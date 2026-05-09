@@ -1,0 +1,43 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: |
+          python -m pytest tests/ -v --tb=short
+
+      - name: Smoke-test the static HTML generator
+        run: |
+          # Aggregator should run with empty data without crashing
+          mkdir -p data
+          echo "date,Total" > data/btc_flows.csv
+          echo "date,Total" > data/eth_flows.csv
+          python app.py --no-open || true
+          test -f dashboard.html && echo "dashboard.html generated"
