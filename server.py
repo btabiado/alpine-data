@@ -1,0 +1,314 @@
+"""
+Live web server for the dashboard.
+
+    python server.py
+    # → http://127.0.0.1:8765/
+
+Endpoints:
+    GET  /                       dashboard HTML (re-rendered from latest cache on every load)
+    GET  /api/data               JSON payload for in-page hot reload
+    POST /api/refresh            re-fetches market + whale data, returns fresh payload
+    GET  /healthz                liveness probe
+
+Background:
+    A daemon thread refreshes market + whale data every REFRESH_MINUTES
+    (default 30). Set to 0 to disable.
+
+Env:
+    HOST        bind address           (default 127.0.0.1)
+    PORT        bind port              (default 8765)
+    REFRESH_MINUTES  auto-fetch every N minutes (default 30, 0 to disable)
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import threading
+import time
+from datetime import datetime, timezone
+
+from flask import Flask, Response, jsonify, request
+
+import app as dash
+import fetch_live
+import fetch_market
+
+HOST = os.environ.get("HOST", "127.0.0.1")
+PORT = int(os.environ.get("PORT", "8765"))
+REFRESH_MINUTES = int(os.environ.get("REFRESH_MINUTES", "30"))
+
+flask_app = Flask(__name__)
+
+
+@flask_app.after_request
+def _cors(resp):
+    """Allow the bookmarklet on third-party pages (Farside, SoSoValue) to POST CSVs here."""
+    resp.headers["Access-Control-Allow-Origin"] = "*"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return resp
+
+
+@flask_app.route("/api/upload-csv", methods=["OPTIONS"])
+def _upload_csv_preflight():
+    return ("", 204)
+
+# Track last successful fetch + any fetch lock
+_state = {
+    "last_fetch_at": None,
+    "last_fetch_error": None,
+    "fetching": False,
+    "lock": threading.Lock(),
+}
+
+
+def _do_fetch() -> tuple[bool, str | None]:
+    """Run market + whale fetch. Returns (ok, error_msg)."""
+    if _state["fetching"]:
+        return False, "already fetching"
+    with _state["lock"]:
+        _state["fetching"] = True
+        try:
+            fetch_market.fetch_all()
+            _state["last_fetch_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            _state["last_fetch_error"] = None
+            return True, None
+        except Exception as e:
+            err = f"{type(e).__name__}: {e}"
+            _state["last_fetch_error"] = err
+            return False, err
+        finally:
+            _state["fetching"] = False
+
+
+def _refresher():
+    """Background daemon: periodic fetch."""
+    if REFRESH_MINUTES <= 0:
+        return
+    interval = REFRESH_MINUTES * 60
+    while True:
+        time.sleep(interval)
+        ok, err = _do_fetch()
+        ts = datetime.now(timezone.utc).strftime("%H:%M:%SZ")
+        if ok:
+            print(f"[{ts}] auto-refresh ok", flush=True)
+        else:
+            print(f"[{ts}] auto-refresh FAILED: {err}", flush=True)
+
+
+@flask_app.route("/")
+def index() -> Response:
+    payload = dash.build_payload()
+    payload["server"] = {
+        "last_fetch_at": _state["last_fetch_at"],
+        "auto_refresh_minutes": REFRESH_MINUTES,
+    }
+    html = dash.render_html(payload)
+    return Response(html, mimetype="text/html")
+
+
+@flask_app.route("/api/data")
+def api_data() -> Response:
+    payload = dash.build_payload()
+    payload["server"] = {
+        "last_fetch_at": _state["last_fetch_at"],
+        "auto_refresh_minutes": REFRESH_MINUTES,
+    }
+    return jsonify(payload)
+
+
+@flask_app.route("/api/refresh", methods=["POST", "GET"])
+def api_refresh() -> Response:
+    ok, err = _do_fetch()
+    if not ok:
+        return jsonify({"ok": False, "error": err}), 503
+    payload = dash.build_payload()
+    payload["server"] = {
+        "last_fetch_at": _state["last_fetch_at"],
+        "auto_refresh_minutes": REFRESH_MINUTES,
+    }
+    return jsonify({"ok": True, "data": payload})
+
+
+@flask_app.route("/api/seed-etf", methods=["POST"])
+def api_seed_etf() -> Response:
+    """Pull BTC ETF flows from the community GitHub mirror.
+
+    Mirror is community-maintained and may be stale. Total column only.
+    """
+    try:
+        n = fetch_live.fetch_btc_from_github_mirror(dash.DATA_DIR)
+        return jsonify({"ok": True, "rows": n, "source": "canadiancode/btc-etf-flows"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 503
+
+
+@flask_app.route("/api/upload-csv", methods=["POST"])
+def api_upload_csv() -> Response:
+    """Accept a pasted CSV body and persist it to data/{asset}_flows.csv.
+
+    Body: text/csv or text/plain
+    Query: ?asset=btc|eth (default btc)
+    Validates that the first line contains 'date' and at least one numeric column.
+    """
+    asset = (request.args.get("asset") or "btc").lower()
+    if asset not in ("btc", "eth"):
+        return jsonify({"ok": False, "error": "asset must be btc or eth"}), 400
+    body = request.get_data(as_text=True) or ""
+    body = body.strip()
+    if not body:
+        return jsonify({"ok": False, "error": "empty body"}), 400
+
+    # Auto-detect Farside's column-major paste (each cell on its own line)
+    try:
+        import parse_farside
+        if parse_farside.looks_like_vertical_farside(body):
+            body = parse_farside.parse_farside_vertical(body, asset_hint=asset)
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"farside parse: {e}"}), 400
+
+    # Allow tab-separated (typical browser copy-paste from Farside)
+    sample = body.splitlines()[0]
+    if "\t" in sample and "," not in sample:
+        body = "\n".join(line.replace("\t", ",") for line in body.splitlines())
+
+    head = body.splitlines()[0].lower()
+    if "date" not in head:
+        return jsonify({"ok": False, "error": "first line must contain a 'date' column"}), 400
+
+    path = dash.DATA_DIR / f"{asset}_flows.csv"
+    path.write_text(body + ("\n" if not body.endswith("\n") else ""))
+    rows = max(0, len(body.splitlines()) - 1)
+    return jsonify({"ok": True, "rows": rows, "path": str(path.name)})
+
+
+BOOKMARKLET_JS = """
+(async () => {
+  const PORT = 8765;
+  const ENDPOINT = `http://127.0.0.1:${PORT}/api/upload-csv`;
+  const tables = document.querySelectorAll('table');
+  if (!tables.length) { alert('No <table> on this page.'); return; }
+  let best = null, bestRows = 0;
+  for (const t of tables) {
+    const n = t.querySelectorAll('tr').length;
+    const text = (t.innerText || '').slice(0, 800);
+    const isFlow = /\\b(IBIT|FBTC|GBTC|ETHA|FETH|ETHE|ETHW)\\b/.test(text) && /\\bTotal\\b/i.test(text);
+    if (isFlow && n > bestRows) { best = t; bestRows = n; }
+  }
+  if (!best) { alert('No ETF flow table found on this page.'); return; }
+  const rows = best.querySelectorAll('tr');
+  const lines = [];
+  for (const r of rows) {
+    const cells = r.querySelectorAll('th, td');
+    const out = [];
+    for (const c of cells) {
+      let t = (c.innerText || '').trim().replace(/\\u00a0/g,' ').replace(/,(?=\\d{3}\\b)/g,'');
+      if (/^\\(.+\\)$/.test(t)) t = '-' + t.slice(1, -1);
+      if (t === '-' || t === '\\u2014') t = '0';
+      t = t.replace(/[^-0-9.A-Za-z _:/]/g,'');
+      out.push(t);
+    }
+    lines.push(out.join(','));
+  }
+  const csv = lines.join('\\n');
+  const url = location.href.toLowerCase();
+  const tableText = (best.innerText || '').toUpperCase();
+  let asset = 'btc';
+  if (url.includes('ethereum') || /\\b(ETHA|FETH|ETHE|ETHW)\\b/.test(tableText)) asset = 'eth';
+  if (!confirm(`Send ${lines.length-1} rows to ${asset.toUpperCase()} dashboard?\\nFirst line: ${lines[0].slice(0,80)}\\nLast line:  ${lines[lines.length-1].slice(0,80)}`)) return;
+  try {
+    const resp = await fetch(`${ENDPOINT}?asset=${asset}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: csv,
+    });
+    const j = await resp.json();
+    if (j.ok) alert(`Imported ${j.rows} ${asset.toUpperCase()} rows. Reload http://127.0.0.1:${PORT}/`);
+    else alert(`Upload failed: ${j.error || 'unknown error'}`);
+  } catch (e) {
+    alert(`Network error: ${e.message}\\nIs the dashboard server running?`);
+  }
+})();
+""".strip()
+
+
+@flask_app.route("/bookmarklet")
+def bookmarklet_page() -> Response:
+    import urllib.parse
+    minified = " ".join(BOOKMARKLET_JS.split())
+    href = "javascript:" + urllib.parse.quote(minified, safe="(){};,:='\"$.+_-/?&* []!@#%^&|<>")
+    html = """<!doctype html>
+<html><head><meta charset="utf-8"><title>ETF flow bookmarklet</title>
+<style>
+  body{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:720px;margin:40px auto;padding:0 20px;background:#0b0d12;color:#e6e8ee}
+  a.bm{display:inline-block;background:#f7931a;color:#000;padding:10px 18px;border-radius:8px;text-decoration:none;font-weight:600;border:1px solid #f7931a}
+  a.bm:hover{background:#ffaa3a}
+  code{background:#1b2030;padding:2px 6px;border-radius:4px;font:13px monospace}
+  pre{background:#10151f;padding:14px;border-radius:8px;overflow:auto;font:12px monospace;max-height:240px}
+  .step{margin:18px 0}
+  h1{font-size:22px;margin:0 0 6px} h2{font-size:15px;margin-top:28px}
+  .muted{color:#8a93a6;font-size:13px}
+</style></head><body>
+<h1>ETF Flow Importer Bookmarklet</h1>
+<p class="muted">Drag the orange button to your bookmarks bar. Then visit Farside (or any page with a spot ETF flow table), click the bookmark, and the data flows straight into your local dashboard.</p>
+
+<div class="step">
+  <strong>1.</strong> Drag this to your bookmarks bar &rarr;
+  &nbsp;&nbsp;<a class="bm" href="__BM_HREF__">↳ Send ETF Flow</a>
+</div>
+
+<div class="step">
+  <strong>2.</strong> Make sure the dashboard server is running:
+  <code>cd ~/btc-eth-etf-dashboard &amp;&amp; .venv/bin/python server.py</code>
+</div>
+
+<div class="step">
+  <strong>3.</strong> Open one of these pages:
+  <ul>
+    <li><a href="https://farside.co.uk/bitcoin-etf-flow-all-data/" target="_blank">farside.co.uk/bitcoin-etf-flow-all-data/</a> &nbsp;<span class="muted">(BTC)</span></li>
+    <li><a href="https://farside.co.uk/ethereum-etf-flow-all-data/" target="_blank">farside.co.uk/ethereum-etf-flow-all-data/</a> &nbsp;<span class="muted">(ETH)</span></li>
+  </ul>
+</div>
+
+<div class="step">
+  <strong>4.</strong> Click the bookmark. You'll see a confirmation dialog showing row count and the first/last rows; click OK to import.
+</div>
+
+<div class="step">
+  <strong>5.</strong> Reload <a href="/">http://127.0.0.1:8765/</a> &mdash; the ETF Flows tab will reflect the new data.
+</div>
+
+<h2>What the bookmarklet does</h2>
+<p class="muted">It scans the page for the largest <code>&lt;table&gt;</code> containing recognized ETF tickers (IBIT, FBTC, ETHA, FETH&hellip;), serialises it to CSV (with parens-negatives and dash-blanks normalised), guesses BTC vs ETH from the URL/contents, and POSTs to <code>/api/upload-csv</code>. The server's auto-detect parser handles either Farside layout. No data leaves your machine.</p>
+
+<h2>Source</h2>
+<pre>__BM_SRC__</pre>
+</body></html>"""
+    html = html.replace("__BM_HREF__", href)
+    html = html.replace("__BM_SRC__", BOOKMARKLET_JS.replace("<", "&lt;"))
+    return Response(html, mimetype="text/html")
+
+
+@flask_app.route("/healthz")
+def health() -> Response:
+    return jsonify({
+        "ok": True,
+        "last_fetch_at": _state["last_fetch_at"],
+        "fetching": _state["fetching"],
+        "last_fetch_error": _state["last_fetch_error"],
+    })
+
+
+def main() -> int:
+    # Kick off background refresher (skips re-fetch if data is already fresh).
+    t = threading.Thread(target=_refresher, daemon=True, name="refresher")
+    t.start()
+    print(f"Dashboard live on http://{HOST}:{PORT}/", flush=True)
+    print(f"  auto-refresh every {REFRESH_MINUTES} min" + (" (disabled)" if REFRESH_MINUTES == 0 else ""), flush=True)
+    flask_app.run(host=HOST, port=PORT, threaded=True, debug=False, use_reloader=False)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

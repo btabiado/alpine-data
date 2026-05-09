@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Generated dashboard output
+dashboard.html
+
+# Local data (your imported flow data and cached fetches stay on your machine)
+data/*.csv
+data/*.json
+data/*.bak
+data/*.farside-vertical.bak
+
+# Keep schema templates if you want to re-add them later (manually)
+!data/.gitkeep
+
+# Local env / secrets
+.env
+*.local
