@@ -35,9 +35,12 @@ jobs:
 
       - name: Smoke-test the static HTML generator
         run: |
-          # Aggregator should run with empty data without crashing
+          # Aggregator should produce a working dashboard.html from a
+          # minimal one-row CSV (proves the full read -> aggregate -> render
+          # pipeline works end-to-end in CI).
           mkdir -p data
-          echo "date,Total" > data/btc_flows.csv
-          echo "date,Total" > data/eth_flows.csv
-          python app.py --no-open || true
-          test -f dashboard.html && echo "dashboard.html generated"
+          printf 'date,Total\n2024-01-11,100\n' > data/btc_flows.csv
+          printf 'date,Total\n2024-07-23,50\n' > data/eth_flows.csv
+          python app.py --no-open
+          test -f dashboard.html
+          echo "dashboard.html generated ($(wc -c < dashboard.html) bytes)"
