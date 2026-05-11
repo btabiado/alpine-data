@@ -99,15 +99,47 @@ def aggregate(df: pd.DataFrame) -> dict:
     yearly.columns = ["date", "flow"]
     yearly["cumulative"] = yearly["flow"].cumsum()
 
+    try:
+        from fund_meta import name_for as _fund_name
+    except Exception:
+        def _fund_name(s): return s
+
     fund_cols = [c for c in df.columns if c not in ("date", "Total")]
+    fund_cols = [c for c in fund_cols if pd.api.types.is_numeric_dtype(df[c])]
+
+    max_d = df["date"].max()
+    win30 = max_d - pd.Timedelta(days=30)
+    win60 = max_d - pd.Timedelta(days=60)
+    win90 = max_d - pd.Timedelta(days=90)
+
+    all_time_abs = sum(abs(float(df[c].sum())) for c in fund_cols) or 1.0
     by_fund = []
+    by_fund_daily = {}
     for c in fund_cols:
-        if pd.api.types.is_numeric_dtype(df[c]):
-            by_fund.append({
-                "fund": c,
-                "total": float(df[c].sum()),
-                "last_30d": float(df[df["date"] >= df["date"].max() - pd.Timedelta(days=30)][c].sum()),
-            })
+        total = float(df[c].sum())
+        last_30 = float(df[df["date"] >= win30][c].sum())
+        last_60 = float(df[df["date"] >= win60][c].sum())
+        last_90 = float(df[df["date"] >= win90][c].sum())
+        by_fund.append({
+            "fund": c,
+            "name": _fund_name(c),
+            "total": total,
+            "last_30d": last_30,
+            "last_60d": last_60,
+            "last_90d": last_90,
+            "share_pct": (abs(total) / all_time_abs) * 100.0,
+            "last_flow": float(df[c].iloc[-1]),
+            "last_date": df["date"].iloc[-1].strftime("%Y-%m-%d"),
+        })
+        # Daily series for charts (date, flow, cumulative)
+        series = df[["date", c]].copy()
+        series["cum"] = series[c].cumsum()
+        by_fund_daily[c] = [
+            {"date": r["date"].strftime("%Y-%m-%d"),
+             "flow": float(r[c]) if pd.notna(r[c]) else 0.0,
+             "cumulative": float(r["cum"]) if pd.notna(r["cum"]) else 0.0}
+            for _, r in series.iterrows()
+        ]
     by_fund.sort(key=lambda r: r["total"], reverse=True)
 
     yoy = {}
@@ -151,6 +183,7 @@ def aggregate(df: pd.DataFrame) -> dict:
         "monthly": to_records(monthly),
         "yearly": to_records(yearly),
         "by_fund": by_fund,
+        "by_fund_daily": by_fund_daily,
         "yoy": yoy,
         "stats": stats,
         "funds": fund_cols,
@@ -406,6 +439,35 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
       </div>
+
+      <!-- ===== By-Fund detail section ===== -->
+      <div style="margin-top:6px;padding:14px 16px;background:#10151f;border:1px solid var(--border);border-radius:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <div>
+            <h2 style="margin:0;font-size:15px">Fund detail <span class="tag" id="tagFundDetail">BTC</span></h2>
+            <div class="sub" style="color:var(--muted)">Per-fund KPIs, cumulative trajectory, and time-window comparison</div>
+          </div>
+          <div>
+            <span class="lbl" style="margin:0">Compare window</span>
+            <button class="btn active" data-fundwin="30">30d</button>
+            <button class="btn" data-fundwin="60">60d</button>
+            <button class="btn" data-fundwin="90">90d</button>
+            <button class="btn" data-fundwin="all">All</button>
+          </div>
+        </div>
+        <div id="fundKpiGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"></div>
+      </div>
+
+      <div class="grid2" style="margin-top:18px">
+        <div class="chart-card">
+          <div class="head"><h2>Cumulative flow stacked by fund <span class="tag" id="tagStack">BTC</span></h2><span class="desc">Running total per fund, USD millions</span></div>
+          <div class="chart-wrap tall"><canvas id="fundStackChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="head"><h2>Fund comparison <span class="tag" id="tagCompare">BTC</span></h2><span class="desc">Net flow over selected window</span></div>
+          <div class="chart-wrap tall"><canvas id="fundCompareChart"></canvas></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -526,7 +588,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
 <script>
 const DATA = __DATA_JSON__;
-const state = { tab:'etf', asset:'btc', period:'daily', range:'all' };
+const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -654,6 +716,128 @@ function renderEtfKpis(){
   document.getElementById('etfKpis').innerHTML = items.map(i =>
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls}">${i.val}</div></div>`
   ).join('');
+}
+
+// ---------- Fund detail (new By-Fund section) ----------
+const FUND_PALETTE = ['#f7931a','#627eea','#22c55e','#a78bfa','#ec4899','#06b6d4','#f59e0b','#10b981','#8b5cf6','#ef4444','#14b8a6','#fb923c','#84cc16'];
+
+function fundWindowKey(){
+  return state.fundwin === '60' ? 'last_60d'
+       : state.fundwin === '90' ? 'last_90d'
+       : state.fundwin === 'all' ? 'total'
+       : 'last_30d';
+}
+function fundWindowLabel(){
+  return state.fundwin === 'all' ? 'All-time' : state.fundwin + 'd';
+}
+
+function renderFundKpis(){
+  const d = etfData();
+  const funds = d.by_fund || [];
+  const host = document.getElementById('fundKpiGrid');
+  if (!funds.length){
+    host.innerHTML = `<div class="empty" style="grid-column:1/-1">No per-fund data loaded. Use <b>Paste ${state.asset.toUpperCase()}</b> with the full Farside table to populate fund-level views.</div>`;
+    return;
+  }
+  const winKey = fundWindowKey();
+  const winLabel = fundWindowLabel();
+  // sort by the selected window (desc)
+  const sorted = funds.slice().sort((a,b) => (b[winKey]||0) - (a[winKey]||0));
+  host.innerHTML = sorted.map((f, i) => {
+    const c = (state.asset==='eth' ? '#627eea' : state.asset==='link' ? '#2a5ada' : '#f7931a');
+    const flowCls = (f[winKey]||0) >= 0 ? 'green' : 'red';
+    const totalCls = f.total >= 0 ? 'green' : 'red';
+    return `
+      <div class="card" style="border-left:3px solid ${FUND_PALETTE[i % FUND_PALETTE.length]}">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
+          <div style="font-weight:700;font-size:14px;letter-spacing:.03em">${f.fund}</div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">${f.share_pct.toFixed(1)}% share</div>
+        </div>
+        <div class="sub" style="color:var(--muted);font-size:11px;margin-top:2px;min-height:14px">${f.name||''}</div>
+        <div class="v ${flowCls}" style="font-size:18px;margin-top:6px">${fmtSigned(f[winKey]||0)}</div>
+        <div class="sub" style="color:var(--muted);font-size:10px">${winLabel} net</div>
+        <div style="display:flex;gap:8px;font-size:11px;margin-top:6px;flex-wrap:wrap">
+          <span class="sub">30d <span class="${(f.last_30d>=0?'green':'red')}">${fmtSigned(f.last_30d)}</span></span>
+          <span class="sub">60d <span class="${(f.last_60d>=0?'green':'red')}">${fmtSigned(f.last_60d)}</span></span>
+          <span class="sub">90d <span class="${(f.last_90d>=0?'green':'red')}">${fmtSigned(f.last_90d)}</span></span>
+        </div>
+        <div class="sub" style="font-size:11px;margin-top:4px">All-time <span class="${totalCls}">${fmtSigned(f.total)}</span></div>
+      </div>`;
+  }).join('');
+}
+
+function renderFundStack(){
+  const d = etfData();
+  const fundDaily = d.by_fund_daily || {};
+  const funds = (d.by_fund || []).slice().sort((a,b) => Math.abs(b.total) - Math.abs(a.total));
+  destroy('fundStack');
+  if (!funds.length){
+    return;
+  }
+  // Range filter: use any one fund's date axis (they all share the same dates)
+  const first = funds[0].fund;
+  const ref = applyRange(fundDaily[first] || []);
+  const labels = ref.map(r => r.date);
+  const dateSet = new Set(labels);
+
+  const datasets = funds.map((f, i) => {
+    const color = FUND_PALETTE[i % FUND_PALETTE.length];
+    const series = (fundDaily[f.fund] || []).filter(r => dateSet.has(r.date));
+    return {
+      label: f.fund,
+      data: series.map(r => r.cumulative),
+      borderColor: color,
+      backgroundColor: color + '88',
+      fill: true,
+      pointRadius: 0,
+      borderWidth: 1.2,
+      tension: 0.2,
+    };
+  });
+  charts.fundStack = new Chart(document.getElementById('fundStackChart'), {
+    type:'line',
+    data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#e6e8ee', font:{size:10}}},
+        tooltip:{mode:'index', intersect:false, callbacks:{label: ctx => `${ctx.dataset.label}: ${fmtSigned(ctx.parsed.y)}`}},
+      },
+      scales:{
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}, stacked:true},
+        y:{title:{display:true,text:'Cumulative ($M)',color:'#8a93a6'}, ticks:{color:'#8a93a6', callback:v=>fmtUSD(v)}, grid:{color:'#1f2533'}, stacked:true},
+      },
+    },
+  });
+}
+
+function renderFundCompare(){
+  const d = etfData();
+  const funds = (d.by_fund || []);
+  destroy('fundCompare');
+  if (!funds.length) return;
+  const winKey = fundWindowKey();
+  const sorted = funds.slice().sort((a,b) => (b[winKey]||0) - (a[winKey]||0));
+  const labels = sorted.map(f => f.fund);
+  const data = sorted.map(f => f[winKey] || 0);
+  const colors = data.map(v => v >= 0 ? '#22c55e' : '#ef4444');
+
+  charts.fundCompare = new Chart(document.getElementById('fundCompareChart'), {
+    type:'bar',
+    data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0}]},
+    options:{
+      indexAxis: 'y',
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label: ctx => fmtSigned(ctx.parsed.x)}},
+      },
+      scales:{
+        x:{title:{display:true,text:`Net flow ${fundWindowLabel()} ($M)`, color:'#8a93a6'}, ticks:{color:'#8a93a6', callback:v=>fmtUSD(v)}, grid:{color:'#1f2533'}},
+        y:{ticks:{color:'#e6e8ee', font:{weight:'600'}}, grid:{display:false}},
+      },
+    },
+  });
 }
 
 function renderEtfFundTable(){
@@ -987,7 +1171,7 @@ function renderCoverage(){
 
 function renderAll(){
   // tag updates
-  ['1','2','3','4','Price','Funding','OI','LS','Dvol'].forEach(s=>{
+  ['1','2','3','4','Price','Funding','OI','LS','Dvol','FundDetail','Stack','Compare'].forEach(s=>{
     const t = document.getElementById('tagAsset'+s) || document.getElementById('tag'+s);
     if (!t) return;
     t.textContent = state.asset.toUpperCase();
@@ -1033,6 +1217,7 @@ function renderAll(){
 
   if (state.tab === 'etf' && !etfEmpty){
     renderEtfKpis(); renderEtfFundTable(); renderFlow(); renderCum(); renderYoy();
+    renderFundKpis(); renderFundStack(); renderFundCompare();
   }
   if (state.tab === 'trading' && !trEmpty){
     renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
@@ -1072,6 +1257,9 @@ document.querySelectorAll('.btn[data-period]').forEach(b =>
 );
 document.querySelectorAll('.btn[data-range]').forEach(b =>
   b.addEventListener('click', () => { state.range = b.dataset.range; setActive('range', state.range); renderAll(); })
+);
+document.querySelectorAll('.btn[data-fundwin]').forEach(b =>
+  b.addEventListener('click', () => { state.fundwin = b.dataset.fundwin; setActive('fundwin', state.fundwin); renderAll(); })
 );
 document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => selectTab(b.dataset.tab))
