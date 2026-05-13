@@ -393,6 +393,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab active" data-tab="etf">ETF Flows</div>
   <div class="tab" data-tab="trading">Trading</div>
   <div class="tab" data-tab="signals">Signals</div>
+  <div class="tab" data-tab="markets">Markets</div>
+  <div class="tab" data-tab="defi">DeFi</div>
   <div class="tab" data-tab="whale">Whale Activity</div>
 </div>
 
@@ -560,6 +562,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div style="padding:8px 4px"><table id="globalTable"><tbody></tbody></table></div>
         </div>
       </div>
+      <div class="chart-card">
+        <div class="head"><h2>Latest crypto news</h2><span class="desc">CoinDesk · Cointelegraph · Decrypt · The Block · BTC Magazine (RSS, auto-refresh)</span></div>
+        <div id="newsFeed" style="max-height:480px;overflow:auto;padding:2px"></div>
+      </div>
     </div>
   </div>
 
@@ -586,12 +592,101 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
   </div>
 
+  <!-- ============ MARKETS TAB ============ -->
+  <div id="tab-markets" class="hidden">
+    <div class="card" style="padding:12px 16px">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
+        <span class="sub" id="marketsAsOf" style="color:var(--muted);font-size:11px"></span>
+        <span style="flex:1"></span>
+        <span class="lbl" style="margin:0">Sort</span>
+        <button class="btn active" data-mktsort="rank">Rank</button>
+        <button class="btn" data-mktsort="change_24h_pct">24h %</button>
+        <button class="btn" data-mktsort="change_7d_pct">7d %</button>
+        <button class="btn" data-mktsort="volume_24h_usd">Volume</button>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:auto">
+      <table id="marketsTable" style="margin:0">
+        <thead>
+          <tr>
+            <th style="padding-left:14px">#</th>
+            <th>Coin</th>
+            <th>Price</th>
+            <th>1h</th>
+            <th>24h</th>
+            <th>7d</th>
+            <th>30d</th>
+            <th>Volume 24h</th>
+            <th>Market Cap</th>
+            <th>Last 7d</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="chart-card">
+      <div class="head"><h2>Trending on CoinGecko (last 24h search)</h2><span class="desc">Retail attention proxy</span></div>
+      <div id="trendingList" style="display:flex;flex-wrap:wrap;gap:8px;padding:6px 4px"></div>
+    </div>
+  </div>
+
+  <!-- ============ DeFi TAB ============ -->
+  <div id="tab-defi" class="hidden">
+    <div class="row" id="defiKpis"></div>
+    <div class="grid2">
+      <div class="chart-card">
+        <div class="head"><h2>TVL by chain</h2><span class="desc">Top 20 chains, 24h change colored</span></div>
+        <div class="chart-wrap"><canvas id="defiChainsChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="head"><h2>TVL history</h2><span class="desc">Ethereum + Solana + Arbitrum + Base, last 365 days</span></div>
+        <div class="chart-wrap"><canvas id="defiTvlHistoryChart"></canvas></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="chart-card">
+        <div class="head"><h2>Top 25 DeFi protocols</h2><span class="desc">By TVL, with 1d/7d/30d %</span></div>
+        <div style="max-height:380px;overflow:auto">
+          <table id="defiProtocolsTable">
+            <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="head"><h2>Top stablecoin yields</h2><span class="desc">Sorted by TVL, ≥$5M</span></div>
+        <div style="max-height:380px;overflow:auto">
+          <table id="defiYieldsTable">
+            <thead><tr><th>Pool</th><th>Chain</th><th>TVL</th><th>APY</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ WHALE TAB ============ -->
   <div id="tab-whale" class="hidden">
     <div id="whaleEmpty" class="empty hidden">No whale data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="whaleContent">
       <div class="note">Free on-chain proxies (BTC). Real whale exchange-flow series need a paid feed (Glassnode / CryptoQuant). ETH-side proxies require Etherscan v2 — not yet wired.</div>
       <div class="row" id="whaleKpis"></div>
+      <!-- BTC network state additions -->
+      <div class="grid2">
+        <div class="card" style="padding:12px 14px">
+          <h3>Difficulty adjustment</h3>
+          <div id="diffAdjBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
+        </div>
+        <div class="card" style="padding:12px 14px">
+          <h3>Lightning Network</h3>
+          <div id="lightningBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="head"><h2>Mining pool concentration</h2><span class="desc">Hashrate share by pool (1y window) &middot; top 2 = <span id="poolsTop2">?</span></span></div>
+        <div class="chart-wrap"><canvas id="miningPoolsChart"></canvas></div>
+      </div>
       <div class="grid2">
         <div class="chart-card">
           <div class="head"><h2>Avg. transaction value (USD)</h2><span class="desc">tx_volume_usd / tx_count &middot; rising = whales moving more per tx</span></div>
@@ -1281,6 +1376,280 @@ function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// ---------- Markets tab ----------
+const marketState = { sort: 'rank' };
+
+function renderMarkets(){
+  const rows = (DATA.market && DATA.market.markets_top) || [];
+  const host = document.querySelector('#marketsTable tbody');
+  if (!host) return;
+  const asOf = document.getElementById('marketsAsOf');
+  if (asOf) asOf.textContent = rows.length ? `${rows.length} coins · auto-refreshes every 30 min` : 'No data yet — refresh';
+  // Sort
+  const k = marketState.sort;
+  const sorted = rows.slice().sort((a,b) => {
+    const av = a[k], bv = b[k];
+    if (k === 'rank') return (av||999) - (bv||999);
+    return (bv||0) - (av||0);
+  });
+  const html = sorted.map(c => {
+    const dir = v => v == null ? 'amber' : v >= 0 ? 'green' : 'red';
+    const pct = v => v == null ? '—' : (v>=0?'+':'') + v.toFixed(2) + '%';
+    const spark = (c.sparkline_7d || []).slice(-50);
+    const sparkSvg = renderSparkline(spark, c.change_7d_pct >= 0);
+    const img = c.image ? `<img src="${c.image}" alt="" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:6px">` : '';
+    return `<tr>
+      <td style="padding-left:14px;color:var(--muted)">${c.rank||''}</td>
+      <td><strong>${img}${escapeHtml(c.symbol||'')}</strong> <span class="sub" style="color:var(--muted);font-size:11px">${escapeHtml(c.name||'')}</span></td>
+      <td>${fmtUSD(c.price_usd,'auto')}</td>
+      <td class="${dir(c.change_1h_pct)}">${pct(c.change_1h_pct)}</td>
+      <td class="${dir(c.change_24h_pct)}">${pct(c.change_24h_pct)}</td>
+      <td class="${dir(c.change_7d_pct)}">${pct(c.change_7d_pct)}</td>
+      <td class="${dir(c.change_30d_pct)}">${pct(c.change_30d_pct)}</td>
+      <td>${fmtUSD(c.volume_24h_usd,'auto')}</td>
+      <td>${fmtUSD(c.market_cap_usd,'auto')}</td>
+      <td>${sparkSvg}</td>
+    </tr>`;
+  }).join('');
+  host.innerHTML = html;
+
+  // Trending
+  const trending = (DATA.market && DATA.market.trending) || [];
+  const tHost = document.getElementById('trendingList');
+  if (tHost) {
+    if (!trending.length) tHost.innerHTML = '<div class="sub" style="color:var(--muted)">No trending data</div>';
+    else tHost.innerHTML = trending.map((t,i) =>
+      `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:999px;font-size:12px">
+        <span style="color:var(--muted);font-size:10px">#${i+1}</span>
+        ${t.thumb ? `<img src="${t.thumb}" style="width:14px;height:14px;border-radius:50%">` : ''}
+        <strong>${escapeHtml(t.symbol||'')}</strong>
+        <span class="sub" style="color:var(--muted)">${escapeHtml(t.name||'')}${t.rank?` · rank ${t.rank}`:''}</span>
+      </span>`
+    ).join('');
+  }
+}
+
+function renderSparkline(values, isUp){
+  if (!values || values.length < 2) return '';
+  const w = 90, h = 24;
+  const min = Math.min(...values), max = Math.max(...values);
+  const range = max - min || 1;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = h - ((v - min) / range) * h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const color = isUp ? '#22c55e' : '#ef4444';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+
+document.querySelectorAll('.btn[data-mktsort]').forEach(b =>
+  b.addEventListener('click', () => {
+    marketState.sort = b.dataset.mktsort;
+    document.querySelectorAll('.btn[data-mktsort]').forEach(x => x.classList.toggle('active', x.dataset.mktsort === marketState.sort));
+    renderMarkets();
+  })
+);
+
+// ---------- DeFi tab ----------
+function renderDefi(){
+  const defi = (DATA.market || {}).defi || {};
+  const llama = (DATA.market || {}).defillama || {};
+  const chains = defi.chains || [];
+  const protocols = defi.protocols || [];
+  const yields = defi.yields_stablecoin || [];
+  const tvlHistory = defi.tvl_history || {};
+
+  // KPIs
+  const totalTvl = chains.reduce((s, c) => s + (c.tvl_usd || 0), 0);
+  const ethTvl = chains.find(c => c.name === 'Ethereum')?.tvl_usd || 0;
+  const solTvl = chains.find(c => c.name === 'Solana')?.tvl_usd || 0;
+  const items = [
+    {label: 'Total DeFi TVL', val: fmtUSD(totalTvl, 'auto'), sub: `${chains.length} chains tracked`},
+    {label: 'Ethereum TVL', val: fmtUSD(ethTvl, 'auto'), sub: `${((ethTvl/totalTvl)*100).toFixed(1)}% share`},
+    {label: 'Solana TVL', val: fmtUSD(solTvl, 'auto'), sub: `${((solTvl/totalTvl)*100).toFixed(1)}% share`},
+    {label: 'Stablecoin mcap', val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: `7d ${llama.stablecoin_7d_change_usd>=0?'+':''}${fmtUSD(llama.stablecoin_7d_change_usd,'auto')}`},
+    {label: 'DEX 24h volume', val: fmtUSD(llama.dex_volume_24h_usd, 'auto')},
+    {label: 'Protocol fees 24h', val: fmtUSD(llama.fees_24h_usd, 'auto')},
+  ];
+  document.getElementById('defiKpis').innerHTML = items.map(i =>
+    `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
+  ).join('');
+
+  // Chains bar chart (top 15)
+  destroy('defiChains');
+  const top15 = chains.slice(0, 15);
+  charts.defiChains = new Chart(document.getElementById('defiChainsChart'), {
+    type:'bar',
+    data:{
+      labels: top15.map(c => c.name),
+      datasets: [{
+        data: top15.map(c => c.tvl_usd || 0),
+        backgroundColor: top15.map(c => (c.change_1d_pct||0) >= 0 ? '#22c55e' : '#ef4444'),
+        borderWidth: 0,
+      }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {legend:{display:false}, tooltip:{callbacks:{label: ctx => `TVL ${fmtUSD(ctx.parsed.x,'auto')} (1d ${(top15[ctx.dataIndex].change_1d_pct||0).toFixed(2)}%)`}}},
+      scales: {
+        x:{ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{color:'#1f2533'}},
+        y:{ticks:{color:'#e6e8ee'}, grid:{display:false}},
+      },
+    },
+  });
+
+  // TVL history (4 chains)
+  destroy('defiTvlHistory');
+  const palette = {Ethereum:'#627eea', Solana:'#9945FF', Arbitrum:'#28a0f0', Base:'#0052ff'};
+  const datasets = Object.keys(tvlHistory).filter(k => tvlHistory[k].length).map(chain => ({
+    label: chain,
+    data: tvlHistory[chain].map(p => p.tvl_usd),
+    borderColor: palette[chain] || '#a78bfa',
+    backgroundColor: 'transparent',
+    pointRadius: 0,
+    borderWidth: 1.8,
+    tension: 0.2,
+  }));
+  const labels = (tvlHistory.Ethereum || []).map(p => p.date);
+  if (datasets.length) {
+    charts.defiTvlHistory = new Chart(document.getElementById('defiTvlHistoryChart'), {
+      type:'line',
+      data:{labels, datasets},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#e6e8ee'}}, tooltip:{mode:'index', intersect:false, callbacks:{label: ctx => `${ctx.dataset.label}: ${fmtUSD(ctx.parsed.y,'auto')}`}}},
+        scales:{
+          x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
+          y:{ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{color:'#1f2533'}},
+        },
+      },
+    });
+  }
+
+  // Protocols table
+  const protoBody = document.querySelector('#defiProtocolsTable tbody');
+  if (protoBody) {
+    protoBody.innerHTML = protocols.map((p, i) => {
+      const dir = v => v == null ? 'amber' : v >= 0 ? 'green' : 'red';
+      const pct = v => v == null ? '—' : (v>=0?'+':'') + v.toFixed(2) + '%';
+      return `<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td><strong>${escapeHtml(p.name||'')}</strong></td>
+        <td><span class="sub" style="color:var(--muted);font-size:11px">${escapeHtml(p.category||'')}</span></td>
+        <td>${fmtUSD(p.tvl_usd,'auto')}</td>
+        <td class="${dir(p.change_1d_pct)}">${pct(p.change_1d_pct)}</td>
+        <td class="${dir(p.change_7d_pct)}">${pct(p.change_7d_pct)}</td>
+        <td class="${dir(p.change_1m_pct)}">${pct(p.change_1m_pct)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Yields table
+  const yieldsBody = document.querySelector('#defiYieldsTable tbody');
+  if (yieldsBody) {
+    yieldsBody.innerHTML = yields.map(y => `<tr>
+      <td><strong>${escapeHtml(y.project||'')}</strong> <span class="sub" style="color:var(--muted);font-size:11px">${escapeHtml(y.symbol||'')}</span></td>
+      <td>${escapeHtml(y.chain||'')}</td>
+      <td>${fmtUSD(y.tvl_usd,'auto')}</td>
+      <td class="${(y.apy_pct||0)>=4?'green':(y.apy_pct||0)>=1?'amber':'red'}">${(y.apy_pct||0).toFixed(2)}%</td>
+    </tr>`).join('');
+  }
+}
+
+// ---------- News feed (Trading tab) ----------
+function renderNews(){
+  const news = (DATA.market || {}).news || [];
+  const host = document.getElementById('newsFeed');
+  if (!host) return;
+  if (!news.length) {
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines available</div>';
+    return;
+  }
+  host.innerHTML = news.slice(0, 25).map(n =>
+    `<a href="${n.url}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:3px">
+        <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+      </div>
+      <div style="font-size:13px;line-height:1.35;margin-bottom:3px">${escapeHtml(n.title||'')}</div>
+      ${n.body ? `<div class="sub" style="font-size:11px;color:var(--muted)">${escapeHtml(n.body)}</div>` : ''}
+    </a>`
+  ).join('');
+}
+
+// ---------- Whale tab additions: difficulty + Lightning + mining pools ----------
+function renderWhaleExtras(){
+  const extra = (DATA.market || {}).mempool_extra || {};
+  const diff = extra.difficulty_adjustment || {};
+  const ln = extra.lightning || {};
+  const pools = extra.pools || {};
+
+  // Difficulty card
+  const dEl = document.getElementById('diffAdjBox');
+  if (dEl) {
+    if (!diff.remaining_blocks && !diff.difficulty_change_pct) {
+      dEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
+    } else {
+      const days = (diff.remaining_time_ms || 0) / 86400000;
+      const changeColor = (diff.difficulty_change_pct || 0) >= 0 ? 'red' : 'green';  // higher diff = harder on miners
+      dEl.innerHTML = `
+        <div class="v" style="font-size:20px;font-weight:600;color:var(--text)">${(diff.difficulty_change_pct||0).toFixed(2)}%</div>
+        <div class="sub" style="color:var(--muted)">estimated next retarget</div>
+        <div style="margin-top:8px;font-size:11px">
+          <span class="sub">Blocks left: <strong>${diff.remaining_blocks?.toLocaleString()||'?'}</strong></span> ·
+          <span class="sub">~<strong>${days.toFixed(1)}</strong> days</span><br>
+          <span class="sub">Progress: ${(diff.progress_pct||0).toFixed(1)}%</span>
+        </div>`;
+    }
+  }
+
+  // Lightning card
+  const lEl = document.getElementById('lightningBox');
+  if (lEl) {
+    if (!ln.node_count) {
+      lEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
+    } else {
+      lEl.innerHTML = `
+        <div class="v" style="font-size:20px;font-weight:600;color:var(--text)">${(ln.total_capacity_btc||0).toFixed(0)} BTC</div>
+        <div class="sub" style="color:var(--muted)">total network capacity</div>
+        <div style="margin-top:8px;font-size:11px">
+          <span class="sub">Nodes: <strong>${(ln.node_count||0).toLocaleString()}</strong> (${(ln.clearnet_nodes||0).toLocaleString()} clearnet, ${(ln.tor_nodes||0).toLocaleString()} Tor)</span><br>
+          <span class="sub">Channels: <strong>${(ln.channel_count||0).toLocaleString()}</strong></span> ·
+          <span class="sub">avg ${(ln.avg_capacity_btc||0).toFixed(3)} BTC/ch</span>
+        </div>`;
+    }
+  }
+
+  // Mining pools chart
+  const poolsArr = pools.pools || [];
+  document.getElementById('poolsTop2').textContent = pools.top2_concentration_pct ? `${pools.top2_concentration_pct.toFixed(1)}%` : '?';
+  destroy('miningPools');
+  if (poolsArr.length) {
+    const palette = ['#f7931a','#627eea','#22c55e','#a78bfa','#ec4899','#06b6d4','#f59e0b','#10b981','#8b5cf6','#ef4444','#14b8a6','#fb923c','#84cc16','#06b6d4','#a855f7'];
+    charts.miningPools = new Chart(document.getElementById('miningPoolsChart'), {
+      type:'bar',
+      data:{
+        labels: poolsArr.map(p => p.name),
+        datasets:[{
+          data: poolsArr.map(p => p.share_pct),
+          backgroundColor: poolsArr.map((_, i) => palette[i % palette.length]),
+          borderWidth: 0,
+        }],
+      },
+      options:{
+        indexAxis: 'y',
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{callbacks:{label: ctx => `${ctx.parsed.x.toFixed(2)}% (${poolsArr[ctx.dataIndex].blocks} blocks)`}}},
+        scales:{
+          x:{title:{display:true,text:'Share of blocks (%)',color:'#8a93a6'}, ticks:{color:'#8a93a6'}, grid:{color:'#1f2533'}},
+          y:{ticks:{color:'#e6e8ee'}, grid:{display:false}},
+        },
+      },
+    });
+  }
+}
+
 function renderAll(){
   renderInsights();
   // tag updates
@@ -1339,7 +1708,16 @@ function renderAll(){
     renderSignals();
   }
   if (state.tab === 'whale' && state.asset === 'btc' && !whEmpty){
-    renderWhaleKpis(); renderWhale();
+    renderWhaleKpis(); renderWhale(); renderWhaleExtras();
+  }
+  if (state.tab === 'markets'){
+    renderMarkets();
+  }
+  if (state.tab === 'defi'){
+    renderDefi();
+  }
+  if (state.tab === 'trading' && !trEmpty){
+    renderNews();
   }
   renderCoverage();
 }
@@ -1353,6 +1731,8 @@ function selectTab(t){
   document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
   document.getElementById('tab-trading').classList.toggle('hidden', t!=='trading');
   document.getElementById('tab-signals').classList.toggle('hidden', t!=='signals');
+  document.getElementById('tab-markets').classList.toggle('hidden', t!=='markets');
+  document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
   // Period selector applies to ETF / Trading / Whale (not Signals — daily snapshot)
   const showPeriod = (t === 'etf' || t === 'trading' || t === 'whale');

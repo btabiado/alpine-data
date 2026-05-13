@@ -341,6 +341,57 @@ def _market_insights(payload: dict) -> list[dict]:
             "headline": f"DEX 24h volume: ${dex24/1e9:.2f}B  ·  protocol fees: ${(fees24 or 0)/1e6:.1f}M",
             "detail": None})
 
+    # Trending coin (CoinGecko search) — retail attention proxy
+    trending = market.get("trending") or []
+    if trending:
+        top = trending[0]
+        sym = (top.get("symbol") or "").upper()
+        name = top.get("name") or ""
+        rank = top.get("rank")
+        # Filter out BTC/ETH (we already cover them) and anything in top-10 (not really "trending")
+        if sym and sym not in ("BTC", "ETH") and (rank is None or rank > 10):
+            out.append({"kind": "trend", "asset": "global", "severity": "info",
+                "headline": f"{sym} ({name}) is trending #1 on CoinGecko",
+                "detail": (f"Current market cap rank: {rank}" if rank else "Retail search interest spike — watch for follow-through.")})
+
+    # BTC difficulty adjustment — miner economics
+    diff_adj = (market.get("mempool_extra") or {}).get("difficulty_adjustment") or {}
+    change_pct = diff_adj.get("difficulty_change_pct")
+    days = (diff_adj.get("remaining_time_ms") or 0) / 86400000.0
+    if change_pct is not None and 0 < days < 5:
+        if abs(change_pct) >= 4:
+            sev = "alert" if change_pct > 0 else "good"
+            direction = "harder" if change_pct > 0 else "easier"
+            out.append({"kind": "milestone", "asset": "btc", "severity": sev,
+                "headline": f"BTC difficulty retarget in ~{days:.1f} days: {change_pct:+.1f}% ({direction} for miners)",
+                "detail": ("Miners likely under pressure — watch for distribution." if change_pct > 0 else "Miners get a break — less sell-side pressure.")})
+
+    # Mining pool centralization risk
+    pools = (market.get("mempool_extra") or {}).get("pools") or {}
+    top2 = pools.get("top2_concentration_pct")
+    if top2 is not None and top2 >= 55:
+        out.append({"kind": "anomaly", "asset": "btc", "severity": "alert",
+            "headline": f"BTC mining concentration high: top 2 pools = {top2:.1f}% of blocks",
+            "detail": "Theoretical 51% attack risk if both colluded."})
+
+    # DeFi TVL by chain - flag big movers
+    chains = ((market.get("defi") or {}).get("chains")) or []
+    for c in chains[:10]:
+        change_1d = c.get("change_1d_pct")
+        if change_1d is not None and abs(change_1d) >= 4:
+            sev = "good" if change_1d > 0 else "bad"
+            out.append({"kind": "trend", "asset": "global", "severity": sev,
+                "headline": f"{c.get('name')} TVL {'+'if change_1d>0 else ''}{change_1d:.1f}% today (${(c.get('tvl_usd') or 0)/1e9:.1f}B)",
+                "detail": f"Top-10 chain by TVL — significant 1d move."})
+            break  # one chain insight at most
+
+    # Latest news headline (top story summary)
+    news = market.get("news") or []
+    if news and news[0].get("title"):
+        out.append({"kind": "info", "asset": "global", "severity": "info",
+            "headline": f"📰 {news[0]['source']}: {news[0]['title'][:100]}",
+            "detail": None})
+
     # ETH/BTC ratio extremes
     ethbtc = market.get("ethbtc") or []
     if len(ethbtc) >= 60:
