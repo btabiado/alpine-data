@@ -22,12 +22,15 @@ Env:
 
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import sys
 import threading
 import time
 from datetime import datetime, timezone
+from typing import Any
 
 from flask import Flask, Response, jsonify, request
 
@@ -61,7 +64,60 @@ _AUTH_BYPASS = {"/healthz"}
 # Endpoints that share-token holders are explicitly allowed to hit. Anything
 # that mutates server state (refresh, CSV upload, ETF seed, share admin) is
 # intentionally excluded — share viewers are strictly read-only.
-_SHARE_ALLOWED = {"/", "/api/data", "/api/chat"}
+_SHARE_ALLOWED = {"/", "/api/data", "/api/chat", "/api/export/csv"}
+
+
+# Whitelist of series the CSV exporter is allowed to surface. Anything outside
+# this set is rejected with 400 — both to keep the surface area small and to
+# avoid leaking unrelated payload fields (e.g. insights text) via this route.
+_ALLOWED_SERIES: set[str] = {
+    "btc.daily",
+    "eth.daily",
+    "market.btc.price",
+    "market.eth.price",
+    "market.link.price",
+    "market.btc.funding",
+    "market.eth.funding",
+    "market.btc.dvol",
+    "market.fear_greed",
+    "market.fred.dxy",
+    "market.fred.sp500",
+    "market.fred.gold",
+    "market.fred.treasury_10y",
+    "whale.btc.tx_volume_usd",
+    "whale.btc.tx_count",
+    "whale.btc.active_addresses",
+    "whale.btc.avg_tx_usd",
+    "whale.btc.miners_revenue_usd",
+    "whale.btc.hash_rate",
+}
+
+
+def _resolve_series(payload: dict, dotted_path: str) -> list[dict]:
+    """Walk a dotted path into payload and return a list of row-dicts.
+
+    Returns [] if any intermediate key is missing or the final value isn't a list.
+    """
+    node: Any = payload
+    for part in dotted_path.split("."):
+        if not isinstance(node, dict) or part not in node:
+            return []
+        node = node[part]
+    if not isinstance(node, list):
+        return []
+    # Filter to dict-shaped rows only (defensive; payload should already be clean)
+    return [r for r in node if isinstance(r, dict)]
+
+
+def _sorted_headers(rows: list[dict]) -> list[str]:
+    """Return CSV header columns: 'date' first (if present), then the rest sorted."""
+    keys: set[str] = set()
+    for r in rows:
+        keys.update(r.keys())
+    if not keys:
+        return []
+    rest = sorted(k for k in keys if k != "date")
+    return (["date"] if "date" in keys else []) + rest
 
 
 def _challenge() -> Response:
@@ -228,6 +284,71 @@ def api_data() -> Response:
         "auto_refresh_minutes": REFRESH_MINUTES,
     }
     return jsonify(payload)
+
+
+@flask_app.route("/api/export/csv")
+def api_export_csv() -> Response:
+    """Export a single time-series from the payload as a CSV download.
+
+    Query:
+        series   dotted path into the payload (must be in `_ALLOWED_SERIES`)
+        from     optional ISO date (YYYY-MM-DD), inclusive lower bound
+        to       optional ISO date (YYYY-MM-DD), inclusive upper bound
+
+    Empty / missing series still returns a valid CSV (header row only),
+    so callers can build URLs without 404-handling for sparse data.
+    """
+    series = (request.args.get("series") or "").strip()
+    if not series:
+        return jsonify({"ok": False, "error": "series not in allowlist"}), 400
+    if series not in _ALLOWED_SERIES:
+        return jsonify({"ok": False, "error": "series not in allowlist"}), 400
+
+    date_from = (request.args.get("from") or "").strip() or None
+    date_to = (request.args.get("to") or "").strip() or None
+
+    payload = dash.build_payload()
+    rows = _resolve_series(payload, series)
+
+    if date_from or date_to:
+        rows = [
+            r for r in rows
+            if (not date_from or str(r.get("date", "")) >= date_from)
+            and (not date_to or str(r.get("date", "")) <= date_to)
+        ]
+
+    # Header order: 'date' first, then the rest alphabetically. If the series is
+    # empty, fall back to the canonical column set inferred from the path so the
+    # caller still gets a useful header row.
+    headers = _sorted_headers(rows) or _fallback_headers(series)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf, lineterminator="\n")
+    writer.writerow(headers)
+    for r in rows:
+        writer.writerow([r.get(h, "") for h in headers])
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    filename = f"{series}_{today}.csv"
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _fallback_headers(series: str) -> list[str]:
+    """Canonical column order for known series when no data rows are present."""
+    if series in ("btc.daily", "eth.daily"):
+        return ["date", "flow", "cumulative"]
+    if series in ("market.btc.funding", "market.eth.funding"):
+        return ["date", "rate"]
+    if series in ("market.btc.dvol", "market.eth.dvol"):
+        return ["date", "dvol"]
+    if series == "market.fear_greed":
+        return ["date", "label", "value"]
+    # Everything else (prices, FRED series, whale metrics) is date+value.
+    return ["date", "value"]
 
 
 @flask_app.route("/api/share", methods=["GET", "POST"])

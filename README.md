@@ -60,7 +60,10 @@ Endpoints:
 | POST | `/api/refresh` | force re-fetch market + whale |
 | POST | `/api/seed-etf` | seed BTC ETF flows from GitHub mirror |
 | POST | `/api/upload-csv?asset=btc\|eth` | import a pasted CSV/TSV |
+| GET  | `/api/export/csv?series=<path>&from=<date>&to=<date>` | download a time-series as CSV |
 | GET  | `/healthz` | status |
+
+The CSV export route returns `text/csv` with a `Content-Disposition: attachment` header so a browser hit triggers a download. `series` is a dotted path into the live payload — whitelisted to: `btc.daily`, `eth.daily`, `market.{btc,eth,link}.price`, `market.{btc,eth}.funding`, `market.btc.dvol`, `market.fear_greed`, `market.fred.{dxy,sp500,gold,treasury_10y}`, and `whale.btc.{tx_volume_usd,tx_count,active_addresses,avg_tx_usd,miners_revenue_usd,hash_rate}`. The optional `from`/`to` query params filter inclusively on ISO date strings. Share-token holders can hit this route — it's read-only.
 
 Env: `HOST=127.0.0.1`, `PORT=8765`, `REFRESH_MINUTES=30` (set 0 to disable).
 
