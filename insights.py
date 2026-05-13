@@ -392,6 +392,69 @@ def _market_insights(payload: dict) -> list[dict]:
             "headline": f"📰 {news[0]['source']}: {news[0]['title'][:100]}",
             "detail": None})
 
+    # FRED macro overlay (DXY / SP500 / Gold / 10Y) — only if user supplied a key
+    fred = market.get("fred") or {}
+    if fred.get("available"):
+        # DXY 1d change ≥1%
+        dxy = fred.get("dxy") or []
+        if len(dxy) >= 2:
+            last = dxy[-1].get("value")
+            prev = dxy[-2].get("value")
+            if last and prev:
+                ch = (last - prev) / prev * 100.0
+                if abs(ch) >= 1.0:
+                    out.append({
+                        "kind": "trend", "asset": "global",
+                        "severity": "bad" if ch > 0 else "good",
+                        "headline": f"DXY {ch:+.1f}% today — typically inverse to risk assets including crypto",
+                        "detail": f"Broad dollar index at {last:.2f}.",
+                    })
+
+        # 10Y Treasury yield thresholds
+        tnx = fred.get("treasury_10y") or []
+        if len(tnx) >= 2:
+            last_y = tnx[-1].get("value")
+            prev_y = tnx[-2].get("value")
+            if last_y is not None and prev_y is not None:
+                for thresh in (4.5, 5.0):
+                    crossed_up = prev_y < thresh <= last_y
+                    crossed_dn = prev_y >= thresh > last_y
+                    if crossed_up or crossed_dn:
+                        out.append({
+                            "kind": "milestone", "asset": "global",
+                            "severity": "alert" if crossed_up else "info",
+                            "headline": f"10Y Treasury yield {'crossed above' if crossed_up else 'fell below'} {thresh:.1f}% ({last_y:.2f}%)",
+                            "detail": "Higher yields pressure risk assets; lower yields ease conditions.",
+                        })
+                        break
+
+        # Gold new 30-day high
+        gold = fred.get("gold") or []
+        if len(gold) >= 2:
+            vals = [r.get("value") for r in gold if r.get("value") is not None]
+            if vals:
+                tail = vals[-30:] if len(vals) >= 30 else vals
+                if vals[-1] == max(tail) and len(tail) >= 5:
+                    out.append({
+                        "kind": "milestone", "asset": "global", "severity": "info",
+                        "headline": f"Gold at 30-day high (${vals[-1]:,.2f}/oz)",
+                        "detail": "Often a hedge/risk-off signal — monitor BTC correlation.",
+                    })
+
+        # S&P 500 1d drop ≥2%
+        spx = fred.get("sp500") or []
+        if len(spx) >= 2:
+            last_s = spx[-1].get("value")
+            prev_s = spx[-2].get("value")
+            if last_s and prev_s and prev_s > 0:
+                ch = (last_s - prev_s) / prev_s * 100.0
+                if ch <= -2.0:
+                    out.append({
+                        "kind": "anomaly", "asset": "global", "severity": "bad",
+                        "headline": f"S&P 500 {ch:.1f}% today — risk-off may pressure crypto",
+                        "detail": f"Index at {last_s:,.0f}.",
+                    })
+
     # ETH/BTC ratio extremes
     ethbtc = market.get("ethbtc") or []
     if len(ethbtc) >= 60:

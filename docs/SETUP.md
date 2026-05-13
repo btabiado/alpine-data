@@ -158,3 +158,63 @@ The workflow runs on every `git push origin main`. After ~60 sec:
 ### Disable
 Don't want public Pages? Delete `.github/workflows/pages.yml` and the
 workflow stops running.
+
+---
+
+## 4. FRED macro data (DXY, SPX, gold, 10Y)
+
+The Trading tab can overlay BTC against macro context: the Broad Dollar
+Index (DXY), the S&P 500, London PM gold, the 10-Year Treasury yield, and
+M2 money supply. The data comes from the St. Louis Fed's free **FRED API**
+— no payment, no rate-limit games, just a self-service key.
+
+Until you paste a key, the Macro section shows a one-line "disabled"
+note and skips silently. The rest of the dashboard is unaffected.
+
+### Get a key
+1. Visit https://fredaccount.stlouisfed.org/apikeys
+2. Sign up (free, instant — email confirmation only)
+3. Click **Request API Key**, fill a one-line "what for" reason
+   (e.g. "personal trading dashboard")
+4. Copy the 32-character hex key it gives you
+
+### Activate it on your Mac
+```bash
+# Add to your shell startup so it persists across reboots:
+echo 'export FRED_API_KEY="<your-32-char-key>"' >> ~/.zprofile
+source ~/.zprofile
+
+# Verify it's set:
+echo $FRED_API_KEY | head -c 8   # should print 8 chars of your key
+
+# Restart the dashboard server so it picks up the env var:
+lsof -ti:8765 | xargs kill -9
+cd ~/btc-eth-etf-dashboard
+HOST=0.0.0.0 .venv/bin/python server.py
+```
+
+### Verify it took
+Trigger a refresh (the floating ⟳ button or `python app.py
+--fetch-market`). In the server logs you should see:
+```
+  FRED macro (DXY/SPX/Gold/10Y/M2)...
+```
+Then open the **Trading** tab and scroll to the bottom — the
+**Macro overlay** card should render BTC, DXY, S&P 500, Gold, and 10Y
+yield normalized to 100 at the start of the visible range, plus five
+KPI cards with latest values and 1d changes.
+
+If you still see "Macro overlay disabled", the env var didn't make it
+into the server's process — re-run `source ~/.zprofile` in the **same
+terminal** that you'll launch the server from, then start the server.
+
+### What you get
+- **Macro chart** (Trading tab, bottom): BTC vs DXY / SPX / Gold / 10Y,
+  with 1M / 3M / 6M / 1Y range selector
+- **Macro insights**: surfaced on the dashboard's top insights bar
+  when DXY moves ≥1%, the 10Y yield crosses 4.5% or 5%, gold hits a
+  30-day high, or the S&P drops ≥2% in a day
+- **M2 series**: stored in the payload (`market.fred.m2`) for future use
+
+### Cost
+Zero. FRED is a public-good service.

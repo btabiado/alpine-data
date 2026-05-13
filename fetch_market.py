@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -553,6 +553,65 @@ def etherscan_gas() -> dict:
     return out
 
 
+def fetch_fred() -> dict:
+    """FRED (St. Louis Fed) macro overlay — DXY, S&P 500, gold, 10Y yield, M2.
+
+    Free API; requires a self-service key in env var ``FRED_API_KEY``. If the
+    key isn't set, return ``{"available": False, ...}`` and skip silently so
+    the dashboard stays useful without a key.
+
+    Series pulled (last 3 years):
+        dxy           DTWEXBGS          Broad Dollar Index (daily, business)
+        sp500         SP500             S&P 500 closing price (daily)
+        gold          GOLDAMGBD228NLBM  London PM Gold Fixing, USD (daily)
+        treasury_10y  DGS10             10-Year Treasury CMT (daily)
+        m2            M2SL              M2 Money Stock (monthly)
+
+    FRED encodes missing observations as ``"."`` — those are filtered out.
+    """
+    import os
+
+    fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    api_key = os.environ.get("FRED_API_KEY", "").strip()
+    if not api_key:
+        return {"available": False, "fetched_at": fetched_at}
+
+    series_map = {
+        "dxy":          "DTWEXBGS",
+        "sp500":        "SP500",
+        "gold":         "GOLDAMGBD228NLBM",
+        "treasury_10y": "DGS10",
+        "m2":           "M2SL",
+    }
+    start = (datetime.now(timezone.utc).date() - timedelta(days=1095)).isoformat()
+    end = "2026-12-31"
+    out: dict[str, Any] = {"available": True, "fetched_at": fetched_at}
+    for friendly, series_id in series_map.items():
+        j = _get(
+            "https://api.stlouisfed.org/fred/series/observations",
+            {
+                "series_id": series_id,
+                "api_key": api_key,
+                "file_type": "json",
+                "observation_start": start,
+                "observation_end": end,
+            },
+        )
+        rows: list[dict] = []
+        if j and isinstance(j, dict):
+            for obs in (j.get("observations") or []):
+                date = obs.get("date")
+                raw = obs.get("value")
+                if not date or raw is None or raw == "." or raw == "":
+                    continue
+                try:
+                    rows.append({"date": date, "value": float(raw)})
+                except (TypeError, ValueError):
+                    continue
+        out[friendly] = rows
+    return out
+
+
 def defillama() -> dict:
     """DeFiLlama: stablecoin mcap & 7d delta, DEX 24h vol, fees 24h,
     plus a sanity-check price feed. No auth, no rate limit issues."""
@@ -660,6 +719,9 @@ def fetch_trading() -> dict:
     cc = cryptocompare()
     print("  Etherscan v2 (ETH gas oracle)...")
     gas = etherscan_gas()
+    fred = fetch_fred()
+    if fred.get("available"):
+        print("  FRED macro (DXY/SPX/Gold/10Y/M2)...")
     print("  mempool.space (BTC fees, hashrate, tip height)...")
     mp = mempool_space()
     print("  mempool difficulty adjustment + lightning + mining pools...")
@@ -725,6 +787,7 @@ def fetch_trading() -> dict:
         "defillama": llama,
         "cryptocompare": cc,
         "eth_gas": gas,
+        "fred": fred,
         "mempool": mp,
         "mempool_extra": {
             "difficulty_adjustment": diff_adj,

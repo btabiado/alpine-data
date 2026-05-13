@@ -2,14 +2,35 @@
 
 [![tests](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml)
 
-Local, live web dashboard for actively monitoring BTC and ETH. Four tabs:
+Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broader crypto market. Six tabs:
 
-1. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs.
-2. **Trading** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC.
+1. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
+2. **Trading** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed.
 3. **Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Not investment advice.
-4. **Whale Activity** (BTC) — on-chain proxies: avg tx USD, daily tx volume, active addresses, hash rate, miners revenue.
+4. **Markets** — sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, plus trending coins.
+5. **DeFi** — TVL by chain, top 25 protocols, stablecoin yields, 365-day TVL history across Ethereum/Solana/Arbitrum/Base.
+6. **Whale Activity** (BTC) — on-chain proxies, mining pool concentration, Lightning Network stats, difficulty adjustment.
 
-All trading + whale data uses **free APIs, no key required**. Live web server included. Optional HTTP Basic Auth — set `DASH_USER` / `DASH_PASS` env vars. See [`docs/SETUP.md`](docs/SETUP.md).
+Plus: insights bar (rule-based, ~12 live notifications), a Claude-powered **Ask the data** chat dock (right side), optional HTTP Basic Auth, GitHub Pages mirror, Tailscale-ready.
+
+All data sources are **free, no key required** except the optional Anthropic chat (`ANTHROPIC_API_KEY`) and FRED macro overlay (`FRED_API_KEY`). See [`docs/SETUP.md`](docs/SETUP.md).
+
+## Data sources (15 wired, all free)
+
+- **Price + market cap**: CoinGecko (BTC/ETH/LINK price+vol+mcap, top 25 markets, trending, global stats)
+- **Cross-exchange price**: CryptoCompare CCCAGG (BTC/ETH/LINK aggregate)
+- **Derivatives**: OKX (funding rate, open interest, long/short ratio)
+- **Options-implied vol**: Deribit DVOL (BTC, ETH)
+- **Sentiment**: Alternative.me Fear & Greed
+- **BTC on-chain**: blockchain.info charts (tx vol, hash rate, miners rev, active addresses)
+- **BTC network**: mempool.space (fees, hashrate, tip height, **difficulty adjustment**, **Lightning Network**, **mining pools**)
+- **ETH on-chain**: Etherscan v2 (gas oracle)
+- **BTC index**: CoinDesk cadli (manipulation-resistant daily OHLC)
+- **DeFi**: DeFiLlama (TVL by chain, top 25 protocols, top stablecoin yields, 365-day historical TVL across 4 chains)
+- **News**: RSS from CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine (25 deduped headlines)
+- **ETF flows**: Farside Investors via paste workflow + GitHub mirror fallback
+- **Optional macro**: FRED — DXY, S&P 500, Gold, 10Y Treasury, M2 (needs free key)
+- **Optional chat**: Anthropic API (Claude) — chat dock with live dashboard as context
 
 ## Quickstart
 

@@ -566,6 +566,26 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="head"><h2>Latest crypto news</h2><span class="desc">CoinDesk · Cointelegraph · Decrypt · The Block · BTC Magazine (RSS, auto-refresh)</span></div>
         <div id="newsFeed" style="max-height:480px;overflow:auto;padding:2px"></div>
       </div>
+      <div class="chart-card" id="macroSection">
+        <div class="head" style="flex-wrap:wrap;gap:8px">
+          <div>
+            <h2>Macro overlay <span class="tag">FRED</span></h2>
+            <span class="desc">BTC vs DXY · S&amp;P 500 · Gold · 10Y yield — normalized to 100 at start of range</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <span class="lbl" style="margin:0">Range</span>
+            <button class="btn" data-macrorange="1M">1M</button>
+            <button class="btn" data-macrorange="3M">3M</button>
+            <button class="btn" data-macrorange="6M">6M</button>
+            <button class="btn active" data-macrorange="1Y">1Y</button>
+          </div>
+        </div>
+        <div id="macroDisabled" class="sub hidden" style="color:var(--muted);padding:14px">Macro overlay disabled — set <code>FRED_API_KEY</code> in <code>~/.zprofile</code> to enable. See <code>docs/SETUP.md</code>.</div>
+        <div id="macroEnabled">
+          <div class="chart-wrap tall"><canvas id="macroChart"></canvas></div>
+          <div class="row" id="macroKpis" style="margin-top:8px"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -752,7 +772,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
 <script>
 const DATA = __DATA_JSON__;
-const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30' };
+const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -1578,6 +1598,141 @@ function renderNews(){
   ).join('');
 }
 
+// ---------- Macro overlay (FRED) ----------
+function _macroDaysForRange(r){
+  return ({'1M':30, '3M':90, '6M':180, '1Y':365})[r] || 365;
+}
+function _macroFilter(series, days){
+  if (!Array.isArray(series) || !series.length) return [];
+  if (!days) return series;
+  const last = new Date(series[series.length-1].date);
+  const cutoff = new Date(last.getTime() - days*86400000);
+  return series.filter(p => new Date(p.date) >= cutoff);
+}
+function _macroAlignToDates(series, dates){
+  // Returns values aligned to `dates`, forward-filling from `series`.
+  const out = new Array(dates.length).fill(null);
+  if (!series.length || !dates.length) return out;
+  let i = 0;
+  let lastVal = null;
+  for (let d = 0; d < dates.length; d++){
+    while (i < series.length && series[i].date <= dates[d]){
+      lastVal = series[i].value;
+      i++;
+    }
+    out[d] = lastVal;
+  }
+  return out;
+}
+function _macroNormalize(values){
+  // Find first non-null as base, normalize to 100.
+  let base = null;
+  for (const v of values){
+    if (v != null && isFinite(v) && v !== 0){ base = v; break; }
+  }
+  if (base == null) return values.slice();
+  return values.map(v => (v == null || !isFinite(v)) ? null : (v / base) * 100);
+}
+function renderMacro(){
+  const section = document.getElementById('macroSection');
+  if (!section) return;
+  const fred = (DATA.market || {}).fred;
+  const disabled = document.getElementById('macroDisabled');
+  const enabled = document.getElementById('macroEnabled');
+  if (!fred || !fred.available){
+    if (disabled) disabled.classList.remove('hidden');
+    if (enabled) enabled.classList.add('hidden');
+    destroy('macro');
+    return;
+  }
+  if (disabled) disabled.classList.add('hidden');
+  if (enabled) enabled.classList.remove('hidden');
+
+  const days = _macroDaysForRange(state.macroRange);
+  // BTC price from market data (CoinGecko)
+  const btcRaw = ((DATA.market||{}).btc || {}).price || [];
+  const btc = _macroFilter(btcRaw, days);
+
+  // Union of dates from BTC (daily, dense) — use BTC dates as the X axis.
+  const labels = btc.map(p => p.date);
+  if (!labels.length){
+    destroy('macro');
+    return;
+  }
+  const btcVals = btc.map(p => p.value);
+
+  const dxyAll  = _macroFilter(fred.dxy          || [], days);
+  const spxAll  = _macroFilter(fred.sp500        || [], days);
+  const goldAll = _macroFilter(fred.gold         || [], days);
+  const tnxAll  = _macroFilter(fred.treasury_10y || [], days);
+
+  const dxyAligned  = _macroAlignToDates(dxyAll,  labels);
+  const spxAligned  = _macroAlignToDates(spxAll,  labels);
+  const goldAligned = _macroAlignToDates(goldAll, labels);
+  const tnxAligned  = _macroAlignToDates(tnxAll,  labels);
+
+  const btcNorm  = _macroNormalize(btcVals);
+  const dxyNorm  = _macroNormalize(dxyAligned);
+  const spxNorm  = _macroNormalize(spxAligned);
+  const goldNorm = _macroNormalize(goldAligned);
+  const tnxNorm  = _macroNormalize(tnxAligned);
+
+  destroy('macro');
+  charts.macro = new Chart(document.getElementById('macroChart'), {
+    type:'line',
+    data:{labels, datasets:[
+      {label:'BTC',         data:btcNorm,  borderColor:'#f7931a', backgroundColor:'transparent', tension:0.2, pointRadius:0, borderWidth:2},
+      {label:'DXY',         data:dxyNorm,  borderColor:'#22c55e', backgroundColor:'transparent', tension:0.2, pointRadius:0, borderWidth:1.5},
+      {label:'S&P 500',     data:spxNorm,  borderColor:'#a78bfa', backgroundColor:'transparent', tension:0.2, pointRadius:0, borderWidth:1.5},
+      {label:'Gold',        data:goldNorm, borderColor:'#facc15', backgroundColor:'transparent', tension:0.2, pointRadius:0, borderWidth:1.5},
+      {label:'10Y Treasury',data:tnxNorm,  borderColor:'#06b6d4', backgroundColor:'transparent', tension:0.2, pointRadius:0, borderWidth:1.5},
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#e6e8ee'}},
+        tooltip:{mode:'index', intersect:false, callbacks:{label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y == null ? '—' : ctx.parsed.y.toFixed(2)}`}},
+      },
+      scales:{
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
+        y:{title:{display:true, text:'Index (start = 100)', color:'#8a93a6'}, ticks:{color:'#8a93a6'}, grid:{color:'#1f2533'}},
+      },
+    },
+  });
+
+  // KPI cards: each series' latest value + 1d change
+  function _lastChange(series){
+    if (!series || series.length < 2) {
+      const last = (series && series.length) ? series[series.length-1].value : null;
+      return {last, change: null};
+    }
+    const last = series[series.length-1].value;
+    const prev = series[series.length-2].value;
+    if (last == null || prev == null || prev === 0) return {last, change: null};
+    return {last, change: ((last - prev) / prev) * 100};
+  }
+  const cards = [
+    {label:'BTC',         color:'#f7931a', fmt:v=>'$'+(v||0).toLocaleString(undefined,{maximumFractionDigits:0}), src:btcRaw},
+    {label:'DXY',         color:'#22c55e', fmt:v=>(v||0).toFixed(2),                                                src:(fred.dxy||[])},
+    {label:'S&P 500',     color:'#a78bfa', fmt:v=>(v||0).toLocaleString(undefined,{maximumFractionDigits:0}),       src:(fred.sp500||[])},
+    {label:'Gold',        color:'#facc15', fmt:v=>'$'+(v||0).toLocaleString(undefined,{maximumFractionDigits:0}),   src:(fred.gold||[])},
+    {label:'10Y Treasury',color:'#06b6d4', fmt:v=>(v||0).toFixed(2)+'%',                                            src:(fred.treasury_10y||[])},
+  ];
+  const host = document.getElementById('macroKpis');
+  if (host){
+    host.innerHTML = cards.map(c => {
+      const {last, change} = _lastChange(c.src);
+      const ch = (change == null) ? '<span class="sub" style="color:var(--muted)">—</span>'
+                : `<span class="${change>=0?'green':'red'}">${change>=0?'+':''}${change.toFixed(2)}%</span>`;
+      return `<div class="card" style="padding:10px 12px;min-width:130px;flex:1 1 130px;border-left:3px solid ${c.color}">
+        <div class="lbl" style="margin:0">${c.label}</div>
+        <div class="v" style="font-size:16px;font-weight:600;margin-top:2px">${last == null ? '—' : c.fmt(last)}</div>
+        <div class="sub" style="font-size:11px;margin-top:2px">1d: ${ch}</div>
+      </div>`;
+    }).join('');
+  }
+}
+
 // ---------- Whale tab additions: difficulty + Lightning + mining pools ----------
 function renderWhaleExtras(){
   const extra = (DATA.market || {}).mempool_extra || {};
@@ -1718,6 +1873,7 @@ function renderAll(){
   }
   if (state.tab === 'trading' && !trEmpty){
     renderNews();
+    renderMacro();
   }
   renderCoverage();
 }
@@ -1753,6 +1909,9 @@ document.querySelectorAll('.btn[data-range]').forEach(b =>
 );
 document.querySelectorAll('.btn[data-fundwin]').forEach(b =>
   b.addEventListener('click', () => { state.fundwin = b.dataset.fundwin; setActive('fundwin', state.fundwin); renderAll(); })
+);
+document.querySelectorAll('.btn[data-macrorange]').forEach(b =>
+  b.addEventListener('click', () => { state.macroRange = b.dataset.macrorange; setActive('macrorange', state.macroRange); renderMacro(); })
 );
 
 // ---------- Chat dock ----------
