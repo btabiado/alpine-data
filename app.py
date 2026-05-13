@@ -1467,6 +1467,26 @@ function severityIcon(sev, kind){
   if (kind === 'etf')       return sev === 'bad' ? '📉' : '💵';
   return '•';
 }
+// Human-readable label for the current tab's insight bar header.
+const TAB_LABELS = {
+  etf: 'ETF flow insights',
+  signals: 'Signals insights',
+  trading: 'Trading insights',
+  markets: 'Markets insights',
+  defi: 'DeFi insights',
+  whale: 'Whale insights',
+};
+// Empty-state copy per tab — explains what would normally appear here so the
+// reader knows "nothing today" rather than "is this broken?"
+const TAB_EMPTY = {
+  etf:     'No notable ETF flow changes today.',
+  signals: 'No signal flips or extreme readings right now.',
+  trading: 'No funding / sentiment / DVOL extremes right now.',
+  markets: 'No notable macro / news / index moves right now.',
+  defi:    'No notable DeFi / gas / TVL moves right now.',
+  whale:   'On-chain looks quiet — no mempool / mining / hashrate anomalies.',
+};
+
 function renderInsights(){
   // The Insights bar is per-tab. Overview hides the bar entirely (it has its
   // own "Top insights" card inside the Overview content).
