@@ -339,6 +339,13 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)}
 th:first-child,td:first-child{text-align:left}
 th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+/* Tracker variant: full grid lines (both axes) + tighter rows for the
+   Whale Activity Tracker. Vertical separators help the eye line up
+   1d / 7d / 30d / 90d delta columns across rows. */
+.tracker-grid{border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.tracker-grid th,.tracker-grid td{padding:4px 10px;border:1px solid var(--border)}
+.tracker-grid thead th{background:#0e1118}
+.tracker-grid tbody tr:nth-child(odd){background:rgba(255,255,255,.015)}
 .empty{padding:48px 16px;text-align:center;color:var(--muted)}
 .tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10px;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--border);color:var(--muted);margin-left:6px}
 .tag.btc{color:var(--btc);border-color:var(--btc)}
@@ -786,7 +793,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <span class="desc">snapshot across multiple time horizons</span>
         </div>
         <div style="overflow:auto">
-          <table id="whaleTrackerTable">
+          <table id="whaleTrackerTable" class="tracker-grid">
             <thead><tr>
               <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
             </tr></thead>
