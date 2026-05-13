@@ -273,6 +273,56 @@ def _market_insights(payload: dict) -> list[dict]:
                         "headline": f"{asset.upper()} DVOL spike ({z:+.1f}σ vs 30d mean)",
                         "detail": "Implied vol elevated — caution."})
 
+    # ETH gas oracle (Etherscan v2)
+    gas = market.get("eth_gas") or {}
+    base = gas.get("base_fee_gwei")
+    if base is not None:
+        if base >= 50:
+            out.append({"kind":"anomaly","asset":"eth","severity":"alert",
+                "headline": f"ETH gas spike: base fee {base:.0f} gwei",
+                "detail": f"Fast: {gas.get('fast_gwei','?')} gwei. Network is congested."})
+        elif base <= 1:
+            out.append({"kind":"trend","asset":"eth","severity":"info",
+                "headline": f"ETH gas near zero ({base:.2f} gwei)",
+                "detail": "Quiet mainnet — cheap to transact, but low activity."})
+
+    # BTC mempool fees (mempool.space)
+    mp = market.get("mempool") or {}
+    fees = mp.get("fees_sat_vb") or {}
+    fastest = fees.get("fastestFee")
+    if fastest is not None:
+        if fastest >= 100:
+            out.append({"kind":"anomaly","asset":"btc","severity":"alert",
+                "headline": f"BTC mempool congested: {fastest} sat/vB fastest fee",
+                "detail": "Heavy on-chain demand."})
+        elif fastest <= 2:
+            out.append({"kind":"trend","asset":"btc","severity":"info",
+                "headline": f"BTC mempool quiet ({fastest} sat/vB)",
+                "detail": None})
+
+    # BTC hashrate trend
+    hr = mp.get("hashrate_daily_eh") or []
+    if len(hr) >= 30:
+        last = hr[-1].get("value")
+        prior = [r.get("value") for r in hr[-30:] if r.get("value")]
+        if last and prior and last == max(prior):
+            out.append({"kind":"milestone","asset":"btc","severity":"good",
+                "headline": f"BTC hashrate at 30-day high ({last:.0f} EH/s)",
+                "detail": "Miners committing more compute — bullish security."})
+
+    # CryptoCompare price-divergence sanity check (vs CoinGecko)
+    cc = market.get("cryptocompare") or {}
+    for asset in ("btc","eth","link"):
+        cg_last_rows = (((market.get(asset) or {}).get("price")) or [])
+        cg_last = cg_last_rows[-1].get("value") if cg_last_rows else None
+        cc_price = (cc.get(asset.upper()) or {}).get("price")
+        if cg_last and cc_price and cg_last > 0:
+            div = abs(cc_price - cg_last) / cg_last
+            if div >= 0.005:  # >0.5%
+                out.append({"kind":"anomaly","asset":asset,"severity":"info",
+                    "headline": f"{asset.upper()} price divergence: CoinGecko ${cg_last:,.0f} vs CryptoCompare ${cc_price:,.0f}",
+                    "detail": f"{div*100:.2f}% spread between data sources."})
+
     # Stablecoin supply 7d delta (DeFiLlama) — proxy for "dry powder" coming in/out
     llama = market.get("defillama") or {}
     delta = llama.get("stablecoin_7d_change_usd")

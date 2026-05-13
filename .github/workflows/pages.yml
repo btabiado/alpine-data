@@ -1,0 +1,76 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Restore cached market data (no live fetch in CI)
+        run: |
+          # Pages deploy is a static snapshot. We seed minimal data so the
+          # generator can render every tab without crashing. To get a live
+          # snapshot, run `python app.py --fetch-market --no-open` locally
+          # and commit data/market.json + data/whale.json before pushing.
+          mkdir -p data
+          if [ ! -f data/btc_flows.csv ]; then
+            printf 'date,Total\n2024-01-11,100\n' > data/btc_flows.csv
+          fi
+          if [ ! -f data/eth_flows.csv ]; then
+            printf 'date,Total\n2024-07-23,50\n' > data/eth_flows.csv
+          fi
+
+      - name: Generate dashboard.html
+        run: python app.py --no-open
+
+      - name: Stage site directory
+        run: |
+          mkdir -p _site
+          cp dashboard.html _site/index.html
+          # Include a tiny "about" so the page works even if dashboard.html breaks
+          cat > _site/README.txt <<EOF
+          BTC/ETH/LINK Trading Dashboard — static snapshot
+          Source: https://github.com/btabiado/btc-eth-etf-dashboard
+          Generated: $(date -u)
+          EOF
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

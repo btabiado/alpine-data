@@ -154,6 +154,77 @@ def deribit_dvol(currency: str, days: int = 1095) -> list[dict]:
     return [{"date": _ts(int(r[0])), "dvol": float(r[4])} for r in rows]
 
 
+def mempool_space() -> dict:
+    """mempool.space: BTC mempool fees, 3y hashrate series, current tip height."""
+    out: dict[str, Any] = {}
+    fees = _get("https://mempool.space/api/v1/fees/recommended")
+    if fees:
+        out["fees_sat_vb"] = fees  # {fastestFee, halfHourFee, hourFee, economyFee, minimumFee}
+    tip = _get("https://mempool.space/api/blocks/tip/height")
+    if tip is not None:
+        out["tip_height"] = tip
+    hr = _get("https://mempool.space/api/v1/mining/hashrate/3y")
+    if hr and isinstance(hr, dict):
+        series = hr.get("hashrates") or []
+        # last 365d only to keep payload size reasonable
+        out["hashrate_daily_eh"] = [
+            {"date": datetime.fromtimestamp(int(p["timestamp"]), tz=timezone.utc).strftime("%Y-%m-%d"),
+             "value": float(p.get("avgHashrate", 0)) / 1e18}  # convert H/s -> EH/s
+            for p in series[-365:]
+        ]
+    out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return out
+
+
+def cryptocompare(syms: tuple = ("BTC", "ETH", "LINK")) -> dict:
+    """CryptoCompare CCCAGG cross-exchange aggregate price + 24h volume.
+
+    Free tier, no key needed for these public endpoints.
+    """
+    fsyms = ",".join(syms)
+    j = _get("https://min-api.cryptocompare.com/data/pricemultifull",
+             {"fsyms": fsyms, "tsyms": "USD"})
+    out: dict[str, Any] = {}
+    if not j or "RAW" not in j:
+        return {"fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    for sym in syms:
+        raw = (j.get("RAW") or {}).get(sym, {}).get("USD")
+        if not raw:
+            continue
+        out[sym] = {
+            "price": float(raw.get("PRICE", 0)),
+            "vol_24h_usd": float(raw.get("TOTALVOLUME24HTO", 0)),
+            "top_tier_vol_24h_usd": float(raw.get("TOPTIERVOLUME24HOURTO", 0)),
+            "mktcap_usd": float(raw.get("MKTCAP", 0)),
+            "change_pct_24h": float(raw.get("CHANGEPCT24HOUR", 0)),
+            "high_24h": float(raw.get("HIGH24HOUR", 0)),
+            "low_24h": float(raw.get("LOW24HOUR", 0)),
+        }
+    out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return out
+
+
+def etherscan_gas() -> dict:
+    """Etherscan v2 gas oracle — ETH mainnet base fee + safe/propose/fast.
+
+    Works without an API key but rate-limited to 1 req/5sec.
+    """
+    j = _get("https://api.etherscan.io/v2/api",
+             {"chainid": "1", "module": "gastracker", "action": "gasoracle"})
+    out: dict[str, Any] = {"fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if not j or j.get("status") != "1":
+        return out
+    r = j.get("result") or {}
+    try:
+        out["safe_gwei"] = float(r.get("SafeGasPrice", 0))
+        out["propose_gwei"] = float(r.get("ProposeGasPrice", 0))
+        out["fast_gwei"] = float(r.get("FastGasPrice", 0))
+        out["base_fee_gwei"] = float(r.get("suggestBaseFee", 0))
+    except (TypeError, ValueError):
+        pass
+    return out
+
+
 def defillama() -> dict:
     """DeFiLlama: stablecoin mcap & 7d delta, DEX 24h vol, fees 24h,
     plus a sanity-check price feed. No auth, no rate limit issues."""
@@ -257,6 +328,12 @@ def fetch_trading() -> dict:
     dvol_eth = deribit_dvol("ETH")
     print("  DeFiLlama (stablecoin mcap, DEX vol, fees)...")
     llama = defillama()
+    print("  CryptoCompare (cross-exchange CCCAGG)...")
+    cc = cryptocompare()
+    print("  Etherscan v2 (ETH gas oracle)...")
+    gas = etherscan_gas()
+    print("  mempool.space (BTC fees, hashrate, tip height)...")
+    mp = mempool_space()
     print("  Fear & Greed...")
     fng = fear_greed()
 
@@ -298,6 +375,9 @@ def fetch_trading() -> dict:
         },
         "global": glob,
         "defillama": llama,
+        "cryptocompare": cc,
+        "eth_gas": gas,
+        "mempool": mp,
         "fear_greed": fng,
         "ethbtc": ethbtc,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
