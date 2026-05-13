@@ -369,9 +369,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 @media (max-width:720px){
   #chatDock{width:100%}
 }
-/* Mobile: collapse Overview hero band to one column so phone view doesn't horizontal-scroll. */
+/* Mobile: collapse Overview macro/indices row to one column so phone view doesn't horizontal-scroll. */
 @media (max-width:860px){
-  #tab-overview > div:first-of-type{grid-template-columns:1fr !important}
+  #overviewMacroRow{grid-template-columns:1fr !important}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -434,28 +434,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
-    <!-- Row 1: HERO BAND — macro chart (left, 2/3) + indices stacked (right, 1/3) -->
-    <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:18px;align-items:stretch">
-      <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
-        <div class="head">
-          <h2>Macro snapshot <span class="tag">FRED</span></h2>
-          <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; normalized to 100 over 3M &middot; click to zoom in</span>
-        </div>
-        <div class="chart-wrap" style="flex:1;min-height:380px;height:auto"><canvas id="overviewMacroChart"></canvas></div>
-      </div>
-      <div class="chart-card" style="display:flex;flex-direction:column">
-        <div class="head">
-          <h2>Traditional indices <span class="tag">Yahoo</span></h2>
-          <span class="desc">US market close · 1d / 5d / 30d</span>
-        </div>
-        <div id="overviewIndices" style="display:flex;flex-direction:column;gap:8px;padding:2px;flex:1;justify-content:flex-start"></div>
-      </div>
-    </div>
+    <!-- Row 1: Signal cards (HERO — our secret sauce, clickable) -->
+    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
 
-    <!-- Row 2: Signal cards (our secret sauce — clickable) -->
-    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:6px"></div>
-
-    <!-- Row 3: top news + top insights -->
+    <!-- Row 2: top news + top insights -->
     <div class="grid2">
       <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
         <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
@@ -464,6 +446,24 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="chart-card">
         <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
         <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Row 3: Traditional indices (LEFT, 1/3) + Macro snapshot (RIGHT, 2/3) -->
+    <div id="overviewMacroRow" style="display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,2fr);gap:18px;align-items:stretch">
+      <div class="chart-card" style="display:flex;flex-direction:column">
+        <div class="head">
+          <h2>Traditional indices <span class="tag">Yahoo</span></h2>
+          <span class="desc">US market close · 1d / 5d / 30d</span>
+        </div>
+        <div id="overviewIndices" style="display:flex;flex-direction:column;gap:8px;padding:2px;flex:1;justify-content:flex-start"></div>
+      </div>
+      <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
+        <div class="head">
+          <h2>Macro snapshot <span class="tag">FRED</span></h2>
+          <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; normalized to 100 over 3M &middot; click to zoom in</span>
+        </div>
+        <div class="chart-wrap" style="flex:1;min-height:380px;height:auto"><canvas id="overviewMacroChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -2134,6 +2134,13 @@ function selectTab(t){
   const showPeriod = (t === 'etf' || t === 'trading' || t === 'whale');
   document.querySelectorAll('.btn[data-period]').forEach(b => b.style.display = showPeriod ? '' : 'none');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'PERIOD') b.style.display = showPeriod ? '' : 'none'; });
+  // Overview simplification: hide BTC/ETH/LINK asset toggle, Range buttons, and the redundant Insights bar.
+  const isOverview = (t === 'overview');
+  document.querySelectorAll('.btn[data-asset]').forEach(b => b.style.display = isOverview ? 'none' : '');
+  document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = isOverview ? 'none' : '');
+  document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'RANGE') b.style.display = isOverview ? 'none' : ''; });
+  const insightsBar = document.getElementById('insightsBar');
+  if (insightsBar) insightsBar.style.display = isOverview ? 'none' : '';
   renderAll();
 }
 
