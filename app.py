@@ -2428,8 +2428,12 @@ function selectTab(t){
     if (isWhale && b.dataset.asset !== 'btc') { b.style.display = 'none'; return; }
     b.style.display = '';
   });
-  document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = isOverview ? 'none' : '');
-  document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'RANGE') b.style.display = isOverview ? 'none' : ''; });
+  // Range buttons only meaningfully affect ETF / Trading / Whale (which clip
+  // their time-series). Signals is a daily snapshot, Markets is a top-25 list,
+  // DeFi has its own zoom — none of them respond to Range. Hide elsewhere.
+  const usesRange = (t === 'etf' || t === 'trading' || t === 'whale');
+  document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = usesRange ? '' : 'none');
+  document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'RANGE') b.style.display = usesRange ? '' : 'none'; });
   const insightsBar = document.getElementById('insightsBar');
   if (insightsBar) insightsBar.style.display = isOverview ? 'none' : '';
   renderAll();
