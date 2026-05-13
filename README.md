@@ -1,5 +1,7 @@
 # BTC & ETH Trading Dashboard
 
+[![tests](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml)
+
 Local, live web dashboard for actively monitoring BTC and ETH. Four tabs:
 
 1. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs.
