@@ -430,26 +430,26 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
-    <!-- Row 1: Signal cards (our secret sauce — clickable) -->
-    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))"></div>
-
-    <!-- Row 2: macro snapshot + traditional indices -->
-    <div class="grid2">
-      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="Open Trading tab">
+    <!-- Row 1: HERO BAND — macro chart (left, 2/3) + indices stacked (right, 1/3) -->
+    <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(280px,1fr);gap:18px;align-items:stretch">
+      <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
         <div class="head">
           <h2>Macro snapshot <span class="tag">FRED</span></h2>
-          <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; click to zoom in</span>
+          <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; normalized to 100 over 3M &middot; click to zoom in</span>
         </div>
-        <div class="chart-wrap" style="height:240px"><canvas id="overviewMacroChart"></canvas></div>
+        <div class="chart-wrap" style="flex:1;min-height:380px;height:auto"><canvas id="overviewMacroChart"></canvas></div>
       </div>
-      <div class="chart-card">
+      <div class="chart-card" style="display:flex;flex-direction:column">
         <div class="head">
           <h2>Traditional indices <span class="tag">Yahoo</span></h2>
           <span class="desc">US market close · 1d / 5d / 30d</span>
         </div>
-        <div id="overviewIndices" style="display:grid;grid-template-columns:1fr;gap:10px;padding:4px"></div>
+        <div id="overviewIndices" style="display:flex;flex-direction:column;gap:8px;padding:2px;flex:1;justify-content:space-between"></div>
       </div>
     </div>
+
+    <!-- Row 2: Signal cards (our secret sauce — clickable) -->
+    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:6px"></div>
 
     <!-- Row 3: top news + top insights -->
     <div class="grid2">
