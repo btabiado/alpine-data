@@ -22,6 +22,7 @@ Env:
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import threading
@@ -288,6 +289,54 @@ def bookmarklet_page() -> Response:
     html = html.replace("__BM_HREF__", href)
     html = html.replace("__BM_SRC__", BOOKMARKLET_JS.replace("<", "&lt;"))
     return Response(html, mimetype="text/html")
+
+
+@flask_app.route("/api/chat", methods=["POST"])
+def api_chat() -> Response:
+    """Stream a Claude answer over Server-Sent Events.
+
+    Body: {"question": "..."}.
+    Streams 'data: {"text": "..."}\\n\\n' chunks, ends with 'data: [DONE]'.
+    """
+    try:
+        body = request.get_json(silent=True) or {}
+        question = (body.get("question") or "").strip()
+        if not question:
+            return jsonify({"ok": False, "error": "empty question"}), 400
+
+        import chat as chat_mod
+        payload = dash.build_payload()
+        out_of_scope_warning = chat_mod.is_out_of_scope(question)
+        configured = chat_mod.is_configured()
+
+        def gen():
+            try:
+                if not configured:
+                    # No API key — return rule-based fallback answer
+                    text = chat_mod.fallback_answer(question, payload)
+                    notice = "(LLM offline — using rule-based fallback. Set ANTHROPIC_API_KEY to enable Claude.)\n\n"
+                    full = notice + text
+                    # Emit in chunks of ~50 chars to feel like streaming
+                    step = 50
+                    for i in range(0, len(full), step):
+                        yield 'data: ' + json.dumps({"text": full[i:i+step]}) + '\n\n'
+                    yield 'data: [DONE]\n\n'
+                    return
+                if out_of_scope_warning:
+                    yield 'data: ' + json.dumps({"text":
+                        "Note: I won't make explicit buy/sell calls or price predictions, "
+                        "but here's what the indicators currently say.\n\n"}) + '\n\n'
+                for chunk in chat_mod.stream_answer(question, payload):
+                    yield 'data: ' + json.dumps({"text": chunk}) + '\n\n'
+                yield 'data: [DONE]\n\n'
+            except Exception as e:
+                yield 'data: ' + json.dumps({"error": f"{type(e).__name__}: {e}"}) + '\n\n'
+                yield 'data: [DONE]\n\n'
+
+        return Response(gen(), mimetype="text/event-stream",
+                        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
 
 
 @flask_app.route("/healthz")

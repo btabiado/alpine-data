@@ -344,6 +344,31 @@ th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;le
 .fng-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#222;margin-top:8px}
 .fng-bar div{height:100%}
 footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;border-top:1px solid var(--border);margin-top:24px}
+/* Chat dock */
+#chatDock{position:fixed;top:0;right:0;height:100vh;width:380px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;z-index:40;box-shadow:-4px 0 24px rgba(0,0,0,.35)}
+#chatDock.open{transform:translateX(0)}
+.chat-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.chat-head h2{margin:0;font-size:14px}
+.chat-head .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.msg{padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.4;max-width:90%;white-space:pre-wrap;word-wrap:break-word}
+.msg.user{background:#1f2533;align-self:flex-end;border:1px solid var(--border)}
+.msg.bot{background:#10151f;align-self:flex-start;border:1px solid var(--border);border-left:3px solid #a78bfa}
+.msg.err{background:#3b1414;align-self:flex-start;border:1px solid #6b1f1f;color:#fca5a5}
+.chat-suggestions{padding:0 14px 8px;display:flex;flex-wrap:wrap;gap:6px}
+.chat-suggestions .chip{font-size:10px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:999px;cursor:pointer}
+.chat-suggestions .chip:hover{background:#222838;color:var(--text)}
+.chat-form{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
+.chat-form input{flex:1;background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none}
+.chat-form input:focus{border-color:#a78bfa}
+.chat-form button{background:#a78bfa;color:#000;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+.chat-form button:disabled{opacity:.4;cursor:not-allowed}
+#chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
+#chatFab:hover{transform:scale(1.08)}
+#chatFab.hidden{display:none}
+@media (max-width:720px){
+  #chatDock{width:100%}
+}
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
 .note{font-size:11px;color:var(--muted);background:#10151f;border:1px solid var(--border);padding:8px 12px;border-radius:8px}
@@ -604,6 +629,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 <footer>
   Sources: ETF flows from your <code>data/*.csv</code>. Trading from CoinGecko, OKX, Deribit, Alternative.me. Whale proxies from blockchain.info. Refresh with <code>python app.py --fetch-market</code>.
 </footer>
+
+<!-- ============ CHAT DOCK ============ -->
+<button id="chatFab" title="Ask about the data">💬</button>
+<aside id="chatDock" aria-label="Data chat">
+  <div class="chat-head">
+    <div>
+      <h2>Ask the data</h2>
+      <div class="sub">Powered by Claude · context = your live dashboard</div>
+    </div>
+    <button class="btn" id="chatClose" style="padding:3px 8px;font-size:12px">×</button>
+  </div>
+  <div class="chat-msgs" id="chatMsgs"></div>
+  <div class="chat-suggestions" id="chatSuggestions">
+    <span class="chip" data-q="What are today's biggest changes?">today's biggest changes</span>
+    <span class="chip" data-q="Compare BTC and ETH ETF flow trends.">compare BTC vs ETH flows</span>
+    <span class="chip" data-q="Which BTC ETF had the largest 30-day inflow?">top 30d BTC fund</span>
+    <span class="chip" data-q="What does the signal breakdown say about positioning?">signal breakdown</span>
+    <span class="chip" data-q="Is funding bullish or bearish right now?">funding view</span>
+    <span class="chip" data-q="Summarize the most important insights for me.">summarise insights</span>
+  </div>
+  <form class="chat-form" id="chatForm" autocomplete="off">
+    <input type="text" id="chatInput" placeholder="Ask anything about the data…" required>
+    <button type="submit" id="chatSend">Send</button>
+  </form>
+</aside>
 
 <script>
 const DATA = __DATA_JSON__;
@@ -1324,6 +1374,100 @@ document.querySelectorAll('.btn[data-range]').forEach(b =>
 document.querySelectorAll('.btn[data-fundwin]').forEach(b =>
   b.addEventListener('click', () => { state.fundwin = b.dataset.fundwin; setActive('fundwin', state.fundwin); renderAll(); })
 );
+
+// ---------- Chat dock ----------
+const chatDock = document.getElementById('chatDock');
+const chatFab  = document.getElementById('chatFab');
+const chatMsgs = document.getElementById('chatMsgs');
+const chatForm = document.getElementById('chatForm');
+const chatInput= document.getElementById('chatInput');
+const chatSend = document.getElementById('chatSend');
+
+function openChat(){ chatDock?.classList.add('open'); chatFab?.classList.add('hidden'); setTimeout(()=>chatInput?.focus(), 200); }
+function closeChat(){ chatDock?.classList.remove('open'); chatFab?.classList.remove('hidden'); }
+
+chatFab?.addEventListener('click', openChat);
+document.getElementById('chatClose')?.addEventListener('click', closeChat);
+
+function appendMsg(role, text){
+  const el = document.createElement('div');
+  el.className = 'msg ' + role;
+  el.textContent = text;
+  chatMsgs.appendChild(el);
+  chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  return el;
+}
+
+document.querySelectorAll('#chatSuggestions .chip').forEach(c =>
+  c.addEventListener('click', () => {
+    chatInput.value = c.dataset.q;
+    chatForm.requestSubmit();
+  })
+);
+
+async function streamChat(question){
+  appendMsg('user', question);
+  const botEl = appendMsg('bot', '…');
+  let acc = '';
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({question}),
+    });
+    if (!resp.ok || !resp.body){
+      const text = await resp.text().catch(()=>'(no body)');
+      botEl.className = 'msg err';
+      botEl.textContent = 'Error ' + resp.status + ': ' + text.slice(0, 300);
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream:true});
+      // SSE: lines starting with "data: "
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const evt = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of evt.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') return;
+          try {
+            const j = JSON.parse(data);
+            if (j.error){
+              botEl.className = 'msg err';
+              botEl.textContent = j.error;
+              continue;
+            }
+            if (j.text){
+              if (acc === '') botEl.textContent = '';
+              acc += j.text;
+              botEl.textContent = acc;
+              chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            }
+          } catch (e) {}
+        }
+      }
+    }
+  } catch (e) {
+    botEl.className = 'msg err';
+    botEl.textContent = 'Network error: ' + e.message;
+  }
+}
+
+chatForm?.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const q = chatInput.value.trim();
+  if (!q) return;
+  chatInput.value = '';
+  chatSend.disabled = true;
+  streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
+});
 
 // Insights show/hide
 document.getElementById('insightsToggle')?.addEventListener('click', () => {

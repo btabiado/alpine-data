@@ -273,6 +273,24 @@ def _market_insights(payload: dict) -> list[dict]:
                         "headline": f"{asset.upper()} DVOL spike ({z:+.1f}σ vs 30d mean)",
                         "detail": "Implied vol elevated — caution."})
 
+    # Stablecoin supply 7d delta (DeFiLlama) — proxy for "dry powder" coming in/out
+    llama = market.get("defillama") or {}
+    delta = llama.get("stablecoin_7d_change_usd")
+    if delta is not None:
+        d_b = delta / 1e9  # billions
+        if abs(d_b) >= 0.5:
+            out.append({"kind":"trend","asset":"global",
+                "severity": "good" if d_b > 0 else "bad",
+                "headline": f"Stablecoin supply {'+' if d_b > 0 else ''}${d_b:.2f}B over the last 7d",
+                "detail": f"Total stablecoin mcap: ${(llama.get('stablecoin_mcap_usd') or 0)/1e9:.1f}B. Rising stablecoins = buying power building up."})
+    # DeFi DEX volume snapshot
+    dex24 = llama.get("dex_volume_24h_usd")
+    fees24 = llama.get("fees_24h_usd")
+    if dex24 and dex24 >= 5e9:
+        out.append({"kind":"info","asset":"global","severity":"info",
+            "headline": f"DEX 24h volume: ${dex24/1e9:.2f}B  ·  protocol fees: ${(fees24 or 0)/1e6:.1f}M",
+            "detail": None})
+
     # ETH/BTC ratio extremes
     ethbtc = market.get("ethbtc") or []
     if len(ethbtc) >= 60:

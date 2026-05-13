@@ -154,6 +154,30 @@ def deribit_dvol(currency: str, days: int = 1095) -> list[dict]:
     return [{"date": _ts(int(r[0])), "dvol": float(r[4])} for r in rows]
 
 
+def defillama() -> dict:
+    """DeFiLlama: stablecoin mcap & 7d delta, DEX 24h vol, fees 24h,
+    plus a sanity-check price feed. No auth, no rate limit issues."""
+    out: dict[str, Any] = {}
+    prices = _get("https://coins.llama.fi/prices/current/"
+                  "coingecko:bitcoin,coingecko:ethereum,coingecko:chainlink")
+    if prices and "coins" in prices:
+        out["prices"] = {v.get("symbol"): v.get("price") for v in prices["coins"].values() if v.get("symbol")}
+    stables = _get("https://stablecoins.llama.fi/stablecoins?includePrices=false")
+    if stables and stables.get("peggedAssets"):
+        agg_now = agg_prev = 0.0
+        for a in stables["peggedAssets"]:
+            agg_now += (a.get("circulating") or {}).get("peggedUSD", 0) or 0
+            agg_prev += (a.get("circulatingPrevWeek") or {}).get("peggedUSD", 0) or 0
+        out["stablecoin_mcap_usd"] = agg_now
+        out["stablecoin_7d_change_usd"] = agg_now - agg_prev
+    dex = _get("https://api.llama.fi/overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true")
+    fees = _get("https://api.llama.fi/overview/fees?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true")
+    if dex: out["dex_volume_24h_usd"] = dex.get("total24h")
+    if fees: out["fees_24h_usd"] = fees.get("total24h")
+    out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return out
+
+
 def fear_greed(limit: int = 1095) -> list[dict]:
     j = _get(f"https://api.alternative.me/fng/?limit={limit}")
     if not j or "data" not in j:
@@ -231,6 +255,8 @@ def fetch_trading() -> dict:
     print("  Deribit DVOL BTC/ETH (LINK not supported)...")
     dvol_btc = deribit_dvol("BTC")
     dvol_eth = deribit_dvol("ETH")
+    print("  DeFiLlama (stablecoin mcap, DEX vol, fees)...")
+    llama = defillama()
     print("  Fear & Greed...")
     fng = fear_greed()
 
@@ -271,6 +297,7 @@ def fetch_trading() -> dict:
             "dvol": [],
         },
         "global": glob,
+        "defillama": llama,
         "fear_greed": fng,
         "ethbtc": ethbtc,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
