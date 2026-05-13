@@ -1427,16 +1427,99 @@ function whaleData(){ return (DATA.whale||{}).btc || {}; }
 function renderWhaleKpis(){
   const w = whaleData();
   const last = (a) => (a||[]).slice(-1)[0];
-  const items = [
-    {label:'Latest avg tx (USD)', val: last(w.avg_tx_usd) ? fmtUSD(last(w.avg_tx_usd).value,'auto') : '—', sub: last(w.avg_tx_usd) ? last(w.avg_tx_usd).date : ''},
-    {label:'On-chain tx value', val: last(w.tx_volume_usd) ? fmtUSD(last(w.tx_volume_usd).value,'auto') : '—'},
-    {label:'Tx count', val: last(w.tx_count) ? fmtNum(last(w.tx_count).value,0) : '—'},
-    {label:'Active addresses', val: last(w.active_addresses) ? fmtNum(last(w.active_addresses).value,0) : '—'},
-    {label:'Hash rate (TH/s)', val: last(w.hash_rate) ? fmtNum(last(w.hash_rate).value,0) : '—'},
-    {label:'Miners revenue (USD)', val: last(w.miners_revenue_usd) ? fmtUSD(last(w.miners_revenue_usd).value,'auto') : '—'},
-  ];
+  // Compute 1d delta-% from a value series. Returns null if <2 points.
+  const delta1d = (series) => {
+    const arr = series || [];
+    if (arr.length < 2) return null;
+    const cur = arr[arr.length-1]?.value;
+    const prev = arr[arr.length-2]?.value;
+    if (cur == null || prev == null || prev === 0) return null;
+    return (cur - prev) / Math.abs(prev) * 100;
+  };
+  // Mean of the last N values.
+  const meanN = (series, n) => {
+    const arr = (series||[]).slice(-n).map(r => r?.value).filter(v => v != null);
+    if (!arr.length) return null;
+    return arr.reduce((s,v) => s+v, 0) / arr.length;
+  };
+  const deltaClass = (d) => d == null ? '' : (d >= 0 ? 'green' : 'red');
+  const deltaStr = (d) => d == null ? '—' : (d >= 0 ? '+' : '') + d.toFixed(2) + '%';
+
+  const items = [];
+
+  // Active addresses
+  {
+    const cur = last(w.active_addresses);
+    const d = delta1d(w.active_addresses);
+    const avg30 = meanN(w.active_addresses, 30);
+    items.push({
+      label: 'Active addresses',
+      val: cur ? fmtNum(cur.value, 0) : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)}${avg30 != null ? ` · 30d avg ${fmtNum(avg30, 0)}` : ''}`,
+    });
+  }
+  // Tx count
+  {
+    const cur = last(w.tx_count);
+    const d = delta1d(w.tx_count);
+    items.push({
+      label: 'Tx count',
+      val: cur ? fmtNum(cur.value, 0) : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)}`,
+    });
+  }
+  // Avg tx size — whale-movement proxy
+  {
+    const cur = last(w.avg_tx_usd);
+    const d = delta1d(w.avg_tx_usd);
+    items.push({
+      label: 'Avg tx size',
+      val: cur ? fmtUSD(cur.value, 'auto') : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)} · whale-movement proxy`,
+    });
+  }
+  // Miner revenue (1d)
+  {
+    const cur = last(w.miners_revenue_usd);
+    const d = delta1d(w.miners_revenue_usd);
+    items.push({
+      label: 'Miner revenue (1d)',
+      val: cur ? fmtUSD(cur.value, 'auto') : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)}`,
+    });
+  }
+  // Output volume (BTC)
+  {
+    const cur = last(w.output_volume_btc);
+    const d = delta1d(w.output_volume_btc);
+    items.push({
+      label: 'Output volume',
+      val: cur ? fmtNum(cur.value, 0) + ' BTC' : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)}`,
+    });
+  }
+  // Hash rate (EH/s) — series is in TH/s but blockchain.info "hash_rate" is GH/s.
+  // Existing chart treats it as TH/s; convert /1e9 from raw → EH/s here as
+  // specified, which matches the order-of-magnitude expected by the UI.
+  {
+    const cur = last(w.hash_rate);
+    const d = delta1d(w.hash_rate);
+    const eh = cur ? cur.value / 1e9 : null;
+    items.push({
+      label: 'Hash rate',
+      val: eh != null ? fmtNum(eh, 0) + ' EH/s' : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)}`,
+    });
+  }
+
   document.getElementById('whaleKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
+    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
   ).join('');
 
   // "data as of" badge — show freshest date across primary series so the user
