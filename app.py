@@ -1518,6 +1518,94 @@ function renderWhaleKpis(){
     });
   }
 
+  // --- Derived "tracking-style" KPIs ----------------------------------
+  // Helper: read .value at offset from the end (0 = latest, 1 = yesterday).
+  const at = (series, back) => {
+    const arr = series || [];
+    const i = arr.length - 1 - back;
+    if (i < 0) return null;
+    const r = arr[i];
+    return (r && r.value != null) ? r.value : null;
+  };
+
+  // 7. Network velocity = tx_volume_usd / active_addresses (latest day).
+  {
+    const volCur = at(w.tx_volume_usd, 0);
+    const addrCur = at(w.active_addresses, 0);
+    const volPrev = at(w.tx_volume_usd, 1);
+    const addrPrev = at(w.active_addresses, 1);
+    const cur = (volCur != null && addrCur && addrCur !== 0) ? volCur / addrCur : null;
+    const prev = (volPrev != null && addrPrev && addrPrev !== 0) ? volPrev / addrPrev : null;
+    const d = (cur != null && prev != null && prev !== 0) ? (cur - prev) / Math.abs(prev) * 100 : null;
+    items.push({
+      label: 'Network velocity',
+      val: cur != null ? fmtUSD(cur, 'auto') : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)} · USD moved per active address`,
+    });
+  }
+
+  // 8. Miner profitability = miners_revenue_usd / (hash_rate / 1e9)  → $/EH/s.
+  {
+    const revCur = at(w.miners_revenue_usd, 0);
+    const hashCur = at(w.hash_rate, 0);
+    const revPrev = at(w.miners_revenue_usd, 1);
+    const hashPrev = at(w.hash_rate, 1);
+    const cur = (revCur != null && hashCur && hashCur !== 0) ? revCur / (hashCur / 1e9) : null;
+    const prev = (revPrev != null && hashPrev && hashPrev !== 0) ? revPrev / (hashPrev / 1e9) : null;
+    const d = (cur != null && prev != null && prev !== 0) ? (cur - prev) / Math.abs(prev) * 100 : null;
+    items.push({
+      label: 'Miner profitability',
+      val: cur != null ? fmtUSD(cur, 'auto') : '—',
+      cls: deltaClass(d),
+      sub: `1d ${deltaStr(d)} · revenue per EH/s of hashpower`,
+    });
+  }
+
+  // 9. 7d tx volume — sum of last 7d vs prior 7d.
+  {
+    const arr = (w.tx_volume_usd || []).map(r => r && r.value).filter(v => v != null);
+    let cur = null, prev = null, d = null;
+    if (arr.length >= 7) {
+      cur = arr.slice(-7).reduce((s,v) => s+v, 0);
+    }
+    if (arr.length >= 14) {
+      prev = arr.slice(-14, -7).reduce((s,v) => s+v, 0);
+      if (prev !== 0) d = (cur - prev) / Math.abs(prev) * 100;
+    }
+    items.push({
+      label: '7d tx volume',
+      val: cur != null ? fmtUSD(cur, 'auto') : '—',
+      cls: deltaClass(d),
+      sub: `vs prior 7d: ${deltaStr(d)}`,
+    });
+  }
+
+  // 10. 30d range position for active addresses — percentile within min↔max.
+  {
+    const arr = (w.active_addresses || []).slice(-30).map(r => r && r.value).filter(v => v != null);
+    let pct = null;
+    if (arr.length >= 2) {
+      const mn = Math.min(...arr);
+      const mx = Math.max(...arr);
+      const cur = arr[arr.length - 1];
+      if (mx !== mn && cur != null) pct = (cur - mn) / (mx - mn) * 100;
+      else if (mx === mn && cur != null) pct = 100; // flat series → top of range
+    }
+    let cls = '';
+    if (pct != null) {
+      if (pct >= 66) cls = 'green';
+      else if (pct <= 33) cls = 'red';
+      else cls = 'amber';
+    }
+    items.push({
+      label: '30d range position',
+      val: pct != null ? pct.toFixed(0) + '%' : '—',
+      cls,
+      sub: 'of 30d active-address range',
+    });
+  }
+
   document.getElementById('whaleKpis').innerHTML = items.map(i =>
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
   ).join('');
