@@ -49,7 +49,7 @@ def _macd_hist(s: pd.Series, fast: int = 12, slow: int = 26, sig: int = 9) -> pd
 
 # ---------- scoring rules ----------
 
-def _score_at(date, price, sma50, sma200, rsi, macd, funding, fng, etf, dvol_z=None):
+def _score_at(date, price, sma50, sma200, rsi, macd, funding, fng, etf, dvol_z=None, vix_z=None):
     s = 0
     parts = []
 
@@ -89,6 +89,11 @@ def _score_at(date, price, sma50, sma200, rsi, macd, funding, fng, etf, dvol_z=N
         z = dvol_z.loc[date]
         c = 5 if z < -1 else (-5 if z > 1 else 0)
         s += c; parts.append(("DVOL", c))
+    if vix_z is not None and date in vix_z.index and pd.notna(vix_z.loc[date]):
+        # VIX is inverse: low VIX = risk-on = bullish; high VIX = risk-off = bearish
+        z = vix_z.loc[date]
+        c = 5 if z < -1 else (-5 if z > 1 else 0)
+        s += c; parts.append(("VIX", c))
     return s, parts
 
 
@@ -120,6 +125,11 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
     rsi = _rsi(price)
     macd = _macd_hist(price)
     dvol_z = ((dvol - dvol.rolling(30).mean()) / dvol.rolling(30).std()) if not dvol.empty else None
+
+    # VIX (macro vol gauge) — same series for every asset; low VIX = risk-on
+    vix_series_rows = (((payload.get("market") or {}).get("yahoo_indices") or {}).get("vix") or {}).get("series_90d") or []
+    vix = _series(vix_series_rows)
+    vix_z = ((vix - vix.rolling(30).mean()) / vix.rolling(30).std()) if not vix.empty and len(vix) > 30 else None
 
     # Build components for the latest date
     last = price.index[-1]
@@ -175,6 +185,16 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
         c = 5 if z < -1 else (-5 if z > 1 else 0)
         e = "vol crushed (long-vol setup)" if c > 0 else ("vol spike (caution)" if c < 0 else "normal vol")
         add("DVOL z-score (30d)", f"{z:+.2f}σ", c, e)
+    if vix_z is not None and not vix_z.empty:
+        # Use the most recent available VIX z-score (VIX has its own calendar)
+        latest_vix = vix_z.dropna()
+        if not latest_vix.empty:
+            z = float(latest_vix.iloc[-1])
+            c = 5 if z < -1 else (-5 if z > 1 else 0)
+            e = ("VIX crushed — macro risk-on" if c > 0
+                 else "VIX spike — macro risk-off" if c < 0
+                 else "VIX normal")
+            add("VIX z-score (30d)", f"{z:+.2f}σ", c, e)
 
     score = sum(c["contribution"] for c in components)
 
@@ -182,7 +202,7 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
     horizon = price.index[-90:] if len(price) >= 90 else price.index
     history = []
     for d in horizon:
-        sc, _ = _score_at(d, price, sma50, sma200, rsi, macd, funding, fng, etf, dvol_z)
+        sc, _ = _score_at(d, price, sma50, sma200, rsi, macd, funding, fng, etf, dvol_z, vix_z)
         history.append({"date": d.strftime("%Y-%m-%d"), "score": int(sc), "price": float(price.loc[d])})
 
     return {

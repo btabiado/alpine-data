@@ -681,6 +681,7 @@ def yahoo_indices() -> dict:
             "currency": meta.get("currency"),
             "exchange": meta.get("fullExchangeName"),
             "sparkline_90d": [p["value"] for p in series[-90:]],
+            "series_90d": series[-90:],  # [{date, value}, ...] for downstream z-score etc.
         }
     return out
 
