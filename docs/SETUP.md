@@ -229,6 +229,19 @@ For a stable hostname across reboots, see "Named tunnel" below.
 If you have any domain on Cloudflare (free plan is fine), you can pin a
 stable subdomain like `dashboard.yourdomain.com` to your laptop.
 
+#### Fast path: use the helper scripts
+```bash
+bash scripts/tunnel-status.sh    # diagnose where you are
+bash scripts/tunnel-config.sh    # one-time setup wizard
+bash scripts/tunnel-up.sh        # bring tunnel up
+```
+The wizard handles install detection, login, tunnel creation, config.yml,
+and DNS routing — echoes every cloudflared command and prompts for
+confirmation before running it. Idempotent: safe to re-run on a
+partially-configured machine.
+
+#### Manual recipe (full control)
+
 ```bash
 # Auth cloudflared to your CF account (opens a browser):
 cloudflared tunnel login

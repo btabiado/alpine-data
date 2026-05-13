@@ -15,6 +15,8 @@ Plus: insights bar (rule-based, ~12 live notifications), a Claude-powered **Ask 
 
 All data sources are **free, no key required** except the optional Anthropic chat (`ANTHROPIC_API_KEY`) and FRED macro overlay (`FRED_API_KEY`). See [`docs/SETUP.md`](docs/SETUP.md).
 
+For a stable public share-link host (your own subdomain over a named Cloudflare Tunnel), use the helper scripts in [`scripts/`](scripts/): `tunnel-status.sh` to diagnose, `tunnel-config.sh` to set up, `tunnel-up.sh` to run. Details in [`docs/SETUP.md`](docs/SETUP.md) §4.
+
 ## Data sources (15 wired, all free)
 
 - **Price + market cap**: CoinGecko (BTC/ETH/LINK price+vol+mcap, top 25 markets, trending, global stats)
