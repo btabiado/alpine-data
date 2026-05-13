@@ -2744,6 +2744,17 @@ document.getElementById('shareCreate')?.addEventListener('click', async () => {
     const box = document.getElementById('shareJustMinted');
     document.getElementById('shareNewUrl').value = url;
     box.classList.remove('hidden');
+    // Show/hide the "no public host" warning under the minted link
+    const warn = document.getElementById('shareNewWarn');
+    if (warn) {
+      if (_shareHost()) {
+        warn.classList.add('hidden');
+        warn.textContent = '';
+      } else {
+        warn.textContent = 'Set a Public host above to make this URL textable.';
+        warn.classList.remove('hidden');
+      }
+    }
     shareStatus.textContent = 'Created. Expires ' + new Date(j.share.expires_at).toLocaleString();
     document.getElementById('shareLabel').value = '';
     loadShareList();
