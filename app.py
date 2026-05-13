@@ -223,6 +223,12 @@ def build_payload() -> dict:
     except Exception as e:
         print(f"[signals] error: {e}", file=sys.stderr)
         payload["signals"] = {"btc": None, "eth": None}
+    try:
+        import insights as ins_mod
+        payload["insights"] = ins_mod.build_insights(payload, limit=12)
+    except Exception as e:
+        print(f"[insights] error: {e}", file=sys.stderr)
+        payload["insights"] = []
     return payload
 
 
@@ -381,6 +387,19 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <div class="container">
+  <!-- ============ INSIGHTS BAR (always visible) ============ -->
+  <div id="insightsBar" class="card" style="padding:10px 14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:14px">⚡</span>
+        <strong style="font-size:13px;letter-spacing:.03em">Insights</strong>
+        <span class="sub" id="insightsCount" style="color:var(--muted);font-size:11px"></span>
+      </div>
+      <button class="btn" id="insightsToggle" style="font-size:11px;padding:3px 8px">Hide</button>
+    </div>
+    <div id="insightsList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+
   <!-- ============ ETF FLOWS TAB ============ -->
   <div id="tab-etf">
     <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
@@ -1169,7 +1188,51 @@ function renderCoverage(){
   }
 }
 
+// ---------- Insights bar ----------
+function severityColor(sev){
+  return ({
+    good:   '#22c55e',
+    bad:    '#ef4444',
+    alert:  '#f59e0b',
+    info:   '#06b6d4',
+  })[sev] || '#a78bfa';
+}
+function severityIcon(sev, kind){
+  if (kind === 'milestone') return '🏁';
+  if (kind === 'anomaly')   return '⚠️';
+  if (kind === 'signal')    return '📡';
+  if (kind === 'trend')     return '📈';
+  if (kind === 'etf')       return sev === 'bad' ? '📉' : '💵';
+  return '•';
+}
+function renderInsights(){
+  const list = (DATA.insights || []);
+  const host = document.getElementById('insightsList');
+  const cnt = document.getElementById('insightsCount');
+  cnt.textContent = list.length ? `${list.length} signal${list.length>1?'s':''} as of ${DATA.generated_at?.slice(0,16) || ''}` : 'No notable changes';
+  if (!list.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted)">Nothing unusual right now. Load more data or wait for the next refresh.</div>';
+    return;
+  }
+  host.innerHTML = list.map(i => {
+    const c = severityColor(i.severity);
+    const ic = severityIcon(i.severity, i.kind);
+    const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:1px">${escapeHtml(i.detail)}</div>` : '';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};border-radius:8px;max-width:360px;flex:1 1 280px">
+      <span style="font-size:13px;line-height:1.2">${ic}</span>
+      <div style="line-height:1.25">
+        <div style="font-size:12px;color:var(--text)">${escapeHtml(i.headline)}</div>
+        ${detail}
+      </div>
+    </div>`;
+  }).join('');
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function renderAll(){
+  renderInsights();
   // tag updates
   ['1','2','3','4','Price','Funding','OI','LS','Dvol','FundDetail','Stack','Compare'].forEach(s=>{
     const t = document.getElementById('tagAsset'+s) || document.getElementById('tag'+s);
