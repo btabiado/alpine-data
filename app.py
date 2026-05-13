@@ -375,6 +375,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 /* Mobile: collapse Overview macro/indices row to one column so phone view doesn't horizontal-scroll. */
 @media (max-width:860px){
   #overviewMacroRow{grid-template-columns:1fr !important}
+  .grid2{grid-template-columns:1fr !important}
+  .grid3{grid-template-columns:1fr !important}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -430,6 +432,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="shareClose">×</button>
     </div>
     <div class="sub">Mints a token-gated URL. Anyone with the link can view this dashboard (data refreshes live), but cannot trigger refreshes, upload data, or use chat. Link auto-expires.</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span class="lbl" style="margin:0">Public host</span>
+      <input id="shareHost" placeholder="https://my-tunnel.trycloudflare.com" style="flex:1;min-width:200px;background:#0b0d12;color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font:11px monospace" />
+      <button class="btn" id="shareHostSave">Save</button>
+      <a href="#" id="shareHostClear" style="font-size:11px;color:var(--muted)">Clear</a>
+      <span id="shareHostStatus" class="sub" style="color:var(--muted)"></span>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:10px">
       <span class="lbl" style="margin:0">Expires in</span>
       <select id="shareDays" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:3px 6px;border-radius:4px">
@@ -447,6 +456,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <input id="shareNewUrl" readonly style="flex:1;background:#0b0d12;color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font:11px monospace" />
         <button class="btn" id="shareCopyBtn">Copy</button>
       </div>
+      <div id="shareNewWarn" class="hidden" style="margin-top:6px;font-size:11px;color:#e9d27a;background:#2a2410;border:1px solid #4a3f1a;border-radius:4px;padding:4px 8px"></div>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:10px">
       <div class="sub" style="margin-bottom:6px">Active links</div>
@@ -736,7 +746,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="grid2">
       <div class="chart-card">
         <div class="head"><h2>TVL by chain</h2><span class="desc">Top 20 chains, 24h change colored</span></div>
-        <div class="chart-wrap"><canvas id="defiChainsChart"></canvas></div>
+        <div class="chart-wrap tall"><canvas id="defiChainsChart"></canvas></div>
       </div>
       <div class="chart-card">
         <div class="head"><h2>TVL history</h2><span class="desc">Ethereum + Solana + Arbitrum + Base, last 365 days</span></div>
@@ -769,6 +779,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-whale" class="hidden">
     <div id="whaleEmpty" class="empty hidden">No whale data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="whaleContent">
+      <div class="sub" id="whaleAsOf" style="margin-bottom:6px"></div>
       <div class="note">Free on-chain proxies (BTC). Real whale exchange-flow series need a paid feed (Glassnode / CryptoQuant). ETH-side proxies require Etherscan v2 — not yet wired.</div>
       <div class="row" id="whaleKpis"></div>
       <!-- BTC network state additions -->
@@ -784,7 +795,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="chart-card">
         <div class="head"><h2>Mining pool concentration</h2><span class="desc">Hashrate share by pool (1y window) &middot; top 2 = <span id="poolsTop2">?</span></span></div>
-        <div class="chart-wrap"><canvas id="miningPoolsChart"></canvas></div>
+        <div class="chart-wrap tall"><canvas id="miningPoolsChart"></canvas></div>
       </div>
       <div class="grid2">
         <div class="chart-card">
@@ -1429,6 +1440,25 @@ function renderWhaleKpis(){
   document.getElementById('whaleKpis').innerHTML = items.map(i =>
     `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
   ).join('');
+
+  // "data as of" badge — show freshest date across primary series so the user
+  // notices when blockchain.info is stale.
+  const asOfEl = document.getElementById('whaleAsOf');
+  if (asOfEl){
+    const candidates = [w.tx_volume_usd, w.active_addresses, w.large_tx]
+      .map(s => last(s))
+      .filter(p => p && p.date);
+    if (!candidates.length){
+      asOfEl.textContent = '';
+      asOfEl.style.color = '';
+    } else {
+      const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
+      const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
+      const ageStr = ageDays <= 0 ? 'today' : `${ageDays}d ago`;
+      asOfEl.textContent = `data as of ${freshest} (${ageStr})`;
+      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
+    }
+  }
 }
 
 function lineChart(canvasId, key, series, color, fmt){
@@ -1617,7 +1647,7 @@ function renderMarkets(){
     else tHost.innerHTML = trending.map((t,i) =>
       `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:999px;font-size:12px">
         <span style="color:var(--muted);font-size:10px">#${i+1}</span>
-        ${t.thumb ? `<img src="${t.thumb}" style="width:14px;height:14px;border-radius:50%">` : ''}
+        ${t.thumb ? `<img src="${t.thumb}" alt="${escapeHtml(t.symbol||'')}" style="width:14px;height:14px;border-radius:50%">` : ''}
         <strong>${escapeHtml(t.symbol||'')}</strong>
         <span class="sub" style="color:var(--muted)">${escapeHtml(t.name||'')}${t.rank?` · rank ${t.rank}`:''}</span>
       </span>`
@@ -1710,16 +1740,28 @@ function renderDefi(){
   // TVL history (4 chains)
   destroy('defiTvlHistory');
   const palette = {Ethereum:'#627eea', Solana:'#9945FF', Arbitrum:'#28a0f0', Base:'#0052ff'};
-  const datasets = Object.keys(tvlHistory).filter(k => tvlHistory[k].length).map(chain => ({
-    label: chain,
-    data: tvlHistory[chain].map(p => p.tvl_usd),
-    borderColor: palette[chain] || '#a78bfa',
-    backgroundColor: 'transparent',
-    pointRadius: 0,
-    borderWidth: 1.8,
-    tension: 0.2,
-  }));
-  const labels = (tvlHistory.Ethereum || []).map(p => p.date);
+  const activeChains = Object.keys(tvlHistory).filter(k => tvlHistory[k].length);
+  // Build union of dates across all active chains so an empty Ethereum series
+  // doesn't strip x-axis labels from the rest of the chart.
+  const dateSet = new Set();
+  activeChains.forEach(chain => {
+    tvlHistory[chain].forEach(p => dateSet.add(p.date));
+  });
+  const labels = Array.from(dateSet).sort();
+  const datasets = activeChains.map(chain => {
+    const byDate = {};
+    tvlHistory[chain].forEach(p => { byDate[p.date] = p.tvl_usd; });
+    return {
+      label: chain,
+      data: labels.map(d => (d in byDate ? byDate[d] : null)),
+      borderColor: palette[chain] || '#a78bfa',
+      backgroundColor: 'transparent',
+      pointRadius: 0,
+      borderWidth: 1.8,
+      tension: 0.2,
+      spanGaps: true,
+    };
+  });
   if (datasets.length) {
     charts.defiTvlHistory = new Chart(document.getElementById('defiTvlHistoryChart'), {
       type:'line',
@@ -1936,14 +1978,17 @@ function renderWhaleExtras(){
     if (diff.remaining_blocks == null && diff.difficulty_change_pct == null) {
       dEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
     } else {
-      const days = (diff.remaining_time_ms || 0) / 86400000;
+      // Distinguish missing data ("— days") from a legitimate zero so the card
+      // doesn't claim "~0.0 days" when the API simply didn't return the field.
+      const days = diff.remaining_time_ms == null ? null : diff.remaining_time_ms / 86400000;
+      const daysStr = days == null ? '—' : days.toFixed(1);
       const changeColor = (diff.difficulty_change_pct || 0) >= 0 ? 'red' : 'green';  // higher diff = harder on miners
       dEl.innerHTML = `
         <div class="v" style="font-size:20px;font-weight:600;color:var(--text)">${(diff.difficulty_change_pct||0).toFixed(2)}%</div>
         <div class="sub" style="color:var(--muted)">estimated next retarget</div>
         <div style="margin-top:8px;font-size:11px">
           <span class="sub">Blocks left: <strong>${diff.remaining_blocks?.toLocaleString()||'?'}</strong></span> ·
-          <span class="sub">~<strong>${days.toFixed(1)}</strong> days</span><br>
+          <span class="sub">~<strong>${daysStr}</strong> days</span><br>
           <span class="sub">Progress: ${(diff.progress_pct||0).toFixed(1)}%</span>
         </div>`;
     }
@@ -2550,8 +2595,18 @@ const shareClose = document.getElementById('shareClose');
 const shareList  = document.getElementById('shareList');
 const shareStatus= document.getElementById('shareStatus');
 
+function _shareHost(){
+  try { return (localStorage.getItem('shareHost') || '').trim(); } catch(e) { return ''; }
+}
 function _shareUrl(token){
-  return location.origin + '/share/' + token;
+  const h = _shareHost();
+  return (h || location.origin) + '/share/' + token;
+}
+function _validShareHost(v){
+  // must start with http:// or https://, no spaces, non-empty
+  if (!v) return false;
+  if (/\s/.test(v)) return false;
+  return /^https?:\/\/\S+$/i.test(v);
 }
 function _expiryLabel(iso){
   if (!iso) return '';
