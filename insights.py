@@ -736,6 +736,98 @@ def _market_insights(payload: dict) -> list[dict]:
                         "detail": f"Index at {last_s:,.0f}.",
                     })
 
+    # ----- Markets tab: top-25 movers + BTC dominance + total market cap -----
+    # These fire more frequently than the FRED macro rules so the Markets
+    # insights bar isn't empty on calm macro days.
+
+    markets_top = market.get("markets_top") or []
+
+    # Top-25 24h gainer (≥5%): surface the leader so user knows which top-cap
+    # name is hot today. Skip stables (symbols ending in USD).
+    if markets_top:
+        gainers_24h = [c for c in markets_top
+                       if (c.get("change_24h_pct") is not None
+                           and c.get("change_24h_pct") >= 5
+                           and not (c.get("symbol") or "").upper().endswith("USD"))]
+        if gainers_24h:
+            top = max(gainers_24h, key=lambda c: c.get("change_24h_pct") or 0)
+            out.append({
+                "kind": "trend", "asset": "global", "severity": "good",
+                "headline": f"Top-25 24h gainer: {top.get('symbol','?')} {top.get('change_24h_pct'):+.1f}% (rank #{top.get('rank','?')})",
+                "detail": (top.get("name") or "") + f" — {_fmt_usd((top.get('market_cap_usd') or 0)/1e6)} mcap.",
+            })
+
+        # Top-25 24h loser (≤-5%): same but for biggest drop
+        losers_24h = [c for c in markets_top
+                      if (c.get("change_24h_pct") is not None
+                          and c.get("change_24h_pct") <= -5
+                          and not (c.get("symbol") or "").upper().endswith("USD"))]
+        if losers_24h:
+            worst = min(losers_24h, key=lambda c: c.get("change_24h_pct") or 0)
+            out.append({
+                "kind": "trend", "asset": "global", "severity": "bad",
+                "headline": f"Top-25 24h loser: {worst.get('symbol','?')} {worst.get('change_24h_pct'):+.1f}% (rank #{worst.get('rank','?')})",
+                "detail": (worst.get("name") or "") + f" — {_fmt_usd((worst.get('market_cap_usd') or 0)/1e6)} mcap.",
+            })
+
+        # Top-25 7d gainer (≥15%)
+        gainers_7d = [c for c in markets_top
+                      if (c.get("change_7d_pct") is not None
+                          and c.get("change_7d_pct") >= 15
+                          and not (c.get("symbol") or "").upper().endswith("USD"))]
+        if gainers_7d:
+            top = max(gainers_7d, key=lambda c: c.get("change_7d_pct") or 0)
+            out.append({
+                "kind": "trend", "asset": "global", "severity": "good",
+                "headline": f"Top-25 7d momentum: {top.get('symbol','?')} {top.get('change_7d_pct'):+.1f}% week (rank #{top.get('rank','?')})",
+                "detail": (top.get("name") or "") + " — sustained breakout.",
+            })
+
+        # Top-25 7d loser (≤-15%)
+        losers_7d = [c for c in markets_top
+                     if (c.get("change_7d_pct") is not None
+                         and c.get("change_7d_pct") <= -15
+                         and not (c.get("symbol") or "").upper().endswith("USD"))]
+        if losers_7d:
+            worst = min(losers_7d, key=lambda c: c.get("change_7d_pct") or 0)
+            out.append({
+                "kind": "trend", "asset": "global", "severity": "bad",
+                "headline": f"Top-25 7d laggard: {worst.get('symbol','?')} {worst.get('change_7d_pct'):+.1f}% week (rank #{worst.get('rank','?')})",
+                "detail": (worst.get("name") or "") + " — sustained drawdown.",
+            })
+
+    # BTC dominance threshold crossings (50% / 55% / 60% / 65%)
+    g = market.get("global") or {}
+    btc_d = g.get("btc_dominance")
+    if btc_d is not None:
+        # We don't track yesterday's dominance, so just flag standout regimes.
+        if btc_d >= 60:
+            out.append({
+                "kind": "milestone", "asset": "global", "severity": "info",
+                "headline": f"BTC dominance high: {btc_d:.1f}% — alt season unlikely",
+                "detail": "Capital concentrated in BTC vs alts.",
+            })
+        elif btc_d <= 45:
+            out.append({
+                "kind": "milestone", "asset": "global", "severity": "info",
+                "headline": f"BTC dominance low: {btc_d:.1f}% — alt rotation in play",
+                "detail": "Capital diversifying out of BTC.",
+            })
+
+    # Total crypto market cap milestones ($3T / $4T / $5T)
+    total_mcap = g.get("total_market_cap_usd")
+    if total_mcap is not None and total_mcap > 0:
+        t = total_mcap / 1e12
+        for thresh in (5.0, 4.0, 3.0):
+            if t >= thresh:
+                # Only emit the highest threshold crossed (avoid stacking)
+                out.append({
+                    "kind": "milestone", "asset": "global", "severity": "good",
+                    "headline": f"Total crypto market cap above ${thresh:.0f}T (now ${t:.2f}T)",
+                    "detail": "Asset class scale milestone.",
+                })
+                break
+
     # ----- Whale tab: BTC on-chain transfer volume + active-address swings -----
     whale = (payload.get("whale") or {}).get("btc") or {}
 
@@ -995,6 +1087,10 @@ def _market_insight_tab(insight: dict) -> str:
     if "📰" in raw: return "markets"
     if "trending #1" in h: return "markets"
     if "price divergence" in h: return "markets"
+    # Top-25 movers + dominance + total mcap milestones
+    if "top-25" in h: return "markets"
+    if "btc dominance" in h: return "markets"
+    if "total crypto market cap" in h: return "markets"
     # Default: anything else macro-flavoured lands in Markets.
     return "markets"
 

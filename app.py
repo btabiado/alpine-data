@@ -338,6 +338,10 @@ header .meta{color:var(--muted);font-size:12px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)}
 th:first-child,td:first-child{text-align:left}
+/* Markets table: rank in col 1, Coin (icon + symbol) in col 2 — left-align
+   col 2 so all the icons start at the same x. Default right-align would
+   make the icon position drift with text width row-by-row. */
+#marketsTable th:nth-child(2),#marketsTable td:nth-child(2){text-align:left}
 th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
 /* Tracker variant: full grid lines (both axes) + tighter rows for the
    Whale Activity Tracker. Vertical separators help the eye line up

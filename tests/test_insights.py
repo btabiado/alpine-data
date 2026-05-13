@@ -90,6 +90,14 @@ def test_market_insight_tab_classifier_known_patterns():
     assert f({"headline": "Dow Jones -2.10% on the day"}) == "markets"
     assert f({"headline": "VIX crossed above 20 (22.4) — calm→fear"}) == "markets"
     assert f({"headline": "VIX fell below 30 (28.1) — panic→fear"}) == "markets"
+    # Top-25 movers + BTC dominance + market-cap milestones
+    assert f({"headline": "Top-25 24h gainer: SOL +7.4% (rank #5)"}) == "markets"
+    assert f({"headline": "Top-25 24h loser: ADA -6.1% (rank #11)"}) == "markets"
+    assert f({"headline": "Top-25 7d momentum: AVAX +18.2% week (rank #14)"}) == "markets"
+    assert f({"headline": "Top-25 7d laggard: DOT -16.4% week (rank #16)"}) == "markets"
+    assert f({"headline": "BTC dominance high: 61.2% — alt season unlikely"}) == "markets"
+    assert f({"headline": "BTC dominance low: 43.8% — alt rotation in play"}) == "markets"
+    assert f({"headline": "Total crypto market cap above $4T (now $4.12T)"}) == "markets"
 
 
 def test_market_insight_tab_classifier_falls_back_to_markets():
