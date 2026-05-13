@@ -622,6 +622,69 @@ def fetch_fred() -> dict:
     return out
 
 
+def yahoo_indices() -> dict:
+    """Yahoo Finance public chart API — top US indices for the Overview tab.
+
+    Free, no key, near-real-time. Returns latest close + 1d/5d/30d % change
+    plus a 90-day sparkline series for each index.
+
+    Tickers:
+        ^DJI   Dow Jones Industrial Average
+        ^GSPC  S&P 500
+        ^IXIC  NASDAQ Composite
+        ^VIX   CBOE Volatility Index (bonus — fear gauge)
+    """
+    indices = [
+        ("dow",    "^DJI",  "Dow Jones Industrial Average"),
+        ("sp500",  "^GSPC", "S&P 500"),
+        ("nasdaq", "^IXIC", "NASDAQ Composite"),
+        ("vix",    "^VIX",  "CBOE Volatility Index"),
+    ]
+    out: dict[str, Any] = {"fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    for friendly, ticker, name in indices:
+        j = _get(
+            f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}",
+            {"range": "3mo", "interval": "1d"},
+        )
+        if not j or not isinstance(j, dict):
+            out[friendly] = None
+            continue
+        try:
+            result = (j.get("chart") or {}).get("result", [])[0]
+            meta = result.get("meta") or {}
+            ts = result.get("timestamp") or []
+            closes = ((result.get("indicators") or {}).get("quote") or [{}])[0].get("close") or []
+        except (IndexError, AttributeError, TypeError):
+            out[friendly] = None
+            continue
+        # Filter out None closes
+        series = [{"date": datetime.fromtimestamp(int(t), tz=timezone.utc).strftime("%Y-%m-%d"),
+                   "value": float(c)}
+                  for t, c in zip(ts, closes) if c is not None and t is not None]
+        if not series:
+            out[friendly] = None
+            continue
+        last = series[-1]["value"]
+        # Compute % changes
+        prev_1d = series[-2]["value"] if len(series) >= 2 else last
+        prev_5d = series[-6]["value"] if len(series) >= 6 else series[0]["value"]
+        prev_30d = series[-31]["value"] if len(series) >= 31 else series[0]["value"]
+        out[friendly] = {
+            "ticker": ticker,
+            "name": name,
+            "latest": last,
+            "latest_date": series[-1]["date"],
+            "change_1d_pct": (last / prev_1d - 1) * 100 if prev_1d else None,
+            "change_5d_pct": (last / prev_5d - 1) * 100 if prev_5d else None,
+            "change_30d_pct": (last / prev_30d - 1) * 100 if prev_30d else None,
+            "previous_close": meta.get("chartPreviousClose"),
+            "currency": meta.get("currency"),
+            "exchange": meta.get("fullExchangeName"),
+            "sparkline_90d": [p["value"] for p in series[-90:]],
+        }
+    return out
+
+
 def _yahoo_gold(days: int = 1095) -> list[dict]:
     """Daily gold futures closes from Yahoo Finance public chart API."""
     range_str = "2y" if days <= 730 else "5y"
@@ -780,6 +843,8 @@ def fetch_trading() -> dict:
     news = crypto_news_rss(25)
     print("  CoinDesk cadli BTC-USD OHLC (90d)...")
     cadli = coindesk_cadli_ohlc(90)
+    print("  Yahoo Finance indices (Dow / S&P / NASDAQ / VIX)...")
+    yahoo_idx = yahoo_indices()
     print("  Fear & Greed...")
     fng = fear_greed()
 
@@ -846,6 +911,7 @@ def fetch_trading() -> dict:
         },
         "news": news,
         "cadli_btc": cadli,
+        "yahoo_indices": yahoo_idx,
         "fear_greed": fng,
         "ethbtc": ethbtc,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

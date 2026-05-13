@@ -390,9 +390,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </header>
 
 <div class="tabs">
-  <div class="tab active" data-tab="etf">ETF Flows</div>
-  <div class="tab" data-tab="trading">Trading</div>
+  <div class="tab active" data-tab="overview">Overview</div>
   <div class="tab" data-tab="signals">Signals</div>
+  <div class="tab" data-tab="etf">ETF Flows</div>
+  <div class="tab" data-tab="trading">Trading</div>
   <div class="tab" data-tab="markets">Markets</div>
   <div class="tab" data-tab="defi">DeFi</div>
   <div class="tab" data-tab="whale">Whale Activity</div>
@@ -427,8 +428,44 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="insightsList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
   </div>
 
+  <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
+  <div id="tab-overview">
+    <!-- Row 1: Signal cards (our secret sauce — clickable) -->
+    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))"></div>
+
+    <!-- Row 2: macro snapshot + traditional indices -->
+    <div class="grid2">
+      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="Open Trading tab">
+        <div class="head">
+          <h2>Macro snapshot <span class="tag">FRED</span></h2>
+          <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; click to zoom in</span>
+        </div>
+        <div class="chart-wrap" style="height:240px"><canvas id="overviewMacroChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="head">
+          <h2>Traditional indices <span class="tag">Yahoo</span></h2>
+          <span class="desc">US market close · 1d / 5d / 30d</span>
+        </div>
+        <div id="overviewIndices" style="display:grid;grid-template-columns:1fr;gap:10px;padding:4px"></div>
+      </div>
+    </div>
+
+    <!-- Row 3: top news + top insights -->
+    <div class="grid2">
+      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
+        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
+        <div id="overviewNews"></div>
+      </div>
+      <div class="chart-card">
+        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
+        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ ETF FLOWS TAB ============ -->
-  <div id="tab-etf">
+  <div id="tab-etf" class="hidden">
     <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
@@ -1805,6 +1842,201 @@ function renderWhaleExtras(){
   }
 }
 
+// ---------- Overview tab (landing page) ----------
+function renderOverview(){
+  renderOverviewSignals();
+  renderOverviewMacro();
+  renderOverviewIndices();
+  renderOverviewNews();
+  renderOverviewInsights();
+}
+
+function renderOverviewSignals(){
+  const sigs = DATA.signals || {};
+  const order = ['btc','eth','link'];
+  const labelColor = (label) => ({
+    'STRONG BUY':'#16a34a', 'BUY':'#22c55e', 'HOLD':'#f59e0b',
+    'SELL':'#ef4444', 'STRONG SELL':'#b91c1c',
+  })[label] || '#a78bfa';
+  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada'})[a] || '#a78bfa';
+  const host = document.getElementById('overviewSignals');
+  if (!host) return;
+  host.innerHTML = order.map(a => {
+    const s = sigs[a];
+    if (!s){
+      return `<div class="card"><h3>${a.toUpperCase()}</h3><div class="v">—</div><div class="sub">no signal yet</div></div>`;
+    }
+    const color = labelColor(s.label);
+    const pct = ((s.score + 100) / 200) * 100;
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="signals" title="Open Signals tab for ${a.toUpperCase()}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()} signal</h3>
+        <span class="sub" style="color:var(--muted);font-size:11px">$${(s.price||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px">
+        <div class="v" style="font-size:26px;font-weight:700;color:${color}">${s.label}</div>
+        <div class="sub" style="font-size:13px;color:${color};font-weight:600">${s.score>=0?'+':''}${s.score} / ±100</div>
+      </div>
+      <div style="height:8px;margin-top:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:4px;position:relative">
+        <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:14px;background:#fff;border-radius:1px;box-shadow:0 0 0 2px #0b0d12"></div>
+      </div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${s.as_of || '?'}</div>
+    </div>`;
+  }).join('');
+
+  // Wire click-to-jump on signal cards
+  host.querySelectorAll('[data-jump]').forEach(el =>
+    el.addEventListener('click', () => selectTab(el.dataset.jump))
+  );
+}
+
+function renderOverviewMacro(){
+  const fred = (DATA.market || {}).fred || {};
+  destroy('overviewMacro');
+  if (!fred.available){
+    const ctx = document.getElementById('overviewMacroChart');
+    if (ctx && ctx.getContext){
+      const c = ctx.getContext('2d');
+      c.clearRect(0, 0, ctx.width, ctx.height);
+      c.fillStyle = '#8a93a6';
+      c.font = '13px -apple-system';
+      c.textAlign = 'center';
+      c.fillText('Macro overlay disabled — set FRED_API_KEY', ctx.width/2, ctx.height/2);
+    }
+    return;
+  }
+  // Use 3-month window for the overview
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 90);
+  const cutoffStr = cutoff.toISOString().slice(0,10);
+  const filter = (arr) => (arr || []).filter(r => r.date >= cutoffStr);
+  const btcPrice = filter(((DATA.market || {}).btc || {}).price);
+  const dxy = filter(fred.dxy);
+  const sp = filter(fred.sp500);
+  const gold = filter(fred.gold);
+  const ty10 = filter(fred.treasury_10y);
+
+  // Build unified date axis
+  const allDates = new Set();
+  [btcPrice, dxy, sp, gold, ty10].forEach(s => s.forEach(p => allDates.add(p.date)));
+  const labels = Array.from(allDates).sort();
+
+  const align = (arr) => {
+    const map = new Map(arr.map(p => [p.date, p.value]));
+    let lastSeen = null;
+    return labels.map(d => { if (map.has(d)) lastSeen = map.get(d); return lastSeen; });
+  };
+  const normalize = (arr) => {
+    const first = arr.find(v => v != null);
+    return first ? arr.map(v => v == null ? null : (v / first) * 100) : arr;
+  };
+  const series = [
+    {label:'BTC',   data: normalize(align(btcPrice.map(p=>({date:p.date,value:p.value})))), color:'#f7931a'},
+    {label:'DXY',   data: normalize(align(dxy)),  color:'#22c55e'},
+    {label:'S&P',   data: normalize(align(sp)),   color:'#a78bfa'},
+    {label:'Gold',  data: normalize(align(gold)), color:'#fbbf24'},
+    {label:'10Y',   data: normalize(align(ty10)), color:'#06b6d4'},
+  ].filter(s => s.data.some(v => v != null));
+
+  charts.overviewMacro = new Chart(document.getElementById('overviewMacroChart'), {
+    type:'line',
+    data:{labels, datasets: series.map(s => ({
+      label: s.label, data: s.data,
+      borderColor: s.color, backgroundColor: 'transparent',
+      pointRadius: 0, borderWidth: 1.6, tension: 0.2, spanGaps: true,
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#e6e8ee', font:{size:10}, boxWidth:14}},
+        tooltip:{mode:'index', intersect:false, callbacks:{label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(1)}`}},
+      },
+      scales:{
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:6}, grid:{color:'#1f2533'}},
+        y:{title:{display:true, text:'Index (start = 100)', color:'#8a93a6', font:{size:10}}, ticks:{color:'#8a93a6'}, grid:{color:'#1f2533'}},
+      },
+    },
+  });
+}
+
+function renderOverviewIndices(){
+  const y = ((DATA.market || {}).yahoo_indices) || {};
+  const items = [
+    {key:'dow',     short:'DOW',    name:'Dow Jones'},
+    {key:'sp500',   short:'S&P 500',name:'S&P 500'},
+    {key:'nasdaq',  short:'NASDAQ', name:'NASDAQ Composite'},
+    {key:'vix',     short:'VIX',    name:'Volatility Index'},
+  ];
+  const host = document.getElementById('overviewIndices');
+  if (!host) return;
+  host.innerHTML = items.map(i => {
+    const v = y[i.key];
+    if (!v) return `<div class="card" style="padding:10px 12px"><h3 style="font-size:11px">${i.short}</h3><div class="v">—</div></div>`;
+    const cls1d = (v.change_1d_pct||0) >= 0 ? 'green' : 'red';
+    const cls5d = (v.change_5d_pct||0) >= 0 ? 'green' : 'red';
+    const cls30d = (v.change_30d_pct||0) >= 0 ? 'green' : 'red';
+    const pct = x => (x>=0?'+':'') + x.toFixed(2) + '%';
+    const spark = renderSparkline(v.sparkline_90d || [], (v.change_30d_pct||0) >= 0);
+    return `<div class="card" style="padding:10px 12px;display:flex;align-items:center;gap:12px">
+      <div style="flex:1;min-width:0">
+        <h3 style="margin:0;font-size:11px;color:var(--muted)">${i.short}</h3>
+        <div class="v" style="font-size:20px;font-weight:600;margin-top:2px">${(v.latest||0).toLocaleString(undefined,{maximumFractionDigits:2})}</div>
+        <div style="display:flex;gap:8px;font-size:11px;margin-top:2px">
+          <span class="${cls1d}">${pct(v.change_1d_pct||0)} 1d</span>
+          <span class="${cls5d}">${pct(v.change_5d_pct||0)} 5d</span>
+          <span class="${cls30d}">${pct(v.change_30d_pct||0)} 30d</span>
+        </div>
+      </div>
+      <div style="flex-shrink:0">${spark}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderOverviewNews(){
+  const news = ((DATA.market || {}).news) || [];
+  const host = document.getElementById('overviewNews');
+  if (!host) return;
+  if (!news.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines yet</div>';
+    return;
+  }
+  host.innerHTML = news.slice(0,4).map(n =>
+    `<a href="${n.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
+        <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+      </div>
+      <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title||'')}</div>
+    </a>`
+  ).join('');
+}
+
+function renderOverviewInsights(){
+  const all = DATA.insights || [];
+  const host = document.getElementById('overviewInsights');
+  if (!host) return;
+  if (!all.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No notable insights right now</div>';
+    return;
+  }
+  host.innerHTML = all.slice(0,4).map(i => {
+    const c = severityColor(i.severity);
+    const ic = severityIcon(i.severity, i.kind);
+    const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
+      <span style="font-size:13px">${ic}</span>
+      <div style="flex:1;line-height:1.3">
+        <div style="font-size:12px">${escapeHtml(i.headline)}</div>
+        ${detail}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Wire click-to-jump on the macro card and news card
+document.addEventListener('click', (e) => {
+  const card = e.target.closest('[data-jump]');
+  if (card && !e.target.closest('a')) selectTab(card.dataset.jump);
+});
+
 function renderAll(){
   renderInsights();
   // tag updates
@@ -1875,6 +2107,9 @@ function renderAll(){
     renderNews();
     renderMacro();
   }
+  if (state.tab === 'overview'){
+    renderOverview();
+  }
   renderCoverage();
 }
 
@@ -1884,6 +2119,7 @@ function selectTab(t){
     el.classList.toggle('active', el.dataset.tab === t);
     el.classList.toggle('eth', state.asset === 'eth');
   });
+  document.getElementById('tab-overview').classList.toggle('hidden', t!=='overview');
   document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
   document.getElementById('tab-trading').classList.toggle('hidden', t!=='trading');
   document.getElementById('tab-signals').classList.toggle('hidden', t!=='signals');
@@ -2123,7 +2359,7 @@ const isServer = location.protocol.startsWith('http');
 if (isServer) setInterval(() => liveRefresh(false), 60000);
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
-selectTab('etf');
+selectTab('overview');
 renderAll();
 </script>
 </body>
