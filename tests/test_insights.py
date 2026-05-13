@@ -138,6 +138,63 @@ def test_every_insight_has_a_valid_tab():
             f"insight tab {i['tab']!r} not in VALID_TABS for {i.get('headline')!r}"
 
 
+# ---------- whale: network velocity rule ----------
+
+def _whale_payload(velocity_series: list[float]) -> dict:
+    """Build a payload whose tx_volume_usd / active_addresses ratio matches
+    the provided ``velocity_series`` (one entry per day, oldest first).
+    active_addresses is held constant so the ratio = tx_volume directly,
+    which keeps the test math simple.
+    """
+    addrs = 1_000_000.0
+    rows_vol = []
+    rows_addr = []
+    for i, v in enumerate(velocity_series):
+        date = f"2024-01-{i+1:02d}"
+        rows_vol.append({"date": date, "value": v * addrs})
+        rows_addr.append({"date": date, "value": addrs})
+    return {
+        "btc": {}, "eth": {}, "market": {}, "signals": {},
+        "whale": {"btc": {
+            "tx_volume_usd": rows_vol,
+            "active_addresses": rows_addr,
+        }},
+    }
+
+
+def test_network_velocity_spike_fires_and_tagged_whale():
+    """A flat ratio for 30d then a big jump on day 31 should trip the
+    network-velocity-spike rule and the insight must be tagged tab='whale'."""
+    series = [1000.0] * 30 + [5000.0]  # day 31 is a huge ratio spike
+    payload = _whale_payload(series)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "network velocity" in i.get("headline", "").lower()]
+    assert hits, "expected network velocity spike insight to fire"
+    for i in hits:
+        assert i["tab"] == "whale", f"expected tab=whale, got {i.get('tab')!r}"
+        assert i["kind"] == "anomaly"
+        assert i["asset"] == "btc"
+
+
+def test_network_velocity_no_spike_when_flat():
+    """A flat ratio (no variance, latest equals mean) must not emit the
+    velocity-spike anomaly."""
+    series = [1000.0] * 31
+    payload = _whale_payload(series)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "network velocity" in i.get("headline", "").lower()]
+    assert not hits, f"did not expect velocity spike for flat ratio, got {hits!r}"
+
+
+def test_network_velocity_skipped_when_series_too_short():
+    """Fewer than 31 daily ratios → zscore unavailable → rule must stay silent."""
+    series = [1000.0] * 10 + [9999.0]  # latest spikes but only 11 days total
+    payload = _whale_payload(series)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "network velocity" in i.get("headline", "").lower()]
+    assert not hits, "rule should be silent with <31 daily ratios"
+
+
 # ---------- regression: existing behaviour still holds ----------
 
 def test_build_insights_respects_limit():

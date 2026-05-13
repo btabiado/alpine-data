@@ -780,6 +780,20 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="sub" id="whaleAsOf" style="margin-bottom:6px"></div>
       <div class="note">Free on-chain proxies (BTC). Real whale exchange-flow series need a paid feed (Glassnode / CryptoQuant). ETH-side proxies require Etherscan v2 — not yet wired.</div>
       <div class="row" id="whaleKpis"></div>
+      <div class="chart-card">
+        <div class="head">
+          <h2>Whale Activity Tracker</h2>
+          <span class="desc">snapshot across multiple time horizons</span>
+        </div>
+        <div style="overflow:auto">
+          <table id="whaleTrackerTable">
+            <thead><tr>
+              <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
       <!-- BTC network state additions -->
       <div class="grid2">
         <div class="card" style="padding:12px 14px">
@@ -1647,6 +1661,58 @@ function renderWhale(){
   lineChart('hashChart',   'hash',   ra(w.hash_rate,         'mean'), '#f7931a', v=>fmtNum(v,0)+' TH/s');
   lineChart('minerChart',  'miner',  ra(w.miners_revenue_usd,'sum'),  '#f59e0b', v=>fmtUSD(v,'auto'));
   lineChart('outputChart', 'output', ra(w.output_volume_btc, 'sum'),  '#627eea', v=>fmtNum(v,0)+' BTC');
+  renderWhaleTracker();
+}
+
+// Multi-horizon delta table: each raw on-chain series shown at today vs
+// 1d / 7d / 30d / 90d ago with coloured % deltas. Lives on the Whale tab
+// between the KPI strip and the chart grid.
+function _pctChange(series, daysBack){
+  const arr = series || [];
+  if (arr.length < daysBack + 1) return null;
+  const cur = arr[arr.length-1]?.value;
+  const old = arr[arr.length-1-daysBack]?.value;
+  if (cur == null || old == null || old === 0) return null;
+  return (cur - old) / Math.abs(old) * 100;
+}
+
+function renderWhaleTracker(){
+  const tbody = document.querySelector('#whaleTrackerTable tbody');
+  if (!tbody) return;
+  const w = whaleData();
+
+  // Each row: label, series, formatter for "Today" cell.
+  const rows = [
+    { label: 'Active addresses', series: w.active_addresses,    fmt: v => fmtNum(v, 0) },
+    { label: 'Tx count',         series: w.tx_count,            fmt: v => fmtNum(v, 0) },
+    { label: 'Avg tx size',      series: w.avg_tx_usd,          fmt: v => fmtUSD(v, 'auto') },
+    { label: 'Tx volume USD',    series: w.tx_volume_usd,       fmt: v => fmtUSD(v, 'auto') },
+    { label: 'Miner revenue',    series: w.miners_revenue_usd,  fmt: v => fmtUSD(v, 'auto') },
+    // hash_rate raw is GH/s in blockchain.info; divide by 1e9 → EH/s for display.
+    { label: 'Hash rate',        series: w.hash_rate,           fmt: v => fmtNum(v / 1e9, 0) + ' EH/s' },
+  ];
+
+  const dCell = (series, days) => {
+    const d = _pctChange(series, days);
+    if (d == null) return '<td>—</td>';
+    const cls = d >= 0 ? 'green' : 'red';
+    const sign = d >= 0 ? '+' : '';
+    return `<td class="${cls}">${sign}${d.toFixed(2)}%</td>`;
+  };
+
+  tbody.innerHTML = rows.map(r => {
+    const arr = r.series || [];
+    const cur = arr.length ? arr[arr.length-1]?.value : null;
+    const today = (cur != null) ? r.fmt(cur) : '—';
+    return `<tr>
+      <td>${r.label}</td>
+      <td>${today}</td>
+      ${dCell(r.series, 1)}
+      ${dCell(r.series, 7)}
+      ${dCell(r.series, 30)}
+      ${dCell(r.series, 90)}
+    </tr>`;
+  }).join('');
 }
 
 // ---------- coverage / tabs / wiring ----------

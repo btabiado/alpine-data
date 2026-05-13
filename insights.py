@@ -482,6 +482,28 @@ def _whale_insights(payload: dict) -> list[dict]:
             "detail": "Network engagement low — could indicate consolidation or holiday lull.",
         })
 
+    # 7. Network velocity spike: tx_volume_usd / active_addresses (per day)
+    # ≥1.5σ above its 30d mean — outsized USD movement per active address.
+    vol_rows = btc.get("tx_volume_usd") or []
+    addr_rows = btc.get("active_addresses") or []
+    # Align by date so we don't divide mismatched offsets if one series is
+    # shorter than the other.
+    addr_by_date = {r.get("date"): r.get("value") for r in addr_rows if r.get("date") is not None}
+    velocity: list[float] = []
+    for r in vol_rows:
+        v = r.get("value")
+        a = addr_by_date.get(r.get("date"))
+        if v is None or a is None or a == 0:
+            continue
+        velocity.append(v / a)
+    if len(velocity) >= 31:
+        z = _zscore(velocity, 30)
+        if z is not None and z >= 1.5:
+            out.append({
+                "kind": "anomaly", "asset": "btc", "severity": "info",
+                "headline": f"BTC network velocity {z:+.1f}σ vs 30d — outsized USD per active address",
+            })
+
     return out
 
 
