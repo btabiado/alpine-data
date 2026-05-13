@@ -1324,6 +1324,17 @@ document.querySelectorAll('.btn[data-range]').forEach(b =>
 document.querySelectorAll('.btn[data-fundwin]').forEach(b =>
   b.addEventListener('click', () => { state.fundwin = b.dataset.fundwin; setActive('fundwin', state.fundwin); renderAll(); })
 );
+
+// Insights show/hide
+document.getElementById('insightsToggle')?.addEventListener('click', () => {
+  const list = document.getElementById('insightsList');
+  const btn = document.getElementById('insightsToggle');
+  if (list.style.display === 'none') {
+    list.style.display = 'flex'; btn.textContent = 'Hide';
+  } else {
+    list.style.display = 'none'; btn.textContent = 'Show';
+  }
+});
 document.querySelectorAll('.tab').forEach(b =>
   b.addEventListener('click', () => selectTab(b.dataset.tab))
 );
