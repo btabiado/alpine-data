@@ -344,8 +344,6 @@ th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;le
 .tag.btc{color:var(--btc);border-color:var(--btc)}
 .tag.eth{color:var(--eth);border-color:var(--eth)}
 .tag.link{color:var(--link);border-color:var(--link)}
-.fng-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#222;margin-top:8px}
-.fng-bar div{height:100%}
 footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;border-top:1px solid var(--border);margin-top:24px}
 /* Chat dock */
 #chatDock{position:fixed;top:0;right:0;height:100vh;width:380px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;z-index:40;box-shadow:-4px 0 24px rgba(0,0,0,.35)}
@@ -2670,6 +2668,66 @@ shareBtn?.addEventListener('click', () => {
   shareModal.classList.remove('hidden');
   document.getElementById('shareJustMinted').classList.add('hidden');
   shareStatus.textContent = '';
+  // Prefill public-host input from localStorage
+  const hostInput = document.getElementById('shareHost');
+  const hostStatus = document.getElementById('shareHostStatus');
+  if (hostInput) hostInput.value = _shareHost();
+  if (hostStatus) hostStatus.textContent = '';
+  loadShareList();
+});
+document.getElementById('shareHostSave')?.addEventListener('click', () => {
+  const inp = document.getElementById('shareHost');
+  const status = document.getElementById('shareHostStatus');
+  let v = (inp.value || '').trim();
+  // strip trailing slash(es)
+  v = v.replace(/\/+$/, '');
+  if (!_validShareHost(v)) {
+    status.style.color = '#ff8888';
+    status.textContent = 'Invalid: must start with http:// or https:// and contain no spaces.';
+    return;
+  }
+  try { localStorage.setItem('shareHost', v); } catch(e) {}
+  inp.value = v;
+  status.style.color = 'var(--muted)';
+  status.textContent = 'Saved.';
+  setTimeout(() => { if (status.textContent === 'Saved.') status.textContent = ''; }, 1800);
+  // If a minted URL is already on screen, refresh it to use the new host
+  const newUrlInp = document.getElementById('shareNewUrl');
+  if (newUrlInp && newUrlInp.value) {
+    const m = newUrlInp.value.match(/\/share\/([^\/?#]+)$/);
+    if (m) {
+      newUrlInp.value = _shareUrl(m[1]);
+      const warn = document.getElementById('shareNewWarn');
+      if (warn) { warn.classList.add('hidden'); warn.textContent = ''; }
+    }
+  }
+  // Refresh the active-links list so URLs reflect the new host
+  loadShareList();
+});
+document.getElementById('shareHostClear')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  try { localStorage.removeItem('shareHost'); } catch(err) {}
+  const inp = document.getElementById('shareHost');
+  const status = document.getElementById('shareHostStatus');
+  if (inp) inp.value = '';
+  if (status) {
+    status.style.color = 'var(--muted)';
+    status.textContent = 'Cleared — falling back to local origin.';
+    setTimeout(() => { if (status.textContent.startsWith('Cleared')) status.textContent = ''; }, 2200);
+  }
+  // Refresh minted URL + list to reflect fallback
+  const newUrlInp = document.getElementById('shareNewUrl');
+  if (newUrlInp && newUrlInp.value) {
+    const m = newUrlInp.value.match(/\/share\/([^\/?#]+)$/);
+    if (m) {
+      newUrlInp.value = _shareUrl(m[1]);
+      const warn = document.getElementById('shareNewWarn');
+      if (warn) {
+        warn.textContent = 'Set a Public host above to make this URL textable.';
+        warn.classList.remove('hidden');
+      }
+    }
+  }
   loadShareList();
 });
 shareClose?.addEventListener('click', () => shareModal.classList.add('hidden'));
