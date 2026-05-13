@@ -312,6 +312,7 @@ header .meta{color:var(--muted);font-size:12px}
 .tab:hover{color:var(--text)}
 .tab.active{color:var(--text);border-bottom-color:var(--btc)}
 .tab.active.eth{border-bottom-color:var(--eth)}
+.tab.active.link{border-bottom-color:var(--link)}
 .controls{display:flex;gap:6px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid var(--border);background:#0e1118}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px}
 .btn:hover{background:#222838}
@@ -1189,7 +1190,14 @@ function renderTradingKpis(){
     {label:'Long/short ratio', val: lastLS ? fmtNum(lastLS.ratio,2) : '—', cls: lastLS ? (lastLS.ratio>1?'green':'red') : ''},
     {label:'DVOL (implied vol)', val: lastDvol ? lastDvol.dvol.toFixed(1)+'%' : '—'},
     {label:'Fear & Greed', val: fng ? `${fng.value} (${fng.label})` : '—', cls: fng ? (fng.value>=60?'green':fng.value<=40?'red':'amber') : ''},
-    {label: state.asset==='btc'?'BTC dominance':'ETH dominance', val: state.asset==='btc' ? fmtNum(g.btc_dominance,2)+'%' : fmtNum(g.eth_dominance,2)+'%'},
+    // For BTC/ETH show their own dominance; for LINK there is no single
+    // "LINK dominance" metric, so fall back to the broader BTC dominance
+    // (the macro-context number most relevant regardless of asset focus).
+    (state.asset === 'btc')
+      ? {label:'BTC dominance', val: fmtNum(g.btc_dominance,2)+'%'}
+      : (state.asset === 'eth')
+        ? {label:'ETH dominance', val: fmtNum(g.eth_dominance,2)+'%'}
+        : {label:'BTC dominance', val: fmtNum(g.btc_dominance,2)+'%', sub:'macro context'},
     {label:'ETH/BTC', val: ethbtc ? ethbtc.value.toFixed(5) : '—'},
   ];
   document.getElementById('tradingKpis').innerHTML = items.map(i =>
@@ -1417,10 +1425,16 @@ function renderWhale(){
 
 // ---------- coverage / tabs / wiring ----------
 function setActive(group, val){
+  const isAssetGroup = (group === 'asset');
   document.querySelectorAll(`.btn[data-${group}]`).forEach(b => {
     b.classList.toggle('active', b.dataset[group] === val);
-    b.classList.toggle('eth',  state.asset === 'eth');
-    b.classList.toggle('link', state.asset === 'link');
+    // Only the BTC/ETH/LINK selector buttons get asset-tinted. Other groups
+    // (Range, Period, Fundwin, Macrorange) keep the default active orange
+    // — they don't represent an asset choice.
+    if (isAssetGroup) {
+      b.classList.toggle('eth',  state.asset === 'eth');
+      b.classList.toggle('link', state.asset === 'link');
+    }
   });
 }
 
@@ -1440,13 +1454,17 @@ function renderCoverage(){
       const f = p[0].date, l = p[p.length-1].date;
       cov.textContent = `${state.asset.toUpperCase()} price ${f} → ${l} (${p.length} obs)`;
     } else cov.textContent = 'no market data';
-  } else {
+  } else if (state.tab === 'whale'){
     const w = whaleData();
     const s = w.tx_volume_usd || [];
     if (s.length){
       const f = s[0].date, l = s[s.length-1].date;
       cov.textContent = `BTC on-chain ${f} → ${l} (${s.length} obs)`;
     } else cov.textContent = 'no whale data';
+  } else {
+    // Overview / Signals / Markets / DeFi: no single dominant data window —
+    // leave the coverage span empty so the header reads cleanly.
+    cov.textContent = '';
   }
 }
 
@@ -2218,7 +2236,8 @@ function selectTab(t){
   }
   document.querySelectorAll('.tab').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === t);
-    el.classList.toggle('eth', state.asset === 'eth');
+    el.classList.toggle('eth',  state.asset === 'eth');
+    el.classList.toggle('link', state.asset === 'link');
   });
   document.getElementById('tab-overview').classList.toggle('hidden', t!=='overview');
   document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
@@ -2249,7 +2268,16 @@ function selectTab(t){
 
 // wire buttons
 document.querySelectorAll('.btn[data-asset]').forEach(b =>
-  b.addEventListener('click', () => { state.asset = b.dataset.asset; setActive('asset', state.asset); renderAll(); })
+  b.addEventListener('click', () => {
+    state.asset = b.dataset.asset;
+    setActive('asset', state.asset);
+    // Re-tint the active tab underline to match the new asset.
+    document.querySelectorAll('.tab').forEach(el => {
+      el.classList.toggle('eth',  state.asset === 'eth');
+      el.classList.toggle('link', state.asset === 'link');
+    });
+    renderAll();
+  })
 );
 document.querySelectorAll('.btn[data-period]').forEach(b =>
   b.addEventListener('click', () => { state.period = b.dataset.period; setActive('period', state.period); renderAll(); })
