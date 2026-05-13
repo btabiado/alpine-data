@@ -34,6 +34,7 @@ from flask import Flask, Response, jsonify, request
 import app as dash
 import fetch_live
 import fetch_market
+import shares
 
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8765"))
@@ -57,6 +58,11 @@ AUTH_ENABLED = bool(DASH_USER and DASH_PASS)
 # cross-origin, and so the health probe stays usable for monitoring).
 _AUTH_BYPASS = {"/healthz"}
 
+# Endpoints that share-token holders are explicitly allowed to hit. Anything
+# that mutates server state (refresh, CSV upload, ETF seed, share admin) is
+# intentionally excluded — share viewers are strictly read-only.
+_SHARE_ALLOWED = {"/", "/api/data", "/api/chat"}
+
 
 def _challenge() -> Response:
     return Response(
@@ -64,6 +70,17 @@ def _challenge() -> Response:
         401,
         {"WWW-Authenticate": 'Basic realm="ETF Dashboard"'},
     )
+
+
+def _share_token_from_request() -> str | None:
+    """Extract a share token from the path /share/<token>(/...) or ?share=<t>."""
+    p = request.path
+    if p == "/share" or p.startswith("/share/"):
+        rest = p[len("/share/"):] if p.startswith("/share/") else ""
+        tok = rest.split("/", 1)[0] if rest else ""
+        if tok:
+            return tok
+    return request.args.get("share")
 
 
 @flask_app.before_request
@@ -74,6 +91,18 @@ def _require_auth():
         return None  # CORS preflight
     if request.path in _AUTH_BYPASS:
         return None
+    # The /share/<token> GET route is always allowed through auth — the route
+    # handler itself returns a friendly 410 page for invalid tokens. Without
+    # this, recipients of a stale text link would see a browser auth prompt
+    # instead of a clear "this link expired" message.
+    if request.method == "GET" and request.path.startswith("/share/"):
+        return None
+    # Share-token bypass: valid tokens may hit a small read-only allowlist
+    # (the data endpoint and chat). Anything else falls through to Basic Auth.
+    tok = _share_token_from_request()
+    if tok and shares.is_valid(tok):
+        if request.path in _SHARE_ALLOWED:
+            return None
     auth = request.authorization
     if auth and auth.username == DASH_USER and auth.password == DASH_PASS:
         return None
@@ -136,14 +165,58 @@ def _refresher():
             print(f"[{ts}] auto-refresh FAILED: {err}", flush=True)
 
 
+def _expired_share_page() -> Response:
+    body = """<!doctype html>
+<html><head><meta charset="utf-8"><title>Share link expired</title>
+<style>
+  body{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0d12;color:#e6e8ee;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:24px}
+  .box{max-width:480px;text-align:center;border:1px solid #1f2937;border-radius:12px;padding:32px;background:#10151f}
+  h1{margin:0 0 12px;font-size:20px}
+  p{margin:8px 0;color:#8a93a6}
+</style></head><body>
+<div class="box">
+  <h1>Share link expired or revoked</h1>
+  <p>This link is no longer active. Ask whoever sent it to mint a fresh one.</p>
+</div></body></html>"""
+    return Response(body, status=410, mimetype="text/html")
+
+
 @flask_app.route("/")
 def index() -> Response:
+    tok = _share_token_from_request()
+    share_token = tok if (tok and shares.is_valid(tok)) else None
     payload = dash.build_payload()
     payload["server"] = {
         "last_fetch_at": _state["last_fetch_at"],
         "auto_refresh_minutes": REFRESH_MINUTES,
     }
-    html = dash.render_html(payload)
+    html = dash.render_html(payload, share_token=share_token)
+    return Response(html, mimetype="text/html")
+
+
+@flask_app.route("/share/<token>")
+def share_view(token: str) -> Response:
+    """Public dashboard view for a share token. Bypasses Basic Auth.
+
+    Behaviour:
+      * Valid + unexpired token → serve the dashboard with a small read-only
+        banner and write-actions hidden client-side.
+      * Unknown or expired token → 410 Gone + "share expired" page.
+    """
+    if not shares.is_valid(token):
+        return _expired_share_page()
+    payload = dash.build_payload()
+    payload["server"] = {
+        "last_fetch_at": _state["last_fetch_at"],
+        "auto_refresh_minutes": REFRESH_MINUTES,
+    }
+    entry = shares.get(token) or {}
+    payload["share"] = {
+        "token": token,
+        "expires_at": entry.get("expires_at"),
+        "label": entry.get("label", ""),
+    }
+    html = dash.render_html(payload, share_token=token)
     return Response(html, mimetype="text/html")
 
 
@@ -155,6 +228,36 @@ def api_data() -> Response:
         "auto_refresh_minutes": REFRESH_MINUTES,
     }
     return jsonify(payload)
+
+
+@flask_app.route("/api/share", methods=["GET", "POST"])
+def api_share() -> Response:
+    """Create or list share tokens. Always requires Basic Auth (the
+    `_require_auth` check earlier rejects share-token holders from /api/share*).
+    """
+    if request.method == "POST":
+        body = request.get_json(silent=True) or {}
+        try:
+            days = float(body.get("days", 3))
+        except (TypeError, ValueError):
+            return jsonify({"ok": False, "error": "days must be a number"}), 400
+        if days <= 0 or days > 30:
+            return jsonify({"ok": False, "error": "days must be between 0 and 30"}), 400
+        label = (body.get("label") or "")[:120]
+        try:
+            entry = shares.create(days=days, label=label, created_by=DASH_USER or "")
+        except Exception as e:
+            return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
+        return jsonify({"ok": True, "share": entry})
+    # GET: list active shares
+    shares.prune_expired()
+    return jsonify({"ok": True, "shares": shares.list_all()})
+
+
+@flask_app.route("/api/share/<token>", methods=["DELETE"])
+def api_share_revoke(token: str) -> Response:
+    removed = shares.revoke(token)
+    return jsonify({"ok": True, "removed": removed})
 
 
 @flask_app.route("/api/refresh", methods=["POST", "GET"])
@@ -403,6 +506,10 @@ def health() -> Response:
 
 
 def main() -> int:
+    # Drop any expired share tokens left over from previous runs.
+    pruned = shares.prune_expired()
+    if pruned:
+        print(f"  pruned {pruned} expired share token(s)", flush=True)
     # Kick off background refresher (skips re-fetch if data is already fresh).
     t = threading.Thread(target=_refresher, daemon=True, name="refresher")
     t.start()

@@ -232,8 +232,10 @@ def build_payload() -> dict:
     return payload
 
 
-def render_html(payload: dict) -> str:
-    return HTML_TEMPLATE.replace("__DATA_JSON__", json.dumps(payload))
+def render_html(payload: dict, share_token: str | None = None) -> str:
+    html = HTML_TEMPLATE.replace("__DATA_JSON__", json.dumps(payload))
+    html = html.replace("__SHARE_TOKEN__", json.dumps(share_token))
+    return html
 
 
 def load_json(path: Path) -> dict:
@@ -389,6 +391,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <button class="btn" data-asset="eth">ETH</button>
     <button class="btn" data-asset="link">LINK</button>
     <span style="width:14px"></span>
+    <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
   </div>
 </header>
@@ -416,6 +419,40 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <button class="btn" data-range="2y">2Y</button>
   <button class="btn" data-range="3y">3Y</button>
   <button class="btn active" data-range="all">All</button>
+</div>
+
+<!-- ============ SHARE MODAL (mint / list / revoke share links) ============ -->
+<div id="shareModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(640px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:14px">🔗 Share dashboard (read-only)</h2>
+      <button class="btn" id="shareClose">×</button>
+    </div>
+    <div class="sub">Mints a token-gated URL. Anyone with the link can view this dashboard (data refreshes live), but cannot trigger refreshes, upload data, or use chat. Link auto-expires.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--border);padding-top:10px">
+      <span class="lbl" style="margin:0">Expires in</span>
+      <select id="shareDays" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:3px 6px;border-radius:4px">
+        <option value="1">1 day</option>
+        <option value="3" selected>3 days</option>
+        <option value="7">7 days</option>
+        <option value="14">14 days</option>
+      </select>
+      <input id="shareLabel" placeholder="Label (optional, e.g. 'for J. via SMS')" style="flex:1;min-width:160px;background:#0b0d12;color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font:12px sans-serif" />
+      <button class="btn" id="shareCreate">Mint link</button>
+    </div>
+    <div id="shareJustMinted" class="hidden" style="background:#1a2840;border:1px solid #2c3e5e;border-radius:6px;padding:10px">
+      <div class="sub" style="margin-bottom:6px;color:#bfd2ff">New link · copy + text it:</div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input id="shareNewUrl" readonly style="flex:1;background:#0b0d12;color:var(--text);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font:11px monospace" />
+        <button class="btn" id="shareCopyBtn">Copy</button>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px">
+      <div class="sub" style="margin-bottom:6px">Active links</div>
+      <div id="shareList" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow:auto"></div>
+    </div>
+    <div id="shareStatus" class="sub" style="color:var(--muted);min-height:14px"></div>
+  </div>
 </div>
 
 <div class="container">
@@ -813,6 +850,25 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
 <script>
 const DATA = __DATA_JSON__;
+const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
+const IS_SHARE = !!SHARE_TOKEN;
+
+// In share mode, transparently append ?share=<token> to all /api/* fetches so
+// the read-only allowlist on the server lets the call through without prompting
+// for HTTP Basic Auth.
+if (IS_SHARE) {
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function(input, init){
+    try {
+      if (typeof input === 'string' && input.startsWith('/api/')) {
+        const sep = input.includes('?') ? '&' : '?';
+        input = input + sep + 'share=' + encodeURIComponent(SHARE_TOKEN);
+      }
+    } catch(_) {}
+    return _origFetch(input, init);
+  };
+}
+
 const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y' };
 
 // ---------- formatters ----------
@@ -2368,6 +2424,133 @@ document.getElementById('pasteSubmit')?.addEventListener('click', async () => {
 // If running under server, poll /api/data every 60s for the latest cached payload
 const isServer = location.protocol.startsWith('http');
 if (isServer) setInterval(() => liveRefresh(false), 60000);
+
+// ---------- Share modal (owner side) ----------
+const shareModal = document.getElementById('shareModal');
+const shareBtn   = document.getElementById('shareBtn');
+const shareClose = document.getElementById('shareClose');
+const shareList  = document.getElementById('shareList');
+const shareStatus= document.getElementById('shareStatus');
+
+function _shareUrl(token){
+  return location.origin + '/share/' + token;
+}
+function _expiryLabel(iso){
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const ms = d.getTime() - Date.now();
+  if (ms <= 0) return 'expired';
+  const days = ms / 86400000;
+  if (days >= 1) return 'expires in ' + Math.round(days) + 'd';
+  const hours = ms / 3600000;
+  if (hours >= 1) return 'expires in ' + Math.round(hours) + 'h';
+  return 'expires in <1h';
+}
+async function loadShareList(){
+  if (!shareList) return;
+  shareList.innerHTML = '<div class="sub" style="color:var(--muted)">loading…</div>';
+  try {
+    const r = await fetch('/api/share');
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'failed');
+    const rows = j.shares || [];
+    if (!rows.length) {
+      shareList.innerHTML = '<div class="sub" style="color:var(--muted)">No active links.</div>';
+      return;
+    }
+    shareList.innerHTML = '';
+    for (const s of rows) {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:6px;padding:6px 8px';
+      const url = _shareUrl(s.token);
+      const lbl = (s.label || '').replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c]));
+      row.innerHTML =
+        '<div style="flex:1;min-width:0">'
+        + '<div style="font:11px monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + url + '</div>'
+        + '<div class="sub" style="color:var(--muted);margin-top:2px">' + (lbl || '<em style="color:#5a6478">no label</em>') + ' · ' + _expiryLabel(s.expires_at) + '</div>'
+        + '</div>'
+        + '<button class="btn" data-copy="' + s.token + '" style="font-size:11px;padding:3px 8px">Copy</button>'
+        + '<button class="btn" data-revoke="' + s.token + '" style="font-size:11px;padding:3px 8px;background:#3a1f1f">Revoke</button>';
+      shareList.appendChild(row);
+    }
+    shareList.querySelectorAll('[data-copy]').forEach(b =>
+      b.addEventListener('click', () => navigator.clipboard?.writeText(_shareUrl(b.dataset.copy)).then(() => { shareStatus.textContent = 'Copied.'; setTimeout(() => shareStatus.textContent = '', 1500); }))
+    );
+    shareList.querySelectorAll('[data-revoke]').forEach(b =>
+      b.addEventListener('click', async () => {
+        if (!confirm('Revoke this share link?')) return;
+        try {
+          const rr = await fetch('/api/share/' + encodeURIComponent(b.dataset.revoke), {method:'DELETE'});
+          const jj = await rr.json();
+          if (!jj.ok) throw new Error(jj.error || 'failed');
+          shareStatus.textContent = 'Revoked.';
+          loadShareList();
+        } catch(e) { shareStatus.textContent = 'Revoke failed: ' + e.message; }
+      })
+    );
+  } catch(e) {
+    shareList.innerHTML = '<div class="sub" style="color:#ff8888">Failed to load: ' + e.message + '</div>';
+  }
+}
+shareBtn?.addEventListener('click', () => {
+  shareModal.classList.remove('hidden');
+  document.getElementById('shareJustMinted').classList.add('hidden');
+  shareStatus.textContent = '';
+  loadShareList();
+});
+shareClose?.addEventListener('click', () => shareModal.classList.add('hidden'));
+shareModal?.addEventListener('click', e => { if (e.target === shareModal) shareModal.classList.add('hidden'); });
+document.getElementById('shareCreate')?.addEventListener('click', async () => {
+  const days = parseFloat(document.getElementById('shareDays').value) || 3;
+  const label = document.getElementById('shareLabel').value.trim();
+  shareStatus.textContent = 'Minting…';
+  try {
+    const r = await fetch('/api/share', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({days, label})});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || 'failed');
+    const url = _shareUrl(j.share.token);
+    const box = document.getElementById('shareJustMinted');
+    document.getElementById('shareNewUrl').value = url;
+    box.classList.remove('hidden');
+    shareStatus.textContent = 'Created. Expires ' + new Date(j.share.expires_at).toLocaleString();
+    document.getElementById('shareLabel').value = '';
+    loadShareList();
+  } catch(e) { shareStatus.textContent = 'Mint failed: ' + e.message; }
+});
+document.getElementById('shareCopyBtn')?.addEventListener('click', () => {
+  const url = document.getElementById('shareNewUrl').value;
+  navigator.clipboard?.writeText(url).then(() => { shareStatus.textContent = 'Copied — paste it into a text.'; });
+});
+
+// ---------- Share (read-only viewer) mode ----------
+// When the page is served via /share/<token>, hide all owner-only controls
+// and surface a small banner so the viewer knows it's a time-bounded link.
+if (IS_SHARE) {
+  // Hide write-action buttons. The chat dock and refresh button mutate
+  // server state (or cost Anthropic credits), so they're owner-only.
+  ['refreshBtn','loadBtcBtn','loadEthBtn','seedBtcBtn','chatFab','chatDock'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  // Hide the entire "Load data" action bar on the ETF tab.
+  document.querySelectorAll('#tab-etf .card').forEach(el => {
+    if (el.textContent && el.textContent.includes('Load data')) el.style.display = 'none';
+  });
+  // Inject a small banner under the header.
+  const expIso = (DATA.share && DATA.share.expires_at) || '';
+  const label  = (DATA.share && DATA.share.label) || '';
+  const banner = document.createElement('div');
+  banner.style.cssText = 'background:#1a2840;border:1px solid #2c3e5e;color:#bfd2ff;padding:8px 14px;border-radius:8px;margin:8px 14px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap';
+  let when = '';
+  if (expIso) {
+    const d = new Date(expIso);
+    if (!isNaN(d.getTime())) when = ' · expires ' + d.toLocaleString();
+  }
+  banner.innerHTML = '<span>🔗 Read-only share link' + (label ? ' (<em>' + label.replace(/[<>&"']/g, c => ({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;","'":"&#39;"}[c])) + '</em>)' : '') + when + '</span><span style="color:#8a93a6">live data · auto-refreshes</span>';
+  const container = document.querySelector('.container');
+  if (container) container.insertBefore(banner, container.firstChild);
+}
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
 selectTab('overview');

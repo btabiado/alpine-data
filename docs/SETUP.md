@@ -161,7 +161,129 @@ workflow stops running.
 
 ---
 
-## 4. FRED macro data (DXY, SPX, gold, 10Y)
+## 4. Share links (read-only, time-bounded) over Cloudflare Tunnel
+
+You can mint a public URL that anyone can open in a browser — no login —
+that shows your live dashboard for a fixed window (default 3 days) and then
+self-destructs. Perfect for sending via text.
+
+Two pieces:
+1. **The share-token system** — already built into the dashboard. Mint via
+   the **🔗 Share** button in the top-right of the dashboard, or via the
+   `share.py` CLI. Tokens are unguessable (24 random bytes ≈ 192 bits) and
+   auto-expire.
+2. **A public tunnel** — Cloudflare Tunnel exposes your local server to a
+   public URL. Required so the recipient can reach the link from the open
+   internet (not just your LAN/Tailscale).
+
+### Mint a share (UI)
+1. Open the dashboard, click **🔗 Share** in the header
+2. Pick "3 days" (or 1/7/14), optionally label it (e.g. *"for J. via SMS"*)
+3. Click **Mint link** → copy the URL → text it
+4. Manage / revoke from the same dialog
+
+The recipient sees a read-only dashboard with a small banner showing the
+expiry. They cannot trigger refreshes, upload data, or use the chat dock
+(those are blocked server-side, not just hidden in the UI).
+
+### Mint a share (CLI)
+```bash
+cd ~/btc-eth-etf-dashboard
+.venv/bin/python share.py --days 3 --label "for J." \
+  --host https://dashboard.your-cf-host.com
+# prints: https://dashboard.your-cf-host.com/share/<24-char-token>
+
+# list / revoke / prune
+.venv/bin/python share.py --list --host https://dashboard.your-cf-host.com
+.venv/bin/python share.py --revoke <token-or-full-url>
+.venv/bin/python share.py --prune
+```
+
+### Cloudflare Tunnel: quick (ephemeral URL)
+The fastest way. The public URL changes every time you restart the tunnel,
+so this is fine for "share now, dies on next reboot."
+
+```bash
+brew install cloudflared
+
+# In one terminal, keep the server running:
+HOST=0.0.0.0 .venv/bin/python server.py
+
+# In another terminal, expose it:
+cloudflared tunnel --url http://localhost:8765
+# →  prints something like
+#    Your quick tunnel: https://random-words-1234.trycloudflare.com
+```
+
+Mint your share, then text the combined URL:
+```
+https://random-words-1234.trycloudflare.com/share/<token>
+```
+
+When you `Ctrl+C` the cloudflared process (or your Mac reboots), the
+public URL stops working. If you re-mint a tunnel later, the token still
+works but the host portion changes, so any URL you texted earlier is dead.
+For a stable hostname across reboots, see "Named tunnel" below.
+
+### Cloudflare Tunnel: named (stable URL — requires a domain on CF)
+If you have any domain on Cloudflare (free plan is fine), you can pin a
+stable subdomain like `dashboard.yourdomain.com` to your laptop.
+
+```bash
+# Auth cloudflared to your CF account (opens a browser):
+cloudflared tunnel login
+
+# Create a tunnel (one-time):
+cloudflared tunnel create dashboard
+
+# Route DNS to it (uses the cert from `tunnel login`):
+cloudflared tunnel route dns dashboard dashboard.yourdomain.com
+
+# Config file ~/.cloudflared/config.yml:
+cat > ~/.cloudflared/config.yml <<'EOF'
+tunnel: dashboard
+credentials-file: /Users/btabiado/.cloudflared/<tunnel-uuid>.json
+ingress:
+  - hostname: dashboard.yourdomain.com
+    service: http://localhost:8765
+  - service: http_status:404
+EOF
+
+# Run it (foreground for now):
+cloudflared tunnel run dashboard
+```
+
+Now `https://dashboard.yourdomain.com/share/<token>` is stable until you
+either:
+* revoke the token via the UI / `share.py --revoke`
+* wait for the token's natural expiry (3-day default)
+* `cloudflared tunnel delete dashboard`
+
+To run it on every boot, install as a launchd service:
+```bash
+sudo cloudflared service install
+```
+
+### Security caveats
+* The share URL is read-only at the server level. Even if a viewer crafts
+  curl requests, the auth bypass only lets them hit `/`, `/api/data`, and
+  `/api/chat`. POST to `/api/refresh`, `/api/upload-csv`, `/api/share`,
+  `/api/share/<token>` all require Basic Auth.
+* The token is unguessable, but anyone with the link can forward it. If
+  you texted it to the wrong person, **revoke** it — don't just wait.
+* Chat costs Anthropic API credits per call. Viewers can use chat in
+  share mode (it's allowed in `_SHARE_ALLOWED`). If you'd rather block
+  that, remove `/api/chat` from `_SHARE_ALLOWED` in `server.py`.
+* The token store is `data/shares.json`, gitignored. Don't commit it.
+
+### Revoking
+* UI: 🔗 Share → click **Revoke** next to the link
+* CLI: `.venv/bin/python share.py --revoke <token-or-url>`
+* Wholesale: delete `data/shares.json` (kills *every* active link)
+
+---
+
+## 5. FRED macro data (DXY, SPX, gold, 10Y)
 
 The Trading tab can overlay BTC against macro context: the Broad Dollar
 Index (DXY), the S&P 500, London PM gold, the 10-Year Treasury yield, and
