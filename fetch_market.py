@@ -563,7 +563,8 @@ def fetch_fred() -> dict:
     Series pulled (last 3 years):
         dxy           DTWEXBGS          Broad Dollar Index (daily, business)
         sp500         SP500             S&P 500 closing price (daily)
-        gold          GOLDAMGBD228NLBM  London PM Gold Fixing, USD (daily)
+        gold          GOLDPMGBD228NLBM  London PM Gold Fixing (USD, daily) — switched
+                                        from the retired AM Fix series.
         treasury_10y  DGS10             10-Year Treasury CMT (daily)
         m2            M2SL              M2 Money Stock (monthly)
 
@@ -579,7 +580,7 @@ def fetch_fred() -> dict:
     series_map = {
         "dxy":          "DTWEXBGS",
         "sp500":        "SP500",
-        "gold":         "GOLDAMGBD228NLBM",
+        "gold":         "GOLDPMGBD228NLBM",
         "treasury_10y": "DGS10",
         "m2":           "M2SL",
     }
