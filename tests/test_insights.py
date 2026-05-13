@@ -71,6 +71,13 @@ def test_market_insight_tab_classifier_known_patterns():
     assert f({"headline": "BTC hashrate at 30-day high (640 EH/s)"}) == "whale"
     assert f({"headline": "BTC difficulty retarget in ~2.1 days: +4.8% (harder for miners)"}) == "whale"
     assert f({"headline": "BTC mining concentration high: top 2 pools = 58.0% of blocks"}) == "whale"
+    assert f({"headline": "BTC on-chain transfer volume spike: Whale tx volume +2.4σ vs 30d mean"}) == "whale"
+    assert f({"headline": "BTC active addresses +1.8σ vs 30d"}) == "whale"
+
+    # Trading: open interest + long/short crowding
+    assert f({"headline": "BTC open interest +2.1σ above 30d mean"}) == "trading"
+    assert f({"headline": "ETH L/S ratio crowded long (2.85)"}) == "trading"
+    assert f({"headline": "LINK L/S ratio crowded short (0.55)"}) == "trading"
 
     assert f({"headline": "DXY +1.2% today — typically inverse to risk assets including crypto"}) == "markets"
     assert f({"headline": "10Y Treasury yield crossed above 5.0% (5.02%)"}) == "markets"
@@ -79,6 +86,10 @@ def test_market_insight_tab_classifier_known_patterns():
     assert f({"headline": "📰 CoinDesk: Some headline goes here"}) == "markets"
     assert f({"headline": "ZANO (Zano) is trending #1 on CoinGecko"}) == "markets"
     assert f({"headline": "BTC price divergence: CoinGecko $43,200 vs CryptoCompare $43,512"}) == "markets"
+    assert f({"headline": "NASDAQ +1.80% on the day"}) == "markets"
+    assert f({"headline": "Dow Jones -2.10% on the day"}) == "markets"
+    assert f({"headline": "VIX crossed above 20 (22.4) — calm→fear"}) == "markets"
+    assert f({"headline": "VIX fell below 30 (28.1) — panic→fear"}) == "markets"
 
 
 def test_market_insight_tab_classifier_falls_back_to_markets():

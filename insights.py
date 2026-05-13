@@ -89,6 +89,21 @@ def _fmt_usd(n) -> str:
     return f"{sign}${a*1000:.0f}K"
 
 
+def _is_fresh(date_str: str | None, max_age_days: int = 14) -> bool:
+    """True if `date_str` (YYYY-MM-DD) is within `max_age_days` of today.
+
+    Returns False on parse failure or missing input so callers fail closed and
+    avoid emitting insights from clearly stale data.
+    """
+    if not date_str:
+        return False
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        return False
+    return (datetime.utcnow() - d) <= timedelta(days=max_age_days)
+
+
 # ----- per-domain insight generators -----
 
 def _etf_insights(payload: dict, asset: str) -> list[dict]:
@@ -101,6 +116,10 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     flows = [d["flow"] for d in daily]
     last_date = daily[-1]["date"]
     last_flow = daily[-1]["flow"]
+    # Freshness guard: if the latest ETF row is more than 14 days old, do not
+    # emit "fresh" insights — but keep cumulative milestones, which describe
+    # the cumulative total (still meaningful even if the last row is stale).
+    fresh = _is_fresh(last_date, max_age_days=14)
 
     # 1. Last day directional flow
     if last_flow != 0:
@@ -189,6 +208,25 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
                     "headline": f"{asset.upper()} top mover today: {top[0]} {_fmt_usd(top[1])}",
                     "detail": None,
                 })
+
+    # 8. ETF flow pace: latest 7d vs 90d-rolling 7d average. Helps fill the
+    #    ETF tab on quiet days when no single rule above triggers.
+    if fresh and len(flows) >= 90:
+        sum7_recent = sum(flows[-7:])
+        # 90-day rolling 7-day windows (exclude the current window so we
+        # compare against history, not against the window we're flagging).
+        history = flows[-90:-7] if len(flows) >= 97 else flows[:-7]
+        if len(history) >= 14:
+            # Average absolute 7d sum across overlapping windows.
+            windows = [sum(history[i:i+7]) for i in range(len(history) - 6)]
+            avg_abs = sum(abs(w) for w in windows) / max(len(windows), 1)
+            if avg_abs > 0 and abs(sum7_recent) >= 2.0 * avg_abs and abs(sum7_recent) >= 100:
+                cls = "good" if sum7_recent > 0 else "bad"
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": cls,
+                    "headline": f"{asset.upper()} ETF flow pace 2x the 90-day average ({_fmt_usd(sum7_recent)} last 7d)",
+                    "detail": f"90-day rolling 7d avg: {_fmt_usd(avg_abs)}",
+                })
     return out
 
 
@@ -223,6 +261,55 @@ def _signal_insights(payload: dict) -> list[dict]:
                     "headline": f"{asset.upper()} signal flipped negative ({prev:+d} → {last:+d})",
                     "detail": None,
                 })
+
+        # Near-extreme signal score (|60| ≤ |score| < |75|). The STRONG
+        # threshold is |75|; this fills the Signals tab on days where no asset
+        # has tipped over but momentum is building.
+        if label not in ("STRONG BUY", "STRONG SELL") and isinstance(score, (int, float)):
+            mag = abs(int(score))
+            if 60 <= mag < 75:
+                direction = "STRONG BUY" if score > 0 else "STRONG SELL"
+                out.append({
+                    "kind": "signal", "asset": asset,
+                    "severity": "good" if score > 0 else "alert",
+                    "headline": f"{asset.upper()} signal near {direction} zone (score {score:+d})",
+                    "detail": f"Within 15 pts of the {direction} threshold — watch for follow-through.",
+                })
+
+    # Signal component standout: of all assets with a non-trivial score, pick
+    # the one with the largest |score| and call out its top-magnitude
+    # contributing component. This always produces something on quiet days
+    # provided any signal data exists.
+    candidates = []
+    for asset, sig in sigs.items():
+        if not sig:
+            continue
+        score = sig.get("score")
+        comps = sig.get("components") or []
+        if score is None or not comps:
+            continue
+        if abs(score) < 20:
+            continue
+        # Find the highest |contribution| component.
+        top_comp = max(
+            (c for c in comps if c.get("contribution") not in (None, 0)),
+            key=lambda c: abs(c.get("contribution") or 0),
+            default=None,
+        )
+        if top_comp is None:
+            continue
+        candidates.append((abs(score), asset, score, top_comp))
+    if candidates:
+        candidates.sort(reverse=True)
+        _, asset, score, top_comp = candidates[0]
+        contrib = top_comp.get("contribution") or 0
+        name = top_comp.get("name") or "component"
+        out.append({
+            "kind": "signal", "asset": asset,
+            "severity": "good" if contrib > 0 else "bad",
+            "headline": f"{asset.upper()} signal driven by {name} contribution {contrib:+d}",
+            "detail": f"Largest single driver of the {score:+d} composite score.",
+        })
     return out
 
 
@@ -455,6 +542,195 @@ def _market_insights(payload: dict) -> list[dict]:
                         "detail": f"Index at {last_s:,.0f}.",
                     })
 
+    # ----- Whale tab: BTC on-chain transfer volume + active-address swings -----
+    whale = (payload.get("whale") or {}).get("btc") or {}
+
+    # Whale tx volume spike (≥2σ above 30d mean)
+    tx_vol = whale.get("tx_volume_usd") or []
+    if len(tx_vol) >= 31:
+        last_row = tx_vol[-1] or {}
+        if _is_fresh(last_row.get("date"), max_age_days=14):
+            vals = [r.get("value") for r in tx_vol if r.get("value") is not None]
+            z = _zscore(vals, 30)
+            if z is not None and z >= 2.0:
+                last_v = vals[-1]
+                out.append({
+                    "kind": "anomaly", "asset": "btc", "severity": "alert",
+                    "headline": f"BTC on-chain transfer volume spike: Whale tx volume {z:+.1f}σ vs 30d mean",
+                    "detail": f"Latest day: {_fmt_usd(last_v / 1e6)} (USD). Heavy on-chain movement.",
+                })
+
+    # Active addresses anomaly (≥1.5σ either direction)
+    addrs = whale.get("active_addresses") or []
+    if len(addrs) >= 31:
+        last_row = addrs[-1] or {}
+        if _is_fresh(last_row.get("date"), max_age_days=14):
+            vals = [r.get("value") for r in addrs if r.get("value") is not None]
+            z = _zscore(vals, 30)
+            if z is not None and abs(z) >= 1.5:
+                sev = "good" if z > 0 else "bad"
+                last_v = vals[-1]
+                out.append({
+                    "kind": "anomaly", "asset": "btc", "severity": sev,
+                    "headline": f"BTC active addresses {z:+.1f}σ vs 30d",
+                    "detail": f"Latest day: ~{int(last_v):,} addresses. "
+                              f"{'Surging' if z > 0 else 'Falling'} network participation.",
+                })
+
+    # ----- Markets tab: traditional indices intraday moves -----
+    yi = market.get("yahoo_indices") or {}
+
+    def _series_1d_change(idx_dict: dict | None) -> tuple[float | None, str | None]:
+        if not idx_dict:
+            return None, None
+        series = idx_dict.get("series_90d") or []
+        if len(series) < 2:
+            return None, None
+        last = series[-1].get("value")
+        prev = series[-2].get("value")
+        if not last or not prev:
+            return None, None
+        return (last / prev - 1) * 100.0, idx_dict.get("latest_date") or series[-1].get("date")
+
+    # NASDAQ 1d move
+    ch_nas, date_nas = _series_1d_change(yi.get("nasdaq"))
+    if ch_nas is not None and abs(ch_nas) >= 1.5 and _is_fresh(date_nas, max_age_days=7):
+        out.append({
+            "kind": "trend", "asset": "global",
+            "severity": "good" if ch_nas > 0 else "bad",
+            "headline": f"NASDAQ {ch_nas:+.2f}% on the day",
+            "detail": f"Risk-on tech tape — typically correlated with crypto majors.",
+        })
+
+    # Dow Jones 1d move
+    ch_dji, date_dji = _series_1d_change(yi.get("dow"))
+    if ch_dji is not None and abs(ch_dji) >= 1.5 and _is_fresh(date_dji, max_age_days=7):
+        out.append({
+            "kind": "trend", "asset": "global",
+            "severity": "good" if ch_dji > 0 else "bad",
+            "headline": f"Dow Jones {ch_dji:+.2f}% on the day",
+            "detail": "Broad US large-cap industrial bellwether.",
+        })
+
+    # VIX threshold crossings (20 = calm↔fear, 30 = fear↔panic)
+    vix = yi.get("vix") or {}
+    vix_series = vix.get("series_90d") or []
+    if len(vix_series) >= 2:
+        last_v = vix_series[-1].get("value")
+        prev_v = vix_series[-2].get("value")
+        last_d = vix.get("latest_date") or vix_series[-1].get("date")
+        if last_v is not None and prev_v is not None and _is_fresh(last_d, max_age_days=7):
+            for thresh, calm_label, fear_label in (
+                (20.0, "calm", "fear"),
+                (30.0, "fear", "panic"),
+            ):
+                crossed_up = prev_v < thresh <= last_v
+                crossed_dn = prev_v >= thresh > last_v
+                if crossed_up:
+                    out.append({
+                        "kind": "milestone", "asset": "global", "severity": "alert",
+                        "headline": f"VIX crossed above {thresh:.0f} ({last_v:.1f}) — {calm_label}→{fear_label}",
+                        "detail": "Volatility regime shift higher; risk assets typically wobble.",
+                    })
+                    break
+                if crossed_dn:
+                    out.append({
+                        "kind": "milestone", "asset": "global", "severity": "good",
+                        "headline": f"VIX fell below {thresh:.0f} ({last_v:.1f}) — {fear_label}→{calm_label}",
+                        "detail": "Volatility regime cooling; supportive for risk-on.",
+                    })
+                    break
+
+    # ----- Trading tab: Open Interest and Long/Short crowding -----
+    for asset in ("btc", "eth", "link"):
+        a = market.get(asset) or {}
+
+        # Open interest surge (≥1.5σ above 30d mean). The cached series uses
+        # `oi_usd` keyed rows; tolerate the prompt-spec `oi` field too.
+        oi_rows = a.get("open_interest_usd") or a.get("open_interest") or []
+        if len(oi_rows) >= 31:
+            last_row = oi_rows[-1] or {}
+            if _is_fresh(last_row.get("date"), max_age_days=14):
+                vals = [
+                    (r.get("oi_usd") if r.get("oi_usd") is not None else r.get("oi"))
+                    for r in oi_rows
+                ]
+                vals = [v for v in vals if v is not None]
+                z = _zscore(vals, 30) if len(vals) >= 31 else None
+                if z is not None and z >= 1.5:
+                    out.append({
+                        "kind": "anomaly", "asset": asset, "severity": "alert",
+                        "headline": f"{asset.upper()} open interest {z:+.1f}σ above 30d mean",
+                        "detail": f"Latest OI: {_fmt_usd((vals[-1] or 0) / 1e6)} — leverage building, watch for squeezes.",
+                    })
+
+        # Long/Short ratio extremes
+        ls_rows = a.get("long_short_ratio") or a.get("long_short") or []
+        if ls_rows:
+            last_row = ls_rows[-1] or {}
+            ratio = last_row.get("ratio")
+            if ratio is not None and _is_fresh(last_row.get("date"), max_age_days=14):
+                if ratio >= 2.5:
+                    out.append({
+                        "kind": "anomaly", "asset": asset, "severity": "alert",
+                        "headline": f"{asset.upper()} L/S ratio crowded long ({ratio:.2f})",
+                        "detail": "Contrarian: heavy long positioning often precedes long-squeezes.",
+                    })
+                elif ratio <= 0.7:
+                    out.append({
+                        "kind": "anomaly", "asset": asset, "severity": "good",
+                        "headline": f"{asset.upper()} L/S ratio crowded short ({ratio:.2f})",
+                        "detail": "Contrarian: heavy short positioning often precedes short-squeezes.",
+                    })
+
+    # ----- DeFi tab extras: second-place chain mover + protocol mover -----
+    # `chains[:10]` mover loop above breaks on the FIRST big mover. Catch a
+    # second-place mover here so the DeFi tab gets two chain insights when
+    # multiple chains are moving.
+    chains_extra = ((market.get("defi") or {}).get("chains")) or []
+    if chains_extra:
+        # Re-scan, skip the index that emitted above (first |change_1d|≥4).
+        first_emitter = None
+        for idx, c in enumerate(chains_extra[:10]):
+            ch = c.get("change_1d_pct")
+            if ch is not None and abs(ch) >= 4:
+                first_emitter = idx
+                break
+        if first_emitter is not None:
+            for idx, c in enumerate(chains_extra[:10]):
+                if idx == first_emitter:
+                    continue
+                ch = c.get("change_1d_pct")
+                if ch is not None and abs(ch) >= 4:
+                    sev = "good" if ch > 0 else "bad"
+                    out.append({
+                        "kind": "trend", "asset": "global", "severity": sev,
+                        "headline": f"{c.get('name')} TVL {'+'if ch>0 else ''}{ch:.1f}% today (${(c.get('tvl_usd') or 0)/1e9:.1f}B)",
+                        "detail": "Second-place 1d chain mover in the top-10 by TVL.",
+                    })
+                    break
+
+    # Top DeFi protocol mover (≥10% 1d change)
+    protocols = ((market.get("defi") or {}).get("protocols")) or []
+    if protocols:
+        # Sort by |change_1d_pct| descending, ignoring None.
+        ranked = sorted(
+            (p for p in protocols if p.get("change_1d_pct") is not None),
+            key=lambda p: abs(p.get("change_1d_pct") or 0),
+            reverse=True,
+        )
+        if ranked:
+            top = ranked[0]
+            ch = top.get("change_1d_pct") or 0
+            if abs(ch) >= 10:
+                sev = "good" if ch > 0 else "bad"
+                tvl_b = (top.get("tvl_usd") or 0) / 1e9
+                out.append({
+                    "kind": "trend", "asset": "global", "severity": sev,
+                    "headline": f"{top.get('name')} TVL {'+' if ch > 0 else ''}{ch:.1f}% today (${tvl_b:.2f}B)",
+                    "detail": f"Largest 1d protocol mover by % change. Category: {top.get('category') or '—'}.",
+                })
+
     # ETH/BTC ratio extremes
     ethbtc = market.get("ethbtc") or []
     if len(ethbtc) >= 60:
@@ -493,26 +769,35 @@ def _market_insight_tab(insight: dict) -> str:
     """
     raw = insight.get("headline") or ""
     h = raw.lower()
-    # Trading desk: sentiment, funding, IV, BTC↔ETH crosses
+    # Trading desk: sentiment, funding, IV, BTC↔ETH crosses, OI, L/S
     if "fear & greed" in h: return "trading"
     if "funding flipped" in h: return "trading"
     if "dvol" in h: return "trading"
     if "eth/btc" in h: return "trading"
-    # DeFi: gas, stablecoin supply, DEX volume, chain TVL
+    if "open interest" in h: return "trading"
+    if "l/s ratio" in h: return "trading"
+    # DeFi: gas, stablecoin supply, DEX volume, chain/protocol TVL
     if "gas" in h: return "defi"
     if "stablecoin supply" in h: return "defi"
     if "dex 24h" in h: return "defi"
     if "tvl" in h: return "defi"
-    # Whale / on-chain: mempool, hashrate, difficulty, mining concentration
+    # Whale / on-chain: mempool, hashrate, difficulty, mining concentration,
+    # on-chain transfer volume, active-address swings
     if "mempool" in h: return "whale"
     if "hashrate" in h: return "whale"
     if "difficulty retarget" in h: return "whale"
     if "mining concentration" in h: return "whale"
+    if "whale tx volume" in h: return "whale"
+    if "on-chain transfer volume" in h: return "whale"
+    if "active addresses" in h: return "whale"
     # Markets / macro: traditional indices, news, trending tickers, source divergence
     if "dxy" in h: return "markets"
     if "10y treasury" in h: return "markets"
     if "gold at" in h: return "markets"
     if "s&p 500" in h: return "markets"
+    if "nasdaq" in h: return "markets"
+    if "dow jones" in h: return "markets"
+    if "vix " in h or h.startswith("vix"): return "markets"
     if "📰" in raw: return "markets"
     if "trending #1" in h: return "markets"
     if "price divergence" in h: return "markets"
