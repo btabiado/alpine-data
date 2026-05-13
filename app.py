@@ -1260,9 +1260,36 @@ function renderLS(){
   });
 }
 
+// Toggle an empty-state placeholder inside a chart's .chart-wrap container.
+// Returns true if data is present (caller should proceed to build the chart);
+// false if the placeholder is shown (caller should skip the chart).
+function chartOrEmpty(canvasId, hasData, msg){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return hasData;
+  const wrap = canvas.parentElement;
+  let empty = wrap.querySelector('.chart-empty');
+  if (!empty) {
+    empty = document.createElement('div');
+    empty.className = 'chart-empty';
+    empty.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:12px;text-align:center;padding:14px;line-height:1.4';
+    wrap.appendChild(empty);
+  }
+  if (!hasData) {
+    canvas.style.display = 'none';
+    empty.style.display = 'flex';
+    empty.textContent = msg || 'No data available.';
+    return false;
+  }
+  canvas.style.display = '';
+  empty.style.display = 'none';
+  return true;
+}
+
 function renderDvol(){
   const a = tradingAssetData(); const series = ra(a.dvol, 'last');
   destroy('dvol');
+  if (!chartOrEmpty('dvolChart', series.length > 0,
+      `DVOL not available for ${state.asset.toUpperCase()} — Deribit only quotes BTC and ETH.`)) return;
   charts.dvol = new Chart(document.getElementById('dvolChart'), {
     type:'line',
     data:{labels:series.map(r=>r.date), datasets:[{data:series.map(r=>r.dvol), borderColor:'#06b6d4', backgroundColor:'#06b6d422', fill:true, tension:0.2, pointRadius:0, borderWidth:2}]},
@@ -1654,14 +1681,25 @@ function renderDefi(){
       labels: top15.map(c => c.name),
       datasets: [{
         data: top15.map(c => c.tvl_usd || 0),
-        backgroundColor: top15.map(c => (c.change_1d_pct||0) >= 0 ? '#22c55e' : '#ef4444'),
+        // Treat missing change_1d_pct as neutral grey (not green) so we don't
+        // pretend every chain rose when DeFiLlama hasn't returned a delta yet.
+        backgroundColor: top15.map(c => {
+          const ch = c.change_1d_pct;
+          if (ch == null) return '#475569';   // slate-600 — "no data"
+          return ch >= 0 ? '#22c55e' : '#ef4444';
+        }),
         borderWidth: 0,
       }],
     },
     options: {
       indexAxis: 'y',
       responsive: true, maintainAspectRatio: false,
-      plugins: {legend:{display:false}, tooltip:{callbacks:{label: ctx => `TVL ${fmtUSD(ctx.parsed.x,'auto')} (1d ${(top15[ctx.dataIndex].change_1d_pct||0).toFixed(2)}%)`}}},
+      plugins: {legend:{display:false}, tooltip:{callbacks:{label: ctx => {
+        const c = top15[ctx.dataIndex];
+        const ch = c.change_1d_pct;
+        const chStr = (ch == null) ? '—' : `${ch>=0?'+':''}${ch.toFixed(2)}%`;
+        return `TVL ${fmtUSD(ctx.parsed.x,'auto')} (1d ${chStr})`;
+      }}}},
       scales: {
         x:{ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{color:'#1f2533'}},
         y:{ticks:{color:'#e6e8ee'}, grid:{display:false}},
@@ -1892,7 +1930,10 @@ function renderWhaleExtras(){
   // Difficulty card
   const dEl = document.getElementById('diffAdjBox');
   if (dEl) {
-    if (!diff.remaining_blocks && !diff.difficulty_change_pct) {
+    // Use explicit `== null` so a legitimate 0 (e.g. zero blocks remaining,
+    // or zero predicted change) still renders the card instead of showing
+    // "Loading…" forever.
+    if (diff.remaining_blocks == null && diff.difficulty_change_pct == null) {
       dEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
     } else {
       const days = (diff.remaining_time_ms || 0) / 86400000;
@@ -1911,7 +1952,9 @@ function renderWhaleExtras(){
   // Lightning card
   const lEl = document.getElementById('lightningBox');
   if (lEl) {
-    if (!ln.node_count) {
+    // Explicit null-check: an LN network that genuinely has 0 nodes (e.g.
+    // during a regional fetch outage) should not be stuck on "Loading…".
+    if (ln.node_count == null) {
       lEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
     } else {
       lEl.innerHTML = `
