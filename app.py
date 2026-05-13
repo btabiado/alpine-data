@@ -369,6 +369,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 @media (max-width:720px){
   #chatDock{width:100%}
 }
+/* Mobile: collapse Overview hero band to one column so phone view doesn't horizontal-scroll. */
+@media (max-width:860px){
+  #tab-overview > div:first-of-type{grid-template-columns:1fr !important}
+}
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
 .note{font-size:11px;color:var(--muted);background:#10151f;border:1px solid var(--border);padding:8px 12px;border-radius:8px}
@@ -444,12 +448,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <h2>Traditional indices <span class="tag">Yahoo</span></h2>
           <span class="desc">US market close · 1d / 5d / 30d</span>
         </div>
-        <div id="overviewIndices" style="display:flex;flex-direction:column;gap:8px;padding:2px;flex:1;justify-content:space-between"></div>
+        <div id="overviewIndices" style="display:flex;flex-direction:column;gap:8px;padding:2px;flex:1;justify-content:flex-start"></div>
       </div>
     </div>
 
     <!-- Row 2: Signal cards (our secret sauce — clickable) -->
-    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:6px"></div>
+    <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:6px"></div>
 
     <!-- Row 3: top news + top insights -->
     <div class="grid2">
