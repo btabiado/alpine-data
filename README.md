@@ -9,7 +9,7 @@ Local, live web dashboard for actively monitoring BTC and ETH. Four tabs:
 3. **Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Not investment advice.
 4. **Whale Activity** (BTC) — on-chain proxies: avg tx USD, daily tx volume, active addresses, hash rate, miners revenue.
 
-All trading + whale data uses **free APIs, no key required**. Live web server included.
+All trading + whale data uses **free APIs, no key required**. Live web server included. Optional HTTP Basic Auth — set `DASH_USER` / `DASH_PASS` env vars. See [`docs/SETUP.md`](docs/SETUP.md).
 
 ## Quickstart
 

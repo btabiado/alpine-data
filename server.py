@@ -42,6 +42,44 @@ REFRESH_MINUTES = int(os.environ.get("REFRESH_MINUTES", "30"))
 flask_app = Flask(__name__)
 
 
+# ---------- HTTP Basic Auth ----------
+# Set both env vars to enable. If either is missing, the dashboard runs
+# wide-open (legacy behaviour) so local dev stays frictionless.
+#
+#   export DASH_USER="btabiado"
+#   export DASH_PASS="<your-strong-password>"
+#
+DASH_USER = os.environ.get("DASH_USER")
+DASH_PASS = os.environ.get("DASH_PASS")
+AUTH_ENABLED = bool(DASH_USER and DASH_PASS)
+
+# Endpoints that bypass auth (so the bookmarklet from Farside still works
+# cross-origin, and so the health probe stays usable for monitoring).
+_AUTH_BYPASS = {"/healthz"}
+
+
+def _challenge() -> Response:
+    return Response(
+        "Authentication required.",
+        401,
+        {"WWW-Authenticate": 'Basic realm="ETF Dashboard"'},
+    )
+
+
+@flask_app.before_request
+def _require_auth():
+    if not AUTH_ENABLED:
+        return None  # auth off, anything goes (legacy)
+    if request.method == "OPTIONS":
+        return None  # CORS preflight
+    if request.path in _AUTH_BYPASS:
+        return None
+    auth = request.authorization
+    if auth and auth.username == DASH_USER and auth.password == DASH_PASS:
+        return None
+    return _challenge()
+
+
 @flask_app.after_request
 def _cors(resp):
     """Allow the bookmarklet on third-party pages (Farside, SoSoValue) to POST CSVs here."""
@@ -188,6 +226,7 @@ BOOKMARKLET_JS = """
 (async () => {
   const PORT = 8765;
   const ENDPOINT = `http://127.0.0.1:${PORT}/api/upload-csv`;
+  const AUTH = __AUTH_HEADER__;  // populated server-side when DASH_USER/DASH_PASS set
   const tables = document.querySelectorAll('table');
   if (!tables.length) { alert('No <table> on this page.'); return; }
   let best = null, bestRows = 0;
@@ -219,9 +258,11 @@ BOOKMARKLET_JS = """
   if (url.includes('ethereum') || /\\b(ETHA|FETH|ETHE|ETHW)\\b/.test(tableText)) asset = 'eth';
   if (!confirm(`Send ${lines.length-1} rows to ${asset.toUpperCase()} dashboard?\\nFirst line: ${lines[0].slice(0,80)}\\nLast line:  ${lines[lines.length-1].slice(0,80)}`)) return;
   try {
+    const headers = { 'Content-Type': 'text/plain' };
+    if (AUTH) headers['Authorization'] = AUTH;
     const resp = await fetch(`${ENDPOINT}?asset=${asset}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers,
       body: csv,
     });
     const j = await resp.json();
@@ -236,8 +277,17 @@ BOOKMARKLET_JS = """
 
 @flask_app.route("/bookmarklet")
 def bookmarklet_page() -> Response:
+    import base64
     import urllib.parse
-    minified = " ".join(BOOKMARKLET_JS.split())
+    # If auth is enabled, embed the user's credentials in the bookmarklet
+    # so cross-origin POSTs from farside.co.uk can pass auth.
+    if AUTH_ENABLED:
+        token = base64.b64encode(f"{DASH_USER}:{DASH_PASS}".encode()).decode()
+        auth_literal = '"Basic ' + token + '"'
+    else:
+        auth_literal = "null"
+    js_src = BOOKMARKLET_JS.replace("__AUTH_HEADER__", auth_literal)
+    minified = " ".join(js_src.split())
     href = "javascript:" + urllib.parse.quote(minified, safe="(){};,:='\"$.+_-/?&* []!@#%^&|<>")
     html = """<!doctype html>
 <html><head><meta charset="utf-8"><title>ETF flow bookmarklet</title>

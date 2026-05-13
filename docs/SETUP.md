@@ -4,6 +4,54 @@ User-action items that can't be installed for you, with copy-paste-ready steps.
 
 ---
 
+## 0. Add a password to the dashboard (HTTP Basic Auth)
+
+The local Flask server has zero auth by default — anyone reachable over
+your network (Wi-Fi or Tailscale) can view your dashboard. To require a
+login:
+
+### Pick a strong password and set env vars
+```bash
+# Open ~/.zprofile in any editor and add:
+export DASH_USER="btabiado"
+export DASH_PASS="<a strong password — use 1Password, etc.>"
+
+# Reload your shell env:
+source ~/.zprofile
+
+# Restart the server so it picks up the new env:
+lsof -ti:8765 | xargs kill -9
+cd ~/btc-eth-etf-dashboard
+HOST=0.0.0.0 .venv/bin/python server.py
+```
+
+### Verify
+Visit **http://127.0.0.1:8765/**. The browser pops a username/password
+dialog. Enter `btabiado` + your password. After success, the browser
+caches it for the session — no further prompts.
+
+### What's protected vs not
+- **Protected:** `/`, `/api/data`, `/api/refresh`, `/api/chat`,
+  `/api/upload-csv`, `/api/seed-etf`, `/bookmarklet`
+- **NOT protected:** `/healthz` (so uptime monitors / Tailscale probes
+  work without creds)
+
+### The bookmarklet still works
+When auth is on, the `/bookmarklet` page embeds your credentials
+directly into the generated bookmarklet (only visible to you after
+you've logged in). The bookmark itself sends `Authorization: Basic ...`
+on every cross-origin POST, so the Farside import workflow keeps working.
+
+If you regenerate the bookmarklet (e.g. you change your password),
+re-visit **/bookmarklet** and re-drag the orange button into your
+bookmarks bar.
+
+### Reverting to no-auth
+Just unset the env vars (or comment them out in `~/.zprofile`) and
+restart the server. With no `DASH_USER`/`DASH_PASS` set, auth is bypassed.
+
+---
+
 ## 1. Enable real LLM chat (set `ANTHROPIC_API_KEY`)
 
 The chat dock works out-of-the-box in **rule-based fallback** mode — it
