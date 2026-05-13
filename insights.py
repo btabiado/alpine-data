@@ -473,13 +473,69 @@ def _market_insights(payload: dict) -> list[dict]:
     return out
 
 
+# ----- per-tab classification -----
+#
+# Every insight is tagged with the dashboard tab it belongs to so the
+# Insights bar can filter to "just the things relevant to what I'm looking
+# at right now." The Overview tab is intentionally NOT in the mapping —
+# Overview shows its own curated "Top insights" card from the global list,
+# and the per-tab Insights bar is hidden when Overview is active.
+
+VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale"}
+
+
+def _market_insight_tab(insight: dict) -> str:
+    """Classify a market-generator insight to a single dashboard tab.
+
+    Headlines are stable strings emitted by `_market_insights`; the matching
+    is intentionally explicit so test_insights can catch drift if someone
+    changes a headline without updating the mapping.
+    """
+    raw = insight.get("headline") or ""
+    h = raw.lower()
+    # Trading desk: sentiment, funding, IV, BTC↔ETH crosses
+    if "fear & greed" in h: return "trading"
+    if "funding flipped" in h: return "trading"
+    if "dvol" in h: return "trading"
+    if "eth/btc" in h: return "trading"
+    # DeFi: gas, stablecoin supply, DEX volume, chain TVL
+    if "gas" in h: return "defi"
+    if "stablecoin supply" in h: return "defi"
+    if "dex 24h" in h: return "defi"
+    if "tvl" in h: return "defi"
+    # Whale / on-chain: mempool, hashrate, difficulty, mining concentration
+    if "mempool" in h: return "whale"
+    if "hashrate" in h: return "whale"
+    if "difficulty retarget" in h: return "whale"
+    if "mining concentration" in h: return "whale"
+    # Markets / macro: traditional indices, news, trending tickers, source divergence
+    if "dxy" in h: return "markets"
+    if "10y treasury" in h: return "markets"
+    if "gold at" in h: return "markets"
+    if "s&p 500" in h: return "markets"
+    if "📰" in raw: return "markets"
+    if "trending #1" in h: return "markets"
+    if "price divergence" in h: return "markets"
+    # Default: anything else macro-flavoured lands in Markets.
+    return "markets"
+
+
 def build_insights(payload: dict, limit: int = 12) -> list[dict]:
     """Top-level entry. Returns up to `limit` insights, prioritised."""
-    out: list[dict] = []
-    out += _etf_insights(payload, "btc")
-    out += _etf_insights(payload, "eth")
-    out += _signal_insights(payload)
-    out += _market_insights(payload)
+    etf_btc = _etf_insights(payload, "btc")
+    etf_eth = _etf_insights(payload, "eth")
+    sigs = _signal_insights(payload)
+    mkts = _market_insights(payload)
+
+    # Tag with the tab each insight belongs to.
+    for i in etf_btc + etf_eth:
+        i.setdefault("tab", "etf")
+    for i in sigs:
+        i.setdefault("tab", "signals")
+    for i in mkts:
+        i.setdefault("tab", _market_insight_tab(i))
+
+    out = etf_btc + etf_eth + sigs + mkts
 
     # Prioritise: milestones + anomalies first, then ETF, then trends, then signals, then info
     rank = {
