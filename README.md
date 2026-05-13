@@ -1,4 +1,4 @@
-# BTC & ETH Trading Dashboard
+# Crypto Trading Dashboard
 
 [![tests](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml)
 
