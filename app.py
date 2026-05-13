@@ -1687,6 +1687,11 @@ function renderWhaleTracker(){
     { label: 'Tx count',         series: w.tx_count,            fmt: v => fmtNum(v, 0) },
     { label: 'Avg tx size',      series: w.avg_tx_usd,          fmt: v => fmtUSD(v, 'auto') },
     { label: 'Tx volume USD',    series: w.tx_volume_usd,       fmt: v => fmtUSD(v, 'auto') },
+    // BTC actually moved on-chain — total of all transaction outputs that day.
+    // Network-wide (blockchain.info doesn't expose per-address detail), but
+    // since most BTC moved per day is in larger transactions, this is a
+    // reasonable proxy for whale-cohort activity in BTC units.
+    { label: 'BTC moved on-chain', series: w.output_volume_btc, fmt: v => fmtNum(v, 0) + ' BTC' },
     { label: 'Miner revenue',    series: w.miners_revenue_usd,  fmt: v => fmtUSD(v, 'auto') },
     // hash_rate raw is GH/s in blockchain.info; divide by 1e9 → EH/s for display.
     { label: 'Hash rate',        series: w.hash_rate,           fmt: v => fmtNum(v / 1e9, 0) + ' EH/s' },
