@@ -227,6 +227,94 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
                     "headline": f"{asset.upper()} ETF flow pace 2x the 90-day average ({_fmt_usd(sum7_recent)} last 7d)",
                     "detail": f"90-day rolling 7d avg: {_fmt_usd(avg_abs)}",
                 })
+
+    # 9. Top-fund concentration: when a single fund drives ≥60% of today's
+    # net flow and the net flow is meaningful (≥$100M abs).
+    if fresh and by_fund_daily and abs(last_flow) >= 100:
+        last_per_fund_signed = []
+        for fund, series in by_fund_daily.items():
+            if series and series[-1].get("date") == last_date:
+                last_per_fund_signed.append((fund, series[-1].get("flow") or 0))
+        if last_per_fund_signed:
+            # Find fund with largest |flow|.
+            top_abs = max(last_per_fund_signed, key=lambda x: abs(x[1]))
+            if last_flow != 0 and abs(top_abs[1]) / abs(last_flow) >= 0.6:
+                pct = abs(top_abs[1]) / abs(last_flow) * 100.0
+                out.append({
+                    "kind": "etf", "asset": asset,
+                    "severity": "good" if last_flow > 0 else "bad",
+                    "headline": f"{asset.upper()} ETF: {top_abs[0]} drove {pct:.0f}% of today's net flow",
+                    "detail": f"{top_abs[0]} {_fmt_usd(top_abs[1])} vs net {_fmt_usd(last_flow)}.",
+                })
+
+    # 10. Outflow leader: the single fund bleeding the worst today (≤ −$25M).
+    # Skip the not-noteworthy case where net flow is positive AND the worst
+    # fund is only mildly negative (between -25 and 0).
+    if fresh and by_fund_daily:
+        last_per_fund_signed = []
+        for fund, series in by_fund_daily.items():
+            if series and series[-1].get("date") == last_date:
+                last_per_fund_signed.append((fund, series[-1].get("flow") or 0))
+        if last_per_fund_signed:
+            worst = min(last_per_fund_signed, key=lambda x: x[1])
+            worst_flow = worst[1]
+            # Threshold: ≤ -25; if net flow positive AND worst > -25, skip.
+            if worst_flow <= -25 and not (last_flow > 0 and worst_flow > -25):
+                out.append({
+                    "kind": "etf", "asset": asset, "severity": "bad",
+                    "headline": f"{asset.upper()} ETF: {worst[0]} leads outflows at {_fmt_usd(worst_flow)}",
+                    "detail": f"Net flow today: {_fmt_usd(last_flow)}.",
+                })
+
+    # 11. New all-time cumulative high: today's cumulative > max of all prior
+    # cumulative values. Reports even on stale data (it's a milestone).
+    cumulative_series = [d.get("cumulative") for d in daily if d.get("cumulative") is not None]
+    if len(cumulative_series) >= 2:
+        last_cum = cumulative_series[-1]
+        prior_max = max(cumulative_series[:-1])
+        if last_cum is not None and last_cum > prior_max:
+            out.append({
+                "kind": "milestone", "asset": asset, "severity": "good",
+                "headline": f"{asset.upper()} ETF cumulative hits new all-time high: {_fmt_usd(last_cum)}",
+                "detail": f"Prior peak: {_fmt_usd(prior_max)} as of {last_date}.",
+            })
+
+    # 12. Month-over-month aggregate: last 30 days vs prior 30 days. Trigger
+    # when same-sign and ≥2× in abs terms, with the recent window ≥$1B.
+    if fresh and len(flows) >= 60:
+        curr_30 = sum(flows[-30:])
+        prev_30 = sum(flows[-60:-30])
+        same_sign = (curr_30 > 0 and prev_30 > 0) or (curr_30 < 0 and prev_30 < 0)
+        if same_sign and abs(curr_30) >= 1000 and abs(prev_30) > 0 and abs(curr_30) >= 2 * abs(prev_30):
+            direction = "accelerated" if curr_30 > 0 else "deepened"
+            sev = "good" if curr_30 > 0 else "bad"
+            out.append({
+                "kind": "trend", "asset": asset, "severity": sev,
+                "headline": f"{asset.upper()} ETF: month-over-month flows {direction} sharply ({_fmt_usd(prev_30)} → {_fmt_usd(curr_30)})",
+                "detail": "30d vs prior 30d net flows.",
+            })
+
+    # 13. Flow vs price divergence: 7d flow strongly diverges from 7d price.
+    # Threshold: |7d flow| ≥ $300M and 7d price change ≥5% in the opposite
+    # direction. Pulls price series from payload["market"][asset]["price"].
+    if fresh and len(flows) >= 7:
+        price_rows = (((payload.get("market") or {}).get(asset) or {}).get("price")) or []
+        # Need at least 8 points to compute a 7-day change.
+        if len(price_rows) >= 8:
+            sum7_flow = sum(flows[-7:])
+            p_now = price_rows[-1].get("value")
+            p_then = price_rows[-8].get("value")
+            if p_now and p_then and p_then > 0 and abs(sum7_flow) >= 300:
+                price_pct = (p_now / p_then - 1) * 100.0
+                # Positive flow + price down ≥5%, OR negative flow + price up ≥5%.
+                if (sum7_flow >= 300 and price_pct <= -5) or (sum7_flow <= -300 and price_pct >= 5):
+                    flow_dir = "inflows" if sum7_flow > 0 else "outflows"
+                    price_dir = "fell" if price_pct < 0 else "rose"
+                    out.append({
+                        "kind": "anomaly", "asset": asset, "severity": "alert",
+                        "headline": f"{asset.upper()} ETF flow vs price divergence: {flow_dir} {_fmt_usd(abs(sum7_flow))} 7d while price {price_dir} {price_pct:+.1f}%",
+                        "detail": "Flows and spot are pointing in opposite directions — sentiment dislocation.",
+                    })
     return out
 
 
@@ -310,6 +398,90 @@ def _signal_insights(payload: dict) -> list[dict]:
             "headline": f"{asset.upper()} signal driven by {name} contribution {contrib:+d}",
             "detail": f"Largest single driver of the {score:+d} composite score.",
         })
+    return out
+
+
+def _whale_insights(payload: dict) -> list[dict]:
+    """BTC on-chain whale-tab rules. Operates on payload['whale']['btc'].
+
+    Each rule guards for empty/missing series. Freshness is not strictly
+    enforced here because blockchain.info is occasionally a day or two
+    behind — the trends still describe the most recent state we have.
+    """
+    out: list[dict] = []
+    btc = (payload.get("whale") or {}).get("btc") or {}
+
+    def _vals(series_name: str) -> list[float]:
+        rows = btc.get(series_name) or []
+        return [r.get("value") for r in rows if r.get("value") is not None]
+
+    addrs = _vals("active_addresses")
+    tx_count = _vals("tx_count")
+    tx_vol = _vals("tx_volume_usd")
+    avg_tx = _vals("avg_tx_usd")
+    miners = _vals("miners_revenue_usd")
+
+    addrs_high = _largest_in_window(addrs, 30) if len(addrs) >= 2 else False
+    addrs_low = _smallest_in_window(addrs, 30) if len(addrs) >= 2 else False
+    txc_high = _largest_in_window(tx_count, 30) if len(tx_count) >= 2 else False
+    txc_low = _smallest_in_window(tx_count, 30) if len(tx_count) >= 2 else False
+    vol_low = _smallest_in_window(tx_vol, 30) if len(tx_vol) >= 2 else False
+
+    # 1. Active addresses 30d high
+    if addrs_high and addrs:
+        last = addrs[-1]
+        out.append({
+            "kind": "milestone", "asset": "btc", "severity": "good",
+            "headline": f"BTC active addresses at 30-day high ({last:,.0f})",
+            "detail": "Network participation surging.",
+        })
+
+    # 2. Active addresses 30d low
+    if addrs_low and addrs:
+        last = addrs[-1]
+        out.append({
+            "kind": "anomaly", "asset": "btc", "severity": "bad",
+            "headline": f"BTC active addresses at 30-day low ({last:,.0f}) — network engagement weak",
+            "detail": None,
+        })
+
+    # 3. Average transaction size spike (≥1.5σ above 30d mean) — whale proxy.
+    if len(avg_tx) >= 31:
+        z = _zscore(avg_tx, 30)
+        if z is not None and z >= 1.5:
+            out.append({
+                "kind": "anomaly", "asset": "btc", "severity": "info",
+                "headline": f"BTC avg transaction size {z:+.1f}σ vs 30d — big-money on-chain",
+                "detail": f"Latest avg tx: {_fmt_usd((avg_tx[-1] or 0) / 1e6)}.",
+            })
+
+    # 4. Miner revenue spike (≥2σ above 30d mean).
+    if len(miners) >= 31:
+        z = _zscore(miners, 30)
+        if z is not None and z >= 2:
+            last = miners[-1] or 0
+            out.append({
+                "kind": "anomaly", "asset": "btc", "severity": "good",
+                "headline": f"BTC miner revenue {z:+.1f}σ vs 30d ({_fmt_usd(last / 1e6)}M today)",
+                "detail": "Miners earning more — supports network security and may ease sell-pressure.",
+            })
+
+    # 5. Combined network momentum: tx_count AND active_addresses both at 30d highs.
+    if txc_high and addrs_high:
+        out.append({
+            "kind": "milestone", "asset": "btc", "severity": "good",
+            "headline": "BTC network momentum strong: both tx count and active addresses at 30-day highs",
+            "detail": "Broad-based on-chain engagement.",
+        })
+
+    # 6. On-chain quiet day: tx_count + active_addresses + tx_volume all at 30d lows.
+    if txc_low and addrs_low and vol_low:
+        out.append({
+            "kind": "trend", "asset": "btc", "severity": "info",
+            "headline": "BTC on-chain unusually quiet: tx count, active addresses, and volume all at 30-day lows",
+            "detail": "Network engagement low — could indicate consolidation or holiday lull.",
+        })
+
     return out
 
 
@@ -810,6 +982,7 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
     etf_btc = _etf_insights(payload, "btc")
     etf_eth = _etf_insights(payload, "eth")
     sigs = _signal_insights(payload)
+    whales = _whale_insights(payload)
     mkts = _market_insights(payload)
 
     # Tag with the tab each insight belongs to.
@@ -817,10 +990,12 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
         i.setdefault("tab", "etf")
     for i in sigs:
         i.setdefault("tab", "signals")
+    for i in whales:
+        i.setdefault("tab", "whale")
     for i in mkts:
         i.setdefault("tab", _market_insight_tab(i))
 
-    out = etf_btc + etf_eth + sigs + mkts
+    out = etf_btc + etf_eth + sigs + whales + mkts
 
     # Prioritise: milestones + anomalies first, then ETF, then trends, then signals, then info
     rank = {
