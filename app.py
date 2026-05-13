@@ -2233,7 +2233,13 @@ function selectTab(t){
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'PERIOD') b.style.display = showPeriod ? '' : 'none'; });
   // Overview simplification: hide BTC/ETH/LINK asset toggle, Range buttons, and the redundant Insights bar.
   const isOverview = (t === 'overview');
-  document.querySelectorAll('.btn[data-asset]').forEach(b => b.style.display = isOverview ? 'none' : '');
+  // Whale is BTC-only on-chain; hide ETH/LINK so the toggle stays consistent.
+  const isWhale = (t === 'whale');
+  document.querySelectorAll('.btn[data-asset]').forEach(b => {
+    if (isOverview) { b.style.display = 'none'; return; }
+    if (isWhale && b.dataset.asset !== 'btc') { b.style.display = 'none'; return; }
+    b.style.display = '';
+  });
   document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = isOverview ? 'none' : '');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'RANGE') b.style.display = isOverview ? 'none' : ''; });
   const insightsBar = document.getElementById('insightsBar');
