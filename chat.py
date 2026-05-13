@@ -245,9 +245,11 @@ def answer(question: str, payload: dict) -> str:
 # ---- safety: pre-filter clearly out-of-scope questions ----
 
 _OUT_OF_SCOPE = re.compile(
-    r"(buy|sell|short|long)\s+(now|today|this)|"
-    r"price\s+target|"
-    r"will\s+(btc|eth|link|bitcoin|ethereum|chainlink)\s+go",
+    r"\b(should|do|can|would|could)\s+(i|we|you)\s+(buy|sell|short|long)\b|"
+    r"\b(buy|sell|short|long)\b.{0,40}\b(now|today|this|right\s+now)\b|"
+    r"\bprice\s+target\b|"
+    r"\bwill\s+(btc|eth|link|bitcoin|ethereum|chainlink)\b.*\b(go|reach|hit|moon)\b|"
+    r"\b(prediction|forecast|will\s+pump|will\s+dump|to\s+the\s+moon)\b",
     re.IGNORECASE,
 )
 

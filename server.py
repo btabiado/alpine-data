@@ -364,8 +364,11 @@ def api_chat() -> Response:
                 if not configured:
                     # No API key — return rule-based fallback answer
                     text = chat_mod.fallback_answer(question, payload)
+                    scope_note = ("Note: I won't make explicit buy/sell calls or price "
+                                  "predictions, but here's what the indicators currently say.\n\n"
+                                  if out_of_scope_warning else "")
                     notice = "(LLM offline — using rule-based fallback. Set ANTHROPIC_API_KEY to enable Claude.)\n\n"
-                    full = notice + text
+                    full = scope_note + notice + text
                     # Emit in chunks of ~50 chars to feel like streaming
                     step = 50
                     for i in range(0, len(full), step):
