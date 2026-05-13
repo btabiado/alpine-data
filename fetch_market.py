@@ -610,7 +610,42 @@ def fetch_fred() -> dict:
                 except (TypeError, ValueError):
                     continue
         out[friendly] = rows
+
+    # Fallback: FRED's London Gold fixings (AM and PM) were both discontinued
+    # in 2017. If gold came back empty, pull from Yahoo Finance gold futures
+    # (GC=F) — free, no key, ~2 years of daily closes.
+    if not out.get("gold"):
+        out["gold"] = _yahoo_gold(days=1095)
+        if out["gold"]:
+            out["gold_source"] = "yahoo:GC=F"
+
     return out
+
+
+def _yahoo_gold(days: int = 1095) -> list[dict]:
+    """Daily gold futures closes from Yahoo Finance public chart API."""
+    range_str = "2y" if days <= 730 else "5y"
+    j = _get(
+        "https://query1.finance.yahoo.com/v8/finance/chart/GC=F",
+        {"range": range_str, "interval": "1d"},
+    )
+    if not j or not isinstance(j, dict):
+        return []
+    try:
+        result = (j.get("chart") or {}).get("result", [])[0]
+        timestamps = result.get("timestamp") or []
+        closes = ((result.get("indicators") or {}).get("quote") or [{}])[0].get("close") or []
+    except (IndexError, AttributeError, TypeError):
+        return []
+    rows = []
+    for ts, close in zip(timestamps, closes):
+        if close is None or ts is None:
+            continue
+        rows.append({
+            "date": datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d"),
+            "value": float(close),
+        })
+    return rows[-days:]
 
 
 def defillama() -> dict:
