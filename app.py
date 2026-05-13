@@ -1468,12 +1468,26 @@ function severityIcon(sev, kind){
   return '•';
 }
 function renderInsights(){
-  const list = (DATA.insights || []);
+  // The Insights bar is per-tab. Overview hides the bar entirely (it has its
+  // own "Top insights" card inside the Overview content).
+  const all = (DATA.insights || []);
+  const tab = state.tab;
+  const list = (tab === 'overview') ? all : all.filter(i => (i.tab || 'markets') === tab);
   const host = document.getElementById('insightsList');
   const cnt = document.getElementById('insightsCount');
-  cnt.textContent = list.length ? `${list.length} signal${list.length>1?'s':''} as of ${DATA.generated_at?.slice(0,16) || ''}` : 'No notable changes';
+  const label = TAB_LABELS[tab] || 'Insights';
+  if (cnt) {
+    const asOf = (DATA.generated_at || '').slice(0, 16);
+    cnt.textContent = list.length
+      ? `${label} · ${list.length} as of ${asOf}`
+      : `${label} · none right now`;
+  }
+  // Re-label the strong "Insights" header if present (the bar's title).
+  const headerStrong = host?.parentElement?.querySelector('strong');
+  if (headerStrong && tab !== 'overview') headerStrong.textContent = label;
   if (!list.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted)">Nothing unusual right now. Load more data or wait for the next refresh.</div>';
+    const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
+    host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
     return;
   }
   host.innerHTML = list.map(i => {
@@ -2175,6 +2189,13 @@ function renderAll(){
 
 function selectTab(t){
   state.tab = t;
+  // Whale Activity is BTC-only (free on-chain proxies from blockchain.info).
+  // Force the asset to BTC so the page renders something useful instead of
+  // the "switch to BTC" empty state when the user is on ETH or LINK.
+  if (t === 'whale' && state.asset !== 'btc') {
+    state.asset = 'btc';
+    setActive('asset', 'btc');
+  }
   document.querySelectorAll('.tab').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === t);
     el.classList.toggle('eth', state.asset === 'eth');
