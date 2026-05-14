@@ -402,6 +402,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <button class="btn active" data-asset="btc">BTC</button>
     <button class="btn" data-asset="eth">ETH</button>
     <button class="btn" data-asset="link">LINK</button>
+    <button class="btn" data-asset="ltc">LTC</button>
     <span style="width:14px"></span>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
@@ -434,6 +435,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <!-- ============ SHARE MODAL (mint / list / revoke share links) ============ -->
+<!-- ============ CONFIGURE SIGNAL CARDS MODAL ============ -->
+<div id="configSignalsModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(440px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:14px">⚙️ Configure signal cards</h2>
+      <button class="btn" id="configSignalsClose">×</button>
+    </div>
+    <div class="sub">Pick which assets appear as signal cards on the Overview. Selection persists in your browser.</div>
+    <div id="configSignalsList" style="display:flex;flex-direction:column;gap:8px;padding:6px 0"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:10px">
+      <button class="btn" id="configSignalsReset">Reset to default</button>
+      <button class="btn active" id="configSignalsSave">Save</button>
+    </div>
+    <div id="configSignalsStatus" class="sub" style="color:var(--muted);min-height:14px"></div>
+  </div>
+</div>
+
 <div id="shareModal" class="modal-bg hidden">
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(640px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center">
@@ -491,7 +509,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
-    <!-- Row 1: Signal cards (HERO — our secret sauce, clickable) -->
+    <!-- Row 1: Signal cards (HERO — clickable) -->
+    <div style="display:flex;justify-content:flex-end;margin-bottom:-6px">
+      <button class="btn" id="configSignalsBtn" style="font-size:11px;padding:3px 8px" title="Pick which assets show signal cards">⚙️ Configure</button>
+    </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
 
     <!-- Row 2: top news + top insights -->
@@ -506,14 +527,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
 
-    <!-- Row 3: Traditional indices (LEFT, 1/3) + Macro snapshot (RIGHT, 2/3) -->
+    <!-- Row 3: Top 10 by 24h trading volume (LEFT, 1/3) + Macro snapshot (RIGHT, 2/3) -->
     <div id="overviewMacroRow" style="display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,2fr);gap:18px;align-items:stretch">
-      <div class="chart-card" style="display:flex;flex-direction:column">
+      <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="markets" title="See full top 25 on Markets tab">
         <div class="head">
-          <h2>Traditional indices <span class="tag">Yahoo</span></h2>
-          <span class="desc">US market close · 1d / 5d / 30d</span>
+          <h2>Top 10 by 24h volume <span class="tag">CoinGecko</span></h2>
+          <span class="desc">most actively traded right now · click to open Markets</span>
         </div>
-        <div id="overviewIndices" style="display:flex;flex-direction:column;gap:8px;padding:2px;flex:1;justify-content:flex-start"></div>
+        <div id="overviewTopVolume" style="display:flex;flex-direction:column;gap:6px;padding:2px;flex:1;justify-content:flex-start"></div>
       </div>
       <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
         <div class="head">
@@ -712,6 +733,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ MARKETS TAB ============ -->
   <div id="tab-markets" class="hidden">
+    <!-- Traditional indices strip — moved here from Overview. Macro context
+         lives alongside the crypto top-25 so the user can scan both. -->
+    <div class="chart-card" style="padding:14px 16px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">Traditional indices <span class="tag">Yahoo</span></h2>
+        <span class="desc">US market close · 1d / 5d / 30d &middot; 90d sparkline</span>
+      </div>
+      <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;padding:4px 2px"></div>
+    </div>
     <div class="card" style="padding:12px 16px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
         <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
@@ -2108,6 +2138,10 @@ function escapeHtml(s){
 const marketState = { sort: 'rank' };
 
 function renderMarkets(){
+  // Traditional indices were moved here from Overview — reuse the same
+  // render function which still targets #overviewIndices (id kept stable
+  // so we don't break any other references).
+  renderOverviewIndices();
   const rows = (DATA.market && DATA.market.markets_top) || [];
   const host = document.querySelector('#marketsTable tbody');
   if (!host) return;
@@ -2548,19 +2582,72 @@ function renderWhaleExtras(){
 function renderOverview(){
   renderOverviewSignals();
   renderOverviewMacro();
-  renderOverviewIndices();
+  renderOverviewTopVolume();
   renderOverviewNews();
   renderOverviewInsights();
 }
 
+// Top 10 coins by 24h trading volume (USD). Derives from the cached
+// markets_top list (which is top-25 by market cap) by re-sorting on
+// volume_24h_usd. Filters out stablecoins (USD-suffix) so the strip
+// stays focused on price-discovery flow, not USDT/USDC settlement churn.
+function renderOverviewTopVolume(){
+  const host = document.getElementById('overviewTopVolume');
+  if (!host) return;
+  const all = (DATA.market && DATA.market.markets_top) || [];
+  const isStable = c => /^(usd[tcskpoe]?|dai|busd|tusd|fdusd|pyusd)$/i.test(c.symbol || '');
+  const rows = all
+    .filter(c => !isStable(c) && (c.volume_24h_usd || 0) > 0)
+    .sort((a, b) => (b.volume_24h_usd || 0) - (a.volume_24h_usd || 0))
+    .slice(0, 10);
+  if (!rows.length) {
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No market data yet — refresh.</div>';
+    return;
+  }
+  host.innerHTML = rows.map((c, i) => {
+    const img = c.image ? `<img src="${c.image}" alt="" style="width:18px;height:18px;border-radius:50%">` : '';
+    const ch24 = c.change_24h_pct;
+    const chCls = ch24 == null ? '' : (ch24 >= 0 ? 'green' : 'red');
+    const chStr = ch24 == null ? '—' : (ch24 >= 0 ? '+' : '') + ch24.toFixed(2) + '%';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="color:var(--muted);width:18px;text-align:right">${i+1}</span>
+      ${img}
+      <span style="font-weight:600;min-width:48px">${escapeHtml(c.symbol||'')}</span>
+      <span style="flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name||'')}</span>
+      <span style="font-variant-numeric:tabular-nums;min-width:64px;text-align:right">${fmtUSD(c.volume_24h_usd, 'auto')}</span>
+      <span class="${chCls}" style="font-variant-numeric:tabular-nums;min-width:56px;text-align:right">${chStr}</span>
+    </div>`;
+  }).join('');
+}
+
+// Which signal cards appear on Overview. User-configurable via the
+// ⚙️ Configure button — selection persists in localStorage so it
+// survives reloads. Backend computes a signal for every asset key that
+// has price data in payload.market; UI just picks which to display.
+const SIGNAL_SUPPORTED = ['btc','eth','link','ltc'];
+const SIGNAL_DEFAULT = ['btc','eth','link','ltc'];
+
+function getSignalOrder(){
+  try {
+    const raw = localStorage.getItem('overviewSignals');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) {
+        return parsed.filter(a => SIGNAL_SUPPORTED.includes(a));
+      }
+    }
+  } catch(_) {}
+  return SIGNAL_DEFAULT.slice();
+}
+
 function renderOverviewSignals(){
   const sigs = DATA.signals || {};
-  const order = ['btc','eth','link'];
+  const order = getSignalOrder();
   const labelColor = (label) => ({
     'STRONG BUY':'#16a34a', 'BUY':'#22c55e', 'HOLD':'#f59e0b',
     'SELL':'#ef4444', 'STRONG SELL':'#b91c1c',
   })[label] || '#a78bfa';
-  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada'})[a] || '#a78bfa';
+  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
   const host = document.getElementById('overviewSignals');
   if (!host) return;
   host.innerHTML = order.map(a => {
@@ -2591,6 +2678,51 @@ function renderOverviewSignals(){
     el.addEventListener('click', () => selectTab(el.dataset.jump))
   );
 }
+
+// Configure signal cards modal — checkbox list of supported assets,
+// saved to localStorage on Save, instantly re-renders the card row.
+function openConfigSignals(){
+  const modal = document.getElementById('configSignalsModal');
+  const list  = document.getElementById('configSignalsList');
+  const status = document.getElementById('configSignalsStatus');
+  const ASSET_NAMES = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
+  const current = new Set(getSignalOrder());
+  list.innerHTML = SIGNAL_SUPPORTED.map(a =>
+    `<label style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:#0e1118;border:1px solid var(--border);border-radius:6px;cursor:pointer">
+      <input type="checkbox" data-asset="${a}" ${current.has(a) ? 'checked' : ''} style="cursor:pointer">
+      <strong style="min-width:40px">${a.toUpperCase()}</strong>
+      <span class="sub" style="color:var(--muted)">${ASSET_NAMES[a] || a}</span>
+    </label>`
+  ).join('');
+  status.textContent = '';
+  modal.classList.remove('hidden');
+}
+document.getElementById('configSignalsBtn')?.addEventListener('click', openConfigSignals);
+document.getElementById('configSignalsClose')?.addEventListener('click', () =>
+  document.getElementById('configSignalsModal').classList.add('hidden'));
+document.getElementById('configSignalsModal')?.addEventListener('click', e => {
+  if (e.target.id === 'configSignalsModal') e.target.classList.add('hidden');
+});
+document.getElementById('configSignalsSave')?.addEventListener('click', () => {
+  const checked = Array.from(document.querySelectorAll('#configSignalsList input[type=checkbox]:checked'))
+    .map(i => i.dataset.asset);
+  if (!checked.length) {
+    document.getElementById('configSignalsStatus').textContent = 'Pick at least one asset.';
+    return;
+  }
+  try {
+    localStorage.setItem('overviewSignals', JSON.stringify(checked));
+  } catch(_) {}
+  document.getElementById('configSignalsStatus').textContent = 'Saved.';
+  renderOverviewSignals();
+  setTimeout(() => document.getElementById('configSignalsModal').classList.add('hidden'), 600);
+});
+document.getElementById('configSignalsReset')?.addEventListener('click', () => {
+  try { localStorage.removeItem('overviewSignals'); } catch(_) {}
+  document.getElementById('configSignalsStatus').textContent = 'Reset to default.';
+  openConfigSignals();  // re-render checkboxes
+  renderOverviewSignals();
+});
 
 function renderOverviewMacro(){
   const fred = (DATA.market || {}).fred || {};
