@@ -805,6 +805,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </table>
         </div>
       </div>
+      <!-- Whale vs non-whale supply held (real cohort data from bitinfocharts) -->
+      <div class="chart-card">
+        <div class="head">
+          <h2>BTC supply: whales vs non-whales <span class="tag">bitinfocharts</span></h2>
+          <span class="desc">Total BTC held by addresses with ≥1,000 BTC (whales) vs everyone else &middot; daily back to 2021-05 &middot; honors Range buttons above</span>
+        </div>
+        <div class="chart-wrap tall"><canvas id="whaleCohortChart"></canvas></div>
+        <div class="row" id="whaleCohortKpis" style="margin-top:10px"></div>
+      </div>
       <!-- Whale activity proxy: BTC volume + avg tx size combined view -->
       <div class="chart-card">
         <div class="head">
@@ -813,7 +822,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
         <div class="chart-wrap tall"><canvas id="whaleProxyChart"></canvas></div>
         <div class="note" style="margin-top:10px;font-size:11px">
-          ⚠️ Best free proxy. True whale-cohort split (volume by ≥1,000 BTC transactions, address count by balance band) needs Glassnode Studio Lite (~$30/mo). If you sign up, paste the key and I'll wire the cohort-specific charts.
+          ⚠️ Best free <em>flow</em> proxy. True whale-cohort flow split (volume by ≥1,000 BTC transactions) needs Glassnode Studio Lite (~$30/mo). If you sign up, paste the key and I'll wire the cohort-flow chart.
         </div>
       </div>
       <!-- BTC network state additions -->
@@ -1693,7 +1702,86 @@ function renderWhale(){
   lineChart('minerChart',  'miner',  ra(w.miners_revenue_usd,'sum'),  '#f59e0b', v=>fmtUSD(v,'auto'));
   lineChart('outputChart', 'output', ra(w.output_volume_btc, 'sum'),  '#627eea', v=>fmtNum(v,0)+' BTC');
   renderWhaleTracker();
+  renderWhaleCohortChart();
   renderWhaleProxyChart();
+}
+
+// BTC supply held: whales (≥1,000 BTC addresses) vs non-whales (<1,000 BTC).
+// Real cohort data from bitinfocharts.com — daily back to ~2021-05. Honors
+// the Range selector at the top of the Whale tab via _whaleRangeFilter.
+function _whaleRangeFilter(rows){
+  if (!rows || !rows.length) return rows || [];
+  const range = state.range;
+  const days = {'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095}[range] || null;
+  if (!days) return rows;
+  return rows.slice(-days);
+}
+
+function renderWhaleCohortChart(){
+  const dist = ((DATA.whale||{}).distribution || {});
+  const buckets = _whaleRangeFilter(dist.buckets || []);
+  const kpiHost = document.getElementById('whaleCohortKpis');
+  destroy('whaleCohort');
+  if (!buckets.length) {
+    if (kpiHost) kpiHost.innerHTML = '<div class="sub" style="color:var(--muted)">No cohort data — wait for next fetch, or run python app.py --fetch-market.</div>';
+    return;
+  }
+  // Sum the 3 whale buckets vs the 5 non-whale buckets per row.
+  const whales = buckets.map(r => (r.b1k_10k||0) + (r.b10k_100k||0) + (r.b100k_1m||0));
+  const others = buckets.map(r => (r.b0_01||0) + (r.b01_1||0) + (r.b1_10||0) + (r.b10_100||0) + (r.b100_1k||0));
+  const dates  = buckets.map(r => r.date);
+  charts.whaleCohort = new Chart(document.getElementById('whaleCohortChart'), {
+    type:'line',
+    data:{
+      labels: dates,
+      datasets:[
+        {label:'Whales (≥1,000 BTC)',     data:whales, borderColor:'#f7931a',
+         backgroundColor:'#f7931a33', fill:true, tension:0.2, pointRadius:0, borderWidth:1.8},
+        {label:'Non-whales (<1,000 BTC)', data:others, borderColor:'#627eea',
+         backgroundColor:'#627eea33', fill:true, tension:0.2, pointRadius:0, borderWidth:1.8},
+      ],
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#e6e8ee'}},
+        tooltip:{mode:'index', intersect:false,
+          callbacks:{label: ctx => ctx.dataset.label + ': ' + fmtNum(ctx.parsed.y, 0) + ' BTC'}},
+      },
+      scales:{
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
+        y:{ticks:{color:'#8a93a6', callback:v=>fmtNum(v/1e6, 2) + 'M BTC'},
+           grid:{color:'#1f2533'}, title:{display:true, text:'BTC supply held', color:'#8a93a6'}},
+      },
+    },
+  });
+
+  // KPI strip below the chart: latest snapshot
+  if (kpiHost) {
+    const last = buckets[buckets.length - 1];
+    const wTotal = (last.b1k_10k||0) + (last.b10k_100k||0) + (last.b100k_1m||0);
+    const nTotal = (last.b0_01||0) + (last.b01_1||0) + (last.b1_10||0) + (last.b10_100||0) + (last.b100_1k||0);
+    const grand  = wTotal + nTotal;
+    const whalePct = grand > 0 ? (wTotal / grand * 100) : 0;
+    // 1y change in whale supply
+    const lookback = Math.min(365, buckets.length - 1);
+    const prev = buckets[buckets.length - 1 - lookback];
+    const prevWhale = (prev.b1k_10k||0) + (prev.b10k_100k||0) + (prev.b100k_1m||0);
+    const wDelta = prevWhale > 0 ? (wTotal - prevWhale) / prevWhale * 100 : null;
+    const cards = [
+      {label:'Whale supply (≥1K BTC)', val: fmtNum(wTotal/1e6, 2) + 'M BTC',
+       sub: `${whalePct.toFixed(1)}% of tracked supply`, cls: ''},
+      {label:'Non-whale supply',       val: fmtNum(nTotal/1e6, 2) + 'M BTC',
+       sub: `${(100-whalePct).toFixed(1)}% of tracked supply`, cls: ''},
+      {label:'≥10K BTC ("mega-whales")', val: fmtNum(((last.b10k_100k||0) + (last.b100k_1m||0))/1e6, 2) + 'M BTC',
+       sub: `${last.date}`, cls: ''},
+      {label:'Whale supply 1y Δ', val: wDelta == null ? '—' : `${wDelta>=0?'+':''}${wDelta.toFixed(2)}%`,
+       sub:'whales accumulating or distributing', cls: wDelta == null ? '' : (wDelta>=0?'green':'red')},
+    ];
+    kpiHost.innerHTML = cards.map(c =>
+      `<div class="card"><h3>${c.label}</h3><div class="v ${c.cls}">${c.val}</div><div class="sub">${c.sub}</div></div>`
+    ).join('');
+  }
 }
 
 // Whale activity proxy: combined two-axis chart of BTC moved per day +

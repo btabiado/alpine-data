@@ -919,11 +919,95 @@ def fetch_trading() -> dict:
     }
 
 
+def bitinfocharts_btc_distribution() -> dict:
+    """BTC supply held per address-balance cohort, daily, ~5 years back.
+
+    Source: bitinfocharts.com/bitcoin-distribution-history.html — they publish
+    the Dygraph data inline as `[new Date("YYYY/MM/DD"), v1, v2, ..., v8]`
+    arrays. Each row is one day; the 8 values are supply (BTC) held by
+    addresses in each balance band:
+
+        0-0.1, 0.1-1, 1-10, 10-100, 100-1K, 1K-10K, 10K-100K, 100K-1M
+
+    The last three columns (≥1,000 BTC) are the whale cohort.
+
+    Returns:
+        {
+            "labels": [...],
+            "buckets": [
+                {"date": "YYYY-MM-DD",
+                 "b0_01": ..., "b01_1": ..., "b1_10": ..., "b10_100": ...,
+                 "b100_1k": ..., "b1k_10k": ..., "b10k_100k": ..., "b100k_1m": ...},
+                ...
+            ],
+            "source": "bitinfocharts.com",
+        }
+
+    Returns an empty dict on any failure (network, parse, structure change).
+    """
+    import re
+    try:
+        r = requests.get(
+            "https://bitinfocharts.com/bitcoin-distribution-history.html",
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X)"},
+            timeout=30,
+        )
+        if r.status_code != 200 or not r.text:
+            print(f"  [skip] bitinfocharts -> {r.status_code}", file=sys.stderr)
+            return {}
+    except Exception as e:
+        print(f"  [skip] bitinfocharts -> {e}", file=sys.stderr)
+        return {}
+
+    pattern = re.compile(
+        r'\[new Date\("(\d{4}/\d{1,2}/\d{1,2})"\)((?:,\s*-?\d+(?:\.\d+)?|,\s*null)+)\]'
+    )
+    rows = []
+    for m in pattern.finditer(r.text):
+        date_iso = m.group(1).replace("/", "-")
+        # Pad single-digit month / day to 2 chars
+        try:
+            d = datetime.strptime(m.group(1), "%Y/%m/%d").strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+        vals = [v.strip() for v in m.group(2).strip(",").split(",")]
+        if len(vals) != 8:
+            continue
+        try:
+            parsed = [None if v == "null" else float(v) for v in vals]
+        except ValueError:
+            continue
+        rows.append({
+            "date": d,
+            "b0_01":     parsed[0],
+            "b01_1":     parsed[1],
+            "b1_10":     parsed[2],
+            "b10_100":   parsed[3],
+            "b100_1k":   parsed[4],
+            "b1k_10k":   parsed[5],
+            "b10k_100k": parsed[6],
+            "b100k_1m":  parsed[7],
+        })
+    if not rows:
+        print("  [skip] bitinfocharts: no rows parsed", file=sys.stderr)
+        return {}
+    return {
+        "labels": ["0-0.1", "0.1-1", "1-10", "10-100",
+                   "100-1K", "1K-10K", "10K-100K", "100K-1M"],
+        "buckets": rows,
+        "source": "bitinfocharts.com",
+        "note": "BTC supply held per address-balance cohort. ≥1,000 BTC = whale.",
+    }
+
+
 def fetch_whale() -> dict:
     print("Fetching whale-activity proxies (BTC on-chain)...")
     btc = whale_proxies_btc()
+    print("  bitinfocharts BTC distribution history (cohorts)...")
+    distribution = bitinfocharts_btc_distribution()
     return {
         "btc": btc,
+        "distribution": distribution,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "note": "Free on-chain proxies. Real whale-flow metrics (Glassnode etc.) need a paid API.",
     }
