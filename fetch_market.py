@@ -1035,14 +1035,20 @@ def whale_proxies_btc() -> dict:
 # ----- main entrypoints ------------------------------------------------------
 
 def fetch_trading() -> dict:
+    # CoinGecko free tier is 30 calls/min. We make 7 calls back-to-back during
+    # this function, which can trip the per-minute limit when combined with
+    # any other recent activity (manual /api/refresh, /api/data polls, etc).
+    # Sleep 600ms between CoinGecko calls so a single fetch_all() can't blow
+    # the budget even on a cold start. Total: ~4s overhead — well worth it.
+    CG_PACE = 0.6
     print("Fetching trading data...")
     print("  CoinGecko BTC/ETH/LINK/LTC market_chart...")
-    btc_mkt = coingecko_market("bitcoin")
-    eth_mkt = coingecko_market("ethereum")
-    link_mkt = coingecko_market("chainlink")
-    ltc_mkt = coingecko_market("litecoin")
+    btc_mkt = coingecko_market("bitcoin");   time.sleep(CG_PACE)
+    eth_mkt = coingecko_market("ethereum");  time.sleep(CG_PACE)
+    link_mkt = coingecko_market("chainlink"); time.sleep(CG_PACE)
+    ltc_mkt = coingecko_market("litecoin");  time.sleep(CG_PACE)
     print("  CoinGecko global...")
-    glob = coingecko_global()
+    glob = coingecko_global();               time.sleep(CG_PACE)
     print("  Coinbase Exchange spot (BTC/ETH/LINK/LTC)...")
     cb_spot = coinbase_spot()
     print("  Coinbase International Exchange perpetuals snapshot...")
@@ -1087,7 +1093,7 @@ def fetch_trading() -> dict:
     lightning = mempool_lightning_stats()
     pools = mempool_mining_pools()
     print("  CoinGecko top-25 markets + trending...")
-    top_markets = coingecko_top_markets(25)
+    top_markets = coingecko_top_markets(25); time.sleep(CG_PACE)
     trending = coingecko_trending()
     print("  DeFiLlama: chains + protocols + yields + bridges + historical TVL...")
     chains = defillama_chains(20)
