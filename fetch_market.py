@@ -589,25 +589,38 @@ def geckoterminal_pools() -> dict:
 
 
 def lunarcrush_snapshot() -> dict:
-    """Social-sentiment snapshot for top coins. Env-gated by LUNARCRUSH_API_KEY."""
+    """Social-sentiment snapshot for top coins. Env-gated by LUNARCRUSH_API_KEY.
+
+    Free tier is 10 req/min. We make one call but the IP may be shared
+    (rate-limit can fire spuriously on the first call after startup).
+    Retry once after a 3-second wait on a 429 response."""
     import os
     key = os.environ.get("LUNARCRUSH_API_KEY")
     if not key:
         return {"available": False, "reason": "no LUNARCRUSH_API_KEY in env"}
+    url = "https://lunarcrush.com/api4/public/coins/list/v1"
+    headers = {"Authorization": f"Bearer {key}", "User-Agent": UA}
+    r = None
+    for attempt in range(2):
+        try:
+            r = requests.get(url, headers=headers, timeout=20)
+        except Exception as e:
+            print(f"  [lunarcrush] error: {e}", file=sys.stderr)
+            return {"available": False, "reason": "error"}
+        if r.status_code == 200:
+            break
+        if r.status_code == 429 and attempt == 0:
+            print(f"  [lunarcrush] HTTP 429 — retrying after backoff…", file=sys.stderr)
+            time.sleep(3)
+            continue
+        print(f"  [lunarcrush] HTTP {r.status_code}", file=sys.stderr)
+        return {"available": False, "reason": f"http_{r.status_code}"}
     try:
-        r = requests.get(
-            "https://lunarcrush.com/api4/public/coins/list/v1",
-            headers={"Authorization": f"Bearer {key}", "User-Agent": UA},
-            timeout=20,
-        )
-        if r.status_code != 200:
-            print(f"  [lunarcrush] HTTP {r.status_code}", file=sys.stderr)
-            return {"available": False, "reason": f"http_{r.status_code}"}
         j = r.json() or {}
         data = (j.get("data") if isinstance(j, dict) else j) or []
     except Exception as e:
-        print(f"  [lunarcrush] error: {e}", file=sys.stderr)
-        return {"available": False, "reason": "error"}
+        print(f"  [lunarcrush] parse: {e}", file=sys.stderr)
+        return {"available": False, "reason": "parse_error"}
     out = []
     for c in data[:50]:
         if not isinstance(c, dict):

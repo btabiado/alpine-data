@@ -2710,7 +2710,13 @@ function renderOverviewTopVolume(){
   const host = document.getElementById('overviewTopVolume');
   if (!host) return;
   const all = (DATA.market && DATA.market.markets_top) || [];
-  const isStable = c => /^(usd[tcskpoe]?|dai|busd|tusd|fdusd|pyusd)$/i.test(c.symbol || '');
+  // Stablecoin filter: catch every "USD"-prefixed (USDT/USDC/USDS/USD1/USDe/USDP/...)
+  // or "USD"-suffixed (BUSD/FDUSD/PYUSD/TUSD/GUSD/...) symbol, plus DAI by name.
+  // Anything new that follows either naming convention auto-qualifies.
+  const isStable = c => {
+    const s = (c.symbol || '').toUpperCase();
+    return /^USD/.test(s) || /USD$/.test(s) || s === 'DAI';
+  };
   const rows = all
     .filter(c => !isStable(c) && (c.volume_24h_usd || 0) > 0)
     .sort((a, b) => (b.volume_24h_usd || 0) - (a.volume_24h_usd || 0))
