@@ -807,9 +807,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <!-- Whale vs non-whale supply held (real cohort data from bitinfocharts) -->
       <div class="chart-card">
-        <div class="head">
-          <h2>BTC supply: whales vs non-whales <span class="tag">bitinfocharts</span></h2>
-          <span class="desc">Total BTC held by addresses with ≥1,000 BTC (whales) vs everyone else &middot; daily back to 2021-05 &middot; honors Range buttons above</span>
+        <div class="head" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <h2>BTC supply: whales vs non-whales <span class="tag">bitinfocharts</span></h2>
+            <span class="desc">Stacked: addresses with ≥1,000 BTC (whales) vs everyone else &middot; ~5y daily history binned to your selection</span>
+          </div>
+          <div class="controls" id="cohortBins" style="border:0;padding:0;margin:0;gap:4px">
+            <span class="lbl" style="margin:0">Bin</span>
+            <button class="btn" data-cohortbin="week">Weekly</button>
+            <button class="btn active" data-cohortbin="month">Monthly</button>
+            <button class="btn" data-cohortbin="quarter">Quarterly</button>
+            <button class="btn" data-cohortbin="year">Yearly</button>
+          </div>
         </div>
         <div class="chart-wrap tall"><canvas id="whaleCohortChart"></canvas></div>
         <div class="row" id="whaleCohortKpis" style="margin-top:10px"></div>
@@ -924,7 +933,7 @@ if (IS_SHARE) {
   };
 }
 
-const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y' };
+const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y', cohortBin:'month' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -1717,9 +1726,34 @@ function _whaleRangeFilter(rows){
   return rows.slice(-days);
 }
 
+// Bin daily cohort rows down to weekly / monthly / quarterly / yearly buckets
+// using the LAST value in each window (it's a stock metric — supply held —
+// not a flow, so sampling the period-end value is the right aggregation).
+function _binCohortRows(rows, mode){
+  if (!rows || !rows.length) return [];
+  if (mode === 'day') return rows;
+  const keyFn = {
+    week:    d => { const dt = new Date(d); const day = dt.getUTCDay() || 7;
+                    dt.setUTCDate(dt.getUTCDate() - day + 1); return dt.toISOString().slice(0,10); },
+    month:   d => d.slice(0,7) + '-01',
+    quarter: d => { const [y,m] = d.split('-'); const q = Math.floor((parseInt(m,10)-1)/3); return `${y}-${String(q*3+1).padStart(2,'0')}-01`; },
+    year:    d => d.slice(0,4) + '-01-01',
+  }[mode] || (d => d);
+  const seen = new Map();
+  for (const r of rows) {
+    const k = keyFn(r.date);
+    // Last value wins → period-end snapshot
+    seen.set(k, {...r, date: k});
+  }
+  return Array.from(seen.values()).sort((a,b) => a.date.localeCompare(b.date));
+}
+
 function renderWhaleCohortChart(){
   const dist = ((DATA.whale||{}).distribution || {});
-  const buckets = _whaleRangeFilter(dist.buckets || []);
+  // Use the chart's own bin selector — independent from the tab Range buttons.
+  // Show full history; the bin width controls visual density.
+  const mode = state.cohortBin || 'month';
+  const buckets = _binCohortRows(dist.buckets || [], mode);
   const kpiHost = document.getElementById('whaleCohortKpis');
   destroy('whaleCohort');
   if (!buckets.length) {
@@ -1731,14 +1765,16 @@ function renderWhaleCohortChart(){
   const others = buckets.map(r => (r.b0_01||0) + (r.b01_1||0) + (r.b1_10||0) + (r.b10_100||0) + (r.b100_1k||0));
   const dates  = buckets.map(r => r.date);
   charts.whaleCohort = new Chart(document.getElementById('whaleCohortChart'), {
-    type:'line',
+    type:'bar',
     data:{
       labels: dates,
       datasets:[
-        {label:'Whales (≥1,000 BTC)',     data:whales, borderColor:'#f7931a',
-         backgroundColor:'#f7931a33', fill:true, tension:0.2, pointRadius:0, borderWidth:1.8},
-        {label:'Non-whales (<1,000 BTC)', data:others, borderColor:'#627eea',
-         backgroundColor:'#627eea33', fill:true, tension:0.2, pointRadius:0, borderWidth:1.8},
+        // Order matters for stacking: whales on top so the orange band rides
+        // the blue base — visually obvious that whales are a fraction of total.
+        {label:'Non-whales (<1,000 BTC)', data:others,
+         backgroundColor:'#627eea', borderWidth:0, stack:'supply'},
+        {label:'Whales (≥1,000 BTC)',     data:whales,
+         backgroundColor:'#f7931a', borderWidth:0, stack:'supply'},
       ],
     },
     options:{
@@ -1749,9 +1785,9 @@ function renderWhaleCohortChart(){
           callbacks:{label: ctx => ctx.dataset.label + ': ' + fmtNum(ctx.parsed.y, 0) + ' BTC'}},
       },
       scales:{
-        x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
-        y:{ticks:{color:'#8a93a6', callback:v=>fmtNum(v/1e6, 2) + 'M BTC'},
-           grid:{color:'#1f2533'}, title:{display:true, text:'BTC supply held', color:'#8a93a6'}},
+        x:{stacked:true, ticks:{color:'#8a93a6', maxTicksLimit:14}, grid:{display:false}},
+        y:{stacked:true, ticks:{color:'#8a93a6', callback:v=>fmtNum(v/1e6, 1) + 'M'},
+           grid:{color:'#1f2533'}, title:{display:true, text:'BTC supply held (stacked)', color:'#8a93a6'}},
       },
     },
   });
@@ -2746,8 +2782,11 @@ function selectTab(t){
   document.getElementById('tab-markets').classList.toggle('hidden', t!=='markets');
   document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
-  // Period selector applies to ETF / Trading / Whale (not Signals — daily snapshot)
-  const showPeriod = (t === 'etf' || t === 'trading' || t === 'whale');
+  // Period selector now ETF-only. Trading and Whale tabs had it but it was
+  // confusing (overlap with Timeframe / Range buttons); their charts are
+  // daily by default. ETF Flows still needs Period for the daily/weekly/
+  // monthly/yearly resampling toggle on per-fund flow tables and stacks.
+  const showPeriod = (t === 'etf');
   document.querySelectorAll('.btn[data-period]').forEach(b => b.style.display = showPeriod ? '' : 'none');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'PERIOD') b.style.display = showPeriod ? '' : 'none'; });
   // Overview simplification: hide BTC/ETH/LINK asset toggle, Range buttons, and the redundant Insights bar.
@@ -2794,6 +2833,9 @@ document.querySelectorAll('.btn[data-fundwin]').forEach(b =>
 );
 document.querySelectorAll('.btn[data-macrorange]').forEach(b =>
   b.addEventListener('click', () => { state.macroRange = b.dataset.macrorange; setActive('macrorange', state.macroRange); renderMacro(); })
+);
+document.querySelectorAll('.btn[data-cohortbin]').forEach(b =>
+  b.addEventListener('click', () => { state.cohortBin = b.dataset.cohortbin; setActive('cohortbin', state.cohortBin); renderWhaleCohortChart(); })
 );
 
 // ---------- Chat dock ----------
