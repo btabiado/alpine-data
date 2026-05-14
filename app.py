@@ -531,8 +531,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="overviewMacroRow" style="display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,2fr);gap:18px;align-items:stretch">
       <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="markets" title="See full top 25 on Markets tab">
         <div class="head">
-          <h2>Top 10 by 24h volume <span class="tag">CoinGecko</span></h2>
-          <span class="desc">most actively traded right now · click to open Markets</span>
+          <h2>Top 10 crypto by 24h volume <span class="tag">CoinGecko</span></h2>
+          <span class="desc">most actively traded crypto right now · click to open Markets</span>
         </div>
         <div id="overviewTopVolume" style="display:flex;flex-direction:column;gap:6px;padding:2px;flex:1;justify-content:flex-start"></div>
       </div>
