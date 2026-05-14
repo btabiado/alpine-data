@@ -410,7 +410,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </header>
 
 <div class="tabs">
-  <div class="tab active" data-tab="overview">Overview</div>
+  <div class="tab active" data-tab="overview">Crypto Overview</div>
   <div class="tab" data-tab="signals">Signals</div>
   <div class="tab" data-tab="etf">ETF Flows</div>
   <div class="tab" data-tab="trading">Trading</div>
