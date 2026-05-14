@@ -64,6 +64,48 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
     }
 
 
+def coinbase_intl_perpetuals() -> list[dict]:
+    """Coinbase International Exchange — funding rate + mark price + open
+    interest for every PERP (~246 of them). Public endpoint, no auth.
+
+    Works from US IPs (Binance's /fapi endpoint returns 451 from US, this
+    one returns 200). Use case: cross-exchange perpetual positioning view
+    next to OKX funding. The funding rate field returned is
+    `predicted_funding` from the quote object, which is the rate that will
+    settle at the next funding interval — i.e. forward-looking funding,
+    most useful for spotting crowded positioning right now.
+
+    Returns rows sorted by funding_rate descending (most crowded long first).
+    Empty list on any failure.
+    """
+    j = _get("https://api.international.coinbase.com/api/v1/instruments")
+    if not j or not isinstance(j, list):
+        return []
+    out: list[dict] = []
+    for it in j:
+        if it.get("type") != "PERP":
+            continue
+        sym_full = it.get("symbol") or ""
+        sym = sym_full.replace("-PERP", "")
+        if not sym:
+            continue
+        quote = it.get("quote") or {}
+        try:
+            out.append({
+                "symbol":         sym,
+                "funding_rate":   float(quote.get("predicted_funding") or 0),
+                "mark_price":     float(quote.get("mark_price") or 0),
+                "index_price":    float(quote.get("index_price") or 0),
+                "open_interest_base": float(it.get("open_interest") or 0),
+                "volume_24h":     float(it.get("qty_24hr") or 0),
+                "notional_24h":   float(it.get("notional_24hr") or 0),
+            })
+        except (ValueError, TypeError):
+            continue
+    out.sort(key=lambda r: r["funding_rate"], reverse=True)
+    return out
+
+
 def coinbase_spot() -> dict:
     """Coinbase Exchange spot ticker + 24h stats for BTC/ETH/LINK/LTC.
 
@@ -1003,6 +1045,8 @@ def fetch_trading() -> dict:
     glob = coingecko_global()
     print("  Coinbase Exchange spot (BTC/ETH/LINK/LTC)...")
     cb_spot = coinbase_spot()
+    print("  Coinbase International Exchange perpetuals snapshot...")
+    cb_intl = coinbase_intl_perpetuals()
     print("  OKX funding BTC/ETH/LINK/LTC...")
     okx_fund_btc = okx_funding("BTC-USDT-SWAP")
     okx_fund_eth = okx_funding("ETH-USDT-SWAP")
@@ -1110,6 +1154,7 @@ def fetch_trading() -> dict:
         },
         "global": glob,
         "coinbase": cb_spot,
+        "coinbase_intl_perps": cb_intl,
         "defillama": llama,
         "binance_futures": binance_fut,
         "geckoterminal": gt_pools,
