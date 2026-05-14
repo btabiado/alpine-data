@@ -162,21 +162,33 @@ def test_seed_etf_returns_503_on_failure(client, monkeypatch):
     assert "boom" in j["error"]
 
 
-def test_api_refresh_with_mocked_fetch(client, monkeypatch):
-    """Mock fetch_market.fetch_all so /api/refresh does no real network."""
+def test_api_refresh_kicks_off_background_fetch(client, monkeypatch):
+    """`/api/refresh` is async — spawns a thread for fetch_all and returns
+    `{ok: true, in_progress: true}` immediately so Safari doesn't hit its
+    fetch timeout on the ~60s real-world fetch."""
     monkeypatch.setattr(server.fetch_market, "fetch_all", lambda: None)
     r = client.post("/api/refresh")
     assert r.status_code == 200
     j = r.get_json()
     assert j["ok"] is True
-    assert "data" in j
+    assert j["in_progress"] is True
+    # No 'data' key on the immediate response — client polls /api/data for
+    # the fresh payload once the background thread finishes.
+    assert "data" not in j
 
 
-def test_api_refresh_returns_503_on_fetch_error(client, monkeypatch):
-    def boom():
-        raise RuntimeError("network down")
-    monkeypatch.setattr(server.fetch_market, "fetch_all", boom)
-    r = client.post("/api/refresh")
-    assert r.status_code == 503
-    j = r.get_json()
-    assert j["ok"] is False
+def test_api_refresh_returns_in_progress_when_already_fetching(client, monkeypatch):
+    """If a fetch is already mid-flight, /api/refresh should NOT queue a
+    duplicate — it should just acknowledge that one is running."""
+    monkeypatch.setattr(server.fetch_market, "fetch_all", lambda: None)
+    # Pretend a fetch is in flight
+    server._state["fetching"] = True
+    try:
+        r = client.post("/api/refresh")
+        assert r.status_code == 200
+        j = r.get_json()
+        assert j["ok"] is True
+        assert j["in_progress"] is True
+        assert "already running" in j.get("status", "")
+    finally:
+        server._state["fetching"] = False
