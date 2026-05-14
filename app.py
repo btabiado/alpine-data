@@ -669,6 +669,46 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="chart-wrap"><canvas id="lsChart"></canvas></div>
         </div>
       </div>
+      <!-- Coinbase International Exchange perpetuals positioning: two side-by-side
+           tables surfacing the most crowded LONGS (highest funding) and SHORTS
+           (most negative funding) from the ~246 PERP markets. Funding rate is
+           a positioning gauge — positive = longs paying shorts (crowded long,
+           squeeze setup); negative = shorts paying longs (contrarian buy zone). -->
+      <div class="chart-card" style="background:transparent;border:0;padding:0">
+        <div class="head" style="padding:0 4px 6px">
+          <h2 style="margin:0">Coinbase Intl perpetuals positioning <span class="tag">FUNDING</span></h2>
+          <span class="desc">crowded longs vs crowded shorts &middot; ~246 PERP markets</span>
+        </div>
+        <div class="grid2">
+          <div class="chart-card">
+            <div class="head">
+              <h2>Most crowded LONGS <span class="tag">Coinbase Intl</span></h2>
+              <span class="desc">highest funding rates &middot; squeeze setup risk</span>
+            </div>
+            <div style="overflow:auto">
+              <table id="cieLongsTable" class="tracker-grid">
+                <thead><tr><th>Symbol</th><th>Funding</th><th>Mark</th><th>Notional 24h</th><th>OI</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="head">
+              <h2>Most crowded SHORTS <span class="tag">Coinbase Intl</span></h2>
+              <span class="desc">most negative funding &middot; contrarian zone</span>
+            </div>
+            <div style="overflow:auto">
+              <table id="cieShortsTable" class="tracker-grid">
+                <thead><tr><th>Symbol</th><th>Funding</th><th>Mark</th><th>Notional 24h</th><th>OI</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="note" style="margin-top:8px;font-size:11px">
+          Funding rate fires every 1h. Positive = longs pay shorts (crowded long, squeeze setup). Negative = shorts pay longs (crowded short, contrarian buy zone). Funding &times; 24 &asymp; approx daily annualized cost.
+        </div>
+      </div>
       <div class="grid2">
         <div class="chart-card">
           <div class="head"><h2>Implied volatility (DVOL) <span class="tag" id="tagDvol">BTC</span></h2><span class="desc">Deribit options-implied 30d vol, %</span></div>
@@ -1403,6 +1443,44 @@ function renderLS(){
     data:{labels:series.map(r=>r.date), datasets:[{data:series.map(r=>r.ratio), borderColor:'#a78bfa', backgroundColor:'#a78bfa22', fill:true, tension:0.2, pointRadius:0, borderWidth:2}]},
     options: baseOpts({yLabel:'L/S ratio', tooltipFmt:v=>v.toFixed(3)}),
   });
+}
+
+// Coinbase International Exchange perpetuals positioning tables.
+// Pulls market.coinbase_intl_perps (pre-sorted desc by funding_rate on the
+// backend), splits into positive-funding (crowded longs) and negative-funding
+// (crowded shorts) buckets, takes top 6 of each, and renders into the two
+// table bodies on the Trading tab.
+function renderCoinbaseIntlPerps(){
+  const perps = (DATA.market || {}).coinbase_intl_perps || [];
+  const longs  = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate > 0)
+                      .sort((a,b) => b.funding_rate - a.funding_rate)
+                      .slice(0, 6);
+  const shorts = perps.filter(p => p && typeof p.funding_rate === 'number' && p.funding_rate < 0)
+                      .sort((a,b) => a.funding_rate - b.funding_rate)
+                      .slice(0, 6);
+  const emptyRow = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:14px">No perpetuals data — wait for next refresh</td></tr>';
+
+  function rowFor(p){
+    const ratePct = (p.funding_rate * 100).toFixed(4) + '%';
+    const cls = p.funding_rate >= 0 ? 'green' : 'red';
+    const mark = (p.mark_price != null) ? fmtUSD(p.mark_price, 'auto') : '—';
+    const notional = (p.notional_24h != null) ? fmtUSD(p.notional_24h, 'auto') : '—';
+    const oi = (p.open_interest_base != null)
+      ? fmtNum(p.open_interest_base, 0) + ' ' + (p.symbol || '')
+      : '—';
+    return `<tr>
+      <td><strong>${p.symbol || '—'}</strong></td>
+      <td class="${cls}" style="font-variant-numeric:tabular-nums">${ratePct}</td>
+      <td style="font-variant-numeric:tabular-nums">${mark}</td>
+      <td style="font-variant-numeric:tabular-nums">${notional}</td>
+      <td style="font-variant-numeric:tabular-nums">${oi}</td>
+    </tr>`;
+  }
+
+  const longsBody  = document.querySelector('#cieLongsTable tbody');
+  const shortsBody = document.querySelector('#cieShortsTable tbody');
+  if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
+  if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
 }
 
 // Toggle an empty-state placeholder inside a chart's .chart-wrap container.
@@ -3044,7 +3122,7 @@ function renderAll(){
     renderFundKpis(); renderFundStack(); renderFundCompare();
   }
   if (state.tab === 'trading' && !trEmpty){
-    renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
+    renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
   }
   if (state.tab === 'signals'){
     renderSignals();
