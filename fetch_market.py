@@ -792,25 +792,29 @@ def whale_proxies_btc() -> dict:
 
 def fetch_trading() -> dict:
     print("Fetching trading data...")
-    print("  CoinGecko BTC/ETH/LINK market_chart...")
+    print("  CoinGecko BTC/ETH/LINK/LTC market_chart...")
     btc_mkt = coingecko_market("bitcoin")
     eth_mkt = coingecko_market("ethereum")
     link_mkt = coingecko_market("chainlink")
+    ltc_mkt = coingecko_market("litecoin")
     print("  CoinGecko global...")
     glob = coingecko_global()
-    print("  OKX funding BTC/ETH/LINK...")
+    print("  OKX funding BTC/ETH/LINK/LTC...")
     okx_fund_btc = okx_funding("BTC-USDT-SWAP")
     okx_fund_eth = okx_funding("ETH-USDT-SWAP")
     okx_fund_link = okx_funding("LINK-USDT-SWAP")
-    print("  OKX open interest BTC/ETH/LINK...")
+    okx_fund_ltc = okx_funding("LTC-USDT-SWAP")
+    print("  OKX open interest BTC/ETH/LINK/LTC...")
     okx_oi_btc = okx_open_interest("BTC")
     okx_oi_eth = okx_open_interest("ETH")
     okx_oi_link = okx_open_interest("LINK")
-    print("  OKX long/short BTC/ETH/LINK...")
+    okx_oi_ltc = okx_open_interest("LTC")
+    print("  OKX long/short BTC/ETH/LINK/LTC...")
     okx_ls_btc = okx_long_short("BTC")
     okx_ls_eth = okx_long_short("ETH")
     okx_ls_link = okx_long_short("LINK")
-    print("  Deribit DVOL BTC/ETH (LINK not supported)...")
+    okx_ls_ltc = okx_long_short("LTC")
+    print("  Deribit DVOL BTC/ETH (LINK and LTC not supported)...")
     dvol_btc = deribit_dvol("BTC")
     dvol_eth = deribit_dvol("ETH")
     print("  DeFiLlama (stablecoin mcap, DEX vol, fees)...")
@@ -883,6 +887,15 @@ def fetch_trading() -> dict:
             "funding": okx_fund_link,
             "open_interest_usd": okx_oi_link,
             "long_short_ratio": okx_ls_link,
+            "dvol": [],
+        },
+        "ltc": {
+            "price": ltc_mkt["price"],
+            "volume": ltc_mkt["volume"],
+            "market_cap": ltc_mkt["market_cap"],
+            "funding": okx_fund_ltc,
+            "open_interest_usd": okx_oi_ltc,
+            "long_short_ratio": okx_ls_ltc,
             "dvol": [],
         },
         "global": glob,

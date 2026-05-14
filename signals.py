@@ -221,4 +221,5 @@ def compute_all(payload: dict) -> dict:
         "btc": compute_signal("btc", payload),
         "eth": compute_signal("eth", payload),
         "link": compute_signal("link", payload),
+        "ltc": compute_signal("ltc", payload),
     }
