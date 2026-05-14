@@ -64,6 +64,58 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
     }
 
 
+def coinbase_spot() -> dict:
+    """Coinbase Exchange spot ticker + 24h stats for BTC/ETH/LINK/LTC.
+
+    Public Exchange API endpoint (api.exchange.coinbase.com) — no auth, no
+    key required, no rate-limit concerns for personal use. Adds a US-licensed
+    exchange perspective alongside CoinGecko (which is a price aggregator,
+    not an exchange) and OKX (offshore). Useful for:
+
+      * Cross-exchange price-divergence sanity check (rule fires if Coinbase
+        and CoinGecko diverge by ≥0.5%)
+      * US-flavored bid/ask spread + 24h high/low/open in BTC-native units
+
+    Returns:
+        {
+            "btc": {price_usd, bid, ask, volume_24h, open_24h, high_24h, low_24h, time},
+            "eth": {...},
+            "link": {...},
+            "ltc": {...},
+            "fetched_at": ISO,
+        }
+    """
+    out: dict[str, Any] = {}
+    products = [("BTC-USD", "btc"), ("ETH-USD", "eth"),
+                ("LINK-USD", "link"), ("LTC-USD", "ltc")]
+    for product, sym in products:
+        ticker = _get(f"https://api.exchange.coinbase.com/products/{product}/ticker")
+        stats = _get(f"https://api.exchange.coinbase.com/products/{product}/stats")
+        if not ticker or not isinstance(ticker, dict):
+            continue
+        try:
+            entry = {
+                "price_usd":  float(ticker.get("price") or 0),
+                "bid":        float(ticker.get("bid") or 0),
+                "ask":        float(ticker.get("ask") or 0),
+                "volume_24h": float(ticker.get("volume") or 0),  # base units (e.g. BTC)
+                "time":       ticker.get("time"),
+            }
+            if isinstance(stats, dict):
+                entry["open_24h"] = float(stats.get("open") or 0)
+                entry["high_24h"] = float(stats.get("high") or 0)
+                entry["low_24h"]  = float(stats.get("low") or 0)
+                # Coinbase 24h change %: (last - open) / open
+                if entry["open_24h"] > 0:
+                    entry["change_24h_pct"] = (entry["price_usd"] / entry["open_24h"] - 1) * 100
+            out[sym] = entry
+        except (ValueError, TypeError) as e:
+            print(f"  [coinbase] {product}: parse {e}", file=sys.stderr)
+            continue
+    out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return out
+
+
 def coingecko_global() -> dict:
     j = _get("https://api.coingecko.com/api/v3/global") or {}
     d = j.get("data", {})
@@ -949,6 +1001,8 @@ def fetch_trading() -> dict:
     ltc_mkt = coingecko_market("litecoin")
     print("  CoinGecko global...")
     glob = coingecko_global()
+    print("  Coinbase Exchange spot (BTC/ETH/LINK/LTC)...")
+    cb_spot = coinbase_spot()
     print("  OKX funding BTC/ETH/LINK/LTC...")
     okx_fund_btc = okx_funding("BTC-USDT-SWAP")
     okx_fund_eth = okx_funding("ETH-USDT-SWAP")
@@ -1055,6 +1109,7 @@ def fetch_trading() -> dict:
             "dvol": [],
         },
         "global": glob,
+        "coinbase": cb_spot,
         "defillama": llama,
         "binance_futures": binance_fut,
         "geckoterminal": gt_pools,

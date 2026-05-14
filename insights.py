@@ -737,6 +737,25 @@ def _market_insights(payload: dict) -> list[dict]:
                         "detail": f"Index at {last_s:,.0f}.",
                     })
 
+    # Coinbase vs CoinGecko price divergence (cross-source sanity check).
+    # Replaces the old CryptoCompare-based version we removed when CC's free
+    # tier sunset. Coinbase is a US-regulated exchange spot price; CoinGecko
+    # is an aggregator. A ≥0.5% drift between them usually means one venue
+    # is leading the other (arbitrage opportunity proxy).
+    cb = market.get("coinbase") or {}
+    for asset in ("btc", "eth", "link", "ltc"):
+        cg_last_rows = (((market.get(asset) or {}).get("price")) or [])
+        cg_last = cg_last_rows[-1].get("value") if cg_last_rows else None
+        cb_price = (cb.get(asset) or {}).get("price_usd")
+        if cg_last and cb_price and cg_last > 0:
+            div = abs(cb_price - cg_last) / cg_last
+            if div >= 0.005:  # >0.5%
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": "info",
+                    "headline": f"{asset.upper()} price divergence: CoinGecko ${cg_last:,.0f} vs Coinbase ${cb_price:,.0f}",
+                    "detail": f"{div*100:.2f}% spread between data sources — Coinbase often leads US-hours moves.",
+                })
+
     # ----- Markets tab: top-25 movers + BTC dominance + total market cap -----
     # These fire more frequently than the FRED macro rules so the Markets
     # insights bar isn't empty on calm macro days.
@@ -1087,6 +1106,7 @@ def _market_insight_tab(insight: dict) -> str:
     if "vix " in h or h.startswith("vix"): return "markets"
     if "📰" in raw: return "markets"
     if "trending #1" in h: return "markets"
+    if "price divergence" in h: return "markets"
     if "dex hot pool" in h: return "markets"
     # Top-25 movers + dominance + total mcap milestones
     if "top-25" in h: return "markets"
