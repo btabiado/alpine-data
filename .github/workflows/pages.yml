@@ -36,12 +36,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Seed ETF flow CSV stubs
+      - name: Restore fetched data cache (markets_top stale-keep, etc.)
+        # CI runs are stateless — every fetch starts cold. fetch_market.py's
+        # stale-keep fallback (markets_top, lunarcrush) reads from prior
+        # data/market.json, which doesn't exist on a fresh runner. This
+        # cache lets the stale-keep actually work in CI by persisting the
+        # most recent successful fetch between runs. Primary key uses
+        # run_id so we always save a fresh snapshot; restore-keys prefix
+        # gets the latest available on miss.
+        uses: actions/cache@v4
+        with:
+          path: |
+            data/market.json
+            data/whale.json
+          key: fetched-data-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            fetched-data-
+
+      - name: Seed ETF flow CSV stubs (only if real CSVs not committed)
         run: |
-          # ETF flow data isn't free-fetchable (paid API or manual Farside
-          # paste), so we seed one-row stubs to keep the ETF Flows tab from
-          # crashing. To ship real ETF history publicly, force-add the local
-          # data/btc_flows.csv + data/eth_flows.csv (they're gitignored).
+          # If data/btc_flows.csv + data/eth_flows.csv are committed to the
+          # repo (force-add overrides .gitignore), this step is a no-op.
+          # Otherwise we seed one-row stubs to keep the ETF Flows tab from
+          # crashing — useful before the user ships real Farside data.
           mkdir -p data
           if [ ! -f data/btc_flows.csv ]; then
             printf 'date,Total\n2024-01-11,100\n' > data/btc_flows.csv
@@ -56,6 +73,15 @@ jobs:
         # (logs "[skip] <url>" and continues); app.py wraps the call in
         # try/except so the generator always runs even on a total fetch
         # crash, falling back to whatever data is on disk.
+        env:
+          # Optional API keys. If a secret isn't set in the repo, the env
+          # var resolves to an empty string and the source falls back to
+          # {available: False} or a free alternative. Add them under
+          # repo Settings → Secrets and variables → Actions → New repository
+          # secret to populate FRED macro + LunarCrush social on public.
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          LUNARCRUSH_API_KEY: ${{ secrets.LUNARCRUSH_API_KEY }}
+          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
         run: python app.py --fetch-market --no-open
 
       - name: Fallback generate if dashboard.html missing
