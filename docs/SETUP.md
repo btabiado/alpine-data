@@ -353,3 +353,64 @@ terminal** that you'll launch the server from, then start the server.
 
 ### Cost
 Zero. FRED is a public-good service.
+
+---
+
+## 6. Glassnode (optional — true whale-cohort metrics)
+
+The Whale tab already shows free supply-cohort data scraped from
+bitinfocharts.com (whales vs non-whales BTC held over time). For
+**richer cohort flow metrics** — number of whale addresses over time,
+exchange inflow/outflow in BTC, supply in profit, etc. — wire a
+Glassnode API key. The dashboard auto-activates a "Glassnode" KPI
+strip on the Whale tab the moment the key is present.
+
+### Get a key
+1. Sign up at https://studio.glassnode.com — free tier covers basic
+   metrics, **Lite plan (~$30/mo) unlocks the address-cohort series**
+   the dashboard uses
+2. Account → **API Keys** → create a new key
+3. Copy the value (you can see it again later, but you should still
+   put it in `~/.zprofile`)
+
+### Activate it on your Mac
+```bash
+echo 'export GLASSNODE_API_KEY="<your-key>"' >> ~/.zprofile
+source ~/.zprofile
+
+# Verify it's set:
+echo $GLASSNODE_API_KEY | head -c 12
+
+# Restart the dashboard server so it picks up the env var:
+lsof -ti:8765 | xargs kill -9
+cd ~/btc-eth-etf-dashboard
+HOST=0.0.0.0 .venv/bin/python server.py
+```
+
+### Trigger a refresh
+The next auto-refresh (every 30 min) will hit Glassnode. To pull
+immediately: click the **↻ Refresh** button in the dashboard header
+or `curl -X POST http://127.0.0.1:8765/api/refresh` (auth required).
+
+### What you get when active
+A new KPI strip appears at the bottom of the **BTC supply: whales
+vs non-whales** card on the Whale tab, with cards showing:
+
+- **Whale addresses (≥1K BTC)** with 7d % change
+- **Mega-whale addresses (≥10K BTC)** with 7d % change
+- **Transfer volume (BTC)** — total network transfer volume
+- **Exchange inflow (BTC)** — flow INTO exchanges (rising = sell pressure)
+- **Exchange outflow (BTC)** — flow OUT (rising = accumulation)
+- **Supply in profit (%)** — % of supply currently above its cost basis
+
+If your tier doesn't cover a given metric, that card silently skips
+(no error). The bitinfocharts cohort chart and free proxies stay live
+either way.
+
+### Cost
+Tier 1 (free): basic metrics only — most whale cohort series are gated.
+Tier 2 ("Lite", ~$30/mo): unlocks address-cohort, exchange-flow series.
+Tier 3 ("Advanced", more): adds entity-adjusted and SOPR/MVRV variants.
+
+Cancel anytime — the dashboard falls back gracefully when the key is
+removed or expires.

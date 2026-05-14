@@ -919,6 +919,84 @@ def fetch_trading() -> dict:
     }
 
 
+def glassnode_btc_whale_metrics() -> dict:
+    """Optional: pull true whale cohort metrics from Glassnode Studio.
+
+    Env-gated by GLASSNODE_API_KEY. If unset (or 403 returned for higher-tier
+    metrics), returns an empty dict and the dashboard falls back to free
+    bitinfocharts data + the activity proxy chart.
+
+    Each call is independent — partial tier access is fine; failures skip
+    the missing series rather than aborting the whole batch.
+
+    Metrics pulled (all daily, BTC asset):
+      addresses/min_1k_count            — # of addresses with ≥1,000 BTC
+      addresses/min_10k_count           — # of addresses with ≥10,000 BTC
+      transactions/transfers_volume_sum — total transfer volume (BTC)
+      transactions/transfers_to_exchanges_sum   — exchange inflow proxy
+      transactions/transfers_from_exchanges_sum — exchange outflow proxy
+      supply/profit_relative            — % supply in profit (regime context)
+
+    Returns:
+        {
+            "available": bool,
+            "tier_status": {metric_path: "ok" | "forbidden" | "error"},
+            "series": {metric_path: [{"date": "YYYY-MM-DD", "value": float}, ...]},
+            "fetched_at": ISO timestamp,
+        }
+    """
+    import os
+    key = os.environ.get("GLASSNODE_API_KEY")
+    if not key:
+        return {"available": False, "reason": "no GLASSNODE_API_KEY in env"}
+    metrics = [
+        "addresses/min_1k_count",
+        "addresses/min_10k_count",
+        "transactions/transfers_volume_sum",
+        "transactions/transfers_to_exchanges_sum",
+        "transactions/transfers_from_exchanges_sum",
+        "supply/profit_relative",
+    ]
+    series_out: dict[str, list[dict]] = {}
+    tier_status: dict[str, str] = {}
+    # 90 days back is enough for the dashboard; bumps to 365 if user has tier.
+    import time as _time
+    since = int(_time.time()) - 90 * 86400
+    for m in metrics:
+        url = f"https://api.glassnode.com/v1/metrics/{m}"
+        try:
+            r = requests.get(
+                url,
+                params={"a": "BTC", "api_key": key, "i": "24h", "s": since},
+                headers=H,
+                timeout=20,
+            )
+            if r.status_code == 200:
+                rows = r.json() or []
+                series_out[m] = [
+                    {"date": datetime.fromtimestamp(int(p["t"]), tz=timezone.utc).strftime("%Y-%m-%d"),
+                     "value": p.get("v")}
+                    for p in rows if isinstance(p, dict) and "t" in p
+                ]
+                tier_status[m] = "ok"
+            elif r.status_code in (401, 402, 403):
+                # 401 invalid key, 402/403 tier mismatch — skip gracefully
+                tier_status[m] = "forbidden"
+                print(f"  [glassnode] {m}: tier {r.status_code} (paid plan needed)", file=sys.stderr)
+            else:
+                tier_status[m] = f"http_{r.status_code}"
+                print(f"  [glassnode] {m}: HTTP {r.status_code}", file=sys.stderr)
+        except Exception as e:
+            tier_status[m] = "error"
+            print(f"  [glassnode] {m}: {e}", file=sys.stderr)
+    return {
+        "available": any(v == "ok" for v in tier_status.values()),
+        "tier_status": tier_status,
+        "series": series_out,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def bitinfocharts_btc_distribution() -> dict:
     """BTC supply held per address-balance cohort, daily, ~5 years back.
 
@@ -1005,11 +1083,15 @@ def fetch_whale() -> dict:
     btc = whale_proxies_btc()
     print("  bitinfocharts BTC distribution history (cohorts)...")
     distribution = bitinfocharts_btc_distribution()
+    print("  Glassnode (optional, env-gated by GLASSNODE_API_KEY)...")
+    glassnode = glassnode_btc_whale_metrics()
     return {
         "btc": btc,
         "distribution": distribution,
+        "glassnode": glassnode,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "note": "Free on-chain proxies. Real whale-flow metrics (Glassnode etc.) need a paid API.",
+        "note": ("Free: blockchain.info + bitinfocharts cohorts. "
+                 "Glassnode auto-activates when GLASSNODE_API_KEY is set."),
     }
 
 
