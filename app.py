@@ -299,7 +299,7 @@ HTML_TEMPLATE = r"""<!doctype html>
 <style>
 :root{
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
-  --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada;
+  --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada; --ltc:#bfbbbb;
   --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa; --cyan:#06b6d4;
 }
 *{box-sizing:border-box}
@@ -355,6 +355,7 @@ th{color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;le
 .tag.btc{color:var(--btc);border-color:var(--btc)}
 .tag.eth{color:var(--eth);border-color:var(--eth)}
 .tag.link{color:var(--link);border-color:var(--link)}
+.tag.ltc{color:var(--ltc);border-color:var(--ltc)}
 footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;border-top:1px solid var(--border);margin-top:24px}
 /* Chat dock */
 #chatDock{position:fixed;top:0;right:0;height:100vh;width:380px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;z-index:40;box-shadow:-4px 0 24px rgba(0,0,0,.35)}
@@ -775,6 +776,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="head"><h2>LINK signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
           <div class="chart-wrap"><canvas id="sigLinkChart"></canvas></div>
         </div>
+        <div class="chart-card">
+          <div class="head"><h2>LTC signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
+          <div class="chart-wrap"><canvas id="sigLtcChart"></canvas></div>
+        </div>
       </div>
     </div>
   </div>
@@ -1068,7 +1073,7 @@ const fmtPct = (n, d=2) => n==null?'—':(n*100).toFixed(d)+'%';
 const fmtNum = (n, d=2) => n==null?'—':n.toLocaleString(undefined,{maximumFractionDigits:d});
 
 const colorFor = n => n >= 0 ? '#22c55e' : '#ef4444';
-const ACCENTS = {btc:'#f7931a', eth:'#627eea', link:'#2a5ada'};
+const ACCENTS = {btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'};
 const accentFor = a => ACCENTS[a] || '#627eea';
 
 // ---------- range helpers ----------
@@ -1624,15 +1629,16 @@ function renderSignalChart(canvasId, asset){
 
 function renderSignals(){
   const sigData = DATA.signals || {};
-  const empty = !sigData.btc && !sigData.eth && !sigData.link;
+  const empty = !sigData.btc && !sigData.eth && !sigData.link && !sigData.ltc;
   document.getElementById('signalsEmpty').classList.toggle('hidden', !empty);
   document.getElementById('signalsContent').classList.toggle('hidden', empty);
   if (empty) return;
   document.getElementById('signalCards').innerHTML =
-    renderSignalCard('btc') + renderSignalCard('eth') + renderSignalCard('link');
+    renderSignalCard('btc') + renderSignalCard('eth') + renderSignalCard('link') + renderSignalCard('ltc');
   renderSignalChart('sigBtcChart','btc');
   renderSignalChart('sigEthChart','eth');
   renderSignalChart('sigLinkChart','link');
+  renderSignalChart('sigLtcChart','ltc');
 }
 
 // ---------- Whale tab ----------
@@ -2840,39 +2846,52 @@ function getSignalOrder(){
 }
 
 function renderOverviewSignals(){
-  const sigs = DATA.signals || {};
+  // Top-row asset cards on the Overview tab. Shows latest price, 24h
+  // % change, and 24h volume for each configured asset. Click jumps
+  // to the Trading tab for that asset.
+  const market = DATA.market || {};
   const order = getSignalOrder();
-  const labelColor = (label) => ({
-    'STRONG BUY':'#16a34a', 'BUY':'#22c55e', 'HOLD':'#f59e0b',
-    'SELL':'#ef4444', 'STRONG SELL':'#b91c1c',
-  })[label] || '#a78bfa';
   const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+  const ASSET_NAMES = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
+  const fmtPrice = p => {
+    if (p == null) return '—';
+    const d = p >= 1000 ? 0 : (p >= 1 ? 2 : 4);
+    return '$' + p.toLocaleString(undefined, {maximumFractionDigits: d, minimumFractionDigits: d});
+  };
+  const fmtVol = v => {
+    if (v == null) return '—';
+    if (v >= 1e9) return '$' + (v/1e9).toFixed(2) + 'B';
+    if (v >= 1e6) return '$' + (v/1e6).toFixed(1) + 'M';
+    return '$' + Math.round(v).toLocaleString();
+  };
   const host = document.getElementById('overviewSignals');
   if (!host) return;
   host.innerHTML = order.map(a => {
-    const s = sigs[a];
-    if (!s){
-      return `<div class="card"><h3>${a.toUpperCase()}</h3><div class="v">—</div><div class="sub">no signal yet</div></div>`;
-    }
-    const color = labelColor(s.label);
-    const pct = ((s.score + 100) / 200) * 100;
-    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="signals" title="Open Signals tab for ${a.toUpperCase()}">
+    const m = market[a] || {};
+    const prices = m.price || [];
+    const vols = m.volume || [];
+    const lastP = prices.length ? prices[prices.length-1].value : null;
+    const prevP = prices.length > 1 ? prices[prices.length-2].value : null;
+    const lastV = vols.length ? vols[vols.length-1].value : null;
+    const pct = (lastP != null && prevP && prevP > 0) ? (lastP / prevP - 1) * 100 : null;
+    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
+    const pctTxt  = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+    const asOf = prices.length ? prices[prices.length-1].date : '—';
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="trading" data-asset="${a}" title="Open Trading tab for ${a.toUpperCase()}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()} signal</h3>
-        <span class="sub" style="color:var(--muted);font-size:11px">$${(s.price||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
+        <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_NAMES[a] || a}</span>
       </div>
-      <div style="display:flex;align-items:baseline;gap:10px;margin-top:6px">
-        <div class="v" style="font-size:26px;font-weight:700;color:${color}">${s.label}</div>
-        <div class="sub" style="font-size:13px;color:${color};font-weight:600">${s.score>=0?'+':''}${s.score} / ±100</div>
+      <div class="v" style="font-size:26px;font-weight:700;margin-top:6px;color:var(--text)">${fmtPrice(lastP)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
+        <span style="font-size:13px;color:${pctColor};font-weight:600">${pctTxt}</span>
+        <span class="sub" style="font-size:12px;color:var(--muted)">24h vol ${fmtVol(lastV)}</span>
       </div>
-      <div style="height:8px;margin-top:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:4px;position:relative">
-        <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:14px;background:#fff;border-radius:1px;box-shadow:0 0 0 2px #0b0d12"></div>
-      </div>
-      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${s.as_of || '?'}</div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${asOf}</div>
     </div>`;
   }).join('');
 
-  // Wire click-to-jump on signal cards
+  // Wire click-to-jump on cards (now jumps to Trading tab)
   host.querySelectorAll('[data-jump]').forEach(el =>
     el.addEventListener('click', () => selectTab(el.dataset.jump))
   );
