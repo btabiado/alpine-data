@@ -3332,20 +3332,50 @@ document.querySelectorAll('.tab').forEach(b =>
 );
 
 // ---------- live refresh (server mode only) ----------
+// /api/refresh is now ASYNC server-side — it kicks off a background fetch
+// thread and returns immediately with `{ok, in_progress: true}`. We can't
+// just consume the returned payload; instead we update the button state to
+// "fetching…" and rely on the existing 60-second /api/data polling loop to
+// pick up the fresh payload once the background fetch finishes (~30-60s).
 async function liveRefresh(force){
   const btn = document.getElementById('refreshBtn');
   if (btn) { btn.disabled = true; btn.textContent = '↻ refreshing…'; }
   try {
-    const url = force ? '/api/refresh' : '/api/data';
-    const opts = force ? {method:'POST'} : {};
-    const r = await fetch(url, opts);
-    if (!r.ok) throw new Error('http '+r.status);
-    const j = await r.json();
-    const fresh = force ? j.data : j;
-    Object.assign(DATA, fresh);
-    document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
-    renderAll();
-    if (btn) btn.textContent = '↻ Refresh';
+    if (force) {
+      // Kick off background fetch — server returns immediately.
+      const r = await fetch('/api/refresh', {method:'POST'});
+      if (!r.ok) throw new Error('http '+r.status);
+      // Poll /api/data every 5s for up to 90s — bail when we see a fresh
+      // generated_at OR when the timeout elapses.
+      const oldStamp = DATA.generated_at;
+      const t0 = Date.now();
+      let updated = false;
+      while (Date.now() - t0 < 90_000) {
+        await new Promise(res => setTimeout(res, 5000));
+        try {
+          const rr = await fetch('/api/data');
+          if (!rr.ok) continue;
+          const j = await rr.json();
+          if (j && j.generated_at && j.generated_at !== oldStamp) {
+            Object.assign(DATA, j);
+            document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
+            renderAll();
+            updated = true;
+            break;
+          }
+        } catch(_) { /* retry next tick */ }
+      }
+      if (btn) btn.textContent = updated ? '↻ Refresh' : '↻ slow…';
+    } else {
+      // Plain poll for the latest cached payload.
+      const r = await fetch('/api/data');
+      if (!r.ok) throw new Error('http '+r.status);
+      const j = await r.json();
+      Object.assign(DATA, j);
+      document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
+      renderAll();
+      if (btn) btn.textContent = '↻ Refresh';
+    }
   } catch (e) {
     if (btn) btn.textContent = '↻ failed';
     console.warn('refresh failed', e);

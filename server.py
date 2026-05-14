@@ -383,15 +383,31 @@ def api_share_revoke(token: str) -> Response:
 
 @flask_app.route("/api/refresh", methods=["POST", "GET"])
 def api_refresh() -> Response:
-    ok, err = _do_fetch()
-    if not ok:
-        return jsonify({"ok": False, "error": err}), 503
-    payload = dash.build_payload()
-    payload["server"] = {
+    """Trigger a fresh fetch_all() in the background.
+
+    Used to be synchronous (block until fetch_all completed) but a full
+    fetch takes ~60s — longer than Safari's default fetch timeout — so the
+    UI would show "refresh failed" even though the underlying fetch was
+    still running and would eventually succeed. Now: kick off a thread,
+    return immediately with `{ok, in_progress: true}`. The browser's
+    existing 60-second polling of `/api/data` picks up the fresh payload
+    when the background fetch finishes.
+
+    If a fetch is already running, returns the same in_progress shape
+    rather than queueing a duplicate.
+    """
+    if _state["fetching"]:
+        return jsonify({"ok": True, "in_progress": True, "status": "already running"})
+    # Spawn the fetch on a daemon thread so the response can return now.
+    t = threading.Thread(target=_do_fetch, daemon=True, name="manual-refresh")
+    t.start()
+    return jsonify({
+        "ok": True,
+        "in_progress": True,
+        "status": "kicked off",
         "last_fetch_at": _state["last_fetch_at"],
-        "auto_refresh_minutes": REFRESH_MINUTES,
-    }
-    return jsonify({"ok": True, "data": payload})
+        "estimated_seconds": 60,
+    })
 
 
 @flask_app.route("/api/seed-etf", methods=["POST"])
