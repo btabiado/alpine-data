@@ -598,9 +598,19 @@ def api_chat() -> Response:
         payload = dash.build_payload()
         out_of_scope_warning = chat_mod.is_out_of_scope(question)
         configured = chat_mod.is_configured()
+        mcp_meta = chat_mod.mcp_status()
 
         def gen():
             try:
+                # Emit a small meta frame up front so the client can flip
+                # any "social tools active" UI before the first text chunk
+                # arrives. Backwards-compatible: clients that ignore unknown
+                # keys see no behaviour change.
+                yield 'data: ' + json.dumps({"meta": {
+                    "llm_configured": configured,
+                    "mcp_available": mcp_meta["mcp_available"],
+                    "mcp_servers": mcp_meta["servers"],
+                }}) + '\n\n'
                 if not configured:
                     # No API key — return rule-based fallback answer
                     text = chat_mod.fallback_answer(question, payload)

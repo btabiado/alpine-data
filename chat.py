@@ -5,6 +5,12 @@ context summary of the latest dashboard payload as the system prompt.
 Env:
     ANTHROPIC_API_KEY    required
     CHAT_MODEL           override the default model (e.g. claude-haiku-...)
+    LUNARCRUSH_API_KEY   optional — enables LunarCrush MCP tool calls
+                         during chat (live social-sentiment lookups).
+                         Same key already used by fetch_market.lunarcrush_snapshot().
+    LUNARCRUSH_MCP_URL   optional — explicit override for the LunarCrush
+                         MCP endpoint URL. If unset, the URL is built
+                         from LUNARCRUSH_API_KEY.
 """
 
 from __future__ import annotations
@@ -100,10 +106,21 @@ Format:
 - Keep total response under ~200 words unless the user asks for more.
 - If the user asks vague meta-questions ("what should I watch?"), point
   to the strongest insights and signal flips.
-
+%s
 Dashboard context (JSON):
 %s
 """
+
+
+# Appended to the system prompt when the LunarCrush MCP server is wired.
+# Kept on its own block so the base prompt stays identical when MCP is off.
+MCP_LUNARCRUSH_NOTE = (
+    "\nLunarCrush social-sentiment tools are available via MCP. When the "
+    "user asks about crypto social activity, sentiment, Galaxy Score, "
+    "AltRank, trending coins, or anything where fresh social data beats "
+    "the cached dashboard snapshot, call the lunarcrush tools to fetch "
+    "live values. Otherwise stick to the dashboard JSON below.\n"
+)
 
 
 class APIKeyMissing(RuntimeError):
@@ -112,6 +129,42 @@ class APIKeyMissing(RuntimeError):
 
 def is_configured() -> bool:
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+
+def _mcp_servers_config() -> list[dict]:
+    """Return MCP server configs to pass to Anthropic. Empty list if none.
+
+    Currently wires LunarCrush's hosted MCP server (social sentiment for
+    crypto). The URL is built from LUNARCRUSH_API_KEY unless the caller
+    supplies an explicit LUNARCRUSH_MCP_URL override (useful for pointing
+    at a self-hosted proxy).
+    """
+    out: list[dict] = []
+    # LunarCrush — social sentiment for crypto
+    explicit = os.environ.get("LUNARCRUSH_MCP_URL")
+    key = os.environ.get("LUNARCRUSH_API_KEY")
+    url = explicit or (f"https://lunarcrush.ai/sse?key={key}" if key else None)
+    if url:
+        out.append({
+            "type": "url",
+            "url": url,
+            "name": "lunarcrush",
+        })
+    return out
+
+
+def mcp_status() -> dict:
+    """Return a small status dict describing which MCP servers are active.
+
+    Designed for the /api/chat route to expose to the client so it can
+    surface a "social tools active" badge or similar. Keeps `is_configured()`
+    backwards-compatible (still a plain bool).
+    """
+    servers = _mcp_servers_config()
+    return {
+        "mcp_available": bool(servers),
+        "servers": [s["name"] for s in servers],
+    }
 
 
 def _client():
@@ -220,17 +273,34 @@ def fallback_answer(question: str, payload: dict) -> str:
 
 
 def stream_answer(question: str, payload: dict) -> Iterator[str]:
-    """Yield text chunks from Claude streaming."""
+    """Yield text chunks from Claude streaming.
+
+    When LUNARCRUSH_API_KEY (or LUNARCRUSH_MCP_URL) is set, the LunarCrush
+    MCP server is attached so Claude can call live social-sentiment tools
+    during the conversation. The SDK's ``text_stream`` only yields the
+    final assistant text — any intermediate MCP tool_use / tool_result
+    blocks are resolved transparently before that text is produced.
+    """
     client = _client()
     model = os.environ.get("CHAT_MODEL", "claude-haiku-4-5")
     summary = json.dumps(_summarise_payload(payload), default=str)
-    system = SYSTEM_PROMPT % summary
+    mcp_servers = _mcp_servers_config()
+    mcp_note = MCP_LUNARCRUSH_NOTE if mcp_servers else ""
+    system = SYSTEM_PROMPT % (mcp_note, summary)
+
+    # Only pass mcp_servers + the beta header when we actually have one;
+    # otherwise the call is identical to the pre-MCP behaviour.
+    extra_kwargs: dict[str, Any] = {}
+    if mcp_servers:
+        extra_kwargs["mcp_servers"] = mcp_servers
+        extra_kwargs["extra_headers"] = {"anthropic-beta": "mcp-client-2025-04-04"}
 
     with client.messages.stream(
         model=model,
         max_tokens=800,
         system=system,
         messages=[{"role": "user", "content": question}],
+        **extra_kwargs,
     ) as stream:
         for text in stream.text_stream:
             yield text

@@ -92,6 +92,12 @@ export CHAT_MODEL=claude-haiku-4-5     # default — fast and cheap
 Haiku is roughly **$0.001 per question** at typical lengths. A heavy month
 of chatting is still under $1. Anthropic's billing dashboard tracks it.
 
+### Optional: live LunarCrush tool calls in chat (MCP)
+If you've also set `LUNARCRUSH_API_KEY` (see §7), the chat dock attaches
+LunarCrush's official MCP server to its Anthropic call. Claude can then
+fetch fresh social sentiment / Galaxy Score / trending coins mid-chat
+instead of relying on the cached snapshot. Full details in **§8**.
+
 ---
 
 ## 2. Tailscale: phone-from-anywhere access
@@ -463,6 +469,20 @@ Overview** when the key is present, with per-coin tiles for:
 If your tier doesn't cover a metric or the API returns 4xx, the strip
 silently hides (no error). Removing the env var fully disables it.
 
+### Same key also drives the chat dock (MCP)
+Setting `LUNARCRUSH_API_KEY` activates **two** features off the one key,
+no extra setup needed:
+
+1. **`fetch_market.lunarcrush_snapshot()`** — bulk REST snapshot pulled
+   on every auto-refresh (every 30 min) and baked into the dashboard
+   payload as `market.lunarcrush.*`. Fast, but can be up to ~30 min
+   stale and gated by your tier's rate limits.
+2. **Chat dock MCP** — the chat dock attaches LunarCrush's official MCP
+   server to its Claude API call, so Claude can make **live tool calls**
+   when you ask about social sentiment. Useful when the cached snapshot
+   is stale, was rate-limited (HTTP 429), or doesn't cover the coin you
+   asked about. See **§8** below.
+
 ### Cost
 Free tier: limited credit pool, fine for daily refreshes if cached.
 Individual ($24/mo): comfortable headroom for personal use.
@@ -470,3 +490,49 @@ Builder ($240/mo): production / commercial use.
 
 Cancel anytime — the dashboard falls back gracefully when the key is
 removed or expires.
+
+---
+
+## 8. LunarCrush MCP for chat (uses key from §7)
+
+When `LUNARCRUSH_API_KEY` is set, the chat dock wires LunarCrush's
+official hosted **MCP server** (`https://lunarcrush.ai/sse?key=...`)
+into the Anthropic Messages API call. Claude can then call LunarCrush
+tools mid-conversation to fetch fresh social-sentiment data —
+**without** waiting for the dashboard's next 30-minute auto-refresh.
+
+### Behaviour
+- If `LUNARCRUSH_API_KEY` is **set**: chat dock has live access to
+  Galaxy Score, AltRank, trending coins, social-volume series, etc.
+  Ask things like *"what's BTC sentiment today?"* or *"which coin is
+  trending hardest on Twitter right now?"* and Claude will call the
+  MCP tool rather than read the cached snapshot.
+- If `LUNARCRUSH_API_KEY` is **unset**: chat dock works exactly as
+  before — the system prompt never mentions MCP, no tool calls happen,
+  responses fall back to the cached `lunarcrush_snapshot()` data
+  embedded in the dashboard payload (or the rule-based fallback if
+  `ANTHROPIC_API_KEY` is also unset).
+
+### Override the MCP URL
+For a self-hosted MCP proxy (e.g. you want to add auth logging or
+caching), set an explicit override and the dashboard will use it
+verbatim instead of building one from your API key:
+```bash
+export LUNARCRUSH_MCP_URL="https://my-proxy.example.com/sse?token=..."
+```
+Unset it again to fall back to the official endpoint.
+
+### Verify it's wired
+POST a chat question; the SSE stream now begins with a small `meta`
+frame like:
+```
+data: {"meta": {"llm_configured": true, "mcp_available": true, "mcp_servers": ["lunarcrush"]}}
+```
+`mcp_available: true` confirms the server is being passed to
+Anthropic. (Backwards-compatible: existing clients ignore the meta
+frame and process subsequent `text` frames as before.)
+
+### Cost
+The MCP call counts as normal LunarCrush API usage on whichever tier
+you're on — same metering as the REST snapshot. Anthropic does **not**
+add a surcharge for MCP-routed tool calls.
