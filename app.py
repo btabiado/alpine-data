@@ -514,6 +514,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="configSignalsBtn" style="font-size:11px;padding:3px 8px" title="Pick which assets show signal cards">⚙️ Configure</button>
     </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
+    <!-- LunarCrush social KPI strip — only renders when LUNARCRUSH_API_KEY is set
+         and the snapshot returned data. Otherwise stays empty/hidden. -->
+    <div id="lunarcrushStrip" class="hidden">
+      <div class="sub" style="margin:6px 14px 6px;color:var(--muted)">
+        🌙 <strong>LunarCrush</strong> — social sentiment for the assets above
+      </div>
+      <div class="row" id="lunarcrushKpis"></div>
+    </div>
 
     <!-- Row 2: top news + top insights -->
     <div class="grid2">
@@ -776,6 +784,33 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="chart-card">
       <div class="head"><h2>Trending on CoinGecko (last 24h search)</h2><span class="desc">Retail attention proxy</span></div>
       <div id="trendingList" style="display:flex;flex-wrap:wrap;gap:8px;padding:6px 4px"></div>
+    </div>
+    <!-- DEX side of the market (GeckoTerminal) — trending pools by volume + brand-new pools -->
+    <div class="grid2">
+      <div class="chart-card">
+        <div class="head">
+          <h2>DEX trending pools <span class="tag">GeckoTerminal</span></h2>
+          <span class="desc">top 10 DEX pools by 24h volume across all chains</span>
+        </div>
+        <div style="max-height:360px;overflow:auto">
+          <table id="gtTrendingTable" style="margin:0;font-size:12px"><thead><tr>
+            <th style="padding-left:14px">#</th>
+            <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="head">
+          <h2>DEX new pools <span class="tag">GeckoTerminal</span></h2>
+          <span class="desc">freshest listings · memecoin / early-listing radar</span>
+        </div>
+        <div style="max-height:360px;overflow:auto">
+          <table id="gtNewTable" style="margin:0;font-size:12px"><thead><tr>
+            <th style="padding-left:14px">#</th>
+            <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2189,6 +2224,42 @@ function renderMarkets(){
       </span>`
     ).join('');
   }
+
+  // GeckoTerminal DEX pools — trending (by 24h volume) + new (newest listings)
+  renderGeckoTerminalPools();
+}
+
+// Render two GeckoTerminal DEX pool tables side-by-side on the Markets tab.
+// Free DEX coverage across 1,800+ DEXes / 260+ chains, sourced from the
+// /networks/trending_pools and /networks/new_pools endpoints.
+function renderGeckoTerminalPools(){
+  const gt = (DATA.market && DATA.market.geckoterminal) || {};
+  const trending = gt.trending_pools || [];
+  const fresh = gt.new_pools || [];
+  const fillTable = (tbodySel, rows) => {
+    const tbody = document.querySelector(tbodySel);
+    if (!tbody) return;
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:14px">No data yet — wait for next refresh</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.slice(0, 10).map((p, i) => {
+      const ch = p.change_24h_pct;
+      const chCls = ch == null ? '' : (ch >= 0 ? 'green' : 'red');
+      const chStr = ch == null ? '—' : (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%';
+      return `<tr>
+        <td style="padding-left:14px;color:var(--muted)">${i+1}</td>
+        <td style="text-align:left"><strong>${escapeHtml(p.name||'?')}</strong>
+          <div class="sub" style="font-size:10px;color:var(--muted)">${escapeHtml(p.dex||'?')}</div></td>
+        <td style="text-align:left">${escapeHtml(p.network||'?')}</td>
+        <td>${fmtUSD(p.volume_24h_usd||0, 'auto')}</td>
+        <td class="${chCls}">${chStr}</td>
+        <td>${(p.transactions_24h||0).toLocaleString()}</td>
+      </tr>`;
+    }).join('');
+  };
+  fillTable('#gtTrendingTable tbody', trending);
+  fillTable('#gtNewTable tbody', fresh);
 }
 
 function renderSparkline(values, isUp){
@@ -2581,10 +2652,54 @@ function renderWhaleExtras(){
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
   renderOverviewSignals();
+  renderLunarcrushStrip();
   renderOverviewMacro();
   renderOverviewTopVolume();
   renderOverviewNews();
   renderOverviewInsights();
+}
+
+// LunarCrush social KPI strip — visible only when the env-gated snapshot
+// returned data (LUNARCRUSH_API_KEY set in ~/.zprofile). Shows the social
+// signal for the same assets that have signal cards above (BTC/ETH/LINK/LTC
+// by default, or whatever the user configured via the ⚙️ picker).
+function renderLunarcrushStrip(){
+  const strip = document.getElementById('lunarcrushStrip');
+  const host  = document.getElementById('lunarcrushKpis');
+  if (!strip || !host) return;
+  const lc = (DATA.market || {}).lunarcrush || {};
+  if (!lc.available || !(lc.coins || []).length) {
+    strip.classList.add('hidden');
+    return;
+  }
+  const order = getSignalOrder().map(a => a.toUpperCase());
+  const bySym = {};
+  for (const c of lc.coins) {
+    if (c.symbol) bySym[c.symbol.toUpperCase()] = c;
+  }
+  const cards = order.map(sym => {
+    const c = bySym[sym];
+    if (!c) {
+      return `<div class="card"><h3>${sym} social</h3><div class="v">—</div><div class="sub">not in top 50</div></div>`;
+    }
+    const galaxy = c.galaxy_score != null ? c.galaxy_score : '—';
+    const altrank = c.alt_rank != null ? `#${c.alt_rank}` : '—';
+    const sentiment = c.sentiment != null ? c.sentiment : null;
+    // Sentiment from LunarCrush is 1-5 (1=bearish, 5=bullish)
+    const sentLabel = sentiment == null ? '—' :
+      sentiment >= 4 ? `bullish (${sentiment})` :
+      sentiment <= 2 ? `bearish (${sentiment})` :
+      `neutral (${sentiment})`;
+    const sentCls = sentiment == null ? '' :
+      sentiment >= 4 ? 'green' : sentiment <= 2 ? 'red' : 'amber';
+    return `<div class="card">
+      <h3>${sym} social</h3>
+      <div class="v ${sentCls}" style="font-size:18px">${sentLabel}</div>
+      <div class="sub">Galaxy ${galaxy} · AltRank ${altrank}</div>
+    </div>`;
+  });
+  host.innerHTML = cards.join('');
+  strip.classList.remove('hidden');
 }
 
 // Top 10 coins by 24h trading volume (USD). Derives from the cached
