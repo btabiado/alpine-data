@@ -805,6 +805,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </table>
         </div>
       </div>
+      <!-- Whale activity proxy: BTC volume + avg tx size combined view -->
+      <div class="chart-card">
+        <div class="head">
+          <h2>Whale activity proxy <span class="tag">FREE</span></h2>
+          <span class="desc">Daily BTC moved on-chain (left axis) &middot; avg tx size USD (right axis) &middot; both rising together = whale-shaped activity</span>
+        </div>
+        <div class="chart-wrap tall"><canvas id="whaleProxyChart"></canvas></div>
+        <div class="note" style="margin-top:10px;font-size:11px">
+          ⚠️ Best free proxy. True whale-cohort split (volume by ≥1,000 BTC transactions, address count by balance band) needs Glassnode Studio Lite (~$30/mo). If you sign up, paste the key and I'll wire the cohort-specific charts.
+        </div>
+      </div>
       <!-- BTC network state additions -->
       <div class="grid2">
         <div class="card" style="padding:12px 14px">
@@ -1682,6 +1693,59 @@ function renderWhale(){
   lineChart('minerChart',  'miner',  ra(w.miners_revenue_usd,'sum'),  '#f59e0b', v=>fmtUSD(v,'auto'));
   lineChart('outputChart', 'output', ra(w.output_volume_btc, 'sum'),  '#627eea', v=>fmtNum(v,0)+' BTC');
   renderWhaleTracker();
+  renderWhaleProxyChart();
+}
+
+// Whale activity proxy: combined two-axis chart of BTC moved per day +
+// avg tx size USD. When both rise together that's whale-shaped activity.
+// Range buttons (3M / 6M / 1Y / 2Y / 3Y / All) honored via the shared `ra`
+// resampler — same as every other whale chart on this tab.
+function renderWhaleProxyChart(){
+  const w = whaleData();
+  destroy('whaleProxy');
+  const btcSeries  = ra(w.output_volume_btc, 'sum');
+  const avgSeries  = ra(w.avg_tx_usd,        'mean');
+  // Align on the union of dates so two y-axes stay synced.
+  const dateSet = new Set([...btcSeries.map(r=>r.date), ...avgSeries.map(r=>r.date)]);
+  const dates = Array.from(dateSet).sort();
+  const btcByDate = Object.fromEntries(btcSeries.map(r=>[r.date, r.value]));
+  const avgByDate = Object.fromEntries(avgSeries.map(r=>[r.date, r.value]));
+  const btcData = dates.map(d => btcByDate[d] ?? null);
+  const avgData = dates.map(d => avgByDate[d] ?? null);
+  charts.whaleProxy = new Chart(document.getElementById('whaleProxyChart'), {
+    type:'line',
+    data:{
+      labels: dates,
+      datasets:[
+        {label:'BTC moved on-chain', yAxisID:'y1', data:btcData,
+         borderColor:'#627eea', backgroundColor:'#627eea22', fill:true,
+         tension:0.2, pointRadius:0, borderWidth:1.8, spanGaps:true},
+        {label:'Avg tx size (USD)', yAxisID:'y2', data:avgData,
+         borderColor:'#f7931a', backgroundColor:'transparent', fill:false,
+         tension:0.2, pointRadius:0, borderWidth:1.8, spanGaps:true},
+      ],
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#e6e8ee'}},
+        tooltip:{mode:'index', intersect:false,
+          callbacks:{label:ctx => {
+            const v = ctx.parsed.y;
+            return ctx.dataset.label + ': ' + (ctx.dataset.yAxisID === 'y1'
+              ? fmtNum(v, 0) + ' BTC'
+              : fmtUSD(v, 'auto'));
+          }}},
+      },
+      scales:{
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
+        y1:{type:'linear', position:'left', title:{display:true, text:'BTC moved', color:'#627eea'},
+            ticks:{color:'#8a93a6', callback:v=>fmtNum(v,0)+' BTC'}, grid:{color:'#1f2533'}},
+        y2:{type:'linear', position:'right', title:{display:true, text:'Avg tx size USD', color:'#f7931a'},
+            ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{display:false}},
+      },
+    },
+  });
 }
 
 // Multi-horizon delta table: each raw on-chain series shown at today vs
@@ -1703,8 +1767,8 @@ function renderWhaleTracker(){
 
   // Each row: label, series, formatter for "Today" cell.
   const rows = [
-    { label: 'Active addresses', series: w.active_addresses,    fmt: v => fmtNum(v, 0) },
-    { label: 'Tx count',         series: w.tx_count,            fmt: v => fmtNum(v, 0) },
+    { label: 'Active addresses (network)', series: w.active_addresses,    fmt: v => fmtNum(v, 0) },
+    { label: 'Tx count (network-wide)',    series: w.tx_count,            fmt: v => fmtNum(v, 0) },
     { label: 'Avg tx size',      series: w.avg_tx_usd,          fmt: v => fmtUSD(v, 'auto') },
     { label: 'Tx volume USD',    series: w.tx_volume_usd,       fmt: v => fmtUSD(v, 'auto') },
     // BTC actually moved on-chain — total of all transaction outputs that day.
