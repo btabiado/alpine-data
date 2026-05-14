@@ -424,7 +424,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <button class="btn" data-period="weekly">Weekly</button>
   <button class="btn" data-period="monthly">Monthly</button>
   <button class="btn" data-period="yearly">Yearly</button>
-  <span class="lbl" style="margin-left:14px">Range</span>
+  <span class="lbl" style="margin-left:14px">Timeframe</span>
   <button class="btn" data-range="3m">3M</button>
   <button class="btn" data-range="6m">6M</button>
   <button class="btn" data-range="1y">1Y</button>
@@ -2803,7 +2803,7 @@ function selectTab(t){
   // DeFi has its own zoom — none of them respond to Range. Hide elsewhere.
   const usesRange = (t === 'etf' || t === 'trading' || t === 'whale');
   document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = usesRange ? '' : 'none');
-  document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'RANGE') b.style.display = usesRange ? '' : 'none'; });
+  document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'TIMEFRAME') b.style.display = usesRange ? '' : 'none'; });
   const insightsBar = document.getElementById('insightsBar');
   if (insightsBar) insightsBar.style.display = isOverview ? 'none' : '';
   renderAll();
