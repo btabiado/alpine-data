@@ -44,6 +44,8 @@ python3 -m venv .venv
 # → open http://127.0.0.1:8765/
 ```
 
+**Daily startup recipe** (`dash-up` / `dash-status` / `dash-down` aliases): see [`docs/MORNING.md`](docs/MORNING.md).
+
 The server auto-refreshes market + whale data every 30 minutes in the background. The browser polls `/api/data` every 60s for the freshest cached payload.
 
 ## Two ways to run
