@@ -1206,7 +1206,16 @@ function tradingAssetData(){ return (DATA.market||{})[state.asset] || {}; }
 
 function renderTradingKpis(){
   const m = DATA.market || {}; const a = tradingAssetData(); const g = m.global || {}; const fng = (m.fear_greed||[]).slice(-1)[0];
-  const lastPrice = (a.price||[]).slice(-1)[0]; const prevPrice = (a.price||[]).slice(-2,-1)[0];
+  // Period-aware price delta: match the lookback window to the currently
+  // selected Period button so the KPI sub-text isn't misleadingly "1d"
+  // when the user is on Weekly / Monthly / Yearly view.
+  const priceSeries = a.price || [];
+  const lastPrice = priceSeries.slice(-1)[0];
+  const periodLookback = { daily: 1, weekly: 7, monthly: 30, yearly: 365 };
+  const periodLabel    = { daily: '1d', weekly: '7d', monthly: '30d', yearly: '1y' };
+  const lookback = periodLookback[state.period] || 1;
+  const lbLabel  = periodLabel[state.period]    || '1d';
+  const prevPrice = priceSeries.length > lookback ? priceSeries[priceSeries.length - 1 - lookback] : null;
   const chgPct = (lastPrice && prevPrice && prevPrice.value) ? (lastPrice.value/prevPrice.value - 1) : null;
   const lastVol = (a.volume||[]).slice(-1)[0];
   const lastFund = (a.funding||[]).slice(-1)[0];
@@ -1216,7 +1225,7 @@ function renderTradingKpis(){
   const ethbtc = (m.ethbtc||[]).slice(-1)[0];
 
   const items = [
-    {label:'Spot price', val: lastPrice ? fmtUSD(lastPrice.value, 'auto') : '—', sub: chgPct!=null ? (chgPct>=0?'+':'')+(chgPct*100).toFixed(2)+'% 1d' : '', cls: chgPct==null?'':(chgPct>=0?'green':'red')},
+    {label:'Spot price', val: lastPrice ? fmtUSD(lastPrice.value, 'auto') : '—', sub: chgPct!=null ? (chgPct>=0?'+':'')+(chgPct*100).toFixed(2)+'% ' + lbLabel : '', cls: chgPct==null?'':(chgPct>=0?'green':'red')},
     {label:'24h volume', val: lastVol ? fmtUSD(lastVol.value,'auto') : '—'},
     {label:'Market cap', val: a.market_cap && a.market_cap.length ? fmtUSD(a.market_cap.slice(-1)[0].value,'auto') : '—'},
     {label:'Funding rate', val: lastFund ? (lastFund.rate*100).toFixed(4)+'%' : '—', cls: lastFund ? (lastFund.rate>=0?'green':'red') : '', sub: lastFund ? lastFund.date : ''},
