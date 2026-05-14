@@ -414,3 +414,59 @@ Tier 3 ("Advanced", more): adds entity-adjusted and SOPR/MVRV variants.
 
 Cancel anytime — the dashboard falls back gracefully when the key is
 removed or expires.
+
+---
+
+## 7. LunarCrush (optional — social sentiment)
+
+The dashboard ships without social-sentiment context out of the box. Wire
+a LunarCrush key and the Crypto Overview gains a social-sentiment KPI
+strip with Galaxy Score, AltRank, and 24h social volume for the top
+50 coins — the cheapest credible social signal available.
+
+### Get a key
+1. Sign up at https://lunarcrush.com/developers/api/authentication —
+   the **Individual** plan ($24/mo) covers the `coins/list/v1` endpoint
+   the dashboard uses; a free trial credit pool is usually included
+2. Account → **API Keys** → create a new key
+3. Copy the value
+
+### Activate it on your Mac
+```bash
+echo 'export LUNARCRUSH_API_KEY="<your-key>"' >> ~/.zprofile
+source ~/.zprofile
+
+# Verify it's set:
+echo $LUNARCRUSH_API_KEY | head -c 12
+
+# Restart the dashboard server so it picks up the env var:
+lsof -ti:8765 | xargs kill -9
+cd ~/btc-eth-etf-dashboard
+HOST=0.0.0.0 .venv/bin/python server.py
+```
+
+### Trigger a refresh
+The next auto-refresh (every 30 min) will hit LunarCrush. To pull
+immediately: click the **↻ Refresh** button in the dashboard header
+or `curl -X POST http://127.0.0.1:8765/api/refresh` (auth required).
+
+### What you get when active
+The dashboard renders a **social-sentiment KPI strip on the Crypto
+Overview** when the key is present, with per-coin tiles for:
+
+- **Galaxy Score** (0-100 composite of price + social health)
+- **AltRank** (rank vs all tracked alts on combined performance)
+- **Social volume 24h** (interactions across X, Reddit, news)
+- **Sentiment** (bullish/bearish skew)
+- **Social dominance** (% of all crypto chatter pointed at this coin)
+
+If your tier doesn't cover a metric or the API returns 4xx, the strip
+silently hides (no error). Removing the env var fully disables it.
+
+### Cost
+Free tier: limited credit pool, fine for daily refreshes if cached.
+Individual ($24/mo): comfortable headroom for personal use.
+Builder ($240/mo): production / commercial use.
+
+Cancel anytime — the dashboard falls back gracefully when the key is
+removed or expires.

@@ -85,7 +85,7 @@ def test_market_insight_tab_classifier_known_patterns():
     assert f({"headline": "S&P 500 -2.4% today — risk-off may pressure crypto"}) == "markets"
     assert f({"headline": "📰 CoinDesk: Some headline goes here"}) == "markets"
     assert f({"headline": "ZANO (Zano) is trending #1 on CoinGecko"}) == "markets"
-    assert f({"headline": "BTC price divergence: CoinGecko $43,200 vs CryptoCompare $43,512"}) == "markets"
+    assert f({"headline": "DEX hot pool: PEPE/WETH on ethereum +45% with $80M volume"}) == "markets"
     assert f({"headline": "NASDAQ +1.80% on the day"}) == "markets"
     assert f({"headline": "Dow Jones -2.10% on the day"}) == "markets"
     assert f({"headline": "VIX crossed above 20 (22.4) — calm→fear"}) == "markets"

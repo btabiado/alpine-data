@@ -591,19 +591,6 @@ def _market_insights(payload: dict) -> list[dict]:
                 "headline": f"BTC hashrate at 30-day high ({last:.0f} EH/s)",
                 "detail": "Miners committing more compute — bullish security."})
 
-    # CryptoCompare price-divergence sanity check (vs CoinGecko)
-    cc = market.get("cryptocompare") or {}
-    for asset in ("btc","eth","link"):
-        cg_last_rows = (((market.get(asset) or {}).get("price")) or [])
-        cg_last = cg_last_rows[-1].get("value") if cg_last_rows else None
-        cc_price = (cc.get(asset.upper()) or {}).get("price")
-        if cg_last and cc_price and cg_last > 0:
-            div = abs(cc_price - cg_last) / cg_last
-            if div >= 0.005:  # >0.5%
-                out.append({"kind":"anomaly","asset":asset,"severity":"info",
-                    "headline": f"{asset.upper()} price divergence: CoinGecko ${cg_last:,.0f} vs CryptoCompare ${cc_price:,.0f}",
-                    "detail": f"{div*100:.2f}% spread between data sources."})
-
     # Stablecoin supply 7d delta (DeFiLlama) — proxy for "dry powder" coming in/out
     llama = market.get("defillama") or {}
     delta = llama.get("stablecoin_7d_change_usd")
@@ -634,6 +621,20 @@ def _market_insights(payload: dict) -> list[dict]:
             out.append({"kind": "trend", "asset": "global", "severity": "info",
                 "headline": f"{sym} ({name}) is trending #1 on CoinGecko",
                 "detail": (f"Current market cap rank: {rank}" if rank else "Retail search interest spike — watch for follow-through.")})
+
+    # DEX hot pool (GeckoTerminal) — top trending pool by volume with big move
+    gt = market.get("geckoterminal") or {}
+    gt_trending = gt.get("trending_pools") or []
+    for pool in gt_trending[:5]:  # only top-5 by volume considered
+        vol = pool.get("volume_24h_usd") or 0
+        ch = pool.get("change_24h_pct")
+        if vol >= 50_000_000 and ch is not None and ch >= 30:
+            out.append({
+                "kind": "trend", "asset": "global", "severity": "info",
+                "headline": f"DEX hot pool: {pool.get('name','?')} on {pool.get('network','?')} {ch:+.0f}% with {_fmt_usd(vol/1e6)}M volume",
+                "detail": f"DEX: {pool.get('dex','?')} · 24h tx: {pool.get('transactions_24h',0):,}",
+            })
+            break  # one such insight is enough
 
     # BTC difficulty adjustment — miner economics
     diff_adj = (market.get("mempool_extra") or {}).get("difficulty_adjustment") or {}
@@ -1086,7 +1087,7 @@ def _market_insight_tab(insight: dict) -> str:
     if "vix " in h or h.startswith("vix"): return "markets"
     if "📰" in raw: return "markets"
     if "trending #1" in h: return "markets"
-    if "price divergence" in h: return "markets"
+    if "dex hot pool" in h: return "markets"
     # Top-25 movers + dominance + total mcap milestones
     if "top-25" in h: return "markets"
     if "btc dominance" in h: return "markets"

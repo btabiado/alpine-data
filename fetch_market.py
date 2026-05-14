@@ -504,32 +504,169 @@ def mempool_space() -> dict:
     return out
 
 
-def cryptocompare(syms: tuple = ("BTC", "ETH", "LINK")) -> dict:
-    """CryptoCompare CCCAGG cross-exchange aggregate price + 24h volume.
-
-    Free tier, no key needed for these public endpoints.
-    """
-    fsyms = ",".join(syms)
-    j = _get("https://min-api.cryptocompare.com/data/pricemultifull",
-             {"fsyms": fsyms, "tsyms": "USD"})
-    out: dict[str, Any] = {}
-    if not j or "RAW" not in j:
-        return {"fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-    for sym in syms:
-        raw = (j.get("RAW") or {}).get(sym, {}).get("USD")
-        if not raw:
+def binance_futures_snapshot() -> list[dict]:
+    """Funding rate + mark price across all Binance USDT-margined perpetuals.
+    Single snapshot (not historical). Free, no auth."""
+    j = _get("https://fapi.binance.com/fapi/v1/premiumIndex")
+    if not j or not isinstance(j, list):
+        return []
+    out = []
+    for r in j:
+        sym = r.get("symbol") or ""
+        if not sym.endswith("USDT"):  # ignore USDC/BUSD/etc
             continue
-        out[sym] = {
-            "price": float(raw.get("PRICE", 0)),
-            "vol_24h_usd": float(raw.get("TOTALVOLUME24HTO", 0)),
-            "top_tier_vol_24h_usd": float(raw.get("TOPTIERVOLUME24HOURTO", 0)),
-            "mktcap_usd": float(raw.get("MKTCAP", 0)),
-            "change_pct_24h": float(raw.get("CHANGEPCT24HOUR", 0)),
-            "high_24h": float(raw.get("HIGH24HOUR", 0)),
-            "low_24h": float(raw.get("LOW24HOUR", 0)),
-        }
-    out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        try:
+            out.append({
+                "symbol": sym.replace("USDT", ""),
+                "funding_rate": float(r.get("lastFundingRate") or 0),
+                "mark_price": float(r.get("markPrice") or 0),
+                "index_price": float(r.get("indexPrice") or 0),
+                "next_funding_time_ms": int(r.get("nextFundingTime") or 0),
+            })
+        except (ValueError, TypeError):
+            continue
+    out.sort(key=lambda r: r["funding_rate"], reverse=True)
     return out
+
+
+def _parse_gt_pool(item: dict) -> dict | None:
+    if not isinstance(item, dict):
+        return None
+    a = item.get("attributes") or {}
+    r = item.get("relationships") or {}
+    network = ((r.get("network") or {}).get("data") or {}).get("id") or ""
+    dex = ((r.get("dex") or {}).get("data") or {}).get("id") or ""
+    try:
+        price = float(a.get("base_token_price_usd") or 0)
+    except (TypeError, ValueError):
+        price = 0.0
+    try:
+        vol = float((a.get("volume_usd") or {}).get("h24") or 0)
+    except (TypeError, ValueError):
+        vol = 0.0
+    try:
+        ch = float((a.get("price_change_percentage") or {}).get("h24") or 0)
+    except (TypeError, ValueError):
+        ch = 0.0
+    tx_h24 = a.get("transactions", {}).get("h24") or {}
+    try:
+        txs = int(tx_h24.get("buys", 0)) + int(tx_h24.get("sells", 0))
+    except (TypeError, ValueError):
+        txs = 0
+    return {
+        "name": a.get("name") or "",
+        "network": network,
+        "dex": dex,
+        "price_usd": price,
+        "volume_24h_usd": vol,
+        "change_24h_pct": ch,
+        "transactions_24h": txs,
+        "fdv_usd": a.get("fdv_usd"),
+        "market_cap_usd": a.get("market_cap_usd"),
+        "pool_address": a.get("address"),
+    }
+
+
+def geckoterminal_pools() -> dict:
+    """DEX trending + new pools snapshot."""
+    trending_j = _get("https://api.geckoterminal.com/api/v2/networks/trending_pools",
+                      {"include": "base_token,quote_token"})
+    new_j = _get("https://api.geckoterminal.com/api/v2/networks/new_pools", {"page": "1"})
+    def to_rows(j):
+        if not j or not isinstance(j, dict):
+            return []
+        data = j.get("data") or []
+        out = [_parse_gt_pool(it) for it in data]
+        return [r for r in out if r is not None]
+    trending = to_rows(trending_j)[:20]
+    new = to_rows(new_j)[:20]
+    trending.sort(key=lambda r: r.get("volume_24h_usd") or 0, reverse=True)
+    return {
+        "trending_pools": trending,
+        "new_pools": new,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def lunarcrush_snapshot() -> dict:
+    """Social-sentiment snapshot for top coins. Env-gated by LUNARCRUSH_API_KEY."""
+    import os
+    key = os.environ.get("LUNARCRUSH_API_KEY")
+    if not key:
+        return {"available": False, "reason": "no LUNARCRUSH_API_KEY in env"}
+    try:
+        r = requests.get(
+            "https://lunarcrush.com/api4/public/coins/list/v1",
+            headers={"Authorization": f"Bearer {key}", "User-Agent": UA},
+            timeout=20,
+        )
+        if r.status_code != 200:
+            print(f"  [lunarcrush] HTTP {r.status_code}", file=sys.stderr)
+            return {"available": False, "reason": f"http_{r.status_code}"}
+        j = r.json() or {}
+        data = (j.get("data") if isinstance(j, dict) else j) or []
+    except Exception as e:
+        print(f"  [lunarcrush] error: {e}", file=sys.stderr)
+        return {"available": False, "reason": "error"}
+    out = []
+    for c in data[:50]:
+        if not isinstance(c, dict):
+            continue
+        out.append({
+            "symbol": c.get("symbol"),
+            "name": c.get("name"),
+            "galaxy_score": c.get("galaxy_score"),
+            "alt_rank": c.get("alt_rank"),
+            "social_volume_24h": c.get("interactions_24h") or c.get("social_volume_24h"),
+            "sentiment": c.get("sentiment"),
+            "social_dominance": c.get("social_dominance"),
+            "percent_change_24h": c.get("percent_change_24h"),
+            "market_cap_rank": c.get("market_cap_rank"),
+        })
+    return {
+        "available": bool(out),
+        "coins": out,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def coin_metrics_btc_eth_metrics() -> dict:
+    """Coin Metrics Community API — free network metrics for BTC + ETH.
+    Tier 1 free only; metrics outside free tier return 403 and skip."""
+    metrics = ["PriceUSD", "CapMrktCurUSD"]
+    # Pull each asset+metric pair so we can gracefully degrade
+    out: dict[str, dict[str, list[dict]]] = {"btc": {}, "eth": {}}
+    import time as _time
+    since = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00")
+    for asset in ("btc", "eth"):
+        params = {
+            "assets": asset,
+            "metrics": ",".join(metrics),
+            "start_time": since,
+            "page_size": "1000",
+            "frequency": "1d",
+        }
+        j = _get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
+        if not j or not isinstance(j, dict):
+            continue
+        rows = j.get("data") or []
+        for m in metrics:
+            ser = []
+            for r in rows:
+                v = r.get(m)
+                if v is None:
+                    continue
+                try:
+                    ser.append({"date": (r.get("time") or "")[:10], "value": float(v)})
+                except (ValueError, TypeError):
+                    continue
+            if ser:
+                out[asset][m] = ser
+    return {
+        "btc": out["btc"],
+        "eth": out["eth"],
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
 
 
 def etherscan_gas() -> dict:
@@ -819,8 +956,14 @@ def fetch_trading() -> dict:
     dvol_eth = deribit_dvol("ETH")
     print("  DeFiLlama (stablecoin mcap, DEX vol, fees)...")
     llama = defillama()
-    print("  CryptoCompare (cross-exchange CCCAGG)...")
-    cc = cryptocompare()
+    print("  Binance Futures snapshot (all USDT perpetuals)...")
+    binance_fut = binance_futures_snapshot()
+    print("  GeckoTerminal DEX pools (trending + new)...")
+    gt_pools = geckoterminal_pools()
+    print("  LunarCrush social sentiment (env-gated by LUNARCRUSH_API_KEY)...")
+    lunar = lunarcrush_snapshot()
+    print("  Coin Metrics Community (BTC/ETH network metrics)...")
+    cm = coin_metrics_btc_eth_metrics()
     print("  Etherscan v2 (ETH gas oracle)...")
     gas = etherscan_gas()
     fred = fetch_fred()
@@ -900,7 +1043,10 @@ def fetch_trading() -> dict:
         },
         "global": glob,
         "defillama": llama,
-        "cryptocompare": cc,
+        "binance_futures": binance_fut,
+        "geckoterminal": gt_pools,
+        "lunarcrush": lunar,
+        "coin_metrics": cm,
         "eth_gas": gas,
         "fred": fred,
         "mempool": mp,
