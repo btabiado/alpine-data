@@ -598,31 +598,6 @@ def mempool_space() -> dict:
     return out
 
 
-def binance_futures_snapshot() -> list[dict]:
-    """Funding rate + mark price across all Binance USDT-margined perpetuals.
-    Single snapshot (not historical). Free, no auth."""
-    j = _get("https://fapi.binance.com/fapi/v1/premiumIndex")
-    if not j or not isinstance(j, list):
-        return []
-    out = []
-    for r in j:
-        sym = r.get("symbol") or ""
-        if not sym.endswith("USDT"):  # ignore USDC/BUSD/etc
-            continue
-        try:
-            out.append({
-                "symbol": sym.replace("USDT", ""),
-                "funding_rate": float(r.get("lastFundingRate") or 0),
-                "mark_price": float(r.get("markPrice") or 0),
-                "index_price": float(r.get("indexPrice") or 0),
-                "next_funding_time_ms": int(r.get("nextFundingTime") or 0),
-            })
-        except (ValueError, TypeError):
-            continue
-    out.sort(key=lambda r: r["funding_rate"], reverse=True)
-    return out
-
-
 def _parse_gt_pool(item: dict) -> dict | None:
     if not isinstance(item, dict):
         return None
@@ -682,39 +657,61 @@ def geckoterminal_pools() -> dict:
     }
 
 
+def _lunarcrush_stale_fallback(reason: str) -> dict:
+    """When LunarCrush errors or rate-limits, return the previous good
+    snapshot from cache (annotated stale) rather than showing 'unavailable'
+    in the UI. Falls through to {available: False} only if no prior good
+    snapshot exists."""
+    try:
+        prev = json.loads((CACHE / "market.json").read_text()).get("lunarcrush") or {}
+        if prev.get("coins"):
+            print(f"  [stale-keep] lunarcrush {reason}; kept {len(prev['coins'])} coins from {prev.get('fetched_at','?')}", file=sys.stderr)
+            return {**prev, "stale": True, "stale_reason": reason}
+    except Exception:
+        pass
+    return {"available": False, "reason": reason}
+
+
 def lunarcrush_snapshot() -> dict:
     """Social-sentiment snapshot for top coins. Env-gated by LUNARCRUSH_API_KEY.
 
-    Free tier is 10 req/min. We make one call but the IP may be shared
-    (rate-limit can fire spuriously on the first call after startup).
-    Retry once after a 3-second wait on a 429 response."""
+    Free tier is 10 req/min and the IP pool is shared, so 429s are common.
+    Three attempts with exponential backoff (3s → 10s → 30s between retries,
+    ~43s worst-case). On final failure, fall back to the previous good
+    snapshot via _lunarcrush_stale_fallback() so the UI keeps showing real
+    data instead of going blank."""
     import os
     key = os.environ.get("LUNARCRUSH_API_KEY")
     if not key:
         return {"available": False, "reason": "no LUNARCRUSH_API_KEY in env"}
     url = "https://lunarcrush.com/api4/public/coins/list/v1"
     headers = {"Authorization": f"Bearer {key}", "User-Agent": UA}
+    backoffs = [3, 10, 30]  # sleep BEFORE attempt 2 and 3 (last is unused)
     r = None
-    for attempt in range(2):
+    for attempt in range(3):
+        if attempt > 0:
+            sleep_s = backoffs[attempt - 1]
+            print(f"  [lunarcrush] HTTP 429 — backing off {sleep_s}s before retry {attempt+1}/3…", file=sys.stderr)
+            time.sleep(sleep_s)
         try:
             r = requests.get(url, headers=headers, timeout=20)
         except Exception as e:
             print(f"  [lunarcrush] error: {e}", file=sys.stderr)
-            return {"available": False, "reason": "error"}
+            return _lunarcrush_stale_fallback("error")
         if r.status_code == 200:
             break
-        if r.status_code == 429 and attempt == 0:
-            print(f"  [lunarcrush] HTTP 429 — retrying after backoff…", file=sys.stderr)
-            time.sleep(3)
-            continue
-        print(f"  [lunarcrush] HTTP {r.status_code}", file=sys.stderr)
-        return {"available": False, "reason": f"http_{r.status_code}"}
+        if r.status_code != 429:
+            print(f"  [lunarcrush] HTTP {r.status_code}", file=sys.stderr)
+            return _lunarcrush_stale_fallback(f"http_{r.status_code}")
+    if r is None or r.status_code != 200:
+        print(f"  [lunarcrush] HTTP 429 persisted after 3 attempts", file=sys.stderr)
+        return _lunarcrush_stale_fallback("http_429")
     try:
         j = r.json() or {}
         data = (j.get("data") if isinstance(j, dict) else j) or []
     except Exception as e:
         print(f"  [lunarcrush] parse: {e}", file=sys.stderr)
-        return {"available": False, "reason": "parse_error"}
+        return _lunarcrush_stale_fallback("parse_error")
     out = []
     for c in data[:50]:
         if not isinstance(c, dict):
@@ -1073,8 +1070,6 @@ def fetch_trading() -> dict:
     dvol_eth = deribit_dvol("ETH")
     print("  DeFiLlama (stablecoin mcap, DEX vol, fees)...")
     llama = defillama()
-    print("  Binance Futures snapshot (all USDT perpetuals)...")
-    binance_fut = binance_futures_snapshot()
     print("  GeckoTerminal DEX pools (trending + new)...")
     gt_pools = geckoterminal_pools()
     print("  LunarCrush social sentiment (env-gated by LUNARCRUSH_API_KEY)...")
@@ -1094,6 +1089,17 @@ def fetch_trading() -> dict:
     pools = mempool_mining_pools()
     print("  CoinGecko top-25 markets + trending...")
     top_markets = coingecko_top_markets(25); time.sleep(CG_PACE)
+    if not top_markets and (CACHE / "market.json").exists():
+        # CoinGecko 429 (rate-limit wipe) returns []. Pacing in 2b396b8 helps
+        # but doesn't fully eliminate races. Preserve the last good value
+        # instead of overwriting cache with an empty list.
+        try:
+            prev = json.loads((CACHE / "market.json").read_text()).get("markets_top") or []
+            if prev:
+                top_markets = prev
+                print(f"  [stale-keep] markets_top empty from API; kept {len(prev)} from previous fetch")
+        except Exception as e:
+            print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
     trending = coingecko_trending()
     print("  DeFiLlama: chains + protocols + yields + bridges + historical TVL...")
     chains = defillama_chains(20)
@@ -1162,7 +1168,6 @@ def fetch_trading() -> dict:
         "coinbase": cb_spot,
         "coinbase_intl_perps": cb_intl,
         "defillama": llama,
-        "binance_futures": binance_fut,
         "geckoterminal": gt_pools,
         "lunarcrush": lunar,
         "coin_metrics": cm,

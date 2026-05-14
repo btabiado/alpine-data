@@ -3,6 +3,11 @@ name: pages
 on:
   push:
     branches: [main]
+  schedule:
+    # Hourly live-data refresh. GitHub cron is best-effort and can drift
+    # 5–15 min under fleet load. Frequent enough to feel fresh, conservative
+    # on free-tier rate limits (CoinGecko 30/min, LunarCrush 429s).
+    - cron: "0 * * * *"
   workflow_dispatch: {}
 
 permissions:
@@ -31,12 +36,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Restore cached market data (no live fetch in CI)
+      - name: Seed ETF flow CSV stubs
         run: |
-          # Pages deploy is a static snapshot. We seed minimal data so the
-          # generator can render every tab without crashing. To get a live
-          # snapshot, run `python app.py --fetch-market --no-open` locally
-          # and commit data/market.json + data/whale.json before pushing.
+          # ETF flow data isn't free-fetchable (paid API or manual Farside
+          # paste), so we seed one-row stubs to keep the ETF Flows tab from
+          # crashing. To ship real ETF history publicly, force-add the local
+          # data/btc_flows.csv + data/eth_flows.csv (they're gitignored).
           mkdir -p data
           if [ ! -f data/btc_flows.csv ]; then
             printf 'date,Total\n2024-01-11,100\n' > data/btc_flows.csv
@@ -45,7 +50,18 @@ jobs:
             printf 'date,Total\n2024-07-23,50\n' > data/eth_flows.csv
           fi
 
-      - name: Generate dashboard.html
+      - name: Fetch live data + generate dashboard.html
+        # app.py runs fetch_market.fetch_all() then renders dashboard.html
+        # in one invocation. fetch_all handles per-source failures internally
+        # (logs "[skip] <url>" and continues); app.py wraps the call in
+        # try/except so the generator always runs even on a total fetch
+        # crash, falling back to whatever data is on disk.
+        run: python app.py --fetch-market --no-open
+
+      - name: Fallback generate if dashboard.html missing
+        # Safety net: if the previous step crashed before generating,
+        # render once more from whatever data exists.
+        if: hashFiles('dashboard.html') == ''
         run: python app.py --no-open
 
       - name: Stage site directory
