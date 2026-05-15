@@ -242,6 +242,14 @@ def build_payload() -> dict:
     except Exception as e:
         print(f"[poc] error: {e}", file=sys.stderr)
     try:
+        # Whale Sentiment Index — composite ±100 from existing on-chain
+        # proxies. Pure compute. Attached under whale.sentiment.
+        import fetch_market as fm_mod2
+        if isinstance(whale, dict):
+            whale["sentiment"] = fm_mod2.compute_whale_sentiment(whale)
+    except Exception as e:
+        print(f"[whale-sentiment] error: {e}", file=sys.stderr)
+    try:
         import insights as ins_mod
         payload["insights"] = ins_mod.build_insights(payload, limit=12)
     except Exception as e:
@@ -1166,7 +1174,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="whaleEmpty" class="empty hidden">No whale data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="whaleContent">
       <div class="sub" id="whaleAsOf" style="margin-bottom:6px"></div>
-      <div class="note">Free on-chain proxies (BTC). Real whale exchange-flow series need a paid feed (Glassnode / CryptoQuant). ETH-side proxies require Etherscan v2 — not yet wired.</div>
+      <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed. ETH whale extension is in research.</div>
+      <!-- Headline: Whale Sentiment Index (composite ±100 from on-chain proxies) -->
+      <div class="chart-card" id="whaleSentimentCard" style="position:relative"></div>
       <div class="row" id="whaleKpis"></div>
       <div class="chart-card">
         <div class="head">
@@ -2161,6 +2171,169 @@ function closeSignalDetail(){
 // ---------- Whale tab ----------
 function whaleData(){ return (DATA.whale||{}).btc || {}; }
 
+// Render the Whale Sentiment Index headline card at the top of the Whale
+// tab. Reads market.whale.sentiment which is computed Python-side in
+// fetch_market.compute_whale_sentiment(). Same gauge pattern as the
+// asset signal cards.
+function renderWhaleSentiment(){
+  const s = (DATA.whale || {}).sentiment;
+  const host = document.getElementById('whaleSentimentCard');
+  if (!host) return;
+  if (!s){
+    host.innerHTML = '<div class="sub" style="color:var(--muted)">No whale sentiment data yet — waiting on first fetch.</div>';
+    return;
+  }
+  const color = signalColor(s.score);
+  const pct = ((s.score + 100) / 200) * 100;
+  const compRows = (s.components||[]).map(c => {
+    const cls = c.contribution > 0 ? 'green' : (c.contribution < 0 ? 'red' : 'amber');
+    const sign = (c.contribution>=0?'+':'') + c.contribution;
+    return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
+  }).join('');
+  host.innerHTML = `
+    <div class="head" style="align-items:flex-start">
+      <div>
+        <h2 style="font-size:15px">🐋 Whale Sentiment Index</h2>
+        <div class="desc">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
+        <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
+      </div>
+    </div>
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+    </div>
+    <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
+    <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer||'')}</div>
+  `;
+}
+
+// 8 focused KPIs based on cohort migration + tx-shape signals (not the
+// noisy active-addresses/tx-count combo that was there before). See the
+// agent report: cohort-driven metrics from bitinfocharts are the strongest
+// whale signal we can get from free data. Replaces the prior 10-card set.
+function renderWhaleKpisV2(){
+  const w = whaleData();
+  const dist = ((DATA.whale||{}).distribution || {}).buckets || [];
+  const host = document.getElementById('whaleKpis');
+  if (!host) return;
+  const fmtBTC = b => b == null ? '—' :
+    b >= 1e6 ? (b/1e6).toFixed(2) + 'M BTC' :
+    b >= 1e3 ? (b/1e3).toFixed(1) + 'k BTC' :
+    Math.round(b).toLocaleString() + ' BTC';
+  const fmtPct = (p, d=2) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(d) + '%';
+  const last = a => (a||[]).slice(-1)[0];
+  const meanN = (series, n) => {
+    const arr = (series||[]).slice(-n).map(r => r?.value).filter(v => v != null);
+    if (!arr.length) return null;
+    return arr.reduce((s,v)=>s+v, 0) / arr.length;
+  };
+  const colorFor = (pct, t) => pct == null ? '' : (pct >= t ? 'green' : pct <= -t ? 'red' : 'amber');
+  // Cohort helpers
+  const whaleSup = r => (r.b1k_10k||0) + (r.b10k_100k||0) + (r.b100k_1m||0);
+  const megaSup  = r => (r.b10k_100k||0) + (r.b100k_1m||0);
+  const shrimpSup = r => (r.b0_01||0) + (r.b01_1||0);
+  const totalSup = r => (r.b0_01||0)+(r.b01_1||0)+(r.b1_10||0)+(r.b10_100||0)+
+                        (r.b100_1k||0)+(r.b1k_10k||0)+(r.b10k_100k||0)+(r.b100k_1m||0);
+
+  const items = [];
+
+  // ====== 4 cohort-based cards (need bitinfocharts data) ======
+  if (dist.length >= 31){
+    const cur = dist[dist.length-1];
+    const prev30 = dist[dist.length-31];
+    // 1. Whale Supply (≥1K BTC) + 30d % change
+    const wNow = whaleSup(cur), w30 = whaleSup(prev30);
+    const wPct = w30 ? (wNow - w30) / w30 * 100 : null;
+    items.push({label:'Whale Supply (≥1K)', val: fmtBTC(wNow),
+                cls: colorFor(wPct, 0.5), sub:`30d Δ ${fmtPct(wPct, 2)}`});
+    // 2. Whale Δ 30d (BTC accumulated/sold)
+    const wDeltaBtc = wNow - w30;
+    items.push({label:'Whale Δ 30d', val: (wDeltaBtc>=0?'+':'') + fmtBTC(Math.abs(wDeltaBtc)),
+                cls: wDeltaBtc >= 0 ? 'green' : 'red',
+                sub:'net accumulation last 30d'});
+    // 3. Mega-Whale Share (≥10K BTC as % of total tracked supply)
+    const totalNow = totalSup(cur), totalPrev = totalSup(prev30);
+    const megaShareNow = totalNow ? megaSup(cur) / totalNow * 100 : 0;
+    const megaSharePrev = totalPrev ? megaSup(prev30) / totalPrev * 100 : 0;
+    const sharePP = megaShareNow - megaSharePrev;
+    items.push({label:'Mega-Whale Share', val: megaShareNow.toFixed(2)+'%',
+                cls: sharePP >= 0.2 ? 'green' : sharePP <= -0.2 ? 'red' : 'amber',
+                sub:`30d Δ ${sharePP>=0?'+':''}${sharePP.toFixed(2)}pp`});
+    // 4. Shrimp Supply (<1 BTC) — retail counter-signal
+    const sNow = shrimpSup(cur), sPrev = shrimpSup(prev30);
+    const sPct = sPrev ? (sNow - sPrev) / sPrev * 100 : null;
+    items.push({label:'Shrimp Supply (<1)', val: fmtBTC(sNow),
+                cls: colorFor(sPct, 0.5), sub:`30d Δ ${fmtPct(sPct, 2)} · retail proxy`});
+  }
+
+  // ====== 4 flow/miner cards (from blockchain.info) ======
+  // 5. Avg Tx Size USD — 7d vs 30d MA
+  {
+    const cur = (last(w.avg_tx_usd) || {}).value;
+    const ma7  = meanN(w.avg_tx_usd, 7);
+    const ma30 = meanN(w.avg_tx_usd, 30);
+    const pct = (ma30 && ma7) ? (ma7 - ma30) / ma30 * 100 : null;
+    items.push({label:'Avg Tx Size', val: cur ? fmtUSD(cur, 'auto') : '—',
+                cls: colorFor(pct, 5), sub:`7d MA ${fmtPct(pct, 1)} vs 30d`});
+  }
+  // 6. Whale-Tx Proxy ($/active-addr, 7d MA vs 30d MA)
+  {
+    const v = (w.tx_volume_usd || []);
+    const a = (w.active_addresses || []);
+    const byDate = {};
+    a.forEach(d => { if (d.date) byDate[d.date] = d.value; });
+    const ratios = v.filter(d => d.date && byDate[d.date])
+      .map(d => ({date:d.date, v: d.value / byDate[d.date]}));
+    const m = n => ratios.slice(-n).reduce((s,r)=>s+r.v,0) / Math.min(n, ratios.length || 1);
+    const r7 = ratios.length >= 7 ? m(7) : null;
+    const r30 = ratios.length >= 30 ? m(30) : null;
+    const pct = (r30 && r7) ? (r7 - r30) / r30 * 100 : null;
+    items.push({label:'Whale-Tx Proxy', val: r7 != null ? fmtUSD(r7, 'auto') : '—',
+                cls: colorFor(pct, 5), sub:`$/active addr · 7d ${fmtPct(pct, 1)}`});
+  }
+  // 7. Miner Revenue 7d sum + w/w delta
+  {
+    const arr = (w.miners_revenue_usd || []).map(r => r?.value).filter(v => v != null);
+    const sum7 = arr.length >= 7 ? arr.slice(-7).reduce((s,v)=>s+v,0) : null;
+    const sum14_7 = arr.length >= 14 ? arr.slice(-14, -7).reduce((s,v)=>s+v,0) : null;
+    const pct = (sum14_7 && sum7) ? (sum7 - sum14_7) / sum14_7 * 100 : null;
+    items.push({label:'Miner Revenue 7d', val: sum7 != null ? fmtUSD(sum7, 'auto') : '—',
+                cls: colorFor(pct, 5), sub:`w/w ${fmtPct(pct, 1)}`});
+  }
+  // 8. Hash rate 30d trend
+  {
+    const arr = (w.hash_rate || []).map(r => r?.value).filter(v => v != null);
+    const cur = arr.length ? arr[arr.length-1] : null;
+    const prev30 = arr.length >= 31 ? arr[arr.length-31] : null;
+    const pct = (prev30 && cur) ? (cur - prev30) / prev30 * 100 : null;
+    items.push({label:'Hash rate 30d', val: cur ? (cur / 1e18).toFixed(1) + ' EH/s' : '—',
+                cls: colorFor(pct, 2), sub:`30d ${fmtPct(pct, 1)}`});
+  }
+
+  host.innerHTML = items.map(i =>
+    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
+  ).join('');
+
+  // "data as of" badge — show freshest date across primary series
+  const asOfEl = document.getElementById('whaleAsOf');
+  if (asOfEl){
+    const candidates = [w.tx_volume_usd, w.active_addresses, w.miners_revenue_usd]
+      .map(s => last(s)).filter(p => p && p.date);
+    if (!candidates.length){
+      asOfEl.textContent = ''; asOfEl.style.color = '';
+    } else {
+      const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
+      const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
+      asOfEl.textContent = `data as of ${freshest} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})`;
+      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
+    }
+  }
+}
+
+// Legacy KPI function kept for reference; renderWhaleKpisV2 is the new one
+// wired into renderWhale(). Delete after a few commits if no rollback needed.
 function renderWhaleKpis(){
   const w = whaleData();
   const last = (a) => (a||[]).slice(-1)[0];
@@ -4080,7 +4253,7 @@ function renderAll(){
     renderSignals();
   }
   if (state.tab === 'whale' && state.asset === 'btc' && !whEmpty){
-    renderWhaleKpis(); renderWhale(); renderWhaleExtras();
+    renderWhaleSentiment(); renderWhaleKpisV2(); renderWhale(); renderWhaleExtras();
   }
   if (state.tab === 'markets'){
     renderMarkets();

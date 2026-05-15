@@ -1469,6 +1469,136 @@ def naked_pocs(price_series: list[dict], volume_series: list[dict],
     return naked[:top_n]
 
 
+def compute_whale_sentiment(whale: dict) -> dict | None:
+    """Composite ±100 whale-sentiment score from existing BTC on-chain
+    proxies (no new API calls). Six components, drawing on Glassnode-style
+    framing translated to free data:
+
+      ±20  Whale supply Δ30d (bitinfocharts cohorts, ≥1K BTC addresses)
+      ±20  Hash rate vs 30d mean (miner confidence proxy)
+      ±15  Miner revenue vs 30d mean (selling-pressure inverse)
+      ±15  Avg tx USD z-score(30d) (larger-ticket flow = whale-shaped)
+      ±15  Output volume BTC z-score(30d) (large-tx proxy, no `large_tx` field)
+      ±15  Active addresses vs 30d mean (broad usage breadth)
+
+    Returns same shape as signals.compute_signal (score, label,
+    components, as_of, disclaimer) so the existing UI patterns work.
+    Returns None if data is too thin to compute.
+    """
+    if not isinstance(whale, dict):
+        return None
+    btc = whale.get("btc") or {}
+    dist = (whale.get("distribution") or {}).get("buckets") or []
+    if len(dist) < 31:
+        return None
+
+    def _last_values(series: list[dict], n: int) -> list[float]:
+        vals = [r.get("value") for r in (series or []) if isinstance(r, dict) and r.get("value") is not None]
+        return vals[-n:]
+
+    def _mean(arr: list[float]) -> float:
+        return sum(arr) / len(arr) if arr else 0.0
+
+    def _std(arr: list[float]) -> float:
+        if not arr:
+            return 1.0
+        m = _mean(arr)
+        var = _mean([(x - m) ** 2 for x in arr])
+        return (var ** 0.5) or 1.0
+
+    def _pct_vs_mean30(name: str) -> float | None:
+        v = _last_values(btc.get(name) or [], 31)
+        if len(v) < 31:
+            return None
+        history, today = v[:-1], v[-1]
+        m = _mean(history)
+        return ((today - m) / m * 100) if m else None
+
+    def _z30(name: str) -> float | None:
+        v = _last_values(btc.get(name) or [], 31)
+        if len(v) < 31:
+            return None
+        history, today = v[:-1], v[-1]
+        m = _mean(history)
+        s = _std(history)
+        return (today - m) / s if s else None
+
+    def _clamp(x: float, lo: float, hi: float) -> int:
+        return int(max(lo, min(hi, round(x))))
+
+    def _whale_supply(row: dict) -> float:
+        return (row.get("b1k_10k", 0) + row.get("b10k_100k", 0) + row.get("b100k_1m", 0))
+
+    comps: list[dict] = []
+    def add(name: str, value: str, c: int, explanation: str):
+        comps.append({"name": name, "value": value,
+                      "contribution": int(c), "explanation": explanation})
+
+    # 1) Whale supply 30d Δ — ±20 saturates at ±1%
+    sup_now = _whale_supply(dist[-1])
+    sup_30 = _whale_supply(dist[-31])
+    if sup_30:
+        sup_delta = (sup_now - sup_30) / sup_30 * 100
+        c = _clamp(sup_delta / 1.0 * 20, -20, 20)
+        add("Whale supply Δ30d", f"{sup_delta:+.2f}%", c,
+            "whales accumulating" if c > 0 else "whales distributing" if c < 0 else "flat")
+
+    # 2) Hash rate vs 30d mean — ±20 saturates at ±10%
+    hr = _pct_vs_mean30("hash_rate")
+    if hr is not None:
+        c = _clamp(hr / 10 * 20, -20, 20)
+        add("Hash rate vs 30d", f"{hr:+.1f}%", c,
+            "miner confidence rising" if c > 0 else "miners capitulating" if c < 0 else "flat")
+
+    # 3) Miner revenue vs 30d mean — ±15 saturates at ±15%
+    mr = _pct_vs_mean30("miners_revenue_usd")
+    if mr is not None:
+        c = _clamp(mr / 15 * 15, -15, 15)
+        add("Miner revenue vs 30d", f"{mr:+.1f}%", c,
+            "miners under pressure" if c < 0 else "miner income healthy" if c > 0 else "flat")
+
+    # 4) Avg tx USD z-score(30d) — ±15 saturates at ±2σ
+    az = _z30("avg_tx_usd")
+    if az is not None:
+        c = _clamp(az / 2 * 15, -15, 15)
+        add("Avg tx USD z30", f"{az:.2f}σ", c,
+            "larger-ticket flow (whale-shaped)" if c > 0 else "smaller-ticket flow")
+
+    # 5) Output volume BTC z-score(30d) — large-tx proxy
+    oz = _z30("output_volume_btc")
+    if oz is not None:
+        c = _clamp(oz / 2 * 15, -15, 15)
+        add("Output vol z30", f"{oz:.2f}σ", c,
+            "on-chain BTC movement spike" if c > 0 else "quiet on-chain")
+
+    # 6) Active addresses vs 30d mean — ±15 saturates at ±15%
+    aa = _pct_vs_mean30("active_addresses")
+    if aa is not None:
+        c = _clamp(aa / 15 * 15, -15, 15)
+        add("Active addr vs 30d", f"{aa:+.1f}%", c,
+            "broad usage uptick" if c > 0 else "usage softening")
+
+    if not comps:
+        return None
+
+    score = max(-100, min(100, sum(x["contribution"] for x in comps)))
+    if   score >=  50: label = "STRONG WHALE BUY"
+    elif score >=  20: label = "WHALE ACCUMULATION"
+    elif score >  -20: label = "NEUTRAL"
+    elif score >  -50: label = "WHALE DISTRIBUTION"
+    else:              label = "STRONG WHALE DUMP"
+
+    return {
+        "score": int(score),
+        "label": label,
+        "components": comps,
+        "as_of": (whale.get("fetched_at") or "")[:10],
+        "disclaimer": ("Proxy composite from free blockchain.info + bitinfocharts "
+                       "cohorts. Not a Glassnode metric — directional indicator, "
+                       "not a trading signal."),
+    }
+
+
 def fetch_social() -> dict:
     """Consolidated 'Research' tab payload. Composes free social + dev +
     on-chain + news signals from 4 independent free sources, each handled
