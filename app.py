@@ -342,6 +342,7 @@ header .meta{color:var(--muted);font-size:12px}
 .controls{display:flex;gap:6px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid var(--border);background:#0e1118}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px}
 .btn:hover{background:#222838}
+.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,a:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
 .btn.active{background:var(--btc);color:#000;border-color:var(--btc)}
 .btn.active.eth{background:var(--eth);color:#fff;border-color:var(--eth)}
 .btn.active.link{background:var(--link);color:#fff;border-color:var(--link)}
@@ -552,16 +553,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 </header>
 
-<div class="tabs">
-  <div class="tab active" data-tab="overview">Crypto Overview</div>
-  <div class="tab" data-tab="signals">Signals</div>
-  <div class="tab" data-tab="poc">Point of Control</div>
-  <div class="tab" data-tab="social">Research</div>
-  <div class="tab" data-tab="defi">DeFi</div>
-  <div class="tab" data-tab="whale">Whale Activity</div>
-  <div class="tab" data-tab="etf">ETF Flows</div>
-  <div class="tab" data-tab="trading">Futures</div>
-  <div class="tab" data-tab="stocks">Stocks</div>
+<div class="tabs" role="tablist">
+  <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Crypto Overview</div>
+  <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Signals</div>
+  <div class="tab" data-tab="poc" role="tab" tabindex="0" aria-selected="false">Point of Control</div>
+  <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
+  <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
+  <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale Activity</div>
+  <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
+  <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
+  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
 </div>
 
 <div class="controls">
@@ -585,7 +586,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(440px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2 style="margin:0;font-size:14px">⚙️ Configure signal cards</h2>
-      <button class="btn" id="configSignalsClose">×</button>
+      <button class="btn" id="configSignalsClose" aria-label="Close configure signal cards">×</button>
     </div>
     <div class="sub">Pick which assets appear as signal cards on the Overview. Selection persists in your browser.</div>
     <div id="configSignalsList" style="display:flex;flex-direction:column;gap:8px;padding:6px 0"></div>
@@ -602,7 +603,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:8px;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2 id="signalDetailTitle" style="margin:0;font-size:14px">Signal detail</h2>
-      <button class="btn" id="signalDetailClose">×</button>
+      <button class="btn" id="signalDetailClose" aria-label="Close signal detail">×</button>
     </div>
     <div id="signalDetailBody"></div>
   </div>
@@ -613,7 +614,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(620px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2 style="margin:0;font-size:14px">📊 What is Point of Control?</h2>
-      <button class="btn" id="pocExplainerClose">×</button>
+      <button class="btn" id="pocExplainerClose" aria-label="Close Point of Control explainer">×</button>
     </div>
     <div class="sub" style="line-height:1.55;color:var(--text)">
       <p><strong>Plain language.</strong> The Point of Control (POC) is the price level where the most volume has traded over a given window. Think of it as the price buyers and sellers keep <em>gravitating back to</em> — the market's recent "center of gravity."</p>
@@ -655,7 +656,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(640px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2 style="margin:0;font-size:14px">🔗 Share dashboard (read-only)</h2>
-      <button class="btn" id="shareClose">×</button>
+      <button class="btn" id="shareClose" aria-label="Close share dashboard modal">×</button>
     </div>
     <div class="sub">Mints a token-gated URL. Anyone with the link can view this dashboard (data refreshes live), but cannot trigger refreshes, upload data, or use chat. Link auto-expires.</div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--border)">
@@ -855,7 +856,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <h2 style="margin:0;font-size:14px">Paste ETF flow CSV</h2>
-          <button class="btn" id="pasteClose">×</button>
+          <button class="btn" id="pasteClose" aria-label="Close paste CSV modal">×</button>
         </div>
         <div class="sub">First line is the header. Tab-separated also OK (paste from a browser table). Asset:
           <select id="pasteAsset" style="background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:3px 6px;border-radius:4px"><option value="btc">BTC</option><option value="eth">ETH</option></select>
@@ -1027,11 +1028,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="grid2">
         <div class="chart-card">
-          <div class="head"><h2>ETH/BTC ratio</h2><span class="desc">Relative strength</span></div>
+          <div class="head"><h2>ETH/BTC ratio <span class="tag">CoinGecko</span></h2><span class="desc">Relative strength</span></div>
           <div class="chart-wrap"><canvas id="ethbtcChart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="head"><h2>Market snapshot</h2><span class="desc">CoinGecko global stats</span></div>
+          <div class="head"><h2>Market snapshot <span class="tag">CoinGecko</span></h2><span class="desc">CoinGecko global stats</span></div>
           <div style="padding:8px 4px"><table id="globalTable"><tbody></tbody></table></div>
         </div>
       </div>
@@ -1067,8 +1068,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="container">
       <div class="chart-card">
         <div class="head">
-          <h2>Stock signals — Top 20 most active</h2>
+          <h2>Stock signals — Top 20 most active <span class="tag">Yahoo</span></h2>
           <span class="desc">Daily-volume leaders on US exchanges &middot; signal score across SMA / RSI / MACD / momentum / volume &middot; sorted Strong Buy &rarr; Strong Sell</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <span class="lbl" style="margin:0">Filter</span>
+          <button class="btn active" data-stocksfilter="all">All</button>
+          <button class="btn" data-stocksfilter="strong_buy">STRONG BUY+</button>
+          <button class="btn" data-stocksfilter="buy">BUY+</button>
+          <button class="btn" data-stocksfilter="hold">HOLD</button>
+          <button class="btn" data-stocksfilter="sell">SELL+</button>
+          <button class="btn" data-stocksfilter="strong_sell">STRONG SELL</button>
         </div>
         <div id="stocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
       </div>
@@ -1330,7 +1340,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div class="chart-card">
-        <div class="head"><h2>Mining pool concentration</h2><span class="desc">Hashrate share by pool (1y window) &middot; top 2 = <span id="poolsTop2">?</span></span></div>
+        <div class="head"><h2>Mining pool concentration <span class="tag">mempool.space</span></h2><span class="desc">Hashrate share by pool (1y window) &middot; top 2 = <span id="poolsTop2">?</span></span></div>
         <div class="chart-wrap tall"><canvas id="miningPoolsChart"></canvas></div>
       </div>
       <div class="grid2">
@@ -1415,14 +1425,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </footer>
 
 <!-- ============ CHAT DOCK ============ -->
-<button id="chatFab" title="Ask about the data">💬</button>
+<button id="chatFab" title="Ask about the data" aria-label="Open data chat">💬</button>
 <aside id="chatDock" aria-label="Data chat">
   <div class="chat-head">
     <div>
       <h2>Ask the data</h2>
       <div class="sub">Powered by Claude · context = your live dashboard</div>
     </div>
-    <button class="btn" id="chatClose" style="padding:3px 8px;font-size:12px">×</button>
+    <button class="btn" id="chatClose" style="padding:3px 8px;font-size:12px" aria-label="Close data chat">×</button>
   </div>
   <div class="chat-msgs" id="chatMsgs"></div>
   <div class="chat-suggestions" id="chatSuggestions">
@@ -2186,7 +2196,7 @@ function renderSignalSparkline(s){
 // Mirrors renderSignalCard(asset) but keys off the object directly so the
 // modal works for any coin, not just the four pinned in DATA.signals.
 function renderSignalCardFromObj(s){
-  if (!s) return '<div class="chart-card"><div class="empty">No signal.</div></div>';
+  if (!s) return '<div class="chart-card"><div class="empty">No data available.</div></div>';
   const color = signalColor(s.score);
   const sym = (s.symbol||'').toUpperCase();
   const compRows = (s.components||[]).map(c => {
@@ -3538,7 +3548,7 @@ function renderNews(){
   const host = document.getElementById('newsFeed');
   if (!host) return;
   if (!news.length) {
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines available</div>';
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
     return;
   }
   host.innerHTML = news.slice(0, 25).map(n =>
@@ -4139,7 +4149,7 @@ function renderOverviewNews(){
   const host = document.getElementById('overviewNews');
   if (host){
     if (!news.length){
-      host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines yet</div>';
+      host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
     } else {
       host.innerHTML = news.slice(0,4).map(n =>
         `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
@@ -4155,7 +4165,7 @@ function renderOverviewNews(){
   const bottom = document.getElementById('overviewNewsHost');
   if (bottom){
     if (!news.length){
-      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines yet</div>';
+      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
       return;
     }
     bottom.innerHTML = news.slice(0,10).map(n =>
@@ -4309,6 +4319,26 @@ function signalScoreSparkline(history){
 // Renders DATA.market.stocks_signals (top-20 most-active US stocks scored
 // across SMA / RSI / MACD / momentum / volume) as a grid of cards sorted
 // Strong Buy -> Strong Sell. Fetcher lives in fetch_market.py.
+// Map a stock label to a filter-chip bucket. Label values from
+// fetch_market._label_from_score: STRONG BUY / BUY / HOLD / SELL / STRONG SELL.
+function stockLabelBucket(label){
+  const L = (label||'').toUpperCase().trim();
+  if (L === 'STRONG BUY')  return 'strong_buy';
+  if (L === 'BUY')         return 'buy';
+  if (L === 'STRONG SELL') return 'strong_sell';
+  if (L === 'SELL')        return 'sell';
+  return 'hold';
+}
+// Compact volume formatter: 124000000 -> "124M", 2_500_000_000 -> "2.5B".
+function fmtVolumeCompact(v){
+  const n = Number(v);
+  if (!isFinite(n) || n <= 0) return '—';
+  if (n >= 1e12) return (n/1e12).toFixed(n>=1e13?0:1).replace(/\.0$/,'') + 'T';
+  if (n >= 1e9)  return (n/1e9 ).toFixed(n>=1e10?0:1).replace(/\.0$/,'') + 'B';
+  if (n >= 1e6)  return (n/1e6 ).toFixed(n>=1e7 ?0:1).replace(/\.0$/,'') + 'M';
+  if (n >= 1e3)  return (n/1e3 ).toFixed(n>=1e4 ?0:1).replace(/\.0$/,'') + 'K';
+  return fmtNum(n, 0);
+}
 function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
@@ -4341,7 +4371,12 @@ function renderStocksTab(){
         <td style="color:${csColor};text-align:right">${csTxt}</td>
       </tr>`;
     }).join('');
-    return `<div class="chart-card" style="padding:12px 14px">
+    // Gauge bar: -100 to +100 gradient with marker (mirrors renderSignalCard).
+    const clamped = Math.max(-100, Math.min(100, score));
+    const pct = ((clamped + 100) / 200) * 100;
+    const bucket = stockLabelBucket(s.label);
+    const volTxt = fmtVolumeCompact(s.volume);
+    return `<div class="chart-card" data-stock-bucket="${bucket}" style="padding:12px 14px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
         <div style="min-width:0">
           <div style="font-size:18px;font-weight:700;letter-spacing:0.3px">${escapeHtml(String(s.symbol || ''))}</div>
@@ -4352,16 +4387,75 @@ function renderStocksTab(){
           <div style="font-size:11px;color:${color};font-weight:600;margin-top:2px">${escapeHtml(String(s.label || ''))}</div>
         </div>
       </div>
+      <div style="height:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:4px;position:relative;margin:6px 0 8px">
+        <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:14px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+      </div>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px">
         <div style="font-weight:600">${priceTxt}</div>
         <div style="color:${chColor};font-weight:600">${chTxt}</div>
       </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">Vol ${volTxt}</div>
       ${spark}
       ${compRows ? `<table style="margin-top:8px;font-size:11px"><thead><tr><th>Component</th><th>Value</th><th style="text-align:right">&plusmn;</th></tr></thead><tbody>${compRows}</tbody></table>` : ''}
     </div>`;
   }).join('');
   grid.innerHTML = cards;
+  // Re-apply the persisted filter chip selection after re-render.
+  applyStocksFilter();
 }
+
+// Apply the active stocks filter chip — reads from localStorage on first
+// run, then drives both the chip highlight + per-card display:none.
+function applyStocksFilter(bucket){
+  let target = bucket;
+  if (target == null){
+    try { target = localStorage.getItem('stocksFilter') || 'all'; } catch(_) { target = 'all'; }
+  }
+  // Color the active chip per its bucket family (green = buy-side,
+  // red = sell-side, amber = hold, neutral for all).
+  const chips = document.querySelectorAll('[data-stocksfilter]');
+  if (!chips.length) return;
+  let found = false;
+  chips.forEach(b => {
+    const isActive = b.getAttribute('data-stocksfilter') === target;
+    if (isActive) found = true;
+    b.classList.toggle('active', isActive);
+    // Inline color the active chip (the .btn.active rule already styles it,
+    // but we want the matching bucket color to bleed through).
+    if (isActive){
+      const c = target.indexOf('buy')  >= 0 ? '#22c55e'
+              : target.indexOf('sell') >= 0 ? '#ef4444'
+              : target === 'hold'           ? '#f59e0b'
+              : '';
+      b.style.borderColor = c || '';
+      b.style.color       = c || '';
+    } else {
+      b.style.borderColor = '';
+      b.style.color       = '';
+    }
+  });
+  if (!found){
+    // Persisted value no longer maps to a chip — fall back to "all".
+    target = 'all';
+    const allChip = document.querySelector('[data-stocksfilter="all"]');
+    if (allChip) allChip.classList.add('active');
+  }
+  document.querySelectorAll('#stocksGrid [data-stock-bucket]').forEach(card => {
+    card.style.display = (target === 'all' || card.getAttribute('data-stock-bucket') === target) ? '' : 'none';
+  });
+}
+
+// Wire up chip clicks once. Persists selection in localStorage.
+(function wireStocksFilter(){
+  if (window._stocksFilterWired) return; window._stocksFilterWired = true;
+  document.addEventListener('click', e => {
+    const fb = e.target && e.target.closest && e.target.closest('[data-stocksfilter]');
+    if (!fb) return;
+    const bucket = fb.getAttribute('data-stocksfilter');
+    try { localStorage.setItem('stocksFilter', bucket); } catch(_) {}
+    applyStocksFilter(bucket);
+  });
+})();
 
 // Tiny inline SVG sparkline of the rolling-30d POC over the last 90 days.
 // Stroke color slopes green/red based on first→last direction.
@@ -4595,7 +4689,7 @@ function renderCCSocialCards(){
     const c = cc[a];
     const accent = RESEARCH_ACCENT(a);
     if (!c){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no data</div></div>`;
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">No data available.</div></div>`;
     }
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -4822,7 +4916,7 @@ function renderResearchNews(){
   if (!host) return;
   const news = ((DATA.market || {}).news) || [];
   if (!news.length) {
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines available</div>';
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
     return;
   }
   const sorted = news.slice().sort((a, b) => {
@@ -4960,7 +5054,9 @@ function selectTab(t){
     catch(_){ _activeTab.scrollIntoView(); }
   }
   document.querySelectorAll('.tab').forEach(el => {
-    el.classList.toggle('active', el.dataset.tab === t);
+    const isActive = el.dataset.tab === t;
+    el.classList.toggle('active', isActive);
+    el.setAttribute('aria-selected', isActive ? 'true' : 'false');
     el.classList.toggle('eth',  state.asset === 'eth');
     el.classList.toggle('link', state.asset === 'link');
   });
@@ -5145,9 +5241,15 @@ document.getElementById('insightsToggle')?.addEventListener('click', () => {
     list.style.display = 'none'; btn.textContent = 'Show';
   }
 });
-document.querySelectorAll('.tab').forEach(b =>
-  b.addEventListener('click', () => selectTab(b.dataset.tab))
-);
+document.querySelectorAll('.tab').forEach(b => {
+  b.addEventListener('click', () => selectTab(b.dataset.tab));
+  b.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      selectTab(b.dataset.tab);
+    }
+  });
+});
 
 // ---------- live refresh (server mode only) ----------
 // /api/refresh is now ASYNC server-side — it kicks off a background fetch

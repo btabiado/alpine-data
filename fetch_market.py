@@ -1559,7 +1559,7 @@ def compute_poc_all(market: dict) -> dict:
     return out
 
 
-def cryptocompare_market(symbol: str, days: int = 180) -> dict:
+def _cryptocompare_market_impl(symbol: str, days: int = 180) -> dict:
     """Daily OHLCV from CryptoCompare histoday. No key required for basic
     usage; honors CRYPTOCOMPARE_API_KEY env var if set. Same shape as
     coingecko_market — {price, volume} where each is [{date, value}]."""
@@ -1600,6 +1600,31 @@ def cryptocompare_market(symbol: str, days: int = 180) -> dict:
         except (ValueError, TypeError, KeyError):
             continue
     return {"price": prices, "volume": volumes}
+
+
+def cryptocompare_market(symbol: str, days: int = 180) -> dict:
+    """Stale-fallback wrapper around `_cryptocompare_market_impl`.
+
+    CryptoCompare's free tier can rate-limit or briefly 5xx during top-N
+    sweeps. If the price array comes back empty we fall back to the cached
+    prior result for this exact ``symbol`` so the section isn't blanked by
+    a single transient failure. Mirrors the `coingecko_market` pattern.
+    """
+    sym = (symbol or "").upper()
+    cache_key = f"cryptocompare_market_{sym}"
+    try:
+        out = _cryptocompare_market_impl(symbol, days)
+    except Exception as e:
+        print(f"  [cryptocompare_market] {sym}: fatal {e}", file=sys.stderr)
+        out = None
+    # Empty price array == failed fetch; everything else == success.
+    if isinstance(out, dict) and out.get("price"):
+        _stale_save(cache_key, out)
+        return out
+    cached = _stale_load(cache_key)
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {"price": [], "volume": []}
 
 
 def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
