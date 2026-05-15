@@ -481,7 +481,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #whaleKpis,
   #tradingKpis,
   #etfKpis,
-  #fundKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  #fundKpiGrid,
+  #pocTopGrid,
+  #stocksGrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  /* POC compact card sub-text bumped 10→11px for readability on phone */
+  #pocTopGrid .poc-card .sub{font-size:11px !important}
+  /* Ensure clickable card divs hit 44px touch target */
+  .poc-card,.stock-card{min-height:44px}
   #defiKpis .card,
   #whaleKpis .card,
   #tradingKpis .card,
@@ -4839,10 +4845,14 @@ function pocDetailHtml(c){
   const mig = d.migration;
   let migBadge = '';
   if (mig){
+    // Coerce delta_pct to a finite number; bad/missing data shows "?" instead
+    // of literally rendering "+null%" or any string the API might inject.
+    const dlt = Number(mig.delta_pct);
+    const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(2) + '%') : '?';
     const cfg = mig.direction === 'UP'
-      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
+      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${dltTxt}`}
       : mig.direction === 'DOWN'
-      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
+      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${dltTxt}`}
       : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
     migBadge = `<span style="background:${cfg.bg};color:${cfg.fg};padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600">${cfg.arrow} ${cfg.label}</span>`;
   }
@@ -4872,10 +4882,12 @@ function pocDetailHtml(c){
       ${nakedArr.map(n => {
         const isSupport = cur != null && cur > n.poc;
         const col = isSupport ? '#22c55e' : '#ef4444';
-        const dp = (n.distance_pct == null) ? null : n.distance_pct;
-        const sign = (dp != null && dp >= 0) ? '+' : '';
-        const dpTxt = dp == null ? '—' : (sign + dp + '%');
-        const daysTxt = (n.days_ago != null) ? (n.days_ago + 'd ago · ') : '';
+        // Coerce both to finite numbers so a stringy or null upstream value
+        // can't reflect into the DOM unescaped.
+        const dp = Number(n.distance_pct);
+        const dpTxt = isFinite(dp) ? ((dp >= 0 ? '+' : '') + dp.toFixed(2) + '%') : '—';
+        const days = Number(n.days_ago);
+        const daysTxt = isFinite(days) ? (days.toFixed(0) + 'd ago · ') : '';
         return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px solid var(--border)">
           <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
           <span style="color:var(--muted)">${daysTxt}${dpTxt}</span>
@@ -5303,6 +5315,9 @@ function renderAll(){
 
 function selectTab(t){
   state.tab = t;
+  // Close any open detail modals when switching tabs — leaving a POC or
+  // Stocks modal floating over an unrelated tab is disorienting.
+  document.querySelectorAll('.modal-bg').forEach(m => m.classList.add('hidden'));
   // Whale Activity is BTC-only (free on-chain proxies from blockchain.info).
   // Force the asset to BTC so the page renders something useful instead of
   // the "switch to BTC" empty state when the user is on ETH or LINK.
