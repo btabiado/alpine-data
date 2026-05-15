@@ -2362,6 +2362,300 @@ def _yahoo_gold(days: int = 1095) -> list[dict]:
     return rows[-days:]
 
 
+# ----- Yahoo most-active stocks + signal scoring ----------------------------
+
+def yahoo_most_active(limit: int = 20) -> list[dict]:
+    """Yahoo Finance most-active US stocks predefined screener.
+
+    Returns a list of dicts with symbol, name, last_price, change_pct, volume.
+    No auth required. Some Yahoo endpoints require a cookie/crumb; this one
+    is publicly accessible. Returns [] on any failure.
+    """
+    j = _get(
+        "https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved",
+        {"count": str(limit), "scrIds": "most_actives",
+         "lang": "en-US", "region": "US"},
+    )
+    if not j or not isinstance(j, dict):
+        return []
+    try:
+        quotes = ((j.get("finance") or {}).get("result") or [{}])[0].get("quotes") or []
+    except (IndexError, AttributeError, TypeError):
+        return []
+    out: list[dict] = []
+    for q in quotes[:limit]:
+        sym = q.get("symbol")
+        if not sym:
+            continue
+        name = q.get("shortName") or q.get("longName") or sym
+        try:
+            last_price = float(q.get("regularMarketPrice") or 0)
+            change_pct = float(q.get("regularMarketChangePercent") or 0)
+            volume = int(q.get("regularMarketVolume") or 0)
+        except (ValueError, TypeError):
+            continue
+        out.append({
+            "symbol":     sym,
+            "name":       name,
+            "last_price": last_price,
+            "change_pct": change_pct,
+            "volume":     volume,
+        })
+    return out
+
+
+def yahoo_chart_history(symbol: str, range_: str = "6mo") -> list[dict]:
+    """Daily OHLCV history for a single ticker via Yahoo's chart API.
+
+    Returns a list of {date, close, volume} for each valid daily bar.
+    Yahoo includes None values for missing days; those are filtered out.
+    Empty list on failure.
+    """
+    j = _get(
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
+        {"range": range_, "interval": "1d"},
+    )
+    if not j or not isinstance(j, dict):
+        return []
+    try:
+        result = (j.get("chart") or {}).get("result", [])[0]
+        timestamps = result.get("timestamp") or []
+        quote = ((result.get("indicators") or {}).get("quote") or [{}])[0]
+        closes = quote.get("close") or []
+        volumes = quote.get("volume") or []
+    except (IndexError, AttributeError, TypeError):
+        return []
+    out: list[dict] = []
+    for i, ts in enumerate(timestamps):
+        if ts is None:
+            continue
+        c = closes[i] if i < len(closes) else None
+        v = volumes[i] if i < len(volumes) else None
+        if c is None:
+            continue
+        out.append({
+            "date":   datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d"),
+            "close":  float(c),
+            "volume": int(v) if v is not None else 0,
+        })
+    return out
+
+
+def _score_components_from_series(closes: list[float], volumes: list[float]) -> tuple[list[dict], int]:
+    """Compute the 6 signal components for the last day given full series.
+
+    Returns (components_list, raw_total_score). The caller normalizes/labels.
+    Each component is {"name", "value", "score"}.
+    """
+    n = len(closes)
+    components: list[dict] = []
+
+    last_close = closes[-1] if n else 0.0
+
+    # 1) Above 50d SMA
+    if n >= 50:
+        sma_50 = sum(closes[-50:]) / 50.0
+        above_50 = 1 if last_close > sma_50 else 0
+        score_50 = 10 if above_50 else -10
+        components.append({"name": "Above 50d SMA", "value": above_50, "score": score_50})
+    else:
+        sma_50 = sum(closes) / n if n else 0.0
+        above_50 = 1 if last_close > sma_50 else 0
+        score_50 = 5 if above_50 else -5
+        components.append({"name": "Above 50d SMA", "value": above_50, "score": score_50})
+
+    # 2) RSI(14)
+    if n >= 15:
+        gains = 0.0
+        losses = 0.0
+        for i in range(n - 14, n):
+            change = closes[i] - closes[i - 1]
+            if change > 0:
+                gains += change
+            else:
+                losses += -change
+        avg_gain = gains / 14.0
+        avg_loss = losses / 14.0
+        if avg_loss == 0:
+            rsi = 100.0 if avg_gain > 0 else 50.0
+        else:
+            rs = avg_gain / avg_loss
+            rsi = 100.0 - (100.0 / (1.0 + rs))
+        if rsi > 70:
+            score_rsi = -10
+        elif rsi < 30:
+            score_rsi = 10
+        else:
+            # middle linear: 50 -> 0, 30 -> +10, 70 -> -10
+            score_rsi = int(round((50.0 - rsi) / 20.0 * 10.0))
+        components.append({"name": "RSI(14)", "value": round(rsi, 2), "score": score_rsi})
+    else:
+        components.append({"name": "RSI(14)", "value": None, "score": 0})
+
+    # 3) MACD(12,26) signal line crossover
+    def _ema(vals: list[float], period: int) -> list[float]:
+        if not vals:
+            return []
+        k = 2.0 / (period + 1.0)
+        ema_vals = [vals[0]]
+        for v in vals[1:]:
+            ema_vals.append(v * k + ema_vals[-1] * (1.0 - k))
+        return ema_vals
+
+    if n >= 35:
+        ema_12 = _ema(closes, 12)
+        ema_26 = _ema(closes, 26)
+        macd_line = [a - b for a, b in zip(ema_12, ema_26)]
+        # signal line is EMA(9) of macd_line
+        signal_line = _ema(macd_line[-(len(macd_line)):], 9) if macd_line else []
+        if signal_line:
+            macd_val = macd_line[-1]
+            sig_val = signal_line[-1]
+            diff = macd_val - sig_val
+            score_macd = 10 if diff > 0 else -10
+            components.append({"name": "MACD signal", "value": round(diff, 3), "score": score_macd})
+        else:
+            components.append({"name": "MACD signal", "value": None, "score": 0})
+    else:
+        components.append({"name": "MACD signal", "value": None, "score": 0})
+
+    # 4) 5d momentum
+    if n >= 6:
+        prev_5 = closes[-6]
+        if prev_5 != 0:
+            mom_pct = (last_close / prev_5 - 1.0) * 100.0
+        else:
+            mom_pct = 0.0
+        score_mom = int(round(max(-10.0, min(10.0, mom_pct))))
+        components.append({"name": "5d momentum", "value": round(mom_pct, 2), "score": score_mom})
+    else:
+        components.append({"name": "5d momentum", "value": None, "score": 0})
+
+    # 5) Volume z-score (last day vs 30d mean/std)
+    if len(volumes) >= 31:
+        recent = volumes[-31:-1]  # 30-day baseline excluding today
+        mean_v = sum(recent) / 30.0
+        var_v = sum((v - mean_v) ** 2 for v in recent) / 30.0
+        std_v = var_v ** 0.5
+        if std_v > 0:
+            z = (volumes[-1] - mean_v) / std_v
+        else:
+            z = 0.0
+        score_vol = 5 if z > 1.5 else 0
+        components.append({"name": "Volume z-score", "value": round(z, 2), "score": score_vol})
+    else:
+        components.append({"name": "Volume z-score", "value": None, "score": 0})
+
+    # 6) 50/200 cross
+    if n >= 200:
+        sma_50_x = sum(closes[-50:]) / 50.0
+        sma_200_x = sum(closes[-200:]) / 200.0
+        if sma_50_x > sma_200_x:
+            components.append({"name": "50/200 cross", "value": "above", "score": 10})
+        else:
+            components.append({"name": "50/200 cross", "value": "below", "score": -10})
+    else:
+        # Partial: use what's available
+        if n >= 50:
+            sma_50_x = sum(closes[-50:]) / 50.0
+            sma_long = sum(closes) / n
+            label = "above" if sma_50_x > sma_long else "below"
+            score = 5 if sma_50_x > sma_long else -5
+            components.append({"name": "50/200 cross", "value": label, "score": score})
+        else:
+            components.append({"name": "50/200 cross", "value": "n/a", "score": 0})
+
+    raw_total = sum(c["score"] for c in components)
+    return components, raw_total
+
+
+def _label_from_score(score: int) -> str:
+    if score >= 50:
+        return "STRONG BUY"
+    if score >= 20:
+        return "BUY"
+    if score > -20:
+        return "HOLD"
+    if score > -50:
+        return "SELL"
+    return "STRONG SELL"
+
+
+def compute_stock_signal(history: list[dict]) -> dict:
+    """Compute a signal score, label, components, and a 30d rolling history
+    from daily OHLC history. `history` is the list returned by
+    `yahoo_chart_history` — each item has {date, close, volume}.
+
+    Returns:
+        {
+            "score": int,            # -100..+100
+            "label": str,
+            "components": [...],
+            "history": [{date, score}, ...]   # last 30d, oldest first
+        }
+    """
+    if not history:
+        return {"score": 0, "label": "HOLD", "components": [], "history": []}
+
+    closes = [float(h["close"]) for h in history]
+    volumes = [float(h.get("volume") or 0) for h in history]
+    dates = [h["date"] for h in history]
+
+    components, raw_total = _score_components_from_series(closes, volumes)
+    # Raw range roughly ±55; normalize to ±100 by ~1.8x then clip.
+    final_score = int(round(max(-100.0, min(100.0, raw_total * 1.8))))
+    label = _label_from_score(final_score)
+
+    # Rolling 30d history: compute signal at each day for the last 30
+    rolling: list[dict] = []
+    n = len(closes)
+    window = min(30, n)
+    start = n - window
+    for i in range(start, n):
+        sub_closes = closes[: i + 1]
+        sub_vols = volumes[: i + 1]
+        _comps, sub_raw = _score_components_from_series(sub_closes, sub_vols)
+        sub_score = int(round(max(-100.0, min(100.0, sub_raw * 1.8))))
+        rolling.append({"date": dates[i], "score": sub_score})
+
+    return {
+        "score":      final_score,
+        "label":      label,
+        "components": components,
+        "history":    rolling,
+    }
+
+
+def fetch_stocks_signals(limit: int = 20) -> list[dict]:
+    """Pull the top-N most-active US stocks and compute a signal for each.
+
+    Paces requests to Yahoo (~0.3s sleep between chart calls) since their
+    rate limit is ~200/hour with strict enforcement. Returns [] if the
+    screener call fails.
+    """
+    movers = yahoo_most_active(limit)
+    if not movers:
+        return []
+    out: list[dict] = []
+    for m in movers:
+        sym = m["symbol"]
+        hist = yahoo_chart_history(sym, "6mo")
+        sig = compute_stock_signal(hist)
+        out.append({
+            "symbol":     sym,
+            "name":       m["name"],
+            "last_price": m["last_price"],
+            "change_pct": m["change_pct"],
+            "volume":     m["volume"],
+            "score":      sig["score"],
+            "label":      sig["label"],
+            "components": sig["components"],
+            "history":    sig["history"],
+        })
+        time.sleep(0.3)
+    return out
+
+
 def defillama() -> dict:
     """DeFiLlama: stablecoin mcap & 7d delta, DEX 24h vol, fees 24h,
     plus a sanity-check price feed. No auth, no rate limit issues."""
@@ -2527,6 +2821,8 @@ def fetch_trading() -> dict:
     cadli = coindesk_cadli_ohlc(90)
     print("  Yahoo Finance indices (Dow / S&P / NASDAQ / VIX)...")
     yahoo_idx = yahoo_indices()
+    print("  Yahoo most-active stocks + signals...")
+    stocks_signals = fetch_stocks_signals(20)
     print("  Fear & Greed...")
     fng = fear_greed()
 
@@ -2608,6 +2904,7 @@ def fetch_trading() -> dict:
         "news": news,
         "cadli_btc": cadli,
         "yahoo_indices": yahoo_idx,
+        "stocks_signals": stocks_signals,
         "fear_greed": fng,
         "ethbtc": ethbtc,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -561,6 +561,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="whale">Whale Activity</div>
   <div class="tab" data-tab="etf">ETF Flows</div>
   <div class="tab" data-tab="trading">Futures</div>
+  <div class="tab" data-tab="stocks">Stocks</div>
 </div>
 
 <div class="controls">
@@ -1024,6 +1025,19 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="chart-wrap tall"><canvas id="macroChart"></canvas></div>
           <div class="row" id="macroKpis" style="margin-top:8px"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ STOCKS TAB ============ -->
+  <div id="tab-stocks" class="hidden">
+    <div class="container">
+      <div class="chart-card">
+        <div class="head">
+          <h2>Stock signals — Top 20 most active</h2>
+          <span class="desc">Daily-volume leaders on US exchanges &middot; signal score across SMA / RSI / MACD / momentum / volume &middot; sorted Strong Buy &rarr; Strong Sell</span>
+        </div>
+        <div id="stocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
       </div>
     </div>
   </div>
@@ -4197,6 +4211,64 @@ function signalScoreSparkline(history){
   </svg>`;
 }
 
+// ============ STOCKS TAB RENDERER ============
+// Renders DATA.market.stocks_signals (top-20 most-active US stocks scored
+// across SMA / RSI / MACD / momentum / volume) as a grid of cards sorted
+// Strong Buy -> Strong Sell. Fetcher lives in fetch_market.py.
+function renderStocksTab(){
+  const grid = document.getElementById('stocksGrid');
+  if (!grid) return;
+  const rows = ((DATA.market||{}).stocks_signals) || [];
+  if (!Array.isArray(rows) || rows.length === 0){
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">Stock signals not yet loaded &mdash; run python app.py --fetch-market</div>';
+    return;
+  }
+  const sorted = rows.slice().sort((a, b) => (Number(b.score)||0) - (Number(a.score)||0));
+  const cards = sorted.map(s => {
+    const score = Number(s.score) || 0;
+    const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+    const chPct = Number(s.change_pct);
+    const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+    const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
+    const price  = Number(s.last_price);
+    const priceTxt = isFinite(price)
+      ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}))
+      : '—';
+    const scoreTxt = (score >= 0 ? '+' : '') + (Number.isInteger(score) ? score : score.toFixed(1));
+    const spark = signalScoreSparkline(s.history || []);
+    const comps = Array.isArray(s.components) ? s.components : [];
+    const compRows = comps.map(c => {
+      const cs = Number(c.score) || 0;
+      const csColor = cs > 0 ? '#22c55e' : (cs < 0 ? '#ef4444' : 'var(--muted)');
+      const csTxt = (cs >= 0 ? '+' : '') + (Number.isInteger(cs) ? cs : cs.toFixed(1));
+      return `<tr>
+        <td>${escapeHtml(String(c.name || ''))}</td>
+        <td style="color:var(--muted)">${escapeHtml(String(c.value == null ? '' : c.value))}</td>
+        <td style="color:${csColor};text-align:right">${csTxt}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="chart-card" style="padding:12px 14px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+        <div style="min-width:0">
+          <div style="font-size:18px;font-weight:700;letter-spacing:0.3px">${escapeHtml(String(s.symbol || ''))}</div>
+          <div class="sub" style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${escapeHtml(String(s.name || ''))}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:24px;font-weight:700;color:${color};line-height:1">${scoreTxt}</div>
+          <div style="font-size:11px;color:${color};font-weight:600;margin-top:2px">${escapeHtml(String(s.label || ''))}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px">
+        <div style="font-weight:600">${priceTxt}</div>
+        <div style="color:${chColor};font-weight:600">${chTxt}</div>
+      </div>
+      ${spark}
+      ${compRows ? `<table style="margin-top:8px;font-size:11px"><thead><tr><th>Component</th><th>Value</th><th style="text-align:right">&plusmn;</th></tr></thead><tbody>${compRows}</tbody></table>` : ''}
+    </div>`;
+  }).join('');
+  grid.innerHTML = cards;
+}
+
 // Tiny inline SVG sparkline of the rolling-30d POC over the last 90 days.
 // Stroke color slopes green/red based on first→last direction.
 function pocMigrationSparkline(series){
@@ -4769,6 +4841,9 @@ function renderAll(){
   }
   if (state.tab === 'poc'){
     renderPocTopCards();
+  }
+  if (state.tab === 'stocks'){
+    renderStocksTab();
   }
   renderCoverage();
 }
