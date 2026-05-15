@@ -724,6 +724,28 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
 
+    <!-- Coinbase spot quotes — bid/ask + 24h range from Coinbase Exchange.
+         Compact table view for each asset we already track. Cross-check
+         against the CoinGecko aggregate price in the cards above. -->
+    <div id="coinbaseSpotWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">live exchange</span></h2>
+        <span class="desc">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</span>
+      </div>
+      <div style="overflow:auto">
+        <table id="coinbaseSpotTable" style="margin:0;font-size:12px">
+          <thead><tr>
+            <th>Asset</th>
+            <th style="text-align:right">Bid / Ask</th>
+            <th style="text-align:right">24h range</th>
+            <th style="text-align:right">24h %</th>
+            <th style="text-align:right">24h volume</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Strong Buys: up to 5 STRONG BUY signals from the top-50 strip.
          Hidden when none exist. Cards click through to the signal detail
          modal (same one the Signals-tab strip uses). -->
@@ -941,6 +963,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="head"><h2>Long/short account ratio <span class="tag" id="tagLS">BTC</span></h2><span class="desc">OKX traders &middot; >1 = more longs</span></div>
           <div class="chart-wrap"><canvas id="lsChart"></canvas></div>
         </div>
+      </div>
+      <!-- CADLI BTC reference price — 90d daily closes from the CoinDesk
+           CADLI Cryptocurrency Real-Time Index. This is the regulated
+           reference price used in derivatives settlement, so it sits with
+           the rest of the futures-positioning surface. -->
+      <div class="chart-card">
+        <div class="head">
+          <h2>CADLI BTC reference price <span class="tag">CoinDesk</span></h2>
+          <span class="desc">90d OHLC from the CoinDesk CADLI Cryptocurrency Real-Time Index used in regulated derivatives pricing</span>
+        </div>
+        <div class="chart-wrap"><canvas id="cadliBtcChart"></canvas></div>
       </div>
       <!-- Coinbase International Exchange perpetuals positioning: two side-by-side
            tables surfacing the most crowded LONGS (highest funding) and SHORTS
@@ -1916,6 +1949,23 @@ function renderCoinbaseIntlPerps(){
   const shortsBody = document.querySelector('#cieShortsTable tbody');
   if (longsBody)  longsBody.innerHTML  = longs.length  ? longs.map(rowFor).join('')  : emptyRow;
   if (shortsBody) shortsBody.innerHTML = shorts.length ? shorts.map(rowFor).join('') : emptyRow;
+}
+
+// CADLI BTC reference price chart — 90d daily close from the CoinDesk CADLI
+// Cryptocurrency Real-Time Index. CADLI is the regulated reference price
+// used in derivatives settlement, so it lives on the Futures tab alongside
+// funding/OI. Data shape: [{date, open, high, low, close, volume}, ...] —
+// we map close→value and re-use the shared lineChart() helper.
+function renderCadliChart(){
+  const bars = (DATA.market || {}).cadli_btc || [];
+  const series = (bars || [])
+    .filter(b => b && b.date && b.close != null)
+    .map(b => ({date: b.date, value: b.close}));
+  if (!chartOrEmpty('cadliBtcChart', series.length > 0, 'No CADLI BTC reference data — wait for next refresh.')) {
+    destroy('cadliBtc');
+    return;
+  }
+  lineChart('cadliBtcChart', 'cadliBtc', series, '#f7931a', v => fmtUSD(v, 'auto'));
 }
 
 // Toggle an empty-state placeholder inside a chart's .chart-wrap container.
@@ -3716,12 +3766,51 @@ function renderWhaleExtras(){
 function renderOverview(){
   renderOverviewIndices();        // top bar — moved from deleted Markets tab
   renderOverviewSignals();
+  renderCoinbaseSpot();           // compact Coinbase exchange bid/ask + 24h range
   renderOverviewStrongBuys();
   renderOverviewTop15();
   renderOverviewMacro();
   renderOverviewNews();           // top 4-item teaser + bottom 10-item feed
   renderOverviewInsights();
   renderGeckoTerminalPools();     // bottom — also moved from Markets
+}
+
+// Coinbase spot widget: one compact row per asset showing bid/ask, 24h
+// high/low range, 24h change %, and 24h volume in coin units. Cross-checks
+// the aggregate price in the asset signal cards against a single regulated
+// US venue. Source: DATA.market.coinbase (REST snapshot, fetched per refresh).
+function renderCoinbaseSpot(){
+  const wrap = document.getElementById('coinbaseSpotWrap');
+  const tbody = document.querySelector('#coinbaseSpotTable tbody');
+  if (!wrap || !tbody) return;
+  const cb = ((DATA.market || {}).coinbase) || {};
+  const order = ['btc', 'eth', 'link', 'ltc'];
+  const rows = order.filter(k => cb[k] && typeof cb[k] === 'object');
+  if (!rows.length){
+    wrap.classList.add('hidden');
+    tbody.innerHTML = '';
+    return;
+  }
+  wrap.classList.remove('hidden');
+  tbody.innerHTML = rows.map(k => {
+    const q = cb[k] || {};
+    const sym = k.toUpperCase();
+    const bid = (q.bid != null) ? fmtUSD(q.bid, 'auto') : '—';
+    const ask = (q.ask != null) ? fmtUSD(q.ask, 'auto') : '—';
+    const lo  = (q.low_24h  != null) ? fmtUSD(q.low_24h,  'auto') : '—';
+    const hi  = (q.high_24h != null) ? fmtUSD(q.high_24h, 'auto') : '—';
+    const pct = (typeof q.change_24h_pct === 'number') ? q.change_24h_pct : null;
+    const pctStr = (pct == null) ? '—' : ((pct >= 0 ? '+' : '') + pct.toFixed(2) + '%');
+    const pctCls = (pct == null) ? '' : (pct >= 0 ? 'green' : 'red');
+    const vol = (q.volume_24h != null) ? (fmtNum(q.volume_24h, q.volume_24h >= 1000 ? 0 : 2) + ' ' + escapeHtml(sym)) : '—';
+    return `<tr>
+      <td><strong>${escapeHtml(sym)}</strong></td>
+      <td style="text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-variant-numeric:tabular-nums">${bid} / ${ask}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${lo} → ${hi}</td>
+      <td class="${pctCls}" style="text-align:right;font-variant-numeric:tabular-nums">${pctStr}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${vol}</td>
+    </tr>`;
+  }).join('');
 }
 
 // Top 15 coins by market-cap rank from the top-50 signal computation.
@@ -4818,7 +4907,7 @@ function renderAll(){
     renderFundKpis(); renderFundStack(); renderFundCompare();
   }
   if (state.tab === 'trading' && !trEmpty){
-    renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
+    renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderCadliChart(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
   }
   if (state.tab === 'signals'){
     renderSignals();

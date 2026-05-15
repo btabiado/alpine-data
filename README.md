@@ -2,15 +2,17 @@
 
 [![tests](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml)
 
-Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broader crypto market. Seven tabs:
+Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broader crypto market. Nine tabs:
 
 1. **Crypto Overview** — sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, trending coins, global stats.
 2. **Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Not investment advice.
-3. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
-4. **Trading** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed. Naked POC overlays on the price chart; 30d POC drift sparkline in each POC card.
+3. **Point of Control** — volume-weighted price levels for the top 25 by market cap across 30d / 90d / 180d windows, with naked POCs, value-area drift sparkline, and migration badges per coin.
+4. **Research** — Reddit subreddit stats, CryptoCompare social/news depth, Santiment daily active addresses.
 5. **DeFi** — TVL by chain, top 25 protocols, stablecoin yields, 365-day TVL history across Ethereum/Solana/Arbitrum/Base.
-6. **Research** — Reddit subreddit stats, CryptoCompare social/news depth, Santiment daily active addresses.
-7. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply). Whale Alerts feed scans mempool.space for transactions ≥$1M in the latest block.
+6. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply). Whale Alerts feed scans mempool.space for transactions ≥$1M in the latest block.
+7. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
+8. **Futures** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed. Naked POC overlays on the price chart; 30d POC drift sparkline in each POC card. Side-by-side **crowded longs / crowded shorts** tables built from Coinbase International Exchange perpetual funding rates (246 perps), and CoinDesk CADLI as the regulated reference index used in derivatives settlement.
+9. **Stocks** — signals for the top 20 most-active US stocks via Yahoo Finance. Each card shows symbol/name header, big colored score, label (STRONG BUY → STRONG SELL), price + change %, 30d score sparkline, and a per-component breakdown (SMA, RSI(14), MACD, 5-day momentum, volume z-score, 50/200 cross). Sorted Strong Buy → Strong Sell.
 
 Plus: insights bar (rule-based, ~12 live notifications), a Claude-powered **Ask the data** chat dock (right side), optional HTTP Basic Auth, GitHub Pages mirror, Tailscale-ready.
 
@@ -22,13 +24,17 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 
 - **Price + market cap**: CoinGecko (BTC/ETH/LINK price+vol+mcap, top 25 markets, trending, global stats)
 - **Cross-exchange price**: CryptoCompare CCCAGG (BTC/ETH/LINK aggregate)
+- **Coinbase data feeds the dashboard from three places:**
+  - **Coinbase Exchange spot** (`api.exchange.coinbase.com`) — bid/ask, 24h range, 24h volume per asset (BTC/ETH/LINK/LTC). Used for the spot quote tiles and a cross-exchange price-divergence sanity check.
+  - **Coinbase International Exchange perpetuals** (`api.international.coinbase.com`) — funding rate, mark price, open interest, and volume across all 246 PERP instruments. Surfaced in the **Futures** tab as the crowded longs / crowded shorts tables.
+  - **CoinDesk CADLI** (`data-api.coindesk.com`) — manipulation-resistant daily OHLC index. CADLI is the regulated reference index used in derivatives settlement; shown in the Futures tab alongside the perp positioning view.
 - **Derivatives**: OKX (funding rate, open interest, long/short ratio)
 - **Options-implied vol**: Deribit DVOL (BTC, ETH)
 - **Sentiment**: Alternative.me Fear & Greed
 - **BTC on-chain**: blockchain.info charts (tx vol, hash rate, miners rev, active addresses), Blockchair (supplementary stats), bitinfocharts (rich list / distribution)
 - **BTC network**: mempool.space (fees, hashrate, tip height, **difficulty adjustment**, **Lightning Network**, **mining pools**, latest-block scan for Whale Alerts ≥$1M)
 - **ETH on-chain**: Etherscan v2 (gas oracle, ETH whale stats — burn, largest tx, ERC-20/721)
-- **BTC index**: CoinDesk cadli (manipulation-resistant daily OHLC)
+- **US equities**: Yahoo Finance (top-20 most-active US stocks → daily OHLCV for the Stocks tab signal scores)
 - **DeFi**: DeFiLlama (TVL by chain, top 25 protocols, top stablecoin yields, 365-day historical TVL across 4 chains)
 - **News + social**: RSS from CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine (25 deduped headlines); CryptoCompare social/news depth (optional key); Reddit subreddit stats (optional OAuth, RSS-only fallback)
 - **Research metrics**: Santiment (daily active addresses, optional)
@@ -110,7 +116,7 @@ The ETF Flows tab is empty until you load data. Three options:
 
 The 3Y range button just clips to whatever's loaded.
 
-## Trading data sources
+## Futures data sources
 
 | KPI | Source | Auth | History |
 |---|---|---|---|
@@ -156,6 +162,24 @@ Classification:
 The 90-day signal history is plotted alongside price so you can see how
 the indicator behaved through past regimes.
 
+## Stock signals (top 20 most active)
+
+The Stocks tab applies the same `−100 … +100` score idea to the 20 most-active US stocks (by daily volume) pulled from Yahoo Finance. Same five-bucket label scheme (STRONG BUY → STRONG SELL), different components — the crypto-specific inputs (funding, DVOL, F&G, ETF flows) don't exist for equities, so the score is built from price/volume only:
+
+| Component | Source | Notes |
+|---|---|---|
+| Price vs SMA50 | derived from Yahoo daily | trend filter |
+| Price vs SMA200 | derived from Yahoo daily | trend filter |
+| RSI(14) | derived | overbought/oversold |
+| MACD histogram sign | derived | momentum direction |
+| 5-day momentum | derived | short-term acceleration |
+| Volume z-score | derived | unusual participation flag |
+| 50/200 cross | derived | golden / death cross state |
+
+Cards are sorted Strong Buy → Strong Sell. Each card shows the symbol/name header, the colored score, the label, current price + change %, a 30-day score sparkline, and the component breakdown.
+
+Not investment advice — same caveat as the crypto signal.
+
 ## Environment variables
 
 All optional. Core dashboard runs with none of these set; the dashboard surfaces a `key_set: false` flag or falls back to a free path where applicable.
@@ -166,7 +190,7 @@ All optional. Core dashboard runs with none of these set; the dashboard surfaces
 | `CHAT_MODEL` | `chat.py` | Defaults to `claude-haiku-4-5-20251001` |
 | `FRED_API_KEY` | `fetch_market.py` | Macro overlay (DXY, S&P 500, Gold, 10Y, M2) hidden |
 | `GLASSNODE_API_KEY` | `fetch_market.py` | True whale-cohort metrics off; free on-chain proxies still shown |
-| `CRYPTOCOMPARE_API_KEY` | `fetch_market.py` | Social/news depth limited to anonymous tier |
+| `CRYPTOCOMPARE_API_KEY` | `fetch_market.py` | Social/news depth limited to anonymous tier; also used for the top-25 historical daily OHLCV that feeds the Point of Control tab (free tier works, key raises the rate limit) |
 | `COINMETRICS_API_KEY` | `fetch_market.py` | ETH whale series omitted from Whale tab |
 | `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | `fetch_market.py` | Reddit subscriber counts unavailable; public dashboard falls back to RSS post titles only |
 | `COINGLASS_API_KEY` | `fetch_live.py` | CoinGlass v4 ETF-flow path disabled |

@@ -442,6 +442,95 @@ def _signal_insights(payload: dict) -> list[dict]:
     return out
 
 
+def _stocks_insights(payload: dict) -> list[dict]:
+    """Rules surfacing patterns in the top-20 most-active US stocks signal
+    scores (``payload['market']['stocks_signals']``). Three rules:
+
+    1. Broad-market sentiment: ≥75% of stocks scoring +20 (BUY+) or -20 (SELL+).
+    2. Strong single buy/sell: any individual stock at |score| ≥ 50.
+    3. Score divergence vs. crypto: avg stock score and avg crypto-signal score
+       differ by ≥30 points → possible regime-change signal.
+
+    Defensive: returns empty list if the fetcher hasn't run or the array is empty.
+    """
+    out: list[dict] = []
+    stocks = _get_nested(payload, "market.stocks_signals", []) or []
+    if not stocks:
+        return out
+
+    # Pull (score, symbol, name) tuples for stocks with a numeric score.
+    scored = []
+    for s in stocks:
+        if not isinstance(s, dict):
+            continue
+        score = s.get("score")
+        if isinstance(score, (int, float)):
+            scored.append((score, s.get("symbol") or "?", s.get("name") or ""))
+    if not scored:
+        return out
+
+    n = len(scored)
+
+    # Rule 1: broad-market sentiment direction (≥75% on one side at |20|).
+    buys = sum(1 for sc, _, _ in scored if sc >= 20)
+    sells = sum(1 for sc, _, _ in scored if sc <= -20)
+    if n >= 4:  # avoid noise on tiny lists
+        if buys / n >= 0.75:
+            pct = buys / n * 100.0
+            out.append({
+                "kind": "stocks", "asset": "global", "severity": "info",
+                "headline": f"Broad stock-market buy bias: {buys}/{n} ({pct:.0f}%) of top-20 actives at BUY+",
+                "detail": "Sentiment is one-sided across the most-active US tape.",
+            })
+        elif sells / n >= 0.75:
+            pct = sells / n * 100.0
+            out.append({
+                "kind": "stocks", "asset": "global", "severity": "warning",
+                "headline": f"Broad stock-market sell bias: {sells}/{n} ({pct:.0f}%) of top-20 actives at SELL+",
+                "detail": "Sentiment is one-sided across the most-active US tape.",
+            })
+
+    # Rule 2: strong single buy/sell (|score| ≥ 50). Surface the most extreme one.
+    extreme = max(scored, key=lambda t: abs(t[0]))
+    ex_score, ex_sym, ex_name = extreme
+    if ex_score >= 50:
+        out.append({
+            "kind": "stocks", "asset": ex_sym, "severity": "info",
+            "headline": f"Strong-buy signal: {ex_sym} at score {int(ex_score):+d} — {ex_name}",
+            "detail": "Among the top-20 most-active US stocks.",
+        })
+    elif ex_score <= -50:
+        out.append({
+            "kind": "stocks", "asset": ex_sym, "severity": "warning",
+            "headline": f"Strong-sell signal: {ex_sym} at score {int(ex_score):+d} — {ex_name}",
+            "detail": "Among the top-20 most-active US stocks.",
+        })
+
+    # Rule 3: stock vs crypto-signal score divergence.
+    crypto_sigs = payload.get("signals") or {}
+    crypto_scores = []
+    for asset, sig in crypto_sigs.items():
+        if not isinstance(sig, dict):
+            continue
+        sc = sig.get("score")
+        if isinstance(sc, (int, float)):
+            crypto_scores.append(sc)
+    if crypto_scores:
+        avg_stock = sum(sc for sc, _, _ in scored) / n
+        avg_crypto = sum(crypto_scores) / len(crypto_scores)
+        diff = avg_stock - avg_crypto
+        if abs(diff) >= 30:
+            leader = "stocks" if diff > 0 else "crypto"
+            sev = "warning" if abs(diff) >= 45 else "info"
+            out.append({
+                "kind": "stocks", "asset": "global", "severity": sev,
+                "headline": f"Crypto + stocks disagree: avg stock score {avg_stock:+.0f} vs avg crypto {avg_crypto:+.0f} ({leader} leading by {abs(diff):.0f} pts)",
+                "detail": "Cross-asset sentiment divergence — possible regime-change signal.",
+            })
+
+    return out
+
+
 def _whale_insights(payload: dict) -> list[dict]:
     """BTC on-chain whale-tab rules. Operates on payload['whale']['btc'].
 
@@ -1104,7 +1193,7 @@ def _market_insights(payload: dict) -> list[dict]:
 # Overview shows its own curated "Top insights" card from the global list,
 # and the per-tab Insights bar is hidden when Overview is active.
 
-VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale"}
+VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale", "stocks"}
 
 
 def _market_insight_tab(insight: dict) -> str:
@@ -1162,6 +1251,7 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
     etf_btc = _etf_insights(payload, "btc")
     etf_eth = _etf_insights(payload, "eth")
     sigs = _signal_insights(payload)
+    stocks = _stocks_insights(payload)
     whales = _whale_insights(payload)
     mkts = _market_insights(payload)
 
@@ -1170,12 +1260,14 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
         i.setdefault("tab", "etf")
     for i in sigs:
         i.setdefault("tab", "signals")
+    for i in stocks:
+        i.setdefault("tab", "stocks")
     for i in whales:
         i.setdefault("tab", "whale")
     for i in mkts:
         i.setdefault("tab", _market_insight_tab(i))
 
-    out = etf_btc + etf_eth + sigs + whales + mkts
+    out = etf_btc + etf_eth + sigs + stocks + whales + mkts
 
     # Prioritise: milestones + anomalies first, then ETF, then trends, then signals, then info
     rank = {
@@ -1183,6 +1275,7 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
         ("anomaly", "good"): 2,   ("anomaly", "alert"): 2, ("anomaly", "bad"): 2,
         ("etf", "good"): 3,        ("etf", "bad"): 3,
         ("signal", "good"): 4,     ("signal", "bad"): 4, ("signal", "alert"): 4,
+        ("stocks", "warning"): 4,  ("stocks", "info"): 6,
         ("trend", "good"): 5,      ("trend", "bad"): 5,
     }
     out.sort(key=lambda r: rank.get((r["kind"], r["severity"]), 9))

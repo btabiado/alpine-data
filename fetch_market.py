@@ -49,7 +49,7 @@ def _ts(ms: int) -> str:
 
 # ----- trading ---------------------------------------------------------------
 
-def coingecko_market(asset_id: str, days: int = 365) -> dict:
+def _coingecko_market_impl(asset_id: str, days: int = 365) -> dict:
     """Daily price, market cap, total volume series. Free tier caps at 365 days."""
     j = _get(
         f"https://api.coingecko.com/api/v3/coins/{asset_id}/market_chart",
@@ -62,6 +62,30 @@ def coingecko_market(asset_id: str, days: int = 365) -> dict:
         "volume": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("total_volumes", [])],
         "market_cap": [{"date": _ts(p[0]), "value": p[1]} for p in j.get("market_caps", [])],
     }
+
+
+def coingecko_market(asset_id: str, days: int = 365) -> dict:
+    """Stale-fallback wrapper around `_coingecko_market_impl`.
+
+    CG free tier rate-limits aggressively (~30 req/min) and frequently 429s
+    during top-N sweeps. If the price array comes back empty we fall back
+    to the cached prior result for this exact ``asset_id`` so the section
+    isn't blanked by a single transient rate-limit hit.
+    """
+    cache_key = f"coingecko_market_{asset_id}"
+    try:
+        out = _coingecko_market_impl(asset_id, days)
+    except Exception as e:
+        print(f"  [coingecko_market] {asset_id}: fatal {e}", file=sys.stderr)
+        out = None
+    # Empty price array == failed fetch; everything else == success.
+    if isinstance(out, dict) and out.get("price"):
+        _stale_save(cache_key, out)
+        return out
+    cached = _stale_load(cache_key)
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {"price": [], "volume": [], "market_cap": []}
 
 
 def coinbase_intl_perpetuals() -> list[dict]:
@@ -106,7 +130,7 @@ def coinbase_intl_perpetuals() -> list[dict]:
     return out
 
 
-def coinbase_spot() -> dict:
+def _coinbase_spot_impl() -> dict:
     """Coinbase Exchange spot ticker + 24h stats for BTC/ETH/LINK/LTC.
 
     Public Exchange API endpoint (api.exchange.coinbase.com) — no auth, no
@@ -156,6 +180,31 @@ def coinbase_spot() -> dict:
             continue
     out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     return out
+
+
+def coinbase_spot() -> dict:
+    """Stale-fallback wrapper around `_coinbase_spot_impl`.
+
+    If all four assets (btc/eth/link/ltc) come back empty (e.g., Coinbase
+    Exchange API outage or transient block), serve the last good payload
+    from `data/.stale/coinbase_spot.json` tagged with stale metadata.
+    """
+    try:
+        out = _coinbase_spot_impl()
+    except Exception as e:
+        print(f"  [coinbase_spot] fatal: {e}", file=sys.stderr)
+        out = None
+    # Success means at least one of the four expected symbols populated.
+    expected = ("btc", "eth", "link", "ltc")
+    if isinstance(out, dict) and any(out.get(s) for s in expected):
+        _stale_save("coinbase_spot", out)
+        return out
+    cached = _stale_load("coinbase_spot")
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
 
 
 def coingecko_global() -> dict:
@@ -1990,7 +2039,7 @@ def _coin_metrics_get(url: str, params: dict) -> dict | list | None:
         return None
 
 
-def coin_metrics_btc_eth_metrics() -> dict:
+def _coin_metrics_btc_eth_metrics_impl() -> dict:
     """Coin Metrics Community API — free network metrics for BTC + ETH.
     Tier 1 free only; metrics outside free tier return 403 and skip.
 
@@ -2028,6 +2077,38 @@ def coin_metrics_btc_eth_metrics() -> dict:
     return {
         "btc": out["btc"],
         "eth": out["eth"],
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def coin_metrics_btc_eth_metrics() -> dict:
+    """Stale-fallback wrapper around `_coin_metrics_btc_eth_metrics_impl`.
+
+    The free Community API 403s without an API key and rate-limits even
+    with one. When both btc and eth series come back empty we serve the
+    last good payload from `data/.stale/coin_metrics_btc_eth_metrics.json`.
+    """
+    try:
+        out = _coin_metrics_btc_eth_metrics_impl()
+    except Exception as e:
+        print(f"  [coin_metrics_btc_eth_metrics] fatal: {e}", file=sys.stderr)
+        out = None
+    # Success = at least one of btc/eth populated with any metric series.
+    def _has_data(d):
+        if not isinstance(d, dict):
+            return False
+        btc = d.get("btc") or {}
+        eth = d.get("eth") or {}
+        return bool(btc) or bool(eth)
+
+    if _has_data(out):
+        _stale_save("coin_metrics_btc_eth_metrics", out)
+        return out
+    cached = _stale_load("coin_metrics_btc_eth_metrics")
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {
+        "btc": {}, "eth": {},
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -2777,8 +2858,11 @@ def fetch_trading() -> dict:
     gt_pools = geckoterminal_pools()
     print("  Research tab social/sentiment sources (Reddit, CryptoCompare, Santiment)...")
     social = fetch_social()
-    print("  Coin Metrics Community (BTC/ETH network metrics)...")
-    cm = coin_metrics_btc_eth_metrics()
+    # Removed: coin_metrics_btc_eth_metrics() — the resulting market.coin_metrics
+    # blob (~68 KB of PriceUSD/CapMrktCurUSD) was never consumed by any
+    # renderer or insight rule. The whale tab uses a separate ETH-only
+    # fetcher (coin_metrics_eth_whale_metrics) under whale.eth.coin_metrics
+    # which has different metrics. Re-enable here only if a UI consumer lands.
     print("  Etherscan v2 (ETH gas oracle)...")
     gas = etherscan_gas()
     fred = fetch_fred()
@@ -2877,7 +2961,6 @@ def fetch_trading() -> dict:
         "defillama": llama,
         "geckoterminal": gt_pools,
         "social": social,
-        "coin_metrics": cm,
         "eth_gas": gas,
         "fred": fred,
         "mempool": mp,
