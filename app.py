@@ -400,7 +400,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 @media (max-width:720px){
   #chatDock{width:100%}
 }
-/* Mobile: collapse Overview macro/indices row to one column so phone view doesn't horizontal-scroll. */
+/* Mobile: tight layout — collapse multi-col grids, shrink header, KPI rows
+   become 2-up instead of 1-up, chart heights capped. Desktop unchanged. */
 @media (max-width:860px){
   #overviewMacroRow{grid-template-columns:1fr !important}
   .grid2{grid-template-columns:1fr !important}
@@ -415,6 +416,54 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* Strong Buys + Top-50 strip cards: tighter on mobile too */
   #overviewStrongBuys{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
   #top20SignalCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
+
+  /* --- Compact mobile header (was ~200px tall, now ~104px) --- */
+  header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
+  header > div:first-child{min-width:0;flex:1 1 auto}
+  header h1{font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .meta{display:none}
+  /* Header button row: asset toggles + share/refresh, single line, no wrap */
+  header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
+  header .controls .btn{padding:5px 8px;font-size:11px;min-height:32px}
+  header .controls > span{width:6px !important}
+
+  /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */
+  .tabs{
+    padding:0 8px;
+    gap:0;
+    overflow-x:auto;
+    overflow-y:hidden;
+    flex-wrap:nowrap;
+    white-space:nowrap;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto}
+
+  /* --- Period/timeframe controls row below tabs (smaller buttons) --- */
+  .controls{padding:8px 12px;gap:5px}
+  .controls .btn{padding:5px 9px;font-size:11px}
+
+  /* --- KPI rows go 2-up on mobile so they don't eat the screen.
+         #defiKpis, #whaleKpis, #tradingKpis all use the .row class with
+         minmax(220px,1fr) which forces 1 col on phones. Force 2 cols. --- */
+  #defiKpis,
+  #whaleKpis,
+  #tradingKpis{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  #defiKpis .card,
+  #whaleKpis .card,
+  #tradingKpis .card{padding:10px 12px}
+  #defiKpis .card .v,
+  #whaleKpis .card .v,
+  #tradingKpis .card .v{font-size:17px !important}
+  #defiKpis .card .sub,
+  #whaleKpis .card .sub,
+  #tradingKpis .card .sub{font-size:10px !important}
+
+  /* --- Cap chart heights on mobile (was 380px each, way too tall) --- */
+  .chart-wrap.tall{height:280px}
+  .chart-wrap{min-height:0}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
