@@ -220,9 +220,19 @@ def build_payload() -> dict:
     try:
         import signals as sig_mod
         payload["signals"] = sig_mod.compute_all(payload)
+        # Top-20 simplified signals (one per market-cap top-20 coin, sorted
+        # by score). Uses ONLY markets_top fields — no funding/ETF/F&G,
+        # since those don't exist for the long tail. Empty list if
+        # markets_top is unpopulated.
+        try:
+            payload["signals_top20"] = sig_mod.compute_all_top20(payload)
+        except Exception as e:
+            print(f"[signals_top20] error: {e}", file=sys.stderr)
+            payload["signals_top20"] = []
     except Exception as e:
         print(f"[signals] error: {e}", file=sys.stderr)
         payload["signals"] = {"btc": None, "eth": None}
+        payload["signals_top20"] = []
     try:
         # Point of Control + Value Area derived from existing price+volume.
         # No external API call — pure compute. Attached under market.poc.
@@ -459,6 +469,60 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn active" id="configSignalsSave">Save</button>
     </div>
     <div id="configSignalsStatus" class="sub" style="color:var(--muted);min-height:14px"></div>
+  </div>
+</div>
+
+<!-- ============ SIGNAL DETAIL MODAL (top-20 strip → full breakdown) ============ -->
+<div id="signalDetailModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:8px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="signalDetailTitle" style="margin:0;font-size:14px">Signal detail</h2>
+      <button class="btn" id="signalDetailClose">×</button>
+    </div>
+    <div id="signalDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ POC EXPLAINER MODAL ============ -->
+<div id="pocExplainerModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px;width:min(620px,100%);max-height:90vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 style="margin:0;font-size:14px">📊 What is Point of Control?</h2>
+      <button class="btn" id="pocExplainerClose">×</button>
+    </div>
+    <div class="sub" style="line-height:1.55;color:var(--text)">
+      <p><strong>Plain language.</strong> The Point of Control (POC) is the price level where the most volume has traded over a given window. Think of it as the price buyers and sellers keep <em>gravitating back to</em> — the market's recent "center of gravity."</p>
+
+      <h3 style="margin:10px 0 4px;font-size:12px;letter-spacing:.04em;color:var(--text)">HOW THIS DASHBOARD COMPUTES IT</h3>
+      <p>Each card builds a <strong>volume profile</strong>: daily candles are bucketed by price, weighted by traded volume. We run it over two lookbacks — <span class="tag">30d</span> (tactical) and <span class="tag">90d</span> (structural). The POC is the highest-volume bucket. The <strong>Value Area</strong> (VAH / VAL) is the contiguous range around the POC that contains <strong>70%</strong> of total volume — roughly one standard deviation of where price "agreed."</p>
+
+      <h3 style="margin:10px 0 4px;font-size:12px;letter-spacing:.04em;color:var(--text)">HOW TO READ A CARD</h3>
+      <div style="display:flex;gap:14px;align-items:center;margin:6px 0 8px;font-size:11px">
+        <div style="flex:1;position:relative;height:54px;border:1px solid var(--border);border-radius:6px;background:linear-gradient(to top,#0b0d12,#13202a 30%,#1a3a4a 50%,#13202a 70%,#0b0d12)">
+          <div style="position:absolute;left:0;right:0;top:48%;border-top:2px dashed #ffcc66"></div>
+          <div style="position:absolute;left:0;right:0;top:18%;border-top:1px dotted #4a8;opacity:.7"></div>
+          <div style="position:absolute;left:0;right:0;top:78%;border-top:1px dotted #4a8;opacity:.7"></div>
+          <span style="position:absolute;right:6px;top:42%;color:#ffcc66">POC</span>
+          <span style="position:absolute;right:6px;top:12%;color:#7ad">VAH</span>
+          <span style="position:absolute;right:6px;top:72%;color:#7ad">VAL</span>
+        </div>
+      </div>
+      <p><strong>POC price</strong> — fair-value magnet. <strong>VAH / VAL</strong> — the top and bottom of the 70% Value Area. <span class="tag">IN VA</span> means current price sits inside that band (consolidation / accepted value). <span class="tag">OUTSIDE</span> means price has broken above VAH or below VAL.</p>
+
+      <h3 style="margin:10px 0 4px;font-size:12px;letter-spacing:.04em;color:var(--text)">WHAT IT MEANS FOR TRADING</h3>
+      <p>
+        • <strong>Above POC + OUTSIDE</strong> → extended; the move is stretched relative to recent accepted value.<br>
+        • <strong>Below POC + OUTSIDE</strong> → discount; price is trading below where most volume changed hands.<br>
+        • <strong>Inside VA</strong> → consolidation; supply and demand are roughly balanced, breakouts from here are often more meaningful.
+      </p>
+
+      <h3 style="margin:10px 0 4px;font-size:12px;letter-spacing:.04em;color:var(--text)">ORIGINS</h3>
+      <p>Volume profile and the Value Area concept come from <strong>Market Profile</strong>, developed by J. Peter Steidlmayer at the CBOT in the 1980s as a way to read auction-market behavior intraday.</p>
+
+      <div class="note" style="margin-top:8px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:#1a1410;color:#e9d27a;font-size:11px">
+        <strong>Not investment advice.</strong> POC describes where volume <em>has</em> traded, not where price <em>will</em> go. It's a statistical tendency, not a certainty — price can stay extended or break structure for a long time. Use it as context alongside other signals.
+      </div>
+    </div>
   </div>
 </div>
 
@@ -781,6 +845,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="head"><h2>LTC signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
           <div class="chart-wrap"><canvas id="sigLtcChart"></canvas></div>
         </div>
+      </div>
+
+      <!-- ============ TOP-20 COMPACT SIGNALS STRIP ============ -->
+      <div class="card" style="padding:12px 14px;margin-top:14px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div>
+            <h2 style="margin:0;font-size:15px">Top 20 by market cap</h2>
+            <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
+          </div>
+          <span style="flex:1"></span>
+          <span class="lbl" style="margin:0">Filter</span>
+          <button class="btn active" data-top20filter="all">All</button>
+          <button class="btn" data-top20filter="buy">Buy</button>
+          <button class="btn" data-top20filter="hold">Hold</button>
+          <button class="btn" data-top20filter="sell">Sell</button>
+        </div>
+        <div id="top20SignalCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
       </div>
     </div>
   </div>
@@ -1699,7 +1780,8 @@ function renderSignalChart(canvasId, asset){
 
 function renderSignals(){
   const sigData = DATA.signals || {};
-  const empty = !sigData.btc && !sigData.eth && !sigData.link && !sigData.ltc;
+  const top20  = DATA.signals_top20 || [];
+  const empty = !sigData.btc && !sigData.eth && !sigData.link && !sigData.ltc && !top20.length;
   document.getElementById('signalsEmpty').classList.toggle('hidden', !empty);
   document.getElementById('signalsContent').classList.toggle('hidden', empty);
   if (empty) return;
@@ -1709,7 +1791,142 @@ function renderSignals(){
   renderSignalChart('sigEthChart','eth');
   renderSignalChart('sigLinkChart','link');
   renderSignalChart('sigLtcChart','ltc');
+  renderTop20Signals();
 }
+
+// Map a signal label to a coarse bucket used by the strip's filter chips
+// and the colored chip on each compact card.
+function labelBucket(label){
+  const L = (label||'').toUpperCase();
+  if (L.indexOf('BUY')  >= 0) return 'buy';
+  if (L.indexOf('SELL') >= 0) return 'sell';
+  return 'hold';
+}
+
+// Render the full signal-card breakdown from a raw signals_top20 entry.
+// Mirrors renderSignalCard(asset) but keys off the object directly so the
+// modal works for any coin, not just the four pinned in DATA.signals.
+function renderSignalCardFromObj(s){
+  if (!s) return '<div class="chart-card"><div class="empty">No signal.</div></div>';
+  const color = signalColor(s.score);
+  const sym = (s.symbol||'').toUpperCase();
+  const compRows = (s.components||[]).map(c => {
+    const cls = c.contribution > 0 ? 'green' : (c.contribution < 0 ? 'red' : 'amber');
+    const sign = (c.contribution>=0?'+':'') + c.contribution;
+    return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
+  }).join('');
+  const pct = ((s.score + 100) / 200) * 100;
+  const priceStr = (s.price != null)
+    ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1?2:6})
+    : '—';
+  return `
+    <div class="chart-card" style="position:relative">
+      <div class="head" style="align-items:flex-start">
+        <div>
+          <h2 style="font-size:15px">${sym} signal <span class="tag">${priceStr}</span></h2>
+          <div class="desc">${escapeHtml(s.name||'')} · as of ${escapeHtml(s.as_of||'')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:28px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
+          <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
+        </div>
+      </div>
+      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+        <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+      </div>
+      <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
+      <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer||'')}</div>
+    </div>`;
+}
+
+function renderTop20Signals(){
+  const host = document.getElementById('top20SignalCards');
+  if (!host) return;
+  const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  const all = (DATA.signals_top20 || [])
+    .filter(s => s && !isStable(s.symbol))
+    .slice().sort((a,b) => (b.score||0) - (a.score||0));
+  if (!all.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No top-20 signals yet — refresh.</div>';
+    return;
+  }
+  window._top20SignalsCache = {};
+  host.innerHTML = all.map(s => {
+    const sym = (s.symbol||'').toUpperCase();
+    const color = signalColor(s.score);
+    const bucket = labelBucket(s.label);
+    const img = s.image
+      ? `<img src="${s.image}" alt="" style="width:32px;height:32px;border-radius:50%">`
+      : `<div style="width:32px;height:32px;border-radius:50%;background:${color}33"></div>`;
+    const score = (s.score>=0?'+':'') + s.score;
+    window._top20SignalsCache[sym] = s;
+    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
+      ${img}
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="font-weight:700;font-size:13px">${escapeHtml(sym)}</div>
+        <div class="sub" style="color:var(--muted);font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${escapeHtml(s.name||'')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;font-weight:700;color:${color};line-height:1.1">${escapeHtml(s.label||'')}</div>
+        <div style="font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums">${score} / ±100</div>
+      </div>
+    </div>`;
+  }).join('');
+  // Bind click → modal
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
+  );
+}
+
+function openSignalDetail(sym){
+  const s = (window._top20SignalsCache || {})[sym];
+  const modal = document.getElementById('signalDetailModal');
+  if (!modal || !s) return;
+  document.getElementById('signalDetailTitle').textContent = `${sym} · ${s.name||''} · signal detail`;
+  document.getElementById('signalDetailBody').innerHTML = renderSignalCardFromObj(s);
+  modal.classList.remove('hidden');
+}
+function closeSignalDetail(){
+  const m = document.getElementById('signalDetailModal');
+  if (m) m.classList.add('hidden');
+}
+
+// One-time wiring for the detail modal + filter chips + POC explainer. Idempotent.
+(function wireTop20Modals(){
+  if (window._top20Wired) return; window._top20Wired = true;
+  document.addEventListener('click', e => {
+    if (e.target && e.target.id === 'signalDetailClose') closeSignalDetail();
+    if (e.target && e.target.id === 'signalDetailModal') closeSignalDetail();
+    const fb = e.target && e.target.closest && e.target.closest('[data-top20filter]');
+    if (fb){
+      const bucket = fb.getAttribute('data-top20filter');
+      fb.parentElement.querySelectorAll('[data-top20filter]').forEach(b => b.classList.toggle('active', b===fb));
+      document.querySelectorAll('#top20SignalCards [data-symbol]').forEach(c => {
+        c.style.display = (bucket==='all' || c.getAttribute('data-bucket')===bucket) ? '' : 'none';
+      });
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      closeSignalDetail();
+      const pm = document.getElementById('pocExplainerModal');
+      if (pm && !pm.classList.contains('hidden')) pm.classList.add('hidden');
+    }
+  });
+  // POC explainer: rewrite the TrendSpider link to open the in-dashboard modal
+  const pocModal = document.getElementById('pocExplainerModal');
+  if (pocModal){
+    const openPoc = e => { if (e) e.preventDefault(); pocModal.classList.remove('hidden'); };
+    const closePoc = () => pocModal.classList.add('hidden');
+    document.querySelectorAll('a[href*="trendspider.com"]').forEach(a => {
+      a.addEventListener('click', openPoc);
+      a.setAttribute('href', '#');
+      a.setAttribute('title', 'What is POC?');
+    });
+    document.getElementById('pocExplainerClose')?.addEventListener('click', closePoc);
+    pocModal.addEventListener('click', e => { if (e.target.id === 'pocExplainerModal') closePoc(); });
+  }
+})();
 
 // ---------- Whale tab ----------
 function whaleData(){ return (DATA.whale||{}).btc || {}; }

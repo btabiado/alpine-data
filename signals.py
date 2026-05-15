@@ -223,3 +223,154 @@ def compute_all(payload: dict) -> dict:
         "link": compute_signal("link", payload),
         "ltc": compute_signal("ltc", payload),
     }
+
+
+# ---------- simplified top-20 signal (CoinGecko sparkline only) ----------
+# The 4-coin signal above uses funding (OKX), DVOL (Deribit), Fear & Greed,
+# and ETF flows — none of which we have for the long tail (SOL, XRP, ADA,
+# etc.). The simplified scorer below works from ONLY the markets_top entry
+# (price + 24h/7d/30d % change + 168-hour sparkline + volume + mcap).
+# Output shape matches compute_signal() so the same render logic can be
+# reused for both. Score still bounded ±100; label thresholds unchanged.
+
+from datetime import datetime, timezone
+
+_STABLE_PREFIX = "USD"  # USDT, USDC, USDS, USD1, USDe, USDP, ...
+
+def _is_stable_symbol(sym: str) -> bool:
+    s = (sym or "").upper()
+    return s.startswith(_STABLE_PREFIX) or s.endswith(_STABLE_PREFIX) or s == "DAI"
+
+
+def _rsi_from_list(prices: list[float], period: int = 14) -> float | None:
+    """Wilder RSI on a plain list of prices. Returns None if too short."""
+    if not prices or len(prices) < period + 1:
+        return None
+    gains, losses = [], []
+    for i in range(1, len(prices)):
+        d = prices[i] - prices[i-1]
+        gains.append(max(d, 0.0)); losses.append(max(-d, 0.0))
+    a = 1.0 / period
+    g, l = gains[0], losses[0]
+    for i in range(1, len(gains)):
+        g = a * gains[i] + (1 - a) * g
+        l = a * losses[i] + (1 - a) * l
+    if l == 0:
+        return 100.0
+    rs = g / l
+    return 100 - 100 / (1 + rs)
+
+
+def _slope_pct(prices: list[float]) -> float | None:
+    """OLS slope of `prices` (assumed evenly-spaced) normalized to total
+    % change over the full window. Returns None if too few points."""
+    s = [p for p in prices if p is not None]
+    n = len(s)
+    if n < 10:
+        return None
+    xm = (n - 1) / 2.0
+    ym = sum(s) / n
+    cov = sum((i - xm) * (s[i] - ym) for i in range(n))
+    var = sum((i - xm) ** 2 for i in range(n))
+    if var == 0 or ym == 0:
+        return None
+    return (cov / var / ym) * 100 * n
+
+
+def compute_signal_simple(coin: dict) -> dict | None:
+    """Score one markets_top entry on the 6-component simplified system.
+    See module-top docstring for component breakdown. Returns None if
+    sparkline is too short to compute.
+
+    Field names match the actual markets_top shape from fetch_market.py
+    (price_usd, market_cap_usd, volume_24h_usd, change_*_pct, sparkline_7d,
+    rank, symbol, name, image)."""
+    if not coin:
+        return None
+    spark = coin.get("sparkline_7d") or []
+    if len(spark) < 30:
+        return None
+    comps: list[dict] = []
+    def add(name, value, c, expl):
+        comps.append({"name": name, "value": value,
+                      "contribution": int(c), "explanation": expl})
+
+    c7   = coin.get("change_7d_pct")
+    c30  = coin.get("change_30d_pct")
+    c24  = coin.get("change_24h_pct")
+    vol  = coin.get("volume_24h_usd") or 0
+    mcap = coin.get("market_cap_usd") or 0
+    price = coin.get("price_usd") or (spark[-1] if spark else None)
+
+    # 1) 7d momentum  — saturates at ±10% → ±25
+    if c7 is not None:
+        c = max(-25, min(25, round(c7 / 10 * 25)))
+        add("7d momentum", f"{c7:+.1f}%", c,
+            "trending up" if c > 0 else "trending down" if c < 0 else "flat")
+    # 2) 30d momentum — saturates at ±25% → ±25
+    if c30 is not None:
+        c = max(-25, min(25, round(c30 / 25 * 25)))
+        add("30d momentum", f"{c30:+.1f}%", c,
+            "strong uptrend" if c > 0 else "downtrend" if c < 0 else "flat")
+    # 3) Sparkline OLS slope (7d) → ±15
+    sp = _slope_pct(spark)
+    if sp is not None:
+        c = max(-15, min(15, round(sp / 15 * 15)))
+        add("7d trend slope", f"{sp:+.1f}%", c,
+            "rising" if c > 0 else "falling" if c < 0 else "sideways")
+    # 4) 24h contrarian (mean-reversion signal) → ±10
+    if c24 is not None:
+        if   c24 <= -8: c, e = 10,  "oversold 24h — contrarian buy"
+        elif c24 >=  8: c, e = -10, "overbought 24h — contrarian sell"
+        elif c24 <= -4: c, e = 5,   "weak 24h — mild contrarian buy"
+        elif c24 >=  4: c, e = -5,  "hot 24h — mild contrarian sell"
+        else:           c, e = 0,   "neutral 24h"
+        add("24h contrarian", f"{c24:+.2f}%", c, e)
+    # 5) Volume turnover (vol/mcap), confirming-or-divergent → ±10/±15
+    if mcap > 0 and vol > 0:
+        t = vol / mcap
+        up = (c7 or 0) >= 0
+        if   t > 0.15: c, e = (10 if up else -10), ("volume surge confirming trend" if up else "volume surge on weakness")
+        elif t > 0.08: c, e = (5  if up else -5 ), ("elevated volume"               if up else "elevated sell volume")
+        elif t < 0.02: c, e = -5, "thin volume — weak conviction"
+        else:          c, e = 0,  "normal turnover"
+        add("Volume turnover", f"{t*100:.1f}%/d", c, e)
+    # 6) RSI(14) on hourly sparkline → ±10
+    rsi = _rsi_from_list(spark, 14)
+    if rsi is not None:
+        if   rsi < 30: c, e = 10,  "oversold"
+        elif rsi > 70: c, e = -10, "overbought"
+        elif rsi < 40: c, e = 5,   "leaning oversold"
+        elif rsi > 60: c, e = -5,  "leaning overbought"
+        else:          c, e = 0,   "neutral"
+        add("RSI(14) sparkline", f"{rsi:.1f}", c, e)
+
+    score = max(-100, min(100, sum(x["contribution"] for x in comps)))
+    return {
+        "score": int(score),
+        "label": _label(score),
+        "components": comps,
+        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "price": float(price) if price else None,
+        "symbol": coin.get("symbol"),
+        "name": coin.get("name"),
+        "rank": coin.get("rank"),
+        "image": coin.get("image"),
+        "disclaimer": "Rules-based indicator (simplified — based on CoinGecko "
+                      "price/volume only, no funding/ETF/F&G). Not investment "
+                      "advice. Evaluate on your own.",
+    }
+
+
+def compute_all_top20(payload: dict, exclude_stables: bool = True,
+                     limit: int = 20) -> list[dict]:
+    """Iterate the top 20 by market cap (or `limit`), compute the simplified
+    signal for each, return sorted by score descending (strongest BUY first,
+    strongest SELL last). Stablecoins excluded by default."""
+    rows = ((payload.get("market") or {}).get("markets_top") or [])
+    if exclude_stables:
+        rows = [r for r in rows if not _is_stable_symbol(r.get("symbol", ""))]
+    rows = rows[:limit]
+    out = [s for s in (compute_signal_simple(r) for r in rows) if s]
+    out.sort(key=lambda s: s["score"], reverse=True)
+    return out
