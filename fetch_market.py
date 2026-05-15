@@ -789,13 +789,20 @@ def reddit_crypto_stats() -> dict:
 
 
 def cryptocompare_social_stats() -> dict:
-    """Per-coin social + dev stats from CryptoCompare.
-    Endpoint: /data/social/coin/latest?coinId=N (free, no key for basic data).
+    """Per-coin social + dev stats from CryptoCompare (now hosted under CoinDesk
+    after the 2026 migration). Endpoint: /data/social/coin/latest?coinId=N.
+    As of 2026 this requires an API key — set CRYPTOCOMPARE_API_KEY in env
+    (free tier 100k calls/month; sign up at developers.coindesk.com).
+    Without a key, the endpoint returns HTTP 200 with Response='Error' and
+    empty Data; we skip cleanly and the UI renders "no data" rather than dashes.
+
     Coin IDs are CryptoCompare's internal numeric IDs (not symbols):
       BTC=1182, ETH=7605, LINK=46472, LTC=3808
-    Returns Twitter followers, Reddit subscribers, GitHub stars/forks/commits,
+    Returns Twitter followers, Reddit subscribers, GitHub stars/forks/PRs,
     code activity. Each call has its own try/except so partial failures
     don't kill the whole section."""
+    import os
+    api_key = os.environ.get("CRYPTOCOMPARE_API_KEY", "")
     COINS = {
         "btc":  {"id": 1182,  "name": "Bitcoin"},
         "eth":  {"id": 7605,  "name": "Ethereum"},
@@ -805,22 +812,29 @@ def cryptocompare_social_stats() -> dict:
     out: dict[str, dict] = {}
     for sym, meta in COINS.items():
         try:
+            params = {"coinId": meta["id"]}
+            # Auth via Authorization header is the documented v2 path; the
+            # api_key query-string param is also accepted for backwards-compat.
+            headers = dict(H)
+            if api_key:
+                headers["Authorization"] = f"Apikey {api_key}"
+                params["api_key"] = api_key
             r = requests.get(
                 "https://min-api.cryptocompare.com/data/social/coin/latest",
-                params={"coinId": meta["id"]},
-                headers=H, timeout=15,
+                params=params,
+                headers=headers, timeout=15,
             )
             if r.status_code != 200:
                 print(f"  [cryptocompare] {sym} -> {r.status_code}", file=sys.stderr)
                 continue
             body = r.json() or {}
-            # As of 2026 the legacy /data/social/coin/latest endpoint silently
-            # returns HTTP 200 with {"Response": "Error", "Message": "auth key
-            # required", "Data": {}}. Without this check, we'd populate the
-            # dashboard cards with all-None fields and render as "—" dashes.
+            # Without a key, the legacy endpoint returns HTTP 200 with
+            # {"Response": "Error", "Message": "auth key required", "Data": {}}.
+            # Skip cleanly so the UI shows "no data" cards instead of all-dash.
             if body.get("Response") == "Error" or not body.get("Data"):
                 msg = (body.get("Message") or "")[:80]
-                print(f"  [cryptocompare] {sym} skipped: {msg}", file=sys.stderr)
+                hint = "" if api_key else " (set CRYPTOCOMPARE_API_KEY)"
+                print(f"  [cryptocompare] {sym} skipped: {msg}{hint}", file=sys.stderr)
                 continue
             j = body["Data"]
             general = (j.get("General") or {})
