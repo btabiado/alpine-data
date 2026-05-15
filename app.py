@@ -442,7 +442,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   header .meta{display:none}
   /* Header button row: asset toggles + share/refresh, single line, no wrap */
   header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
-  header .controls .btn{padding:5px 8px;font-size:11px;min-height:32px}
+  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px}
   header .controls > span{width:6px !important}
 
   /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */
@@ -469,20 +469,29 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .controls .btn{padding:5px 9px;font-size:11px}
 
   /* --- KPI rows go 2-up on mobile so they don't eat the screen.
-         #defiKpis, #whaleKpis, #tradingKpis all use the .row class with
-         minmax(220px,1fr) which forces 1 col on phones. Force 2 cols. --- */
+         #defiKpis, #whaleKpis, #tradingKpis, #etfKpis, #fundKpiGrid all use
+         the .row class with minmax(180-220px,1fr) which forces 1 col on
+         phones. Force 2 cols. --- */
   #defiKpis,
   #whaleKpis,
-  #tradingKpis{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  #tradingKpis,
+  #etfKpis,
+  #fundKpiGrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
   #defiKpis .card,
   #whaleKpis .card,
-  #tradingKpis .card{padding:10px 12px}
+  #tradingKpis .card,
+  #etfKpis .card,
+  #fundKpiGrid .card{padding:10px 12px}
   #defiKpis .card .v,
   #whaleKpis .card .v,
-  #tradingKpis .card .v{font-size:17px !important}
+  #tradingKpis .card .v,
+  #etfKpis .card .v,
+  #fundKpiGrid .card .v{font-size:17px !important}
   #defiKpis .card .sub,
   #whaleKpis .card .sub,
-  #tradingKpis .card .sub{font-size:10px !important}
+  #tradingKpis .card .sub,
+  #etfKpis .card .sub,
+  #fundKpiGrid .card .sub{font-size:10px !important}
 
   /* --- Cap chart heights on mobile (was 380px each, way too tall) --- */
   .chart-wrap.tall{height:280px}
@@ -1156,7 +1165,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="whaleEmpty" class="empty hidden">No whale data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="whaleContent">
       <div class="sub" id="whaleAsOf" style="margin-bottom:6px"></div>
-      <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed. ETH whale extension is in research.</div>
+      <!-- Asset toggle: BTC (default) or ETH. Each panel below renders the
+           selected asset's whale view; the other panel stays hidden. -->
+      <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;margin-bottom:10px">
+        <span class="lbl" style="margin:0">View</span>
+        <button class="btn active" data-whaleasset="btc">BTC</button>
+        <button class="btn" data-whaleasset="eth">ETH</button>
+      </div>
+      <!-- ===== BTC PANEL (default) ===== -->
+      <div id="whaleBtcPanel">
+      <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed.</div>
       <!-- Headline: Whale Sentiment Index (composite ±100 from on-chain proxies) -->
       <div class="chart-card" id="whaleSentimentCard" style="position:relative"></div>
       <div class="row" id="whaleKpis"></div>
@@ -1171,6 +1189,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
               <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
             </tr></thead>
             <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Recent Whale Transactions: vouts ≥ $1M from the latest confirmed block -->
+      <div class="chart-card hidden" id="whaleAlertsCard">
+        <div class="head">
+          <div>
+            <h2>Recent Whale Transactions <span class="tag">mempool.space</span></h2>
+            <span class="desc" id="whaleAlertsNote">—</span>
+          </div>
+        </div>
+        <div style="overflow:auto">
+          <table class="tracker-grid">
+            <thead><tr>
+              <th>Block</th><th style="text-align:right">USD value</th><th style="text-align:right">BTC</th><th>txid</th>
+            </tr></thead>
+            <tbody id="whaleAlertsBody"></tbody>
           </table>
         </div>
       </div>
@@ -1256,6 +1291,49 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="chart-wrap"><canvas id="outputChart"></canvas></div>
         </div>
       </div>
+      </div> <!-- /whaleBtcPanel -->
+      <!-- ===== ETH PANEL ===== -->
+      <div id="whaleEthPanel" class="hidden">
+        <div class="note">ETH whale view: Blockchair (24h tx, largest tx, supply) + Coin Metrics Community (active addresses, transfer volume). True ETH whale cohorts (≥10K ETH addresses) require a paid feed.</div>
+        <div class="row" id="whaleEthKpis"></div>
+        <div class="chart-card">
+          <div class="head">
+            <h2>Largest ETH transaction (last 24h) <span class="tag">Blockchair</span></h2>
+            <span class="desc">Single biggest tx by USD value on Ethereum mainnet over the past 24 hours</span>
+          </div>
+          <div id="ethLargestTxBox" class="sub" style="font-size:13px;color:var(--text);line-height:1.6;padding:6px 4px"></div>
+        </div>
+        <div class="grid2">
+          <div class="chart-card">
+            <div class="head"><h2>ETH active addresses</h2><span class="desc">Unique addresses used per day (Coin Metrics)</span></div>
+            <div class="chart-wrap"><canvas id="ethActiveAddrChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="head"><h2>ETH transfer volume (USD)</h2><span class="desc">Adjusted daily transfer value (Coin Metrics)</span></div>
+            <div class="chart-wrap"><canvas id="ethTxVolChart"></canvas></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="chart-card">
+            <div class="head"><h2>ETH transactions per day</h2><span class="desc">Network throughput (Coin Metrics)</span></div>
+            <div class="chart-wrap"><canvas id="ethTxCountChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="head"><h2>ETH circulating supply</h2><span class="desc">Post-Merge supply has trended flat-to-deflationary (Coin Metrics)</span></div>
+            <div class="chart-wrap"><canvas id="ethSupplyChart"></canvas></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="card" style="padding:12px 14px">
+            <h3>ETH gas (gwei)</h3>
+            <div id="ethGasBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
+          </div>
+          <div class="card" style="padding:12px 14px">
+            <h3>ETH 24h network stats</h3>
+            <div id="ethStatsBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
+          </div>
+        </div>
+      </div> <!-- /whaleEthPanel -->
     </div>
   </div>
 </div>
@@ -1310,7 +1388,10 @@ if (IS_SHARE) {
   };
 }
 
-const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y', cohortBin:'month' };
+const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y', cohortBin:'month',
+  // Per-tab asset toggle for the Whale tab (independent of the global asset
+  // selector). Persisted to localStorage so the chosen view sticks.
+  whaleAsset: (typeof localStorage !== 'undefined' && localStorage.getItem('whaleAsset') === 'eth') ? 'eth' : 'btc' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -1678,13 +1759,13 @@ function renderPriceVol(){
     {type:'bar', label:'24h volume', data:vol.map(r=>r.value), backgroundColor:'#2a3140', yAxisID:'yVol', borderWidth:0, order:2},
     {type:'line', label:'Price', data:price.map(r=>r.value), borderColor:c, backgroundColor:c+'22', fill:false, tension:0.15, pointRadius:0, borderWidth:2, yAxisID:'yPrice', order:1},
   ];
-  // POC overlay: 3 extra constant-y datasets (POC, VAH, VAL) when enabled.
-  // Chart.js doesn't have the annotation plugin loaded so we use the simpler
+  // POC overlay: extra constant-y datasets (POC, VAH, VAL + naked POCs) when
+  // enabled. Chart.js annotation plugin isn't loaded so we use the simpler
   // "horizontal line via flat dataset" approach.
   if (pocOverlay.on){
+    const flat = y => labels.map(()=>y);
     const lv = pocLevelsFor(state.asset, pocOverlay.win);
     if (lv && lv.poc != null){
-      const flat = y => labels.map(()=>y);
       const tag = pocOverlay.win.toUpperCase();
       datasets.push(
         {type:'line', label:`POC ${tag}`, data:flat(lv.poc), borderColor:'#ffcc66', borderWidth:1.5, pointRadius:0, fill:false, yAxisID:'yPrice', order:0, spanGaps:true},
@@ -1692,6 +1773,24 @@ function renderPriceVol(){
         {type:'line', label:`VAL ${tag}`, data:flat(lv.val), borderColor:'#cf6a6a', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false, yAxisID:'yPrice', order:0},
       );
     }
+    // Naked POCs (untested weekly POCs in last 180d) — thin dashed lines,
+    // green if below current price (support), red if above (resistance).
+    // Cap at 3 so the legend doesn't explode.
+    const allPoc = ((DATA.market||{}).poc || {})[state.asset] || {};
+    const naked = Array.isArray(allPoc.naked) ? allPoc.naked.slice(0, 3) : [];
+    const cur = price.length ? price[price.length-1].value : null;
+    naked.forEach(n => {
+      if (n.poc == null) return;
+      const isResist = (cur != null && n.poc > cur);
+      const col = isResist ? '#cf6a6a' : '#8fbf8f';
+      datasets.push({
+        type:'line',
+        label:`Naked ${fmtUSD(n.poc,'auto')} (${n.days_ago}d)`,
+        data:flat(n.poc),
+        borderColor:col, borderWidth:1, borderDash:[2,3],
+        pointRadius:0, fill:false, yAxisID:'yPrice', order:0,
+      });
+    });
   }
   charts.price = new Chart(document.getElementById('priceChart'), {
     type:'bar',
@@ -2547,9 +2646,163 @@ function renderWhale(){
   lineChart('minerChart',  'miner',  ra(w.miners_revenue_usd,'sum'),  '#f59e0b', v=>fmtUSD(v,'auto'));
   lineChart('outputChart', 'output', ra(w.output_volume_btc, 'sum'),  '#627eea', v=>fmtNum(v,0)+' BTC');
   renderWhaleTracker();
+  renderWhaleAlerts();
   renderWhaleCohortChart();
   renderWhaleProxyChart();
   renderGlassnodeStrip();
+}
+
+// Toggle which Whale-tab panel is visible. Called after state.whaleAsset
+// changes and on initial render.
+function syncWhalePanels(){
+  const btc = document.getElementById('whaleBtcPanel');
+  const eth = document.getElementById('whaleEthPanel');
+  if (!btc || !eth) return;
+  const isEth = state.whaleAsset === 'eth';
+  btc.classList.toggle('hidden', isEth);
+  eth.classList.toggle('hidden', !isEth);
+}
+
+// Dispatch table for the Whale tab: renders the currently-selected panel
+// only. Lazy-rendering keeps chart sizing correct (Chart.js dislikes drawing
+// to display:none canvases).
+function renderWhalePanel(){
+  syncWhalePanels();
+  if (state.whaleAsset === 'eth'){
+    renderWhaleEth();
+  } else {
+    renderWhaleSentiment();
+    renderWhaleKpisV2();
+    renderWhale();
+    renderWhaleExtras();
+  }
+}
+
+// ETH whale view — KPIs from Coin Metrics, largest 24h tx + network stats
+// from Blockchair, gas oracle from the existing Etherscan v2 fetcher.
+function renderWhaleEth(){
+  const eth = ((DATA.whale || {}).eth) || {};
+  const bc  = eth.blockchair || {};
+  const cm  = eth.coin_metrics || {};
+  const gas = ((DATA.market || {}).eth_gas) || {};
+
+  const lastVal = (m) => { const s = cm[m] || []; return s.length ? s[s.length-1].value : null; };
+  const aa  = lastVal('AdrActCnt');
+  const txc = lastVal('TxCnt');
+  const txv = lastVal('TxTfrValAdjUSD');
+  const sup = lastVal('SplyCur');
+  const kpis = [
+    {label:'Active addresses (24h)', val: aa  != null ? fmtNum(aa, 0)                   : '—'},
+    {label:'Transactions (24h)',     val: txc != null ? fmtNum(txc, 0)                  : '—'},
+    {label:'Transfer volume (USD)',  val: txv != null ? fmtUSD(txv, 'auto')             : '—'},
+    {label:'Supply (ETH)',           val: sup != null ? fmtNum(sup/1e6, 2) + 'M'        : '—'},
+  ];
+  const kpiHost = document.getElementById('whaleEthKpis');
+  if (kpiHost) kpiHost.innerHTML = kpis.map(i =>
+    `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div></div>`
+  ).join('');
+
+  // Largest tx (24h) — Blockchair. Validate hash as 0x + 64 hex chars to defang
+  // any javascript:/data: scheme injection through the href + innerHTML.
+  const isEthTxHash = s => typeof s === 'string' && /^0x[0-9a-fA-F]{64}$/.test(s);
+  const lt = bc.largest_tx_24h;
+  const ltBox = document.getElementById('ethLargestTxBox');
+  if (ltBox){
+    const hash = (lt && isEthTxHash(lt.hash)) ? lt.hash : '';
+    if (hash){
+      const valFmt = lt.value_usd != null ? fmtUSD(lt.value_usd, 'auto') : '—';
+      const shortHash = hash.slice(0, 10) + '…' + hash.slice(-8);
+      ltBox.innerHTML = `<strong style="color:var(--text);font-size:18px">${valFmt}</strong>
+        <span style="color:var(--muted)"> in a single transaction</span><br>
+        <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`;
+    } else {
+      ltBox.innerHTML = '<span style="color:var(--muted)">No data — Blockchair fetch may have failed.</span>';
+    }
+  }
+
+  // 180-day charts from Coin Metrics
+  const slice180 = (arr) => (arr || []).slice(-180);
+  lineChart('ethActiveAddrChart', 'ethActiveAddr', slice180(cm.AdrActCnt),      '#06b6d4', v=>fmtNum(v,0));
+  lineChart('ethTxVolChart',      'ethTxVol',      slice180(cm.TxTfrValAdjUSD), '#22c55e', v=>fmtUSD(v,'auto'));
+  lineChart('ethTxCountChart',    'ethTxCount',    slice180(cm.TxCnt),          '#a78bfa', v=>fmtNum(v,0));
+  lineChart('ethSupplyChart',     'ethSupply',     slice180(cm.SplyCur),        '#627eea', v=>fmtNum(v/1e6,2)+'M');
+
+  // Gas oracle
+  const gasBox = document.getElementById('ethGasBox');
+  if (gasBox){
+    if (gas.safe_gwei != null || gas.propose_gwei != null || gas.fast_gwei != null){
+      gasBox.innerHTML = `
+        <div>Safe: <strong style="color:var(--text)">${(gas.safe_gwei||0).toFixed(1)} gwei</strong></div>
+        <div>Propose: <strong style="color:var(--text)">${(gas.propose_gwei||0).toFixed(1)} gwei</strong></div>
+        <div>Fast: <strong style="color:var(--text)">${(gas.fast_gwei||0).toFixed(1)} gwei</strong></div>
+        <div style="margin-top:4px">Base fee: <strong style="color:var(--text)">${(gas.base_fee_gwei||0).toFixed(2)} gwei</strong></div>`;
+    } else {
+      gasBox.innerHTML = '<span>No gas data — Etherscan may have rate-limited.</span>';
+    }
+  }
+
+  // Blockchair 24h network stats — txs, EIP-1559 burn, ERC-20/721 activity
+  const statsBox = document.getElementById('ethStatsBox');
+  if (statsBox){
+    if (bc.blocks_24h || bc.transactions_24h){
+      const avgFee = bc.avg_tx_fee_eth_24h;
+      const mp    = bc.market_price_usd;
+      const burn  = bc.burned_eth_24h;
+      const erc20 = bc.erc20_transactions_24h;
+      const erc721= bc.erc721_transactions_24h;
+      const inflation = bc.inflation_eth_24h;
+      // Deflationary if burn > inflation in the 24h window. Post-Merge this
+      // flips between deflationary and mildly inflationary block-to-block.
+      const netSupplyDelta = (burn != null && inflation != null) ? (inflation - burn) : null;
+      const netCls = netSupplyDelta == null ? '' : (netSupplyDelta < 0 ? 'green' : 'red');
+      const netLbl = netSupplyDelta == null ? '—' : (netSupplyDelta < 0 ? '⤓ deflationary' : '⤒ inflationary');
+      statsBox.innerHTML = `
+        <div>Blocks (24h): <strong style="color:var(--text)">${fmtNum(bc.blocks_24h||0, 0)}</strong></div>
+        <div>Txs (24h): <strong style="color:var(--text)">${fmtNum(bc.transactions_24h||0, 0)}</strong></div>
+        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
+        ${burn != null ? `<div>EIP-1559 burn (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
+        ${erc20  != null ? `<div>ERC-20 tx (24h): <strong style="color:var(--text)">${fmtNum(erc20, 0)}</strong></div>` : ''}
+        ${erc721 != null ? `<div>ERC-721 tx (24h): <strong style="color:var(--text)">${fmtNum(erc721, 0)}</strong></div>` : ''}`;
+    } else {
+      statsBox.innerHTML = '<span>No Blockchair data.</span>';
+    }
+  }
+}
+
+// Recent Whale Transactions: vouts ≥ $1M scanned from the latest confirmed
+// BTC block via mempool.space. Hidden when no transactions are present.
+function renderWhaleAlerts(){
+  const card = document.getElementById('whaleAlertsCard');
+  if (!card) return;
+  const txs = ((DATA.whale||{}).whale_transactions || []);
+  if (!txs.length){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const head = txs[0];
+  const minsAgo = head.block_time ? Math.round((Date.now()/1000 - head.block_time)/60) : null;
+  const note = document.getElementById('whaleAlertsNote');
+  if (note){
+    const heightPart = head.block_height ? `Block #${head.block_height.toLocaleString()}` : 'Latest block';
+    const agePart    = minsAgo != null ? ` · ${minsAgo} min ago` : '';
+    note.textContent = `${heightPart}${agePart} · ${txs.length} txs ≥ $1M`;
+  }
+  const tbody = document.getElementById('whaleAlertsBody');
+  if (!tbody) return;
+  // Validate txid as 64-char hex to defang any javascript:/data: scheme injection
+  // before interpolating into href + innerHTML.
+  const isHexTxid = s => typeof s === 'string' && /^[0-9a-fA-F]{64}$/.test(s);
+  tbody.innerHTML = txs.slice(0, 10).map(t => {
+    const txid = isHexTxid(t.txid) ? t.txid : '';
+    const shortId = txid ? txid.slice(0,8) + '…' + txid.slice(-6) : '—';
+    const txUrl = txid ? `https://mempool.space/tx/${txid}` : '#';
+    const cls = (t.value_usd >= 10_000_000) ? 'green' : '';
+    const blk = t.block_height ? t.block_height.toLocaleString() : '—';
+    return `<tr>
+      <td>${blk}</td>
+      <td class="${cls}" style="text-align:right">${fmtUSD(t.value_usd, 'auto')}</td>
+      <td style="text-align:right">${fmtNum(t.value_btc, 2)} BTC</td>
+      <td><a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortId} ↗</a></td>
+    </tr>`;
+  }).join('');
 }
 
 // Glassnode KPIs: only render when the user has set GLASSNODE_API_KEY and
@@ -2816,6 +3069,7 @@ function renderWhaleTracker(){
 // ---------- coverage / tabs / wiring ----------
 function setActive(group, val){
   const isAssetGroup = (group === 'asset');
+  const isWhaleAssetGroup = (group === 'whaleasset');
   document.querySelectorAll(`.btn[data-${group}]`).forEach(b => {
     b.classList.toggle('active', b.dataset[group] === val);
     // Only the BTC/ETH/LINK selector buttons get asset-tinted. Other groups
@@ -2824,6 +3078,10 @@ function setActive(group, val){
     if (isAssetGroup) {
       b.classList.toggle('eth',  state.asset === 'eth');
       b.classList.toggle('link', state.asset === 'link');
+    }
+    // Whale-tab BTC/ETH toggle: tint active button by selected asset.
+    if (isWhaleAssetGroup) {
+      b.classList.toggle('eth', state.whaleAsset === 'eth');
     }
   });
 }
@@ -3895,6 +4153,30 @@ function volumeProfileSVG(primary, alt, current){
   return `<svg width="${W}" height="${H}">${vaBand}${bars}${altLine}${curMarker}</svg>`;
 }
 
+// Tiny inline SVG sparkline of the rolling-30d POC over the last 90 days.
+// Stroke color slopes green/red based on first→last direction.
+function pocMigrationSparkline(series){
+  if (!series || series.length < 5) return '';
+  const values = series.map(p => p.poc).filter(v => typeof v === 'number');
+  if (values.length < 5) return '';
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const range = (hi - lo) || 1;
+  const n = values.length;
+  const w = 100, h = 30, padTop = 10, padBot = 2;
+  const pts = values.map((v, i) => {
+    const x = (i / (n - 1)) * w;
+    const y = padTop + (1 - (v - lo) / range) * (h - padTop - padBot);
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(' ');
+  const first = values[0], last = values[values.length - 1];
+  const trend = last > first * 1.005 ? '#22c55e' : last < first * 0.995 ? '#ef4444' : '#94a3b8';
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:30px;display:block;margin-top:6px;border-radius:3px;background:#0b0d12">
+    <text x="2" y="7" font-size="6" fill="#64748b">30d POC drift · ${n}d</text>
+    <text x="${w-2}" y="7" font-size="6" fill="#64748b" text-anchor="end">${fmtUsdShort(last)}</text>
+    <polyline points="${pts}" fill="none" stroke="${trend}" stroke-width="1.2" vector-effect="non-scaling-stroke" />
+  </svg>`;
+}
+
 function renderPocCards(){
   const poc = (DATA.market||{}).poc || {};
   const host = document.getElementById('pocCards');
@@ -3957,6 +4239,7 @@ function renderPocCards(){
           </div>`;
         }).join('')}
       </div>` : '';
+    const sparkline = pocMigrationSparkline(d.migration_series);
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap">
         <h3 style="font-size:13px;color:var(--text);margin:0">${a.toUpperCase()}
@@ -3964,6 +4247,7 @@ function renderPocCards(){
         </h3>
         <div style="display:flex;gap:4px;flex-wrap:wrap">${clusterBadge}${migBadge}</div>
       </div>
+      ${sparkline}
       <div style="display:flex;gap:10px;margin-top:8px">
         <div style="flex:1;min-width:0">
           <table style="width:100%;font-size:11px;border-collapse:collapse">
@@ -4265,19 +4549,20 @@ function renderAll(){
   document.getElementById('tradingEmpty').classList.toggle('hidden', !trEmpty);
   document.getElementById('tradingContent').classList.toggle('hidden', trEmpty);
 
+  // Whale tab has its own BTC/ETH toggle (state.whaleAsset) — independent
+  // from the global asset selector. Show the global "no data at all" empty
+  // state only when BOTH panels are empty; otherwise let the toggle stay
+  // visible and each panel handle its own per-asset empty state inline.
   const wd = whaleData();
+  const ethWd = ((DATA.whale||{}).eth) || {};
   const whEmptyEl = document.getElementById('whaleEmpty');
   if (!whEmptyEl.dataset.original) whEmptyEl.dataset.original = whEmptyEl.innerHTML;
-  const whEmpty = !wd.tx_volume_usd || wd.tx_volume_usd.length === 0;
-  if (state.asset !== 'btc') {
-    whEmptyEl.innerHTML = `<div>Whale Activity is BTC-only (free on-chain proxies via blockchain.info). Switch to BTC to view.</div>`;
-    whEmptyEl.classList.remove('hidden');
-    document.getElementById('whaleContent').classList.add('hidden');
-  } else {
-    whEmptyEl.innerHTML = whEmptyEl.dataset.original;
-    whEmptyEl.classList.toggle('hidden', !whEmpty);
-    document.getElementById('whaleContent').classList.toggle('hidden', whEmpty);
-  }
+  const btcEmpty = !wd.tx_volume_usd || wd.tx_volume_usd.length === 0;
+  const ethEmpty = !ethWd.coin_metrics || Object.keys(ethWd.coin_metrics).filter(k => k !== 'fetched_at').length === 0;
+  const whEmpty = btcEmpty && ethEmpty;
+  whEmptyEl.innerHTML = whEmptyEl.dataset.original;
+  whEmptyEl.classList.toggle('hidden', !whEmpty);
+  document.getElementById('whaleContent').classList.toggle('hidden', whEmpty);
 
   if (state.tab === 'etf' && !etfEmpty){
     renderEtfKpis(); renderEtfFundTable(); renderFlow(); renderCum(); renderYoy();
@@ -4289,8 +4574,8 @@ function renderAll(){
   if (state.tab === 'signals'){
     renderSignals();
   }
-  if (state.tab === 'whale' && state.asset === 'btc' && !whEmpty){
-    renderWhaleSentiment(); renderWhaleKpisV2(); renderWhale(); renderWhaleExtras();
+  if (state.tab === 'whale' && !whEmpty){
+    renderWhalePanel();
   }
   if (state.tab === 'defi'){
     renderDefi();
@@ -4393,6 +4678,17 @@ document.querySelectorAll('.btn[data-macrorange]').forEach(b =>
 document.querySelectorAll('.btn[data-cohortbin]').forEach(b =>
   b.addEventListener('click', () => { state.cohortBin = b.dataset.cohortbin; setActive('cohortbin', state.cohortBin); renderWhaleCohortChart(); })
 );
+// Whale tab BTC/ETH toggle — per-tab asset selector, persisted to localStorage.
+document.querySelectorAll('.btn[data-whaleasset]').forEach(b =>
+  b.addEventListener('click', () => {
+    state.whaleAsset = b.dataset.whaleasset;
+    if (typeof localStorage !== 'undefined') localStorage.setItem('whaleAsset', state.whaleAsset);
+    setActive('whaleasset', state.whaleAsset);
+    renderAll();
+  })
+);
+// Sync the active toggle to the persisted whaleAsset on initial load.
+setActive('whaleasset', state.whaleAsset);
 
 // ---------- Chat dock ----------
 const chatDock = document.getElementById('chatDock');

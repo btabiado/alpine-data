@@ -576,6 +576,56 @@ def mempool_mining_pools() -> dict:
     }
 
 
+def mempool_whale_transactions(btc_price_usd: float | None,
+                                threshold_usd: float = 1_000_000,
+                                n_blocks: int = 1,
+                                max_per_block: int = 200) -> list[dict]:
+    """Scan the latest confirmed BTC block(s) for txs with any single vout
+    above `threshold_usd`. Returns top 20 by USD value.
+
+    mempool.space caveats:
+      - txs in a block come ordered by mining priority (fee/byte), not value,
+        so a low-fee whale tx late in the block can fall outside max_per_block.
+        The default 200 covers ~90% of typical ~3k-tx blocks.
+      - Coinbase txs are filtered — they aren't whale movements.
+    """
+    if not btc_price_usd or btc_price_usd <= 0:
+        return []
+    threshold_sats = int((threshold_usd / btc_price_usd) * 1e8)
+    blocks = _get("https://mempool.space/api/v1/blocks")
+    if not blocks or not isinstance(blocks, list):
+        return []
+    out: list[dict] = []
+    for blk in blocks[:n_blocks]:
+        bhash = blk.get("id")
+        if not bhash:
+            continue
+        for start in range(0, max_per_block, 25):
+            txs = _get(f"https://mempool.space/api/block/{bhash}/txs/{start}")
+            if not txs or not isinstance(txs, list):
+                break
+            for tx in txs:
+                if not isinstance(tx, dict):
+                    continue
+                vins = tx.get("vin") or []
+                if vins and vins[0].get("is_coinbase"):
+                    continue
+                vouts = tx.get("vout") or []
+                max_sats = max((vo.get("value") or 0 for vo in vouts), default=0)
+                if max_sats >= threshold_sats:
+                    out.append({
+                        "txid": tx.get("txid"),
+                        "value_btc": round(max_sats / 1e8, 4),
+                        "value_usd": round(max_sats / 1e8 * btc_price_usd, 0),
+                        "block_height": blk.get("height"),
+                        "block_time": blk.get("timestamp"),
+                    })
+            if len(txs) < 25:
+                break
+    out.sort(key=lambda x: x["value_usd"], reverse=True)
+    return out[:20]
+
+
 def mempool_space() -> dict:
     """mempool.space: BTC mempool fees, 3y hashrate series, current tip height."""
     out: dict[str, Any] = {}
@@ -1363,6 +1413,7 @@ def compute_poc_all(market: dict) -> dict:
         if any(tfs.values()):
             out[sym] = {**tfs,
                         "migration": compute_poc_migration(tfs.get("d30"), tfs.get("d90")),
+                        "migration_series": poc_migration_series(prices, volumes),
                         "naked": naked_pocs(prices, volumes, lookback_days=180)}
     return out
 
@@ -1399,6 +1450,37 @@ def compute_poc_migration(d30: dict | None, d90: dict | None) -> dict | None:
     return {"delta_pct": round(delta, 2), "direction": direction,
             "magnitude": magnitude, "between_pocs": between,
             "explanation": explanation}
+
+
+def poc_migration_series(price_series: list[dict], volume_series: list[dict],
+                          lookback_days: int = 90, window_days: int = 30,
+                          bins: int = 60) -> list[dict]:
+    """Rolling 30d POC computed for each day across the last 90 days, so the
+    UI can sparkline how the value-area centroid has migrated over time.
+    Returns [{date, poc}] sorted ascending."""
+    if not price_series or not volume_series:
+        return []
+    p_by = {p.get("date"): p.get("value") for p in price_series if p.get("date") and p.get("value")}
+    v_by = {v.get("date"): v.get("value") for v in volume_series if v.get("date") and v.get("value")}
+    common = sorted(set(p_by) & set(v_by))
+    if len(common) < window_days + 1:
+        return []
+    out: list[dict] = []
+    start_idx = max(window_days - 1, len(common) - lookback_days)
+    for i in range(start_idx, len(common)):
+        ws_p = [p_by[d] for d in common[i - window_days + 1:i + 1]]
+        ws_v = [v_by[d] for d in common[i - window_days + 1:i + 1]]
+        lo, hi = min(ws_p), max(ws_p)
+        if hi <= lo:
+            continue
+        step = (hi - lo) / bins
+        buckets = [0.0] * bins
+        for p, v in zip(ws_p, ws_v):
+            idx = min(int((p - lo) / step), bins - 1)
+            buckets[idx] += v
+        poc_idx = max(range(bins), key=lambda k: buckets[k])
+        out.append({"date": common[i], "poc": round(lo + (poc_idx + 0.5) * step, 2)})
+    return out
 
 
 def naked_pocs(price_series: list[dict], volume_series: list[dict],
@@ -1705,6 +1787,92 @@ def coin_metrics_btc_eth_metrics() -> dict:
     return {
         "btc": out["btc"],
         "eth": out["eth"],
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def coin_metrics_eth_whale_metrics() -> dict:
+    """Coin Metrics ETH-only daily series for the Whale tab — active
+    addresses, tx count, USD transfer volume, supply. Tier 1 free."""
+    metrics = ["AdrActCnt", "TxCnt", "TxTfrValAdjUSD", "SplyCur"]
+    since = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00")
+    params = {
+        "assets": "eth",
+        "metrics": ",".join(metrics),
+        "start_time": since,
+        "page_size": "1000",
+        "frequency": "1d",
+    }
+    j = _get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
+    if not j or not isinstance(j, dict):
+        return {}
+    rows = j.get("data") or []
+    out: dict[str, list[dict]] = {m: [] for m in metrics}
+    for r in rows:
+        d = (r.get("time") or "")[:10]
+        if not d:
+            continue
+        for m in metrics:
+            v = r.get(m)
+            if v is None:
+                continue
+            try:
+                out[m].append({"date": d, "value": float(v)})
+            except (ValueError, TypeError):
+                continue
+    populated = {m: ser for m, ser in out.items() if ser}
+    if not populated:
+        return {}
+    populated["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return populated
+
+
+def blockchair_eth_stats() -> dict:
+    """Blockchair ETH stats — 24h tx counts, largest transaction of the day,
+    EIP-1559 burn, ERC-20/ERC-721 token activity, supply. No API key needed;
+    free tier is 30 req/min.
+
+    Returns a flat dict that maps cleanly into whale.eth.* — empty dict if the
+    request fails so callers can render an empty-state.
+    """
+    j = _get("https://api.blockchair.com/ethereum/stats")
+    if not j or not isinstance(j, dict):
+        return {}
+    d = j.get("data") or {}
+    if not d:
+        return {}
+    largest = d.get("largest_transaction_24h") or {}
+
+    # Blockchair returns wei amounts as strings (the values exceed JS safe-int
+    # range, so they have to). Wrap conversions to tolerate string-or-None.
+    def _wei_to_eth(v):
+        if v in (None, "", 0, "0"):
+            return None
+        try:
+            return float(v) / 1e18
+        except (ValueError, TypeError):
+            return None
+
+    layer_2 = d.get("layer_2") or {}
+    erc20  = (layer_2.get("erc_20")  if isinstance(layer_2, dict) else None) or {}
+    erc721 = (layer_2.get("erc_721") if isinstance(layer_2, dict) else None) or {}
+
+    return {
+        "blocks_24h": d.get("blocks_24h"),
+        "transactions_24h": d.get("transactions_24h"),
+        "avg_tx_fee_eth_24h": d.get("average_transaction_fee_24h"),
+        "avg_tx_value_eth_24h": d.get("average_transaction_value_24h"),
+        "supply_eth": _wei_to_eth(d.get("circulation_approximate")),
+        "burned_eth_total": _wei_to_eth(d.get("burned")),
+        "burned_eth_24h": _wei_to_eth(d.get("burned_24h")),
+        "inflation_eth_24h": _wei_to_eth(d.get("inflation_24h")) or 0.0,
+        "erc20_transactions_24h": erc20.get("transactions_24h"),
+        "erc721_transactions_24h": erc721.get("transactions_24h"),
+        "market_price_usd": d.get("market_price_usd"),
+        "largest_tx_24h": {
+            "hash": largest.get("hash"),
+            "value_usd": largest.get("value_usd"),
+        } if largest else None,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
@@ -2297,19 +2465,31 @@ def bitinfocharts_btc_distribution() -> dict:
     }
 
 
-def fetch_whale() -> dict:
+def fetch_whale(btc_price_usd: float | None = None) -> dict:
     print("Fetching whale-activity proxies (BTC on-chain)...")
     btc = whale_proxies_btc()
     print("  bitinfocharts BTC distribution history (cohorts)...")
     distribution = bitinfocharts_btc_distribution()
     print("  Glassnode (optional, env-gated by GLASSNODE_API_KEY)...")
     glassnode = glassnode_btc_whale_metrics()
+    print("  mempool.space whale-tx scan (last block, >$1M vouts)...")
+    whale_txs = mempool_whale_transactions(btc_price_usd) if btc_price_usd else []
+    print("  Blockchair ETH stats (24h tx, largest tx, supply)...")
+    eth_bc = blockchair_eth_stats()
+    print("  Coin Metrics ETH whale series (active addresses, tx count/volume)...")
+    eth_cm = coin_metrics_eth_whale_metrics()
     return {
         "btc": btc,
         "distribution": distribution,
         "glassnode": glassnode,
+        "whale_transactions": whale_txs,
+        "eth": {
+            "blockchair": eth_bc,
+            "coin_metrics": eth_cm,
+        },
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        "note": ("Free: blockchain.info + bitinfocharts cohorts. "
+        "note": ("Free: blockchain.info + bitinfocharts cohorts + mempool.space "
+                 "tx scan. ETH side via Blockchair + Coin Metrics. "
                  "Glassnode auto-activates when GLASSNODE_API_KEY is set."),
     }
 
@@ -2318,7 +2498,11 @@ def fetch_all() -> None:
     trading = fetch_trading()
     (CACHE / "market.json").write_text(json.dumps(trading))
     print(f"  wrote {CACHE/'market.json'}")
-    whale = fetch_whale()
+    # Pull latest BTC price from the trading dict so the whale-tx scan can
+    # threshold by USD value instead of a hardcoded BTC amount.
+    btc_prices = ((trading or {}).get("btc") or {}).get("price") or []
+    btc_price = btc_prices[-1]["value"] if btc_prices else None
+    whale = fetch_whale(btc_price_usd=btc_price)
     (CACHE / "whale.json").write_text(json.dumps(whale))
     print(f"  wrote {CACHE/'whale.json'}")
 
