@@ -2914,7 +2914,7 @@ def fetch_trading() -> dict:
             print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
     trending = coingecko_trending()
     print("  CoinGecko market_chart for top-25 POC analytics...")
-    poc_top = compute_poc_top_markets(top_markets, n=25)
+    poc_top = compute_poc_top_markets(top_markets, n=50)
     print("  DeFiLlama: chains + protocols + yields + bridges + historical TVL...")
     chains = defillama_chains(20)
     protocols = defillama_protocols(25)

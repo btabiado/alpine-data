@@ -1158,8 +1158,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="container">
       <div class="chart-card">
         <div class="head">
-          <h2>Point of Control — Top 25 by market cap</h2>
+          <h2>Point of Control — Top 50 by market cap, sorted by signal score</h2>
           <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <span class="lbl" style="margin:0">Filter</span>
+          <button class="btn active" data-pocfilter="all">All</button>
+          <button class="btn" data-pocfilter="strong_buy">STRONG BUY+</button>
+          <button class="btn" data-pocfilter="buy">BUY+</button>
+          <button class="btn" data-pocfilter="hold">HOLD</button>
+          <button class="btn" data-pocfilter="sell">SELL+</button>
+          <button class="btn" data-pocfilter="strong_sell">STRONG SELL</button>
         </div>
         <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"></div>
       </div>
@@ -4681,9 +4690,32 @@ function renderPocTopCards(){
     host.innerHTML = '<div class="empty" style="grid-column:1/-1">POC data populating — run python app.py --fetch-market and reload.</div>';
     return;
   }
+  // --- Join: index signals_top20 by uppercase symbol and attach score/label
+  // onto each POC entry before sorting/rendering. Entries with no matching
+  // signal get null score/label and sort LAST (treated as -Infinity).
+  const sigArr = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
+  const sigBySym = {};
+  sigArr.forEach(s => {
+    if (!s) return;
+    const k = String(s.symbol || '').toUpperCase();
+    if (k) sigBySym[k] = s;
+  });
+  const joined = list.map(c => {
+    const sk = String(c.symbol || c.coin_id || '').toUpperCase();
+    const sig = sigBySym[sk];
+    return Object.assign({}, c, {
+      signal_score: sig && sig.score != null ? Number(sig.score) : null,
+      signal_label: sig && sig.label != null ? String(sig.label) : null,
+    });
+  });
+  const sorted = joined.slice().sort((a, b) => {
+    const sa = (a.signal_score == null || !isFinite(a.signal_score)) ? -Infinity : Number(a.signal_score);
+    const sb = (b.signal_score == null || !isFinite(b.signal_score)) ? -Infinity : Number(b.signal_score);
+    return sb - sa;
+  });
   // COMPACT cards — small title, anchor POC, migration badge. Click opens
   // the full-detail modal with the ladder + naked POCs + sparkline.
-  host.innerHTML = list.map(c => {
+  host.innerHTML = sorted.map(c => {
     const cid = escapeHtml(String(c.coin_id || c.symbol || ''));
     const sym = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
     const imgUrl = sanitizeUrl(c.image, '');
@@ -4691,12 +4723,23 @@ function renderPocTopCards(){
       ? `<img src="${imgUrl}" alt="" style="width:18px;height:18px;border-radius:50%">`
       : '<div style="width:18px;height:18px;border-radius:50%;background:#1f2533"></div>';
     const priceTxt = fmtUsdShort(c.current_price);
+    // Signal badge: score + label, color-coded green/red/amber.
+    const sc = c.signal_score;
+    const bucket = c.signal_label ? stockLabelBucket(c.signal_label) : 'hold';
+    let sigBadge = '';
+    if (sc != null && isFinite(sc)){
+      const sColor = sc >= 20 ? '#22c55e' : (sc <= -20 ? '#ef4444' : '#f59e0b');
+      const sTxt = (sc >= 0 ? '+' : '') + (Number.isInteger(sc) ? sc : sc.toFixed(1));
+      const lblTxt = c.signal_label ? escapeHtml(String(c.signal_label)) : '';
+      sigBadge = `<span style="background:${sColor}22;color:${sColor};padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;white-space:nowrap" title="Signal score">${sTxt}${lblTxt ? ' · ' + lblTxt : ''}</span>`;
+    }
     const d = c.poc || {};
     if (!d.d30 && !d.d90 && !d.d180){
-      return `<div class="card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
+      return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:6px">
           ${img}
           <span style="font-weight:700;font-size:12px">${sym}</span>
+          ${sigBadge}
           <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
         </div>
         <div class="sub" style="color:var(--muted);margin-top:4px;font-size:10px">no POC data</div>
@@ -4715,11 +4758,12 @@ function renderPocTopCards(){
                 : {fg:'var(--muted)', arrow:'·'};
       migDot = `<span style="color:${cfg.fg};font-weight:700;font-size:12px" title="${escapeHtml(mig.explanation || '')}">${cfg.arrow}</span>`;
     }
-    return `<div class="card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+    return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
         ${img}
         <span style="font-weight:700;font-size:12px">${sym}</span>
         ${migDot}
+        ${sigBadge}
         <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
       </div>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:11px">
@@ -4729,7 +4773,57 @@ function renderPocTopCards(){
       </div>
     </div>`;
   }).join('');
+  applyPocFilter();
 }
+
+// Apply the active POC filter chip — reads from localStorage on first run,
+// then drives both the chip highlight + per-card display:none. Mirrors
+// applyStocksFilter() exactly, keyed under 'pocFilter' instead.
+function applyPocFilter(bucket){
+  let target = bucket;
+  if (target == null){
+    try { target = localStorage.getItem('pocFilter') || 'all'; } catch(_) { target = 'all'; }
+  }
+  const chips = document.querySelectorAll('[data-pocfilter]');
+  if (!chips.length) return;
+  let found = false;
+  chips.forEach(b => {
+    const isActive = b.getAttribute('data-pocfilter') === target;
+    if (isActive) found = true;
+    b.classList.toggle('active', isActive);
+    if (isActive){
+      const c = target.indexOf('buy')  >= 0 ? '#22c55e'
+              : target.indexOf('sell') >= 0 ? '#ef4444'
+              : target === 'hold'           ? '#f59e0b'
+              : '';
+      b.style.borderColor = c || '';
+      b.style.color       = c || '';
+    } else {
+      b.style.borderColor = '';
+      b.style.color       = '';
+    }
+  });
+  if (!found){
+    target = 'all';
+    const allChip = document.querySelector('[data-pocfilter="all"]');
+    if (allChip) allChip.classList.add('active');
+  }
+  document.querySelectorAll('#pocTopGrid [data-poc-bucket]').forEach(card => {
+    card.style.display = (target === 'all' || card.getAttribute('data-poc-bucket') === target) ? '' : 'none';
+  });
+}
+
+// Wire up POC filter chip clicks once. Persists selection in localStorage.
+(function wirePocFilter(){
+  if (window._pocFilterWired) return; window._pocFilterWired = true;
+  document.addEventListener('click', e => {
+    const fb = e.target && e.target.closest && e.target.closest('[data-pocfilter]');
+    if (!fb) return;
+    const bucket = fb.getAttribute('data-pocfilter');
+    try { localStorage.setItem('pocFilter', bucket); } catch(_) {}
+    applyPocFilter(bucket);
+  });
+})();
 
 // Full POC detail (modal body). Mirrors the old verbose card layout —
 // migration badge, ladder, naked POCs, migration sparkline.

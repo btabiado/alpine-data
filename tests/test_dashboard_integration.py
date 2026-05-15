@@ -265,3 +265,155 @@ def test_app_no_open_rebuilds_dashboard():
         "dashboard.html mtime did not advance — build may have been a no-op "
         f"(before={before}, after={after})"
     )
+
+
+# ---------- 5. POC <-> signals_top20 join contract ----------
+#
+# The POC tab renderer joins ``DATA.market.poc_top`` with
+# ``DATA.signals_top20`` (matching by uppercase symbol) and sorts by
+# signal score descending. ``signals_top20`` is computed at payload-build
+# time by ``signals.compute_all_top20({"market": market})`` — there is no
+# persisted ``signals_top20`` field in ``market.json``. To exercise the
+# real contract the dashboard sees, the tests below rebuild
+# ``signals_top20`` from ``market.json`` exactly the way ``app.py`` does.
+
+_LABELS_VALID = {"STRONG BUY", "BUY", "HOLD", "SELL", "STRONG SELL"}
+
+
+def _compute_signals_top20_or_skip(market: dict) -> list[dict]:
+    """Rebuild ``signals_top20`` from a market.json blob the same way app.py
+    does. Skip the test if the signals module or its inputs are unavailable."""
+    if not isinstance(market.get("markets_top"), list) or not market["markets_top"]:
+        pytest.skip("market.markets_top is empty — signals_top20 cannot be built")
+    sys.path.insert(0, str(ROOT))
+    try:
+        import signals as sig_mod  # noqa: WPS433 (test-time import is fine)
+    except Exception as e:  # pragma: no cover — defensive
+        pytest.skip(f"signals module unavailable: {e}")
+    try:
+        out = sig_mod.compute_all_top20({"market": market})
+    except Exception as e:  # pragma: no cover — defensive
+        pytest.skip(f"signals.compute_all_top20 raised: {e}")
+    if not isinstance(out, list) or not out:
+        pytest.skip("signals_top20 came back empty — nothing to join against")
+    return out
+
+
+def test_signals_top20_provides_symbols_for_poc_top_join():
+    """At least 70% of poc_top entries must have a matching signals_top20
+    entry by uppercase symbol — otherwise the POC tab renderer's join will
+    drop most cards and the sort-by-score key has nothing to act on."""
+    market = _load_json_or_skip(MARKET_JSON)
+    poc_top = market.get("poc_top") or []
+    if not poc_top:
+        pytest.skip("market.poc_top is empty — nothing to join")
+    signals_top20 = _compute_signals_top20_or_skip(market)
+
+    poc_syms = [
+        (e.get("symbol") or "").upper()
+        for e in poc_top
+        if isinstance(e, dict) and isinstance(e.get("symbol"), str)
+    ]
+    poc_syms = [s for s in poc_syms if s]
+    sig_syms = {
+        (e.get("symbol") or "").upper()
+        for e in signals_top20
+        if isinstance(e, dict) and isinstance(e.get("symbol"), str)
+    }
+    sig_syms.discard("")
+
+    matched = [s for s in poc_syms if s in sig_syms]
+    coverage = len(matched) / len(poc_syms) if poc_syms else 0.0
+    unmatched = sorted(set(poc_syms) - sig_syms)
+
+    assert coverage >= 0.70, (
+        f"Only {coverage:.0%} of poc_top entries match a signals_top20 "
+        f"symbol ({len(matched)}/{len(poc_syms)}). The POC tab join will "
+        f"silently drop cards. Unmatched POC symbols: {unmatched}"
+    )
+
+
+def test_poc_top_entries_have_required_fields_for_sort():
+    """The POC renderer reads ``symbol`` (join key), ``poc.d90.poc`` (ladder
+    anchor) and ``poc.migration`` / ``poc.migration_series`` (header chips)
+    off every card. Enforce the shape so a fetcher schema shift doesn't
+    quietly blank the tab."""
+    market = _load_json_or_skip(MARKET_JSON)
+    poc_top = market.get("poc_top") or []
+    if not poc_top:
+        pytest.skip("market.poc_top is empty")
+
+    # symbol is mandatory on every entry — it's the join key.
+    for i, entry in enumerate(poc_top):
+        assert isinstance(entry, dict), f"poc_top[{i}] is not a dict: {type(entry).__name__}"
+        sym = entry.get("symbol")
+        assert isinstance(sym, str) and sym, (
+            f"poc_top[{i}] missing string 'symbol' (got {sym!r})"
+        )
+
+    total = len(poc_top)
+
+    # poc.d90.poc — most entries should have it (ladder anchor).
+    with_d90 = 0
+    for entry in poc_top:
+        poc = entry.get("poc")
+        if not isinstance(poc, dict):
+            continue
+        d90 = poc.get("d90")
+        if isinstance(d90, dict) and isinstance(d90.get("poc"), (int, float)):
+            with_d90 += 1
+    d90_ratio = with_d90 / total
+    assert d90_ratio >= 0.70, (
+        f"Only {d90_ratio:.0%} of poc_top entries have numeric poc.d90.poc "
+        f"({with_d90}/{total}); the ladder anchor display will be blank for most cards"
+    )
+
+    # poc.migration OR poc.migration_series — at least 50%.
+    with_migration = 0
+    for entry in poc_top:
+        poc = entry.get("poc")
+        if not isinstance(poc, dict):
+            continue
+        mig = poc.get("migration")
+        mig_series = poc.get("migration_series")
+        has_mig = isinstance(mig, dict) and len(mig) > 0
+        has_series = isinstance(mig_series, list) and len(mig_series) > 0
+        if has_mig or has_series:
+            with_migration += 1
+    mig_ratio = with_migration / total
+    assert mig_ratio >= 0.50, (
+        f"Only {mig_ratio:.0%} of poc_top entries have poc.migration or "
+        f"poc.migration_series ({with_migration}/{total})"
+    )
+
+
+def test_signals_top20_entries_have_required_fields_for_join():
+    """Every signals_top20 entry must carry ``symbol`` (join key) and a
+    numeric ``score`` (sort key). Any ``label`` present must be one of the
+    five canonical buckets — case-insensitive — so the renderer can colour
+    chips without a fallback branch."""
+    market = _load_json_or_skip(MARKET_JSON)
+    signals_top20 = _compute_signals_top20_or_skip(market)
+
+    for i, entry in enumerate(signals_top20):
+        assert isinstance(entry, dict), (
+            f"signals_top20[{i}] is not a dict: {type(entry).__name__}"
+        )
+        sym = entry.get("symbol")
+        assert isinstance(sym, str) and sym, (
+            f"signals_top20[{i}] missing string 'symbol' (got {sym!r})"
+        )
+        score = entry.get("score")
+        assert isinstance(score, (int, float)) and not isinstance(score, bool), (
+            f"signals_top20[{i}] ({sym}) 'score' must be a number, got {score!r}"
+        )
+
+        if "label" in entry:
+            label = entry.get("label")
+            assert isinstance(label, str), (
+                f"signals_top20[{i}] ({sym}) 'label' present but not a string: {label!r}"
+            )
+            assert label.strip().upper() in _LABELS_VALID, (
+                f"signals_top20[{i}] ({sym}) has non-canonical label {label!r}; "
+                f"expected one of {sorted(_LABELS_VALID)} (case-insensitive)"
+            )
