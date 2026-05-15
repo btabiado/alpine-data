@@ -1510,6 +1510,49 @@ def compute_poc_all(market: dict) -> dict:
     return out
 
 
+def cryptocompare_market(symbol: str, days: int = 180) -> dict:
+    """Daily OHLCV from CryptoCompare histoday. No key required for basic
+    usage; honors CRYPTOCOMPARE_API_KEY env var if set. Same shape as
+    coingecko_market — {price, volume} where each is [{date, value}]."""
+    sym = (symbol or "").upper()
+    if not sym or len(sym) > 12:
+        return {"price": [], "volume": []}
+    days = max(1, min(days, 2000))
+    import os
+    headers = dict(H)
+    key = os.environ.get("CRYPTOCOMPARE_API_KEY", "").strip()
+    if key:
+        headers["authorization"] = f"Apikey {key}"
+    try:
+        r = requests.get(
+            "https://min-api.cryptocompare.com/data/v2/histoday",
+            params={"fsym": sym, "tsym": "USD", "limit": str(days)},
+            timeout=15, headers=headers,
+        )
+        if r.status_code != 200:
+            return {"price": [], "volume": []}
+        j = r.json()
+    except Exception:
+        return {"price": [], "volume": []}
+    if not isinstance(j, dict) or j.get("Response") != "Success":
+        return {"price": [], "volume": []}
+    rows = (j.get("Data") or {}).get("Data") or []
+    prices, volumes = [], []
+    for row in rows:
+        try:
+            t = int(row.get("time"))
+            close = float(row.get("close"))
+            volto = float(row.get("volumeto") or 0)  # USD volume
+            if close <= 0:
+                continue
+            date = datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%d")
+            prices.append({"date": date, "value": close})
+            volumes.append({"date": date, "value": volto})
+        except (ValueError, TypeError, KeyError):
+            continue
+    return {"price": prices, "volume": volumes}
+
+
 def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
                              days: int = 180) -> list[dict]:
     """Fetch market_chart and compute multi-timeframe POC + migration + naked
@@ -1526,29 +1569,46 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
     """
     if not top_markets:
         return []
-    CG_PACE = 0.6
+    # Binance public klines API has ~1200 req/min limits with no key, so this
+    # comfortably covers a top-25 sweep. CoinGecko's 30/min free tier was
+    # hitting 429 on most coins given the rest of fetch_trading already burns
+    # ~10 calls. Stablecoins and unlisted-on-Binance coins fall back to the
+    # stale cache from the previous run.
     out: list[dict] = []
     coins = top_markets[:n]
     LOOKBACKS = (("d30", 30, 60), ("d90", 90, 80), ("d180", 180, 100))
-    for i, c in enumerate(coins):
+    # Build a stale-keep map from the previous market.json so any coin we
+    # fail to fetch this run keeps its last good POC entry.
+    stale_map: dict[str, dict] = {}
+    try:
+        prev = json.loads((CACHE / "market.json").read_text())
+        for e in (prev.get("poc_top") or []):
+            cid = e.get("coin_id")
+            if cid:
+                stale_map[cid] = e
+    except Exception:
+        pass
+    for c in coins:
         coin_id = c.get("id")
-        if not coin_id:
+        symbol = (c.get("symbol") or "").upper()
+        if not coin_id or not symbol:
             continue
-        try:
-            m = coingecko_market(coin_id, days=days)
-        except Exception as e:
-            print(f"  [poc_top] {coin_id} fetch failed: {e}", file=sys.stderr)
-            time.sleep(CG_PACE)
-            continue
-        if i < len(coins) - 1:
-            time.sleep(CG_PACE)
+        m = cryptocompare_market(symbol, days=days)
         prices = (m or {}).get("price") or []
         volumes = (m or {}).get("volume") or []
         if not prices or not volumes:
+            if coin_id in stale_map:
+                stale = dict(stale_map[coin_id])
+                stale["stale"] = True
+                out.append(stale)
             continue
         tfs = {k: point_of_control(prices, volumes, lookback_days=lb, bins=b)
                for k, lb, b in LOOKBACKS}
         if not any(tfs.values()):
+            if coin_id in stale_map:
+                stale = dict(stale_map[coin_id])
+                stale["stale"] = True
+                out.append(stale)
             continue
         entry = {
             "coin_id":       coin_id,
