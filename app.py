@@ -1629,7 +1629,7 @@ function renderFundKpis(){
       <div class="card" style="border-left:3px solid ${FUND_PALETTE[i % FUND_PALETTE.length]}">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
           <div style="font-weight:700;font-size:14px;letter-spacing:.03em">${escapeHtml(f.fund)}</div>
-          <div class="sub" style="font-size:10px;color:var(--muted)">${f.share_pct.toFixed(1)}% share</div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">${(Number(f.share_pct) || 0).toFixed(1)}% share</div>
         </div>
         <div class="sub" style="color:var(--muted);font-size:11px;margin-top:2px;min-height:14px">${escapeHtml(f.name||'')}</div>
         <div class="v ${flowCls}" style="font-size:18px;margin-top:6px">${fmtSigned(f[winKey]||0)}</div>
@@ -2143,12 +2143,13 @@ function labelBucket(label){
 // the 7-day tail of DATA.market[asset].price for the pinned 4 assets.
 // Returns empty string if no usable series found.
 function renderSignalSparkline(s){
-  let series = Array.isArray(s.sparkline_7d) ? s.sparkline_7d.filter(x => x != null) : null;
+  const ok = x => typeof x === 'number' && isFinite(x);
+  let series = Array.isArray(s.sparkline_7d) ? s.sparkline_7d.filter(ok) : null;
   if (!series || series.length < 5){
     const lower = (s.symbol||'').toLowerCase();
     const main = (DATA.market||{})[lower];
     if (main && Array.isArray(main.price)){
-      series = main.price.slice(-7).map(p => p.value).filter(x => x != null);
+      series = main.price.slice(-7).map(p => p.value).filter(ok);
     }
   }
   if (!series || series.length < 5) return '';
@@ -3335,6 +3336,8 @@ function renderGeckoTerminalPools(){
 
 function renderSparkline(values, isUp, w, h){
   if (!values || values.length < 2) return '';
+  values = values.filter(v => typeof v === 'number' && isFinite(v));
+  if (values.length < 2) return '';
   w = w || 90; h = h || 24;
   const min = Math.min(...values), max = Math.max(...values);
   const range = max - min || 1;
@@ -4274,7 +4277,7 @@ function signalScoreSparkline(history){
   const slice = history.slice(-7);
   const values = slice
     .map(p => (p && typeof p.score === 'number') ? p.score : null)
-    .filter(v => v != null);
+    .filter(v => v != null && isFinite(v));
   if (values.length < 2) return '';
   const lo = Math.min(...values), hi = Math.max(...values);
   const range = (hi - lo) || 1;
@@ -4362,7 +4365,7 @@ function renderStocksTab(){
 // Stroke color slopes green/red based on first→last direction.
 function pocMigrationSparkline(series){
   if (!series || series.length < 5) return '';
-  const values = series.map(p => p.poc).filter(v => typeof v === 'number');
+  const values = series.map(p => p.poc).filter(v => typeof v === 'number' && isFinite(v));
   if (values.length < 5) return '';
   const lo = Math.min(...values), hi = Math.max(...values);
   const range = (hi - lo) || 1;
