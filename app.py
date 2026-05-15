@@ -725,28 +725,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
 
-    <!-- Coinbase spot quotes — bid/ask + 24h range from Coinbase Exchange.
-         Compact table view for each asset we already track. Cross-check
-         against the CoinGecko aggregate price in the cards above. -->
-    <div id="coinbaseSpotWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">live exchange</span></h2>
-        <span class="desc">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</span>
-      </div>
-      <div style="overflow:auto">
-        <table id="coinbaseSpotTable" style="margin:0;font-size:12px">
-          <thead><tr>
-            <th>Asset</th>
-            <th style="text-align:right">Bid / Ask</th>
-            <th style="text-align:right">24h range</th>
-            <th style="text-align:right">24h %</th>
-            <th style="text-align:right">24h volume</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-
     <!-- Strong Buys: up to 5 STRONG BUY signals from the top-50 strip.
          Hidden when none exist. Cards click through to the signal detail
          modal (same one the Signals-tab strip uses). -->
@@ -821,6 +799,27 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
           </tr></thead><tbody></tbody></table>
         </div>
+      </div>
+    </div>
+
+    <!-- Coinbase spot quotes — moved per user request to sit right before
+         breaking news. Bid/ask + 24h range from Coinbase Exchange. -->
+    <div id="coinbaseSpotWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">live exchange</span></h2>
+        <span class="desc">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</span>
+      </div>
+      <div style="overflow:auto">
+        <table id="coinbaseSpotTable" style="margin:0;font-size:12px">
+          <thead><tr>
+            <th>Asset</th>
+            <th style="text-align:right">Bid / Ask</th>
+            <th style="text-align:right">24h range</th>
+            <th style="text-align:right">24h %</th>
+            <th style="text-align:right">24h volume</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
 
