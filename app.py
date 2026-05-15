@@ -2485,16 +2485,19 @@ function renderWhaleCohortChart(){
   const others = buckets.map(r => (r.b0_01||0) + (r.b01_1||0) + (r.b1_10||0) + (r.b10_100||0) + (r.b100_1k||0));
   const dates  = buckets.map(r => r.date);
   charts.whaleCohort = new Chart(document.getElementById('whaleCohortChart'), {
-    type:'bar',
+    type:'line',
     data:{
       labels: dates,
       datasets:[
-        // Order matters for stacking: whales on top so the orange band rides
-        // the blue base — visually obvious that whales are a fraction of total.
+        // Two-line view: whale supply and non-whale supply on the same axis,
+        // both in BTC. Trend over time is the actionable signal — bar/stacked
+        // hid the slope. Whales orange, non-whales blue, both filled lightly.
         {label:'Non-whales (<1,000 BTC)', data:others,
-         backgroundColor:'#627eea', borderWidth:0, stack:'supply'},
+         borderColor:'#627eea', backgroundColor:'#627eea22',
+         fill:false, tension:0.15, pointRadius:0, borderWidth:2},
         {label:'Whales (≥1,000 BTC)',     data:whales,
-         backgroundColor:'#f7931a', borderWidth:0, stack:'supply'},
+         borderColor:'#f7931a', backgroundColor:'#f7931a22',
+         fill:false, tension:0.15, pointRadius:0, borderWidth:2},
       ],
     },
     options:{
@@ -2505,9 +2508,9 @@ function renderWhaleCohortChart(){
           callbacks:{label: ctx => ctx.dataset.label + ': ' + fmtNum(ctx.parsed.y, 0) + ' BTC'}},
       },
       scales:{
-        x:{stacked:true, ticks:{color:'#8a93a6', maxTicksLimit:14}, grid:{display:false}},
-        y:{stacked:true, ticks:{color:'#8a93a6', callback:v=>fmtNum(v/1e6, 1) + 'M'},
-           grid:{color:'#1f2533'}, title:{display:true, text:'BTC supply held (stacked)', color:'#8a93a6'}},
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:14}, grid:{display:false}},
+        y:{ticks:{color:'#8a93a6', callback:v=>fmtNum(v/1e6, 1) + 'M'},
+           grid:{color:'#1f2533'}, title:{display:true, text:'BTC supply held', color:'#8a93a6'}},
       },
     },
   });
