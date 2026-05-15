@@ -13,6 +13,34 @@ from typing import Any
 import pandas as pd
 
 
+# ---------- tunable thresholds and weights ----------
+# Centralised so the scoring intent is explicit and a future reviewer can
+# eyeball every magic number in one place. Values match the original inline
+# literals — this block is a pure rename, no behaviour change.
+SIGNAL_WEIGHTS: dict[str, float] = {
+    # RSI band edges (Wilder 14): below LOW → oversold (bullish), above HIGH → overbought (bearish)
+    "RSI_OVERSOLD": 30,
+    "RSI_OVERBOUGHT": 70,
+    # Fear & Greed band edges (same numeric scale as RSI by coincidence)
+    "FNG_FEAR": 30,
+    "FNG_GREED": 70,
+    # Funding rate cutoff for "crowded long" (perp funding > ~1bp / 8h)
+    "FUNDING_CROWDED_LONG": 1e-4,
+    # Z-score cutoffs for vol-of-vol style signals (±1σ from 30d mean)
+    "SIGMA_LOW": -1,
+    "SIGMA_HIGH": 1,
+    # Component score weights — sign is applied at use-site
+    "WEIGHT_SMA": 20,        # price vs SMA50 / SMA200
+    "WEIGHT_RSI": 15,        # RSI band
+    "WEIGHT_MACD": 10,       # MACD histogram sign
+    "WEIGHT_FUNDING": 10,    # perp funding contrarian
+    "WEIGHT_FNG": 10,        # Fear & Greed contrarian
+    "WEIGHT_ETF": 10,        # 7d ETF net flow
+    "WEIGHT_DVOL": 5,        # Deribit DVOL z-score
+    "WEIGHT_VIX": 5,         # VIX z-score (macro risk-on/off)
+}
+
+
 # ---------- indicator helpers ----------
 
 def _series(rows: list[dict] | None, key: str = "value") -> pd.Series:
@@ -53,46 +81,55 @@ def _score_at(date, price, sma50, sma200, rsi, macd, funding, fng, etf, dvol_z=N
     s = 0
     parts = []
 
+    w_sma = SIGNAL_WEIGHTS["WEIGHT_SMA"]
+    w_rsi = SIGNAL_WEIGHTS["WEIGHT_RSI"]
+    w_macd = SIGNAL_WEIGHTS["WEIGHT_MACD"]
+    w_fund = SIGNAL_WEIGHTS["WEIGHT_FUNDING"]
+    w_fng = SIGNAL_WEIGHTS["WEIGHT_FNG"]
+    w_etf = SIGNAL_WEIGHTS["WEIGHT_ETF"]
+    w_dvol = SIGNAL_WEIGHTS["WEIGHT_DVOL"]
+    w_vix = SIGNAL_WEIGHTS["WEIGHT_VIX"]
+
     if date in sma50.index and pd.notna(sma50.loc[date]):
-        c = 20 if price.loc[date] > sma50.loc[date] else -20
+        c = w_sma if price.loc[date] > sma50.loc[date] else -w_sma
         s += c; parts.append(("SMA50", c))
     if date in sma200.index and pd.notna(sma200.loc[date]):
-        c = 20 if price.loc[date] > sma200.loc[date] else -20
+        c = w_sma if price.loc[date] > sma200.loc[date] else -w_sma
         s += c; parts.append(("SMA200", c))
     if date in rsi.index and pd.notna(rsi.loc[date]):
         v = rsi.loc[date]
-        c = 15 if v < 30 else (-15 if v > 70 else 0)
+        c = w_rsi if v < SIGNAL_WEIGHTS["RSI_OVERSOLD"] else (-w_rsi if v > SIGNAL_WEIGHTS["RSI_OVERBOUGHT"] else 0)
         s += c; parts.append(("RSI", c))
     if date in macd.index and pd.notna(macd.loc[date]):
-        c = 10 if macd.loc[date] > 0 else -10
+        c = w_macd if macd.loc[date] > 0 else -w_macd
         s += c; parts.append(("MACD", c))
     if not funding.empty:
         # nearest-prior funding value
         f = funding[funding.index <= date]
         if not f.empty:
             v = f.iloc[-1]
-            c = 10 if v < 0 else (-10 if v > 1e-4 else 0)
+            c = w_fund if v < 0 else (-w_fund if v > SIGNAL_WEIGHTS["FUNDING_CROWDED_LONG"] else 0)
             s += c; parts.append(("Funding", c))
     if not fng.empty:
         f = fng[fng.index <= date]
         if not f.empty:
             v = f.iloc[-1]
-            c = 10 if v < 30 else (-10 if v > 70 else 0)
+            c = w_fng if v < SIGNAL_WEIGHTS["FNG_FEAR"] else (-w_fng if v > SIGNAL_WEIGHTS["FNG_GREED"] else 0)
             s += c; parts.append(("F&G", c))
     if not etf.empty:
         last7 = etf[(etf.index <= date) & (etf.index >= date - pd.Timedelta(days=7))]
         if not last7.empty:
             v = float(last7.sum())
-            c = 10 if v > 0 else (-10 if v < 0 else 0)
+            c = w_etf if v > 0 else (-w_etf if v < 0 else 0)
             s += c; parts.append(("ETF7d", c))
     if dvol_z is not None and date in dvol_z.index and pd.notna(dvol_z.loc[date]):
         z = dvol_z.loc[date]
-        c = 5 if z < -1 else (-5 if z > 1 else 0)
+        c = w_dvol if z < SIGNAL_WEIGHTS["SIGMA_LOW"] else (-w_dvol if z > SIGNAL_WEIGHTS["SIGMA_HIGH"] else 0)
         s += c; parts.append(("DVOL", c))
     if vix_z is not None and date in vix_z.index and pd.notna(vix_z.loc[date]):
         # VIX is inverse: low VIX = risk-on = bullish; high VIX = risk-off = bearish
         z = vix_z.loc[date]
-        c = 5 if z < -1 else (-5 if z > 1 else 0)
+        c = w_vix if z < SIGNAL_WEIGHTS["SIGMA_LOW"] else (-w_vix if z > SIGNAL_WEIGHTS["SIGMA_HIGH"] else 0)
         s += c; parts.append(("VIX", c))
     return s, parts
 
@@ -124,12 +161,25 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
     sma200 = price.rolling(200).mean()
     rsi = _rsi(price)
     macd = _macd_hist(price)
-    dvol_z = ((dvol - dvol.rolling(30).mean()) / dvol.rolling(30).std()) if not dvol.empty else None
+    # Guard rolling std against zero (constant series) and NaN (warmup window).
+    # fillna(1) keeps any NaN z-score out of the comparison branch (pd.notna
+    # filters them anyway), and replacing 0 with 1 prevents division-by-zero
+    # from producing inf — the resulting z is 0, which falls into the neutral
+    # band, identical to how a NaN would have been handled downstream.
+    if not dvol.empty:
+        dvol_std = dvol.rolling(30).std().replace(0, 1).fillna(1)
+        dvol_z = (dvol - dvol.rolling(30).mean()) / dvol_std
+    else:
+        dvol_z = None
 
     # VIX (macro vol gauge) — same series for every asset; low VIX = risk-on
     vix_series_rows = (((payload.get("market") or {}).get("yahoo_indices") or {}).get("vix") or {}).get("series_90d") or []
     vix = _series(vix_series_rows)
-    vix_z = ((vix - vix.rolling(30).mean()) / vix.rolling(30).std()) if not vix.empty and len(vix) > 30 else None
+    if not vix.empty and len(vix) > 30:
+        vix_std = vix.rolling(30).std().replace(0, 1).fillna(1)
+        vix_z = (vix - vix.rolling(30).mean()) / vix_std
+    else:
+        vix_z = None
 
     # Build components for the latest date
     last = price.index[-1]
@@ -139,35 +189,44 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
     def add(name, value, contribution, explanation):
         components.append({"name": name, "value": value, "contribution": contribution, "explanation": explanation})
 
+    w_sma = SIGNAL_WEIGHTS["WEIGHT_SMA"]
+    w_rsi = SIGNAL_WEIGHTS["WEIGHT_RSI"]
+    w_macd = SIGNAL_WEIGHTS["WEIGHT_MACD"]
+    w_fund = SIGNAL_WEIGHTS["WEIGHT_FUNDING"]
+    w_fng = SIGNAL_WEIGHTS["WEIGHT_FNG"]
+    w_etf = SIGNAL_WEIGHTS["WEIGHT_ETF"]
+    w_dvol = SIGNAL_WEIGHTS["WEIGHT_DVOL"]
+    w_vix = SIGNAL_WEIGHTS["WEIGHT_VIX"]
+
     if last in sma50.index and pd.notna(sma50.loc[last]):
         v = float(sma50.loc[last]); diff = (last_price/v - 1)*100
-        c = 20 if last_price > v else -20
+        c = w_sma if last_price > v else -w_sma
         add("Price vs SMA50", f"{diff:+.1f}%", c, "above 50d MA — uptrend" if c > 0 else "below 50d MA — downtrend")
     if last in sma200.index and pd.notna(sma200.loc[last]):
         v = float(sma200.loc[last]); diff = (last_price/v - 1)*100
-        c = 20 if last_price > v else -20
+        c = w_sma if last_price > v else -w_sma
         add("Price vs SMA200", f"{diff:+.1f}%", c, "above 200d MA — bull regime" if c > 0 else "below 200d MA — bear regime")
     if last in rsi.index and pd.notna(rsi.loc[last]):
         v = float(rsi.loc[last])
-        c = 15 if v < 30 else (-15 if v > 70 else 0)
+        c = w_rsi if v < SIGNAL_WEIGHTS["RSI_OVERSOLD"] else (-w_rsi if v > SIGNAL_WEIGHTS["RSI_OVERBOUGHT"] else 0)
         e = "oversold" if c > 0 else ("overbought" if c < 0 else "neutral")
         add("RSI(14)", f"{v:.1f}", c, e)
     if last in macd.index and pd.notna(macd.loc[last]):
         v = float(macd.loc[last])
-        c = 10 if v > 0 else -10
+        c = w_macd if v > 0 else -w_macd
         add("MACD histogram", f"{v:+.1f}", c, "momentum up" if c > 0 else "momentum down")
     if not funding.empty:
         f = funding[funding.index <= last]
         if not f.empty:
             v = float(f.iloc[-1])
-            c = 10 if v < 0 else (-10 if v > 1e-4 else 0)
+            c = w_fund if v < 0 else (-w_fund if v > SIGNAL_WEIGHTS["FUNDING_CROWDED_LONG"] else 0)
             e = "negative funding — contrarian buy" if c > 0 else ("crowded long" if c < 0 else "neutral positioning")
             add("Funding rate", f"{v*100:.4f}%", c, e)
     if not fng.empty:
         f = fng[fng.index <= last]
         if not f.empty:
             v = int(f.iloc[-1])
-            c = 10 if v < 30 else (-10 if v > 70 else 0)
+            c = w_fng if v < SIGNAL_WEIGHTS["FNG_FEAR"] else (-w_fng if v > SIGNAL_WEIGHTS["FNG_GREED"] else 0)
             e = "extreme fear (contrarian buy)" if c > 0 else ("extreme greed (contrarian sell)" if c < 0 else "neutral sentiment")
             add("Fear & Greed", str(v), c, e)
     if not etf.empty:
@@ -175,14 +234,14 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
         if age_days <= 14:
             recent = etf[etf.index >= last - pd.Timedelta(days=10)]
             v = float(recent.sum())
-            c = 10 if v > 0 else (-10 if v < 0 else 0)
+            c = w_etf if v > 0 else (-w_etf if v < 0 else 0)
             e = "institutional buying" if c > 0 else ("institutional selling" if c < 0 else "no flow")
             add("ETF flow 7d", f"{v:+.0f} $M", c, e)
         else:
             add("ETF flow 7d", "stale", 0, f"latest is {etf.index[-1].strftime('%Y-%m-%d')} ({age_days}d ago) — skipped")
     if dvol_z is not None and last in dvol_z.index and pd.notna(dvol_z.loc[last]):
         z = float(dvol_z.loc[last])
-        c = 5 if z < -1 else (-5 if z > 1 else 0)
+        c = w_dvol if z < SIGNAL_WEIGHTS["SIGMA_LOW"] else (-w_dvol if z > SIGNAL_WEIGHTS["SIGMA_HIGH"] else 0)
         e = "vol crushed (long-vol setup)" if c > 0 else ("vol spike (caution)" if c < 0 else "normal vol")
         add("DVOL z-score (30d)", f"{z:+.2f}σ", c, e)
     if vix_z is not None and not vix_z.empty:
@@ -190,7 +249,7 @@ def compute_signal(asset: str, payload: dict) -> dict | None:
         latest_vix = vix_z.dropna()
         if not latest_vix.empty:
             z = float(latest_vix.iloc[-1])
-            c = 5 if z < -1 else (-5 if z > 1 else 0)
+            c = w_vix if z < SIGNAL_WEIGHTS["SIGMA_LOW"] else (-w_vix if z > SIGNAL_WEIGHTS["SIGMA_HIGH"] else 0)
             e = ("VIX crushed — macro risk-on" if c > 0
                  else "VIX spike — macro risk-off" if c < 0
                  else "VIX normal")

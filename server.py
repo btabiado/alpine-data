@@ -26,6 +26,8 @@ import csv
 import io
 import json
 import os
+import re
+import secrets
 import sys
 import threading
 import time
@@ -160,8 +162,11 @@ def _require_auth():
         if request.path in _SHARE_ALLOWED:
             return None
     auth = request.authorization
-    if auth and auth.username == DASH_USER and auth.password == DASH_PASS:
-        return None
+    if auth and auth.username and auth.password and DASH_USER and DASH_PASS:
+        user_ok = secrets.compare_digest(str(auth.username), str(DASH_USER))
+        pass_ok = secrets.compare_digest(str(auth.password), str(DASH_PASS))
+        if user_ok and pass_ok:
+            return None
     return _challenge()
 
 
@@ -329,7 +334,10 @@ def api_export_csv() -> Response:
         writer.writerow([r.get(h, "") for h in headers])
 
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    filename = f"{series}_{today}.csv"
+    raw_filename = f"{series}_{today}.csv"
+    # Strip anything outside [A-Za-z0-9_.-] so a hostile `series` cannot break
+    # out of the quoted filename in Content-Disposition.
+    filename = re.sub(r"[^A-Za-z0-9_.-]", "", raw_filename)
     return Response(
         buf.getvalue(),
         mimetype="text/csv",

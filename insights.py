@@ -20,11 +20,52 @@ from typing import Any
 from datetime import datetime, timedelta
 
 
+# ----- thresholds -----
+#
+# Magic numbers used in 2+ places, extracted for clarity. Names describe the
+# semantic role; values are unchanged from the original inline constants.
+
+THRESHOLDS = {
+    # Fear & Greed Index cutoffs (CNN / alternative.me 0-100 scale).
+    "FNG_FEAR": 25,
+    "FNG_GREED": 75,
+    # Z-score / sigma cutoffs against rolling 30d window.
+    "SIGMA_15": 1.5,
+    "SIGMA_20": 2.0,
+    # ETF per-fund flow thresholds (USD millions).
+    "OUTFLOW_LEADER_USD_M": -25,
+    # ETF flow-vs-price divergence rule (USD millions, % price move).
+    "FLOW_DIVERGENCE_USD_M": 300,
+    "FLOW_VS_PRICE_PCT": 5,
+}
+
+FNG_FEAR = THRESHOLDS["FNG_FEAR"]
+FNG_GREED = THRESHOLDS["FNG_GREED"]
+SIGMA_15 = THRESHOLDS["SIGMA_15"]
+SIGMA_20 = THRESHOLDS["SIGMA_20"]
+OUTFLOW_LEADER_USD_M = THRESHOLDS["OUTFLOW_LEADER_USD_M"]
+FLOW_DIVERGENCE_USD_M = THRESHOLDS["FLOW_DIVERGENCE_USD_M"]
+FLOW_VS_PRICE_PCT = THRESHOLDS["FLOW_VS_PRICE_PCT"]
+
+
 # ----- helpers -----
 
-def _safe(x, default=None):
-    return x if x is not None else default
 
+def _get_nested(d, path, default=None):
+    """Safely traverse a dotted key path through nested dicts.
+
+    Replaces ``(((x or {}).get(y) or {}).get(z))``-style chains. Returns
+    ``default`` if any step encounters a non-dict or if the final value is
+    None. Note: this only treats ``None`` as missing — empty containers,
+    zero, and falsy non-None values pass through unchanged, so callers that
+    relied on ``... or []`` to coerce ``0``/``""`` should not use this.
+    """
+    cur = d
+    for k in path.split("."):
+        if not isinstance(cur, dict):
+            return default
+        cur = cur.get(k)
+    return default if cur is None else cur
 
 def _last(rows, n=1, key="flow"):
     if not rows:
@@ -159,7 +200,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
 
     # 4. Z-score anomaly vs 30d
     z = _zscore(flows, 30)
-    if z is not None and abs(z) >= 2:
+    if z is not None and abs(z) >= SIGMA_20:
         cls = "good" if z > 0 else "bad"
         out.append({
             "kind": "anomaly", "asset": asset, "severity": cls,
@@ -259,7 +300,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
             worst = min(last_per_fund_signed, key=lambda x: x[1])
             worst_flow = worst[1]
             # Threshold: ≤ -25; if net flow positive AND worst > -25, skip.
-            if worst_flow <= -25 and not (last_flow > 0 and worst_flow > -25):
+            if worst_flow <= OUTFLOW_LEADER_USD_M and not (last_flow > 0 and worst_flow > OUTFLOW_LEADER_USD_M):
                 out.append({
                     "kind": "etf", "asset": asset, "severity": "bad",
                     "headline": f"{asset.upper()} ETF: {worst[0]} leads outflows at {_fmt_usd(worst_flow)}",
@@ -298,16 +339,16 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # Threshold: |7d flow| ≥ $300M and 7d price change ≥5% in the opposite
     # direction. Pulls price series from payload["market"][asset]["price"].
     if fresh and len(flows) >= 7:
-        price_rows = (((payload.get("market") or {}).get(asset) or {}).get("price")) or []
+        price_rows = _get_nested(payload, f"market.{asset}.price", [])
         # Need at least 8 points to compute a 7-day change.
         if len(price_rows) >= 8:
             sum7_flow = sum(flows[-7:])
             p_now = price_rows[-1].get("value")
             p_then = price_rows[-8].get("value")
-            if p_now and p_then and p_then > 0 and abs(sum7_flow) >= 300:
+            if p_now and p_then and p_then > 0 and abs(sum7_flow) >= FLOW_DIVERGENCE_USD_M:
                 price_pct = (p_now / p_then - 1) * 100.0
                 # Positive flow + price down ≥5%, OR negative flow + price up ≥5%.
-                if (sum7_flow >= 300 and price_pct <= -5) or (sum7_flow <= -300 and price_pct >= 5):
+                if (sum7_flow >= FLOW_DIVERGENCE_USD_M and price_pct <= -FLOW_VS_PRICE_PCT) or (sum7_flow <= -FLOW_DIVERGENCE_USD_M and price_pct >= FLOW_VS_PRICE_PCT):
                     flow_dir = "inflows" if sum7_flow > 0 else "outflows"
                     price_dir = "fell" if price_pct < 0 else "rose"
                     out.append({
@@ -448,7 +489,7 @@ def _whale_insights(payload: dict) -> list[dict]:
     # 3. Average transaction size spike (≥1.5σ above 30d mean) — whale proxy.
     if len(avg_tx) >= 31:
         z = _zscore(avg_tx, 30)
-        if z is not None and z >= 1.5:
+        if z is not None and z >= SIGMA_15:
             out.append({
                 "kind": "anomaly", "asset": "btc", "severity": "info",
                 "headline": f"BTC avg transaction size {z:+.1f}σ vs 30d — big-money on-chain",
@@ -458,7 +499,7 @@ def _whale_insights(payload: dict) -> list[dict]:
     # 4. Miner revenue spike (≥2σ above 30d mean).
     if len(miners) >= 31:
         z = _zscore(miners, 30)
-        if z is not None and z >= 2:
+        if z is not None and z >= SIGMA_20:
             last = miners[-1] or 0
             out.append({
                 "kind": "anomaly", "asset": "btc", "severity": "good",
@@ -498,7 +539,7 @@ def _whale_insights(payload: dict) -> list[dict]:
         velocity.append(v / a)
     if len(velocity) >= 31:
         z = _zscore(velocity, 30)
-        if z is not None and z >= 1.5:
+        if z is not None and z >= SIGMA_15:
             out.append({
                 "kind": "anomaly", "asset": "btc", "severity": "info",
                 "headline": f"BTC network velocity {z:+.1f}σ vs 30d — outsized USD per active address",
@@ -515,11 +556,11 @@ def _market_insights(payload: dict) -> list[dict]:
         last = fng[-1]
         v = last.get("value")
         if v is not None:
-            if v <= 25:
+            if v <= FNG_FEAR:
                 out.append({"kind":"anomaly","asset":"global","severity":"good",
                     "headline": f"Fear & Greed at {v} — extreme fear (contrarian buy zone)",
                     "detail": last.get("label","")})
-            elif v >= 75:
+            elif v >= FNG_GREED:
                 out.append({"kind":"anomaly","asset":"global","severity":"alert",
                     "headline": f"Fear & Greed at {v} — extreme greed (contrarian caution)",
                     "detail": last.get("label","")})
@@ -545,11 +586,11 @@ def _market_insights(payload: dict) -> list[dict]:
             vals = [r["dvol"] for r in dvol if r.get("dvol") is not None]
             z = _zscore(vals, 30)
             if z is not None:
-                if z <= -1.5:
+                if z <= -SIGMA_15:
                     out.append({"kind":"anomaly","asset":asset,"severity":"good",
                         "headline": f"{asset.upper()} DVOL crushed ({z:+.1f}σ vs 30d mean)",
                         "detail": "Implied vol historically low — long-vol setup."})
-                elif z >= 1.5:
+                elif z >= SIGMA_15:
                     out.append({"kind":"anomaly","asset":asset,"severity":"alert",
                         "headline": f"{asset.upper()} DVOL spike ({z:+.1f}σ vs 30d mean)",
                         "detail": "Implied vol elevated — caution."})
@@ -637,7 +678,7 @@ def _market_insights(payload: dict) -> list[dict]:
             break  # one such insight is enough
 
     # BTC difficulty adjustment — miner economics
-    diff_adj = (market.get("mempool_extra") or {}).get("difficulty_adjustment") or {}
+    diff_adj = _get_nested(market, "mempool_extra.difficulty_adjustment", {})
     change_pct = diff_adj.get("difficulty_change_pct")
     days = (diff_adj.get("remaining_time_ms") or 0) / 86400000.0
     if change_pct is not None and 0 < days < 5:
@@ -649,7 +690,7 @@ def _market_insights(payload: dict) -> list[dict]:
                 "detail": ("Miners likely under pressure — watch for distribution." if change_pct > 0 else "Miners get a break — less sell-side pressure.")})
 
     # Mining pool centralization risk
-    pools = (market.get("mempool_extra") or {}).get("pools") or {}
+    pools = _get_nested(market, "mempool_extra.pools", {})
     top2 = pools.get("top2_concentration_pct")
     if top2 is not None and top2 >= 55:
         out.append({"kind": "anomaly", "asset": "btc", "severity": "alert",
@@ -657,7 +698,7 @@ def _market_insights(payload: dict) -> list[dict]:
             "detail": "Theoretical 51% attack risk if both colluded."})
 
     # DeFi TVL by chain - flag big movers
-    chains = ((market.get("defi") or {}).get("chains")) or []
+    chains = _get_nested(market, "defi.chains", [])
     for c in chains[:10]:
         change_1d = c.get("change_1d_pct")
         if change_1d is not None and abs(change_1d) >= 4:
@@ -744,7 +785,7 @@ def _market_insights(payload: dict) -> list[dict]:
     # is leading the other (arbitrage opportunity proxy).
     cb = market.get("coinbase") or {}
     for asset in ("btc", "eth", "link", "ltc"):
-        cg_last_rows = (((market.get(asset) or {}).get("price")) or [])
+        cg_last_rows = _get_nested(market, f"{asset}.price", [])
         cg_last = cg_last_rows[-1].get("value") if cg_last_rows else None
         cb_price = (cb.get(asset) or {}).get("price_usd")
         if cg_last and cb_price and cg_last > 0:
@@ -858,7 +899,7 @@ def _market_insights(payload: dict) -> list[dict]:
         if _is_fresh(last_row.get("date"), max_age_days=14):
             vals = [r.get("value") for r in tx_vol if r.get("value") is not None]
             z = _zscore(vals, 30)
-            if z is not None and z >= 2.0:
+            if z is not None and z >= SIGMA_20:
                 last_v = vals[-1]
                 out.append({
                     "kind": "anomaly", "asset": "btc", "severity": "alert",
@@ -873,7 +914,7 @@ def _market_insights(payload: dict) -> list[dict]:
         if _is_fresh(last_row.get("date"), max_age_days=14):
             vals = [r.get("value") for r in addrs if r.get("value") is not None]
             z = _zscore(vals, 30)
-            if z is not None and abs(z) >= 1.5:
+            if z is not None and abs(z) >= SIGMA_15:
                 sev = "good" if z > 0 else "bad"
                 last_v = vals[-1]
                 out.append({
@@ -963,7 +1004,7 @@ def _market_insights(payload: dict) -> list[dict]:
                 ]
                 vals = [v for v in vals if v is not None]
                 z = _zscore(vals, 30) if len(vals) >= 31 else None
-                if z is not None and z >= 1.5:
+                if z is not None and z >= SIGMA_15:
                     out.append({
                         "kind": "anomaly", "asset": asset, "severity": "alert",
                         "headline": f"{asset.upper()} open interest {z:+.1f}σ above 30d mean",

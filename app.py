@@ -462,11 +462,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
   }
   .tabs::-webkit-scrollbar{display:none}
-  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto}
+  .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center}
 
   /* --- Period/timeframe controls row below tabs (smaller buttons) --- */
   .controls{padding:8px 12px;gap:5px}
-  .controls .btn{padding:5px 9px;font-size:11px}
+  .controls .btn{padding:5px 9px;font-size:11px;min-height:44px;display:inline-flex;align-items:center}
 
   /* --- KPI rows go 2-up on mobile so they don't eat the screen.
          #defiKpis, #whaleKpis, #tradingKpis, #etfKpis, #fundKpiGrid all use
@@ -1411,6 +1411,11 @@ const fmtUSD = (n, unit='M') => {
 const fmtSigned = n => (n>=0?'+':'') + fmtUSD(n);
 const fmtPct = (n, d=2) => n==null?'—':(n*100).toFixed(d)+'%';
 const fmtNum = (n, d=2) => n==null?'—':n.toLocaleString(undefined,{maximumFractionDigits:d});
+// Defang URLs from third-party APIs (news, Reddit, CryptoCompare, image CDNs)
+// before interpolating into href/src. Rejects javascript:, data:, vbscript:,
+// file:, and any non-http(s) scheme. Pass '' as fallback for img src.
+const sanitizeUrl = (u, fallback='#') =>
+  (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : fallback;
 
 const colorFor = n => n >= 0 ? '#22c55e' : '#ef4444';
 const ACCENTS = {btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'};
@@ -2134,8 +2139,8 @@ function renderTop20Signals(){
     const sym = (s.symbol||'').toUpperCase();
     const color = signalColor(s.score);
     const bucket = labelBucket(s.label);
-    const img = s.image
-      ? `<img src="${s.image}" alt="" style="width:32px;height:32px;border-radius:50%">`
+    const img = sanitizeUrl(s.image, '')
+      ? `<img src="${sanitizeUrl(s.image, '')}" alt="" style="width:32px;height:32px;border-radius:50%">`
       : `<div style="width:32px;height:32px;border-radius:50%;background:${color}33"></div>`;
     const score = (s.score>=0?'+':'') + s.score;
     window._top20SignalsCache[sym] = s;
@@ -3439,7 +3444,7 @@ function renderNews(){
     return;
   }
   host.innerHTML = news.slice(0, 25).map(n =>
-    `<a href="${n.url}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
       <div style="font-size:12px;color:var(--muted);margin-bottom:3px">
         <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
       </div>
@@ -3702,8 +3707,8 @@ function renderOverviewTop15(){
     const sym = (s.symbol||'').toUpperCase();
     const color = signalColor(s.score);
     window._top20SignalsCache[sym] = s;
-    const img = s.image
-      ? `<img src="${s.image}" alt="" style="width:28px;height:28px;border-radius:50%">`
+    const img = sanitizeUrl(s.image, '')
+      ? `<img src="${sanitizeUrl(s.image, '')}" alt="" style="width:28px;height:28px;border-radius:50%">`
       : `<div style="width:28px;height:28px;border-radius:50%;background:${color}33"></div>`;
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
@@ -3752,8 +3757,8 @@ function renderOverviewStrongBuys(){
     const sym = (s.symbol||'').toUpperCase();
     const color = signalColor(s.score);
     window._top20SignalsCache[sym] = s;
-    const img = s.image
-      ? `<img src="${s.image}" alt="" style="width:28px;height:28px;border-radius:50%">`
+    const img = sanitizeUrl(s.image, '')
+      ? `<img src="${sanitizeUrl(s.image, '')}" alt="" style="width:28px;height:28px;border-radius:50%">`
       : `<div style="width:28px;height:28px;border-radius:50%;background:${color}33"></div>`;
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
@@ -3802,7 +3807,7 @@ function renderOverviewTopVolume(){
     return;
   }
   host.innerHTML = rows.map((c, i) => {
-    const img = c.image ? `<img src="${c.image}" alt="" style="width:18px;height:18px;border-radius:50%">` : '';
+    const img = sanitizeUrl(c.image, '') ? `<img src="${sanitizeUrl(c.image, '')}" alt="" style="width:18px;height:18px;border-radius:50%">` : '';
     const ch24 = c.change_24h_pct;
     const chCls = ch24 == null ? '' : (ch24 >= 0 ? 'green' : 'red');
     const chStr = ch24 == null ? '—' : (ch24 >= 0 ? '+' : '') + ch24.toFixed(2) + '%';
@@ -4041,7 +4046,7 @@ function renderOverviewNews(){
     return;
   }
   host.innerHTML = news.slice(0,4).map(n =>
-    `<a href="${n.url}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
       <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
         <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
       </div>
@@ -4308,13 +4313,13 @@ function renderRedditCards(){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${s?.sub || name}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
     }
     const posts = (s.top_posts || []).slice(0, 3).map(p => `
-      <a href="${p.url}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
+      <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
         <span style="color:var(--muted)">▲ ${fmtNumShort(p.score)} · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
       </a>
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
     const trending = (s.trending || []).slice(0, 3).map(p => `
-      <a href="${p.url}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
+      <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
         <span style="color:#f59e0b">🔥 ${fmtNumShort(p.score)}</span>
         <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
@@ -4425,7 +4430,7 @@ function renderCCNewsCards(){
     const articles = (c.top_articles || []).slice(0, 4).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px"></span>`;
-      return `<a href="${art.url || '#'}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:5px 0;border-top:1px solid var(--border);line-height:1.3">
+      return `<a href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:5px 0;border-top:1px solid var(--border);line-height:1.3">
         ${dot}<strong style="color:${sc}">${(art.sentiment||'?').slice(0,3)}</strong>
         <span style="color:var(--muted)"> · ${(art.source||'').slice(0,20)}</span>
         <span style="display:block;color:var(--text);margin-top:2px">${(art.title||'').replace(/</g,'&lt;')}</span>

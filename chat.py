@@ -252,7 +252,7 @@ def stream_answer(question: str, payload: dict) -> Iterator[str]:
     by the SDK before the final assistant text streams back. Currently
     no MCP servers are wired (LunarCrush integration was removed)."""
     client = _client()
-    model = os.environ.get("CHAT_MODEL", "claude-haiku-4-5")
+    model = os.environ.get("CHAT_MODEL", "claude-haiku-4-5-20251001")
     summary = json.dumps(_summarise_payload(payload), default=str)
     mcp_servers = _mcp_servers_config()
     # MCP note slot kept for future integrations; currently always empty.
@@ -268,7 +268,7 @@ def stream_answer(question: str, payload: dict) -> Iterator[str]:
     with client.messages.stream(
         model=model,
         max_tokens=800,
-        system=system,
+        system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": question}],
         **extra_kwargs,
     ) as stream:

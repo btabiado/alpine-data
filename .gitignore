@@ -18,6 +18,8 @@ dashboard.html
 data/*.json
 data/*.bak
 data/*.farside-vertical.bak
+# Stale-fallback cache for flaky third-party APIs (FRED/Glassnode/mempool/Etherscan)
+data/.stale/
 # NOTE: data/*.csv (ETF flow history) is intentionally NOT ignored — those
 # files are tracked so the public dashboard can ship real flow data.
 # Update them locally via the dashboard's "Paste CSV…" workflow, then commit.

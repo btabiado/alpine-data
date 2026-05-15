@@ -396,15 +396,18 @@ def defillama_yields_stablecoin_top(top: int = 20) -> list[dict]:
 def defillama_bridges() -> dict:
     """Cross-chain bridge daily volume snapshot.
 
-    DeFiLlama's `bridges.llama.fi` host now requires payment (402). We
-    fall back to the deprecated-but-still-public `/bridges` route under
-    `api.llama.fi` if available; otherwise return empty.
+    The legacy `api.llama.fi/bridges` route now 404s. DeFiLlama moved the
+    bridges API onto its own subdomain at `bridges.llama.fi/bridges`. If
+    that also fails (rare auth/quota cases), gracefully return an empty
+    list — never raise.
     """
-    j = _get("https://api.llama.fi/bridges")
     out: dict[str, Any] = {"top_bridges": []}
+    j = _get("https://bridges.llama.fi/bridges")
     if not j or not isinstance(j, dict):
         return out
     bridges = (j.get("bridges") or [])
+    if not isinstance(bridges, list):
+        return out
     bridges = sorted(bridges, key=lambda b: (b.get("lastDailyVolume") or 0), reverse=True)
     out["top_bridges"] = [
         {
@@ -626,8 +629,8 @@ def mempool_whale_transactions(btc_price_usd: float | None,
     return out[:20]
 
 
-def mempool_space() -> dict:
-    """mempool.space: BTC mempool fees, 3y hashrate series, current tip height."""
+def _mempool_space_impl() -> dict:
+    """Live mempool.space fetch — fees, hashrate, tip. See `mempool_space`."""
     out: dict[str, Any] = {}
     fees = _get("https://mempool.space/api/v1/fees/recommended")
     if fees:
@@ -646,6 +649,26 @@ def mempool_space() -> dict:
         ]
     out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
     return out
+
+
+def mempool_space() -> dict:
+    """mempool.space: BTC mempool fees, 3y hashrate series, current tip height.
+
+    Wraps `_mempool_space_impl` with a stale-fallback. If the live fetch
+    returns nothing meaningful (only `fetched_at`), serve the last good
+    payload from `data/.stale/mempool_space.json` tagged with
+    ``{"stale": True, "stale_age_sec": N}``.
+    """
+    try:
+        out = _mempool_space_impl()
+    except Exception as e:
+        print(f"  [mempool_space] fatal: {e}", file=sys.stderr)
+        out = None
+    if not _is_empty_result(out):
+        _stale_save("mempool_space", out)
+        return out
+    cached = _stale_load("mempool_space")
+    return cached if cached is not None else (out or {})
 
 
 def _parse_gt_pool(item: dict) -> dict | None:
@@ -719,6 +742,75 @@ def _social_stale_fallback(key: str, default):
     except Exception:
         pass
     return default
+
+
+# ----- generic stale-fallback for flaky source fetchers ----------------------
+
+_STALE_DIR = CACHE / ".stale"
+
+
+def _stale_path(funcname: str) -> Path:
+    return _STALE_DIR / f"{funcname}.json"
+
+
+def _stale_save(funcname: str, value) -> None:
+    """Persist a successful fetcher return for later stale-fallback use.
+    Silently no-ops on disk errors — never let cache writes break a fetch."""
+    try:
+        _STALE_DIR.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "saved_at": int(time.time()),
+            "value": value,
+        }
+        _stale_path(funcname).write_text(json.dumps(payload))
+    except Exception as e:
+        print(f"  [stale-save] {funcname}: {e}", file=sys.stderr)
+
+
+def _stale_load(funcname: str):
+    """Load the last successful return for `funcname`, tagged with stale
+    metadata. Returns ``None`` if no cache exists or it's unreadable.
+
+    For dict return values the tags `{"stale": True, "stale_age_sec": N}`
+    are merged in. For non-dict types the raw value is returned untagged
+    so callers can decide how to surface staleness."""
+    try:
+        p = _stale_path(funcname)
+        if not p.exists():
+            return None
+        payload = json.loads(p.read_text())
+        saved_at = int(payload.get("saved_at") or 0)
+        age = max(0, int(time.time()) - saved_at) if saved_at else 0
+        value = payload.get("value")
+        if isinstance(value, dict):
+            value = dict(value)  # shallow copy so we don't mutate cache
+            value["stale"] = True
+            value["stale_age_sec"] = age
+        print(f"  [stale-load] {funcname}: serving cached value (age {age}s)", file=sys.stderr)
+        return value
+    except Exception as e:
+        print(f"  [stale-load] {funcname}: {e}", file=sys.stderr)
+        return None
+
+
+def _is_empty_result(value) -> bool:
+    """Heuristic for 'fetcher returned nothing useful'. Dicts that only carry
+    timestamp/availability flags count as empty so we'd rather serve stale."""
+    if value is None:
+        return True
+    if isinstance(value, (list, tuple, set, str)):
+        return len(value) == 0
+    if isinstance(value, dict):
+        meaningful = {k: v for k, v in value.items()
+                      if k not in ("fetched_at", "available", "reason")}
+        if not meaningful:
+            return True
+        # All-empty sub-collections also count as empty.
+        return all(
+            (v is None) or (isinstance(v, (list, dict, str)) and len(v) == 0)
+            for v in meaningful.values()
+        )
+    return False
 
 
 def _reddit_rss_top_posts(sub: str, headers: dict) -> list[dict]:
@@ -1752,9 +1844,41 @@ def fetch_social() -> dict:
     }
 
 
+def _coin_metrics_headers() -> dict:
+    """Auth header for Coin Metrics. If COINMETRICS_API_KEY is set in env,
+    return their documented `Authorization: Api-Key <key>` header. If unset,
+    print a one-line stderr hint (so 403s are explained) and fall back to
+    the keyless community-API behavior."""
+    import os
+    key = os.environ.get("COINMETRICS_API_KEY", "").strip()
+    if not key:
+        print("[coin_metrics] no API key set; expecting 403", file=sys.stderr)
+        return {}
+    return {"Authorization": f"Api-Key {key}"}
+
+
+def _coin_metrics_get(url: str, params: dict) -> dict | list | None:
+    """Internal Coin Metrics fetch that merges auth headers with the default
+    UA. Mirrors `_get` semantics — None on any failure, no raise."""
+    try:
+        headers = dict(H)
+        headers.update(_coin_metrics_headers())
+        r = requests.get(url, params=params, headers=headers, timeout=25)
+        if r.status_code != 200:
+            print(f"  [skip] {url} -> {r.status_code}", file=sys.stderr)
+            return None
+        return r.json()
+    except Exception as e:
+        print(f"  [skip] {url} -> {e}", file=sys.stderr)
+        return None
+
+
 def coin_metrics_btc_eth_metrics() -> dict:
     """Coin Metrics Community API — free network metrics for BTC + ETH.
-    Tier 1 free only; metrics outside free tier return 403 and skip."""
+    Tier 1 free only; metrics outside free tier return 403 and skip.
+
+    Honors ``COINMETRICS_API_KEY`` env var (sent as ``Authorization:
+    Api-Key <value>``). Falls back to keyless if unset."""
     metrics = ["PriceUSD", "CapMrktCurUSD"]
     # Pull each asset+metric pair so we can gracefully degrade
     out: dict[str, dict[str, list[dict]]] = {"btc": {}, "eth": {}}
@@ -1768,7 +1892,7 @@ def coin_metrics_btc_eth_metrics() -> dict:
             "page_size": "1000",
             "frequency": "1d",
         }
-        j = _get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
+        j = _coin_metrics_get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
         if not j or not isinstance(j, dict):
             continue
         rows = j.get("data") or []
@@ -1793,7 +1917,10 @@ def coin_metrics_btc_eth_metrics() -> dict:
 
 def coin_metrics_eth_whale_metrics() -> dict:
     """Coin Metrics ETH-only daily series for the Whale tab — active
-    addresses, tx count, USD transfer volume, supply. Tier 1 free."""
+    addresses, tx count, USD transfer volume, supply. Tier 1 free.
+
+    Honors ``COINMETRICS_API_KEY`` env var (sent as ``Authorization:
+    Api-Key <value>``). Falls back to keyless if unset."""
     metrics = ["AdrActCnt", "TxCnt", "TxTfrValAdjUSD", "SplyCur"]
     since = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00")
     params = {
@@ -1803,7 +1930,7 @@ def coin_metrics_eth_whale_metrics() -> dict:
         "page_size": "1000",
         "frequency": "1d",
     }
-    j = _get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
+    j = _coin_metrics_get("https://community-api.coinmetrics.io/v4/timeseries/asset-metrics", params)
     if not j or not isinstance(j, dict):
         return {}
     rows = j.get("data") or []
@@ -1877,11 +2004,8 @@ def blockchair_eth_stats() -> dict:
     }
 
 
-def etherscan_gas() -> dict:
-    """Etherscan v2 gas oracle — ETH mainnet base fee + safe/propose/fast.
-
-    Works without an API key but rate-limited to 1 req/5sec.
-    """
+def _etherscan_gas_impl() -> dict:
+    """Live etherscan gas oracle fetch. See `etherscan_gas` wrapper."""
     j = _get("https://api.etherscan.io/v2/api",
              {"chainid": "1", "module": "gastracker", "action": "gasoracle"})
     out: dict[str, Any] = {"fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
@@ -1898,23 +2022,30 @@ def etherscan_gas() -> dict:
     return out
 
 
-def fetch_fred() -> dict:
-    """FRED (St. Louis Fed) macro overlay — DXY, S&P 500, gold, 10Y yield, M2.
+def etherscan_gas() -> dict:
+    """Etherscan v2 gas oracle — ETH mainnet base fee + safe/propose/fast.
 
-    Free API; requires a self-service key in env var ``FRED_API_KEY``. If the
-    key isn't set, return ``{"available": False, ...}`` and skip silently so
-    the dashboard stays useful without a key.
-
-    Series pulled (last 3 years):
-        dxy           DTWEXBGS          Broad Dollar Index (daily, business)
-        sp500         SP500             S&P 500 closing price (daily)
-        gold          GOLDPMGBD228NLBM  London PM Gold Fixing (USD, daily) — switched
-                                        from the retired AM Fix series.
-        treasury_10y  DGS10             10-Year Treasury CMT (daily)
-        m2            M2SL              M2 Money Stock (monthly)
-
-    FRED encodes missing observations as ``"."`` — those are filtered out.
+    Works without an API key but rate-limited to 1 req/5sec — frequent
+    callers get HTTP 429. On rate-limit (or any non-200) the live fetch
+    returns a payload with only `fetched_at` and no gwei fields; this
+    wrapper detects that empty case and serves the last good response
+    from `data/.stale/etherscan_gas.json` tagged with stale metadata.
     """
+    try:
+        out = _etherscan_gas_impl()
+    except Exception as e:
+        print(f"  [etherscan_gas] fatal: {e}", file=sys.stderr)
+        out = None
+    if not _is_empty_result(out):
+        _stale_save("etherscan_gas", out)
+        return out
+    cached = _stale_load("etherscan_gas")
+    return cached if cached is not None else (out or {})
+
+
+def _fetch_fred_impl() -> dict:
+    """Live FRED fetch. See `fetch_fred` for the public wrapper that adds
+    stale-fallback when the key is set but the API errors."""
     import os
 
     fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
@@ -1964,6 +2095,63 @@ def fetch_fred() -> dict:
         if out["gold"]:
             out["gold_source"] = "yahoo:GC=F"
 
+    return out
+
+
+def fetch_fred() -> dict:
+    """FRED (St. Louis Fed) macro overlay — DXY, S&P 500, gold, 10Y yield, M2.
+
+    Free API; requires a self-service key in env var ``FRED_API_KEY``. If the
+    key isn't set, return ``{"available": False, ...}`` and skip silently so
+    the dashboard stays useful without a key.
+
+    Series pulled (last 3 years):
+        dxy           DTWEXBGS          Broad Dollar Index (daily, business)
+        sp500         SP500             S&P 500 closing price (daily)
+        gold          GOLDPMGBD228NLBM  London PM Gold Fixing (USD, daily) — switched
+                                        from the retired AM Fix series.
+        treasury_10y  DGS10             10-Year Treasury CMT (daily)
+        m2            M2SL              M2 Money Stock (monthly)
+
+    FRED encodes missing observations as ``"."`` — those are filtered out.
+
+    Stale-fallback: when ``FRED_API_KEY`` is set but every series comes back
+    empty (key revoked, FRED outage, network), serve the last good response
+    from ``data/.stale/fetch_fred.json`` tagged
+    ``{"stale": True, "stale_age_sec": N}``. The no-key branch (returns
+    ``available: False``) is an intentional opt-out and never triggers stale.
+    """
+    import os
+    key_set = bool(os.environ.get("FRED_API_KEY", "").strip())
+    try:
+        out = _fetch_fred_impl()
+    except Exception as e:
+        print(f"  [fetch_fred] fatal: {e}", file=sys.stderr)
+        out = None
+
+    # No-key branch is intentional; treat as valid response, no stale.
+    if isinstance(out, dict) and out.get("available") is False:
+        return out
+
+    # Key set: assess whether any series populated. We treat 'no series at
+    # all' as failure worthy of stale-fallback.
+    def _all_series_empty(d):
+        if not isinstance(d, dict):
+            return True
+        series_keys = ("dxy", "sp500", "gold", "treasury_10y", "m2")
+        return all(not (d.get(k) or [])  for k in series_keys)
+
+    if key_set and (out is None or _all_series_empty(out)):
+        cached = _stale_load("fetch_fred")
+        if cached is not None:
+            return cached
+        return out if isinstance(out, dict) else {
+            "available": False,
+            "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+
+    if isinstance(out, dict):
+        _stale_save("fetch_fred", out)
     return out
 
 
@@ -2306,32 +2494,10 @@ def fetch_trading() -> dict:
     }
 
 
-def glassnode_btc_whale_metrics() -> dict:
-    """Optional: pull true whale cohort metrics from Glassnode Studio.
-
-    Env-gated by GLASSNODE_API_KEY. If unset (or 403 returned for higher-tier
-    metrics), returns an empty dict and the dashboard falls back to free
-    bitinfocharts data + the activity proxy chart.
-
-    Each call is independent — partial tier access is fine; failures skip
-    the missing series rather than aborting the whole batch.
-
-    Metrics pulled (all daily, BTC asset):
-      addresses/min_1k_count            — # of addresses with ≥1,000 BTC
-      addresses/min_10k_count           — # of addresses with ≥10,000 BTC
-      transactions/transfers_volume_sum — total transfer volume (BTC)
-      transactions/transfers_to_exchanges_sum   — exchange inflow proxy
-      transactions/transfers_from_exchanges_sum — exchange outflow proxy
-      supply/profit_relative            — % supply in profit (regime context)
-
-    Returns:
-        {
-            "available": bool,
-            "tier_status": {metric_path: "ok" | "forbidden" | "error"},
-            "series": {metric_path: [{"date": "YYYY-MM-DD", "value": float}, ...]},
-            "fetched_at": ISO timestamp,
-        }
-    """
+def _glassnode_btc_whale_metrics_impl() -> dict:
+    """Live Glassnode whale-cohort fetch. See `glassnode_btc_whale_metrics`
+    for the wrapper that adds stale-fallback when the key is set but
+    requests fail."""
     import os
     key = os.environ.get("GLASSNODE_API_KEY")
     if not key:
@@ -2384,6 +2550,86 @@ def glassnode_btc_whale_metrics() -> dict:
     }
 
 
+def glassnode_btc_whale_metrics() -> dict:
+    """Optional: pull true whale cohort metrics from Glassnode Studio.
+
+    Env-gated by GLASSNODE_API_KEY. If unset (or 403 returned for higher-tier
+    metrics), returns an empty dict and the dashboard falls back to free
+    bitinfocharts data + the activity proxy chart.
+
+    Each call is independent — partial tier access is fine; failures skip
+    the missing series rather than aborting the whole batch.
+
+    Metrics pulled (all daily, BTC asset):
+      addresses/min_1k_count            — # of addresses with ≥1,000 BTC
+      addresses/min_10k_count           — # of addresses with ≥10,000 BTC
+      transactions/transfers_volume_sum — total transfer volume (BTC)
+      transactions/transfers_to_exchanges_sum   — exchange inflow proxy
+      transactions/transfers_from_exchanges_sum — exchange outflow proxy
+      supply/profit_relative            — % supply in profit (regime context)
+
+    Returns:
+        {
+            "available": bool,
+            "tier_status": {metric_path: "ok" | "forbidden" | "error"},
+            "series": {metric_path: [{"date": "YYYY-MM-DD", "value": float}, ...]},
+            "fetched_at": ISO timestamp,
+        }
+
+    Stale-fallback: when the key is set but every metric returned an error
+    (tier_status has no "ok"), serve the last good response from
+    `data/.stale/glassnode_btc_whale_metrics.json`. The no-key branch is
+    intentional and never triggers stale.
+    """
+    import os
+    key_set = bool(os.environ.get("GLASSNODE_API_KEY"))
+    try:
+        out = _glassnode_btc_whale_metrics_impl()
+    except Exception as e:
+        print(f"  [glassnode] fatal: {e}", file=sys.stderr)
+        out = None
+
+    # No-key branch is intentional; never serve stale for that.
+    if (
+        isinstance(out, dict)
+        and out.get("available") is False
+        and out.get("reason") == "no GLASSNODE_API_KEY in env"
+    ):
+        return out
+
+    # Key was set but every metric failed → try stale.
+    if key_set and (out is None or not (isinstance(out, dict) and out.get("available"))):
+        cached = _stale_load("glassnode_btc_whale_metrics")
+        if cached is not None:
+            return cached
+        return out if isinstance(out, dict) else {
+            "available": False,
+            "reason": "fetch_failed",
+            "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+
+    if isinstance(out, dict) and out.get("available"):
+        _stale_save("glassnode_btc_whale_metrics", out)
+    return out if isinstance(out, dict) else {}
+
+
+def _bitinfocharts_cached_distribution() -> dict:
+    """Return the previous `distribution` dict from data/whale.json, if any.
+    Used as the last-line fallback when the live scrape parses zero rows
+    (page restructure, anti-bot block, etc.) so the dashboard doesn't blow
+    away a known-good payload."""
+    try:
+        prev = json.loads((CACHE / "whale.json").read_text())
+        d = (prev or {}).get("distribution") or {}
+        if isinstance(d, dict) and d.get("buckets"):
+            print("  [stale-keep] whale.distribution kept from previous fetch",
+                  file=sys.stderr)
+            return d
+    except Exception:
+        pass
+    return {}
+
+
 def bitinfocharts_btc_distribution() -> dict:
     """BTC supply held per address-balance cohort, daily, ~5 years back.
 
@@ -2408,7 +2654,13 @@ def bitinfocharts_btc_distribution() -> dict:
             "source": "bitinfocharts.com",
         }
 
-    Returns an empty dict on any failure (network, parse, structure change).
+    Defensive guards:
+      * Each captured cell is type-guarded before `.strip()` — the regex can
+        in theory hand back non-string match groups under exotic re flags;
+        only strings are stripped, others are skipped.
+      * If 0 rows are parsed (network, anti-bot 403, HTML restructure) the
+        previous `distribution` from `data/whale.json` is reused if present
+        instead of returning empty and clobbering the cached payload.
     """
     import re
     try:
@@ -2419,23 +2671,31 @@ def bitinfocharts_btc_distribution() -> dict:
         )
         if r.status_code != 200 or not r.text:
             print(f"  [skip] bitinfocharts -> {r.status_code}", file=sys.stderr)
-            return {}
+            return _bitinfocharts_cached_distribution()
     except Exception as e:
         print(f"  [skip] bitinfocharts -> {e}", file=sys.stderr)
-        return {}
+        return _bitinfocharts_cached_distribution()
 
     pattern = re.compile(
         r'\[new Date\("(\d{4}/\d{1,2}/\d{1,2})"\)((?:,\s*-?\d+(?:\.\d+)?|,\s*null)+)\]'
     )
     rows = []
     for m in pattern.finditer(r.text):
-        date_iso = m.group(1).replace("/", "-")
         # Pad single-digit month / day to 2 chars
         try:
             d = datetime.strptime(m.group(1), "%Y/%m/%d").strftime("%Y-%m-%d")
         except ValueError:
             continue
-        vals = [v.strip() for v in m.group(2).strip(",").split(",")]
+        # Type-guard each split fragment: only call .strip() on strings.
+        raw_cells = m.group(2).strip(",").split(",")
+        vals: list[str] = []
+        for v in raw_cells:
+            if isinstance(v, str):
+                vals.append(v.strip())
+            else:
+                # Non-str token — skip the whole row defensively.
+                vals = []
+                break
         if len(vals) != 8:
             continue
         try:
@@ -2455,7 +2715,7 @@ def bitinfocharts_btc_distribution() -> dict:
         })
     if not rows:
         print("  [skip] bitinfocharts: no rows parsed", file=sys.stderr)
-        return {}
+        return _bitinfocharts_cached_distribution()
     return {
         "labels": ["0-0.1", "0.1-1", "1-10", "10-100",
                    "100-1K", "1K-10K", "10K-100K", "100K-1M"],
