@@ -408,11 +408,21 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .grid3{grid-template-columns:1fr !important}
   /* Asset signal cards: keep 2 per row on mobile instead of one big card,
      and shrink fonts so price/change/volume don't dominate the screen. */
-  #overviewSignals{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
-  #overviewSignals .card{padding:10px 12px}
-  #overviewSignals .card h3{font-size:11px !important}
-  #overviewSignals .card .v{font-size:18px !important}
-  #overviewSignals .card .sub{font-size:10px !important}
+  /* Asset cards (BTC/ETH/LINK/LTC) — ultra-compact on mobile so the user
+     sees Strong Buys + news above the fold. Was ~110px tall each → ~55px.
+     Hides redundant fields (full coin name, "as of" date) that already
+     live in the header / tooltips. */
+  #overviewSignals{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
+  #overviewSignals .card{padding:6px 10px;border-left-width:3px}
+  #overviewSignals .card h3{font-size:11px !important;margin:0 !important}
+  /* Hide the full name "Bitcoin/Ethereum" next to the symbol */
+  #overviewSignals .card > div:first-child > span.sub{display:none}
+  /* Hide the "as of YYYY-MM-DD" date — same info is in the header timestamp */
+  #overviewSignals .card > .sub:last-child{display:none}
+  /* Price + % change row sizes */
+  #overviewSignals .card .v{font-size:15px !important;margin-top:2px !important}
+  #overviewSignals .card > div:nth-child(3){margin-top:2px !important}
+  #overviewSignals .card > div:nth-child(3) span{font-size:10px !important}
   /* Strong Buys + Top-50 strip cards: tighter on mobile too */
   #overviewStrongBuys{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
   #top20SignalCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
@@ -464,6 +474,32 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* --- Cap chart heights on mobile (was 380px each, way too tall) --- */
   .chart-wrap.tall{height:280px}
   .chart-wrap{min-height:0}
+
+  /* --- GLOBAL CARD TIGHTENING (every tab, not just Overview) ---
+     User reported all phone pages had boxes wasting too much space.
+     Shrinks padding, fonts, and gaps across .card / .chart-card / .grid*
+     so every section becomes ~40-50% shorter without losing data. */
+  .container{padding:10px 12px;gap:10px}
+  .card{padding:8px 10px;border-radius:6px}
+  .chart-card{padding:10px 12px;border-radius:6px}
+  .chart-card .head{flex-wrap:wrap;gap:4px;margin-bottom:4px}
+  .chart-card .head h2{font-size:13px !important;line-height:1.2}
+  .chart-card .head .desc,
+  .chart-card .head span.desc{font-size:10px !important;line-height:1.3}
+  /* Larger card titles (h3) used in non-chart-card cards */
+  .card h3{font-size:12px !important;line-height:1.2;margin:0 0 4px 0}
+  /* Common ".v" big-value text — applies to many KPI/asset cards */
+  .card .v{font-size:16px !important}
+  .card .sub{font-size:10px !important;line-height:1.3}
+  /* Tables inside cards: tighter, scrollable horizontally if needed */
+  .chart-card table,
+  .card table{font-size:11px}
+  .chart-card table th,
+  .chart-card table td{padding:3px 4px}
+  /* Grid gaps shrunk so 2-up cards sit closer */
+  .grid2,.grid3{gap:8px !important}
+  /* Period-button row on each tab — already tightened above; keep tight */
+  .note{font-size:10px;padding:6px 10px;line-height:1.35}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
