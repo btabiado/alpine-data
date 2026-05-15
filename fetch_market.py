@@ -802,7 +802,11 @@ def cryptocompare_social_stats() -> dict:
     code activity. Each call has its own try/except so partial failures
     don't kill the whole section."""
     import os
-    api_key = os.environ.get("CRYPTOCOMPARE_API_KEY", "")
+    # Accept either the canonical name or the legacy BTC_ETH_ETF_DASHBOARD
+    # name that an earlier secret-add mishap created. Canonical wins when both
+    # are set. Safe to drop the fallback once the legacy secret is renamed.
+    api_key = (os.environ.get("CRYPTOCOMPARE_API_KEY") or
+               os.environ.get("BTC_ETH_ETF_DASHBOARD") or "")
     COINS = {
         "btc":  {"id": 1182,  "name": "Bitcoin"},
         "eth":  {"id": 7605,  "name": "Ethereum"},
