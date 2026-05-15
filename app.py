@@ -1169,6 +1169,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
+    <!-- ===== CryptoCompare news sentiment — pinned to TOP per user request,
+         BTC card renders first (RESEARCH_ASSETS = [btc,eth,link,ltc]) ===== -->
+    <div class="chart-card" style="padding:12px 16px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">News sentiment by coin <span class="tag">CryptoCompare</span></h2>
+        <span class="desc">POSITIVE / NEGATIVE / NEUTRAL split from CryptoCompare's keyless news API · 50 most recent articles per coin · 7d trend bars + clickable keyword chips</span>
+      </div>
+      <div class="row" id="ccNewsCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+    </div>
     <div class="chart-card">
       <div class="head">
         <h2>Top crypto news</h2>
@@ -1209,14 +1218,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="row" id="redditCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
       </div>
 
-      <!-- ===== CryptoCompare news sentiment (keyless data-api) ===== -->
-      <div class="chart-card" style="padding:12px 16px">
-        <div class="head">
-          <h2 style="margin:0;font-size:15px">News sentiment <span class="tag">CryptoCompare</span></h2>
-          <span class="desc">Built-in POSITIVE / NEGATIVE / NEUTRAL sentiment from CryptoCompare's keyless news API — 50 most recent articles per coin</span>
-        </div>
-        <div class="row" id="ccNewsCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
-      </div>
+      <!-- (CC news sentiment moved to the top of the tab, outside socialContent) -->
 
       <!-- ===== Santiment on-chain + dev ===== -->
       <div class="chart-card" style="padding:12px 16px">
@@ -4969,6 +4971,8 @@ function selectTab(t){
   document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
   document.getElementById('tab-social').classList.toggle('hidden', t!=='social');
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
+  document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
+  document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
