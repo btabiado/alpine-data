@@ -355,6 +355,10 @@ header .meta{color:var(--muted);font-size:12px}
 .card .sub{font-size:11px;color:var(--muted);margin-top:3px}
 .green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)}
 .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+.stock-card{transition:border-color .12s, transform .08s}
+.stock-card:hover{border-color:#a78bfa}
+.stock-card:active{transform:scale(0.99)}
+.stock-card:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
 .chart-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
@@ -606,6 +610,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="signalDetailClose" aria-label="Close signal detail">×</button>
     </div>
     <div id="signalDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ STOCK DETAIL MODAL (Stocks tab card → full breakdown) ============ -->
+<div id="stockDetailModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(820px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="stockDetailTitle" style="margin:0;font-size:15px">Stock detail</h2>
+      <button class="btn" id="stockDetailClose" aria-label="Close stock detail">×</button>
+    </div>
+    <div id="stockDetailBody"></div>
   </div>
 </div>
 
@@ -4347,6 +4362,8 @@ function renderStocksTab(){
     return;
   }
   const sorted = rows.slice().sort((a, b) => (Number(b.score)||0) - (Number(a.score)||0));
+  // COMPACT cards — small title, gauge, price+change, score. Click anywhere
+  // on the card opens the full-screen modal with components + sparkline.
   const cards = sorted.map(s => {
     const score = Number(s.score) || 0;
     const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
@@ -4358,50 +4375,125 @@ function renderStocksTab(){
       ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}))
       : '—';
     const scoreTxt = (score >= 0 ? '+' : '') + (Number.isInteger(score) ? score : score.toFixed(1));
-    const spark = signalScoreSparkline(s.history || []);
-    const comps = Array.isArray(s.components) ? s.components : [];
-    const compRows = comps.map(c => {
-      const cs = Number(c.score) || 0;
-      const csColor = cs > 0 ? '#22c55e' : (cs < 0 ? '#ef4444' : 'var(--muted)');
-      const csTxt = (cs >= 0 ? '+' : '') + (Number.isInteger(cs) ? cs : cs.toFixed(1));
-      return `<tr>
-        <td>${escapeHtml(String(c.name || ''))}</td>
-        <td style="color:var(--muted)">${escapeHtml(String(c.value == null ? '' : c.value))}</td>
-        <td style="color:${csColor};text-align:right">${csTxt}</td>
-      </tr>`;
-    }).join('');
-    // Gauge bar: -100 to +100 gradient with marker (mirrors renderSignalCard).
     const clamped = Math.max(-100, Math.min(100, score));
     const pct = ((clamped + 100) / 200) * 100;
     const bucket = stockLabelBucket(s.label);
-    const volTxt = fmtVolumeCompact(s.volume);
-    return `<div class="chart-card" data-stock-bucket="${bucket}" style="padding:12px 14px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
-        <div style="min-width:0">
-          <div style="font-size:18px;font-weight:700;letter-spacing:0.3px">${escapeHtml(String(s.symbol || ''))}</div>
-          <div class="sub" style="font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">${escapeHtml(String(s.name || ''))}</div>
+    const symbol = escapeHtml(String(s.symbol || ''));
+    return `<div class="chart-card stock-card" data-stock-symbol="${symbol}" data-stock-bucket="${bucket}" role="button" tabindex="0" aria-label="Open full ${symbol} signal detail" title="Click for full breakdown" style="padding:10px 12px;cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+        <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
+          <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${escapeHtml(String(s.name || ''))}</div>
         </div>
-        <div style="text-align:right">
-          <div style="font-size:24px;font-weight:700;color:${color};line-height:1">${scoreTxt}</div>
-          <div style="font-size:11px;color:${color};font-weight:600;margin-top:2px">${escapeHtml(String(s.label || ''))}</div>
+        <div style="text-align:right;line-height:1">
+          <div style="font-size:16px;font-weight:700;color:${color}">${scoreTxt}</div>
+          <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
         </div>
       </div>
-      <div style="height:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:4px;position:relative;margin:6px 0 8px">
-        <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:14px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+      <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+        <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:10px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:13px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px">
         <div style="font-weight:600">${priceTxt}</div>
         <div style="color:${chColor};font-weight:600">${chTxt}</div>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px">Vol ${volTxt}</div>
-      ${spark}
-      ${compRows ? `<table style="margin-top:8px;font-size:11px"><thead><tr><th>Component</th><th>Value</th><th style="text-align:right">&plusmn;</th></tr></thead><tbody>${compRows}</tbody></table>` : ''}
     </div>`;
   }).join('');
   grid.innerHTML = cards;
-  // Re-apply the persisted filter chip selection after re-render.
   applyStocksFilter();
 }
+
+// Build the full stock-detail card body (rendered into the modal).
+function stockDetailHtml(s){
+  const score = Number(s.score) || 0;
+  const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+  const chPct = Number(s.change_pct);
+  const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+  const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
+  const price  = Number(s.last_price);
+  const priceTxt = isFinite(price)
+    ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}))
+    : '—';
+  const scoreTxt = (score >= 0 ? '+' : '') + (Number.isInteger(score) ? score : score.toFixed(1));
+  const clamped = Math.max(-100, Math.min(100, score));
+  const pct = ((clamped + 100) / 200) * 100;
+  const spark = signalScoreSparkline(s.history || []);
+  const comps = Array.isArray(s.components) ? s.components : [];
+  const compRows = comps.map(c => {
+    const cs = Number(c.score) || 0;
+    const csColor = cs > 0 ? '#22c55e' : (cs < 0 ? '#ef4444' : 'var(--muted)');
+    const csTxt = (cs >= 0 ? '+' : '') + (Number.isInteger(cs) ? cs : cs.toFixed(1));
+    return `<tr>
+      <td style="padding:4px 6px">${escapeHtml(String(c.name || ''))}</td>
+      <td style="color:var(--muted);padding:4px 6px">${escapeHtml(String(c.value == null ? '' : c.value))}</td>
+      <td style="color:${csColor};text-align:right;padding:4px 6px;font-weight:600">${csTxt}</td>
+    </tr>`;
+  }).join('');
+  const volTxt = fmtVolumeCompact(s.volume);
+  return `<div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:24px;font-weight:700;letter-spacing:0.4px">${escapeHtml(String(s.symbol||''))}</div>
+        <div class="sub" style="font-size:13px;color:var(--muted)">${escapeHtml(String(s.name||''))}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:34px;font-weight:700;color:${color};line-height:1">${scoreTxt}</div>
+        <div style="font-size:13px;color:${color};font-weight:600;margin-top:3px">${escapeHtml(String(s.label||''))}</div>
+      </div>
+    </div>
+    <div style="height:12px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:6px;position:relative">
+      <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;font-size:15px">
+      <div><span style="color:var(--muted);font-size:11px">Last price</span><br><strong>${priceTxt}</strong></div>
+      <div><span style="color:var(--muted);font-size:11px">Today</span><br><strong style="color:${chColor}">${chTxt}</strong></div>
+      <div><span style="color:var(--muted);font-size:11px">Volume</span><br><strong>${volTxt}</strong></div>
+    </div>
+    ${spark ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Signal score · last 7 days</div>${spark}</div>` : ''}
+    ${compRows ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Signal breakdown</div>
+      <table style="font-size:12px;width:100%"><thead><tr style="color:var(--muted);text-align:left">
+        <th style="padding:4px 6px">Component</th><th style="padding:4px 6px">Value</th><th style="text-align:right;padding:4px 6px">&plusmn;</th>
+      </tr></thead><tbody>${compRows}</tbody></table></div>` : ''}
+  </div>`;
+}
+
+function openStockDetail(symbol){
+  const rows = ((DATA.market||{}).stocks_signals) || [];
+  const s = rows.find(r => r && String(r.symbol||'') === symbol);
+  if (!s) return;
+  const modal = document.getElementById('stockDetailModal');
+  if (!modal) return;
+  document.getElementById('stockDetailTitle').textContent = `${s.symbol} · ${s.name||''}`;
+  document.getElementById('stockDetailBody').innerHTML = stockDetailHtml(s);
+  modal.classList.remove('hidden');
+}
+function closeStockDetail(){
+  const m = document.getElementById('stockDetailModal');
+  if (m) m.classList.add('hidden');
+}
+
+// Wire up stock-card click + keyboard activation + modal close. Run once.
+(function wireStockDetail(){
+  if (window._stockDetailWired) return; window._stockDetailWired = true;
+  document.addEventListener('click', e => {
+    const card = e.target.closest && e.target.closest('.stock-card[data-stock-symbol]');
+    if (card){
+      // Ignore clicks on filter chips that bubble (chips live outside #stocksGrid anyway).
+      openStockDetail(card.getAttribute('data-stock-symbol'));
+      return;
+    }
+    if (e.target && e.target.id === 'stockDetailClose') closeStockDetail();
+    if (e.target && e.target.id === 'stockDetailModal') closeStockDetail();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeStockDetail();
+    const card = e.target && e.target.closest && e.target.closest('.stock-card[data-stock-symbol]');
+    if (card && (e.key === 'Enter' || e.key === ' ')){
+      e.preventDefault();
+      openStockDetail(card.getAttribute('data-stock-symbol'));
+    }
+  });
+})();
 
 // Apply the active stocks filter chip — reads from localStorage on first
 // run, then drives both the chip highlight + per-card display:none.
