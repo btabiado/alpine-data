@@ -808,49 +808,361 @@ def _social_stale_fallback(key: str, default):
     return default
 
 
+def reddit_crypto_stats() -> dict:
+    """Free Reddit JSON API — no key, just a User-Agent header (required).
+    Pulls subscriber count, active users, and top 5 posts (24h) for each
+    of the major crypto subreddits we care about. Reddit's unauthenticated
+    rate limit is ~60 req/min per IP. We make 10 calls (5 subs × 2 endpoints)
+    paced at 0.4s = 4s of overhead. Falls back to previous good per-sub
+    snapshot on individual failures."""
+    SUBS = [
+        ("CryptoCurrency", "All crypto"),
+        ("Bitcoin", "BTC"),
+        ("ethereum", "ETH"),
+        ("Chainlink", "LINK"),
+        ("litecoin", "LTC"),
+    ]
+    out: dict[str, dict] = {}
+    headers = {"User-Agent": "btc-eth-etf-dashboard/1.0 (research script)"}
+    for sub, label in SUBS:
+        meta = {"sub": sub, "label": label, "subscribers": None,
+                "active_users": None, "top_posts": [], "ok": False}
+        # About
+        try:
+            r = requests.get(f"https://www.reddit.com/r/{sub}/about.json",
+                             headers=headers, timeout=15)
+            if r.status_code == 200:
+                d = (r.json() or {}).get("data") or {}
+                meta["subscribers"] = d.get("subscribers")
+                meta["active_users"] = d.get("active_user_count") or d.get("accounts_active")
+                meta["description"] = (d.get("public_description") or "")[:120]
+                meta["ok"] = True
+            else:
+                print(f"  [reddit] /r/{sub}/about -> {r.status_code}", file=sys.stderr)
+        except Exception as e:
+            print(f"  [reddit] /r/{sub}/about error: {e}", file=sys.stderr)
+        time.sleep(0.4)
+        # Top posts (last 24h)
+        try:
+            r = requests.get(f"https://www.reddit.com/r/{sub}/top.json?t=day&limit=5",
+                             headers=headers, timeout=15)
+            if r.status_code == 200:
+                children = ((r.json() or {}).get("data") or {}).get("children") or []
+                meta["top_posts"] = [{
+                    "title": (c.get("data") or {}).get("title", "")[:120],
+                    "score": (c.get("data") or {}).get("score"),
+                    "comments": (c.get("data") or {}).get("num_comments"),
+                    "url": "https://reddit.com" + ((c.get("data") or {}).get("permalink", "")),
+                } for c in children if isinstance(c, dict)][:5]
+        except Exception as e:
+            print(f"  [reddit] /r/{sub}/top error: {e}", file=sys.stderr)
+        time.sleep(0.4)
+        out[sub.lower()] = meta
+    return {
+        "available": any(v.get("ok") for v in out.values()),
+        "subreddits": out,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def cryptocompare_social_stats() -> dict:
+    """Per-coin social + dev stats from CryptoCompare.
+    Endpoint: /data/social/coin/latest?coinId=N (free, no key for basic data).
+    Coin IDs are CryptoCompare's internal numeric IDs (not symbols):
+      BTC=1182, ETH=7605, LINK=46472, LTC=3808
+    Returns Twitter followers, Reddit subscribers, GitHub stars/forks/commits,
+    code activity. Each call has its own try/except so partial failures
+    don't kill the whole section."""
+    COINS = {
+        "btc":  {"id": 1182,  "name": "Bitcoin"},
+        "eth":  {"id": 7605,  "name": "Ethereum"},
+        "link": {"id": 46472, "name": "Chainlink"},
+        "ltc":  {"id": 3808,  "name": "Litecoin"},
+    }
+    out: dict[str, dict] = {}
+    for sym, meta in COINS.items():
+        try:
+            r = requests.get(
+                "https://min-api.cryptocompare.com/data/social/coin/latest",
+                params={"coinId": meta["id"]},
+                headers=H, timeout=15,
+            )
+            if r.status_code != 200:
+                print(f"  [cryptocompare] {sym} -> {r.status_code}", file=sys.stderr)
+                continue
+            j = (r.json() or {}).get("Data") or {}
+            general = (j.get("General") or {})
+            twitter = (j.get("Twitter") or {})
+            reddit  = (j.get("Reddit") or {})
+            repo    = (j.get("CodeRepository") or {}).get("List") or []
+            # Aggregate across multiple repos if listed
+            stars = forks = subs = pulls = issues = 0
+            for r_ in repo:
+                if not isinstance(r_, dict):
+                    continue
+                stars  += int(r_.get("stars") or 0)
+                forks  += int(r_.get("forks") or 0)
+                subs   += int(r_.get("subscribers") or 0)
+                pulls  += int(r_.get("open_pull_issues") or 0)
+                issues += int(r_.get("open_total_issues") or 0)
+            out[sym] = {
+                "name": meta["name"],
+                "points": general.get("Points"),
+                "twitter_followers": twitter.get("followers"),
+                "twitter_statuses": twitter.get("statuses"),
+                "reddit_subscribers": reddit.get("subscribers"),
+                "reddit_active_users": reddit.get("active_users"),
+                "reddit_posts_per_day": reddit.get("posts_per_day"),
+                "reddit_comments_per_day": reddit.get("comments_per_day"),
+                "github_stars": stars,
+                "github_forks": forks,
+                "github_subscribers": subs,
+                "github_open_pulls": pulls,
+                "github_open_issues": issues,
+                "github_repo_count": len(repo),
+            }
+        except Exception as e:
+            print(f"  [cryptocompare] {sym} error: {e}", file=sys.stderr)
+        time.sleep(0.3)
+    return {
+        "available": bool(out),
+        "coins": out,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def santiment_metrics() -> dict:
+    """Santiment GraphQL daily-active-addresses + dev-activity for our 4 coins.
+    Free tier is 100 calls/day shared. We gate this to fire only on the
+    hourly run at UTC hour == 0 (once per day, 8 calls/day used). Other
+    hours read the previous good snapshot from cache.
+
+    No API key needed for the small free-tier metrics. Slugs:
+      bitcoin, ethereum, chainlink, litecoin"""
+    # Daily-only gate: skip outside the midnight UTC hour
+    now_hour = datetime.now(timezone.utc).hour
+    if now_hour != 0:
+        try:
+            prev = json.loads((CACHE / "market.json").read_text())
+            prev_san = ((prev.get("social") or {}).get("santiment")) or None
+            if prev_san and prev_san.get("coins"):
+                return {**prev_san, "stale": True, "stale_reason": f"daily_gate_hour_{now_hour}"}
+        except Exception:
+            pass
+        return {"available": False, "reason": f"daily_gate_hour_{now_hour}",
+                "coins": {},
+                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    SLUGS = {"btc": "bitcoin", "eth": "ethereum", "link": "chainlink", "ltc": "litecoin"}
+    METRICS = ["daily_active_addresses", "dev_activity"]
+    out: dict[str, dict] = {}
+    today = datetime.now(timezone.utc).date()
+    from_iso = (today - timedelta(days=8)).isoformat() + "T00:00:00Z"
+    to_iso = today.isoformat() + "T00:00:00Z"
+    for sym, slug in SLUGS.items():
+        coin_data: dict = {"slug": slug}
+        for metric in METRICS:
+            q = ('query{getMetric(metric:"' + metric + '"){'
+                 'timeseriesData(slug:"' + slug + '",from:"' + from_iso + '",to:"' + to_iso +
+                 '",interval:"1d"){datetime value}}}')
+            try:
+                r = requests.post("https://api.santiment.net/graphql",
+                                  json={"query": q}, headers=H, timeout=20)
+                if r.status_code != 200:
+                    print(f"  [santiment] {slug}/{metric} -> {r.status_code}", file=sys.stderr)
+                    continue
+                j = r.json() or {}
+                ser = (((j.get("data") or {}).get("getMetric") or {}).get("timeseriesData")) or []
+                coin_data[metric] = [
+                    {"date": (p.get("datetime") or "")[:10],
+                     "value": p.get("value")}
+                    for p in ser if isinstance(p, dict) and p.get("value") is not None
+                ]
+            except Exception as e:
+                print(f"  [santiment] {slug}/{metric} error: {e}", file=sys.stderr)
+        if any(coin_data.get(m) for m in METRICS):
+            out[sym] = coin_data
+        time.sleep(0.3)
+    return {
+        "available": bool(out),
+        "coins": out,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def point_of_control(price_series: list[dict], volume_series: list[dict],
+                     lookback_days: int = 90, bins: int = 80) -> dict | None:
+    """Volume profile Point of Control + Value Area for one asset.
+
+    Algorithm:
+      1. Align daily price + volume by date over the last `lookback_days`.
+      2. Bin the price range into `bins` equal-width buckets.
+      3. Each day's volume contributes to its closing-price bin.
+      4. POC = price bin with highest cumulative volume.
+      5. Value Area = smallest price band containing ~70% of total volume,
+         expanded outward from POC by whichever neighbor (above/below) has
+         more volume at each step.
+
+    Returns {poc, val, vah, current, distance_pct, lookback, ...} or None
+    if insufficient data."""
+    if not price_series or not volume_series:
+        return None
+    p_by = {p.get("date"): p.get("value") for p in price_series if p.get("date") and p.get("value")}
+    v_by = {v.get("date"): v.get("value") for v in volume_series if v.get("date") and v.get("value")}
+    common = sorted(set(p_by) & set(v_by))
+    if len(common) < 10:
+        return None
+    common = common[-lookback_days:]
+    prices = [p_by[d] for d in common]
+    volumes = [v_by[d] for d in common]
+    lo = min(prices)
+    hi = max(prices)
+    if hi <= lo:
+        return None
+    step = (hi - lo) / bins
+    buckets = [0.0] * bins
+    for p, v in zip(prices, volumes):
+        idx = min(int((p - lo) / step), bins - 1)
+        buckets[idx] += v
+    poc_idx = max(range(bins), key=lambda i: buckets[i])
+    poc_price = lo + (poc_idx + 0.5) * step
+    total_vol = sum(buckets)
+    target = 0.70 * total_vol
+    covered = buckets[poc_idx]
+    lo_i = hi_i = poc_idx
+    while covered < target and (lo_i > 0 or hi_i < bins - 1):
+        below = buckets[lo_i - 1] if lo_i > 0 else -1
+        above = buckets[hi_i + 1] if hi_i < bins - 1 else -1
+        if below >= above and lo_i > 0:
+            lo_i -= 1
+            covered += buckets[lo_i]
+        elif hi_i < bins - 1:
+            hi_i += 1
+            covered += buckets[hi_i]
+        else:
+            break
+    val_price = lo + lo_i * step
+    vah_price = lo + (hi_i + 1) * step
+    current = prices[-1]
+    return {
+        "poc": poc_price,
+        "val": val_price,
+        "vah": vah_price,
+        "current": current,
+        "distance_pct": (current - poc_price) / poc_price * 100 if poc_price else None,
+        "in_value_area": val_price <= current <= vah_price,
+        "lookback_days": len(common),
+        "price_low": lo,
+        "price_high": hi,
+        "bin_count": bins,
+        "total_volume_usd": total_vol,
+    }
+
+
+def compute_poc_all(market: dict) -> dict:
+    """Compute 30d + 90d POC/VAH/VAL for BTC, ETH, LINK, LTC from the
+    cached market payload's price+volume series. Returns dict shaped:
+      {btc: {"d30": {...}, "d90": {...}}, eth: {...}, ...}
+    Used by app.py during build to attach analytics to the payload."""
+    out: dict[str, dict] = {}
+    for sym in ("btc", "eth", "link", "ltc"):
+        m = (market or {}).get(sym) or {}
+        prices = m.get("price") or []
+        volumes = m.get("volume") or []
+        d30 = point_of_control(prices, volumes, lookback_days=30, bins=60)
+        d90 = point_of_control(prices, volumes, lookback_days=90, bins=80)
+        if d30 or d90:
+            out[sym] = {"d30": d30, "d90": d90}
+    return out
+
+
 def fetch_social() -> dict:
-    """Compose the Social tab payload from 3 free-tier LunarCrush endpoints:
-        1. /coins/{symbol}/v1 — per-coin snapshot for BTC/ETH/LINK/LTC
-        2. /topics/list/v1   — trending topics (top 20)
-        3. /topic/{name}/v1  — sentiment breakdown for each of our 4 coins
-    Calls are paced at 0.8s between requests to stay under the free-tier
-    10 req/min cap (9 calls × 0.8s = 7.2s pacing, ~10s total fetch).
-    Each section has its own stale-keep so partial failures degrade
-    gracefully — UI keeps showing whatever last worked.
+    """One-stop consolidated 'Research' tab payload. Composes free social +
+    dev + on-chain signals from 4 independent sources, each handled
+    separately so partial failures degrade gracefully:
+
+      lunarcrush — 3 free-tier endpoints (typically HTTP 402 unless paid)
+      reddit     — subscribers + active users + top 24h posts for 5 subs
+      cryptocompare — per-coin Twitter/Reddit/GitHub social+dev stats
+      santiment  — DAA + dev-activity (daily-gated at hour=0 UTC for quota)
+
+    Each sub-payload has its own .available flag; the parent .available
+    is true if ANY source has data so the UI shows the tab content.
     """
     import os
-    if not os.environ.get("LUNARCRUSH_API_KEY"):
-        return {"available": False, "reason": "no LUNARCRUSH_API_KEY in env",
-                "coins": {}, "topics": [], "topic_detail": {},
-                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-    SYMBOLS = ["BTC", "ETH", "LINK", "LTC"]
-    TOPICS  = ["bitcoin", "ethereum", "chainlink", "litecoin"]
     PACE = 0.8
-    coins: dict[str, dict] = {}
-    for sym in SYMBOLS:
-        c = lunarcrush_coin(sym)
-        if c:
-            coins[sym.lower()] = c
+
+    # --- LunarCrush 3 free-tier endpoints (kept for completeness; mostly 402) ---
+    if os.environ.get("LUNARCRUSH_API_KEY"):
+        SYMBOLS = ["BTC", "ETH", "LINK", "LTC"]
+        TOPICS  = ["bitcoin", "ethereum", "chainlink", "litecoin"]
+        coins: dict[str, dict] = {}
+        for sym in SYMBOLS:
+            c = lunarcrush_coin(sym)
+            if c:
+                coins[sym.lower()] = c
+            time.sleep(PACE)
+        topics_list = lunarcrush_topics_list(20)
         time.sleep(PACE)
-    topics_list = lunarcrush_topics_list(20)
-    time.sleep(PACE)
-    if not topics_list:
-        topics_list = _social_stale_fallback("topics", [])
-    topic_detail: dict[str, dict] = {}
-    for tp in TOPICS:
-        d = lunarcrush_topic(tp)
-        if d:
-            topic_detail[tp] = d
-        time.sleep(PACE)
-    if not coins:
-        coins = _social_stale_fallback("coins", {})
-    if not topic_detail:
-        topic_detail = _social_stale_fallback("topic_detail", {})
+        if not topics_list:
+            topics_list = _social_stale_fallback("topics", [])
+        topic_detail: dict[str, dict] = {}
+        for tp in TOPICS:
+            d = lunarcrush_topic(tp)
+            if d:
+                topic_detail[tp] = d
+            time.sleep(PACE)
+        if not coins:
+            coins = _social_stale_fallback("coins", {})
+        if not topic_detail:
+            topic_detail = _social_stale_fallback("topic_detail", {})
+        lunar = {
+            "available": bool(coins or topics_list or topic_detail),
+            "coins": coins,
+            "topics": topics_list,
+            "topic_detail": topic_detail,
+        }
+    else:
+        lunar = {"available": False, "reason": "no LUNARCRUSH_API_KEY in env",
+                 "coins": {}, "topics": [], "topic_detail": {}}
+
+    # --- Reddit (no key, just User-Agent) ---
+    print("    reddit: subreddit stats + top 24h posts...")
+    try:
+        reddit = reddit_crypto_stats()
+    except Exception as e:
+        print(f"  [reddit] fatal: {e}", file=sys.stderr)
+        reddit = {"available": False, "reason": "fetch_error", "subreddits": {}}
+    if not reddit.get("available"):
+        prev = _social_stale_fallback("reddit", {})
+        if isinstance(prev, dict) and prev.get("subreddits"):
+            reddit = {**prev, "stale": True}
+
+    # --- CryptoCompare (no key, generous free tier) ---
+    print("    cryptocompare: Twitter/Reddit/GitHub stats per coin...")
+    try:
+        cc = cryptocompare_social_stats()
+    except Exception as e:
+        print(f"  [cryptocompare] fatal: {e}", file=sys.stderr)
+        cc = {"available": False, "reason": "fetch_error", "coins": {}}
+    if not cc.get("available"):
+        prev = _social_stale_fallback("cryptocompare", {})
+        if isinstance(prev, dict) and prev.get("coins"):
+            cc = {**prev, "stale": True}
+
+    # --- Santiment (no key for free tier; daily-gated for quota) ---
+    print("    santiment: DAA + dev activity (daily-gated at 00:00 UTC)...")
+    try:
+        san = santiment_metrics()
+    except Exception as e:
+        print(f"  [santiment] fatal: {e}", file=sys.stderr)
+        san = {"available": False, "reason": "fetch_error", "coins": {}}
+
     return {
-        "available": bool(coins or topics_list or topic_detail),
-        "coins": coins,
-        "topics": topics_list,
-        "topic_detail": topic_detail,
+        "available": any(s.get("available") for s in (lunar, reddit, cc, san)),
+        "lunarcrush": lunar,
+        "reddit": reddit,
+        "cryptocompare": cc,
+        "santiment": san,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 

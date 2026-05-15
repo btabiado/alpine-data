@@ -224,6 +224,14 @@ def build_payload() -> dict:
         print(f"[signals] error: {e}", file=sys.stderr)
         payload["signals"] = {"btc": None, "eth": None}
     try:
+        # Point of Control + Value Area derived from existing price+volume.
+        # No external API call — pure compute. Attached under market.poc.
+        import fetch_market as fm_mod
+        if isinstance(market, dict):
+            market["poc"] = fm_mod.compute_poc_all(market)
+    except Exception as e:
+        print(f"[poc] error: {e}", file=sys.stderr)
+    try:
         import insights as ins_mod
         payload["insights"] = ins_mod.build_insights(payload, limit=12)
     except Exception as e:
@@ -417,7 +425,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="trading">Trading</div>
   <div class="tab" data-tab="markets">Markets</div>
   <div class="tab" data-tab="defi">DeFi</div>
-  <div class="tab" data-tab="social">Social</div>
+  <div class="tab" data-tab="social">Research</div>
   <div class="tab" data-tab="whale">Whale Activity</div>
 </div>
 
@@ -895,31 +903,75 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
   </div>
 
-  <!-- ============ SOCIAL TAB ============ -->
+  <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
     <div id="socialEmpty" class="empty hidden">
-      No social data — LunarCrush is env-gated by <code>LUNARCRUSH_API_KEY</code>.
-      Free-tier endpoints (per-coin, topics, topic detail) may also return HTTP 402 on some accounts.
+      No research data yet — all free sources (Reddit, CryptoCompare, Santiment, LunarCrush) returned empty.
+      Refresh or wait for the next hourly cron.
     </div>
     <div id="socialContent">
       <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
       <div class="note">
-        <strong>Social Sentiment</strong> — pulled from LunarCrush free-tier public endpoints:
-        per-coin metrics (<code>/coins/{symbol}</code>), trending topics (<code>/topics/list</code>),
-        and per-topic sentiment breakdown (<code>/topic/{name}</code>). Galaxy Score blends
-        social + market signals; Alt Rank is LunarCrush's relative-strength rank (1 = best).
+        <strong>Research</strong> — one consolidated page for free social, dev, on-chain, and
+        technical signals. Sources: Reddit (subscribers + top posts), CryptoCompare
+        (Twitter / Reddit / GitHub stats per coin), Santiment (daily-active addresses +
+        dev activity, refreshed once a day at 00:00 UTC to preserve the 100-call free quota),
+        LunarCrush (when account plan allows), and Point of Control (volume profile
+        derived from existing price+volume series).
       </div>
 
-      <!-- Per-coin cards -->
+      <!-- ===== Point of Control ===== -->
       <div class="chart-card" style="padding:12px 16px">
-        <div class="head"><h2 style="margin:0;font-size:15px">Per-coin social metrics</h2><span class="desc">BTC · ETH · LINK · LTC</span></div>
+        <div class="head">
+          <h2 style="margin:0;font-size:15px">Point of Control <span class="tag">Volume profile</span></h2>
+          <span class="desc">
+            POC = price with highest cumulative volume.
+            Value Area = ~70% of volume around POC.
+            <a href="https://trendspider.com/learning-center/understanding-point-of-control-a-guide-for-investors-and-traders/" target="_blank" rel="noopener" style="color:#a78bfa">What is POC? ↗</a>
+          </span>
+        </div>
+        <div class="row" id="pocCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+      </div>
+
+      <!-- ===== CryptoCompare social + dev stats ===== -->
+      <div class="chart-card" style="padding:12px 16px">
+        <div class="head">
+          <h2 style="margin:0;font-size:15px">Social + developer stats <span class="tag">CryptoCompare</span></h2>
+          <span class="desc">Twitter followers · Reddit subscribers · GitHub stars / forks / open PRs</span>
+        </div>
+        <div class="row" id="ccSocialCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+      </div>
+
+      <!-- ===== Reddit pulse ===== -->
+      <div class="chart-card" style="padding:12px 16px">
+        <div class="head">
+          <h2 style="margin:0;font-size:15px">Reddit pulse <span class="tag">/r/crypto subs</span></h2>
+          <span class="desc">Subscribers · active users now · top 24h posts</span>
+        </div>
+        <div class="row" id="redditCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+      </div>
+
+      <!-- ===== Santiment on-chain + dev ===== -->
+      <div class="chart-card" style="padding:12px 16px">
+        <div class="head">
+          <h2 style="margin:0;font-size:15px">On-chain &amp; dev activity <span class="tag">Santiment</span></h2>
+          <span class="desc">Daily-active addresses · dev activity (7d) · refreshed once daily</span>
+        </div>
+        <div class="row" id="santimentCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+      </div>
+
+      <!-- ===== LunarCrush (kept for completeness; usually 402 on free plan) ===== -->
+      <div class="chart-card" style="padding:12px 16px">
+        <div class="head">
+          <h2 style="margin:0;font-size:15px">LunarCrush <span class="tag">Plan-gated</span></h2>
+          <span class="desc">Galaxy Score · Alt Rank · per-coin social — empty unless your plan covers free endpoints (HTTP 402 otherwise)</span>
+        </div>
         <div class="row" id="socialCoinCards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"></div>
       </div>
 
-      <!-- Trending topics + topic sentiment side-by-side -->
       <div class="grid2">
         <div class="chart-card" style="padding:12px 16px">
-          <div class="head"><h2 style="margin:0;font-size:15px">Trending topics</h2><span class="desc">Top 20 by 24h interactions</span></div>
+          <div class="head"><h2 style="margin:0;font-size:15px">Trending topics <span class="tag">LunarCrush</span></h2><span class="desc">Top 20 by 24h interactions</span></div>
           <div style="max-height:520px;overflow:auto">
             <table id="socialTopicsTable" style="font-size:12px">
               <thead><tr><th>#</th><th>Topic</th><th class="right">24h interactions</th><th class="right">1h</th><th class="right">Posts</th></tr></thead>
@@ -929,7 +981,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
         <div class="chart-card" style="padding:12px 16px">
           <div class="head">
-            <h2 style="margin:0;font-size:15px">Topic sentiment</h2>
+            <h2 style="margin:0;font-size:15px">Topic sentiment <span class="tag">LunarCrush</span></h2>
             <span class="desc">
               <select id="socialTopicPick" style="background:#0e1118;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
                 <option value="bitcoin">Bitcoin</option>
@@ -3140,12 +3192,180 @@ document.addEventListener('click', (e) => {
   if (card && !e.target.closest('a')) selectTab(card.dataset.jump);
 });
 
-// ---------- Social tab ----------
+// ---------- Research tab (one-stop social + dev + on-chain + POC) ----------
 function socialData(){ return (DATA.market||{}).social || {}; }
+const RESEARCH_ASSETS = ['btc','eth','link','ltc'];
+const RESEARCH_ACCENT = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+const ASSET_FULLNAME = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
+const fmtNumShort = n => n == null ? '—' :
+  (n >= 1e9 ? (n/1e9).toFixed(2) + 'B' :
+   n >= 1e6 ? (n/1e6).toFixed(1) + 'M' :
+   n >= 1e3 ? (n/1e3).toFixed(1) + 'K' : String(Math.round(n)));
+const fmtUsdShort = p => p == null ? '—' :
+  '$' + (p >= 1000 ? Math.round(p).toLocaleString() :
+         p >= 1    ? p.toFixed(2) :
+         p >= 0.01 ? p.toFixed(4) : p.toFixed(6));
 
+// ===== Point of Control =====
+function renderPocCards(){
+  const poc = (DATA.market||{}).poc || {};
+  const host = document.getElementById('pocCards');
+  if (!host) return;
+  host.innerHTML = RESEARCH_ASSETS.map(a => {
+    const d = poc[a];
+    const accent = RESEARCH_ACCENT(a);
+    if (!d || (!d.d30 && !d.d90)){
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no POC data</div></div>`;
+    }
+    const r = d.d90 || d.d30;
+    const inVA = r.in_value_area;
+    const distColor = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+    const distTxt  = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(2) + '%';
+    const vaBadge = inVA
+      ? '<span style="background:#22c55e22;color:#22c55e;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+      : '<span style="background:#f59e0b22;color:#f59e0b;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600">OUTSIDE</span>';
+    // 30d alt
+    const r30 = d.d30;
+    const alt30 = r30
+      ? `<div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">30d POC ${fmtUsdShort(r30.poc)} · VA ${fmtUsdShort(r30.val)} – ${fmtUsdShort(r30.vah)}</div>`
+      : '';
+    return `<div class="card" style="border-left:4px solid ${accent}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()} <span class="sub" style="color:var(--muted);font-size:10px">${r.lookback_days}d</span></h3>
+        ${vaBadge}
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px">
+        <div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">POC</div>
+          <div class="v" style="font-size:18px;font-weight:700">${fmtUsdShort(r.poc)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="sub" style="font-size:10px;color:var(--muted)">Current</div>
+          <div class="v" style="font-size:18px;font-weight:700">${fmtUsdShort(r.current)}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px">
+        <span class="sub" style="color:var(--muted)">VA: ${fmtUsdShort(r.val)} – ${fmtUsdShort(r.vah)}</span>
+        <span style="color:${distColor};font-weight:600">${distTxt} from POC</span>
+      </div>
+      ${alt30}
+    </div>`;
+  }).join('');
+}
+
+// ===== CryptoCompare social + dev stats =====
+function renderCCSocialCards(){
+  const cc = (socialData().cryptocompare || {}).coins || {};
+  const host = document.getElementById('ccSocialCards');
+  if (!host) return;
+  host.innerHTML = RESEARCH_ASSETS.map(a => {
+    const c = cc[a];
+    const accent = RESEARCH_ACCENT(a);
+    if (!c){
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no data</div></div>`;
+    }
+    return `<div class="card" style="border-left:4px solid ${accent}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
+        <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_FULLNAME[a]}</span>
+      </div>
+      <table style="margin-top:8px;font-size:11px;width:100%">
+        <tbody>
+          <tr><td class="sub" style="color:var(--muted)">Twitter followers</td><td class="right"><strong>${fmtNumShort(c.twitter_followers)}</strong></td></tr>
+          <tr><td class="sub" style="color:var(--muted)">Reddit subs</td><td class="right"><strong>${fmtNumShort(c.reddit_subscribers)}</strong></td></tr>
+          <tr><td class="sub" style="color:var(--muted)">Reddit active</td><td class="right">${fmtNumShort(c.reddit_active_users)}</td></tr>
+          <tr><td class="sub" style="color:var(--muted)">GitHub stars</td><td class="right"><strong>${fmtNumShort(c.github_stars)}</strong></td></tr>
+          <tr><td class="sub" style="color:var(--muted)">GitHub forks</td><td class="right">${fmtNumShort(c.github_forks)}</td></tr>
+          <tr><td class="sub" style="color:var(--muted)">Open PRs / issues</td><td class="right">${fmtNumShort(c.github_open_pulls)} / ${fmtNumShort(c.github_open_issues)}</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+  }).join('');
+}
+
+// ===== Reddit per-subreddit cards =====
+function renderRedditCards(){
+  const subs = (socialData().reddit || {}).subreddits || {};
+  const host = document.getElementById('redditCards');
+  if (!host) return;
+  const order = ['cryptocurrency', 'bitcoin', 'ethereum', 'chainlink', 'litecoin'];
+  const labelAccent = {bitcoin:'#f7931a', ethereum:'#627eea', chainlink:'#2a5ada', litecoin:'#bfbbbb', cryptocurrency:'#a78bfa'};
+  host.innerHTML = order.map(name => {
+    const s = subs[name];
+    const accent = labelAccent[name] || '#a78bfa';
+    if (!s || !s.ok){
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${s?.sub || name}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
+    }
+    const posts = (s.top_posts || []).slice(0, 3).map(p => `
+      <a href="${p.url}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
+        <span style="color:var(--muted)">▲ ${fmtNumShort(p.score)} · 💬 ${fmtNumShort(p.comments)}</span>
+        <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
+      </a>
+    `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
+    return `<div class="card" style="border-left:4px solid ${accent}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3 style="font-size:13px;color:var(--text)">/r/${s.sub}</h3>
+        <span class="sub" style="color:var(--muted);font-size:11px">${s.label || ''}</span>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:8px">
+        <div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">Subscribers</div>
+          <div class="v" style="font-size:18px;font-weight:700">${fmtNumShort(s.subscribers)}</div>
+        </div>
+        <div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">Active now</div>
+          <div class="v" style="font-size:18px;font-weight:700">${fmtNumShort(s.active_users)}</div>
+        </div>
+      </div>
+      <div style="margin-top:8px">${posts}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== Santiment on-chain + dev =====
+function renderSantimentCards(){
+  const coins = (socialData().santiment || {}).coins || {};
+  const stale = (socialData().santiment || {}).stale;
+  const host = document.getElementById('santimentCards');
+  if (!host) return;
+  host.innerHTML = RESEARCH_ASSETS.map(a => {
+    const c = coins[a];
+    const accent = RESEARCH_ACCENT(a);
+    if (!c){
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Santiment data</div></div>`;
+    }
+    const daa = c.daily_active_addresses || [];
+    const dev = c.dev_activity || [];
+    const lastDAA = daa.length ? daa[daa.length-1] : null;
+    const firstDAA = daa.length ? daa[0] : null;
+    const lastDev = dev.length ? dev[dev.length-1] : null;
+    const daaDelta = (lastDAA && firstDAA && firstDAA.value)
+      ? (lastDAA.value - firstDAA.value) / firstDAA.value * 100
+      : null;
+    const daaColor = daaDelta == null ? 'var(--muted)' : (daaDelta >= 0 ? '#22c55e' : '#ef4444');
+    const daaDeltaTxt = daaDelta == null ? '' : ' (' + (daaDelta >= 0 ? '+' : '') + daaDelta.toFixed(1) + '% 7d)';
+    return `<div class="card" style="border-left:4px solid ${accent}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
+        <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_FULLNAME[a]}</span>
+      </div>
+      <div style="margin-top:8px">
+        <div class="sub" style="font-size:10px;color:var(--muted)">Daily-active addresses (latest)</div>
+        <div class="v" style="font-size:18px;font-weight:700">${lastDAA ? fmtNumShort(lastDAA.value) : '—'}<span style="font-size:11px;color:${daaColor};font-weight:600">${daaDeltaTxt}</span></div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="sub" style="font-size:10px;color:var(--muted)">Dev activity (latest)</div>
+        <div class="v" style="font-size:18px;font-weight:700">${lastDev ? Math.round(lastDev.value).toLocaleString() : '—'}</div>
+      </div>
+      ${stale ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:8px">cached (daily-gated)</div>' : ''}
+    </div>`;
+  }).join('');
+}
+
+// ===== LunarCrush (kept for completeness; usually empty due to 402) =====
 function renderSocialCoinCards(){
-  const social = socialData();
-  const coins = social.coins || {};
+  const lunar = socialData().lunarcrush || {};
+  const coins = lunar.coins || {};
   const order = ['btc','eth','link','ltc'];
   const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
   const host = document.getElementById('socialCoinCards');
@@ -3189,7 +3409,7 @@ function renderSocialCoinCards(){
 
 function renderSocialTopics(){
   const social = socialData();
-  const topics = social.topics || [];
+  const topics = (social.lunarcrush || {}).topics || [];
   const tbody = document.querySelector('#socialTopicsTable tbody');
   if (!tbody) return;
   if (!topics.length){
@@ -3218,7 +3438,7 @@ function renderSocialTopicDetail(){
   const host = document.getElementById('socialTopicDetail');
   if (!pick || !host) return;
   const social = socialData();
-  const detail = (social.topic_detail || {})[pick.value];
+  const detail = ((social.lunarcrush || {}).topic_detail || {})[pick.value];
   if (!detail){
     host.innerHTML = '<div class="sub" style="color:var(--muted);padding:12px 4px">No data for this topic.</div>';
     return;
@@ -3264,12 +3484,25 @@ function renderSocialTopicDetail(){
 
 function renderSocial(){
   const social = socialData();
-  const hasAny = Object.keys(social.coins||{}).length || (social.topics||[]).length || Object.keys(social.topic_detail||{}).length;
+  const lunar = social.lunarcrush || {};
+  const poc = (DATA.market||{}).poc || {};
+  const hasAny =
+    Object.keys(lunar.coins||{}).length ||
+    (lunar.topics||[]).length ||
+    Object.keys(lunar.topic_detail||{}).length ||
+    Object.keys((social.cryptocompare||{}).coins||{}).length ||
+    Object.keys((social.reddit||{}).subreddits||{}).length ||
+    Object.keys((social.santiment||{}).coins||{}).length ||
+    Object.keys(poc).length;
   document.getElementById('socialEmpty').classList.toggle('hidden', !!hasAny);
   document.getElementById('socialContent').classList.toggle('hidden', !hasAny);
   const asOf = document.getElementById('socialAsOf');
   if (asOf) asOf.textContent = social.fetched_at ? 'Fetched ' + social.fetched_at : '';
   if (!hasAny) return;
+  renderPocCards();
+  renderCCSocialCards();
+  renderRedditCards();
+  renderSantimentCards();
   renderSocialCoinCards();
   renderSocialTopics();
   renderSocialTopicDetail();
