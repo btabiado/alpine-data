@@ -703,6 +703,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
 
+    <!-- Top 15 by market cap: structural "what's the market doing" view.
+         Re-sorts signals_top20 by CoinGecko market-cap rank (not by score)
+         so the largest 15 coins are always visible, regardless of bull/bear.
+         Each card shows symbol + price + label + score, click → full modal. -->
+    <div id="overviewTop15Wrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">🏆 Top 15 by market cap</h2>
+        <span class="desc">Largest 15 coins · price + signal · click any card for the full breakdown</span>
+      </div>
+      <div class="row" id="overviewTop15" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+    </div>
+
     <!-- Row 2: top news + top insights -->
     <div class="grid2">
       <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
@@ -2058,10 +2070,17 @@ function renderTop20Signals(){
       : `<div style="width:32px;height:32px;border-radius:50%;background:${color}33"></div>`;
     const score = (s.score>=0?'+':'') + s.score;
     window._top20SignalsCache[sym] = s;
+    // Price formatting — auto-scales decimal places for small-cap coins
+    const priceStr = (s.price != null)
+      ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
+      : '';
     return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
-        <div style="font-weight:700;font-size:13px">${escapeHtml(sym)}</div>
+        <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:13px">${escapeHtml(sym)}</span>
+          ${priceStr ? `<span style="font-size:11px;color:var(--text);font-variant-numeric:tabular-nums">${priceStr}</span>` : ''}
+        </div>
         <div class="sub" style="color:var(--muted);font-size:11px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${escapeHtml(s.name||'')}</div>
       </div>
       <div style="text-align:right">
@@ -3430,10 +3449,62 @@ function renderWhaleExtras(){
 function renderOverview(){
   renderOverviewSignals();
   renderOverviewStrongBuys();
+  renderOverviewTop15();
   renderOverviewMacro();
   renderOverviewTopVolume();
   renderOverviewNews();
   renderOverviewInsights();
+}
+
+// Top 15 coins by market-cap rank from the top-50 signal computation.
+// Different from Strong Buys (which filters by STRONG BUY label) — this
+// shows the structural "core" of the market regardless of signal direction.
+// Cards click through to the same detail modal as the Signals-tab strip.
+function renderOverviewTop15(){
+  const wrap = document.getElementById('overviewTop15Wrap');
+  const host = document.getElementById('overviewTop15');
+  if (!wrap || !host) return;
+  const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  // signals_top20 is sorted by SCORE — re-sort by rank for this widget.
+  const top15 = (DATA.signals_top20 || [])
+    .filter(s => s && !isStable(s.symbol))
+    .slice()
+    .sort((a,b) => (a.rank ?? 999) - (b.rank ?? 999))
+    .slice(0, 15);
+  if (!top15.length){
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  window._top20SignalsCache = window._top20SignalsCache || {};
+  host.innerHTML = top15.map(s => {
+    const sym = (s.symbol||'').toUpperCase();
+    const color = signalColor(s.score);
+    window._top20SignalsCache[sym] = s;
+    const img = s.image
+      ? `<img src="${s.image}" alt="" style="width:28px;height:28px;border-radius:50%">`
+      : `<div style="width:28px;height:28px;border-radius:50%;background:${color}33"></div>`;
+    const priceStr = (s.price != null)
+      ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
+      : '';
+    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+      ${img}
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:12px">${escapeHtml(sym)}</span>
+          ${priceStr ? `<span style="font-size:10px;color:var(--text);font-variant-numeric:tabular-nums">${priceStr}</span>` : ''}
+        </div>
+        <div class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${escapeHtml(s.name||'')}${s.rank ? ' · #' + s.rank : ''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;font-weight:700;color:${color};line-height:1.1">${escapeHtml(s.label||'')}</div>
+        <div style="font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums">${(s.score>=0?'+':'')+s.score}</div>
+      </div>
+    </div>`;
+  }).join('');
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
+  );
 }
 
 // Up to 5 STRONG BUY signals pulled from the top-50 strip, surfaced
@@ -3463,10 +3534,16 @@ function renderOverviewStrongBuys(){
     const img = s.image
       ? `<img src="${s.image}" alt="" style="width:28px;height:28px;border-radius:50%">`
       : `<div style="width:28px;height:28px;border-radius:50%;background:${color}33"></div>`;
+    const priceStr = (s.price != null)
+      ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
+      : '';
     return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
-        <div style="font-weight:700;font-size:12px">${escapeHtml(sym)}</div>
+        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:12px">${escapeHtml(sym)}</span>
+          ${priceStr ? `<span style="font-size:10px;color:var(--text);font-variant-numeric:tabular-nums">${priceStr}</span>` : ''}
+        </div>
         <div class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${escapeHtml(s.name||'')}</div>
       </div>
       <div style="text-align:right">
