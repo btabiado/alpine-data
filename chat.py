@@ -5,12 +5,11 @@ context summary of the latest dashboard payload as the system prompt.
 Env:
     ANTHROPIC_API_KEY    required
     CHAT_MODEL           override the default model (e.g. claude-haiku-...)
-    LUNARCRUSH_API_KEY   optional — enables LunarCrush MCP tool calls
-                         during chat (live social-sentiment lookups).
-                         Same key already used by fetch_market.lunarcrush_snapshot().
-    LUNARCRUSH_MCP_URL   optional — explicit override for the LunarCrush
-                         MCP endpoint URL. If unset, the URL is built
-                         from LUNARCRUSH_API_KEY.
+
+Note: The LunarCrush MCP integration was removed when we discovered the
+v4 API requires the Builder plan (~$240/mo). The `mcp_servers_config`
+hook is preserved as an empty list so future MCP integrations can be
+wired in without changing the chat protocol.
 """
 
 from __future__ import annotations
@@ -112,17 +111,6 @@ Dashboard context (JSON):
 """
 
 
-# Appended to the system prompt when the LunarCrush MCP server is wired.
-# Kept on its own block so the base prompt stays identical when MCP is off.
-MCP_LUNARCRUSH_NOTE = (
-    "\nLunarCrush social-sentiment tools are available via MCP. When the "
-    "user asks about crypto social activity, sentiment, Galaxy Score, "
-    "AltRank, trending coins, or anything where fresh social data beats "
-    "the cached dashboard snapshot, call the lunarcrush tools to fetch "
-    "live values. Otherwise stick to the dashboard JSON below.\n"
-)
-
-
 class APIKeyMissing(RuntimeError):
     """Raised when ANTHROPIC_API_KEY is not configured."""
 
@@ -132,25 +120,11 @@ def is_configured() -> bool:
 
 
 def _mcp_servers_config() -> list[dict]:
-    """Return MCP server configs to pass to Anthropic. Empty list if none.
-
-    Currently wires LunarCrush's hosted MCP server (social sentiment for
-    crypto). The URL is built from LUNARCRUSH_API_KEY unless the caller
-    supplies an explicit LUNARCRUSH_MCP_URL override (useful for pointing
-    at a self-hosted proxy).
-    """
-    out: list[dict] = []
-    # LunarCrush — social sentiment for crypto
-    explicit = os.environ.get("LUNARCRUSH_MCP_URL")
-    key = os.environ.get("LUNARCRUSH_API_KEY")
-    url = explicit or (f"https://lunarcrush.ai/sse?key={key}" if key else None)
-    if url:
-        out.append({
-            "type": "url",
-            "url": url,
-            "name": "lunarcrush",
-        })
-    return out
+    """Return MCP server configs to pass to Anthropic. Currently always
+    empty — the LunarCrush MCP wiring was removed when we discovered the
+    v4 API requires the Builder plan ($240/mo). Hook preserved for future
+    free MCP integrations."""
+    return []
 
 
 def mcp_status() -> dict:
@@ -273,20 +247,16 @@ def fallback_answer(question: str, payload: dict) -> str:
 
 
 def stream_answer(question: str, payload: dict) -> Iterator[str]:
-    """Yield text chunks from Claude streaming.
-
-    When LUNARCRUSH_API_KEY (or LUNARCRUSH_MCP_URL) is set, the LunarCrush
-    MCP server is attached so Claude can call live social-sentiment tools
-    during the conversation. The SDK's ``text_stream`` only yields the
-    final assistant text — any intermediate MCP tool_use / tool_result
-    blocks are resolved transparently before that text is produced.
-    """
+    """Yield text chunks from Claude streaming. MCP tool calls (when any
+    servers are wired via _mcp_servers_config) are resolved transparently
+    by the SDK before the final assistant text streams back. Currently
+    no MCP servers are wired (LunarCrush integration was removed)."""
     client = _client()
     model = os.environ.get("CHAT_MODEL", "claude-haiku-4-5")
     summary = json.dumps(_summarise_payload(payload), default=str)
     mcp_servers = _mcp_servers_config()
-    mcp_note = MCP_LUNARCRUSH_NOTE if mcp_servers else ""
-    system = SYSTEM_PROMPT % (mcp_note, summary)
+    # MCP note slot kept for future integrations; currently always empty.
+    system = SYSTEM_PROMPT % ("", summary)
 
     # Only pass mcp_servers + the beta header when we actually have one;
     # otherwise the call is identical to the pre-MCP behaviour.

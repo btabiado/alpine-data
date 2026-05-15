@@ -524,14 +524,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="configSignalsBtn" style="font-size:11px;padding:3px 8px" title="Pick which assets show signal cards">⚙️ Configure</button>
     </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
-    <!-- LunarCrush social KPI strip — only renders when LUNARCRUSH_API_KEY is set
-         and the snapshot returned data. Otherwise stays empty/hidden. -->
-    <div id="lunarcrushStrip" class="hidden">
-      <div class="sub" style="margin:6px 14px 6px;color:var(--muted)">
-        🌙 <strong>LunarCrush</strong> — social sentiment for the assets above
-      </div>
-      <div class="row" id="lunarcrushKpis"></div>
-    </div>
 
     <!-- Row 2: top news + top insights -->
     <div class="grid2">
@@ -906,18 +898,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
     <div id="socialEmpty" class="empty hidden">
-      No research data yet — all free sources (Reddit, CryptoCompare, Santiment, LunarCrush) returned empty.
+      No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
       Refresh or wait for the next hourly cron.
     </div>
     <div id="socialContent">
       <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
       <div class="note">
-        <strong>Research</strong> — one consolidated page for free social, dev, on-chain, and
-        technical signals. Sources: Reddit (subscribers + top posts), CryptoCompare
-        (Twitter / Reddit / GitHub stats per coin), Santiment (daily-active addresses +
-        dev activity, refreshed once a day at 00:00 UTC to preserve the 100-call free quota),
-        LunarCrush (when account plan allows), and Point of Control (volume profile
-        derived from existing price+volume series).
+        <strong>Research</strong> — one consolidated page for free social, dev, on-chain, news,
+        and technical signals. Sources: Reddit (subscribers + top posts; cloud-IP-blocked, local-only),
+        CryptoCompare social (legacy endpoint now auth-gated, may be empty),
+        CryptoCompare news sentiment (keyless, POSITIVE/NEGATIVE/NEUTRAL labels),
+        Santiment (daily-active addresses + dev activity, refreshed once a day at 00:00 UTC),
+        and Point of Control (volume profile derived from existing price+volume series).
       </div>
 
       <!-- ===== Point of Control ===== -->
@@ -946,9 +938,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="chart-card" style="padding:12px 16px">
         <div class="head">
           <h2 style="margin:0;font-size:15px">Reddit pulse <span class="tag">/r/crypto subs</span></h2>
-          <span class="desc">Subscribers · active users now · top 24h posts</span>
+          <span class="desc">Subscribers · active users now · top 24h posts (Reddit blocks cloud IPs — local-only on the public mirror)</span>
         </div>
         <div class="row" id="redditCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+      </div>
+
+      <!-- ===== CryptoCompare news sentiment (keyless data-api) ===== -->
+      <div class="chart-card" style="padding:12px 16px">
+        <div class="head">
+          <h2 style="margin:0;font-size:15px">News sentiment <span class="tag">CryptoCompare</span></h2>
+          <span class="desc">Built-in POSITIVE / NEGATIVE / NEUTRAL sentiment from CryptoCompare's keyless news API — 50 most recent articles per coin</span>
+        </div>
+        <div class="row" id="ccNewsCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
       </div>
 
       <!-- ===== Santiment on-chain + dev ===== -->
@@ -960,40 +961,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="row" id="santimentCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
       </div>
 
-      <!-- ===== LunarCrush (kept for completeness; usually 402 on free plan) ===== -->
-      <div class="chart-card" style="padding:12px 16px">
-        <div class="head">
-          <h2 style="margin:0;font-size:15px">LunarCrush <span class="tag">Plan-gated</span></h2>
-          <span class="desc">Galaxy Score · Alt Rank · per-coin social — empty unless your plan covers free endpoints (HTTP 402 otherwise)</span>
-        </div>
-        <div class="row" id="socialCoinCards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"></div>
-      </div>
-
-      <div class="grid2">
-        <div class="chart-card" style="padding:12px 16px">
-          <div class="head"><h2 style="margin:0;font-size:15px">Trending topics <span class="tag">LunarCrush</span></h2><span class="desc">Top 20 by 24h interactions</span></div>
-          <div style="max-height:520px;overflow:auto">
-            <table id="socialTopicsTable" style="font-size:12px">
-              <thead><tr><th>#</th><th>Topic</th><th class="right">24h interactions</th><th class="right">1h</th><th class="right">Posts</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="chart-card" style="padding:12px 16px">
-          <div class="head">
-            <h2 style="margin:0;font-size:15px">Topic sentiment <span class="tag">LunarCrush</span></h2>
-            <span class="desc">
-              <select id="socialTopicPick" style="background:#0e1118;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
-                <option value="bitcoin">Bitcoin</option>
-                <option value="ethereum">Ethereum</option>
-                <option value="chainlink">Chainlink</option>
-                <option value="litecoin">Litecoin</option>
-              </select>
-            </span>
-          </div>
-          <div id="socialTopicDetail" style="padding:6px 2px"></div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -2839,54 +2806,10 @@ function renderWhaleExtras(){
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
   renderOverviewSignals();
-  renderLunarcrushStrip();
   renderOverviewMacro();
   renderOverviewTopVolume();
   renderOverviewNews();
   renderOverviewInsights();
-}
-
-// LunarCrush social KPI strip — visible only when the env-gated snapshot
-// returned data (LUNARCRUSH_API_KEY set in ~/.zprofile). Shows the social
-// signal for the same assets that have signal cards above (BTC/ETH/LINK/LTC
-// by default, or whatever the user configured via the ⚙️ picker).
-function renderLunarcrushStrip(){
-  const strip = document.getElementById('lunarcrushStrip');
-  const host  = document.getElementById('lunarcrushKpis');
-  if (!strip || !host) return;
-  const lc = (DATA.market || {}).lunarcrush || {};
-  if (!lc.available || !(lc.coins || []).length) {
-    strip.classList.add('hidden');
-    return;
-  }
-  const order = getSignalOrder().map(a => a.toUpperCase());
-  const bySym = {};
-  for (const c of lc.coins) {
-    if (c.symbol) bySym[c.symbol.toUpperCase()] = c;
-  }
-  const cards = order.map(sym => {
-    const c = bySym[sym];
-    if (!c) {
-      return `<div class="card"><h3>${sym} social</h3><div class="v">—</div><div class="sub">not in top 50</div></div>`;
-    }
-    const galaxy = c.galaxy_score != null ? c.galaxy_score : '—';
-    const altrank = c.alt_rank != null ? `#${c.alt_rank}` : '—';
-    const sentiment = c.sentiment != null ? c.sentiment : null;
-    // Sentiment from LunarCrush is 1-5 (1=bearish, 5=bullish)
-    const sentLabel = sentiment == null ? '—' :
-      sentiment >= 4 ? `bullish (${sentiment})` :
-      sentiment <= 2 ? `bearish (${sentiment})` :
-      `neutral (${sentiment})`;
-    const sentCls = sentiment == null ? '' :
-      sentiment >= 4 ? 'green' : sentiment <= 2 ? 'red' : 'amber';
-    return `<div class="card">
-      <h3>${sym} social</h3>
-      <div class="v ${sentCls}" style="font-size:18px">${sentLabel}</div>
-      <div class="sub">Galaxy ${galaxy} · AltRank ${altrank}</div>
-    </div>`;
-  });
-  host.innerHTML = cards.join('');
-  strip.classList.remove('hidden');
 }
 
 // Top 10 coins by 24h trading volume (USD). Derives from the cached
@@ -3362,135 +3285,59 @@ function renderSantimentCards(){
   }).join('');
 }
 
-// ===== LunarCrush (kept for completeness; usually empty due to 402) =====
-function renderSocialCoinCards(){
-  const lunar = socialData().lunarcrush || {};
-  const coins = lunar.coins || {};
-  const order = ['btc','eth','link','ltc'];
-  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
-  const host = document.getElementById('socialCoinCards');
+// ===== CryptoCompare news sentiment (keyless data-api) =====
+function renderCCNewsCards(){
+  const coins = (socialData().cc_news || {}).coins || {};
+  const host = document.getElementById('ccNewsCards');
   if (!host) return;
-  host.innerHTML = order.map(a => {
+  const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
+  host.innerHTML = RESEARCH_ASSETS.map(a => {
     const c = coins[a];
+    const accent = RESEARCH_ACCENT(a);
     if (!c){
-      return `<div class="card" style="border-left:4px solid ${accent(a)}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no social data</div></div>`;
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no news</div></div>`;
     }
-    const gs = c.galaxy_score;
-    const ar = c.alt_rank;
-    const pc = c.percent_change_24h;
-    const pcColor = pc == null ? 'var(--muted)' : (pc >= 0 ? '#22c55e' : '#ef4444');
-    const pcTxt  = pc == null ? '—' : (pc >= 0 ? '+' : '') + Number(pc).toFixed(2) + '%';
-    const intxs = c.interactions_24h;
-    const intxsTxt = intxs == null ? '—' :
-      (intxs >= 1e6 ? (intxs/1e6).toFixed(1) + 'M' :
-       intxs >= 1e3 ? (intxs/1e3).toFixed(1) + 'K' : String(intxs));
-    return `<div class="card" style="border-left:4px solid ${accent(a)}">
+    const total = (c.positive || 0) + (c.negative || 0) + (c.neutral || 0) || 1;
+    const posPct = (c.positive || 0) / total * 100;
+    const negPct = (c.negative || 0) / total * 100;
+    const neuPct = (c.neutral || 0) / total * 100;
+    const netColor = c.net_score == null ? 'var(--muted)' : (c.net_score > 0 ? '#22c55e' : (c.net_score < 0 ? '#ef4444' : '#f59e0b'));
+    const articles = (c.top_articles || []).slice(0, 4).map(art => {
+      const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
+      const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px"></span>`;
+      return `<a href="${art.url || '#'}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:5px 0;border-top:1px solid var(--border);line-height:1.3">
+        ${dot}<strong style="color:${sc}">${(art.sentiment||'?').slice(0,3)}</strong>
+        <span style="color:var(--muted)"> · ${(art.source||'').slice(0,20)}</span>
+        <span style="display:block;color:var(--text);margin-top:2px">${(art.title||'').replace(/</g,'&lt;')}</span>
+      </a>`;
+    }).join('');
+    return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
-        <span class="sub" style="color:var(--muted);font-size:11px">${c.name || ''}</span>
+        <span class="sub" style="color:${netColor};font-size:12px;font-weight:600">net ${c.net_score > 0 ? '+' : ''}${c.net_score ?? 0}</span>
       </div>
-      <div style="display:flex;gap:14px;margin-top:8px">
-        <div>
-          <div class="sub" style="font-size:10px;color:var(--muted)">Galaxy</div>
-          <div class="v" style="font-size:20px;font-weight:700">${gs == null ? '—' : Math.round(gs)}</div>
-        </div>
-        <div>
-          <div class="sub" style="font-size:10px;color:var(--muted)">Alt rank</div>
-          <div class="v" style="font-size:20px;font-weight:700">${ar == null ? '—' : '#' + ar}</div>
-        </div>
+      <div style="display:flex;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:#1f2533">
+        <div style="background:#22c55e;width:${posPct}%" title="${c.positive} positive"></div>
+        <div style="background:#f59e0b;width:${neuPct}%" title="${c.neutral} neutral"></div>
+        <div style="background:#ef4444;width:${negPct}%" title="${c.negative} negative"></div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px">
-        <span style="color:${pcColor};font-weight:600">${pcTxt}</span>
-        <span class="sub" style="color:var(--muted)">24h intxs ${intxsTxt}</span>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
+        <span style="color:#22c55e">${c.positive} +</span>
+        <span>${c.neutral} ◯</span>
+        <span style="color:#ef4444">${c.negative} −</span>
+        <span>${c.article_count} total</span>
       </div>
+      <div style="margin-top:6px">${articles || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No articles.</div>'}</div>
     </div>`;
   }).join('');
 }
 
-function renderSocialTopics(){
-  const social = socialData();
-  const topics = (social.lunarcrush || {}).topics || [];
-  const tbody = document.querySelector('#socialTopicsTable tbody');
-  if (!tbody) return;
-  if (!topics.length){
-    tbody.innerHTML = '<tr><td colspan="5" class="sub" style="color:var(--muted);padding:12px 6px">No trending topic data.</td></tr>';
-    return;
-  }
-  const fmtN = n => n == null ? '—' :
-    (n >= 1e6 ? (n/1e6).toFixed(1) + 'M' :
-     n >= 1e3 ? (n/1e3).toFixed(1) + 'K' : String(n));
-  tbody.innerHTML = topics.map((t, i) => {
-    const trend = t.trend;
-    const trendArrow = trend == null ? '' : (trend > 0 ? '▲' : (trend < 0 ? '▼' : '·'));
-    const trendColor = trend == null ? 'var(--muted)' : (trend > 0 ? '#22c55e' : (trend < 0 ? '#ef4444' : 'var(--muted)'));
-    return `<tr>
-      <td style="color:var(--muted)">${(t.topic_rank ?? (i+1))}</td>
-      <td><strong>${t.title || t.topic || '?'}</strong> <span style="color:${trendColor}">${trendArrow}</span></td>
-      <td class="right">${fmtN(t.interactions_24h)}</td>
-      <td class="right" style="color:var(--muted)">${fmtN(t.interactions_1h)}</td>
-      <td class="right" style="color:var(--muted)">${fmtN(t.num_posts)}</td>
-    </tr>`;
-  }).join('');
-}
-
-function renderSocialTopicDetail(){
-  const pick = document.getElementById('socialTopicPick');
-  const host = document.getElementById('socialTopicDetail');
-  if (!pick || !host) return;
-  const social = socialData();
-  const detail = ((social.lunarcrush || {}).topic_detail || {})[pick.value];
-  if (!detail){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:12px 4px">No data for this topic.</div>';
-    return;
-  }
-  const fmtN = n => n == null ? '—' :
-    (n >= 1e6 ? (n/1e6).toFixed(1) + 'M' :
-     n >= 1e3 ? (n/1e3).toFixed(1) + 'K' : String(n));
-  const sentByType = detail.types_sentiment || {};
-  const countByType = detail.types_count || {};
-  const intxByType = detail.types_interactions || {};
-  // Sort sources by 24h interactions
-  const sources = Object.keys(sentByType).concat(Object.keys(countByType))
-    .filter((v,i,a) => a.indexOf(v) === i)
-    .sort((a, b) => (intxByType[b]||0) - (intxByType[a]||0));
-  const rows = sources.map(src => {
-    const s = sentByType[src];
-    const sColor = s == null ? 'var(--muted)' : (s >= 60 ? '#22c55e' : (s >= 40 ? '#f59e0b' : '#ef4444'));
-    const pct = s == null ? 0 : Math.max(0, Math.min(100, s));
-    return `<tr>
-      <td><strong>${src}</strong></td>
-      <td style="width:40%">
-        <div style="background:#1f2533;border-radius:3px;height:8px;position:relative">
-          <div style="background:${sColor};width:${pct}%;height:100%;border-radius:3px"></div>
-        </div>
-      </td>
-      <td class="right" style="color:${sColor};font-weight:600">${s == null ? '—' : Math.round(s)}%</td>
-      <td class="right" style="color:var(--muted)">${fmtN(countByType[src])} posts</td>
-      <td class="right" style="color:var(--muted)">${fmtN(intxByType[src])} intxs</td>
-    </tr>`;
-  }).join('');
-  host.innerHTML = `
-    <div style="display:flex;gap:18px;margin-bottom:10px;flex-wrap:wrap">
-      <div><div class="sub" style="font-size:10px;color:var(--muted)">Rank</div><div style="font-size:18px;font-weight:700">#${detail.topic_rank ?? '—'}</div></div>
-      <div><div class="sub" style="font-size:10px;color:var(--muted)">24h interactions</div><div style="font-size:18px;font-weight:700">${fmtN(detail.interactions_24h)}</div></div>
-      <div><div class="sub" style="font-size:10px;color:var(--muted)">Contributors</div><div style="font-size:18px;font-weight:700">${fmtN(detail.num_contributors)}</div></div>
-      <div><div class="sub" style="font-size:10px;color:var(--muted)">Posts</div><div style="font-size:18px;font-weight:700">${fmtN(detail.num_posts)}</div></div>
-    </div>
-    <table style="font-size:12px;margin-top:4px">
-      <thead><tr><th>Source</th><th>Positive sentiment</th><th class="right">%</th><th class="right">Posts</th><th class="right">Intxs</th></tr></thead>
-      <tbody>${rows || '<tr><td colspan="5" class="sub" style="color:var(--muted);padding:8px 4px">No per-source breakdown.</td></tr>'}</tbody>
-    </table>`;
-}
-
 function renderSocial(){
   const social = socialData();
-  const lunar = social.lunarcrush || {};
   const poc = (DATA.market||{}).poc || {};
   const hasAny =
-    Object.keys(lunar.coins||{}).length ||
-    (lunar.topics||[]).length ||
-    Object.keys(lunar.topic_detail||{}).length ||
     Object.keys((social.cryptocompare||{}).coins||{}).length ||
+    Object.keys((social.cc_news||{}).coins||{}).length ||
     Object.keys((social.reddit||{}).subreddits||{}).length ||
     Object.keys((social.santiment||{}).coins||{}).length ||
     Object.keys(poc).length;
@@ -3501,21 +3348,10 @@ function renderSocial(){
   if (!hasAny) return;
   renderPocCards();
   renderCCSocialCards();
+  renderCCNewsCards();
   renderRedditCards();
   renderSantimentCards();
-  renderSocialCoinCards();
-  renderSocialTopics();
-  renderSocialTopicDetail();
 }
-
-// Wire topic-picker change. Idempotent — addEventListener dedupes via marker.
-(function wireSocialPicker(){
-  const pick = document.getElementById('socialTopicPick');
-  if (pick && !pick.dataset.wired){
-    pick.dataset.wired = '1';
-    pick.addEventListener('change', renderSocialTopicDetail);
-  }
-})();
 
 function renderAll(){
   renderInsights();
