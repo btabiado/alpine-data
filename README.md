@@ -4,17 +4,17 @@
 
 Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broader crypto market. Nine tabs:
 
-1. **Crypto Overview** — sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, trending coins, global stats.
-2. **Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Not investment advice.
-3. **Point of Control** — volume-weighted price levels for the **top 50 by market cap** across 30d / 90d / 180d windows. Cards are sorted by signal score (Strong Buy → Strong Sell) and filterable via chips (Strong Buy / Buy / Hold / Sell / Strong Sell). Click any card to open a full breakdown modal with the POC ladder, migration sparkline, and naked POCs.
-4. **Research** — Reddit subreddit stats, CryptoCompare social/news depth, Santiment daily active addresses.
-5. **DeFi** — TVL by chain, top 25 protocols, stablecoin yields, 365-day TVL history across Ethereum/Solana/Arbitrum/Base.
-6. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply). Whale Alerts feed scans mempool.space for transactions ≥$1M in the latest block.
-7. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
-8. **Futures** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed. Naked POC overlays on the price chart; 30d POC drift sparkline in each POC card. Side-by-side **crowded longs / crowded shorts** tables built from Coinbase International Exchange perpetual funding rates (246 perps), and CoinDesk CADLI as the regulated reference index used in derivatives settlement.
-9. **Stocks** — signals for the top 20 most-active US stocks via Yahoo Finance. Compact cards show symbol/name header, big colored score, label (STRONG BUY → STRONG SELL), price + change %, and 30d score sparkline. Click any card to open a modal with the full per-component breakdown (SMA, RSI(14), MACD, 5-day momentum, volume z-score, 50/200 cross). Sorted Strong Buy → Strong Sell.
+1. **Overview** — sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, trending coins, global stats.
+2. **Crypto Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Not investment advice.
+3. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply). Whale Alerts feed scans mempool.space for transactions ≥$1M in the latest block.
+4. **Stocks** — signals for the top 20 most-active US stocks via Yahoo Finance. Compact cards show symbol/name header, big colored score, label (STRONG BUY → STRONG SELL), price + change %, and 30d score sparkline. Click any card to open a modal with the full per-component breakdown (SMA, RSI(14), MACD, 5-day momentum, volume z-score, 50/200 cross). Sorted Strong Buy → Strong Sell.
+5. **Point of Control** — volume-weighted price levels for the **top 50 by market cap** across 30d / 90d / 180d windows. Cards are sorted by signal score (Strong Buy → Strong Sell) and filterable via chips (Strong Buy / Buy / Hold / Sell / Strong Sell). Click any card to open a full breakdown modal with the POC ladder, migration sparkline, and naked POCs.
+6. **Research** — Reddit subreddit stats, CryptoCompare social/news depth, Santiment daily active addresses.
+7. **DeFi** — TVL by chain, top 25 protocols, stablecoin yields, 365-day TVL history across Ethereum/Solana/Arbitrum/Base.
+8. **ETF Flows** — daily/weekly/monthly/YoY net flows from US spot BTC and ETH ETFs, per-fund detail.
+9. **Futures** — price, volume, funding rate, open interest, long/short ratio, implied vol (DVOL), Fear & Greed, dominance, ETH/BTC, live news feed. Naked POC overlays on the price chart; 30d POC drift sparkline in each POC card. Side-by-side **crowded longs / crowded shorts** tables built from Coinbase International Exchange perpetual funding rates (246 perps), and CoinDesk CADLI as the regulated reference index used in derivatives settlement.
 
-Plus: insights bar (rule-based, ~12 live notifications), a Claude-powered **Ask the data** chat dock (right side), optional HTTP Basic Auth, GitHub Pages mirror, Tailscale-ready.
+Plus: insights bar (rule-based, ~12 live notifications), a Claude-powered **Ask the data** chat dock (right side), **Symbol search**: type any ticker (BTC, NVDA, SOL, AAPL...) in the header search box → a universal modal shows the signal score, POC if available, recent news, and sentiment for that symbol. Optional HTTP Basic Auth, GitHub Pages mirror, Tailscale-ready.
 
 > **Note:** The global BTC/ETH/LINK/LTC asset selector was removed from the header. The internal `state.asset` still defaults to `'btc'`, so the **ETF Flows** and **Futures** tabs are pinned to BTC.
 

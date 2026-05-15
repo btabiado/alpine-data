@@ -557,21 +557,27 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          request — most tabs aren't asset-specific. ETF Flows + Futures stay
          pinned to BTC (state.asset='btc' default); add an inline toggle to
          those tabs if per-asset switching is needed. -->
+    <form id="symbolSearchForm" style="margin:0;display:flex;gap:4px" onsubmit="return false">
+      <input id="symbolSearchInput" type="text" placeholder="Symbol (BTC, NVDA…)" autocomplete="off"
+             aria-label="Search any stock or crypto symbol"
+             style="background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;width:130px;outline:none">
+      <button class="btn" id="symbolSearchBtn" type="submit" aria-label="Look up symbol">🔍</button>
+    </form>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
   </div>
 </header>
 
 <div class="tabs" role="tablist">
-  <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Crypto Overview</div>
-  <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Signals</div>
+  <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Overview</div>
+  <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Crypto Signals</div>
+  <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale Activity</div>
+  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="poc" role="tab" tabindex="0" aria-selected="false">Point of Control</div>
   <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
   <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
-  <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale Activity</div>
   <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
-  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
 </div>
 
 <div class="controls">
@@ -637,6 +643,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="pocDetailClose" aria-label="Close POC detail">×</button>
     </div>
     <div id="pocDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ SYMBOL DETAIL MODAL (universal header search → consolidated view) ============ -->
+<div id="symbolDetailModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(820px,100%);max-height:92vh;display:flex;flex-direction:column;gap:12px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="symbolDetailTitle" style="margin:0;font-size:15px">Symbol</h2>
+      <button class="btn" id="symbolDetailClose" aria-label="Close symbol detail">×</button>
+    </div>
+    <div id="symbolDetailBody"></div>
   </div>
 </div>
 
@@ -5894,6 +5911,186 @@ if (IS_SHARE) {
   const container = document.querySelector('.container');
   if (container) container.insertBefore(banner, container.firstChild);
 }
+
+// ============ UNIVERSAL SYMBOL SEARCH (header → consolidated modal) ============
+// Searches: stocks_signals, signals_top20, poc_top, news, cc_news sentiment.
+// Renders only the sections that match.
+function lookupSymbol(query){
+  const raw = String(query == null ? '' : query).trim();
+  if (!raw) return;
+  const sym = raw.toUpperCase();
+  const symLower = sym.toLowerCase();
+  const market = DATA.market || {};
+  const eq = (a, b) => String(a || '').toUpperCase() === b;
+
+  // 1) Stock signal
+  const stock = (market.stocks_signals || []).find(s => s && eq(s.symbol, sym));
+  // 2) Crypto signal (top-20)
+  const cryptoSignal = (DATA.signals_top20 || []).find(s => s && eq(s.symbol, sym));
+  // 3) POC entry
+  const poc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
+  // 4) News — case-insensitive whole-word match against title/body
+  let newsRegex = null;
+  try { newsRegex = new RegExp('\\b' + sym.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\b', 'i'); }
+  catch(_) { newsRegex = null; }
+  const news = (market.news || []).filter(n => {
+    if (!n) return false;
+    const t = String(n.title || '');
+    const b = String(n.body || '');
+    if (newsRegex){
+      return newsRegex.test(t) || newsRegex.test(b);
+    }
+    const up = sym;
+    return t.toUpperCase().includes(up) || b.toUpperCase().includes(up);
+  });
+  // 5) Sentiment (CryptoCompare news)
+  const sentiment = ((((market.social || {}).cc_news || {}).coins) || {})[symLower] || null;
+
+  const hasAny = !!(stock || cryptoSignal || poc || news.length || sentiment);
+  const modal = document.getElementById('symbolDetailModal');
+  const body  = document.getElementById('symbolDetailBody');
+  const title = document.getElementById('symbolDetailTitle');
+  if (!modal || !body || !title) return;
+
+  const displayName =
+    (stock && stock.name) ||
+    (cryptoSignal && cryptoSignal.name) ||
+    (poc && poc.name) ||
+    '';
+  title.textContent = displayName ? (sym + ' · ' + displayName) : sym;
+
+  if (!hasAny){
+    body.innerHTML =
+      '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
+        'No data for <strong>' + escapeHtml(sym) + '</strong>. ' +
+        'Try BTC, ETH, NVDA, SOL, AAPL, etc.' +
+      '</div>';
+    modal.classList.remove('hidden');
+    return;
+  }
+
+  const sections = [];
+
+  // Header block
+  sections.push(
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      (displayName ? '<div class="sub" style="font-size:13px;color:var(--muted)">' + escapeHtml(displayName) + '</div>' : '') +
+    '</div>'
+  );
+
+  // Signal section
+  if (stock){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Stock signal</div>' +
+        stockDetailHtml(stock) +
+      '</div>'
+    );
+  }
+  if (cryptoSignal){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Crypto signal</div>' +
+        renderSignalCardFromObj(cryptoSignal) +
+      '</div>'
+    );
+  }
+
+  // POC section
+  if (poc){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
+        pocDetailHtml(poc) +
+      '</div>'
+    );
+  }
+
+  // News section (top 5)
+  if (news.length){
+    const sorted = news.slice().sort((a, b) => {
+      const da = a && a.date ? Date.parse(a.date) : 0;
+      const db = b && b.date ? Date.parse(b.date) : 0;
+      return (db || 0) - (da || 0);
+    });
+    const newsRows = sorted.slice(0, 5).map(n => {
+      return '<a href="' + sanitizeUrl(n.url) + '" target="_blank" rel="noopener" ' +
+        'style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">' +
+          '<div style="font-weight:600;font-size:13px">' + escapeHtml(n.title || '') + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
+            escapeHtml(n.source_name || n.source || '') + (n.date ? ' · ' + escapeHtml(n.date) : '') +
+          '</div>' +
+        '</a>';
+    }).join('');
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News · ' + sorted.length + ' match' + (sorted.length === 1 ? '' : 'es') + '</div>' +
+        '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">' + newsRows + '</div>' +
+      '</div>'
+    );
+  }
+
+  // Sentiment section
+  if (sentiment){
+    const pos = Number(sentiment.positive) || 0;
+    const neg = Number(sentiment.negative) || 0;
+    const neu = Number(sentiment.neutral) || 0;
+    const total = pos + neg + neu || 1;
+    const posPct = (pos / total) * 100;
+    const negPct = (neg / total) * 100;
+    const neuPct = (neu / total) * 100;
+    const net = sentiment.net_score;
+    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
+    const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News sentiment</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' articles scored</span>' +
+          '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
+        '</div>' +
+        '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
+          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
+          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
+          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
+          '<span style="color:#22c55e">' + pos + ' positive</span>' +
+          '<span>' + neu + ' neutral</span>' +
+          '<span style="color:#ef4444">' + neg + ' negative</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  body.innerHTML = sections.join('');
+  modal.classList.remove('hidden');
+}
+
+function closeSymbolDetail(){
+  const m = document.getElementById('symbolDetailModal');
+  if (m) m.classList.add('hidden');
+}
+
+(function wireSymbolSearch(){
+  if (window._symbolSearchWired) return; window._symbolSearchWired = true;
+  const form = document.getElementById('symbolSearchForm');
+  const input = document.getElementById('symbolSearchInput');
+  if (form){
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      if (input) lookupSymbol(input.value);
+    });
+  }
+  document.addEventListener('click', e => {
+    if (e.target && e.target.id === 'symbolDetailClose') closeSymbolDetail();
+    if (e.target && e.target.id === 'symbolDetailModal') closeSymbolDetail();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSymbolDetail();
+  });
+})();
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
 selectTab('overview');
