@@ -355,10 +355,10 @@ header .meta{color:var(--muted);font-size:12px}
 .card .sub{font-size:11px;color:var(--muted);margin-top:3px}
 .green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)}
 .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
-.stock-card{transition:border-color .12s, transform .08s}
-.stock-card:hover{border-color:#a78bfa}
-.stock-card:active{transform:scale(0.99)}
-.stock-card:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+.stock-card,.poc-card{transition:border-color .12s, transform .08s}
+.stock-card:hover,.poc-card:hover{border-color:#a78bfa}
+.stock-card:active,.poc-card:active{transform:scale(0.99)}
+.stock-card:focus-visible,.poc-card:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
 .chart-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
@@ -547,11 +547,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span></div>
   </div>
   <div class="controls" style="border:0;padding:0">
-    <button class="btn active" data-asset="btc">BTC</button>
-    <button class="btn" data-asset="eth">ETH</button>
-    <button class="btn" data-asset="link">LINK</button>
-    <button class="btn" data-asset="ltc">LTC</button>
-    <span style="width:14px"></span>
+    <!-- Per-asset BTC/ETH/LINK/LTC selector removed from the header per user
+         request — most tabs aren't asset-specific. ETF Flows + Futures stay
+         pinned to BTC (state.asset='btc' default); add an inline toggle to
+         those tabs if per-asset switching is needed. -->
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
   </div>
@@ -621,6 +620,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="stockDetailClose" aria-label="Close stock detail">×</button>
     </div>
     <div id="stockDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ POC DETAIL MODAL (POC tab card → full breakdown) ============ -->
+<div id="pocDetailModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(820px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="pocDetailTitle" style="margin:0;font-size:15px">POC detail</h2>
+      <button class="btn" id="pocDetailClose" aria-label="Close POC detail">×</button>
+    </div>
+    <div id="pocDetailBody"></div>
   </div>
 </div>
 
@@ -1151,7 +1161,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <h2>Point of Control — Top 25 by market cap</h2>
           <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
         </div>
-        <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
+        <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"></div>
       </div>
     </div>
   </div>
@@ -4671,105 +4681,175 @@ function renderPocTopCards(){
     host.innerHTML = '<div class="empty" style="grid-column:1/-1">POC data populating — run python app.py --fetch-market and reload.</div>';
     return;
   }
-  const POC_TOP_TFS = [['d30','30d'],['d90','90d'],['d180','180d']];
+  // COMPACT cards — small title, anchor POC, migration badge. Click opens
+  // the full-detail modal with the ladder + naked POCs + sparkline.
   host.innerHTML = list.map(c => {
+    const cid = escapeHtml(String(c.coin_id || c.symbol || ''));
     const sym = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
-    const name = escapeHtml(c.name || '');
     const imgUrl = sanitizeUrl(c.image, '');
     const img = imgUrl
-      ? `<img src="${imgUrl}" alt="" style="width:24px;height:24px;border-radius:50%">`
-      : '<div style="width:24px;height:24px;border-radius:50%;background:#1f2533"></div>';
+      ? `<img src="${imgUrl}" alt="" style="width:18px;height:18px;border-radius:50%">`
+      : '<div style="width:18px;height:18px;border-radius:50%;background:#1f2533"></div>';
     const priceTxt = fmtUsdShort(c.current_price);
     const d = c.poc || {};
-    // Empty/missing POC: render minimal "no POC" card
     if (!d.d30 && !d.d90 && !d.d180){
-      return `<div class="card" style="border-left:4px solid #a78bfa">
-        <div style="display:flex;align-items:center;gap:8px">
+      return `<div class="card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:6px">
           ${img}
-          <div style="min-width:0;flex:1">
-            <div style="display:flex;align-items:baseline;gap:6px">
-              <span style="font-weight:700;font-size:13px">${sym}</span>
-              <span class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${name}</span>
-            </div>
-            <div style="font-size:11px;color:var(--muted)">${priceTxt}</div>
-          </div>
+          <span style="font-weight:700;font-size:12px">${sym}</span>
+          <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
         </div>
-        <div class="sub" style="color:var(--muted);margin-top:8px;font-size:11px">no POC data</div>
+        <div class="sub" style="color:var(--muted);margin-top:4px;font-size:10px">no POC data</div>
       </div>`;
     }
     const anchor = d.d90 || d.d30 || d.d180;
-    // Migration badge (UP/DOWN/FLAT) from poc.migration
+    const anchorPoc = anchor ? fmtUsdShort(anchor.poc) : '—';
+    const dp = anchor && anchor.distance_pct != null ? anchor.distance_pct : null;
+    const dpColor = dp == null ? 'var(--muted)' : (dp >= 0 ? '#22c55e' : '#ef4444');
+    const dpTxt = dp == null ? '—' : ((dp >= 0 ? '+' : '') + dp.toFixed(1) + '%');
     const mig = d.migration;
-    let migBadge = '';
+    let migDot = '';
     if (mig){
-      const cfg = mig.direction === 'UP'
-        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
-        : mig.direction === 'DOWN'
-        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`DOWN ${mig.delta_pct}%`}
-        : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'FLAT'};
-      const tip = escapeHtml(mig.explanation || '');
-      migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}</span>`;
+      const cfg = mig.direction === 'UP' ? {fg:'#22c55e', arrow:'↑'}
+                : mig.direction === 'DOWN' ? {fg:'#ef4444', arrow:'↓'}
+                : {fg:'var(--muted)', arrow:'·'};
+      migDot = `<span style="color:${cfg.fg};font-weight:700;font-size:12px" title="${escapeHtml(mig.explanation || '')}">${cfg.arrow}</span>`;
     }
-    // 3-row ladder: D30 / D90 / D180
-    const ladder = POC_TOP_TFS.map(([k, label]) => {
-      const r = d[k];
-      if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
-      const inVA = r.in_value_area;
-      const tag = inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
-      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
-      const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
-      return `<tr>
-        <td style="color:var(--muted);font-size:10px">${label}</td>
-        <td style="font-weight:600">${fmtUsdShort(r.poc)}</td>
-        <td style="color:${dc};text-align:right">${dt}</td>
-        <td style="text-align:right">${tag}</td>
-      </tr>`;
-    }).join('');
-    // Naked POCs (top 3) with green/red support/resistance coloring
-    const nakedArr = Array.isArray(d.naked) ? d.naked.slice(0, 3) : [];
-    const cur = c.current_price != null ? c.current_price : (anchor && anchor.current);
-    const nakedHtml = nakedArr.length ? `
-      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs <span style="opacity:.7">(untested magnet levels)</span></div>
-        ${nakedArr.map(n => {
-          const isSupport = cur != null && cur > n.poc;
-          const col = isSupport ? '#22c55e' : '#ef4444';
-          const dp = (n.distance_pct == null) ? null : n.distance_pct;
-          const sign = (dp != null && dp >= 0) ? '+' : '';
-          const dpTxt = dp == null ? '—' : (sign + dp + '%');
-          const daysTxt = (n.days_ago != null) ? (n.days_ago + 'd ago · ') : '';
-          return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
-            <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
-            <span style="color:var(--muted)">${daysTxt}${dpTxt}</span>
-          </div>`;
-        }).join('')}
-      </div>` : '';
-    const sparkline = pocMigrationSparkline(d.migration_series);
-    return `<div class="card" style="border-left:4px solid #a78bfa">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    return `<div class="card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
         ${img}
-        <div style="min-width:0;flex:1">
-          <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
-            <span style="font-weight:700;font-size:13px">${sym}</span>
-            <span class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${name}</span>
-          </div>
-          <div style="font-size:11px;color:var(--muted)">${priceTxt} now</div>
-        </div>
-        ${migBadge ? `<div>${migBadge}</div>` : ''}
+        <span style="font-weight:700;font-size:12px">${sym}</span>
+        ${migDot}
+        <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
       </div>
-      ${sparkline}
-      <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:8px">
-        <thead><tr style="color:var(--muted);font-size:9px;text-align:left">
-          <th>TF</th><th>POC</th><th style="text-align:right">Δ</th><th style="text-align:right">VA</th>
-        </tr></thead>
-        <tbody>${ladder}</tbody>
-      </table>
-      ${nakedHtml}
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:11px">
+        <span style="color:var(--muted);font-size:10px">90d POC</span>
+        <span style="font-weight:600">${anchorPoc}</span>
+        <span style="color:${dpColor};font-weight:600">${dpTxt}</span>
+      </div>
     </div>`;
   }).join('');
 }
+
+// Full POC detail (modal body). Mirrors the old verbose card layout —
+// migration badge, ladder, naked POCs, migration sparkline.
+function pocDetailHtml(c){
+  const sym  = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
+  const name = escapeHtml(c.name || '');
+  const imgUrl = sanitizeUrl(c.image, '');
+  const img = imgUrl
+    ? `<img src="${imgUrl}" alt="" style="width:32px;height:32px;border-radius:50%">`
+    : '<div style="width:32px;height:32px;border-radius:50%;background:#1f2533"></div>';
+  const priceTxt = fmtUsdShort(c.current_price);
+  const d = c.poc || {};
+  const mig = d.migration;
+  let migBadge = '';
+  if (mig){
+    const cfg = mig.direction === 'UP'
+      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
+      : mig.direction === 'DOWN'
+      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
+      : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
+    migBadge = `<span style="background:${cfg.bg};color:${cfg.fg};padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600">${cfg.arrow} ${cfg.label}</span>`;
+  }
+  const POC_TOP_TFS = [['d30','30d'],['d90','90d'],['d180','180d']];
+  const ladder = POC_TOP_TFS.map(([k, label]) => {
+    const r = d[k];
+    if (!r) return `<tr><td style="color:var(--muted);padding:5px 8px">${label}</td><td colspan="3" style="color:var(--muted);padding:5px 8px">—</td></tr>`;
+    const inVA = r.in_value_area;
+    const tag = inVA
+      ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+      : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>';
+    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+    const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
+    return `<tr>
+      <td style="color:var(--muted);padding:5px 8px">${label}</td>
+      <td style="font-weight:600;padding:5px 8px">${fmtUsdShort(r.poc)}</td>
+      <td style="color:${dc};text-align:right;padding:5px 8px;font-weight:600">${dt}</td>
+      <td style="text-align:right;padding:5px 8px">${tag}</td>
+    </tr>`;
+  }).join('');
+  const nakedArr = Array.isArray(d.naked) ? d.naked.slice(0, 5) : [];
+  const anchor = d.d90 || d.d30 || d.d180;
+  const cur = c.current_price != null ? c.current_price : (anchor && anchor.current);
+  const nakedHtml = nakedArr.length ? `
+    <div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs · untested magnet levels (last 180d)</div>
+      ${nakedArr.map(n => {
+        const isSupport = cur != null && cur > n.poc;
+        const col = isSupport ? '#22c55e' : '#ef4444';
+        const dp = (n.distance_pct == null) ? null : n.distance_pct;
+        const sign = (dp != null && dp >= 0) ? '+' : '';
+        const dpTxt = dp == null ? '—' : (sign + dp + '%');
+        const daysTxt = (n.days_ago != null) ? (n.days_ago + 'd ago · ') : '';
+        return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px solid var(--border)">
+          <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
+          <span style="color:var(--muted)">${daysTxt}${dpTxt}</span>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+  const sparkline = pocMigrationSparkline(d.migration_series);
+  return `<div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      ${img}
+      <div style="min-width:0;flex:1">
+        <div style="font-size:22px;font-weight:700;letter-spacing:0.4px">${sym}</div>
+        <div class="sub" style="font-size:12px;color:var(--muted)">${name}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--muted)">Current price</div>
+        <div style="font-size:18px;font-weight:700">${priceTxt}</div>
+      </div>
+    </div>
+    ${migBadge ? `<div>${migBadge}</div>` : ''}
+    ${sparkline ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">30d POC drift · last 90 days</div>${sparkline}</div>` : ''}
+    <div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Value-area ladder</div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="color:var(--muted);font-size:10px;text-align:left">
+          <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px">VA</th>
+        </tr></thead>
+        <tbody>${ladder}</tbody>
+      </table>
+    </div>
+    ${nakedHtml}
+  </div>`;
+}
+
+function openPocDetail(coinId){
+  const list = ((DATA.market || {}).poc_top) || [];
+  const c = list.find(r => r && String(r.coin_id || r.symbol || '') === coinId);
+  if (!c) return;
+  const modal = document.getElementById('pocDetailModal');
+  if (!modal) return;
+  document.getElementById('pocDetailTitle').textContent =
+    `${String(c.symbol || c.coin_id || '').toUpperCase()} · ${c.name || ''} · POC`;
+  document.getElementById('pocDetailBody').innerHTML = pocDetailHtml(c);
+  modal.classList.remove('hidden');
+}
+function closePocDetail(){
+  const m = document.getElementById('pocDetailModal');
+  if (m) m.classList.add('hidden');
+}
+
+// Wire up POC-card click + keyboard activation. Mirrors wireStockDetail.
+(function wirePocDetail(){
+  if (window._pocDetailWired) return; window._pocDetailWired = true;
+  document.addEventListener('click', e => {
+    const card = e.target.closest && e.target.closest('.poc-card[data-poc-coin-id]');
+    if (card){ openPocDetail(card.getAttribute('data-poc-coin-id')); return; }
+    if (e.target && e.target.id === 'pocDetailClose') closePocDetail();
+    if (e.target && e.target.id === 'pocDetailModal') closePocDetail();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closePocDetail();
+    const card = e.target && e.target.closest && e.target.closest('.poc-card[data-poc-coin-id]');
+    if (card && (e.key === 'Enter' || e.key === ' ')){
+      e.preventDefault();
+      openPocDetail(card.getAttribute('data-poc-coin-id'));
+    }
+  });
+})();
 
 // ===== CryptoCompare social + dev stats =====
 function renderCCSocialCards(){
