@@ -36,6 +36,9 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 - **BTC on-chain**: blockchain.info charts (tx vol, hash rate, miners rev, active addresses), Blockchair (supplementary stats), bitinfocharts (rich list / distribution)
 - **BTC network**: mempool.space (fees, hashrate, tip height, **difficulty adjustment**, **Lightning Network**, **mining pools**, latest-block scan for Whale Alerts ≥$1M)
 - **ETH on-chain**: Etherscan v2 (gas oracle, ETH whale stats — burn, largest tx, ERC-20/721)
+- **ETH large transactions**: Blockchair (top 10 recent whale txs ≥$1M USD, no key required)
+- **Multi-chain whale snapshot**: Blockchair (LTC, BCH, DOGE 24h network stats + largest single tx, no key required)
+- **Blockchair**: free public endpoints — used for BTC supplementary stats, ETH large transactions, and the LTC/BCH/DOGE multi-chain snapshot
 - **US equities**: Yahoo Finance (top-20 most-active US stocks → daily OHLCV for the Stocks tab signal scores)
 - **DeFi**: DeFiLlama (TVL by chain, top 25 protocols, top stablecoin yields, 365-day historical TVL across 4 chains)
 - **News + social**: RSS from CoinDesk, Cointelegraph, Decrypt, The Block, Bitcoin Magazine (25 deduped headlines); CryptoCompare social/news depth (optional key); Reddit subreddit stats (optional OAuth, RSS-only fallback)
@@ -226,7 +229,9 @@ True whale exchange-flow series (Glassnode / CryptoQuant / CoinMetrics Pro) requ
 
 Source: blockchain.info `/charts/...`, supplemented by Blockchair and bitinfocharts.
 
-**ETH panel** (BTC/ETH switcher in the Whale tab): 24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply. Etherscan v2 (free) covers the basics; `COINMETRICS_API_KEY` unlocks the historical ETH whale series.
+**ETH panel** (BTC/ETH switcher in the Whale tab): 24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply. Etherscan v2 (free) covers the basics; `COINMETRICS_API_KEY` unlocks the historical ETH whale series. ETH side now lists top 10 recent whale transactions (≥$1M USD) via Blockchair, in addition to the existing largest-24h tx.
+
+**Multi-chain whale snapshot** below the BTC panel shows 24h network stats + largest single tx for LTC, BCH, DOGE (Blockchair, no key required).
 
 **Whale Alerts feed**: continuous scan of the latest mempool.space block for individual transactions ≥$1M.
 

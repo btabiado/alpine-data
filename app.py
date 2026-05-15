@@ -1429,6 +1429,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="chart-wrap"><canvas id="outputChart"></canvas></div>
         </div>
       </div>
+      <div class="chart-card hidden" id="multichainWhaleCard">
+        <div class="head">
+          <h2>Multi-chain whale snapshot <span class="tag">Blockchair</span></h2>
+          <span class="desc">24h network stats + largest single tx · LTC / BCH / DOGE</span>
+        </div>
+        <div id="multichainWhaleGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
+      </div>
       </div> <!-- /whaleBtcPanel -->
       <!-- ===== ETH PANEL ===== -->
       <div id="whaleEthPanel" class="hidden">
@@ -1440,6 +1447,20 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <span class="desc">Single biggest tx by USD value on Ethereum mainnet over the past 24 hours</span>
           </div>
           <div id="ethLargestTxBox" class="sub" style="font-size:13px;color:var(--text);line-height:1.6;padding:6px 4px"></div>
+        </div>
+        <div class="chart-card hidden" id="ethWhaleAlertsCard">
+          <div class="head">
+            <h2>Recent ETH whale transactions <span class="tag">Blockchair</span></h2>
+            <span class="desc" id="ethWhaleAlertsNote">—</span>
+          </div>
+          <div style="overflow:auto">
+            <table class="tracker-grid">
+              <thead><tr>
+                <th>Hash</th><th style="text-align:right">ETH</th><th style="text-align:right">USD value</th><th>Time</th>
+              </tr></thead>
+              <tbody id="ethWhaleAlertsBody"></tbody>
+            </table>
+          </div>
         </div>
         <div class="grid2">
           <div class="chart-card">
@@ -2817,6 +2838,7 @@ function renderWhale(){
   renderWhaleCohortChart();
   renderWhaleProxyChart();
   renderGlassnodeStrip();
+  renderMultichainWhale();
 }
 
 // Toggle which Whale-tab panel is visible. Called after state.whaleAsset
@@ -2886,6 +2908,10 @@ function renderWhaleEth(){
       ltBox.innerHTML = '<span style="color:var(--muted)">No data — Blockchair fetch may have failed.</span>';
     }
   }
+
+  // Recent ETH whale transactions feed (≥ $1M, 24h) — sits right below the
+  // single-largest card to give users both the headline and the full feed.
+  renderEthWhaleAlerts();
 
   // 180-day charts from Coin Metrics
   const slice180 = (arr) => (arr || []).slice(-180);
@@ -2970,6 +2996,100 @@ function renderWhaleAlerts(){
       <td><a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortId} ↗</a></td>
     </tr>`;
   }).join('');
+}
+
+// Recent ETH whale transactions: ≥ $1M last 24h from Blockchair. Hidden when
+// no data. Mirrors renderWhaleAlerts() (BTC mempool feed) in structure.
+function renderEthWhaleAlerts(){
+  const card = document.getElementById('ethWhaleAlertsCard');
+  if (!card) return;
+  const txs = (((DATA.whale||{}).eth||{}).large_transactions) || [];
+  if (!txs.length){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  const note = document.getElementById('ethWhaleAlertsNote');
+  if (note){
+    note.textContent = `${txs.length} txs ≥ $1M · last 24h`;
+  }
+  const tbody = document.getElementById('ethWhaleAlertsBody');
+  if (!tbody) return;
+  // Validate ETH tx hash as 0x + 64 hex chars to defang any javascript:/data:
+  // scheme injection through the href + innerHTML.
+  const isEthTxHash = s => typeof s === 'string' && /^0x[0-9a-fA-F]{64}$/.test(s);
+  tbody.innerHTML = txs.slice(0, 10).map(t => {
+    const hash = isEthTxHash(t.hash) ? t.hash : '';
+    const shortHash = hash ? (hash.slice(0,10) + '…' + hash.slice(-8)) : '—';
+    const txUrl = hash ? sanitizeUrl(`https://etherscan.io/tx/${hash}`) : '#';
+    const eth = t.value_eth != null ? fmtNum(t.value_eth, 2) : '—';
+    const usd = t.value_usd != null ? fmtUSD(t.value_usd, 'auto') : '—';
+    const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
+    const time = t.time ? escapeHtml(String(t.time)) : '—';
+    const linkCell = hash
+      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
+      : '—';
+    return `<tr>
+      <td>${linkCell}</td>
+      <td style="text-align:right">${eth}</td>
+      <td class="${cls}" style="text-align:right">${usd}</td>
+      <td style="color:var(--muted);font-size:12px">${time}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Multi-chain whale snapshot: LTC / BCH / DOGE 24h Blockchair stats + the
+// largest single tx per chain. Hidden when no chain data is present.
+function renderMultichainWhale(){
+  const card = document.getElementById('multichainWhaleCard');
+  const grid = document.getElementById('multichainWhaleGrid');
+  if (!card || !grid) return;
+  const mc = ((DATA.whale||{}).multichain) || {};
+  const keys = Object.keys(mc).filter(k => mc[k] && typeof mc[k] === 'object');
+  if (!keys.length){ card.classList.add('hidden'); return; }
+  // Per-chain explorer URL templates. Hash validated as 64 hex chars before
+  // interpolation; chain id is whitelisted by lookup so it can never be
+  // user-controlled.
+  const EXPLORER = {
+    'litecoin':     h => `https://blockchair.com/litecoin/transaction/${h}`,
+    'bitcoin-cash': h => `https://blockchair.com/bitcoin-cash/transaction/${h}`,
+    'dogecoin':     h => `https://blockchair.com/dogecoin/transaction/${h}`,
+  };
+  const isHexHash = s => typeof s === 'string' && /^[0-9a-fA-F]{64}$/.test(s);
+  const cards = keys.map(k => {
+    const c = mc[k] || {};
+    const sym  = escapeHtml(c.symbol || k.toUpperCase());
+    const name = escapeHtml(c.name || k);
+    const price = c.market_price_usd != null ? fmtUSD(c.market_price_usd, 'auto') : '—';
+    const blk = c.blocks_24h       != null ? fmtNum(c.blocks_24h, 0)       : '—';
+    const txc = c.transactions_24h != null ? fmtNum(c.transactions_24h, 0) : '—';
+    const sup = c.supply           != null ? fmtNum(c.supply, 0)           : '—';
+    const lt  = c.largest_tx_24h || {};
+    const hash = isHexHash(lt.hash) ? lt.hash : '';
+    const mkUrl = EXPLORER[k];
+    const txUrl = (hash && mkUrl) ? sanitizeUrl(mkUrl(hash)) : '#';
+    const shortHash = hash ? (hash.slice(0,8) + '…' + hash.slice(-6)) : '—';
+    const ltUsd = lt.value_usd != null ? fmtUSD(lt.value_usd, 'auto') : '—';
+    const ltLink = hash
+      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
+      : '<span style="color:var(--muted)">—</span>';
+    return `<div class="card" style="padding:12px 14px">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="font-weight:700;font-size:18px;color:var(--text)">${sym}</span>
+        <span class="sub" style="color:var(--muted);font-size:12px">${name}</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--text)">${price}</span>
+      </div>
+      <div class="sub" style="font-size:12px;color:var(--muted);line-height:1.6">
+        <div>Blocks (24h): <strong style="color:var(--text)">${blk}</strong></div>
+        <div>Tx (24h): <strong style="color:var(--text)">${txc}</strong></div>
+        <div>Supply: <strong style="color:var(--text)">${sup}</strong></div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)">
+          Largest 24h tx: <strong style="color:var(--text)">${ltUsd}</strong>
+          <div>${ltLink}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  if (!cards){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  grid.innerHTML = cards;
 }
 
 // Glassnode KPIs: only render when the user has set GLASSNODE_API_KEY and

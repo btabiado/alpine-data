@@ -2227,6 +2227,211 @@ def blockchair_eth_stats() -> dict:
     }
 
 
+# Native decimal lookup for Blockchair multichain stats. Blockchair returns
+# circulation/supply in the chain's smallest unit (satoshis for the BTC-derived
+# chains, wei for ETH). LTC/BCH/DOGE all inherit Bitcoin's 1e8 base unit.
+_BLOCKCHAIR_NATIVE_DECIMALS = {
+    "bitcoin":      8,
+    "litecoin":     8,
+    "bitcoin-cash": 8,
+    "dogecoin":     8,
+    "ethereum":    18,
+}
+
+_BLOCKCHAIR_SYMBOLS = {
+    "bitcoin":      "BTC",
+    "litecoin":     "LTC",
+    "bitcoin-cash": "BCH",
+    "dogecoin":     "DOGE",
+    "ethereum":     "ETH",
+}
+
+_BLOCKCHAIR_NAMES = {
+    "bitcoin":      "Bitcoin",
+    "litecoin":     "Litecoin",
+    "bitcoin-cash": "Bitcoin Cash",
+    "dogecoin":     "Dogecoin",
+    "ethereum":     "Ethereum",
+}
+
+
+def _blockchair_eth_large_transactions_impl(
+    min_value_usd: float = 1_000_000.0, limit: int = 10
+) -> list[dict]:
+    """Live fetch of large ETH transactions over the last 24h via Blockchair.
+
+    Blockchair's tx search uses a `q=` query language; we ask for txs in the
+    last 24h with value_usd above the threshold. If the query rejects the
+    `value_usd(...)` filter we fall back to a plain top-N-by-value scan.
+
+    Each row carries hash, native ETH value, USD value, ISO time, and fee
+    in ETH. Returns at most `limit` rows sorted by USD value descending.
+    """
+    min_usd = int(max(0, float(min_value_usd or 0)))
+    base = "https://api.blockchair.com/ethereum/transactions"
+
+    j = _get(base, {
+        "q": f"time(24h)..,value_usd({min_usd}..)",
+        "s": "value_usd(desc)",
+        "limit": str(max(limit, 10)),
+    })
+
+    # Fall back to plain top-N-by-value if the query language was rejected
+    # (Blockchair returns 4xx for malformed `q=`; _get logs and returns None).
+    if not j or not isinstance(j, dict) or not j.get("data"):
+        j = _get(base, {"limit": str(max(limit, 10)), "s": "value(desc)"})
+
+    if not j or not isinstance(j, dict):
+        return []
+    rows = j.get("data") or []
+    if not isinstance(rows, list):
+        return []
+
+    out: list[dict] = []
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        h = r.get("hash")
+        if not h:
+            continue
+        try:
+            value_eth = float(r.get("value") or 0) / 1e18
+        except (TypeError, ValueError):
+            value_eth = 0.0
+        try:
+            value_usd = float(r.get("value_usd") or 0)
+        except (TypeError, ValueError):
+            value_usd = 0.0
+        try:
+            fee_eth = float(r.get("fee") or 0) / 1e18
+        except (TypeError, ValueError):
+            fee_eth = 0.0
+        out.append({
+            "hash":      h,
+            "value_eth": value_eth,
+            "value_usd": value_usd,
+            "time":      r.get("time"),
+            "fee_eth":   fee_eth,
+        })
+
+    out.sort(key=lambda r: r.get("value_usd") or 0, reverse=True)
+    return out[:limit]
+
+
+def blockchair_eth_large_transactions(
+    min_value_usd: float = 1_000_000.0, limit: int = 10
+) -> list[dict]:
+    """Stale-fallback wrapper around `_blockchair_eth_large_transactions_impl`.
+
+    On empty result or fetch failure, serves the last good payload from
+    `data/.stale/blockchair_eth_large_transactions.json`. Returns an empty
+    list if no cache exists either — never raises.
+    """
+    cache_key = "blockchair_eth_large_transactions"
+    try:
+        out = _blockchair_eth_large_transactions_impl(min_value_usd, limit)
+    except Exception as e:
+        print(f"  [blockchair_eth_large_transactions] fatal: {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, list) and len(out) > 0:
+        _stale_save(cache_key, out)
+        return out
+    cached = _stale_load(cache_key)
+    if cached is not None:
+        return cached if isinstance(cached, list) else []
+    return out if isinstance(out, list) else []
+
+
+def blockchair_chain_stats(chain_slug: str) -> dict:
+    """Blockchair `/stats` endpoint generalized over chain slug.
+
+    Supports `bitcoin`, `litecoin`, `bitcoin-cash`, `dogecoin`, `ethereum`.
+    Returns a flat dict with blocks_24h, transactions_24h, largest_tx_24h,
+    supply (in native units via `_BLOCKCHAIR_NATIVE_DECIMALS`), and
+    market_price_usd. Empty dict on failure so callers can render an
+    empty-state.
+    """
+    slug = (chain_slug or "").strip().lower()
+    if slug not in _BLOCKCHAIR_NATIVE_DECIMALS:
+        return {}
+    j = _get(f"https://api.blockchair.com/{slug}/stats")
+    if not j or not isinstance(j, dict):
+        return {}
+    d = j.get("data") or {}
+    if not d:
+        return {}
+    decimals = _BLOCKCHAIR_NATIVE_DECIMALS[slug]
+    divisor = float(10 ** decimals)
+
+    def _to_native(v):
+        if v in (None, "", 0, "0"):
+            return None
+        try:
+            return float(v) / divisor
+        except (ValueError, TypeError):
+            return None
+
+    largest = d.get("largest_transaction_24h") or {}
+    largest_out = None
+    if isinstance(largest, dict) and largest.get("hash"):
+        largest_out = {
+            "hash":      largest.get("hash"),
+            "value_usd": largest.get("value_usd"),
+        }
+
+    return {
+        "symbol":            _BLOCKCHAIR_SYMBOLS.get(slug, slug.upper()),
+        "name":              _BLOCKCHAIR_NAMES.get(slug, slug.title()),
+        "blocks_24h":        d.get("blocks_24h"),
+        "transactions_24h":  d.get("transactions_24h"),
+        "largest_tx_24h":    largest_out,
+        "supply":            _to_native(d.get("circulation_approximate")
+                                        or d.get("circulation")),
+        "market_price_usd":  d.get("market_price_usd"),
+        "_native_decimals":  decimals,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def _fetch_multichain_whale_stats_impl() -> dict:
+    """Live fetch of Blockchair stats for LTC/BCH/DOGE. Paced at 0.3s/req to
+    respect Blockchair's free-tier 30-req/min cap. Returns dict keyed by
+    chain slug — missing chains map to empty dicts, never raises."""
+    out: dict[str, dict] = {}
+    for slug in ("litecoin", "bitcoin-cash", "dogecoin"):
+        try:
+            out[slug] = blockchair_chain_stats(slug) or {}
+        except Exception as e:
+            print(f"  [multichain_whale_stats] {slug}: {e}", file=sys.stderr)
+            out[slug] = {}
+        time.sleep(0.3)
+    return out
+
+
+def fetch_multichain_whale_stats() -> dict:
+    """Stale-fallback wrapper around `_fetch_multichain_whale_stats_impl`.
+
+    Treats the multichain dict as empty if *every* chain returned an empty
+    payload; in that case the last good cache is served. Returns `{}` if no
+    cache exists either.
+    """
+    cache_key = "multichain_whale_stats"
+    try:
+        out = _fetch_multichain_whale_stats_impl()
+    except Exception as e:
+        print(f"  [fetch_multichain_whale_stats] fatal: {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, dict) and any(
+        isinstance(v, dict) and v for v in out.values()
+    ):
+        _stale_save(cache_key, out)
+        return out
+    cached = _stale_load(cache_key)
+    if cached is not None:
+        return cached if isinstance(cached, dict) else {}
+    return out if isinstance(out, dict) else {}
+
+
 def _etherscan_gas_impl() -> dict:
     """Live etherscan gas oracle fetch. See `etherscan_gas` wrapper."""
     j = _get("https://api.etherscan.io/v2/api",
@@ -3261,8 +3466,12 @@ def fetch_whale(btc_price_usd: float | None = None) -> dict:
     whale_txs = mempool_whale_transactions(btc_price_usd) if btc_price_usd else []
     print("  Blockchair ETH stats (24h tx, largest tx, supply)...")
     eth_bc = blockchair_eth_stats()
+    print("  Blockchair ETH large transactions (24h, >$1M)...")
+    eth_large_txs = blockchair_eth_large_transactions(min_value_usd=1_000_000)
     print("  Coin Metrics ETH whale series (active addresses, tx count/volume)...")
     eth_cm = coin_metrics_eth_whale_metrics()
+    print("  Blockchair multichain stats (LTC, BCH, DOGE)...")
+    multichain = fetch_multichain_whale_stats()
     return {
         "btc": btc,
         "distribution": distribution,
@@ -3271,10 +3480,13 @@ def fetch_whale(btc_price_usd: float | None = None) -> dict:
         "eth": {
             "blockchair": eth_bc,
             "coin_metrics": eth_cm,
+            "large_transactions": eth_large_txs,
         },
+        "multichain": multichain,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "note": ("Free: blockchain.info + bitinfocharts cohorts + mempool.space "
                  "tx scan. ETH side via Blockchair + Coin Metrics. "
+                 "Multichain (LTC/BCH/DOGE) via Blockchair /stats. "
                  "Glassnode auto-activates when GLASSNODE_API_KEY is set."),
     }
 
