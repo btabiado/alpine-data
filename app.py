@@ -4587,9 +4587,22 @@ document.getElementById('pasteSubmit')?.addEventListener('click', async () => {
   } catch(e) { s.textContent = 'Import failed: ' + e.message; }
 });
 
-// If running under server, poll /api/data every 60s for the latest cached payload
-const isServer = location.protocol.startsWith('http');
+// "Live server" mode = we have a Flask backend at /api/* (running locally).
+// "Public mirror" mode = static HTML served from GitHub Pages — no backend.
+// The old check `protocol.startsWith('http')` was wrong: it caught Pages too,
+// so the refresh button POSTed /api/refresh on github.io → 404 → "refresh
+// failed" (which is what the user reported on mobile). Hostname-based check
+// is the correct gate.
+const isServer = ['127.0.0.1','localhost','0.0.0.0'].includes(location.hostname);
 if (isServer) setInterval(() => liveRefresh(false), 60000);
+// Hide the Refresh button on the public mirror — it can't work there.
+if (!isServer){
+  const _rb = document.getElementById('refreshBtn');
+  if (_rb) _rb.style.display = 'none';
+  // Also drop the Share button — it depends on the local /api/share endpoint.
+  const _sb = document.getElementById('shareBtn');
+  if (_sb) _sb.style.display = 'none';
+}
 
 // ---------- Share modal (owner side) ----------
 const shareModal = document.getElementById('shareModal');
