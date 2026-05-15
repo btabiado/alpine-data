@@ -335,22 +335,24 @@ def test_coin_metrics_eth_whale_metrics_get_returns_none():
 
 
 def test_coin_metrics_eth_whale_metrics_partial_metrics():
-    """Mock 3 of 4 metrics populated. The missing metric should be ABSENT from
-    the output (not present as None or empty list)."""
+    """Mock 2 of 3 metrics populated. The missing metric should be ABSENT from
+    the output (not present as None or empty list).
+
+    TxTfrValAdjUSD was dropped from the metrics list in 815238e / followup
+    because it's paid-only and poisons the whole batch with 403 when free
+    callers request it. Only AdrActCnt / TxCnt / SplyCur are requested now."""
     payload = {
         "data": [
             {
                 "time": "2025-01-01T00:00:00.000Z",
                 "AdrActCnt": "500000",
                 "TxCnt": "1200000",
-                "TxTfrValAdjUSD": "8.5e9",
                 # SplyCur intentionally missing
             },
             {
                 "time": "2025-01-02T00:00:00.000Z",
                 "AdrActCnt": "510000",
                 "TxCnt": "1250000",
-                "TxTfrValAdjUSD": "9.0e9",
                 # SplyCur intentionally missing
             },
         ]
@@ -360,11 +362,9 @@ def test_coin_metrics_eth_whale_metrics_partial_metrics():
 
     assert "AdrActCnt" in out
     assert "TxCnt" in out
-    assert "TxTfrValAdjUSD" in out
     assert "SplyCur" not in out  # missing metric absent, not None / not [].
     assert "fetched_at" in out
 
     assert len(out["AdrActCnt"]) == 2
     assert out["AdrActCnt"][0] == {"date": "2025-01-01", "value": 500_000.0}
     assert out["TxCnt"][1] == {"date": "2025-01-02", "value": 1_250_000.0}
-    assert out["TxTfrValAdjUSD"][0]["value"] == 8.5e9

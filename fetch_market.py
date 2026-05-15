@@ -2038,12 +2038,12 @@ def fetch_social() -> dict:
 def _coin_metrics_headers() -> dict:
     """Auth header for Coin Metrics. If COINMETRICS_API_KEY is set in env,
     return their documented `Authorization: Api-Key <key>` header. If unset,
-    print a one-line stderr hint (so 403s are explained) and fall back to
-    the keyless community-API behavior."""
+    fall back to the keyless community-API tier — most of the basic metrics
+    the dashboard needs (AdrActCnt, TxCnt, SplyCur, PriceUSD) are available
+    keyless. A few advanced metrics (transfer volume USD) are paid-only."""
     import os
     key = os.environ.get("COINMETRICS_API_KEY", "").strip()
     if not key:
-        print("[coin_metrics] no API key set; expecting 403", file=sys.stderr)
         return {}
     return {"Authorization": f"Api-Key {key}"}
 
@@ -2140,11 +2140,19 @@ def coin_metrics_btc_eth_metrics() -> dict:
 
 def coin_metrics_eth_whale_metrics() -> dict:
     """Coin Metrics ETH-only daily series for the Whale tab — active
-    addresses, tx count, USD transfer volume, supply. Tier 1 free.
+    addresses, tx count, supply. Keyless community tier is enough.
 
-    Honors ``COINMETRICS_API_KEY`` env var (sent as ``Authorization:
-    Api-Key <value>``). Falls back to keyless if unset."""
-    metrics = ["AdrActCnt", "TxCnt", "TxTfrValAdjUSD", "SplyCur"]
+    Note: ``TxTfrValAdjUSD`` (USD transfer volume) was originally in the
+    metrics list but it's a paid metric on the community-api tier — and
+    Coin Metrics' API rejects the entire batch with HTTP 403 if even one
+    requested metric is paid, which silently nuked all four series. Now
+    we only request the three free ones. The UI's transfer-volume KPI
+    sources from a different feed (Blockchair / Etherscan).
+
+    Honors ``COINMETRICS_API_KEY`` env var (sent as
+    ``Authorization: Api-Key <value>``) for users on a paid plan;
+    keyless works for the free tier."""
+    metrics = ["AdrActCnt", "TxCnt", "SplyCur"]
     since = (datetime.now(timezone.utc) - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00")
     params = {
         "assets": "eth",
