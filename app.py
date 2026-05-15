@@ -580,20 +580,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
 </div>
 
-<div class="controls">
-  <span class="lbl">Period</span>
-  <button class="btn active" data-period="daily">Daily</button>
-  <button class="btn" data-period="weekly">Weekly</button>
-  <button class="btn" data-period="monthly">Monthly</button>
-  <button class="btn" data-period="yearly">Yearly</button>
-  <span class="lbl" style="margin-left:14px">Timeframe</span>
-  <button class="btn" data-range="3m">3M</button>
-  <button class="btn" data-range="6m">6M</button>
-  <button class="btn" data-range="1y">1Y</button>
-  <button class="btn" data-range="2y">2Y</button>
-  <button class="btn" data-range="3y">3Y</button>
-  <button class="btn active" data-range="all">All</button>
-</div>
+<!-- Global Period + Timeframe header bar removed: it was clutter on tabs
+     where it didn't drive content meaningfully (Overview/Signals/Stocks/POC
+     /Research/DeFi never read it; ETF/Futures/Whale defaults work fine).
+     state.period ('daily') and state.range ('all') defaults flow through
+     to the remaining renderers silently. Per-chart Range / Timeframe /
+     Compare-window controls (macro overlay, POC overlay, fund compare,
+     cohort bin) remain inline on their respective charts. -->
 
 <!-- ============ SHARE MODAL (mint / list / revoke share links) ============ -->
 <!-- ============ CONFIGURE SIGNAL CARDS MODAL ============ -->
@@ -1200,20 +1193,44 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ DeFi TAB ============ -->
   <div id="tab-defi" class="hidden">
+    <!-- 4-card KPI strip (mirrors Whale tab pattern) -->
     <div class="row" id="defiKpis"></div>
+    <!-- Per-chain selector (mirrors Whale BTC/ETH toggle). Default Ethereum;
+         persists to localStorage.defiChain. -->
+    <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;margin-bottom:10px">
+      <span class="lbl" style="margin:0">Chain</span>
+      <button class="btn active" data-defichain="Ethereum">Ethereum</button>
+      <button class="btn" data-defichain="Solana">Solana</button>
+      <button class="btn" data-defichain="Arbitrum">Arbitrum</button>
+      <button class="btn" data-defichain="Base">Base</button>
+    </div>
+    <!-- Per-chain content area: summary + TVL history + top protocols -->
+    <div class="row" id="defiChainSummary" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:10px"></div>
     <div class="grid2">
       <div class="chart-card">
-        <div class="head"><h2>TVL by chain</h2><span class="desc">Top 15 chains · brand colors · green/red border = 24h change direction</span></div>
-        <div class="chart-wrap tall"><canvas id="defiChainsChart"></canvas></div>
-      </div>
-      <div class="chart-card">
-        <div class="head"><h2>TVL history</h2><span class="desc">Ethereum + Solana + Arbitrum + Base, last 365 days</span></div>
+        <div class="head">
+          <h2><span id="defiTvlHistoryTitle">Ethereum</span> TVL history</h2>
+          <span class="desc">Last 365 days · selected chain</span>
+        </div>
         <div class="chart-wrap"><canvas id="defiTvlHistoryChart"></canvas></div>
       </div>
+      <div class="chart-card">
+        <div class="head">
+          <h2>Top protocols on <span id="defiTopProtoTitle">Ethereum</span></h2>
+          <span class="desc">Top 10 by TVL · multi-chain protocols filtered to selected chain</span>
+        </div>
+        <div style="max-height:380px;overflow:auto">
+          <table id="defiChainProtocolsTable">
+            <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
+    <!-- Global tables: protocols (top 15) + yields -->
     <div class="grid2">
       <div class="chart-card">
-        <div class="head"><h2>Top 25 DeFi protocols</h2><span class="desc">By TVL, with 1d/7d/30d %</span></div>
+        <div class="head"><h2>Top 15 DeFi protocols (global)</h2><span class="desc">All chains · by TVL · 1d/7d/30d %</span></div>
         <div style="max-height:380px;overflow:auto">
           <table id="defiProtocolsTable">
             <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
@@ -1229,6 +1246,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <tbody></tbody>
           </table>
         </div>
+      </div>
+    </div>
+    <!-- Optional: bridges (only renders if data present) -->
+    <div class="chart-card hidden" id="defiBridgesCard">
+      <div class="head"><h2>Top bridges by volume</h2><span class="desc">DefiLlama bridge volume</span></div>
+      <div style="max-height:300px;overflow:auto">
+        <table id="defiBridgesTable">
+          <thead><tr><th>#</th><th>Bridge</th><th>24h volume</th><th>7d volume</th></tr></thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -1550,7 +1577,14 @@ if (IS_SHARE) {
 const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30', macroRange:'1Y', cohortBin:'month',
   // Per-tab asset toggle for the Whale tab (independent of the global asset
   // selector). Persisted to localStorage so the chosen view sticks.
-  whaleAsset: (typeof localStorage !== 'undefined' && localStorage.getItem('whaleAsset') === 'eth') ? 'eth' : 'btc' };
+  whaleAsset: (typeof localStorage !== 'undefined' && localStorage.getItem('whaleAsset') === 'eth') ? 'eth' : 'btc',
+  // Per-tab chain selector for the DeFi tab. One of Ethereum / Solana /
+  // Arbitrum / Base (the 4 chains we have tvl_history for). Default Ethereum.
+  defiChain: (function(){
+    if (typeof localStorage === 'undefined') return 'Ethereum';
+    const v = localStorage.getItem('defiChain');
+    return ['Ethereum','Solana','Arbitrum','Base'].includes(v) ? v : 'Ethereum';
+  })() };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -3547,151 +3581,47 @@ document.querySelectorAll('.btn[data-mktsort]').forEach(b =>
 );
 
 // ---------- DeFi tab ----------
+// Brand colors for the 4 chains we render per-chain content for. Module-
+// scope so renderDefi() and renderDefiChainSection() can share.
+const DEFI_CHAIN_COLORS = {
+  'Ethereum': '#627eea',
+  'Solana':   '#14f195',
+  'Arbitrum': '#28a0f0',
+  'Base':     '#0052ff',
+};
+
 function renderDefi(){
   const defi = (DATA.market || {}).defi || {};
   const llama = (DATA.market || {}).defillama || {};
   const chains = defi.chains || [];
   const protocols = defi.protocols || [];
   const yields = defi.yields_stablecoin || [];
-  const tvlHistory = defi.tvl_history || {};
+  const bridges = ((defi.bridges || {}).top_bridges) || [];
 
-  // KPIs
+  // ---- 4-card KPI strip (mirrors Whale tab layout) ----
   const totalTvl = chains.reduce((s, c) => s + (c.tvl_usd || 0), 0);
-  const ethTvl = chains.find(c => c.name === 'Ethereum')?.tvl_usd || 0;
-  const solTvl = chains.find(c => c.name === 'Solana')?.tvl_usd || 0;
+  const stable7d = llama.stablecoin_7d_change_usd;
+  const stable7dStr = (stable7d == null)
+    ? '—'
+    : `7d ${stable7d>=0?'+':''}${fmtUSD(stable7d,'auto')}`;
   const items = [
-    {label: 'Total DeFi TVL', val: fmtUSD(totalTvl, 'auto'), sub: `${chains.length} chains tracked`},
-    {label: 'Ethereum TVL', val: fmtUSD(ethTvl, 'auto'), sub: `${((ethTvl/totalTvl)*100).toFixed(1)}% share`},
-    {label: 'Solana TVL', val: fmtUSD(solTvl, 'auto'), sub: `${((solTvl/totalTvl)*100).toFixed(1)}% share`},
-    {label: 'Stablecoin mcap', val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: `7d ${llama.stablecoin_7d_change_usd>=0?'+':''}${fmtUSD(llama.stablecoin_7d_change_usd,'auto')}`},
-    {label: 'DEX 24h volume', val: fmtUSD(llama.dex_volume_24h_usd, 'auto')},
-    {label: 'Protocol fees 24h', val: fmtUSD(llama.fees_24h_usd, 'auto')},
+    {label: 'Stablecoin mcap',  val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: stable7dStr},
+    {label: 'DEX 24h volume',   val: fmtUSD(llama.dex_volume_24h_usd,  'auto'), sub: 'DefiLlama'},
+    {label: 'Protocol fees 24h',val: fmtUSD(llama.fees_24h_usd,        'auto'), sub: 'DefiLlama'},
+    {label: 'Total DeFi TVL',   val: fmtUSD(totalTvl,                  'auto'), sub: `${chains.length} chains`},
   ];
   document.getElementById('defiKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
+    `<div class="card"><h3>${escapeHtml(i.label)}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${escapeHtml(i.sub)}</div>`:''}</div>`
   ).join('');
 
-  // Chains bar chart (top 15)
-  // Per-chain brand colors. Falls back to a vivid accent palette for chains
-  // not in the map. Replaces the prior gray-when-no-1d-change look — every
-  // bar is now visually distinct so the user can identify chains at a glance.
-  const CHAIN_COLORS = {
-    'Ethereum':       '#627eea',
-    'Solana':         '#14f195',
-    'BSC':            '#f3ba2f',
-    'Binance':        '#f3ba2f',
-    'Bitcoin':        '#f7931a',
-    'Tron':           '#ff0013',
-    'Arbitrum':       '#28a0f0',
-    'Hyperliquid L1': '#5eead4',
-    'Hyperliquid':    '#5eead4',
-    'Provenance':     '#8b5cf6',
-    'Polygon':        '#8247e5',
-    'MegaETH':        '#94a3b8',
-    'Avalanche':      '#e84142',
-    'Plasma':         '#a78bfa',
-    'Sui':            '#4da2ff',
-    'Monad':          '#7c3aed',
-    'Base':           '#0052ff',
-    'Optimism':       '#ff0420',
-    'OP Mainnet':     '#ff0420',
-    'Aptos':          '#06b6d4',
-    'Sei':            '#9333ea',
-    'Cardano':        '#0033ad',
-    'Cosmos':         '#2e3148',
-    'Cronos':         '#002d74',
-    'Fantom':         '#1969ff',
-    'Mantle':         '#22c55e',
-    'Linea':          '#61dfff',
-    'zkSync':         '#4e529a',
-    'Starknet':       '#ec4899',
-    'Bittensor':      '#ec4899',
-    'Stacks':         '#5546ff',
-    'Bera':           '#d97706',
-    'Berachain':      '#d97706',
-  };
-  const FALLBACK_PALETTE = ['#a78bfa','#f59e0b','#06b6d4','#ec4899','#84cc16','#10b981','#3b82f6','#f43f5e','#eab308','#22c55e'];
-  destroy('defiChains');
-  const top15 = chains.slice(0, 15);
-  charts.defiChains = new Chart(document.getElementById('defiChainsChart'), {
-    type:'bar',
-    data:{
-      labels: top15.map(c => c.name),
-      datasets: [{
-        data: top15.map(c => c.tvl_usd || 0),
-        backgroundColor: top15.map((c, i) =>
-          CHAIN_COLORS[c.name] || FALLBACK_PALETTE[i % FALLBACK_PALETTE.length]
-        ),
-        // Highlight 24h direction via thin border instead of full-bar tint —
-        // user keeps the brand-color identification AND the up/down signal.
-        borderColor: top15.map(c => {
-          const ch = c.change_1d_pct;
-          if (ch == null) return 'transparent';
-          return ch >= 0 ? '#22c55e' : '#ef4444';
-        }),
-        borderWidth: top15.map(c => c.change_1d_pct == null ? 0 : 2),
-      }],
-    },
-    options: {
-      indexAxis: 'y',
-      responsive: true, maintainAspectRatio: false,
-      plugins: {legend:{display:false}, tooltip:{callbacks:{label: ctx => {
-        const c = top15[ctx.dataIndex];
-        const ch = c.change_1d_pct;
-        const chStr = (ch == null) ? '—' : `${ch>=0?'+':''}${ch.toFixed(2)}%`;
-        return `TVL ${fmtUSD(ctx.parsed.x,'auto')} (1d ${chStr})`;
-      }}}},
-      scales: {
-        x:{ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{color:'#1f2533'}},
-        y:{ticks:{color:'#e6e8ee'}, grid:{display:false}},
-      },
-    },
-  });
+  // ---- Per-chain section (TVL history + summary + top protocols on chain) ----
+  renderDefiChainSection();
 
-  // TVL history (4 chains)
-  destroy('defiTvlHistory');
-  const palette = {Ethereum:'#627eea', Solana:'#9945FF', Arbitrum:'#28a0f0', Base:'#0052ff'};
-  const activeChains = Object.keys(tvlHistory).filter(k => tvlHistory[k].length);
-  // Build union of dates across all active chains so an empty Ethereum series
-  // doesn't strip x-axis labels from the rest of the chart.
-  const dateSet = new Set();
-  activeChains.forEach(chain => {
-    tvlHistory[chain].forEach(p => dateSet.add(p.date));
-  });
-  const labels = Array.from(dateSet).sort();
-  const datasets = activeChains.map(chain => {
-    const byDate = {};
-    tvlHistory[chain].forEach(p => { byDate[p.date] = p.tvl_usd; });
-    return {
-      label: chain,
-      data: labels.map(d => (d in byDate ? byDate[d] : null)),
-      borderColor: palette[chain] || '#a78bfa',
-      backgroundColor: 'transparent',
-      pointRadius: 0,
-      borderWidth: 1.8,
-      tension: 0.2,
-      spanGaps: true,
-    };
-  });
-  if (datasets.length) {
-    charts.defiTvlHistory = new Chart(document.getElementById('defiTvlHistoryChart'), {
-      type:'line',
-      data:{labels, datasets},
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{labels:{color:'#e6e8ee'}}, tooltip:{mode:'index', intersect:false, callbacks:{label: ctx => `${ctx.dataset.label}: ${fmtUSD(ctx.parsed.y,'auto')}`}}},
-        scales:{
-          x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
-          y:{ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{color:'#1f2533'}},
-        },
-      },
-    });
-  }
-
-  // Protocols table
+  // ---- Global protocols table (top 15, shrunk from 25) ----
   const protoBody = document.querySelector('#defiProtocolsTable tbody');
   if (protoBody) {
-    protoBody.innerHTML = protocols.map((p, i) => {
+    const top15 = protocols.slice(0, 15);
+    protoBody.innerHTML = top15.map((p, i) => {
       const dir = v => v == null ? 'amber' : v >= 0 ? 'green' : 'red';
       const pct = v => v == null ? '—' : (v>=0?'+':'') + v.toFixed(2) + '%';
       return `<tr>
@@ -3706,7 +3636,7 @@ function renderDefi(){
     }).join('');
   }
 
-  // Yields table
+  // ---- Yields table ----
   const yieldsBody = document.querySelector('#defiYieldsTable tbody');
   if (yieldsBody) {
     yieldsBody.innerHTML = yields.map(y => `<tr>
@@ -3715,6 +3645,121 @@ function renderDefi(){
       <td>${fmtUSD(y.tvl_usd,'auto')}</td>
       <td class="${(y.apy_pct||0)>=4?'green':(y.apy_pct||0)>=1?'amber':'red'}">${(y.apy_pct||0).toFixed(2)}%</td>
     </tr>`).join('');
+  }
+
+  // ---- Optional bridges card (hidden when empty) ----
+  const bridgesCard = document.getElementById('defiBridgesCard');
+  const bridgesBody = document.querySelector('#defiBridgesTable tbody');
+  if (bridgesCard && bridgesBody) {
+    if (bridges.length) {
+      bridgesCard.classList.remove('hidden');
+      bridgesBody.innerHTML = bridges.slice(0, 15).map((b, i) => `<tr>
+        <td style="color:var(--muted)">${i+1}</td>
+        <td><strong>${escapeHtml(b.name||b.chain||'')}</strong></td>
+        <td>${fmtUSD(b.volume_24h_usd ?? b.volume_24h ?? b.volume_usd_24h, 'auto')}</td>
+        <td>${fmtUSD(b.volume_7d_usd  ?? b.volume_7d  ?? b.volume_usd_7d,  'auto')}</td>
+      </tr>`).join('');
+    } else {
+      bridgesCard.classList.add('hidden');
+      bridgesBody.innerHTML = '';
+    }
+  }
+}
+
+// Per-chain renderer. Drives chain summary cards, TVL-history line chart,
+// and top-10 protocols on the selected chain. Called by renderDefi() on tab
+// open AND by the chain-selector click handler, so toggling between chains
+// only refreshes this section (not the KPI strip or global tables).
+function renderDefiChainSection(){
+  const defi = (DATA.market || {}).defi || {};
+  const chains = defi.chains || [];
+  const protocols = defi.protocols || [];
+  const tvlHistory = defi.tvl_history || {};
+  const selected = state.defiChain || 'Ethereum';
+  const totalTvl = chains.reduce((s, c) => s + (c.tvl_usd || 0), 0);
+
+  // Chain summary cards: TVL, share, 1d / 7d / 30d change
+  const chainEntry = chains.find(c => c.name === selected) || {};
+  const tvl = chainEntry.tvl_usd || 0;
+  const share = totalTvl > 0 ? (tvl / totalTvl) * 100 : 0;
+  const pctCardHtml = v => {
+    if (v == null) return '<div class="v">—</div>';
+    const cls = v >= 0 ? 'green' : 'red';
+    return `<div class="v ${cls}">${v>=0?'+':''}${v.toFixed(2)}%</div>`;
+  };
+  const summaryItems = [
+    {label: `${selected} TVL`, html: `<div class="v">${fmtUSD(tvl, 'auto')}</div>`, sub: `${share.toFixed(1)}% of global`},
+    {label: '1d change',       html: pctCardHtml(chainEntry.change_1d_pct),         sub: '24-hour'},
+    {label: '7d change',       html: pctCardHtml(chainEntry.change_7d_pct),         sub: 'weekly'},
+    {label: '30d change',      html: pctCardHtml(chainEntry.change_1m_pct),         sub: 'monthly'},
+  ];
+  const sumHost = document.getElementById('defiChainSummary');
+  if (sumHost) {
+    sumHost.innerHTML = summaryItems.map(i =>
+      `<div class="card"><h3>${escapeHtml(i.label)}</h3>${i.html}<div class="sub">${escapeHtml(i.sub)}</div></div>`
+    ).join('');
+  }
+
+  // Section titles
+  const titleA = document.getElementById('defiTvlHistoryTitle');
+  const titleB = document.getElementById('defiTopProtoTitle');
+  if (titleA) titleA.textContent = selected;
+  if (titleB) titleB.textContent = selected;
+
+  // TVL history line chart — single-chain
+  destroy('defiTvlHistory');
+  const series = tvlHistory[selected] || [];
+  if (series.length) {
+    const color = DEFI_CHAIN_COLORS[selected] || '#a78bfa';
+    charts.defiTvlHistory = new Chart(document.getElementById('defiTvlHistoryChart'), {
+      type:'line',
+      data:{
+        labels: series.map(p => p.date),
+        datasets: [{
+          label: selected,
+          data: series.map(p => p.tvl_usd),
+          borderColor: color,
+          backgroundColor: color + '22',
+          pointRadius: 0,
+          borderWidth: 1.8,
+          tension: 0.2,
+          fill: true,
+        }],
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false}, tooltip:{mode:'index', intersect:false, callbacks:{label: ctx => `${ctx.dataset.label}: ${fmtUSD(ctx.parsed.y,'auto')}`}}},
+        scales:{
+          x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
+          y:{ticks:{color:'#8a93a6', callback:v=>fmtUSD(v,'auto')}, grid:{color:'#1f2533'}},
+        },
+      },
+    });
+  }
+
+  // Top 10 protocols on the selected chain — filter via chains.includes().
+  // TVL shown is the protocol's global TVL (DefiLlama doesn't break out per-
+  // chain TVL in this payload); this surfaces which protocols touch this
+  // chain ranked by overall scale.
+  const chainProtoBody = document.querySelector('#defiChainProtocolsTable tbody');
+  if (chainProtoBody) {
+    const filtered = protocols.filter(p => Array.isArray(p.chains) && p.chains.includes(selected)).slice(0, 10);
+    if (filtered.length) {
+      chainProtoBody.innerHTML = filtered.map((p, i) => {
+        const dir = v => v == null ? 'amber' : v >= 0 ? 'green' : 'red';
+        const pct = v => v == null ? '—' : (v>=0?'+':'') + v.toFixed(2) + '%';
+        return `<tr>
+          <td style="color:var(--muted)">${i+1}</td>
+          <td><strong>${escapeHtml(p.name||'')}</strong></td>
+          <td><span class="sub" style="color:var(--muted);font-size:11px">${escapeHtml(p.category||'')}</span></td>
+          <td>${fmtUSD(p.tvl_usd,'auto')}</td>
+          <td class="${dir(p.change_1d_pct)}">${pct(p.change_1d_pct)}</td>
+          <td class="${dir(p.change_7d_pct)}">${pct(p.change_7d_pct)}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      chainProtoBody.innerHTML = `<tr><td colspan="6" class="sub" style="color:var(--muted);padding:12px">No protocols found for ${escapeHtml(selected)}.</td></tr>`;
+    }
   }
 }
 
@@ -5554,6 +5599,20 @@ document.querySelectorAll('.btn[data-whaleasset]').forEach(b =>
 // Sync the active toggle to the persisted whaleAsset on initial load.
 setActive('whaleasset', state.whaleAsset);
 
+// DeFi tab chain selector (Ethereum / Solana / Arbitrum / Base) — persists
+// to localStorage.defiChain. Only re-renders the per-chain section so the
+// rest of the tab stays in place.
+document.querySelectorAll('.btn[data-defichain]').forEach(b =>
+  b.addEventListener('click', () => {
+    state.defiChain = b.dataset.defichain;
+    if (typeof localStorage !== 'undefined') localStorage.setItem('defiChain', state.defiChain);
+    setActive('defichain', state.defiChain);
+    renderDefiChainSection();
+  })
+);
+// Sync active toggle to persisted defiChain on initial load.
+setActive('defichain', state.defiChain);
+
 // ---------- Chat dock ----------
 const chatDock = document.getElementById('chatDock');
 const chatFab  = document.getElementById('chatFab');
@@ -6034,8 +6093,186 @@ if (IS_SHARE) {
 
 // ============ UNIVERSAL SYMBOL SEARCH (header → consolidated modal) ============
 // Searches: stocks_signals, signals_top20, poc_top, news, cc_news sentiment.
-// Renders only the sections that match.
-function lookupSymbol(query){
+// Renders only the sections that match. On cache miss, falls back to a live
+// CryptoCompare browser fetch (CORS-ok) so users can look up any crypto.
+
+// --- live crypto helpers (cache-miss fallback for lookupSymbol) ---
+async function liveCryptoLookup(symbol){
+  const sym = String(symbol || '').toUpperCase();
+  if (!sym) throw new Error('empty symbol');
+  const url = 'https://min-api.cryptocompare.com/data/v2/histoday?fsym=' +
+              encodeURIComponent(sym) + '&tsym=USD&limit=180';
+  const resp = await fetch(url, { method: 'GET' });
+  if (!resp.ok) throw new Error('http ' + resp.status);
+  const j = await resp.json();
+  if (!j || j.Response !== 'Success' || !j.Data || !Array.isArray(j.Data.Data)){
+    throw new Error('non-success response');
+  }
+  const rows = j.Data.Data
+    .filter(r => r && typeof r.close === 'number' && r.close > 0)
+    .map(r => ({
+      time: r.time,
+      close: Number(r.close),
+      volumefrom: Number(r.volumefrom) || 0,
+      volumeto: Number(r.volumeto) || 0,
+    }));
+  if (rows.length < 10) throw new Error('not enough data');
+  return rows;
+}
+
+function liveComputePOC(rows){
+  // Bin closes into 60 buckets by price range, weighted by volumeto.
+  const closes = rows.map(r => r.close);
+  const vols = rows.map(r => r.volumeto || 0);
+  const minP = Math.min.apply(null, closes);
+  const maxP = Math.max.apply(null, closes);
+  const range = maxP - minP || 1;
+  const N = 60;
+  const buckets = new Array(N).fill(0);
+  for (let i = 0; i < closes.length; i++){
+    let idx = Math.floor(((closes[i] - minP) / range) * N);
+    if (idx >= N) idx = N - 1;
+    if (idx < 0) idx = 0;
+    buckets[idx] += vols[i];
+  }
+  let pocIdx = 0;
+  for (let i = 1; i < N; i++) if (buckets[i] > buckets[pocIdx]) pocIdx = i;
+  const totalVol = buckets.reduce((a, b) => a + b, 0);
+  // Value area = bins around POC capturing ~70% of volume.
+  let lo = pocIdx, hi = pocIdx, acc = buckets[pocIdx];
+  const target = totalVol * 0.70;
+  while (acc < target && (lo > 0 || hi < N - 1)){
+    const left  = lo > 0       ? buckets[lo - 1] : -1;
+    const right = hi < N - 1   ? buckets[hi + 1] : -1;
+    if (right >= left){ hi += 1; acc += buckets[hi]; }
+    else { lo -= 1; acc += buckets[lo]; }
+  }
+  const bucketPrice = (i) => minP + (i + 0.5) * (range / N);
+  return {
+    poc: bucketPrice(pocIdx),
+    valueAreaLow: bucketPrice(lo),
+    valueAreaHigh: bucketPrice(hi),
+    current: closes[closes.length - 1],
+  };
+}
+
+function liveComputeSignal(rows){
+  const closes = rows.map(r => r.close);
+  const n = closes.length;
+  const last = closes[n - 1];
+  const sma = (k) => {
+    if (n < k) return null;
+    let s = 0;
+    for (let i = n - k; i < n; i++) s += closes[i];
+    return s / k;
+  };
+  const sma50 = sma(50);
+  const sma200 = sma(200);
+  const mom5 = n > 5 ? ((last - closes[n - 6]) / closes[n - 6]) * 100 : 0;
+  let rsi = null;
+  if (n >= 15){
+    let gains = 0, losses = 0;
+    for (let i = n - 14; i < n; i++){
+      const d = closes[i] - closes[i - 1];
+      if (d >= 0) gains += d; else losses -= d;
+    }
+    const avgG = gains / 14, avgL = losses / 14;
+    if (avgL === 0) rsi = 100;
+    else { const rs = avgG / avgL; rsi = 100 - (100 / (1 + rs)); }
+  }
+  let score = 0;
+  if (sma50 != null) score += (last > sma50 ? 20 : -20);
+  if (sma200 != null) score += (last > sma200 ? 20 : -20);
+  score += Math.max(-10, Math.min(10, mom5));
+  if (rsi != null){ if (rsi > 70) score -= 10; else if (rsi < 30) score += 10; }
+  if (sma50 != null && sma200 != null) score += (sma50 > sma200 ? 10 : -10);
+  score = Math.max(-100, Math.min(100, Math.round(score)));
+  let label;
+  if (score >= 50) label = 'STRONG BUY';
+  else if (score >= 20) label = 'BUY';
+  else if (score <= -50) label = 'STRONG SELL';
+  else if (score <= -20) label = 'SELL';
+  else label = 'HOLD';
+  return { score, label, sma50, sma200, mom5, rsi, last };
+}
+
+function liveSignalColor(label){
+  if (label === 'STRONG BUY') return '#16a34a';
+  if (label === 'BUY') return '#22c55e';
+  if (label === 'STRONG SELL') return '#b91c1c';
+  if (label === 'SELL') return '#ef4444';
+  return '#f59e0b';
+}
+
+function liveFmtUsd(v){
+  if (v == null || !isFinite(v)) return '—';
+  const a = Math.abs(v);
+  if (a >= 1000) return '$' + v.toLocaleString(undefined, {maximumFractionDigits: 2});
+  if (a >= 1)    return '$' + v.toFixed(2);
+  if (a >= 0.01) return '$' + v.toFixed(4);
+  return '$' + v.toPrecision(3);
+}
+
+function liveLooksLikeStock(sym){
+  // Crude: 3-4 uppercase A-Z, no digits. Only used after crypto fetch already failed.
+  return /^[A-Z]{3,4}$/.test(sym);
+}
+
+function renderLiveCryptoSection(sym, rows){
+  const sig = liveComputeSignal(rows);
+  const poc = liveComputePOC(rows);
+  const closes = rows.map(r => r.close);
+  const n = closes.length;
+  const last = closes[n - 1];
+  const ch5  = n > 5  ? ((last - closes[n - 6])  / closes[n - 6])  * 100 : null;
+  const ch30 = n > 30 ? ((last - closes[n - 31]) / closes[n - 31]) * 100 : null;
+  const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const sparkVals = closes.slice(-30);
+  const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
+  const spark = renderSparkline(sparkVals, sparkUp, 160, 36);
+  const pocDistPct = (poc.current && poc.poc) ? ((poc.current - poc.poc) / poc.poc) * 100 : null;
+  const color = liveSignalColor(sig.label);
+  return (
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      '<div class="sub" style="font-size:12px;color:var(--muted)">(live from CryptoCompare)</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px">' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">Signal</div>' +
+        '<div style="font-size:20px;font-weight:700;color:' + color + ';margin-top:4px">' + escapeHtml(sig.label) + '</div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted)">score ' + sig.score + ' / 100' +
+          (sig.rsi != null ? ' · RSI ' + sig.rsi.toFixed(0) : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">Price</div>' +
+        '<div style="font-size:18px;font-weight:700;margin-top:4px">' + escapeHtml(liveFmtUsd(last)) + '</div>' +
+        '<div style="font-size:11px;margin-top:2px">' +
+          '<span style="color:' + pctColor(ch5)  + '">5d '  + escapeHtml(fmtPct(ch5))  + '</span> · ' +
+          '<span style="color:' + pctColor(ch30) + '">30d ' + escapeHtml(fmtPct(ch30)) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">POC (180d)</div>' +
+        '<div style="font-size:14px;font-weight:600;margin-top:4px">' + escapeHtml(liveFmtUsd(poc.poc)) + '</div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted)">' +
+          'VA ' + escapeHtml(liveFmtUsd(poc.valueAreaLow)) + ' &ndash; ' + escapeHtml(liveFmtUsd(poc.valueAreaHigh)) +
+        '</div>' +
+        '<div style="font-size:11px;margin-top:2px;color:' + pctColor(pocDistPct) + '">' +
+          'current vs POC ' + escapeHtml(fmtPct(pocDistPct)) +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    (spark ? '<div style="margin-top:10px"><div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">30d sparkline</div>' + spark + '</div>' : '') +
+    '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">' +
+      'Live fetch &mdash; not cached. Use the dashboard&rsquo;s signals/POC tabs for full historical context.' +
+    '</div>'
+  );
+}
+
+async function lookupSymbol(query){
   const raw = String(query == null ? '' : query).trim();
   if (!raw) return;
   const sym = raw.toUpperCase();
@@ -6080,12 +6317,34 @@ function lookupSymbol(query){
   title.textContent = displayName ? (sym + ' · ' + displayName) : sym;
 
   if (!hasAny){
+    // No cached match — show spinner immediately, then try live CryptoCompare.
+    title.textContent = sym;
     body.innerHTML =
       '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
-        'No data for <strong>' + escapeHtml(sym) + '</strong>. ' +
-        'Try BTC, ETH, NVDA, SOL, AAPL, etc.' +
+        'Fetching live data for <strong>' + escapeHtml(sym) + '</strong>&hellip;' +
       '</div>';
     modal.classList.remove('hidden');
+    // Track this request so a fast follow-up doesn't render stale results.
+    const reqId = (window._liveLookupReq = (window._liveLookupReq || 0) + 1);
+    try {
+      const rows = await liveCryptoLookup(sym);
+      if (reqId !== window._liveLookupReq) return; // superseded
+      body.innerHTML = renderLiveCryptoSection(sym, rows);
+    } catch (err){
+      if (reqId !== window._liveLookupReq) return; // superseded
+      if (liveLooksLikeStock(sym)){
+        body.innerHTML =
+          '<div class="sub" style="color:var(--muted);padding:14px;text-align:center;line-height:1.5">' +
+            'Stock symbols outside the top-20 active list aren&rsquo;t available on the public mirror.<br>' +
+            'Run the dashboard locally with <code>python server.py</code> for live stock lookup (coming soon).' +
+          '</div>';
+      } else {
+        body.innerHTML =
+          '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
+            'Live lookup failed for <strong>' + escapeHtml(sym) + '</strong> &mdash; check ticker or try again.' +
+          '</div>';
+      }
+    }
     return;
   }
 

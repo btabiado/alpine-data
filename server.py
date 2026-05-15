@@ -33,6 +33,7 @@ import threading
 import time
 import traceback
 from datetime import datetime, timezone
+from functools import lru_cache
 from typing import Any
 
 from flask import Flask, Response, jsonify, request
@@ -698,6 +699,151 @@ def api_chat() -> Response:
     except Exception:
         traceback.print_exc()
         return jsonify({"ok": False, "error": "Chat service error — check server logs"}), 500
+
+
+# Regex used to validate the ticker portion of /api/symbol/<symbol>. Yahoo
+# tickers can run up to ~10 chars (e.g. BRK.A is 5 incl. punctuation, but we
+# restrict to letters to keep the surface area tight — exchange-suffix tickers
+# like "9988.HK" aren't supported here). Crypto symbols are uppercase 3-6
+# letters typically, with longer outliers (SHIB=4, AVAX=4, MATIC=5).
+_SYMBOL_RE = re.compile(r"^[A-Za-z]{1,10}$")
+
+
+def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
+    """Run the actual crypto-then-stock lookup. Returns (status_code, body).
+    Pure function so it can be wrapped by the lru_cache helper below."""
+    sym = symbol.upper()
+
+    # --- Crypto branch (CryptoCompare histoday) ---
+    try:
+        crypto = fetch_market.cryptocompare_market(sym, days=180) or {}
+    except Exception as e:
+        print(f"[symbol_lookup] crypto fetch failed for {sym}: {type(e).__name__}: {e}",
+              file=sys.stderr)
+        crypto = {"price": [], "volume": []}
+
+    prices = crypto.get("price") or []
+    volumes = crypto.get("volume") or []
+    if prices and volumes:
+        # Convert {date,value} pair into the {date, close, volume} shape that
+        # compute_stock_signal expects so we can reuse the same scorer for
+        # both asset classes.
+        v_by = {v.get("date"): v.get("value") for v in volumes if v.get("date") is not None}
+        history = [
+            {"date": p.get("date"),
+             "close": float(p.get("value") or 0),
+             "volume": float(v_by.get(p.get("date")) or 0)}
+            for p in prices
+            if p.get("date") and p.get("value")
+        ]
+        signal = fetch_market.compute_stock_signal(history)
+        d30 = fetch_market.point_of_control(prices, volumes, lookback_days=30, bins=60)
+        d90 = fetch_market.point_of_control(prices, volumes, lookback_days=90, bins=80)
+        d180 = fetch_market.point_of_control(prices, volumes, lookback_days=180, bins=100)
+        naked = fetch_market.naked_pocs(prices, volumes, lookback_days=180)
+        migration = fetch_market.poc_migration_series(prices, volumes)
+        price = history[-1]["close"] if history else None
+        return 200, {
+            "symbol":     sym,
+            "kind":       "crypto",
+            "name":       sym,
+            "price":      price,
+            "score":      signal.get("score"),
+            "label":      signal.get("label"),
+            "components": signal.get("components") or [],
+            "history":    signal.get("history") or [],
+            "poc": {
+                "d30":              d30,
+                "d90":              d90,
+                "d180":             d180,
+                "naked":            naked,
+                "migration_series": migration,
+            },
+        }
+
+    # --- Stock branch (Yahoo Finance chart) ---
+    try:
+        history = fetch_market.yahoo_chart_history(sym, range_="6mo") or []
+    except Exception as e:
+        print(f"[symbol_lookup] stock fetch failed for {sym}: {type(e).__name__}: {e}",
+              file=sys.stderr)
+        history = []
+
+    if history:
+        signal = fetch_market.compute_stock_signal(history)
+        # Re-shape OHLC into {date,value} pairs so the existing POC helpers
+        # (which were authored against the crypto market shape) can be reused.
+        prices = [{"date": h["date"], "value": float(h["close"])}
+                  for h in history if h.get("date") and h.get("close") is not None]
+        volumes = [{"date": h["date"], "value": float(h.get("volume") or 0)}
+                   for h in history if h.get("date")]
+        d30 = fetch_market.point_of_control(prices, volumes, lookback_days=30, bins=60)
+        d90 = fetch_market.point_of_control(prices, volumes, lookback_days=90, bins=80)
+        d180 = fetch_market.point_of_control(prices, volumes, lookback_days=180, bins=100)
+        naked = fetch_market.naked_pocs(prices, volumes, lookback_days=180)
+        migration = fetch_market.poc_migration_series(prices, volumes)
+        price = history[-1]["close"] if history else None
+        return 200, {
+            "symbol":     sym,
+            "kind":       "stock",
+            "name":       sym,
+            "price":      price,
+            "score":      signal.get("score"),
+            "label":      signal.get("label"),
+            "components": signal.get("components") or [],
+            "history":    signal.get("history") or [],
+            "poc": {
+                "d30":              d30,
+                "d90":              d90,
+                "d180":             d180,
+                "naked":            naked,
+                "migration_series": migration,
+            },
+        }
+
+    return 404, {"error": "Symbol not found in crypto or US stocks"}
+
+
+@lru_cache(maxsize=64)
+def _symbol_lookup_cached(symbol: str, hour_bucket: int) -> tuple[int, str]:
+    """Hour-bucketed memoization of the symbol lookup.
+
+    The ``hour_bucket`` arg (= ``int(time.time()) // 3600``) is part of the
+    cache key, so each new wall-clock hour gets a fresh fetch and the same
+    symbol queried 50 times within one hour resolves to a single upstream
+    call. Result is serialised to JSON-string up front so we don't return
+    mutable dicts that callers could accidentally mutate across hits.
+    """
+    status, body = _symbol_lookup_compute(symbol)
+    return status, json.dumps(body)
+
+
+@flask_app.route("/api/symbol/<symbol>")
+def api_symbol(symbol: str) -> Response:
+    """Look up signal + POC for any ticker — crypto first, US stock second.
+
+    Yahoo Finance doesn't expose reliable browser CORS, so the dashboard's
+    universal symbol-search box has to round-trip through this endpoint to
+    get a usable result for stock tickers.
+
+    Validation: symbol must match ``[A-Za-z]{1,10}`` — anything else is
+    rejected with 400 before we hit any upstream API. Results are cached
+    per ``(symbol, current-UTC-hour)`` via ``functools.lru_cache(maxsize=64)``,
+    so repeated lookups within an hour don't re-fetch.
+    """
+    if not symbol or not _SYMBOL_RE.match(symbol):
+        return jsonify({"error": "invalid symbol — must match [A-Za-z]{1,10}"}), 400
+    sym = symbol.upper()
+    hour_bucket = int(time.time()) // 3600
+    try:
+        status, body_json = _symbol_lookup_cached(sym, hour_bucket)
+    except Exception as e:
+        # Log the full trace server-side; return a sanitized message so we
+        # don't leak upstream API tokens / SDK internals through error text.
+        traceback.print_exc()
+        print(f"[symbol_lookup] {sym}: {type(e).__name__}: {e}", file=sys.stderr)
+        return jsonify({"error": "lookup failed — check server logs"}), 500
+    return Response(body_json, status=status, mimetype="application/json")
 
 
 @flask_app.route("/healthz")
