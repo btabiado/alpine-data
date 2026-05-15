@@ -1082,7 +1082,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="row" id="defiKpis"></div>
     <div class="grid2">
       <div class="chart-card">
-        <div class="head"><h2>TVL by chain</h2><span class="desc">Top 20 chains, 24h change colored</span></div>
+        <div class="head"><h2>TVL by chain</h2><span class="desc">Top 15 chains · brand colors · green/red border = 24h change direction</span></div>
         <div class="chart-wrap tall"><canvas id="defiChainsChart"></canvas></div>
       </div>
       <div class="chart-card">
@@ -3106,6 +3106,45 @@ function renderDefi(){
   ).join('');
 
   // Chains bar chart (top 15)
+  // Per-chain brand colors. Falls back to a vivid accent palette for chains
+  // not in the map. Replaces the prior gray-when-no-1d-change look — every
+  // bar is now visually distinct so the user can identify chains at a glance.
+  const CHAIN_COLORS = {
+    'Ethereum':       '#627eea',
+    'Solana':         '#14f195',
+    'BSC':            '#f3ba2f',
+    'Binance':        '#f3ba2f',
+    'Bitcoin':        '#f7931a',
+    'Tron':           '#ff0013',
+    'Arbitrum':       '#28a0f0',
+    'Hyperliquid L1': '#5eead4',
+    'Hyperliquid':    '#5eead4',
+    'Provenance':     '#8b5cf6',
+    'Polygon':        '#8247e5',
+    'MegaETH':        '#94a3b8',
+    'Avalanche':      '#e84142',
+    'Plasma':         '#a78bfa',
+    'Sui':            '#4da2ff',
+    'Monad':          '#7c3aed',
+    'Base':           '#0052ff',
+    'Optimism':       '#ff0420',
+    'OP Mainnet':     '#ff0420',
+    'Aptos':          '#06b6d4',
+    'Sei':            '#9333ea',
+    'Cardano':        '#0033ad',
+    'Cosmos':         '#2e3148',
+    'Cronos':         '#002d74',
+    'Fantom':         '#1969ff',
+    'Mantle':         '#22c55e',
+    'Linea':          '#61dfff',
+    'zkSync':         '#4e529a',
+    'Starknet':       '#ec4899',
+    'Bittensor':      '#ec4899',
+    'Stacks':         '#5546ff',
+    'Bera':           '#d97706',
+    'Berachain':      '#d97706',
+  };
+  const FALLBACK_PALETTE = ['#a78bfa','#f59e0b','#06b6d4','#ec4899','#84cc16','#10b981','#3b82f6','#f43f5e','#eab308','#22c55e'];
   destroy('defiChains');
   const top15 = chains.slice(0, 15);
   charts.defiChains = new Chart(document.getElementById('defiChainsChart'), {
@@ -3114,14 +3153,17 @@ function renderDefi(){
       labels: top15.map(c => c.name),
       datasets: [{
         data: top15.map(c => c.tvl_usd || 0),
-        // Treat missing change_1d_pct as neutral grey (not green) so we don't
-        // pretend every chain rose when DeFiLlama hasn't returned a delta yet.
-        backgroundColor: top15.map(c => {
+        backgroundColor: top15.map((c, i) =>
+          CHAIN_COLORS[c.name] || FALLBACK_PALETTE[i % FALLBACK_PALETTE.length]
+        ),
+        // Highlight 24h direction via thin border instead of full-bar tint —
+        // user keeps the brand-color identification AND the up/down signal.
+        borderColor: top15.map(c => {
           const ch = c.change_1d_pct;
-          if (ch == null) return '#475569';   // slate-600 — "no data"
+          if (ch == null) return 'transparent';
           return ch >= 0 ? '#22c55e' : '#ef4444';
         }),
-        borderWidth: 0,
+        borderWidth: top15.map(c => c.change_1d_pct == null ? 0 : 2),
       }],
     },
     options: {
