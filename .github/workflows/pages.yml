@@ -80,7 +80,6 @@ jobs:
           # repo Settings → Secrets and variables → Actions → New repository
           # secret to populate FRED macro + LunarCrush social on public.
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-          LUNARCRUSH_API_KEY: ${{ secrets.LUNARCRUSH_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}

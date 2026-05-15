@@ -33,6 +33,8 @@ def client(tmp_path: Path, monkeypatch):
 
     server.flask_app.config["TESTING"] = True
     with server.flask_app.test_client() as c:
+        # CSRF mitigation in server.py requires this header on POST/DELETE.
+        c.environ_base["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
         yield c
 
 

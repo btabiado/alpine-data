@@ -19,7 +19,6 @@ FUND_NAMES = {
 
     # ETH spot ETFs
     "ETHA": "iShares Ethereum Trust (BlackRock)",
-    "ETH2": "New ETH ETF (col 2 — rename in CSV)",
     "FETH": "Fidelity Ethereum Fund",
     "ETHW": "Bitwise Ethereum ETF",
     "CETH": "21Shares Core Ethereum ETF",

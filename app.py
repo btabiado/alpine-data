@@ -522,6 +522,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .grid2,.grid3{gap:8px !important}
   /* Period-button row on each tab — already tightened above; keep tight */
   .note{font-size:10px;padding:6px 10px;line-height:1.35}
+  /* Mobile a11y: any clickable .btn or chat send button hits 44px regardless
+     of inline padding/font overrides. Inline-flex+center keeps visual size.
+     Covers: #insightsToggle, #configSignalsBtn, #chatClose, [data-pocwin],
+     [data-fundwin], [data-cohortbin], [data-copy], [data-revoke], plus the
+     chat form's submit button (#chatSend) which has no .btn class. */
+  .chat-form button,
+  button.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -1558,10 +1565,10 @@ function renderFundKpis(){
     return `
       <div class="card" style="border-left:3px solid ${FUND_PALETTE[i % FUND_PALETTE.length]}">
         <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
-          <div style="font-weight:700;font-size:14px;letter-spacing:.03em">${f.fund}</div>
+          <div style="font-weight:700;font-size:14px;letter-spacing:.03em">${escapeHtml(f.fund)}</div>
           <div class="sub" style="font-size:10px;color:var(--muted)">${f.share_pct.toFixed(1)}% share</div>
         </div>
-        <div class="sub" style="color:var(--muted);font-size:11px;margin-top:2px;min-height:14px">${f.name||''}</div>
+        <div class="sub" style="color:var(--muted);font-size:11px;margin-top:2px;min-height:14px">${escapeHtml(f.name||'')}</div>
         <div class="v ${flowCls}" style="font-size:18px;margin-top:6px">${fmtSigned(f[winKey]||0)}</div>
         <div class="sub" style="color:var(--muted);font-size:10px">${winLabel} net</div>
         <div style="display:flex;gap:8px;font-size:11px;margin-top:6px;flex-wrap:wrap">
@@ -1651,7 +1658,7 @@ function renderFundCompare(){
 function renderEtfFundTable(){
   const d = etfData(); const tb = document.querySelector('#fundTable tbody');
   if (!d.by_fund || !d.by_fund.length){ tb.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted)">No fund data</td></tr>'; return; }
-  tb.innerHTML = d.by_fund.map(f => `<tr><td>${f.fund}</td><td class="${f.total>=0?'green':'red'}">${fmtSigned(f.total)}</td><td class="${f.last_30d>=0?'green':'red'}">${fmtSigned(f.last_30d)}</td></tr>`).join('');
+  tb.innerHTML = d.by_fund.map(f => `<tr><td>${escapeHtml(f.fund)}</td><td class="${f.total>=0?'green':'red'}">${fmtSigned(f.total)}</td><td class="${f.last_30d>=0?'green':'red'}">${fmtSigned(f.last_30d)}</td></tr>`).join('');
 }
 
 function renderFlow(){
@@ -1970,7 +1977,7 @@ function renderSignalCard(asset, container){
   const compRows = s.components.map(c => {
     const cls = c.contribution > 0 ? 'green' : (c.contribution < 0 ? 'red' : 'amber');
     const sign = (c.contribution>=0?'+':'') + c.contribution;
-    return `<tr><td>${c.name}</td><td>${c.value}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${c.explanation}</td></tr>`;
+    return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
   }).join('');
   // Gauge: -100 to +100, 0 in middle
   const pct = ((s.score + 100) / 200) * 100;
@@ -1979,7 +1986,7 @@ function renderSignalCard(asset, container){
       <div class="head" style="align-items:flex-start">
         <div>
           <h2 style="font-size:15px">${asset.toUpperCase()} signal <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
-          <div class="desc">as of ${s.as_of}</div>
+          <div class="desc">as of ${escapeHtml(s.as_of)}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${s.label}</div>
@@ -1990,7 +1997,7 @@ function renderSignalCard(asset, container){
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
-      <div class="sub" style="margin-top:8px;font-size:11px">${s.disclaimer}</div>
+      <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer)}</div>
     </div>`;
 }
 

@@ -31,6 +31,7 @@ import secrets
 import sys
 import threading
 import time
+import traceback
 from datetime import datetime, timezone
 from typing import Any
 
@@ -46,6 +47,11 @@ PORT = int(os.environ.get("PORT", "8765"))
 REFRESH_MINUTES = int(os.environ.get("REFRESH_MINUTES", "30"))
 
 flask_app = Flask(__name__)
+
+# Cap any single request body at 5MB. Applies globally; the only large body we
+# ever expect is a pasted CSV via /api/upload-csv, and that's well under 1MB
+# even for the full historical Farside table.
+flask_app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024
 
 
 # ---------- HTTP Basic Auth ----------
@@ -170,11 +176,24 @@ def _require_auth():
     return _challenge()
 
 
+# Mutating routes (POST/DELETE) require a custom header that browsers will
+# not add on cross-origin form submissions. Effective lightweight CSRF
+# mitigation — same trick most JSON APIs rely on. The bookmarklet sets this
+# header explicitly so its cross-origin POST from Farside still works.
+@flask_app.before_request
+def _require_csrf_header():
+    if request.method not in ("POST", "DELETE"):
+        return None
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        return None
+    return jsonify({"error": "missing X-Requested-With header"}), 403
+
+
 @flask_app.after_request
 def _cors(resp):
     """Allow the bookmarklet on third-party pages (Farside, SoSoValue) to POST CSVs here."""
     resp.headers["Access-Control-Allow-Origin"] = "*"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    resp.headers["Access-Control-Allow-Headers"] = "Content-Type, X-Requested-With"
     resp.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return resp
 
@@ -464,10 +483,36 @@ def api_upload_csv() -> Response:
     if "date" not in head:
         return jsonify({"ok": False, "error": "first line must contain a 'date' column"}), 400
 
+    # CSV formula-injection guard: a cell that opens with =, +, @, or -
+    # is interpreted as a formula by Excel / Numbers / Sheets. Prefix any
+    # such cell with a single quote so the spreadsheet treats it as text.
+    body = _sanitize_csv_formulas(body)
+
     path = dash.DATA_DIR / f"{asset}_flows.csv"
     path.write_text(body + ("\n" if not body.endswith("\n") else ""))
     rows = max(0, len(body.splitlines()) - 1)
     return jsonify({"ok": True, "rows": rows, "path": str(path.name)})
+
+
+_FORMULA_PREFIXES = ("=", "+", "@", "-")
+
+
+def _sanitize_csv_formulas(body: str) -> str:
+    """Round-trip the CSV body through csv.reader/writer, prefixing any cell
+    that opens with =, +, @, or - with a single quote. Cells already opening
+    with ' are left alone."""
+    reader = csv.reader(io.StringIO(body))
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    for row in reader:
+        cleaned = []
+        for cell in row:
+            if cell and cell[0] in _FORMULA_PREFIXES:
+                cleaned.append("'" + cell)
+            else:
+                cleaned.append(cell)
+        writer.writerow(cleaned)
+    return out.getvalue().rstrip("\n")
 
 
 BOOKMARKLET_JS = """
@@ -506,7 +551,7 @@ BOOKMARKLET_JS = """
   if (url.includes('ethereum') || /\\b(ETHA|FETH|ETHE|ETHW)\\b/.test(tableText)) asset = 'eth';
   if (!confirm(`Send ${lines.length-1} rows to ${asset.toUpperCase()} dashboard?\\nFirst line: ${lines[0].slice(0,80)}\\nLast line:  ${lines[lines.length-1].slice(0,80)}`)) return;
   try {
-    const headers = { 'Content-Type': 'text/plain' };
+    const headers = { 'Content-Type': 'text/plain', 'X-Requested-With': 'XMLHttpRequest' };
     if (AUTH) headers['Authorization'] = AUTH;
     const resp = await fetch(`${ENDPOINT}?asset=${asset}`, {
       method: 'POST',
@@ -640,14 +685,19 @@ def api_chat() -> Response:
                 for chunk in chat_mod.stream_answer(question, payload):
                     yield 'data: ' + json.dumps({"text": chunk}) + '\n\n'
                 yield 'data: [DONE]\n\n'
-            except Exception as e:
-                yield 'data: ' + json.dumps({"error": f"{type(e).__name__}: {e}"}) + '\n\n'
+            except Exception:
+                # Don't leak exception text to the client — it can carry the
+                # Anthropic API key from SDK error messages. Log full trace
+                # server-side, return a generic message.
+                traceback.print_exc()
+                yield 'data: ' + json.dumps({"error": "Chat service error — check server logs"}) + '\n\n'
                 yield 'data: [DONE]\n\n'
 
         return Response(gen(), mimetype="text/event-stream",
                         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
+    except Exception:
+        traceback.print_exc()
+        return jsonify({"ok": False, "error": "Chat service error — check server logs"}), 500
 
 
 @flask_app.route("/healthz")

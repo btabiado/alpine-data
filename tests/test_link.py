@@ -72,6 +72,8 @@ def test_signals_compute_all_returns_link_key():
 def test_upload_csv_link_rejected():
     """POST /api/upload-csv?asset=link should be rejected — LINK has no ETF flows."""
     client = flask_app.test_client()
+    # CSRF mitigation in server.py requires this header on POST/DELETE.
+    client.environ_base["HTTP_X_REQUESTED_WITH"] = "XMLHttpRequest"
     resp = client.post(
         "/api/upload-csv?asset=link",
         data=b"date,Total\n2024-01-11,100\n",
