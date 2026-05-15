@@ -1325,6 +1325,13 @@ def point_of_control(price_series: list[dict], volume_series: list[dict],
     val_price = lo + lo_i * step
     vah_price = lo + (hi_i + 1) * step
     current = prices[-1]
+    # Expose buckets + step so the UI can render a horizontal volume profile
+    # histogram inline with each POC card. List ordered low → high. Each entry
+    # is {price: bin-center, volume: cumulative USD volume in that bin}.
+    bucket_list = [
+        {"price": lo + (i + 0.5) * step, "volume": buckets[i]}
+        for i in range(bins)
+    ]
     return {
         "poc": poc_price,
         "val": val_price,
@@ -1336,25 +1343,134 @@ def point_of_control(price_series: list[dict], volume_series: list[dict],
         "price_low": lo,
         "price_high": hi,
         "bin_count": bins,
+        "step": step,
+        "buckets": bucket_list,
         "total_volume_usd": total_vol,
     }
 
 
 def compute_poc_all(market: dict) -> dict:
-    """Compute 30d + 90d POC/VAH/VAL for BTC, ETH, LINK, LTC from the
-    cached market payload's price+volume series. Returns dict shaped:
-      {btc: {"d30": {...}, "d90": {...}}, eth: {...}, ...}
+    """Compute multi-timeframe POC/VAH/VAL + migration + naked POCs per asset.
+    Returns:
+      {btc: {"d30":{...}, "d90":{...}, "d180":{...}, "d365":{...},
+             "migration": {...}, "naked": [...]}, ...}
     Used by app.py during build to attach analytics to the payload."""
     out: dict[str, dict] = {}
+    LOOKBACKS = (("d30", 30, 60), ("d90", 90, 80),
+                 ("d180", 180, 100), ("d365", 365, 120))
     for sym in ("btc", "eth", "link", "ltc"):
         m = (market or {}).get(sym) or {}
         prices = m.get("price") or []
         volumes = m.get("volume") or []
-        d30 = point_of_control(prices, volumes, lookback_days=30, bins=60)
-        d90 = point_of_control(prices, volumes, lookback_days=90, bins=80)
-        if d30 or d90:
-            out[sym] = {"d30": d30, "d90": d90}
+        tfs = {k: point_of_control(prices, volumes, lookback_days=lb, bins=b)
+               for k, lb, b in LOOKBACKS}
+        if any(tfs.values()):
+            out[sym] = {**tfs,
+                        "migration": compute_poc_migration(tfs.get("d30"), tfs.get("d90")),
+                        "naked": naked_pocs(prices, volumes, lookback_days=180)}
     return out
+
+
+def compute_poc_migration(d30: dict | None, d90: dict | None) -> dict | None:
+    """Compare 30d POC vs 90d POC to detect directional value migration.
+    Positive delta = recent volume concentrating ABOVE the structural mean
+    (bullish acceptance — "value is migrating up"). Negative = bearish
+    acceptance. FLAT within ±1%.
+
+    Returns None if either timeframe is missing or 90d POC is zero/invalid.
+    `between_pocs` flags the transition-zone case where current price sits
+    between 30d and 90d POC — often the most actionable read since structural
+    support hasn't caught up to tactical volume formation."""
+    if not d30 or not d90:
+        return None
+    p30, p90 = d30.get("poc"), d90.get("poc")
+    if not p30 or not p90:
+        return None
+    delta = (p30 - p90) / p90 * 100
+    a = abs(delta)
+    direction = "FLAT" if a < 1 else ("UP" if delta > 0 else "DOWN")
+    magnitude = "STRONG" if a >= 5 else ("MEDIUM" if a >= 2 else "WEAK")
+    cur = d30.get("current") or d90.get("current")
+    between = (cur is not None and min(p30, p90) <= cur <= max(p30, p90))
+    if direction == "FLAT":
+        explanation = f"Value stable (Δ {delta:+.2f}%) — 30d and 90d POCs aligned"
+    else:
+        word = "above" if direction == "UP" else "below"
+        explanation = (f"Value migrating {direction} {delta:+.2f}% — "
+                       f"short-term volume concentrating {word} structural mean")
+    if between:
+        explanation += " · price sits BETWEEN POCs (transition zone)"
+    return {"delta_pct": round(delta, 2), "direction": direction,
+            "magnitude": magnitude, "between_pocs": between,
+            "explanation": explanation}
+
+
+def naked_pocs(price_series: list[dict], volume_series: list[dict],
+               lookback_days: int = 180, week_len: int = 7,
+               skip_recent_weeks: int = 2, bins: int = 24,
+               top_n: int = 5) -> list[dict]:
+    """Find recent weekly POCs that price hasn't subsequently traded through.
+
+    Market Profile theory: a POC that hasn't been retested acts as a magnet
+    level — volume concentrated there but no later session has tested it.
+    When price drifts back to a naked POC, expect a reaction.
+
+    Touch approximation (daily close only, no OHLC): a POC is considered
+    "touched" if a consecutive-close pair straddles it:
+        min(close[t-1], close[t]) <= poc <= max(close[t-1], close[t])
+    This misses intra-day wicks, so the function is biased toward MORE
+    naked POCs than reality. Treat output as a candidate set."""
+    if not price_series or not volume_series:
+        return []
+    p_by = {p.get("date"): p.get("value") for p in price_series if p.get("date") and p.get("value")}
+    v_by = {v.get("date"): v.get("value") for v in volume_series if v.get("date") and v.get("value")}
+    common = sorted(set(p_by) & set(v_by))
+    if len(common) < week_len * (skip_recent_weeks + 3):
+        return []
+    common = common[-lookback_days:]
+    prices = [p_by[d] for d in common]
+    vols   = [v_by[d] for d in common]
+    current = prices[-1]
+    # Build weekly POCs newest-to-oldest
+    weeks: list[dict] = []
+    i = len(common)
+    while i - week_len >= 0:
+        seg_p, seg_v = prices[i-week_len:i], vols[i-week_len:i]
+        lo, hi = min(seg_p), max(seg_p)
+        if hi > lo:
+            step = (hi - lo) / bins
+            buckets = [0.0] * bins
+            for p, v in zip(seg_p, seg_v):
+                idx = min(int((p - lo) / step), bins - 1)
+                buckets[idx] += v
+            poc_idx = max(range(bins), key=lambda k: buckets[k])
+            weeks.append({"week_start": common[i-week_len],
+                          "end_idx": i-1,
+                          "poc": lo + (poc_idx + 0.5) * step})
+        i -= week_len
+    # Skip the most recent N weeks (too fresh to have been tested)
+    candidates = weeks[skip_recent_weeks:]
+    naked = []
+    last_idx = len(prices) - 1
+    for w in candidates:
+        poc, s = w["poc"], w["end_idx"]
+        touched = False
+        prev = prices[s]
+        for t in range(s + 1, len(prices)):
+            cur = prices[t]
+            if min(prev, cur) <= poc <= max(prev, cur):
+                touched = True
+                break
+            prev = cur
+        if not touched:
+            naked.append({
+                "poc": round(poc, 2),
+                "week_start": w["week_start"],
+                "days_ago": last_idx - w["end_idx"],
+                "distance_pct": round((current - poc) / poc * 100, 2) if poc else None,
+            })
+    naked.sort(key=lambda x: x["days_ago"])
+    return naked[:top_n]
 
 
 def fetch_social() -> dict:

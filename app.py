@@ -717,7 +717,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="row" id="tradingKpis"></div>
       <div class="grid2">
         <div class="chart-card">
-          <div class="head"><h2>Price &amp; volume <span class="tag" id="tagPrice">BTC</span></h2><span class="desc">Spot price (line) &middot; 24h volume (bars)</span></div>
+          <div class="head" style="align-items:center;gap:10px;flex-wrap:wrap">
+            <h2 style="margin:0">Price &amp; volume <span class="tag" id="tagPrice">BTC</span></h2>
+            <span class="desc" style="flex:1">Spot price (line) &middot; 24h volume (bars)</span>
+            <label style="font-size:11px;display:inline-flex;gap:5px;align-items:center;cursor:pointer">
+              <input type="checkbox" id="pocOverlayToggle"> POC overlay
+            </label>
+            <span id="pocWinChips" style="display:none;gap:4px">
+              <button class="btn" data-pocwin="d30" type="button" style="font-size:10px;padding:3px 8px">30d</button>
+              <button class="btn" data-pocwin="d90" type="button" style="font-size:10px;padding:3px 8px">90d</button>
+            </span>
+          </div>
           <div class="chart-wrap tall"><canvas id="priceChart"></canvas></div>
         </div>
         <div class="chart-card">
@@ -1546,18 +1556,48 @@ function renderTradingKpis(){
   ).join('');
 }
 
+// POC overlay state (Trading-tab price chart). Persisted in localStorage.
+// `on`  — boolean, render POC/VAH/VAL horizontal lines on price chart
+// `win` — 'd30' or 'd90', which timeframe's POC to overlay
+const pocOverlay = {
+  on:  (typeof localStorage !== 'undefined') && localStorage.getItem('tradingShowPoc') === '1',
+  win: ((typeof localStorage !== 'undefined') && localStorage.getItem('tradingPocWin') === 'd30') ? 'd30' : 'd90',
+};
+
+function pocLevelsFor(asset, win){
+  const p = ((DATA.market||{}).poc || {})[asset];
+  if (!p) return null;
+  return p[win] || p.d90 || p.d30 || null;
+}
+
 function renderPriceVol(){
   const a = tradingAssetData(); const c = accentFor(state.asset);
   const price = ra(a.price, 'last');
   const vol = ra(a.volume, 'sum');
   const labels = price.map(r=>r.date);
   destroy('price');
+  const datasets = [
+    {type:'bar', label:'24h volume', data:vol.map(r=>r.value), backgroundColor:'#2a3140', yAxisID:'yVol', borderWidth:0, order:2},
+    {type:'line', label:'Price', data:price.map(r=>r.value), borderColor:c, backgroundColor:c+'22', fill:false, tension:0.15, pointRadius:0, borderWidth:2, yAxisID:'yPrice', order:1},
+  ];
+  // POC overlay: 3 extra constant-y datasets (POC, VAH, VAL) when enabled.
+  // Chart.js doesn't have the annotation plugin loaded so we use the simpler
+  // "horizontal line via flat dataset" approach.
+  if (pocOverlay.on){
+    const lv = pocLevelsFor(state.asset, pocOverlay.win);
+    if (lv && lv.poc != null){
+      const flat = y => labels.map(()=>y);
+      const tag = pocOverlay.win.toUpperCase();
+      datasets.push(
+        {type:'line', label:`POC ${tag}`, data:flat(lv.poc), borderColor:'#ffcc66', borderWidth:1.5, pointRadius:0, fill:false, yAxisID:'yPrice', order:0, spanGaps:true},
+        {type:'line', label:`VAH ${tag}`, data:flat(lv.vah), borderColor:'#8fbf8f', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false, yAxisID:'yPrice', order:0},
+        {type:'line', label:`VAL ${tag}`, data:flat(lv.val), borderColor:'#cf6a6a', borderWidth:1, borderDash:[6,4], pointRadius:0, fill:false, yAxisID:'yPrice', order:0},
+      );
+    }
+  }
   charts.price = new Chart(document.getElementById('priceChart'), {
     type:'bar',
-    data:{labels, datasets:[
-      {type:'bar', label:'24h volume', data:vol.map(r=>r.value), backgroundColor:'#2a3140', yAxisID:'yVol', borderWidth:0, order:2},
-      {type:'line', label:'Price', data:price.map(r=>r.value), borderColor:c, backgroundColor:c+'22', fill:false, tension:0.15, pointRadius:0, borderWidth:2, yAxisID:'yPrice', order:1},
-    ]},
+    data:{labels, datasets},
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:true,labels:{color:'#e6e8ee'}}, tooltip:{mode:'index', intersect:false, callbacks:{label:ctx=>ctx.dataset.label+': '+fmtUSD(ctx.parsed.y,'auto')}}},
@@ -1925,6 +1965,32 @@ function closeSignalDetail(){
     });
     document.getElementById('pocExplainerClose')?.addEventListener('click', closePoc);
     pocModal.addEventListener('click', e => { if (e.target.id === 'pocExplainerModal') closePoc(); });
+  }
+  // POC overlay (Trading-tab price chart): checkbox toggle + 30d/90d chips.
+  const pocCb   = document.getElementById('pocOverlayToggle');
+  const pocWrap = document.getElementById('pocWinChips');
+  const setWinUI = () => {
+    if (!pocWrap) return;
+    pocWrap.querySelectorAll('button[data-pocwin]').forEach(b =>
+      b.classList.toggle('active', b.dataset.pocwin === pocOverlay.win));
+  };
+  if (pocCb && pocWrap){
+    pocCb.checked = pocOverlay.on;
+    pocWrap.style.display = pocOverlay.on ? 'inline-flex' : 'none';
+    setWinUI();
+    pocCb.addEventListener('change', () => {
+      pocOverlay.on = pocCb.checked;
+      try { localStorage.setItem('tradingShowPoc', pocOverlay.on ? '1' : '0'); } catch(_) {}
+      pocWrap.style.display = pocOverlay.on ? 'inline-flex' : 'none';
+      renderPriceVol();
+    });
+    pocWrap.addEventListener('click', e => {
+      const b = e.target.closest('button[data-pocwin]'); if (!b) return;
+      pocOverlay.win = b.dataset.pocwin;
+      try { localStorage.setItem('tradingPocWin', pocOverlay.win); } catch(_) {}
+      setWinUI();
+      renderPriceVol();
+    });
   }
 })();
 
@@ -3347,6 +3413,66 @@ const fmtUsdShort = p => p == null ? '—' :
          p >= 0.01 ? p.toFixed(4) : p.toFixed(6));
 
 // ===== Point of Control =====
+// Multi-timeframe POC ladder. Each card shows 4 timeframes' POCs in a
+// compact table — clustering across timeframes signals high-conviction
+// levels. Inline SVG volume profile histogram visualizes distribution shape.
+const POC_TFS = [['d30','30d'],['d90','90d'],['d180','180d'],['d365','365d']];
+
+// "Clustered" = 3+ of the 4 POCs land within 2% of each other.
+function pocClustered(rows){
+  const pocs = (rows||[]).filter(r => r && r.poc).map(r => r.poc);
+  if (pocs.length < 3) return false;
+  return pocs.some(ref => pocs.filter(p => Math.abs(p-ref)/ref*100 <= 2).length >= 3);
+}
+
+// Horizontal volume profile SVG. Primary = 90d filled histogram; 30d shown
+// as a dashed overlay for divergence-at-a-glance. POC bin highlighted
+// orange, VA band shaded blue, current price drawn as a green line
+// (dashed if outside the binned range).
+function volumeProfileSVG(primary, alt, current){
+  const W = 120, H = 140, padL = 4, padR = 4;
+  if (!primary || !primary.buckets || !primary.buckets.length){
+    return `<svg width="${W}" height="${H}"><text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="10" fill="#888">no profile</text></svg>`;
+  }
+  const bks = primary.buckets;
+  const maxV = Math.max(...bks.map(b => b.volume)) || 1;
+  const prices = bks.map(b => b.price);
+  const pMin = prices[0] - primary.step / 2;
+  const pMax = prices[prices.length - 1] + primary.step / 2;
+  const barH = (H - 4) / bks.length;
+  const barW = W - padL - padR;
+  const yFor = i => 2 + (bks.length - 1 - i) * barH;
+  const bars = bks.map((b, i) => {
+    const w = (b.volume / maxV) * barW;
+    const isPoc = Math.abs(b.price - primary.poc) < primary.step / 2 + 1e-6;
+    const inVA  = b.price >= primary.val && b.price <= primary.vah;
+    const fill  = isPoc ? '#ff6b35' : (inVA ? '#4a90e2' : '#7aa7d9');
+    const op    = isPoc ? 1 : (inVA ? 0.85 : 0.45);
+    return `<rect x="${padL}" y="${yFor(i)}" width="${w}" height="${Math.max(1, barH-1)}" fill="${fill}" opacity="${op}"/>`;
+  }).join('');
+  const vaTop = 2 + ((pMax - primary.vah) / (pMax - pMin)) * (H - 4);
+  const vaBot = 2 + ((pMax - primary.val) / (pMax - pMin)) * (H - 4);
+  const vaBand = `<rect x="0" y="${vaTop}" width="${W}" height="${vaBot - vaTop}" fill="#4a90e2" opacity="0.08"/>`;
+  let altLine = '';
+  if (alt && alt.buckets && alt.buckets.length){
+    const maxA = Math.max(...alt.buckets.map(b => b.volume)) || 1;
+    const pts = alt.buckets.map(b => {
+      const y = 2 + ((pMax - b.price) / (pMax - pMin)) * (H - 4);
+      const x = padL + (b.volume / maxA) * barW;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    altLine = `<polyline points="${pts}" fill="none" stroke="#888" stroke-width="1" stroke-dasharray="2,2" opacity="0.7"/>`;
+  }
+  let curMarker = '';
+  if (current != null){
+    const clamped = Math.min(Math.max(current, pMin), pMax);
+    const yC = 2 + ((pMax - clamped) / (pMax - pMin)) * (H - 4);
+    const dash = (current < pMin || current > pMax) ? 'stroke-dasharray="3,2"' : '';
+    curMarker = `<line x1="0" y1="${yC}" x2="${W}" y2="${yC}" stroke="#00c853" stroke-width="1.5" ${dash}/>`;
+  }
+  return `<svg width="${W}" height="${H}">${vaBand}${bars}${altLine}${curMarker}</svg>`;
+}
+
 function renderPocCards(){
   const poc = (DATA.market||{}).poc || {};
   const host = document.getElementById('pocCards');
@@ -3354,41 +3480,80 @@ function renderPocCards(){
   host.innerHTML = RESEARCH_ASSETS.map(a => {
     const d = poc[a];
     const accent = RESEARCH_ACCENT(a);
-    if (!d || (!d.d30 && !d.d90)){
+    if (!d || !POC_TFS.some(([k]) => d[k])){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no POC data</div></div>`;
     }
-    const r = d.d90 || d.d30;
-    const inVA = r.in_value_area;
-    const distColor = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
-    const distTxt  = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(2) + '%';
-    const vaBadge = inVA
-      ? '<span style="background:#22c55e22;color:#22c55e;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
-      : '<span style="background:#f59e0b22;color:#f59e0b;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600">OUTSIDE</span>';
-    // 30d alt
-    const r30 = d.d30;
-    const alt30 = r30
-      ? `<div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">30d POC ${fmtUsdShort(r30.poc)} · VA ${fmtUsdShort(r30.val)} – ${fmtUsdShort(r30.vah)}</div>`
+    const rows = POC_TFS.map(([k]) => d[k]);
+    const anchor = d.d90 || d.d30 || rows.find(Boolean);
+    // Cluster badge: 3+ TFs within 2%
+    const clustered = pocClustered(rows);
+    const clusterBadge = clustered
+      ? '<span style="background:#a78bfa22;color:#a78bfa;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
       : '';
+    // Migration badge: 30d vs 90d POC delta
+    const mig = d.migration;
+    let migBadge = '';
+    if (mig){
+      const cfg = mig.direction === 'UP'
+        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
+        : mig.direction === 'DOWN'
+        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
+        : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
+      const tip = (mig.explanation || '').replace(/"/g,'&quot;');
+      migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}${mig.between_pocs ? ' ⇆' : ''}</span>`;
+    }
+    // 4-row ladder
+    const ladder = POC_TFS.map(([k, label]) => {
+      const r = d[k];
+      if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
+      const inVA = r.in_value_area;
+      const tag = inVA
+        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
+      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+      const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
+      return `<tr>
+        <td style="color:var(--muted);font-size:10px">${label}</td>
+        <td style="font-weight:600">${fmtUsdShort(r.poc)}</td>
+        <td style="color:${dc};text-align:right">${dt}</td>
+        <td style="text-align:right">${tag}</td>
+      </tr>`;
+    }).join('');
+    // Naked POCs subsection
+    const naked = Array.isArray(d.naked) ? d.naked : [];
+    const cur = anchor && anchor.current;
+    const nakedHtml = naked.length ? `
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
+        ${naked.map(n => {
+          const isSupport = cur != null && cur > n.poc;
+          const col = isSupport ? '#22c55e' : '#ef4444';
+          const sign = n.distance_pct >= 0 ? '+' : '';
+          return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
+            <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
+            <span style="color:var(--muted)">${n.days_ago}d ago · ${sign}${n.distance_pct}%</span>
+          </div>`;
+        }).join('')}
+      </div>` : '';
     return `<div class="card" style="border-left:4px solid ${accent}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()} <span class="sub" style="color:var(--muted);font-size:10px">${r.lookback_days}d</span></h3>
-        ${vaBadge}
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px;flex-wrap:wrap">
+        <h3 style="font-size:13px;color:var(--text);margin:0">${a.toUpperCase()}
+          <span class="sub" style="color:var(--muted);font-size:10px">${fmtUsdShort(anchor.current)} now</span>
+        </h3>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${clusterBadge}${migBadge}</div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px">
-        <div>
-          <div class="sub" style="font-size:10px;color:var(--muted)">POC</div>
-          <div class="v" style="font-size:18px;font-weight:700">${fmtUsdShort(r.poc)}</div>
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <div style="flex:1;min-width:0">
+          <table style="width:100%;font-size:11px;border-collapse:collapse">
+            <thead><tr style="color:var(--muted);font-size:9px;text-align:left">
+              <th>TF</th><th>POC</th><th style="text-align:right">Δ</th><th style="text-align:right">VA</th>
+            </tr></thead>
+            <tbody>${ladder}</tbody>
+          </table>
         </div>
-        <div style="text-align:right">
-          <div class="sub" style="font-size:10px;color:var(--muted)">Current</div>
-          <div class="v" style="font-size:18px;font-weight:700">${fmtUsdShort(r.current)}</div>
-        </div>
+        <div style="flex:0 0 120px">${volumeProfileSVG(d.d90, d.d30, anchor.current)}</div>
       </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:12px">
-        <span class="sub" style="color:var(--muted)">VA: ${fmtUsdShort(r.val)} – ${fmtUsdShort(r.vah)}</span>
-        <span style="color:${distColor};font-weight:600">${distTxt} from POC</span>
-      </div>
-      ${alt30}
+      ${nakedHtml}
     </div>`;
   }).join('');
 }
