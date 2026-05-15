@@ -248,7 +248,7 @@ def deribit_dvol(currency: str, days: int = 1095) -> list[dict]:
     return [{"date": _ts(int(r[0])), "dvol": float(r[4])} for r in rows]
 
 
-def coingecko_top_markets(per_page: int = 25) -> list[dict]:
+def coingecko_top_markets(per_page: int = 50) -> list[dict]:
     """Top N coins by market cap with price/vol/24h%/7d%/sparkline."""
     j = _get(
         "https://api.coingecko.com/api/v3/coins/markets",
@@ -1894,7 +1894,7 @@ def fetch_trading() -> dict:
     lightning = mempool_lightning_stats()
     pools = mempool_mining_pools()
     print("  CoinGecko top-25 markets + trending...")
-    top_markets = coingecko_top_markets(25); time.sleep(CG_PACE)
+    top_markets = coingecko_top_markets(50); time.sleep(CG_PACE)
     if not top_markets and (CACHE / "market.json").exists():
         # CoinGecko 429 (rate-limit wipe) returns []. Pacing in 2b396b8 helps
         # but doesn't fully eliminate races. Preserve the last good value

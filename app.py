@@ -589,6 +589,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
 
+    <!-- Strong Buys: up to 5 STRONG BUY signals from the top-50 strip.
+         Hidden when none exist. Cards click through to the signal detail
+         modal (same one the Signals-tab strip uses). -->
+    <div id="overviewStrongBuysWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">🚀 Strong Buys <span class="tag">Top 50</span></h2>
+        <span class="desc">Up to 5 strongest signals from the top-50 by market cap · click any card for the full breakdown</span>
+      </div>
+      <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+    </div>
+
     <!-- Row 2: top news + top insights -->
     <div class="grid2">
       <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
@@ -839,20 +850,20 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="note"><strong>Composite indicator, not investment advice.</strong> Score is a transparent sum of contributions from price trend (SMA50/200), momentum (RSI, MACD), positioning (funding), sentiment (Fear &amp; Greed), institutional flows (ETF 7d), and volatility (DVOL z-score). Range −100 to +100. Read the components below — that's where the score comes from. Do your own evaluation.</div>
       <div class="grid3" id="signalCards"></div>
       <div class="grid3">
-        <div class="chart-card">
-          <div class="head"><h2>BTC signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
+        <div class="chart-card" data-sig-asset="BTC" style="cursor:pointer" title="Click to open BTC signal detail">
+          <div class="head"><h2>BTC signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
           <div class="chart-wrap"><canvas id="sigBtcChart"></canvas></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>ETH signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
+        <div class="chart-card" data-sig-asset="ETH" style="cursor:pointer" title="Click to open ETH signal detail">
+          <div class="head"><h2>ETH signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
           <div class="chart-wrap"><canvas id="sigEthChart"></canvas></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>LINK signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
+        <div class="chart-card" data-sig-asset="LINK" style="cursor:pointer" title="Click to open LINK signal detail">
+          <div class="head"><h2>LINK signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
           <div class="chart-wrap"><canvas id="sigLinkChart"></canvas></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>LTC signal history (90d)</h2><span class="desc">Score &middot; price overlay</span></div>
+        <div class="chart-card" data-sig-asset="LTC" style="cursor:pointer" title="Click to open LTC signal detail">
+          <div class="head"><h2>LTC signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
           <div class="chart-wrap"><canvas id="sigLtcChart"></canvas></div>
         </div>
       </div>
@@ -861,7 +872,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="card" style="padding:12px 14px;margin-top:14px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
           <div>
-            <h2 style="margin:0;font-size:15px">Top 20 by market cap</h2>
+            <h2 style="margin:0;font-size:15px">Top 50 by market cap</h2>
             <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
           </div>
           <span style="flex:1"></span>
@@ -1919,10 +1930,21 @@ function renderTop20Signals(){
 }
 
 function openSignalDetail(sym){
-  const s = (window._top20SignalsCache || {})[sym];
+  // Look up the signal: first the top-50 strip cache, then fall back to
+  // the main 4 signals (so the history-chart click handlers work too).
+  const upper = (sym||'').toUpperCase();
+  const lower = upper.toLowerCase();
+  let s = (window._top20SignalsCache || {})[upper];
+  if (!s){
+    const main = (DATA.signals || {})[lower];
+    if (main){
+      // Reshape main-signal output to match renderSignalCardFromObj's expected shape
+      s = {...main, symbol: upper, name: main.name || upper, image: null};
+    }
+  }
   const modal = document.getElementById('signalDetailModal');
   if (!modal || !s) return;
-  document.getElementById('signalDetailTitle').textContent = `${sym} · ${s.name||''} · signal detail`;
+  document.getElementById('signalDetailTitle').textContent = `${upper} · ${s.name||''} · signal detail`;
   document.getElementById('signalDetailBody').innerHTML = renderSignalCardFromObj(s);
   modal.classList.remove('hidden');
 }
@@ -1945,6 +1967,11 @@ function closeSignalDetail(){
         c.style.display = (bucket==='all' || c.getAttribute('data-bucket')===bucket) ? '' : 'none';
       });
     }
+    // Click on any signal history chart-card → open the detail modal for
+    // that asset. Uses the generalized openSignalDetail which falls back
+    // to DATA.signals when the symbol isn't in the top-50 cache.
+    const sigChart = e.target && e.target.closest && e.target.closest('[data-sig-asset]');
+    if (sigChart) openSignalDetail(sigChart.getAttribute('data-sig-asset'));
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -3089,10 +3116,55 @@ function renderWhaleExtras(){
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
   renderOverviewSignals();
+  renderOverviewStrongBuys();
   renderOverviewMacro();
   renderOverviewTopVolume();
   renderOverviewNews();
   renderOverviewInsights();
+}
+
+// Up to 5 STRONG BUY signals pulled from the top-50 strip, surfaced
+// prominently on the Crypto Overview before the news row. Hides the
+// whole section when zero strong buys exist. Cards click through to
+// the same detail modal the Signals-tab strip uses (cache is shared).
+function renderOverviewStrongBuys(){
+  const wrap = document.getElementById('overviewStrongBuysWrap');
+  const host = document.getElementById('overviewStrongBuys');
+  if (!wrap || !host) return;
+  const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  const strongs = (DATA.signals_top20 || [])
+    .filter(s => s && !isStable(s.symbol) && (s.label || '').toUpperCase() === 'STRONG BUY')
+    .slice(0, 5);
+  if (!strongs.length){
+    wrap.classList.add('hidden');
+    return;
+  }
+  wrap.classList.remove('hidden');
+  // Re-cache so the click handler can find these too (top-20 strip may
+  // not have rendered yet on a first overview-only page load).
+  window._top20SignalsCache = window._top20SignalsCache || {};
+  host.innerHTML = strongs.map(s => {
+    const sym = (s.symbol||'').toUpperCase();
+    const color = signalColor(s.score);
+    window._top20SignalsCache[sym] = s;
+    const img = s.image
+      ? `<img src="${s.image}" alt="" style="width:28px;height:28px;border-radius:50%">`
+      : `<div style="width:28px;height:28px;border-radius:50%;background:${color}33"></div>`;
+    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+      ${img}
+      <div style="flex:1;min-width:0;overflow:hidden">
+        <div style="font-weight:700;font-size:12px">${escapeHtml(sym)}</div>
+        <div class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${escapeHtml(s.name||'')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;font-weight:700;color:${color};line-height:1.1">${escapeHtml(s.label||'')}</div>
+        <div style="font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums">${(s.score>=0?'+':'')+s.score}</div>
+      </div>
+    </div>`;
+  }).join('');
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
+  );
 }
 
 // Top 10 coins by 24h trading volume (USD). Derives from the cached

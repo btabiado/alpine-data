@@ -363,10 +363,11 @@ def compute_signal_simple(coin: dict) -> dict | None:
 
 
 def compute_all_top20(payload: dict, exclude_stables: bool = True,
-                     limit: int = 20) -> list[dict]:
-    """Iterate the top 20 by market cap (or `limit`), compute the simplified
-    signal for each, return sorted by score descending (strongest BUY first,
-    strongest SELL last). Stablecoins excluded by default."""
+                     limit: int = 50) -> list[dict]:
+    """Iterate the top N by market cap (default 50; legacy name "top20" kept
+    for backward compat with the payload key + JS identifiers), compute the
+    simplified signal for each, return sorted by score descending (strongest
+    BUY first, strongest SELL last). Stablecoins excluded by default."""
     rows = ((payload.get("market") or {}).get("markets_top") or [])
     if exclude_stables:
         rows = [r for r in rows if not _is_stable_symbol(r.get("symbol", ""))]
