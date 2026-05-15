@@ -807,11 +807,14 @@ def cryptocompare_social_stats() -> dict:
     # are set. Safe to drop the fallback once the legacy secret is renamed.
     api_key = (os.environ.get("CRYPTOCOMPARE_API_KEY") or
                os.environ.get("BTC_ETH_ETF_DASHBOARD") or "")
+    # CryptoCompare internal coin IDs (NOT symbols). 46472 used to map to
+    # LINK in older docs but now returns "Coin id is invalid"; the canonical
+    # ID is 309621 (verified via /data/all/coinlist?fsym=LINK in 2026-05).
     COINS = {
-        "btc":  {"id": 1182,  "name": "Bitcoin"},
-        "eth":  {"id": 7605,  "name": "Ethereum"},
-        "link": {"id": 46472, "name": "Chainlink"},
-        "ltc":  {"id": 3808,  "name": "Litecoin"},
+        "btc":  {"id": 1182,   "name": "Bitcoin"},
+        "eth":  {"id": 7605,   "name": "Ethereum"},
+        "link": {"id": 309621, "name": "Chainlink"},
+        "ltc":  {"id": 3808,   "name": "Litecoin"},
     }
     out: dict[str, dict] = {}
     for sym, meta in COINS.items():
