@@ -672,6 +672,189 @@ def _lunarcrush_stale_fallback(reason: str) -> dict:
     return {"available": False, "reason": reason}
 
 
+def _lunarcrush_call(url: str, retry_429: bool = True) -> tuple[dict | None, str | None]:
+    """Shared LunarCrush HTTP helper for all endpoints. Returns (data, error)
+    where data is parsed JSON dict on success and error is a short reason
+    string on failure ('no_key', 'http_402', 'http_429', 'error', etc.).
+    One retry after 5s on 429 if retry_429=True. The 402 case is treated as
+    plan-level rejection — no retry, fast fail.
+    """
+    import os
+    key = os.environ.get("LUNARCRUSH_API_KEY")
+    if not key:
+        return None, "no_key"
+    headers = {"Authorization": f"Bearer {key}", "User-Agent": UA}
+    for attempt in range(2 if retry_429 else 1):
+        if attempt > 0:
+            time.sleep(5)
+        try:
+            r = requests.get(url, headers=headers, timeout=15)
+        except Exception as e:
+            print(f"  [lunarcrush] error: {e}", file=sys.stderr)
+            return None, "error"
+        if r.status_code == 200:
+            try:
+                return r.json() or {}, None
+            except Exception as e:
+                print(f"  [lunarcrush] parse: {e}", file=sys.stderr)
+                return None, "parse_error"
+        if r.status_code == 429 and attempt == 0 and retry_429:
+            print(f"  [lunarcrush] HTTP 429 on {url.rsplit('/v1',1)[0][-40:]} — retrying in 5s", file=sys.stderr)
+            continue
+        # 402 (payment required), 401 (bad key), 404 (bad topic), etc. — no retry
+        print(f"  [lunarcrush] HTTP {r.status_code} on {url[-60:]}", file=sys.stderr)
+        return None, f"http_{r.status_code}"
+    return None, "http_429"
+
+
+def lunarcrush_coin(symbol: str) -> dict | None:
+    """Per-coin social snapshot via /api4/public/coins/{symbol}/v1.
+    Free tier covers individual coin queries. Returns shaped dict or None
+    on failure. Caller is responsible for pacing (free tier is 10 req/min)."""
+    j, err = _lunarcrush_call(f"https://lunarcrush.com/api4/public/coins/{symbol.upper()}/v1")
+    if err:
+        return None
+    c = j.get("data") if isinstance(j, dict) else None
+    if not isinstance(c, dict):
+        return None
+    return {
+        "symbol": c.get("symbol"),
+        "name": c.get("name"),
+        "price": c.get("price"),
+        "market_cap": c.get("market_cap"),
+        "volume_24h": c.get("volume_24h"),
+        "percent_change_24h": c.get("percent_change_24h"),
+        "percent_change_7d": c.get("percent_change_7d"),
+        "percent_change_30d": c.get("percent_change_30d"),
+        "galaxy_score": c.get("galaxy_score"),
+        "alt_rank": c.get("alt_rank"),
+        "market_cap_rank": c.get("market_cap_rank"),
+        "interactions_24h": c.get("interactions_24h"),
+        "social_volume_24h": c.get("social_volume_24h"),
+        "social_dominance": c.get("social_dominance"),
+        "sentiment": c.get("sentiment"),
+        "categories": c.get("categories"),
+    }
+
+
+def lunarcrush_topics_list(limit: int = 20) -> list[dict]:
+    """Trending topics from /api4/public/topics/list/v1. Free tier endpoint.
+    Returns ordered list of top topics by interactions; empty list on
+    failure (caller can use stale-keep fallback)."""
+    j, err = _lunarcrush_call("https://lunarcrush.com/api4/public/topics/list/v1")
+    if err or not isinstance(j, dict):
+        return []
+    rows = j.get("data") or []
+    out = []
+    for t in rows[:limit]:
+        if not isinstance(t, dict):
+            continue
+        out.append({
+            "topic": t.get("topic"),
+            "title": t.get("title"),
+            "topic_rank": t.get("topic_rank"),
+            "interactions_24h": t.get("interactions_24h"),
+            "interactions_1h": t.get("interactions_1h"),
+            "num_contributors": t.get("num_contributors"),
+            "num_posts": t.get("num_posts"),
+            "categories": t.get("categories"),
+            "trend": t.get("trend"),
+        })
+    return out
+
+
+def lunarcrush_topic(topic: str) -> dict | None:
+    """Sentiment breakdown for a single topic via /api4/public/topic/{topic}/v1.
+    Topic strings are lowercase slugs like 'bitcoin', 'ethereum', 'chainlink',
+    'litecoin'. Free tier endpoint. Returns shaped dict or None on failure."""
+    j, err = _lunarcrush_call(f"https://lunarcrush.com/api4/public/topic/{topic.lower()}/v1")
+    if err:
+        return None
+    t = j.get("data") if isinstance(j, dict) else None
+    if not isinstance(t, dict):
+        return None
+    # Aggregate sentiment counts across types (tweet, reddit-post, news, etc.)
+    types_sentiment = t.get("types_sentiment") or {}
+    types_interactions = t.get("types_interactions") or {}
+    types_count = t.get("types_count") or {}
+    return {
+        "topic": t.get("topic"),
+        "title": t.get("title"),
+        "topic_rank": t.get("topic_rank"),
+        "related_topics": t.get("related_topics"),
+        "types_count": types_count,
+        "types_interactions": types_interactions,
+        "types_sentiment": types_sentiment,
+        "interactions_24h": t.get("interactions_24h"),
+        "interactions_1h": t.get("interactions_1h"),
+        "num_contributors": t.get("num_contributors"),
+        "num_posts": t.get("num_posts"),
+        "categories": t.get("categories"),
+        "trend": t.get("trend"),
+    }
+
+
+def _social_stale_fallback(key: str, default):
+    """Restore previous good value for a `social` sub-key when the current
+    fetch returns empty/None. Returns `default` if nothing usable found."""
+    try:
+        prev = json.loads((CACHE / "market.json").read_text()).get("social") or {}
+        val = prev.get(key)
+        if val:
+            print(f"  [stale-keep] social.{key} kept from previous fetch", file=sys.stderr)
+            return val
+    except Exception:
+        pass
+    return default
+
+
+def fetch_social() -> dict:
+    """Compose the Social tab payload from 3 free-tier LunarCrush endpoints:
+        1. /coins/{symbol}/v1 — per-coin snapshot for BTC/ETH/LINK/LTC
+        2. /topics/list/v1   — trending topics (top 20)
+        3. /topic/{name}/v1  — sentiment breakdown for each of our 4 coins
+    Calls are paced at 0.8s between requests to stay under the free-tier
+    10 req/min cap (9 calls × 0.8s = 7.2s pacing, ~10s total fetch).
+    Each section has its own stale-keep so partial failures degrade
+    gracefully — UI keeps showing whatever last worked.
+    """
+    import os
+    if not os.environ.get("LUNARCRUSH_API_KEY"):
+        return {"available": False, "reason": "no LUNARCRUSH_API_KEY in env",
+                "coins": {}, "topics": [], "topic_detail": {},
+                "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    SYMBOLS = ["BTC", "ETH", "LINK", "LTC"]
+    TOPICS  = ["bitcoin", "ethereum", "chainlink", "litecoin"]
+    PACE = 0.8
+    coins: dict[str, dict] = {}
+    for sym in SYMBOLS:
+        c = lunarcrush_coin(sym)
+        if c:
+            coins[sym.lower()] = c
+        time.sleep(PACE)
+    topics_list = lunarcrush_topics_list(20)
+    time.sleep(PACE)
+    if not topics_list:
+        topics_list = _social_stale_fallback("topics", [])
+    topic_detail: dict[str, dict] = {}
+    for tp in TOPICS:
+        d = lunarcrush_topic(tp)
+        if d:
+            topic_detail[tp] = d
+        time.sleep(PACE)
+    if not coins:
+        coins = _social_stale_fallback("coins", {})
+    if not topic_detail:
+        topic_detail = _social_stale_fallback("topic_detail", {})
+    return {
+        "available": bool(coins or topics_list or topic_detail),
+        "coins": coins,
+        "topics": topics_list,
+        "topic_detail": topic_detail,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def lunarcrush_snapshot() -> dict:
     """Social-sentiment snapshot for top coins. Env-gated by LUNARCRUSH_API_KEY.
 
@@ -1074,6 +1257,8 @@ def fetch_trading() -> dict:
     gt_pools = geckoterminal_pools()
     print("  LunarCrush social sentiment (env-gated by LUNARCRUSH_API_KEY)...")
     lunar = lunarcrush_snapshot()
+    print("  LunarCrush social tab (free-tier per-coin + topics)...")
+    social = fetch_social()
     print("  Coin Metrics Community (BTC/ETH network metrics)...")
     cm = coin_metrics_btc_eth_metrics()
     print("  Etherscan v2 (ETH gas oracle)...")
@@ -1170,6 +1355,7 @@ def fetch_trading() -> dict:
         "defillama": llama,
         "geckoterminal": gt_pools,
         "lunarcrush": lunar,
+        "social": social,
         "coin_metrics": cm,
         "eth_gas": gas,
         "fred": fred,

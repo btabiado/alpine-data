@@ -417,6 +417,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="trading">Trading</div>
   <div class="tab" data-tab="markets">Markets</div>
   <div class="tab" data-tab="defi">DeFi</div>
+  <div class="tab" data-tab="social">Social</div>
   <div class="tab" data-tab="whale">Whale Activity</div>
 </div>
 
@@ -889,6 +890,56 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <thead><tr><th>Pool</th><th>Chain</th><th>TVL</th><th>APY</th></tr></thead>
             <tbody></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SOCIAL TAB ============ -->
+  <div id="tab-social" class="hidden">
+    <div id="socialEmpty" class="empty hidden">
+      No social data — LunarCrush is env-gated by <code>LUNARCRUSH_API_KEY</code>.
+      Free-tier endpoints (per-coin, topics, topic detail) may also return HTTP 402 on some accounts.
+    </div>
+    <div id="socialContent">
+      <div class="sub" id="socialAsOf" style="margin-bottom:6px"></div>
+      <div class="note">
+        <strong>Social Sentiment</strong> — pulled from LunarCrush free-tier public endpoints:
+        per-coin metrics (<code>/coins/{symbol}</code>), trending topics (<code>/topics/list</code>),
+        and per-topic sentiment breakdown (<code>/topic/{name}</code>). Galaxy Score blends
+        social + market signals; Alt Rank is LunarCrush's relative-strength rank (1 = best).
+      </div>
+
+      <!-- Per-coin cards -->
+      <div class="chart-card" style="padding:12px 16px">
+        <div class="head"><h2 style="margin:0;font-size:15px">Per-coin social metrics</h2><span class="desc">BTC · ETH · LINK · LTC</span></div>
+        <div class="row" id="socialCoinCards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr))"></div>
+      </div>
+
+      <!-- Trending topics + topic sentiment side-by-side -->
+      <div class="grid2">
+        <div class="chart-card" style="padding:12px 16px">
+          <div class="head"><h2 style="margin:0;font-size:15px">Trending topics</h2><span class="desc">Top 20 by 24h interactions</span></div>
+          <div style="max-height:520px;overflow:auto">
+            <table id="socialTopicsTable" style="font-size:12px">
+              <thead><tr><th>#</th><th>Topic</th><th class="right">24h interactions</th><th class="right">1h</th><th class="right">Posts</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="chart-card" style="padding:12px 16px">
+          <div class="head">
+            <h2 style="margin:0;font-size:15px">Topic sentiment</h2>
+            <span class="desc">
+              <select id="socialTopicPick" style="background:#0e1118;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:12px">
+                <option value="bitcoin">Bitcoin</option>
+                <option value="ethereum">Ethereum</option>
+                <option value="chainlink">Chainlink</option>
+                <option value="litecoin">Litecoin</option>
+              </select>
+            </span>
+          </div>
+          <div id="socialTopicDetail" style="padding:6px 2px"></div>
         </div>
       </div>
     </div>
@@ -3089,6 +3140,150 @@ document.addEventListener('click', (e) => {
   if (card && !e.target.closest('a')) selectTab(card.dataset.jump);
 });
 
+// ---------- Social tab ----------
+function socialData(){ return (DATA.market||{}).social || {}; }
+
+function renderSocialCoinCards(){
+  const social = socialData();
+  const coins = social.coins || {};
+  const order = ['btc','eth','link','ltc'];
+  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+  const host = document.getElementById('socialCoinCards');
+  if (!host) return;
+  host.innerHTML = order.map(a => {
+    const c = coins[a];
+    if (!c){
+      return `<div class="card" style="border-left:4px solid ${accent(a)}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no social data</div></div>`;
+    }
+    const gs = c.galaxy_score;
+    const ar = c.alt_rank;
+    const pc = c.percent_change_24h;
+    const pcColor = pc == null ? 'var(--muted)' : (pc >= 0 ? '#22c55e' : '#ef4444');
+    const pcTxt  = pc == null ? '—' : (pc >= 0 ? '+' : '') + Number(pc).toFixed(2) + '%';
+    const intxs = c.interactions_24h;
+    const intxsTxt = intxs == null ? '—' :
+      (intxs >= 1e6 ? (intxs/1e6).toFixed(1) + 'M' :
+       intxs >= 1e3 ? (intxs/1e3).toFixed(1) + 'K' : String(intxs));
+    return `<div class="card" style="border-left:4px solid ${accent(a)}">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
+        <span class="sub" style="color:var(--muted);font-size:11px">${c.name || ''}</span>
+      </div>
+      <div style="display:flex;gap:14px;margin-top:8px">
+        <div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">Galaxy</div>
+          <div class="v" style="font-size:20px;font-weight:700">${gs == null ? '—' : Math.round(gs)}</div>
+        </div>
+        <div>
+          <div class="sub" style="font-size:10px;color:var(--muted)">Alt rank</div>
+          <div class="v" style="font-size:20px;font-weight:700">${ar == null ? '—' : '#' + ar}</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px">
+        <span style="color:${pcColor};font-weight:600">${pcTxt}</span>
+        <span class="sub" style="color:var(--muted)">24h intxs ${intxsTxt}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderSocialTopics(){
+  const social = socialData();
+  const topics = social.topics || [];
+  const tbody = document.querySelector('#socialTopicsTable tbody');
+  if (!tbody) return;
+  if (!topics.length){
+    tbody.innerHTML = '<tr><td colspan="5" class="sub" style="color:var(--muted);padding:12px 6px">No trending topic data.</td></tr>';
+    return;
+  }
+  const fmtN = n => n == null ? '—' :
+    (n >= 1e6 ? (n/1e6).toFixed(1) + 'M' :
+     n >= 1e3 ? (n/1e3).toFixed(1) + 'K' : String(n));
+  tbody.innerHTML = topics.map((t, i) => {
+    const trend = t.trend;
+    const trendArrow = trend == null ? '' : (trend > 0 ? '▲' : (trend < 0 ? '▼' : '·'));
+    const trendColor = trend == null ? 'var(--muted)' : (trend > 0 ? '#22c55e' : (trend < 0 ? '#ef4444' : 'var(--muted)'));
+    return `<tr>
+      <td style="color:var(--muted)">${(t.topic_rank ?? (i+1))}</td>
+      <td><strong>${t.title || t.topic || '?'}</strong> <span style="color:${trendColor}">${trendArrow}</span></td>
+      <td class="right">${fmtN(t.interactions_24h)}</td>
+      <td class="right" style="color:var(--muted)">${fmtN(t.interactions_1h)}</td>
+      <td class="right" style="color:var(--muted)">${fmtN(t.num_posts)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSocialTopicDetail(){
+  const pick = document.getElementById('socialTopicPick');
+  const host = document.getElementById('socialTopicDetail');
+  if (!pick || !host) return;
+  const social = socialData();
+  const detail = (social.topic_detail || {})[pick.value];
+  if (!detail){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:12px 4px">No data for this topic.</div>';
+    return;
+  }
+  const fmtN = n => n == null ? '—' :
+    (n >= 1e6 ? (n/1e6).toFixed(1) + 'M' :
+     n >= 1e3 ? (n/1e3).toFixed(1) + 'K' : String(n));
+  const sentByType = detail.types_sentiment || {};
+  const countByType = detail.types_count || {};
+  const intxByType = detail.types_interactions || {};
+  // Sort sources by 24h interactions
+  const sources = Object.keys(sentByType).concat(Object.keys(countByType))
+    .filter((v,i,a) => a.indexOf(v) === i)
+    .sort((a, b) => (intxByType[b]||0) - (intxByType[a]||0));
+  const rows = sources.map(src => {
+    const s = sentByType[src];
+    const sColor = s == null ? 'var(--muted)' : (s >= 60 ? '#22c55e' : (s >= 40 ? '#f59e0b' : '#ef4444'));
+    const pct = s == null ? 0 : Math.max(0, Math.min(100, s));
+    return `<tr>
+      <td><strong>${src}</strong></td>
+      <td style="width:40%">
+        <div style="background:#1f2533;border-radius:3px;height:8px;position:relative">
+          <div style="background:${sColor};width:${pct}%;height:100%;border-radius:3px"></div>
+        </div>
+      </td>
+      <td class="right" style="color:${sColor};font-weight:600">${s == null ? '—' : Math.round(s)}%</td>
+      <td class="right" style="color:var(--muted)">${fmtN(countByType[src])} posts</td>
+      <td class="right" style="color:var(--muted)">${fmtN(intxByType[src])} intxs</td>
+    </tr>`;
+  }).join('');
+  host.innerHTML = `
+    <div style="display:flex;gap:18px;margin-bottom:10px;flex-wrap:wrap">
+      <div><div class="sub" style="font-size:10px;color:var(--muted)">Rank</div><div style="font-size:18px;font-weight:700">#${detail.topic_rank ?? '—'}</div></div>
+      <div><div class="sub" style="font-size:10px;color:var(--muted)">24h interactions</div><div style="font-size:18px;font-weight:700">${fmtN(detail.interactions_24h)}</div></div>
+      <div><div class="sub" style="font-size:10px;color:var(--muted)">Contributors</div><div style="font-size:18px;font-weight:700">${fmtN(detail.num_contributors)}</div></div>
+      <div><div class="sub" style="font-size:10px;color:var(--muted)">Posts</div><div style="font-size:18px;font-weight:700">${fmtN(detail.num_posts)}</div></div>
+    </div>
+    <table style="font-size:12px;margin-top:4px">
+      <thead><tr><th>Source</th><th>Positive sentiment</th><th class="right">%</th><th class="right">Posts</th><th class="right">Intxs</th></tr></thead>
+      <tbody>${rows || '<tr><td colspan="5" class="sub" style="color:var(--muted);padding:8px 4px">No per-source breakdown.</td></tr>'}</tbody>
+    </table>`;
+}
+
+function renderSocial(){
+  const social = socialData();
+  const hasAny = Object.keys(social.coins||{}).length || (social.topics||[]).length || Object.keys(social.topic_detail||{}).length;
+  document.getElementById('socialEmpty').classList.toggle('hidden', !!hasAny);
+  document.getElementById('socialContent').classList.toggle('hidden', !hasAny);
+  const asOf = document.getElementById('socialAsOf');
+  if (asOf) asOf.textContent = social.fetched_at ? 'Fetched ' + social.fetched_at : '';
+  if (!hasAny) return;
+  renderSocialCoinCards();
+  renderSocialTopics();
+  renderSocialTopicDetail();
+}
+
+// Wire topic-picker change. Idempotent — addEventListener dedupes via marker.
+(function wireSocialPicker(){
+  const pick = document.getElementById('socialTopicPick');
+  if (pick && !pick.dataset.wired){
+    pick.dataset.wired = '1';
+    pick.addEventListener('change', renderSocialTopicDetail);
+  }
+})();
+
 function renderAll(){
   renderInsights();
   // tag updates
@@ -3162,6 +3357,9 @@ function renderAll(){
   if (state.tab === 'overview'){
     renderOverview();
   }
+  if (state.tab === 'social'){
+    renderSocial();
+  }
   renderCoverage();
 }
 
@@ -3185,6 +3383,7 @@ function selectTab(t){
   document.getElementById('tab-signals').classList.toggle('hidden', t!=='signals');
   document.getElementById('tab-markets').classList.toggle('hidden', t!=='markets');
   document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
+  document.getElementById('tab-social').classList.toggle('hidden', t!=='social');
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
@@ -3193,12 +3392,13 @@ function selectTab(t){
   const showPeriod = (t === 'etf');
   document.querySelectorAll('.btn[data-period]').forEach(b => b.style.display = showPeriod ? '' : 'none');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'PERIOD') b.style.display = showPeriod ? '' : 'none'; });
-  // Overview simplification: hide BTC/ETH/LINK asset toggle, Range buttons, and the redundant Insights bar.
+  // Overview + Social are multi-asset snapshots; hide asset toggle there.
   const isOverview = (t === 'overview');
+  const isSocial = (t === 'social');
   // Whale is BTC-only on-chain; hide ETH/LINK so the toggle stays consistent.
   const isWhale = (t === 'whale');
   document.querySelectorAll('.btn[data-asset]').forEach(b => {
-    if (isOverview) { b.style.display = 'none'; return; }
+    if (isOverview || isSocial) { b.style.display = 'none'; return; }
     if (isWhale && b.dataset.asset !== 'btc') { b.style.display = 'none'; return; }
     b.style.display = '';
   });
