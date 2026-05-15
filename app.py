@@ -455,6 +455,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     white-space:nowrap;
     -webkit-overflow-scrolling:touch;
     scrollbar-width:none;
+    /* Fade-right affordance so users see there's more content to scroll —
+       without this, "Research" / "Whale Activity" looked like they didn't
+       exist because they sit off-screen past 390px. */
+    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
+            mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
   }
   .tabs::-webkit-scrollbar{display:none}
   .tab{padding:9px 12px;font-size:13px;flex:0 0 auto}
@@ -536,7 +541,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="signals">Signals</div>
   <div class="tab" data-tab="etf">ETF Flows</div>
   <div class="tab" data-tab="trading">Trading</div>
-  <div class="tab" data-tab="markets">Markets</div>
   <div class="tab" data-tab="defi">DeFi</div>
   <div class="tab" data-tab="social">Research</div>
   <div class="tab" data-tab="whale">Whale Activity</div>
@@ -686,6 +690,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
+    <!-- Traditional indices — compact bar above the asset cards. Dow/SPX/
+         NDX/VIX 1d/5d/30d + 90d sparkline per index. Moved here from the
+         Markets tab so it's visible on the landing page as macro context. -->
+    <div id="overviewIndicesWrap" class="card" style="padding:6px 10px;margin-bottom:2px">
+      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px">
+        <span style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.05em">TRADITIONAL INDICES</span>
+        <span class="sub" style="font-size:9px;color:var(--muted)">Yahoo · 1d / 5d / 30d</span>
+      </div>
+      <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px"></div>
+    </div>
     <!-- Row 1: Signal cards (HERO — clickable) -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:-6px">
       <button class="btn" id="configSignalsBtn" style="font-size:11px;padding:3px 8px" title="Pick which assets show signal cards">⚙️ Configure</button>
@@ -742,6 +756,37 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; normalized to 100 over 3M &middot; click to zoom in</span>
         </div>
         <div class="chart-wrap" style="flex:1;min-height:380px;height:auto"><canvas id="overviewMacroChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- DEX pools — trending by volume + brand-new listings.
+         Moved here from the (now-deleted) Markets tab. Useful at the end
+         of Overview as a "what's hot in DeFi" peek without needing a
+         dedicated tab. Memecoin/early-listing radar. -->
+    <div class="grid2">
+      <div class="chart-card">
+        <div class="head">
+          <h2>DEX trending pools <span class="tag">GeckoTerminal</span></h2>
+          <span class="desc">top 10 DEX pools by 24h volume across all chains</span>
+        </div>
+        <div style="max-height:360px;overflow:auto">
+          <table id="gtTrendingTable" style="margin:0;font-size:12px"><thead><tr>
+            <th style="padding-left:14px">#</th>
+            <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="head">
+          <h2>DEX new pools <span class="tag">GeckoTerminal</span></h2>
+          <span class="desc">freshest listings · memecoin / early-listing radar</span>
+        </div>
+        <div style="max-height:360px;overflow:auto">
+          <table id="gtNewTable" style="margin:0;font-size:12px"><thead><tr>
+            <th style="padding-left:14px">#</th>
+            <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
       </div>
     </div>
   </div>
@@ -998,81 +1043,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-top20filter="sell">Sell</button>
         </div>
         <div id="top20SignalCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============ MARKETS TAB ============ -->
-  <div id="tab-markets" class="hidden">
-    <!-- Traditional indices strip — moved here from Overview. Macro context
-         lives alongside the crypto top-25 so the user can scan both. -->
-    <div class="chart-card" style="padding:14px 16px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">Traditional indices <span class="tag">Yahoo</span></h2>
-        <span class="desc">US market close · 1d / 5d / 30d &middot; 90d sparkline</span>
-      </div>
-      <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;padding:4px 2px"></div>
-    </div>
-    <div class="card" style="padding:12px 16px">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-        <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
-        <span class="sub" id="marketsAsOf" style="color:var(--muted);font-size:11px"></span>
-        <span style="flex:1"></span>
-        <span class="lbl" style="margin:0">Sort</span>
-        <button class="btn active" data-mktsort="rank">Rank</button>
-        <button class="btn" data-mktsort="change_24h_pct">24h %</button>
-        <button class="btn" data-mktsort="change_7d_pct">7d %</button>
-        <button class="btn" data-mktsort="volume_24h_usd">Volume</button>
-      </div>
-    </div>
-    <div class="card" style="padding:0;overflow:auto">
-      <table id="marketsTable" style="margin:0">
-        <thead>
-          <tr>
-            <th style="padding-left:14px">#</th>
-            <th>Coin</th>
-            <th>Price</th>
-            <th>1h</th>
-            <th>24h</th>
-            <th>7d</th>
-            <th>30d</th>
-            <th>Volume 24h</th>
-            <th>Market Cap</th>
-            <th>Last 7d</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-    <div class="chart-card">
-      <div class="head"><h2>Trending on CoinGecko (last 24h search)</h2><span class="desc">Retail attention proxy</span></div>
-      <div id="trendingList" style="display:flex;flex-wrap:wrap;gap:8px;padding:6px 4px"></div>
-    </div>
-    <!-- DEX side of the market (GeckoTerminal) — trending pools by volume + brand-new pools -->
-    <div class="grid2">
-      <div class="chart-card">
-        <div class="head">
-          <h2>DEX trending pools <span class="tag">GeckoTerminal</span></h2>
-          <span class="desc">top 10 DEX pools by 24h volume across all chains</span>
-        </div>
-        <div style="max-height:360px;overflow:auto">
-          <table id="gtTrendingTable" style="margin:0;font-size:12px"><thead><tr>
-            <th style="padding-left:14px">#</th>
-            <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
-          </tr></thead><tbody></tbody></table>
-        </div>
-      </div>
-      <div class="chart-card">
-        <div class="head">
-          <h2>DEX new pools <span class="tag">GeckoTerminal</span></h2>
-          <span class="desc">freshest listings · memecoin / early-listing radar</span>
-        </div>
-        <div style="max-height:360px;overflow:auto">
-          <table id="gtNewTable" style="margin:0;font-size:12px"><thead><tr>
-            <th style="padding-left:14px">#</th>
-            <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
-          </tr></thead><tbody></tbody></table>
-        </div>
       </div>
     </div>
   </div>
@@ -2968,62 +2938,11 @@ function escapeHtml(s){
 // ---------- Markets tab ----------
 const marketState = { sort: 'rank' };
 
-function renderMarkets(){
-  // Traditional indices were moved here from Overview — reuse the same
-  // render function which still targets #overviewIndices (id kept stable
-  // so we don't break any other references).
-  renderOverviewIndices();
-  const rows = (DATA.market && DATA.market.markets_top) || [];
-  const host = document.querySelector('#marketsTable tbody');
-  if (!host) return;
-  const asOf = document.getElementById('marketsAsOf');
-  if (asOf) asOf.textContent = rows.length ? `${rows.length} coins · auto-refreshes every 30 min` : 'No data yet — refresh';
-  // Sort
-  const k = marketState.sort;
-  const sorted = rows.slice().sort((a,b) => {
-    const av = a[k], bv = b[k];
-    if (k === 'rank') return (av||999) - (bv||999);
-    return (bv||0) - (av||0);
-  });
-  const html = sorted.map(c => {
-    const dir = v => v == null ? 'amber' : v >= 0 ? 'green' : 'red';
-    const pct = v => v == null ? '—' : (v>=0?'+':'') + v.toFixed(2) + '%';
-    const spark = (c.sparkline_7d || []).slice(-50);
-    const sparkSvg = renderSparkline(spark, c.change_7d_pct >= 0);
-    const img = c.image ? `<img src="${c.image}" alt="" style="width:18px;height:18px;border-radius:50%;vertical-align:middle;margin-right:6px">` : '';
-    return `<tr>
-      <td style="padding-left:14px;color:var(--muted)">${c.rank||''}</td>
-      <td><strong>${img}${escapeHtml(c.symbol||'')}</strong> <span class="sub" style="color:var(--muted);font-size:11px">${escapeHtml(c.name||'')}</span></td>
-      <td>${fmtUSD(c.price_usd,'auto')}</td>
-      <td class="${dir(c.change_1h_pct)}">${pct(c.change_1h_pct)}</td>
-      <td class="${dir(c.change_24h_pct)}">${pct(c.change_24h_pct)}</td>
-      <td class="${dir(c.change_7d_pct)}">${pct(c.change_7d_pct)}</td>
-      <td class="${dir(c.change_30d_pct)}">${pct(c.change_30d_pct)}</td>
-      <td>${fmtUSD(c.volume_24h_usd,'auto')}</td>
-      <td>${fmtUSD(c.market_cap_usd,'auto')}</td>
-      <td>${sparkSvg}</td>
-    </tr>`;
-  }).join('');
-  host.innerHTML = html;
-
-  // Trending
-  const trending = (DATA.market && DATA.market.trending) || [];
-  const tHost = document.getElementById('trendingList');
-  if (tHost) {
-    if (!trending.length) tHost.innerHTML = '<div class="sub" style="color:var(--muted)">No trending data</div>';
-    else tHost.innerHTML = trending.map((t,i) =>
-      `<span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:var(--panel2);border:1px solid var(--border);border-radius:999px;font-size:12px">
-        <span style="color:var(--muted);font-size:10px">#${i+1}</span>
-        ${t.thumb ? `<img src="${t.thumb}" alt="${escapeHtml(t.symbol||'')}" style="width:14px;height:14px;border-radius:50%">` : ''}
-        <strong>${escapeHtml(t.symbol||'')}</strong>
-        <span class="sub" style="color:var(--muted)">${escapeHtml(t.name||'')}${t.rank?` · rank ${t.rank}`:''}</span>
-      </span>`
-    ).join('');
-  }
-
-  // GeckoTerminal DEX pools — trending (by 24h volume) + new (newest listings)
-  renderGeckoTerminalPools();
-}
+// Markets tab was consolidated into Crypto Overview. The Top 25 / sortable
+// markets table + Trending CoinGecko list were dropped (already covered by
+// the Top-50 signals strip + Top-15 by mcap widget on Overview). What
+// remains: traditional indices (top bar) + DEX pools (bottom of Overview),
+// rendered by their own helper functions called from renderOverview().
 
 // Render two GeckoTerminal DEX pool tables side-by-side on the Markets tab.
 // Free DEX coverage across 1,800+ DEXes / 260+ chains, sourced from the
@@ -3058,9 +2977,9 @@ function renderGeckoTerminalPools(){
   fillTable('#gtNewTable tbody', fresh);
 }
 
-function renderSparkline(values, isUp){
+function renderSparkline(values, isUp, w, h){
   if (!values || values.length < 2) return '';
-  const w = 90, h = 24;
+  w = w || 90; h = h || 24;
   const min = Math.min(...values), max = Math.max(...values);
   const range = max - min || 1;
   const pts = values.map((v, i) => {
@@ -3072,11 +2991,11 @@ function renderSparkline(values, isUp){
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="vertical-align:middle"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 }
 
+// data-mktsort buttons no longer exist (Markets tab deleted); kept as a
+// no-op guard so we don't error if any old browser cache still has them.
 document.querySelectorAll('.btn[data-mktsort]').forEach(b =>
   b.addEventListener('click', () => {
-    marketState.sort = b.dataset.mktsort;
-    document.querySelectorAll('.btn[data-mktsort]').forEach(x => x.classList.toggle('active', x.dataset.mktsort === marketState.sort));
-    renderMarkets();
+    /* noop — Markets tab consolidated into Crypto Overview */
   })
 );
 
@@ -3489,6 +3408,7 @@ function renderWhaleExtras(){
 
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
+  renderOverviewIndices();        // top bar — moved from deleted Markets tab
   renderOverviewSignals();
   renderOverviewStrongBuys();
   renderOverviewTop15();
@@ -3496,6 +3416,7 @@ function renderOverview(){
   renderOverviewTopVolume();
   renderOverviewNews();
   renderOverviewInsights();
+  renderGeckoTerminalPools();     // bottom — also moved from Markets
 }
 
 // Top 15 coins by market-cap rank from the top-50 signal computation.
@@ -3823,35 +3744,32 @@ function renderOverviewMacro(){
   });
 }
 
+// Compact one-liner index row — fits the thin bar at top of Overview.
+// Layout per index: SYMBOL  VALUE  +X.YZ% (1d), with a tiny sparkline at
+// the right. No 5d/30d (kept the most actionable signal, drop the rest).
 function renderOverviewIndices(){
   const y = ((DATA.market || {}).yahoo_indices) || {};
   const items = [
-    {key:'dow',     short:'DOW',    name:'Dow Jones'},
-    {key:'sp500',   short:'S&P 500',name:'S&P 500'},
-    {key:'nasdaq',  short:'NASDAQ', name:'NASDAQ Composite'},
-    {key:'vix',     short:'VIX',    name:'Volatility Index'},
+    {key:'dow',     short:'DOW'},
+    {key:'sp500',   short:'S&P'},
+    {key:'nasdaq',  short:'NDX'},
+    {key:'vix',     short:'VIX'},
   ];
   const host = document.getElementById('overviewIndices');
   if (!host) return;
   host.innerHTML = items.map(i => {
     const v = y[i.key];
-    if (!v) return `<div class="card" style="padding:10px 12px"><h3 style="font-size:11px">${i.short}</h3><div class="v">—</div></div>`;
-    const cls1d = (v.change_1d_pct||0) >= 0 ? 'green' : 'red';
-    const cls5d = (v.change_5d_pct||0) >= 0 ? 'green' : 'red';
-    const cls30d = (v.change_30d_pct||0) >= 0 ? 'green' : 'red';
-    const pct = x => (x>=0?'+':'') + x.toFixed(2) + '%';
-    const spark = renderSparkline(v.sparkline_90d || [], (v.change_30d_pct||0) >= 0);
-    return `<div class="card" style="padding:10px 12px;display:flex;align-items:center;gap:12px">
-      <div style="flex:1;min-width:0">
-        <h3 style="margin:0;font-size:11px;color:var(--muted)">${i.short}</h3>
-        <div class="v" style="font-size:20px;font-weight:600;margin-top:2px">${(v.latest||0).toLocaleString(undefined,{maximumFractionDigits:2})}</div>
-        <div style="display:flex;gap:8px;font-size:11px;margin-top:2px">
-          <span class="${cls1d}">${pct(v.change_1d_pct||0)} 1d</span>
-          <span class="${cls5d}">${pct(v.change_5d_pct||0)} 5d</span>
-          <span class="${cls30d}">${pct(v.change_30d_pct||0)} 30d</span>
-        </div>
-      </div>
-      <div style="flex-shrink:0">${spark}</div>
+    if (!v) return `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:#10151f;border:1px solid var(--border);border-radius:4px"><span style="font-size:10px;color:var(--muted);font-weight:600">${i.short}</span><span style="font-size:11px;color:var(--muted)">—</span></div>`;
+    const ch = v.change_1d_pct || 0;
+    const cls = ch >= 0 ? 'green' : 'red';
+    const pct = (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%';
+    // Tiny sparkline — 56×16 SVG
+    const spark = renderSparkline(v.sparkline_90d || [], ch >= 0, 56, 16);
+    return `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:#10151f;border:1px solid var(--border);border-radius:4px;font-variant-numeric:tabular-nums">
+      <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.04em">${i.short}</span>
+      <span style="font-size:12px;font-weight:600">${(v.latest||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+      <span class="${cls}" style="font-size:11px;font-weight:600">${pct}</span>
+      <span style="margin-left:auto;line-height:0">${spark}</span>
     </div>`;
   }).join('');
 }
@@ -4374,9 +4292,6 @@ function renderAll(){
   if (state.tab === 'whale' && state.asset === 'btc' && !whEmpty){
     renderWhaleSentiment(); renderWhaleKpisV2(); renderWhale(); renderWhaleExtras();
   }
-  if (state.tab === 'markets'){
-    renderMarkets();
-  }
   if (state.tab === 'defi'){
     renderDefi();
   }
@@ -4402,6 +4317,14 @@ function selectTab(t){
     state.asset = 'btc';
     setActive('asset', 'btc');
   }
+  // Scroll the newly-active tab into view on the horizontal-scroll tab
+  // strip (mobile only — desktop the strip never overflows). Without this
+  // "Research" / "Whale Activity" sat off-screen on iPhone widths.
+  const _activeTab = document.querySelector(`.tab[data-tab="${t}"]`);
+  if (_activeTab && _activeTab.scrollIntoView){
+    try { _activeTab.scrollIntoView({inline:'center', block:'nearest', behavior:'smooth'}); }
+    catch(_){ _activeTab.scrollIntoView(); }
+  }
   document.querySelectorAll('.tab').forEach(el => {
     el.classList.toggle('active', el.dataset.tab === t);
     el.classList.toggle('eth',  state.asset === 'eth');
@@ -4411,7 +4334,6 @@ function selectTab(t){
   document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
   document.getElementById('tab-trading').classList.toggle('hidden', t!=='trading');
   document.getElementById('tab-signals').classList.toggle('hidden', t!=='signals');
-  document.getElementById('tab-markets').classList.toggle('hidden', t!=='markets');
   document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
   document.getElementById('tab-social').classList.toggle('hidden', t!=='social');
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
