@@ -356,6 +356,9 @@ def compute_signal_simple(coin: dict) -> dict | None:
         "name": coin.get("name"),
         "rank": coin.get("rank"),
         "image": coin.get("image"),
+        # Expose the 168-hour sparkline so the UI can render a price chart
+        # inline in the detail modal. Same data the score was computed from.
+        "sparkline_7d": spark,
         "disclaimer": "Rules-based indicator (simplified — based on CoinGecko "
                       "price/volume only, no funding/ETF/F&G). Not investment "
                       "advice. Evaluate on your own.",

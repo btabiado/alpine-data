@@ -405,6 +405,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #overviewMacroRow{grid-template-columns:1fr !important}
   .grid2{grid-template-columns:1fr !important}
   .grid3{grid-template-columns:1fr !important}
+  /* Asset signal cards: keep 2 per row on mobile instead of one big card,
+     and shrink fonts so price/change/volume don't dominate the screen. */
+  #overviewSignals{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  #overviewSignals .card{padding:10px 12px}
+  #overviewSignals .card h3{font-size:11px !important}
+  #overviewSignals .card .v{font-size:18px !important}
+  #overviewSignals .card .sub{font-size:10px !important}
+  /* Strong Buys + Top-50 strip cards: tighter on mobile too */
+  #overviewStrongBuys{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
+  #top20SignalCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
@@ -1854,6 +1864,47 @@ function labelBucket(label){
   return 'hold';
 }
 
+// Inline SVG sparkline for the detail modal. Tries the signal's own
+// sparkline_7d first (top-50 entries carry this), then falls back to
+// the 7-day tail of DATA.market[asset].price for the pinned 4 assets.
+// Returns empty string if no usable series found.
+function renderSignalSparkline(s){
+  let series = Array.isArray(s.sparkline_7d) ? s.sparkline_7d.filter(x => x != null) : null;
+  if (!series || series.length < 5){
+    const lower = (s.symbol||'').toLowerCase();
+    const main = (DATA.market||{})[lower];
+    if (main && Array.isArray(main.price)){
+      series = main.price.slice(-7).map(p => p.value).filter(x => x != null);
+    }
+  }
+  if (!series || series.length < 5) return '';
+  const W = 640, H = 120, pad = 6;
+  const min = Math.min(...series);
+  const max = Math.max(...series);
+  const range = max - min || 1;
+  const step = (W - pad*2) / (series.length - 1);
+  const yFor = v => pad + (H - pad*2) * (1 - (v - min) / range);
+  const pts = series.map((v, i) => `${pad + i*step},${yFor(v).toFixed(1)}`).join(' ');
+  const first = series[0], last = series[series.length-1];
+  const up = last >= first;
+  const color = up ? '#22c55e' : '#ef4444';
+  const fillColor = up ? '#22c55e22' : '#ef444422';
+  const area = `${pad},${H-pad} ${pts} ${pad + (series.length-1)*step},${H-pad}`;
+  const pctChg = (last - first) / first * 100;
+  const pctTxt = (pctChg >= 0 ? '+' : '') + pctChg.toFixed(2) + '%';
+  return `
+    <div style="background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px">
+        <span class="sub" style="color:var(--muted)">Price · ${series.length === 168 ? '168h hourly' : series.length + 'd daily'} sparkline</span>
+        <span style="color:${color};font-weight:600">${pctTxt} over window</span>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:120px;display:block;margin-top:4px">
+        <polygon points="${area}" fill="${fillColor}"/>
+        <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5"/>
+      </svg>
+    </div>`;
+}
+
 // Render the full signal-card breakdown from a raw signals_top20 entry.
 // Mirrors renderSignalCard(asset) but keys off the object directly so the
 // modal works for any coin, not just the four pinned in DATA.signals.
@@ -1885,6 +1936,7 @@ function renderSignalCardFromObj(s){
       <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
+      ${renderSignalSparkline(s)}
       <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
       <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer||'')}</div>
     </div>`;
