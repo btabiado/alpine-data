@@ -914,11 +914,7 @@ def cryptocompare_social_stats() -> dict:
     code activity. Each call has its own try/except so partial failures
     don't kill the whole section."""
     import os
-    # Accept either the canonical name or the legacy BTC_ETH_ETF_DASHBOARD
-    # name that an earlier secret-add mishap created. Canonical wins when both
-    # are set. Safe to drop the fallback once the legacy secret is renamed.
-    api_key = (os.environ.get("CRYPTOCOMPARE_API_KEY") or
-               os.environ.get("BTC_ETH_ETF_DASHBOARD") or "")
+    api_key = os.environ.get("CRYPTOCOMPARE_API_KEY", "")
     # CryptoCompare internal coin IDs (NOT symbols). 46472 used to map to
     # LINK in older docs but now returns "Coin id is invalid"; the canonical
     # ID is 309621 (verified via /data/all/coinlist?fsym=LINK in 2026-05).
