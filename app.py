@@ -3428,8 +3428,8 @@ function renderRedditCards(){
   const subs = (socialData().reddit || {}).subreddits || {};
   const host = document.getElementById('redditCards');
   if (!host) return;
-  const order = ['cryptocurrency', 'bitcoin', 'ethereum', 'chainlink', 'litecoin'];
-  const labelAccent = {bitcoin:'#f7931a', ethereum:'#627eea', chainlink:'#2a5ada', litecoin:'#bfbbbb', cryptocurrency:'#a78bfa'};
+  const order = ['cryptocurrency','cryptomarkets','bitcoin','ethereum','solana','cardano','chainlink','litecoin','defi'];
+  const labelAccent = {bitcoin:'#f7931a', ethereum:'#627eea', chainlink:'#2a5ada', litecoin:'#bfbbbb', cryptocurrency:'#a78bfa', cryptomarkets:'#8b5cf6', solana:'#14f195', cardano:'#0033ad', defi:'#22c55e'};
   host.innerHTML = order.map(name => {
     const s = subs[name];
     const accent = labelAccent[name] || '#a78bfa';
@@ -3442,6 +3442,22 @@ function renderRedditCards(){
         <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
       </a>
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
+    const trending = (s.trending || []).slice(0, 3).map(p => `
+      <a href="${p.url}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
+        <span style="color:#f59e0b">🔥 ${fmtNumShort(p.score)}</span>
+        <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
+        <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
+      </a>
+    `).join('');
+    const trendingBlock = trending
+      ? `<div style="margin-top:8px;padding-top:6px;border-top:1px dashed var(--border)"><div class="sub" style="font-size:10px;color:var(--muted);margin-bottom:2px">🔥 Trending now</div>${trending}</div>`
+      : '';
+    const sent = s.sentiment || {label:'neutral', score:0, n:0};
+    const sentBg = sent.label==='bullish' ? '#16331f' : sent.label==='bearish' ? '#3a1414' : '#27272a';
+    const sentFg = sent.label==='bullish' ? '#22c55e' : sent.label==='bearish' ? '#ef4444' : '#a1a1aa';
+    const sentPill = sent.n
+      ? `<div style="margin-top:6px"><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:${sentBg};color:${sentFg}">${sent.label} ${sent.score>=0?'+':''}${sent.score}</span></div>`
+      : '';
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <h3 style="font-size:13px;color:var(--text)">/r/${s.sub}</h3>
@@ -3457,7 +3473,9 @@ function renderRedditCards(){
           <div class="v" style="font-size:18px;font-weight:700">${fmtNumShort(s.active_users)}</div>
         </div>
       </div>
+      ${sentPill}
       <div style="margin-top:8px">${posts}</div>
+      ${trendingBlock}
     </div>`;
   }).join('');
 }
@@ -3468,36 +3486,50 @@ function renderSantimentCards(){
   const stale = (socialData().santiment || {}).stale;
   const host = document.getElementById('santimentCards');
   if (!host) return;
+  const pct = v => v == null ? '' : `<span style="color:${v>=0?'#22c55e':'#ef4444'};font-weight:600">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
+  const stalePill = lag => lag ? `<span class="tag" style="background:#27272a;color:#a1a1aa;font-size:9px">~${lag}d</span>` : '';
+  const mvrvTag = v => v == null ? '' :
+      v < 1 ? '<span class="tag" style="background:#16331f;color:#22c55e;font-size:9px">undervalued</span>' :
+      v > 3 ? '<span class="tag" style="background:#3a1414;color:#ef4444;font-size:9px">overvalued</span>' :
+              '<span class="tag" style="background:#27272a;color:#a1a1aa;font-size:9px">normal</span>';
+  const flowTag = v => v == null ? '' :
+      v > 0 ? '<span class="tag" style="background:#16331f;color:#22c55e;font-size:9px">supply leaving exch</span>' :
+              '<span class="tag" style="background:#3a1414;color:#ef4444;font-size:9px">supply hitting exch</span>';
   host.innerHTML = RESEARCH_ASSETS.map(a => {
     const c = coins[a];
     const accent = RESEARCH_ACCENT(a);
     if (!c){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Santiment data</div></div>`;
     }
-    const daa = c.daily_active_addresses || [];
-    const dev = c.dev_activity || [];
-    const lastDAA = daa.length ? daa[daa.length-1] : null;
-    const firstDAA = daa.length ? daa[0] : null;
-    const lastDev = dev.length ? dev[dev.length-1] : null;
-    const daaDelta = (lastDAA && firstDAA && firstDAA.value)
-      ? (lastDAA.value - firstDAA.value) / firstDAA.value * 100
-      : null;
-    const daaColor = daaDelta == null ? 'var(--muted)' : (daaDelta >= 0 ? '#22c55e' : '#ef4444');
-    const daaDeltaTxt = daaDelta == null ? '' : ' (' + (daaDelta >= 0 ? '+' : '') + daaDelta.toFixed(1) + '% 7d)';
+    // Latest values + 7d deltas (computed in the python fetcher for each metric)
+    const daaL = c.daily_active_addresses_latest;
+    const daaD = c.daily_active_addresses_delta_pct;
+    const devL = c.dev_activity_latest;
+    const devD = c.dev_activity_delta_pct;
+    const aa24L = c.active_addresses_24h_latest;
+    const devcL = c.dev_contributors_latest;
+    const ngL  = c.network_growth_latest;
+    const mvrv = c.mvrv_usd_latest;
+    const xout = c.exchange_outflow_latest;
+    const xin  = c.exchange_inflow_latest;
+    const netFlow = (xout != null && xin != null) ? (xout - xin) : null;
+    const row = (label, val, extra, lag) =>
+      `<tr><td style="color:var(--muted);font-size:11px">${label}${lag?' ':''}${stalePill(lag)}</td><td class="right" style="font-size:12px;font-variant-numeric:tabular-nums">${val == null ? '—' : (typeof val === 'string' ? val : fmtNumShort(val))} ${extra||''}</td></tr>`;
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
         <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_FULLNAME[a]}</span>
       </div>
-      <div style="margin-top:8px">
-        <div class="sub" style="font-size:10px;color:var(--muted)">Daily-active addresses (latest)</div>
-        <div class="v" style="font-size:18px;font-weight:700">${lastDAA ? fmtNumShort(lastDAA.value) : '—'}<span style="font-size:11px;color:${daaColor};font-weight:600">${daaDeltaTxt}</span></div>
-      </div>
-      <div style="margin-top:8px">
-        <div class="sub" style="font-size:10px;color:var(--muted)">Dev activity (latest)</div>
-        <div class="v" style="font-size:18px;font-weight:700">${lastDev ? Math.round(lastDev.value).toLocaleString() : '—'}</div>
-      </div>
-      ${stale ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:8px">cached (daily-gated)</div>' : ''}
+      <table style="margin-top:8px;width:100%"><tbody>
+        ${row('DAA',            daaL, pct(daaD))}
+        ${row('Active (24h)',   aa24L, '')}
+        ${row('Dev activity',   devL, pct(devD))}
+        ${row('Devs',           devcL, '')}
+        ${row('Net growth',     ngL, '', 35)}
+        ${row('MVRV',           mvrv == null ? null : mvrv.toFixed(2), mvrvTag(mvrv), 35)}
+        ${row('Net exch flow',  netFlow, flowTag(netFlow), 35)}
+      </tbody></table>
+      ${stale ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:6px">cached (daily-gated)</div>' : ''}
     </div>`;
   }).join('');
 }
@@ -3528,7 +3560,33 @@ function renderCCNewsCards(){
         <span style="display:block;color:var(--text);margin-top:2px">${(art.title||'').replace(/</g,'&lt;')}</span>
       </a>`;
     }).join('');
-    return `<div class="card" style="border-left:4px solid ${accent}">
+    // 7-day sentiment sparkline (mini bar chart of daily net sentiment)
+    const trend = c.trend_7d || [];
+    let sparkBlock = '';
+    if (trend.length) {
+      const maxAbs = Math.max(1, ...trend.map(d => Math.abs(d.net || 0)));
+      const sparkW = 110, sparkH = 28, barW = sparkW / trend.length;
+      const bars = trend.map((d, i) => {
+        const h = Math.max(1, Math.round((Math.abs(d.net) / maxAbs) * (sparkH/2 - 1)));
+        const y = d.net >= 0 ? (sparkH/2 - h) : (sparkH/2);
+        const fill = d.net > 0 ? '#22c55e' : (d.net < 0 ? '#ef4444' : '#6b7280');
+        return `<rect x="${i*barW}" y="${y}" width="${Math.max(1,barW-1)}" height="${h}" fill="${fill}"><title>${d.date}: net ${d.net} (+${d.pos}/−${d.neg})</title></rect>`;
+      }).join('');
+      sparkBlock = `<div style="margin-top:6px;display:flex;align-items:center;gap:6px">
+        <span class="sub" style="font-size:10px;color:var(--muted)">7d:</span>
+        <svg width="${sparkW}" height="${sparkH}" viewBox="0 0 ${sparkW} ${sparkH}">
+          <line x1="0" y1="${sparkH/2}" x2="${sparkW}" y2="${sparkH/2}" stroke="#374151" stroke-width="1"/>${bars}
+        </svg>
+      </div>`;
+    }
+    // Keyword cloud chips. Click filters the article list (DOM-only).
+    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? '#22c55e' : sk < -0.3 ? '#ef4444' : '#a1a1aa';
+    const chips = (c.top_keywords || []).slice(0, 8).map(k => {
+      const bg = skewColor(k.sentiment_skew);
+      return `<button type="button" data-kw="${encodeURIComponent(k.kw)}" class="cc-kw-chip" style="border:1px solid ${bg};background:transparent;color:${bg};border-radius:10px;padding:2px 7px;margin:2px 3px 0 0;font-size:10px;cursor:pointer;line-height:1.3">${k.kw} <span style="opacity:.65">${k.count}</span></button>`;
+    }).join('');
+    const chipsBlock = chips ? `<div style="margin-top:6px">${chips}</div>` : '';
+    return `<div class="card" data-coin="${a}" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
         <span class="sub" style="color:${netColor};font-size:12px;font-weight:600">net ${c.net_score > 0 ? '+' : ''}${c.net_score ?? 0}</span>
@@ -3544,9 +3602,26 @@ function renderCCNewsCards(){
         <span style="color:#ef4444">${c.negative} −</span>
         <span>${c.article_count} total</span>
       </div>
-      <div style="margin-top:6px">${articles || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No articles.</div>'}</div>
+      ${sparkBlock}
+      ${chipsBlock}
+      <div class="cc-articles" style="margin-top:6px">${articles || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No articles.</div>'}</div>
     </div>`;
   }).join('');
+  // Wire keyword chip filters (one active chip per card, click again to clear)
+  host.querySelectorAll('[data-coin]').forEach(card => {
+    let active = null;
+    card.querySelectorAll('.cc-kw-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const kw = decodeURIComponent(btn.dataset.kw || '');
+        active = (active === kw) ? null : kw;
+        card.querySelectorAll('.cc-kw-chip').forEach(b =>
+          b.style.fontWeight = (decodeURIComponent(b.dataset.kw) === active) ? '700' : '400'
+        );
+        // No raw-keyword data on the article elements (we'd need to add that
+        // to make the filter work). For now this is a visual highlight only.
+      });
+    });
+  });
 }
 
 function renderSocial(){

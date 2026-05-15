@@ -705,45 +705,126 @@ def _reddit_rss_top_posts(sub: str, headers: dict) -> list[dict]:
         return []
 
 
+# Title-sentiment keyword lists. Plain word-match × upvote_ratio gives a
+# decent buzz signal without an NLP dep. Tunable per market mood.
+_BULL_KW = {"surge","rally","ath","breakout","moon","bullish","approved","approval",
+            "soar","pump","green","record","milestone","adoption","upgrade","partnership"}
+_BEAR_KW = {"crash","dump","ban","banned","hack","hacked","exploit","exploited",
+            "bearish","sec","lawsuit","sue","sued","liquidation","rugpull","rug",
+            "scam","plunge","drop","sell-off","selloff"}
+
+
+def _title_sentiment(posts: list[dict]) -> dict:
+    """(bull - bear) × upvote_ratio summed across titles. Returns
+    {score, n, label} where label in {'bullish','bearish','neutral'}.
+    Missing upvote_ratio (RSS posts) defaults to 0.85 (neutral confidence)."""
+    import re as _re
+    total, n = 0.0, 0
+    for p in posts or []:
+        title = (p.get("title") or "").lower()
+        if not title:
+            continue
+        words = set(_re.findall(r"[a-z]+", title))
+        bull = len(words & _BULL_KW)
+        bear = len(words & _BEAR_KW)
+        ratio = p.get("upvote_ratio")
+        if ratio is None:
+            ratio = 0.85
+        total += (bull - bear) * float(ratio)
+        n += 1
+    if n == 0:
+        return {"score": 0.0, "n": 0, "label": "neutral"}
+    label = "bullish" if total >= 0.75 else ("bearish" if total <= -0.75 else "neutral")
+    return {"score": round(total, 2), "n": n, "label": label}
+
+
+# Module-level Reddit OAuth token cache so we re-auth once per fetch_all().
+_REDDIT_TOKEN_CACHE: dict = {"token": None, "exp": 0.0}
+
+
+def _reddit_oauth_token(ua: str) -> str | None:
+    """Fetch (and cache for the process lifetime) a Reddit app-only bearer
+    token via the client_credentials grant. Returns None on any failure so
+    callers can fall back to anon. Requires REDDIT_CLIENT_ID + _SECRET in env."""
+    import os
+    cid = os.environ.get("REDDIT_CLIENT_ID")
+    csec = os.environ.get("REDDIT_CLIENT_SECRET")
+    if not cid or not csec:
+        return None
+    now = time.time()
+    if _REDDIT_TOKEN_CACHE["token"] and _REDDIT_TOKEN_CACHE["exp"] - 60 > now:
+        return _REDDIT_TOKEN_CACHE["token"]
+    try:
+        r = requests.post(
+            "https://www.reddit.com/api/v1/access_token",
+            auth=(cid, csec),
+            data={"grant_type": "client_credentials"},
+            headers={"User-Agent": ua},
+            timeout=15,
+        )
+        if r.status_code != 200:
+            print(f"  [reddit] oauth token -> {r.status_code}: {r.text[:160]}", file=sys.stderr)
+            return None
+        j = r.json() or {}
+        tok = j.get("access_token")
+        if not tok:
+            return None
+        _REDDIT_TOKEN_CACHE["token"] = tok
+        _REDDIT_TOKEN_CACHE["exp"] = now + float(j.get("expires_in", 3600))
+        return tok
+    except Exception as e:
+        print(f"  [reddit] oauth token error: {e}", file=sys.stderr)
+        return None
+
+
 def reddit_crypto_stats() -> dict:
-    """Free Reddit data — no key. Reddit aggressively blocks cloud-IP ranges
-    (GitHub Actions runners typically get HTTP 403). To survive in CI, we:
+    """Free Reddit data. Prefers OAuth (oauth.reddit.com) when
+    REDDIT_CLIENT_ID + REDDIT_CLIENT_SECRET are set — bypasses most of
+    Reddit's cloud-IP blocking and gives 100 req/min vs ~60 anon.
 
-      1. Use a browser-like User-Agent (Reddit's bot detection is lenient
-         on real browser UAs).
-      2. For each subreddit, fetch /about.json + /top.json?t=day.
-      3. On 403, fall back to the public RSS feed (/.rss) which is
-         sometimes served from a different stack with looser checks.
+    For each of 9 subreddits, fetches: /about (subs + active users), /top
+    (top 5 24h posts), /hot (top 3 climbing posts not yet in /top — the
+    "trending now" signal). Aggregates per-sub title sentiment from the
+    keyword lists above × upvote_ratio.
 
-    Returns subscriber count + active-user-count + top 24h posts per sub.
-    Locally (residential IP) all calls succeed; in CI we degrade to RSS
-    posts only (no subscriber count) if the JSON path is blocked."""
+    Falls back to anon www.reddit.com JSON, then RSS for post titles, as
+    defense in depth. Calls: 9 subs × 3 endpoints + 1 token = 28 paced at
+    0.4s ≈ 11s overhead. Under Reddit's 100 req/min auth limit."""
     SUBS = [
         ("CryptoCurrency", "All crypto"),
-        ("Bitcoin", "BTC"),
-        ("ethereum", "ETH"),
-        ("Chainlink", "LINK"),
-        ("litecoin", "LTC"),
+        ("CryptoMarkets",  "Markets/TA"),
+        ("Bitcoin",        "BTC"),
+        ("ethereum",       "ETH"),
+        ("solana",         "SOL"),
+        ("cardano",        "ADA"),
+        ("Chainlink",      "LINK"),
+        ("litecoin",       "LTC"),
+        ("defi",           "DeFi"),
     ]
+    ua = ("btc-eth-etf-dashboard/1.0 (+https://github.com/btabiado/btc-eth-etf-dashboard) "
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 "
+          "(KHTML, like Gecko) Version/18.0 Safari/605.1.15")
+    token = _reddit_oauth_token(ua)
+    if token:
+        base = "https://oauth.reddit.com"
+        headers = {"User-Agent": ua, "Authorization": f"bearer {token}",
+                   "Accept": "application/json,text/xml,*/*;q=0.8"}
+        print("  [reddit] using OAuth (oauth.reddit.com)", file=sys.stderr)
+    else:
+        base = "https://www.reddit.com"
+        headers = {"User-Agent": ua,
+                   "Accept": "application/json,text/xml,*/*;q=0.8"}
+        print("  [reddit] no creds, using anon www.reddit.com", file=sys.stderr)
+
     out: dict[str, dict] = {}
-    # Mimic a modern Safari UA. Per Reddit's API ToS, custom UAs are
-    # supposed to be unique strings, but their bot-detection layer rejects
-    # most non-browser-shaped strings outright from cloud IPs.
-    headers = {
-        "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) "
-                       "AppleWebKit/605.1.15 (KHTML, like Gecko) "
-                       "Version/18.0 Safari/605.1.15"),
-        "Accept": "application/json,text/xml,*/*;q=0.8",
-    }
     for sub, label in SUBS:
         meta = {"sub": sub, "label": label, "subscribers": None,
-                "active_users": None, "top_posts": [], "ok": False}
-        about_status = None
-        # About
+                "active_users": None, "top_posts": [], "trending": [],
+                "sentiment": {"score": 0, "n": 0, "label": "neutral"},
+                "ok": False}
+        # About — subscriber + active-user counts
         try:
-            r = requests.get(f"https://www.reddit.com/r/{sub}/about.json",
-                             headers=headers, timeout=15)
-            about_status = r.status_code
+            r = requests.get(f"{base}/r/{sub}/about.json", headers=headers, timeout=15)
             if r.status_code == 200:
                 d = (r.json() or {}).get("data") or {}
                 meta["subscribers"] = d.get("subscribers")
@@ -755,10 +836,10 @@ def reddit_crypto_stats() -> dict:
         except Exception as e:
             print(f"  [reddit] /r/{sub}/about error: {e}", file=sys.stderr)
         time.sleep(0.4)
-        # Top posts (last 24h) — JSON first, RSS fallback on 403/blocked
+        # Top posts (last 24h) — JSON first, RSS fallback
         json_ok = False
         try:
-            r = requests.get(f"https://www.reddit.com/r/{sub}/top.json?t=day&limit=5",
+            r = requests.get(f"{base}/r/{sub}/top.json?t=day&limit=5",
                              headers=headers, timeout=15)
             if r.status_code == 200:
                 children = ((r.json() or {}).get("data") or {}).get("children") or []
@@ -766,6 +847,7 @@ def reddit_crypto_stats() -> dict:
                     "title": (c.get("data") or {}).get("title", "")[:120],
                     "score": (c.get("data") or {}).get("score"),
                     "comments": (c.get("data") or {}).get("num_comments"),
+                    "upvote_ratio": (c.get("data") or {}).get("upvote_ratio"),
                     "url": "https://reddit.com" + ((c.get("data") or {}).get("permalink", "")),
                 } for c in children if isinstance(c, dict)][:5]
                 json_ok = True
@@ -774,12 +856,42 @@ def reddit_crypto_stats() -> dict:
         except Exception as e:
             print(f"  [reddit] /r/{sub}/top error: {e} (will try RSS)", file=sys.stderr)
         if not json_ok:
-            # RSS fallback (no score/comments, but at least surfaces titles)
             meta["top_posts"] = _reddit_rss_top_posts(sub, headers)
             if meta["top_posts"]:
-                meta["ok"] = True  # RSS posts count as data
+                meta["ok"] = True
                 meta["via_rss"] = True
         time.sleep(0.4)
+        # Trending = hot ∖ top (climbing fast, not yet top of day). Non-critical.
+        try:
+            r = requests.get(f"{base}/r/{sub}/hot.json?limit=15",
+                             headers=headers, timeout=15)
+            if r.status_code == 200:
+                hot_children = ((r.json() or {}).get("data") or {}).get("children") or []
+                top_titles = {(p.get("title") or "") for p in meta["top_posts"]}
+                trending = []
+                for c in hot_children:
+                    d = (c.get("data") or {}) if isinstance(c, dict) else {}
+                    title = d.get("title") or ""
+                    if not title or d.get("stickied") or title in top_titles:
+                        continue
+                    trending.append({
+                        "title": title[:120],
+                        "score": d.get("score"),
+                        "comments": d.get("num_comments"),
+                        "upvote_ratio": d.get("upvote_ratio"),
+                        "url": "https://reddit.com" + (d.get("permalink") or ""),
+                    })
+                trending.sort(key=lambda p: p.get("score") or 0, reverse=True)
+                meta["trending"] = trending[:3]
+            else:
+                print(f"  [reddit] /r/{sub}/hot -> {r.status_code}", file=sys.stderr)
+        except Exception as e:
+            print(f"  [reddit] /r/{sub}/hot error: {e}", file=sys.stderr)
+        time.sleep(0.4)
+        # Aggregate sentiment from top + trending titles
+        meta["sentiment"] = _title_sentiment(
+            (meta.get("top_posts") or []) + (meta.get("trending") or [])
+        )
         out[sub.lower()] = meta
     return {
         "available": any(v.get("ok") for v in out.values()),
@@ -884,15 +996,129 @@ def cryptocompare_social_stats() -> dict:
     }
 
 
+# Generic noise filtered out of the keyword-cloud aggregation.
+_CC_KW_STOP = {
+    "crypto", "cryptocurrency", "cryptocurrencies", "blockchain",
+    "market", "markets", "news", "price", "prices", "trading",
+    "trader", "traders", "coin", "coins", "token", "tokens",
+    "update", "report", "analysis",
+}
+# Per-coin aliases also dropped (e.g. don't show "bitcoin" as a tag on the BTC card)
+_CC_CAT_ALIASES = {
+    "BTC":  {"btc", "bitcoin", "xbt"},
+    "ETH":  {"eth", "ethereum", "ether"},
+    "LINK": {"link", "chainlink"},
+    "LTC":  {"ltc", "litecoin"},
+}
+
+
+def _cc_aggregate_keywords(arts: list[dict], cat: str, top_n: int = 10) -> list[dict]:
+    """Bucket KEYWORDS across articles, score by frequency × sentiment skew.
+    sentiment_skew > 0 → keyword appears more in positive context; <0 negative."""
+    drop = _CC_KW_STOP | _CC_CAT_ALIASES.get(cat, set())
+    sent_val = {"POSITIVE": 1, "NEGATIVE": -1, "NEUTRAL": 0}
+    counts: dict[str, int] = {}
+    skew_sum: dict[str, int] = {}
+    for a in arts:
+        if not isinstance(a, dict):
+            continue
+        raw = a.get("KEYWORDS") or ""
+        s = sent_val.get((a.get("SENTIMENT") or "").upper(), 0)
+        seen: set[str] = set()
+        for tok in str(raw).split(","):
+            kw = tok.strip().lower()
+            if not kw or len(kw) < 3 or kw.isdigit() or kw in drop:
+                continue
+            if kw in seen:
+                continue
+            seen.add(kw)
+            counts[kw] = counts.get(kw, 0) + 1
+            skew_sum[kw] = skew_sum.get(kw, 0) + s
+    ranked = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:top_n]
+    return [
+        {"kw": kw, "count": n,
+         "sentiment_skew": round(skew_sum[kw] / n, 3) if n else 0.0}
+        for kw, n in ranked
+    ]
+
+
+def _cc_news_trend(category: str, days: int = 7, page_size: int = 50,
+                   max_pages: int = 5) -> list[dict]:
+    """Paginate cc data-api news backwards via to_ts, bucket by UTC date,
+    return last `days` days of {date, pos, neg, neu, net}. Keyless."""
+    cutoff = int(time.time()) - days * 86400
+    buckets: dict[str, dict[str, int]] = {}
+    to_ts = None
+    for _page in range(max_pages):
+        params = {"lang": "EN", "categories": category, "limit": page_size}
+        if to_ts is not None:
+            params["to_ts"] = to_ts
+        try:
+            r = requests.get(
+                "https://data-api.cryptocompare.com/news/v1/article/list",
+                params=params, headers=H, timeout=15,
+            )
+            if r.status_code != 200:
+                print(f"  [cc-news-trend] {category} -> {r.status_code}", file=sys.stderr)
+                break
+            arts = (r.json() or {}).get("Data") or []
+        except Exception as e:
+            print(f"  [cc-news-trend] {category} error: {e}", file=sys.stderr)
+            break
+        if not arts:
+            break
+        oldest = None
+        for a in arts:
+            ts = a.get("PUBLISHED_ON") or 0
+            if not ts:
+                continue
+            oldest = ts if oldest is None else min(oldest, ts)
+            if ts < cutoff:
+                continue
+            d = datetime.fromtimestamp(ts, timezone.utc).date().isoformat()
+            b = buckets.setdefault(d, {"pos": 0, "neg": 0, "neu": 0})
+            s = (a.get("SENTIMENT") or "").upper()
+            if   s == "POSITIVE": b["pos"] += 1
+            elif s == "NEGATIVE": b["neg"] += 1
+            elif s == "NEUTRAL":  b["neu"] += 1
+        if oldest is None or oldest < cutoff:
+            break
+        to_ts = oldest - 1
+        time.sleep(0.3)
+    today = datetime.now(timezone.utc).date()
+    out = []
+    for i in range(days - 1, -1, -1):
+        d = (today - timedelta(days=i)).isoformat()
+        b = buckets.get(d, {"pos": 0, "neg": 0, "neu": 0})
+        out.append({"date": d, "pos": b["pos"], "neg": b["neg"],
+                    "neu": b["neu"], "net": b["pos"] - b["neg"]})
+    return out
+
+
+def _cc_trend_should_refresh() -> bool:
+    """Trend is ~16 extra calls. Refresh only at the top of each hour (first
+    5 minutes). Other minutes reuse the previous cached trend."""
+    return datetime.now(timezone.utc).minute < 5
+
+
+def _cc_trend_from_cache(sym: str) -> list[dict]:
+    """Read previous trend_7d from data/market.json so non-refresh minutes
+    can rehydrate without re-fetching."""
+    try:
+        prev = json.loads((CACHE / "market.json").read_text())
+        return (((prev.get("social") or {}).get("cc_news") or {})
+                .get("coins", {}).get(sym, {}).get("trend_7d")) or []
+    except Exception:
+        return []
+
+
 def cryptocompare_news_sentiment() -> dict:
-    """Per-coin news sentiment via CryptoCompare's keyless data-api endpoint
-    (data-api.cryptocompare.com — distinct from min-api which now requires
-    auth). Categories: BTC, ETH, LINK, LTC. Each article comes back with a
-    built-in SENTIMENT label (POSITIVE / NEGATIVE / NEUTRAL) plus KEYWORDS,
-    UPVOTES, and BODY. We aggregate sentiment counts per category and
-    return the top 5 headlines per coin.
+    """Per-coin news sentiment via CryptoCompare's keyless data-api endpoint.
+    Returns sentiment counts, top 5 headlines, top-10 keyword cloud (with
+    sentiment skew), and a 7-day daily sentiment trend (rate-limited to hourly).
     """
     CATS = {"btc": "BTC", "eth": "ETH", "link": "LINK", "ltc": "LTC"}
+    refresh_trend = _cc_trend_should_refresh()
     out: dict[str, dict] = {}
     for sym, cat in CATS.items():
         try:
@@ -914,7 +1140,6 @@ def cryptocompare_news_sentiment() -> dict:
                 if s == "POSITIVE":  pos += 1
                 elif s == "NEGATIVE": neg += 1
                 elif s == "NEUTRAL":  neu += 1
-            # Top 5 articles by recency (already sorted desc by PUBLISHED_ON)
             top = []
             for a in arts[:5]:
                 if not isinstance(a, dict):
@@ -926,8 +1151,15 @@ def cryptocompare_news_sentiment() -> dict:
                     "source": ((a.get("SOURCE_DATA") or {}).get("NAME")) or a.get("SOURCE_ID"),
                     "published_on": a.get("PUBLISHED_ON"),
                     "upvotes": a.get("UPVOTES"),
+                    "keywords_raw": a.get("KEYWORDS") or "",
                 })
             total = pos + neg + neu
+            # Keyword cloud + per-coin trend (cached unless hourly refresh window)
+            top_keywords = _cc_aggregate_keywords(arts, cat, top_n=10)
+            if refresh_trend:
+                trend_7d = _cc_news_trend(cat, days=7)
+            else:
+                trend_7d = _cc_trend_from_cache(sym)
             out[sym] = {
                 "category": cat,
                 "article_count": len(arts),
@@ -939,6 +1171,8 @@ def cryptocompare_news_sentiment() -> dict:
                 "neutral_pct":  (neu / total * 100) if total else None,
                 "net_score": pos - neg,
                 "top_articles": top,
+                "top_keywords": top_keywords,
+                "trend_7d": trend_7d,
             }
         except Exception as e:
             print(f"  [cc-news] {cat} error: {e}", file=sys.stderr)
@@ -951,14 +1185,18 @@ def cryptocompare_news_sentiment() -> dict:
 
 
 def santiment_metrics() -> dict:
-    """Santiment GraphQL daily-active-addresses + dev-activity for our 4 coins.
-    Free tier is 100 calls/day shared. We gate this to fire only on the
-    hourly run at UTC hour == 0 (once per day, 8 calls/day used). Other
-    hours read the previous good snapshot from cache.
+    """Santiment GraphQL — free-tier metrics for 4 coins. No API key.
 
-    No API key needed for the small free-tier metrics. Slugs:
-      bitcoin, ethereum, chainlink, litecoin"""
-    # Daily-only gate: skip outside the midnight UTC hour
+    The free tier has a sliding window restriction (now-12mo to now-30d)
+    for MOST metrics, but a handful work with recent data (lag=0): DAA,
+    dev_activity, active_addresses_24h, dev_contributors. The rest
+    (network_growth, mvrv_usd, exchange flows) need a ~35d lag query.
+
+    Budget: 4 slugs × 7 metrics = 28 calls. Gated to fire only on the
+    hourly run at UTC hour 0 (once/day). Other hours return prior good
+    snapshot from cache (marked stale).
+    """
+    # Daily-only gate (stale-keep otherwise)
     now_hour = datetime.now(timezone.utc).hour
     if now_hour != 0:
         try:
@@ -972,14 +1210,29 @@ def santiment_metrics() -> dict:
                 "coins": {},
                 "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
     SLUGS = {"btc": "bitcoin", "eth": "ethereum", "link": "chainlink", "ltc": "litecoin"}
-    METRICS = ["daily_active_addresses", "dev_activity"]
-    out: dict[str, dict] = {}
-    today = datetime.now(timezone.utc).date()
-    from_iso = (today - timedelta(days=8)).isoformat() + "T00:00:00Z"
-    to_iso = today.isoformat() + "T00:00:00Z"
-    for sym, slug in SLUGS.items():
-        coin_data: dict = {"slug": slug}
-        for metric in METRICS:
+    BTC_ETH_ONLY = {"btc", "eth"}
+    # (metric_name, output_key, day_lag, slugs_supported)
+    SANTIMENT_METRICS = [
+        ("daily_active_addresses",         "daily_active_addresses",  0,  set(SLUGS)),
+        ("dev_activity",                   "dev_activity",            0,  set(SLUGS)),
+        ("active_addresses_24h",           "active_addresses_24h",    0,  set(SLUGS)),
+        ("dev_activity_contributors_count","dev_contributors",        0,  set(SLUGS)),
+        ("network_growth",                 "network_growth",          35, set(SLUGS)),
+        ("mvrv_usd",                       "mvrv_usd",                35, set(SLUGS)),
+        ("exchange_outflow",               "exchange_outflow",        35, BTC_ETH_ONLY),
+        ("exchange_inflow",                "exchange_inflow",         35, BTC_ETH_ONLY),
+    ]
+    out: dict[str, dict] = {sym: {"slug": slug} for sym, slug in SLUGS.items()}
+    now = datetime.now(timezone.utc)
+    for metric, key, lag, slugs_ok in SANTIMENT_METRICS:
+        # Build per-metric date window (recent vs lagged)
+        to_dt = now - timedelta(days=lag) if lag else now
+        from_dt = to_dt - timedelta(days=8)
+        from_iso = from_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        to_iso   = to_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
+        for sym, slug in SLUGS.items():
+            if slug not in {SLUGS[s] for s in slugs_ok}:
+                continue
             q = ('query{getMetric(metric:"' + metric + '"){'
                  'timeseriesData(slug:"' + slug + '",from:"' + from_iso + '",to:"' + to_iso +
                  '",interval:"1d"){datetime value}}}')
@@ -991,16 +1244,26 @@ def santiment_metrics() -> dict:
                     continue
                 j = r.json() or {}
                 ser = (((j.get("data") or {}).get("getMetric") or {}).get("timeseriesData")) or []
-                coin_data[metric] = [
+                points = [
                     {"date": (p.get("datetime") or "")[:10],
                      "value": p.get("value")}
                     for p in ser if isinstance(p, dict) and p.get("value") is not None
                 ]
+                if points:
+                    out[sym][key] = points
+                    # Also store a flat scalar summary the UI can use directly
+                    latest = points[-1]
+                    first = points[0]
+                    delta_pct = ((latest["value"] - first["value"]) / first["value"] * 100) if first["value"] else None
+                    out[sym][key + "_latest"] = latest["value"]
+                    out[sym][key + "_delta_pct"] = delta_pct
+                    out[sym][key + "_lag_days"] = lag
             except Exception as e:
                 print(f"  [santiment] {slug}/{metric} error: {e}", file=sys.stderr)
-        if any(coin_data.get(m) for m in METRICS):
-            out[sym] = coin_data
-        time.sleep(0.3)
+            time.sleep(0.3)
+    # Filter out slugs with no metrics populated
+    out = {sym: data for sym, data in out.items()
+           if any(k for k in data if k not in ("slug",))}
     return {
         "available": bool(out),
         "coins": out,

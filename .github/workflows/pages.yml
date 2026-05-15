@@ -84,6 +84,8 @@ jobs:
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
           BTC_ETH_ETF_DASHBOARD: ${{ secrets.BTC_ETH_ETF_DASHBOARD }}
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
         run: python app.py --fetch-market --no-open
 
       - name: Fallback generate if dashboard.html missing
