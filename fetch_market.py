@@ -1510,6 +1510,63 @@ def compute_poc_all(market: dict) -> dict:
     return out
 
 
+def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
+                             days: int = 180) -> list[dict]:
+    """Fetch market_chart and compute multi-timeframe POC + migration + naked
+    POCs for the top `n` coins by market cap. Used by the "Top 25 POC" UI.
+
+    Calls `coingecko_market(coin_id, days)` per coin with CG_PACE spacing so
+    we don't trip CoinGecko's free-tier rate limit (~30 calls/min). Skips
+    coins whose price/volume series come back empty or whose POC compute
+    yields nothing usable.
+
+    Returns up to `n` entries with the schema the dashboard expects:
+        {coin_id, symbol, name, image, current_price,
+         poc: {d30, d90, d180, migration, naked, migration_series}}
+    """
+    if not top_markets:
+        return []
+    CG_PACE = 0.6
+    out: list[dict] = []
+    coins = top_markets[:n]
+    LOOKBACKS = (("d30", 30, 60), ("d90", 90, 80), ("d180", 180, 100))
+    for i, c in enumerate(coins):
+        coin_id = c.get("id")
+        if not coin_id:
+            continue
+        try:
+            m = coingecko_market(coin_id, days=days)
+        except Exception as e:
+            print(f"  [poc_top] {coin_id} fetch failed: {e}", file=sys.stderr)
+            time.sleep(CG_PACE)
+            continue
+        if i < len(coins) - 1:
+            time.sleep(CG_PACE)
+        prices = (m or {}).get("price") or []
+        volumes = (m or {}).get("volume") or []
+        if not prices or not volumes:
+            continue
+        tfs = {k: point_of_control(prices, volumes, lookback_days=lb, bins=b)
+               for k, lb, b in LOOKBACKS}
+        if not any(tfs.values()):
+            continue
+        entry = {
+            "coin_id":       coin_id,
+            "symbol":        (c.get("symbol") or "").upper(),
+            "name":          c.get("name"),
+            "image":         c.get("image"),
+            "current_price": c.get("price_usd"),
+            "poc": {
+                **tfs,
+                "migration":        compute_poc_migration(tfs.get("d30"), tfs.get("d90")),
+                "naked":            naked_pocs(prices, volumes, lookback_days=180),
+                "migration_series": poc_migration_series(prices, volumes),
+            },
+        }
+        out.append(entry)
+    return out
+
+
 def compute_poc_migration(d30: dict | None, d90: dict | None) -> dict | None:
     """Compare 30d POC vs 90d POC to detect directional value migration.
     Positive delta = recent volume concentrating ABOVE the structural mean
@@ -2393,6 +2450,8 @@ def fetch_trading() -> dict:
         except Exception as e:
             print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
     trending = coingecko_trending()
+    print("  CoinGecko market_chart for top-25 POC analytics...")
+    poc_top = compute_poc_top_markets(top_markets, n=25)
     print("  DeFiLlama: chains + protocols + yields + bridges + historical TVL...")
     chains = defillama_chains(20)
     protocols = defillama_protocols(25)
@@ -2473,6 +2532,7 @@ def fetch_trading() -> dict:
         },
         "markets_top": top_markets,
         "trending": trending,
+        "poc_top": poc_top,
         "defi": {
             "chains": chains,
             "protocols": protocols,

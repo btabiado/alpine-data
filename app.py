@@ -555,11 +555,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 <div class="tabs">
   <div class="tab active" data-tab="overview">Crypto Overview</div>
   <div class="tab" data-tab="signals">Signals</div>
-  <div class="tab" data-tab="etf">ETF Flows</div>
-  <div class="tab" data-tab="trading">Trading</div>
-  <div class="tab" data-tab="defi">DeFi</div>
+  <div class="tab" data-tab="poc">Point of Control</div>
   <div class="tab" data-tab="social">Research</div>
+  <div class="tab" data-tab="defi">DeFi</div>
   <div class="tab" data-tab="whale">Whale Activity</div>
+  <div class="tab" data-tab="etf">ETF Flows</div>
+  <div class="tab" data-tab="trading">Futures</div>
 </div>
 
 <div class="controls">
@@ -757,15 +758,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
 
-    <!-- Row 3: Top 10 by 24h trading volume (LEFT, 1/3) + Macro snapshot (RIGHT, 2/3) -->
-    <div id="overviewMacroRow" style="display:grid;grid-template-columns:minmax(280px,1fr) minmax(0,2fr);gap:18px;align-items:stretch">
-      <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="markets" title="See full top 25 on Markets tab">
-        <div class="head">
-          <h2>Top 10 crypto by 24h volume <span class="tag">CoinGecko</span></h2>
-          <span class="desc">most actively traded crypto right now · click to open Markets</span>
-        </div>
-        <div id="overviewTopVolume" style="display:flex;flex-direction:column;gap:6px;padding:2px;flex:1;justify-content:flex-start"></div>
-      </div>
+    <!-- Row 3: Macro snapshot (full width) -->
+    <div id="overviewMacroRow">
       <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
         <div class="head">
           <h2>Macro snapshot <span class="tag">FRED</span></h2>
@@ -804,6 +798,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </tr></thead><tbody></tbody></table>
         </div>
       </div>
+    </div>
+
+    <!-- Bottom-of-Overview: breaking news feed (top 10 most recent) -->
+    <div class="chart-card">
+      <div class="head">
+        <h2>Breaking news</h2>
+        <span class="desc">latest crypto headlines</span>
+      </div>
+      <div id="overviewNewsHost"></div>
     </div>
   </div>
 
@@ -901,6 +904,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-trading" class="hidden">
     <div id="tradingEmpty" class="empty hidden">No market data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="tradingContent">
+      <div class="card" style="padding:14px 16px;margin-bottom:10px;border-left:3px solid var(--btc)">
+        <h2 style="margin:0 0 6px;font-size:14px">Futures &amp; perpetuals dashboard</h2>
+        <p class="sub" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0">
+          Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase International Exchange perps with the most extreme positive (crowded longs) and negative (crowded shorts) funding rates.
+        </p>
+      </div>
       <div class="row" id="tradingKpis"></div>
       <div class="grid2">
         <div class="chart-card">
@@ -1023,6 +1032,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-signals" class="hidden">
     <div id="signalsEmpty" class="empty hidden">No signal data — needs price history. Run <code>--fetch-market</code>.</div>
     <div id="signalsContent">
+      <!-- ============ TOP-50 COMPACT SIGNALS STRIP (moved to top of tab) ============ -->
+      <div class="card" style="padding:12px 14px;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div>
+            <h2 style="margin:0;font-size:15px">Top 50 by market cap</h2>
+            <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
+          </div>
+          <span style="flex:1"></span>
+          <span class="lbl" style="margin:0">Filter</span>
+          <button class="btn active" data-top20filter="all">All</button>
+          <button class="btn" data-top20filter="buy">Buy</button>
+          <button class="btn" data-top20filter="hold">Hold</button>
+          <button class="btn" data-top20filter="sell">Sell</button>
+        </div>
+        <div id="top20SignalCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+      </div>
+
       <div class="note"><strong>Composite indicator, not investment advice.</strong> Score is a transparent sum of contributions from price trend (SMA50/200), momentum (RSI, MACD), positioning (funding), sentiment (Fear &amp; Greed), institutional flows (ETF 7d), and volatility (DVOL z-score). Range −100 to +100. Read the components below — that's where the score comes from. Do your own evaluation.</div>
       <div class="grid3" id="signalCards"></div>
       <div class="grid3">
@@ -1043,22 +1069,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="chart-wrap"><canvas id="sigLtcChart"></canvas></div>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- ============ TOP-20 COMPACT SIGNALS STRIP ============ -->
-      <div class="card" style="padding:12px 14px;margin-top:14px">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-          <div>
-            <h2 style="margin:0;font-size:15px">Top 50 by market cap</h2>
-            <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
-          </div>
-          <span style="flex:1"></span>
-          <span class="lbl" style="margin:0">Filter</span>
-          <button class="btn active" data-top20filter="all">All</button>
-          <button class="btn" data-top20filter="buy">Buy</button>
-          <button class="btn" data-top20filter="hold">Hold</button>
-          <button class="btn" data-top20filter="sell">Sell</button>
+  <!-- ============ Point of Control TAB ============ -->
+  <div id="tab-poc" class="hidden">
+    <div class="container">
+      <div class="chart-card">
+        <div class="head">
+          <h2>Point of Control — Top 25 by market cap</h2>
+          <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
         </div>
-        <div id="top20SignalCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+        <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
       </div>
     </div>
   </div>
@@ -1100,6 +1122,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
+    <div class="chart-card">
+      <div class="head">
+        <h2>Top crypto news</h2>
+        <span class="desc">latest headlines · CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine</span>
+      </div>
+      <div id="researchNewsHost"></div>
+    </div>
     <div id="socialEmpty" class="empty hidden">
       No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
       Refresh or wait for the next hourly cron.
@@ -1113,19 +1142,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         CryptoCompare news sentiment (keyless, POSITIVE/NEGATIVE/NEUTRAL labels),
         Santiment (daily-active addresses + dev activity, refreshed once a day at 00:00 UTC),
         and Point of Control (volume profile derived from existing price+volume series).
-      </div>
-
-      <!-- ===== Point of Control ===== -->
-      <div class="chart-card" style="padding:12px 16px">
-        <div class="head">
-          <h2 style="margin:0;font-size:15px">Point of Control <span class="tag">Volume profile</span></h2>
-          <span class="desc">
-            POC = price with highest cumulative volume.
-            Value Area = ~70% of volume around POC.
-            <a href="https://trendspider.com/learning-center/understanding-point-of-control-a-guide-for-investors-and-traders/" target="_blank" rel="noopener" style="color:#a78bfa">What is POC? ↗</a>
-          </span>
-        </div>
-        <div class="row" id="pocCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
       </div>
 
       <!-- ===== CryptoCompare social + dev stats ===== -->
@@ -1996,6 +2012,7 @@ function renderSignalCard(asset, container){
       <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
+      ${signalScoreSparkline(s.history)}
       <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
       <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer)}</div>
     </div>`;
@@ -2034,8 +2051,13 @@ function renderSignals(){
   document.getElementById('signalsEmpty').classList.toggle('hidden', !empty);
   document.getElementById('signalsContent').classList.toggle('hidden', empty);
   if (empty) return;
+  // Sort cards descending by score so the strongest signals appear first.
+  const sortedAssets = Object.entries(sigData)
+    .filter(([k, v]) => v && typeof v.score === 'number')
+    .sort((a, b) => (b[1].score || 0) - (a[1].score || 0))
+    .map(([k]) => k);
   document.getElementById('signalCards').innerHTML =
-    renderSignalCard('btc') + renderSignalCard('eth') + renderSignalCard('link') + renderSignalCard('ltc');
+    sortedAssets.map(a => renderSignalCard(a)).join('');
   renderSignalChart('sigBtcChart','btc');
   renderSignalChart('sigEthChart','eth');
   renderSignalChart('sigLinkChart','link');
@@ -3683,8 +3705,7 @@ function renderOverview(){
   renderOverviewStrongBuys();
   renderOverviewTop15();
   renderOverviewMacro();
-  renderOverviewTopVolume();
-  renderOverviewNews();
+  renderOverviewNews();           // top 4-item teaser + bottom 10-item feed
   renderOverviewInsights();
   renderGeckoTerminalPools();     // bottom — also moved from Markets
 }
@@ -3788,45 +3809,6 @@ function renderOverviewStrongBuys(){
   host.querySelectorAll('[data-symbol]').forEach(el =>
     el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
   );
-}
-
-// Top 10 coins by 24h trading volume (USD). Derives from the cached
-// markets_top list (which is top-25 by market cap) by re-sorting on
-// volume_24h_usd. Filters out stablecoins (USD-suffix) so the strip
-// stays focused on price-discovery flow, not USDT/USDC settlement churn.
-function renderOverviewTopVolume(){
-  const host = document.getElementById('overviewTopVolume');
-  if (!host) return;
-  const all = (DATA.market && DATA.market.markets_top) || [];
-  // Stablecoin filter: catch every "USD"-prefixed (USDT/USDC/USDS/USD1/USDe/USDP/...)
-  // or "USD"-suffixed (BUSD/FDUSD/PYUSD/TUSD/GUSD/...) symbol, plus DAI by name.
-  // Anything new that follows either naming convention auto-qualifies.
-  const isStable = c => {
-    const s = (c.symbol || '').toUpperCase();
-    return /^USD/.test(s) || /USD$/.test(s) || s === 'DAI';
-  };
-  const rows = all
-    .filter(c => !isStable(c) && (c.volume_24h_usd || 0) > 0)
-    .sort((a, b) => (b.volume_24h_usd || 0) - (a.volume_24h_usd || 0))
-    .slice(0, 10);
-  if (!rows.length) {
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No market data yet — refresh.</div>';
-    return;
-  }
-  host.innerHTML = rows.map((c, i) => {
-    const img = sanitizeUrl(c.image, '') ? `<img src="${sanitizeUrl(c.image, '')}" alt="" style="width:18px;height:18px;border-radius:50%">` : '';
-    const ch24 = c.change_24h_pct;
-    const chCls = ch24 == null ? '' : (ch24 >= 0 ? 'green' : 'red');
-    const chStr = ch24 == null ? '—' : (ch24 >= 0 ? '+' : '') + ch24.toFixed(2) + '%';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--border);font-size:12px">
-      <span style="color:var(--muted);width:18px;text-align:right">${i+1}</span>
-      ${img}
-      <span style="font-weight:600;min-width:48px">${escapeHtml(c.symbol||'')}</span>
-      <span style="flex:1;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(c.name||'')}</span>
-      <span style="font-variant-numeric:tabular-nums;min-width:64px;text-align:right">${fmtUSD(c.volume_24h_usd, 'auto')}</span>
-      <span class="${chCls}" style="font-variant-numeric:tabular-nums;min-width:56px;text-align:right">${chStr}</span>
-    </div>`;
-  }).join('');
 }
 
 // Which signal cards appear on Overview. User-configurable via the
@@ -4047,19 +4029,34 @@ function renderOverviewIndices(){
 function renderOverviewNews(){
   const news = ((DATA.market || {}).news) || [];
   const host = document.getElementById('overviewNews');
-  if (!host) return;
-  if (!news.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines yet</div>';
-    return;
+  if (host){
+    if (!news.length){
+      host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines yet</div>';
+    } else {
+      host.innerHTML = news.slice(0,4).map(n =>
+        `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
+            <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+          </div>
+          <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title||'')}</div>
+        </a>`
+      ).join('');
+    }
   }
-  host.innerHTML = news.slice(0,4).map(n =>
-    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
-        <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
-      </div>
-      <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title||'')}</div>
-    </a>`
-  ).join('');
+  // Bottom-of-Overview "Breaking news" feed: 10 most recent items.
+  const bottom = document.getElementById('overviewNewsHost');
+  if (bottom){
+    if (!news.length){
+      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines yet</div>';
+      return;
+    }
+    bottom.innerHTML = news.slice(0,10).map(n =>
+      `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+        <div style="font-weight:600;font-size:13px">${escapeHtml(n.title)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source)} · ${escapeHtml(n.date)}</div>
+      </a>`
+    ).join('');
+  }
 }
 
 function renderOverviewInsights(){
@@ -4163,6 +4160,41 @@ function volumeProfileSVG(primary, alt, current){
     curMarker = `<line x1="0" y1="${yC}" x2="${W}" y2="${yC}" stroke="#00c853" stroke-width="1.5" ${dash}/>`;
   }
   return `<svg width="${W}" height="${H}">${vaBand}${bars}${altLine}${curMarker}</svg>`;
+}
+
+// Tiny inline SVG sparkline of the last 7 days of signal score for a
+// signal card. Stroke color reflects first→last direction (green up,
+// red down, muted flat). Returns empty string when the series is too
+// short to draw a meaningful line.
+function signalScoreSparkline(history){
+  if (!Array.isArray(history) || history.length < 2) return '';
+  const slice = history.slice(-7);
+  const values = slice
+    .map(p => (p && typeof p.score === 'number') ? p.score : null)
+    .filter(v => v != null);
+  if (values.length < 2) return '';
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const range = (hi - lo) || 1;
+  const n = values.length;
+  const w = 100, h = 30, padTop = 10, padBot = 2;
+  const pts = values.map((v, i) => {
+    const x = (i / (n - 1)) * w;
+    const y = padTop + (1 - (v - lo) / range) * (h - padTop - padBot);
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(' ');
+  const first = values[0], last = values[values.length - 1];
+  // "Flat" = within 1% of the first value (use absolute fallback when
+  // |first| is tiny so the relative test stays meaningful at score ~0).
+  const flatTol = Math.max(Math.abs(first) * 0.01, 0.5);
+  const trend = Math.abs(last - first) <= flatTol
+    ? '#94a3b8'
+    : (last >= first ? '#22c55e' : '#ef4444');
+  const lastTxt = (last >= 0 ? '+' : '') + (Number.isInteger(last) ? last : last.toFixed(1));
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:30px;display:block;margin-top:6px;border-radius:3px;background:#0b0d12">
+    <text x="2" y="7" font-size="6" fill="#64748b">7d score</text>
+    <text x="${w-2}" y="7" font-size="6" fill="#64748b" text-anchor="end">${lastTxt}</text>
+    <polyline points="${pts}" fill="none" stroke="${trend}" stroke-width="1.2" vector-effect="non-scaling-stroke" />
+  </svg>`;
 }
 
 // Tiny inline SVG sparkline of the rolling-30d POC over the last 90 days.
@@ -4271,6 +4303,118 @@ function renderPocCards(){
         </div>
         <div style="flex:0 0 120px">${volumeProfileSVG(d.d90, d.d30, anchor.current)}</div>
       </div>
+      ${nakedHtml}
+    </div>`;
+  }).join('');
+}
+
+// ===== POC top-25 grid (Point of Control tab) =====
+// Renders one card per top-25 coin from DATA.market.poc_top. Reuses the
+// renderPocCards() layout but keyed off coin metadata (image/symbol/name/price)
+// instead of the fixed RESEARCH_ASSETS list.
+function renderPocTopCards(){
+  const host = document.getElementById('pocTopGrid');
+  if (!host) return;
+  const list = ((DATA.market || {}).poc_top) || [];
+  if (!Array.isArray(list) || list.length === 0){
+    host.innerHTML = '<div class="empty" style="grid-column:1/-1">POC data populating — run python app.py --fetch-market and reload.</div>';
+    return;
+  }
+  const POC_TOP_TFS = [['d30','30d'],['d90','90d'],['d180','180d']];
+  host.innerHTML = list.map(c => {
+    const sym = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
+    const name = escapeHtml(c.name || '');
+    const imgUrl = sanitizeUrl(c.image, '');
+    const img = imgUrl
+      ? `<img src="${imgUrl}" alt="" style="width:24px;height:24px;border-radius:50%">`
+      : '<div style="width:24px;height:24px;border-radius:50%;background:#1f2533"></div>';
+    const priceTxt = fmtUsdShort(c.current_price);
+    const d = c.poc || {};
+    // Empty/missing POC: render minimal "no POC" card
+    if (!d.d30 && !d.d90 && !d.d180){
+      return `<div class="card" style="border-left:4px solid #a78bfa">
+        <div style="display:flex;align-items:center;gap:8px">
+          ${img}
+          <div style="min-width:0;flex:1">
+            <div style="display:flex;align-items:baseline;gap:6px">
+              <span style="font-weight:700;font-size:13px">${sym}</span>
+              <span class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${name}</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted)">${priceTxt}</div>
+          </div>
+        </div>
+        <div class="sub" style="color:var(--muted);margin-top:8px;font-size:11px">no POC data</div>
+      </div>`;
+    }
+    const anchor = d.d90 || d.d30 || d.d180;
+    // Migration badge (UP/DOWN/FLAT) from poc.migration
+    const mig = d.migration;
+    let migBadge = '';
+    if (mig){
+      const cfg = mig.direction === 'UP'
+        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
+        : mig.direction === 'DOWN'
+        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`DOWN ${mig.delta_pct}%`}
+        : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'FLAT'};
+      const tip = escapeHtml(mig.explanation || '');
+      migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}</span>`;
+    }
+    // 3-row ladder: D30 / D90 / D180
+    const ladder = POC_TOP_TFS.map(([k, label]) => {
+      const r = d[k];
+      if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
+      const inVA = r.in_value_area;
+      const tag = inVA
+        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
+      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+      const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
+      return `<tr>
+        <td style="color:var(--muted);font-size:10px">${label}</td>
+        <td style="font-weight:600">${fmtUsdShort(r.poc)}</td>
+        <td style="color:${dc};text-align:right">${dt}</td>
+        <td style="text-align:right">${tag}</td>
+      </tr>`;
+    }).join('');
+    // Naked POCs (top 3) with green/red support/resistance coloring
+    const nakedArr = Array.isArray(d.naked) ? d.naked.slice(0, 3) : [];
+    const cur = c.current_price != null ? c.current_price : (anchor && anchor.current);
+    const nakedHtml = nakedArr.length ? `
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs <span style="opacity:.7">(untested magnet levels)</span></div>
+        ${nakedArr.map(n => {
+          const isSupport = cur != null && cur > n.poc;
+          const col = isSupport ? '#22c55e' : '#ef4444';
+          const dp = (n.distance_pct == null) ? null : n.distance_pct;
+          const sign = (dp != null && dp >= 0) ? '+' : '';
+          const dpTxt = dp == null ? '—' : (sign + dp + '%');
+          const daysTxt = (n.days_ago != null) ? (n.days_ago + 'd ago · ') : '';
+          return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
+            <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
+            <span style="color:var(--muted)">${daysTxt}${dpTxt}</span>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+    const sparkline = pocMigrationSparkline(d.migration_series);
+    return `<div class="card" style="border-left:4px solid #a78bfa">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        ${img}
+        <div style="min-width:0;flex:1">
+          <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
+            <span style="font-weight:700;font-size:13px">${sym}</span>
+            <span class="sub" style="color:var(--muted);font-size:10px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${name}</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted)">${priceTxt} now</div>
+        </div>
+        ${migBadge ? `<div>${migBadge}</div>` : ''}
+      </div>
+      ${sparkline}
+      <table style="width:100%;font-size:11px;border-collapse:collapse;margin-top:8px">
+        <thead><tr style="color:var(--muted);font-size:9px;text-align:left">
+          <th>TF</th><th>POC</th><th style="text-align:right">Δ</th><th style="text-align:right">VA</th>
+        </tr></thead>
+        <tbody>${ladder}</tbody>
+      </table>
       ${nakedHtml}
     </div>`;
   }).join('');
@@ -4507,6 +4651,27 @@ function renderCCNewsCards(){
   });
 }
 
+function renderResearchNews(){
+  const host = document.getElementById('researchNewsHost');
+  if (!host) return;
+  const news = ((DATA.market || {}).news) || [];
+  if (!news.length) {
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No headlines available</div>';
+    return;
+  }
+  const sorted = news.slice().sort((a, b) => {
+    const da = a && a.date ? Date.parse(a.date) : 0;
+    const db = b && b.date ? Date.parse(b.date) : 0;
+    return (db || 0) - (da || 0);
+  });
+  host.innerHTML = sorted.slice(0, 15).map(n =>
+    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+      <div style="font-weight:600;font-size:13px">${escapeHtml(n.title || '')}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source || '')} · ${escapeHtml(n.date || '')}</div>
+    </a>`
+  ).join('');
+}
+
 function renderSocial(){
   const social = socialData();
   const poc = (DATA.market||{}).poc || {};
@@ -4520,8 +4685,8 @@ function renderSocial(){
   document.getElementById('socialContent').classList.toggle('hidden', !hasAny);
   const asOf = document.getElementById('socialAsOf');
   if (asOf) asOf.textContent = social.fetched_at ? 'Fetched ' + social.fetched_at : '';
+  renderResearchNews();
   if (!hasAny) return;
-  renderPocCards();
   renderCCSocialCards();
   renderCCNewsCards();
   renderRedditCards();
@@ -4601,6 +4766,9 @@ function renderAll(){
   }
   if (state.tab === 'social'){
     renderSocial();
+  }
+  if (state.tab === 'poc'){
+    renderPocTopCards();
   }
   renderCoverage();
 }
