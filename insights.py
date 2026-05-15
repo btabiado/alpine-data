@@ -67,14 +67,6 @@ def _get_nested(d, path, default=None):
         cur = cur.get(k)
     return default if cur is None else cur
 
-def _last(rows, n=1, key="flow"):
-    if not rows:
-        return None
-    if n == 1:
-        return rows[-1].get(key)
-    return [r.get(key) for r in rows[-n:]]
-
-
 def _streak(values, sign: str) -> int:
     """Length of trailing run of values with the given sign ('pos' or 'neg')."""
     if not values:

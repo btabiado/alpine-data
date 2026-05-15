@@ -276,12 +276,6 @@ def stream_answer(question: str, payload: dict) -> Iterator[str]:
             yield text
 
 
-def answer(question: str, payload: dict) -> str:
-    """Non-streaming convenience."""
-    parts = list(stream_answer(question, payload))
-    return "".join(parts)
-
-
 # ---- safety: pre-filter clearly out-of-scope questions ----
 
 _OUT_OF_SCOPE = re.compile(

@@ -6,7 +6,7 @@ on:
   schedule:
     # Hourly live-data refresh. GitHub cron is best-effort and can drift
     # 5–15 min under fleet load. Frequent enough to feel fresh, conservative
-    # on free-tier rate limits (CoinGecko 30/min, LunarCrush 429s).
+    # on free-tier rate limits (CoinGecko 30/min, CryptoCompare keyless).
     - cron: "0 * * * *"
   workflow_dispatch: {}
 
@@ -78,12 +78,20 @@ jobs:
           # var resolves to an empty string and the source falls back to
           # {available: False} or a free alternative. Add them under
           # repo Settings → Secrets and variables → Actions → New repository
-          # secret to populate FRED macro + LunarCrush social on public.
+          # secret to light up the corresponding sections on the public mirror:
+          #   FRED            macro overlay (DXY/SPX/Gold/10Y/M2)
+          #   GLASSNODE       true BTC whale-cohort metrics (replaces bitinfocharts)
+          #   CRYPTOCOMPARE   per-coin social + news sentiment + dev stats
+          #   REDDIT_*        subreddit subscriber counts (cloud IPs are normally
+          #                   blocked; OAuth bypasses that)
+          #   COINMETRICS     ETH whale active addresses / tx count / transfer
+          #                   volume / supply on the Whale-tab ETH panel
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
         run: python app.py --fetch-market --no-open
 
       - name: Fallback generate if dashboard.html missing
