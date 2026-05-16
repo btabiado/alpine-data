@@ -16,8 +16,107 @@ Each insight is:
 
 from __future__ import annotations
 
+import json
+import statistics
+import sys
+from pathlib import Path
 from typing import Any
 from datetime import datetime, timedelta
+
+
+# ----- rolling history -----
+#
+# Small persisted day-over-day snapshot file used by rules that need to know
+# what yesterday looked like (e.g., "AI sentiment flipped" or "news volume
+# 2σ above the 7-day mean"). Everything in here is pure-Python JSON I/O and
+# fully defensive: a missing/corrupt file just gives back an empty list and
+# the rules that depend on it stay silent until a real history accumulates.
+
+_HISTORY_PATH = Path(__file__).parent / "data" / "insights_history.json"
+_HISTORY_MAX_DAYS = 14
+
+
+def _today_iso() -> str:
+    return datetime.utcnow().strftime("%Y-%m-%d")
+
+
+def _load_insights_history() -> list[dict]:
+    """Return list of {date, ai_news_sentiment_label, ai_news_total} sorted
+    ascending by date. Anything malformed is silently dropped so a corrupt
+    file never crashes the build."""
+    try:
+        if not _HISTORY_PATH.exists():
+            return []
+        raw = json.loads(_HISTORY_PATH.read_text())
+    except Exception as e:
+        print(f"[insights-history] load failed: {e}", file=sys.stderr)
+        return []
+    rows = raw.get("history") if isinstance(raw, dict) else raw
+    if not isinstance(rows, list):
+        return []
+    clean: list[dict] = []
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        d = r.get("date")
+        if not isinstance(d, str) or len(d) != 10:
+            continue
+        clean.append(r)
+    clean.sort(key=lambda h: h.get("date") or "")
+    return clean
+
+
+def _save_insights_history(history: list[dict]) -> None:
+    """Best-effort write. Failures are logged to stderr but never raise."""
+    try:
+        _HISTORY_PATH.parent.mkdir(exist_ok=True)
+        _HISTORY_PATH.write_text(json.dumps({"history": history}, indent=2))
+    except Exception as e:
+        print(f"[insights-history] save failed: {e}", file=sys.stderr)
+
+
+def _build_today_snapshot(payload: dict) -> dict | None:
+    """Pull the day-over-day fields from `payload` we care about. Returns
+    None when the AI news block hasn't produced anything useful — in that
+    case we skip recording so a transient fetch failure doesn't pollute
+    history with zeros and trigger spurious "flip to NEUTRAL" alerts on
+    the next build."""
+    market = payload.get("market") or {}
+    ai_news = market.get("ai_news") or {}
+    summary = ai_news.get("summary") or {}
+    try:
+        total = int(summary.get("total") or 0)
+    except (TypeError, ValueError):
+        total = 0
+    label = (summary.get("sentiment_label") or "").upper() or None
+    if total <= 0 and not label:
+        return None
+    return {
+        "date": _today_iso(),
+        "ai_news_sentiment_label": label,
+        "ai_news_total": total,
+    }
+
+
+def _record_today(history: list[dict], today: dict) -> list[dict]:
+    """Insert/overwrite today's row and trim to the last ``_HISTORY_MAX_DAYS``.
+    Pure function — does not touch disk."""
+    today_date = today.get("date")
+    merged = [h for h in history if h.get("date") != today_date]
+    merged.append(today)
+    merged.sort(key=lambda h: h.get("date") or "")
+    return merged[-_HISTORY_MAX_DAYS:]
+
+
+def _previous_day_entry(history: list[dict]) -> dict | None:
+    """Most recent history row whose date is strictly before today.
+    Returns None when there's no prior entry (first run)."""
+    today = _today_iso()
+    for h in reversed(history):
+        d = h.get("date")
+        if isinstance(d, str) and d < today:
+            return h
+    return None
 
 
 # ----- thresholds -----
@@ -1989,9 +2088,59 @@ def _ainews_insights(payload: dict) -> list[dict]:
     except Exception:
         pass
 
+    # Rule 7 (rolling history): sentiment label flipped vs yesterday. Only
+    # fires on a POSITIVE↔NEGATIVE transition with material skew on both
+    # sides — NEUTRAL transitions get ignored because the sentiment_label is
+    # already gated on |net_score|/total ≥ 0.10 upstream and a NEUTRAL day
+    # often just means "fewer articles," not "consensus shifted." Requires a
+    # prior day in `data/insights_history.json` to compare against.
+    try:
+        history = _load_insights_history()
+        prev = _previous_day_entry(history)
+        prev_label = (prev or {}).get("ai_news_sentiment_label")
+        if (
+            sentiment_label in ("POSITIVE", "NEGATIVE")
+            and prev_label in ("POSITIVE", "NEGATIVE")
+            and sentiment_label != prev_label
+            and total >= 15
+        ):
+            sev = "good" if sentiment_label == "POSITIVE" else "bad"
+            out.append({
+                "kind": "anomaly", "asset": "global", "severity": sev,
+                "headline": f"AI news sentiment flipped {prev_label} → {sentiment_label} day-over-day",
+                "detail": f"Net score {net_score:+d} across {total} articles. "
+                          f"Prior day's labelled sentiment was {prev_label}.",
+                "score": 75,
+            })
+
+        # Rule 8 (rolling history): today's article count is ≥2σ above the
+        # trailing 7-day mean. Needs ≥4 prior days of data with non-trivial
+        # totals to compute a stable mean/std; tighter than 30d but matches
+        # the cadence of the AI news fetcher which can swing day-to-day. The
+        # absolute floor of mean+5 guards against false positives when the
+        # baseline collapses to near-zero on a quiet weekend.
+        prior_totals = [
+            int(h.get("ai_news_total") or 0)
+            for h in history
+            if h.get("date") and h.get("date") < _today_iso()
+        ]
+        prior_totals = [t for t in prior_totals[-7:] if t > 0]
+        if len(prior_totals) >= 4 and total > 0:
+            mean_total = statistics.mean(prior_totals)
+            std_total = statistics.pstdev(prior_totals) or 1.0
+            z = (total - mean_total) / std_total
+            if z >= SIGMA_20 and total >= mean_total + 5:
+                out.append({
+                    "kind": "anomaly", "asset": "global", "severity": "info",
+                    "headline": f"AI news volume surge: {total} articles · {z:+.1f}σ vs 7-day mean ({mean_total:.0f})",
+                    "detail": "Article count materially above the trailing weekly cadence — busy news day.",
+                    "score": 65,
+                })
+    except Exception as e:
+        # Defensive — rules 7/8 must never tank the rest of the ainews bar.
+        print(f"[insights-rolling] error: {e}", file=sys.stderr)
+
     return out
-
-
 
 
 
@@ -2096,4 +2245,16 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
         ("trend", "good"): 5,      ("trend", "bad"): 5,
     }
     out.sort(key=lambda r: rank.get((r["kind"], r["severity"]), 9))
+
+    # Persist a small rolling snapshot for next build's day-over-day rules
+    # (sentiment-flip + news volume σ in `_ainews_insights`). We do this after
+    # ranking so the rules above see only *prior* days — today's snapshot
+    # never feeds into its own thresholds. Best-effort I/O: a write failure
+    # is logged but never raises.
+    snapshot = _build_today_snapshot(payload)
+    if snapshot is not None:
+        history = _load_insights_history()
+        history = _record_today(history, snapshot)
+        _save_insights_history(history)
+
     return out[:limit]

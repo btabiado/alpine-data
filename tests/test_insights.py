@@ -887,3 +887,160 @@ def test_build_insights_respects_limit():
     }
     out = insights.build_insights(payload, limit=3)
     assert len(out) <= 3
+
+
+# ---------- rolling history: sentiment flip + volume σ ----------
+#
+# Both rules read ``data/insights_history.json``. The conftest fixture
+# redirects ``_HISTORY_PATH`` to a tmp file per test, so we can seed prior
+# days by writing JSON there directly.
+
+import json
+from datetime import datetime, timedelta
+
+
+def _seed_history(rows):
+    """Write rows to the (tmp) insights history path."""
+    insights._HISTORY_PATH.write_text(json.dumps({"history": rows}))
+
+
+def _yday_iso(days_ago: int = 1) -> str:
+    return (datetime.utcnow() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
+
+
+def test_ainews_sentiment_flip_positive_to_negative_fires():
+    """POSITIVE yesterday → NEGATIVE today emits a flip anomaly with severity
+    'bad' (today's labelled mood is the negative side)."""
+    _seed_history([{
+        "date": _yday_iso(1),
+        "ai_news_sentiment_label": "POSITIVE",
+        "ai_news_total": 30,
+    }])
+    summary = {"positive": 5, "negative": 28, "neutral": 8, "total": 41,
+               "net_score": -23, "sentiment_label": "NEGATIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sentiment flipped POSITIVE → NEGATIVE" in i.get("headline", "")]
+    assert hits, f"expected flip insight, got {[i['headline'] for i in out]!r}"
+    assert hits[0]["tab"] == "ainews"
+    assert hits[0]["severity"] == "bad"
+
+
+def test_ainews_sentiment_flip_silent_when_no_history():
+    """First run with no prior days → flip rule stays quiet."""
+    summary = {"positive": 30, "negative": 5, "neutral": 7, "total": 42,
+               "net_score": 25, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sentiment flipped" in i.get("headline", "")]
+    assert not hits, f"flip rule fired without prior history: {hits!r}"
+
+
+def test_ainews_sentiment_flip_silent_on_neutral_transition():
+    """Yesterday NEUTRAL (no label) → today POSITIVE must not fire. We only
+    care about POSITIVE ↔ NEGATIVE transitions; NEUTRAL → labelled is a
+    cadence change, not a sentiment flip."""
+    _seed_history([{
+        "date": _yday_iso(1),
+        "ai_news_sentiment_label": None,
+        "ai_news_total": 25,
+    }])
+    summary = {"positive": 30, "negative": 5, "neutral": 7, "total": 42,
+               "net_score": 25, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sentiment flipped" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_volume_sigma_surge_fires_above_2sigma():
+    """Seed 7 prior days with totals tightly around 20; today's 60 is far
+    enough above mean+2σ to fire and also clears the mean+5 floor."""
+    rows = []
+    base_totals = [18, 22, 20, 19, 21, 20, 23]
+    for i, t in enumerate(base_totals, start=1):
+        rows.append({
+            "date": _yday_iso(8 - i),
+            "ai_news_sentiment_label": "POSITIVE",
+            "ai_news_total": t,
+        })
+    _seed_history(rows)
+    summary = {"positive": 30, "negative": 12, "neutral": 18, "total": 60,
+               "net_score": 18, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news volume surge" in i.get("headline", "")]
+    assert hits, f"expected volume σ insight, got {[i['headline'] for i in out]!r}"
+    assert hits[0]["tab"] == "ainews"
+
+
+def test_ainews_volume_sigma_silent_when_within_band():
+    """Today's total within the 7-day natural band → no σ insight."""
+    rows = []
+    base_totals = [40, 42, 38, 41, 39, 43, 40]
+    for i, t in enumerate(base_totals, start=1):
+        rows.append({
+            "date": _yday_iso(8 - i),
+            "ai_news_sentiment_label": "POSITIVE",
+            "ai_news_total": t,
+        })
+    _seed_history(rows)
+    summary = {"positive": 25, "negative": 10, "neutral": 7, "total": 41,
+               "net_score": 15, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news volume surge" in i.get("headline", "")]
+    assert not hits, f"σ rule fired inside natural band: {hits!r}"
+
+
+def test_ainews_volume_sigma_silent_when_history_too_short():
+    """Need ≥4 prior days for stats. With 3 days, the σ rule stays quiet."""
+    rows = []
+    for i, t in enumerate([18, 20, 19], start=1):
+        rows.append({
+            "date": _yday_iso(4 - i),
+            "ai_news_sentiment_label": "POSITIVE",
+            "ai_news_total": t,
+        })
+    _seed_history(rows)
+    summary = {"positive": 30, "negative": 12, "neutral": 18, "total": 60,
+               "net_score": 18, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news volume surge" in i.get("headline", "")]
+    assert not hits
+
+
+def test_build_insights_persists_today_snapshot():
+    """After build_insights, today's row must land in the history file so
+    the next build can compare day-over-day."""
+    summary = {"positive": 20, "negative": 10, "neutral": 14, "total": 44,
+               "net_score": 10, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    insights.build_insights(payload, limit=100)
+    rows = insights._load_insights_history()
+    assert rows, "expected history file populated after build_insights"
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    assert rows[-1]["date"] == today
+    assert rows[-1]["ai_news_total"] == 44
+    assert rows[-1]["ai_news_sentiment_label"] == "POSITIVE"
+
+
+def test_build_insights_history_trims_to_max_days():
+    """Seed 20 old rows; after a build the file should hold ≤14 rows
+    (_HISTORY_MAX_DAYS), keeping the most recent ones plus today."""
+    rows = [
+        {"date": (datetime.utcnow() - timedelta(days=d)).strftime("%Y-%m-%d"),
+         "ai_news_sentiment_label": "POSITIVE",
+         "ai_news_total": 20 + d}
+        for d in range(2, 22)  # 20 days ago through 2 days ago
+    ]
+    _seed_history(rows)
+    summary = {"positive": 20, "negative": 10, "neutral": 14, "total": 44,
+               "net_score": 10, "sentiment_label": "POSITIVE"}
+    insights.build_insights(_ainews_payload(summary=summary), limit=100)
+    final = insights._load_insights_history()
+    assert len(final) <= insights._HISTORY_MAX_DAYS
+    # Oldest rows must have been dropped first.
+    dates = [r["date"] for r in final]
+    assert dates == sorted(dates)
