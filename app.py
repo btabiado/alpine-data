@@ -1151,11 +1151,60 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
           <div id="aiNewsSummary"></div>
         </div>
+
+        <!-- AI investment KPI strip (curated) -->
+        <div class="chart-card" id="aiInvestmentKpisCard" style="margin-top:12px">
+          <div class="head">
+            <h2>AI investment KPIs <span class="tag">Stanford AI Index &middot; Goldman &middot; McKinsey &middot; Epoch</span></h2>
+            <span class="desc">Headline numbers from authoritative published sources &middot; click any card for source link</span>
+          </div>
+          <div class="row" id="aiInvestmentKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
+        </div>
+
+        <!-- Top funded AI companies table -->
+        <div class="chart-card" id="aiTopFundedCard" style="margin-top:12px">
+          <div class="head">
+            <h2>Top funded AI companies <span class="tag">curated, public valuations</span></h2>
+            <span class="desc">Sorted by latest known valuation &middot; click company for the source URL</span>
+          </div>
+          <div style="overflow:auto;max-height:420px">
+            <table id="aiTopFundedTable" class="tracker-grid">
+              <thead><tr>
+                <th>Company</th>
+                <th style="text-align:right">Valuation</th>
+                <th style="text-align:right">Last round</th>
+                <th>Stage</th>
+                <th>HQ</th>
+                <th>Category</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Quadrant scatter chart -->
+        <div class="chart-card" id="aiQuadrantCard" style="margin-top:12px">
+          <div class="head">
+            <h2>AI funding quadrant <span class="tag">last round &times; valuation</span></h2>
+            <span class="desc">X = last round size &middot; Y = total valuation &middot; log scale both axes &middot; each dot is a company (hover for name)</span>
+          </div>
+          <div class="chart-wrap" style="height:380px"><canvas id="aiQuadrantChart"></canvas></div>
+        </div>
+
+        <!-- White paper / research KPIs -->
+        <div class="chart-card" id="aiWhitepaperKpisCard" style="margin-top:12px">
+          <div class="head">
+            <h2>Research benchmarks <span class="tag">Stanford AI Index &middot; Epoch &middot; IEA &middot; MLPerf</span></h2>
+            <span class="desc">From peer-reviewed and major institutional reports &middot; click any card for source</span>
+          </div>
+          <div class="row" id="aiWhitepaperKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
+        </div>
+
         <div class="grid2" style="margin-top:12px">
           <!-- Middle: AI news feed -->
           <div class="chart-card">
             <div class="head">
-              <h2>Latest AI news</h2>
+              <h2>Latest AI news <span class="tag" id="aiNewsHeaderBadge"></span></h2>
               <span class="desc">Top 30 most recent &middot; click any row to open the article</span>
             </div>
             <div id="aiNewsFeed" style="max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
@@ -4931,6 +4980,236 @@ function renderAiNewsTab(){
         </tbody></table>`;
     }
   }
+
+  // --- AI curated / investment add-ons -----------------------------------
+  // The data agent injects DATA.market.ai_curated.{investment_kpis,
+  // top_funded_companies, whitepaper_kpis} and DATA.market.ai_funding.
+  // If ai_curated is missing entirely, hide the four new sections but keep
+  // the original AI news UI working.
+  const market = DATA.market || {};
+  const curated = market.ai_curated || null;
+  const funding = market.ai_funding || null;
+  const hasCurated = !!curated && (
+    (Array.isArray(curated.investment_kpis)   && curated.investment_kpis.length) ||
+    (Array.isArray(curated.top_funded_companies) && curated.top_funded_companies.length) ||
+    (Array.isArray(curated.whitepaper_kpis)   && curated.whitepaper_kpis.length)
+  );
+  ['aiInvestmentKpisCard','aiTopFundedCard','aiQuadrantCard','aiWhitepaperKpisCard']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.classList.toggle('hidden', !hasCurated); });
+
+  // YC startup count badge in the existing "Latest AI news" header.
+  const badge = document.getElementById('aiNewsHeaderBadge');
+  if (badge){
+    const yc = funding && Array.isArray(funding.yc_companies) ? funding.yc_companies.length : 0;
+    const articles = Array.isArray(ai.items) ? ai.items.length : 0;
+    badge.textContent = yc > 0
+      ? (articles + ' articles · ' + yc + ' YC AI companies')
+      : (articles + ' articles');
+  }
+
+  if (hasCurated){
+    renderAiInvestmentKpis();
+    renderAiTopFunded();
+    renderAiQuadrant();
+    renderAiWhitepaperKpis();
+  } else {
+    // Make sure any old scatter chart is torn down on empty state.
+    destroy('aiQuadrant');
+  }
+}
+
+// ---- AI investment KPI strip ------------------------------------------
+function renderAiInvestmentKpis(){
+  const host = document.getElementById('aiInvestmentKpis');
+  if (!host) return;
+  const kpis = (((DATA.market||{}).ai_curated||{}).investment_kpis) || [];
+  if (!Array.isArray(kpis) || !kpis.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No investment KPIs available.</div>';
+    return;
+  }
+  host.innerHTML = kpis.map(k => {
+    const label    = escapeHtml(String(k.label || k.name || ''));
+    const value    = escapeHtml(String(k.value == null ? '—' : k.value));
+    const prior    = k.prior_value == null ? '' : escapeHtml(String(k.prior_value));
+    const deltaRaw = k.delta == null ? null : Number(k.delta);
+    const deltaTxt = (k.delta == null) ? (k.delta_label ? escapeHtml(String(k.delta_label)) : '')
+                   : (isFinite(deltaRaw) ? ((deltaRaw >= 0 ? '+' : '') + deltaRaw.toLocaleString(undefined,{maximumFractionDigits:2})) : escapeHtml(String(k.delta)));
+    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)');
+    const src       = escapeHtml(String(k.source || k.source_label || k.publisher || ''));
+    const srcUrl    = sanitizeUrl(k.source_url || k.url, '');
+    const unit      = escapeHtml(String(k.unit || ''));
+    const inner = `
+      <div style="display:flex;flex-direction:column;gap:6px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">${label}</div>
+        <div style="font-size:24px;font-weight:700;line-height:1.1">${value}${unit ? ' <span style="font-size:13px;color:var(--muted);font-weight:600">'+unit+'</span>' : ''}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${deltaTxt ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:'+deltaColor+';border:1px solid '+deltaColor+'">'+deltaTxt+'</span>' : ''}
+          ${prior ? '<span class="sub" style="font-size:10px;color:var(--muted)">prior: '+prior+'</span>' : ''}
+        </div>
+        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
+      </div>`;
+    if (srcUrl){
+      return '<a class="chart-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
+    }
+    return '<div class="chart-card">'+inner+'</div>';
+  }).join('');
+}
+
+// ---- Top funded AI companies table ------------------------------------
+function renderAiTopFunded(){
+  const tb = document.querySelector('#aiTopFundedTable tbody');
+  if (!tb) return;
+  const rows = (((DATA.market||{}).ai_curated||{}).top_funded_companies) || [];
+  if (!Array.isArray(rows) || !rows.length){
+    tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No company data.</td></tr>';
+    return;
+  }
+  const sorted = rows.slice().sort((a,b) => (Number(b.valuation_usd)||0) - (Number(a.valuation_usd)||0));
+  tb.innerHTML = sorted.map(c => {
+    const name    = escapeHtml(String(c.name || c.company || ''));
+    const val     = Number(c.valuation_usd);
+    const round   = Number(c.last_round_size_usd);
+    const valTxt  = isFinite(val)   ? fmtUSD(val, 'auto')   : '—';
+    const rndTxt  = isFinite(round) ? fmtUSD(round, 'auto') : '—';
+    const stage   = escapeHtml(String(c.stage || c.last_round_stage || ''));
+    const hq      = escapeHtml(String(c.hq || c.headquarters || c.country || ''));
+    const cat     = escapeHtml(String(c.category || c.sector || ''));
+    const url     = sanitizeUrl(c.source_url || c.url, '');
+    const nameCell = url
+      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:600;text-decoration:none">'+name+'</a>'
+      : '<span style="font-weight:600">'+name+'</span>';
+    return `<tr>
+      <td>${nameCell}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${valTxt}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${rndTxt}</td>
+      <td>${stage}</td>
+      <td>${hq}</td>
+      <td>${cat}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- AI quadrant scatter chart ----------------------------------------
+const AI_QUADRANT_COLORS = {
+  'LLM':'#a78bfa','Agents':'#22c55e','Coding':'#f59e0b','Robotics':'#ef4444',
+  'Vision':'#06b6d4','Search':'#ec4899','Infra':'#94a3b8','Chips':'#facc15',
+  'Audio':'#10b981','Video':'#8b5cf6','Bio':'#34d399','Other':'#64748b',
+};
+function aiQuadrantColor(cat){
+  if (!cat) return AI_QUADRANT_COLORS.Other;
+  const k = String(cat);
+  if (AI_QUADRANT_COLORS[k]) return AI_QUADRANT_COLORS[k];
+  // Stable-ish hash to fallback palette for unexpected categories.
+  let h = 0; for (let i=0;i<k.length;i++) h = (h*31 + k.charCodeAt(i)) & 0xffff;
+  const palette = Object.values(AI_QUADRANT_COLORS);
+  return palette[h % palette.length];
+}
+function renderAiQuadrant(){
+  const canvas = document.getElementById('aiQuadrantChart');
+  if (!canvas) return;
+  destroy('aiQuadrant');
+  const rows = (((DATA.market||{}).ai_curated||{}).top_funded_companies) || [];
+  if (!Array.isArray(rows) || !rows.length) return;
+  // Group by category so the legend doubles as a category key.
+  const byCat = new Map();
+  rows.forEach(c => {
+    const x = Number(c.last_round_size_usd);
+    const y = Number(c.valuation_usd);
+    if (!isFinite(x) || !isFinite(y) || x <= 0 || y <= 0) return;
+    const cat = String(c.category || c.sector || 'Other');
+    if (!byCat.has(cat)) byCat.set(cat, []);
+    byCat.get(cat).push({
+      x, y,
+      name:  String(c.name || c.company || ''),
+      stage: String(c.stage || c.last_round_stage || ''),
+      cat,
+    });
+  });
+  if (!byCat.size) return;
+  const datasets = Array.from(byCat.entries()).map(([cat, pts]) => ({
+    label: cat,
+    data: pts,
+    backgroundColor: aiQuadrantColor(cat) + 'cc',
+    borderColor: aiQuadrantColor(cat),
+    pointRadius: 6,
+    pointHoverRadius: 8,
+    borderWidth: 1,
+  }));
+  charts.aiQuadrant = new Chart(canvas, {
+    type: 'scatter',
+    data: { datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, position: 'bottom', labels: { color: '#e6e8ee', boxWidth: 10, font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.raw || {};
+              return [
+                (d.name || '') + (d.stage ? ' · ' + d.stage : ''),
+                'Valuation: ' + fmtUSD(d.y, 'auto'),
+                'Last round: ' + fmtUSD(d.x, 'auto'),
+                d.cat ? ('Category: ' + d.cat) : '',
+              ].filter(Boolean);
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: 'logarithmic',
+          title: { display: true, text: 'Last round size (USD, log)', color: '#8a93a6' },
+          ticks: { color: '#8a93a6', callback: v => fmtUSD(v, 'auto') },
+          grid: { color: '#1f2533' },
+        },
+        y: {
+          type: 'logarithmic',
+          title: { display: true, text: 'Valuation (USD, log)', color: '#8a93a6' },
+          ticks: { color: '#8a93a6', callback: v => fmtUSD(v, 'auto') },
+          grid: { color: '#1f2533' },
+        },
+      },
+    },
+  });
+}
+
+// ---- Research / whitepaper KPI strip ----------------------------------
+function renderAiWhitepaperKpis(){
+  const host = document.getElementById('aiWhitepaperKpis');
+  if (!host) return;
+  const kpis = (((DATA.market||{}).ai_curated||{}).whitepaper_kpis) || [];
+  if (!Array.isArray(kpis) || !kpis.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No research benchmarks available.</div>';
+    return;
+  }
+  host.innerHTML = kpis.map(k => {
+    const label    = escapeHtml(String(k.label || k.name || ''));
+    const value    = escapeHtml(String(k.value == null ? '—' : k.value));
+    const prior    = k.prior_value == null ? '' : escapeHtml(String(k.prior_value));
+    const deltaRaw = k.delta == null ? null : Number(k.delta);
+    const deltaTxt = (k.delta == null) ? (k.delta_label ? escapeHtml(String(k.delta_label)) : '')
+                   : (isFinite(deltaRaw) ? ((deltaRaw >= 0 ? '+' : '') + deltaRaw.toLocaleString(undefined,{maximumFractionDigits:2})) : escapeHtml(String(k.delta)));
+    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)');
+    const src       = escapeHtml(String(k.source || k.source_label || k.publisher || ''));
+    const srcUrl    = sanitizeUrl(k.source_url || k.url, '');
+    const unit      = escapeHtml(String(k.unit || ''));
+    const inner = `
+      <div style="display:flex;flex-direction:column;gap:6px;padding:12px 14px">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">${label}</div>
+        <div style="font-size:24px;font-weight:700;line-height:1.1">${value}${unit ? ' <span style="font-size:13px;color:var(--muted);font-weight:600">'+unit+'</span>' : ''}</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${deltaTxt ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:'+deltaColor+';border:1px solid '+deltaColor+'">'+deltaTxt+'</span>' : ''}
+          ${prior ? '<span class="sub" style="font-size:10px;color:var(--muted)">prior: '+prior+'</span>' : ''}
+        </div>
+        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
+      </div>`;
+    if (srcUrl){
+      return '<a class="chart-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
+    }
+    return '<div class="chart-card">'+inner+'</div>';
+  }).join('');
 }
 
 // Build the full stock-detail card body (rendered into the modal).

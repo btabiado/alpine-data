@@ -764,6 +764,183 @@ def fetch_ai_news() -> dict:
     }
 
 
+# ----- AI funding & curated data --------------------------------------------
+
+_AI_FUNDING_KEYWORDS = (
+    "ai", "a.i.", "artificial intelligence", "machine learning", " ml ",
+    "openai", "anthropic", "mistral", "cohere", "perplexity", "xai",
+    "llm", "gpt", "claude", "gemini", "model", "foundation model",
+    "generative", "neural", "deep learning", "agent", "agents",
+    "robot", "robotics", "humanoid", "autonom", "self-driving",
+    "chip", "silicon", "inference", "training compute",
+)
+
+
+def load_ai_curated() -> dict:
+    """Read the curated AI snapshot from data/ai_curated.json.
+
+    Returns an empty dict with the expected top-level keys if the file is
+    missing or malformed so downstream consumers can rely on the shape.
+    """
+    path = ROOT / "data" / "ai_curated.json"
+    empty = {
+        "top_funded_companies": [],
+        "investment_kpis": [],
+        "whitepaper_kpis": [],
+        "compiled_at": None,
+        "sources_index": [],
+    }
+    try:
+        if not path.exists():
+            print(f"  [ai-curated] {path} missing, returning empty shell", file=sys.stderr)
+            return empty
+        data = json.loads(path.read_text())
+        if not isinstance(data, dict):
+            return empty
+        # Fill in any missing top-level keys so callers can index safely.
+        for k, v in empty.items():
+            data.setdefault(k, v)
+        return data
+    except Exception as e:
+        print(f"  [ai-curated] load failed: {e}", file=sys.stderr)
+        return empty
+
+
+def _fetch_yc_ai_companies_impl(limit: int = 200) -> dict:
+    """Pull YC's AI-tagged company list from the free yc-oss mirror."""
+    url = "https://yc-oss.github.io/api/tags/artificial-intelligence.json"
+    try:
+        r = requests.get(url, headers=H, timeout=20)
+        if r.status_code != 200:
+            print(f"  [yc-ai] {url} -> {r.status_code}", file=sys.stderr)
+            return {"yc_companies": [], "yc_total_ai_count": 0}
+        rows = r.json()
+    except Exception as e:
+        print(f"  [yc-ai] failed: {e}", file=sys.stderr)
+        return {"yc_companies": [], "yc_total_ai_count": 0}
+    if not isinstance(rows, list):
+        return {"yc_companies": [], "yc_total_ai_count": 0}
+    total = len(rows)
+    out: list[dict] = []
+    for row in rows[:limit]:
+        if not isinstance(row, dict):
+            continue
+        out.append({
+            "name": row.get("name"),
+            "slug": row.get("slug"),
+            "batch": row.get("batch"),
+            "status": row.get("status"),
+            "one_liner": row.get("one_liner") or row.get("subtitle") or "",
+            "tags": row.get("tags") or [],
+        })
+    return {"yc_companies": out, "yc_total_ai_count": total}
+
+
+def fetch_yc_ai_companies(limit: int = 200) -> dict:
+    """Stale-fallback wrapper around `_fetch_yc_ai_companies_impl`."""
+    try:
+        out = _fetch_yc_ai_companies_impl(limit)
+    except Exception as e:
+        print(f"  [fetch_yc_ai_companies] fatal {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, dict) and out.get("yc_companies"):
+        _stale_save("fetch_yc_ai_companies", out)
+        return out
+    cached = _stale_load("fetch_yc_ai_companies")
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {
+        "yc_companies": [], "yc_total_ai_count": 0,
+    }
+
+
+def _fetch_ai_funding_news_hn_impl(days: int = 30, max_items: int = 40) -> list[dict]:
+    """Pull recent 'raises Series' Hacker News stories filtered for AI relevance."""
+    epoch_cutoff = int(time.time()) - days * 86400
+    url = "https://hn.algolia.com/api/v1/search"
+    params = {
+        "query": "raises Series",
+        "tags": "story",
+        "numericFilters": f"created_at_i>{epoch_cutoff}",
+        "hitsPerPage": 100,
+    }
+    try:
+        r = requests.get(url, params=params, headers=H, timeout=20)
+        if r.status_code != 200:
+            print(f"  [hn-funding] -> {r.status_code}", file=sys.stderr)
+            return []
+        j = r.json()
+    except Exception as e:
+        print(f"  [hn-funding] failed: {e}", file=sys.stderr)
+        return []
+    hits = (j or {}).get("hits") or []
+    out: list[dict] = []
+    for h in hits:
+        title = (h.get("title") or "").strip()
+        if not title:
+            continue
+        low = title.lower()
+        if not any(kw in low for kw in _AI_FUNDING_KEYWORDS):
+            continue
+        url_ = (h.get("url") or "").strip()
+        if not url_:
+            obj_id = h.get("objectID")
+            if not obj_id:
+                continue
+            url_ = f"https://news.ycombinator.com/item?id={obj_id}"
+        created_i = h.get("created_at_i")
+        date_str = ""
+        if created_i:
+            try:
+                date_str = datetime.fromtimestamp(int(created_i), tz=timezone.utc).strftime("%Y-%m-%d")
+            except Exception:
+                date_str = ""
+        out.append({
+            "title": title,
+            "url": url_,
+            "source": "HN",
+            "date": date_str,
+        })
+        if len(out) >= max_items:
+            break
+    return out
+
+
+def fetch_ai_funding_news_hn(days: int = 30, max_items: int = 40) -> list[dict]:
+    """Stale-fallback wrapper around the HN funding-news fetcher."""
+    try:
+        out = _fetch_ai_funding_news_hn_impl(days, max_items)
+    except Exception as e:
+        print(f"  [fetch_ai_funding_news_hn] fatal {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, list) and out:
+        _stale_save("fetch_ai_funding_news_hn", out)
+        return out
+    cached = _stale_load("fetch_ai_funding_news_hn")
+    if isinstance(cached, list):
+        return cached
+    return out if isinstance(out, list) else []
+
+
+def fetch_ai_funding() -> dict:
+    """Orchestrator: pull live YC AI directory + HN funding news + load
+    curated snapshot. Stored on `market.ai_funding`.
+    """
+    print("  AI funding: YC AI directory (yc-oss)...")
+    yc = fetch_yc_ai_companies(200)
+    print(f"    -> {len(yc.get('yc_companies', []))} YC companies "
+          f"(total tagged: {yc.get('yc_total_ai_count', 0)})")
+    print("  AI funding: HN 'raises Series' (filtered for AI)...")
+    hn_news = fetch_ai_funding_news_hn(30, 40)
+    print(f"    -> {len(hn_news)} HN funding stories")
+    return {
+        "yc_companies": yc.get("yc_companies", []),
+        "yc_total_ai_count": yc.get("yc_total_ai_count", 0),
+        "recent_funding_news": hn_news,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def coindesk_cadli_ohlc(days: int = 90) -> list[dict]:
     """CoinDesk cadli BTC-USD daily OHLC — manipulation-resistant aggregate index."""
     j = _get(
@@ -3366,6 +3543,13 @@ def fetch_trading() -> dict:
     news = crypto_news_rss(25)
     print("  AI news RSS (TechCrunch + Verge + VentureBeat + MIT TR + Anthropic + OpenAI + Ars)...")
     ai_news = fetch_ai_news()
+    print("  AI funding (YC AI directory + HN funding stories)...")
+    ai_funding = fetch_ai_funding()
+    print("  AI curated snapshot (data/ai_curated.json)...")
+    ai_curated = load_ai_curated()
+    print(f"    -> {len(ai_curated.get('top_funded_companies', []))} companies, "
+          f"{len(ai_curated.get('investment_kpis', []))} inv KPIs, "
+          f"{len(ai_curated.get('whitepaper_kpis', []))} wp KPIs")
     print("  CoinDesk cadli BTC-USD OHLC (90d)...")
     cadli = coindesk_cadli_ohlc(90)
     print("  Yahoo Finance indices (Dow / S&P / NASDAQ / VIX)...")
@@ -3451,6 +3635,8 @@ def fetch_trading() -> dict:
         },
         "news": news,
         "ai_news": ai_news,
+        "ai_funding": ai_funding,
+        "ai_curated": ai_curated,
         "cadli_btc": cadli,
         "yahoo_indices": yahoo_idx,
         "stocks_signals": stocks_signals,
