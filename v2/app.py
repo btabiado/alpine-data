@@ -1374,6 +1374,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
+    <div id="aiTake-overview" class="aiTake-slot"></div>
     <!-- News + Insights — pulled above the sentiment composite per user
          request: "news & insight need to go on before the Crypto market
          Sentiment bar". The headline news + top-4 insights are the first
@@ -1521,6 +1522,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ ETF FLOWS TAB ============ -->
   <div id="tab-etf" class="hidden">
+    <div id="aiTake-etf" class="aiTake-slot"></div>
     <!-- ETF FLOW SENTIMENT — composite of 7d net flow sum and 30d net flow
          sum, weighted 60/40 toward the 7d. Tracks the BTC/ETH toggle below.
          Rendered by renderEtfFlowSentiment(). -->
@@ -1590,7 +1592,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="row" id="etfKpis"></div>
       <div class="grid2">
         <div class="chart-card">
-          <div class="head"><h2>Net flow <span class="tag" id="tagAsset1">BTC</span></h2><span class="desc">USD millions, negative = outflow</span></div>
+          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Net inflow (positive) or outflow (negative) into spot ETFs in USD millions, from Farside Investors.">Net flow</span> <span class="tag" id="tagAsset1">BTC</span></h2><span class="desc">USD millions, negative = outflow</span></div>
           <div class="chart-wrap"><canvas id="flowChart"></canvas></div>
         </div>
         <div class="chart-card">
@@ -1644,6 +1646,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ TRADING TAB ============ -->
   <div id="tab-trading" class="hidden">
+    <div id="aiTake-trading" class="aiTake-slot"></div>
     <div id="tradingEmpty" class="empty hidden">No market data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="tradingContent">
       <details class="futures-explainer">
@@ -1710,17 +1713,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="chart-wrap tall"><canvas id="priceChart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="head"><h2>Funding rate <span class="tag" id="tagFunding">BTC</span></h2><span class="desc">OKX perpetual, daily mean &middot; +ve = longs pay shorts</span></div>
+          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Perpetual futures funding rate — positive means longs pay shorts (bullish positioning); negative means shorts pay longs.">Funding rate</span> <span class="tag" id="tagFunding">BTC</span></h2><span class="desc">OKX perpetual, daily mean &middot; +ve = longs pay shorts</span></div>
           <div class="chart-wrap"><canvas id="fundingChart"></canvas></div>
         </div>
       </div>
       <div class="grid2">
         <div class="chart-card">
-          <div class="head"><h2>Open interest (USD) <span class="tag" id="tagOI">BTC</span></h2><span class="desc">OKX aggregated futures + perps</span></div>
+          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Total notional value of outstanding derivative contracts. Rising OI + rising price = trend strength; rising OI + falling price = bearish positioning.">Open interest</span> (USD) <span class="tag" id="tagOI">BTC</span></h2><span class="desc">OKX aggregated futures + perps</span></div>
           <div class="chart-wrap"><canvas id="oiChart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="head"><h2>Long/short account ratio <span class="tag" id="tagLS">BTC</span></h2><span class="desc">OKX traders &middot; >1 = more longs</span></div>
+          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Ratio of long-position accounts to short-position accounts. Extreme readings often precede mean reversion.">Long/short account ratio</span> <span class="tag" id="tagLS">BTC</span></h2><span class="desc">OKX traders &middot; >1 = more longs</span></div>
           <div class="chart-wrap"><canvas id="lsChart"></canvas></div>
         </div>
       </div>
@@ -1777,11 +1780,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="grid2">
         <div class="chart-card">
-          <div class="head"><h2>Implied volatility (DVOL) <span class="tag" id="tagDvol">BTC</span></h2><span class="desc">Deribit options-implied 30d vol, %</span></div>
+          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Deribit's annualized 30d implied vol index. Spikes = expected price uncertainty (often around macro events).">Implied volatility (DVOL)</span> <span class="tag" id="tagDvol">BTC</span></h2><span class="desc">Deribit options-implied 30d vol, %</span></div>
           <div class="chart-wrap"><canvas id="dvolChart"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="head"><h2>Fear &amp; Greed Index</h2><span class="desc">Crypto-wide sentiment, 0=fear 100=greed</span></div>
+          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="0-100 sentiment index from alternative.me. <25 = Extreme Fear; >75 = Extreme Greed.">Fear &amp; Greed Index</span></h2><span class="desc">Crypto-wide sentiment, 0=fear 100=greed</span></div>
           <div class="chart-wrap"><canvas id="fngChart"></canvas></div>
         </div>
       </div>
@@ -1825,6 +1828,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ STOCKS TAB ============ -->
   <div id="tab-stocks" class="hidden">
     <div class="container">
+      <div id="aiTake-stocks" class="aiTake-slot"></div>
       <!-- Traditional indices — DOW / S&P / NDX / VIX with 1d % + 90d
            sparkline. Moved here from the Crypto tab so macro equity context
            lives alongside the equity-signal grid that follows. -->
@@ -1891,6 +1895,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ AI NEWS TAB ============ -->
   <div id="tab-ainews" class="hidden">
     <div class="container">
+      <div id="aiTake-ainews" class="aiTake-slot"></div>
       <div id="aiNewsEmpty" class="empty hidden">AI news not yet loaded. Run <code>python app.py --fetch-market</code> to populate.</div>
       <div id="aiNewsContent">
         <!-- Top: AI sentiment summary card -->
@@ -2006,6 +2011,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ SIGNALS TAB ============ -->
   <div id="tab-signals" class="hidden">
+    <div id="aiTake-signals" class="aiTake-slot"></div>
     <div id="signalsEmpty" class="empty hidden">No signal data — needs price history. Run <code>--fetch-market</code>.</div>
     <div id="signalsContent">
       <!-- CRYPTO SIGNAL SENTIMENT — aggregate signal-score buckets across the
@@ -2072,11 +2078,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ Point of Control TAB ============ -->
   <div id="tab-poc" class="hidden">
     <div class="container">
+      <div id="aiTake-poc" class="aiTake-slot"></div>
       <div class="chart-card">
         <div class="head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="min-width:0;flex:1">
             <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
-              Point of Control — Top 50 by market cap, sorted by signal score
+              <span class="v2-tip-anchor" data-v2-tip="Price level with the highest cumulative volume over the lookback window. Acts as a magnet level — high-volume = high-acceptance.">Point of Control</span> — Top 50 by market cap, sorted by signal score
               <button class="btn" data-poc-help="1" aria-label="What is Point of Control?" title="What is Point of Control?" style="padding:1px 8px;font-size:11px;font-weight:700;line-height:1.4">?</button>
             </h2>
             <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
@@ -2136,6 +2143,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ DeFi TAB ============ -->
   <div id="tab-defi" class="hidden">
+    <div id="aiTake-defi" class="aiTake-slot"></div>
     <!-- Loading state shown while the lazy-loaded /data-defi.json sidecar
          is in-flight (see SIDECAR_FOR_TAB.defi). Toggled by renderAll
          based on SIDECAR_STATE.defi — hidden on first paint when defi is
@@ -2238,6 +2246,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
+    <div id="aiTake-social" class="aiTake-slot"></div>
     <!-- ===== Per-coin news sentiment for the top 25 by market cap. Sourced
          from DATA.market.news (crypto_news_rss, all 5 free feeds) — items are
          keyword-matched to coin name/symbol on the client and scored
@@ -2307,6 +2316,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ WHALE TAB ============ -->
   <div id="tab-whale" class="hidden">
+    <div id="aiTake-whale" class="aiTake-slot"></div>
     <div id="whaleEmpty" class="empty hidden">No whale data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="whaleContent">
       <div class="sub" id="whaleAsOf" style="margin-bottom:6px"></div>
@@ -3267,7 +3277,7 @@ function renderSignalCard(asset, container){
     <div class="chart-card" style="position:relative">
       <div class="head" style="align-items:flex-start">
         <div>
-          <h2 style="font-size:15px">${asset.toUpperCase()} signal <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
+          <h2 style="font-size:15px">${asset.toUpperCase()} <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score: 50d SMA, RSI(14), MACD signal cross, 5d momentum, volume z-score, 50/200 SMA cross. ≥50 STRONG BUY; ≤-50 STRONG SELL.">signal</span> <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
           <div class="desc">as of ${escapeHtml(s.as_of)}</div>
         </div>
         <div style="text-align:right">
@@ -3886,7 +3896,7 @@ function renderWhaleSentiment(){
   host.innerHTML = `
     <div class="head" style="align-items:flex-start">
       <div>
-        <h2 style="font-size:15px">🐋 Whale Sentiment Index</h2>
+        <h2 style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score from on-chain whale proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).">Whale Sentiment Index</span></h2>
         <div class="desc">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
       </div>
       <div style="text-align:right">
@@ -4310,7 +4320,7 @@ function renderWhaleSentimentEth(){
   host.innerHTML = `
     <div class="head" style="align-items:flex-start">
       <div>
-        <h2 style="font-size:15px">🐋 ETH Whale Sentiment Index</h2>
+        <h2 style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics.">ETH Whale Sentiment Index</span></h2>
         <div class="desc">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
       </div>
       <div style="text-align:right">
@@ -5085,6 +5095,21 @@ const TAB_EMPTY = {
   whale:   'On-chain looks quiet — no mempool / mining / hashrate anomalies.',
   ainews:  'No notable AI sentiment / funding / ticker moves right now.',
 };
+
+// Fill the "Today's AI Take" slot for the active tab. Each tab's static
+// HTML contains a <div id="aiTake-<tabId>" class="aiTake-slot"></div> as
+// its first child. V2.aiTake() returns the purple band markup pulling the
+// top 2-3 ranked insights filtered by tab. Called from renderAll() so it
+// stays in sync with DATA refreshes.
+function renderAiTakeBands(){
+  const tab = state.tab;
+  if (!tab) return;
+  const slot = document.getElementById('aiTake-' + tab);
+  if (!slot || !window.V2 || typeof V2.aiTake !== 'function') return;
+  slot.style.display = 'block';
+  slot.style.marginBottom = '10px';
+  slot.innerHTML = V2.aiTake(tab);
+}
 
 function renderInsights(){
   // The Insights bar is per-tab. Overview hides the bar entirely (it has its
@@ -7516,7 +7541,7 @@ function renderPocCards(){
     const cur = anchor && anchor.current;
     const nakedHtml = naked.length ? `
       <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px"><span class="v2-tip-anchor" data-v2-tip="A POC from a prior week that price hasn't subsequently traded through. Theory: untested POCs act as future magnet levels.">Naked POCs</span> <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
         ${naked.map(n => {
           const isSupport = cur != null && cur > n.poc;
           const col = isSupport ? '#22c55e' : '#ef4444';
@@ -8179,7 +8204,7 @@ function pocDetailHtml(c){
       <button class="btn" data-poc-help="1" aria-label="What is POC?" title="What is Point of Control?" style="padding:1px 8px;font-size:11px;font-weight:700;line-height:1.4">?</button>
     </div>
     ${migBadge ? `<div>${migBadge}</div>` : ''}
-    ${sparkline ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">30d POC drift · last 90 days</div>${sparkline}</div>` : ''}
+    ${sparkline ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px"><span class="v2-tip-anchor" data-v2-tip="Direction of value migration: comparing 30d POC vs 90d POC. UP = recent volume concentrating above the structural mean (bullish acceptance).">30d POC drift</span> · last 90 days</div>${sparkline}</div>` : ''}
     ${volProfile ? `<div class="poc-vol-profile-wrap" data-poc-vol-sym="${sym}">
       <div class="sub" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:4px">
         <span style="flex:1">Volume profile · 90d (30d dashed) · current price marker</span>
@@ -8191,7 +8216,7 @@ function pocDetailHtml(c){
       <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Value-area ladder</div>
       <table style="width:100%;font-size:13px;border-collapse:collapse">
         <thead><tr style="color:var(--muted);font-size:10px;text-align:left">
-          <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px">VA</th>
+          <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px"><span class="v2-tip-anchor" data-v2-tip="Value Area = the price band containing ~70% of the lookback's volume. VAL/VAH bound it. Inside VA = acceptance; outside = imbalance.">VA</span></th>
         </tr></thead>
         <tbody>${ladder}</tbody>
       </table>
@@ -8910,6 +8935,7 @@ function renderSocial(){
 
 function renderAll(){
   renderInsights();
+  renderAiTakeBands();
   // tag updates — ETF-related tags follow state.etfAsset (decoupled from
   // global asset), Futures-related tags follow state.asset (Futures toggle
   // sets state.asset on click so they always match).
