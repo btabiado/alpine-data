@@ -8904,21 +8904,222 @@ async function streamChat(question){
   }
 }
 
-// On first chat-dock open in public-mirror mode, drop in a one-time
-// intro message explaining the feature is local-only — so the user
-// understands BEFORE typing why their question won't get an answer.
+// ---- Client-side Anthropic chat for the public mirror ----
+//
+// The public mirror is a static GitHub Pages site — there's no /api/chat
+// endpoint. To make chat actually WORK here (instead of just showing a
+// "run locally" message), users can paste their own Anthropic API key
+// once. It's stored in localStorage and never leaves the browser except
+// to api.anthropic.com directly.
+//
+// Same pattern as the Twelvedata stock-lookup key (already shipped).
+// Per-message cost on claude-haiku-4-5 is ~$0.001, so even heavy use
+// stays well under the free-tier credit budget for most users.
+
+const ANTHROPIC_KEY_LS = 'anthropic_api_key';
+function getAnthropicKey(){
+  try { return localStorage.getItem(ANTHROPIC_KEY_LS) || ''; } catch(_) { return ''; }
+}
+function promptForAnthropicKey(){
+  const k = window.prompt(
+    "Paste your Anthropic API key to enable chat on this URL.\n\n" +
+    "The key is stored ONLY in this browser's localStorage and sent\n" +
+    "ONLY to api.anthropic.com (the same call the local server makes).\n\n" +
+    "Get one at: console.anthropic.com → API Keys\n" +
+    "Format: sk-ant-...\n\n" +
+    "(To clear later, type /clearkey into the chat box.)"
+  );
+  if (!k) return '';
+  const trimmed = String(k).trim();
+  if (!/^sk-ant-/.test(trimmed)){
+    alert("That doesn't look like an Anthropic key (should start with sk-ant-).");
+    return '';
+  }
+  try { localStorage.setItem(ANTHROPIC_KEY_LS, trimmed); } catch(_) {}
+  return trimmed;
+}
+function clearAnthropicKey(){
+  try { localStorage.removeItem(ANTHROPIC_KEY_LS); } catch(_) {}
+}
+
+// Compact dashboard-data projection — mirrors chat.py's _summarise_payload
+// so the model sees the same shape on the public mirror as it does in
+// local Flask mode. Keep this tight: 30 days of daily ETF flows, top 8
+// funds per asset, latest market snapshot, latest whale row, all insights.
+function buildChatContext(){
+  const out = { generated_at: DATA.generated_at };
+  for (const asset of ['btc','eth','link']){
+    const a = DATA[asset]; if (!a) continue;
+    out[asset] = {
+      stats: a.stats || {},
+      last_date: a.last_date,
+      recent_daily: (a.daily || []).slice(-30),
+      by_fund_top: (a.by_fund || []).slice(0, 8),
+    };
+  }
+  const sigs = DATA.signals || {};
+  out.signals = {};
+  for (const k of Object.keys(sigs)){
+    const v = sigs[k]; if (!v) continue;
+    out.signals[k] = {
+      score: v.score, label: v.label, as_of: v.as_of,
+      components: v.components, price: v.price,
+    };
+  }
+  const m = DATA.market || {};
+  const snap = { global: m.global || {} };
+  const lastVal = (arr, key) => (arr && arr.length) ? arr[arr.length - 1][key] : null;
+  for (const asset of ['btc','eth','link']){
+    const ma = m[asset] || {};
+    snap[asset] = {
+      last_price:       lastVal(ma.price, 'value'),
+      last_volume:      lastVal(ma.volume, 'value'),
+      last_funding:     lastVal(ma.funding, 'rate'),
+      last_oi_usd:      lastVal(ma.open_interest_usd, 'oi_usd'),
+      last_long_short:  lastVal(ma.long_short_ratio, 'ratio'),
+      last_dvol:        lastVal(ma.dvol, 'dvol'),
+    };
+  }
+  snap.fear_greed_latest = (m.fear_greed && m.fear_greed.length) ? m.fear_greed[m.fear_greed.length - 1] : null;
+  snap.ethbtc_latest     = (m.ethbtc     && m.ethbtc.length)     ? m.ethbtc[m.ethbtc.length - 1] : null;
+  out.market_snapshot = snap;
+  const whale = ((DATA.whale || {}).btc) || {};
+  const wlast = {};
+  for (const k of Object.keys(whale)){
+    const v = whale[k];
+    if (Array.isArray(v)) wlast[k] = v.length ? v[v.length - 1] : null;
+  }
+  out.btc_whale_latest = wlast;
+  out.insights = DATA.insights || [];
+  return out;
+}
+
+const CHAT_CLIENT_SYSTEM_PROMPT =
+  "You are an analyst embedded in a private dashboard that tracks U.S. spot " +
+  "BTC and ETH ETF flows, LINK trading metrics, perpetual funding, open " +
+  "interest, implied volatility (DVOL), Fear & Greed, and BTC on-chain whale " +
+  "proxies. You ALSO see a rules-based composite signal (-100..+100) per asset.\n\n" +
+  "When the user asks a question, answer concisely using ONLY the dashboard " +
+  "context below. If the data needed is not present, say so plainly.\n\n" +
+  "NEVER give explicit investment advice or recommendations to buy or sell " +
+  "specific assets. If asked, you may explain what the indicators say and let " +
+  "the user draw their own conclusions. You may discuss risk factors.\n\n" +
+  "Format:\n" +
+  "- Lead with the direct answer in 1-2 sentences.\n" +
+  "- Then give 2-4 bullet points with the supporting numbers from the data.\n" +
+  "- Cite the date and metric explicitly (e.g. \"as of 2026-05-12, BTC ETF " +
+  "7-day net = +$543M\").\n" +
+  "- Keep total response under ~200 words unless the user asks for more.\n\n" +
+  "Dashboard context (JSON):\n";
+
+async function clientSideChatStream(question, botEl){
+  let key = getAnthropicKey();
+  if (!key){
+    key = promptForAnthropicKey();
+    if (!key){
+      botEl.className = 'msg bot';
+      botEl.textContent = "No key entered. Chat needs your Anthropic key to answer questions on this URL. Submit again to try the prompt once more.";
+      return;
+    }
+  }
+  // Build context. Cap at ~50KB to stay well within the 200K input window
+  // while keeping cost predictable (~$0.001/msg on Haiku).
+  let ctxJson;
+  try { ctxJson = JSON.stringify(buildChatContext()); }
+  catch(_) { ctxJson = '{}'; }
+  if (ctxJson.length > 50000) ctxJson = ctxJson.slice(0, 50000) + '"...(truncated)"}';
+  const system = CHAT_CLIENT_SYSTEM_PROMPT + ctxJson;
+
+  let acc = '';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        stream: true,
+        system: system,
+        messages: [{ role: 'user', content: question }],
+      }),
+    });
+    if (!resp.ok || !resp.body){
+      const errText = await resp.text().catch(()=>'(no body)');
+      botEl.className = 'msg err';
+      let msg = 'HTTP ' + resp.status;
+      try {
+        const j = JSON.parse(errText);
+        if (j && j.error && j.error.message) msg = j.error.message;
+      } catch(_) { msg = errText.slice(0, 200); }
+      if (resp.status === 401){
+        msg = 'Invalid Anthropic key (HTTP 401). Type /clearkey in the chat box to reset and re-enter.';
+      } else if (resp.status === 429){
+        msg = 'Rate limited (HTTP 429). Wait a moment and try again, or check your Anthropic console for usage limits.';
+      }
+      botEl.textContent = msg;
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true){
+      const {value, done} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream:true});
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0){
+        const evt = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of evt.split('\n')){
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (!data || data === '[DONE]') continue;
+          try {
+            const j = JSON.parse(data);
+            // Anthropic streaming events: content_block_delta with text_delta
+            if (j.type === 'content_block_delta' && j.delta && j.delta.type === 'text_delta'){
+              if (acc === '') botEl.textContent = '';
+              acc += j.delta.text;
+              botEl.textContent = acc;
+              chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            } else if (j.type === 'message_stop'){
+              return;
+            } else if (j.type === 'error' && j.error){
+              botEl.className = 'msg err';
+              botEl.textContent = (j.error.message || 'stream error').slice(0, 300);
+              return;
+            }
+          } catch(_) { /* heartbeat / non-JSON event */ }
+        }
+      }
+    }
+  } catch(e){
+    botEl.className = 'msg err';
+    botEl.textContent = 'Network error: ' + e.message;
+  }
+}
+
+// On first chat-dock open in public-mirror mode, drop in a one-time intro
+// explaining the BYO-key flow up front (so the user understands the
+// prompt that will appear on first submit instead of being surprised).
 let _chatIntroShown = false;
 function _maybeShowChatIntro(){
   if (_chatIntroShown || _chatIsServer) return;
   _chatIntroShown = true;
   const el = appendMsg('bot',
-    "Hi! Chat needs to run locally (python server.py) — the public dashboard " +
-    "is a static site with no backend. Your dashboard data is all here, but " +
-    "I can't answer questions about it from this URL.\n\n" +
-    "To use chat: clone the repo, run `python server.py`, open localhost:5000. " +
-    "Same dashboard, plus a working assistant."
+    "Chat is wired to call Anthropic's API directly from your browser. " +
+    "On the first question I'll prompt for your Anthropic API key — paste it " +
+    "once and it's saved in this browser's localStorage (never sent anywhere " +
+    "except api.anthropic.com).\n\n" +
+    "Get a key: console.anthropic.com → API Keys. Cost on Haiku ≈ $0.001/msg.\n\n" +
+    "Type /clearkey to reset the stored key."
   );
-  el.className = 'msg bot';  // ensure styled correctly
+  el.className = 'msg bot';
 }
 chatFab?.addEventListener('click', _maybeShowChatIntro);
 
@@ -8927,18 +9128,28 @@ chatForm?.addEventListener('submit', (e) => {
   const q = chatInput.value.trim();
   if (!q) return;
   chatInput.value = '';
-  // Public mirror: intercept the submit so we never fire the /api/chat
-  // request that would return 405. Show a friendly per-question reply
-  // instead of an HTTP error blob.
-  if (!_chatIsServer){
+  // /clearkey command — reset the stored Anthropic key on the public mirror.
+  if (!_chatIsServer && /^\/clear\s*key$/i.test(q)){
+    clearAnthropicKey();
     appendMsg('user', q);
-    appendMsg('bot',
-      "Chat is local-only on this build. Run `python server.py` locally " +
-      "(needs ANTHROPIC_API_KEY) to ask questions about this dashboard's data."
-    );
+    appendMsg('bot', 'Anthropic key cleared. The next question will prompt for a new key.');
     chatInput.focus();
     return;
   }
+  if (!_chatIsServer){
+    // Public mirror: stream from Anthropic directly via the user's key.
+    // (streamChat() does its own appendMsg('user', …) in local Flask mode,
+    // so we only append the user bubble on this branch.)
+    appendMsg('user', q);
+    const botEl = appendMsg('bot', '…');
+    chatSend.disabled = true;
+    clientSideChatStream(q, botEl).finally(() => {
+      chatSend.disabled = false;
+      chatInput.focus();
+    });
+    return;
+  }
+  // Local Flask mode — use the existing /api/chat path.
   chatSend.disabled = true;
   streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
 });
