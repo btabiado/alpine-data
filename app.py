@@ -10777,15 +10777,34 @@ function renderSymbolSuggestions(list){
   const box = document.getElementById('symbolSearchSuggest');
   const input = document.getElementById('symbolSearchInput');
   if (!box) return;
-  if (!list || !list.length){
-    box.innerHTML = '';
-    box.classList.add('hidden');
-    if (input) input.setAttribute('aria-expanded', 'false');
-    return;
-  }
   const esc = s => String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  // Empty list ≠ silent. When the user has typed something but nothing
+  // matches the cache, show a single "Press Enter to search live" hint so
+  // they get visible feedback that the form IS working. Pressing Enter
+  // routes through `lookupSymbol` which handles the live-lookup chain
+  // (including the fuzzy-suggest chips in the modal fallback).
+  const query = (input && input.value || '').trim();
+  if (!list || !list.length){
+    if (!query){
+      box.innerHTML = '';
+      box.classList.add('hidden');
+      if (input) input.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    box.innerHTML =
+      '<div class="symbol-suggest-row symbol-suggest-empty" role="option" ' +
+        'data-symbol="' + esc(query.toUpperCase()) + '" tabindex="-1" ' +
+        'style="opacity:.85">' +
+        '<span class="symbol-suggest-sym">↵</span>' +
+        '<span class="symbol-suggest-name">Press Enter to search <strong>' +
+          esc(query.toUpperCase()) + '</strong></span>' +
+      '</div>';
+    box.classList.remove('hidden');
+    if (input) input.setAttribute('aria-expanded', 'true');
+    return;
+  }
   const html = list.map((r, i) =>
     '<div class="symbol-suggest-row" role="option" data-symbol="' + esc(r.symbol) +
     '" data-idx="' + i + '" tabindex="-1">' +
