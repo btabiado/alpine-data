@@ -897,10 +897,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          pinned to BTC (state.asset='btc' default); add an inline toggle to
          those tabs if per-asset switching is needed. -->
     <form id="symbolSearchForm" style="margin:0;display:flex;gap:4px;position:relative" onsubmit="return false">
-      <input id="symbolSearchInput" type="text" placeholder="Symbol (BTC, NVDA…)" autocomplete="off"
-             aria-label="Search any stock or crypto symbol"
+      <input id="symbolSearchInput" type="text" placeholder="Symbol(s): BTC, ETH, NVDA" autocomplete="off"
+             aria-label="Search one or more stock or crypto symbols (comma-separated)"
              aria-autocomplete="list" aria-controls="symbolSearchSuggest" aria-expanded="false"
-             style="background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;width:130px;outline:none">
+             style="background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;width:160px;outline:none">
+
       <button class="btn" id="symbolSearchBtn" type="submit" aria-label="Look up symbol">🔍</button>
       <div id="symbolSearchSuggest" class="symbol-suggest hidden" role="listbox" aria-label="Symbol suggestions"></div>
     </form>
@@ -9626,10 +9627,206 @@ function renderLiveCryptoSection(sym, rows){
   );
 }
 
+// Parse a raw symbol-search input into a deduped list of uppercase symbols.
+// Accepts comma, semicolon, and whitespace separators. Caps at MAX_SYMBOLS
+// (6) to keep the modal sane and avoid abuse. Exported for tests via the
+// HTML payload — see test_dashboard_integration.py.
+function parseSymbolSearchTokens(raw){
+  const MAX_SYMBOLS = 6;
+  if (raw == null) return [];
+  const s = String(raw).trim();
+  if (!s) return [];
+  const parts = s.split(/[\s,;]+/);
+  const seen = new Set();
+  const out = [];
+  for (let i = 0; i < parts.length; i++){
+    const tok = String(parts[i] || '').trim();
+    if (!tok) continue;
+    const up = tok.toUpperCase();
+    if (seen.has(up)) continue;
+    seen.add(up);
+    out.push(up);
+    if (out.length >= MAX_SYMBOLS) break;
+  }
+  return out;
+}
+
+// Resolve a single symbol against cached DATA. Returns an object describing
+// what was found (or null if nothing matched the cache). Pulled out of
+// lookupSymbol so both the single- and multi-symbol paths share resolution.
+function resolveSymbolFromCache(sym){
+  const symLower = sym.toLowerCase();
+  const market = DATA.market || {};
+  const eq = (a, b) => String(a || '').toUpperCase() === b;
+  const stock = (market.stocks_signals || []).find(s => s && eq(s.symbol, sym));
+  const cryptoSignal = (DATA.signals_top20 || []).find(s => s && eq(s.symbol, sym));
+  const poc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
+  let newsRegex = null;
+  try { newsRegex = new RegExp('\\b' + sym.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\b', 'i'); }
+  catch(_) { newsRegex = null; }
+  const news = (market.news || []).filter(n => {
+    if (!n) return false;
+    const t = String(n.title || '');
+    const b = String(n.body || '');
+    if (newsRegex){
+      return newsRegex.test(t) || newsRegex.test(b);
+    }
+    const up = sym;
+    return t.toUpperCase().includes(up) || b.toUpperCase().includes(up);
+  });
+  const sentiment = ((((market.social || {}).cc_news || {}).coins) || {})[symLower] || null;
+  const hasAny = !!(stock || cryptoSignal || poc || news.length || sentiment);
+  const displayName =
+    (stock && stock.name) ||
+    (cryptoSignal && cryptoSignal.name) ||
+    (poc && poc.name) ||
+    '';
+  return { sym: sym, stock: stock, cryptoSignal: cryptoSignal, poc: poc, news: news, sentiment: sentiment, hasAny: hasAny, displayName: displayName };
+}
+
+// Build the inner HTML for a single cache-hit symbol (everything below the
+// modal title — header block + signal/POC/news/sentiment sections).
+function buildSymbolSectionsHtml(resolved){
+  const sym = resolved.sym;
+  const stock = resolved.stock;
+  const cryptoSignal = resolved.cryptoSignal;
+  const poc = resolved.poc;
+  const news = resolved.news;
+  const sentiment = resolved.sentiment;
+  const displayName = resolved.displayName;
+  const sections = [];
+  sections.push(
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      (displayName ? '<div class="sub" style="font-size:13px;color:var(--muted)">' + escapeHtml(displayName) + '</div>' : '') +
+    '</div>'
+  );
+  if (stock){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Stock signal</div>' +
+        stockDetailHtml(stock) +
+      '</div>'
+    );
+  }
+  if (cryptoSignal){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Crypto signal</div>' +
+        renderSignalCardFromObj(cryptoSignal) +
+      '</div>'
+    );
+  }
+  if (poc){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
+        pocDetailHtml(poc) +
+      '</div>'
+    );
+  }
+  if (news && news.length){
+    const sorted = news.slice().sort((a, b) => {
+      const da = a && a.date ? Date.parse(a.date) : 0;
+      const db = b && b.date ? Date.parse(b.date) : 0;
+      return (db || 0) - (da || 0);
+    });
+    const newsRows = sorted.slice(0, 5).map(n => {
+      return '<a href="' + sanitizeUrl(n.url) + '" target="_blank" rel="noopener" ' +
+        'style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">' +
+          '<div style="font-weight:600;font-size:13px">' + escapeHtml(n.title || '') + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
+            escapeHtml(n.source_name || n.source || '') + (n.date ? ' · ' + escapeHtml(n.date) : '') +
+          '</div>' +
+        '</a>';
+    }).join('');
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News · ' + sorted.length + ' match' + (sorted.length === 1 ? '' : 'es') + '</div>' +
+        '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">' + newsRows + '</div>' +
+      '</div>'
+    );
+  }
+  if (sentiment){
+    const pos = Number(sentiment.positive) || 0;
+    const neg = Number(sentiment.negative) || 0;
+    const neu = Number(sentiment.neutral) || 0;
+    const total = pos + neg + neu || 1;
+    const posPct = (pos / total) * 100;
+    const negPct = (neg / total) * 100;
+    const neuPct = (neu / total) * 100;
+    const net = sentiment.net_score;
+    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
+    const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News sentiment</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' articles scored</span>' +
+          '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
+        '</div>' +
+        '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
+          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
+          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
+          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
+          '<span style="color:#22c55e">' + pos + ' positive</span>' +
+          '<span>' + neu + ' neutral</span>' +
+          '<span style="color:#ef4444">' + neg + ' negative</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+  return sections.join('');
+}
+
+// Resolve and render HTML for a single symbol — cache hit OR live fallbacks.
+// Returns { html, found, sym, displayName }. `found` is false only when
+// neither cache nor any live source produced data. Reused by both the
+// single- and multi-symbol modal paths.
+async function resolveAndRenderSymbol(sym){
+  const resolved = resolveSymbolFromCache(sym);
+  if (resolved.hasAny){
+    return { html: buildSymbolSectionsHtml(resolved), found: true, sym: sym, displayName: resolved.displayName };
+  }
+  // No cache hit — try live sources in the same order lookupSymbol does.
+  if (typeof isServer !== 'undefined' && isServer){
+    try {
+      const payload = await liveServerSymbolLookup(sym);
+      return { html: renderServerSymbolSection(sym, payload), found: true, sym: sym, displayName: '' };
+    } catch (err) { /* fall through */ }
+  }
+  try {
+    const rows = await liveCryptoLookup(sym);
+    return { html: renderLiveCryptoSection(sym, rows), found: true, sym: sym, displayName: '' };
+  } catch (err) { /* fall through */ }
+  if (liveLooksLikeStock(sym)){
+    try {
+      const out = await liveStockLookup(sym);
+      return { html: renderLiveStockSection(sym, out.rows, out.source), found: true, sym: sym, displayName: '' };
+    } catch (err){
+      // Surface the no-API-key panel as a "found" result so the user can
+      // wire a key from inside the modal (matches single-symbol behavior).
+      if (err && err.code === 'NO_STOCK_API_KEY'){
+        return { html: renderLiveStockNoKey(sym), found: true, sym: sym, displayName: '' };
+      }
+      return { html: '', found: false, sym: sym, displayName: '' };
+    }
+  }
+  return { html: '', found: false, sym: sym, displayName: '' };
+}
+
 async function lookupSymbol(query){
-  const raw = String(query == null ? '' : query).trim();
-  if (!raw) return;
-  const sym = raw.toUpperCase();
+  // Multi-symbol entry point. Accepts a raw input string; splits on
+  // comma/semicolon/whitespace, dedupes, caps at 6, and routes to the
+  // single- or multi-symbol render path. Empty input → no-op.
+  const tokens = parseSymbolSearchTokens(query);
+  if (!tokens.length) return;
+  if (tokens.length > 1){
+    return lookupSymbolsMulti(tokens);
+  }
+  const sym = tokens[0];
   const symLower = sym.toLowerCase();
   const market = DATA.market || {};
   const eq = (a, b) => String(a || '').toUpperCase() === b;
@@ -9749,103 +9946,68 @@ async function lookupSymbol(query){
     return;
   }
 
-  const sections = [];
-
-  // Header block
-  sections.push(
-    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
-      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
-      (displayName ? '<div class="sub" style="font-size:13px;color:var(--muted)">' + escapeHtml(displayName) + '</div>' : '') +
-    '</div>'
-  );
-
-  // Signal section
-  if (stock){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Stock signal</div>' +
-        stockDetailHtml(stock) +
-      '</div>'
-    );
-  }
-  if (cryptoSignal){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Crypto signal</div>' +
-        renderSignalCardFromObj(cryptoSignal) +
-      '</div>'
-    );
-  }
-
-  // POC section
-  if (poc){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
-        pocDetailHtml(poc) +
-      '</div>'
-    );
-  }
-
-  // News section (top 5)
-  if (news.length){
-    const sorted = news.slice().sort((a, b) => {
-      const da = a && a.date ? Date.parse(a.date) : 0;
-      const db = b && b.date ? Date.parse(b.date) : 0;
-      return (db || 0) - (da || 0);
-    });
-    const newsRows = sorted.slice(0, 5).map(n => {
-      return '<a href="' + sanitizeUrl(n.url) + '" target="_blank" rel="noopener" ' +
-        'style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">' +
-          '<div style="font-weight:600;font-size:13px">' + escapeHtml(n.title || '') + '</div>' +
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
-            escapeHtml(n.source_name || n.source || '') + (n.date ? ' · ' + escapeHtml(n.date) : '') +
-          '</div>' +
-        '</a>';
-    }).join('');
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News · ' + sorted.length + ' match' + (sorted.length === 1 ? '' : 'es') + '</div>' +
-        '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">' + newsRows + '</div>' +
-      '</div>'
-    );
-  }
-
-  // Sentiment section
-  if (sentiment){
-    const pos = Number(sentiment.positive) || 0;
-    const neg = Number(sentiment.negative) || 0;
-    const neu = Number(sentiment.neutral) || 0;
-    const total = pos + neg + neu || 1;
-    const posPct = (pos / total) * 100;
-    const negPct = (neg / total) * 100;
-    const neuPct = (neu / total) * 100;
-    const net = sentiment.net_score;
-    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
-    const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News sentiment</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
-          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' articles scored</span>' +
-          '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
-        '</div>' +
-        '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
-          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
-          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
-          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
-          '<span style="color:#22c55e">' + pos + ' positive</span>' +
-          '<span>' + neu + ' neutral</span>' +
-          '<span style="color:#ef4444">' + neg + ' negative</span>' +
-        '</div>' +
-      '</div>'
-    );
-  }
-
-  body.innerHTML = sections.join('');
+  // Reuse the shared section builder so single- and multi-symbol render
+  // identically. Pass the already-resolved data to avoid a second lookup.
+  body.innerHTML = buildSymbolSectionsHtml({
+    sym: sym,
+    stock: stock,
+    cryptoSignal: cryptoSignal,
+    poc: poc,
+    news: news,
+    sentiment: sentiment,
+    displayName: displayName,
+  });
   modal.classList.remove('hidden');
+}
+
+// Multi-symbol modal renderer. Opens the modal immediately with a spinner,
+// then resolves each symbol in parallel and stacks the resulting cards.
+// Found symbols render as <div class="multi-symbol-card"> blocks with an
+// <h2> header. Misses are aggregated into a small footer note. If every
+// token fails to resolve, the modal shows a single "Couldn't find any
+// of: ..." error message.
+async function lookupSymbolsMulti(tokens){
+  const modal = document.getElementById('symbolDetailModal');
+  const body  = document.getElementById('symbolDetailBody');
+  const title = document.getElementById('symbolDetailTitle');
+  if (!modal || !body || !title) return;
+  title.textContent = tokens.join(' · ');
+  body.innerHTML =
+    '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
+      'Looking up <strong>' + escapeHtml(tokens.join(', ')) + '</strong>&hellip;' +
+    '</div>';
+  modal.classList.remove('hidden');
+  // Track this request so a fast follow-up doesn't render stale results.
+  const reqId = (window._liveLookupReq = (window._liveLookupReq || 0) + 1);
+  const results = await Promise.all(tokens.map(t => resolveAndRenderSymbol(t)));
+  if (reqId !== window._liveLookupReq) return;
+  const found = results.filter(r => r && r.found && r.html);
+  const missed = results.filter(r => !(r && r.found && r.html)).map(r => r.sym);
+  if (!found.length){
+    body.innerHTML =
+      '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
+        'Couldn&rsquo;t find any of: <strong>' + escapeHtml(tokens.join(', ')) + '</strong>' +
+      '</div>';
+    return;
+  }
+  const cards = found.map(r => {
+    const hdr =
+      '<h2 style="margin:0 0 8px 0;font-size:15px;letter-spacing:0.3px">' +
+        escapeHtml(r.sym) +
+        (r.displayName ? ' <span class="sub" style="font-size:12px;color:var(--muted);font-weight:400">· ' + escapeHtml(r.displayName) + '</span>' : '') +
+      '</h2>';
+    return (
+      '<div class="multi-symbol-card" style="padding:10px 0;border-top:1px solid var(--border)">' +
+        hdr + r.html +
+      '</div>'
+    );
+  }).join('');
+  const footer = missed.length
+    ? '<div class="sub" style="color:var(--muted);font-size:11px;padding-top:8px;border-top:1px solid var(--border);margin-top:6px">' +
+        'Couldn&rsquo;t find: <strong>' + escapeHtml(missed.join(', ')) + '</strong>' +
+      '</div>'
+    : '';
+  body.innerHTML = cards + footer;
 }
 
 function closeSymbolDetail(){

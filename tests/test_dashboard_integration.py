@@ -819,3 +819,53 @@ def test_symbol_search_typeahead_wiring():
             f"buildSymbolSuggestions() does not consult {path!r} — the "
             "typeahead is missing a data source."
         )
+# ---------- Header symbol search: multi-symbol support ----------
+#
+# The header search input accepts comma/semicolon/whitespace-separated
+# tokens (e.g. "BTC, ETH, NVDA") and renders them as stacked cards in the
+# symbol detail modal. Guard the wiring so a refactor can't silently
+# drop multi-symbol parsing or the stacked-card markup.
+
+
+def test_symbol_search_supports_multiple_symbols():
+    html = _read_dashboard_or_skip()
+
+    # Parser function present and splits on comma/semicolon/whitespace.
+    assert "function parseSymbolSearchTokens" in html, (
+        "parseSymbolSearchTokens() missing — header search can no longer "
+        "split a multi-symbol input."
+    )
+    # The split regex itself — keep this loose so we tolerate formatting
+    # tweaks but catch a regression that drops a separator class.
+    assert re.search(r"split\(\s*/\[\\s,;\]\+/\s*\)", html), (
+        "parseSymbolSearchTokens() must split on /[\\s,;]+/ — comma, "
+        "semicolon, or whitespace separators."
+    )
+
+    # Multi-symbol orchestrator + the stacked-card wrapper class.
+    assert "function lookupSymbolsMulti" in html, (
+        "lookupSymbolsMulti() missing — multi-symbol render path is gone."
+    )
+    assert 'class="multi-symbol-card"' in html, (
+        "multi-symbol-card wrapper missing — stacked cards can't render."
+    )
+
+    # Cap is enforced inside the parser (MAX_SYMBOLS = 6) so a bad paste
+    # can't open dozens of cards.
+    assert re.search(r"MAX_SYMBOLS\s*=\s*6", html), (
+        "MAX_SYMBOLS cap missing or changed — multi-symbol input is no "
+        "longer bounded at 6."
+    )
+
+    # Updated placeholder hints at multi-symbol support.
+    assert "Symbol(s): BTC, ETH, NVDA" in html, (
+        "Header search input placeholder no longer advertises multi-symbol "
+        "support."
+    )
+
+    # The submit handler still routes the raw input through lookupSymbol,
+    # which now branches on token count.
+    assert "lookupSymbol(input.value)" in html, (
+        "symbolSearchForm submit handler no longer calls lookupSymbol with "
+        "the raw input string."
+    )
