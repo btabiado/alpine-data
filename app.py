@@ -589,6 +589,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      which beats the non-!important mobile .card{padding:8px 10px}. The
      disclosure body re-flows with too much padding on phones; tighten it. */
   .futures-explainer .card{padding:8px 10px !important}
+  /* POC volume profile fullscreen button is desktop-only — user reported
+     the mobile-sized chart in the modal is already legible. Hide the
+     control to keep the modal header clean on phones. */
+  .poc-vol-fullscreen-btn{display:none !important}
 }
 /* UX-F8: All modals — outer .modal-bg padding:24px eats 48px on a 375px
    viewport; combined with each modal's inner padding the content area is
@@ -960,6 +964,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 </div>
 
+<!-- POC volume profile fullscreen overlay (desktop only — fullscreen button
+     is hidden via @media on mobile because the modal-sized chart is already
+     legible on phone viewports). Click expand button → SVG copies in here
+     full-viewport; click × or Escape to dismiss. -->
+<div id="pocVolFullscreen" class="modal-bg hidden" style="padding:0">
+  <div style="background:var(--panel);width:100vw;height:100vh;display:flex;flex-direction:column;gap:6px;padding:14px 18px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div>
+        <h2 id="pocVolFullscreenTitle" style="margin:0;font-size:16px">Volume profile</h2>
+        <div class="sub" style="font-size:11px;color:var(--muted)">90d (30d dashed) · current price marker · Esc / × to close</div>
+      </div>
+      <button class="btn" id="pocVolFullscreenClose" aria-label="Close fullscreen volume profile">×</button>
+    </div>
+    <div id="pocVolFullscreenBody" style="flex:1;min-height:0;display:flex;align-items:center;justify-content:center"></div>
+  </div>
+</div>
+
 <!-- ============ NEWS SENTIMENT DETAIL MODAL (Research tab — click any Top-25 row) ============ -->
 <div id="newsSentimentDetailModal" class="modal-bg hidden">
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(720px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
@@ -1088,6 +1109,22 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
+    <!-- News + Insights — pulled above the sentiment composite per user
+         request: "news & insight need to go on before the Crypto market
+         Sentiment bar". The headline news + top-4 insights are the first
+         thing a returning user wants to see; sentiment is a slower-moving
+         summary that belongs underneath. -->
+    <div class="grid2">
+      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
+        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
+        <div id="overviewNews"></div>
+      </div>
+      <div class="chart-card">
+        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
+        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+      </div>
+    </div>
+
     <!-- CRYPTO MARKET SENTIMENT — composite of Fear & Greed, top-50 signal
          score avg, and average perp funding rate. Rendered by
          renderOverviewSentiment(). Mirrors the visual pattern of
@@ -1112,20 +1149,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span style="color:#22c55e">BULLISH inputs</span>
         <span>NEUTRAL</span>
         <span style="color:#ef4444">BEARISH inputs</span>
-      </div>
-    </div>
-
-    <!-- News + Insights — moved up here so "Top insights" gets prime
-         landing-page real estate below the sentiment headline. Was sitting
-         below the Top-25 grid which buried it on mobile. -->
-    <div class="grid2">
-      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
-        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
-        <div id="overviewNews"></div>
-      </div>
-      <div class="chart-card">
-        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
-        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
       </div>
     </div>
 
@@ -7526,8 +7549,11 @@ function pocDetailHtml(c){
     </div>
     ${migBadge ? `<div>${migBadge}</div>` : ''}
     ${sparkline ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">30d POC drift · last 90 days</div>${sparkline}</div>` : ''}
-    ${volProfile ? `<div>
-      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Volume profile · 90d (30d dashed) · current price marker</div>
+    ${volProfile ? `<div class="poc-vol-profile-wrap" data-poc-vol-sym="${sym}">
+      <div class="sub" style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);margin-bottom:4px">
+        <span style="flex:1">Volume profile · 90d (30d dashed) · current price marker</span>
+        <button class="btn poc-vol-fullscreen-btn" data-poc-vol-fullscreen="1" aria-label="Expand volume profile to fullscreen" title="Expand to fullscreen" style="padding:2px 8px;font-size:11px;font-weight:600;line-height:1.4">⛶ Fullscreen</button>
+      </div>
       ${volProfile}
     </div>` : ''}
     <div>
@@ -7576,6 +7602,50 @@ function closePocDetail(){
       openPocDetail(card.getAttribute('data-poc-coin-id'));
     }
   });
+})();
+
+// POC volume profile fullscreen overlay — desktop only (mobile reads the
+// modal-sized chart fine per user feedback "mobile is perfect"). Clicks on
+// the Fullscreen button inside the POC detail modal pop the SVG out into a
+// full-viewport overlay. Close on × / click-outside / Escape.
+(function wirePocVolFullscreen(){
+  if (window._pocVolFullscreenWired) return; window._pocVolFullscreenWired = true;
+  const open = (sym, svgHtml) => {
+    const modal = document.getElementById('pocVolFullscreen');
+    const body  = document.getElementById('pocVolFullscreenBody');
+    const title = document.getElementById('pocVolFullscreenTitle');
+    if (!modal || !body || !title) return;
+    title.textContent = `${sym} · Volume profile`;
+    // Clone the SVG and force it to fill the available area. The original
+    // viewBox is preserved so axes/labels scale up proportionally.
+    body.innerHTML = svgHtml;
+    const svg = body.querySelector('svg');
+    if (svg){
+      svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+      svg.style.width = '100%';
+      svg.style.height = '100%';
+      svg.style.maxHeight = 'none';
+      svg.style.maxWidth = '100%';
+    }
+    modal.classList.remove('hidden');
+  };
+  const close = () => {
+    const m = document.getElementById('pocVolFullscreen');
+    if (m) m.classList.add('hidden');
+  };
+  document.addEventListener('click', e => {
+    const btn = e.target && e.target.closest && e.target.closest('[data-poc-vol-fullscreen]');
+    if (btn){
+      const wrap = btn.closest('.poc-vol-profile-wrap');
+      const sym  = wrap ? wrap.getAttribute('data-poc-vol-sym') : '';
+      const svg  = wrap ? wrap.querySelector('svg') : null;
+      if (svg) open(sym, svg.outerHTML);
+      return;
+    }
+    if (e.target && e.target.id === 'pocVolFullscreenClose') close();
+    if (e.target && e.target.id === 'pocVolFullscreen') close();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
 })();
 
 // Wire up News Sentiment detail modal — close on × / click-outside / Escape.
