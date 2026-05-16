@@ -578,6 +578,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
   <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
+  <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -1121,6 +1122,49 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-stocksfilter="strong_sell">STRONG SELL</button>
         </div>
         <div id="stocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AI NEWS TAB ============ -->
+  <div id="tab-ainews" class="hidden">
+    <div class="container">
+      <div id="aiNewsEmpty" class="empty hidden">AI news not yet loaded. Run <code>python app.py --fetch-market</code> to populate.</div>
+      <div id="aiNewsContent">
+        <!-- Top: AI sentiment summary card -->
+        <div class="chart-card" id="aiNewsSummaryCard">
+          <div class="head">
+            <h2>AI news sentiment <span class="tag">live</span></h2>
+            <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
+          </div>
+          <div id="aiNewsSummary"></div>
+        </div>
+        <div class="grid2" style="margin-top:12px">
+          <!-- Middle: AI news feed -->
+          <div class="chart-card">
+            <div class="head">
+              <h2>Latest AI news</h2>
+              <span class="desc">Top 30 most recent &middot; click any row to open the article</span>
+            </div>
+            <div id="aiNewsFeed" style="max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
+          </div>
+          <!-- Bottom right: AI-exposed stock signal cards -->
+          <div class="chart-card">
+            <div class="head">
+              <h2>AI-exposed stocks</h2>
+              <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
+            </div>
+            <div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+          </div>
+        </div>
+        <!-- Bottom left: source breakdown -->
+        <div class="chart-card" style="margin-top:12px">
+          <div class="head">
+            <h2>Source breakdown</h2>
+            <span class="desc">Which publications are most positive / negative on AI coverage</span>
+          </div>
+          <div id="aiNewsSources"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -4637,6 +4681,181 @@ function renderStocksTab(){
   applyStocksFilter();
 }
 
+// ===== AI NEWS TAB =====
+// Renders the AI News tab: aggregate sentiment summary, live article feed,
+// AI-exposed stock signal subset, and source-level positive/negative breakdown.
+// Reads DATA.market.ai_news (produced by fetch_market.py). Defensive: when
+// available=false or missing, shows an empty state pointing to the fetcher.
+const AI_EXPOSED_TICKERS = ['NVDA','GOOGL','MSFT','META','AMZN','AAPL','TSLA','AMD','INTC','ORCL','CRM','PLTR','SMCI','ARM','AVGO'];
+const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#f59e0b'};
+
+function renderAiNewsTab(){
+  const ai = ((DATA.market||{}).ai_news) || null;
+  const empty = document.getElementById('aiNewsEmpty');
+  const content = document.getElementById('aiNewsContent');
+  if (!empty || !content) return;
+  const ok = ai && ai.available && Array.isArray(ai.items);
+  empty.classList.toggle('hidden', !!ok);
+  content.classList.toggle('hidden', !ok);
+  if (!ok) return;
+
+  // --- Summary card -------------------------------------------------------
+  const sum = ai.summary || {};
+  const pos = Number(sum.positive)||0, neg = Number(sum.negative)||0, neu = Number(sum.neutral)||0;
+  const tot = Number(sum.total) || (pos+neg+neu) || 1;
+  const posPct = pos/tot*100, negPct = neg/tot*100, neuPct = neu/tot*100;
+  const net = (sum.net_score == null) ? 0 : Number(sum.net_score);
+  const netColor = net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b');
+  const netTxt = (net >= 0 ? '+' : '') + (Number.isInteger(net) ? net : net.toFixed(1));
+  const label = sum.sentiment_label || '—';
+  const summaryHost = document.getElementById('aiNewsSummary');
+  if (summaryHost){
+    summaryHost.innerHTML = `
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:42px;font-weight:700;color:${netColor};line-height:1">${escapeHtml(netTxt)}</div>
+          <div style="font-size:14px;color:${netColor};font-weight:600;margin-top:3px">${escapeHtml(String(label))}</div>
+          <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px">net score · ${tot} articles</div>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--muted);min-width:140px">
+          <div><span style="color:#22c55e;font-weight:600">${pos}</span> positive</div>
+          <div><span style="color:#f59e0b;font-weight:600">${neu}</span> neutral</div>
+          <div><span style="color:#ef4444;font-weight:600">${neg}</span> negative</div>
+        </div>
+      </div>
+      <div style="display:flex;height:14px;margin-top:10px;border-radius:4px;overflow:hidden;background:#1f2533">
+        <div style="background:#22c55e;width:${posPct.toFixed(2)}%" title="${pos} positive"></div>
+        <div style="background:#f59e0b;width:${neuPct.toFixed(2)}%" title="${neu} neutral"></div>
+        <div style="background:#ef4444;width:${negPct.toFixed(2)}%" title="${neg} negative"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
+        <span style="color:#22c55e">${posPct.toFixed(0)}% +</span>
+        <span>${neuPct.toFixed(0)}% ◯</span>
+        <span style="color:#ef4444">${negPct.toFixed(0)}% −</span>
+      </div>`;
+  }
+
+  // --- Feed (top 30 most-recent) -----------------------------------------
+  const feed = document.getElementById('aiNewsFeed');
+  if (feed){
+    const items = (ai.items||[]).slice().sort((a,b)=>{
+      const da = a && a.date ? Date.parse(a.date) : 0;
+      const db = b && b.date ? Date.parse(b.date) : 0;
+      return (db||0) - (da||0);
+    }).slice(0, 30);
+    if (!items.length){
+      feed.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
+    } else {
+      feed.innerHTML = items.map(n => {
+        const sc = AI_SENT_COLOR[n.sentiment] || 'var(--muted)';
+        const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
+        return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
+            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span>
+            <span>· ${escapeHtml(n.date||'')}</span>
+            <span style="color:${sc};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment||'').slice(0,3))}</span>
+          </div>
+          <div style="font-size:13px;line-height:1.35;margin-bottom:3px">${escapeHtml(n.title||'')}</div>
+          ${n.body ? `<div class="sub" style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(n.body)}</div>` : ''}
+        </a>`;
+      }).join('');
+    }
+  }
+
+  // --- AI-exposed stock signal subset ------------------------------------
+  const aiGrid = document.getElementById('aiStocksGrid');
+  if (aiGrid){
+    const allStocks = ((DATA.market||{}).stocks_signals) || [];
+    const set = new Set(AI_EXPOSED_TICKERS);
+    const subset = (Array.isArray(allStocks) ? allStocks : [])
+      .filter(s => s && s.symbol && set.has(String(s.symbol).toUpperCase()))
+      .sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0));
+    if (!subset.length){
+      aiGrid.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No AI-exposed tickers in current stocks_signals.</div>';
+    } else {
+      aiGrid.innerHTML = subset.map(s => {
+        const score = Number(s.score) || 0;
+        const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+        const chPct = Number(s.change_pct);
+        const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+        const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
+        const price  = Number(s.last_price);
+        const priceTxt = isFinite(price)
+          ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}))
+          : '—';
+        const scoreTxt = (score >= 0 ? '+' : '') + (Number.isInteger(score) ? score : score.toFixed(1));
+        const clamped = Math.max(-100, Math.min(100, score));
+        const pct = ((clamped + 100) / 200) * 100;
+        const symbol = escapeHtml(String(s.symbol || ''));
+        return `<div class="chart-card" style="padding:10px 12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+            <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
+              <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
+              <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${escapeHtml(String(s.name || ''))}</div>
+            </div>
+            <div style="text-align:right;line-height:1">
+              <div style="font-size:16px;font-weight:700;color:${color}">${scoreTxt}</div>
+              <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
+            </div>
+          </div>
+          <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+            <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:10px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px">
+            <div style="font-weight:600">${priceTxt}</div>
+            <div style="color:${chColor};font-weight:600">${chTxt}</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // --- Source breakdown table --------------------------------------------
+  const srcHost = document.getElementById('aiNewsSources');
+  if (srcHost){
+    const bySrc = new Map();
+    (ai.items||[]).forEach(n => {
+      const k = String(n.source || 'unknown');
+      if (!bySrc.has(k)) bySrc.set(k, {positive:0, negative:0, neutral:0, total:0});
+      const r = bySrc.get(k);
+      r.total += 1;
+      const s = String(n.sentiment||'').toUpperCase();
+      if (s === 'POSITIVE') r.positive += 1;
+      else if (s === 'NEGATIVE') r.negative += 1;
+      else r.neutral += 1;
+    });
+    const rows = Array.from(bySrc.entries())
+      .map(([src, r]) => ({src, ...r, net: r.positive - r.negative}))
+      .sort((a,b)=> b.total - a.total || b.net - a.net);
+    if (!rows.length){
+      srcHost.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No source data available.</div>';
+    } else {
+      srcHost.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
+          <th style="padding:6px 8px">Source</th>
+          <th style="padding:6px 8px;text-align:right">Total</th>
+          <th style="padding:6px 8px;text-align:right;color:#22c55e">+</th>
+          <th style="padding:6px 8px;text-align:right">◯</th>
+          <th style="padding:6px 8px;text-align:right;color:#ef4444">−</th>
+          <th style="padding:6px 8px;text-align:right">Net</th>
+        </tr></thead><tbody>
+        ${rows.map(r => {
+          const netColor = r.net > 0 ? '#22c55e' : (r.net < 0 ? '#ef4444' : 'var(--muted)');
+          const netTxt = (r.net >= 0 ? '+' : '') + r.net;
+          return `<tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 8px;color:#a78bfa;font-weight:600">${escapeHtml(r.src)}</td>
+            <td style="padding:6px 8px;text-align:right">${r.total}</td>
+            <td style="padding:6px 8px;text-align:right;color:#22c55e">${r.positive}</td>
+            <td style="padding:6px 8px;text-align:right">${r.neutral}</td>
+            <td style="padding:6px 8px;text-align:right;color:#ef4444">${r.negative}</td>
+            <td style="padding:6px 8px;text-align:right;color:${netColor};font-weight:600">${netTxt}</td>
+          </tr>`;
+        }).join('')}
+        </tbody></table>`;
+    }
+  }
+}
+
 // Build the full stock-detail card body (rendered into the modal).
 function stockDetailHtml(s){
   const score = Number(s.score) || 0;
@@ -5564,6 +5783,9 @@ function renderAll(){
   if (state.tab === 'stocks'){
     renderStocksTab();
   }
+  if (state.tab === 'ainews'){
+    renderAiNewsTab();
+  }
   renderCoverage();
 }
 
@@ -5603,6 +5825,7 @@ function selectTab(t){
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
   document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
   document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
+  document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/

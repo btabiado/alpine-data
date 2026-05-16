@@ -539,6 +539,231 @@ def crypto_news_rss(limit: int = 25) -> list[dict]:
 import re
 
 
+# ----- AI news (RSS + keyword sentiment) -------------------------------------
+
+# Keyword lists scoped at module level so they're trivially testable and the
+# per-item scoring loop doesn't rebuild them. Lowercase form only; the scorer
+# lowercases the title/body before matching.
+_AI_NEWS_POSITIVE_KEYWORDS = (
+    "breakthrough", "launches", "raises", "wins", "advance", "milestone",
+    "best", "leading", "growth", "valuation", "funding round", "series",
+    "deal", "partnership", "outperform", "open-source",
+)
+_AI_NEWS_NEGATIVE_KEYWORDS = (
+    "lawsuit", "fired", "layoff", "warns", "risk", "regulate", "ban",
+    "concern", "fear", "fail", "down", "loss", "fraud", "investigation",
+    "outage", "leaked", "hack", "breach", "harm", "decline", "delay",
+    "criticism", "deepfake", "misinformation",
+)
+
+
+def ai_news_rss(per_feed_limit: int = 15) -> list[dict]:
+    """Latest AI/ML headlines via free RSS feeds (TechCrunch AI, The Verge AI,
+    VentureBeat AI, MIT Technology Review AI, Anthropic, OpenAI, Ars Technica).
+    Sorted newest first, deduped by title, capped at 60 items total.
+
+    Mirrors `crypto_news_rss()` — same field schema:
+        {title, url, source, source_name, body, ts, date}
+    Each per-feed fetch is wrapped so one bad XML response doesn't take the
+    whole batch down.
+    """
+    import xml.etree.ElementTree as ET
+    feeds = [
+        ("TechCrunch AI",     "https://techcrunch.com/category/artificial-intelligence/feed/"),
+        ("The Verge AI",      "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml"),
+        ("VentureBeat AI",    "https://venturebeat.com/category/ai/feed/"),
+        ("MIT Tech Review",   "https://www.technologyreview.com/topic/artificial-intelligence/feed"),
+        ("Anthropic",         "https://www.anthropic.com/news/feed.xml"),
+        ("OpenAI",            "https://openai.com/news/rss.xml"),
+        ("Ars Technica",      "https://feeds.arstechnica.com/arstechnica/index/"),
+    ]
+    out: list[dict] = []
+    for source_name, url in feeds:
+        try:
+            r = requests.get(url, headers=H, timeout=15)
+            if r.status_code != 200:
+                print(f"  [ai-news] {source_name} -> {r.status_code}", file=sys.stderr)
+                continue
+            # Strip BOM / XML namespace prefixes can show up but ET handles
+            # them fine — only catch malformed XML here.
+            try:
+                root = ET.fromstring(r.text)
+            except ET.ParseError as e:
+                print(f"  [ai-news] {source_name} parse: {e}", file=sys.stderr)
+                continue
+            # RSS 2.0 uses <item>; Atom uses <entry>. Try both.
+            items = root.findall(".//item")
+            is_atom = False
+            if not items:
+                # Atom: namespace is http://www.w3.org/2005/Atom — use a
+                # wildcard local-name match so we don't have to hard-code it.
+                items = root.findall(".//{http://www.w3.org/2005/Atom}entry")
+                is_atom = bool(items)
+            items = items[:per_feed_limit]
+            for it in items:
+                try:
+                    if is_atom:
+                        title = (it.findtext("{http://www.w3.org/2005/Atom}title") or "").strip()
+                        # Atom links are <link href="..."/>
+                        link_el = it.find("{http://www.w3.org/2005/Atom}link")
+                        link = (link_el.get("href") if link_el is not None else "") or ""
+                        pub = (it.findtext("{http://www.w3.org/2005/Atom}updated")
+                               or it.findtext("{http://www.w3.org/2005/Atom}published")
+                               or "").strip()
+                        desc = (it.findtext("{http://www.w3.org/2005/Atom}summary")
+                                or it.findtext("{http://www.w3.org/2005/Atom}content")
+                                or "").strip()
+                    else:
+                        title = (it.findtext("title") or "").strip()
+                        link = (it.findtext("link") or "").strip()
+                        pub = (it.findtext("pubDate") or "").strip()
+                        desc = (it.findtext("description") or "").strip()
+                    desc = re.sub(r"<[^>]+>", "", desc)[:280]
+                    ts = None
+                    date_str = pub
+                    # Try RFC822 (RSS pubDate) then ISO 8601 (Atom updated).
+                    try:
+                        from email.utils import parsedate_to_datetime
+                        dt = parsedate_to_datetime(pub)
+                        if dt:
+                            ts = int(dt.timestamp())
+                            date_str = dt.strftime("%Y-%m-%d %H:%M")
+                    except Exception:
+                        pass
+                    if ts is None and pub:
+                        try:
+                            # Atom often has e.g. 2026-05-15T12:34:56Z
+                            dt = datetime.fromisoformat(pub.replace("Z", "+00:00"))
+                            ts = int(dt.timestamp())
+                            date_str = dt.strftime("%Y-%m-%d %H:%M")
+                        except Exception:
+                            pass
+                    if title and link:
+                        out.append({
+                            "title": title,
+                            "url": link,
+                            "source": source_name,
+                            "source_name": source_name,
+                            "body": desc,
+                            "ts": ts,
+                            "date": date_str,
+                        })
+                except Exception as e:
+                    # Per-entry failure — skip and keep parsing the rest.
+                    print(f"  [ai-news] {source_name} entry: {e}", file=sys.stderr)
+                    continue
+        except Exception as e:
+            print(f"  [ai-news] {source_name} failed: {e}", file=sys.stderr)
+            continue
+    out.sort(key=lambda x: x.get("ts") or 0, reverse=True)
+    seen: set[str] = set()
+    deduped: list[dict] = []
+    for n in out:
+        k = (n["title"][:50]).lower()
+        if k in seen:
+            continue
+        seen.add(k)
+        deduped.append(n)
+        if len(deduped) >= 60:
+            break
+    return deduped
+
+
+def compute_ai_sentiment(items: list[dict]) -> dict:
+    """Keyword-based POSITIVE/NEGATIVE/NEUTRAL tagging for AI news items.
+
+    Each item is scored against title + body (body only if non-empty). An item
+    is POSITIVE if it has any positive keyword and no negative keywords,
+    NEGATIVE if it has any negative keyword and no positive keywords, and
+    NEUTRAL if both/neither are present.
+
+    Returns aggregate counts plus the item list with a `sentiment` field
+    attached to each row. Caller pops `items` out of the result if it wants
+    summary-only stats.
+    """
+    pos = neg = neu = 0
+    enriched: list[dict] = []
+    for it in items or []:
+        title = (it.get("title") or "")
+        body = (it.get("body") or "")
+        text = (title + " " + body if body.strip() else title).lower()
+        has_pos = any(kw in text for kw in _AI_NEWS_POSITIVE_KEYWORDS)
+        has_neg = any(kw in text for kw in _AI_NEWS_NEGATIVE_KEYWORDS)
+        if has_pos and not has_neg:
+            label = "POSITIVE"
+            pos += 1
+        elif has_neg and not has_pos:
+            label = "NEGATIVE"
+            neg += 1
+        else:
+            label = "NEUTRAL"
+            neu += 1
+        row = dict(it)
+        row["sentiment"] = label
+        enriched.append(row)
+    total = pos + neg + neu
+    net_score = pos - neg
+    # Overall label thresholds: if net_score dominates, tag it; else NEUTRAL.
+    # Picking a small absolute floor (>=2 net items) keeps a single article
+    # from swinging the dashboard summary.
+    if total == 0:
+        overall = "NEUTRAL"
+    elif net_score >= 2 and pos > neg:
+        overall = "POSITIVE"
+    elif net_score <= -2 and neg > pos:
+        overall = "NEGATIVE"
+    else:
+        overall = "NEUTRAL"
+    return {
+        "positive": pos,
+        "negative": neg,
+        "neutral": neu,
+        "total": total,
+        "net_score": net_score,
+        "sentiment_label": overall,
+        "items": enriched,
+    }
+
+
+def _fetch_ai_news_impl() -> dict:
+    items = ai_news_rss()
+    sent = compute_ai_sentiment(items)
+    return {
+        "available": bool(items),
+        "items": sent.pop("items"),
+        "summary": sent,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def fetch_ai_news() -> dict:
+    """Stale-fallback wrapper around `_fetch_ai_news_impl`.
+
+    The publisher feeds (especially MIT TR + VentureBeat) periodically 503
+    or block our UA — when every feed fails we get an empty `items` list,
+    which would blank the AI News tab. Fall back to the last successful
+    fetch in that case.
+    """
+    try:
+        out = _fetch_ai_news_impl()
+    except Exception as e:
+        print(f"  [fetch_ai_news] fatal {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, dict) and out.get("available") and out.get("items"):
+        _stale_save("fetch_ai_news", out)
+        return out
+    cached = _stale_load("fetch_ai_news")
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {
+        "available": False,
+        "items": [],
+        "summary": {"positive": 0, "negative": 0, "neutral": 0,
+                    "total": 0, "net_score": 0, "sentiment_label": "NEUTRAL"},
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def coindesk_cadli_ohlc(days: int = 90) -> list[dict]:
     """CoinDesk cadli BTC-USD daily OHLC — manipulation-resistant aggregate index."""
     j = _get(
@@ -3139,6 +3364,8 @@ def fetch_trading() -> dict:
     tvl_base = defillama_historical_tvl("Base")
     print("  Crypto news RSS (CoinDesk + Cointelegraph + Decrypt + Block + BTC Mag)...")
     news = crypto_news_rss(25)
+    print("  AI news RSS (TechCrunch + Verge + VentureBeat + MIT TR + Anthropic + OpenAI + Ars)...")
+    ai_news = fetch_ai_news()
     print("  CoinDesk cadli BTC-USD OHLC (90d)...")
     cadli = coindesk_cadli_ohlc(90)
     print("  Yahoo Finance indices (Dow / S&P / NASDAQ / VIX)...")
@@ -3223,6 +3450,7 @@ def fetch_trading() -> dict:
             },
         },
         "news": news,
+        "ai_news": ai_news,
         "cadli_btc": cadli,
         "yahoo_indices": yahoo_idx,
         "stocks_signals": stocks_signals,
