@@ -10228,6 +10228,17 @@ const chatForm = document.getElementById('chatForm');
 const chatInput= document.getElementById('chatInput');
 const chatSend = document.getElementById('chatSend');
 
+// Chat requires the Flask backend at /api/chat (uses ANTHROPIC_API_KEY).
+// On the public GitHub Pages mirror that route doesn't exist — the request
+// would hit the static server and return HTTP 405. Hide the FAB + dock so
+// users don't see a feature that can't work in this mode.
+const _chatIsServer = (typeof location !== 'undefined') &&
+  ['127.0.0.1','localhost','0.0.0.0'].includes(location.hostname);
+if (!_chatIsServer){
+  if (chatFab)  chatFab.style.display  = 'none';
+  if (chatDock) chatDock.style.display = 'none';
+}
+
 function openChat(){ chatDock?.classList.add('open'); chatFab?.classList.add('hidden'); setTimeout(()=>chatInput?.focus(), 200); }
 function closeChat(){ chatDock?.classList.remove('open'); chatFab?.classList.remove('hidden'); }
 
