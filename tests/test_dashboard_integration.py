@@ -993,6 +993,43 @@ def test_symbol_fuzzy_match_helpers_present():
     )
 
 
+def test_signal_detail_unified_with_universal_symbol_modal():
+    """Every coin-card click (Top-25 by mcap, Top-50 signals strip, per-coin
+    sentiment, signal-history chart) used to open a signal-only modal that
+    did not show the POC pair. The unified entry point routes them all
+    through `lookupSymbol`, which renders the Signal + POC pair side-by-side
+    (with an empty-state POC card when the coin is outside `poc_top`).
+
+    Guard: `openSignalDetail` must delegate to `lookupSymbol` and must NOT
+    open the legacy `#signalDetailModal` itself."""
+    html = _read_dashboard_or_skip()
+
+    # The dispatcher must still exist (called from at least 4 click handlers).
+    assert "function openSignalDetail" in html, (
+        "openSignalDetail() missing — coin-card click handlers will throw."
+    )
+
+    # Delegation: the function body must call lookupSymbol.
+    body_match = re.search(
+        r"function openSignalDetail\([^)]*\)\s*\{([\s\S]*?)\n\}",
+        html,
+    )
+    assert body_match, "could not isolate openSignalDetail() body for inspection"
+    body = body_match.group(1)
+    assert "lookupSymbol(" in body, (
+        "openSignalDetail() no longer delegates to lookupSymbol — coin "
+        "clicks have regressed back to the signal-only modal."
+    )
+    # And must NOT open #signalDetailModal in EXECUTABLE code inside its
+    # body — that was the legacy path. Comments are allowed (the function
+    # docstring explains why the legacy element is left in the DOM).
+    code_only = re.sub(r"//[^\n]*", "", body)
+    assert "signalDetailModal" not in code_only, (
+        "openSignalDetail() still references signalDetailModal in code — "
+        "the legacy signal-only modal path was re-introduced."
+    )
+
+
 def test_symbol_suggestion_chip_wiring():
     html = _read_dashboard_or_skip()
     assert "symbol-suggest-chip" in html, (
@@ -1064,7 +1101,14 @@ def test_symbol_recent_chips_div_and_renderer_present():
 
 
 def _extract_function_body(html: str, name: str) -> str:
-    """Return the body of a top-level ``function <name>(...)`` declaration."""
+    """Return the body of a top-level ``function <name>(...)`` declaration.
+
+    The walker handles JS string literals (', ", `) AND line / block comments
+    so apostrophes inside ``// the foo's bar`` style comments don't trick it
+    into entering string mode and miscounting braces — that exact bug
+    masquerades as "unterminated function body" on first hit and has burned
+    us twice now.
+    """
     m = re.search(r"function\s+" + re.escape(name) + r"\s*\([^)]*\)\s*\{", html)
     assert m, f"function {name}(...) not found in dashboard.html"
     start = m.end()
@@ -1073,9 +1117,19 @@ def _extract_function_body(html: str, name: str) -> str:
     in_str = False
     str_ch = ""
     esc = False
+    in_line_comment = False
+    in_block_comment = False
     while i < len(html) and depth > 0:
         ch = html[i]
-        if in_str:
+        nxt = html[i + 1] if i + 1 < len(html) else ""
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+        elif in_block_comment:
+            if ch == "*" and nxt == "/":
+                in_block_comment = False
+                i += 1
+        elif in_str:
             if esc:
                 esc = False
             elif ch == "\\":
@@ -1083,7 +1137,13 @@ def _extract_function_body(html: str, name: str) -> str:
             elif ch == str_ch:
                 in_str = False
         else:
-            if ch in ("'", '"', "`"):
+            if ch == "/" and nxt == "/":
+                in_line_comment = True
+                i += 1
+            elif ch == "/" and nxt == "*":
+                in_block_comment = True
+                i += 1
+            elif ch in ("'", '"', "`"):
                 in_str = True
                 str_ch = ch
             elif ch == "{":

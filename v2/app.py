@@ -2763,6 +2763,28 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </aside>
 
 <script>
+// Surface uncaught JS errors as a thin red banner at the top of the page so
+// a runtime exception during init (which silently kills the rest of the
+// script, including the symbol-search wiring) is visible instead of just
+// "nothing happens." Banner contains message + first stack line; click to
+// dismiss. Production-safe: zero overhead until an error actually fires.
+window.addEventListener('error', e => {
+  try {
+    const existing = document.getElementById('__jsErrBanner');
+    if (existing) { existing.parentNode && existing.parentNode.removeChild(existing); }
+    const b = document.createElement('div');
+    b.id = '__jsErrBanner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;'
+      + 'background:#7f1d1d;color:#fff;padding:8px 14px;font:12px/1.4 monospace;'
+      + 'border-bottom:2px solid #ef4444;cursor:pointer;white-space:pre-wrap';
+    const where = e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno : '';
+    b.textContent = '⚠ JS error: ' + (e.message || 'unknown') + where +
+      '\n(click to dismiss)';
+    b.addEventListener('click', () => b.parentNode && b.parentNode.removeChild(b));
+    (document.body || document.documentElement).appendChild(b);
+  } catch (_) { /* defensive */ }
+});
+
 const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
 const IS_SHARE = !!SHARE_TOKEN;
@@ -10228,6 +10250,16 @@ const chatForm = document.getElementById('chatForm');
 const chatInput= document.getElementById('chatInput');
 const chatSend = document.getElementById('chatSend');
 
+// Chat requires the Flask backend at /api/chat (uses ANTHROPIC_API_KEY).
+// On the public GitHub Pages mirror that route doesn't exist — the raw
+// request returns HTTP 405 with an ugly HTML body. Keep the chat widget
+// visible (users want to know the feature exists) but intercept the
+// submit so a friendly explainer renders instead of letting the fetch
+// fail. The interception is below — wired right before the form-submit
+// listener.
+const _chatIsServer = (typeof location !== 'undefined') &&
+  ['127.0.0.1','localhost','0.0.0.0'].includes(location.hostname);
+
 function openChat(){ chatDock?.classList.add('open'); chatFab?.classList.add('hidden'); setTimeout(()=>chatInput?.focus(), 200); }
 function closeChat(){ chatDock?.classList.remove('open'); chatFab?.classList.remove('hidden'); }
 
@@ -10305,11 +10337,41 @@ async function streamChat(question){
   }
 }
 
+// On first chat-dock open in public-mirror mode, drop in a one-time
+// intro message explaining the feature is local-only — so the user
+// understands BEFORE typing why their question won't get an answer.
+let _chatIntroShown = false;
+function _maybeShowChatIntro(){
+  if (_chatIntroShown || _chatIsServer) return;
+  _chatIntroShown = true;
+  const el = appendMsg('bot',
+    "Hi! Chat needs to run locally (python server.py) — the public dashboard " +
+    "is a static site with no backend. Your dashboard data is all here, but " +
+    "I can't answer questions about it from this URL.\n\n" +
+    "To use chat: clone the repo, run `python server.py`, open localhost:5000. " +
+    "Same dashboard, plus a working assistant."
+  );
+  el.className = 'msg bot';
+}
+chatFab?.addEventListener('click', _maybeShowChatIntro);
+
 chatForm?.addEventListener('submit', (e) => {
   e.preventDefault();
   const q = chatInput.value.trim();
   if (!q) return;
   chatInput.value = '';
+  // Public mirror: intercept the submit so we never fire the /api/chat
+  // request that would return 405. Show a friendly per-question reply
+  // instead of an HTTP error blob.
+  if (!_chatIsServer){
+    appendMsg('user', q);
+    appendMsg('bot',
+      "Chat is local-only on this build. Run `python server.py` locally " +
+      "(needs ANTHROPIC_API_KEY) to ask questions about this dashboard's data."
+    );
+    chatInput.focus();
+    return;
+  }
   chatSend.disabled = true;
   streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
 });
@@ -11934,166 +11996,15 @@ async function lookupSymbol(query){
     displayName: displayName,
   });
 
-  // Header block
-  sections.push(
-    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
-      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
-      (displayName ? '<div class="sub" style="font-size:13px;color:var(--muted)">' + escapeHtml(displayName) + '</div>' : '') +
-    '</div>'
-  );
-
-  // Signal section
-  if (effectiveStock){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Stock signal</div>' +
-        stockDetailHtml(effectiveStock) +
-      '</div>'
-    );
-  }
-  if (effectiveSignal){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Crypto signal</div>' +
-        renderSignalCardFromObj(effectiveSignal) +
-      '</div>'
-    );
-  } else if (effectiveMarketTop){
-    // Coin is in markets_top (top-25 by mcap) but didn't get a full signal —
-    // typically stables (USDT, USDC, DAI) or coins below the 50-row sparkline
-    // threshold. Render a compact info card so the modal isn't blank.
-    const r = effectiveMarketTop;
-    const price = r.price_usd != null
-      ? '$' + Number(r.price_usd).toLocaleString(undefined, {maximumFractionDigits: r.price_usd >= 1 ? 2 : 6})
-      : '—';
-    const mcap  = r.market_cap_usd ? '$' + Number(r.market_cap_usd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '—';
-    const vol   = r.volume_24h_usd ? '$' + Number(r.volume_24h_usd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '—';
-    const c24   = r.change_24h_pct;
-    const c7    = r.change_7d_pct;
-    const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
-    const fmtPct = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + Number(p).toFixed(2) + '%';
-    const sparkVals = (r.sparkline_7d || []).filter(v => typeof v === 'number' && isFinite(v));
-    const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
-    const spark = sparkVals.length >= 2 ? renderSparkline(sparkVals, sparkUp, 240, 36) : '';
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Market snapshot</div>' +
-        '<div class="chart-card" style="padding:12px">' +
-          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">' +
-            '<div><div class="sub" style="font-size:11px;color:var(--muted)">Price</div>' +
-              '<div style="font-size:16px;font-weight:700;margin-top:2px">' + escapeHtml(price) + '</div></div>' +
-            '<div><div class="sub" style="font-size:11px;color:var(--muted)">Market cap</div>' +
-              '<div style="font-size:13px;font-weight:600;margin-top:2px">' + escapeHtml(mcap) + '</div></div>' +
-            '<div><div class="sub" style="font-size:11px;color:var(--muted)">24h volume</div>' +
-              '<div style="font-size:13px;font-weight:600;margin-top:2px">' + escapeHtml(vol) + '</div></div>' +
-            '<div><div class="sub" style="font-size:11px;color:var(--muted)">24h / 7d</div>' +
-              '<div style="font-size:13px;font-weight:600;margin-top:2px">' +
-                '<span style="color:' + pctColor(c24) + '">' + escapeHtml(fmtPct(c24)) + '</span> · ' +
-                '<span style="color:' + pctColor(c7)  + '">' + escapeHtml(fmtPct(c7))  + '</span>' +
-              '</div></div>' +
-          '</div>' +
-          (spark ? '<div style="margin-top:10px;line-height:0">' + spark.replace('<svg ', '<svg style="width:100%;height:36px;display:block" ') + '</div>' : '') +
-          '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:8px">Top-25 by market cap · score unavailable (no sparkline or excluded as stable)</div>' +
-        '</div>' +
-      '</div>'
-    );
-  } else if (pinnedAsset && (pinnedAsset.price || []).length){
-    // BTC/ETH/LINK/LTC fallback when neither signals_top20 nor markets_top
-    // turned up an entry (rare — usually only happens during a partial
-    // fetch). Show the 90d sparkline + last price from the pinned series.
-    const prices = pinnedAsset.price || [];
-    const lastP = prices[prices.length - 1] && prices[prices.length - 1].value;
-    const prevP = prices.length > 1 && prices[prices.length - 2].value;
-    const pct = (lastP != null && prevP) ? ((lastP / prevP) - 1) * 100 : null;
-    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
-    const pctTxt   = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
-    const sparkVals = prices.slice(-90).map(p => p.value).filter(v => typeof v === 'number' && isFinite(v));
-    const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
-    const spark = sparkVals.length >= 2 ? renderSparkline(sparkVals, sparkUp, 240, 36) : '';
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Price series</div>' +
-        '<div class="chart-card" style="padding:12px">' +
-          '<div style="display:flex;align-items:baseline;gap:12px">' +
-            '<div style="font-size:18px;font-weight:700">' + (lastP != null ? '$' + Number(lastP).toLocaleString() : '—') + '</div>' +
-            '<div style="color:' + pctColor + ';font-size:13px">' + escapeHtml(pctTxt) + ' 1d</div>' +
-          '</div>' +
-          (spark ? '<div style="margin-top:8px;line-height:0">' + spark.replace('<svg ', '<svg style="width:100%;height:48px;display:block" ') + '</div>' : '') +
-        '</div>' +
-      '</div>'
-    );
-  }
-
-  // POC section
-  if (poc){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
-        pocDetailHtml(poc) +
-      '</div>'
-    );
-  }
-
-  // News section (top 5)
-  if (news.length){
-    const sorted = news.slice().sort((a, b) => {
-      const da = a && a.date ? Date.parse(a.date) : 0;
-      const db = b && b.date ? Date.parse(b.date) : 0;
-      return (db || 0) - (da || 0);
-    });
-    const newsRows = sorted.slice(0, 5).map(n => {
-      return '<a href="' + sanitizeUrl(n.url) + '" target="_blank" rel="noopener" ' +
-        'style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">' +
-          '<div style="font-weight:600;font-size:13px">' + escapeHtml(n.title || '') + '</div>' +
-          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
-            escapeHtml(n.source_name || n.source || '') + (n.date ? ' · ' + escapeHtml(n.date) : '') +
-          '</div>' +
-        '</a>';
-    }).join('');
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News · ' + sorted.length + ' match' + (sorted.length === 1 ? '' : 'es') + '</div>' +
-        '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">' + newsRows + '</div>' +
-      '</div>'
-    );
-  }
-
-  // Sentiment section
-  if (sentiment){
-    const pos = Number(sentiment.positive) || 0;
-    const neg = Number(sentiment.negative) || 0;
-    const neu = Number(sentiment.neutral) || 0;
-    const total = pos + neg + neu || 1;
-    const posPct = (pos / total) * 100;
-    const negPct = (neg / total) * 100;
-    const neuPct = (neu / total) * 100;
-    const net = sentiment.net_score;
-    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
-    const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News sentiment</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
-          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' articles scored</span>' +
-          '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
-        '</div>' +
-        '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
-          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
-          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
-          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
-          '<span style="color:#22c55e">' + pos + ' positive</span>' +
-          '<span>' + neu + ' neutral</span>' +
-          '<span style="color:#ef4444">' + neg + ' negative</span>' +
-        '</div>' +
-      '</div>'
-    );
-  }
-
   modal.classList.remove('hidden');
   pushSymbolRecent(sym);
 }
+
+// (Legacy inline section-building block was deleted here — it was
+// orphaned dead code referencing an undeclared `sections` array,
+// throwing a ReferenceError on every cached-symbol lookup after
+// buildSymbolSectionsHtml was extracted upstream. That's why the
+// modal would 'open once' and then never reappear.)
 
 // Multi-symbol modal renderer. Opens the modal immediately with a spinner,
 // then resolves each symbol in parallel and stacks the resulting cards.
@@ -12196,15 +12107,34 @@ function renderSymbolSuggestions(list){
   const box = document.getElementById('symbolSearchSuggest');
   const input = document.getElementById('symbolSearchInput');
   if (!box) return;
-  if (!list || !list.length){
-    box.innerHTML = '';
-    box.classList.add('hidden');
-    if (input) input.setAttribute('aria-expanded', 'false');
-    return;
-  }
   const esc = s => String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  // Empty list ≠ silent. When the user has typed something but nothing
+  // matches the cache, show a single "Press Enter to search live" hint so
+  // they get visible feedback that the form IS working. Pressing Enter
+  // routes through `lookupSymbol` which handles the live-lookup chain
+  // (including the fuzzy-suggest chips in the modal fallback).
+  const query = (input && input.value || '').trim();
+  if (!list || !list.length){
+    if (!query){
+      box.innerHTML = '';
+      box.classList.add('hidden');
+      if (input) input.setAttribute('aria-expanded', 'false');
+      return;
+    }
+    box.innerHTML =
+      '<div class="symbol-suggest-row symbol-suggest-empty" role="option" ' +
+        'data-symbol="' + esc(query.toUpperCase()) + '" tabindex="-1" ' +
+        'style="opacity:.85">' +
+        '<span class="symbol-suggest-sym">↵</span>' +
+        '<span class="symbol-suggest-name">Press Enter to search <strong>' +
+          esc(query.toUpperCase()) + '</strong></span>' +
+      '</div>';
+    box.classList.remove('hidden');
+    if (input) input.setAttribute('aria-expanded', 'true');
+    return;
+  }
   const html = list.map((r, i) =>
     '<div class="symbol-suggest-row" role="option" data-symbol="' + esc(r.symbol) +
     '" data-idx="' + i + '" tabindex="-1">' +
