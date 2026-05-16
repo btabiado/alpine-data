@@ -435,16 +435,16 @@ header .meta{color:var(--muted);font-size:12px}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-/* Top-25 signals strip layout. Outer #top20SignalCards is a flex-wrap row;
-   populated bucket sections (.signals-section) grow to share available
-   width, empty pills (.signals-empty-pill) flex-basis 100% to take their
-   own row. Was a CSS grid with auto-fit minmax(220px,1fr), but the
-   grid-column:1/-1 on empty pills forced the grid to instantiate ~9
-   implicit 220px tracks on wide viewports — populated sections then got
-   1 track each (~220px) and the right half of the viewport sat empty.
-   Flex with grow:1 lets 2 populated sections split 50/50 cleanly. */
-.signals-section{flex:1 1 280px;min-width:0}
-.signals-section.signals-empty-pill{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;color:var(--muted);flex:1 1 100%;min-width:100%;margin:0}
+/* Top-25 signals strip layout. Outer #top20SignalCards is a vertical flex
+   column — each populated bucket section gets its OWN full-width row, and
+   cards within auto-fit horizontally via the inner grid. The previous
+   flex-wrap-row approach made BUY (1 card) and HOLD (24 cards) split the
+   viewport 50/50, which left a tiny DOGE card alongside a tall stack of
+   HOLD cards — most of the BUY column was empty whitespace. Stacking
+   means a single-card bucket only wastes 1 row of horizontal space
+   (the empty slots next to that card), not 12 rows of vertical space. */
+.signals-section{width:100%;min-width:0}
+.signals-section.signals-empty-pill{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;color:var(--muted);width:100%;margin:0}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px}
 .card h3{margin:0 0 4px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .card .v{font-size:20px;font-weight:600;margin-top:2px}
