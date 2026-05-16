@@ -597,7 +597,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* UX-F1: Header search input's inline width:130px + the four control buttons
      consume ~351px on a 375px viewport, collapsing the dashboard title to "…".
      Shrink the search input on mobile and shrink the controls' font. */
-  header #symbolSearchInput{width:84px !important;font-size:11px;min-height:34px;padding:6px 8px}
+  header #symbolSearchInput{width:84px !important;font-size:11px;min-height:44px;padding:8px 10px}
   /* UX-F9: Futures explainer's inner .card carries inline padding:14px 16px
      which beats the non-!important mobile .card{padding:8px 10px}. The
      disclosure body re-flows with too much padding on phones; tighten it. */
