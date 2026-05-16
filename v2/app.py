@@ -1375,19 +1375,20 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
     <div id="aiTake-overview" class="aiTake-slot"></div>
+    <div id="overviewSpotlight"></div>
     <!-- News + Insights — pulled above the sentiment composite per user
          request: "news & insight need to go on before the Crypto market
          Sentiment bar". The headline news + top-4 insights are the first
          thing a returning user wants to see; sentiment is a slower-moving
          summary that belongs underneath. -->
     <div class="grid2">
-      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
-        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
-        <div id="overviewNews"></div>
+      <div class="v2-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
+        <div class="v2-card__head"><div><h2 class="v2-card__title">Latest crypto news</h2><div class="v2-card__subtitle">Top 4 · click for full feed</div></div></div>
+        <div class="v2-card__body" id="overviewNews"></div>
       </div>
-      <div class="chart-card">
-        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
-        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+      <div class="v2-card v2-card--ai">
+        <div class="v2-card__head"><div><h2 class="v2-card__title">Top insights</h2><div class="v2-card__subtitle">Most-relevant 4 right now</div></div></div>
+        <div class="v2-card__body" id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
       </div>
     </div>
 
@@ -1427,34 +1428,46 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <!-- Strong Buys: up to 5 STRONG BUY signals from the top-50 strip.
          Hidden when none exist. Cards click through to the signal detail
          modal (same one the Signals-tab strip uses). -->
-    <div id="overviewStrongBuysWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">🚀 Strong Buys <span class="tag">Top 50</span></h2>
-        <span class="desc">Up to 5 strongest signals from the top-50 by market cap · click any card for the full breakdown</span>
+    <div id="overviewStrongBuysWrap" class="v2-card v2-card--good hidden" style="margin-top:6px">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">🚀 Strong Buys <span class="tag">Top 50</span></h2>
+          <div class="v2-card__subtitle">Up to 5 strongest signals from the top-50 by market cap · click any card for the full breakdown</div>
+        </div>
       </div>
-      <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+      <div class="v2-card__body">
+        <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+      </div>
     </div>
 
     <!-- Top 25 by market cap: structural "what's the market doing" view.
          Re-sorts signals_top20 by CoinGecko market-cap rank (not by score)
          so the largest 25 coins are always visible, regardless of bull/bear.
          Each card shows symbol + price + label + score, click → full modal. -->
-    <div id="overviewTop15Wrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">🏆 Top 25 by market cap</h2>
-        <span class="desc">Largest 25 coins · price + signal · click any card for the full breakdown</span>
+    <div id="overviewTop15Wrap" class="v2-card hidden" style="margin-top:6px">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">🏆 Top 25 by market cap</h2>
+          <div class="v2-card__subtitle">Largest 25 coins · price + signal · click any card for the full breakdown</div>
+        </div>
       </div>
-      <div class="row" id="overviewTop15" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+      <div class="v2-card__body">
+        <div class="row" id="overviewTop15" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
+      </div>
     </div>
 
     <!-- Row 3: Macro snapshot (full width) -->
     <div id="overviewMacroRow">
-      <div class="chart-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
-        <div class="head">
-          <h2>Macro snapshot <span class="tag">FRED</span></h2>
-          <span class="desc">BTC vs DXY · S&amp;P · Gold · 10Y &middot; normalized to 100 over 3M &middot; click to zoom in</span>
+      <div class="v2-card" style="cursor:pointer;display:flex;flex-direction:column" data-jump="trading" title="Open Trading tab for full 1Y view">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Macro snapshot <span class="tag">FRED</span></h2>
+            <div class="v2-card__subtitle">BTC vs DXY · S&amp;P · Gold · 10Y · normalized to 100 over 3M · click to zoom in</div>
+          </div>
         </div>
-        <div class="chart-wrap" style="flex:1;min-height:380px;height:auto"><canvas id="overviewMacroChart"></canvas></div>
+        <div class="v2-card__body" style="flex:1">
+          <div class="chart-wrap" style="flex:1;min-height:380px;height:auto"><canvas id="overviewMacroChart"></canvas></div>
+        </div>
       </div>
     </div>
 
@@ -1463,24 +1476,28 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          of Overview as a "what's hot in DeFi" peek without needing a
          dedicated tab. Memecoin/early-listing radar. -->
     <div class="grid2">
-      <div class="chart-card">
-        <div class="head">
-          <h2>DEX trending pools <span class="tag">GeckoTerminal</span></h2>
-          <span class="desc">top 10 DEX pools by 24h volume across all chains</span>
+      <div class="v2-card">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">DEX trending pools <span class="tag">GeckoTerminal</span></h2>
+            <div class="v2-card__subtitle">top 10 DEX pools by 24h volume across all chains</div>
+          </div>
         </div>
-        <div style="max-height:360px;overflow:auto">
+        <div class="v2-card__body" style="max-height:360px;overflow:auto">
           <table id="gtTrendingTable" style="margin:0;font-size:12px"><thead><tr>
             <th style="padding-left:14px">#</th>
             <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
           </tr></thead><tbody></tbody></table>
         </div>
       </div>
-      <div class="chart-card">
-        <div class="head">
-          <h2>DEX new pools <span class="tag">GeckoTerminal</span></h2>
-          <span class="desc">freshest listings · memecoin / early-listing radar</span>
+      <div class="v2-card">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">DEX new pools <span class="tag">GeckoTerminal</span></h2>
+            <div class="v2-card__subtitle">freshest listings · memecoin / early-listing radar</div>
+          </div>
         </div>
-        <div style="max-height:360px;overflow:auto">
+        <div class="v2-card__body" style="max-height:360px;overflow:auto">
           <table id="gtNewTable" style="margin:0;font-size:12px"><thead><tr>
             <th style="padding-left:14px">#</th>
             <th>Pool</th><th>Chain</th><th>Vol 24h</th><th>1d %</th><th>Tx 24h</th>
@@ -1491,12 +1508,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
     <!-- Coinbase spot quotes — moved per user request to sit right before
          breaking news. Bid/ask + 24h range from Coinbase Exchange. -->
-    <div id="coinbaseSpotWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">Coinbase spot <span class="tag">live exchange</span></h2>
-        <span class="desc">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</span>
+    <div id="coinbaseSpotWrap" class="v2-card hidden" style="margin-top:6px">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">Coinbase spot <span class="tag">live exchange</span></h2>
+          <div class="v2-card__subtitle">Bid/ask + 24h range from Coinbase Exchange (US-regulated). Cross-check vs CoinGecko aggregate.</div>
+        </div>
       </div>
-      <div style="overflow:auto">
+      <div class="v2-card__body" style="overflow:auto">
         <table id="coinbaseSpotTable" style="margin:0;font-size:12px">
           <thead><tr>
             <th>Asset</th>
@@ -1511,12 +1530,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
 
     <!-- Bottom-of-Overview: breaking news feed (top 10 most recent) -->
-    <div class="chart-card">
-      <div class="head">
-        <h2>Breaking news</h2>
-        <span class="desc">latest crypto headlines</span>
+    <div class="v2-card">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">Breaking news</h2>
+          <div class="v2-card__subtitle">latest crypto headlines</div>
+        </div>
       </div>
-      <div id="overviewNewsHost"></div>
+      <div class="v2-card__body" id="overviewNewsHost"></div>
     </div>
   </div>
 
@@ -1652,6 +1673,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ TRADING TAB ============ -->
   <div id="tab-trading" class="hidden">
     <div id="aiTake-trading" class="aiTake-slot"></div>
+    <div id="tradingSpotlight"></div>
     <div id="tradingEmpty" class="empty hidden">No market data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="tradingContent">
       <details class="futures-explainer">
@@ -1703,75 +1725,110 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="row" id="tradingKpis"></div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head" style="align-items:center;gap:10px;flex-wrap:wrap">
-            <h2 style="margin:0">Price &amp; volume <span class="tag" id="tagPrice">BTC</span></h2>
-            <span class="desc" style="flex:1">Spot price (line) &middot; 24h volume (bars)</span>
-            <label style="font-size:11px;display:inline-flex;gap:5px;align-items:center;cursor:pointer">
-              <input type="checkbox" id="pocOverlayToggle"> POC overlay
-            </label>
-            <span id="pocWinChips" style="display:none;gap:4px">
-              <button class="btn" data-pocwin="d30" type="button" style="font-size:10px;padding:3px 8px">30d</button>
-              <button class="btn" data-pocwin="d90" type="button" style="font-size:10px;padding:3px 8px">90d</button>
-            </span>
+        <div class="v2-card">
+          <div class="v2-card__head" style="align-items:center;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;min-width:0">
+              <div>
+                <h2 class="v2-card__title">Price &amp; volume <span class="tag" id="tagPrice">BTC</span></h2>
+                <div class="v2-card__subtitle">Spot price (line) · 24h volume (bars)</div>
+              </div>
+              <label style="font-size:11px;display:inline-flex;gap:5px;align-items:center;cursor:pointer">
+                <input type="checkbox" id="pocOverlayToggle"> POC overlay
+              </label>
+              <span id="pocWinChips" style="display:none;gap:4px">
+                <button class="btn" data-pocwin="d30" type="button" style="font-size:10px;padding:3px 8px">30d</button>
+                <button class="btn" data-pocwin="d90" type="button" style="font-size:10px;padding:3px 8px">90d</button>
+              </span>
+            </div>
           </div>
-          <div class="chart-wrap tall"><canvas id="priceChart"></canvas></div>
+          <div class="v2-card__body">
+            <div class="chart-wrap tall"><canvas id="priceChart"></canvas></div>
+          </div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Perpetual futures funding rate — positive means longs pay shorts (bullish positioning); negative means shorts pay longs.">Funding rate</span> <span class="tag" id="tagFunding">BTC</span></h2><span class="desc">OKX perpetual, daily mean &middot; +ve = longs pay shorts</span></div>
-          <div class="chart-wrap"><canvas id="fundingChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Perpetual futures funding rate — positive means longs pay shorts (bullish positioning); negative means shorts pay longs.">Funding rate</span> <span class="tag" id="tagFunding">BTC</span></h2>
+              <div class="v2-card__subtitle">OKX perpetual, daily mean · +ve = longs pay shorts</div>
+            </div>
+          </div>
+          <div class="v2-card__body">
+            <div class="chart-wrap"><canvas id="fundingChart"></canvas></div>
+          </div>
         </div>
       </div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Total notional value of outstanding derivative contracts. Rising OI + rising price = trend strength; rising OI + falling price = bearish positioning.">Open interest</span> (USD) <span class="tag" id="tagOI">BTC</span></h2><span class="desc">OKX aggregated futures + perps</span></div>
-          <div class="chart-wrap"><canvas id="oiChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Total notional value of outstanding derivative contracts. Rising OI + rising price = trend strength; rising OI + falling price = bearish positioning.">Open interest</span> (USD) <span class="tag" id="tagOI">BTC</span></h2>
+              <div class="v2-card__subtitle">OKX aggregated futures + perps</div>
+            </div>
+          </div>
+          <div class="v2-card__body">
+            <div class="chart-wrap"><canvas id="oiChart"></canvas></div>
+          </div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Ratio of long-position accounts to short-position accounts. Extreme readings often precede mean reversion.">Long/short account ratio</span> <span class="tag" id="tagLS">BTC</span></h2><span class="desc">OKX traders &middot; >1 = more longs</span></div>
-          <div class="chart-wrap"><canvas id="lsChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Ratio of long-position accounts to short-position accounts. Extreme readings often precede mean reversion.">Long/short account ratio</span> <span class="tag" id="tagLS">BTC</span></h2>
+              <div class="v2-card__subtitle">OKX traders · &gt;1 = more longs</div>
+            </div>
+          </div>
+          <div class="v2-card__body">
+            <div class="chart-wrap"><canvas id="lsChart"></canvas></div>
+          </div>
         </div>
       </div>
       <!-- CADLI BTC reference price — 90d daily closes from the CoinDesk
            CADLI Cryptocurrency Real-Time Index. This is the regulated
            reference price used in derivatives settlement, so it sits with
            the rest of the futures-positioning surface. -->
-      <div class="chart-card">
-        <div class="head">
-          <h2>CADLI BTC reference price <span class="tag">CoinDesk</span></h2>
-          <span class="desc">90d OHLC from the CoinDesk CADLI Cryptocurrency Real-Time Index used in regulated derivatives pricing</span>
+      <div class="v2-card">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">CADLI BTC reference price <span class="tag">CoinDesk</span></h2>
+            <div class="v2-card__subtitle">90d OHLC from the CoinDesk CADLI Cryptocurrency Real-Time Index used in regulated derivatives pricing</div>
+          </div>
         </div>
-        <div class="chart-wrap"><canvas id="cadliBtcChart"></canvas></div>
+        <div class="v2-card__body">
+          <div class="chart-wrap"><canvas id="cadliBtcChart"></canvas></div>
+        </div>
       </div>
       <!-- Coinbase International Exchange perpetuals positioning: two side-by-side
            tables surfacing the most crowded LONGS (highest funding) and SHORTS
            (most negative funding) from the ~246 PERP markets. Funding rate is
            a positioning gauge — positive = longs paying shorts (crowded long,
            squeeze setup); negative = shorts paying longs (contrarian buy zone). -->
-      <div class="chart-card" style="background:transparent;border:0;padding:0">
-        <div class="head" style="padding:0 4px 6px">
-          <h2 style="margin:0">Coinbase Intl perpetuals positioning <span class="tag">FUNDING</span></h2>
-          <span class="desc">crowded longs vs crowded shorts &middot; ~246 PERP markets</span>
+      <div style="background:transparent;border:0;padding:0">
+        <div style="padding:0 4px 6px">
+          <h2 style="margin:0;font-size:13px;font-weight:600">Coinbase Intl perpetuals positioning <span class="tag">FUNDING</span></h2>
+          <div style="font-size:11px;color:var(--muted)">crowded longs vs crowded shorts · ~246 PERP markets</div>
         </div>
         <div class="grid2">
-          <div class="chart-card">
-            <div class="head">
-              <h2>Most crowded LONGS <span class="tag">Coinbase Intl</span></h2>
-              <span class="desc">highest funding rates &middot; squeeze setup risk</span>
+          <div class="v2-card v2-card--good">
+            <div class="v2-card__head">
+              <div>
+                <h2 class="v2-card__title">Most crowded LONGS <span class="tag">Coinbase Intl</span></h2>
+                <div class="v2-card__subtitle">highest funding rates · squeeze setup risk</div>
+              </div>
             </div>
-            <div style="overflow:auto">
+            <div class="v2-card__body" style="overflow:auto">
               <table id="cieLongsTable" class="tracker-grid">
                 <thead><tr><th>Symbol</th><th>Funding</th><th>Mark</th><th>Notional 24h</th><th>OI</th></tr></thead>
                 <tbody></tbody>
               </table>
             </div>
           </div>
-          <div class="chart-card">
-            <div class="head">
-              <h2>Most crowded SHORTS <span class="tag">Coinbase Intl</span></h2>
-              <span class="desc">most negative funding &middot; contrarian zone</span>
+          <div class="v2-card v2-card--bad">
+            <div class="v2-card__head">
+              <div>
+                <h2 class="v2-card__title">Most crowded SHORTS <span class="tag">Coinbase Intl</span></h2>
+                <div class="v2-card__subtitle">most negative funding · contrarian zone</div>
+              </div>
             </div>
-            <div style="overflow:auto">
+            <div class="v2-card__body" style="overflow:auto">
               <table id="cieShortsTable" class="tracker-grid">
                 <thead><tr><th>Symbol</th><th>Funding</th><th>Mark</th><th>Notional 24h</th><th>OI</th></tr></thead>
                 <tbody></tbody>
@@ -1784,34 +1841,65 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Deribit's annualized 30d implied vol index. Spikes = expected price uncertainty (often around macro events).">Implied volatility (DVOL)</span> <span class="tag" id="tagDvol">BTC</span></h2><span class="desc">Deribit options-implied 30d vol, %</span></div>
-          <div class="chart-wrap"><canvas id="dvolChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Deribit's annualized 30d implied vol index. Spikes = expected price uncertainty (often around macro events).">Implied volatility (DVOL)</span> <span class="tag" id="tagDvol">BTC</span></h2>
+              <div class="v2-card__subtitle">Deribit options-implied 30d vol, %</div>
+            </div>
+          </div>
+          <div class="v2-card__body">
+            <div class="chart-wrap"><canvas id="dvolChart"></canvas></div>
+          </div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="0-100 sentiment index from alternative.me. <25 = Extreme Fear; >75 = Extreme Greed.">Fear &amp; Greed Index</span></h2><span class="desc">Crypto-wide sentiment, 0=fear 100=greed</span></div>
-          <div class="chart-wrap"><canvas id="fngChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="0-100 sentiment index from alternative.me. <25 = Extreme Fear; >75 = Extreme Greed.">Fear &amp; Greed Index</span></h2>
+              <div class="v2-card__subtitle">Crypto-wide sentiment, 0=fear 100=greed</div>
+            </div>
+          </div>
+          <div class="v2-card__body">
+            <div class="chart-wrap"><canvas id="fngChart"></canvas></div>
+          </div>
         </div>
       </div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2>ETH/BTC ratio <span class="tag">CoinGecko</span></h2><span class="desc">Relative strength</span></div>
-          <div class="chart-wrap"><canvas id="ethbtcChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">ETH/BTC ratio <span class="tag">CoinGecko</span></h2>
+              <div class="v2-card__subtitle">Relative strength</div>
+            </div>
+          </div>
+          <div class="v2-card__body">
+            <div class="chart-wrap"><canvas id="ethbtcChart"></canvas></div>
+          </div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>Market snapshot <span class="tag">CoinGecko</span></h2><span class="desc">CoinGecko global stats</span></div>
-          <div style="padding:8px 4px"><table id="globalTable"><tbody></tbody></table></div>
+        <div class="v2-card v2-card--info">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Market snapshot <span class="tag">CoinGecko</span></h2>
+              <div class="v2-card__subtitle">CoinGecko global stats</div>
+            </div>
+          </div>
+          <div class="v2-card__body" style="padding-top:8px"><table id="globalTable"><tbody></tbody></table></div>
         </div>
       </div>
-      <div class="chart-card">
-        <div class="head"><h2>Latest crypto news</h2><span class="desc">CoinDesk · Cointelegraph · Decrypt · The Block · BTC Magazine (RSS, auto-refresh)</span></div>
-        <div id="newsFeed" style="max-height:480px;overflow:auto;padding:2px"></div>
-      </div>
-      <div class="chart-card" id="macroSection">
-        <div class="head" style="flex-wrap:wrap;gap:8px">
+      <div class="v2-card">
+        <div class="v2-card__head">
           <div>
-            <h2>Macro overlay <span class="tag">FRED</span></h2>
-            <span class="desc">BTC vs DXY · S&amp;P 500 · Gold · 10Y yield — normalized to 100 at start of range</span>
+            <h2 class="v2-card__title">Latest crypto news</h2>
+            <div class="v2-card__subtitle">CoinDesk · Cointelegraph · Decrypt · The Block · BTC Magazine (RSS, auto-refresh)</div>
+          </div>
+        </div>
+        <div class="v2-card__body" id="newsFeed" style="max-height:480px;overflow:auto;padding:2px"></div>
+      </div>
+      <div class="v2-card" id="macroSection">
+        <div class="v2-card__head" style="flex-wrap:wrap;gap:8px">
+          <div>
+            <h2 class="v2-card__title">Macro overlay <span class="tag">FRED</span></h2>
+            <div class="v2-card__subtitle">BTC vs DXY · S&amp;P 500 · Gold · 10Y yield — normalized to 100 at start of range</div>
           </div>
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <span class="lbl" style="margin:0">Range</span>
@@ -1821,10 +1909,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <button class="btn active" data-macrorange="1Y">1Y</button>
           </div>
         </div>
-        <div id="macroDisabled" class="sub hidden" style="color:var(--muted);padding:14px">Macro overlay disabled — set <code>FRED_API_KEY</code> in <code>~/.zprofile</code> to enable. See <code>docs/SETUP.md</code>.</div>
-        <div id="macroEnabled">
-          <div class="chart-wrap tall"><canvas id="macroChart"></canvas></div>
-          <div class="row" id="macroKpis" style="margin-top:8px"></div>
+        <div class="v2-card__body">
+          <div id="macroDisabled" class="sub hidden" style="color:var(--muted);padding:14px">Macro overlay disabled — set <code>FRED_API_KEY</code> in <code>~/.zprofile</code> to enable. See <code>docs/SETUP.md</code>.</div>
+          <div id="macroEnabled">
+            <div class="chart-wrap tall"><canvas id="macroChart"></canvas></div>
+            <div class="row" id="macroKpis" style="margin-top:8px"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -2017,6 +2107,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ SIGNALS TAB ============ -->
   <div id="tab-signals" class="hidden">
     <div id="aiTake-signals" class="aiTake-slot"></div>
+    <div id="signalsSpotlight"></div>
     <div id="signalsEmpty" class="empty hidden">No signal data — needs price history. Run <code>--fetch-market</code>.</div>
     <div id="signalsContent">
       <!-- CRYPTO SIGNAL SENTIMENT — aggregate signal-score buckets across the
@@ -2046,12 +2137,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <!-- Signal breadth chart (top of tab) -->
-      <div class="chart-card" style="margin-bottom:14px">
-        <div class="head">
-          <h2>Crypto signal breadth — top 50 by market cap <span class="tag">CoinGecko</span></h2>
-          <span class="desc">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 by market cap &middot; last 90 days</span>
+      <div class="v2-card" style="margin-bottom:14px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Crypto signal breadth — top 50 by market cap <span class="tag">CoinGecko</span></h2>
+            <div class="v2-card__subtitle">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 by market cap · last 90 days</div>
+          </div>
         </div>
-        <div class="chart-wrap" style="height:220px"><canvas id="cryptoSignalsBreadthChart"></canvas></div>
+        <div class="v2-card__body">
+          <div class="chart-wrap" style="height:220px"><canvas id="cryptoSignalsBreadthChart"></canvas></div>
+        </div>
       </div>
       <!-- ============ TOP-50 COMPACT SIGNALS STRIP (moved to top of tab) ============ -->
       <div class="card" style="padding:12px 14px;margin-bottom:14px">
@@ -3070,6 +3165,136 @@ function renderYoy(){
 // ---------- Trading tab ----------
 function tradingAssetData(){ return (DATA.market||{})[state.asset] || {}; }
 
+// Trading-tab spotlight row: picks the three derivatives readings with the
+// most extreme positioning right now for the currently-selected asset.
+// Candidates: funding rate (extremes = crowded long/short), long/short
+// ratio (extremes = positioning bias), 7d OI change (extremes = leverage
+// build/unwind), DVOL (extremes = vol regime), F&G. Each gets a |z|-style
+// "extremity" score so we surface what's actually loudest today.
+function renderTradingSpotlight(){
+  const host = document.getElementById('tradingSpotlight');
+  if (!host) return;
+  const m = DATA.market || {};
+  const a = tradingAssetData();
+  const fundArr = a.funding || [];
+  const oiArr = a.open_interest_usd || [];
+  const lsArr = a.long_short_ratio || [];
+  const dvolArr = a.dvol || [];
+  const fngArr = m.fear_greed || [];
+  const last = arr => arr && arr.length ? arr[arr.length-1] : null;
+  const lastFund = last(fundArr);
+  const lastOI = last(oiArr);
+  const lastLS = last(lsArr);
+  const lastDvol = last(dvolArr);
+  const lastFng = last(fngArr);
+
+  // 7d OI change %
+  let oi7dPct = null;
+  if (oiArr.length > 7){
+    const prev = oiArr[oiArr.length - 8];
+    if (prev && prev.oi_usd) oi7dPct = (lastOI.oi_usd / prev.oi_usd - 1) * 100;
+  }
+
+  // Build candidate list with an extremity score (|z| or distance from neutral).
+  const candidates = [];
+  if (lastFund && typeof lastFund.rate === 'number'){
+    const ratePct = lastFund.rate * 100;
+    const extreme = Math.abs(ratePct) * 100; // funding rates are typically <0.05%
+    const sev = ratePct > 0.02 ? 'good' : ratePct < -0.02 ? 'bad' : 'warn';
+    candidates.push({
+      key: 'funding',
+      extreme,
+      metric: {
+        label: 'Funding rate',
+        html: (ratePct>=0?'+':'') + ratePct.toFixed(4) + '%',
+        severity: sev,
+        large: true,
+        tip: 'Perp funding rate · positive = crowded longs paying shorts, negative = crowded shorts paying longs.',
+      },
+    });
+  }
+  if (lastLS && typeof lastLS.ratio === 'number'){
+    const r = lastLS.ratio;
+    const extreme = Math.abs(r - 1) * 100;
+    const sev = r > 1.3 ? 'good' : r < 0.7 ? 'bad' : 'warn';
+    candidates.push({
+      key: 'ls',
+      extreme,
+      metric: {
+        label: 'Long/short ratio',
+        html: r.toFixed(2),
+        severity: sev,
+        large: true,
+        tip: 'OKX top accounts long/short ratio · >1 = more longs · extreme readings often precede reversals.',
+      },
+    });
+  }
+  if (oi7dPct != null){
+    const extreme = Math.abs(oi7dPct);
+    const sev = oi7dPct > 5 ? 'good' : oi7dPct < -5 ? 'bad' : 'warn';
+    candidates.push({
+      key: 'oi',
+      extreme,
+      metric: {
+        label: 'Open interest 7d',
+        html: (oi7dPct>=0?'+':'') + oi7dPct.toFixed(1) + '%',
+        severity: sev,
+        large: true,
+        tip: 'Aggregated futures + perps OI change over the last 7 days. Rising = leverage building, falling = unwind.',
+      },
+    });
+  }
+  if (lastDvol && typeof lastDvol.dvol === 'number'){
+    // DVOL: 40-50 normal, <35 quiet, >70 stress
+    const v = lastDvol.dvol;
+    const extreme = Math.abs(v - 50);
+    const sev = v > 65 ? 'bad' : v < 40 ? 'good' : 'warn';
+    candidates.push({
+      key: 'dvol',
+      extreme,
+      metric: {
+        label: 'DVOL (implied)',
+        html: v.toFixed(1) + '%',
+        severity: sev,
+        large: true,
+        tip: 'Deribit options-implied 30d vol. <40 = quiet, >65 = stressed regime.',
+      },
+    });
+  }
+  if (lastFng && typeof lastFng.value === 'number'){
+    const v = lastFng.value;
+    const extreme = Math.abs(v - 50);
+    const sev = v >= 60 ? 'good' : v <= 40 ? 'bad' : 'warn';
+    candidates.push({
+      key: 'fng',
+      extreme,
+      metric: {
+        label: 'Fear & Greed',
+        html: v + ' <span style="font-size:12px;color:var(--muted);font-weight:500">' + escapeHtml(lastFng.label||'') + '</span>',
+        severity: sev,
+        large: true,
+        tip: 'Crypto-wide 0-100 sentiment index from alternative.me.',
+      },
+    });
+  }
+  if (!candidates.length){
+    host.innerHTML = '';
+    return;
+  }
+  // Pick the 3 most extreme.
+  const picked = candidates.slice().sort((a,b) => b.extreme - a.extreme).slice(0, 3);
+  // Re-order to a stable display order so the row doesn't bounce around.
+  const orderRank = {funding: 0, ls: 1, oi: 2, dvol: 3, fng: 4};
+  picked.sort((a,b) => (orderRank[a.key] - orderRank[b.key]));
+  host.innerHTML = V2.card({
+    title: 'Spotlight · ' + state.asset.toUpperCase(),
+    subtitle: 'Three derivatives readings standing out most right now',
+    severity: 'ai',
+    body: '<div class="v2-card__metric-row" style="gap:24px">' +
+      picked.map(c => V2.metric(c.metric)).join('') + '</div>',
+  });
+}
+
 function renderTradingKpis(){
   const m = DATA.market || {}; const a = tradingAssetData(); const g = m.global || {}; const fng = (m.fear_greed||[]).slice(-1)[0];
   // Period-aware price delta: match the lookback window to the currently
@@ -3480,7 +3705,13 @@ function renderSignals(){
   const empty = !sigData.btc && !sigData.eth && !sigData.link && !sigData.ltc && !top20.length;
   document.getElementById('signalsEmpty').classList.toggle('hidden', !empty);
   document.getElementById('signalsContent').classList.toggle('hidden', empty);
-  if (empty) return;
+  if (empty) {
+    const spot = document.getElementById('signalsSpotlight');
+    if (spot) spot.innerHTML = '';
+    return;
+  }
+  // Spotlight: leader / strongest buy / strongest sell.
+  renderSignalsSpotlight();
   // Sentiment card at the very top of the tab (mirrors POC pattern).
   renderCryptoSignalsSentiment();
   // Breadth chart at the top of the tab (first visible widget).
@@ -3498,6 +3729,53 @@ function renderSignals(){
   // LTC 4-chart grid so every top-25 coin gets the full breakdown plus
   // a price chart.
   renderPerCoinSignalList();
+}
+
+// Signals tab spotlight row: market-cap leader (sorted by rank=1, usually
+// BTC), the highest-scoring BUY, and the lowest-scoring SELL. These three
+// answer "who's leading, who's hot, who's bleeding" at a glance.
+function renderSignalsSpotlight(){
+  const host = document.getElementById('signalsSpotlight');
+  if (!host) return;
+  const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  const list = (DATA.signals_top20 || []).filter(s => s && !isStable(s.symbol));
+  if (!list.length){
+    host.innerHTML = '';
+    return;
+  }
+  const leader = list.slice().sort((a,b) => (a.rank||999) - (b.rank||999))[0];
+  const strongestBuy = list.slice().sort((a,b) => (b.score||0) - (a.score||0))[0];
+  const strongestSell = list.slice().sort((a,b) => (a.score||0) - (b.score||0))[0];
+  const sevForScore = sc => {
+    if (sc == null) return 'info';
+    if (sc >= 10) return 'good';
+    if (sc <= -10) return 'bad';
+    return 'warn';
+  };
+  const fmt = (s, label) => V2.metric({
+    label: label + ' · ' + (s.symbol||'').toUpperCase(),
+    html: '<span>' + (s.score>=0?'+':'') + s.score + '</span>' +
+          ' <span style="font-size:12px;color:var(--muted);font-weight:500">' + escapeHtml(s.label||'') + '</span>',
+    severity: sevForScore(s.score),
+    large: true,
+    tip: escapeHtml(s.name||'') + ' · rank #' + (s.rank||'?') + ' · click cards below for full breakdown',
+  });
+  const cells = [];
+  if (leader)         cells.push(fmt(leader, 'Leader'));
+  if (strongestBuy && strongestBuy !== leader && (strongestBuy.score||0) > 0)
+    cells.push(fmt(strongestBuy, 'Strongest BUY'));
+  if (strongestSell && strongestSell !== leader && strongestSell !== strongestBuy && (strongestSell.score||0) < 0)
+    cells.push(fmt(strongestSell, 'Strongest SELL'));
+  if (!cells.length){
+    host.innerHTML = '';
+    return;
+  }
+  host.innerHTML = V2.card({
+    title: 'Spotlight',
+    subtitle: 'Market leader · strongest BUY · strongest SELL',
+    severity: 'ai',
+    body: '<div class="v2-card__metric-row" style="gap:24px">' + cells.join('') + '</div>',
+  });
 }
 
 // Map a signal label to a coarse bucket used by the strip's filter chips
@@ -6020,6 +6298,7 @@ function renderWhaleExtras(){
 
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
+  renderOverviewSpotlight();      // top-3 metric spotlight row (BTC sig, ETH sig, F&G)
   renderOverviewSentiment();      // crypto market sentiment composite card
   renderOverviewSignals();
   renderCoinbaseSpot();           // compact Coinbase exchange bid/ask + 24h range
@@ -6029,6 +6308,76 @@ function renderOverview(){
   renderOverviewNews();           // top 4-item teaser + bottom 10-item feed
   renderOverviewInsights();
   renderGeckoTerminalPools();     // bottom — also moved from Markets
+}
+
+// Spotlight row at the very top of Overview: BTC signal, ETH signal, F&G.
+// These three answer the "what should I look at first?" question — the
+// crypto-market top-line read in three numbers. Rest of the tab fans out
+// from there. Uses V2.metric() inside a v2-card metric row layout.
+function renderOverviewSpotlight(){
+  const host = document.getElementById('overviewSpotlight');
+  if (!host) return;
+  const sigs = DATA.signals || {};
+  const btc = sigs.btc, eth = sigs.eth;
+  const fngArr = (DATA.market || {}).fear_greed || [];
+  const fng = fngArr.length ? fngArr[fngArr.length - 1] : null;
+  const sevForScore = sc => {
+    if (sc == null) return 'info';
+    if (sc >= 50) return 'good';
+    if (sc >= 10) return 'good';
+    if (sc <= -50) return 'bad';
+    if (sc <= -10) return 'bad';
+    return 'warn';
+  };
+  const sevForFng = v => {
+    if (v == null) return 'info';
+    if (v >= 75) return 'good';
+    if (v >= 55) return 'good';
+    if (v <= 25) return 'bad';
+    if (v <= 45) return 'warn';
+    return 'warn';
+  };
+  const items = [];
+  if (btc && typeof btc.score === 'number'){
+    items.push(V2.metric({
+      label: 'BTC signal',
+      html: '<span>' + (btc.score>=0?'+':'') + btc.score + '</span>' +
+            ' <span style="font-size:12px;color:var(--muted);font-weight:500">' + escapeHtml(btc.label||'') + '</span>',
+      severity: sevForScore(btc.score),
+      large: true,
+      tip: 'BTC composite signal score (-100…+100). Synthesizes trend, momentum, funding, sentiment, and flows.',
+    }));
+  }
+  if (eth && typeof eth.score === 'number'){
+    items.push(V2.metric({
+      label: 'ETH signal',
+      html: '<span>' + (eth.score>=0?'+':'') + eth.score + '</span>' +
+            ' <span style="font-size:12px;color:var(--muted);font-weight:500">' + escapeHtml(eth.label||'') + '</span>',
+      severity: sevForScore(eth.score),
+      large: true,
+      tip: 'ETH composite signal score (-100…+100). Same methodology as BTC signal.',
+    }));
+  }
+  if (fng && typeof fng.value === 'number'){
+    items.push(V2.metric({
+      label: 'Fear & Greed',
+      html: '<span>' + fng.value + '</span>' +
+            ' <span style="font-size:12px;color:var(--muted);font-weight:500">' + escapeHtml(fng.label||'') + '</span>',
+      severity: sevForFng(fng.value),
+      large: true,
+      tip: '0-100 crypto sentiment index from alternative.me. <25 = Extreme Fear, >75 = Extreme Greed.',
+    }));
+  }
+  if (!items.length){
+    host.innerHTML = '';
+    return;
+  }
+  host.innerHTML = V2.card({
+    title: 'Top of mind',
+    subtitle: 'Three numbers that drive the read across the rest of Overview',
+    severity: 'ai',
+    body: '<div class="v2-card__metric-row" style="gap:24px">' + items.join('') + '</div>',
+  });
 }
 
 // Coinbase spot widget: one compact row per asset showing bid/ask, 24h
@@ -9330,9 +9679,12 @@ function renderAll(){
     renderEtfSpotlight();
   }
   if (state.tab === 'trading' && !trEmpty){
+    renderTradingSpotlight();
     renderFuturesSentiment();
     renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderCadliChart(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
   } else if (state.tab === 'trading'){
+    const spot = document.getElementById('tradingSpotlight');
+    if (spot) spot.innerHTML = '';
     renderFuturesSentiment();
   }
   if (state.tab === 'signals'){
