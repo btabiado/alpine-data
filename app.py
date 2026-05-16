@@ -856,16 +856,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
-    <!-- Traditional indices — compact bar above the asset cards. Dow/SPX/
-         NDX/VIX 1d/5d/30d + 90d sparkline per index. Moved here from the
-         Markets tab so it's visible on the landing page as macro context. -->
-    <div id="overviewIndicesWrap" class="card" style="padding:12px 16px;margin-bottom:6px">
-      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
-        <span style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em">TRADITIONAL INDICES</span>
-        <span class="sub" style="font-size:11px;color:var(--muted)">Yahoo · 1d / 5d / 30d</span>
-      </div>
-      <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
-    </div>
     <!-- CRYPTO MARKET SENTIMENT — composite of Fear & Greed, top-50 signal
          score avg, and average perp funding rate. Rendered by
          renderOverviewSentiment(). Mirrors the visual pattern of
@@ -1309,6 +1299,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ STOCKS TAB ============ -->
   <div id="tab-stocks" class="hidden">
     <div class="container">
+      <!-- Traditional indices — DOW / S&P / NDX / VIX with 1d % + 90d
+           sparkline. Moved here from the Crypto tab so macro equity context
+           lives alongside the equity-signal grid that follows. -->
+      <div id="overviewIndicesWrap" class="card" style="padding:12px 16px;margin-bottom:10px">
+        <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em">TRADITIONAL INDICES</span>
+          <span class="sub" style="font-size:11px;color:var(--muted)">Yahoo · 1d / 5d / 30d</span>
+        </div>
+        <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
+      </div>
       <!-- STOCK SIGNAL SENTIMENT — aggregate signal-score buckets across the
            top-50 most-active stocks (DATA.market.stocks_signals). Mirrors the
            POC sentiment card pattern: net index in [-100,+100] (positive =
@@ -4777,7 +4777,6 @@ function renderWhaleExtras(){
 
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
-  renderOverviewIndices();        // top bar — moved from deleted Markets tab
   renderOverviewSentiment();      // crypto market sentiment composite card
   renderOverviewSignals();
   renderCoinbaseSpot();           // compact Coinbase exchange bid/ask + 24h range
@@ -4980,6 +4979,18 @@ function renderOverviewSignals(){
     const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
     const pctTxt  = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     const asOf = prices.length ? prices[prices.length-1].date : '—';
+    // 90-day price sparkline — uses the same renderSparkline helper as the
+    // Traditional Indices bar. SVG scales via viewBox; width is responsive
+    // (svg style="width:100%") so the chart fills the card regardless of
+    // grid column width. Hidden when there's not enough history (<2 points).
+    const sparkVals = prices.slice(-90).map(p => p.value).filter(v => typeof v === 'number' && isFinite(v));
+    const sparkUp = sparkVals.length >= 2 ? (sparkVals[sparkVals.length-1] >= sparkVals[0]) : true;
+    const sparkSvg = sparkVals.length >= 2
+      ? renderSparkline(sparkVals, sparkUp, 240, 36).replace('<svg ', '<svg style="width:100%;height:36px;display:block" ')
+      : '';
+    const sparkBlock = sparkSvg
+      ? `<div style="margin-top:8px;line-height:0">${sparkSvg}</div>`
+      : '';
     return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="trading" data-asset="${a}" title="Open Trading tab for ${a.toUpperCase()}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
@@ -4990,6 +5001,7 @@ function renderOverviewSignals(){
         <span style="font-size:13px;color:${pctColor};font-weight:600">${pctTxt}</span>
         <span class="sub" style="font-size:12px;color:var(--muted)">24h vol ${fmtVol(lastV)}</span>
       </div>
+      ${sparkBlock}
       <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${asOf}</div>
     </div>`;
   }).join('');
@@ -5510,6 +5522,9 @@ function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
   const rows = ((DATA.market||{}).stocks_signals) || [];
+  // Traditional indices bar (DOW / S&P / NDX / VIX) moved here from the
+  // Crypto tab — macro equity context belongs alongside the equity-signal grid.
+  renderOverviewIndices();
   // Sentiment card at the very top of the tab (mirrors POC pattern).
   renderStocksSentiment();
   // Always (re)render the breadth chart first so it appears whether or not
