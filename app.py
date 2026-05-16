@@ -681,6 +681,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <p><strong>POC price</strong> — fair-value magnet. <strong>VAH / VAL</strong> — the top and bottom of the 70% Value Area. <span class="tag">IN VA</span> means current price sits inside that band (consolidation / accepted value). <span class="tag">OUTSIDE</span> means price has broken above VAH or below VAL.</p>
 
+      <p style="margin-top:6px"><strong>The big arrow on each card</strong> tells you which way value is migrating:
+      <span style="color:#22c55e;font-weight:700">↑ UP</span> means the POC is drifting higher (accumulation) ·
+      <span style="color:#ef4444;font-weight:700">↓ DOWN</span> means the POC is drifting lower (distribution) ·
+      <span style="color:var(--muted);font-weight:700">· FLAT</span> means value is stable.
+      The little chart on each card is the 30d POC's drift over the last 90 days. Distance % shows where current price sits relative to that POC.</p>
+
       <h3 style="margin:10px 0 4px;font-size:12px;letter-spacing:.04em;color:var(--text)">WHAT IT MEANS FOR TRADING</h3>
       <p>
         • <strong>Above POC + OUTSIDE</strong> → extended; the move is stretched relative to recent accepted value.<br>
@@ -1299,18 +1305,38 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
           <button class="btn" data-poc-help="1" style="font-size:11px;white-space:nowrap">📊 Learn about POC</button>
         </div>
-        <div class="note" style="margin:6px 0 10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:#0e1620;color:var(--text);font-size:11px;line-height:1.5">
-          <strong>How to read this page.</strong>
-          Each card shows one coin's 90d Point of Control — the price where the most volume has traded.
-          The big arrow on the right tells you which way value is migrating:
-          <span style="color:#22c55e;font-weight:700">↑ UP</span> (POC drifting higher · accumulation)
-          ·
-          <span style="color:#ef4444;font-weight:700">↓ DOWN</span> (POC drifting lower · distribution)
-          ·
-          <span style="color:var(--muted);font-weight:700">· FLAT</span> (value stable).
-          Distance % shows where current price sits relative to that POC.
-          Click any card for the full value-area ladder, naked POCs, and drift detail.
+        <!-- Inline "How to read this page" panel removed per user request —
+             all of that explainer content lives in the Learn-about-POC modal
+             (triggered by the data-poc-help button above + inside the modal).
+             Keeps the tab cleaner; users who want the full primer click. -->
+
+        <!-- POC SENTIMENT INDEX — aggregate across the top 25 by signal score.
+             Computes UP / DOWN / FLAT migration counts + a net index in
+             [-100,+100] (positive = broad accumulation, negative = broad
+             distribution). Rendered by renderPocSentimentIndex(). -->
+        <div class="card" id="pocSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🐋 POC SENTIMENT — TOP 25 BY SIGNAL SCORE</div>
+              <div style="font-size:11px;color:var(--muted)" id="pocSentimentSubline">—</div>
+            </div>
+            <div style="text-align:right">
+              <div id="pocSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+              <div id="pocSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+            </div>
+          </div>
+          <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="pocSentimentBar">
+            <div style="background:#22c55e;width:0%" id="pocSentimentBarUp"></div>
+            <div style="background:#94a3b8;width:0%" id="pocSentimentBarFlat"></div>
+            <div style="background:#ef4444;width:0%" id="pocSentimentBarDown"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+            <span style="color:#22c55e">↑ <span id="pocSentimentUpCount">0</span> UP</span>
+            <span>· <span id="pocSentimentFlatCount">0</span> FLAT</span>
+            <span style="color:#ef4444">↓ <span id="pocSentimentDownCount">0</span> DOWN</span>
+          </div>
         </div>
+
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <span class="lbl" style="margin:0">Filter</span>
           <button class="btn active" data-pocfilter="all">All</button>
@@ -5723,6 +5749,84 @@ function renderPocCards(){
 // Renders one card per top-25 coin from DATA.market.poc_top. Reuses the
 // renderPocCards() layout but keyed off coin metadata (image/symbol/name/price)
 // instead of the fixed RESEARCH_ASSETS list.
+// POC SENTIMENT INDEX — aggregate migration direction across the top 25
+// by signal score. Renders into #pocSentimentCard. Index in [-100,+100]:
+// positive = broad accumulation (POCs drifting higher), negative = broad
+// distribution. Label thresholds match the signal-score conventions used
+// elsewhere on the dashboard (±50 strong, ±20 moderate).
+function renderPocSentimentIndex(){
+  const card = document.getElementById('pocSentimentCard');
+  if (!card) return;
+  const list = ((DATA.market || {}).poc_top) || [];
+  if (!Array.isArray(list) || list.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  // Join signals_top20 to get score per coin so we can pick the top 25.
+  const sigArr = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
+  const sigBySym = {};
+  sigArr.forEach(s => {
+    if (!s) return;
+    const k = String(s.symbol || '').toUpperCase();
+    if (k) sigBySym[k] = s;
+  });
+  const scored = list.map(c => {
+    const sk = String(c.symbol || c.coin_id || '').toUpperCase();
+    const sig = sigBySym[sk];
+    return {c, score: sig && sig.score != null ? Number(sig.score) : -Infinity};
+  }).sort((a, b) => b.score - a.score).slice(0, 25).map(x => x.c);
+  // Count migration direction across the 25.
+  let up = 0, down = 0, flat = 0, considered = 0;
+  for (const c of scored){
+    const dir = c && c.poc && c.poc.migration && c.poc.migration.direction;
+    if (dir === 'UP')        { up++;   considered++; }
+    else if (dir === 'DOWN') { down++; considered++; }
+    else if (dir === 'FLAT') { flat++; considered++; }
+  }
+  const total = Math.max(considered, 1);
+  const net = Math.round(((up - down) / total) * 100);
+  // Bucket label
+  const label = net >=  50 ? 'STRONG ACCUMULATION'
+              : net >=  20 ? 'ACCUMULATION'
+              : net >  -20 ? 'NEUTRAL'
+              : net >  -50 ? 'DISTRIBUTION'
+              :              'STRONG DISTRIBUTION';
+  const color = net >=  20 ? '#22c55e'
+              : net <= -20 ? '#ef4444'
+              :              '#f59e0b';
+  // Write values into the DOM
+  const scoreEl = document.getElementById('pocSentimentScore');
+  const labelEl = document.getElementById('pocSentimentLabel');
+  const sublineEl = document.getElementById('pocSentimentSubline');
+  if (scoreEl){
+    scoreEl.textContent = (net >= 0 ? '+' : '') + net;
+    scoreEl.style.color = color;
+  }
+  if (labelEl){
+    labelEl.textContent = label;
+    labelEl.style.color = color;
+  }
+  if (sublineEl){
+    sublineEl.textContent = `${considered} coins with migration data · positive = POCs drifting higher (broad accumulation) · negative = drifting lower (broad distribution)`;
+  }
+  const pctUp   = (up   / total) * 100;
+  const pctFlat = (flat / total) * 100;
+  const pctDown = (down / total) * 100;
+  const upBar   = document.getElementById('pocSentimentBarUp');
+  const flatBar = document.getElementById('pocSentimentBarFlat');
+  const downBar = document.getElementById('pocSentimentBarDown');
+  if (upBar)   upBar.style.width   = pctUp.toFixed(1) + '%';
+  if (flatBar) flatBar.style.width = pctFlat.toFixed(1) + '%';
+  if (downBar) downBar.style.width = pctDown.toFixed(1) + '%';
+  const upCount   = document.getElementById('pocSentimentUpCount');
+  const flatCount = document.getElementById('pocSentimentFlatCount');
+  const downCount = document.getElementById('pocSentimentDownCount');
+  if (upCount)   upCount.textContent   = String(up);
+  if (flatCount) flatCount.textContent = String(flat);
+  if (downCount) downCount.textContent = String(down);
+}
+
 function renderPocTopCards(){
   const host = document.getElementById('pocTopGrid');
   if (!host) return;
@@ -5754,15 +5858,19 @@ function renderPocTopCards(){
     const sb = (b.signal_score == null || !isFinite(b.signal_score)) ? -Infinity : Number(b.signal_score);
     return sb - sa;
   });
-  // COMPACT cards — small title, anchor POC, migration badge. Click opens
-  // the full-detail modal with the ladder + naked POCs + sparkline.
-  host.innerHTML = sorted.map(c => {
+  // Top 5 cards get FEATURED treatment per user request — double width
+  // (grid-column span 2), bigger fonts, always-large sparkline. Everything
+  // below position 5 stays the current compact size. The cards are already
+  // sorted by signal score, so featured == top 5 by score.
+  host.innerHTML = sorted.map((c, idx) => {
+    const featured = idx < 5;
     const cid = escapeHtml(String(c.coin_id || c.symbol || ''));
     const sym = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
     const imgUrl = sanitizeUrl(c.image, '');
+    const imgSize = featured ? 28 : 18;
     const img = imgUrl
-      ? `<img src="${imgUrl}" alt="" style="width:18px;height:18px;border-radius:50%">`
-      : '<div style="width:18px;height:18px;border-radius:50%;background:#1f2533"></div>';
+      ? `<img src="${imgUrl}" alt="" style="width:${imgSize}px;height:${imgSize}px;border-radius:50%">`
+      : `<div style="width:${imgSize}px;height:${imgSize}px;border-radius:50%;background:#1f2533"></div>`;
     const priceTxt = fmtUsdShort(c.current_price);
     // Signal badge: score + label, color-coded green/red/amber.
     const sc = c.signal_score;
@@ -5772,7 +5880,9 @@ function renderPocTopCards(){
       const sColor = sc >= 20 ? '#22c55e' : (sc <= -20 ? '#ef4444' : '#f59e0b');
       const sTxt = (sc >= 0 ? '+' : '') + (Number.isInteger(sc) ? sc : sc.toFixed(1));
       const lblTxt = c.signal_label ? escapeHtml(String(c.signal_label)) : '';
-      sigBadge = `<span style="background:${sColor}22;color:${sColor};padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;white-space:nowrap" title="Signal score">${sTxt}${lblTxt ? ' · ' + lblTxt : ''}</span>`;
+      const badgeFont = featured ? 13 : 10;
+      const badgePad  = featured ? '2px 9px' : '1px 6px';
+      sigBadge = `<span style="background:${sColor}22;color:${sColor};padding:${badgePad};border-radius:4px;font-size:${badgeFont}px;font-weight:600;white-space:nowrap" title="Signal score">${sTxt}${lblTxt ? ' · ' + lblTxt : ''}</span>`;
     }
     const d = c.poc || {};
     if (!d.d30 && !d.d90 && !d.d180){
@@ -5798,8 +5908,11 @@ function renderPocTopCards(){
           : '<span style="background:#f59e0b22;color:#f59e0b;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>')
       : '';
     // BIG migration arrow on the right edge — primary visual cue for direction.
-    // UP / DOWN / FLAT (·) with label, color-coded green/red/muted.
+    // Featured cards get an even bigger arrow rail.
     const mig = d.migration;
+    const railW  = featured ? 64 : 44;
+    const arrowFs= featured ? 38 : 26;
+    const labelFs= featured ? 11 : 9;
     let migBlock;
     if (mig){
       const dlt = Number(mig.delta_pct);
@@ -5810,41 +5923,49 @@ function renderPocTopCards(){
         ? {fg:'#ef4444', arrow:'↓', label:'DOWN'}
         : {fg:'#94a3b8',  arrow:'·', label:'FLAT'};
       const tip = escapeHtml(mig.explanation || `POC migration ${cfg.label}`);
-      migBlock = `<div title="${tip}" style="flex:0 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:${cfg.fg}">
-        <div style="font-size:26px;line-height:1;font-weight:700">${cfg.arrow}</div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:.04em">${cfg.label}</div>
-        ${dltTxt ? `<div style="font-size:9px;opacity:.85">${dltTxt}</div>` : ''}
+      migBlock = `<div title="${tip}" style="flex:0 0 ${railW}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:${cfg.fg}">
+        <div style="font-size:${arrowFs}px;line-height:1;font-weight:700">${cfg.arrow}</div>
+        <div style="font-size:${labelFs}px;font-weight:700;letter-spacing:.04em">${cfg.label}</div>
+        ${dltTxt ? `<div style="font-size:${labelFs}px;opacity:.85">${dltTxt}</div>` : ''}
       </div>`;
     } else {
-      migBlock = `<div title="No migration data" style="flex:0 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:var(--muted)">
-        <div style="font-size:26px;line-height:1;font-weight:700">·</div>
-        <div style="font-size:9px;font-weight:700;letter-spacing:.04em">—</div>
+      migBlock = `<div title="No migration data" style="flex:0 0 ${railW}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:var(--muted)">
+        <div style="font-size:${arrowFs}px;line-height:1;font-weight:700">·</div>
+        <div style="font-size:${labelFs}px;font-weight:700;letter-spacing:.04em">—</div>
       </div>`;
     }
-    // 30d POC drift sparkline. STRONG BUY / BUY cards get the beefier
-    // version (taller, filled area, change-% callout) so buy-rated coins
-    // are visually distinct from HOLD / SELL at a glance. Falls back to
-    // empty string when the series is too short.
+    // 30d POC drift sparkline. Featured cards always get the big version,
+    // and so do STRONG BUY / BUY cards below. Everything else gets the
+    // tight 30px sparkline.
     const isBuy = bucket === 'strong-buy' || bucket === 'buy';
-    const spark = isBuy
+    const spark = (featured || isBuy)
       ? pocMigrationSparklineLarge(d.migration_series)
       : pocMigrationSparkline(d.migration_series);
-    return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
-      <div style="display:flex;align-items:stretch;gap:8px">
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    const cardPad   = featured ? '14px 16px' : '8px 10px';
+    const symFs     = featured ? 18 : 12;
+    const priceFs   = featured ? 13 : 10;
+    const pocRowFs  = featured ? 14 : 11;
+    const fallbackH = (featured || isBuy) ? 64 : 30;
+    // Featured cards span 2 grid columns so they read as ~double the width.
+    const featuredCSS = featured
+      ? 'grid-column:span 2;border-left:6px solid #a78bfa;background:#10151f'
+      : 'border-left:4px solid #a78bfa';
+    return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" ${featured ? 'data-poc-featured="1"' : ''} role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="${featuredCSS};padding:${cardPad};cursor:pointer">
+      <div style="display:flex;align-items:stretch;gap:${featured ? 12 : 8}px">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:${featured ? 6 : 3}px">
+          <div style="display:flex;align-items:center;gap:${featured ? 8 : 6}px;flex-wrap:wrap">
             ${img}
-            <span style="font-weight:700;font-size:12px">${sym}</span>
+            <span style="font-weight:700;font-size:${symFs}px">${sym}</span>
             ${sigBadge}
-            <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
+            <span class="sub" style="font-size:${priceFs}px;color:var(--muted);margin-left:auto">${priceTxt}</span>
           </div>
-          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:11px">
-            <span style="color:var(--muted);font-size:10px">90d POC</span>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:${pocRowFs}px">
+            <span style="color:var(--muted);font-size:${pocRowFs - 1}px">90d POC</span>
             <span style="font-weight:600">${anchorPoc}</span>
             <span style="color:${dpColor};font-weight:600">${dpTxt}</span>
             ${vaTag}
           </div>
-          ${spark || `<div style="height:${isBuy ? '64' : '30'}px;margin-top:6px;border-radius:3px;background:#0b0d12;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)">no drift data</div>`}
+          ${spark || `<div style="height:${fallbackH}px;margin-top:6px;border-radius:3px;background:#0b0d12;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)">no drift data</div>`}
         </div>
         ${migBlock}
       </div>
@@ -6390,6 +6511,7 @@ function renderAll(){
     renderSocial();
   }
   if (state.tab === 'poc'){
+    renderPocSentimentIndex();
     renderPocTopCards();
   }
   if (state.tab === 'stocks'){
