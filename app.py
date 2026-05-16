@@ -489,6 +489,19 @@ header .meta{color:var(--muted);font-size:12px}
 .chart-wrap.tall{height:380px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:18px}
 .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+/* Symbol detail modal body: pair Signal + POC cards side-by-side. Uses a
+   tighter min-column than .grid2 because the modal width caps at ~940px so
+   the 420px default would force a single column most of the time. Stacks
+   1-col on mobile via the existing .grid2 @media 860 override AND an
+   explicit ≤480 rule below. */
+.symbol-modal-body{grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:12px}
+@media (max-width:480px){
+  /* Explicit mobile stack for the symbol detail modal body — the 860px
+     .grid2 override already collapses to 1-col much earlier, but spell it
+     out at ≤480 too so future refactors of .grid2 don't accidentally
+     re-introduce a side-by-side layout on a phone-width screen. */
+  .symbol-modal-body{grid-template-columns:1fr !important;gap:10px}
+}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)}
 th:first-child,td:first-child{text-align:left}
@@ -1035,8 +1048,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <!-- ============ SYMBOL DETAIL MODAL (universal header search → consolidated view) ============ -->
+<!-- Width bumped to 940px so the Signal + POC cards can sit side-by-side on
+     desktop with breathing room. Stacks 1-col on mobile via .grid2 @media
+     override at 860px (further tightened to ≤480px below in CSS). -->
 <div id="symbolDetailModal" class="modal-bg hidden">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(820px,100%);max-height:92vh;display:flex;flex-direction:column;gap:12px;overflow:auto">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(940px,100%);max-height:92vh;display:flex;flex-direction:column;gap:12px;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <h2 id="symbolDetailTitle" style="margin:0;font-size:15px">Symbol</h2>
       <button class="btn" id="symbolDetailClose" aria-label="Close symbol detail">×</button>
@@ -9725,27 +9741,35 @@ function buildSymbolSectionsHtml(resolved){
       (displayName ? '<div class="sub" style="font-size:13px;color:var(--muted)">' + escapeHtml(displayName) + '</div>' : '') +
     '</div>'
   );
-  if (stock){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Stock signal</div>' +
-        stockDetailHtml(stock) +
-      '</div>'
-    );
-  }
-  if (cryptoSignal){
-    sections.push(
-      '<div>' +
-        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Crypto signal</div>' +
-        renderSignalCardFromObj(cryptoSignal) +
-      '</div>'
-    );
-  }
-  if (poc){
-    sections.push(
-      '<div>' +
+  // Signal + POC pair — side-by-side on desktop, stacked on mobile.
+  // Signal (left): stockDetailHtml for stocks, renderSignalCardFromObj for
+  // top-50 cryptos. POC (right): pocCompactCardHtml for cryptos in poc_top,
+  // pocEmptyCardHtml for stocks or cryptos outside top-50. Either side may
+  // be empty individually; pairing renders only when at least one exists.
+  const signalHtml = stock
+    ? stockDetailHtml(stock)
+    : (cryptoSignal ? renderSignalCardFromObj(cryptoSignal) : '');
+  const signalLabel = stock ? 'Stock signal' : (cryptoSignal ? 'Crypto signal' : '');
+  const hasSignal = !!signalHtml;
+  const hasPoc    = !!poc;
+  if (hasSignal || hasPoc){
+    const pocCardHtml = hasPoc
+      ? pocCompactCardHtml(poc)
+      : pocEmptyCardHtml(sym, stock ? 'stock' : 'crypto');
+    const signalSection = hasSignal
+      ? '<div>' +
+          '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">' + escapeHtml(signalLabel) + '</div>' +
+          signalHtml +
+        '</div>'
+      : '<div class="chart-card" style="opacity:.85"><div class="empty" style="padding:18px 8px;font-size:12px">No signal data for <strong>' + escapeHtml(sym) + '</strong> in this build.</div></div>';
+    const pocSection = '<div>' +
         '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
-        pocDetailHtml(poc) +
+        pocCardHtml +
+      '</div>';
+    sections.push(
+      '<div class="grid2 symbol-modal-body">' +
+        signalSection +
+        pocSection +
       '</div>'
     );
   }
@@ -9964,6 +9988,128 @@ function renderSymbolRecentChips(){
     });
     host.appendChild(btn);
   }
+}
+
+// --- Compact POC card for the symbol-detail modal ---
+//
+// Slim variant: header (icon + symbol + migration chip), price vs 90d POC
+// distance with IN VA / OUT badge, the 30d-drift sparkline reused from
+// pocMigrationSparkline(), and a 2-row 30d/90d ladder.
+//
+// The card is wrapped in `.poc-card[data-poc-coin-id]` so the existing
+// wirePocDetail() listener picks up the click and opens the rich
+// pocDetailHtml() modal — no new click wiring needed.
+//
+// Intentionally does NOT reuse pocDetailHtml() directly: that one is
+// designed for a full-width modal (volume profile + naked POCs + 4-col
+// table) and dwarfs the Signal card when forced into a 2-col layout.
+// Side-by-side display in the symbol modal is the whole point of this
+// helper.
+function pocCompactCardHtml(coin){
+  if (!coin) return '';
+  const sym = escapeHtml(String(coin.symbol || coin.coin_id || '').toUpperCase());
+  const cid = escapeHtml(String(coin.coin_id || coin.symbol || ''));
+  const d = coin.poc || {};
+  const anchor = d.d90 || d.d30 || d.d180 || null;
+  const cur = coin.current_price != null ? coin.current_price : (anchor && anchor.current);
+  const priceTxt = fmtUsdShort(cur);
+  // Migration chip — UP / DOWN / FLAT — mirrors the POC tab styling.
+  const mig = d.migration;
+  let migChip = '';
+  if (mig){
+    const dlt = Number(mig.delta_pct);
+    const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(2) + '%') : '';
+    const cfg = mig.direction === 'UP'
+      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:'UP'}
+      : mig.direction === 'DOWN'
+      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:'DOWN'}
+      : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'FLAT'};
+    migChip = `<span style="background:${cfg.bg};color:${cfg.fg};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap">${cfg.arrow} ${cfg.label}${dltTxt ? ' ' + dltTxt : ''}</span>`;
+  }
+  // 90d POC distance + IN VA / OUT badge.
+  const pocPrice = anchor ? anchor.poc : null;
+  const distPct  = anchor && anchor.distance_pct != null ? Number(anchor.distance_pct) : null;
+  const dColor = distPct == null ? 'var(--muted)' : (distPct >= 0 ? '#22c55e' : '#ef4444');
+  const dTxt   = distPct == null ? '—' : ((distPct >= 0 ? '+' : '') + distPct.toFixed(2) + '%');
+  const inVA = anchor && anchor.in_value_area;
+  const vaTag = anchor
+    ? (inVA
+        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>')
+    : '';
+  // Mini ladder — 30d / 90d POC + distance%. 180d intentionally omitted to
+  // keep the card visually paired with the Signal card height.
+  const LADDER_TFS = [['d30','30d'], ['d90','90d']];
+  const ladder = LADDER_TFS.map(([k, label]) => {
+    const r = d[k];
+    if (!r) {
+      return `<tr><td style="color:var(--muted);padding:3px 6px">${label}</td><td colspan="2" style="color:var(--muted);padding:3px 6px">—</td></tr>`;
+    }
+    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+    const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + Number(r.distance_pct).toFixed(1) + '%';
+    return `<tr>
+      <td style="color:var(--muted);padding:3px 6px">${label}</td>
+      <td style="font-weight:600;padding:3px 6px">${fmtUsdShort(r.poc)}</td>
+      <td style="color:${dc};text-align:right;padding:3px 6px;font-weight:600">${dt}</td>
+    </tr>`;
+  }).join('');
+  const sparkline = pocMigrationSparkline(d.migration_series);
+  // Whole card is the click target — reuses wirePocDetail() in app.py.
+  return `<div class="chart-card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} full POC detail" title="Click for full POC breakdown" style="cursor:pointer;display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0">
+        <h2 style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
+        ${migChip}
+      </div>
+      <div style="text-align:right">
+        <div class="sub" style="font-size:10px;color:var(--muted)">Current</div>
+        <div style="font-size:14px;font-weight:700">${priceTxt}</div>
+      </div>
+    </div>
+    ${anchor ? `<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#0b0d12">
+      <span class="sub" style="font-size:10px;color:var(--muted)">vs 90d POC ${fmtUsdShort(pocPrice)}</span>
+      <span style="color:${dColor};font-weight:700;font-size:13px">${dTxt}</span>
+      ${vaTag}
+    </div>` : ''}
+    ${sparkline ? `<div><div class="sub" style="font-size:10px;color:var(--muted);margin-bottom:2px">30d POC drift · last 90d</div>${sparkline}</div>` : ''}
+    <div>
+      <table style="width:100%;font-size:12px;border-collapse:collapse">
+        <thead><tr style="color:var(--muted);font-size:9px;text-align:left">
+          <th style="padding:3px 6px">Window</th>
+          <th style="padding:3px 6px">POC</th>
+          <th style="text-align:right;padding:3px 6px">Δ vs price</th>
+        </tr></thead>
+        <tbody>${ladder}</tbody>
+      </table>
+    </div>
+    <div class="sub" style="font-size:10px;color:var(--muted);text-align:right">click for full breakdown ›</div>
+  </div>`;
+}
+
+// Empty state for when poc_top has no entry for a symbol (e.g. stocks like
+// NVDA — POC is crypto-only in this build — or a crypto outside the
+// top-50-by-score window). Visually matches a regular chart-card so the
+// 2-col layout doesn't lopsidedly leave one slot blank.
+function pocEmptyCardHtml(sym, kind){
+  const safeSym = escapeHtml(String(sym || '').toUpperCase());
+  const isStock = kind === 'stock';
+  const msg = isStock
+    ? 'POC data is computed from crypto OHLCV only in this build.'
+    : `<strong>${safeSym}</strong> isn't in the top-50 crypto POC window.`;
+  const sub = isStock
+    ? 'Volume-profile POC for stocks is on the roadmap — for now this card surfaces only for cryptos in <code>poc_top</code>.'
+    : 'The POC tab tracks the top 50 cryptos by signal score; symbols outside that set fall back to this empty state.';
+  return `<div class="chart-card" style="display:flex;flex-direction:column;gap:8px;opacity:.85">
+    <div style="display:flex;align-items:center;gap:8px">
+      <h2 style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
+      <span class="tag" style="font-size:9px">not available</span>
+    </div>
+    <div class="empty" style="padding:18px 8px;font-size:12px;line-height:1.5">
+      <div style="font-size:24px;margin-bottom:6px">📊</div>
+      <div>${msg}</div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:8px">${sub}</div>
+    </div>
+  </div>`;
 }
 
 async function lookupSymbol(query){

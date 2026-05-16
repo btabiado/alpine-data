@@ -902,3 +902,189 @@ def test_symbol_recent_chips_div_and_renderer_present():
     assert "'recentSymbolLookups'" in html or '"recentSymbolLookups"' in html, (
         "localStorage key 'recentSymbolLookups' missing from dashboard.html"
     )
+
+
+# ---------- Symbol detail modal — Signal + POC side-by-side wiring ----------
+#
+# The header search opens #symbolDetailModal. As of the POC-card polish, the
+# modal body wires a Signal card AND a POC card side-by-side on desktop
+# (stacked on mobile). These tests guard the structural pieces so a future
+# refactor can't silently undo:
+#   - the two helpers (pocCompactCardHtml + pocEmptyCardHtml) staying defined,
+#   - the lookupSymbol() body emitting the .grid2.symbol-modal-body wrapper,
+#   - the renderer using poc_top as the lookup source for the compact card,
+#   - the @media (max-width:480px) rule that stacks the body 1-col on phones.
+#
+# Mirrors the assertion style of the tab-routing tests above — no JS runtime,
+# just verifies the rendered HTML carries the expected hooks.
+
+
+def _extract_function_body(html: str, name: str) -> str:
+    """Return the body of a top-level ``function <name>(...)`` declaration."""
+    m = re.search(r"function\s+" + re.escape(name) + r"\s*\([^)]*\)\s*\{", html)
+    assert m, f"function {name}(...) not found in dashboard.html"
+    start = m.end()
+    depth = 1
+    i = start
+    in_str = False
+    str_ch = ""
+    esc = False
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == str_ch:
+                in_str = False
+        else:
+            if ch in ("'", '"', "`"):
+                in_str = True
+                str_ch = ch
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return html[start:i]
+        i += 1
+    raise AssertionError(f"Unterminated function body for {name}")
+
+
+def test_symbol_detail_modal_wires_signal_and_poc_cards():
+    """``buildSymbolSectionsHtml`` (the shared builder used by both single-
+    and multi-symbol modal paths) must emit a ``.grid2.symbol-modal-body``
+    wrapper and call both the Signal renderer AND the compact POC helper
+    inside that wrapper.
+    """
+    html = _read_dashboard_or_skip()
+    body = _extract_function_body(html, "buildSymbolSectionsHtml")
+
+    assert re.search(
+        r"['\"]<div class=\"grid2 symbol-modal-body\">",
+        body,
+    ), "buildSymbolSectionsHtml does not emit a <div class=\"grid2 symbol-modal-body\"> wrapper"
+
+    assert (
+        "stockDetailHtml(" in body or "renderSignalCardFromObj(" in body
+    ), "buildSymbolSectionsHtml does not call any signal-card renderer"
+
+    assert "pocCompactCardHtml(" in body, (
+        "buildSymbolSectionsHtml does not call pocCompactCardHtml() — the "
+        "side-by-side POC card slot is missing"
+    )
+    assert "pocEmptyCardHtml(" in body, (
+        "buildSymbolSectionsHtml does not call pocEmptyCardHtml() — stocks "
+        "and outside-top-50 cryptos would render with a blank POC slot"
+    )
+
+
+def test_symbol_detail_poc_lookup_uses_poc_top_by_uppercase_symbol():
+    """The compact POC card is sourced from ``DATA.market.poc_top``. The
+    resolver (``resolveSymbolFromCache``) does the uppercased .find()
+    against poc_top before passing the matched entry to the builder.
+    """
+    html = _read_dashboard_or_skip()
+    body = _extract_function_body(html, "resolveSymbolFromCache")
+
+    assert "poc_top" in body, (
+        "resolveSymbolFromCache does not read poc_top to find the POC entry"
+    )
+    assert re.search(
+        r"\.poc_top\s*\|\|\s*\[\]\s*\)\s*\.find\s*\(", body
+    ), "poc_top lookup is no longer a .find() — case-insensitive join may have regressed"
+
+
+def test_pocCompactCardHtml_is_defined_and_clickable():
+    """The compact POC card helper must exist, render a ``.poc-card`` with
+    ``data-poc-coin-id`` (the click hook ``wirePocDetail`` listens for) so
+    clicking opens the full pocDetailModal. Without this, the symbol modal's
+    POC card becomes a static dead-end.
+    """
+    html = _read_dashboard_or_skip()
+    body = _extract_function_body(html, "pocCompactCardHtml")
+
+    assert "data-poc-coin-id=" in body, (
+        "pocCompactCardHtml output is missing data-poc-coin-id — click "
+        "handler in wirePocDetail() won't fire and the card becomes a dead "
+        "end (no path to the full POC detail modal)"
+    )
+    assert "poc-card" in body, (
+        "pocCompactCardHtml output is missing the .poc-card class — the "
+        "click delegate `.poc-card[data-poc-coin-id]` won't match"
+    )
+    # Must reuse the existing sparkline helper, not roll a new chart.
+    assert "pocMigrationSparkline(" in body, (
+        "pocCompactCardHtml should reuse pocMigrationSparkline() instead "
+        "of rolling a new sparkline implementation"
+    )
+
+
+def test_pocEmptyCardHtml_is_defined_for_stocks():
+    """Stocks (NVDA, AAPL, ...) and cryptos outside the top-50 POC window
+    must fall back to ``pocEmptyCardHtml`` so the 2-col modal layout never
+    leaves a blank slot. The helper must distinguish the two reasons so the
+    user knows why POC isn't available.
+    """
+    html = _read_dashboard_or_skip()
+    body = _extract_function_body(html, "pocEmptyCardHtml")
+
+    # Stock-specific copy mentions crypto-only.
+    assert "crypto" in body.lower(), (
+        "pocEmptyCardHtml stock branch should explain POC is crypto-only"
+    )
+    # And a top-50 explanation for cryptos that aren't in poc_top.
+    assert "top-50" in body or "top 50" in body or "top-50" in body, (
+        "pocEmptyCardHtml crypto branch should explain top-50 windowing"
+    )
+
+
+def test_symbol_modal_body_stacks_one_column_on_mobile():
+    """The ``.symbol-modal-body`` grid must collapse to 1-col on phone
+    widths. The existing ``.grid2`` @media 860 already covers tablets, but
+    a dedicated ≤480 rule guarantees phones stack even if .grid2 is
+    refactored later.
+    """
+    html = _read_dashboard_or_skip()
+
+    # Symbol modal body is declared with a tighter min-col than .grid2
+    # (360px instead of 420px) so the 2-col layout actually engages within
+    # the ~940px modal width.
+    assert re.search(
+        r"\.symbol-modal-body\s*\{[^}]*grid-template-columns\s*:\s*repeat\(auto-fit,\s*minmax\(\s*360px",
+        html,
+    ), "symbol-modal-body desktop column rule missing or wrong min-col"
+
+    # Mobile ≤480 explicit override → 1-col.
+    media_match = re.search(
+        r"@media\s*\(max-width\s*:\s*480px\)\s*\{([^{}]|\{[^{}]*\})*?\.symbol-modal-body\s*\{[^}]*grid-template-columns\s*:\s*1fr",
+        html,
+    )
+    assert media_match, (
+        "missing @media (max-width:480px) { .symbol-modal-body { grid-"
+        "template-columns: 1fr } } — phone-width users would still see the "
+        "2-col layout if .grid2 ever stops collapsing"
+    )
+
+
+def test_symbol_detail_modal_width_fits_two_cards():
+    """The modal container width must be wide enough for the side-by-side
+    layout (two 360px-min cards + gap + padding ≈ 740px). Sanity check it
+    didn't get shrunk back to the old 820px-or-less limit, which would
+    silently force single-column.
+    """
+    html = _read_dashboard_or_skip()
+
+    # Find the modal container line — must be the inner div under
+    # #symbolDetailModal. Look for width:min(NNNpx,100%) near the modal.
+    block_m = re.search(
+        r'id=["\']symbolDetailModal["\'][^>]*>\s*<div[^>]*width:\s*min\(\s*(\d+)\s*px',
+        html,
+    )
+    assert block_m, "could not find symbolDetailModal inner width style"
+    width_px = int(block_m.group(1))
+    assert width_px >= 900, (
+        f"symbolDetailModal width is {width_px}px — needs ≥900px to comfortably "
+        "host two 360px-min cards side-by-side (currently they'd wrap to 1-col)"
+    )
