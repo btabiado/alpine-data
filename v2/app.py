@@ -1589,26 +1589,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
     <div id="etfContent">
+      <!-- Spotlight row — top-3 ETF flow signals (today BTC, today ETH, current streak).
+           Populated by renderEtfSpotlight(); empty until first ETF render. -->
+      <div id="etfSpotlight" style="margin-bottom:10px"></div>
       <div class="row" id="etfKpis"></div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2><span class="v2-tip-anchor" data-v2-tip="Net inflow (positive) or outflow (negative) into spot ETFs in USD millions, from Farside Investors.">Net flow</span> <span class="tag" id="tagAsset1">BTC</span></h2><span class="desc">USD millions, negative = outflow</span></div>
-          <div class="chart-wrap"><canvas id="flowChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Net inflow (positive) or outflow (negative) into spot ETFs in USD millions, from Farside Investors.">Net flow</span> <span class="tag" id="tagAsset1">BTC</span></h2><div class="v2-card__subtitle">USD millions, negative = outflow</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="flowChart"></canvas></div></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>Cumulative flow <span class="tag" id="tagAsset2">BTC</span></h2><span class="desc">All-time running net</span></div>
-          <div class="chart-wrap"><canvas id="cumChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Cumulative flow <span class="tag" id="tagAsset2">BTC</span></h2><div class="v2-card__subtitle">All-time running net</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="cumChart"></canvas></div></div>
         </div>
       </div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2>Year-over-year cumulative <span class="tag" id="tagAsset3">BTC</span></h2><span class="desc">By day-of-year</span></div>
-          <div class="chart-wrap"><canvas id="yoyChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Year-over-year cumulative <span class="tag" id="tagAsset3">BTC</span></h2><div class="v2-card__subtitle">By day-of-year</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="yoyChart"></canvas></div></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>By fund <span class="tag" id="tagAsset4">BTC</span></h2><span class="desc">All-time &amp; last 30d</span></div>
-          <div style="max-height:300px;overflow:auto">
-            <table id="fundTable"><thead><tr><th>Fund</th><th>All-time ($M)</th><th>Last 30d ($M)</th></tr></thead><tbody></tbody></table>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">By fund <span class="tag" id="tagAsset4">BTC</span></h2><div class="v2-card__subtitle">All-time &amp; last 30d</div></div></div>
+          <div class="v2-card__body">
+            <div style="max-height:300px;overflow:auto">
+              <table id="fundTable"><thead><tr><th>Fund</th><th>All-time ($M)</th><th>Last 30d ($M)</th></tr></thead><tbody></tbody></table>
+            </div>
           </div>
         </div>
       </div>
@@ -1632,13 +1637,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
 
       <div class="grid2" style="margin-top:18px">
-        <div class="chart-card">
-          <div class="head"><h2>Cumulative flow stacked by fund <span class="tag" id="tagStack">BTC</span></h2><span class="desc">Running total per fund, USD millions</span></div>
-          <div class="chart-wrap tall"><canvas id="fundStackChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Cumulative flow stacked by fund <span class="tag" id="tagStack">BTC</span></h2><div class="v2-card__subtitle">Running total per fund, USD millions</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap tall"><canvas id="fundStackChart"></canvas></div></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>Fund comparison <span class="tag" id="tagCompare">BTC</span></h2><span class="desc">Net flow over selected window</span></div>
-          <div class="chart-wrap tall"><canvas id="fundCompareChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Fund comparison <span class="tag" id="tagCompare">BTC</span></h2><div class="v2-card__subtitle">Net flow over selected window</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap tall"><canvas id="fundCompareChart"></canvas></div></div>
         </div>
       </div>
     </div>
@@ -2079,17 +2084,21 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-poc" class="hidden">
     <div class="container">
       <div id="aiTake-poc" class="aiTake-slot"></div>
-      <div class="chart-card">
-        <div class="head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+      <!-- Spotlight row — top-3 POC migrations (biggest UP, biggest DOWN, notable in-VA mover).
+           Populated by renderPocSpotlight(); empty until first POC render. -->
+      <div id="pocSpotlight" style="margin-bottom:10px"></div>
+      <div class="v2-card">
+        <div class="v2-card__head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
           <div style="min-width:0;flex:1">
-            <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+            <h2 class="v2-card__title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
               <span class="v2-tip-anchor" data-v2-tip="Price level with the highest cumulative volume over the lookback window. Acts as a magnet level — high-volume = high-acceptance.">Point of Control</span> — Top 50 by market cap, sorted by signal score
               <button class="btn" data-poc-help="1" aria-label="What is Point of Control?" title="What is Point of Control?" style="padding:1px 8px;font-size:11px;font-weight:700;line-height:1.4">?</button>
             </h2>
-            <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
+            <div class="v2-card__subtitle">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</div>
           </div>
           <button class="btn" data-poc-help="1" style="font-size:11px;white-space:nowrap">📊 Learn about POC</button>
         </div>
+        <div class="v2-card__body">
         <!-- Inline "How to read this page" panel removed per user request —
              all of that explainer content lives in the Learn-about-POC modal
              (triggered by the data-poc-help button above + inside the modal).
@@ -2137,6 +2146,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
              #pocTopGrid below at the standard compact size. -->
         <div id="pocFeaturedRow" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px"></div>
         <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+        </div><!-- /v2-card__body -->
       </div>
     </div>
   </div>
@@ -2327,49 +2337,54 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <button class="btn active" data-whaleasset="btc">BTC</button>
         <button class="btn" data-whaleasset="eth">ETH</button>
       </div>
+      <!-- Spotlight row — top-3 whale signals (BTC sentiment, ETH sentiment, 24h tx vol).
+           Populated by renderWhaleSpotlight(); empty until first whale render. -->
+      <div id="whaleSpotlight" style="margin-bottom:10px"></div>
       <!-- ===== BTC PANEL (default) ===== -->
       <div id="whaleBtcPanel">
       <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed.</div>
       <!-- Headline: Whale Sentiment Index (composite ±100 from on-chain proxies) -->
       <div class="chart-card" id="whaleSentimentCard" style="position:relative"></div>
       <div class="row" id="whaleKpis"></div>
-      <div class="chart-card">
-        <div class="head">
-          <h2>Whale Activity Tracker</h2>
-          <span class="desc">snapshot across multiple time horizons</span>
-        </div>
-        <div style="overflow:auto">
-          <table id="whaleTrackerTable" class="tracker-grid">
-            <thead><tr>
-              <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
+      <div class="v2-card">
+        <div class="v2-card__head"><div style="min-width:0">
+          <h2 class="v2-card__title">Whale Activity Tracker</h2>
+          <div class="v2-card__subtitle">snapshot across multiple time horizons</div>
+        </div></div>
+        <div class="v2-card__body">
+          <div style="overflow:auto">
+            <table id="whaleTrackerTable" class="tracker-grid">
+              <thead><tr>
+                <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
       </div>
       <!-- Recent Whale Transactions: vouts ≥ $1M from the latest confirmed block -->
-      <div class="chart-card hidden" id="whaleAlertsCard">
-        <div class="head">
-          <div>
-            <h2>Recent Whale Transactions <span class="tag">mempool.space</span></h2>
-            <span class="desc" id="whaleAlertsNote">—</span>
+      <div class="v2-card hidden" id="whaleAlertsCard">
+        <div class="v2-card__head"><div style="min-width:0">
+          <h2 class="v2-card__title">Recent Whale Transactions <span class="tag">mempool.space</span></h2>
+          <div class="v2-card__subtitle" id="whaleAlertsNote">—</div>
+        </div></div>
+        <div class="v2-card__body">
+          <div style="overflow:auto">
+            <table class="tracker-grid">
+              <thead><tr>
+                <th>Block</th><th style="text-align:right">USD value</th><th style="text-align:right">BTC</th><th>txid</th>
+              </tr></thead>
+              <tbody id="whaleAlertsBody"></tbody>
+            </table>
           </div>
-        </div>
-        <div style="overflow:auto">
-          <table class="tracker-grid">
-            <thead><tr>
-              <th>Block</th><th style="text-align:right">USD value</th><th style="text-align:right">BTC</th><th>txid</th>
-            </tr></thead>
-            <tbody id="whaleAlertsBody"></tbody>
-          </table>
         </div>
       </div>
       <!-- Whale vs non-whale supply held (real cohort data from bitinfocharts) -->
-      <div class="chart-card">
-        <div class="head" style="flex-wrap:wrap;gap:12px">
-          <div>
-            <h2>BTC supply: whales vs non-whales <span class="tag">bitinfocharts</span></h2>
-            <span class="desc">Stacked: addresses with ≥1,000 BTC (whales) vs everyone else &middot; ~5y daily history binned to your selection</span>
+      <div class="v2-card">
+        <div class="v2-card__head" style="flex-wrap:wrap;gap:12px">
+          <div style="min-width:0">
+            <h2 class="v2-card__title">BTC supply: whales vs non-whales <span class="tag">bitinfocharts</span></h2>
+            <div class="v2-card__subtitle">Stacked: addresses with ≥1,000 BTC (whales) vs everyone else &middot; ~5y daily history binned to your selection</div>
           </div>
           <div class="controls" id="cohortBins" style="border:0;padding:0;margin:0;gap:4px">
             <span class="lbl" style="margin:0">Bin</span>
@@ -2379,26 +2394,30 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <button class="btn" data-cohortbin="year">Yearly</button>
           </div>
         </div>
-        <div class="chart-wrap tall"><canvas id="whaleCohortChart"></canvas></div>
-        <div class="row" id="whaleCohortKpis" style="margin-top:10px"></div>
-        <!-- Glassnode-powered KPIs — visible only if GLASSNODE_API_KEY is set
-             and the metric returned 200. Otherwise stays empty. -->
-        <div id="glassnodeStrip" class="hidden" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)">
-          <div class="sub" style="margin-bottom:8px;color:var(--muted)">
-            🔓 <strong>Glassnode</strong> — true cohort metrics (replaces the bitinfocharts proxy when active)
+        <div class="v2-card__body">
+          <div class="chart-wrap tall"><canvas id="whaleCohortChart"></canvas></div>
+          <div class="row" id="whaleCohortKpis" style="margin-top:10px"></div>
+          <!-- Glassnode-powered KPIs — visible only if GLASSNODE_API_KEY is set
+               and the metric returned 200. Otherwise stays empty. -->
+          <div id="glassnodeStrip" class="hidden" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)">
+            <div class="sub" style="margin-bottom:8px;color:var(--muted)">
+              🔓 <strong>Glassnode</strong> — true cohort metrics (replaces the bitinfocharts proxy when active)
+            </div>
+            <div class="row" id="glassnodeKpis"></div>
           </div>
-          <div class="row" id="glassnodeKpis"></div>
         </div>
       </div>
       <!-- Whale activity proxy: BTC volume + avg tx size combined view -->
-      <div class="chart-card">
-        <div class="head">
-          <h2>Whale activity proxy <span class="tag">FREE</span></h2>
-          <span class="desc">Daily BTC moved on-chain (left axis) &middot; avg tx size USD (right axis) &middot; both rising together = whale-shaped activity</span>
-        </div>
-        <div class="chart-wrap tall"><canvas id="whaleProxyChart"></canvas></div>
-        <div class="note" style="margin-top:10px;font-size:11px">
-          ⚠️ Best free <em>flow</em> proxy. True whale-cohort flow split (volume by ≥1,000 BTC transactions) needs Glassnode Studio Lite (~$30/mo). If you sign up, paste the key and I'll wire the cohort-flow chart.
+      <div class="v2-card">
+        <div class="v2-card__head"><div style="min-width:0">
+          <h2 class="v2-card__title">Whale activity proxy <span class="tag">FREE</span></h2>
+          <div class="v2-card__subtitle">Daily BTC moved on-chain (left axis) &middot; avg tx size USD (right axis) &middot; both rising together = whale-shaped activity</div>
+        </div></div>
+        <div class="v2-card__body">
+          <div class="chart-wrap tall"><canvas id="whaleProxyChart"></canvas></div>
+          <div class="note" style="margin-top:10px;font-size:11px">
+            ⚠️ Best free <em>flow</em> proxy. True whale-cohort flow split (volume by ≥1,000 BTC transactions) needs Glassnode Studio Lite (~$30/mo). If you sign up, paste the key and I'll wire the cohort-flow chart.
+          </div>
         </div>
       </div>
       <!-- BTC network state additions -->
@@ -2412,46 +2431,48 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div id="lightningBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
         </div>
       </div>
-      <div class="chart-card">
-        <div class="head"><h2>Mining pool concentration <span class="tag">mempool.space</span></h2><span class="desc">Hashrate share by pool (1y window) &middot; top 2 = <span id="poolsTop2">?</span></span></div>
-        <div class="chart-wrap tall"><canvas id="miningPoolsChart"></canvas></div>
+      <div class="v2-card">
+        <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Mining pool concentration <span class="tag">mempool.space</span></h2><div class="v2-card__subtitle">Hashrate share by pool (1y window) &middot; top 2 = <span id="poolsTop2">?</span></div></div></div>
+        <div class="v2-card__body"><div class="chart-wrap tall"><canvas id="miningPoolsChart"></canvas></div></div>
       </div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2>Avg. transaction value (USD)</h2><span class="desc">tx_volume_usd / tx_count &middot; rising = whales moving more per tx</span></div>
-          <div class="chart-wrap"><canvas id="avgTxChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Avg. transaction value (USD)</h2><div class="v2-card__subtitle">tx_volume_usd / tx_count &middot; rising = whales moving more per tx</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="avgTxChart"></canvas></div></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>On-chain transaction value (USD)</h2><span class="desc">Daily estimated USD value moved</span></div>
-          <div class="chart-wrap"><canvas id="txVolChart"></canvas></div>
-        </div>
-      </div>
-      <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2>Active addresses</h2><span class="desc">Unique addresses used per day</span></div>
-          <div class="chart-wrap"><canvas id="addrChart"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="head"><h2>Hash rate (TH/s)</h2><span class="desc">Miner commitment, log scale</span></div>
-          <div class="chart-wrap"><canvas id="hashChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">On-chain transaction value (USD)</h2><div class="v2-card__subtitle">Daily estimated USD value moved</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="txVolChart"></canvas></div></div>
         </div>
       </div>
       <div class="grid2">
-        <div class="chart-card">
-          <div class="head"><h2>Miners revenue (USD)</h2><span class="desc">Block reward + fees</span></div>
-          <div class="chart-wrap"><canvas id="minerChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Active addresses</h2><div class="v2-card__subtitle">Unique addresses used per day</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="addrChart"></canvas></div></div>
         </div>
-        <div class="chart-card">
-          <div class="head"><h2>On-chain output volume (BTC)</h2><span class="desc">Total BTC moved per day</span></div>
-          <div class="chart-wrap"><canvas id="outputChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Hash rate (TH/s)</h2><div class="v2-card__subtitle">Miner commitment, log scale</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="hashChart"></canvas></div></div>
         </div>
       </div>
-      <div class="chart-card hidden" id="multichainWhaleCard">
-        <div class="head">
-          <h2>Multi-chain whale snapshot <span class="tag">Blockchair</span></h2>
-          <span class="desc">24h network stats + largest single tx · LTC / BCH / DOGE</span>
+      <div class="grid2">
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Miners revenue (USD)</h2><div class="v2-card__subtitle">Block reward + fees</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="minerChart"></canvas></div></div>
         </div>
-        <div id="multichainWhaleGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">On-chain output volume (BTC)</h2><div class="v2-card__subtitle">Total BTC moved per day</div></div></div>
+          <div class="v2-card__body"><div class="chart-wrap"><canvas id="outputChart"></canvas></div></div>
+        </div>
+      </div>
+      <div class="v2-card hidden" id="multichainWhaleCard">
+        <div class="v2-card__head"><div style="min-width:0">
+          <h2 class="v2-card__title">Multi-chain whale snapshot <span class="tag">Blockchair</span></h2>
+          <div class="v2-card__subtitle">24h network stats + largest single tx · LTC / BCH / DOGE</div>
+        </div></div>
+        <div class="v2-card__body">
+          <div id="multichainWhaleGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
+        </div>
       </div>
       </div> <!-- /whaleBtcPanel -->
       <!-- ===== ETH PANEL ===== -->
@@ -2462,77 +2483,85 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="row" id="whaleEthKpis"></div>
         <!-- Recent ETH whale tx feed — promoted directly after Sentiment+KPIs
              to mirror the BTC panel ordering. Hidden until data arrives. -->
-        <div class="chart-card hidden" id="ethWhaleAlertsCard">
-          <div class="head">
-            <h2>Recent ETH whale transactions <span class="tag">Blockchair</span></h2>
-            <span class="desc" id="ethWhaleAlertsNote">—</span>
-          </div>
-          <div style="overflow:auto">
-            <table class="tracker-grid">
-              <thead><tr>
-                <th>Hash</th><th style="text-align:right">ETH</th><th style="text-align:right">USD value</th><th>Time</th>
-              </tr></thead>
-              <tbody id="ethWhaleAlertsBody"></tbody>
-            </table>
+        <div class="v2-card hidden" id="ethWhaleAlertsCard">
+          <div class="v2-card__head"><div style="min-width:0">
+            <h2 class="v2-card__title">Recent ETH whale transactions <span class="tag">Blockchair</span></h2>
+            <div class="v2-card__subtitle" id="ethWhaleAlertsNote">—</div>
+          </div></div>
+          <div class="v2-card__body">
+            <div style="overflow:auto">
+              <table class="tracker-grid">
+                <thead><tr>
+                  <th>Hash</th><th style="text-align:right">ETH</th><th style="text-align:right">USD value</th><th>Time</th>
+                </tr></thead>
+                <tbody id="ethWhaleAlertsBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
         <!-- ETH Whale Activity Tracker — multi-horizon delta table. Mirrors
              the BTC panel's whaleTrackerTable but reads CM + Blockchair +
              Etherscan series available on the ETH side. Hidden when no row
              has any data. -->
-        <div class="chart-card hidden" id="ethWhaleTrackerCard">
-          <div class="head">
-            <h2>ETH Whale Activity Tracker</h2>
-            <span class="desc">snapshot across multiple time horizons (Coin Metrics + Etherscan)</span>
-          </div>
-          <div style="overflow:auto">
-            <table id="ethWhaleTrackerTable" class="tracker-grid">
-              <thead><tr>
-                <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
-              </tr></thead>
-              <tbody></tbody>
-            </table>
+        <div class="v2-card hidden" id="ethWhaleTrackerCard">
+          <div class="v2-card__head"><div style="min-width:0">
+            <h2 class="v2-card__title">ETH Whale Activity Tracker</h2>
+            <div class="v2-card__subtitle">snapshot across multiple time horizons (Coin Metrics + Etherscan)</div>
+          </div></div>
+          <div class="v2-card__body">
+            <div style="overflow:auto">
+              <table id="ethWhaleTrackerTable" class="tracker-grid">
+                <thead><tr>
+                  <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
         </div>
         <!-- ETH whale activity proxy: combined two-axis chart of daily
              transactions + active addresses. Both rising together = whale-
              shaped activity (more txs per active wallet). ETH parallel of the
              BTC whaleProxyChart card. -->
-        <div class="chart-card hidden" id="ethWhaleProxyCard">
-          <div class="head">
-            <h2>ETH whale activity proxy <span class="tag">FREE</span></h2>
-            <span class="desc">Daily transactions (left axis) &middot; active addresses (right axis) &middot; Coin Metrics community tier &middot; both rising = whale-shaped activity</span>
-          </div>
-          <div class="chart-wrap tall"><canvas id="ethWhaleProxyChart"></canvas></div>
-          <div class="note" style="margin-top:10px;font-size:11px">
-            ⚠️ Best free <em>activity</em> proxy. True ETH cohort flow (volume by ≥10K ETH wallets) requires Glassnode / Nansen — both paid.
+        <div class="v2-card hidden" id="ethWhaleProxyCard">
+          <div class="v2-card__head"><div style="min-width:0">
+            <h2 class="v2-card__title">ETH whale activity proxy <span class="tag">FREE</span></h2>
+            <div class="v2-card__subtitle">Daily transactions (left axis) &middot; active addresses (right axis) &middot; Coin Metrics community tier &middot; both rising = whale-shaped activity</div>
+          </div></div>
+          <div class="v2-card__body">
+            <div class="chart-wrap tall"><canvas id="ethWhaleProxyChart"></canvas></div>
+            <div class="note" style="margin-top:10px;font-size:11px">
+              ⚠️ Best free <em>activity</em> proxy. True ETH cohort flow (volume by ≥10K ETH wallets) requires Glassnode / Nansen — both paid.
+            </div>
           </div>
         </div>
-        <div class="chart-card">
-          <div class="head">
-            <h2>Largest ETH transaction (last 24h) <span class="tag">Blockchair</span></h2>
-            <span class="desc">Single biggest tx by USD value on Ethereum mainnet over the past 24 hours</span>
-          </div>
-          <div id="ethLargestTxBox" class="sub" style="font-size:13px;color:var(--text);line-height:1.6;padding:6px 4px"></div>
-        </div>
-        <div class="grid2">
-          <div class="chart-card">
-            <div class="head"><h2>ETH active addresses</h2><span class="desc">Unique addresses used per day (Coin Metrics)</span></div>
-            <div class="chart-wrap"><canvas id="ethActiveAddrChart"></canvas></div>
-          </div>
-          <div class="chart-card">
-            <div class="head"><h2>ETH 24h trading volume (CoinGecko)</h2><span class="desc">Exchange-traded volume in USD — on-chain transfer volume requires a paid feed</span></div>
-            <div class="chart-wrap"><canvas id="ethTxVolChart"></canvas></div>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0">
+            <h2 class="v2-card__title">Largest ETH transaction (last 24h) <span class="tag">Blockchair</span></h2>
+            <div class="v2-card__subtitle">Single biggest tx by USD value on Ethereum mainnet over the past 24 hours</div>
+          </div></div>
+          <div class="v2-card__body">
+            <div id="ethLargestTxBox" class="sub" style="font-size:13px;color:var(--text);line-height:1.6;padding:6px 4px"></div>
           </div>
         </div>
         <div class="grid2">
-          <div class="chart-card">
-            <div class="head"><h2>ETH transactions per day</h2><span class="desc">Network throughput (Coin Metrics)</span></div>
-            <div class="chart-wrap"><canvas id="ethTxCountChart"></canvas></div>
+          <div class="v2-card">
+            <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">ETH active addresses</h2><div class="v2-card__subtitle">Unique addresses used per day (Coin Metrics)</div></div></div>
+            <div class="v2-card__body"><div class="chart-wrap"><canvas id="ethActiveAddrChart"></canvas></div></div>
           </div>
-          <div class="chart-card">
-            <div class="head"><h2>ETH circulating supply</h2><span class="desc">Post-Merge supply has trended flat-to-deflationary (Coin Metrics)</span></div>
-            <div class="chart-wrap"><canvas id="ethSupplyChart"></canvas></div>
+          <div class="v2-card">
+            <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">ETH 24h trading volume (CoinGecko)</h2><div class="v2-card__subtitle">Exchange-traded volume in USD — on-chain transfer volume requires a paid feed</div></div></div>
+            <div class="v2-card__body"><div class="chart-wrap"><canvas id="ethTxVolChart"></canvas></div></div>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="v2-card">
+            <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">ETH transactions per day</h2><div class="v2-card__subtitle">Network throughput (Coin Metrics)</div></div></div>
+            <div class="v2-card__body"><div class="chart-wrap"><canvas id="ethTxCountChart"></canvas></div></div>
+          </div>
+          <div class="v2-card">
+            <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">ETH circulating supply</h2><div class="v2-card__subtitle">Post-Merge supply has trended flat-to-deflationary (Coin Metrics)</div></div></div>
+            <div class="v2-card__body"><div class="chart-wrap"><canvas id="ethSupplyChart"></canvas></div></div>
           </div>
         </div>
         <div class="grid2">
@@ -2545,13 +2574,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <div id="ethStatsBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
           </div>
         </div>
-        <div class="chart-card">
-          <div class="head">
-            <h2>ETH blocks mined per day (90d) <span class="tag">Etherscan</span></h2>
-            <span class="desc">Daily on-chain throughput proxy — block count between midnight-UTC checkpoints. ~7,200/day saturates the 12s slot target post-Merge.</span>
+        <div class="v2-card">
+          <div class="v2-card__head"><div style="min-width:0">
+            <h2 class="v2-card__title">ETH blocks mined per day (90d) <span class="tag">Etherscan</span></h2>
+            <div class="v2-card__subtitle">Daily on-chain throughput proxy — block count between midnight-UTC checkpoints. ~7,200/day saturates the 12s slot target post-Merge.</div>
+          </div></div>
+          <div class="v2-card__body">
+            <div id="ethEtherscanDailyNoKey" class="sub hidden" style="font-size:12px;color:var(--muted);padding:6px 4px"></div>
+            <div class="chart-wrap"><canvas id="ethEtherscanDailyChart"></canvas></div>
           </div>
-          <div id="ethEtherscanDailyNoKey" class="sub hidden" style="font-size:12px;color:var(--muted);padding:6px 4px"></div>
-          <div class="chart-wrap"><canvas id="ethEtherscanDailyChart"></canvas></div>
         </div>
       </div> <!-- /whaleEthPanel -->
     </div>
@@ -2791,6 +2822,67 @@ function baseOpts({yLabel='', tooltipFmt=null}={}){
 // other tabs that still read state.asset.
 function etfAsset(){ return state.etfAsset; }
 function etfData(){ return DATA[etfAsset()] || {}; }
+
+// Spotlight row for the ETF tab — three top-of-fold metrics chosen for
+// decision relevance: today's BTC net flow, today's ETH net flow, and
+// the currently-active streak (longer of BTC/ETH). Severity tints follow
+// flow direction (good = inflow, bad = outflow). Wave-3 hierarchy goal.
+function renderEtfSpotlight(){
+  const host = document.getElementById('etfSpotlight');
+  if (!host) return;
+  const btc = (DATA.btc || {}).stats || {};
+  const eth = (DATA.eth || {}).stats || {};
+  const btcLast = btc.last_day_flow;
+  const ethLast = eth.last_day_flow;
+  const btcSev = btcLast == null ? 'info' : (btcLast >= 0 ? 'good' : 'bad');
+  const ethSev = ethLast == null ? 'info' : (ethLast >= 0 ? 'good' : 'bad');
+  // Streak: pick the asset with the longer current streak. Length 0 → no streak.
+  const btcStreak = btc.streak || null;
+  const ethStreak = eth.streak || null;
+  const btcLen = btcStreak ? Number(btcStreak.length || 0) : 0;
+  const ethLen = ethStreak ? Number(ethStreak.length || 0) : 0;
+  let streakLabel = 'Current streak';
+  let streakVal = '—';
+  let streakSev = 'info';
+  let streakTip = 'Longest active consecutive-day streak in the same flow direction across BTC and ETH ETFs.';
+  if (btcLen || ethLen){
+    const pick = btcLen >= ethLen ? {s:btcStreak, sym:'BTC'} : {s:ethStreak, sym:'ETH'};
+    const dir = pick.s.direction || 'flat';
+    streakLabel = `Current streak (${pick.sym})`;
+    streakVal = `${pick.s.length}d ${dir}`;
+    streakSev = dir === 'up' ? 'good' : dir === 'down' ? 'bad' : 'warn';
+  }
+  const body =
+    '<div class="v2-card__metric-row" style="justify-content:space-around">' +
+      V2.metric({
+        label: `BTC net flow${btc.last_date ? ' · ' + btc.last_date : ''}`,
+        value: btcLast == null ? '—' : fmtSigned(btcLast),
+        severity: btcSev,
+        large: true,
+        tip: 'Latest daily net spot-BTC-ETF flow (USD millions). Inflows are buying pressure, outflows are selling pressure.',
+      }) +
+      V2.metric({
+        label: `ETH net flow${eth.last_date ? ' · ' + eth.last_date : ''}`,
+        value: ethLast == null ? '—' : fmtSigned(ethLast),
+        severity: ethSev,
+        large: true,
+        tip: 'Latest daily net spot-ETH-ETF flow (USD millions). Inflows are buying pressure, outflows are selling pressure.',
+      }) +
+      V2.metric({
+        label: streakLabel,
+        value: streakVal,
+        severity: streakSev,
+        large: true,
+        tip: streakTip,
+      }) +
+    '</div>';
+  host.innerHTML = V2.card({
+    title: 'Top signals — today',
+    subtitle: 'Most decision-relevant ETF metrics right now',
+    severity: 'ai',
+    body,
+  });
+}
 
 function renderEtfKpis(){
   const d = etfData(); const s = d.stats || {};
@@ -3888,6 +3980,72 @@ function whaleData(){ return (DATA.whale||{}).btc || {}; }
 // tab. Reads market.whale.sentiment which is computed Python-side in
 // fetch_market.compute_whale_sentiment(). Same gauge pattern as the
 // asset signal cards.
+// Spotlight row for the Whale tab — three top-of-fold metrics: BTC whale
+// sentiment score, ETH whale sentiment score, and an estimate of total 24h
+// whale transaction volume. Severity tints follow each sentiment index
+// (+ accumulation = good, distribution = bad). Wave-3 hierarchy goal.
+function renderWhaleSpotlight(){
+  const host = document.getElementById('whaleSpotlight');
+  if (!host) return;
+  const btcS = (DATA.whale || {}).sentiment || null;
+  const ethS = ((DATA.whale || {}).eth || {}).sentiment || null;
+  // 24h whale volume proxy: prefer BTC tx_volume_usd last value when present
+  // (best free whale-flow proxy we have for BTC), else fall back to the ETH
+  // Blockchair on-chain transfer volume.
+  const btcVol = (function(){
+    const arr = ((DATA.whale || {}).btc || {}).tx_volume_usd || [];
+    const last = arr.length ? arr[arr.length - 1] : null;
+    return last && last.value != null ? Number(last.value) : null;
+  })();
+  const ethVol = (function(){
+    const bc = (((DATA.whale || {}).eth) || {}).blockchair || {};
+    return bc.transfer_volume_24h_usd != null ? Number(bc.transfer_volume_24h_usd) : null;
+  })();
+  const totalVol = (btcVol != null || ethVol != null)
+    ? (btcVol || 0) + (ethVol || 0) : null;
+  const sevForScore = (sc) => {
+    if (sc == null) return 'info';
+    if (sc >= 20) return 'good';
+    if (sc <= -20) return 'bad';
+    return 'warn';
+  };
+  const fmtScore = (s) => {
+    if (!s || s.score == null) return '—';
+    const n = Number(s.score);
+    return (n >= 0 ? '+' : '') + n + ' · ' + (s.label || '');
+  };
+  const body =
+    '<div class="v2-card__metric-row" style="justify-content:space-around">' +
+      V2.metric({
+        label: 'BTC Whale Sentiment',
+        value: fmtScore(btcS),
+        severity: sevForScore(btcS ? btcS.score : null),
+        large: true,
+        tip: 'Composite ±100 whale index built from free BTC on-chain proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).',
+      }) +
+      V2.metric({
+        label: 'ETH Whale Sentiment',
+        value: fmtScore(ethS),
+        severity: sevForScore(ethS ? ethS.score : null),
+        large: true,
+        tip: 'ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics (Coin Metrics + Blockchair).',
+      }) +
+      V2.metric({
+        label: '24h whale-flow proxy (BTC+ETH)',
+        value: totalVol == null ? '—' : fmtUSD(totalVol, 'auto'),
+        severity: 'info',
+        large: true,
+        tip: 'Total estimated USD value moved on-chain across BTC + ETH over the last day. Combines blockchain.info tx_volume_usd (BTC) and Blockchair transfer-volume (ETH) — best free flow proxy.',
+      }) +
+    '</div>';
+  host.innerHTML = V2.card({
+    title: 'Top signals — whale activity',
+    subtitle: 'Composite indices + 24h on-chain flow',
+    severity: 'ai',
+    body,
+  });
+}
+
 function renderWhaleSentiment(){
   const s = (DATA.whale || {}).sentiment;
   const host = document.getElementById('whaleSentimentCard');
@@ -4299,6 +4457,9 @@ function syncWhalePanels(){
 // to display:none canvases).
 function renderWhalePanel(){
   syncWhalePanels();
+  // Spotlight is asset-agnostic (covers BTC + ETH side-by-side) so it
+  // renders for both panel choices.
+  renderWhaleSpotlight();
   if (state.whaleAsset === 'eth'){
     renderWhaleEth();
   } else {
@@ -7901,6 +8062,87 @@ function renderFuturesSentiment(){
 // positive = broad accumulation (POCs drifting higher), negative = broad
 // distribution. Label thresholds match the signal-score conventions used
 // elsewhere on the dashboard (±50 strong, ±20 moderate).
+// Spotlight row for the POC tab — three top-of-fold metrics chosen for
+// decision relevance: top-25 coin with the strongest UP migration, top-25
+// coin with the strongest DOWN migration, and BTC's current 90d POC vs
+// price (distance % — actionable since BTC anchors most of the market).
+// Wave-3 hierarchy goal.
+function renderPocSpotlight(){
+  const host = document.getElementById('pocSpotlight');
+  if (!host) return;
+  const list = ((DATA.market || {}).poc_top) || [];
+  if (!Array.isArray(list) || list.length === 0){
+    host.innerHTML = '';
+    return;
+  }
+  // Top-25 by market cap slice — poc_top is already sorted by market cap.
+  const top25 = list.slice(0, 25);
+  // Helper: signed migration magnitude (positive = UP, negative = DOWN).
+  const migDelta = (c) => {
+    const m = c && c.poc && c.poc.migration;
+    if (!m || !isFinite(Number(m.delta_pct))) return 0;
+    const d = Number(m.delta_pct);
+    return m.direction === 'UP' ? Math.abs(d) : m.direction === 'DOWN' ? -Math.abs(d) : 0;
+  };
+  let topUp = null, topDown = null;
+  for (const c of top25){
+    const d = migDelta(c);
+    if (d > 0 && (!topUp || d > migDelta(topUp))) topUp = c;
+    if (d < 0 && (!topDown || d < migDelta(topDown))) topDown = c;
+  }
+  const symOf = (c) => (c && (c.symbol || c.coin_id) || '').toString().toUpperCase();
+  // BTC anchor: prefer 90d POC distance from current price.
+  const btc = top25.find(c => symOf(c) === 'BTC') || list.find(c => symOf(c) === 'BTC');
+  const btcAnchor = btc && btc.poc && (btc.poc.d90 || btc.poc.d30 || btc.poc.d180);
+  const btcDist = btcAnchor && btcAnchor.distance_pct != null ? Number(btcAnchor.distance_pct) : null;
+  const btcInVA = btcAnchor && btcAnchor.in_value_area;
+  // Severity mapping: UP = good, DOWN = bad. BTC distance — IN value area =
+  // info, far above (>5%) = warn (extended), far below = warn (potential bounce).
+  const upVal = topUp
+    ? `${symOf(topUp)} +${migDelta(topUp).toFixed(1)}%`
+    : '—';
+  const downVal = topDown
+    ? `${symOf(topDown)} ${migDelta(topDown).toFixed(1)}%`
+    : '—';
+  const btcVal = btcDist == null
+    ? '—'
+    : ((btcDist >= 0 ? '+' : '') + btcDist.toFixed(1) + '%' + (btcInVA ? ' · in VA' : ' · out'));
+  const btcSev = btcDist == null ? 'info'
+    : btcInVA ? 'info'
+    : Math.abs(btcDist) >= 5 ? 'warn'
+    : 'info';
+  const body =
+    '<div class="v2-card__metric-row" style="justify-content:space-around">' +
+      V2.metric({
+        label: 'Top POC migration UP (top 25)',
+        value: upVal,
+        severity: topUp ? 'good' : 'info',
+        large: true,
+        tip: 'Coin whose Point of Control drifted the most upward over the lookback window — strongest accumulation signal in the top-25.',
+      }) +
+      V2.metric({
+        label: 'Top POC migration DOWN (top 25)',
+        value: downVal,
+        severity: topDown ? 'bad' : 'info',
+        large: true,
+        tip: 'Coin whose Point of Control drifted the most downward — strongest distribution signal in the top-25.',
+      }) +
+      V2.metric({
+        label: 'BTC price vs 90d POC',
+        value: btcVal,
+        severity: btcSev,
+        large: true,
+        tip: 'Distance from BTC current price to the 90-day Point of Control. Inside the value area = price accepted; outside = potential mean-reversion magnet.',
+      }) +
+    '</div>';
+  host.innerHTML = V2.card({
+    title: 'Top signals — POC migrations',
+    subtitle: 'Strongest accumulation / distribution + BTC anchor distance',
+    severity: 'ai',
+    body,
+  });
+}
+
 function renderPocSentimentIndex(){
   const card = document.getElementById('pocSentimentCard');
   if (!card) return;
@@ -9078,12 +9320,14 @@ function renderAll(){
 
   if (state.tab === 'etf' && !etfEmpty){
     renderEtfFlowSentiment();
+    renderEtfSpotlight();
     renderEtfKpis(); renderEtfFundTable(); renderFlow(); renderCum(); renderYoy();
     renderFundKpis(); renderFundStack(); renderFundCompare();
   } else if (state.tab === 'etf'){
     // Empty-state safety: hide the sentiment card cleanly if there's no
     // ETF data loaded yet (otherwise it would persist stale numbers).
     renderEtfFlowSentiment();
+    renderEtfSpotlight();
   }
   if (state.tab === 'trading' && !trEmpty){
     renderFuturesSentiment();
@@ -9129,6 +9373,7 @@ function renderAll(){
     renderSocial();
   }
   if (state.tab === 'poc'){
+    renderPocSpotlight();
     renderPocSentimentIndex();
     renderPocTopCards();
   }
