@@ -13,12 +13,13 @@ Output: data/market.json and data/whale.json, consumed by app.py.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 import requests
 
@@ -3500,71 +3501,149 @@ def whale_proxies_btc() -> dict:
 
 # ----- main entrypoints ------------------------------------------------------
 
-def fetch_trading() -> dict:
-    # CoinGecko free tier is 30 calls/min. We make 7 calls back-to-back during
-    # this function, which can trip the per-minute limit when combined with
-    # any other recent activity (manual /api/refresh, /api/data polls, etc).
-    # Sleep 600ms between CoinGecko calls so a single fetch_all() can't blow
-    # the budget even on a cold start. Total: ~4s overhead — well worth it.
-    CG_PACE = 0.6
+# Concurrency configuration. CoinGecko's free tier is ~30 req/min, so we
+# serialize CG calls through a 1-permit semaphore AND enforce a 0.6s gap
+# between successive calls (100/min headroom mathematically; 0.6s in
+# practice protects against the per-IP burst limiter). Other APIs
+# (CryptoCompare, DeFiLlama, mempool.space, etc.) tolerate much higher
+# concurrency — we cap them at 10 simultaneously to avoid local socket
+# exhaustion and being mistaken for a scraper.
+CG_PACE = 0.6
+CG_CONCURRENCY = 1
+GENERIC_CONCURRENCY = 10
+
+
+async def _cg_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
+    """Run a synchronous CoinGecko fetcher in a thread, serialized via the
+    CG semaphore and followed by the CG_PACE gap. The semaphore is held
+    across the gap so two CG calls can never overlap, no matter how the
+    event loop schedules other tasks."""
+    async with _cg_semaphore:
+        result = await asyncio.to_thread(fn, *args, **kwargs)
+        await asyncio.sleep(CG_PACE)
+        return result
+
+
+async def _bg_call(fn: Callable, *args: Any, **kwargs: Any) -> Any:
+    """Run an arbitrary synchronous fetcher in a thread under the generic
+    concurrency cap. Used for all non-CG sources (CryptoCompare, OKX,
+    DeFiLlama, mempool.space, Coinbase, Yahoo, FRED, etc.)."""
+    async with _generic_semaphore:
+        return await asyncio.to_thread(fn, *args, **kwargs)
+
+
+async def _timed(label: str, coro: Awaitable[Any]) -> Any:
+    """Await ``coro`` and log wall-clock duration. Survives exceptions —
+    timing line is emitted even on failure so a hung fetcher is visible."""
+    t0 = time.monotonic()
+    try:
+        return await coro
+    finally:
+        print(f"  [timing] {label}: {time.monotonic() - t0:.2f}s")
+
+
+# Lazily-created event-loop-bound semaphores. We construct them fresh per
+# asyncio.run() invocation to avoid the "attached to different loop" error
+# that bites long-lived module-scope asyncio primitives. See _fetch_trading_async.
+_cg_semaphore: asyncio.Semaphore  # set in _fetch_trading_async / _fetch_whale_async
+_generic_semaphore: asyncio.Semaphore
+
+
+async def _fetch_trading_async() -> dict:
+    """Concurrent implementation of ``fetch_trading``. Schema-identical to
+    the previous sequential version; just runs the independent fetchers in
+    parallel and serializes CoinGecko calls behind a rate-limited
+    semaphore."""
+    global _cg_semaphore, _generic_semaphore
+    _cg_semaphore = asyncio.Semaphore(CG_CONCURRENCY)
+    _generic_semaphore = asyncio.Semaphore(GENERIC_CONCURRENCY)
+
     print("Fetching trading data...")
-    print("  CoinGecko BTC/ETH/LINK/LTC market_chart...")
-    btc_mkt = coingecko_market("bitcoin");   time.sleep(CG_PACE)
-    eth_mkt = coingecko_market("ethereum");  time.sleep(CG_PACE)
-    link_mkt = coingecko_market("chainlink"); time.sleep(CG_PACE)
-    ltc_mkt = coingecko_market("litecoin");  time.sleep(CG_PACE)
-    print("  CoinGecko global...")
-    glob = coingecko_global();               time.sleep(CG_PACE)
-    print("  Coinbase Exchange spot (BTC/ETH/LINK/LTC)...")
-    cb_spot = coinbase_spot()
-    print("  Coinbase International Exchange perpetuals snapshot...")
-    cb_intl = coinbase_intl_perpetuals()
-    print("  OKX funding BTC/ETH/LINK/LTC...")
-    okx_fund_btc = okx_funding("BTC-USDT-SWAP")
-    okx_fund_eth = okx_funding("ETH-USDT-SWAP")
-    okx_fund_link = okx_funding("LINK-USDT-SWAP")
-    okx_fund_ltc = okx_funding("LTC-USDT-SWAP")
-    print("  OKX open interest BTC/ETH/LINK/LTC...")
-    okx_oi_btc = okx_open_interest("BTC")
-    okx_oi_eth = okx_open_interest("ETH")
-    okx_oi_link = okx_open_interest("LINK")
-    okx_oi_ltc = okx_open_interest("LTC")
-    print("  OKX long/short BTC/ETH/LINK/LTC...")
-    okx_ls_btc = okx_long_short("BTC")
-    okx_ls_eth = okx_long_short("ETH")
-    okx_ls_link = okx_long_short("LINK")
-    okx_ls_ltc = okx_long_short("LTC")
-    print("  Deribit DVOL BTC/ETH (LINK and LTC not supported)...")
-    dvol_btc = deribit_dvol("BTC")
-    dvol_eth = deribit_dvol("ETH")
-    print("  DeFiLlama (stablecoin mcap, DEX vol, fees)...")
-    llama = defillama()
-    print("  GeckoTerminal DEX pools (trending + new)...")
-    gt_pools = geckoterminal_pools()
-    print("  Research tab social/sentiment sources (Reddit, CryptoCompare, Santiment)...")
-    social = fetch_social()
-    # Removed: coin_metrics_btc_eth_metrics() — the resulting market.coin_metrics
-    # blob (~68 KB of PriceUSD/CapMrktCurUSD) was never consumed by any
-    # renderer or insight rule. The whale tab uses a separate ETH-only
-    # fetcher (coin_metrics_eth_whale_metrics) under whale.eth.coin_metrics
-    # which has different metrics. Re-enable here only if a UI consumer lands.
-    print("  Etherscan v2 (ETH gas oracle)...")
-    gas = etherscan_gas()
-    fred = fetch_fred()
+    t_total = time.monotonic()
+
+    # ---- Batch 1: all independent fetchers run concurrently -----------------
+    # CoinGecko calls share a 1-permit semaphore so they execute in series
+    # internally even though they're scheduled in parallel here.
+    print("  Batch 1: scheduling all independent fetchers in parallel...")
+    (
+        btc_mkt, eth_mkt, link_mkt, ltc_mkt,           # CG market_chart × 4
+        glob,                                          # CG /global
+        top_markets_raw,                               # CG /coins/markets
+        trending,                                      # CG /search/trending
+        cb_spot, cb_intl,                              # Coinbase × 2
+        okx_fund_btc, okx_fund_eth, okx_fund_link, okx_fund_ltc,  # OKX funding × 4
+        okx_oi_btc, okx_oi_eth, okx_oi_link, okx_oi_ltc,          # OKX OI × 4
+        okx_ls_btc, okx_ls_eth, okx_ls_link, okx_ls_ltc,          # OKX L/S × 4
+        dvol_btc, dvol_eth,                            # Deribit × 2
+        llama, gt_pools, social,                       # DeFiLlama, GeckoTerm, social
+        gas, fred, mp,                                 # Etherscan, FRED, mempool
+        diff_adj, lightning, pools,                    # mempool extras × 3
+        chains, protocols, yields_top, bridges,        # DeFiLlama tabular × 4
+        tvl_eth, tvl_sol, tvl_arb, tvl_base,           # DeFiLlama historical × 4
+        news, ai_news, ai_funding, ai_curated,         # news × 4
+        cadli, yahoo_idx, stocks_signals, fng,         # cadli, yahoo × 2, F&G
+    ) = await asyncio.gather(
+        _timed("coingecko_market(btc)",   _cg_call(coingecko_market, "bitcoin")),
+        _timed("coingecko_market(eth)",   _cg_call(coingecko_market, "ethereum")),
+        _timed("coingecko_market(link)",  _cg_call(coingecko_market, "chainlink")),
+        _timed("coingecko_market(ltc)",   _cg_call(coingecko_market, "litecoin")),
+        _timed("coingecko_global",        _cg_call(coingecko_global)),
+        _timed("coingecko_top_markets",   _cg_call(coingecko_top_markets, 50)),
+        _timed("coingecko_trending",      _cg_call(coingecko_trending)),
+        _timed("coinbase_spot",           _bg_call(coinbase_spot)),
+        _timed("coinbase_intl_perpetuals", _bg_call(coinbase_intl_perpetuals)),
+        _timed("okx_funding(btc)",        _bg_call(okx_funding, "BTC-USDT-SWAP")),
+        _timed("okx_funding(eth)",        _bg_call(okx_funding, "ETH-USDT-SWAP")),
+        _timed("okx_funding(link)",       _bg_call(okx_funding, "LINK-USDT-SWAP")),
+        _timed("okx_funding(ltc)",        _bg_call(okx_funding, "LTC-USDT-SWAP")),
+        _timed("okx_open_interest(btc)",  _bg_call(okx_open_interest, "BTC")),
+        _timed("okx_open_interest(eth)",  _bg_call(okx_open_interest, "ETH")),
+        _timed("okx_open_interest(link)", _bg_call(okx_open_interest, "LINK")),
+        _timed("okx_open_interest(ltc)",  _bg_call(okx_open_interest, "LTC")),
+        _timed("okx_long_short(btc)",     _bg_call(okx_long_short, "BTC")),
+        _timed("okx_long_short(eth)",     _bg_call(okx_long_short, "ETH")),
+        _timed("okx_long_short(link)",    _bg_call(okx_long_short, "LINK")),
+        _timed("okx_long_short(ltc)",     _bg_call(okx_long_short, "LTC")),
+        _timed("deribit_dvol(btc)",       _bg_call(deribit_dvol, "BTC")),
+        _timed("deribit_dvol(eth)",       _bg_call(deribit_dvol, "ETH")),
+        _timed("defillama",               _bg_call(defillama)),
+        _timed("geckoterminal_pools",     _bg_call(geckoterminal_pools)),
+        _timed("fetch_social",            _bg_call(fetch_social)),
+        _timed("etherscan_gas",           _bg_call(etherscan_gas)),
+        _timed("fetch_fred",              _bg_call(fetch_fred)),
+        _timed("mempool_space",           _bg_call(mempool_space)),
+        _timed("mempool_diff_adj",        _bg_call(mempool_difficulty_adjustment)),
+        _timed("mempool_lightning",       _bg_call(mempool_lightning_stats)),
+        _timed("mempool_mining_pools",    _bg_call(mempool_mining_pools)),
+        _timed("defillama_chains",        _bg_call(defillama_chains, 20)),
+        _timed("defillama_protocols",     _bg_call(defillama_protocols, 25)),
+        _timed("defillama_yields",        _bg_call(defillama_yields_stablecoin_top, 20)),
+        _timed("defillama_bridges",       _bg_call(defillama_bridges)),
+        _timed("defillama_tvl(eth)",      _bg_call(defillama_historical_tvl, "Ethereum")),
+        _timed("defillama_tvl(sol)",      _bg_call(defillama_historical_tvl, "Solana")),
+        _timed("defillama_tvl(arb)",      _bg_call(defillama_historical_tvl, "Arbitrum")),
+        _timed("defillama_tvl(base)",     _bg_call(defillama_historical_tvl, "Base")),
+        _timed("crypto_news_rss",         _bg_call(crypto_news_rss, 25)),
+        _timed("fetch_ai_news",           _bg_call(fetch_ai_news)),
+        _timed("fetch_ai_funding",        _bg_call(fetch_ai_funding)),
+        _timed("load_ai_curated",         _bg_call(load_ai_curated)),
+        _timed("coindesk_cadli_ohlc",     _bg_call(coindesk_cadli_ohlc, 90)),
+        _timed("yahoo_indices",           _bg_call(yahoo_indices)),
+        _timed("fetch_stocks_signals",    _bg_call(fetch_stocks_signals, 50)),
+        _timed("fear_greed",              _bg_call(fear_greed)),
+    )
     if fred.get("available"):
-        print("  FRED macro (DXY/SPX/Gold/10Y/M2)...")
-    print("  mempool.space (BTC fees, hashrate, tip height)...")
-    mp = mempool_space()
-    print("  mempool difficulty adjustment + lightning + mining pools...")
-    diff_adj = mempool_difficulty_adjustment()
-    lightning = mempool_lightning_stats()
-    pools = mempool_mining_pools()
-    print("  CoinGecko top-25 markets + trending...")
-    top_markets = coingecko_top_markets(50); time.sleep(CG_PACE)
+        print("  FRED macro (DXY/SPX/Gold/10Y/M2) available")
+    print(f"    -> {len(ai_curated.get('top_funded_companies', []))} companies, "
+          f"{len(ai_curated.get('investment_kpis', []))} inv KPIs, "
+          f"{len(ai_curated.get('whitepaper_kpis', []))} wp KPIs")
+
+    # ---- Stale-keep for top_markets (was inline in the sequential version) --
+    top_markets = top_markets_raw
     if not top_markets and (CACHE / "market.json").exists():
-        # CoinGecko 429 (rate-limit wipe) returns []. Pacing in 2b396b8 helps
-        # but doesn't fully eliminate races. Preserve the last good value
-        # instead of overwriting cache with an empty list.
+        # CoinGecko 429 (rate-limit wipe) returns []. The semaphore + 0.6s
+        # gap helps, but a fresh-cache 429 from upstream contention is still
+        # possible — preserve last good list instead of clobbering cache.
         try:
             prev = json.loads((CACHE / "market.json").read_text()).get("markets_top") or []
             if prev:
@@ -3572,37 +3651,18 @@ def fetch_trading() -> dict:
                 print(f"  [stale-keep] markets_top empty from API; kept {len(prev)} from previous fetch")
         except Exception as e:
             print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
-    trending = coingecko_trending()
-    print("  CoinGecko market_chart for top-25 POC analytics...")
-    poc_top = compute_poc_top_markets(top_markets, n=50)
-    print("  DeFiLlama: chains + protocols + yields + bridges + historical TVL...")
-    chains = defillama_chains(20)
-    protocols = defillama_protocols(25)
-    yields_top = defillama_yields_stablecoin_top(20)
-    bridges = defillama_bridges()
-    tvl_eth = defillama_historical_tvl("Ethereum")
-    tvl_sol = defillama_historical_tvl("Solana")
-    tvl_arb = defillama_historical_tvl("Arbitrum")
-    tvl_base = defillama_historical_tvl("Base")
-    print("  Crypto news RSS (CoinDesk + Cointelegraph + Decrypt + Block + BTC Mag)...")
-    news = crypto_news_rss(25)
-    print("  AI news RSS (TechCrunch + Verge + VentureBeat + MIT TR + Anthropic + OpenAI + Ars)...")
-    ai_news = fetch_ai_news()
-    print("  AI funding (YC AI directory + HN funding stories)...")
-    ai_funding = fetch_ai_funding()
-    print("  AI curated snapshot (data/ai_curated.json)...")
-    ai_curated = load_ai_curated()
-    print(f"    -> {len(ai_curated.get('top_funded_companies', []))} companies, "
-          f"{len(ai_curated.get('investment_kpis', []))} inv KPIs, "
-          f"{len(ai_curated.get('whitepaper_kpis', []))} wp KPIs")
-    print("  CoinDesk cadli BTC-USD OHLC (90d)...")
-    cadli = coindesk_cadli_ohlc(90)
-    print("  Yahoo Finance indices (Dow / S&P / NASDAQ / VIX)...")
-    yahoo_idx = yahoo_indices()
-    print("  Yahoo most-active stocks + signals...")
-    stocks_signals = fetch_stocks_signals(50)
-    print("  Fear & Greed...")
-    fng = fear_greed()
+
+    # ---- Batch 2: depends on top_markets ------------------------------------
+    # compute_poc_top_markets fans out 50 cryptocompare_market calls. We
+    # already keep those serialized inside the function (it loops), but
+    # CryptoCompare tolerates parallelism — wrap the whole call in a single
+    # thread so it can run alongside any straggling Batch 1 work. (Most of
+    # Batch 1 will be done by now since CG-bound tasks dominate.)
+    print("  Batch 2: compute_poc_top_markets (depends on top_markets)...")
+    poc_top = await _timed(
+        "compute_poc_top_markets",
+        _bg_call(compute_poc_top_markets, top_markets, 50),
+    )
 
     # ETH/BTC ratio from prices
     btc_p = {p["date"]: p["value"] for p in btc_mkt["price"]}
@@ -3611,6 +3671,8 @@ def fetch_trading() -> dict:
         b = btc_p.get(p["date"])
         if b and b > 0:
             ethbtc.append({"date": p["date"], "value": p["value"] / b})
+
+    print(f"  [timing] fetch_trading total: {time.monotonic() - t_total:.2f}s")
 
     return {
         "btc": {
@@ -3689,6 +3751,14 @@ def fetch_trading() -> dict:
         "ethbtc": ethbtc,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
+
+
+def fetch_trading() -> dict:
+    """Synchronous public entrypoint. Drives the concurrent async
+    implementation via ``asyncio.run`` so callers (and the test suite) see
+    the same blocking signature they always have. The returned dict is
+    schema-identical to the pre-concurrency version."""
+    return asyncio.run(_fetch_trading_async())
 
 
 def _glassnode_btc_whale_metrics_impl() -> dict:
@@ -3922,23 +3992,40 @@ def bitinfocharts_btc_distribution() -> dict:
     }
 
 
-def fetch_whale(btc_price_usd: float | None = None) -> dict:
+async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
+    """Concurrent implementation of ``fetch_whale``. All sources here are
+    independent of each other (no per-call dependencies), so we fan them
+    all out in a single asyncio.gather batch under the generic concurrency
+    cap. No CoinGecko calls live in the whale tree."""
+    global _cg_semaphore, _generic_semaphore
+    # Recreate semaphores bound to *this* event loop. _cg_semaphore goes
+    # unused here but is initialized so _bg_call / _cg_call are safe to
+    # invoke from anywhere a future refactor might add them.
+    _cg_semaphore = asyncio.Semaphore(CG_CONCURRENCY)
+    _generic_semaphore = asyncio.Semaphore(GENERIC_CONCURRENCY)
+
     print("Fetching whale-activity proxies (BTC on-chain)...")
-    btc = whale_proxies_btc()
-    print("  bitinfocharts BTC distribution history (cohorts)...")
-    distribution = bitinfocharts_btc_distribution()
-    print("  Glassnode (optional, env-gated by GLASSNODE_API_KEY)...")
-    glassnode = glassnode_btc_whale_metrics()
-    print("  mempool.space whale-tx scan (last block, >$1M vouts)...")
-    whale_txs = mempool_whale_transactions(btc_price_usd) if btc_price_usd else []
-    print("  Blockchair ETH stats (24h tx, largest tx, supply)...")
-    eth_bc = blockchair_eth_stats()
-    print("  Blockchair ETH large transactions (24h, >$1M)...")
-    eth_large_txs = blockchair_eth_large_transactions(min_value_usd=1_000_000)
-    print("  Coin Metrics ETH whale series (active addresses, tx count/volume)...")
-    eth_cm = coin_metrics_eth_whale_metrics()
-    print("  Blockchair multichain stats (LTC, BCH, DOGE)...")
-    multichain = fetch_multichain_whale_stats()
+    t_total = time.monotonic()
+
+    async def _whale_tx() -> list:
+        if not btc_price_usd:
+            return []
+        return await _bg_call(mempool_whale_transactions, btc_price_usd)
+
+    (
+        btc, distribution, glassnode, whale_txs,
+        eth_bc, eth_large_txs, eth_cm, multichain,
+    ) = await asyncio.gather(
+        _timed("whale_proxies_btc",                _bg_call(whale_proxies_btc)),
+        _timed("bitinfocharts_btc_distribution",   _bg_call(bitinfocharts_btc_distribution)),
+        _timed("glassnode_btc_whale_metrics",      _bg_call(glassnode_btc_whale_metrics)),
+        _timed("mempool_whale_transactions",       _whale_tx()),
+        _timed("blockchair_eth_stats",             _bg_call(blockchair_eth_stats)),
+        _timed("blockchair_eth_large_transactions", _bg_call(blockchair_eth_large_transactions, 1_000_000)),
+        _timed("coin_metrics_eth_whale_metrics",   _bg_call(coin_metrics_eth_whale_metrics)),
+        _timed("fetch_multichain_whale_stats",     _bg_call(fetch_multichain_whale_stats)),
+    )
+    print(f"  [timing] fetch_whale total: {time.monotonic() - t_total:.2f}s")
     return {
         "btc": btc,
         "distribution": distribution,
@@ -3956,6 +4043,13 @@ def fetch_whale(btc_price_usd: float | None = None) -> dict:
                  "Multichain (LTC/BCH/DOGE) via Blockchair /stats. "
                  "Glassnode auto-activates when GLASSNODE_API_KEY is set."),
     }
+
+
+def fetch_whale(btc_price_usd: float | None = None) -> dict:
+    """Synchronous public entrypoint for the whale tree. Drives the async
+    implementation via ``asyncio.run``. Schema unchanged from the previous
+    sequential version."""
+    return asyncio.run(_fetch_whale_async(btc_price_usd))
 
 
 def fetch_all() -> None:

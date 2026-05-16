@@ -710,11 +710,49 @@ _SYMBOL_RE = re.compile(r"^[A-Za-z]{1,10}$")
 
 
 def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
-    """Run the actual crypto-then-stock lookup. Returns (status_code, body).
-    Pure function so it can be wrapped by the lru_cache helper below."""
-    sym = symbol.upper()
+    """Run the lookup. Returns (status_code, body).
+    Pure function so it can be wrapped by the lru_cache helper below.
 
-    # --- Crypto branch (CryptoCompare histoday) ---
+    Resolution order:
+      * 4-5 letter all-alpha tickers (e.g. AAPL, MSTR, RIVN, TSLA, GME) →
+        Yahoo first, CryptoCompare second. Several meme/scam crypto tokens
+        share their tickers with real equities (GME, AAPL, NVDA), and the
+        equity is almost always what the user means.
+      * Everything else (BTC, ETH, SOL, …) → CryptoCompare first.
+    """
+    sym = symbol.upper()
+    stock_first = bool(re.fullmatch(r"[A-Z]{3,5}", sym)) and sym not in {
+        # Common crypto symbols that match the stock-shape regex but are
+        # unambiguously crypto when typed in this dashboard. Keep this list
+        # tiny — the goal is to override the heuristic, not enumerate coins.
+        "BTC", "ETH", "SOL", "DOGE", "LINK", "DOT", "ADA", "AVAX", "MATIC",
+        "XRP", "LTC", "BCH", "ATOM", "NEAR", "ARB", "OP", "APT", "SUI",
+        "TRX", "TON", "ICP", "FIL", "ALGO", "XLM", "ETC", "HBAR", "INJ",
+        "TIA", "SEI", "FET", "RNDR", "PEPE", "WIF", "BONK", "SHIB",
+    }
+
+    if stock_first:
+        status, body = _try_stock_lookup(sym)
+        if status == 200:
+            return status, body
+        # Stock fetch returned nothing — fall through to crypto.
+        status2, body2 = _try_crypto_lookup(sym)
+        if status2 == 200:
+            return status2, body2
+        return 404, {"error": "Symbol not found in crypto or US stocks"}
+
+    status, body = _try_crypto_lookup(sym)
+    if status == 200:
+        return status, body
+    status2, body2 = _try_stock_lookup(sym)
+    if status2 == 200:
+        return status2, body2
+    return 404, {"error": "Symbol not found in crypto or US stocks"}
+
+
+def _try_crypto_lookup(sym: str) -> tuple[int, dict]:
+    """CryptoCompare histoday branch — returns (200, body) on success or
+    (404, {error}) when the upstream has no data for this symbol."""
     try:
         crypto = fetch_market.cryptocompare_market(sym, days=180) or {}
     except Exception as e:
@@ -761,7 +799,12 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
             },
         }
 
-    # --- Stock branch (Yahoo Finance chart) ---
+    return 404, {"error": "Symbol not found in crypto"}
+
+
+def _try_stock_lookup(sym: str) -> tuple[int, dict]:
+    """Yahoo Finance chart branch — returns (200, body) on success or
+    (404, {error}) when Yahoo has no chart data for this ticker."""
     try:
         history = fetch_market.yahoo_chart_history(sym, range_="6mo") or []
     except Exception as e:
@@ -801,7 +844,7 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
             },
         }
 
-    return 404, {"error": "Symbol not found in crypto or US stocks"}
+    return 404, {"error": "Symbol not found in US stocks"}
 
 
 @lru_cache(maxsize=64)

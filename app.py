@@ -7121,8 +7121,301 @@ function liveFmtUsd(v){
 }
 
 function liveLooksLikeStock(sym){
-  // Crude: 3-4 uppercase A-Z, no digits. Only used after crypto fetch already failed.
-  return /^[A-Z]{3,4}$/.test(sym);
+  // Crude: 1-5 uppercase A-Z, no digits. Used to pick the live stock branch
+  // when the symbol isn't in our cached stocks_signals AND CryptoCompare has
+  // nothing for it. Widened from 3-4 to 1-5 chars so tickers like F (Ford),
+  // BA, GE, MSTR all qualify; 5-char tickers like GOOGL would too.
+  return /^[A-Z]{1,5}$/.test(sym);
+}
+
+// --- live stock helpers (cache-miss fallback for stock-shaped symbols) ---
+// Uses Twelvedata as primary (800 req/day free tier, CORS *) with Alpha Vantage
+// fallback (25 req/day free, CORS *). Both require a user-obtained free API
+// key — Yahoo Finance has no browser-usable CORS and the only keyless option
+// (marketdata.app) limits to AAPL on free tier. The key is stored in
+// localStorage under `stock_api_key` (Twelvedata) or `stock_api_key_av`
+// (Alpha Vantage). If neither is set, we surface a friendly setup message.
+
+function liveStockGetKey(provider){
+  try {
+    if (provider === 'av') return (localStorage.getItem('stock_api_key_av') || '').trim();
+    return (localStorage.getItem('stock_api_key') || '').trim();
+  } catch (_) { return ''; }
+}
+
+async function liveStockLookupTwelvedata(sym, key){
+  const url = 'https://api.twelvedata.com/time_series'
+    + '?symbol=' + encodeURIComponent(sym)
+    + '&interval=1day&outputsize=220&order=asc'
+    + '&apikey=' + encodeURIComponent(key);
+  const resp = await fetch(url, { method: 'GET' });
+  if (!resp.ok) throw new Error('twelvedata http ' + resp.status);
+  const j = await resp.json();
+  if (!j || j.status === 'error' || !Array.isArray(j.values)){
+    throw new Error('twelvedata: ' + (j && j.message ? j.message : 'no data'));
+  }
+  // Twelvedata returns oldest-first when order=asc — each {datetime,open,high,low,close,volume}
+  const rows = j.values
+    .map(v => ({
+      date: v.datetime,
+      close: Number(v.close),
+      volume: Number(v.volume) || 0,
+    }))
+    .filter(r => isFinite(r.close) && r.close > 0);
+  if (rows.length < 10) throw new Error('twelvedata: not enough rows (' + rows.length + ')');
+  return { rows, source: 'Twelvedata' };
+}
+
+async function liveStockLookupAlphaVantage(sym, key){
+  const url = 'https://www.alphavantage.co/query'
+    + '?function=TIME_SERIES_DAILY&outputsize=full'
+    + '&symbol=' + encodeURIComponent(sym)
+    + '&apikey=' + encodeURIComponent(key);
+  const resp = await fetch(url, { method: 'GET' });
+  if (!resp.ok) throw new Error('alphavantage http ' + resp.status);
+  const j = await resp.json();
+  if (!j) throw new Error('alphavantage: empty');
+  if (j['Error Message']) throw new Error('alphavantage: ' + j['Error Message']);
+  if (j['Note'] || j['Information']){
+    throw new Error('alphavantage: ' + (j['Note'] || j['Information']));
+  }
+  const series = j['Time Series (Daily)'];
+  if (!series || typeof series !== 'object') throw new Error('alphavantage: no series');
+  // Alpha Vantage returns newest-first as a map keyed by YYYY-MM-DD.
+  const dates = Object.keys(series).sort(); // ascending after sort
+  const rows = [];
+  for (const d of dates){
+    const o = series[d] || {};
+    const close = Number(o['4. close']);
+    const vol = Number(o['6. volume'] || o['5. volume']) || 0;
+    if (isFinite(close) && close > 0){
+      rows.push({ date: d, close: close, volume: vol });
+    }
+  }
+  if (rows.length < 10) throw new Error('alphavantage: not enough rows (' + rows.length + ')');
+  // Trim to last 220 sessions (≈ 1y) so downstream math matches Twelvedata.
+  const trimmed = rows.length > 220 ? rows.slice(rows.length - 220) : rows;
+  return { rows: trimmed, source: 'Alpha Vantage' };
+}
+
+async function liveStockLookup(sym){
+  // Try Twelvedata first (better free tier), fall back to Alpha Vantage.
+  const tdKey = liveStockGetKey('td');
+  const avKey = liveStockGetKey('av');
+  if (!tdKey && !avKey){
+    const err = new Error('NO_STOCK_API_KEY');
+    err.code = 'NO_STOCK_API_KEY';
+    throw err;
+  }
+  let lastErr = null;
+  if (tdKey){
+    try { return await liveStockLookupTwelvedata(sym, tdKey); }
+    catch (e){ lastErr = e; }
+  }
+  if (avKey){
+    try { return await liveStockLookupAlphaVantage(sym, avKey); }
+    catch (e){ lastErr = e; }
+  }
+  throw lastErr || new Error('stock lookup failed');
+}
+
+function liveComputeStockSignal(rows){
+  // Mirror of Python compute_stock_signal scoring (simplified to the
+  // SMA50 / SMA200 / RSI14 / 5d-momentum / golden-cross axis the CryptoCompare
+  // path already uses — same component weights, same final mapping).
+  const closes = rows.map(r => r.close);
+  return liveComputeSignal(rows.map(r => ({ close: r.close })));
+}
+
+function liveStockPromptForKey(){
+  // Modal-friendly inline prompt — uses window.prompt for simplicity; the
+  // dashboard already uses prompt() elsewhere for ad-hoc inputs. Returns the
+  // trimmed key (and persists it to localStorage) or '' if the user cancels.
+  let key = null;
+  try {
+    key = window.prompt(
+      'Enter a free Twelvedata API key to enable live stock lookup.\n' +
+      '\n' +
+      'Get one (10 sec, no card): https://twelvedata.com/pricing\n' +
+      'Free tier = 800 requests/day, supports any US ticker.\n' +
+      '\n' +
+      '(Stored locally in this browser only; never sent to the dashboard.)'
+    );
+  } catch (_) { key = null; }
+  if (!key) return '';
+  const trimmed = String(key).trim();
+  if (!trimmed) return '';
+  try { localStorage.setItem('stock_api_key', trimmed); } catch (_) {}
+  return trimmed;
+}
+
+function renderLiveStockSection(sym, rows, source){
+  const sig = liveComputeStockSignal(rows);
+  const poc = liveComputePOC(rows.map(r => ({
+    close: r.close,
+    volumeto: r.volume,  // POC weighting expects volumeto field
+  })));
+  const closes = rows.map(r => r.close);
+  const n = closes.length;
+  const last = closes[n - 1];
+  const ch5  = n > 5  ? ((last - closes[n - 6])  / closes[n - 6])  * 100 : null;
+  const ch30 = n > 30 ? ((last - closes[n - 31]) / closes[n - 31]) * 100 : null;
+  const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const sparkVals = closes.slice(-30);
+  const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
+  const spark = renderSparkline(sparkVals, sparkUp, 160, 36);
+  const pocDistPct = (poc.current && poc.poc) ? ((poc.current - poc.poc) / poc.poc) * 100 : null;
+  const color = liveSignalColor(sig.label);
+  return (
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      '<div class="sub" style="font-size:12px;color:var(--muted)">(live from ' + escapeHtml(source) + ')</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px">' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">Signal</div>' +
+        '<div style="font-size:20px;font-weight:700;color:' + color + ';margin-top:4px">' + escapeHtml(sig.label) + '</div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted)">score ' + sig.score + ' / 100' +
+          (sig.rsi != null ? ' · RSI ' + sig.rsi.toFixed(0) : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">Price</div>' +
+        '<div style="font-size:18px;font-weight:700;margin-top:4px">' + escapeHtml(liveFmtUsd(last)) + '</div>' +
+        '<div style="font-size:11px;margin-top:2px">' +
+          '<span style="color:' + pctColor(ch5)  + '">5d '  + escapeHtml(fmtPct(ch5))  + '</span> · ' +
+          '<span style="color:' + pctColor(ch30) + '">30d ' + escapeHtml(fmtPct(ch30)) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">POC (' + rows.length + 'd)</div>' +
+        '<div style="font-size:14px;font-weight:600;margin-top:4px">' + escapeHtml(liveFmtUsd(poc.poc)) + '</div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted)">' +
+          'VA ' + escapeHtml(liveFmtUsd(poc.valueAreaLow)) + ' &ndash; ' + escapeHtml(liveFmtUsd(poc.valueAreaHigh)) +
+        '</div>' +
+        '<div style="font-size:11px;margin-top:2px;color:' + pctColor(pocDistPct) + '">' +
+          'current vs POC ' + escapeHtml(fmtPct(pocDistPct)) +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    (spark ? '<div style="margin-top:10px"><div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">30d sparkline</div>' + spark + '</div>' : '') +
+    '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">' +
+      'Live fetch &mdash; signal computed client-side (SMA50 / SMA200 / RSI14 / 5d momentum / golden cross).' +
+      ' Run <code>python server.py</code> locally for the full 6-component scorer.' +
+    '</div>'
+  );
+}
+
+function renderLiveStockNoKey(sym){
+  return (
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      '<div class="sub" style="font-size:12px;color:var(--muted)">live stock lookup &mdash; setup needed</div>' +
+    '</div>' +
+    '<div style="padding:14px 0;line-height:1.55">' +
+      '<div style="margin-bottom:10px"><strong>' + escapeHtml(sym) + '</strong> isn&rsquo;t in the cached top-50 most-active list.</div>' +
+      '<div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:14px">' +
+        'To enable live lookup for any US ticker on the public mirror, add a free ' +
+        '<a href="https://twelvedata.com/pricing" target="_blank" rel="noopener" style="color:#60a5fa">Twelvedata</a> ' +
+        'API key (800 requests/day free, no card). Stored locally in this browser only.' +
+      '</div>' +
+      '<button id="liveStockKeyBtn" type="button" ' +
+        'style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer">' +
+        'Add API key&hellip;' +
+      '</button>' +
+      '<div class="sub" style="margin-top:14px;font-size:12px;color:var(--muted)">' +
+        'Or run the dashboard locally with <code>python server.py</code> &mdash; the local mode uses Yahoo Finance ' +
+        'server-side via <code>/api/symbol/' + escapeHtml(sym) + '</code> and has no rate limits.' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderLiveStockFailed(sym, errMsg){
+  return (
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      '<div class="sub" style="font-size:12px;color:var(--muted)">live stock lookup failed</div>' +
+    '</div>' +
+    '<div class="sub" style="color:var(--muted);padding:14px 0;line-height:1.55">' +
+      'No stock data for <strong>' + escapeHtml(sym) + '</strong>' +
+      (errMsg ? ' &mdash; <code style="font-size:11px">' + escapeHtml(String(errMsg).slice(0, 200)) + '</code>' : '') +
+      '<br><br>' +
+      'Possible causes: invalid ticker, free-tier daily limit hit, or upstream outage. ' +
+      'Try again later, or run the dashboard locally with <code>python server.py</code> ' +
+      '(uses Yahoo Finance server-side with no rate limit).' +
+    '</div>'
+  );
+}
+
+// --- server-endpoint fallback (used in local Flask mode) ---
+// Renders the same modal layout from the server's /api/symbol/<sym> response.
+async function liveServerSymbolLookup(sym){
+  const resp = await fetch('/api/symbol/' + encodeURIComponent(sym));
+  if (!resp.ok){
+    const status = resp.status;
+    let msg = 'http ' + status;
+    try { const j = await resp.json(); if (j && j.error) msg = j.error; } catch (_) {}
+    const err = new Error(msg);
+    err.status = status;
+    throw err;
+  }
+  return await resp.json();
+}
+
+function renderServerSymbolSection(sym, payload){
+  const kind = payload.kind || 'stock';
+  const sourceLbl = kind === 'crypto' ? 'server · CryptoCompare' : 'server · Yahoo Finance';
+  const score = Number(payload.score) || 0;
+  const label = payload.label || 'HOLD';
+  const last  = payload.price;
+  const color = liveSignalColor(label);
+  // Derive 5d/30d change from the embedded rolling history (best-effort).
+  const hist = Array.isArray(payload.history) ? payload.history : [];
+  const sparkVals = hist.slice(-30).map(h => Number(h.score)).filter(v => isFinite(v));
+  const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
+  const spark = sparkVals.length >= 2 ? renderSparkline(sparkVals, sparkUp, 160, 36) : '';
+  const poc = (payload.poc || {}).d180 || (payload.poc || {}).d90 || (payload.poc || {}).d30 || null;
+  const pocPrice = poc && (poc.poc != null ? poc.poc : poc.price);
+  const vaLow  = poc && (poc.value_area_low  != null ? poc.value_area_low  : poc.va_low);
+  const vaHigh = poc && (poc.value_area_high != null ? poc.value_area_high : poc.va_high);
+  const pocDistPct = (last != null && pocPrice) ? ((last - pocPrice) / pocPrice) * 100 : null;
+  const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  return (
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      '<div class="sub" style="font-size:12px;color:var(--muted)">(' + escapeHtml(sourceLbl) + ')</div>' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px">' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">Signal</div>' +
+        '<div style="font-size:20px;font-weight:700;color:' + color + ';margin-top:4px">' + escapeHtml(label) + '</div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted)">score ' + score + ' / 100</div>' +
+      '</div>' +
+      '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">Price</div>' +
+        '<div style="font-size:18px;font-weight:700;margin-top:4px">' + escapeHtml(liveFmtUsd(last)) + '</div>' +
+      '</div>' +
+      (pocPrice ?
+        '<div style="border:1px solid var(--border);border-radius:8px;padding:10px">' +
+          '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase">POC</div>' +
+          '<div style="font-size:14px;font-weight:600;margin-top:4px">' + escapeHtml(liveFmtUsd(pocPrice)) + '</div>' +
+          (vaLow && vaHigh ?
+            '<div class="sub" style="font-size:11px;color:var(--muted)">VA ' +
+              escapeHtml(liveFmtUsd(vaLow)) + ' &ndash; ' + escapeHtml(liveFmtUsd(vaHigh)) +
+            '</div>' : '') +
+          '<div style="font-size:11px;margin-top:2px;color:' + pctColor(pocDistPct) + '">' +
+            'current vs POC ' + escapeHtml(fmtPct(pocDistPct)) +
+          '</div>' +
+        '</div>' : '') +
+    '</div>' +
+    (spark ? '<div style="margin-top:10px"><div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:4px">90d score history</div>' + spark + '</div>' : '') +
+    '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">' +
+      'Server endpoint &mdash; full 6-component scorer (SMA50/200, RSI14, MACD, 5d momentum, volume z-score, golden cross).' +
+    '</div>'
+  );
 }
 
 function renderLiveCryptoSection(sym, rows){
@@ -7224,7 +7517,15 @@ async function lookupSymbol(query){
   title.textContent = displayName ? (sym + ' · ' + displayName) : sym;
 
   if (!hasAny){
-    // No cached match — show spinner immediately, then try live CryptoCompare.
+    // No cached match — show spinner immediately, then try the live fallbacks
+    // in this order:
+    //   1) Local Flask server `/api/symbol/<sym>` (only when we're on the
+    //      same-origin live-server mode — has Yahoo + full 6-component scorer
+    //      and no per-day rate limit).
+    //   2) CryptoCompare histoday (covers any crypto symbol, CORS-friendly).
+    //   3) Live stock lookup via Twelvedata (Alpha Vantage as fallback) —
+    //      only attempted when the symbol shape looks like a US ticker AND
+    //      crypto came up empty.
     title.textContent = sym;
     body.innerHTML =
       '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
@@ -7233,25 +7534,64 @@ async function lookupSymbol(query){
     modal.classList.remove('hidden');
     // Track this request so a fast follow-up doesn't render stale results.
     const reqId = (window._liveLookupReq = (window._liveLookupReq || 0) + 1);
-    try {
-      const rows = await liveCryptoLookup(sym);
-      if (reqId !== window._liveLookupReq) return; // superseded
-      body.innerHTML = renderLiveCryptoSection(sym, rows);
-    } catch (err){
-      if (reqId !== window._liveLookupReq) return; // superseded
-      if (liveLooksLikeStock(sym)){
-        body.innerHTML =
-          '<div class="sub" style="color:var(--muted);padding:14px;text-align:center;line-height:1.5">' +
-            'Stock symbols outside the top-20 active list aren&rsquo;t available on the public mirror.<br>' +
-            'Run the dashboard locally with <code>python server.py</code> for live stock lookup (coming soon).' +
-          '</div>';
-      } else {
-        body.innerHTML =
-          '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
-            'Live lookup failed for <strong>' + escapeHtml(sym) + '</strong> &mdash; check ticker or try again.' +
-          '</div>';
+    const stillCurrent = () => reqId === window._liveLookupReq;
+
+    // 1) Server endpoint — only in local Flask mode.
+    if (typeof isServer !== 'undefined' && isServer){
+      try {
+        const payload = await liveServerSymbolLookup(sym);
+        if (!stillCurrent()) return;
+        body.innerHTML = renderServerSymbolSection(sym, payload);
+        return;
+      } catch (err){
+        if (!stillCurrent()) return;
+        // Fall through to the public-mirror code paths below.
       }
     }
+
+    // 2) CryptoCompare — always cheap and works for any crypto.
+    let cryptoErr = null;
+    try {
+      const rows = await liveCryptoLookup(sym);
+      if (!stillCurrent()) return;
+      body.innerHTML = renderLiveCryptoSection(sym, rows);
+      return;
+    } catch (err){
+      cryptoErr = err;
+    }
+    if (!stillCurrent()) return;
+
+    // 3) Live stock lookup for stock-shaped symbols.
+    if (liveLooksLikeStock(sym)){
+      try {
+        const out = await liveStockLookup(sym);
+        if (!stillCurrent()) return;
+        body.innerHTML = renderLiveStockSection(sym, out.rows, out.source);
+        return;
+      } catch (err){
+        if (!stillCurrent()) return;
+        if (err && err.code === 'NO_STOCK_API_KEY'){
+          body.innerHTML = renderLiveStockNoKey(sym);
+          // Wire the "Add API key" button — on success, retry the lookup.
+          const btn = document.getElementById('liveStockKeyBtn');
+          if (btn){
+            btn.addEventListener('click', () => {
+              const k = liveStockPromptForKey();
+              if (k) lookupSymbol(sym);
+            });
+          }
+        } else {
+          body.innerHTML = renderLiveStockFailed(sym, err && err.message);
+        }
+        return;
+      }
+    }
+
+    // Neither crypto nor stock-shaped — show a generic failure.
+    body.innerHTML =
+      '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
+        'Live lookup failed for <strong>' + escapeHtml(sym) + '</strong> &mdash; check ticker or try again.' +
+      '</div>';
     return;
   }
 
