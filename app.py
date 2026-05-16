@@ -754,12 +754,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <!-- Traditional indices — compact bar above the asset cards. Dow/SPX/
          NDX/VIX 1d/5d/30d + 90d sparkline per index. Moved here from the
          Markets tab so it's visible on the landing page as macro context. -->
-    <div id="overviewIndicesWrap" class="card" style="padding:6px 10px;margin-bottom:2px">
-      <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:2px">
-        <span style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.05em">TRADITIONAL INDICES</span>
-        <span class="sub" style="font-size:9px;color:var(--muted)">Yahoo · 1d / 5d / 30d</span>
+    <div id="overviewIndicesWrap" class="card" style="padding:12px 16px;margin-bottom:6px">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em">TRADITIONAL INDICES</span>
+        <span class="sub" style="font-size:11px;color:var(--muted)">Yahoo · 1d / 5d / 30d</span>
       </div>
-      <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px"></div>
+      <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
     </div>
     <!-- Row 1: Signal cards (HERO — clickable) -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:-6px">
@@ -4421,16 +4421,18 @@ function renderOverviewIndices(){
   if (!host) return;
   host.innerHTML = items.map(i => {
     const v = y[i.key];
-    if (!v) return `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:#10151f;border:1px solid var(--border);border-radius:4px"><span style="font-size:10px;color:var(--muted);font-weight:600">${i.short}</span><span style="font-size:11px;color:var(--muted)">—</span></div>`;
+    if (!v) return `<div style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:#10151f;border:1px solid var(--border);border-radius:6px"><span style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em">${i.short}</span><span style="font-size:14px;color:var(--muted)">—</span></div>`;
     const ch = v.change_1d_pct || 0;
     const cls = ch >= 0 ? 'green' : 'red';
     const pct = (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%';
-    // Tiny sparkline — 56×16 SVG
-    const spark = renderSparkline(v.sparkline_90d || [], ch >= 0, 56, 16);
-    return `<div style="display:flex;align-items:center;gap:6px;padding:3px 6px;background:#10151f;border:1px solid var(--border);border-radius:4px;font-variant-numeric:tabular-nums">
-      <span style="font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.04em">${i.short}</span>
-      <span style="font-size:12px;font-weight:600">${(v.latest||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
-      <span class="${cls}" style="font-size:11px;font-weight:600">${pct}</span>
+    // Bigger sparkline — 110×32 SVG (was 56×16)
+    const spark = renderSparkline(v.sparkline_90d || [], ch >= 0, 110, 32);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#10151f;border:1px solid var(--border);border-radius:6px;font-variant-numeric:tabular-nums">
+      <div style="display:flex;flex-direction:column;min-width:0;gap:2px">
+        <span style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em">${i.short}</span>
+        <span style="font-size:20px;font-weight:700;line-height:1">${(v.latest||0).toLocaleString(undefined,{maximumFractionDigits:0})}</span>
+        <span class="${cls}" style="font-size:12px;font-weight:600">${pct}</span>
+      </div>
       <span style="margin-left:auto;line-height:0">${spark}</span>
     </div>`;
   }).join('');
