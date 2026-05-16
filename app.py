@@ -630,11 +630,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Crypto Signals</div>
   <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale Activity</div>
   <div class="tab" data-tab="poc" role="tab" tabindex="0" aria-selected="false">Point of Control</div>
-  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
   <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
   <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
+  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
