@@ -73,7 +73,11 @@ _AUTH_BYPASS = {"/healthz"}
 # Endpoints that share-token holders are explicitly allowed to hit. Anything
 # that mutates server state (refresh, CSV upload, ETF seed, share admin) is
 # intentionally excluded — share viewers are strictly read-only.
-_SHARE_ALLOWED = {"/", "/api/data", "/api/chat", "/api/export/csv"}
+# Sidecar payloads (data-<key>.json) are part of the same read-only surface
+# as the inlined dashboard data, so each one is added automatically here.
+_SHARE_ALLOWED = {"/", "/api/data", "/api/chat", "/api/export/csv"} | {
+    f"/data-{k}.json" for k in dash.SIDECAR_KEYS
+}
 
 
 # Whitelist of series the CSV exporter is allowed to surface. Anything outside
@@ -271,7 +275,11 @@ def index() -> Response:
         "last_fetch_at": _state["last_fetch_at"],
         "auto_refresh_minutes": REFRESH_MINUTES,
     }
-    html = dash.render_html(payload, share_token=share_token)
+    # Same sidecar split the static build (`app.py main`) does: heavy
+    # tab-specific payloads (whale) are stripped from the inlined HTML and
+    # served from /data-<key>.json instead. Cuts ~840KB off the first byte.
+    trimmed, _sidecars, manifest = dash.split_payload_for_sidecars(payload)
+    html = dash.render_html(trimmed, share_token=share_token, sidecars_manifest=manifest)
     return Response(html, mimetype="text/html")
 
 
@@ -297,7 +305,8 @@ def share_view(token: str) -> Response:
         "expires_at": entry.get("expires_at"),
         "label": entry.get("label", ""),
     }
-    html = dash.render_html(payload, share_token=token)
+    trimmed, _sidecars, manifest = dash.split_payload_for_sidecars(payload)
+    html = dash.render_html(trimmed, share_token=token, sidecars_manifest=manifest)
     return Response(html, mimetype="text/html")
 
 
@@ -309,6 +318,22 @@ def api_data() -> Response:
         "auto_refresh_minutes": REFRESH_MINUTES,
     }
     return jsonify(payload)
+
+
+@flask_app.route("/data-<name>.json")
+def sidecar(name: str) -> Response:
+    """Serve a lazy-loaded sidecar payload (e.g. /data-whale.json).
+
+    Only the keys in ``dash.SIDECAR_KEYS`` are served — any other name 404s,
+    so callers can't pull arbitrary payload subtrees through this route.
+    Returns an empty object (not 404) when the key is in the allowlist but
+    absent from the current build, so the client's loadSidecar() resolves
+    cleanly instead of triggering its error path.
+    """
+    if name not in dash.SIDECAR_KEYS:
+        return Response('{"error":"unknown sidecar"}', status=404, mimetype="application/json")
+    payload = dash.build_payload()
+    return jsonify(payload.get(name, {}))
 
 
 @flask_app.route("/api/export/csv")

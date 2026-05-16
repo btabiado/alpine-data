@@ -34,6 +34,38 @@ ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 OUT = ROOT / "dashboard.html"
 
+# Payload keys that get extracted into separate static files instead of
+# being inlined in dashboard.html. Each sidecar is fetched lazily by the
+# client only when the user actually opens the tab that needs it, cutting
+# ~840KB off the initial HTML payload (whale alone is ~736KB of JSON).
+# Add a key here to defer it; the client manifest in SIDECARS picks it up
+# automatically. Keys MUST be top-level payload keys.
+SIDECAR_KEYS: tuple[str, ...] = ("whale",)
+
+
+def split_payload_for_sidecars(
+    payload: dict, keys: tuple[str, ...] = SIDECAR_KEYS
+) -> tuple[dict, dict[str, dict], dict[str, str]]:
+    """Pop ``keys`` out of ``payload`` and return:
+      - trimmed payload (suitable for inlining in dashboard.html),
+      - dict of sidecar payloads keyed by name (for writing to disk),
+      - manifest mapping ``{key: "data-<key>.json"}`` for the JS loader.
+
+    Keys that are absent or empty in ``payload`` are skipped — the manifest
+    only points at sidecars that actually exist, so the client doesn't fire
+    fetches that would 404.
+    """
+    trimmed = dict(payload)
+    sidecars: dict[str, dict] = {}
+    manifest: dict[str, str] = {}
+    for k in keys:
+        v = trimmed.get(k)
+        if not v:
+            continue
+        sidecars[k] = trimmed.pop(k)
+        manifest[k] = f"data-{k}.json"
+    return trimmed, sidecars, manifest
+
 
 def load_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
@@ -258,9 +290,14 @@ def build_payload() -> dict:
     return payload
 
 
-def render_html(payload: dict, share_token: str | None = None) -> str:
+def render_html(
+    payload: dict,
+    share_token: str | None = None,
+    sidecars_manifest: dict[str, str] | None = None,
+) -> str:
     html = HTML_TEMPLATE.replace("__DATA_JSON__", json.dumps(payload))
     html = html.replace("__SHARE_TOKEN__", json.dumps(share_token))
+    html = html.replace("__SIDECARS_JSON__", json.dumps(sidecars_manifest or {}))
     return html
 
 
@@ -306,8 +343,18 @@ def main() -> int:
         print("No data found. Add CSVs to data/ and/or run --fetch-market.", file=sys.stderr)
         return 1
 
+    # Split heavy tab-specific subtrees out of the inlined HTML payload and
+    # write them as static sidecar files. The client fetches each one only
+    # when the user opens the corresponding tab — first paint no longer pays
+    # the cost of payloads the user may never view.
+    trimmed, sidecars, manifest = split_payload_for_sidecars(payload)
+    for name, blob in sidecars.items():
+        sidecar_path = ROOT / f"data-{name}.json"
+        sidecar_path.write_text(json.dumps(blob))
+        print(f"  Wrote {sidecar_path.name} ({sidecar_path.stat().st_size:,} bytes)")
+
     print(f"Writing {OUT.name}...")
-    OUT.write_text(render_html(payload))
+    OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
 
     print(f"Done. {OUT}")
     if not args.no_open:
@@ -1897,14 +1944,48 @@ const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
 const IS_SHARE = !!SHARE_TOKEN;
 
-// In share mode, transparently append ?share=<token> to all /api/* fetches so
-// the read-only allowlist on the server lets the call through without prompting
-// for HTTP Basic Auth.
+// Sidecar manifest: { whale: "data-whale.json", ... }
+// Keys listed here are NOT inlined in DATA; loadSidecar(name) fetches and
+// caches them on demand. Renderers must already guard against missing
+// subtrees with `(DATA.foo||{}).bar` — they do.
+const SIDECARS = __SIDECARS_JSON__;
+// 'loading' | 'loaded' | 'error' per sidecar name; absent = never requested.
+const SIDECAR_STATE = {};
+
+async function loadSidecar(name){
+  const url = (SIDECARS||{})[name];
+  if (!url) return null;                       // nothing to load — already inlined or absent
+  if (SIDECAR_STATE[name] === 'loaded') return DATA[name];
+  if (SIDECAR_STATE[name] === 'loading') return null;  // in-flight; caller will re-render on land
+  SIDECAR_STATE[name] = 'loading';
+  try {
+    // Share viewers hit the URL behind Basic Auth — the IS_SHARE fetch wrapper
+    // above only rewrites /api/* paths, so static sidecars are served fine.
+    const resp = await fetch(url, {cache: 'default'});
+    if (!resp.ok) throw new Error('HTTP '+resp.status);
+    DATA[name] = await resp.json();
+    SIDECAR_STATE[name] = 'loaded';
+    return DATA[name];
+  } catch(e) {
+    SIDECAR_STATE[name] = 'error';
+    console.warn('[sidecar:'+name+'] load failed:', e);
+    return null;
+  }
+}
+
+// Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
+const SIDECAR_FOR_TAB = { whale: 'whale' };
+
+// In share mode, transparently append ?share=<token> to all /api/* and
+// /data-*.json fetches so the read-only allowlist on the server lets the
+// call through without prompting for HTTP Basic Auth. Sidecar payloads
+// (e.g. /data-whale.json) are part of the same read-only surface as the
+// inlined data, so the share token must flow through to them too.
 if (IS_SHARE) {
   const _origFetch = window.fetch.bind(window);
   window.fetch = function(input, init){
     try {
-      if (typeof input === 'string' && input.startsWith('/api/')) {
+      if (typeof input === 'string' && (input.startsWith('/api/') || input.startsWith('/data-'))) {
         const sep = input.includes('?') ? '&' : '?';
         input = input + sep + 'share=' + encodeURIComponent(SHARE_TOKEN);
       }
@@ -7187,6 +7268,12 @@ function renderAll(){
   const ethEmpty = !ethWd.coin_metrics || Object.keys(ethWd.coin_metrics).filter(k => k !== 'fetched_at').length === 0;
   const whEmpty = btcEmpty && ethEmpty;
   whEmptyEl.innerHTML = whEmptyEl.dataset.original;
+  // While the whale sidecar is fetching, surface a loading state instead of
+  // the static "no data" copy so users on the Whale tab don't think the
+  // dashboard is broken during the ~500ms first-load.
+  if (whEmpty && state.tab === 'whale' && SIDECAR_STATE.whale === 'loading'){
+    whEmptyEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading whale data…</div>';
+  }
   whEmptyEl.classList.toggle('hidden', !whEmpty);
   document.getElementById('whaleContent').classList.toggle('hidden', whEmpty);
 
@@ -7239,6 +7326,13 @@ function renderAll(){
 
 function selectTab(t){
   state.tab = t;
+  // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
+  // renderAll() below runs immediately with an empty subtree (the
+  // tab's empty-state handles that), then re-runs once the fetch lands.
+  const _sc = SIDECAR_FOR_TAB[t];
+  if (_sc && (SIDECARS||{})[_sc] && SIDECAR_STATE[_sc] !== 'loaded'){
+    loadSidecar(_sc).then(loaded => { if (state.tab === t && loaded) renderAll(); });
+  }
   // Close any open detail modals when switching tabs — leaving a POC or
   // Stocks modal floating over an unrelated tab is disorienting.
   document.querySelectorAll('.modal-bg').forEach(m => m.classList.add('hidden'));

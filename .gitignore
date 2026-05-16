@@ -13,6 +13,9 @@ __pycache__/
 
 # Generated dashboard output
 dashboard.html
+# Lazy-loaded sidecar payloads (whale, etc.) — written by app.py next to
+# dashboard.html on every build. Same lifecycle as the HTML itself.
+data-*.json
 
 # Local cached fetches stay on your machine (regenerated every run)
 data/*.json

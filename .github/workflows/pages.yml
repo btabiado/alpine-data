@@ -104,6 +104,15 @@ jobs:
         run: |
           mkdir -p _site
           cp dashboard.html _site/index.html
+          # Sidecar payloads (data-<key>.json) are lazy-loaded by the page on
+          # tab-select to keep the initial HTML under ~3.5MB. They're written
+          # to the repo root by app.py alongside dashboard.html; copy whatever
+          # is there so a new SIDECAR_KEYS entry doesn't need a workflow edit.
+          # Glob runs in nullglob so an empty match doesn't error.
+          shopt -s nullglob
+          for f in data-*.json; do
+            cp "$f" "_site/$f"
+          done
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
