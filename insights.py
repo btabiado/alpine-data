@@ -1185,7 +1185,263 @@ def _market_insights(payload: dict) -> list[dict]:
 # Overview shows its own curated "Top insights" card from the global list,
 # and the per-tab Insights bar is hidden when Overview is active.
 
-VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale", "stocks"}
+VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale", "stocks", "ainews"}
+
+
+# Mirrors the AI_EXPOSED_TICKERS list in app.py's renderAiNewsTab so the AI
+# insights rules look at the same subset of stocks_signals the AI tab does.
+_AI_EXPOSED_TICKERS = (
+    "NVDA", "GOOGL", "MSFT", "META", "AMZN", "AAPL", "TSLA",
+    "AMD", "INTC", "ORCL", "CRM", "PLTR", "SMCI", "ARM", "AVGO",
+)
+
+
+def _ainews_insights(payload: dict) -> list[dict]:
+    """Rules surfacing notable AI-tab events. All emitted insights are tagged
+    ``tab="ainews"`` so the per-tab Insights bar finally has something to show.
+    Defensive throughout — every block guards for missing/malformed data so a
+    bad fetch never raises.
+
+    Inputs read:
+      * ``payload['market']['ai_news']`` — RSS-driven AI news + sentiment summary
+      * ``payload['market']['ai_curated']['top_funded_companies']`` — mega-rounds
+      * ``payload['market']['stocks_signals']`` — to filter for AI-exposed names
+    """
+    out: list[dict] = []
+    market = payload.get("market") or {}
+    ai_news = market.get("ai_news") or {}
+    items = ai_news.get("items") or []
+    summary = ai_news.get("summary") or {}
+
+    try:
+        pos = int(summary.get("positive") or 0)
+        neg = int(summary.get("negative") or 0)
+        total = int(summary.get("total") or 0)
+        net_score = summary.get("net_score")
+        if net_score is None:
+            net_score = pos - neg
+        net_score = int(net_score)
+        sentiment_label = (summary.get("sentiment_label") or "").upper()
+    except (TypeError, ValueError):
+        pos = neg = total = net_score = 0
+        sentiment_label = ""
+
+    # Rule 1: AI news sentiment skew. Fires when the labelled overall flips to
+    # POSITIVE/NEGATIVE AND the net skew is materially above the floor — we
+    # require both ≥15 articles for stability and |net_score|/total ≥ 0.25.
+    if total >= 15 and sentiment_label in ("POSITIVE", "NEGATIVE"):
+        try:
+            skew = abs(net_score) / max(total, 1)
+        except ZeroDivisionError:
+            skew = 0.0
+        if skew >= 0.25:
+            pos_pct = (pos / total) * 100.0
+            neg_pct = (neg / total) * 100.0
+            if sentiment_label == "POSITIVE":
+                out.append({
+                    "kind": "trend", "asset": "global", "severity": "good",
+                    "headline": f"AI news sentiment skews POSITIVE: {pos_pct:.0f}% pos vs {neg_pct:.0f}% neg across {total} articles",
+                    "detail": f"Net score {net_score:+d}. Sentiment is one-sided across today's AI tape.",
+                    "score": 60 + int(skew * 30),
+                })
+            else:
+                out.append({
+                    "kind": "trend", "asset": "global", "severity": "bad",
+                    "headline": f"AI news sentiment skews NEGATIVE: {neg_pct:.0f}% neg vs {pos_pct:.0f}% pos across {total} articles",
+                    "detail": f"Net score {net_score:+d}. Sentiment is one-sided across today's AI tape.",
+                    "score": 60 + int(skew * 30),
+                })
+
+    # Rule 2: AI news volume surge. We don't persist a 7-day history of total
+    # article counts, so we use an absolute threshold tuned against the
+    # fetcher's natural ceiling (cap 60, typical ~25-40). ≥50 articles in the
+    # 24h window is a "heavy news day."
+    if total >= 50:
+        out.append({
+            "kind": "anomaly", "asset": "global", "severity": "info",
+            "headline": f"AI news flow heavy: {total} articles in the last 24h",
+            "detail": "Above the typical daily cadence — busy news day across AI feeds.",
+            "score": 55,
+        })
+
+    # Rule 3: Single-source dominance. One feed accounts for >40% of today's
+    # AI news. Useful when one publisher floods the feed (helps the reader
+    # weight the sentiment skew above).
+    if total >= 20 and items:
+        try:
+            by_source: dict[str, int] = {}
+            for it in items:
+                if not isinstance(it, dict):
+                    continue
+                src = (it.get("source") or it.get("source_name") or "").strip()
+                if not src:
+                    continue
+                by_source[src] = by_source.get(src, 0) + 1
+            if by_source:
+                top_src, top_cnt = max(by_source.items(), key=lambda kv: kv[1])
+                share = top_cnt / total
+                if share >= 0.40:
+                    out.append({
+                        "kind": "anomaly", "asset": "global", "severity": "info",
+                        "headline": f"AI news flow concentrated: {top_src} is {share*100:.0f}% of today's {total} articles",
+                        "detail": "One source dominates — read the sentiment skew with that in mind.",
+                        "score": 50,
+                    })
+        except Exception:
+            pass
+
+    # Rule 4: Top AI-exposed ticker — STRONG BUY / STRONG SELL (|score| ≥ 50)
+    # OR a label flip vs. ~7 days ago using the cached score history. Pick
+    # only the single most-extreme name so we don't flood the bar.
+    stocks = market.get("stocks_signals") or []
+    exposed_set = {t.upper() for t in _AI_EXPOSED_TICKERS}
+    ai_stocks: list[dict] = []
+    try:
+        for s in stocks:
+            if not isinstance(s, dict):
+                continue
+            sym = (s.get("symbol") or "").upper()
+            if sym and sym in exposed_set:
+                ai_stocks.append(s)
+    except Exception:
+        ai_stocks = []
+
+    # Rule 4a: strongest |score| at ≥50
+    try:
+        scored = [
+            (s, float(s.get("score")))
+            for s in ai_stocks
+            if isinstance(s.get("score"), (int, float))
+        ]
+        if scored:
+            top_stock, top_score = max(scored, key=lambda t: abs(t[1]))
+            if abs(top_score) >= 50:
+                sym = (top_stock.get("symbol") or "?").upper()
+                name = top_stock.get("name") or ""
+                label = top_stock.get("label") or ""
+                if top_score > 0:
+                    out.append({
+                        "kind": "signal", "asset": sym, "severity": "good",
+                        "headline": f"{sym} AI-exposed ticker {label}: score {int(top_score):+d}",
+                        "detail": f"{name} — strongest score among the AI-exposed subset.",
+                        "score": 70,
+                    })
+                else:
+                    out.append({
+                        "kind": "signal", "asset": sym, "severity": "alert",
+                        "headline": f"{sym} AI-exposed ticker {label}: score {int(top_score):+d}",
+                        "detail": f"{name} — weakest score among the AI-exposed subset.",
+                        "score": 70,
+                    })
+    except Exception:
+        pass
+
+    # Rule 4b: label flip vs ~7d ago using cached rolling score history.
+    # We compare today's score against the score from ~7 entries ago and
+    # require the sign / strong-tier label to have flipped.
+    try:
+        for s in ai_stocks:
+            hist = s.get("history") or []
+            if not isinstance(hist, list) or len(hist) < 8:
+                continue
+            now_row = hist[-1] or {}
+            then_row = hist[-8] or {}
+            now_score = now_row.get("score")
+            then_score = then_row.get("score")
+            if not isinstance(now_score, (int, float)) or not isinstance(then_score, (int, float)):
+                continue
+            now_score = int(now_score)
+            then_score = int(then_score)
+            # Require a meaningful magnitude on at least one side AND a sign flip
+            # so we don't fire on noisy crossings near zero.
+            if max(abs(now_score), abs(then_score)) < 30:
+                continue
+            flipped_up = then_score <= 0 < now_score
+            flipped_dn = then_score >= 0 > now_score
+            if not (flipped_up or flipped_dn):
+                continue
+            sym = (s.get("symbol") or "?").upper()
+            label = s.get("label") or ""
+            sev = "good" if flipped_up else "bad"
+            out.append({
+                "kind": "signal", "asset": sym, "severity": sev,
+                "headline": f"{sym} signal flipped {'positive' if flipped_up else 'negative'}: {then_score:+d} → {now_score:+d}{(' (' + label + ')') if label else ''}",
+                "detail": "AI-exposed ticker direction change over the last ~7 trading days.",
+                "score": 65,
+            })
+            break  # one flip is enough — don't spam the bar
+    except Exception:
+        pass
+
+    # Rule 5: Sentiment / price divergence. AI news leans one way but the
+    # AI-exposed stocks lean the opposite. Helpful for spotting dislocations.
+    try:
+        if total >= 15 and ai_stocks and sentiment_label in ("POSITIVE", "NEGATIVE"):
+            stock_scores = [
+                float(s.get("score"))
+                for s in ai_stocks
+                if isinstance(s.get("score"), (int, float))
+            ]
+            if stock_scores:
+                avg_stock = sum(stock_scores) / len(stock_scores)
+                if sentiment_label == "POSITIVE" and avg_stock <= -10:
+                    out.append({
+                        "kind": "anomaly", "asset": "global", "severity": "alert",
+                        "headline": f"AI sentiment / price divergence: news net {net_score:+d} but AI-exposed stocks avg score {avg_stock:+.0f}",
+                        "detail": "News tape bullish while AI-exposed equities lag — possible dislocation.",
+                        "score": 75,
+                    })
+                elif sentiment_label == "NEGATIVE" and avg_stock >= 10:
+                    out.append({
+                        "kind": "anomaly", "asset": "global", "severity": "info",
+                        "headline": f"AI sentiment / price divergence: news net {net_score:+d} but AI-exposed stocks avg score {avg_stock:+.0f}",
+                        "detail": "News tape bearish while AI-exposed equities hold up — possible dislocation.",
+                        "score": 75,
+                    })
+    except Exception:
+        pass
+
+    # Rule 6: Mega funding round in the last 7 days. Curated snapshot exposes
+    # `top_funded_companies` with last_round_size_usd + last_round_date. We
+    # surface ≥$1B rounds dated within the last 7 days.
+    try:
+        curated = market.get("ai_curated") or {}
+        companies = curated.get("top_funded_companies") or []
+        recent_mega: list[tuple[float, dict]] = []
+        for c in companies:
+            if not isinstance(c, dict):
+                continue
+            size = c.get("last_round_size_usd")
+            date_str = c.get("last_round_date")
+            if not isinstance(size, (int, float)) or size < 1_000_000_000:
+                continue
+            if not _is_fresh(date_str, max_age_days=7):
+                continue
+            recent_mega.append((float(size), c))
+        if recent_mega:
+            recent_mega.sort(key=lambda t: t[0], reverse=True)
+            size, c = recent_mega[0]
+            name = c.get("name") or "?"
+            stage = c.get("last_round_stage") or ""
+            valuation = c.get("valuation_usd")
+            size_b = size / 1e9
+            val_part = ""
+            if isinstance(valuation, (int, float)) and valuation > 0:
+                val_part = f" at ${valuation/1e9:.0f}B valuation"
+            stage_part = f" ({stage})" if stage else ""
+            out.append({
+                "kind": "milestone", "asset": "global", "severity": "good",
+                "headline": f"AI mega-round this week: {name} raised ${size_b:.1f}B{val_part}{stage_part}",
+                "detail": f"Closed {c.get('last_round_date','')}. Among the largest AI rounds on record.",
+                "score": 85,
+            })
+    except Exception:
+        pass
+
+    return out
+
+
+
 
 
 def _market_insight_tab(insight: dict) -> str:
@@ -1246,6 +1502,7 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
     stocks = _stocks_insights(payload)
     whales = _whale_insights(payload)
     mkts = _market_insights(payload)
+    ainews = _ainews_insights(payload)
 
     # Tag with the tab each insight belongs to.
     for i in etf_btc + etf_eth:
@@ -1258,8 +1515,10 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
         i.setdefault("tab", "whale")
     for i in mkts:
         i.setdefault("tab", _market_insight_tab(i))
+    for i in ainews:
+        i.setdefault("tab", "ainews")
 
-    out = etf_btc + etf_eth + sigs + stocks + whales + mkts
+    out = etf_btc + etf_eth + sigs + stocks + whales + mkts + ainews
 
     # Prioritise: milestones + anomalies first, then ETF, then trends, then signals, then info
     rank = {

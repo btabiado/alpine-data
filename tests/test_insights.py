@@ -204,6 +204,250 @@ def test_network_velocity_skipped_when_series_too_short():
     assert not hits, "rule should be silent with <31 daily ratios"
 
 
+# ---------- AI News tab insights ----------
+
+def _ainews_payload(
+    *,
+    summary: dict | None = None,
+    items: list[dict] | None = None,
+    stocks: list[dict] | None = None,
+    curated: dict | None = None,
+    available: bool = True,
+) -> dict:
+    """Build a minimal payload that exercises only the AI insight rules.
+
+    Other generators (etf/signals/whale) receive empty structures so they
+    don't emit anything that could clutter the assertions.
+    """
+    market = {}
+    market["ai_news"] = {
+        "available": available,
+        "items": items or [],
+        "summary": summary or {},
+    }
+    if stocks is not None:
+        market["stocks_signals"] = stocks
+    if curated is not None:
+        market["ai_curated"] = curated
+    return {
+        "btc": {}, "eth": {},
+        "market": market,
+        "signals": {},
+    }
+
+
+def test_ainews_sentiment_skew_positive_fires_and_tagged_ainews():
+    summary = {"positive": 38, "negative": 6, "neutral": 16, "total": 60,
+               "net_score": 32, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sentiment skews POSITIVE" in i.get("headline", "")]
+    assert hits, f"expected POSITIVE sentiment-skew insight, got {[i['headline'] for i in out]!r}"
+    for i in hits:
+        assert i["tab"] == "ainews"
+        assert i["severity"] == "good"
+
+
+def test_ainews_sentiment_skew_negative_fires():
+    summary = {"positive": 5, "negative": 28, "neutral": 12, "total": 45,
+               "net_score": -23, "sentiment_label": "NEGATIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sentiment skews NEGATIVE" in i.get("headline", "")]
+    assert hits
+    for i in hits:
+        assert i["tab"] == "ainews"
+        assert i["severity"] == "bad"
+
+
+def test_ainews_sentiment_skew_silent_when_total_too_low():
+    """Below the 15-article floor the rule must stay silent (avoid noise)."""
+    summary = {"positive": 6, "negative": 0, "neutral": 2, "total": 8,
+               "net_score": 6, "sentiment_label": "POSITIVE"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sentiment skews" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_volume_surge_fires_when_total_gte_50():
+    summary = {"positive": 20, "negative": 18, "neutral": 16, "total": 54,
+               "net_score": 2, "sentiment_label": "NEUTRAL"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news flow heavy" in i.get("headline", "")]
+    assert hits, "expected volume-surge insight to fire at total=54"
+    assert hits[0]["tab"] == "ainews"
+
+
+def test_ainews_volume_surge_silent_below_threshold():
+    summary = {"positive": 10, "negative": 10, "neutral": 10, "total": 30,
+               "net_score": 0, "sentiment_label": "NEUTRAL"}
+    payload = _ainews_payload(summary=summary)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news flow heavy" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_source_dominance_fires_when_one_source_gt_40pct():
+    items = (
+        [{"title": f"tc {i}", "url": "u", "source": "TechCrunch AI"} for i in range(12)]
+        + [{"title": f"v {i}", "url": "u", "source": "The Verge AI"} for i in range(5)]
+        + [{"title": f"vb {i}", "url": "u", "source": "VentureBeat AI"} for i in range(4)]
+        + [{"title": f"o {i}", "url": "u", "source": "OpenAI"} for i in range(4)]
+    )
+    summary = {"positive": 10, "negative": 8, "neutral": 7, "total": len(items),
+               "net_score": 2, "sentiment_label": "NEUTRAL"}
+    payload = _ainews_payload(summary=summary, items=items)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news flow concentrated" in i.get("headline", "")]
+    assert hits, f"expected source-dominance insight; got {[i['headline'] for i in out]!r}"
+    assert "TechCrunch AI" in hits[0]["headline"]
+    assert hits[0]["tab"] == "ainews"
+
+
+def test_ainews_source_dominance_silent_when_spread_even():
+    items = [{"title": f"t {i}", "url": "u", "source": s}
+             for s in ("A", "B", "C", "D", "E") for i in range(5)]  # 25 items, 5/source
+    summary = {"positive": 10, "negative": 8, "neutral": 7, "total": len(items),
+               "net_score": 2, "sentiment_label": "NEUTRAL"}
+    payload = _ainews_payload(summary=summary, items=items)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI news flow concentrated" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_top_ticker_strong_score_fires_for_ai_exposed_ticker():
+    stocks = [
+        {"symbol": "NVDA", "name": "Nvidia", "score": 62, "label": "STRONG BUY"},
+        {"symbol": "GOOGL", "name": "Alphabet", "score": 10, "label": "HOLD"},
+        {"symbol": "XYZ", "name": "Not AI", "score": 95, "label": "STRONG BUY"},  # filtered out
+    ]
+    payload = _ainews_payload(stocks=stocks)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if i.get("tab") == "ainews" and "NVDA" in i.get("headline", "")
+            and "STRONG BUY" in i.get("headline", "")]
+    assert hits, f"expected NVDA STRONG BUY ainews insight; got {[i['headline'] for i in out]!r}"
+    assert hits[0]["asset"] == "NVDA"
+    assert hits[0]["severity"] == "good"
+
+
+def test_ainews_top_ticker_silent_when_no_strong_signal():
+    stocks = [
+        {"symbol": "NVDA", "name": "Nvidia", "score": 25, "label": "BUY"},
+        {"symbol": "MSFT", "name": "Microsoft", "score": -10, "label": "HOLD"},
+    ]
+    payload = _ainews_payload(stocks=stocks)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if i.get("tab") == "ainews" and "AI-exposed ticker" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_ticker_flip_via_history_fires():
+    """Sign flip from -40 → +45 across the 7d history window must trigger."""
+    history = [{"date": f"2024-01-{d:02d}", "score": -40} for d in range(1, 8)]
+    history.append({"date": "2024-01-08", "score": 45})
+    stocks = [{"symbol": "AMD", "name": "Advanced Micro", "score": 45,
+               "label": "BUY", "history": history}]
+    payload = _ainews_payload(stocks=stocks)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if i.get("tab") == "ainews" and "AMD signal flipped" in i.get("headline", "")]
+    assert hits, f"expected AMD flip insight; got {[i['headline'] for i in out]!r}"
+    assert "positive" in hits[0]["headline"]
+
+
+def test_ainews_ticker_flip_silent_when_near_zero():
+    """A flip from -5 → +5 should NOT fire — too noisy near zero."""
+    history = [{"date": f"2024-01-{d:02d}", "score": -5} for d in range(1, 8)]
+    history.append({"date": "2024-01-08", "score": 5})
+    stocks = [{"symbol": "AMD", "name": "Advanced Micro", "score": 5,
+               "label": "HOLD", "history": history}]
+    payload = _ainews_payload(stocks=stocks)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AMD signal flipped" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_sentiment_price_divergence_fires():
+    summary = {"positive": 30, "negative": 5, "neutral": 5, "total": 40,
+               "net_score": 25, "sentiment_label": "POSITIVE"}
+    stocks = [
+        {"symbol": "NVDA", "name": "Nvidia", "score": -20, "label": "SELL"},
+        {"symbol": "AMD",  "name": "AMD",    "score": -15, "label": "SELL"},
+        {"symbol": "MSFT", "name": "MSFT",   "score": -10, "label": "HOLD"},
+    ]
+    payload = _ainews_payload(summary=summary, stocks=stocks)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI sentiment / price divergence" in i.get("headline", "")]
+    assert hits, f"expected divergence insight; got {[i['headline'] for i in out]!r}"
+    assert hits[0]["tab"] == "ainews"
+    assert hits[0]["severity"] == "alert"
+
+
+def test_ainews_mega_round_fires_for_fresh_billion_dollar_round():
+    from datetime import datetime, timedelta
+    recent_date = (datetime.utcnow() - timedelta(days=3)).strftime("%Y-%m-%d")
+    curated = {
+        "top_funded_companies": [
+            {"name": "Anthropic", "valuation_usd": 185_000_000_000,
+             "last_round_size_usd": 5_000_000_000,
+             "last_round_date": recent_date,
+             "last_round_stage": "Series F"},
+            # Stale round — must be filtered out.
+            {"name": "OldCo",     "valuation_usd": 10_000_000_000,
+             "last_round_size_usd": 2_000_000_000,
+             "last_round_date": "2024-01-01",
+             "last_round_stage": "Series D"},
+        ],
+    }
+    payload = _ainews_payload(curated=curated)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI mega-round" in i.get("headline", "")]
+    assert hits, f"expected mega-round insight; got {[i['headline'] for i in out]!r}"
+    assert "Anthropic" in hits[0]["headline"]
+    assert hits[0]["tab"] == "ainews"
+    assert hits[0]["severity"] == "good"
+    assert "OldCo" not in hits[0]["headline"]
+
+
+def test_ainews_mega_round_silent_when_round_too_small():
+    from datetime import datetime, timedelta
+    recent_date = (datetime.utcnow() - timedelta(days=2)).strftime("%Y-%m-%d")
+    curated = {
+        "top_funded_companies": [
+            {"name": "SmallCo", "valuation_usd": 1_000_000_000,
+             "last_round_size_usd": 100_000_000,
+             "last_round_date": recent_date,
+             "last_round_stage": "Series B"},
+        ],
+    }
+    payload = _ainews_payload(curated=curated)
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "AI mega-round" in i.get("headline", "")]
+    assert not hits
+
+
+def test_ainews_rules_defensive_on_empty_payload():
+    """A wholly empty market section must not crash the AI generator."""
+    payload = {"btc": {}, "eth": {}, "market": {}, "signals": {}}
+    out = insights._ainews_insights(payload)  # call generator directly
+    assert out == []
+
+
+def test_ainews_rules_defensive_on_malformed_summary():
+    """Garbage in summary (None, strings) shouldn't raise."""
+    payload = _ainews_payload(summary={"positive": None, "negative": "x", "total": "?",
+                                       "net_score": None, "sentiment_label": None})
+    out = insights._ainews_insights(payload)
+    # No insight should fire, but no exception either.
+    assert isinstance(out, list)
+
+
+def test_ainews_tab_added_to_valid_tabs():
+    """The VALID_TABS allowlist must include 'ainews' so the renderer accepts it."""
+    assert "ainews" in insights.VALID_TABS
+
+
 # ---------- regression: existing behaviour still holds ----------
 
 def test_build_insights_respects_limit():

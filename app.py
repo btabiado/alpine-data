@@ -4188,6 +4188,7 @@ const TAB_LABELS = {
   markets: 'Markets insights',
   defi: 'DeFi insights',
   whale: 'Whale insights',
+  ainews: 'AI insights',
 };
 // Empty-state copy per tab — explains what would normally appear here so the
 // reader knows "nothing today" rather than "is this broken?"
@@ -4198,6 +4199,7 @@ const TAB_EMPTY = {
   markets: 'No notable macro / news / index moves right now.',
   defi:    'No notable DeFi / gas / TVL moves right now.',
   whale:   'On-chain looks quiet — no mempool / mining / hashrate anomalies.',
+  ainews:  'No notable AI sentiment / funding / ticker moves right now.',
 };
 
 function renderInsights(){
