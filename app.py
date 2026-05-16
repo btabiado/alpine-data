@@ -8796,18 +8796,14 @@ const chatInput= document.getElementById('chatInput');
 const chatSend = document.getElementById('chatSend');
 
 // Chat requires the Flask backend at /api/chat (uses ANTHROPIC_API_KEY).
-// On the public GitHub Pages mirror that route doesn't exist — the request
-// would hit the static server and return HTTP 405. Hide the FAB + dock so
-// users don't see a feature that can't work in this mode. `isServer` is
-// defined further down at the live-refresh setup but the constant is
-// derivable here too — read directly from location.hostname to avoid a
-// declaration-order dependency.
+// On the public GitHub Pages mirror that route doesn't exist — the raw
+// request returns HTTP 405 with an ugly HTML body. Keep the chat widget
+// visible (users want to know the feature exists) but intercept the
+// submit so a friendly explainer renders instead of letting the fetch
+// fail. The interception is below — wired right before the form-submit
+// listener.
 const _chatIsServer = (typeof location !== 'undefined') &&
   ['127.0.0.1','localhost','0.0.0.0'].includes(location.hostname);
-if (!_chatIsServer){
-  if (chatFab)  chatFab.style.display  = 'none';
-  if (chatDock) chatDock.style.display = 'none';
-}
 
 function openChat(){ chatDock?.classList.add('open'); chatFab?.classList.add('hidden'); setTimeout(()=>chatInput?.focus(), 200); }
 function closeChat(){ chatDock?.classList.remove('open'); chatFab?.classList.remove('hidden'); }
@@ -8886,11 +8882,41 @@ async function streamChat(question){
   }
 }
 
+// On first chat-dock open in public-mirror mode, drop in a one-time
+// intro message explaining the feature is local-only — so the user
+// understands BEFORE typing why their question won't get an answer.
+let _chatIntroShown = false;
+function _maybeShowChatIntro(){
+  if (_chatIntroShown || _chatIsServer) return;
+  _chatIntroShown = true;
+  const el = appendMsg('bot',
+    "Hi! Chat needs to run locally (python server.py) — the public dashboard " +
+    "is a static site with no backend. Your dashboard data is all here, but " +
+    "I can't answer questions about it from this URL.\n\n" +
+    "To use chat: clone the repo, run `python server.py`, open localhost:5000. " +
+    "Same dashboard, plus a working assistant."
+  );
+  el.className = 'msg bot';  // ensure styled correctly
+}
+chatFab?.addEventListener('click', _maybeShowChatIntro);
+
 chatForm?.addEventListener('submit', (e) => {
   e.preventDefault();
   const q = chatInput.value.trim();
   if (!q) return;
   chatInput.value = '';
+  // Public mirror: intercept the submit so we never fire the /api/chat
+  // request that would return 405. Show a friendly per-question reply
+  // instead of an HTTP error blob.
+  if (!_chatIsServer){
+    appendMsg('user', q);
+    appendMsg('bot',
+      "Chat is local-only on this build. Run `python server.py` locally " +
+      "(needs ANTHROPIC_API_KEY) to ask questions about this dashboard's data."
+    );
+    chatInput.focus();
+    return;
+  }
   chatSend.disabled = true;
   streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
 });
