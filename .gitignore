@@ -16,6 +16,9 @@ dashboard.html
 # Lazy-loaded sidecar payloads (whale, etc.) — written by app.py next to
 # dashboard.html on every build. Same lifecycle as the HTML itself.
 data-*.json
+# V2 builder output mirrors the production layout one level down.
+v2/dashboard.html
+v2/data-*.json
 
 # Local cached fetches stay on your machine (regenerated every run)
 data/*.json

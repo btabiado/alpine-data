@@ -104,6 +104,15 @@ jobs:
         if: hashFiles('dashboard.html') == ''
         run: python app.py --no-open
 
+      - name: Generate V2 dashboard (parallel build, reads same data/)
+        # V2 is a UX-cleanup spin of the same payload — reuses the cached
+        # market.json / whale.json / ETF CSVs already fetched above so no
+        # extra API calls. Failure here must NOT fail the deploy: production
+        # at `/` is the source of truth; V2 at `/v2/` is additive.
+        if: hashFiles('v2/app.py') != ''
+        run: python v2/app.py --no-open || echo "[v2] build failed; production deploy continues"
+        continue-on-error: true
+
       - name: Stage site directory
         run: |
           mkdir -p _site
@@ -117,6 +126,15 @@ jobs:
           for f in data-*.json; do
             cp "$f" "_site/$f"
           done
+          # Stage the V2 build under /v2/ when present. Missing v2/dashboard.html
+          # means the V2 step skipped or failed — production at `/` is unaffected.
+          if [ -f v2/dashboard.html ]; then
+            mkdir -p _site/v2
+            cp v2/dashboard.html _site/v2/index.html
+            for f in v2/data-*.json; do
+              cp "$f" "_site/v2/$(basename "$f")"
+            done
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
