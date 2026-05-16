@@ -986,16 +986,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 </div>
 
-<!-- ============ SIGNAL DETAIL MODAL (top-20 strip → full breakdown) ============ -->
-<div id="signalDetailModal" class="modal-bg hidden">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:8px;overflow:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 id="signalDetailTitle" style="margin:0;font-size:14px">Signal detail</h2>
-      <button class="btn" id="signalDetailClose" aria-label="Close signal detail">×</button>
-    </div>
-    <div id="signalDetailBody"></div>
-  </div>
-</div>
+<!-- (Legacy SIGNAL DETAIL MODAL retired here. Every entry point that
+     previously opened #signalDetailModal now routes through openSignalDetail
+     → lookupSymbol → the universal #symbolDetailModal which pairs Signal
+     + POC side-by-side. Keeping this comment so a future grep finds the
+     intentional removal.) -->
 
 <!-- ============ STOCK DETAIL MODAL (Stocks tab card → full breakdown) ============ -->
 <div id="stockDetailModal" class="modal-bg hidden">
@@ -1227,14 +1222,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
 
-    <!-- Top 25 by market cap: structural "what's the market doing" view.
-         Re-sorts signals_top20 by CoinGecko market-cap rank (not by score)
-         so the largest 25 coins are always visible, regardless of bull/bear.
-         Each card shows symbol + price + label + score, click → full modal. -->
+    <!-- Other top coins by market cap: structural "what's the rest of the
+         market doing" view. The four pinned assets (BTC/ETH/LINK/LTC)
+         already appear in their own big cards above with signal score
+         surfaced — this grid skips them so cards don't duplicate. Re-sorts
+         signals_top20 by CoinGecko market-cap rank. -->
     <div id="overviewTop15Wrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">🏆 Top 25 by market cap</h2>
-        <span class="desc">Largest 25 coins · price + signal · click any card for the full breakdown</span>
+        <h2 style="margin:0;font-size:15px">🏆 Other top coins by market cap</h2>
+        <span class="desc">Top non-pinned coins · price + signal · click any card for the full breakdown</span>
       </div>
       <div class="row" id="overviewTop15" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
@@ -1302,11 +1298,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
 
-    <!-- Bottom-of-Overview: breaking news feed (top 10 most recent) -->
+    <!-- Bottom-of-Overview: continues the news feed past the top-4 teaser
+         (items 5-14) so the user doesn't read the same headlines twice. -->
     <div class="chart-card">
       <div class="head">
-        <h2>Breaking news</h2>
-        <span class="desc">latest crypto headlines</span>
+        <h2>More headlines</h2>
+        <span class="desc">items 5-14 from the same feed</span>
       </div>
       <div id="overviewNewsHost"></div>
     </div>
@@ -3334,7 +3331,7 @@ function renderTop20Signals(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
+    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
@@ -3465,13 +3462,13 @@ function renderPerCoinSignalList(){
       : 'Recent price trend · click for full breakdown';
     // Block A: rich signal card (score + components).
     chunks.push(
-      `<div data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
+      `<div data-per-coin-symbol="${escapeHtml(sym)}" role="button" tabindex="0" aria-label="Open ${escapeHtml(sym)} signal detail" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
       renderSignalCardFromObj(s) +
       `</div>`
     );
     // Block B: history/price chart card.
     chunks.push(
-      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
+      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" role="button" tabindex="0" aria-label="Open ${escapeHtml(sym)} signal detail" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
         <div class="head"><h2>${escapeHtml(chartTitle)}</h2><span class="desc">${chartDesc}</span></div>
         <div class="chart-wrap"><canvas id="perCoinChart-${escapeHtml(sym)}"></canvas></div>
       </div>`
@@ -3563,15 +3560,12 @@ function openSignalDetail(sym){
   //
   // For symbols outside `poc_top`, the POC slot renders an empty-state
   // card instead of being absent — consistent with the symbol-search UX.
-  // The legacy `#signalDetailModal` element stays in the DOM but is no
-  // longer opened; safe to remove later once nothing else references it.
   if (!sym) return;
   if (typeof lookupSymbol === 'function') lookupSymbol(String(sym));
 }
-function closeSignalDetail(){
-  const m = document.getElementById('signalDetailModal');
-  if (m) m.classList.add('hidden');
-}
+// (closeSignalDetail removed — the legacy #signalDetailModal element was
+// retired so there's nothing for this function to close. Click + keydown
+// handlers that referenced it were also removed in wireTop20Modals below.)
 
 // Apply the active Top-50 filter chip — hides both whole sections and any
 // individual cards whose bucket doesn't match. Chip semantics:
@@ -3608,8 +3602,6 @@ function applyTop20Filter(bucket){
 (function wireTop20Modals(){
   if (window._top20Wired) return; window._top20Wired = true;
   document.addEventListener('click', e => {
-    if (e.target && e.target.id === 'signalDetailClose') closeSignalDetail();
-    if (e.target && e.target.id === 'signalDetailModal') closeSignalDetail();
     const fb = e.target && e.target.closest && e.target.closest('[data-top20filter]');
     if (fb){
       const bucket = fb.getAttribute('data-top20filter');
@@ -3622,9 +3614,27 @@ function applyTop20Filter(bucket){
     const sigChart = e.target && e.target.closest && e.target.closest('[data-sig-asset]');
     if (sigChart) openSignalDetail(sigChart.getAttribute('data-sig-asset'));
   });
+  // Keyboard activation for every clickable coin card across the dashboard.
+  // Cards already carry role="button" + tabindex="0" + the appropriate
+  // data-* attribute; one delegated handler keeps Enter/Space working
+  // everywhere without per-renderer duplication. Skips elements with
+  // their own keydown logic (form inputs, the symbol-search box, etc).
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target;
+    if (!t || typeof t.getAttribute !== 'function') return;
+    // Don't steal Enter from form inputs / textareas / buttons that have
+    // their own behaviour.
+    const tag = (t.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const sym = t.getAttribute('data-symbol') || t.getAttribute('data-per-coin-symbol');
+    if (sym){
+      e.preventDefault();
+      openSignalDetail(sym);
+    }
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      closeSignalDetail();
       const pm = document.getElementById('pocExplainerModal');
       if (pm && !pm.classList.contains('hidden')) pm.classList.add('hidden');
     }
@@ -4917,8 +4927,11 @@ function renderInsights(){
       : `${label} · none right now`;
   }
   // Re-label the strong "Insights" header if present (the bar's title).
+  // Always set the strong header — was previously only setting it for
+  // non-Overview tabs, which left a stale "ETF" or "Whale" label visible
+  // if the user returned to Overview with the bar shown via the toggle.
   const headerStrong = host?.parentElement?.querySelector('strong');
-  if (headerStrong && tab !== 'overview') headerStrong.textContent = label;
+  if (headerStrong) headerStrong.textContent = (tab === 'overview') ? 'Insights' : label;
   if (!list.length){
     const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
     host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
@@ -5492,9 +5505,14 @@ function renderOverviewTop15(){
   const host = document.getElementById('overviewTop15');
   if (!wrap || !host) return;
   const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  // The four pinned assets (BTC/ETH/LINK/LTC) already render in their own
+  // big cards above this grid with their signal score chip surfaced. Exclude
+  // them here so the grid is genuinely "the OTHER coins worth watching"
+  // instead of duplicating what the user just saw.
+  const PINNED_ON_TOP = new Set(['BTC', 'ETH', 'LINK', 'LTC']);
   // signals_top20 is sorted by SCORE — re-sort by rank for this widget.
   const top15 = (DATA.signals_top20 || [])
-    .filter(s => s && !isStable(s.symbol))
+    .filter(s => s && !isStable(s.symbol) && !PINNED_ON_TOP.has((s.symbol || '').toUpperCase()))
     .slice()
     .sort((a,b) => (a.rank ?? 999) - (b.rank ?? 999))
     .slice(0, 25);
@@ -5514,7 +5532,7 @@ function renderOverviewTop15(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+    return `<div class="card" data-symbol="${sym}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
@@ -5564,7 +5582,7 @@ function renderOverviewStrongBuys(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+    return `<div class="card" data-symbol="${sym}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
@@ -5606,8 +5624,11 @@ function getSignalOrder(){
 
 function renderOverviewSignals(){
   // Top-row asset cards on the Overview tab. Shows latest price, 24h
-  // % change, and 24h volume for each configured asset. Click jumps
-  // to the Trading tab for that asset.
+  // % change, 24h volume, AND the composite signal score so the four
+  // pinned assets carry their own decision-relevant info up front
+  // (avoids duplicating them in the "Other top coins" grid below).
+  // Click opens the universal Signal + POC modal — consistent with
+  // every other coin-card entry point on the dashboard.
   const market = DATA.market || {};
   const order = getSignalOrder();
   const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
@@ -5625,6 +5646,7 @@ function renderOverviewSignals(){
   };
   const host = document.getElementById('overviewSignals');
   if (!host) return;
+  const sigsAll = DATA.signals || {};
   host.innerHTML = order.map(a => {
     const m = market[a] || {};
     const prices = m.price || [];
@@ -5636,6 +5658,22 @@ function renderOverviewSignals(){
     const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
     const pctTxt  = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     const asOf = prices.length ? prices[prices.length-1].date : '—';
+    // Signal chip — score + label from DATA.signals[a]. signalColor() does
+    // the threshold mapping (≥50 STRONG BUY green, ≤-50 STRONG SELL red,
+    // graded in between). When the asset isn't computed (rare — fetch
+    // failure), the chip is omitted rather than showing a placeholder.
+    const sig = sigsAll[a];
+    let signalChip = '';
+    if (sig && typeof sig.score === 'number'){
+      const sc = sig.score;
+      const lbl = sig.label || '';
+      const col = signalColor(sc);
+      const txt = lbl + ' ' + (sc >= 0 ? '+' : '') + sc;
+      signalChip = '<span style="background:' + col + '22;color:' + col +
+        ';border:1px solid ' + col + '55;padding:2px 8px;border-radius:4px;' +
+        'font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.02em">' +
+        escapeHtml(txt) + '</span>';
+    }
     // 90-day price sparkline — uses the same renderSparkline helper as the
     // Traditional Indices bar. SVG scales via viewBox; width is responsive
     // (svg style="width:100%") so the chart fills the card regardless of
@@ -5648,10 +5686,11 @@ function renderOverviewSignals(){
     const sparkBlock = sparkSvg
       ? `<div style="margin-top:8px;line-height:0">${sparkSvg}</div>`
       : '';
-    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="trading" data-asset="${a}" title="Open Trading tab for ${a.toUpperCase()}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
-        <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_NAMES[a] || a}</span>
+    const SYM = a.toUpperCase();
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-symbol="${SYM}" role="button" tabindex="0" aria-label="Open ${SYM} signal detail" title="Open ${SYM} Signal + POC detail">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h3 style="font-size:13px;color:var(--text);margin:0">${SYM}</h3>
+        ${signalChip}
       </div>
       <div class="v" style="font-size:26px;font-weight:700;margin-top:6px;color:var(--text)">${fmtPrice(lastP)}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
@@ -5659,13 +5698,23 @@ function renderOverviewSignals(){
         <span class="sub" style="font-size:12px;color:var(--muted)">24h vol ${fmtVol(lastV)}</span>
       </div>
       ${sparkBlock}
-      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${asOf}</div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">${ASSET_NAMES[a] || a} &middot; as of ${asOf}</div>
     </div>`;
   }).join('');
 
-  // Wire click-to-jump on cards (now jumps to Trading tab)
-  host.querySelectorAll('[data-jump]').forEach(el =>
-    el.addEventListener('click', () => selectTab(el.dataset.jump))
+  // Wire click → universal Signal + POC modal. openSignalDetail delegates
+  // through lookupSymbol so the same modal that Top-25 cards open also
+  // opens here.
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
+  );
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        openSignalDetail(el.getAttribute('data-symbol'));
+      }
+    })
   );
 }
 
@@ -5831,14 +5880,18 @@ function renderOverviewNews(){
       ).join('');
     }
   }
-  // Bottom-of-Overview "Breaking news" feed: 10 most recent items.
+  // Bottom-of-Overview "More headlines" feed. Picks up where the top
+  // 4-item teaser left off so the user doesn't read the same titles
+  // twice on a single page. If we have fewer than 14 total items we
+  // simply render whatever is past index 4.
   const bottom = document.getElementById('overviewNewsHost');
   if (bottom){
-    if (!news.length){
-      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
+    const more = news.slice(4, 14);
+    if (!more.length){
+      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No additional headlines beyond the top 4 above.</div>';
       return;
     }
-    bottom.innerHTML = news.slice(0,10).map(n =>
+    bottom.innerHTML = more.map(n =>
       `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
         <div style="font-weight:600;font-size:13px">${escapeHtml(n.title)}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source)} · ${escapeHtml(n.date)}</div>
@@ -6277,7 +6330,10 @@ function renderStocksTab(){
 // Reads DATA.market.ai_news (produced by fetch_market.py). Defensive: when
 // available=false or missing, shows an empty state pointing to the fetcher.
 const AI_EXPOSED_TICKERS = ['NVDA','GOOGL','MSFT','META','AMZN','AAPL','TSLA','AMD','INTC','ORCL','CRM','PLTR','SMCI','ARM','AVGO'];
-const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#f59e0b'};
+// Neutral is intentionally a muted grey, not amber. Amber means "caution"
+// per the palette spec; painting a neutral headline amber made it look
+// like a warning. Grey reads as "no signal" which is the actual semantic.
+const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#94a3b8'};
 
 function renderAiNewsTab(){
   const ai = ((DATA.market||{}).ai_news) || null;
@@ -8328,7 +8384,9 @@ function openNewsSentimentDetail(symbol){
     }).join('');
     const chipsBlock = chips ? `<div style="margin-top:10px;line-height:1.8">${chips}</div>` : '';
     // Top articles from CC (different from RSS-matched — these are CC's curated picks).
-    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
+    // Neutral = muted grey (not amber). Amber = caution per the palette
+    // spec; using it for NEUTRAL made neutral headlines look like warnings.
+    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#94a3b8'};
     const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
@@ -8904,21 +8962,222 @@ async function streamChat(question){
   }
 }
 
-// On first chat-dock open in public-mirror mode, drop in a one-time
-// intro message explaining the feature is local-only — so the user
-// understands BEFORE typing why their question won't get an answer.
+// ---- Client-side Anthropic chat for the public mirror ----
+//
+// The public mirror is a static GitHub Pages site — there's no /api/chat
+// endpoint. To make chat actually WORK here (instead of just showing a
+// "run locally" message), users can paste their own Anthropic API key
+// once. It's stored in localStorage and never leaves the browser except
+// to api.anthropic.com directly.
+//
+// Same pattern as the Twelvedata stock-lookup key (already shipped).
+// Per-message cost on claude-haiku-4-5 is ~$0.001, so even heavy use
+// stays well under the free-tier credit budget for most users.
+
+const ANTHROPIC_KEY_LS = 'anthropic_api_key';
+function getAnthropicKey(){
+  try { return localStorage.getItem(ANTHROPIC_KEY_LS) || ''; } catch(_) { return ''; }
+}
+function promptForAnthropicKey(){
+  const k = window.prompt(
+    "Paste your Anthropic API key to enable chat on this URL.\n\n" +
+    "The key is stored ONLY in this browser's localStorage and sent\n" +
+    "ONLY to api.anthropic.com (the same call the local server makes).\n\n" +
+    "Get one at: console.anthropic.com → API Keys\n" +
+    "Format: sk-ant-...\n\n" +
+    "(To clear later, type /clearkey into the chat box.)"
+  );
+  if (!k) return '';
+  const trimmed = String(k).trim();
+  if (!/^sk-ant-/.test(trimmed)){
+    alert("That doesn't look like an Anthropic key (should start with sk-ant-).");
+    return '';
+  }
+  try { localStorage.setItem(ANTHROPIC_KEY_LS, trimmed); } catch(_) {}
+  return trimmed;
+}
+function clearAnthropicKey(){
+  try { localStorage.removeItem(ANTHROPIC_KEY_LS); } catch(_) {}
+}
+
+// Compact dashboard-data projection — mirrors chat.py's _summarise_payload
+// so the model sees the same shape on the public mirror as it does in
+// local Flask mode. Keep this tight: 30 days of daily ETF flows, top 8
+// funds per asset, latest market snapshot, latest whale row, all insights.
+function buildChatContext(){
+  const out = { generated_at: DATA.generated_at };
+  for (const asset of ['btc','eth','link']){
+    const a = DATA[asset]; if (!a) continue;
+    out[asset] = {
+      stats: a.stats || {},
+      last_date: a.last_date,
+      recent_daily: (a.daily || []).slice(-30),
+      by_fund_top: (a.by_fund || []).slice(0, 8),
+    };
+  }
+  const sigs = DATA.signals || {};
+  out.signals = {};
+  for (const k of Object.keys(sigs)){
+    const v = sigs[k]; if (!v) continue;
+    out.signals[k] = {
+      score: v.score, label: v.label, as_of: v.as_of,
+      components: v.components, price: v.price,
+    };
+  }
+  const m = DATA.market || {};
+  const snap = { global: m.global || {} };
+  const lastVal = (arr, key) => (arr && arr.length) ? arr[arr.length - 1][key] : null;
+  for (const asset of ['btc','eth','link']){
+    const ma = m[asset] || {};
+    snap[asset] = {
+      last_price:       lastVal(ma.price, 'value'),
+      last_volume:      lastVal(ma.volume, 'value'),
+      last_funding:     lastVal(ma.funding, 'rate'),
+      last_oi_usd:      lastVal(ma.open_interest_usd, 'oi_usd'),
+      last_long_short:  lastVal(ma.long_short_ratio, 'ratio'),
+      last_dvol:        lastVal(ma.dvol, 'dvol'),
+    };
+  }
+  snap.fear_greed_latest = (m.fear_greed && m.fear_greed.length) ? m.fear_greed[m.fear_greed.length - 1] : null;
+  snap.ethbtc_latest     = (m.ethbtc     && m.ethbtc.length)     ? m.ethbtc[m.ethbtc.length - 1] : null;
+  out.market_snapshot = snap;
+  const whale = ((DATA.whale || {}).btc) || {};
+  const wlast = {};
+  for (const k of Object.keys(whale)){
+    const v = whale[k];
+    if (Array.isArray(v)) wlast[k] = v.length ? v[v.length - 1] : null;
+  }
+  out.btc_whale_latest = wlast;
+  out.insights = DATA.insights || [];
+  return out;
+}
+
+const CHAT_CLIENT_SYSTEM_PROMPT =
+  "You are an analyst embedded in a private dashboard that tracks U.S. spot " +
+  "BTC and ETH ETF flows, LINK trading metrics, perpetual funding, open " +
+  "interest, implied volatility (DVOL), Fear & Greed, and BTC on-chain whale " +
+  "proxies. You ALSO see a rules-based composite signal (-100..+100) per asset.\n\n" +
+  "When the user asks a question, answer concisely using ONLY the dashboard " +
+  "context below. If the data needed is not present, say so plainly.\n\n" +
+  "NEVER give explicit investment advice or recommendations to buy or sell " +
+  "specific assets. If asked, you may explain what the indicators say and let " +
+  "the user draw their own conclusions. You may discuss risk factors.\n\n" +
+  "Format:\n" +
+  "- Lead with the direct answer in 1-2 sentences.\n" +
+  "- Then give 2-4 bullet points with the supporting numbers from the data.\n" +
+  "- Cite the date and metric explicitly (e.g. \"as of 2026-05-12, BTC ETF " +
+  "7-day net = +$543M\").\n" +
+  "- Keep total response under ~200 words unless the user asks for more.\n\n" +
+  "Dashboard context (JSON):\n";
+
+async function clientSideChatStream(question, botEl){
+  let key = getAnthropicKey();
+  if (!key){
+    key = promptForAnthropicKey();
+    if (!key){
+      botEl.className = 'msg bot';
+      botEl.textContent = "No key entered. Chat needs your Anthropic key to answer questions on this URL. Submit again to try the prompt once more.";
+      return;
+    }
+  }
+  // Build context. Cap at ~50KB to stay well within the 200K input window
+  // while keeping cost predictable (~$0.001/msg on Haiku).
+  let ctxJson;
+  try { ctxJson = JSON.stringify(buildChatContext()); }
+  catch(_) { ctxJson = '{}'; }
+  if (ctxJson.length > 50000) ctxJson = ctxJson.slice(0, 50000) + '"...(truncated)"}';
+  const system = CHAT_CLIENT_SYSTEM_PROMPT + ctxJson;
+
+  let acc = '';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        stream: true,
+        system: system,
+        messages: [{ role: 'user', content: question }],
+      }),
+    });
+    if (!resp.ok || !resp.body){
+      const errText = await resp.text().catch(()=>'(no body)');
+      botEl.className = 'msg err';
+      let msg = 'HTTP ' + resp.status;
+      try {
+        const j = JSON.parse(errText);
+        if (j && j.error && j.error.message) msg = j.error.message;
+      } catch(_) { msg = errText.slice(0, 200); }
+      if (resp.status === 401){
+        msg = 'Invalid Anthropic key (HTTP 401). Type /clearkey in the chat box to reset and re-enter.';
+      } else if (resp.status === 429){
+        msg = 'Rate limited (HTTP 429). Wait a moment and try again, or check your Anthropic console for usage limits.';
+      }
+      botEl.textContent = msg;
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true){
+      const {value, done} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream:true});
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0){
+        const evt = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of evt.split('\n')){
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (!data || data === '[DONE]') continue;
+          try {
+            const j = JSON.parse(data);
+            // Anthropic streaming events: content_block_delta with text_delta
+            if (j.type === 'content_block_delta' && j.delta && j.delta.type === 'text_delta'){
+              if (acc === '') botEl.textContent = '';
+              acc += j.delta.text;
+              botEl.textContent = acc;
+              chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            } else if (j.type === 'message_stop'){
+              return;
+            } else if (j.type === 'error' && j.error){
+              botEl.className = 'msg err';
+              botEl.textContent = (j.error.message || 'stream error').slice(0, 300);
+              return;
+            }
+          } catch(_) { /* heartbeat / non-JSON event */ }
+        }
+      }
+    }
+  } catch(e){
+    botEl.className = 'msg err';
+    botEl.textContent = 'Network error: ' + e.message;
+  }
+}
+
+// On first chat-dock open in public-mirror mode, drop in a one-time intro
+// explaining the BYO-key flow up front (so the user understands the
+// prompt that will appear on first submit instead of being surprised).
 let _chatIntroShown = false;
 function _maybeShowChatIntro(){
   if (_chatIntroShown || _chatIsServer) return;
   _chatIntroShown = true;
   const el = appendMsg('bot',
-    "Hi! Chat needs to run locally (python server.py) — the public dashboard " +
-    "is a static site with no backend. Your dashboard data is all here, but " +
-    "I can't answer questions about it from this URL.\n\n" +
-    "To use chat: clone the repo, run `python server.py`, open localhost:5000. " +
-    "Same dashboard, plus a working assistant."
+    "Chat is wired to call Anthropic's API directly from your browser. " +
+    "On the first question I'll prompt for your Anthropic API key — paste it " +
+    "once and it's saved in this browser's localStorage (never sent anywhere " +
+    "except api.anthropic.com).\n\n" +
+    "Get a key: console.anthropic.com → API Keys. Cost on Haiku ≈ $0.001/msg.\n\n" +
+    "Type /clearkey to reset the stored key."
   );
-  el.className = 'msg bot';  // ensure styled correctly
+  el.className = 'msg bot';
 }
 chatFab?.addEventListener('click', _maybeShowChatIntro);
 
@@ -8927,18 +9186,28 @@ chatForm?.addEventListener('submit', (e) => {
   const q = chatInput.value.trim();
   if (!q) return;
   chatInput.value = '';
-  // Public mirror: intercept the submit so we never fire the /api/chat
-  // request that would return 405. Show a friendly per-question reply
-  // instead of an HTTP error blob.
-  if (!_chatIsServer){
+  // /clearkey command — reset the stored Anthropic key on the public mirror.
+  if (!_chatIsServer && /^\/clear\s*key$/i.test(q)){
+    clearAnthropicKey();
     appendMsg('user', q);
-    appendMsg('bot',
-      "Chat is local-only on this build. Run `python server.py` locally " +
-      "(needs ANTHROPIC_API_KEY) to ask questions about this dashboard's data."
-    );
+    appendMsg('bot', 'Anthropic key cleared. The next question will prompt for a new key.');
     chatInput.focus();
     return;
   }
+  if (!_chatIsServer){
+    // Public mirror: stream from Anthropic directly via the user's key.
+    // (streamChat() does its own appendMsg('user', …) in local Flask mode,
+    // so we only append the user bubble on this branch.)
+    appendMsg('user', q);
+    const botEl = appendMsg('bot', '…');
+    chatSend.disabled = true;
+    clientSideChatStream(q, botEl).finally(() => {
+      chatSend.disabled = false;
+      chatInput.focus();
+    });
+    return;
+  }
+  // Local Flask mode — use the existing /api/chat path.
   chatSend.disabled = true;
   streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
 });
@@ -9117,6 +9386,15 @@ if (!isServer){
   }
   const _sb = document.getElementById('shareBtn');
   if (_sb) _sb.style.display = 'none';
+  // ETF Flows tab: "Paste BTC", "Paste ETH", "Seed BTC (mirror)" + the
+  // inline "Seed BTC from GitHub mirror" all POST to /api/upload-csv or
+  // /api/seed-etf, which only exist in local Flask mode. On the static
+  // mirror they 404 — hide the buttons entirely. Public-mirror users
+  // refresh the ETF CSVs via the hourly Pages workflow, not by clicking.
+  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = 'none';
+  });
 }
 
 // ---------- Share modal (owner side) ----------
