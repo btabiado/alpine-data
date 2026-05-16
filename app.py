@@ -1227,14 +1227,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
 
-    <!-- Top 25 by market cap: structural "what's the market doing" view.
-         Re-sorts signals_top20 by CoinGecko market-cap rank (not by score)
-         so the largest 25 coins are always visible, regardless of bull/bear.
-         Each card shows symbol + price + label + score, click → full modal. -->
+    <!-- Other top coins by market cap: structural "what's the rest of the
+         market doing" view. The four pinned assets (BTC/ETH/LINK/LTC)
+         already appear in their own big cards above with signal score
+         surfaced — this grid skips them so cards don't duplicate. Re-sorts
+         signals_top20 by CoinGecko market-cap rank. -->
     <div id="overviewTop15Wrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">🏆 Top 25 by market cap</h2>
-        <span class="desc">Largest 25 coins · price + signal · click any card for the full breakdown</span>
+        <h2 style="margin:0;font-size:15px">🏆 Other top coins by market cap</h2>
+        <span class="desc">Top non-pinned coins · price + signal · click any card for the full breakdown</span>
       </div>
       <div class="row" id="overviewTop15" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
@@ -5492,9 +5493,14 @@ function renderOverviewTop15(){
   const host = document.getElementById('overviewTop15');
   if (!wrap || !host) return;
   const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  // The four pinned assets (BTC/ETH/LINK/LTC) already render in their own
+  // big cards above this grid with their signal score chip surfaced. Exclude
+  // them here so the grid is genuinely "the OTHER coins worth watching"
+  // instead of duplicating what the user just saw.
+  const PINNED_ON_TOP = new Set(['BTC', 'ETH', 'LINK', 'LTC']);
   // signals_top20 is sorted by SCORE — re-sort by rank for this widget.
   const top15 = (DATA.signals_top20 || [])
-    .filter(s => s && !isStable(s.symbol))
+    .filter(s => s && !isStable(s.symbol) && !PINNED_ON_TOP.has((s.symbol || '').toUpperCase()))
     .slice()
     .sort((a,b) => (a.rank ?? 999) - (b.rank ?? 999))
     .slice(0, 25);
@@ -5606,8 +5612,11 @@ function getSignalOrder(){
 
 function renderOverviewSignals(){
   // Top-row asset cards on the Overview tab. Shows latest price, 24h
-  // % change, and 24h volume for each configured asset. Click jumps
-  // to the Trading tab for that asset.
+  // % change, 24h volume, AND the composite signal score so the four
+  // pinned assets carry their own decision-relevant info up front
+  // (avoids duplicating them in the "Other top coins" grid below).
+  // Click opens the universal Signal + POC modal — consistent with
+  // every other coin-card entry point on the dashboard.
   const market = DATA.market || {};
   const order = getSignalOrder();
   const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
@@ -5625,6 +5634,7 @@ function renderOverviewSignals(){
   };
   const host = document.getElementById('overviewSignals');
   if (!host) return;
+  const sigsAll = DATA.signals || {};
   host.innerHTML = order.map(a => {
     const m = market[a] || {};
     const prices = m.price || [];
@@ -5636,6 +5646,22 @@ function renderOverviewSignals(){
     const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
     const pctTxt  = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     const asOf = prices.length ? prices[prices.length-1].date : '—';
+    // Signal chip — score + label from DATA.signals[a]. signalColor() does
+    // the threshold mapping (≥50 STRONG BUY green, ≤-50 STRONG SELL red,
+    // graded in between). When the asset isn't computed (rare — fetch
+    // failure), the chip is omitted rather than showing a placeholder.
+    const sig = sigsAll[a];
+    let signalChip = '';
+    if (sig && typeof sig.score === 'number'){
+      const sc = sig.score;
+      const lbl = sig.label || '';
+      const col = signalColor(sc);
+      const txt = lbl + ' ' + (sc >= 0 ? '+' : '') + sc;
+      signalChip = '<span style="background:' + col + '22;color:' + col +
+        ';border:1px solid ' + col + '55;padding:2px 8px;border-radius:4px;' +
+        'font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.02em">' +
+        escapeHtml(txt) + '</span>';
+    }
     // 90-day price sparkline — uses the same renderSparkline helper as the
     // Traditional Indices bar. SVG scales via viewBox; width is responsive
     // (svg style="width:100%") so the chart fills the card regardless of
@@ -5648,10 +5674,11 @@ function renderOverviewSignals(){
     const sparkBlock = sparkSvg
       ? `<div style="margin-top:8px;line-height:0">${sparkSvg}</div>`
       : '';
-    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="trading" data-asset="${a}" title="Open Trading tab for ${a.toUpperCase()}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
-        <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_NAMES[a] || a}</span>
+    const SYM = a.toUpperCase();
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-symbol="${SYM}" role="button" tabindex="0" aria-label="Open ${SYM} signal detail" title="Open ${SYM} Signal + POC detail">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h3 style="font-size:13px;color:var(--text);margin:0">${SYM}</h3>
+        ${signalChip}
       </div>
       <div class="v" style="font-size:26px;font-weight:700;margin-top:6px;color:var(--text)">${fmtPrice(lastP)}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
@@ -5659,13 +5686,23 @@ function renderOverviewSignals(){
         <span class="sub" style="font-size:12px;color:var(--muted)">24h vol ${fmtVol(lastV)}</span>
       </div>
       ${sparkBlock}
-      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${asOf}</div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">${ASSET_NAMES[a] || a} &middot; as of ${asOf}</div>
     </div>`;
   }).join('');
 
-  // Wire click-to-jump on cards (now jumps to Trading tab)
-  host.querySelectorAll('[data-jump]').forEach(el =>
-    el.addEventListener('click', () => selectTab(el.dataset.jump))
+  // Wire click → universal Signal + POC modal. openSignalDetail delegates
+  // through lookupSymbol so the same modal that Top-25 cards open also
+  // opens here.
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
+  );
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        openSignalDetail(el.getAttribute('data-symbol'));
+      }
+    })
   );
 }
 
