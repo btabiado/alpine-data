@@ -782,6 +782,13 @@ def load_ai_curated() -> dict:
 
     Returns an empty dict with the expected top-level keys if the file is
     missing or malformed so downstream consumers can rely on the shape.
+
+    After loading, the ``top_funded_companies`` rows are enriched with
+    Wikipedia infobox data (founded year, employee count, HQ, industry) via
+    :mod:`wiki_enrich`. Curated values always win — Wikipedia only fills
+    gaps. The enrichment is defensive: if Wikipedia is unreachable, the
+    parser fails, or anything else goes wrong, the raw curated snapshot is
+    returned unchanged.
     """
     path = ROOT / "data" / "ai_curated.json"
     empty = {
@@ -801,10 +808,16 @@ def load_ai_curated() -> dict:
         # Fill in any missing top-level keys so callers can index safely.
         for k, v in empty.items():
             data.setdefault(k, v)
-        return data
     except Exception as e:
         print(f"  [ai-curated] load failed: {e}", file=sys.stderr)
         return empty
+    # Wikipedia enrichment — isolated so a bad parse can never break the build.
+    try:
+        import wiki_enrich
+        data = wiki_enrich.enrich_ai_curated(data)
+    except Exception as e:
+        print(f"  [ai-curated] wiki enrichment skipped: {e}", file=sys.stderr)
+    return data
 
 
 def _fetch_yc_ai_companies_impl(limit: int = 200) -> dict:
