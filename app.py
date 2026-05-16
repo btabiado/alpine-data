@@ -1519,16 +1519,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <!-- ============ TOP-50 COMPACT SIGNALS STRIP (moved to top of tab) ============ -->
       <div class="card" style="padding:12px 14px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-          <div>
-            <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
-            <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
-          </div>
-          <span style="flex:1"></span>
           <span class="lbl" style="margin:0">Filter</span>
           <button class="btn active" data-top20filter="all">All</button>
           <button class="btn" data-top20filter="buy">Buy</button>
           <button class="btn" data-top20filter="hold">Hold</button>
           <button class="btn" data-top20filter="sell">Sell</button>
+          <span style="flex:1"></span>
+          <div style="text-align:right">
+            <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
+            <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
+          </div>
         </div>
         <div id="top20SignalCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
       </div>
