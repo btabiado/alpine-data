@@ -1,7 +1,9 @@
+# Minimum supported Python: 3.10
+# (Bumped from 3.9 so we can take Dependabot-patched requests/pytest.)
 anthropic==0.101.0
 numpy==2.0.2
 pandas==2.3.3
-pytest==8.4.2
+pytest>=8
 python-dateutil==2.9.0.post0
-requests==2.32.5
+requests>=2.32
 Flask==3.1.3
