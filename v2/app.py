@@ -592,7 +592,7 @@ header .meta{color:var(--muted);font-size:12px}
 .controls{display:flex;gap:6px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid var(--border);background:#0e1118}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px}
 .btn:hover{background:#222838}
-.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,a:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,a:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
 .btn.active{background:var(--btc);color:#000;border-color:var(--btc)}
 .btn.active.eth{background:var(--eth);color:#fff;border-color:var(--eth)}
 .btn.active.link{background:var(--link);color:#fff;border-color:var(--link)}
@@ -616,9 +616,9 @@ header .meta{color:var(--muted);font-size:12px}
 .green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)}
 .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
 .stock-card,.poc-card{transition:border-color .12s, transform .08s}
-.stock-card:hover,.poc-card:hover{border-color:#a78bfa}
+.stock-card:hover,.poc-card:hover{border-color:var(--v2-ai)}
 .stock-card:active,.poc-card:active{transform:scale(0.99)}
-.stock-card:focus-visible,.poc-card:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+.stock-card:focus-visible,.poc-card:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
 .chart-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
@@ -735,17 +735,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
 .msg{padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.4;max-width:90%;white-space:pre-wrap;word-wrap:break-word}
 .msg.user{background:#1f2533;align-self:flex-end;border:1px solid var(--border)}
-.msg.bot{background:#10151f;align-self:flex-start;border:1px solid var(--border);border-left:3px solid #a78bfa}
+.msg.bot{background:#10151f;align-self:flex-start;border:1px solid var(--border);border-left:3px solid var(--v2-ai)}
 .msg.err{background:#3b1414;align-self:flex-start;border:1px solid #6b1f1f;color:#fca5a5}
 .chat-suggestions{padding:0 14px 8px;display:flex;flex-wrap:wrap;gap:6px}
 .chat-suggestions .chip{font-size:10px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:999px;cursor:pointer}
 .chat-suggestions .chip:hover{background:#222838;color:var(--text)}
 .chat-form{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
 .chat-form input{flex:1;background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none}
-.chat-form input:focus{border-color:#a78bfa}
-.chat-form button{background:#a78bfa;color:#000;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+.chat-form input:focus{border-color:var(--v2-ai)}
+.chat-form button{background:var(--v2-ai);color:#000;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
 .chat-form button:disabled{opacity:.4;cursor:not-allowed}
-#chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
+#chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--v2-ai);color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
 #chatFab:hover{transform:scale(1.08)}
 #chatFab.hidden{display:none}
 /* Recent symbol-lookup chips. Rendered below the header symbol-search form
@@ -1284,8 +1284,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <p><strong>POC price</strong> — fair-value magnet. <strong>VAH / VAL</strong> — the top and bottom of the 70% Value Area. <span class="tag">IN VA</span> means current price sits inside that band (consolidation / accepted value). <span class="tag">OUTSIDE</span> means price has broken above VAH or below VAL.</p>
 
       <p style="margin-top:6px"><strong>The big arrow on each card</strong> tells you which way value is migrating:
-      <span style="color:#22c55e;font-weight:700">↑ UP</span> means the POC is drifting higher (accumulation) ·
-      <span style="color:#ef4444;font-weight:700">↓ DOWN</span> means the POC is drifting lower (distribution) ·
+      <span style="color:var(--v2-good);font-weight:700">↑ UP</span> means the POC is drifting higher (accumulation) ·
+      <span style="color:var(--v2-bad);font-weight:700">↓ DOWN</span> means the POC is drifting lower (distribution) ·
       <span style="color:var(--muted);font-weight:700">· FLAT</span> means value is stable.
       The little chart on each card is the 30d POC's drift over the last 90 days. Distance % shows where current price sits relative to that POC.</p>
 
@@ -1385,7 +1385,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          score avg, and average perp funding rate. Rendered by
          renderOverviewSentiment(). Mirrors the visual pattern of
          #pocSentimentCard on the POC tab. -->
-    <div class="card" id="overviewSentimentCard" style="padding:14px 16px;margin-bottom:6px;border-left:4px solid #a78bfa">
+    <div class="card" id="overviewSentimentCard" style="padding:14px 16px;margin-bottom:6px;border-left:4px solid var(--v2-ai)">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 CRYPTO MARKET SENTIMENT</div>
@@ -1397,14 +1397,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:0%" id="overviewSentimentBarPos"></div>
+        <div style="background:var(--v2-good);width:0%" id="overviewSentimentBarPos"></div>
         <div style="background:#94a3b8;width:0%" id="overviewSentimentBarNeu"></div>
-        <div style="background:#ef4444;width:0%" id="overviewSentimentBarNeg"></div>
+        <div style="background:var(--v2-bad);width:0%" id="overviewSentimentBarNeg"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-        <span style="color:#22c55e">BULLISH inputs</span>
+        <span style="color:var(--v2-good)">BULLISH inputs</span>
         <span>NEUTRAL</span>
-        <span style="color:#ef4444">BEARISH inputs</span>
+        <span style="color:var(--v2-bad)">BEARISH inputs</span>
       </div>
     </div>
 
@@ -1536,7 +1536,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <!-- ETF FLOW SENTIMENT — composite of 7d net flow sum and 30d net flow
          sum, weighted 60/40 toward the 7d. Tracks the BTC/ETH toggle below.
          Rendered by renderEtfFlowSentiment(). -->
-    <div class="card" id="etfFlowSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+    <div class="card" id="etfFlowSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">💰 ETF FLOW SENTIMENT</div>
@@ -1548,14 +1548,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:0%" id="etfFlowSentimentBarPos"></div>
+        <div style="background:var(--v2-good);width:0%" id="etfFlowSentimentBarPos"></div>
         <div style="background:#94a3b8;width:0%" id="etfFlowSentimentBarNeu"></div>
-        <div style="background:#ef4444;width:0%" id="etfFlowSentimentBarNeg"></div>
+        <div style="background:var(--v2-bad);width:0%" id="etfFlowSentimentBarNeg"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-        <span style="color:#22c55e">INFLOWS</span>
+        <span style="color:var(--v2-good)">INFLOWS</span>
         <span>BALANCED</span>
-        <span style="color:#ef4444">OUTFLOWS</span>
+        <span style="color:var(--v2-bad)">OUTFLOWS</span>
       </div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
@@ -1677,7 +1677,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <!-- FUTURES POSITIONING SENTIMENT — composite of funding rate, long/short
            ratio, and 7d OI change for the currently-selected asset. Rendered
            by renderFuturesSentiment(). -->
-      <div class="card" id="futuresSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div class="card" id="futuresSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🎯 FUTURES POSITIONING SENTIMENT</div>
@@ -1689,14 +1689,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-          <div style="background:#22c55e;width:0%" id="futuresSentimentBarPos"></div>
+          <div style="background:var(--v2-good);width:0%" id="futuresSentimentBarPos"></div>
           <div style="background:#94a3b8;width:0%" id="futuresSentimentBarNeu"></div>
-          <div style="background:#ef4444;width:0%" id="futuresSentimentBarNeg"></div>
+          <div style="background:var(--v2-bad);width:0%" id="futuresSentimentBarNeg"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">CROWDED LONGS</span>
+          <span style="color:var(--v2-good)">CROWDED LONGS</span>
           <span>BALANCED</span>
-          <span style="color:#ef4444">CROWDED SHORTS</span>
+          <span style="color:var(--v2-bad)">CROWDED SHORTS</span>
         </div>
       </div>
       <!-- Per-tab asset toggle: BTC / ETH / LINK / LTC (full original set with
@@ -1931,7 +1931,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            top-50 most-active stocks (DATA.market.stocks_signals). Mirrors the
            POC sentiment card pattern: net index in [-100,+100] (positive =
            broad buy, negative = broad sell). Rendered by renderStocksSentiment(). -->
-      <div class="card" id="stocksSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div class="card" id="stocksSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 STOCK SIGNAL SENTIMENT — TOP 50 MOST ACTIVE</div>
@@ -1943,14 +1943,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="stocksSentimentBar">
-          <div style="background:#22c55e;width:0%" id="stocksSentimentBarBuy"></div>
-          <div style="background:#f59e0b;width:0%" id="stocksSentimentBarHold"></div>
-          <div style="background:#ef4444;width:0%" id="stocksSentimentBarSell"></div>
+          <div style="background:var(--v2-good);width:0%" id="stocksSentimentBarBuy"></div>
+          <div style="background:var(--v2-warn);width:0%" id="stocksSentimentBarHold"></div>
+          <div style="background:var(--v2-bad);width:0%" id="stocksSentimentBarSell"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">↑ <span id="stocksSentimentBuyCount">0</span> BUY+</span>
+          <span style="color:var(--v2-good)">↑ <span id="stocksSentimentBuyCount">0</span> BUY+</span>
           <span>· <span id="stocksSentimentHoldCount">0</span> HOLD</span>
-          <span style="color:#ef4444">↓ <span id="stocksSentimentSellCount">0</span> SELL+</span>
+          <span style="color:var(--v2-bad)">↓ <span id="stocksSentimentSellCount">0</span> SELL+</span>
         </div>
       </div>
       <!-- Signal breadth chart (top of tab, before filter chips) -->
@@ -2132,7 +2132,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            top-50 by market cap (DATA.signals_top20). Mirrors the POC sentiment
            card pattern: net index in [-100,+100] (positive = broad buy signals,
            negative = broad sell signals). Rendered by renderCryptoSignalsSentiment(). -->
-      <div class="card" id="cryptoSignalsSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div class="card" id="cryptoSignalsSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📈 CRYPTO SIGNAL SENTIMENT — TOP 50 BY MARKET CAP</div>
@@ -2144,14 +2144,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="cryptoSignalsSentimentBar">
-          <div style="background:#22c55e;width:0%" id="cryptoSignalsSentimentBarBuy"></div>
-          <div style="background:#f59e0b;width:0%" id="cryptoSignalsSentimentBarHold"></div>
-          <div style="background:#ef4444;width:0%" id="cryptoSignalsSentimentBarSell"></div>
+          <div style="background:var(--v2-good);width:0%" id="cryptoSignalsSentimentBarBuy"></div>
+          <div style="background:var(--v2-warn);width:0%" id="cryptoSignalsSentimentBarHold"></div>
+          <div style="background:var(--v2-bad);width:0%" id="cryptoSignalsSentimentBarSell"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">↑ <span id="cryptoSignalsSentimentBuyCount">0</span> BUY+</span>
+          <span style="color:var(--v2-good)">↑ <span id="cryptoSignalsSentimentBuyCount">0</span> BUY+</span>
           <span>· <span id="cryptoSignalsSentimentHoldCount">0</span> HOLD</span>
-          <span style="color:#ef4444">↓ <span id="cryptoSignalsSentimentSellCount">0</span> SELL+</span>
+          <span style="color:var(--v2-bad)">↓ <span id="cryptoSignalsSentimentSellCount">0</span> SELL+</span>
         </div>
       </div>
       <!-- Signal breadth chart (top of tab) -->
@@ -2221,7 +2221,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
              Computes UP / DOWN / FLAT migration counts + a net index in
              [-100,+100] (positive = broad accumulation, negative = broad
              distribution). Rendered by renderPocSentimentIndex(). -->
-        <div class="card" id="pocSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+        <div class="card" id="pocSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
             <div>
               <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🐋 POC SENTIMENT — TOP 50 BY MARKET CAP</div>
@@ -2233,14 +2233,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             </div>
           </div>
           <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="pocSentimentBar">
-            <div style="background:#22c55e;width:0%" id="pocSentimentBarUp"></div>
+            <div style="background:var(--v2-good);width:0%" id="pocSentimentBarUp"></div>
             <div style="background:#94a3b8;width:0%" id="pocSentimentBarFlat"></div>
-            <div style="background:#ef4444;width:0%" id="pocSentimentBarDown"></div>
+            <div style="background:var(--v2-bad);width:0%" id="pocSentimentBarDown"></div>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-            <span style="color:#22c55e">↑ <span id="pocSentimentUpCount">0</span> UP</span>
+            <span style="color:var(--v2-good)">↑ <span id="pocSentimentUpCount">0</span> UP</span>
             <span>· <span id="pocSentimentFlatCount">0</span> FLAT</span>
-            <span style="color:#ef4444">↓ <span id="pocSentimentDownCount">0</span> DOWN</span>
+            <span style="color:var(--v2-bad)">↓ <span id="pocSentimentDownCount">0</span> DOWN</span>
           </div>
         </div>
 
@@ -2280,7 +2280,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="defiContent">
     <!-- DEFI SENTIMENT — composite of TVL-weighted 7d chain momentum and
          stablecoin mcap 7d change. Rendered by renderDefiSentiment(). -->
-    <div class="card" id="defiSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+    <div class="card" id="defiSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🌊 DEFI SENTIMENT</div>
@@ -2292,14 +2292,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:0%" id="defiSentimentBarPos"></div>
+        <div style="background:var(--v2-good);width:0%" id="defiSentimentBarPos"></div>
         <div style="background:#94a3b8;width:0%" id="defiSentimentBarNeu"></div>
-        <div style="background:#ef4444;width:0%" id="defiSentimentBarNeg"></div>
+        <div style="background:var(--v2-bad);width:0%" id="defiSentimentBarNeg"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-        <span style="color:#22c55e">EXPANSION</span>
+        <span style="color:var(--v2-good)">EXPANSION</span>
         <span>STABLE</span>
-        <span style="color:#ef4444">CONTRACTION</span>
+        <span style="color:var(--v2-bad)">CONTRACTION</span>
       </div>
     </div>
     <!-- 4-card KPI strip (mirrors Whale tab pattern) -->
@@ -2765,7 +2765,7 @@ window.addEventListener('error', e => {
     b.id = '__jsErrBanner';
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;'
       + 'background:#7f1d1d;color:#fff;padding:8px 14px;font:12px/1.4 monospace;'
-      + 'border-bottom:2px solid #ef4444;cursor:pointer;white-space:pre-wrap';
+      + 'border-bottom:2px solid var(--v2-bad);cursor:pointer;white-space:pre-wrap';
     const where = e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno : '';
     b.textContent = '⚠ JS error: ' + (e.message || 'unknown') + where +
       '\n(click to dismiss)';
@@ -3630,9 +3630,9 @@ function renderGlobalTable(){
 // ---------- Signals tab ----------
 function signalColor(score){
   if (score >= 50) return '#16a34a';
-  if (score >= 20) return '#22c55e';
-  if (score > -20) return '#f59e0b';
-  if (score > -50) return '#ef4444';
+  if (score >= 20) return 'var(--v2-good)';
+  if (score > -20) return 'var(--v2-warn)';
+  if (score > -50) return 'var(--v2-bad)';
   return '#b91c1c';
 }
 
@@ -3662,7 +3662,7 @@ function renderSignalCard(asset, container){
           <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
         </div>
       </div>
-      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       ${signalScoreSparkline(s.history)}
@@ -3725,9 +3725,9 @@ function renderCryptoSignalsSentiment(){
               : net >  -20 ? 'NEUTRAL'
               : net >  -50 ? 'DISTRIBUTION'
               :              'STRONG DISTRIBUTION';
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   const scoreEl   = document.getElementById('cryptoSignalsSentimentScore');
   const labelEl   = document.getElementById('cryptoSignalsSentimentLabel');
   const sublineEl = document.getElementById('cryptoSignalsSentimentSubline');
@@ -3917,7 +3917,7 @@ function renderSignalCardFromObj(s){
           <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
         </div>
       </div>
-      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       ${renderSignalSparkline(s)}
@@ -4412,7 +4412,7 @@ function renderWhaleSentiment(){
         <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
       </div>
     </div>
-    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
       <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
     </div>
     <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
@@ -4538,7 +4538,7 @@ function renderWhaleKpisV2(){
       const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
       const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
       asOfEl.textContent = `data as of ${freshest} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})`;
-      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
+      asOfEl.style.color = ageDays > 7 ? 'var(--v2-warn)' : '';
     }
   }
 }
@@ -4746,7 +4746,7 @@ function renderWhaleKpis(){
       const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
       const ageStr = ageDays <= 0 ? 'today' : `${ageDays}d ago`;
       asOfEl.textContent = `data as of ${freshest} (${ageStr})`;
-      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
+      asOfEl.style.color = ageDays > 7 ? 'var(--v2-warn)' : '';
     }
   }
 }
@@ -4839,7 +4839,7 @@ function renderWhaleSentimentEth(){
         <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
       </div>
     </div>
-    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
       <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
     </div>
     <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
@@ -4898,7 +4898,7 @@ function renderWhaleEth(){
       const shortHash = hash.slice(0, 10) + '…' + hash.slice(-8);
       ltBox.innerHTML = `<strong style="color:var(--text);font-size:18px">${valFmt}</strong>
         <span style="color:var(--muted)"> in a single transaction</span><br>
-        <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`;
+        <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`;
     } else {
       ltBox.innerHTML = V2.empty({
         icon: '🐋',
@@ -4939,7 +4939,7 @@ function renderWhaleEth(){
     if (edsNoKey){
       edsNoKey.classList.remove('hidden');
       edsNoKey.innerHTML = noKeyReason
-        ? 'Add <code>ETHERSCAN_API_KEY</code> to light up — free key from <a href="https://etherscan.io/apis" target="_blank" rel="noopener" style="color:#a78bfa">etherscan.io/apis</a>'
+        ? 'Add <code>ETHERSCAN_API_KEY</code> to light up — free key from <a href="https://etherscan.io/apis" target="_blank" rel="noopener" style="color:var(--v2-ai)">etherscan.io/apis</a>'
         : 'No data yet — Etherscan fetch may have failed or rate-limited.';
     }
   } else {
@@ -5022,7 +5022,7 @@ function renderWhaleAlerts(){
       <td>${blk}</td>
       <td class="${cls}" style="text-align:right">${fmtUSD(t.value_usd, 'auto')}</td>
       <td style="text-align:right">${fmtNum(t.value_btc, 2)} BTC</td>
-      <td><a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortId} ↗</a></td>
+      <td><a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortId} ↗</a></td>
     </tr>`;
   }).join('');
 }
@@ -5053,7 +5053,7 @@ function renderEthWhaleAlerts(){
     const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
     const time = t.time ? escapeHtml(String(t.time)) : '—';
     const linkCell = hash
-      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
+      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`
       : '—';
     return `<tr>
       <td>${linkCell}</td>
@@ -5227,7 +5227,7 @@ function renderMultichainWhale(){
     const shortHash = hash ? (hash.slice(0,8) + '…' + hash.slice(-6)) : '—';
     const ltUsd = lt.value_usd != null ? fmtUSD(lt.value_usd, 'auto') : '—';
     const ltLink = hash
-      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
+      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`
       : '<span style="color:var(--muted)">—</span>';
     return `<div class="card" style="padding:12px 14px">
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px">
@@ -5576,11 +5576,11 @@ function renderCoverage(){
 // ---------- Insights bar ----------
 function severityColor(sev){
   return ({
-    good:   '#22c55e',
-    bad:    '#ef4444',
-    alert:  '#f59e0b',
-    info:   '#06b6d4',
-  })[sev] || '#a78bfa';
+    good:   'var(--v2-good)',
+    bad:    'var(--v2-bad)',
+    alert:  'var(--v2-warn)',
+    info:   'var(--v2-info)',
+  })[sev] || 'var(--v2-ai)';
 }
 function severityIcon(sev, kind){
   if (kind === 'milestone') return '🏁';
@@ -6191,7 +6191,7 @@ function renderNews(){
   host.innerHTML = news.slice(0, 25).map(n =>
     `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
       <div style="font-size:12px;color:var(--muted);margin-bottom:3px">
-        <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+        <span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
       </div>
       <div style="font-size:13px;line-height:1.35;margin-bottom:3px">${escapeHtml(n.title||'')}</div>
       ${n.body ? `<div class="sub" style="font-size:11px;color:var(--muted)">${escapeHtml(n.body)}</div>` : ''}
@@ -6663,7 +6663,7 @@ function renderOverviewSignals(){
   // to the Trading tab for that asset.
   const market = DATA.market || {};
   const order = getSignalOrder();
-  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || 'var(--v2-ai)';
   const ASSET_NAMES = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
   const fmtPrice = p => {
     if (p == null) return '—';
@@ -6686,7 +6686,7 @@ function renderOverviewSignals(){
     const prevP = prices.length > 1 ? prices[prices.length-2].value : null;
     const lastV = vols.length ? vols[vols.length-1].value : null;
     const pct = (lastP != null && prevP && prevP > 0) ? (lastP / prevP - 1) * 100 : null;
-    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
+    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const pctTxt  = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     const asOf = prices.length ? prices[prices.length-1].date : '—';
     // 90-day price sparkline — uses the same renderSparkline helper as the
@@ -6882,7 +6882,7 @@ function renderOverviewNews(){
       host.innerHTML = news.slice(0,4).map(n =>
         `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
-            <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+            <span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
           </div>
           <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title||'')}</div>
         </a>`
@@ -6935,7 +6935,7 @@ document.addEventListener('click', (e) => {
 // ---------- Research tab (one-stop social + dev + on-chain + POC) ----------
 function socialData(){ return (DATA.market||{}).social || {}; }
 const RESEARCH_ASSETS = ['btc','eth','link','ltc'];
-const RESEARCH_ACCENT = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+const RESEARCH_ACCENT = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || 'var(--v2-ai)';
 const ASSET_FULLNAME = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
 const fmtNumShort = n => n == null ? '—' :
   (n >= 1e9 ? (n/1e9).toFixed(2) + 'B' :
@@ -7198,9 +7198,9 @@ function renderStocksSentiment(){
               : net >  -20 ? 'NEUTRAL'
               : net >  -50 ? 'DISTRIBUTION'
               :              'STRONG DISTRIBUTION';
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   const scoreEl   = document.getElementById('stocksSentimentScore');
   const labelEl   = document.getElementById('stocksSentimentLabel');
   const sublineEl = document.getElementById('stocksSentimentSubline');
@@ -7327,9 +7327,9 @@ function renderStocksTab(){
   // Render a single compact stock card. Click anywhere opens the full modal.
   const cardHtml = s => {
     const score = Number(s.score) || 0;
-    const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+    const color = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
     const chPct = Number(s.change_pct);
-    const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+    const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
     const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
     const price  = Number(s.last_price);
     const priceTxt = isFinite(price)
@@ -7351,7 +7351,7 @@ function renderStocksTab(){
           <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
         </div>
       </div>
-      <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+      <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
         <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:10px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px">
@@ -7397,7 +7397,7 @@ function renderStocksTab(){
 // Reads DATA.market.ai_news (produced by fetch_market.py). Defensive: when
 // available=false or missing, shows an empty state pointing to the fetcher.
 const AI_EXPOSED_TICKERS = ['NVDA','GOOGL','MSFT','META','AMZN','AAPL','TSLA','AMD','INTC','ORCL','CRM','PLTR','SMCI','ARM','AVGO'];
-const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#f59e0b'};
+const AI_SENT_COLOR = {POSITIVE:'var(--v2-good)', NEGATIVE:'var(--v2-bad)', NEUTRAL:'var(--v2-warn)'};
 
 // Wave-3c — top-3 spotlight for the AI News tab:
 // (1) today's net sentiment label + article count,
@@ -7481,7 +7481,7 @@ function renderAiNewsTab(){
   const tot = Number(sum.total) || (pos+neg+neu) || 1;
   const posPct = pos/tot*100, negPct = neg/tot*100, neuPct = neu/tot*100;
   const net = (sum.net_score == null) ? 0 : Number(sum.net_score);
-  const netColor = net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b');
+  const netColor = net > 0 ? 'var(--v2-good)' : (net < 0 ? 'var(--v2-bad)' : 'var(--v2-warn)');
   const netTxt = (net >= 0 ? '+' : '') + (Number.isInteger(net) ? net : net.toFixed(1));
   const label = sum.sentiment_label || '—';
   const summaryHost = document.getElementById('aiNewsSummary');
@@ -7494,20 +7494,20 @@ function renderAiNewsTab(){
           <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px">net score · ${tot} articles</div>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--muted);min-width:140px">
-          <div><span style="color:#22c55e;font-weight:600">${pos}</span> positive</div>
-          <div><span style="color:#f59e0b;font-weight:600">${neu}</span> neutral</div>
-          <div><span style="color:#ef4444;font-weight:600">${neg}</span> negative</div>
+          <div><span style="color:var(--v2-good);font-weight:600">${pos}</span> positive</div>
+          <div><span style="color:var(--v2-warn);font-weight:600">${neu}</span> neutral</div>
+          <div><span style="color:var(--v2-bad);font-weight:600">${neg}</span> negative</div>
         </div>
       </div>
       <div style="display:flex;height:14px;margin-top:10px;border-radius:4px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:${posPct.toFixed(2)}%" title="${pos} positive"></div>
-        <div style="background:#f59e0b;width:${neuPct.toFixed(2)}%" title="${neu} neutral"></div>
-        <div style="background:#ef4444;width:${negPct.toFixed(2)}%" title="${neg} negative"></div>
+        <div style="background:var(--v2-good);width:${posPct.toFixed(2)}%" title="${pos} positive"></div>
+        <div style="background:var(--v2-warn);width:${neuPct.toFixed(2)}%" title="${neu} neutral"></div>
+        <div style="background:var(--v2-bad);width:${negPct.toFixed(2)}%" title="${neg} negative"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
-        <span style="color:#22c55e">${posPct.toFixed(0)}% +</span>
+        <span style="color:var(--v2-good)">${posPct.toFixed(0)}% +</span>
         <span>${neuPct.toFixed(0)}% ◯</span>
-        <span style="color:#ef4444">${negPct.toFixed(0)}% −</span>
+        <span style="color:var(--v2-bad)">${negPct.toFixed(0)}% −</span>
       </div>`;
   }
 
@@ -7532,7 +7532,7 @@ function renderAiNewsTab(){
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
         return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
-            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span>
+            ${dot}<span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span>
             <span>· ${escapeHtml(n.date||'')}</span>
             <span style="color:${sc};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment||'').slice(0,3))}</span>
           </div>
@@ -7561,9 +7561,9 @@ function renderAiNewsTab(){
     } else {
       aiGrid.innerHTML = subset.map(s => {
         const score = Number(s.score) || 0;
-        const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+        const color = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
         const chPct = Number(s.change_pct);
-        const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+        const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
         const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
         const price  = Number(s.last_price);
         const priceTxt = isFinite(price)
@@ -7584,7 +7584,7 @@ function renderAiNewsTab(){
               <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
             </div>
           </div>
-          <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+          <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
             <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:10px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
           </div>
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px">
@@ -7625,20 +7625,20 @@ function renderAiNewsTab(){
         <thead><tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
           <th style="padding:6px 8px">Source</th>
           <th style="padding:6px 8px;text-align:right">Total</th>
-          <th style="padding:6px 8px;text-align:right;color:#22c55e">+</th>
+          <th style="padding:6px 8px;text-align:right;color:var(--v2-good)">+</th>
           <th style="padding:6px 8px;text-align:right">◯</th>
-          <th style="padding:6px 8px;text-align:right;color:#ef4444">−</th>
+          <th style="padding:6px 8px;text-align:right;color:var(--v2-bad)">−</th>
           <th style="padding:6px 8px;text-align:right">Net</th>
         </tr></thead><tbody>
         ${rows.map(r => {
-          const netColor = r.net > 0 ? '#22c55e' : (r.net < 0 ? '#ef4444' : 'var(--muted)');
+          const netColor = r.net > 0 ? 'var(--v2-good)' : (r.net < 0 ? 'var(--v2-bad)' : 'var(--muted)');
           const netTxt = (r.net >= 0 ? '+' : '') + r.net;
           return `<tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 8px;color:#a78bfa;font-weight:600">${escapeHtml(r.src)}</td>
+            <td style="padding:6px 8px;color:var(--v2-ai);font-weight:600">${escapeHtml(r.src)}</td>
             <td style="padding:6px 8px;text-align:right">${r.total}</td>
-            <td style="padding:6px 8px;text-align:right;color:#22c55e">${r.positive}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--v2-good)">${r.positive}</td>
             <td style="padding:6px 8px;text-align:right">${r.neutral}</td>
-            <td style="padding:6px 8px;text-align:right;color:#ef4444">${r.negative}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--v2-bad)">${r.negative}</td>
             <td style="padding:6px 8px;text-align:right;color:${netColor};font-weight:600">${netTxt}</td>
           </tr>`;
         }).join('')}
@@ -7708,7 +7708,7 @@ function renderAiInvestmentKpis(){
     const deltaRaw = k.delta == null ? null : Number(k.delta);
     const deltaTxt = (k.delta == null) ? (k.delta_label ? escapeHtml(String(k.delta_label)) : '')
                    : (isFinite(deltaRaw) ? ((deltaRaw >= 0 ? '+' : '') + deltaRaw.toLocaleString(undefined,{maximumFractionDigits:2})) : escapeHtml(String(k.delta)));
-    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)');
+    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)');
     const src       = escapeHtml(String(k.source || k.source_label || k.publisher || ''));
     const srcUrl    = sanitizeUrl(k.source_url || k.url, '');
     const unit      = escapeHtml(String(k.unit || ''));
@@ -7720,7 +7720,7 @@ function renderAiInvestmentKpis(){
           ${deltaTxt ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:'+deltaColor+';border:1px solid '+deltaColor+'">'+deltaTxt+'</span>' : ''}
           ${prior ? '<span class="sub" style="font-size:10px;color:var(--muted)">prior: '+prior+'</span>' : ''}
         </div>
-        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
+        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:var(--v2-ai);font-weight:600">'+src+'</span></div>' : ''}
       </div>`;
     if (srcUrl){
       return '<a class="v2-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
@@ -7750,7 +7750,7 @@ function renderAiTopFunded(){
     const cat     = escapeHtml(String(c.category || c.sector || ''));
     const url     = sanitizeUrl(c.source_url || c.url, '');
     const nameCell = url
-      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:600;text-decoration:none">'+name+'</a>'
+      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--v2-ai);font-weight:600;text-decoration:none">'+name+'</a>'
       : '<span style="font-weight:600">'+name+'</span>';
     return `<tr>
       <td>${nameCell}</td>
@@ -7794,7 +7794,7 @@ function renderAiSecFormD(){
     const exTxt = escapeHtml(String(exemptions || ''));
     const url   = sanitizeUrl(f.filing_url, '');
     const issuerCell = url
-      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:600;text-decoration:none">'+issuer+'</a>'
+      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--v2-ai);font-weight:600;text-decoration:none">'+issuer+'</a>'
       : '<span style="font-weight:600">'+issuer+'</span>';
     return `<tr>
       <td>${issuerCell}</td>
@@ -7914,7 +7914,7 @@ function renderAiWhitepaperKpis(){
     const deltaRaw = k.delta == null ? null : Number(k.delta);
     const deltaTxt = (k.delta == null) ? (k.delta_label ? escapeHtml(String(k.delta_label)) : '')
                    : (isFinite(deltaRaw) ? ((deltaRaw >= 0 ? '+' : '') + deltaRaw.toLocaleString(undefined,{maximumFractionDigits:2})) : escapeHtml(String(k.delta)));
-    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)');
+    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)');
     const src       = escapeHtml(String(k.source || k.source_label || k.publisher || ''));
     const srcUrl    = sanitizeUrl(k.source_url || k.url, '');
     const unit      = escapeHtml(String(k.unit || ''));
@@ -7926,7 +7926,7 @@ function renderAiWhitepaperKpis(){
           ${deltaTxt ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:'+deltaColor+';border:1px solid '+deltaColor+'">'+deltaTxt+'</span>' : ''}
           ${prior ? '<span class="sub" style="font-size:10px;color:var(--muted)">prior: '+prior+'</span>' : ''}
         </div>
-        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
+        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:var(--v2-ai);font-weight:600">'+src+'</span></div>' : ''}
       </div>`;
     if (srcUrl){
       return '<a class="v2-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
@@ -7938,9 +7938,9 @@ function renderAiWhitepaperKpis(){
 // Build the full stock-detail card body (rendered into the modal).
 function stockDetailHtml(s){
   const score = Number(s.score) || 0;
-  const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+  const color = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
   const chPct = Number(s.change_pct);
-  const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+  const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
   const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
   const price  = Number(s.last_price);
   const priceTxt = isFinite(price)
@@ -7953,7 +7953,7 @@ function stockDetailHtml(s){
   const comps = Array.isArray(s.components) ? s.components : [];
   const compRows = comps.map(c => {
     const cs = Number(c.score) || 0;
-    const csColor = cs > 0 ? '#22c55e' : (cs < 0 ? '#ef4444' : 'var(--muted)');
+    const csColor = cs > 0 ? 'var(--v2-good)' : (cs < 0 ? 'var(--v2-bad)' : 'var(--muted)');
     const csTxt = (cs >= 0 ? '+' : '') + (Number.isInteger(cs) ? cs : cs.toFixed(1));
     return `<tr>
       <td style="padding:4px 6px">${escapeHtml(String(c.name || ''))}</td>
@@ -7973,7 +7973,7 @@ function stockDetailHtml(s){
         <div style="font-size:13px;color:${color};font-weight:600;margin-top:3px">${escapeHtml(String(s.label||''))}</div>
       </div>
     </div>
-    <div style="height:12px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:6px;position:relative">
+    <div style="height:12px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:6px;position:relative">
       <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
     </div>
     <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;font-size:15px">
@@ -8070,9 +8070,9 @@ function applyStocksFilter(bucket){
     // Inline color the active chip (the .btn.active rule already styles it,
     // but we want the matching bucket color to bleed through).
     if (isActive){
-      const c = target.indexOf('buy')  >= 0 ? '#22c55e'
-              : target.indexOf('sell') >= 0 ? '#ef4444'
-              : target === 'hold'           ? '#f59e0b'
+      const c = target.indexOf('buy')  >= 0 ? 'var(--v2-good)'
+              : target.indexOf('sell') >= 0 ? 'var(--v2-bad)'
+              : target === 'hold'           ? 'var(--v2-warn)'
               : '';
       b.style.borderColor = c || '';
       b.style.color       = c || '';
@@ -8315,16 +8315,16 @@ function renderPocCards(){
     // Cluster badge: 3+ TFs within 2%
     const clustered = pocClustered(rows);
     const clusterBadge = clustered
-      ? '<span style="background:#a78bfa22;color:#a78bfa;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
+      ? '<span style="background:var(--v2-ai-bg);color:var(--v2-ai);padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
       : '';
     // Migration badge: 30d vs 90d POC delta
     const mig = d.migration;
     let migBadge = '';
     if (mig){
       const cfg = mig.direction === 'UP'
-        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
+        ? {bg:'var(--v2-good-bg)', fg:'var(--v2-good)', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
         : mig.direction === 'DOWN'
-        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
+        ? {bg:'var(--v2-bad-bg)', fg:'var(--v2-bad)', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
         : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
       const tip = (mig.explanation || '').replace(/"/g,'&quot;');
       migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}${mig.between_pocs ? ' ⇆' : ''}</span>`;
@@ -8335,9 +8335,9 @@ function renderPocCards(){
       if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
       const inVA = r.in_value_area;
       const tag = inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
-      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+        ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+        : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
+      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
       const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
       return `<tr>
         <td style="color:var(--muted);font-size:10px">${label}</td>
@@ -8354,7 +8354,7 @@ function renderPocCards(){
         <div style="font-size:11px;color:var(--muted);margin-bottom:4px"><span class="v2-tip-anchor" data-v2-tip="A POC from a prior week that price hasn't subsequently traded through. Theory: untested POCs act as future magnet levels.">Naked POCs</span> <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
         ${naked.map(n => {
           const isSupport = cur != null && cur > n.poc;
-          const col = isSupport ? '#22c55e' : '#ef4444';
+          const col = isSupport ? 'var(--v2-good)' : 'var(--v2-bad)';
           const sign = n.distance_pct >= 0 ? '+' : '';
           return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
             <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
@@ -8448,9 +8448,9 @@ function sentimentBucket(net, labels){
               : net >  -20 ? labels[2]
               : net >  -50 ? labels[3]
               :              labels[4];
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   return { label, color };
 }
 function clampScore(v){
@@ -8763,9 +8763,9 @@ function renderPocSentimentIndex(){
               : net >  -20 ? 'NEUTRAL'
               : net >  -50 ? 'DISTRIBUTION'
               :              'STRONG DISTRIBUTION';
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   // Write values into the DOM
   const scoreEl = document.getElementById('pocSentimentScore');
   const labelEl = document.getElementById('pocSentimentLabel');
@@ -8865,7 +8865,7 @@ function renderPocTopCards(){
     }
     const d = c.poc || {};
     if (!d.d30 && !d.d90 && !d.d180){
-      return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
+      return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid var(--v2-ai);padding:8px 10px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:6px">
           ${img}
           <span style="font-weight:700;font-size:12px">${sym}</span>
@@ -8878,13 +8878,13 @@ function renderPocTopCards(){
     const anchor = d.d90 || d.d30 || d.d180;
     const anchorPoc = anchor ? fmtUsdShort(anchor.poc) : '—';
     const dp = anchor && anchor.distance_pct != null ? anchor.distance_pct : null;
-    const dpColor = dp == null ? 'var(--muted)' : (dp >= 0 ? '#22c55e' : '#ef4444');
+    const dpColor = dp == null ? 'var(--muted)' : (dp >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const dpTxt = dp == null ? '—' : ((dp >= 0 ? '+' : '') + dp.toFixed(1) + '%');
     const inVA = anchor && anchor.in_value_area;
     const vaTag = anchor
       ? (inVA
-          ? '<span style="background:#22c55e22;color:#22c55e;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-          : '<span style="background:#f59e0b22;color:#f59e0b;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>')
+          ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+          : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>')
       : '';
     // BIG migration arrow on the right edge — primary visual cue for direction.
     // Featured cards get an even bigger arrow rail.
@@ -8897,9 +8897,9 @@ function renderPocTopCards(){
       const dlt = Number(mig.delta_pct);
       const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(1) + '%') : '';
       const cfg = mig.direction === 'UP'
-        ? {fg:'#22c55e', arrow:'↑', label:'UP'}
+        ? {fg:'var(--v2-good)', arrow:'↑', label:'UP'}
         : mig.direction === 'DOWN'
-        ? {fg:'#ef4444', arrow:'↓', label:'DOWN'}
+        ? {fg:'var(--v2-bad)', arrow:'↓', label:'DOWN'}
         : {fg:'#94a3b8',  arrow:'·', label:'FLAT'};
       const tip = escapeHtml(mig.explanation || `POC migration ${cfg.label}`);
       migBlock = `<div title="${tip}" style="flex:0 0 ${railW}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:${cfg.fg}">
@@ -8929,8 +8929,8 @@ function renderPocTopCards(){
     // the main #pocTopGrid below), so no grid-column span is needed — the
     // separate grid handles even spacing.
     const featuredCSS = featured
-      ? 'border-left:6px solid #a78bfa;background:#10151f'
-      : 'border-left:4px solid #a78bfa';
+      ? 'border-left:6px solid var(--v2-ai);background:#10151f'
+      : 'border-left:4px solid var(--v2-ai)';
     return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" ${featured ? 'data-poc-featured="1"' : ''} role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="${featuredCSS};padding:${cardPad};cursor:pointer">
       <div style="display:flex;align-items:stretch;gap:${featured ? 12 : 8}px">
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:${featured ? 6 : 3}px">
@@ -8977,9 +8977,9 @@ function applyPocFilter(bucket){
     if (isActive) found = true;
     b.classList.toggle('active', isActive);
     if (isActive){
-      const c = target.indexOf('buy')  >= 0 ? '#22c55e'
-              : target.indexOf('sell') >= 0 ? '#ef4444'
-              : target === 'hold'           ? '#f59e0b'
+      const c = target.indexOf('buy')  >= 0 ? 'var(--v2-good)'
+              : target.indexOf('sell') >= 0 ? 'var(--v2-bad)'
+              : target === 'hold'           ? 'var(--v2-warn)'
               : '';
       b.style.borderColor = c || '';
       b.style.color       = c || '';
@@ -9033,9 +9033,9 @@ function pocDetailHtml(c){
     const dlt = Number(mig.delta_pct);
     const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(2) + '%') : '?';
     const cfg = mig.direction === 'UP'
-      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${dltTxt}`}
+      ? {bg:'var(--v2-good-bg)', fg:'var(--v2-good)', arrow:'↑', label:`Migrating UP ${dltTxt}`}
       : mig.direction === 'DOWN'
-      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${dltTxt}`}
+      ? {bg:'var(--v2-bad-bg)', fg:'var(--v2-bad)', arrow:'↓', label:`Migrating DOWN ${dltTxt}`}
       : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
     migBadge = `<span style="background:${cfg.bg};color:${cfg.fg};padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600">${cfg.arrow} ${cfg.label}</span>`;
   }
@@ -9045,9 +9045,9 @@ function pocDetailHtml(c){
     if (!r) return `<tr><td style="color:var(--muted);padding:5px 8px">${label}</td><td colspan="3" style="color:var(--muted);padding:5px 8px">—</td></tr>`;
     const inVA = r.in_value_area;
     const tag = inVA
-      ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
-      : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>';
-    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+      ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+      : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>';
+    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
     return `<tr>
       <td style="color:var(--muted);padding:5px 8px">${label}</td>
@@ -9064,7 +9064,7 @@ function pocDetailHtml(c){
       <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs · untested magnet levels (last 180d)</div>
       ${nakedArr.map(n => {
         const isSupport = cur != null && cur > n.poc;
-        const col = isSupport ? '#22c55e' : '#ef4444';
+        const col = isSupport ? 'var(--v2-good)' : 'var(--v2-bad)';
         // Coerce both to finite numbers so a stringy or null upstream value
         // can't reflect into the DOM unescaped.
         const dp = Number(n.distance_pct);
@@ -9261,7 +9261,7 @@ function renderRedditCards(){
   const labelAccent = {bitcoin:'#f7931a', ethereum:'#627eea', chainlink:'#2a5ada', litecoin:'#bfbbbb', cryptocurrency:'#a78bfa', cryptomarkets:'#8b5cf6', solana:'#14f195', cardano:'#0033ad', defi:'#22c55e'};
   host.innerHTML = order.map(name => {
     const s = subs[name];
-    const accent = labelAccent[name] || '#a78bfa';
+    const accent = labelAccent[name] || 'var(--v2-ai)';
     if (!s || !s.ok){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${s?.sub || name}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
     }
@@ -9273,7 +9273,7 @@ function renderRedditCards(){
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
     const trending = (s.trending || []).slice(0, 3).map(p => `
       <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
-        <span style="color:#f59e0b">🔥 ${fmtNumShort(p.score)}</span>
+        <span style="color:var(--v2-warn)">🔥 ${fmtNumShort(p.score)}</span>
         <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
       </a>
@@ -9283,7 +9283,7 @@ function renderRedditCards(){
       : '';
     const sent = s.sentiment || {label:'neutral', score:0, n:0};
     const sentBg = sent.label==='bullish' ? '#16331f' : sent.label==='bearish' ? '#3a1414' : '#27272a';
-    const sentFg = sent.label==='bullish' ? '#22c55e' : sent.label==='bearish' ? '#ef4444' : '#a1a1aa';
+    const sentFg = sent.label==='bullish' ? 'var(--v2-good)' : sent.label==='bearish' ? 'var(--v2-bad)' : '#a1a1aa';
     const sentPill = sent.n
       ? `<div style="margin-top:6px"><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:${sentBg};color:${sentFg}">${sent.label} ${sent.score>=0?'+':''}${sent.score}</span></div>`
       : '';
@@ -9315,15 +9315,15 @@ function renderSantimentCards(){
   const stale = (socialData().santiment || {}).stale;
   const host = document.getElementById('santimentCards');
   if (!host) return;
-  const pct = v => v == null ? '' : `<span style="color:${v>=0?'#22c55e':'#ef4444'};font-weight:600">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
+  const pct = v => v == null ? '' : `<span style="color:${v>=0?'var(--v2-good)':'var(--v2-bad)'};font-weight:600">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
   const stalePill = lag => lag ? `<span class="tag" style="background:#27272a;color:#a1a1aa;font-size:9px">~${lag}d</span>` : '';
   const mvrvTag = v => v == null ? '' :
-      v < 1 ? '<span class="tag" style="background:#16331f;color:#22c55e;font-size:9px">undervalued</span>' :
-      v > 3 ? '<span class="tag" style="background:#3a1414;color:#ef4444;font-size:9px">overvalued</span>' :
+      v < 1 ? '<span class="tag" style="background:#16331f;color:var(--v2-good);font-size:9px">undervalued</span>' :
+      v > 3 ? '<span class="tag" style="background:#3a1414;color:var(--v2-bad);font-size:9px">overvalued</span>' :
               '<span class="tag" style="background:#27272a;color:#a1a1aa;font-size:9px">normal</span>';
   const flowTag = v => v == null ? '' :
-      v > 0 ? '<span class="tag" style="background:#16331f;color:#22c55e;font-size:9px">supply leaving exch</span>' :
-              '<span class="tag" style="background:#3a1414;color:#ef4444;font-size:9px">supply hitting exch</span>';
+      v > 0 ? '<span class="tag" style="background:#16331f;color:var(--v2-good);font-size:9px">supply leaving exch</span>' :
+              '<span class="tag" style="background:#3a1414;color:var(--v2-bad);font-size:9px">supply hitting exch</span>';
   host.innerHTML = RESEARCH_ASSETS.map(a => {
     const c = coins[a];
     const accent = RESEARCH_ACCENT(a);
@@ -9593,7 +9593,7 @@ function openNewsSentimentDetail(symbol){
   const posPct = (rsv.positive / total) * 100;
   const neuPct = (rsv.neutral  / total) * 100;
   const negPct = (rsv.negative / total) * 100;
-  const netColor = rsv.net_score > 0 ? '#22c55e' : rsv.net_score < 0 ? '#ef4444' : 'var(--muted)';
+  const netColor = rsv.net_score > 0 ? 'var(--v2-good)' : rsv.net_score < 0 ? 'var(--v2-bad)' : 'var(--muted)';
   const netTxt = rsv.total === 0 ? '—' : (rsv.net_score > 0 ? '+' : '') + rsv.net_score;
 
   // --- Optional CryptoCompare deep section (only for the 4 covered coins) ---
@@ -9603,7 +9603,7 @@ function openNewsSentimentDetail(symbol){
     const ccPosPct = (ccCoin.positive || 0) / ccTotal * 100;
     const ccNeuPct = (ccCoin.neutral  || 0) / ccTotal * 100;
     const ccNegPct = (ccCoin.negative || 0) / ccTotal * 100;
-    const ccNetColor = ccCoin.net_score == null ? 'var(--muted)' : ccCoin.net_score > 0 ? '#22c55e' : ccCoin.net_score < 0 ? '#ef4444' : '#f59e0b';
+    const ccNetColor = ccCoin.net_score == null ? 'var(--muted)' : ccCoin.net_score > 0 ? 'var(--v2-good)' : ccCoin.net_score < 0 ? 'var(--v2-bad)' : 'var(--v2-warn)';
     const ccNetTxt = (ccCoin.net_score > 0 ? '+' : '') + (ccCoin.net_score ?? 0);
     // 7-day daily-net sparkline (inline SVG bar chart of daily net sentiment).
     const trend = ccCoin.trend_7d || [];
@@ -9625,14 +9625,14 @@ function openNewsSentimentDetail(symbol){
       </div>`;
     }
     // Keyword chips (visual only — no filter logic in the modal).
-    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? '#22c55e' : sk < -0.3 ? '#ef4444' : '#a1a1aa';
+    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? 'var(--v2-good)' : sk < -0.3 ? 'var(--v2-bad)' : '#a1a1aa';
     const chips = (ccCoin.top_keywords || []).slice(0, 10).map(k => {
       const bg = skewColor(k.sentiment_skew);
       return `<span style="border:1px solid ${bg};color:${bg};border-radius:10px;padding:2px 8px;margin:2px 4px 0 0;font-size:11px;display:inline-block">${escapeHtml(k.kw)} <span style="opacity:.65">${k.count}</span></span>`;
     }).join('');
     const chipsBlock = chips ? `<div style="margin-top:10px;line-height:1.8">${chips}</div>` : '';
     // Top articles from CC (different from RSS-matched — these are CC's curated picks).
-    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
+    const SENT_COLOR = {POSITIVE: 'var(--v2-good)', NEGATIVE: 'var(--v2-bad)', NEUTRAL: 'var(--v2-warn)'};
     const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
@@ -9655,14 +9655,14 @@ function openNewsSentimentDetail(symbol){
           <div style="font-size:11px;color:${ccNetColor};font-weight:700">net ${ccNetTxt} · ${ccCoin.article_count || 0} articles</div>
         </div>
         <div style="display:flex;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:#1f2533">
-          <div style="background:#22c55e;width:${ccPosPct}%"></div>
-          <div style="background:#f59e0b;width:${ccNeuPct}%"></div>
-          <div style="background:#ef4444;width:${ccNegPct}%"></div>
+          <div style="background:var(--v2-good);width:${ccPosPct}%"></div>
+          <div style="background:var(--v2-warn);width:${ccNeuPct}%"></div>
+          <div style="background:var(--v2-bad);width:${ccNegPct}%"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">${ccCoin.positive || 0} +</span>
+          <span style="color:var(--v2-good)">${ccCoin.positive || 0} +</span>
           <span>${ccCoin.neutral || 0} ◯</span>
-          <span style="color:#ef4444">${ccCoin.negative || 0} −</span>
+          <span style="color:var(--v2-bad)">${ccCoin.negative || 0} −</span>
         </div>
         ${sparkBlock}
         ${chipsBlock}
@@ -9674,11 +9674,11 @@ function openNewsSentimentDetail(symbol){
   const items = (rsv.allItems || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const itemsHtml = items.length
     ? items.map(n => {
-        const col = n.sentiment === 'POSITIVE' ? '#22c55e' : n.sentiment === 'NEGATIVE' ? '#ef4444' : '#f59e0b';
+        const col = n.sentiment === 'POSITIVE' ? 'var(--v2-good)' : n.sentiment === 'NEGATIVE' ? 'var(--v2-bad)' : 'var(--v2-warn)';
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:6px;vertical-align:middle"></span>`;
         return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
-            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source || '')}</span>
+            ${dot}<span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source || '')}</span>
             <span>· ${escapeHtml(n.date || '')}</span>
             <span style="color:${col};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment || '').slice(0,3))}</span>
           </div>
@@ -9697,14 +9697,14 @@ function openNewsSentimentDetail(symbol){
       </div>
     </div>
     <div style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#1f2533;margin-bottom:4px">
-      <div style="background:#22c55e;width:${posPct}%"></div>
-      <div style="background:#f59e0b;width:${neuPct}%"></div>
-      <div style="background:#ef4444;width:${negPct}%"></div>
+      <div style="background:var(--v2-good);width:${posPct}%"></div>
+      <div style="background:var(--v2-warn);width:${neuPct}%"></div>
+      <div style="background:var(--v2-bad);width:${negPct}%"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:14px">
-      <span style="color:#22c55e">${rsv.positive} positive</span>
+      <span style="color:var(--v2-good)">${rsv.positive} positive</span>
       <span>${rsv.neutral} neutral</span>
-      <span style="color:#ef4444">${rsv.negative} negative</span>
+      <span style="color:var(--v2-bad)">${rsv.negative} negative</span>
     </div>
     ${ccBlock}
     <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:6px">MATCHED RSS HEADLINES</div>
@@ -9754,16 +9754,16 @@ function renderTopNewsSentiment(){
     const posPct = (r.positive / total) * 100;
     const neuPct = (r.neutral  / total) * 100;
     const negPct = (r.negative / total) * 100;
-    const netColor = r.net_score > 0 ? '#22c55e'
-                    : r.net_score < 0 ? '#ef4444'
+    const netColor = r.net_score > 0 ? 'var(--v2-good)'
+                    : r.net_score < 0 ? 'var(--v2-bad)'
                     : 'var(--muted)';
     const netLbl = r.total === 0 ? '—'
                   : (r.net_score > 0 ? '+' : '') + r.net_score;
     const barInner = r.total === 0
       ? `<div style="background:#1f2533;width:100%;height:100%"></div>`
-      : `<div style="background:#22c55e;width:${posPct}%" title="${r.positive} positive"></div>
-         <div style="background:#f59e0b;width:${neuPct}%" title="${r.neutral} neutral"></div>
-         <div style="background:#ef4444;width:${negPct}%" title="${r.negative} negative"></div>`;
+      : `<div style="background:var(--v2-good);width:${posPct}%" title="${r.positive} positive"></div>
+         <div style="background:var(--v2-warn);width:${neuPct}%" title="${r.neutral} neutral"></div>
+         <div style="background:var(--v2-bad);width:${negPct}%" title="${r.negative} negative"></div>`;
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
@@ -9776,9 +9776,9 @@ function renderTopNewsSentiment(){
         <div class="tns-bar">${barInner}</div>
         <div class="tns-stats">
           <span>${r.total} mention${r.total === 1 ? '' : 's'}</span>
-          <span style="color:#22c55e">${r.positive} +</span>
+          <span style="color:var(--v2-good)">${r.positive} +</span>
           <span>${r.neutral} ○</span>
-          <span style="color:#ef4444">${r.negative} −</span>
+          <span style="color:var(--v2-bad)">${r.negative} −</span>
         </div>
       </div>
       <div class="tns-net" style="color:${netColor}">net ${netLbl}</div>
@@ -10860,10 +10860,10 @@ function liveComputeSignal(rows){
 
 function liveSignalColor(label){
   if (label === 'STRONG BUY') return '#16a34a';
-  if (label === 'BUY') return '#22c55e';
+  if (label === 'BUY') return 'var(--v2-good)';
   if (label === 'STRONG SELL') return '#b91c1c';
-  if (label === 'SELL') return '#ef4444';
-  return '#f59e0b';
+  if (label === 'SELL') return 'var(--v2-bad)';
+  return 'var(--v2-warn)';
 }
 
 function liveFmtUsd(v){
@@ -11016,7 +11016,7 @@ function renderLiveStockSection(sym, rows, source){
   const ch5  = n > 5  ? ((last - closes[n - 6])  / closes[n - 6])  * 100 : null;
   const ch30 = n > 30 ? ((last - closes[n - 31]) / closes[n - 31]) * 100 : null;
   const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
-  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   const sparkVals = closes.slice(-30);
   const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
   const spark = renderSparkline(sparkVals, sparkUp, 160, 36);
@@ -11139,7 +11139,7 @@ function renderServerSymbolSection(sym, payload){
   const vaHigh = poc && (poc.value_area_high != null ? poc.value_area_high : poc.va_high);
   const pocDistPct = (last != null && pocPrice) ? ((last - pocPrice) / pocPrice) * 100 : null;
   const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
-  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   return (
     '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
       '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
@@ -11184,7 +11184,7 @@ function renderLiveCryptoSection(sym, rows){
   const ch5  = n > 5  ? ((last - closes[n - 6])  / closes[n - 6])  * 100 : null;
   const ch30 = n > 30 ? ((last - closes[n - 31]) / closes[n - 31]) * 100 : null;
   const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
-  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   const sparkVals = closes.slice(-30);
   const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
   const spark = renderSparkline(sparkVals, sparkUp, 160, 36);
@@ -11476,7 +11476,7 @@ function buildSymbolSectionsHtml(resolved){
     const negPct = (neg / total) * 100;
     const neuPct = (neu / total) * 100;
     const net = sentiment.net_score;
-    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
+    const netColor = net == null ? 'var(--muted)' : (net > 0 ? 'var(--v2-good)' : (net < 0 ? 'var(--v2-bad)' : 'var(--v2-warn)'));
     const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
     sections.push(
       '<div>' +
@@ -11486,14 +11486,14 @@ function buildSymbolSectionsHtml(resolved){
           '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
         '</div>' +
         '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
-          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
-          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
-          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
+          '<div style="background:var(--v2-good);width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
+          '<div style="background:var(--v2-warn);width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
+          '<div style="background:var(--v2-bad);width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
         '</div>' +
         '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
-          '<span style="color:#22c55e">' + pos + ' positive</span>' +
+          '<span style="color:var(--v2-good)">' + pos + ' positive</span>' +
           '<span>' + neu + ' neutral</span>' +
-          '<span style="color:#ef4444">' + neg + ' negative</span>' +
+          '<span style="color:var(--v2-bad)">' + neg + ' negative</span>' +
         '</div>' +
       '</div>'
     );
@@ -11697,22 +11697,22 @@ function pocCompactCardHtml(coin){
     const dlt = Number(mig.delta_pct);
     const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(2) + '%') : '';
     const cfg = mig.direction === 'UP'
-      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:'UP'}
+      ? {bg:'var(--v2-good-bg)', fg:'var(--v2-good)', arrow:'↑', label:'UP'}
       : mig.direction === 'DOWN'
-      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:'DOWN'}
+      ? {bg:'var(--v2-bad-bg)', fg:'var(--v2-bad)', arrow:'↓', label:'DOWN'}
       : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'FLAT'};
     migChip = `<span style="background:${cfg.bg};color:${cfg.fg};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap">${cfg.arrow} ${cfg.label}${dltTxt ? ' ' + dltTxt : ''}</span>`;
   }
   // 90d POC distance + IN VA / OUT badge.
   const pocPrice = anchor ? anchor.poc : null;
   const distPct  = anchor && anchor.distance_pct != null ? Number(anchor.distance_pct) : null;
-  const dColor = distPct == null ? 'var(--muted)' : (distPct >= 0 ? '#22c55e' : '#ef4444');
+  const dColor = distPct == null ? 'var(--muted)' : (distPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   const dTxt   = distPct == null ? '—' : ((distPct >= 0 ? '+' : '') + distPct.toFixed(2) + '%');
   const inVA = anchor && anchor.in_value_area;
   const vaTag = anchor
     ? (inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>')
+        ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+        : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>')
     : '';
   // Mini ladder — 30d / 90d POC + distance%. 180d intentionally omitted to
   // keep the card visually paired with the Signal card height.
@@ -11722,7 +11722,7 @@ function pocCompactCardHtml(coin){
     if (!r) {
       return `<tr><td style="color:var(--muted);padding:3px 6px">${label}</td><td colspan="2" style="color:var(--muted);padding:3px 6px">—</td></tr>`;
     }
-    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + Number(r.distance_pct).toFixed(1) + '%';
     return `<tr>
       <td style="color:var(--muted);padding:3px 6px">${label}</td>
