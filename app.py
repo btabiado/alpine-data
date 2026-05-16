@@ -896,6 +896,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <a class="btn" href="/bookmarklet" target="_blank" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
+    <!-- Per-tab asset toggle: BTC or ETH (no spot LINK/LTC ETFs exist).
+         Decoupled from the global state.asset — drives state.etfAsset only,
+         persisted to localStorage. Mirrors the Whale tab's inline toggle. -->
+    <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;margin-bottom:10px">
+      <span class="lbl" style="margin:0">View</span>
+      <button class="btn" data-etfasset="btc">BTC</button>
+      <button class="btn" data-etfasset="eth">ETH</button>
+    </div>
     <div id="etfEmpty" class="empty hidden">
       <div>No ETF flow data loaded yet.</div>
       <div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
@@ -985,6 +993,19 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <p class="sub" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0">
           Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase International Exchange perps with the most extreme positive (crowded longs) and negative (crowded shorts) funding rates.
         </p>
+      </div>
+      <!-- Per-tab asset toggle: BTC / ETH / LINK / LTC (full original set with
+           derivatives data). Coupled to state.asset on click since Futures
+           renderers are deeply tangled with the global asset (tradingAssetData,
+           POC overlay, KPI dominance, DVOL empty-state copy). state.futuresAsset
+           tracks the persisted choice and is mirrored to state.asset whenever
+           the Futures tab is active. -->
+      <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;margin-bottom:10px">
+        <span class="lbl" style="margin:0">View</span>
+        <button class="btn" data-futuresasset="btc">BTC</button>
+        <button class="btn" data-futuresasset="eth">ETH</button>
+        <button class="btn" data-futuresasset="link">LINK</button>
+        <button class="btn" data-futuresasset="ltc">LTC</button>
       </div>
       <div class="row" id="tradingKpis"></div>
       <div class="grid2">
@@ -1744,6 +1765,22 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   // Per-tab asset toggle for the Whale tab (independent of the global asset
   // selector). Persisted to localStorage so the chosen view sticks.
   whaleAsset: (typeof localStorage !== 'undefined' && localStorage.getItem('whaleAsset') === 'eth') ? 'eth' : 'btc',
+  // Per-tab asset toggle for the ETF Flows tab — BTC or ETH only (no spot
+  // LINK/LTC ETFs exist). Decoupled from state.asset: ETF renderers read
+  // state.etfAsset via the etfAsset() helper, so switching ETF view does
+  // NOT cascade to POC overlay / Futures / other tabs that read state.asset.
+  etfAsset: (typeof localStorage !== 'undefined' && localStorage.getItem('etfAsset') === 'eth') ? 'eth' : 'btc',
+  // Per-tab asset toggle for the Futures tab (BTC/ETH/LINK/LTC — the original
+  // full set with derivatives data). Coupled to state.asset on click since
+  // Futures renderers are tangled with the global asset state (tradingAssetData,
+  // POC overlay, KPI dominance logic, DVOL empty-state copy, etc.). The
+  // expected UX is that the Futures toggle IS the global asset selector while
+  // the user is on this tab.
+  futuresAsset: (function(){
+    if (typeof localStorage === 'undefined') return 'btc';
+    const v = localStorage.getItem('futuresAsset');
+    return ['btc','eth','link','ltc'].includes(v) ? v : 'btc';
+  })(),
   // Per-tab chain selector for the DeFi tab. One of Ethereum / Solana /
   // Arbitrum / Base (the 4 chains we have tvl_history for). Default Ethereum.
   defiChain: (function(){
@@ -1867,7 +1904,12 @@ function baseOpts({yLabel='', tooltipFmt=null}={}){
 }
 
 // ---------- ETF tab ----------
-function etfData(){ return DATA[state.asset] || {}; }
+// ETF Flows tab is decoupled from the global state.asset — it reads its own
+// per-tab asset (state.etfAsset, 'btc' or 'eth' only — no spot LINK/LTC ETFs).
+// This keeps switching the ETF view from cascading to POC overlay / Futures /
+// other tabs that still read state.asset.
+function etfAsset(){ return state.etfAsset; }
+function etfData(){ return DATA[etfAsset()] || {}; }
 
 function renderEtfKpis(){
   const d = etfData(); const s = d.stats || {};
@@ -1903,7 +1945,7 @@ function renderFundKpis(){
   const funds = d.by_fund || [];
   const host = document.getElementById('fundKpiGrid');
   if (!funds.length){
-    host.innerHTML = `<div class="empty" style="grid-column:1/-1">No per-fund data loaded. Use <b>Paste ${state.asset.toUpperCase()}</b> with the full Farside table to populate fund-level views.</div>`;
+    host.innerHTML = `<div class="empty" style="grid-column:1/-1">No per-fund data loaded. Use <b>Paste ${etfAsset().toUpperCase()}</b> with the full Farside table to populate fund-level views.</div>`;
     return;
   }
   const winKey = fundWindowKey();
@@ -1911,7 +1953,7 @@ function renderFundKpis(){
   // sort by the selected window (desc)
   const sorted = funds.slice().sort((a,b) => (b[winKey]||0) - (a[winKey]||0));
   host.innerHTML = sorted.map((f, i) => {
-    const c = (state.asset==='eth' ? '#627eea' : state.asset==='link' ? '#2a5ada' : '#f7931a');
+    const c = (etfAsset()==='eth' ? '#627eea' : '#f7931a');
     const flowCls = (f[winKey]||0) >= 0 ? 'green' : 'red';
     const totalCls = f.total >= 0 ? 'green' : 'red';
     return `
@@ -2023,7 +2065,7 @@ function renderFlow(){
   });
 }
 function renderCum(){
-  const d = etfData(); const series = applyRange(d[state.period]); const c = accentFor(state.asset);
+  const d = etfData(); const series = applyRange(d[state.period]); const c = accentFor(etfAsset());
   destroy('cum');
   charts.cum = new Chart(document.getElementById('cumChart'), {
     type:'line',
@@ -3661,6 +3703,8 @@ function renderWhaleTracker(){
 function setActive(group, val){
   const isAssetGroup = (group === 'asset');
   const isWhaleAssetGroup = (group === 'whaleasset');
+  const isEtfAssetGroup = (group === 'etfasset');
+  const isFuturesAssetGroup = (group === 'futuresasset');
   document.querySelectorAll(`.btn[data-${group}]`).forEach(b => {
     b.classList.toggle('active', b.dataset[group] === val);
     // Only the BTC/ETH/LINK selector buttons get asset-tinted. Other groups
@@ -3674,6 +3718,15 @@ function setActive(group, val){
     if (isWhaleAssetGroup) {
       b.classList.toggle('eth', state.whaleAsset === 'eth');
     }
+    // ETF Flows BTC/ETH toggle: tint active button by selected asset.
+    if (isEtfAssetGroup) {
+      b.classList.toggle('eth', state.etfAsset === 'eth');
+    }
+    // Futures BTC/ETH/LINK/LTC toggle: tint active button by selected asset.
+    if (isFuturesAssetGroup) {
+      b.classList.toggle('eth',  state.futuresAsset === 'eth');
+      b.classList.toggle('link', state.futuresAsset === 'link');
+    }
   });
 }
 
@@ -3684,8 +3737,8 @@ function renderCoverage(){
     if (d.daily && d.daily.length){
       const f = d.daily[0].date, l = d.daily[d.daily.length-1].date;
       const days = Math.round((new Date(l)-new Date(f))/86400000);
-      cov.textContent = `ETF ${state.asset.toUpperCase()} ${f} → ${l} (${days}d, ${d.daily.length} obs)`;
-    } else cov.textContent = `ETF ${state.asset.toUpperCase()}: no data`;
+      cov.textContent = `ETF ${etfAsset().toUpperCase()} ${f} → ${l} (${days}d, ${d.daily.length} obs)`;
+    } else cov.textContent = `ETF ${etfAsset().toUpperCase()}: no data`;
   } else if (state.tab === 'trading'){
     const a = tradingAssetData();
     const p = a.price || [];
@@ -6525,31 +6578,34 @@ function renderSocial(){
 
 function renderAll(){
   renderInsights();
-  // tag updates
-  ['1','2','3','4','Price','Funding','OI','LS','Dvol','FundDetail','Stack','Compare'].forEach(s=>{
+  // tag updates — ETF-related tags follow state.etfAsset (decoupled from
+  // global asset), Futures-related tags follow state.asset (Futures toggle
+  // sets state.asset on click so they always match).
+  ['1','2','3','4','FundDetail','Stack','Compare'].forEach(s=>{
+    const t = document.getElementById('tagAsset'+s) || document.getElementById('tag'+s);
+    if (!t) return;
+    t.textContent = etfAsset().toUpperCase();
+    t.className = 'tag ' + etfAsset();
+  });
+  ['Price','Funding','OI','LS','Dvol'].forEach(s=>{
     const t = document.getElementById('tagAsset'+s) || document.getElementById('tag'+s);
     if (!t) return;
     t.textContent = state.asset.toUpperCase();
     t.className = 'tag ' + state.asset;
   });
 
-  // ETF empty check
+  // ETF empty check — etfAsset is constrained to btc/eth so we never hit the
+  // LINK "no spot ETF" empty state from this tab anymore. (The toggle UI only
+  // exposes BTC/ETH buttons.)
   const ed = etfData();
   const etfEmpty = !ed.daily || ed.daily.length === 0;
   const etfEmptyEl = document.getElementById('etfEmpty');
-  // Cache original markup once so we can restore when toggling back to BTC/ETH
   if (!etfEmptyEl.dataset.original) etfEmptyEl.dataset.original = etfEmptyEl.innerHTML;
-  if (state.asset === 'link') {
-    etfEmptyEl.innerHTML = '<div>No spot LINK ETF exists. The ETF Flows tab is BTC + ETH only.</div>';
-    etfEmptyEl.classList.remove('hidden');
-    document.getElementById('etfContent').classList.add('hidden');
-  } else {
-    etfEmptyEl.innerHTML = etfEmptyEl.dataset.original;
-    // re-bind seed/paste buttons since innerHTML wiped their listeners
-    rebindEtfImportButtons();
-    etfEmptyEl.classList.toggle('hidden', !etfEmpty);
-    document.getElementById('etfContent').classList.toggle('hidden', etfEmpty);
-  }
+  etfEmptyEl.innerHTML = etfEmptyEl.dataset.original;
+  // re-bind seed/paste buttons since innerHTML wiped their listeners
+  rebindEtfImportButtons();
+  etfEmptyEl.classList.toggle('hidden', !etfEmpty);
+  document.getElementById('etfContent').classList.toggle('hidden', etfEmpty);
 
   const td = tradingAssetData();
   const trEmpty = !td.price || td.price.length === 0;
@@ -6621,6 +6677,15 @@ function selectTab(t){
   if (t === 'whale' && state.asset !== 'btc') {
     state.asset = 'btc';
     setActive('asset', 'btc');
+  }
+  // Futures tab uses its own per-tab selector (state.futuresAsset) but the
+  // renderers are tangled with state.asset — push the persisted Futures
+  // choice into state.asset whenever the user enters the tab so the page
+  // renders the asset they last picked here (not whatever global state.asset
+  // happened to be from another tab).
+  if (t === 'trading' && state.asset !== state.futuresAsset) {
+    state.asset = state.futuresAsset;
+    setActive('asset', state.asset);
   }
   // Scroll the newly-active tab into view on the horizontal-scroll tab
   // strip (mobile only — desktop the strip never overflows). Without this
@@ -6714,6 +6779,41 @@ document.querySelectorAll('.btn[data-whaleasset]').forEach(b =>
 );
 // Sync the active toggle to the persisted whaleAsset on initial load.
 setActive('whaleasset', state.whaleAsset);
+
+// ETF Flows tab BTC/ETH toggle — per-tab asset selector, decoupled from
+// state.asset. Persisted to localStorage.
+document.querySelectorAll('.btn[data-etfasset]').forEach(b =>
+  b.addEventListener('click', () => {
+    state.etfAsset = b.dataset.etfasset;
+    if (typeof localStorage !== 'undefined') localStorage.setItem('etfAsset', state.etfAsset);
+    setActive('etfasset', state.etfAsset);
+    renderAll();
+  })
+);
+// Sync the active toggle to the persisted etfAsset on initial load.
+setActive('etfasset', state.etfAsset);
+
+// Futures tab BTC/ETH/LINK/LTC toggle — coupled to state.asset since the
+// Futures renderers all key off the global asset. Persisted to localStorage
+// as state.futuresAsset and mirrored into state.asset on click. selectTab()
+// also pushes futuresAsset → state.asset whenever the Futures tab opens.
+document.querySelectorAll('.btn[data-futuresasset]').forEach(b =>
+  b.addEventListener('click', () => {
+    state.futuresAsset = b.dataset.futuresasset;
+    if (typeof localStorage !== 'undefined') localStorage.setItem('futuresAsset', state.futuresAsset);
+    state.asset = state.futuresAsset;
+    setActive('futuresasset', state.futuresAsset);
+    setActive('asset', state.asset);
+    // Re-tint the active tab underline to match the new asset.
+    document.querySelectorAll('.tab').forEach(el => {
+      el.classList.toggle('eth',  state.asset === 'eth');
+      el.classList.toggle('link', state.asset === 'link');
+    });
+    renderAll();
+  })
+);
+// Sync the active toggle to the persisted futuresAsset on initial load.
+setActive('futuresasset', state.futuresAsset);
 
 // DeFi tab chain selector (Ethereum / Solana / Arbitrum / Base) — persists
 // to localStorage.defiChain. Only re-renders the per-chain section so the

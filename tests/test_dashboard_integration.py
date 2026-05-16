@@ -306,7 +306,7 @@ def test_signals_top20_provides_symbols_for_poc_top_join():
     market = _load_json_or_skip(MARKET_JSON)
     poc_top = market.get("poc_top") or []
     if not poc_top:
-        pytest.skip("market.poc_top is empty — nothing to join")
+        pytest.fail("market.poc_top is empty — nothing to join")
     signals_top20 = _compute_signals_top20_or_skip(market)
 
     poc_syms = [
@@ -341,7 +341,7 @@ def test_poc_top_entries_have_required_fields_for_sort():
     market = _load_json_or_skip(MARKET_JSON)
     poc_top = market.get("poc_top") or []
     if not poc_top:
-        pytest.skip("market.poc_top is empty")
+        pytest.fail("market.poc_top is empty")
 
     # symbol is mandatory on every entry — it's the join key.
     for i, entry in enumerate(poc_top):

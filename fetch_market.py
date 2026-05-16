@@ -2382,6 +2382,75 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
     }
 
 
+async def _fetch_social_async() -> dict:
+    """Concurrent implementation of ``fetch_social``. Schema-identical to
+    the sequential version; just runs the 4 independent sub-fetchers in
+    parallel via ``asyncio.gather`` + ``asyncio.to_thread``. They hit 4
+    different domains (reddit.com, min-api.cryptocompare.com,
+    data-api.cryptocompare.com, api.santiment.net), so there's no shared
+    rate-limit contention — wall time collapses to max(durations)."""
+    print("    [social] reddit + cryptocompare + cc-news + santiment in parallel...")
+
+    def _reddit() -> dict:
+        try:
+            return reddit_crypto_stats()
+        except Exception as e:
+            print(f"  [reddit] fatal: {e}", file=sys.stderr)
+            return {"available": False, "reason": "fetch_error", "subreddits": {}}
+
+    def _cc() -> dict:
+        try:
+            return cryptocompare_social_stats()
+        except Exception as e:
+            print(f"  [cryptocompare] fatal: {e}", file=sys.stderr)
+            return {"available": False, "reason": "fetch_error", "coins": {}}
+
+    def _ccnews() -> dict:
+        try:
+            return cryptocompare_news_sentiment()
+        except Exception as e:
+            print(f"  [cc-news] fatal: {e}", file=sys.stderr)
+            return {"available": False, "reason": "fetch_error", "coins": {}}
+
+    def _san() -> dict:
+        try:
+            return santiment_metrics()
+        except Exception as e:
+            print(f"  [santiment] fatal: {e}", file=sys.stderr)
+            return {"available": False, "reason": "fetch_error", "coins": {}}
+
+    reddit, cc, cc_news, san = await asyncio.gather(
+        asyncio.to_thread(_reddit),
+        asyncio.to_thread(_cc),
+        asyncio.to_thread(_ccnews),
+        asyncio.to_thread(_san),
+    )
+
+    # Apply stale fallbacks post-gather (these are cheap local disk reads,
+    # so doing them sequentially after the network gather is fine).
+    if not reddit.get("available"):
+        prev = _social_stale_fallback("reddit", {})
+        if isinstance(prev, dict) and prev.get("subreddits"):
+            reddit = {**prev, "stale": True}
+    if not cc.get("available"):
+        prev = _social_stale_fallback("cryptocompare", {})
+        if isinstance(prev, dict) and prev.get("coins"):
+            cc = {**prev, "stale": True}
+    if not cc_news.get("available"):
+        prev = _social_stale_fallback("cc_news", {})
+        if isinstance(prev, dict) and prev.get("coins"):
+            cc_news = {**prev, "stale": True}
+
+    return {
+        "available": any(s.get("available") for s in (reddit, cc, cc_news, san)),
+        "reddit": reddit,
+        "cryptocompare": cc,
+        "cc_news": cc_news,
+        "santiment": san,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def fetch_social() -> dict:
     """Consolidated 'Research' tab payload. Composes free social + dev +
     on-chain + news signals from 4 independent free sources, each handled
@@ -2398,59 +2467,18 @@ def fetch_social() -> dict:
 
     LunarCrush was removed — their v4 API is gated behind the Builder plan
     (~$240/mo); no free endpoints exist. See commit log for the decision.
-    """
-    # --- Reddit (no key, just User-Agent; cloud-IP blocked by Reddit) ---
-    print("    reddit: subreddit stats + top 24h posts...")
-    try:
-        reddit = reddit_crypto_stats()
-    except Exception as e:
-        print(f"  [reddit] fatal: {e}", file=sys.stderr)
-        reddit = {"available": False, "reason": "fetch_error", "subreddits": {}}
-    if not reddit.get("available"):
-        prev = _social_stale_fallback("reddit", {})
-        if isinstance(prev, dict) and prev.get("subreddits"):
-            reddit = {**prev, "stale": True}
 
-    # --- CryptoCompare social/dev (legacy endpoint, now auth-gated) ---
-    print("    cryptocompare: Twitter/Reddit/GitHub stats per coin...")
+    The 4 sub-fetchers run concurrently via ``_fetch_social_async``. This
+    public function stays sync so callers in ``fetch_all`` /
+    ``_fetch_trading_async`` (where it's wrapped by ``_bg_call``) don't
+    need changes. ``asyncio.run`` is safe here because ``_bg_call`` invokes
+    us from a worker thread, which has no existing event loop."""
+    t0 = time.monotonic()
     try:
-        cc = cryptocompare_social_stats()
-    except Exception as e:
-        print(f"  [cryptocompare] fatal: {e}", file=sys.stderr)
-        cc = {"available": False, "reason": "fetch_error", "coins": {}}
-    if not cc.get("available"):
-        prev = _social_stale_fallback("cryptocompare", {})
-        if isinstance(prev, dict) and prev.get("coins"):
-            cc = {**prev, "stale": True}
-
-    # --- CryptoCompare news sentiment (keyless data-api) ---
-    print("    cc-news: per-coin sentiment + top headlines (no key)...")
-    try:
-        cc_news = cryptocompare_news_sentiment()
-    except Exception as e:
-        print(f"  [cc-news] fatal: {e}", file=sys.stderr)
-        cc_news = {"available": False, "reason": "fetch_error", "coins": {}}
-    if not cc_news.get("available"):
-        prev = _social_stale_fallback("cc_news", {})
-        if isinstance(prev, dict) and prev.get("coins"):
-            cc_news = {**prev, "stale": True}
-
-    # --- Santiment (no key for free tier; daily-gated for quota) ---
-    print("    santiment: DAA + dev activity (daily-gated at 00:00 UTC)...")
-    try:
-        san = santiment_metrics()
-    except Exception as e:
-        print(f"  [santiment] fatal: {e}", file=sys.stderr)
-        san = {"available": False, "reason": "fetch_error", "coins": {}}
-
-    return {
-        "available": any(s.get("available") for s in (reddit, cc, cc_news, san)),
-        "reddit": reddit,
-        "cryptocompare": cc,
-        "cc_news": cc_news,
-        "santiment": san,
-        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-    }
+        out = asyncio.run(_fetch_social_async())
+        return out
+    finally:
+        print(f"  [timing] fetch_social: {time.monotonic() - t0:.2f}s")
 
 
 def _coin_metrics_headers() -> dict:
@@ -3393,34 +3421,72 @@ def compute_stock_signal(history: list[dict]) -> dict:
     }
 
 
-def fetch_stocks_signals(limit: int = 50) -> list[dict]:
-    """Pull the top-N most-active US stocks and compute a signal for each.
-
-    Paces requests to Yahoo (~0.3s sleep between chart calls) since their
-    rate limit is ~200/hour with strict enforcement. Returns [] if the
-    screener call fails.
-    """
+async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
+    """Concurrent implementation of ``fetch_stocks_signals``. Schema-
+    identical to the sequential version. Yahoo's chart endpoint tolerates
+    ~200/hr per IP with generous burst behavior; an 8-permit semaphore
+    holds total in-flight chart calls to 8 (replacing the previous 0.3s
+    serial pacing, which capped throughput at ~3 req/s). Order of the
+    returned list matches ``yahoo_most_active``'s order so downstream
+    consumers see the same shape as before."""
     movers = yahoo_most_active(limit)
     if not movers:
         return []
-    out: list[dict] = []
-    for m in movers:
-        sym = m["symbol"]
-        hist = yahoo_chart_history(sym, "6mo")
-        sig = compute_stock_signal(hist)
-        out.append({
-            "symbol":     sym,
-            "name":       m["name"],
-            "last_price": m["last_price"],
-            "change_pct": m["change_pct"],
-            "volume":     m["volume"],
-            "score":      sig["score"],
-            "label":      sig["label"],
-            "components": sig["components"],
-            "history":    sig["history"],
-        })
-        time.sleep(0.3)
-    return out
+
+    # Local semaphore — independent of the trading-fetch generic semaphore
+    # so a parallel ``fetch_all`` doesn't have these compete with other
+    # generic fetchers for the same 10 permits.
+    sem = asyncio.Semaphore(8)
+
+    async def _one(m: dict) -> dict | None:
+        async with sem:
+            def _work() -> dict | None:
+                sym = m["symbol"]
+                hist = yahoo_chart_history(sym, "6mo")
+                sig = compute_stock_signal(hist)
+                return {
+                    "symbol":     sym,
+                    "name":       m["name"],
+                    "last_price": m["last_price"],
+                    "change_pct": m["change_pct"],
+                    "volume":     m["volume"],
+                    "score":      sig["score"],
+                    "label":      sig["label"],
+                    "components": sig["components"],
+                    "history":    sig["history"],
+                }
+            try:
+                return await asyncio.to_thread(_work)
+            except Exception as e:
+                print(f"  [stocks] {m.get('symbol')}: {e}", file=sys.stderr)
+                return None
+
+    results = await asyncio.gather(*[_one(m) for m in movers])
+    return [r for r in results if r is not None]
+
+
+def fetch_stocks_signals(limit: int = 50) -> list[dict]:
+    """Pull the top-N most-active US stocks and compute a signal for each.
+
+    The 50-symbol Yahoo chart fan-out runs concurrently via
+    ``_fetch_stocks_signals_async`` with an 8-permit semaphore for natural
+    rate-throttling (replacing the previous 0.3s per-call serial sleep).
+    Yahoo's chart endpoint allows ~200/hr per IP, so 8-way concurrency is
+    well under the burst limit. Returns [] if the screener call fails.
+
+    Public API is sync so the existing ``_bg_call(fetch_stocks_signals,
+    50)`` site in ``_fetch_trading_async`` doesn't need changes;
+    ``asyncio.run`` is safe because ``_bg_call`` invokes us from a worker
+    thread without an event loop attached."""
+    t0 = time.monotonic()
+    try:
+        out = asyncio.run(_fetch_stocks_signals_async(limit))
+        print(f"  [timing] fetch_stocks_signals: {time.monotonic() - t0:.2f}s · "
+              f"{len(out)} stocks succeeded")
+        return out
+    except Exception:
+        print(f"  [timing] fetch_stocks_signals: {time.monotonic() - t0:.2f}s · failed")
+        raise
 
 
 def defillama() -> dict:
