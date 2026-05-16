@@ -3710,6 +3710,11 @@ def defillama() -> dict:
 
 
 def fear_greed(limit: int = 1095) -> list[dict]:
+    # ``limit`` matches the longest dashboard range button (3y = 1095d) — any
+    # data older than that is unreachable from the UI's range selector and
+    # just bloats the inlined payload. The alternative.me ``?limit=`` query
+    # is silently ignored (the API returns the full history back to 2018
+    # regardless), so we also slice client-side after parsing.
     j = _get(f"https://api.alternative.me/fng/?limit={limit}")
     if not j or "data" not in j:
         return []
@@ -3722,6 +3727,8 @@ def fear_greed(limit: int = 1095) -> list[dict]:
             "label": r.get("value_classification", ""),
         })
     out.sort(key=lambda r: r["date"])
+    if limit and limit > 0 and len(out) > limit:
+        out = out[-limit:]
     return out
 
 

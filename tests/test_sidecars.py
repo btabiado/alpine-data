@@ -226,3 +226,159 @@ def test_share_token_can_fetch_sidecar(shared_client):
     r = shared_client.get(f"/data-whale.json?share={entry['token']}")
     assert r.status_code == 200
     assert r.get_json()["btc"]["tx_volume_usd"] == [1.0]
+
+
+# ---------- 6. defi sidecar (DeFi-tab only payload) ----------
+
+
+def test_defi_is_registered_as_sidecar():
+    """``defi`` joins ``whale`` as a tab-specific lazy-loaded payload — the
+    DeFi tab is the only consumer (renderDefi / renderDefiChainSection /
+    renderDefiSentiment), so the ~86KB subtree shouldn't sit in the
+    inlined HTML for users who never open it."""
+    assert "defi" in app.SIDECAR_KEYS
+
+
+def test_build_payload_hoists_defi_to_top_level(tmp_path: Path, monkeypatch):
+    """``build_payload`` must promote ``market.defi`` to ``payload.defi`` so
+    ``split_payload_for_sidecars`` (which only operates on top-level keys)
+    can extract it into the data-defi.json sidecar."""
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
+    (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
+    (tmp_path / "market.json").write_text(json.dumps({
+        "btc": {"price": []},
+        "eth": {"price": []},
+        "defi": {"chains": [{"name": "Ethereum", "tvl_usd": 1.0}]},
+    }))
+    (tmp_path / "whale.json").write_text(json.dumps({"btc": {"tx_volume_usd": []}}))
+
+    payload = app.build_payload()
+    # Hoisted to top level for sidecar extraction.
+    assert payload["defi"] == {"chains": [{"name": "Ethereum", "tvl_usd": 1.0}]}
+    # And removed from market so it isn't double-inlined.
+    assert "defi" not in payload["market"]
+
+
+def test_build_payload_defi_defaults_to_empty_dict(tmp_path: Path, monkeypatch):
+    """When market.json has no ``defi`` block (e.g. DefiLlama fetch failed),
+    payload.defi must be an empty dict — ``split_payload_for_sidecars``
+    skips empty values so no manifest entry / sidecar file is written, and
+    the client falls back to its in-place ``DATA.defi || {}`` guard."""
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
+    (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
+    (tmp_path / "market.json").write_text(json.dumps({"btc": {"price": []}, "eth": {"price": []}}))
+    (tmp_path / "whale.json").write_text(json.dumps({}))
+
+    payload = app.build_payload()
+    assert payload["defi"] == {}
+    _, sidecars, manifest = app.split_payload_for_sidecars(payload, keys=("defi",))
+    assert "defi" not in sidecars
+    assert manifest == {}
+
+
+def test_main_writes_defi_sidecar(tmp_path: Path, monkeypatch):
+    """End-to-end build: DeFi subtree must land in ``data-defi.json`` and
+    NOT be inlined in dashboard.html — same contract as the whale sidecar
+    test above, with a sentinel value we can grep for."""
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    out_path = tmp_path / "dashboard.html"
+    monkeypatch.setattr(app, "OUT", out_path)
+    monkeypatch.setattr(app, "ROOT", tmp_path)
+
+    (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
+    (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
+    # Sentinel TVL so the "not inlined" assertion can't false-positive.
+    (tmp_path / "market.json").write_text(json.dumps({
+        "btc": {"price": []},
+        "eth": {"price": []},
+        "defi": {"chains": [{"name": "Ethereum", "tvl_usd": 987654321.0}]},
+    }))
+    (tmp_path / "whale.json").write_text(json.dumps({"btc": {"tx_volume_usd": []}}))
+
+    monkeypatch.setattr(sys, "argv", ["app.py", "--no-open"])
+    assert app.main() == 0
+
+    sidecar_path = tmp_path / "data-defi.json"
+    assert sidecar_path.exists(), "data-defi.json missing after build"
+    assert json.loads(sidecar_path.read_text())["chains"][0]["tvl_usd"] == 987654321.0
+
+    html = out_path.read_text()
+    # The sentinel value must NOT appear in the inlined HTML — defi now
+    # lives only in /data-defi.json.
+    assert "987654321" not in html, "defi data leaked into inlined HTML"
+    # The manifest must include defi so loadSidecar() knows where to fetch.
+    assert '"defi"' in html and '"data-defi.json"' in html
+
+
+# ---------- 7. fear_greed history cap ----------
+
+
+def test_build_payload_caps_fear_greed_history(tmp_path: Path, monkeypatch):
+    """The alternative.me API silently ignores its ``?limit=`` query and
+    returns the full ~3000-entry fear-and-greed history back to 2018.
+    ``build_payload`` must trim to ``FEAR_GREED_MAX_DAYS`` (matches the
+    longest UI range button) before the payload gets inlined — anything
+    older than that is unreachable from the range selector."""
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    over = app.FEAR_GREED_MAX_DAYS + 500
+    # Build a list larger than the cap; date strings don't matter for this
+    # test — the slice is positional (last N).
+    fng = [{"date": f"2024-{(i % 12) + 1:02d}-01", "value": i % 100, "label": "X"} for i in range(over)]
+    (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
+    (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
+    (tmp_path / "market.json").write_text(json.dumps({
+        "btc": {"price": []},
+        "eth": {"price": []},
+        "fear_greed": fng,
+    }))
+    (tmp_path / "whale.json").write_text(json.dumps({}))
+
+    payload = app.build_payload()
+    assert len(payload["market"]["fear_greed"]) == app.FEAR_GREED_MAX_DAYS
+    # Last entry is preserved (we keep the tail, not the head).
+    assert payload["market"]["fear_greed"][-1] == fng[-1]
+
+
+def test_build_payload_leaves_short_fear_greed_alone(tmp_path: Path, monkeypatch):
+    """A short fear_greed list (under the cap) must pass through untouched —
+    we slice only when there's something to trim, so a sparse / fresh
+    fetch isn't surprisingly mutated."""
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    short = [{"date": "2024-01-01", "value": 50, "label": "Neutral"}]
+    (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
+    (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
+    (tmp_path / "market.json").write_text(json.dumps({
+        "btc": {"price": []},
+        "eth": {"price": []},
+        "fear_greed": short,
+    }))
+    (tmp_path / "whale.json").write_text(json.dumps({}))
+
+    payload = app.build_payload()
+    assert payload["market"]["fear_greed"] == short
+
+
+def test_fetch_market_fear_greed_slices_to_limit(monkeypatch):
+    """``fetch_market.fear_greed`` requests ``?limit=N`` but the API ignores
+    it, so the function must enforce the cap client-side before returning.
+    Otherwise the on-disk market.json balloons with years of unreachable
+    sentiment data."""
+    import fetch_market as fm
+    # Fake "data" payload from alternative.me — 200 entries (more than our
+    # test limit of 5). The function's _get() is monkeypatched to return
+    # this directly, dodging any network call.
+    fake = {"data": [
+        {"timestamp": str(1700000000 + i * 86400), "value": str(i % 100), "value_classification": "X"}
+        for i in range(200)
+    ]}
+    monkeypatch.setattr(fm, "_get", lambda *a, **kw: fake)
+    out = fm.fear_greed(limit=5)
+    assert len(out) == 5
+    # Output is sorted ascending by date; last 5 from a 200-entry input.
+    # The slice keeps the tail (most recent), so dates are the LATEST 5.
+    assert all("date" in r for r in out)
+    # Sorted, monotonic-nondecreasing dates.
+    dates = [r["date"] for r in out]
+    assert dates == sorted(dates)

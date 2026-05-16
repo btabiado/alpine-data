@@ -40,7 +40,15 @@ OUT = ROOT / "dashboard.html"
 # ~840KB off the initial HTML payload (whale alone is ~736KB of JSON).
 # Add a key here to defer it; the client manifest in SIDECARS picks it up
 # automatically. Keys MUST be top-level payload keys.
-SIDECAR_KEYS: tuple[str, ...] = ("whale",)
+SIDECAR_KEYS: tuple[str, ...] = ("whale", "defi")
+
+# Cap fear_greed history at the longest dashboard range button (3y). The
+# alternative.me API ignores its ``?limit=`` query and returns the full
+# history back to 2018, but the dashboard's range selector tops out at 3y
+# (1095 days), so older entries just bloat the inlined payload. Trimming
+# at build time also benefits stale caches that pre-date the fetcher fix
+# — no need to re-fetch to see the size drop.
+FEAR_GREED_MAX_DAYS = 1095
 
 
 def split_payload_for_sidecars(
@@ -242,11 +250,25 @@ def build_payload() -> dict:
     eth_df = ensure_total(load_csv(DATA_DIR / "eth_flows.csv"))
     market = load_json(DATA_DIR / "market.json")
     whale = load_json(DATA_DIR / "whale.json")
+    # Defensive cap on fear_greed history (see FEAR_GREED_MAX_DAYS docstring).
+    # Done here instead of (only) at fetch so stale on-disk caches that
+    # pre-date the fetcher's slice still get trimmed in the inlined payload.
+    if isinstance(market, dict):
+        fng = market.get("fear_greed")
+        if isinstance(fng, list) and len(fng) > FEAR_GREED_MAX_DAYS:
+            market["fear_greed"] = fng[-FEAR_GREED_MAX_DAYS:]
+    # Promote market.defi to a top-level payload key so it can be split out
+    # as a lazy-loaded sidecar (see SIDECAR_KEYS). The DeFi tab is the only
+    # consumer; renderers read from DATA.defi after this hoist.
+    defi = None
+    if isinstance(market, dict):
+        defi = market.pop("defi", None)
     payload = {
         "btc": aggregate(btc_df),
         "eth": aggregate(eth_df),
         "market": market,
         "whale": whale,
+        "defi": defi or {},
         "generated_at": datetime.now().isoformat(timespec="seconds"),
     }
     try:
@@ -1559,6 +1581,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ DeFi TAB ============ -->
   <div id="tab-defi" class="hidden">
+    <!-- Loading state shown while the lazy-loaded /data-defi.json sidecar
+         is in-flight (see SIDECAR_FOR_TAB.defi). Toggled by renderAll
+         based on SIDECAR_STATE.defi — hidden on first paint when defi is
+         either inlined or already cached. -->
+    <div id="defiLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading DeFi data…</div>
+    <!-- Tab body is hidden by renderAll while #defiLoading is shown, so the
+         placeholder "—" KPIs don't flash before the lazy sidecar lands. -->
+    <div id="defiContent">
     <!-- DEFI SENTIMENT — composite of TVL-weighted 7d chain momentum and
          stablecoin mcap 7d change. Rendered by renderDefiSentiment(). -->
     <div class="card" id="defiSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
@@ -1648,6 +1678,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </table>
       </div>
     </div>
+    </div><!-- /defiContent -->
   </div>
 
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
@@ -1986,7 +2017,7 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -4286,7 +4317,11 @@ const DEFI_CHAIN_COLORS = {
 };
 
 function renderDefi(){
-  const defi = (DATA.market || {}).defi || {};
+  // DATA.defi is lazy-loaded via the sidecar mechanism (see SIDECAR_KEYS /
+  // SIDECAR_FOR_TAB). On first paint after switching to this tab it may be
+  // an empty object — the per-section guards below (chains.length, etc.)
+  // degrade silently, and renderAll re-runs once the fetch lands.
+  const defi = DATA.defi || {};
   const llama = (DATA.market || {}).defillama || {};
   const chains = defi.chains || [];
   const protocols = defi.protocols || [];
@@ -4369,7 +4404,7 @@ function renderDefi(){
 // open AND by the chain-selector click handler, so toggling between chains
 // only refreshes this section (not the KPI strip or global tables).
 function renderDefiChainSection(){
-  const defi = (DATA.market || {}).defi || {};
+  const defi = DATA.defi || {};
   const chains = defi.chains || [];
   const protocols = defi.protocols || [];
   const tvlHistory = defi.tvl_history || {};
@@ -6475,7 +6510,9 @@ function renderOverviewSentiment(){
 // ---- DeFi: TVL-weighted 7d chain momentum + stablecoin mcap 7d Δ.
 function renderDefiSentiment(){
   const m = DATA.market || {};
-  const defi = m.defi || {};
+  // DeFi sentiment card is only rendered from within the DeFi tab (called by
+  // renderDefi), so it can safely read from the lazy-loaded DATA.defi.
+  const defi = DATA.defi || {};
   const llama = m.defillama || {};
   const chains = Array.isArray(defi.chains) ? defi.chains : [];
   const components = [];
@@ -7375,7 +7412,15 @@ function renderAll(){
     renderWhalePanel();
   }
   if (state.tab === 'defi'){
-    renderDefi();
+    // Show the "Loading DeFi data…" placeholder while the sidecar is in
+    // flight, then swap to the real content once it lands. Mirrors the
+    // whale-tab loading-state branch above.
+    const defiLoading = document.getElementById('defiLoading');
+    const defiContent = document.getElementById('defiContent');
+    const defiLoadingActive = SIDECAR_STATE.defi === 'loading';
+    if (defiLoading) defiLoading.classList.toggle('hidden', !defiLoadingActive);
+    if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive);
+    if (!defiLoadingActive) renderDefi();
   }
   if (state.tab === 'trading' && !trEmpty){
     renderNews();
