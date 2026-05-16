@@ -396,6 +396,10 @@ header .meta{color:var(--muted);font-size:12px}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+/* Empty-bucket pill in the Top-25 signals strip. Uses a class (not inline
+   style) so applyTop20Filter()'s `sec.style.display = ''` reset doesn't
+   collapse the row layout back to block. */
+.signals-section.signals-empty-pill{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;color:var(--muted);grid-column:1/-1;margin:0}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px}
 .card h3{margin:0 0 4px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .card .v{font-size:20px;font-weight:600;margin-top:2px}
@@ -621,16 +625,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </header>
 
 <div class="tabs" role="tablist">
-  <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Overview</div>
+  <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
+  <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Crypto</div>
   <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Crypto Signals</div>
   <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale Activity</div>
-  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="poc" role="tab" tabindex="0" aria-selected="false">Point of Control</div>
+  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
   <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
   <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
-  <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -649,7 +653,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <h2 style="margin:0;font-size:14px">⚙️ Configure signal cards</h2>
       <button class="btn" id="configSignalsClose" aria-label="Close configure signal cards">×</button>
     </div>
-    <div class="sub">Pick which assets appear as signal cards on the Overview. Selection persists in your browser.</div>
+    <div class="sub">Pick which assets appear as signal cards on the Crypto tab. Selection persists in your browser.</div>
     <div id="configSignalsList" style="display:flex;flex-direction:column;gap:8px;padding:6px 0"></div>
     <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:10px">
       <button class="btn" id="configSignalsReset">Reset to default</button>
@@ -2945,25 +2949,45 @@ function renderTop20Signals(){
     {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
     {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
   ];
-  host.innerHTML = sections.map(sec => {
-    const items = byBucket[sec.key];
-    const n = items.length;
-    const cards = items.map(cardHtml).join('');
-    const empty = n === 0
-      ? `<div class="sub" style="color:var(--muted);padding:8px 4px;font-size:11px">No coins in this bucket.</div>`
-      : '';
-    return `<div class="signals-section" data-signals-section="${sec.key}" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:8px;margin:0 0 6px 0">
-        <h3 style="margin:0;font-size:13px;font-weight:700;letter-spacing:0.2px;color:var(--text)">
+  // Outer #top20SignalCards is an auto-fit grid, so each section becomes a
+  // column on laptop widths. Previously every empty bucket consumed a full
+  // column with body grid + "No coins" copy, so on a typical day (only HOLD
+  // populated) the layout was 80% whitespace. Empty sections now collapse
+  // to a single-row header pill that spans the full grid width via
+  // grid-column:1/-1 — auto-fit redistributes the populated sections across
+  // the remaining columns, while users still see at a glance which buckets
+  // are empty today (and the filter chips still target them correctly).
+  const allEmpty = sections.every(sec => (byBucket[sec.key] || []).length === 0);
+  if (allEmpty){
+    host.innerHTML = `<div class="sub" style="color:var(--muted);padding:24px;text-align:center;grid-column:1/-1">No signals available yet.</div>`;
+  } else {
+    host.innerHTML = sections.map(sec => {
+      const items = byBucket[sec.key] || [];
+      const n = items.length;
+      if (n === 0){
+        // Compact one-line pill, full-width. Layout lives in the
+        // .signals-empty-pill class (see CSS) so the filter chip's
+        // `style.display = ''` reset doesn't collapse the row to a block.
+        return `<div class="signals-section signals-empty-pill" data-signals-section="${sec.key}" data-empty="1">
           <span aria-hidden="true">${escapeHtml(sec.glyph)}</span>
-          ${escapeHtml(sec.label)}
-          <span style="color:var(--muted);font-weight:500;margin-left:4px">(${n})</span>
-        </h3>
-        <span class="tag" style="background:${sec.color}22;color:${sec.color};border:1px solid ${sec.color}66;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700">${escapeHtml(sec.label)}</span>
-      </div>
-      <div class="row signals-section-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${cards}${empty}</div>
-    </div>`;
-  }).join('');
+          <span style="font-weight:700;letter-spacing:0.2px;color:${sec.color}">${escapeHtml(sec.label)}</span>
+          <span>0 today</span>
+        </div>`;
+      }
+      const cards = items.map(cardHtml).join('');
+      return `<div class="signals-section" data-signals-section="${sec.key}" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:8px;margin:0 0 6px 0">
+          <h3 style="margin:0;font-size:13px;font-weight:700;letter-spacing:0.2px;color:var(--text)">
+            <span aria-hidden="true">${escapeHtml(sec.glyph)}</span>
+            ${escapeHtml(sec.label)}
+            <span style="color:var(--muted);font-weight:500;margin-left:4px">(${n})</span>
+          </h3>
+          <span class="tag" style="background:${sec.color}22;color:${sec.color};border:1px solid ${sec.color}66;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700">${escapeHtml(sec.label)}</span>
+        </div>
+        <div class="row signals-section-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${cards}</div>
+      </div>`;
+    }).join('');
+  }
   // Bind click → modal
   host.querySelectorAll('[data-symbol]').forEach(el =>
     el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
@@ -5139,7 +5163,9 @@ function pocClustered(rows){
 // price labels on the right, a current-price marker with $value, and
 // a small legend at the bottom.
 function volumeProfileSVGLarge(primary, alt, current){
-  const W = 480, H = 360, padL = 8, padR = 70, padT = 18, padB = 26;
+  // padR bumped to 96 to give bigger right-edge labels room. Without it,
+  // "POC $1.33" and "NOW $1.09" used to clip the SVG edge at modal width.
+  const W = 480, H = 360, padL = 8, padR = 96, padT = 18, padB = 26;
   if (!primary || !primary.buckets || !primary.buckets.length){
     return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;max-height:420px;display:block;border-radius:6px;background:#0b0d12">
       <text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="14" fill="#888">no profile</text>
@@ -5177,36 +5203,54 @@ function volumeProfileSVGLarge(primary, alt, current){
     }).join(' ');
     altLine = `<polyline points="${pts}" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.75"/>`;
   }
-  // Price labels on the right: POC / VAH / VAL — and the current price marker
+  // Price labels on the right: POC / VAH / VAL — and the current price marker.
+  // Font sizes bumped (was 10/11) so labels are legible at modal scale; VAH/VAL
+  // are suppressed when they collide with POC (common when POC sits at the top
+  // or bottom of the value area — same y, labels would stack illegibly). The
+  // ladder table below the chart already lists the exact VAH/VAL/POC values,
+  // so dropping a colliding tag costs nothing.
   const yPoc = yForPrice(primary.poc);
   const yVah = yForPrice(primary.vah);
   const yVal = yForPrice(primary.val);
   const labelX = W - padR + 6;
+  const COLLISION = 14;  // SVG units — must exceed VAH/VAL font-size to fully hide overlap
   const pocLine = `<line x1="0" y1="${yPoc}" x2="${W - padR}" y2="${yPoc}" stroke="#ff6b35" stroke-width="1" opacity="0.5"/>`;
+  const vahLabel = Math.abs(yVah - yPoc) < COLLISION
+    ? ''
+    : `<text x="${labelX}" y="${yVah + 5}" font-size="13" fill="#7aa7d9">VAH ${fmtUsdShort(primary.vah)}</text>`;
+  const valLabel = Math.abs(yVal - yPoc) < COLLISION
+    ? ''
+    : `<text x="${labelX}" y="${yVal + 5}" font-size="13" fill="#7aa7d9">VAL ${fmtUsdShort(primary.val)}</text>`;
   const labels = `
-    <text x="${labelX}" y="${yPoc + 4}" font-size="11" fill="#ff6b35" font-weight="700">POC ${fmtUsdShort(primary.poc)}</text>
-    <text x="${labelX}" y="${yVah + 4}" font-size="10" fill="#7aa7d9">VAH ${fmtUsdShort(primary.vah)}</text>
-    <text x="${labelX}" y="${yVal + 4}" font-size="10" fill="#7aa7d9">VAL ${fmtUsdShort(primary.val)}</text>`;
+    <text x="${labelX}" y="${yPoc + 5}" font-size="14" fill="#ff6b35" font-weight="700">POC ${fmtUsdShort(primary.poc)}</text>
+    ${vahLabel}
+    ${valLabel}`;
   let curMarker = '';
   if (current != null){
     const clamped = Math.min(Math.max(current, pMin), pMax);
     const yC = yForPrice(clamped);
     const dash = (current < pMin || current > pMax) ? 'stroke-dasharray="3,2"' : '';
+    // NOW also dodges POC — if the current price is sitting right on the POC
+    // (within COLLISION), skip the label; the green line still marks it and
+    // the header price chip already shows the value.
+    const nowLabel = Math.abs(yC - yPoc) < COLLISION
+      ? ''
+      : `<text x="${labelX}" y="${yC + 5}" font-size="14" fill="#00c853" font-weight="700">NOW ${fmtUsdShort(current)}</text>`;
     curMarker = `<line x1="0" y1="${yC}" x2="${W - padR}" y2="${yC}" stroke="#00c853" stroke-width="1.5" ${dash}/>
-      <text x="${labelX}" y="${yC + 4}" font-size="11" fill="#00c853" font-weight="700">NOW ${fmtUsdShort(current)}</text>`;
+      ${nowLabel}`;
   }
-  // Bottom legend
+  // Bottom legend — font bumped 9→11 to match the bigger label scale.
   const legendY = H - 8;
   const legend = `
-    <g font-size="9" fill="#94a3b8">
-      <rect x="${padL}" y="${legendY - 8}" width="10" height="8" fill="#ff6b35"/>
-      <text x="${padL + 14}" y="${legendY - 1}">POC</text>
-      <rect x="${padL + 46}" y="${legendY - 8}" width="10" height="8" fill="#4a90e2" opacity="0.85"/>
-      <text x="${padL + 60}" y="${legendY - 1}">Value Area (70% vol)</text>
-      <line x1="${padL + 170}" y1="${legendY - 4}" x2="${padL + 190}" y2="${legendY - 4}" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2"/>
-      <text x="${padL + 194}" y="${legendY - 1}">30d overlay</text>
-      <line x1="${padL + 256}" y1="${legendY - 4}" x2="${padL + 276}" y2="${legendY - 4}" stroke="#00c853" stroke-width="1.5"/>
-      <text x="${padL + 280}" y="${legendY - 1}">Current price</text>
+    <g font-size="11" fill="#94a3b8">
+      <rect x="${padL}" y="${legendY - 10}" width="12" height="10" fill="#ff6b35"/>
+      <text x="${padL + 16}" y="${legendY - 1}">POC</text>
+      <rect x="${padL + 52}" y="${legendY - 10}" width="12" height="10" fill="#4a90e2" opacity="0.85"/>
+      <text x="${padL + 68}" y="${legendY - 1}">Value Area (70% vol)</text>
+      <line x1="${padL + 196}" y1="${legendY - 5}" x2="${padL + 218}" y2="${legendY - 5}" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="${padL + 222}" y="${legendY - 1}">30d overlay</text>
+      <line x1="${padL + 296}" y1="${legendY - 5}" x2="${padL + 318}" y2="${legendY - 5}" stroke="#00c853" stroke-width="1.5"/>
+      <text x="${padL + 322}" y="${legendY - 1}">Current price</text>
     </g>`;
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:420px;display:block;border-radius:6px;background:#0b0d12">
     ${vaBand}${bars}${altLine}${pocLine}${curMarker}${labels}${legend}
