@@ -946,6 +946,75 @@ def test_symbol_search_supports_multiple_symbols():
     )
 
 
+# ---------- Fuzzy-suggest + rebrand-alias wiring --------------------------
+#
+# When a search query misses cache and live lookup needs a key (or fails),
+# the dashboard surfaces "Did you mean: X · Y · Z" chips for cached symbols
+# within ~2 edits. Plus a small unambiguous-rebrand map silently rewrites
+# retired tickers like FB → META during parse so the user lands on the
+# current name. Guards keep both wires alive across refactors.
+
+
+def test_symbol_rebrand_alias_map_present():
+    html = _read_dashboard_or_skip()
+    # Map declaration — keep this loose so reordering inside the object
+    # doesn't break the test, but require the entries we ship today.
+    assert "const SYMBOL_REBRANDS" in html, (
+        "SYMBOL_REBRANDS map missing — retired-ticker silent rewrite "
+        "(FB → META) is no longer wired."
+    )
+    assert "FB:" in html and "'META'" in html, (
+        "FB → META rebrand alias missing from SYMBOL_REBRANDS."
+    )
+    # parseSymbolSearchTokens applies the rewrite — anchor on the
+    # hasOwnProperty guard so a refactor can't silently drop the lookup.
+    assert "SYMBOL_REBRANDS" in html and "hasOwnProperty" in html, (
+        "parseSymbolSearchTokens() no longer applies the SYMBOL_REBRANDS "
+        "lookup before dedup."
+    )
+
+
+def test_symbol_fuzzy_match_helpers_present():
+    html = _read_dashboard_or_skip()
+    assert "function symbolEditDist" in html, (
+        "symbolEditDist() missing — fuzzy-suggest can't compute closeness."
+    )
+    assert "function symbolFuzzyMatches" in html, (
+        "symbolFuzzyMatches() missing — Did-you-mean chip strip can't "
+        "build its candidate list."
+    )
+    assert "function collectCachedSymbols" in html, (
+        "collectCachedSymbols() missing — fuzzy-suggest has no source "
+        "set to compare against."
+    )
+    assert "function renderSymbolSuggestionsStrip" in html, (
+        "renderSymbolSuggestionsStrip() missing — Did-you-mean chips can't "
+        "render."
+    )
+
+
+def test_symbol_suggestion_chip_wiring():
+    html = _read_dashboard_or_skip()
+    assert "symbol-suggest-chip" in html, (
+        "symbol-suggest-chip class missing — fuzzy-suggest chips can't be "
+        "styled or selected by the click handler."
+    )
+    assert "data-suggest-sym" in html, (
+        "data-suggest-sym attribute missing — chip click handler can't "
+        "recover the target ticker."
+    )
+    # Delegated click handler at document level
+    assert "wireSymbolSuggestionChips" in html, (
+        "wireSymbolSuggestionChips() initializer missing — chip clicks "
+        "won't route through lookupSymbol."
+    )
+    # The "Did you mean:" lede is the user-facing affordance — copy is
+    # exact-match so an inadvertent rewrite shows up in CI.
+    assert "Did you mean:" in html, (
+        "Did-you-mean lede copy missing from the suggestion strip."
+    )
+
+
 # ---------- Recent symbol-lookup chips wiring -----------------------------
 #
 # The header symbol-search input remembers the last N successful lookups in

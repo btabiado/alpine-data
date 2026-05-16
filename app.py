@@ -9574,7 +9574,7 @@ function renderLiveStockSection(sym, rows, source){
   );
 }
 
-function renderLiveStockNoKey(sym){
+function renderLiveStockNoKey(sym, suggestions){
   return (
     '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
       '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
@@ -9582,6 +9582,7 @@ function renderLiveStockNoKey(sym){
     '</div>' +
     '<div style="padding:14px 0;line-height:1.55">' +
       '<div style="margin-bottom:10px"><strong>' + escapeHtml(sym) + '</strong> isn&rsquo;t in the cached top-50 most-active list.</div>' +
+      renderSymbolSuggestionsStrip(suggestions) +
       '<div class="sub" style="color:var(--muted);font-size:13px;margin-bottom:14px">' +
         'To enable live lookup for any US ticker on the public mirror, add a free ' +
         '<a href="https://twelvedata.com/pricing" target="_blank" rel="noopener" style="color:#60a5fa">Twelvedata</a> ' +
@@ -9599,7 +9600,7 @@ function renderLiveStockNoKey(sym){
   );
 }
 
-function renderLiveStockFailed(sym, errMsg){
+function renderLiveStockFailed(sym, errMsg, suggestions){
   return (
     '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
       '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
@@ -9609,6 +9610,7 @@ function renderLiveStockFailed(sym, errMsg){
       'No stock data for <strong>' + escapeHtml(sym) + '</strong>' +
       (errMsg ? ' &mdash; <code style="font-size:11px">' + escapeHtml(String(errMsg).slice(0, 200)) + '</code>' : '') +
       '<br><br>' +
+      renderSymbolSuggestionsStrip(suggestions) +
       'Possible causes: invalid ticker, free-tier daily limit hit, or upstream outage. ' +
       'Try again later, or run the dashboard locally with <code>python server.py</code> ' +
       '(uses Yahoo Finance server-side with no rate limit).' +
@@ -9739,10 +9741,111 @@ function renderLiveCryptoSection(sym, rows){
   );
 }
 
+// Historical-ticker rebrands. The old ticker no longer trades, so silently
+// redirecting to the current name is unambiguous and helpful. Keep this map
+// small: each entry is "the old/wrong ticker → the one the user almost
+// certainly meant." Common typos that map to a still-distinct real ticker
+// (e.g. INTL → INTC) do NOT go here — they're handled by the fuzzy-suggest
+// UI below so the user can confirm rather than be silently redirected.
+const SYMBOL_REBRANDS = {
+  FB:   'META',  // Facebook → Meta rebrand (Oct 2021)
+  TWTR: 'X',     // Twitter → X (now private but the alias is harmless)
+};
+
+// Levenshtein for short symbol strings. Returns 99 (≈ infinity) when the
+// lengths diverge by more than 2 so we can short-circuit unrelated names.
+function symbolEditDist(a, b){
+  a = String(a || '').toUpperCase();
+  b = String(b || '').toUpperCase();
+  if (!a || !b) return 99;
+  if (a === b) return 0;
+  const m = a.length, n = b.length;
+  if (Math.abs(m - n) > 2) return 99;
+  let prev = Array(n + 1).fill(0).map((_, i) => i);
+  for (let i = 1; i <= m; i++){
+    const cur = [i];
+    for (let j = 1; j <= n; j++){
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      cur.push(Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+// Gather every symbol currently in the cached payload — stock_signals,
+// signals_top20, markets_top, poc_top, plus the four pinned cryptos. Used
+// only by symbolFuzzyMatches so we can suggest a close ticker when the
+// user's query misses cache.
+function collectCachedSymbols(){
+  const market = (typeof DATA !== 'undefined' && DATA && DATA.market) ? DATA.market : {};
+  const set = new Set();
+  const add = (s) => { if (s) set.add(String(s).toUpperCase()); };
+  ((market.stocks_signals) || []).forEach(s => s && add(s.symbol));
+  (((typeof DATA !== 'undefined' && DATA && DATA.signals_top20) || [])).forEach(s => s && add(s.symbol));
+  ((market.markets_top) || []).forEach(r => r && add(r.symbol));
+  ((market.poc_top) || []).forEach(r => r && add(r.symbol));
+  ['BTC', 'ETH', 'LINK', 'LTC'].forEach(add);
+  return Array.from(set);
+}
+
+// Return up to `max` cached symbols within an edit distance of 2 from
+// `query`, ranked by distance then alphabetically. Empty array when
+// nothing comes close — caller falls through to its existing copy.
+function symbolFuzzyMatches(query, max){
+  const m = (typeof max === 'number' && max > 0) ? max : 3;
+  const q = String(query || '').toUpperCase();
+  if (!q) return [];
+  const all = collectCachedSymbols();
+  const ranked = [];
+  for (let i = 0; i < all.length; i++){
+    const s = all[i];
+    if (s === q) continue;
+    const d = symbolEditDist(q, s);
+    if (d > 0 && d <= 2) ranked.push({ sym: s, d: d });
+  }
+  ranked.sort((a, b) => a.d - b.d || a.sym.localeCompare(b.sym));
+  return ranked.slice(0, m).map(o => o.sym);
+}
+
+// Build the clickable "Did you mean: X · Y · Z" chip strip. Returns '' when
+// suggestions is empty so callers can concat unconditionally. Chips carry
+// data-suggest-sym so a delegated click handler can route to lookupSymbol.
+function renderSymbolSuggestionsStrip(suggestions){
+  if (!suggestions || !suggestions.length) return '';
+  const chips = suggestions.map(s => {
+    const esc = escapeHtml(s);
+    return '<button type="button" class="symbol-suggest-chip" data-suggest-sym="' + esc + '" ' +
+             'style="background:#2563eb22;color:#60a5fa;border:1px solid #2563eb55;' +
+             'padding:4px 10px;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px">' +
+             esc +
+           '</button>';
+  }).join('');
+  return '<div style="margin-bottom:14px;padding:10px 12px;background:#1e293b;border:1px solid #334155;border-radius:8px">' +
+           '<div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:6px">Did you mean:</div>' +
+           '<div style="display:flex;gap:6px;flex-wrap:wrap">' + chips + '</div>' +
+         '</div>';
+}
+
+// One-time delegated click handler for the .symbol-suggest-chip buttons.
+// Idempotent — guards against re-wiring on every modal render.
+(function wireSymbolSuggestionChips(){
+  if (typeof document === 'undefined') return;
+  if (window._symbolSuggestWired) return;
+  window._symbolSuggestWired = true;
+  document.addEventListener('click', e => {
+    const btn = e.target && e.target.closest && e.target.closest('.symbol-suggest-chip');
+    if (!btn) return;
+    const sym = btn.getAttribute('data-suggest-sym');
+    if (sym && typeof lookupSymbol === 'function') lookupSymbol(sym);
+  });
+})();
+
 // Parse a raw symbol-search input into a deduped list of uppercase symbols.
 // Accepts comma, semicolon, and whitespace separators. Caps at MAX_SYMBOLS
-// (6) to keep the modal sane and avoid abuse. Exported for tests via the
-// HTML payload — see test_dashboard_integration.py.
+// (6) to keep the modal sane and avoid abuse. Applies SYMBOL_REBRANDS so
+// retired tickers (FB → META) silently route to the current name. Exported
+// for tests via the HTML payload — see test_dashboard_integration.py.
 function parseSymbolSearchTokens(raw){
   const MAX_SYMBOLS = 6;
   if (raw == null) return [];
@@ -9757,7 +9860,10 @@ function parseSymbolSearchTokens(raw){
     // Strip cashtag prefix ($BTC → BTC) so paste from social mentions works.
     if (tok.charAt(0) === '$') tok = tok.slice(1).trim();
     if (!tok) continue;
-    const up = tok.toUpperCase();
+    let up = tok.toUpperCase();
+    // Unambiguous historical rebrand → silently rewrite. We dedup AFTER the
+    // rewrite so typing "FB, META" doesn't open the modal for META twice.
+    if (Object.prototype.hasOwnProperty.call(SYMBOL_REBRANDS, up)) up = SYMBOL_REBRANDS[up];
     if (seen.has(up)) continue;
     seen.add(up);
     out.push(up);
@@ -9935,7 +10041,7 @@ async function resolveAndRenderSymbol(sym){
       // Surface the no-API-key panel as a "found" result so the user can
       // wire a key from inside the modal (matches single-symbol behavior).
       if (err && err.code === 'NO_STOCK_API_KEY'){
-        return { html: renderLiveStockNoKey(sym), found: true, sym: sym, displayName: '' };
+        return { html: renderLiveStockNoKey(sym, symbolFuzzyMatches(sym)), found: true, sym: sym, displayName: '' };
       }
       return { html: '', found: false, sym: sym, displayName: '' };
     }
@@ -10351,8 +10457,9 @@ async function lookupSymbol(query){
         return;
       } catch (err){
         if (!stillCurrent()) return;
+        const suggestions = symbolFuzzyMatches(sym);
         if (err && err.code === 'NO_STOCK_API_KEY'){
-          body.innerHTML = renderLiveStockNoKey(sym);
+          body.innerHTML = renderLiveStockNoKey(sym, suggestions);
           // Wire the "Add API key" button — on success, retry the lookup.
           const btn = document.getElementById('liveStockKeyBtn');
           if (btn){
@@ -10362,18 +10469,22 @@ async function lookupSymbol(query){
             });
           }
         } else {
-          body.innerHTML = renderLiveStockFailed(sym, err && err.message);
+          body.innerHTML = renderLiveStockFailed(sym, err && err.message, suggestions);
         }
         return;
       }
     }
 
-    // Neither crypto nor stock-shaped — show a clear scoped-coverage message.
+    // Neither crypto nor stock-shaped — show a clear scoped-coverage message
+    // plus any close-symbol suggestions from the cached payload (catches
+    // common typos before the user thinks the dashboard is broken).
+    const noMatchSuggestions = symbolFuzzyMatches(sym);
     body.innerHTML =
       '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
         'No data for <strong>' + escapeHtml(sym) + '</strong> &mdash; verify the ticker is in ' +
         'the top-25 crypto / top-50 stocks coverage, or try a different symbol.' +
-      '</div>';
+      '</div>' +
+      renderSymbolSuggestionsStrip(noMatchSuggestions);
     return;
   }
 
