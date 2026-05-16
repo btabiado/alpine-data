@@ -568,12 +568,47 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #etfKpis,
   #fundKpiGrid,
   #pocTopGrid,
-  #pocFeaturedRow,
   #stocksGrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
+  /* Featured POC cards (top-4 by signal score) carry 18px symbol, 64px
+     arrow rail, 14/16px padding and a larger 64px-tall sparkline. At 2-up
+     on a 375px phone each cell is ~155px wide — the rail alone eats it
+     and the left column collapses to ~25px (symbol + badge + price all
+     wrap to 3+ ragged rows). Force 1-up so featured cards keep their
+     designed ~280px layout on phone. The 4-card section becomes a vertical
+     stack, then the remaining cards fill the 2-up #pocTopGrid below. */
+  #pocFeaturedRow{grid-template-columns:1fr !important;gap:8px}
   /* POC compact card sub-text bumped 10→11px for readability on phone */
   #pocTopGrid .poc-card .sub{font-size:11px !important}
   /* Ensure clickable card divs hit 44px touch target */
   .poc-card,.stock-card{min-height:44px}
+  /* --- POC compact card mobile layout fix (#pocTopGrid 2-up at 375px ≈
+         159px per cell). Each card is renderPocTopCards's compact branch
+         with inline styles, so the mobile overrides have to be specific
+         enough (and !important) to beat inline. Bugs at narrow widths:
+         (a) header row "icon + symbol + score-chip + price" had 4 items
+             in a flex-wrap:wrap → wrapped to 3 ragged rows, card heights
+             went jagged. Tighten chip padding + shrink font so it fits.
+         (b) "90d POC" row had 4 children (label/value/Δ%/VA-tag) with
+             space-between and no wrap → squished or overflowed. Hide the
+             redundant IN-VA/OUT pill on phone — the Δ% already carries
+             color (green if above POC = supportive, red if below).
+         (c) 44px arrow rail dominated the 159px card. Shrink to 36px so
+             the data column has breathing room.
+         (d) Inline padding 8px 10px is OK but tighten further on phone.  */
+  #pocTopGrid .poc-card{padding:6px 8px !important}
+  #pocTopGrid .poc-card span[title="Signal score"]{font-size:9px !important;padding:1px 4px !important;letter-spacing:-.01em}
+  /* Arrow rail (the only direct flex child with flex-basis:44px). Match
+     both featured (64px) and compact (44px) variants → universal 36px on
+     phone, with smaller arrow + label fonts so it stays legible. */
+  #pocTopGrid .poc-card > div > div[style*="border-left:1px solid"]{flex:0 0 32px !important;padding:1px 0 !important}
+  #pocTopGrid .poc-card > div > div[style*="border-left:1px solid"] > div:first-child{font-size:20px !important}
+  /* Hide the IN-VA / OUT pill on the compact card's 90d POC row (4-child
+     space-between flex → overflows at 159px). The Δ% color (green/red)
+     already conveys above/below-POC. Pill stays on featured cards. */
+  #pocTopGrid .poc-card span[style*="font-size:9px"][style*="font-weight:600"]{display:none}
+  /* Featured cards keep their 1-up layout (above) but tighten padding so
+     they don't run tall vertically. */
+  #pocFeaturedRow .poc-card[data-poc-featured]{padding:10px 12px !important}
   #defiKpis .card,
   #whaleKpis .card,
   #tradingKpis .card,
