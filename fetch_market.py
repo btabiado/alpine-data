@@ -478,8 +478,18 @@ def defillama_bridges() -> dict:
     return out
 
 
-def crypto_news_rss(limit: int = 25) -> list[dict]:
-    """Latest crypto headlines via free RSS feeds (CoinDesk, Decrypt, Cointelegraph)."""
+def crypto_news_rss(limit: int = 120) -> list[dict]:
+    """Latest crypto headlines via free RSS feeds (CoinDesk, Decrypt, Cointelegraph).
+
+    NB: ``limit`` is the post-dedupe total cap. The per-feed cap is raised
+    from 8 → 30 below so the Research-tab "Top-25 news sentiment" card has a
+    wider corpus to match against — with only ~25 items the long tail of
+    alt-coins scored zero mentions even after alias expansion. Each feed
+    still bounds itself to 30 to avoid one chatty source crowding out the
+    others. The Research card only renders the top-25 coins so it's
+    insensitive to the absolute corpus size; the win is broader coin
+    coverage, not more headlines per row.
+    """
     import xml.etree.ElementTree as ET
     feeds = [
         ("CoinDesk",       "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml"),
@@ -495,7 +505,7 @@ def crypto_news_rss(limit: int = 25) -> list[dict]:
             if r.status_code != 200:
                 continue
             root = ET.fromstring(r.text)
-            items = root.findall(".//item")[:8]
+            items = root.findall(".//item")[:30]
             for it in items:
                 title = (it.findtext("title") or "").strip()
                 link = (it.findtext("link") or "").strip()
@@ -4279,7 +4289,7 @@ async def _fetch_trading_async() -> dict:
         _timed("defillama_tvl(sol)",      _bg_call(defillama_historical_tvl, "Solana")),
         _timed("defillama_tvl(arb)",      _bg_call(defillama_historical_tvl, "Arbitrum")),
         _timed("defillama_tvl(base)",     _bg_call(defillama_historical_tvl, "Base")),
-        _timed("crypto_news_rss",         _bg_call(crypto_news_rss, 25)),
+        _timed("crypto_news_rss",         _bg_call(crypto_news_rss, 120)),
         _timed("fetch_ai_news",           _bg_call(fetch_ai_news)),
         _timed("fetch_ai_funding",        _bg_call(fetch_ai_funding)),
         _timed("load_ai_curated",         _bg_call(load_ai_curated)),

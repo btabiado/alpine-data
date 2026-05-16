@@ -7990,6 +7990,37 @@ function scoreNewsItemSentiment(item){
   return 'NEUTRAL';
 }
 
+// Per-symbol alias map: headlines often refer to coins by an issuer / project
+// name rather than by ticker or coin name (e.g. "Ripple" for XRP, "Binance"
+// for BNB, "TON" for Toncoin). Without these, the matcher misses obvious
+// mentions and ~18 of the top 25 coins score zero on a typical pull. Keep
+// the alias list conservative — anything ≤3 chars or English-common (e.g.
+// "Ton" as a unit, "Dai" as a name) gets word-boundary-matched, so a stray
+// substring won't collide. Symbols already used as the ticker are not
+// repeated here.
+//
+// NB: Keep aliases in ASCII; the matcher lowercases inputs before testing.
+const _NEWS_COIN_ALIASES = {
+  // major issuer/project/full names that don't equal the `coin.name`
+  XRP:  ['Ripple', 'RippleNet', 'RippleLabs', 'Ripple Labs'],
+  BNB:  ['Binance Coin', 'BinanceCoin'],
+  USDT: ['Tether USD', 'Tether USDT'],
+  USDC: ['USD Coin', 'Circle USDC'],
+  TRX:  ['Tron'],                   // case-insensitive; word-boundary
+  DOGE: ['Doge'],
+  ADA:  ['Cardano ADA'],
+  BCH:  ['BCH'],                    // the symbol IS the popular term
+  LTC:  ['Litecoin LTC'],
+  XLM:  ['Stellar Lumens', 'Lumens'],
+  XMR:  ['Monero XMR'],
+  TON:  ['The Open Network', 'Open Network'],
+  ZEC:  ['Zcash ZEC'],
+  HYPE: ['Hyperliquid HYPE'],
+  LINK: ['Chainlink LINK'],
+  DAI:  ['MakerDAO DAI', 'DAI stablecoin'],
+  LEO:  ['Bitfinex LEO', 'LEO token'],
+};
+
 // Build per-coin aggregations from market.news + markets_top. News items have
 // no `symbols`/`assets` field (see fetch_market.crypto_news_rss), so we
 // case-insensitive substring-match the headline+body against each coin's
@@ -8006,13 +8037,31 @@ function groupNewsBySymbol(news, marketsTop, topN){
   // Build per-coin matcher regexes once. Symbol requires word-boundary so
   // 'BTC' doesn't match the middle of unrelated tickers; '$SYM' cashtags
   // are accepted. Name is a case-insensitive substring — coin names are
-  // long enough that false-positives are rare.
+  // long enough that false-positives are rare. Aliases (per
+  // _NEWS_COIN_ALIASES) are folded into a single combined regex per coin so
+  // we still get one pass per news item per coin.
   const escapeRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const matchers = coins.map(c => {
     const sym = (c.symbol || '').toUpperCase();
     const name = c.name || '';
     const symRe  = sym  ? new RegExp('(?:^|[^a-z0-9])\\$?' + escapeRe(sym) + '(?:[^a-z0-9]|$)', 'i') : null;
-    const nameRe = name ? new RegExp('(?:^|[^a-z0-9])' + escapeRe(name) + '(?:[^a-z0-9]|$)', 'i') : null;
+    // Combine the coin name + any aliases into one alternation regex so we
+    // don't pay N regex tests per news item per coin. Empty/duplicate
+    // entries are dropped; everything is word-boundary-anchored to avoid
+    // 'Ton' matching 'tonight' or 'Ripple' matching 'crippled'.
+    const nameForms = [];
+    if (name) nameForms.push(name);
+    const aliases = _NEWS_COIN_ALIASES[sym] || [];
+    for (let i = 0; i < aliases.length; i++){
+      const a = aliases[i];
+      if (a && nameForms.indexOf(a) === -1) nameForms.push(a);
+    }
+    // Sort longest-first so 'Bitcoin Cash' wins the regex race over 'Bitcoin'
+    // inside the same alternation (regex engines prefer the leftmost match
+    // among alternatives at the same position).
+    nameForms.sort((a, b) => b.length - a.length);
+    const nameAlt = nameForms.map(escapeRe).join('|');
+    const nameRe = nameAlt ? new RegExp('(?:^|[^a-z0-9])(?:' + nameAlt + ')(?:[^a-z0-9]|$)', 'i') : null;
     return { symbol: sym, name: name, symRe, nameRe };
   });
   // Pre-score each news item once (avoids re-running the keyword loop per coin).

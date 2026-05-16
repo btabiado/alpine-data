@@ -615,3 +615,134 @@ def test_eth_whale_tracker_and_proxy_cards_wired():
         "renderWhaleEth() does not invoke renderEthWhaleProxyChart() — the "
         "new activity-proxy chart won't render when the user opens Whale → ETH."
     )
+# ---------- 8. Top-25 news-sentiment alias coverage ----------
+#
+# The Research-tab "Top-25 by market cap" sentiment card uses the JS
+# ``_NEWS_COIN_ALIASES`` map plus the ``groupNewsBySymbol`` matcher to score
+# headlines per coin. When the map was missing/short, ~18 of the top-25 coins
+# scored zero mentions even on real RSS pulls. These tests pin the alias
+# map's coverage of the symbols that benefit most, and exercise a Python
+# port of the matcher against representative headlines so a regression in
+# either the alias list or the regex anchors gets caught at CI time.
+
+
+_REQUIRED_ALIAS_SYMBOLS = (
+    "XRP",   # Ripple
+    "BNB",   # Binance Coin
+    "TRX",   # Tron
+    "DOGE",  # Doge
+    "TON",   # The Open Network
+    "XLM",   # Stellar Lumens
+)
+
+
+def _extract_alias_map(html: str) -> dict[str, list[str]]:
+    """Parse the ``_NEWS_COIN_ALIASES`` literal out of dashboard.html.
+
+    We don't run JS, so this peels off the object body and pulls the
+    "KEY: [..]" rows with a tolerant regex. Returns ``{SYM: [aliases…]}``.
+    """
+    m = re.search(r"_NEWS_COIN_ALIASES\s*=\s*\{(.+?)\n\}\s*;", html, re.DOTALL)
+    assert m, "_NEWS_COIN_ALIASES map missing from dashboard.html"
+    body = m.group(1)
+    out: dict[str, list[str]] = {}
+    for row in re.finditer(r"([A-Z][A-Z0-9_]*)\s*:\s*\[([^\]]*)\]", body):
+        sym = row.group(1)
+        items = re.findall(r"""['"]([^'"]+)['"]""", row.group(2))
+        out[sym] = items
+    return out
+
+
+def test_news_alias_map_covers_required_symbols():
+    html = _read_dashboard_or_skip()
+    aliases = _extract_alias_map(html)
+    missing = [s for s in _REQUIRED_ALIAS_SYMBOLS if s not in aliases or not aliases[s]]
+    assert not missing, (
+        f"_NEWS_COIN_ALIASES is missing entries for: {missing}. These coins "
+        "rely on issuer/full-name aliases to score any RSS mentions."
+    )
+
+
+def _make_matcher(symbol: str, name: str, aliases: list[str]):
+    """Python port of the JS matcher in ``groupNewsBySymbol``. Mirrors the
+    word-boundary anchors and alias alternation. Returns a callable
+    ``(text) -> bool``."""
+    def escape(s: str) -> str:
+        return re.sub(r"([.*+?^${}()|\[\]\\])", r"\\\1", s)
+
+    sym = symbol.upper()
+    sym_re = re.compile(
+        r"(?:^|[^a-z0-9])\$?" + escape(sym) + r"(?:[^a-z0-9]|$)", re.I
+    ) if sym else None
+
+    forms = []
+    if name:
+        forms.append(name)
+    for a in aliases or []:
+        if a and a not in forms:
+            forms.append(a)
+    forms.sort(key=len, reverse=True)
+    name_re = None
+    if forms:
+        alt = "|".join(escape(f) for f in forms)
+        name_re = re.compile(
+            r"(?:^|[^a-z0-9])(?:" + alt + r")(?:[^a-z0-9]|$)", re.I
+        )
+
+    def matches(text: str) -> bool:
+        if sym_re and sym_re.search(text):
+            return True
+        if name_re and name_re.search(text):
+            return True
+        return False
+
+    return matches
+
+
+# Representative real-world headlines per symbol the legacy matcher missed.
+_ALIAS_TEST_CASES = [
+    ("XRP",  "XRP",     "Ripple files brief with SEC over XRP institutional sales ruling"),
+    ("BNB",  "BNB",     "Binance Coin slips 4% as exchange announces new compliance rules"),
+    ("TRX",  "TRON",    "Tron's TRX volume tops $500M after USDT migration push"),
+    ("DOGE", "Dogecoin","Doge holders eye new ATH as Elon teases X payments"),
+    ("TON",  "Toncoin", "The Open Network onboards 5M users via Telegram mini-apps"),
+    ("XLM",  "Stellar", "Stellar Lumens steady as MoneyGram rolls out global rails"),
+]
+
+
+@pytest.mark.parametrize("symbol,name,headline", _ALIAS_TEST_CASES)
+def test_news_matcher_catches_alias_phrasing(symbol, name, headline):
+    """For each (sym, name, headline) the alias-aware matcher must hit.
+
+    These exact phrasings are common in RSS feeds but the legacy
+    symbol+coin-name-only regex missed them, leaving the coin with zero
+    mentions on the Research tab.
+    """
+    html = _read_dashboard_or_skip()
+    aliases = _extract_alias_map(html).get(symbol, [])
+    matcher = _make_matcher(symbol, name, aliases)
+    assert matcher(headline), (
+        f"{symbol} matcher did not hit on representative headline: "
+        f"{headline!r}. Aliases for {symbol}: {aliases}"
+    )
+
+
+def test_news_matcher_avoids_substring_false_positives():
+    """Aliases must be word-boundary-anchored so common English words don't
+    falsely match. E.g. 'Ton' for Toncoin must not match 'tonight' or
+    'tones'; 'Ripple' for XRP must not match 'crippled'.
+    """
+    html = _read_dashboard_or_skip()
+    aliases_map = _extract_alias_map(html)
+
+    cases = [
+        ("TON",  "Toncoin",  "Tonight's market wrap: stocks slide on Fed concerns"),
+        ("TON",  "Toncoin",  "Crypto investors strike a softer tone after volatility"),
+        ("XRP",  "XRP",      "Hackers leave many small exchanges crippled this quarter"),
+        ("DOGE", "Dogecoin", "Doggerel and memes flood social feeds during rally"),
+    ]
+    for sym, name, headline in cases:
+        matcher = _make_matcher(sym, name, aliases_map.get(sym, []))
+        assert not matcher(headline), (
+            f"{sym} matcher incorrectly hit on benign headline: {headline!r}"
+        )
