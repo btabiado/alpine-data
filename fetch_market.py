@@ -313,6 +313,17 @@ def coingecko_top_markets(per_page: int = 50) -> list[dict]:
     )
     if not j or not isinstance(j, list):
         return []
+    # Fields kept here are the union of what every consumer reads:
+    #   - signals.compute_signal_simple (price_usd, market_cap_usd,
+    #     volume_24h_usd, change_24h_pct, change_7d_pct, change_30d_pct,
+    #     sparkline_7d, symbol, name, rank, image)
+    #   - compute_poc_top_markets (id, symbol, name, image, price_usd)
+    #   - insights.build_insights (symbol, name, rank, market_cap_usd,
+    #     change_24h_pct, change_7d_pct)
+    #   - tests/test_stocks_breadth.py (symbol; sparkline_7d as breadth source)
+    # Five fields previously emitted but never read — high_24h_usd,
+    # low_24h_usd, change_1h_pct, ath_usd, ath_change_pct — are dropped to
+    # shrink the inlined market.json blob in the rendered dashboard.
     out = []
     for c in j:
         out.append({
@@ -324,15 +335,10 @@ def coingecko_top_markets(per_page: int = 50) -> list[dict]:
             "price_usd": c.get("current_price"),
             "market_cap_usd": c.get("market_cap"),
             "volume_24h_usd": c.get("total_volume"),
-            "high_24h_usd": c.get("high_24h"),
-            "low_24h_usd": c.get("low_24h"),
-            "change_1h_pct": c.get("price_change_percentage_1h_in_currency"),
             "change_24h_pct": c.get("price_change_percentage_24h_in_currency"),
             "change_7d_pct": c.get("price_change_percentage_7d_in_currency"),
             "change_30d_pct": c.get("price_change_percentage_30d_in_currency"),
             "sparkline_7d": (c.get("sparkline_in_7d") or {}).get("price", []),
-            "ath_usd": c.get("ath"),
-            "ath_change_pct": c.get("ath_change_percentage"),
         })
     return out
 
