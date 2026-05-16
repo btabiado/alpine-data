@@ -467,12 +467,23 @@ header .meta{color:var(--muted);font-size:12px}
 .top-news-sentiment-row .tns-stats{font-size:10px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
 .top-news-sentiment-row .tns-bar{display:flex;height:8px;border-radius:3px;overflow:hidden;background:#1f2533}
 .top-news-sentiment-row .tns-net{font-weight:600;font-size:11px;text-align:right}
+/* INTENTIONAL non-standard breakpoint (kept after the 480/860 consolidation).
+   This grid's 3-col → 2-col → 1-col staircase needs the middle step to fall
+   ABOVE the dashboard's main 860px mobile boundary: each .top-news-sentiment-row
+   carries 64+text+130px columns plus gaps, so 3-up gets cramped at ~900px and
+   below. Folding into 860 would make 860-900px render the 3-col grid in ~280px
+   cells (sym name + bar + net all collide). Leave at 900. */
 @media (max-width:900px){
   .top-news-sentiment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:480px){
   .top-news-sentiment-grid{grid-template-columns:1fr}
   .top-news-sentiment-row{grid-template-columns:52px 1fr 96px;gap:8px;padding:6px 8px}
+  /* (Consolidated from a separate later block:) all modals — outer .modal-bg
+     padding:24px eats 48px on a 375px viewport; combined with each modal's
+     inner padding the content area is only ~291px wide. Tight for POC-detail
+     tables and share-link URL row. */
+  .modal-bg{padding:8px !important}
 }
 .chart-wrap{position:relative;height:300px}
 .chart-wrap.tall{height:380px}
@@ -522,12 +533,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 #chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
 #chatFab:hover{transform:scale(1.08)}
 #chatFab.hidden{display:none}
-@media (max-width:720px){
-  #chatDock{width:100%}
-}
 /* Mobile: tight layout — collapse multi-col grids, shrink header, KPI rows
    become 2-up instead of 1-up, chart heights capped. Desktop unchanged. */
 @media (max-width:860px){
+  /* Chat dock: full-width on mobile (was a separate 720px block; folded into
+     860 since the dashboard itself collapses to mobile layout at 860 — a 380px
+     floating sidebar on a 720-860px window was inconsistent with the rest of
+     the mobile-mode UI). */
+  #chatDock{width:100%}
   #overviewMacroRow{grid-template-columns:1fr !important}
   .grid2{grid-template-columns:1fr !important}
   .grid3{grid-template-columns:1fr !important}
@@ -593,16 +606,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      the mobile-sized chart in the modal is already legible. Hide the
      control to keep the modal header clean on phones. */
   .poc-vol-fullscreen-btn{display:none !important}
-}
-/* UX-F8: All modals — outer .modal-bg padding:24px eats 48px on a 375px
-   viewport; combined with each modal's inner padding the content area is
-   only ~291px wide. Tight for POC-detail tables and share-link URL row. */
-@media (max-width:480px){
-  .modal-bg{padding:8px !important}
-}
-/* (close the @media (max-width:860px) block — the rules above need to be
-   inside it, not after it.) */
-@media (max-width:860px){
 
   /* --- Compact mobile header (was ~200px tall, now ~104px) --- */
   header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
