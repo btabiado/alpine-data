@@ -4729,6 +4729,85 @@ function pocClustered(rows){
 // as a dashed overlay for divergence-at-a-glance. POC bin highlighted
 // orange, VA band shaded blue, current price drawn as a green line
 // (dashed if outside the binned range).
+// Larger labeled volume-profile chart used in the POC detail modal. Uses
+// a viewBox so it scales to its container width. Renders POC/VAH/VAL
+// price labels on the right, a current-price marker with $value, and
+// a small legend at the bottom.
+function volumeProfileSVGLarge(primary, alt, current){
+  const W = 480, H = 360, padL = 8, padR = 70, padT = 18, padB = 26;
+  if (!primary || !primary.buckets || !primary.buckets.length){
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:auto;max-height:420px;display:block;border-radius:6px;background:#0b0d12">
+      <text x="${W/2}" y="${H/2}" text-anchor="middle" font-size="14" fill="#888">no profile</text>
+    </svg>`;
+  }
+  const bks = primary.buckets;
+  const maxV = Math.max(...bks.map(b => b.volume)) || 1;
+  const prices = bks.map(b => b.price);
+  const pMin = prices[0] - primary.step / 2;
+  const pMax = prices[prices.length - 1] + primary.step / 2;
+  const plotH = H - padT - padB;
+  const plotW = W - padL - padR;
+  const barH  = plotH / bks.length;
+  const yFor  = i => padT + (bks.length - 1 - i) * barH;
+  const yForPrice = p => padT + ((pMax - p) / (pMax - pMin)) * plotH;
+  const bars = bks.map((b, i) => {
+    const w = (b.volume / maxV) * plotW;
+    const isPoc = Math.abs(b.price - primary.poc) < primary.step / 2 + 1e-6;
+    const inVA  = b.price >= primary.val && b.price <= primary.vah;
+    const fill  = isPoc ? '#ff6b35' : (inVA ? '#4a90e2' : '#7aa7d9');
+    const op    = isPoc ? 1 : (inVA ? 0.85 : 0.5);
+    return `<rect x="${padL}" y="${yFor(i)}" width="${w}" height="${Math.max(1, barH-1)}" fill="${fill}" opacity="${op}"/>`;
+  }).join('');
+  const vaTop = yForPrice(primary.vah);
+  const vaBot = yForPrice(primary.val);
+  const vaBand = `<rect x="0" y="${vaTop}" width="${W}" height="${vaBot - vaTop}" fill="#4a90e2" opacity="0.10"/>`;
+  // 30d overlay as dashed gray polyline
+  let altLine = '';
+  if (alt && alt.buckets && alt.buckets.length){
+    const maxA = Math.max(...alt.buckets.map(b => b.volume)) || 1;
+    const pts = alt.buckets.map(b => {
+      const y = yForPrice(b.price);
+      const x = padL + (b.volume / maxA) * plotW;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    altLine = `<polyline points="${pts}" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2" opacity="0.75"/>`;
+  }
+  // Price labels on the right: POC / VAH / VAL — and the current price marker
+  const yPoc = yForPrice(primary.poc);
+  const yVah = yForPrice(primary.vah);
+  const yVal = yForPrice(primary.val);
+  const labelX = W - padR + 6;
+  const pocLine = `<line x1="0" y1="${yPoc}" x2="${W - padR}" y2="${yPoc}" stroke="#ff6b35" stroke-width="1" opacity="0.5"/>`;
+  const labels = `
+    <text x="${labelX}" y="${yPoc + 4}" font-size="11" fill="#ff6b35" font-weight="700">POC ${fmtUsdShort(primary.poc)}</text>
+    <text x="${labelX}" y="${yVah + 4}" font-size="10" fill="#7aa7d9">VAH ${fmtUsdShort(primary.vah)}</text>
+    <text x="${labelX}" y="${yVal + 4}" font-size="10" fill="#7aa7d9">VAL ${fmtUsdShort(primary.val)}</text>`;
+  let curMarker = '';
+  if (current != null){
+    const clamped = Math.min(Math.max(current, pMin), pMax);
+    const yC = yForPrice(clamped);
+    const dash = (current < pMin || current > pMax) ? 'stroke-dasharray="3,2"' : '';
+    curMarker = `<line x1="0" y1="${yC}" x2="${W - padR}" y2="${yC}" stroke="#00c853" stroke-width="1.5" ${dash}/>
+      <text x="${labelX}" y="${yC + 4}" font-size="11" fill="#00c853" font-weight="700">NOW ${fmtUsdShort(current)}</text>`;
+  }
+  // Bottom legend
+  const legendY = H - 8;
+  const legend = `
+    <g font-size="9" fill="#94a3b8">
+      <rect x="${padL}" y="${legendY - 8}" width="10" height="8" fill="#ff6b35"/>
+      <text x="${padL + 14}" y="${legendY - 1}">POC</text>
+      <rect x="${padL + 46}" y="${legendY - 8}" width="10" height="8" fill="#4a90e2" opacity="0.85"/>
+      <text x="${padL + 60}" y="${legendY - 1}">Value Area (70% vol)</text>
+      <line x1="${padL + 170}" y1="${legendY - 4}" x2="${padL + 190}" y2="${legendY - 4}" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="3,2"/>
+      <text x="${padL + 194}" y="${legendY - 1}">30d overlay</text>
+      <line x1="${padL + 256}" y1="${legendY - 4}" x2="${padL + 276}" y2="${legendY - 4}" stroke="#00c853" stroke-width="1.5"/>
+      <text x="${padL + 280}" y="${legendY - 1}">Current price</text>
+    </g>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;max-height:420px;display:block;border-radius:6px;background:#0b0d12">
+    ${vaBand}${bars}${altLine}${pocLine}${curMarker}${labels}${legend}
+  </svg>`;
+}
+
 function volumeProfileSVG(primary, alt, current){
   const W = 120, H = 140, padL = 4, padR = 4;
   if (!primary || !primary.buckets || !primary.buckets.length){
@@ -6096,12 +6175,13 @@ function pocDetailHtml(c){
       }).join('')}
     </div>` : '';
   const sparkline = pocMigrationSparkline(d.migration_series);
-  // Volume profile mini-chart for the modal (90d primary, 30d overlay as
-  // dashed gray). Only renders when the upstream buckets are present.
+  // Volume profile chart for the modal (90d primary, 30d overlay as
+  // dashed gray). Uses the larger viewBox-scaled variant so it actually
+  // reads at modal size. Only renders when buckets are present.
   const volProfile = (d.d90 && d.d90.buckets && d.d90.buckets.length)
-    ? volumeProfileSVG(d.d90, d.d30, cur)
+    ? volumeProfileSVGLarge(d.d90, d.d30, cur)
     : ((d.d30 && d.d30.buckets && d.d30.buckets.length)
-        ? volumeProfileSVG(d.d30, null, cur)
+        ? volumeProfileSVGLarge(d.d30, null, cur)
         : '');
   return `<div style="display:flex;flex-direction:column;gap:14px">
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -6118,20 +6198,18 @@ function pocDetailHtml(c){
     </div>
     ${migBadge ? `<div>${migBadge}</div>` : ''}
     ${sparkline ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">30d POC drift · last 90 days</div>${sparkline}</div>` : ''}
-    <div style="display:flex;gap:14px;flex-wrap:wrap">
-      <div style="flex:1;min-width:240px">
-        <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Value-area ladder</div>
-        <table style="width:100%;font-size:13px;border-collapse:collapse">
-          <thead><tr style="color:var(--muted);font-size:10px;text-align:left">
-            <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px">VA</th>
-          </tr></thead>
-          <tbody>${ladder}</tbody>
-        </table>
-      </div>
-      ${volProfile ? `<div style="flex:0 0 140px;min-width:120px">
-        <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Volume profile · 90d (30d dashed)</div>
-        ${volProfile}
-      </div>` : ''}
+    ${volProfile ? `<div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Volume profile · 90d (30d dashed) · current price marker</div>
+      ${volProfile}
+    </div>` : ''}
+    <div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Value-area ladder</div>
+      <table style="width:100%;font-size:13px;border-collapse:collapse">
+        <thead><tr style="color:var(--muted);font-size:10px;text-align:left">
+          <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px">VA</th>
+        </tr></thead>
+        <tbody>${ladder}</tbody>
+      </table>
     </div>
     ${nakedHtml}
   </div>`;
