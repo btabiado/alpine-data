@@ -727,6 +727,81 @@ def test_news_matcher_catches_alias_phrasing(symbol, name, headline):
     )
 
 
+def test_top_news_sentiment_uses_cc_per_coin_payload():
+    """The Top-25 news sentiment card must read CC backend-aggregated counts
+    from ``DATA.market.news_sentiment_by_coin.coins`` and pass them into
+    ``groupNewsBySymbol`` so coins missing from the 5 RSS feeds still get
+    scored. Guard the three moving pieces:
+
+    1. ``renderTopNewsSentiment`` reads ``news_sentiment_by_coin`` from
+       DATA.market.
+    2. ``groupNewsBySymbol`` accepts a fourth `ccByCoin` argument and the
+       function body folds CC pos/neg/neu into the row totals.
+    3. The empty-state guard uses an OR over RSS news AND CC coins so a
+       CC-only payload still renders.
+    """
+    html = _read_dashboard_or_skip()
+
+    # 1) renderTopNewsSentiment reads the new key.
+    m = re.search(r"function\s+renderTopNewsSentiment\s*\(\s*\)\s*\{", html)
+    assert m, "renderTopNewsSentiment() not found in dashboard.html"
+    start = m.end()
+    depth = 1
+    i = start
+    body = None
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                body = html[start:i]
+                break
+        i += 1
+    assert body is not None, "Unterminated renderTopNewsSentiment body"
+    assert "news_sentiment_by_coin" in body, (
+        "renderTopNewsSentiment() does not read "
+        "DATA.market.news_sentiment_by_coin — CC backend counts won't merge "
+        "into the Top-25 card."
+    )
+    assert "groupNewsBySymbol(news, marketsTop, 25, ccByCoin)" in body, (
+        "renderTopNewsSentiment() does not pass ccByCoin into "
+        "groupNewsBySymbol — RSS-only merge regression."
+    )
+
+    # 2) groupNewsBySymbol accepts the fourth arg and merges CC counts.
+    assert re.search(
+        r"function\s+groupNewsBySymbol\s*\(\s*news\s*,\s*marketsTop\s*,\s*topN\s*,\s*ccByCoin\s*\)",
+        html,
+    ), "groupNewsBySymbol() signature missing the ccByCoin parameter."
+
+    # The merge block lives inside groupNewsBySymbol; grep for the CC field
+    # accesses so a stub that throws away CC data would fail.
+    grp_m = re.search(r"function\s+groupNewsBySymbol\s*\([^)]*\)\s*\{", html)
+    assert grp_m, "groupNewsBySymbol() body not found"
+    g_start = grp_m.end()
+    depth = 1
+    i = g_start
+    grp_body = None
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                grp_body = html[g_start:i]
+                break
+        i += 1
+    assert grp_body is not None
+    for needle in ("ccRow.positive", "ccRow.negative", "ccRow.neutral"):
+        assert needle in grp_body, (
+            f"groupNewsBySymbol() does not merge {needle!r} into per-coin "
+            "totals — CC backend counts will be silently dropped."
+        )
+
+
 def test_news_matcher_avoids_substring_false_positives():
     """Aliases must be word-boundary-anchored so common English words don't
     falsely match. E.g. 'Ton' for Toncoin must not match 'tonight' or

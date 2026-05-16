@@ -2062,6 +2062,195 @@ def cryptocompare_news_sentiment() -> dict:
     }
 
 
+# --- Per-coin CC news scoring for the Research-tab Top-25 card -------------
+#
+# The RSS pipeline (`crypto_news_rss` + frontend `groupNewsBySymbol`) only
+# matches ~14 of the top-25 coins because the 5 RSS feeds we pull rarely name
+# the long-tail alt-coins (FIGR_HELOC, WBT, USDS, LEO, XMR, TON, XLM, DAI,
+# LTC, USD1, etc.). CryptoCompare's data-api news endpoint accepts a
+# `categories=<COIN>` param and returns up to 50 articles tagged TO that
+# coin, regardless of which publisher wrote them. Fanning out 25 calls (one
+# per top-25 symbol) and aggregating per-coin sentiment server-side lifts
+# coverage substantially and avoids shipping ~1,250 raw articles to the
+# browser.
+#
+# We deliberately re-port the frontend keyword lists rather than reuse
+# `_AI_NEWS_POSITIVE_KEYWORDS` — the JS `_NEWS_POS_KEYWORDS` /
+# `_NEWS_NEG_KEYWORDS` are tuned for crypto (rally/surge/inflows vs
+# crash/dump/liquidation) not AI launches/funding. Keeping the two lists
+# IDENTICAL across Python and JS is the whole point: the merged counts must
+# agree with whatever the JS would have produced if it scored the same items.
+_NEWS_POS_KEYWORDS_PER_COIN = (
+    "rally", "surge", "soars", "soar", "jumps", "jump", "gains", "gain",
+    "breakout", "breakthrough", "launches", "launch", "partnership", "adopts",
+    "adoption", "approves", "approved", "approval", "wins", "win", "milestone",
+    "record", "all-time high", "ath", "bullish", "upgrade", "upgraded",
+    "beats", "inflows", "inflow", "buys", "accumulate", "accumulation",
+    "recovery", "rebounds", "rebound", "outperform", "green", "institutional",
+    "etf approval",
+)
+_NEWS_NEG_KEYWORDS_PER_COIN = (
+    "hack", "hacked", "exploit", "exploited", "lawsuit", "sued", "sec ", "fine",
+    "crash", "plunge", "plunges", "dump", "dumps", "tumbles", "tumble", "sinks",
+    "sink", "slide", "slides", "falls", "fall", "loses", "loss", "losses",
+    "fraud", "investigation", "probe", "ban", "banned", "banning", "breach",
+    "leak", "leaked", "outage", "down", "bearish", "liquidation", "liquidated",
+    "rejected", "rejection", "denied", "sell-off", "selloff", "crashes",
+    "crackdown", "sanction", "sanctioned", "rug", "scam", "theft", "stolen",
+    "delisting", "delisted", "outflows", "outflow", "warning", "warns",
+)
+
+
+def _score_news_item_sentiment(item: dict) -> str:
+    """Port of the JS `scoreNewsItemSentiment` in app.py. POSITIVE iff ≥1
+    positive keyword hit and 0 negative hits, NEGATIVE iff the reverse,
+    otherwise NEUTRAL. Lower-cases title+body before substring-matching.
+    Keep keyword lists in sync with the JS `_NEWS_POS_KEYWORDS` /
+    `_NEWS_NEG_KEYWORDS` constants in app.py.
+    """
+    title = (item.get("title") or "") if isinstance(item, dict) else ""
+    body = (item.get("body") or "") if isinstance(item, dict) else ""
+    text = (str(title) + " " + str(body)).lower()
+    has_pos = any(kw in text for kw in _NEWS_POS_KEYWORDS_PER_COIN)
+    has_neg = any(kw in text for kw in _NEWS_NEG_KEYWORDS_PER_COIN)
+    if has_pos and not has_neg:
+        return "POSITIVE"
+    if has_neg and not has_pos:
+        return "NEGATIVE"
+    return "NEUTRAL"
+
+
+def _fetch_cc_per_coin_news_impl(
+    coins: list[dict],
+    *,
+    per_coin_limit: int = 50,
+    sleep_between: float = 0.06,
+) -> dict:
+    """Hit CryptoCompare's `/news/v1/article/list?categories=<SYM>` for each
+    coin and aggregate per-coin sentiment counts using the same keyword
+    scorer the frontend uses for RSS items. Designed to fan out to ~25 calls
+    (top-25 by mcap) — well within CC's free-tier rate limit (~50 calls/sec).
+
+    The endpoint is keyless for low-volume use, but we pass `Authorization`
+    if `CRYPTOCOMPARE_API_KEY` is set so we benefit from the higher quota.
+
+    Returns `{symbol_upper: {symbol, name, total, positive, negative,
+    neutral, net_score, recent: [{title, url, source, date, sentiment, ts}],
+    article_count}}`. Symbols with zero matched articles are omitted so the
+    frontend can cheaply check `if (cc[sym])`.
+    """
+    import os
+    api_key = os.environ.get("CRYPTOCOMPARE_API_KEY", "").strip()
+    headers = dict(H)
+    if api_key:
+        headers["Authorization"] = f"Apikey {api_key}"
+    out: dict[str, dict] = {}
+    # CC doesn't tag every CG-listed coin. Categories the endpoint rejects
+    # come back as HTTP 400 "Category ... does not exist" — we log + skip.
+    for c in coins or []:
+        if not isinstance(c, dict):
+            continue
+        sym = (c.get("symbol") or "").upper().strip()
+        name = c.get("name") or ""
+        if not sym:
+            continue
+        category = sym
+        try:
+            params = {"lang": "EN", "categories": category, "limit": per_coin_limit}
+            r = requests.get(
+                "https://data-api.cryptocompare.com/news/v1/article/list",
+                params=params, headers=headers, timeout=15,
+            )
+            if r.status_code != 200:
+                # 400 = unknown category (e.g. FIGR_HELOC, USDS, CC, USD1),
+                # 401/429 = auth/rate-limit. All non-fatal per-coin.
+                print(f"  [cc-per-coin-news] {sym} -> {r.status_code}", file=sys.stderr)
+                continue
+            body = r.json() or {}
+            arts = body.get("Data") or []
+            if not arts:
+                continue
+            pos = neg = neu = 0
+            recent: list[dict] = []
+            for a in arts:
+                if not isinstance(a, dict):
+                    continue
+                # CC payload field names differ from our RSS schema; remap so
+                # the scorer (which reads .title/.body) works directly.
+                item = {
+                    "title": (a.get("TITLE") or "")[:240],
+                    "body":  (a.get("BODY")  or "")[:280],
+                }
+                label = _score_news_item_sentiment(item)
+                if   label == "POSITIVE": pos += 1
+                elif label == "NEGATIVE": neg += 1
+                else:                     neu += 1
+                if len(recent) < 5:
+                    src = ((a.get("SOURCE_DATA") or {}).get("NAME")) or a.get("SOURCE_ID") or ""
+                    ts = a.get("PUBLISHED_ON")
+                    date_str = ""
+                    if isinstance(ts, (int, float)) and ts > 0:
+                        date_str = datetime.fromtimestamp(int(ts), timezone.utc).strftime("%Y-%m-%d %H:%M")
+                    recent.append({
+                        "title": item["title"],
+                        "url": a.get("URL") or "",
+                        "source": src,
+                        "date": date_str,
+                        "ts": int(ts) if isinstance(ts, (int, float)) else None,
+                        "sentiment": label,
+                        "body": item["body"],
+                    })
+            total = pos + neg + neu
+            if total == 0:
+                continue
+            out[sym] = {
+                "symbol": sym,
+                "name": name,
+                "total": total,
+                "positive": pos,
+                "negative": neg,
+                "neutral": neu,
+                "net_score": pos - neg,
+                "recent": recent,
+                "article_count": len(arts),
+            }
+        except Exception as e:
+            print(f"  [cc-per-coin-news] {sym} error: {e}", file=sys.stderr)
+        if sleep_between:
+            time.sleep(sleep_between)
+    return {
+        "available": bool(out),
+        "coins": out,
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
+def fetch_cc_per_coin_news(markets_top: list[dict], top_n: int = 25) -> dict:
+    """Stale-fallback wrapper. Slices `markets_top` to the top-N coins (by
+    list order — markets_top is already mcap-sorted) and asks CC for per-
+    coin sentiment. On total failure (no key + 4xx storm, or network down)
+    falls back to the last successful run so the frontend still gets counts.
+    """
+    coins = (markets_top or [])[:top_n]
+    cache_key = "fetch_cc_per_coin_news"
+    try:
+        out = _fetch_cc_per_coin_news_impl(coins)
+    except Exception as e:
+        print(f"  [fetch_cc_per_coin_news] fatal {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, dict) and out.get("available") and out.get("coins"):
+        _stale_save(cache_key, out)
+        return out
+    cached = _stale_load(cache_key)
+    if cached is not None:
+        return cached
+    return out if isinstance(out, dict) else {
+        "available": False,
+        "coins": {},
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def santiment_metrics() -> dict:
     """Santiment GraphQL — free-tier metrics for 4 coins. No API key.
 
@@ -4324,10 +4513,19 @@ async def _fetch_trading_async() -> dict:
     # CryptoCompare tolerates parallelism — wrap the whole call in a single
     # thread so it can run alongside any straggling Batch 1 work. (Most of
     # Batch 1 will be done by now since CG-bound tasks dominate.)
-    print("  Batch 2: compute_poc_top_markets (depends on top_markets)...")
-    poc_top = await _timed(
-        "compute_poc_top_markets",
-        _bg_call(compute_poc_top_markets, top_markets, 50),
+    # fetch_cc_per_coin_news fans out 25 CC news calls — also depends on
+    # top_markets (to pick which symbols to score). Same parallelism story
+    # as compute_poc_top_markets; the two run side-by-side here.
+    print("  Batch 2: compute_poc_top_markets + cc_per_coin_news (depends on top_markets)...")
+    poc_top, cc_per_coin_news = await asyncio.gather(
+        _timed(
+            "compute_poc_top_markets",
+            _bg_call(compute_poc_top_markets, top_markets, 50),
+        ),
+        _timed(
+            "fetch_cc_per_coin_news",
+            _bg_call(fetch_cc_per_coin_news, top_markets, 25),
+        ),
     )
 
     # ETH/BTC ratio from prices
@@ -4407,6 +4605,11 @@ async def _fetch_trading_async() -> dict:
             },
         },
         "news": news,
+        # Per-coin CC news sentiment (top-25 by mcap). Keyed by uppercase
+        # symbol. Frontend `groupNewsBySymbol` merges these counts on top of
+        # RSS counts so coins that aren't named in the 5 RSS feeds still get
+        # scored. See `fetch_cc_per_coin_news` for the shape.
+        "news_sentiment_by_coin": cc_per_coin_news,
         "ai_news": ai_news,
         "ai_funding": ai_funding,
         "ai_curated": ai_curated,

@@ -8112,9 +8112,17 @@ const _NEWS_COIN_ALIASES = {
 // Returns: [{ symbol, name, total, positive, negative, neutral, net_score,
 //             recent: [{title, sentiment, url}] }, …] sorted by total desc,
 //          then by net_score desc, capped at `topN`.
-function groupNewsBySymbol(news, marketsTop, topN){
+function groupNewsBySymbol(news, marketsTop, topN, ccByCoin){
   const coins = (marketsTop || []).slice(0, topN || 25);
-  if (!coins.length || !news || !news.length) return [];
+  // CC per-coin sentiment (backend-aggregated; see fetch_cc_per_coin_news in
+  // fetch_market.py) lets us score coins that aren't named in the 5 RSS
+  // feeds we pull. We merge CC counts on TOP of RSS counts below so the
+  // row total reflects the union. Empty/missing payload is fine — we
+  // degrade to RSS-only.
+  const cc = (ccByCoin && typeof ccByCoin === 'object') ? ccByCoin : {};
+  const safeNews = (news && news.length) ? news : [];
+  if (!coins.length) return [];
+  if (!safeNews.length && !Object.keys(cc).length) return [];
   // Build per-coin matcher regexes once. Symbol requires word-boundary so
   // 'BTC' doesn't match the middle of unrelated tickers; '$SYM' cashtags
   // are accepted. Name is a case-insensitive substring — coin names are
@@ -8146,7 +8154,7 @@ function groupNewsBySymbol(news, marketsTop, topN){
     return { symbol: sym, name: name, symRe, nameRe };
   });
   // Pre-score each news item once (avoids re-running the keyword loop per coin).
-  const scored = news.map(n => ({
+  const scored = safeNews.map(n => ({
     item: n,
     text: ((n && n.title) || '') + ' ' + ((n && n.body) || ''),
     sentiment: scoreNewsItemSentiment(n),
@@ -8172,6 +8180,31 @@ function groupNewsBySymbol(news, marketsTop, topN){
       };
       allItems.push(entry);
       if (recent.length < 3) recent.push(entry);
+    }
+    // Merge CC backend-aggregated counts (already scored server-side using
+    // the same POS/NEG keyword lists as scoreNewsItemSentiment above). CC
+    // items are appended to allItems so the click-to-expand modal shows
+    // both RSS and CC headlines; `source` is tagged 'CC: <publisher>' so
+    // the user can tell where each row came from.
+    const ccRow = cc[m.symbol];
+    if (ccRow){
+      pos += (ccRow.positive || 0);
+      neg += (ccRow.negative || 0);
+      neu += (ccRow.neutral  || 0);
+      const ccRecent = (ccRow.recent || []);
+      for (let j = 0; j < ccRecent.length; j++){
+        const r = ccRecent[j] || {};
+        const entry = {
+          title:     r.title  || '',
+          body:      r.body   || '',
+          source:    r.source ? ('CC: ' + r.source) : 'CryptoCompare',
+          date:      r.date   || '',
+          sentiment: r.sentiment || 'NEUTRAL',
+          url:       r.url    || '',
+        };
+        allItems.push(entry);
+        if (recent.length < 3) recent.push(entry);
+      }
     }
     return {
       symbol: m.symbol,
@@ -8353,11 +8386,15 @@ function renderTopNewsSentiment(){
   if (!host) return;
   const news = ((DATA.market || {}).news) || [];
   const marketsTop = ((DATA.market || {}).markets_top) || [];
-  if (!news.length || !marketsTop.length){
+  // CC backend-aggregated per-coin counts. Keyed by uppercase symbol; lifts
+  // coverage for coins not named in our 5 RSS feeds (FIGR_HELOC, USDS, LEO,
+  // XMR, TON, XLM, DAI, etc.). Missing/empty payload → RSS-only behavior.
+  const ccByCoin = (((DATA.market || {}).news_sentiment_by_coin) || {}).coins || {};
+  if (!marketsTop.length || (!news.length && !Object.keys(ccByCoin).length)){
     host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-25 coins in the current window.</div>';
     return;
   }
-  const rows = groupNewsBySymbol(news, marketsTop, 25);
+  const rows = groupNewsBySymbol(news, marketsTop, 25, ccByCoin);
   // Stash by symbol so click-to-expand can read matched items without
   // recomputing the regex pass.
   window._top25NewsCache = {};

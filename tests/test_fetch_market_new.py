@@ -368,3 +368,160 @@ def test_coin_metrics_eth_whale_metrics_partial_metrics():
     assert len(out["AdrActCnt"]) == 2
     assert out["AdrActCnt"][0] == {"date": "2025-01-01", "value": 500_000.0}
     assert out["TxCnt"][1] == {"date": "2025-01-02", "value": 1_250_000.0}
+
+
+# ============================================================================
+# fetch_cc_per_coin_news + _score_news_item_sentiment
+# ============================================================================
+#
+# The Research-tab "Top-25 news sentiment" card used to rely solely on the 5
+# RSS feeds in `crypto_news_rss`, which only name ~14 of the top-25 coins.
+# fetch_cc_per_coin_news asks CryptoCompare's /news/v1/article/list endpoint
+# for articles tagged to each coin's category, scores them with the same
+# POS/NEG keyword lists the frontend uses for RSS items, and emits per-coin
+# aggregated counts. The frontend merges these on top of RSS counts.
+#
+# All HTTP is mocked via `unittest.mock.patch` on `fetch_market.requests.get`.
+
+from unittest.mock import MagicMock
+
+
+def _mock_cc_news_response(articles: list[dict], status_code: int = 200):
+    """Build a MagicMock that quacks like a `requests.Response` for the
+    CryptoCompare news endpoint. The endpoint wraps articles in
+    `{"Data": [...]}`."""
+    resp = MagicMock()
+    resp.status_code = status_code
+    resp.json.return_value = {"Data": articles}
+    return resp
+
+
+def test_score_news_item_sentiment_positive_only_returns_positive():
+    """Title with a positive keyword and no negative → POSITIVE."""
+    item = {"title": "Bitcoin sees record inflows as ETF approval lifts price"}
+    assert fetch_market._score_news_item_sentiment(item) == "POSITIVE"
+
+
+def test_score_news_item_sentiment_negative_only_returns_negative():
+    """Negative keyword in body, no positives → NEGATIVE."""
+    item = {"title": "Market update", "body": "Major exchange suffers hack and outflows"}
+    assert fetch_market._score_news_item_sentiment(item) == "NEGATIVE"
+
+
+def test_score_news_item_sentiment_both_returns_neutral():
+    """Both positive and negative keywords present → NEUTRAL (matches JS)."""
+    item = {"title": "Crypto rally cools as exchange faces SEC probe"}
+    assert fetch_market._score_news_item_sentiment(item) == "NEUTRAL"
+
+
+def test_score_news_item_sentiment_neither_returns_neutral():
+    """No keywords at all → NEUTRAL."""
+    item = {"title": "Conference attendance grows year over year"}
+    assert fetch_market._score_news_item_sentiment(item) == "NEUTRAL"
+
+
+def test_fetch_cc_per_coin_news_aggregates_pos_neg_neu_correctly():
+    """Three articles in one CC response — one positive, one negative, one
+    neutral — must aggregate into pos=1, neg=1, neu=1, net=0."""
+    coins = [{"symbol": "TON", "name": "Toncoin"}]
+    articles = [
+        {"TITLE": "TON network sees record inflows after partnership",
+         "BODY": "", "URL": "u1", "PUBLISHED_ON": 1700000000,
+         "SOURCE_DATA": {"NAME": "TestSrc"}},
+        {"TITLE": "TON validator hack drains funds", "BODY": "",
+         "URL": "u2", "PUBLISHED_ON": 1700000100,
+         "SOURCE_DATA": {"NAME": "TestSrc"}},
+        {"TITLE": "TON quarterly report released", "BODY": "",
+         "URL": "u3", "PUBLISHED_ON": 1700000200,
+         "SOURCE_DATA": {"NAME": "TestSrc"}},
+    ]
+    with patch.object(fetch_market.requests, "get",
+                      return_value=_mock_cc_news_response(articles)):
+        out = fetch_market._fetch_cc_per_coin_news_impl(coins, sleep_between=0)
+    assert out["available"] is True
+    row = out["coins"]["TON"]
+    assert row["total"] == 3
+    assert row["positive"] == 1
+    assert row["negative"] == 1
+    assert row["neutral"] == 1
+    assert row["net_score"] == 0
+    assert row["symbol"] == "TON"
+    assert row["name"] == "Toncoin"
+    # `recent` is capped at 5 with sentiment + url copied over.
+    assert len(row["recent"]) == 3
+    assert {r["sentiment"] for r in row["recent"]} == {"POSITIVE", "NEGATIVE", "NEUTRAL"}
+
+
+def test_fetch_cc_per_coin_news_skips_400_unknown_category():
+    """CC returns HTTP 400 for unknown categories (e.g. FIGR_HELOC, USDS).
+    The fetcher must skip the coin silently and continue with the rest."""
+    coins = [
+        {"symbol": "FIGR_HELOC", "name": "Figure Heloc"},  # 400
+        {"symbol": "BTC", "name": "Bitcoin"},               # 200
+    ]
+    bad = _mock_cc_news_response([], status_code=400)
+    good = _mock_cc_news_response([
+        {"TITLE": "Bitcoin rally continues amid record inflows",
+         "BODY": "", "URL": "u", "PUBLISHED_ON": 1700000000,
+         "SOURCE_DATA": {"NAME": "Src"}},
+    ])
+    with patch.object(fetch_market.requests, "get", side_effect=[bad, good]):
+        out = fetch_market._fetch_cc_per_coin_news_impl(coins, sleep_between=0)
+    assert "FIGR_HELOC" not in out["coins"]
+    assert "BTC" in out["coins"]
+    assert out["coins"]["BTC"]["positive"] == 1
+
+
+def test_fetch_cc_per_coin_news_empty_articles_omits_coin():
+    """When CC returns Data=[] (no articles for a coin) the coin must be
+    omitted from `out.coins` so the frontend `if (cc[sym])` check stays cheap
+    and the merged row falls back to RSS-only behavior."""
+    coins = [{"symbol": "XYZ", "name": "Nothing"}]
+    with patch.object(fetch_market.requests, "get",
+                      return_value=_mock_cc_news_response([])):
+        out = fetch_market._fetch_cc_per_coin_news_impl(coins, sleep_between=0)
+    assert out["available"] is False
+    assert out["coins"] == {}
+
+
+def test_fetch_cc_per_coin_news_passes_api_key_header_when_set(monkeypatch):
+    """`CRYPTOCOMPARE_API_KEY` env var must travel as an `Authorization:
+    Apikey <key>` header so the higher free-tier quota applies."""
+    monkeypatch.setenv("CRYPTOCOMPARE_API_KEY", "my-test-key")
+    captured: dict = {}
+
+    def fake_get(url, params=None, headers=None, timeout=None):
+        captured["url"] = url
+        captured["params"] = params
+        captured["headers"] = headers
+        return _mock_cc_news_response([])  # empty so we don't aggregate
+
+    with patch.object(fetch_market.requests, "get", side_effect=fake_get):
+        fetch_market._fetch_cc_per_coin_news_impl(
+            [{"symbol": "BTC", "name": "Bitcoin"}], sleep_between=0,
+        )
+    assert "Authorization" in captured["headers"]
+    assert captured["headers"]["Authorization"] == "Apikey my-test-key"
+    assert captured["params"]["categories"] == "BTC"
+
+
+def test_fetch_cc_per_coin_news_caps_to_top_n(monkeypatch):
+    """fetch_cc_per_coin_news (the public wrapper) must only fan out to the
+    first N entries of markets_top (default 25), not the whole list."""
+    coins = [{"symbol": f"S{i}", "name": f"Coin{i}"} for i in range(40)]
+    call_symbols: list[str] = []
+
+    def fake_get(url, params=None, headers=None, timeout=None):
+        call_symbols.append(params.get("categories"))
+        return _mock_cc_news_response([])  # all empty; we only count calls
+
+    monkeypatch.delenv("CRYPTOCOMPARE_API_KEY", raising=False)
+    with patch.object(fetch_market.requests, "get", side_effect=fake_get):
+        out = fetch_market._fetch_cc_per_coin_news_impl(
+            coins[:25], sleep_between=0,
+        )
+    assert len(call_symbols) == 25
+    assert call_symbols[0] == "S0"
+    assert call_symbols[-1] == "S24"
+    # No coins matched (all empty responses) → `available` flips false.
+    assert out["available"] is False
