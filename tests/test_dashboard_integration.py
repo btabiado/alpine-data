@@ -417,3 +417,62 @@ def test_signals_top20_entries_have_required_fields_for_join():
                 f"signals_top20[{i}] ({sym}) has non-canonical label {label!r}; "
                 f"expected one of {sorted(_LABELS_VALID)} (case-insensitive)"
             )
+
+
+# ---------- 6. Research-tab "Top-15 news sentiment" card wiring ----------
+#
+# The new card on the Research tab is rendered entirely client-side from
+# ``DATA.market.news`` + ``DATA.market.markets_top``. There's no backend
+# aggregator to assert against, so we guard the wiring by checking the
+# host div, renderer name, and call-site all survive a rebuild — the same
+# class of "card silently disappeared after a refactor" bugs the rest of
+# this file protects against.
+
+
+def test_top_news_sentiment_card_wiring():
+    """The 'News sentiment — Top 15 by market cap' card must exist in the
+    Research tab markup, its renderer must be defined, and ``renderSocial``
+    must call it. If any of these three drop out the card vanishes from
+    the dashboard without raising an error."""
+    html = _read_dashboard_or_skip()
+
+    # Host div present inside the social tab body.
+    assert 'id="topNewsSentimentCards"' in html, (
+        "topNewsSentimentCards div missing from dashboard.html — the "
+        "Research-tab Top-15 news sentiment card has no mount point."
+    )
+
+    # Renderer + helper functions present.
+    assert "function renderTopNewsSentiment" in html, (
+        "renderTopNewsSentiment() function missing from dashboard.html"
+    )
+    assert "function groupNewsBySymbol" in html, (
+        "groupNewsBySymbol() helper missing from dashboard.html"
+    )
+    assert "function scoreNewsItemSentiment" in html, (
+        "scoreNewsItemSentiment() helper missing from dashboard.html"
+    )
+
+    # renderSocial must invoke the new renderer. Match inside the function
+    # body so a stray comment elsewhere wouldn't pass the test.
+    m = re.search(r"function\s+renderSocial\s*\(\s*\)\s*\{", html)
+    assert m, "renderSocial() function not found in dashboard.html"
+    start = m.end()
+    depth = 1
+    i = start
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                body = html[start:i]
+                break
+        i += 1
+    else:
+        raise AssertionError("Unterminated renderSocial function body")
+    assert "renderTopNewsSentiment()" in body, (
+        "renderSocial() does not call renderTopNewsSentiment() — the new "
+        "Top-15 sentiment card won't render when the user opens Research."
+    )

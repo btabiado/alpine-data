@@ -305,7 +305,13 @@ def build_payload() -> dict:
         print(f"[whale-sentiment] error: {e}", file=sys.stderr)
     try:
         import insights as ins_mod
-        payload["insights"] = ins_mod.build_insights(payload, limit=12)
+        # Was limit=12 (Overview "Top insights" only needed 4). With every
+        # tab now contributing its own insight pool, 12 wasn't enough to
+        # survive cross-tab competition — high-scoring etf/trading/signals
+        # entries filled all 12 slots and ainews/poc/social/etc bars showed
+        # empty even when their rules fired. Bumped to 60 so each per-tab
+        # insights bar has a real pool to filter from. Cost: ~5KB of payload.
+        payload["insights"] = ins_mod.build_insights(payload, limit=60)
     except Exception as e:
         print(f"[insights] error: {e}", file=sys.stderr)
         payload["insights"] = []
@@ -435,6 +441,22 @@ header .meta{color:var(--muted);font-size:12px}
 .chart-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
+/* Top-15 news-sentiment grid (Research tab). Three columns on desktop,
+   two on mid-width tablets, one full-width column on phones (≤480px). */
+.top-news-sentiment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.top-news-sentiment-row{display:grid;grid-template-columns:64px 1fr 130px;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel);min-width:0}
+.top-news-sentiment-row .tns-sym{font-weight:700;font-size:12px;letter-spacing:.02em;color:var(--text)}
+.top-news-sentiment-row .tns-name{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-news-sentiment-row .tns-stats{font-size:10px;color:var(--muted);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.top-news-sentiment-row .tns-bar{display:flex;height:8px;border-radius:3px;overflow:hidden;background:#1f2533}
+.top-news-sentiment-row .tns-net{font-weight:600;font-size:11px;text-align:right}
+@media (max-width:900px){
+  .top-news-sentiment-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:480px){
+  .top-news-sentiment-grid{grid-template-columns:1fr}
+  .top-news-sentiment-row{grid-template-columns:52px 1fr 96px;gap:8px;padding:6px 8px}
+}
 .chart-wrap{position:relative;height:300px}
 .chart-wrap.tall{height:380px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:18px}
@@ -917,6 +939,21 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span style="color:#ef4444">BEARISH inputs</span>
       </div>
     </div>
+
+    <!-- News + Insights — moved up here so "Top insights" gets prime
+         landing-page real estate below the sentiment headline. Was sitting
+         below the Top-25 grid which buried it on mobile. -->
+    <div class="grid2">
+      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
+        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
+        <div id="overviewNews"></div>
+      </div>
+      <div class="chart-card">
+        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
+        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+      </div>
+    </div>
+
     <!-- Row 1: Signal cards (HERO — clickable) -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:-6px">
       <button class="btn" id="configSignalsBtn" style="font-size:11px;padding:3px 8px" title="Pick which assets show signal cards">⚙️ Configure</button>
@@ -934,28 +971,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
 
-    <!-- Top 15 by market cap: structural "what's the market doing" view.
+    <!-- Top 25 by market cap: structural "what's the market doing" view.
          Re-sorts signals_top20 by CoinGecko market-cap rank (not by score)
-         so the largest 15 coins are always visible, regardless of bull/bear.
+         so the largest 25 coins are always visible, regardless of bull/bear.
          Each card shows symbol + price + label + score, click → full modal. -->
     <div id="overviewTop15Wrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">🏆 Top 15 by market cap</h2>
-        <span class="desc">Largest 15 coins · price + signal · click any card for the full breakdown</span>
+        <h2 style="margin:0;font-size:15px">🏆 Top 25 by market cap</h2>
+        <span class="desc">Largest 25 coins · price + signal · click any card for the full breakdown</span>
       </div>
       <div class="row" id="overviewTop15" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
-    </div>
-
-    <!-- Row 2: top news + top insights -->
-    <div class="grid2">
-      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
-        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
-        <div id="overviewNews"></div>
-      </div>
-      <div class="chart-card">
-        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
-        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
-      </div>
     </div>
 
     <!-- Row 3: Macro snapshot (full width) -->
@@ -1768,6 +1793,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <span class="desc">POSITIVE / NEGATIVE / NEUTRAL split from CryptoCompare's keyless news API · 50 most recent articles per coin · 7d trend bars + clickable keyword chips</span>
       </div>
       <div class="row" id="ccNewsCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+    </div>
+    <!-- ===== Per-coin news sentiment for the top 15 by market cap. Sourced
+         from DATA.market.news (crypto_news_rss, all 5 free feeds) — items are
+         keyword-matched to coin name/symbol on the client and scored
+         POSITIVE/NEGATIVE/NEUTRAL via the same word-list approach we use for
+         the AI news sentiment. Mobile-responsive grid (single column ≤480px). ===== -->
+    <div class="chart-card" style="padding:12px 16px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">News sentiment — Top 15 by market cap <span class="tag">RSS</span></h2>
+        <span class="desc">Per-coin mention counts + POSITIVE / NEGATIVE / NEUTRAL split, text-matched against the latest headlines (CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine)</span>
+      </div>
+      <div id="topNewsSentimentCards" class="top-news-sentiment-grid"></div>
     </div>
     <div class="chart-card">
       <div class="head">
@@ -4861,7 +4898,7 @@ function renderCoinbaseSpot(){
   }).join('');
 }
 
-// Top 15 coins by market-cap rank from the top-50 signal computation.
+// Top 25 coins by market-cap rank from the top-50 signal computation.
 // Different from Strong Buys (which filters by STRONG BUY label) — this
 // shows the structural "core" of the market regardless of signal direction.
 // Cards click through to the same detail modal as the Signals-tab strip.
@@ -4875,7 +4912,7 @@ function renderOverviewTop15(){
     .filter(s => s && !isStable(s.symbol))
     .slice()
     .sort((a,b) => (a.rank ?? 999) - (b.rank ?? 999))
-    .slice(0, 15);
+    .slice(0, 25);
   if (!top15.length){
     wrap.classList.add('hidden');
     return;
@@ -7433,6 +7470,170 @@ function renderCCNewsCards(){
   });
 }
 
+// Keyword lists for headline sentiment scoring (same approach the Python
+// `_AI_NEWS_*` lists use server-side for the AI tab). Lowercased; matched
+// substring-wise against title+body. POSITIVE iff ≥1 positive hit and 0
+// negative hits, NEGATIVE iff the reverse, otherwise NEUTRAL.
+const _NEWS_POS_KEYWORDS = [
+  'rally', 'surge', 'soars', 'soar', 'jumps', 'jump', 'gains', 'gain',
+  'breakout', 'breakthrough', 'launches', 'launch', 'partnership', 'adopts',
+  'adoption', 'approves', 'approved', 'approval', 'wins', 'win', 'milestone',
+  'record', 'all-time high', 'ath', 'bullish', 'rally', 'upgrade', 'upgraded',
+  'beats', 'inflows', 'inflow', 'buys', 'accumulate', 'accumulation',
+  'recovery', 'rebounds', 'rebound', 'outperform', 'green', 'institutional',
+  'etf approval'
+];
+const _NEWS_NEG_KEYWORDS = [
+  'hack', 'hacked', 'exploit', 'exploited', 'lawsuit', 'sued', 'sec ', 'fine',
+  'crash', 'plunge', 'plunges', 'dump', 'dumps', 'tumbles', 'tumble', 'sinks',
+  'sink', 'slide', 'slides', 'falls', 'fall', 'loses', 'loss', 'losses',
+  'fraud', 'investigation', 'probe', 'ban', 'banned', 'banning', 'breach',
+  'leak', 'leaked', 'outage', 'down', 'bearish', 'liquidation', 'liquidated',
+  'rejected', 'rejection', 'denied', 'sell-off', 'selloff', 'crashes',
+  'crackdown', 'sanction', 'sanctioned', 'rug', 'scam', 'theft', 'stolen',
+  'delisting', 'delisted', 'outflows', 'outflow', 'warning', 'warns'
+];
+
+// Score a single news item by keyword presence. Mirrors `compute_ai_sentiment`
+// in fetch_market.py so the Research tab uses the same POS/NEG/NEU contract
+// as the AI News tab.
+function scoreNewsItemSentiment(item){
+  const title = (item && item.title) || '';
+  const body  = (item && item.body)  || '';
+  const text = (title + ' ' + (body || '')).toLowerCase();
+  let hasPos = false, hasNeg = false;
+  for (let i = 0; i < _NEWS_POS_KEYWORDS.length; i++){
+    if (text.indexOf(_NEWS_POS_KEYWORDS[i]) !== -1){ hasPos = true; break; }
+  }
+  for (let i = 0; i < _NEWS_NEG_KEYWORDS.length; i++){
+    if (text.indexOf(_NEWS_NEG_KEYWORDS[i]) !== -1){ hasNeg = true; break; }
+  }
+  if (hasPos && !hasNeg) return 'POSITIVE';
+  if (hasNeg && !hasPos) return 'NEGATIVE';
+  return 'NEUTRAL';
+}
+
+// Build per-coin aggregations from market.news + markets_top. News items have
+// no `symbols`/`assets` field (see fetch_market.crypto_news_rss), so we
+// case-insensitive substring-match the headline+body against each coin's
+// symbol and name (word-boundary for short symbols to avoid 'BTC' matching
+// 'BTCM' or 'BTC' inside 'BTCST', and to avoid 'ETH' matching 'ETHEREUM' —
+// wait, we DO want to match Ethereum: we match the long name separately).
+//
+// Returns: [{ symbol, name, total, positive, negative, neutral, net_score,
+//             recent: [{title, sentiment, url}] }, …] sorted by total desc,
+//          then by net_score desc, capped at `topN`.
+function groupNewsBySymbol(news, marketsTop, topN){
+  const coins = (marketsTop || []).slice(0, topN || 15);
+  if (!coins.length || !news || !news.length) return [];
+  // Build per-coin matcher regexes once. For the symbol we require a word
+  // boundary (\b) so 'BTC' doesn't match the middle of unrelated tickers.
+  // For the name we just do a case-insensitive substring — coin names are
+  // long enough that false-positives are rare ('Bitcoin', 'Ethereum').
+  // Special-case: '$SYM' cashtags are common in headlines, so we accept
+  // those too.
+  const escapeRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matchers = coins.map(c => {
+    const sym = (c.symbol || '').toUpperCase();
+    const name = c.name || '';
+    const symRe  = sym  ? new RegExp('(?:^|[^a-z0-9])\\$?' + escapeRe(sym) + '(?:[^a-z0-9]|$)', 'i') : null;
+    const nameRe = name ? new RegExp('(?:^|[^a-z0-9])' + escapeRe(name) + '(?:[^a-z0-9]|$)', 'i') : null;
+    return { symbol: sym, name: name, symRe, nameRe };
+  });
+  // Pre-score each news item once (avoids re-running the keyword loop per coin).
+  const scored = news.map(n => ({
+    item: n,
+    text: ((n && n.title) || '') + ' ' + ((n && n.body) || ''),
+    sentiment: scoreNewsItemSentiment(n),
+  }));
+  const out = matchers.map(m => {
+    let pos = 0, neg = 0, neu = 0;
+    const recent = [];
+    for (let i = 0; i < scored.length; i++){
+      const s = scored[i];
+      const hit = (m.symRe && m.symRe.test(s.text)) || (m.nameRe && m.nameRe.test(s.text));
+      if (!hit) continue;
+      if (s.sentiment === 'POSITIVE') pos++;
+      else if (s.sentiment === 'NEGATIVE') neg++;
+      else neu++;
+      if (recent.length < 3){
+        recent.push({
+          title: (s.item && s.item.title) || '',
+          sentiment: s.sentiment,
+          url: (s.item && s.item.url) || '',
+        });
+      }
+    }
+    return {
+      symbol: m.symbol,
+      name: m.name,
+      total: pos + neg + neu,
+      positive: pos,
+      negative: neg,
+      neutral: neu,
+      net_score: pos - neg,
+      recent,
+    };
+  });
+  // Sort by total mentions desc, then net_score desc as tiebreak; keep all
+  // top-15 coins in the list so users see zero-mention rows too (turns out
+  // to be useful signal: 'no news this week' is itself meaningful).
+  out.sort((a, b) => (b.total - a.total) || (b.net_score - a.net_score));
+  return out;
+}
+
+function renderTopNewsSentiment(){
+  const host = document.getElementById('topNewsSentimentCards');
+  if (!host) return;
+  const news = ((DATA.market || {}).news) || [];
+  const marketsTop = ((DATA.market || {}).markets_top) || [];
+  if (!news.length || !marketsTop.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-15 coins in the current window.</div>';
+    return;
+  }
+  const rows = groupNewsBySymbol(news, marketsTop, 15);
+  const anyMentions = rows.some(r => r.total > 0);
+  if (!anyMentions){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-15 coins in the current window.</div>';
+    return;
+  }
+  host.innerHTML = rows.map(r => {
+    const total = r.total || 1;  // avoid div-by-zero in width math
+    const posPct = (r.positive / total) * 100;
+    const neuPct = (r.neutral  / total) * 100;
+    const negPct = (r.negative / total) * 100;
+    const netColor = r.net_score > 0 ? '#22c55e'
+                    : r.net_score < 0 ? '#ef4444'
+                    : 'var(--muted)';
+    const netLbl = r.total === 0 ? '—'
+                  : (r.net_score > 0 ? '+' : '') + r.net_score;
+    const barInner = r.total === 0
+      ? `<div style="background:#1f2533;width:100%;height:100%"></div>`
+      : `<div style="background:#22c55e;width:${posPct}%" title="${r.positive} positive"></div>
+         <div style="background:#f59e0b;width:${neuPct}%" title="${r.neutral} neutral"></div>
+         <div style="background:#ef4444;width:${negPct}%" title="${r.negative} negative"></div>`;
+    const titleAttr = r.recent
+      .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
+      .join('\n');
+    return `<div class="top-news-sentiment-row" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
+      <div>
+        <div class="tns-sym">${escapeHtml(r.symbol)}</div>
+        <div class="tns-name">${escapeHtml(r.name)}</div>
+      </div>
+      <div style="min-width:0">
+        <div class="tns-bar">${barInner}</div>
+        <div class="tns-stats">
+          <span>${r.total} mention${r.total === 1 ? '' : 's'}</span>
+          <span style="color:#22c55e">${r.positive} +</span>
+          <span>${r.neutral} ○</span>
+          <span style="color:#ef4444">${r.negative} −</span>
+        </div>
+      </div>
+      <div class="tns-net" style="color:${netColor}">net ${netLbl}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderResearchNews(){
   const host = document.getElementById('researchNewsHost');
   if (!host) return;
@@ -7468,6 +7669,11 @@ function renderSocial(){
   const asOf = document.getElementById('socialAsOf');
   if (asOf) asOf.textContent = social.fetched_at ? 'Fetched ' + social.fetched_at : '';
   renderResearchNews();
+  // Top-15 news-sentiment card sources data from DATA.market.news +
+  // markets_top — independent of the social aggregate (`hasAny`), so render
+  // it before the early return so the card still appears when reddit /
+  // santiment / cc_news all returned empty.
+  renderTopNewsSentiment();
   if (!hasAny) return;
   renderCCSocialCards();
   renderCCNewsCards();
