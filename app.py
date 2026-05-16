@@ -498,6 +498,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      sees Strong Buys + news above the fold. Was ~110px tall each → ~55px.
      Hides redundant fields (full coin name, "as of" date) that already
      live in the header / tooltips. */
+  /* Top-25 signal strip: outer grid was forced to 2 columns, which made each
+     populated .signals-section render its inner cards in a single ~175px
+     column (the inner grid's auto-fit minmax(220px,1fr) collapsed to 1 col
+     because no two 220px cells fit). Net effect: empty buckets spanned the
+     full width via .signals-empty-pill (grid-column:1/-1) but populated
+     buckets shrank to a narrow column — visually inconsistent ("out of
+     sorts"). Switch the outer to 1 col on phones so each section block flows
+     full-width, and force the inner card grid to 2-up so users actually see
+     2 cards per row instead of 1 on phones. */
+  #top20SignalCards{grid-template-columns:1fr !important;gap:8px}
+  #top20SignalCards .signals-section{grid-column:1/-1}
+  #top20SignalCards .signals-section-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px !important}
   #overviewSignals{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
   #overviewSignals .card{padding:6px 10px;border-left-width:3px}
   #overviewSignals .card h3{font-size:11px !important;margin:0 !important}
@@ -509,9 +521,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #overviewSignals .card .v{font-size:15px !important;margin-top:2px !important}
   #overviewSignals .card > div:nth-child(3){margin-top:2px !important}
   #overviewSignals .card > div:nth-child(3) span{font-size:10px !important}
-  /* Strong Buys + Top-50 strip cards: tighter on mobile too */
+  /* Strong Buys: tighter on mobile too. (#top20SignalCards is overridden
+     above with full-width sections + 2-up inner grid — don't reset here.) */
   #overviewStrongBuys{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
-  #top20SignalCards{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
 
   /* --- Compact mobile header (was ~200px tall, now ~104px) --- */
   header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
@@ -585,12 +597,21 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #stocksBreadthChart, #cryptoSignalsBreadthChart{}
   .chart-wrap:has(>#stocksBreadthChart),
   .chart-wrap:has(>#cryptoSignalsBreadthChart){height:160px !important}
+  /* AI funding quadrant chart had inline height:380px which overrides
+     .chart-wrap above; force it down on phones so it doesn't tower over
+     the AI News tab. !important needed to beat the inline style. */
+  .chart-wrap:has(>#aiQuadrantChart){height:280px !important;min-height:0 !important}
 
   /* --- GLOBAL CARD TIGHTENING (every tab, not just Overview) ---
      User reported all phone pages had boxes wasting too much space.
      Shrinks padding, fonts, and gaps across .card / .chart-card / .grid*
      so every section becomes ~40-50% shorter without losing data. */
   .container{padding:10px 12px;gap:10px}
+  /* tab-ainews / tab-stocks / tab-poc each open a *nested* .container
+     inside the outer page .container, which double-pads on mobile (24px
+     side-pad vs 12px on every other tab → "boxes are out of sorts").
+     Zero out padding/gap on inner containers so all 10 tabs align. */
+  .container .container{padding:0;gap:10px}
   .card{padding:8px 10px;border-radius:6px}
   .chart-card{padding:10px 12px;border-radius:6px}
   .chart-card .head{flex-wrap:wrap;gap:4px;margin-bottom:4px}
