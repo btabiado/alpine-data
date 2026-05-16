@@ -514,6 +514,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #overviewMacroRow{grid-template-columns:1fr !important}
   .grid2{grid-template-columns:1fr !important}
   .grid3{grid-template-columns:1fr !important}
+  /* Top-25 header title block: on desktop it sits to the right of the filter
+     chips with text-align:right. On mobile the chips wrap to their own line
+     so the title is the only thing on its row — right-aligning it pushes the
+     copy off the right edge. Reset to left-align under mobile width. */
+  .top25-header-title{text-align:left !important;width:100%}
   /* Asset signal cards: keep 2 per row on mobile instead of one big card,
      and shrink fonts so price/change/volume don't dominate the screen. */
   /* Asset cards (BTC/ETH/LINK/LTC) — ultra-compact on mobile so the user
@@ -1585,7 +1590,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-top20filter="hold">Hold</button>
           <button class="btn" data-top20filter="sell">Sell</button>
           <span style="flex:1"></span>
-          <div style="text-align:right">
+          <div class="top25-header-title" style="text-align:right">
             <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
             <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
           </div>
