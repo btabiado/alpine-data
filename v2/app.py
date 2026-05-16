@@ -648,7 +648,45 @@ header .meta{color:var(--muted);font-size:12px}
      inner padding the content area is only ~291px wide. Tight for POC-detail
      tables and share-link URL row. */
   .modal-bg{padding:8px !important}
+  /* --- Wave 2a-2: mobile spacing + chart responsiveness pass ---
+     Tightens .row/.grid gaps, table cell density, chart heights, and adds
+     canvas/overflow safety so phone-width viewports don't horizontal-scroll
+     the whole page. Stacks on top of the ≤860 mobile block above. */
+  .row{gap:6px}
+  /* Table baseline shrink: every <table> drops from 13→12px font and tighter
+     cell padding (7px 10px → 5px 6px). The ≤860 .chart-card table override
+     stays more aggressive (3px 4px) for chart-card-embedded tables. */
+  table{font-size:12px}
+  th,td{padding:5px 6px}
+  /* Chart container heights — was 300/380 desktop, only the .tall variant got
+     trimmed to 280 at ≤860. Bring the default down too at phone widths so
+     chart-area aspect stays sensible on 360-400px screens. */
+  .chart-wrap{height:220px}
+  .chart-wrap.tall{height:280px}
+  /* Chart-card overflow guard: prevents a stray wide canvas/tooltip element
+     from pushing horizontal scroll onto the whole page. Chart.js renders
+     tooltips inside the canvas so cropping the card is safe. */
+  .chart-card{overflow:hidden}
+  /* Canvas safety net — chart.js sometimes computes a width that ignores
+     its container during resize; force it to honor the box and let height
+     auto-recompute. */
+  canvas{max-width:100% !important;height:auto !important}
+  /* Whale tab panel gap — the parent .container gap is 10px at ≤860; tighten
+     further to 8px between the whale tab's sequential chart cards. */
+  #tab-whale{gap:var(--v2-s2)}
+  #tab-whale .row{gap:6px}
+  /* Symbol / Stock detail modal bodies: tighten the inner card grid gap from
+     12 → 8px on phone (the ≤480 .symbol-modal-body rule already collapsed
+     to 1-col with gap:10px above — tighten further to match brief). */
+  .symbol-modal-body,.stocks-modal-body{gap:8px !important}
+  .stocks-modal-body{grid-template-columns:1fr !important}
 }
+/* Opt-in horizontal-scroll wrapper for very wide tables. Any markup that
+   wants the clean scroll affordance (instead of letting the table widen the
+   page) can wrap the <table> in <div class="v2-table-wrap">. Defined at the
+   base (not inside @media) so the class is always available; the wrapper is
+   a no-op on desktop where the table fits naturally. */
+.v2-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .chart-wrap{position:relative;height:300px}
 .chart-wrap.tall{height:380px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:18px}
