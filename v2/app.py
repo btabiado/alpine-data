@@ -1857,7 +1857,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card">
           <div class="v2-card__head">
             <div>
-              <h2 class="v2-card__title">ETH/BTC ratio <span class="tag">CoinGecko</span></h2>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Price of 1 ETH expressed in BTC. Falls when BTC outperforms; rises when ETH outperforms. ~6-month extremes often mark rotation pivots.">ETH/BTC ratio</span> <span class="tag">CoinGecko</span></h2>
               <div class="v2-card__subtitle">Relative strength</div>
             </div>
           </div>
@@ -2346,7 +2346,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card__head"><div><h2 class="v2-card__title">Top 15 DeFi protocols (global)</h2><div class="v2-card__subtitle">All chains · by TVL · 1d/7d/30d %</div></div></div>
         <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiProtocolsTable">
-            <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
+            <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th><span class="v2-tip-anchor" data-v2-tip="Total Value Locked: USD value of assets deposited into a chain or protocol&#39;s smart contracts. Cycle peak indicator; sustained growth = real adoption.">TVL</span></th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -2355,7 +2355,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card__head"><div><h2 class="v2-card__title">Top stablecoin yields</h2><div class="v2-card__subtitle">Sorted by TVL, ≥$5M</div></div></div>
         <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiYieldsTable">
-            <thead><tr><th>Pool</th><th>Chain</th><th>TVL</th><th>APY</th></tr></thead>
+            <thead><tr><th>Pool</th><th>Chain</th><th><span class="v2-tip-anchor" data-v2-tip="Total Value Locked: USD value of assets deposited into the pool's smart contracts. Cycle peak indicator; sustained growth = real adoption.">TVL</span></th><th><span class="v2-tip-anchor" data-v2-tip="Annualized percentage yield on a stablecoin lending or LP position. >5% on a $5M+ TVL pool is competitive.">APY</span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -2556,11 +2556,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <!-- BTC network state additions -->
       <div class="grid2">
         <div class="card" style="padding:12px 14px">
-          <h3>Difficulty adjustment</h3>
+          <h3><span class="v2-tip-anchor" data-v2-tip="BTC mining difficulty resets every 2,016 blocks (~2 weeks) to keep block times near 10 min. Positive adjustments = network is growing.">Difficulty adjustment</span></h3>
           <div id="diffAdjBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
         </div>
         <div class="card" style="padding:12px 14px">
-          <h3>Lightning Network</h3>
+          <h3><span class="v2-tip-anchor" data-v2-tip="Total BTC locked in Lightning Network channels. Proxy for off-chain L2 adoption.">Lightning Network</span></h3>
           <div id="lightningBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
         </div>
       </div>
@@ -2580,11 +2580,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="grid2">
         <div class="v2-card">
-          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Active addresses</h2><div class="v2-card__subtitle">Unique addresses used per day</div></div></div>
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Unique addresses transacting in the last 24h. Proxy for network usage; large swings often precede price moves.">Active addresses</span></h2><div class="v2-card__subtitle">Unique addresses used per day</div></div></div>
           <div class="v2-card__body"><div class="chart-wrap"><canvas id="addrChart"></canvas></div></div>
         </div>
         <div class="v2-card">
-          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Hash rate (TH/s)</h2><div class="v2-card__subtitle">Miner commitment, log scale</div></div></div>
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Total computational power securing the BTC network (EH/s). Rising = stronger miner confidence and security; falling = miner stress.">Hash rate</span> (TH/s)</h2><div class="v2-card__subtitle">Miner commitment, log scale</div></div></div>
           <div class="v2-card__body"><div class="chart-wrap"><canvas id="hashChart"></canvas></div></div>
         </div>
       </div>
@@ -3377,7 +3377,7 @@ function renderTradingKpis(){
 
   const items = [
     {label:'Spot price', val: lastPrice ? fmtUSD(lastPrice.value, 'auto') : '—', sub: chgPct!=null ? (chgPct>=0?'+':'')+(chgPct*100).toFixed(2)+'% ' + lbLabel : '', cls: chgPct==null?'':(chgPct>=0?'green':'red')},
-    {label:'24h volume', val: lastVol ? fmtUSD(lastVol.value,'auto') : '—'},
+    {label:'<span class="v2-tip-anchor" data-v2-tip="24h trading volume in USD. Rising volume confirms price moves; falling volume on a rally = weakening conviction.">24h volume</span>', val: lastVol ? fmtUSD(lastVol.value,'auto') : '—'},
     {label:'Market cap', val: a.market_cap && a.market_cap.length ? fmtUSD(a.market_cap.slice(-1)[0].value,'auto') : '—'},
     {label:'Funding rate', val: lastFund ? (lastFund.rate*100).toFixed(4)+'%' : '—', cls: lastFund ? (lastFund.rate>=0?'green':'red') : '', sub: lastFund ? lastFund.date : ''},
     {label:'Open interest', val: lastOI ? fmtUSD(lastOI.oi_usd,'auto') : '—'},
@@ -3388,11 +3388,11 @@ function renderTradingKpis(){
     // "LINK dominance" metric, so fall back to the broader BTC dominance
     // (the macro-context number most relevant regardless of asset focus).
     (state.asset === 'btc')
-      ? {label:'BTC dominance', val: fmtNum(g.btc_dominance,2)+'%'}
+      ? {label:'<span class="v2-tip-anchor" data-v2-tip="BTC&#39;s share of total crypto market cap. Rising dominance = capital concentrating in BTC (risk-off rotation); falling = alt-season.">BTC dominance</span>', val: fmtNum(g.btc_dominance,2)+'%'}
       : (state.asset === 'eth')
         ? {label:'ETH dominance', val: fmtNum(g.eth_dominance,2)+'%'}
-        : {label:'BTC dominance', val: fmtNum(g.btc_dominance,2)+'%', sub:'macro context'},
-    {label:'ETH/BTC', val: ethbtc ? ethbtc.value.toFixed(5) : '—'},
+        : {label:'<span class="v2-tip-anchor" data-v2-tip="BTC&#39;s share of total crypto market cap. Rising dominance = capital concentrating in BTC (risk-off rotation); falling = alt-season.">BTC dominance</span>', val: fmtNum(g.btc_dominance,2)+'%', sub:'macro context'},
+    {label:'<span class="v2-tip-anchor" data-v2-tip="Price of 1 ETH expressed in BTC. Falls when BTC outperforms; rises when ETH outperforms. ~6-month extremes often mark rotation pivots.">ETH/BTC</span>', val: ethbtc ? ethbtc.value.toFixed(5) : '—'},
   ];
   document.getElementById('tradingKpis').innerHTML = items.map(i =>
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
@@ -3618,9 +3618,9 @@ function renderEthBtc(){
 function renderGlobalTable(){
   const g = (DATA.market||{}).global || {};
   const rows = [
-    ['Total market cap (all crypto)', fmtUSD(g.total_market_cap_usd,'auto')],
+    ['<span class="v2-tip-anchor" data-v2-tip="Sum of all cryptocurrency market caps tracked by CoinGecko. The cycle reference number.">Total market cap (all crypto)</span>', fmtUSD(g.total_market_cap_usd,'auto')],
     ['Total 24h volume', fmtUSD(g.total_volume_usd,'auto')],
-    ['BTC dominance', fmtNum(g.btc_dominance,2)+'%'],
+    ['<span class="v2-tip-anchor" data-v2-tip="BTC&#39;s share of total crypto market cap. Rising dominance = capital concentrating in BTC (risk-off rotation); falling = alt-season.">BTC dominance</span>', fmtNum(g.btc_dominance,2)+'%'],
     ['ETH dominance', fmtNum(g.eth_dominance,2)+'%'],
     ['Active cryptocurrencies', fmtNum(g.active_cryptos,0)],
   ];
@@ -4574,7 +4574,7 @@ function renderWhaleKpis(){
     const d = delta1d(w.active_addresses);
     const avg30 = meanN(w.active_addresses, 30);
     items.push({
-      label: 'Active addresses',
+      label: '<span class="v2-tip-anchor" data-v2-tip="Unique addresses transacting in the last 24h. Proxy for network usage; large swings often precede price moves.">Active addresses</span>',
       val: cur ? fmtNum(cur.value, 0) : '—',
       cls: deltaClass(d),
       sub: `1d ${deltaStr(d)}${avg30 != null ? ` · 30d avg ${fmtNum(avg30, 0)}` : ''}`,
@@ -4632,7 +4632,7 @@ function renderWhaleKpis(){
     const d = delta1d(w.hash_rate);
     const eh = cur ? cur.value / 1e9 : null;
     items.push({
-      label: 'Hash rate',
+      label: '<span class="v2-tip-anchor" data-v2-tip="Total computational power securing the BTC network (EH/s). Rising = stronger miner confidence and security; falling = miner stress.">Hash rate</span>',
       val: eh != null ? fmtNum(eh, 0) + ' EH/s' : '—',
       cls: deltaClass(d),
       sub: `1d ${deltaStr(d)}`,
@@ -4982,7 +4982,7 @@ function renderWhaleEth(){
         <div>Blocks (24h): <strong style="color:var(--text)">${fmtNum(bc.blocks_24h||0, 0)}</strong></div>
         <div>Txs (24h): <strong style="color:var(--text)">${fmtNum(bc.transactions_24h||0, 0)}</strong></div>
         ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
-        ${burn != null ? `<div>EIP-1559 burn (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
+        ${burn != null ? `<div><span class="v2-tip-anchor" data-v2-tip="ETH base fee permanently destroyed by every transaction since the London upgrade. Net deflationary when burn > issuance.">EIP-1559 burn</span> (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
         ${erc20  != null ? `<div>ERC-20 tx (24h): <strong style="color:var(--text)">${fmtNum(erc20, 0)}</strong></div>` : ''}
         ${erc721 != null ? `<div>ERC-721 tx (24h): <strong style="color:var(--text)">${fmtNum(erc721, 0)}</strong></div>` : ''}`;
     } else {
@@ -6010,14 +6010,20 @@ function renderDefi(){
     ? '—'
     : `7d ${stable7d>=0?'+':''}${fmtUSD(stable7d,'auto')}`;
   const items = [
-    {label: 'Stablecoin mcap',  val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: stable7dStr},
-    {label: 'DEX 24h volume',   val: fmtUSD(llama.dex_volume_24h_usd,  'auto'), sub: 'DefiLlama'},
+    {label: 'Stablecoin mcap',  val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: stable7dStr,
+     tip: 'Aggregate USD supply of all stablecoins (USDT, USDC, DAI, etc). Rising = sidelined capital available; falling = capital flight.'},
+    {label: 'DEX 24h volume',   val: fmtUSD(llama.dex_volume_24h_usd,  'auto'), sub: 'DefiLlama',
+     tip: 'On-chain decentralized-exchange trading volume in the last 24h. Reflects active spot trading not routed through CEXes.'},
     {label: 'Protocol fees 24h',val: fmtUSD(llama.fees_24h_usd,        'auto'), sub: 'DefiLlama'},
-    {label: 'Total DeFi TVL',   val: fmtUSD(totalTvl,                  'auto'), sub: `${chains.length} chains`},
+    {label: 'Total DeFi TVL',   val: fmtUSD(totalTvl,                  'auto'), sub: `${chains.length} chains`,
+     tip: 'Total Value Locked: USD value of assets deposited into DeFi smart contracts across all tracked chains. Cycle peak indicator; sustained growth = real adoption.'},
   ];
-  document.getElementById('defiKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${escapeHtml(i.label)}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${escapeHtml(i.sub)}</div>`:''}</div>`
-  ).join('');
+  document.getElementById('defiKpis').innerHTML = items.map(i => {
+    const labelHtml = i.tip
+      ? `<span class="v2-tip-anchor" data-v2-tip="${escapeHtml(i.tip)}">${escapeHtml(i.label)}</span>`
+      : escapeHtml(i.label);
+    return `<div class="card"><h3>${labelHtml}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${escapeHtml(i.sub)}</div>`:''}</div>`;
+  }).join('');
 
   // ---- Per-chain section (TVL history + summary + top protocols on chain) ----
   renderDefiChainSection();
