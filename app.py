@@ -1397,6 +1397,27 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
         <!-- (AI funding quadrant moved up — sits right under sentiment.) -->
 
+        <!-- SEC EDGAR Form D — most-recent AI private placements -->
+        <div class="chart-card" id="aiSecFormDCard" style="margin-top:12px">
+          <div class="head">
+            <h2>SEC Form D — recent AI private placements <span class="tag" id="aiSecFormDBadge">EDGAR</span></h2>
+            <span class="desc">Rule 506(b)/506(c) filings from AI-adjacent issuers in the last 60 days &middot; click any issuer for the EDGAR filing</span>
+          </div>
+          <div style="overflow:auto;max-height:420px">
+            <table id="aiSecFormDTable" class="tracker-grid">
+              <thead><tr>
+                <th>Issuer</th>
+                <th style="text-align:right">Offering</th>
+                <th style="text-align:right">Sold</th>
+                <th>First sale</th>
+                <th>Filed</th>
+                <th>Exemption</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- White paper / research KPIs -->
         <div class="chart-card" id="aiWhitepaperKpisCard" style="margin-top:12px">
           <div class="head">
@@ -5757,6 +5778,10 @@ function renderAiNewsTab(){
       : (articles + ' articles');
   }
 
+  // SEC Form D card renders independently of the curated dataset — it's
+  // driven by market.ai_funding.form_d_filings (live EDGAR data).
+  renderAiSecFormD();
+
   if (hasCurated){
     renderAiInvestmentKpis();
     renderAiTopFunded();
@@ -5835,6 +5860,50 @@ function renderAiTopFunded(){
       <td>${stage}</td>
       <td>${hq}</td>
       <td>${cat}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- SEC EDGAR Form D — recent AI private placements ------------------
+function renderAiSecFormD(){
+  const card = document.getElementById('aiSecFormDCard');
+  const tb = document.querySelector('#aiSecFormDTable tbody');
+  if (!card || !tb) return;
+  const rows = (((DATA.market||{}).ai_funding||{}).form_d_filings) || [];
+  const badge = document.getElementById('aiSecFormDBadge');
+  if (!Array.isArray(rows) || !rows.length){
+    if (badge) badge.textContent = 'EDGAR · no recent filings';
+    tb.innerHTML = '<tr><td colspan="6" style="padding:14px;color:var(--muted)">No AI-adjacent Form D filings in the last 60 days. EDGAR may be unreachable, or no qualifying issuers filed in that window.</td></tr>';
+    return;
+  }
+  if (badge) badge.textContent = 'EDGAR · ' + rows.length + ' filings · last 60d';
+  // Sort by filed_date desc so the freshest deals lead.
+  const sorted = rows.slice().sort((a,b) => {
+    const da = a && a.filed_date ? Date.parse(a.filed_date) : 0;
+    const db = b && b.filed_date ? Date.parse(b.filed_date) : 0;
+    return (db||0) - (da||0);
+  });
+  tb.innerHTML = sorted.map(f => {
+    const issuer  = escapeHtml(String(f.issuer || ''));
+    const offer   = Number(f.total_offering_amount);
+    const sold    = Number(f.total_amount_sold);
+    const offerTxt = isFinite(offer) ? fmtUSD(offer, 'auto') : '—';
+    const soldTxt  = isFinite(sold)  ? fmtUSD(sold,  'auto') : '—';
+    const firstSale = escapeHtml(String(f.date_of_first_sale || ''));
+    const filed     = escapeHtml(String(f.filed_date || ''));
+    const exemptions = Array.isArray(f.exemptions) ? f.exemptions.join(', ') : '';
+    const exTxt = escapeHtml(String(exemptions || ''));
+    const url   = sanitizeUrl(f.filing_url, '');
+    const issuerCell = url
+      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:600;text-decoration:none">'+issuer+'</a>'
+      : '<span style="font-weight:600">'+issuer+'</span>';
+    return `<tr>
+      <td>${issuerCell}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${offerTxt}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${soldTxt}</td>
+      <td style="font-size:11px;color:var(--muted)">${firstSale}</td>
+      <td style="font-size:11px;color:var(--muted)">${filed}</td>
+      <td style="font-size:11px;color:var(--muted)">${exTxt}</td>
     </tr>`;
   }).join('');
 }

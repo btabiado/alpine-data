@@ -942,9 +942,264 @@ def fetch_ai_funding_news_hn(days: int = 30, max_items: int = 40) -> list[dict]:
     return out if isinstance(out, list) else []
 
 
+# --- SEC EDGAR Form D (private placement filings) ---------------------------
+#
+# Form D is filed within 15 days of a Rule 506(b) / 506(c) private placement
+# and discloses issuer, date of first sale, total offering amount, amount
+# sold, and exemption claimed. EDGAR's full-text search at efts.sec.gov is
+# keyless JSON but requires a polite User-Agent per SEC fair access rules
+# (https://www.sec.gov/os/accessing-edgar-data) — without one EDGAR 403s.
+#
+# Approach: pull recent Form D filings via the search-index endpoint (one
+# request, paginated), filter to AI-adjacent issuer names client-side, then
+# for the top N matches optionally fetch the primary XML document to extract
+# the offering-amount fields. Per-filing fetches are rate-limited (sleep
+# between requests) to stay well under SEC's 10 req/sec/IP limit.
+
+# Polite SEC User-Agent — SEC asks for "Sample Company Name AdminContact@..."
+# style. Without this header EDGAR replies 403 Forbidden. Keep it generic so
+# we're not impersonating anyone; the dashboard isn't a registered entity.
+SEC_UA = "etf-flow-dashboard/1.0 (open-source dashboard; contact@etf-flow-dashboard.local)"
+SEC_HEADERS = {"User-Agent": SEC_UA, "Accept": "application/json"}
+
+# Keywords used to flag AI-adjacent Form D filings by issuer name. Kept
+# narrower than _AI_FUNDING_KEYWORDS because issuer names are short and
+# generic terms like "ai" produce too many false positives without word
+# boundaries; the matcher below does word-boundary checks.
+_SEC_AI_KEYWORDS = (
+    "ai", "a.i.", "artificial intelligence", "machine learning",
+    "neural", "deep learning", "gpt", "llm", "agents", "agentic",
+    "robotic", "robotics", "autonomous", "intelligence",
+    "openai", "anthropic", "mistral", "cohere", "perplexity",
+    "inference", "model", "vision", "speech",
+)
+
+
+def _ai_keyword_hit(name: str) -> bool:
+    """Word-boundary keyword check for issuer names. Returns True if any
+    keyword in `_SEC_AI_KEYWORDS` appears as a whole word (or substring for
+    multi-word phrases). Defensive against empty / non-string input."""
+    if not isinstance(name, str) or not name:
+        return False
+    import re
+    low = name.lower()
+    for kw in _SEC_AI_KEYWORDS:
+        if " " in kw or "." in kw:
+            # multi-word / acronym: substring match is safer (whole-word
+            # regex can choke on punctuation in company names like "A.I.").
+            if kw in low:
+                return True
+        else:
+            # single-word keyword: require a word boundary so "ai" doesn't
+            # match every "main", "rain", "captain" in the filings.
+            if re.search(rf"\b{re.escape(kw)}\b", low):
+                return True
+    return False
+
+
+def _sec_get(url: str, params: dict | None = None, timeout: int = 20):
+    """SEC-flavored requests.get that always uses the polite UA. Returns
+    the parsed JSON (or text for non-JSON endpoints) or None on failure.
+    Honors EDGAR's preferred 10 req/sec ceiling implicitly by being called
+    serially in the fetcher with a small sleep between calls."""
+    try:
+        r = requests.get(url, params=params, headers=SEC_HEADERS, timeout=timeout)
+        if r.status_code != 200:
+            print(f"  [sec] {url} -> {r.status_code}", file=sys.stderr)
+            return None
+        ct = (r.headers.get("Content-Type") or "").lower()
+        if "json" in ct:
+            return r.json()
+        return r.text
+    except Exception as e:
+        print(f"  [sec] {url} -> {e}", file=sys.stderr)
+        return None
+
+
+def _sec_accession_url(cik: str, adsh: str) -> str:
+    """Build the public EDGAR filing-index URL for an accession number.
+    `adsh` arrives with dashes (0001234567-25-000123); the archive path uses
+    the no-dash form for the folder and the original form for the .index."""
+    cik_int = str(cik).lstrip("0") or "0"
+    nodash = adsh.replace("-", "")
+    return f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{nodash}/{adsh}-index.htm"
+
+
+def _sec_primary_doc_url(cik: str, adsh: str) -> str:
+    """The structured XML version of the Form D filing — has the offering-
+    amount fields we want. Path mirrors `_sec_accession_url`."""
+    cik_int = str(cik).lstrip("0") or "0"
+    nodash = adsh.replace("-", "")
+    return f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{nodash}/primary_doc.xml"
+
+
+def _parse_form_d_xml(xml_text: str) -> dict:
+    """Extract the four headline Form D fields from primary_doc.xml.
+
+    Returns a dict with keys: ``total_offering_amount`` (float or None),
+    ``total_amount_sold`` (float or None), ``date_of_first_sale`` (ISO date
+    string or empty), ``exemptions`` (list of exemption strings). Tolerant
+    of missing elements — Form D has many optional fields."""
+    out: dict = {
+        "total_offering_amount": None,
+        "total_amount_sold": None,
+        "date_of_first_sale": "",
+        "exemptions": [],
+    }
+    if not xml_text or not isinstance(xml_text, str):
+        return out
+    try:
+        import xml.etree.ElementTree as ET
+        # primary_doc.xml uses no default namespace at the leaf-text level
+        # for the fields we care about, but some have eis: prefixes. The
+        # simplest cross-version-tolerant approach: strip namespaces.
+        import re
+        cleaned = re.sub(r'\sxmlns(:\w+)?="[^"]+"', "", xml_text, count=0)
+        cleaned = re.sub(r"<(/?)\w+:", r"<\1", cleaned)
+        root = ET.fromstring(cleaned)
+    except Exception as e:
+        print(f"  [sec] xml parse fail: {e}", file=sys.stderr)
+        return out
+
+    def _ftext(path: str) -> str:
+        el = root.find(f".//{path}")
+        return (el.text or "").strip() if el is not None and el.text else ""
+
+    def _ffloat(path: str):
+        s = _ftext(path)
+        if not s:
+            return None
+        try:
+            return float(s)
+        except (TypeError, ValueError):
+            return None
+
+    out["total_offering_amount"] = _ffloat("totalOfferingAmount")
+    out["total_amount_sold"]     = _ffloat("totalAmountSold")
+    out["date_of_first_sale"]    = _ftext("dateOfFirstSale")
+    try:
+        ex_nodes = root.findall(".//exemption")
+        out["exemptions"] = [
+            (n.text or "").strip() for n in ex_nodes if n.text and n.text.strip()
+        ]
+    except Exception:
+        out["exemptions"] = []
+    return out
+
+
+def _fetch_sec_form_d_filings_impl(
+    days: int = 60,
+    max_results: int = 20,
+    enrich_details: bool = True,
+) -> list[dict]:
+    """Pull recent Form D filings from EDGAR, filter to AI-adjacent issuers,
+    optionally enrich each with offering-amount fields from primary_doc.xml.
+
+    Steps:
+      1. One full-text search request: `forms=D&dateRange=custom&startdt=...`
+         returns up to 100 hits in chronological order (newest first).
+      2. Filter hits by AI keywords in the issuer display_name.
+      3. Take the top `max_results`. If `enrich_details` is True, fetch
+         each filing's primary_doc.xml (with a 0.15s gap between requests
+         to stay below SEC's 10 req/sec ceiling).
+
+    Returns a list of dicts ready for the AI tab renderer.
+    """
+    end = datetime.now(timezone.utc).date()
+    start = end - timedelta(days=days)
+    params = {
+        "q": "",
+        "forms": "D",
+        "dateRange": "custom",
+        "startdt": start.isoformat(),
+        "enddt": end.isoformat(),
+    }
+    j = _sec_get("https://efts.sec.gov/LATEST/search-index", params=params)
+    if not isinstance(j, dict):
+        return []
+    hits = (((j.get("hits") or {}).get("hits")) or [])
+    rows: list[dict] = []
+    for h in hits:
+        src = h.get("_source") or {}
+        names = src.get("display_names") or []
+        # display_names entries look like "Issuer Name  (CIK 0001234567)
+        # (Filer)". Strip the trailing parens for the matcher and the
+        # rendered name.
+        primary = names[0] if names else ""
+        # Get the bare name without the (CIK ...) suffix.
+        clean_name = primary.split("(CIK")[0].strip() if primary else ""
+        if not clean_name:
+            continue
+        if not _ai_keyword_hit(clean_name):
+            continue
+        # adsh on full-text search hits arrives as the bare _id, like
+        # "0001234567-25-000123:primary_doc.xml" — the part before the colon
+        # is the accession number.
+        raw_id = h.get("_id") or ""
+        adsh = raw_id.split(":", 1)[0] if raw_id else ""
+        ciks = src.get("ciks") or []
+        cik = ciks[0] if ciks else ""
+        file_date = src.get("file_date") or ""
+        rows.append({
+            "issuer": clean_name,
+            "cik": cik,
+            "accession": adsh,
+            "filing_url": _sec_accession_url(cik, adsh) if cik and adsh else "",
+            "filed_date": file_date,
+            "form": src.get("form") or "D",
+            # Filled in by the enrichment pass below (or left as defaults).
+            "total_offering_amount": None,
+            "total_amount_sold": None,
+            "date_of_first_sale": "",
+            "exemptions": [],
+        })
+        if len(rows) >= max_results:
+            break
+
+    if enrich_details and rows:
+        for row in rows:
+            if not row.get("cik") or not row.get("accession"):
+                continue
+            url = _sec_primary_doc_url(row["cik"], row["accession"])
+            xml_text = _sec_get(url)
+            # Be polite — sleep 0.15s between filing fetches (~6 req/sec
+            # ceiling, well under SEC's 10 req/sec limit).
+            time.sleep(0.15)
+            if not isinstance(xml_text, str):
+                continue
+            parsed = _parse_form_d_xml(xml_text)
+            row.update(parsed)
+
+    return rows
+
+
+def fetch_sec_form_d_filings(
+    days: int = 60,
+    max_results: int = 20,
+    enrich_details: bool = True,
+) -> list[dict]:
+    """Stale-fallback wrapper around `_fetch_sec_form_d_filings_impl`.
+
+    EDGAR will 403 if the User-Agent is missing or transiently slow during
+    business hours; preserve the prior good result so the AI tab never goes
+    blank on a single failed sweep."""
+    try:
+        out = _fetch_sec_form_d_filings_impl(days, max_results, enrich_details)
+    except Exception as e:
+        print(f"  [fetch_sec_form_d_filings] fatal {e}", file=sys.stderr)
+        out = None
+    if isinstance(out, list) and out:
+        _stale_save("fetch_sec_form_d_filings", out)
+        return out
+    cached = _stale_load("fetch_sec_form_d_filings")
+    if isinstance(cached, list):
+        return cached
+    return out if isinstance(out, list) else []
+
+
 def fetch_ai_funding() -> dict:
-    """Orchestrator: pull live YC AI directory + HN funding news + load
-    curated snapshot. Stored on `market.ai_funding`.
+    """Orchestrator: pull live YC AI directory + HN funding news + SEC Form
+    D AI filings + load curated snapshot. Stored on `market.ai_funding`.
     """
     print("  AI funding: YC AI directory (yc-oss)...")
     yc = fetch_yc_ai_companies(200)
@@ -953,10 +1208,14 @@ def fetch_ai_funding() -> dict:
     print("  AI funding: HN 'raises Series' (filtered for AI)...")
     hn_news = fetch_ai_funding_news_hn(30, 40)
     print(f"    -> {len(hn_news)} HN funding stories")
+    print("  AI funding: SEC EDGAR Form D (AI issuers, last 60d)...")
+    form_d = fetch_sec_form_d_filings(60, 20, True)
+    print(f"    -> {len(form_d)} Form D filings (AI-adjacent)")
     return {
         "yc_companies": yc.get("yc_companies", []),
         "yc_total_ai_count": yc.get("yc_total_ai_count", 0),
         "recent_funding_news": hn_news,
+        "form_d_filings": form_d,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
 
