@@ -3510,7 +3510,12 @@ function renderTop20Signals(){
     .slice().sort((a,b) => (b.score||0) - (a.score||0))
     .slice(0, 25);
   if (!all.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No top-20 signals yet — refresh.</div>';
+    host.innerHTML = V2.empty({
+      icon: '📡',
+      title: 'Signals warming up',
+      sub: 'No top-20 signals yet — refresh in a moment.',
+      warm: true,
+    });
     return;
   }
   window._top20SignalsCache = {};
@@ -3630,7 +3635,12 @@ function renderPerCoinSignalList(){
     .sort((a,b) => (a.rank||999) - (b.rank||999))
     .slice(0, 25);
   if (!top25.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No per-coin signals yet — refresh.</div>';
+    host.innerHTML = V2.empty({
+      icon: '📡',
+      title: 'Per-coin signals warming up',
+      sub: 'No top-25 signals yet — refresh in a moment.',
+      warm: true,
+    });
     return;
   }
   // Build a lookup of poc_top entries by uppercase symbol so we can pull
@@ -3883,7 +3893,12 @@ function renderWhaleSentiment(){
   const host = document.getElementById('whaleSentimentCard');
   if (!host) return;
   if (!s){
-    host.innerHTML = '<div class="sub" style="color:var(--muted)">No whale sentiment data yet — waiting on first fetch.</div>';
+    host.innerHTML = V2.empty({
+      icon: '🐋',
+      title: 'Whale sentiment warming up',
+      sub: 'Waiting on the first whale-sentiment fetch.',
+      warm: true,
+    });
     return;
   }
   const color = signalColor(s.score);
@@ -4389,7 +4404,12 @@ function renderWhaleEth(){
         <span style="color:var(--muted)"> in a single transaction</span><br>
         <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`;
     } else {
-      ltBox.innerHTML = '<span style="color:var(--muted)">No data — Blockchair fetch may have failed.</span>';
+      ltBox.innerHTML = V2.empty({
+        icon: '🐋',
+        title: 'No single-largest transaction',
+        sub: 'Blockchair fetch may have failed — retry on next refresh.',
+        warm: true,
+      });
     }
   }
 
@@ -5131,21 +5151,10 @@ function renderInsights(){
   if (headerStrong && tab !== 'overview') headerStrong.textContent = label;
   if (!list.length){
     const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
-    host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
+    host.innerHTML = V2.empty({ icon: '📡', title: 'Insights warming up', sub: empty, warm: true });
     return;
   }
-  host.innerHTML = list.map(i => {
-    const c = severityColor(i.severity);
-    const ic = severityIcon(i.severity, i.kind);
-    const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:1px">${escapeHtml(i.detail)}</div>` : '';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};border-radius:8px;max-width:360px;flex:1 1 280px">
-      <span style="font-size:13px;line-height:1.2">${ic}</span>
-      <div style="line-height:1.25">
-        <div style="font-size:12px;color:var(--text)">${escapeHtml(i.headline)}</div>
-        ${detail}
-      </div>
-    </div>`;
-  }).join('');
+  host.innerHTML = list.map(i => V2.insightCard(i)).join('');
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5367,7 +5376,12 @@ function renderGeckoTerminalPools(){
     const tbody = document.querySelector(tbodySel);
     if (!tbody) return;
     if (!rows.length) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:14px">No data yet — wait for next refresh</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:0">' + V2.empty({
+        icon: '📊',
+        title: 'Pools warming up',
+        sub: 'No DEX pool data yet — wait for the next refresh.',
+        warm: true,
+      }) + '</td></tr>';
       return;
     }
     tbody.innerHTML = rows.slice(0, 10).map((p, i) => {
@@ -5609,7 +5623,12 @@ function renderNews(){
   const host = document.getElementById('newsFeed');
   if (!host) return;
   if (!news.length) {
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
+    host.innerHTML = V2.empty({
+      icon: '📰',
+      title: 'News feed warming up',
+      sub: 'No headlines have landed yet — check back after the next refresh.',
+      warm: true,
+    });
     return;
   }
   host.innerHTML = news.slice(0, 25).map(n =>
@@ -5772,7 +5791,7 @@ function renderWhaleExtras(){
     // or zero predicted change) still renders the card instead of showing
     // "Loading…" forever.
     if (diff.remaining_blocks == null && diff.difficulty_change_pct == null) {
-      dEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
+      dEl.innerHTML = V2.skel('lines:3');
     } else {
       // Distinguish missing data ("— days") from a legitimate zero so the card
       // doesn't claim "~0.0 days" when the API simply didn't return the field.
@@ -5796,7 +5815,7 @@ function renderWhaleExtras(){
     // Explicit null-check: an LN network that genuinely has 0 nodes (e.g.
     // during a regional fetch outage) should not be stuck on "Loading…".
     if (ln.node_count == null) {
-      lEl.innerHTML = '<span style="color:var(--muted)">Loading…</span>';
+      lEl.innerHTML = V2.skel('lines:3');
     } else {
       lEl.innerHTML = `
         <div class="v" style="font-size:20px;font-weight:600;color:var(--text)">${(ln.total_capacity_btc||0).toFixed(0)} BTC</div>
@@ -6225,7 +6244,12 @@ function renderOverviewNews(){
   const host = document.getElementById('overviewNews');
   if (host){
     if (!news.length){
-      host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
+      host.innerHTML = V2.empty({
+        icon: '📰',
+        title: 'Headlines warming up',
+        sub: 'No top news yet — refresh in a moment.',
+        warm: true,
+      });
     } else {
       host.innerHTML = news.slice(0,4).map(n =>
         `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
@@ -6241,7 +6265,12 @@ function renderOverviewNews(){
   const bottom = document.getElementById('overviewNewsHost');
   if (bottom){
     if (!news.length){
-      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
+      bottom.innerHTML = V2.empty({
+        icon: '📰',
+        title: 'Breaking news warming up',
+        sub: 'No recent headlines — they will appear after the next refresh.',
+        warm: true,
+      });
       return;
     }
     bottom.innerHTML = news.slice(0,10).map(n =>
@@ -6258,21 +6287,15 @@ function renderOverviewInsights(){
   const host = document.getElementById('overviewInsights');
   if (!host) return;
   if (!all.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No notable insights right now</div>';
+    host.innerHTML = V2.empty({
+      icon: '📡',
+      title: 'Top insights warming up',
+      sub: 'No notable cross-tab signals yet — they will appear here after the next refresh.',
+      warm: true,
+    });
     return;
   }
-  host.innerHTML = all.slice(0,4).map(i => {
-    const c = severityColor(i.severity);
-    const ic = severityIcon(i.severity, i.kind);
-    const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
-      <span style="font-size:13px">${ic}</span>
-      <div style="flex:1;line-height:1.3">
-        <div style="font-size:12px">${escapeHtml(i.headline)}</div>
-        ${detail}
-      </div>
-    </div>`;
-  }).join('');
+  host.innerHTML = all.slice(0,4).map(i => V2.insightCard(i)).join('');
 }
 
 // Wire click-to-jump on the macro card and news card
@@ -6599,7 +6622,12 @@ function renderStocksTab(){
     null
   );
   if (!Array.isArray(rows) || rows.length === 0){
-    grid.innerHTML = '<div class="empty">Stock signals not yet loaded &mdash; run python app.py --fetch-market</div>';
+    grid.innerHTML = V2.empty({
+      icon: '📡',
+      title: 'Stock signals warming up',
+      sub: 'Run python app.py --fetch-market to populate top-50 equity signals.',
+      warm: true,
+    });
     return;
   }
   const sorted = rows.slice().sort((a, b) => (Number(b.score)||0) - (Number(a.score)||0));
@@ -6740,7 +6768,12 @@ function renderAiNewsTab(){
       return (db||0) - (da||0);
     }).slice(0, 30);
     if (!items.length){
-      feed.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
+      feed.innerHTML = V2.empty({
+        icon: '📰',
+        title: 'AI news warming up',
+        sub: 'No AI-related articles yet — wait for the next refresh.',
+        warm: true,
+      });
     } else {
       feed.innerHTML = items.map(n => {
         const sc = AI_SENT_COLOR[n.sentiment] || 'var(--muted)';
@@ -6767,7 +6800,12 @@ function renderAiNewsTab(){
       .filter(s => s && s.symbol && set.has(String(s.symbol).toUpperCase()))
       .sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0));
     if (!subset.length){
-      aiGrid.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No AI-exposed tickers in current stocks_signals.</div>';
+      aiGrid.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
+        icon: '📡',
+        title: 'No AI-exposed tickers',
+        sub: 'No AI-bucket matches in the current stocks_signals payload.',
+        warm: true,
+      }) + '</div>';
     } else {
       aiGrid.innerHTML = subset.map(s => {
         const score = Number(s.score) || 0;
@@ -6824,7 +6862,12 @@ function renderAiNewsTab(){
       .map(([src, r]) => ({src, ...r, net: r.positive - r.negative}))
       .sort((a,b)=> b.total - a.total || b.net - a.net);
     if (!rows.length){
-      srcHost.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No source data available.</div>';
+      srcHost.innerHTML = V2.empty({
+        icon: '📰',
+        title: 'Source breakdown unavailable',
+        sub: 'No per-source headline data — refresh in a moment.',
+        warm: true,
+      });
     } else {
       srcHost.innerHTML = `<table style="width:100%;font-size:12px;border-collapse:collapse">
         <thead><tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
@@ -6898,7 +6941,12 @@ function renderAiInvestmentKpis(){
   if (!host) return;
   const kpis = (((DATA.market||{}).ai_curated||{}).investment_kpis) || [];
   if (!Array.isArray(kpis) || !kpis.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No investment KPIs available.</div>';
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
+      icon: '⏳',
+      title: 'Investment KPIs warming up',
+      sub: 'No KPI data yet — refresh in a moment.',
+      warm: true,
+    }) + '</div>';
     return;
   }
   host.innerHTML = kpis.map(k => {
@@ -7099,7 +7147,12 @@ function renderAiWhitepaperKpis(){
   if (!host) return;
   const kpis = (((DATA.market||{}).ai_curated||{}).whitepaper_kpis) || [];
   if (!Array.isArray(kpis) || !kpis.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No research benchmarks available.</div>';
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
+      icon: '⏳',
+      title: 'Research benchmarks warming up',
+      sub: 'No benchmark data yet — refresh in a moment.',
+      warm: true,
+    }) + '</div>';
     return;
   }
   host.innerHTML = kpis.map(k => {
@@ -7363,7 +7416,12 @@ function renderBreadthChart(canvasId, breadth, title){
     // signals presence-of-section but doesn't render a blank chart.
     const wrap = canvas.parentElement;
     if (wrap){
-      wrap.innerHTML = '<div class="empty" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:12px">No data available.</div>';
+      wrap.innerHTML = V2.empty({
+        icon: '📊',
+        title: 'Breadth data warming up',
+        sub: 'No signal history yet — run --fetch-market to populate.',
+        warm: true,
+      });
     }
     return;
   }
@@ -7913,7 +7971,12 @@ function renderPocTopCards(){
   if (!host) return;
   const list = ((DATA.market || {}).poc_top) || [];
   if (!Array.isArray(list) || list.length === 0){
-    host.innerHTML = '<div class="empty" style="grid-column:1/-1">POC data populating — run python app.py --fetch-market and reload.</div>';
+    host.innerHTML = '<div style="grid-column:1/-1">' + V2.empty({
+      icon: '📊',
+      title: 'POC data warming up',
+      sub: 'Run python app.py --fetch-market and reload to populate volume-profile data.',
+      warm: true,
+    }) + '</div>';
     if (featuredHost) featuredHost.innerHTML = '';
     return;
   }
@@ -8333,7 +8396,9 @@ function renderCCSocialCards(){
     const c = cc[a];
     const accent = RESEARCH_ACCENT(a);
     if (!c){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">No data available.</div></div>`;
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3>` +
+        V2.empty({ icon: '📡', title: 'No social data', sub: 'CryptoCompare did not return data for this asset.', warm: true }) +
+        '</div>';
     }
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -8828,7 +8893,12 @@ function renderTopNewsSentiment(){
   // XMR, TON, XLM, DAI, etc.). Missing/empty payload → RSS-only behavior.
   const ccByCoin = (((DATA.market || {}).news_sentiment_by_coin) || {}).coins || {};
   if (!marketsTop.length || (!news.length && !Object.keys(ccByCoin).length)){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-25 coins in the current window.</div>';
+    host.innerHTML = V2.empty({
+      icon: '📰',
+      title: 'No top-25 mentions',
+      sub: 'No news headlines reference top-25 coins in the current window.',
+      warm: true,
+    });
     return;
   }
   const rows = groupNewsBySymbol(news, marketsTop, 25, ccByCoin);
@@ -8838,7 +8908,12 @@ function renderTopNewsSentiment(){
   rows.forEach(r => { if (r.symbol) window._top25NewsCache[r.symbol] = r; });
   const anyMentions = rows.some(r => r.total > 0);
   if (!anyMentions){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-25 coins in the current window.</div>';
+    host.innerHTML = V2.empty({
+      icon: '📰',
+      title: 'No top-25 mentions',
+      sub: 'No news headlines reference top-25 coins in the current window.',
+      warm: true,
+    });
     return;
   }
   host.innerHTML = rows.map(r => {
@@ -8888,7 +8963,12 @@ function renderResearchNews(){
   if (!host) return;
   const news = ((DATA.market || {}).news) || [];
   if (!news.length) {
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
+    host.innerHTML = V2.empty({
+      icon: '📰',
+      title: 'Research news warming up',
+      sub: 'No notable headlines yet — refresh in a moment.',
+      warm: true,
+    });
     return;
   }
   const sorted = news.slice().sort((a, b) => {
@@ -8986,7 +9066,12 @@ function renderAll(){
   // the static "no data" copy so users on the Whale tab don't think the
   // dashboard is broken during the ~500ms first-load.
   if (whEmpty && state.tab === 'whale' && SIDECAR_STATE.whale === 'loading'){
-    whEmptyEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading whale data…</div>';
+    whEmptyEl.innerHTML = V2.empty({
+      icon: '🐋',
+      title: 'Loading whale activity…',
+      sub: 'Fetching on-chain proxies (mempool, exchange flows, mining).',
+      warm: true,
+    }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
   }
   whEmptyEl.classList.toggle('hidden', !whEmpty);
   document.getElementById('whaleContent').classList.toggle('hidden', whEmpty);
@@ -9019,7 +9104,17 @@ function renderAll(){
     const defiLoading = document.getElementById('defiLoading');
     const defiContent = document.getElementById('defiContent');
     const defiLoadingActive = SIDECAR_STATE.defi === 'loading';
-    if (defiLoading) defiLoading.classList.toggle('hidden', !defiLoadingActive);
+    if (defiLoading) {
+      defiLoading.classList.toggle('hidden', !defiLoadingActive);
+      if (defiLoadingActive) {
+        defiLoading.innerHTML = V2.empty({
+          icon: '⏳',
+          title: 'Loading DeFi data…',
+          sub: 'Fetching TVL, stablecoin, and yield data — usually under a second.',
+          warm: true,
+        }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      }
+    }
     if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive);
     if (!defiLoadingActive) renderDefi();
   }
