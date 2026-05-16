@@ -1152,6 +1152,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div id="aiNewsSummary"></div>
         </div>
 
+        <!-- Quadrant scatter chart — pinned right under sentiment per user
+             request (the big visual lead-in before the numbers). -->
+        <div class="chart-card" id="aiQuadrantCard" style="margin-top:12px">
+          <div class="head">
+            <h2>AI funding quadrant <span class="tag">last round &times; valuation</span></h2>
+            <span class="desc">X = last round size &middot; Y = total valuation &middot; log scale both axes &middot; each dot is a company (hover for name)</span>
+          </div>
+          <div class="chart-wrap" style="height:380px"><canvas id="aiQuadrantChart"></canvas></div>
+        </div>
+
         <!-- AI investment KPI strip (curated) -->
         <div class="chart-card" id="aiInvestmentKpisCard" style="margin-top:12px">
           <div class="head">
@@ -1182,14 +1192,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
 
-        <!-- Quadrant scatter chart -->
-        <div class="chart-card" id="aiQuadrantCard" style="margin-top:12px">
-          <div class="head">
-            <h2>AI funding quadrant <span class="tag">last round &times; valuation</span></h2>
-            <span class="desc">X = last round size &middot; Y = total valuation &middot; log scale both axes &middot; each dot is a company (hover for name)</span>
-          </div>
-          <div class="chart-wrap" style="height:380px"><canvas id="aiQuadrantChart"></canvas></div>
-        </div>
+        <!-- (AI funding quadrant moved up — sits right under sentiment.) -->
 
         <!-- White paper / research KPIs -->
         <div class="chart-card" id="aiWhitepaperKpisCard" style="margin-top:12px">
@@ -1246,7 +1249,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="card" style="padding:12px 14px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
           <div>
-            <h2 style="margin:0;font-size:15px">Top 50 by market cap</h2>
+            <h2 style="margin:0;font-size:15px">Top 25 by market cap</h2>
             <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
           </div>
           <span style="flex:1"></span>
@@ -2495,9 +2498,15 @@ function renderTop20Signals(){
   const host = document.getElementById('top20SignalCards');
   if (!host) return;
   const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  // Per user request, trim the full signals_top20 (which is actually top 50)
+  // down to top 25 by score so the grouped sections + breadth chart stay
+  // tight. Stablecoins are filtered before the slice so they don't burn a
+  // slot. The breadth chart at the top of the tab still uses the full 50
+  // for its time-series — only THIS card grid is trimmed.
   const all = (DATA.signals_top20 || [])
     .filter(s => s && !isStable(s.symbol))
-    .slice().sort((a,b) => (b.score||0) - (a.score||0));
+    .slice().sort((a,b) => (b.score||0) - (a.score||0))
+    .slice(0, 25);
   if (!all.length){
     host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No top-20 signals yet — refresh.</div>';
     return;
