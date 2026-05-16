@@ -79,32 +79,37 @@ def test_market_insight_tab_classifier_known_patterns():
     assert f({"headline": "ETH L/S ratio crowded long (2.85)"}) == "trading"
     assert f({"headline": "LINK L/S ratio crowded short (0.55)"}) == "trading"
 
-    assert f({"headline": "DXY +1.2% today — typically inverse to risk assets including crypto"}) == "markets"
-    assert f({"headline": "10Y Treasury yield crossed above 5.0% (5.02%)"}) == "markets"
-    assert f({"headline": "Gold at 30-day high ($2,420.50/oz)"}) == "markets"
-    assert f({"headline": "S&P 500 -2.4% today — risk-off may pressure crypto"}) == "markets"
-    assert f({"headline": "📰 CoinDesk: Some headline goes here"}) == "markets"
-    assert f({"headline": "ZANO (Zano) is trending #1 on CoinGecko"}) == "markets"
-    assert f({"headline": "BTC price divergence: CoinGecko $79,200 vs Coinbase $79,500"}) == "markets"
-    assert f({"headline": "DEX hot pool: PEPE/WETH on ethereum +45% with $80M volume"}) == "markets"
-    assert f({"headline": "NASDAQ +1.80% on the day"}) == "markets"
-    assert f({"headline": "Dow Jones -2.10% on the day"}) == "markets"
-    assert f({"headline": "VIX crossed above 20 (22.4) — calm→fear"}) == "markets"
-    assert f({"headline": "VIX fell below 30 (28.1) — panic→fear"}) == "markets"
+    # "Markets" tab no longer exists — these now route to real tabs that
+    # have an insights bar. Traditional indices + macro → Stocks (where the
+    # Traditional Indices card lives now). Crypto-wide moves → Crypto Signals.
+    # News → Research (social tab). DEX hot pool → DeFi.
+    assert f({"headline": "DXY +1.2% today — typically inverse to risk assets including crypto"}) == "stocks"
+    assert f({"headline": "10Y Treasury yield crossed above 5.0% (5.02%)"}) == "stocks"
+    assert f({"headline": "Gold at 30-day high ($2,420.50/oz)"}) == "stocks"
+    assert f({"headline": "S&P 500 -2.4% today — risk-off may pressure crypto"}) == "stocks"
+    assert f({"headline": "📰 CoinDesk: Some headline goes here"}) == "social"
+    assert f({"headline": "ZANO (Zano) is trending #1 on CoinGecko"}) == "signals"
+    assert f({"headline": "BTC price divergence: CoinGecko $79,200 vs Coinbase $79,500"}) == "signals"
+    assert f({"headline": "DEX hot pool: PEPE/WETH on ethereum +45% with $80M volume"}) == "defi"
+    assert f({"headline": "NASDAQ +1.80% on the day"}) == "stocks"
+    assert f({"headline": "Dow Jones -2.10% on the day"}) == "stocks"
+    assert f({"headline": "VIX crossed above 20 (22.4) — calm→fear"}) == "stocks"
+    assert f({"headline": "VIX fell below 30 (28.1) — panic→fear"}) == "stocks"
     # Top-25 movers + BTC dominance + market-cap milestones
-    assert f({"headline": "Top-25 24h gainer: SOL +7.4% (rank #5)"}) == "markets"
-    assert f({"headline": "Top-25 24h loser: ADA -6.1% (rank #11)"}) == "markets"
-    assert f({"headline": "Top-25 7d momentum: AVAX +18.2% week (rank #14)"}) == "markets"
-    assert f({"headline": "Top-25 7d laggard: DOT -16.4% week (rank #16)"}) == "markets"
-    assert f({"headline": "BTC dominance high: 61.2% — alt season unlikely"}) == "markets"
-    assert f({"headline": "BTC dominance low: 43.8% — alt rotation in play"}) == "markets"
-    assert f({"headline": "Total crypto market cap above $4T (now $4.12T)"}) == "markets"
+    assert f({"headline": "Top-25 24h gainer: SOL +7.4% (rank #5)"}) == "signals"
+    assert f({"headline": "Top-25 24h loser: ADA -6.1% (rank #11)"}) == "signals"
+    assert f({"headline": "Top-25 7d momentum: AVAX +18.2% week (rank #14)"}) == "signals"
+    assert f({"headline": "Top-25 7d laggard: DOT -16.4% week (rank #16)"}) == "signals"
+    assert f({"headline": "BTC dominance high: 61.2% — alt season unlikely"}) == "signals"
+    assert f({"headline": "BTC dominance low: 43.8% — alt rotation in play"}) == "signals"
+    assert f({"headline": "Total crypto market cap above $4T (now $4.12T)"}) == "signals"
 
 
-def test_market_insight_tab_classifier_falls_back_to_markets():
+def test_market_insight_tab_classifier_falls_back_to_signals():
+    # Default now lands on Crypto Signals (was "markets" — a dropped tab).
     f = insights._market_insight_tab
-    assert f({"headline": "something nobody recognises"}) == "markets"
-    assert f({"headline": ""}) == "markets"
+    assert f({"headline": "something nobody recognises"}) == "signals"
+    assert f({"headline": ""}) == "signals"
 
 
 def test_every_insight_has_a_valid_tab():

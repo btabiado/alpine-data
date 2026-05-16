@@ -1735,7 +1735,7 @@ def _market_insights(payload: dict) -> list[dict]:
 # Overview shows its own curated "Top insights" card from the global list,
 # and the per-tab Insights bar is hidden when Overview is active.
 
-VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale", "stocks",
+VALID_TABS = {"etf", "signals", "trading", "defi", "whale", "stocks",
               "poc", "social", "ainews"}
 
 
@@ -2028,24 +2028,30 @@ def _market_insight_tab(insight: dict) -> str:
     if "whale tx volume" in h: return "whale"
     if "on-chain transfer volume" in h: return "whale"
     if "active addresses" in h: return "whale"
-    # Markets / macro: traditional indices, news, trending tickers, source divergence
-    if "dxy" in h: return "markets"
-    if "10y treasury" in h: return "markets"
-    if "gold at" in h: return "markets"
-    if "s&p 500" in h: return "markets"
-    if "nasdaq" in h: return "markets"
-    if "dow jones" in h: return "markets"
-    if "vix " in h or h.startswith("vix"): return "markets"
-    if "📰" in raw: return "markets"
-    if "trending #1" in h: return "markets"
-    if "price divergence" in h: return "markets"
-    if "dex hot pool" in h: return "markets"
-    # Top-25 movers + dominance + total mcap milestones
-    if "top-25" in h: return "markets"
-    if "btc dominance" in h: return "markets"
-    if "total crypto market cap" in h: return "markets"
-    # Default: anything else macro-flavoured lands in Markets.
-    return "markets"
+    # Markets / macro: traditional indices, news, trending tickers, source divergence.
+    # The "Markets" tab was folded into the Crypto/Overview tab; routing these to
+    # tab="markets" would silently drop them in the per-tab insights bar filter
+    # (renderInsights matches state.tab strict-equals; "markets" matches nothing).
+    # Route by content: traditional-indices + macro → Stocks tab (where the
+    # Traditional Indices card lives now), crypto-wide moves → Crypto Signals,
+    # news → Crypto/Overview's Top insights card.
+    if "dxy" in h: return "stocks"
+    if "10y treasury" in h: return "stocks"
+    if "gold at" in h: return "stocks"
+    if "s&p 500" in h: return "stocks"
+    if "nasdaq" in h: return "stocks"
+    if "dow jones" in h: return "stocks"
+    if "vix " in h or h.startswith("vix"): return "stocks"
+    if "📰" in raw: return "social"
+    if "trending #1" in h: return "signals"
+    if "price divergence" in h: return "signals"
+    if "dex hot pool" in h: return "defi"
+    # Top-25 movers + dominance + total mcap milestones → Crypto Signals
+    if "top-25" in h: return "signals"
+    if "btc dominance" in h: return "signals"
+    if "total crypto market cap" in h: return "signals"
+    # Default: anything else macro-flavoured falls into Crypto Signals.
+    return "signals"
 
 
 def build_insights(payload: dict, limit: int = 12) -> list[dict]:

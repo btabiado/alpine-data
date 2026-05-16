@@ -563,6 +563,42 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* Strong Buys: tighter on mobile too. (#top20SignalCards is overridden
      above with full-width sections + 2-up inner grid — don't reset here.) */
   #overviewStrongBuys{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
+  /* UX-F2: Top-25 by market cap card grid was inline minmax(180px,1fr) which
+     collapses to 1-up at 375px (~1.8k px scroll for 25 cards). Match the
+     Strong Buys sibling: 2-up on mobile. */
+  #overviewTop15{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
+  /* UX-F3: Stocks tab — the prior mobile rule targeted #stocksGrid (the outer
+     wrapper holding 5 bucket sections) which is already 1fr. The actual cards
+     live in inner .stocks-section-grid divs with inline minmax(280px,1fr).
+     Without this override they stack 1-up (~6k px scroll for ~50 stocks). */
+  #stocksGrid .stocks-section-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px !important}
+  /* UX-F5: AI-exposed stocks grid was inline minmax(220px,1fr) → 1-up on
+     mobile (15 cards stacked). Match the AI KPI strip: 2-up. */
+  #aiStocksGrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
+  /* UX-F4: Whale Sentiment Index tables (BTC + ETH) have 4 columns whose
+     Read column carries 6-10-word explanations — min-width > 375px forces the
+     whole Whale tab to scroll horizontally on mobile. Convert table to a
+     block element with its own horizontal scroll so the tab doesn't bleed. */
+  #whaleSentimentCard table,
+  #whaleEthSentimentCard table{display:block;overflow-x:auto;white-space:nowrap;max-width:100%}
+  /* UX-F1: Header search input's inline width:130px + the four control buttons
+     consume ~351px on a 375px viewport, collapsing the dashboard title to "…".
+     Shrink the search input on mobile and shrink the controls' font. */
+  header #symbolSearchInput{width:84px !important;font-size:11px;min-height:34px;padding:6px 8px}
+  /* UX-F9: Futures explainer's inner .card carries inline padding:14px 16px
+     which beats the non-!important mobile .card{padding:8px 10px}. The
+     disclosure body re-flows with too much padding on phones; tighten it. */
+  .futures-explainer .card{padding:8px 10px !important}
+}
+/* UX-F8: All modals — outer .modal-bg padding:24px eats 48px on a 375px
+   viewport; combined with each modal's inner padding the content area is
+   only ~291px wide. Tight for POC-detail tables and share-link URL row. */
+@media (max-width:480px){
+  .modal-bg{padding:8px !important}
+}
+/* (close the @media (max-width:860px) block — the rules above need to be
+   inside it, not after it.) */
+@media (max-width:860px){
 
   /* --- Compact mobile header (was ~200px tall, now ~104px) --- */
   header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
@@ -826,7 +862,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .futures-explainer{margin-bottom:10px}
 .futures-explainer summary{cursor:pointer;font-size:12px;color:var(--muted);padding:4px 0;list-style:none;user-select:none}
 .futures-explainer summary::-webkit-details-marker{display:none}
-.futures-explainer summary::before{content:"\25B8 ";color:var(--accent, #a78bfa)}
+.futures-explainer summary::before{content:"\25B8 ";color:var(--purple)}
 .futures-explainer[open] summary::before{content:"\25BE "}
 </style>
 </head>
