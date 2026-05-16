@@ -1905,6 +1905,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <div id="ethStatsBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.6"></div>
           </div>
         </div>
+        <div class="chart-card">
+          <div class="head">
+            <h2>ETH blocks mined per day (90d) <span class="tag">Etherscan</span></h2>
+            <span class="desc">Daily on-chain throughput proxy — block count between midnight-UTC checkpoints. ~7,200/day saturates the 12s slot target post-Merge.</span>
+          </div>
+          <div id="ethEtherscanDailyNoKey" class="sub hidden" style="font-size:12px;color:var(--muted);padding:6px 4px"></div>
+          <div class="chart-wrap"><canvas id="ethEtherscanDailyChart"></canvas></div>
+        </div>
       </div> <!-- /whaleEthPanel -->
     </div>
   </div>
@@ -3581,6 +3589,30 @@ function renderWhaleEth(){
   lineChart('ethTxVolChart',      'ethTxVol',      slice180(ethMarketVol),      '#22c55e', v=>fmtUSD(v,'auto'));
   lineChart('ethTxCountChart',    'ethTxCount',    slice180(cm.TxCnt),          '#a78bfa', v=>fmtNum(v,0));
   lineChart('ethSupplyChart',     'ethSupply',     slice180(cm.SplyCur),        '#627eea', v=>fmtNum(v/1e6,2)+'M');
+
+  // Etherscan 90d on-chain daily series. Env-gated by ETHERSCAN_API_KEY.
+  // When the key is absent the fetcher returns {available:false,reason:...}
+  // and we replace the chart with an inline hint instead of an empty canvas.
+  const eds = eth.etherscan_daily || {};
+  const edsCanvas  = document.getElementById('ethEtherscanDailyChart');
+  const edsNoKey   = document.getElementById('ethEtherscanDailyNoKey');
+  const edsSeries  = Array.isArray(eds.series) ? eds.series : [];
+  const noKeyReason = (eds.available === false && eds.reason === 'no ETHERSCAN_API_KEY in env');
+  if (noKeyReason || !edsSeries.length){
+    destroy('ethEtherscanDaily');
+    if (edsCanvas) edsCanvas.style.display = 'none';
+    if (edsNoKey){
+      edsNoKey.classList.remove('hidden');
+      edsNoKey.innerHTML = noKeyReason
+        ? 'Add <code>ETHERSCAN_API_KEY</code> to light up — free key from <a href="https://etherscan.io/apis" target="_blank" rel="noopener" style="color:#a78bfa">etherscan.io/apis</a>'
+        : 'No data yet — Etherscan fetch may have failed or rate-limited.';
+    }
+  } else {
+    if (edsCanvas) edsCanvas.style.display = '';
+    if (edsNoKey)  edsNoKey.classList.add('hidden');
+    lineChart('ethEtherscanDailyChart', 'ethEtherscanDaily', edsSeries.slice(-90),
+              '#f59e0b', v=>fmtNum(v,0)+' blocks');
+  }
 
   // Gas oracle
   const gasBox = document.getElementById('ethGasBox');

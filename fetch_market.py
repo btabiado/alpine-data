@@ -2965,6 +2965,162 @@ def etherscan_gas() -> dict:
     return cached if cached is not None else (out or {})
 
 
+# ----- Etherscan daily ETH on-chain series ----------------------------------
+
+def _etherscan_eth_daily_impl(days: int = 90) -> dict:
+    """Live Etherscan daily-series fetch. See ``etherscan_eth_daily`` wrapper.
+
+    Free-tier compromise: Etherscan's purpose-built daily-stats endpoints
+    (``stats?action=dailytx`` / ``dailyavggasprice`` / ``dailynewaddress``
+    / ``ethdailytxnfee`` / ``dailynetutilization``) are gated behind their
+    Pro plan. To stay on the free tier and still produce a 90-day daily
+    on-chain throughput series, we synthesize one from a free endpoint:
+
+      1. For each of the last N+1 UTC midnights, call
+         ``module=block&action=getblocknobytime&closest=before`` to find
+         the block number mined at (or just before) that timestamp.
+      2. The number of blocks mined in a 24h window is the delta between
+         consecutive checkpoints. That delta is a clean proxy for daily
+         network throughput / capacity utilization (post-Merge ETH
+         targets a 12s slot so a steady ~7,200 blocks/day = full
+         saturation; dips correlate with missed slots and demand drops).
+
+    That's ~91 calls per daily refresh — well within the 5-req/sec and
+    100k/day free-tier ceilings. The endpoint takes one ``apikey`` param
+    when provided.
+    """
+    import os
+
+    api_key = os.environ.get("ETHERSCAN_API_KEY", "").strip()
+    fetched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    if not api_key:
+        return {"available": False, "reason": "no ETHERSCAN_API_KEY in env"}
+
+    # Build the list of midnight-UTC timestamps for the last ``days`` days,
+    # plus one extra at "now" so the most recent bucket has a delta.
+    # E.g. for days=90 → 91 timestamps → 90 daily deltas.
+    now = datetime.now(timezone.utc)
+    today_midnight = datetime(now.year, now.month, now.day, tzinfo=timezone.utc)
+    checkpoints: list[tuple[str, int]] = []  # (YYYY-MM-DD label, unix timestamp)
+    for i in range(days, -1, -1):
+        d = today_midnight - timedelta(days=i)
+        checkpoints.append((d.strftime("%Y-%m-%d"), int(d.timestamp())))
+
+    block_numbers: dict[str, int | None] = {}
+    fail_count = 0
+    for label, ts in checkpoints:
+        j = _get(
+            "https://api.etherscan.io/v2/api",
+            {
+                "chainid": "1",
+                "module": "block",
+                "action": "getblocknobytime",
+                "timestamp": str(ts),
+                "closest": "before",
+                "apikey": api_key,
+            },
+        )
+        if not isinstance(j, dict) or j.get("status") != "1":
+            block_numbers[label] = None
+            fail_count += 1
+            # Etherscan returns Max rate limit reached as status=0; bail
+            # early if everything is failing rather than burn 90 calls.
+            if fail_count >= 5 and not any(v for v in block_numbers.values()):
+                print("  [etherscan_eth_daily] aborting: 5 consecutive failures",
+                      file=sys.stderr)
+                break
+            continue
+        try:
+            block_numbers[label] = int(j.get("result"))
+        except (TypeError, ValueError):
+            block_numbers[label] = None
+            fail_count += 1
+
+    # Convert to a (date, blocks_in_24h) series. Blocks-per-day is the
+    # delta from one checkpoint to the next; we attribute that delta to
+    # the *starting* date (i.e. blocks mined from day D 00:00 UTC to
+    # day D+1 00:00 UTC are tagged with date D).
+    series: list[dict] = []
+    labels = [c[0] for c in checkpoints]
+    for i in range(len(labels) - 1):
+        d0, d1 = labels[i], labels[i + 1]
+        b0, b1 = block_numbers.get(d0), block_numbers.get(d1)
+        if b0 is None or b1 is None:
+            continue
+        delta = b1 - b0
+        # Sanity guard: a healthy 24h window is ~6.5k–7.5k blocks. Drop
+        # absurd values (negative, zero, > 20k) which would only occur if
+        # the API returned wildly wrong block numbers.
+        if delta <= 0 or delta > 20_000:
+            continue
+        series.append({"date": d0, "value": delta})
+
+    available = bool(series)
+    out: dict = {
+        "available": available,
+        "metric": "blocks_per_day",
+        "description": (
+            "Ethereum mainnet blocks mined per UTC day. Synthesized from "
+            "Etherscan's free block?action=getblocknobytime endpoint by "
+            "diffing midnight-UTC checkpoint block numbers. Higher = more "
+            "network throughput; ~7,200/day saturates the 12s slot target."
+        ),
+        "series": series,
+        "fetched_at": fetched_at,
+    }
+    if fail_count:
+        out["fail_count"] = fail_count
+    return out
+
+
+def etherscan_eth_daily(days: int = 90) -> dict:
+    """Etherscan ETH on-chain 90-day daily series — env-gated by
+    ``ETHERSCAN_API_KEY``.
+
+    Mirrors the Glassnode / FRED no-key contract: when the env var is
+    absent, returns ``{"available": False, "reason": "no ETHERSCAN_API_KEY in env"}``
+    and never touches the network. The dashboard renders an inline
+    "Add ETHERSCAN_API_KEY to light up" hint in place of the chart.
+
+    Stale-fallback: when the key *is* set but every call failed (rate
+    limit, invalid key, network error), serves the last successful
+    payload from ``data/.stale/etherscan_eth_daily.json`` tagged with
+    stale metadata. The no-key branch never triggers stale.
+    """
+    import os
+    key_set = bool(os.environ.get("ETHERSCAN_API_KEY", "").strip())
+    try:
+        out = _etherscan_eth_daily_impl(days=days)
+    except Exception as e:
+        print(f"  [etherscan_eth_daily] fatal: {e}", file=sys.stderr)
+        out = None
+
+    # No-key branch is intentional; never serve stale for that.
+    if (
+        isinstance(out, dict)
+        and out.get("available") is False
+        and out.get("reason") == "no ETHERSCAN_API_KEY in env"
+    ):
+        return out
+
+    # Key was set and the call succeeded with at least one data point.
+    if isinstance(out, dict) and out.get("available"):
+        _stale_save("etherscan_eth_daily", out)
+        return out
+
+    # Key was set but everything failed → try stale.
+    if key_set:
+        cached = _stale_load("etherscan_eth_daily")
+        if cached is not None:
+            return cached
+    return out if isinstance(out, dict) else {
+        "available": False,
+        "reason": "fetch failed",
+        "series": [],
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+
 def _fetch_fred_impl() -> dict:
     """Live FRED fetch. See `fetch_fred` for the public wrapper that adds
     stale-fallback when the key is set but the API errors."""
@@ -4120,7 +4276,7 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
 
     (
         btc, distribution, glassnode, whale_txs,
-        eth_bc, eth_large_txs, eth_cm, multichain,
+        eth_bc, eth_large_txs, eth_cm, eth_etherscan, multichain,
     ) = await asyncio.gather(
         _timed("whale_proxies_btc",                _bg_call(whale_proxies_btc)),
         _timed("bitinfocharts_btc_distribution",   _bg_call(bitinfocharts_btc_distribution)),
@@ -4129,6 +4285,7 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
         _timed("blockchair_eth_stats",             _bg_call(blockchair_eth_stats)),
         _timed("blockchair_eth_large_transactions", _bg_call(blockchair_eth_large_transactions, 1_000_000)),
         _timed("coin_metrics_eth_whale_metrics",   _bg_call(coin_metrics_eth_whale_metrics)),
+        _timed("etherscan_eth_daily",              _bg_call(etherscan_eth_daily)),
         _timed("fetch_multichain_whale_stats",     _bg_call(fetch_multichain_whale_stats)),
     )
     print(f"  [timing] fetch_whale total: {time.monotonic() - t_total:.2f}s")
@@ -4141,13 +4298,16 @@ async def _fetch_whale_async(btc_price_usd: float | None = None) -> dict:
             "blockchair": eth_bc,
             "coin_metrics": eth_cm,
             "large_transactions": eth_large_txs,
+            "etherscan_daily": eth_etherscan,
         },
         "multichain": multichain,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "note": ("Free: blockchain.info + bitinfocharts cohorts + mempool.space "
                  "tx scan. ETH side via Blockchair + Coin Metrics. "
                  "Multichain (LTC/BCH/DOGE) via Blockchair /stats. "
-                 "Glassnode auto-activates when GLASSNODE_API_KEY is set."),
+                 "Glassnode auto-activates when GLASSNODE_API_KEY is set. "
+                 "Etherscan 90d blocks-per-day series activates when "
+                 "ETHERSCAN_API_KEY is set."),
     }
 
 

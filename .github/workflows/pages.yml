@@ -86,12 +86,16 @@ jobs:
           #                   blocked; OAuth bypasses that)
           #   COINMETRICS     ETH whale active addresses / tx count / transfer
           #                   volume / supply on the Whale-tab ETH panel
+          #   ETHERSCAN       90-day ETH blocks-per-day chart on the Whale-tab
+          #                   ETH panel (free tier — synthesized from
+          #                   getblocknobytime since dailytx is Pro-only)
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
         run: python app.py --fetch-market --no-open
 
       - name: Fallback generate if dashboard.html missing
