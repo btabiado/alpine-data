@@ -798,10 +798,36 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      chat form's submit button (#chatSend) which has no .btn class. */
   .chat-form button,
   button.btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+
+  /* --- Stocks overview indices bar (DOW/S&P/NDX/VIX) ---
+     Desktop uses auto-fit minmax(240px,1fr) which forces 1-up on a 375px
+     phone — each cell ran ~80px tall × full-width with 20px price + 110×32
+     sparkline. Force 2-up grid and shrink the per-cell price/sparkline so
+     the bar drops to ~50% of its prior footprint. Renderer
+     (renderOverviewIndices) emits per-index <div> with inner
+     flex-direction:column block carrying [label span, big price span,
+     pct span] then an SVG sparkline. Override the inline styles via
+     !important. */
+  #overviewIndicesWrap{padding:8px 10px !important}
+  #overviewIndices{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px !important}
+  #overviewIndices > div{padding:6px 8px !important;gap:6px !important}
+  /* Big price number — inner block's 2nd span (after label, before pct) */
+  #overviewIndices > div > div > span:nth-child(2){font-size:14px !important}
+  /* Shrink the sparkline SVG */
+  #overviewIndices svg{width:60px !important;height:20px !important}
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
 .note{font-size:11px;color:var(--muted);background:#10151f;border:1px solid var(--border);padding:8px 12px;border-radius:8px}
+/* Collapsible explainer (Futures tab). Closed-by-default native <details>
+   so the long perpetuals paragraph doesn't dominate above-the-fold on
+   desktop or mobile. Suppress the default disclosure triangle in favor
+   of a colored caret rotated via the [open] attribute selector. */
+.futures-explainer{margin-bottom:10px}
+.futures-explainer summary{cursor:pointer;font-size:12px;color:var(--muted);padding:4px 0;list-style:none;user-select:none}
+.futures-explainer summary::-webkit-details-marker{display:none}
+.futures-explainer summary::before{content:"\25B8 ";color:var(--accent, #a78bfa)}
+.futures-explainer[open] summary::before{content:"\25BE "}
 </style>
 </head>
 <body>
@@ -1296,12 +1322,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-trading" class="hidden">
     <div id="tradingEmpty" class="empty hidden">No market data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="tradingContent">
-      <div class="card" style="padding:14px 16px;margin-bottom:10px;border-left:3px solid var(--btc)">
-        <h2 style="margin:0 0 6px;font-size:14px">Futures &amp; perpetuals dashboard</h2>
-        <p class="sub" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0">
-          Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase International Exchange perps with the most extreme positive (crowded longs) and negative (crowded shorts) funding rates.
-        </p>
-      </div>
+      <details class="futures-explainer">
+        <summary>What's a perpetual? &mdash; Futures &amp; perpetuals dashboard explainer</summary>
+        <div class="card" style="padding:14px 16px;margin-top:6px;margin-bottom:10px;border-left:3px solid var(--btc)">
+          <h2 style="margin:0 0 6px;font-size:14px">Futures &amp; perpetuals dashboard</h2>
+          <p class="sub" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0">
+            Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase International Exchange perps with the most extreme positive (crowded longs) and negative (crowded shorts) funding rates.
+          </p>
+        </div>
+      </details>
       <!-- FUTURES POSITIONING SENTIMENT — composite of funding rate, long/short
            ratio, and 7d OI change for the currently-selected asset. Rendered
            by renderFuturesSentiment(). -->
