@@ -39,6 +39,10 @@ def client(tmp_path: Path, monkeypatch):
     """
     monkeypatch.setattr(app, "DATA_DIR", tmp_path)
     monkeypatch.setattr(server.dash, "DATA_DIR", tmp_path)
+    # Redirect the cached-payload lookup so tests don't pick up the
+    # developer's real data/market.json (which would short-circuit the live
+    # fetch paths these tests are verifying).
+    monkeypatch.setattr(fetch_market, "CACHE", tmp_path)
 
     (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
     (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
@@ -191,3 +195,166 @@ def test_symbol_endpoint_404_when_both_sources_empty(client, monkeypatch):
     body = r.get_json()
     assert isinstance(body, dict)
     assert "error" in body
+
+
+# ---------- cached-payload coverage tests --------------------------------
+#
+# The polish/symbol-coverage branch added a cached-payload pre-pass so any
+# symbol the dashboard already has scored data for is returned without a
+# round-trip to CryptoCompare/Yahoo. These tests verify the cached path
+# returns 200 + a non-empty body for representative tickers from each
+# cached source (stocks_signals, poc_top, markets_top), without making any
+# real network calls.
+
+
+def _write_cached_market(tmp_path: Path, payload: dict) -> None:
+    """Write a synthetic market.json to the fixture's CACHE dir so the
+    cached-payload lookup branch has something to find."""
+    (tmp_path / "market.json").write_text(json.dumps(payload))
+
+
+def test_symbol_endpoint_cached_stocks_signal(client, tmp_path, monkeypatch):
+    """A symbol present in cached ``stocks_signals`` resolves immediately
+    without hitting Yahoo — verified by mocking Yahoo to raise (any network
+    call would fail the test)."""
+    _write_cached_market(tmp_path, {
+        "stocks_signals": [{
+            "symbol": "NVDA", "name": "NVIDIA Corp",
+            "last_price": 100.0, "change_pct": 1.5, "volume": 100_000,
+            "score": 42, "label": "BUY", "components": [{"name": "x", "value": "1", "contribution": 5, "explanation": "ok"}],
+            "history": [{"date": "2024-01-01", "score": 42, "price": 100.0}],
+        }],
+    })
+    monkeypatch.setattr(fetch_market, "yahoo_chart_history",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call Yahoo")))
+    monkeypatch.setattr(fetch_market, "cryptocompare_market",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+
+    r = client.get("/api/symbol/NVDA")
+    assert r.status_code == 200, r.get_data(as_text=True)
+    body = r.get_json()
+    assert body["kind"] == "stock"
+    assert body["symbol"] == "NVDA"
+    assert body["score"] == 42
+    assert body["label"] == "BUY"
+    assert body.get("source") == "cache:stocks_signals"
+
+
+def test_symbol_endpoint_cached_poc_top(client, tmp_path, monkeypatch):
+    """A symbol present in cached ``poc_top`` resolves with the full POC
+    bundle attached — no CryptoCompare call needed."""
+    _write_cached_market(tmp_path, {
+        "poc_top": [{
+            "coin_id": "solana", "symbol": "SOL", "name": "Solana",
+            "current_price": 150.0,
+            "poc": {
+                "d30":  {"poc": 145.0},
+                "d90":  {"poc": 140.0},
+                "d180": {"poc": 135.0},
+                "naked": [],
+                "migration_series": [{"date": "2024-01-01", "migration": "UP"}],
+            },
+            "signal_history": [{"date": "2024-01-01", "score": 10, "price": 150.0}],
+        }],
+    })
+    monkeypatch.setattr(fetch_market, "cryptocompare_market",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+
+    r = client.get("/api/symbol/SOL")
+    assert r.status_code == 200, r.get_data(as_text=True)
+    body = r.get_json()
+    assert body["kind"] == "crypto"
+    assert body["symbol"] == "SOL"
+    assert body["name"] == "Solana"
+    assert body["poc"]["d30"] == {"poc": 145.0}
+    assert body["poc"]["d180"] == {"poc": 135.0}
+    assert body.get("source") == "cache:poc_top"
+
+
+def test_symbol_endpoint_cached_markets_top_stables_and_obscure(client, tmp_path, monkeypatch):
+    """Several symbols (USDT, USDC, FIGR_HELOC, AVAX, XRP) sit in the
+    top-25 ``markets_top`` slice but get filtered out of signals_top20
+    (stables) or poc_top (lower-rank). They must still resolve via the
+    markets_top fallback so the modal isn't blank."""
+    _write_cached_market(tmp_path, {
+        "markets_top": [
+            {"rank": 1, "id": "bitcoin",  "symbol": "BTC",        "name": "Bitcoin",  "price_usd": 65000.0, "market_cap_usd": 1.3e12, "volume_24h_usd": 4e10, "change_24h_pct": 1.2,  "change_7d_pct": 5.0, "sparkline_7d": [64000, 64500, 65000]},
+            {"rank": 3, "id": "tether",   "symbol": "USDT",       "name": "Tether",   "price_usd": 1.0,     "market_cap_usd": 1.3e11, "volume_24h_usd": 5e10, "change_24h_pct": 0.0,  "change_7d_pct": 0.01,"sparkline_7d": [1.0, 1.0, 1.0]},
+            {"rank": 5, "id": "ripple",   "symbol": "XRP",        "name": "XRP",      "price_usd": 0.5,     "market_cap_usd": 3e10,   "volume_24h_usd": 2e9,  "change_24h_pct": -1.0, "change_7d_pct": 3.0, "sparkline_7d": [0.49, 0.50, 0.50]},
+            {"rank": 6, "id": "usd-coin", "symbol": "USDC",       "name": "USD Coin", "price_usd": 1.0,     "market_cap_usd": 3e10,   "volume_24h_usd": 5e9,  "change_24h_pct": 0.0,  "change_7d_pct": 0.0, "sparkline_7d": [1.0, 1.0, 1.0]},
+            {"rank": 9, "id": "figr-heloc","symbol": "FIGR_HELOC","name": "Figure HELOC","price_usd": 1.05, "market_cap_usd": 2e9,   "volume_24h_usd": 1e6,  "change_24h_pct": 0.1,  "change_7d_pct": 0.5, "sparkline_7d": [1.04, 1.05, 1.05]},
+            {"rank": 12,"id": "avalanche","symbol": "AVAX",       "name": "Avalanche","price_usd": 35.0,   "market_cap_usd": 1.4e10, "volume_24h_usd": 5e8,  "change_24h_pct": 2.0,  "change_7d_pct": 7.0, "sparkline_7d": [33, 34, 35]},
+        ],
+    })
+    monkeypatch.setattr(fetch_market, "cryptocompare_market",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+    monkeypatch.setattr(fetch_market, "yahoo_chart_history",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call Yahoo")))
+
+    for sym, expected_name in [
+        ("BTC", "Bitcoin"),
+        ("USDT", "Tether"),
+        ("XRP", "XRP"),
+        ("USDC", "USD Coin"),
+        ("FIGR_HELOC", "Figure HELOC"),
+        ("AVAX", "Avalanche"),
+    ]:
+        # FIGR_HELOC contains an underscore — the endpoint regex
+        # ``[A-Za-z]{1,10}`` rejects it, so callers can only reach this
+        # path via the JS resolver. We still test the underlying
+        # _try_cached_payload_lookup helper directly for that symbol.
+        if "_" in sym:
+            status, body = server._try_cached_payload_lookup(sym)
+            assert status == 200, f"cached lookup miss for {sym}: {body}"
+            assert body["name"] == expected_name
+            continue
+
+        r = client.get(f"/api/symbol/{sym}")
+        assert r.status_code == 200, f"{sym}: {r.status_code} {r.get_data(as_text=True)}"
+        body = r.get_json()
+        assert body["symbol"] == sym
+        assert body["name"] == expected_name
+        # Markets-top entries fall through with score=None (no full signal)
+        # but must still carry the rank/mcap/sparkline payload the UI uses.
+        assert body.get("source") == "cache:markets_top"
+        assert body.get("market_top", {}).get("market_cap_usd") is not None
+
+
+def test_symbol_endpoint_cashtag_prefix(client, tmp_path, monkeypatch):
+    """A leading ``$`` (cashtag, as pasted from social) must resolve the
+    same way as the bare ticker. The route strips the prefix before
+    validating against the [A-Za-z]{1,10} regex."""
+    _write_cached_market(tmp_path, {
+        "markets_top": [{
+            "rank": 1, "id": "bitcoin", "symbol": "BTC", "name": "Bitcoin",
+            "price_usd": 65000.0, "market_cap_usd": 1.3e12, "volume_24h_usd": 4e10,
+            "change_24h_pct": 1.0, "change_7d_pct": 2.0, "sparkline_7d": [64500, 65000],
+        }],
+    })
+    monkeypatch.setattr(fetch_market, "cryptocompare_market",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not call CC")))
+
+    # Flask test client URL-encodes the ``$`` automatically.
+    r = client.get("/api/symbol/$BTC")
+    assert r.status_code == 200, r.get_data(as_text=True)
+    body = r.get_json()
+    assert body["symbol"] == "BTC"
+
+
+def test_symbol_endpoint_404_message_mentions_coverage_scope(client, tmp_path, monkeypatch):
+    """The 404 body must mention the coverage scope (top-25 crypto /
+    top-50 stocks) so the user knows why the symbol failed rather than
+    seeing a generic "not found"."""
+    # Empty cache, both live fetchers return empty.
+    _write_cached_market(tmp_path, {})
+    monkeypatch.setattr(fetch_market, "cryptocompare_market",
+                        lambda symbol, days=180: {"price": [], "volume": []})
+    monkeypatch.setattr(fetch_market, "yahoo_chart_history",
+                        lambda symbol, range_="6mo": [])
+
+    r = client.get("/api/symbol/ZZZZZ")
+    assert r.status_code == 404
+    body = r.get_json()
+    assert "top-25" in body["error"] or "top-50" in body["error"], (
+        f"404 body does not mention coverage scope: {body!r}"
+    )

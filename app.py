@@ -9680,7 +9680,10 @@ function parseSymbolSearchTokens(raw){
   const seen = new Set();
   const out = [];
   for (let i = 0; i < parts.length; i++){
-    const tok = String(parts[i] || '').trim();
+    let tok = String(parts[i] || '').trim();
+    if (!tok) continue;
+    // Strip cashtag prefix ($BTC → BTC) so paste from social mentions works.
+    if (tok.charAt(0) === '$') tok = tok.slice(1).trim();
     if (!tok) continue;
     const up = tok.toUpperCase();
     if (seen.has(up)) continue;
@@ -10114,8 +10117,9 @@ function pocEmptyCardHtml(sym, kind){
 
 async function lookupSymbol(query){
   // Multi-symbol entry point. Accepts a raw input string; splits on
-  // comma/semicolon/whitespace, dedupes, caps at 6, and routes to the
-  // single- or multi-symbol render path. Empty input → no-op.
+  // comma/semicolon/whitespace, strips cashtag prefixes ($BTC → BTC),
+  // dedupes, caps at 6, and routes to the single- or multi-symbol
+  // render path. Empty input → no-op.
   const tokens = parseSymbolSearchTokens(query);
   if (!tokens.length) return;
   if (tokens.length > 1){
@@ -10124,15 +10128,38 @@ async function lookupSymbol(query){
   const sym = tokens[0];
   const symLower = sym.toLowerCase();
   const market = DATA.market || {};
+  // Compare A to a constant pre-uppercased value B. A few callers pass coin
+  // IDs (lowercase) so we have to upper-case both sides every time — keep
+  // the helper small enough that it can be inlined by the JIT.
   const eq = (a, b) => String(a || '').toUpperCase() === b;
 
-  // 1) Stock signal
+  // 1) Stock signal (top-50 most active US stocks).
   const stock = (market.stocks_signals || []).find(s => s && eq(s.symbol, sym));
-  // 2) Crypto signal (top-20)
-  const cryptoSignal = (DATA.signals_top20 || []).find(s => s && eq(s.symbol, sym));
-  // 3) POC entry
+  // 2) Crypto signal — primary source: signals_top20 (computed from top-50
+  //    markets_top, stables excluded, sorted by score).
+  let cryptoSignal = (DATA.signals_top20 || []).find(s => s && eq(s.symbol, sym));
+  // 3) POC entry (top-50 by score — covers more obscure coins than
+  //    signals_top20). May be empty if poc_top fetch was rate-limited.
   const poc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
-  // 4) News — case-insensitive whole-word match against title/body
+  // 4) markets_top backup (top-25 by mcap) — covers stables (USDT, USDC)
+  //    and any coin filtered out of signals_top20.
+  const marketTop = (market.markets_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.id, sym)));
+  // 5) Pinned-asset full series (BTC/ETH/LINK/LTC). market[<lower>] holds
+  //    the full price/volume history when the symbol is one of the four
+  //    we pin.
+  const pinnedAsset = ({btc:1, eth:1, link:1, ltc:1}[symLower]) ? (market[symLower] || null) : null;
+  // 6) Full signal detail for the two assets that get the rich 6-component
+  //    scorer (BTC, ETH). When present this is much richer than the
+  //    signals_top20 entry, so prefer it.
+  const fullSignal = ({btc:1, eth:1}[symLower]) ? ((DATA.signals || {})[symLower] || null) : null;
+  if (!cryptoSignal && fullSignal){
+    // Reshape the full-signal output to match renderSignalCardFromObj's
+    // expected shape (symbol/name/image fields).
+    cryptoSignal = Object.assign({}, fullSignal, {
+      symbol: sym, name: fullSignal.name || sym, image: null,
+    });
+  }
+  // 7) News — case-insensitive whole-word match against title/body
   let newsRegex = null;
   try { newsRegex = new RegExp('\\b' + sym.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\b', 'i'); }
   catch(_) { newsRegex = null; }
@@ -10146,19 +10173,41 @@ async function lookupSymbol(query){
     const up = sym;
     return t.toUpperCase().includes(up) || b.toUpperCase().includes(up);
   });
-  // 5) Sentiment (CryptoCompare news)
+  // 8) Sentiment (CryptoCompare news)
   const sentiment = ((((market.social || {}).cc_news || {}).coins) || {})[symLower] || null;
 
-  const hasAny = !!(stock || cryptoSignal || poc || news.length || sentiment);
+  // 9) Full-name substring fallback — try matching the user's input against
+  //    the `name` field on signals_top20 / markets_top / stocks_signals. Only
+  //    triggers when NO direct symbol hit was found.
+  let nameMatchSignal = null;
+  let nameMatchMarketTop = null;
+  let nameMatchStock = null;
+  const hasDirectHit = !!(stock || cryptoSignal || poc || marketTop || pinnedAsset);
+  if (!hasDirectHit){
+    const needle = sym;  // already uppercased
+    const nameContains = (n) => n && String(n).toUpperCase().includes(needle);
+    nameMatchSignal     = (DATA.signals_top20 || []).find(s => s && nameContains(s.name));
+    nameMatchMarketTop  = (market.markets_top || []).find(r => r && nameContains(r.name));
+    nameMatchStock      = (market.stocks_signals || []).find(s => s && nameContains(s.name));
+  }
+
+  const effectiveStock  = stock || nameMatchStock;
+  const effectiveSignal = cryptoSignal || nameMatchSignal;
+  const effectiveMarketTop = marketTop || nameMatchMarketTop;
+
+  const hasAny = !!(effectiveStock || effectiveSignal || poc || effectiveMarketTop ||
+                    pinnedAsset || news.length || sentiment);
   const modal = document.getElementById('symbolDetailModal');
   const body  = document.getElementById('symbolDetailBody');
   const title = document.getElementById('symbolDetailTitle');
   if (!modal || !body || !title) return;
 
   const displayName =
-    (stock && stock.name) ||
-    (cryptoSignal && cryptoSignal.name) ||
+    (effectiveStock && effectiveStock.name) ||
+    (effectiveSignal && effectiveSignal.name) ||
     (poc && poc.name) ||
+    (effectiveMarketTop && effectiveMarketTop.name) ||
+    (pinnedAsset && ({btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'}[symLower])) ||
     '';
   title.textContent = displayName ? (sym + ' · ' + displayName) : sym;
 
@@ -10236,25 +10285,185 @@ async function lookupSymbol(query){
       }
     }
 
-    // Neither crypto nor stock-shaped — show a generic failure.
+    // Neither crypto nor stock-shaped — show a clear scoped-coverage message.
     body.innerHTML =
       '<div class="sub" style="color:var(--muted);padding:14px;text-align:center">' +
-        'Live lookup failed for <strong>' + escapeHtml(sym) + '</strong> &mdash; check ticker or try again.' +
+        'No data for <strong>' + escapeHtml(sym) + '</strong> &mdash; verify the ticker is in ' +
+        'the top-25 crypto / top-50 stocks coverage, or try a different symbol.' +
       '</div>';
     return;
   }
 
   // Reuse the shared section builder so single- and multi-symbol render
-  // identically. Pass the already-resolved data to avoid a second lookup.
+  // identically. Pass the already-resolved data (with name-substring
+  // fallbacks promoted via effective*) to avoid a second lookup.
   body.innerHTML = buildSymbolSectionsHtml({
     sym: sym,
-    stock: stock,
-    cryptoSignal: cryptoSignal,
+    stock: (typeof effectiveStock !== 'undefined' ? effectiveStock : stock),
+    cryptoSignal: (typeof effectiveSignal !== 'undefined' ? effectiveSignal : cryptoSignal),
     poc: poc,
     news: news,
     sentiment: sentiment,
     displayName: displayName,
   });
+
+  // Header block
+  sections.push(
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
+      '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
+      (displayName ? '<div class="sub" style="font-size:13px;color:var(--muted)">' + escapeHtml(displayName) + '</div>' : '') +
+    '</div>'
+  );
+
+  // Signal section
+  if (effectiveStock){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Stock signal</div>' +
+        stockDetailHtml(effectiveStock) +
+      '</div>'
+    );
+  }
+  if (effectiveSignal){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Crypto signal</div>' +
+        renderSignalCardFromObj(effectiveSignal) +
+      '</div>'
+    );
+  } else if (effectiveMarketTop){
+    // Coin is in markets_top (top-25 by mcap) but didn't get a full signal —
+    // typically stables (USDT, USDC, DAI) or coins below the 50-row sparkline
+    // threshold. Render a compact info card so the modal isn't blank.
+    const r = effectiveMarketTop;
+    const price = r.price_usd != null
+      ? '$' + Number(r.price_usd).toLocaleString(undefined, {maximumFractionDigits: r.price_usd >= 1 ? 2 : 6})
+      : '—';
+    const mcap  = r.market_cap_usd ? '$' + Number(r.market_cap_usd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '—';
+    const vol   = r.volume_24h_usd ? '$' + Number(r.volume_24h_usd).toLocaleString(undefined, {maximumFractionDigits: 0}) : '—';
+    const c24   = r.change_24h_pct;
+    const c7    = r.change_7d_pct;
+    const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+    const fmtPct = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + Number(p).toFixed(2) + '%';
+    const sparkVals = (r.sparkline_7d || []).filter(v => typeof v === 'number' && isFinite(v));
+    const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
+    const spark = sparkVals.length >= 2 ? renderSparkline(sparkVals, sparkUp, 240, 36) : '';
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Market snapshot</div>' +
+        '<div class="chart-card" style="padding:12px">' +
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">' +
+            '<div><div class="sub" style="font-size:11px;color:var(--muted)">Price</div>' +
+              '<div style="font-size:16px;font-weight:700;margin-top:2px">' + escapeHtml(price) + '</div></div>' +
+            '<div><div class="sub" style="font-size:11px;color:var(--muted)">Market cap</div>' +
+              '<div style="font-size:13px;font-weight:600;margin-top:2px">' + escapeHtml(mcap) + '</div></div>' +
+            '<div><div class="sub" style="font-size:11px;color:var(--muted)">24h volume</div>' +
+              '<div style="font-size:13px;font-weight:600;margin-top:2px">' + escapeHtml(vol) + '</div></div>' +
+            '<div><div class="sub" style="font-size:11px;color:var(--muted)">24h / 7d</div>' +
+              '<div style="font-size:13px;font-weight:600;margin-top:2px">' +
+                '<span style="color:' + pctColor(c24) + '">' + escapeHtml(fmtPct(c24)) + '</span> · ' +
+                '<span style="color:' + pctColor(c7)  + '">' + escapeHtml(fmtPct(c7))  + '</span>' +
+              '</div></div>' +
+          '</div>' +
+          (spark ? '<div style="margin-top:10px;line-height:0">' + spark.replace('<svg ', '<svg style="width:100%;height:36px;display:block" ') + '</div>' : '') +
+          '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:8px">Top-25 by market cap · score unavailable (no sparkline or excluded as stable)</div>' +
+        '</div>' +
+      '</div>'
+    );
+  } else if (pinnedAsset && (pinnedAsset.price || []).length){
+    // BTC/ETH/LINK/LTC fallback when neither signals_top20 nor markets_top
+    // turned up an entry (rare — usually only happens during a partial
+    // fetch). Show the 90d sparkline + last price from the pinned series.
+    const prices = pinnedAsset.price || [];
+    const lastP = prices[prices.length - 1] && prices[prices.length - 1].value;
+    const prevP = prices.length > 1 && prices[prices.length - 2].value;
+    const pct = (lastP != null && prevP) ? ((lastP / prevP) - 1) * 100 : null;
+    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
+    const pctTxt   = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+    const sparkVals = prices.slice(-90).map(p => p.value).filter(v => typeof v === 'number' && isFinite(v));
+    const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
+    const spark = sparkVals.length >= 2 ? renderSparkline(sparkVals, sparkUp, 240, 36) : '';
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Price series</div>' +
+        '<div class="chart-card" style="padding:12px">' +
+          '<div style="display:flex;align-items:baseline;gap:12px">' +
+            '<div style="font-size:18px;font-weight:700">' + (lastP != null ? '$' + Number(lastP).toLocaleString() : '—') + '</div>' +
+            '<div style="color:' + pctColor + ';font-size:13px">' + escapeHtml(pctTxt) + ' 1d</div>' +
+          '</div>' +
+          (spark ? '<div style="margin-top:8px;line-height:0">' + spark.replace('<svg ', '<svg style="width:100%;height:48px;display:block" ') + '</div>' : '') +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  // POC section
+  if (poc){
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
+        pocDetailHtml(poc) +
+      '</div>'
+    );
+  }
+
+  // News section (top 5)
+  if (news.length){
+    const sorted = news.slice().sort((a, b) => {
+      const da = a && a.date ? Date.parse(a.date) : 0;
+      const db = b && b.date ? Date.parse(b.date) : 0;
+      return (db || 0) - (da || 0);
+    });
+    const newsRows = sorted.slice(0, 5).map(n => {
+      return '<a href="' + sanitizeUrl(n.url) + '" target="_blank" rel="noopener" ' +
+        'style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">' +
+          '<div style="font-weight:600;font-size:13px">' + escapeHtml(n.title || '') + '</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-top:2px">' +
+            escapeHtml(n.source_name || n.source || '') + (n.date ? ' · ' + escapeHtml(n.date) : '') +
+          '</div>' +
+        '</a>';
+    }).join('');
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News · ' + sorted.length + ' match' + (sorted.length === 1 ? '' : 'es') + '</div>' +
+        '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">' + newsRows + '</div>' +
+      '</div>'
+    );
+  }
+
+  // Sentiment section
+  if (sentiment){
+    const pos = Number(sentiment.positive) || 0;
+    const neg = Number(sentiment.negative) || 0;
+    const neu = Number(sentiment.neutral) || 0;
+    const total = pos + neg + neu || 1;
+    const posPct = (pos / total) * 100;
+    const negPct = (neg / total) * 100;
+    const neuPct = (neu / total) * 100;
+    const net = sentiment.net_score;
+    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
+    const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
+    sections.push(
+      '<div>' +
+        '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">News sentiment</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline">' +
+          '<span class="sub" style="color:var(--muted);font-size:11px">' + (Number(sentiment.article_count) || total) + ' articles scored</span>' +
+          '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
+        '</div>' +
+        '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
+          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
+          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
+          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
+          '<span style="color:#22c55e">' + pos + ' positive</span>' +
+          '<span>' + neu + ' neutral</span>' +
+          '<span style="color:#ef4444">' + neg + ' negative</span>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   modal.classList.remove('hidden');
   pushSymbolRecent(sym);
 }

@@ -734,11 +734,131 @@ def api_chat() -> Response:
 _SYMBOL_RE = re.compile(r"^[A-Za-z]{1,10}$")
 
 
+def _load_cached_market() -> dict:
+    """Load data/market.json if present. Returns {} on any error so callers
+    can treat the cache as best-effort — the live lookup branches still run.
+    """
+    path = fetch_market.CACHE / "market.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return {}
+
+
+def _try_cached_payload_lookup(sym: str) -> tuple[int, dict] | tuple[None, None]:
+    """Resolve ``sym`` against the cached market payload before going to the
+    network. Covers the same source list the JS-side ``lookupSymbol`` walks:
+
+      * ``stocks_signals`` (top-50 most active US stocks — already scored)
+      * ``poc_top`` (top-50 crypto with full POC bundle)
+      * ``markets_top`` (top-25 by mcap — last-resort crypto info card)
+
+    Returns (200, body) on a hit, or (None, None) on miss so the caller can
+    fall through to ``_try_crypto_lookup`` / ``_try_stock_lookup``.
+
+    This is the server-side counterpart to the JS resolver gap fix — it
+    means a user lookup of BTC/NVDA/USDT never hits CryptoCompare or Yahoo
+    when the dashboard already has the data, sidestepping rate-limit churn.
+    """
+    market = _load_cached_market()
+    if not market:
+        return None, None
+
+    # 1) Stock signals — these already carry score/label/components/history,
+    #    so we can build a response that matches the live-lookup shape.
+    stock = next((r for r in (market.get("stocks_signals") or [])
+                  if isinstance(r, dict)
+                  and str(r.get("symbol") or "").upper() == sym), None)
+    if stock and stock.get("history"):
+        return 200, {
+            "symbol":     sym,
+            "kind":       "stock",
+            "name":       stock.get("name") or sym,
+            "price":      stock.get("last_price"),
+            "score":      stock.get("score"),
+            "label":      stock.get("label"),
+            "components": stock.get("components") or [],
+            "history":    stock.get("history") or [],
+            "poc": {
+                "d30": None, "d90": None, "d180": None,
+                "naked": [], "migration_series": [],
+            },
+            "source":     "cache:stocks_signals",
+        }
+
+    # 2) POC top — full POC bundle, plus signal_history but no score/label.
+    poc = next((r for r in (market.get("poc_top") or [])
+                if isinstance(r, dict)
+                and (str(r.get("symbol") or "").upper() == sym
+                     or str(r.get("coin_id") or "").upper() == sym)), None)
+    if poc and poc.get("poc"):
+        poc_bundle = poc.get("poc") or {}
+        return 200, {
+            "symbol":     sym,
+            "kind":       "crypto",
+            "name":       poc.get("name") or sym,
+            "price":      poc.get("current_price"),
+            "score":      None,
+            "label":      None,
+            "components": [],
+            "history":    poc.get("signal_history") or [],
+            "poc": {
+                "d30":              poc_bundle.get("d30"),
+                "d90":              poc_bundle.get("d90"),
+                "d180":             poc_bundle.get("d180"),
+                "naked":            poc_bundle.get("naked") or [],
+                "migration_series": poc_bundle.get("migration_series") or [],
+            },
+            "source":     "cache:poc_top",
+        }
+
+    # 3) Markets top — last-ditch info-only response (no POC, no score).
+    #    Useful for stables (USDT/USDC) and anything top-25 that didn't make
+    #    poc_top. We still emit a non-empty body so the modal doesn't fall
+    #    through to a 404.
+    mt = next((r for r in (market.get("markets_top") or [])
+               if isinstance(r, dict)
+               and (str(r.get("symbol") or "").upper() == sym
+                    or str(r.get("id") or "").upper() == sym)), None)
+    if mt:
+        return 200, {
+            "symbol":     sym,
+            "kind":       "crypto",
+            "name":       mt.get("name") or sym,
+            "price":      mt.get("price_usd"),
+            "score":      None,
+            "label":      None,
+            "components": [],
+            "history":    [],
+            "poc": {
+                "d30": None, "d90": None, "d180": None,
+                "naked": [], "migration_series": [],
+            },
+            "market_top": {
+                "rank":           mt.get("rank"),
+                "market_cap_usd": mt.get("market_cap_usd"),
+                "volume_24h_usd": mt.get("volume_24h_usd"),
+                "change_24h_pct": mt.get("change_24h_pct"),
+                "change_7d_pct":  mt.get("change_7d_pct"),
+                "sparkline_7d":   mt.get("sparkline_7d") or [],
+            },
+            "source":     "cache:markets_top",
+        }
+
+    return None, None
+
+
 def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
     """Run the lookup. Returns (status_code, body).
     Pure function so it can be wrapped by the lru_cache helper below.
 
     Resolution order:
+      * Cached payload (data/market.json) — hits the same in-memory sources
+        the JS-side resolver walks. Returns immediately when found so we
+        never burn an upstream call on a symbol the dashboard already has
+        scored data for.
       * 4-5 letter all-alpha tickers (e.g. AAPL, MSTR, RIVN, TSLA, GME) →
         Yahoo first, CryptoCompare second. Several meme/scam crypto tokens
         share their tickers with real equities (GME, AAPL, NVDA), and the
@@ -746,6 +866,12 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
       * Everything else (BTC, ETH, SOL, …) → CryptoCompare first.
     """
     sym = symbol.upper()
+
+    # ---- 1) Cached payload pass --------------------------------------------
+    status, body = _try_cached_payload_lookup(sym)
+    if status == 200:
+        return status, body
+
     stock_first = bool(re.fullmatch(r"[A-Z]{3,5}", sym)) and sym not in {
         # Common crypto symbols that match the stock-shape regex but are
         # unambiguously crypto when typed in this dashboard. Keep this list
@@ -764,7 +890,10 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
         status2, body2 = _try_crypto_lookup(sym)
         if status2 == 200:
             return status2, body2
-        return 404, {"error": "Symbol not found in crypto or US stocks"}
+        return 404, {"error": (
+            f"No data for {sym} — verify the ticker is in the "
+            "top-25 crypto / top-50 stocks coverage, or try a different symbol."
+        )}
 
     status, body = _try_crypto_lookup(sym)
     if status == 200:
@@ -772,7 +901,10 @@ def _symbol_lookup_compute(symbol: str) -> tuple[int, dict]:
     status2, body2 = _try_stock_lookup(sym)
     if status2 == 200:
         return status2, body2
-    return 404, {"error": "Symbol not found in crypto or US stocks"}
+    return 404, {"error": (
+        f"No data for {sym} — verify the ticker is in the "
+        "top-25 crypto / top-50 stocks coverage, or try a different symbol."
+    )}
 
 
 def _try_crypto_lookup(sym: str) -> tuple[int, dict]:
@@ -899,9 +1031,13 @@ def api_symbol(symbol: str) -> Response:
     per ``(symbol, current-UTC-hour)`` via ``functools.lru_cache(maxsize=64)``,
     so repeated lookups within an hour don't re-fetch.
     """
-    if not symbol or not _SYMBOL_RE.match(symbol):
+    # Strip cashtag prefix so /api/symbol/$BTC works the same as /api/symbol/BTC
+    # (the JS client strips it client-side, but direct API callers / share
+    # links may include it).
+    sym_input = symbol.lstrip("$")
+    if not sym_input or not _SYMBOL_RE.match(sym_input):
         return jsonify({"error": "invalid symbol — must match [A-Za-z]{1,10}"}), 400
-    sym = symbol.upper()
+    sym = sym_input.upper()
     hour_bucket = int(time.time()) // 3600
     try:
         status, body_json = _symbol_lookup_cached(sym, hour_bucket)
