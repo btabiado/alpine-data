@@ -483,6 +483,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   #etfKpis,
   #fundKpiGrid,
   #pocTopGrid,
+  #pocFeaturedRow,
   #stocksGrid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:8px}
   /* POC compact card sub-text bumped 10→11px for readability on phone */
   #pocTopGrid .poc-card .sub{font-size:11px !important}
@@ -1346,6 +1347,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-pocfilter="sell">SELL+</button>
           <button class="btn" data-pocfilter="strong_sell">STRONG SELL</button>
         </div>
+        <!-- Featured row — top 4 by signal score, evenly spread (1×4 on
+             desktop, 2×2 on tablet, 1-up on phone). Rendered by
+             renderPocTopCards into #pocFeaturedRow; everything else fills
+             #pocTopGrid below at the standard compact size. -->
+        <div id="pocFeaturedRow" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px"></div>
         <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
       </div>
     </div>
@@ -5820,10 +5826,12 @@ function renderPocSentimentIndex(){
 
 function renderPocTopCards(){
   const host = document.getElementById('pocTopGrid');
+  const featuredHost = document.getElementById('pocFeaturedRow');
   if (!host) return;
   const list = ((DATA.market || {}).poc_top) || [];
   if (!Array.isArray(list) || list.length === 0){
     host.innerHTML = '<div class="empty" style="grid-column:1/-1">POC data populating — run python app.py --fetch-market and reload.</div>';
+    if (featuredHost) featuredHost.innerHTML = '';
     return;
   }
   // --- Join: index signals_top20 by uppercase symbol and attach score/label
@@ -5849,12 +5857,13 @@ function renderPocTopCards(){
     const sb = (b.signal_score == null || !isFinite(b.signal_score)) ? -Infinity : Number(b.signal_score);
     return sb - sa;
   });
-  // Top 5 cards get FEATURED treatment per user request — double width
-  // (grid-column span 2), bigger fonts, always-large sparkline. Everything
-  // below position 5 stays the current compact size. The cards are already
-  // sorted by signal score, so featured == top 5 by score.
-  host.innerHTML = sorted.map((c, idx) => {
-    const featured = idx < 5;
+  // Top 4 cards get FEATURED treatment per user request — rendered into a
+  // separate #pocFeaturedRow above the main grid so they spread evenly
+  // (1×4 desktop / 2×2 tablet / 1-up phone). Position 5+ goes into the
+  // regular #pocTopGrid at the standard compact size.
+  const FEATURED_N = 4;
+  const cardHtml = sorted.map((c, idx) => {
+    const featured = idx < FEATURED_N;
     const cid = escapeHtml(String(c.coin_id || c.symbol || ''));
     const sym = escapeHtml(String(c.symbol || c.coin_id || '').toUpperCase());
     const imgUrl = sanitizeUrl(c.image, '');
@@ -5937,9 +5946,11 @@ function renderPocTopCards(){
     const priceFs   = featured ? 13 : 10;
     const pocRowFs  = featured ? 14 : 11;
     const fallbackH = (featured || isBuy) ? 64 : 30;
-    // Featured cards span 2 grid columns so they read as ~double the width.
+    // Featured cards live in their own #pocFeaturedRow grid (separate from
+    // the main #pocTopGrid below), so no grid-column span is needed — the
+    // separate grid handles even spacing.
     const featuredCSS = featured
-      ? 'grid-column:span 2;border-left:6px solid #a78bfa;background:#10151f'
+      ? 'border-left:6px solid #a78bfa;background:#10151f'
       : 'border-left:4px solid #a78bfa';
     return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" ${featured ? 'data-poc-featured="1"' : ''} role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="${featuredCSS};padding:${cardPad};cursor:pointer">
       <div style="display:flex;align-items:stretch;gap:${featured ? 12 : 8}px">
@@ -5961,7 +5972,13 @@ function renderPocTopCards(){
         ${migBlock}
       </div>
     </div>`;
-  }).join('');
+  });
+  // Split: first FEATURED_N (4) cards into the featured row, the rest into
+  // the main grid.
+  if (featuredHost){
+    featuredHost.innerHTML = cardHtml.slice(0, FEATURED_N).join('');
+  }
+  host.innerHTML = cardHtml.slice(FEATURED_N).join('');
   applyPocFilter();
 }
 
@@ -5997,7 +6014,8 @@ function applyPocFilter(bucket){
     const allChip = document.querySelector('[data-pocfilter="all"]');
     if (allChip) allChip.classList.add('active');
   }
-  document.querySelectorAll('#pocTopGrid [data-poc-bucket]').forEach(card => {
+  // Filter applies to BOTH the featured row and the main grid below it.
+  document.querySelectorAll('#pocFeaturedRow [data-poc-bucket], #pocTopGrid [data-poc-bucket]').forEach(card => {
     card.style.display = (target === 'all' || card.getAttribute('data-poc-bucket') === target) ? '' : 'none';
   });
 }
