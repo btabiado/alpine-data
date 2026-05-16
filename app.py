@@ -2371,6 +2371,28 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </aside>
 
 <script>
+// Surface uncaught JS errors as a thin red banner at the top of the page so
+// a runtime exception during init (which silently kills the rest of the
+// script, including the symbol-search wiring) is visible instead of just
+// "nothing happens." Banner contains message + first stack line; click to
+// dismiss. Production-safe: zero overhead until an error actually fires.
+window.addEventListener('error', e => {
+  try {
+    const existing = document.getElementById('__jsErrBanner');
+    if (existing) { existing.parentNode && existing.parentNode.removeChild(existing); }
+    const b = document.createElement('div');
+    b.id = '__jsErrBanner';
+    b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;'
+      + 'background:#7f1d1d;color:#fff;padding:8px 14px;font:12px/1.4 monospace;'
+      + 'border-bottom:2px solid #ef4444;cursor:pointer;white-space:pre-wrap';
+    const where = e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno : '';
+    b.textContent = '⚠ JS error: ' + (e.message || 'unknown') + where +
+      '\n(click to dismiss)';
+    b.addEventListener('click', () => b.parentNode && b.parentNode.removeChild(b));
+    (document.body || document.documentElement).appendChild(b);
+  } catch (_) { /* defensive */ }
+});
+
 const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
 const IS_SHARE = !!SHARE_TOKEN;
