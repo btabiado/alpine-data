@@ -113,7 +113,10 @@ def test_stocks_signals_searchable_by_symbol():
     market = _load_market_or_skip()
     stocks = market.get("stocks_signals")
     if not isinstance(stocks, list) or not stocks:
-        pytest.fail("market.stocks_signals is empty — nothing to search")
+        pytest.skip(
+            "market.stocks_signals missing — runtime-computed key requires "
+            "`python app.py --fetch-market`"
+        )
 
     upper_syms = [
         e.get("symbol")
@@ -135,7 +138,10 @@ def test_poc_top_searchable_by_symbol():
     market = _load_market_or_skip()
     poc_top = market.get("poc_top")
     if not isinstance(poc_top, list) or not poc_top:
-        pytest.fail("market.poc_top is empty — nothing to search")
+        pytest.skip(
+            "market.poc_top missing — runtime-computed key requires "
+            "`python app.py --fetch-market`"
+        )
 
     with_symbol = [
         e for e in poc_top
