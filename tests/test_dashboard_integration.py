@@ -429,6 +429,56 @@ def test_signals_top20_entries_have_required_fields_for_join():
 # this file protects against.
 
 
+def test_per_coin_signal_list_replaces_legacy_chart_grid():
+    """The Crypto Signals tab uses an alternating "signal card → history
+    chart → next signal card → …" layout for the top 25 coins, populated by
+    ``renderPerCoinSignalList`` into ``#perCoinSignalList``. The legacy
+    hard-coded 4-chart grid (sigBtcChart / sigEthChart / sigLinkChart /
+    sigLtcChart) must be gone — keeping the old IDs alongside the new
+    container would render duplicate charts and waste a Chart.js handle
+    per coin."""
+    html = _read_dashboard_or_skip()
+
+    # New container present.
+    assert 'id="perCoinSignalList"' in html, (
+        "perCoinSignalList div missing from dashboard.html — the per-coin "
+        "signal box + history chart layout has no mount point."
+    )
+
+    # Renderer function defined and wired into renderSignals().
+    assert "function renderPerCoinSignalList" in html, (
+        "renderPerCoinSignalList() function missing from dashboard.html"
+    )
+    m = re.search(r"function\s+renderSignals\s*\(\s*\)\s*\{", html)
+    assert m, "renderSignals() function not found in dashboard.html"
+    start = m.end()
+    depth = 1
+    i = start
+    body = None
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                body = html[start:i]
+                break
+        i += 1
+    assert body is not None, "Unterminated renderSignals function body"
+    assert "renderPerCoinSignalList()" in body, (
+        "renderSignals() does not invoke renderPerCoinSignalList() — the "
+        "per-coin layout won't render when the user opens Crypto Signals."
+    )
+
+    # Legacy 4-chart grid IDs and renderSignalChart call sites must be gone.
+    for legacy_id in ("sigBtcChart", "sigEthChart", "sigLinkChart", "sigLtcChart"):
+        assert legacy_id not in html, (
+            f"Legacy chart id {legacy_id!r} still present in dashboard.html — "
+            "the per-coin layout should have replaced the hard-coded grid."
+        )
+
+
 def test_top_news_sentiment_card_wiring():
     """The 'News sentiment — Top 15 by market cap' card must exist in the
     Research tab markup, its renderer must be defined, and ``renderSocial``

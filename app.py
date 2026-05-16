@@ -1737,24 +1737,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
       <div class="note"><strong>Composite indicator, not investment advice.</strong> Score is a transparent sum of contributions from price trend (SMA50/200), momentum (RSI, MACD), positioning (funding), sentiment (Fear &amp; Greed), institutional flows (ETF 7d), and volatility (DVOL z-score). Range −100 to +100. Read the components below — that's where the score comes from. Do your own evaluation.</div>
       <div class="grid3" id="signalCards"></div>
-      <div class="grid3">
-        <div class="chart-card" data-sig-asset="BTC" style="cursor:pointer" title="Click to open BTC signal detail">
-          <div class="head"><h2>BTC signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
-          <div class="chart-wrap"><canvas id="sigBtcChart"></canvas></div>
-        </div>
-        <div class="chart-card" data-sig-asset="ETH" style="cursor:pointer" title="Click to open ETH signal detail">
-          <div class="head"><h2>ETH signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
-          <div class="chart-wrap"><canvas id="sigEthChart"></canvas></div>
-        </div>
-        <div class="chart-card" data-sig-asset="LINK" style="cursor:pointer" title="Click to open LINK signal detail">
-          <div class="head"><h2>LINK signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
-          <div class="chart-wrap"><canvas id="sigLinkChart"></canvas></div>
-        </div>
-        <div class="chart-card" data-sig-asset="LTC" style="cursor:pointer" title="Click to open LTC signal detail">
-          <div class="head"><h2>LTC signal history (90d)</h2><span class="desc">Score &middot; price overlay · click for full breakdown</span></div>
-          <div class="chart-wrap"><canvas id="sigLtcChart"></canvas></div>
-        </div>
-      </div>
+      <!-- Per-coin alternating layout: for each of the top 25, render the
+           full rich signal card (score + components) followed by a price/
+           score history chart. Populated by renderPerCoinSignalList() —
+           replaces the legacy hard-coded BTC/ETH/LINK/LTC 4-chart grid. -->
+      <div id="perCoinSignalList" style="display:flex;flex-direction:column;gap:14px"></div>
     </div>
   </div>
 
@@ -3080,11 +3067,12 @@ function renderSignals(){
     .map(([k]) => k);
   document.getElementById('signalCards').innerHTML =
     sortedAssets.map(a => renderSignalCard(a)).join('');
-  renderSignalChart('sigBtcChart','btc');
-  renderSignalChart('sigEthChart','eth');
-  renderSignalChart('sigLinkChart','link');
-  renderSignalChart('sigLtcChart','ltc');
   renderTop20Signals();
+  // Per-coin alternating signal card + history chart pattern for the
+  // top 25 by market cap. Replaces the legacy hard-coded BTC/ETH/LINK/
+  // LTC 4-chart grid so every top-25 coin gets the full breakdown plus
+  // a price chart.
+  renderPerCoinSignalList();
 }
 
 // Map a signal label to a coarse bucket used by the strip's filter chips
@@ -3285,6 +3273,142 @@ function renderTop20Signals(){
   // Re-apply the active filter chip so section visibility matches selection
   // on re-render (e.g. after data refresh while a non-"all" chip is active).
   applyTop20Filter();
+}
+
+// Per-coin alternating layout: for each of the top 25 by market cap, append
+// two stacked blocks to #perCoinSignalList:
+//   A) The rich signal card (via renderSignalCardFromObj) — score, label,
+//      component breakdown table, inline sparkline.
+//   B) A history chart card. If the coin has a 90d signal/price history in
+//      DATA.market.poc_top (joined by uppercase symbol), draw the same
+//      score+price overlay used by the legacy renderSignalChart. Otherwise
+//      fall back to a 7-day price-only sparkline from s.sparkline_7d.
+// Clicks on either block open the existing signal-detail modal.
+function renderPerCoinSignalList(){
+  const host = document.getElementById('perCoinSignalList');
+  if (!host) return;
+  const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  // Sort by rank ascending so top 25 BY MARKET CAP appear (matches the
+  // user's stated intent — "all top-25 coins"). The strip above sorts by
+  // score, so the two surfaces complement rather than duplicate.
+  const top25 = (DATA.signals_top20 || [])
+    .filter(s => s && !isStable(s.symbol))
+    .slice()
+    .sort((a,b) => (a.rank||999) - (b.rank||999))
+    .slice(0, 25);
+  if (!top25.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:8px">No per-coin signals yet — refresh.</div>';
+    return;
+  }
+  // Build a lookup of poc_top entries by uppercase symbol so we can pull
+  // 90d signal_history per coin without an extra fetch. DATA.market.poc_top
+  // is the same source the breadth chart consumes.
+  const pocBySym = {};
+  ((DATA.market || {}).poc_top || []).forEach(p => {
+    const sym = (p && p.symbol || '').toUpperCase();
+    if (sym) pocBySym[sym] = p;
+  });
+  // Cache top-25 entries in the same global the strip uses so click→modal
+  // works for these cards too (openSignalDetail reads _top20SignalsCache).
+  window._top20SignalsCache = window._top20SignalsCache || {};
+  // Build the markup in one pass, then chart-draw in a second pass once
+  // the canvases are in the DOM.
+  const chunks = [];
+  top25.forEach(s => {
+    const sym = (s.symbol || '').toUpperCase();
+    window._top20SignalsCache[sym] = s;
+    const poc = pocBySym[sym];
+    const hasHist = poc && Array.isArray(poc.signal_history) && poc.signal_history.length >= 5;
+    const chartTitle = hasHist
+      ? `${sym} signal history (90d)`
+      : `${sym} price (7d)`;
+    const chartDesc = hasHist
+      ? 'Score &middot; click for full breakdown'
+      : 'Recent price trend · click for full breakdown';
+    // Block A: rich signal card (score + components).
+    chunks.push(
+      `<div data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
+      renderSignalCardFromObj(s) +
+      `</div>`
+    );
+    // Block B: history/price chart card.
+    chunks.push(
+      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
+        <div class="head"><h2>${escapeHtml(chartTitle)}</h2><span class="desc">${chartDesc}</span></div>
+        <div class="chart-wrap"><canvas id="perCoinChart-${escapeHtml(sym)}"></canvas></div>
+      </div>`
+    );
+  });
+  host.innerHTML = chunks.join('');
+  // Second pass: draw the canvas chart for each card. Destroy any prior
+  // instance under the same key so re-renders don't leak Chart.js handles.
+  top25.forEach(s => {
+    const sym = (s.symbol || '').toUpperCase();
+    const canvas = document.getElementById('perCoinChart-' + sym);
+    if (!canvas) return;
+    const chartKey = 'perCoin_' + sym;
+    destroy(chartKey);
+    const poc = pocBySym[sym];
+    const hasHist = poc && Array.isArray(poc.signal_history) && poc.signal_history.length >= 5;
+    const accent = signalColor(Number(s.score) || 0);
+    if (hasHist){
+      // 90-day score history. If poc_top includes a price array on the
+      // same date keys we'd overlay it too — current shape doesn't, so
+      // we draw score-only at full width.
+      const hist = poc.signal_history;
+      const labels = hist.map(r => r.date);
+      const scores = hist.map(r => Number(r.score));
+      charts[chartKey] = new Chart(canvas, {
+        type:'line',
+        data:{labels, datasets:[
+          {label:'Score', data:scores, borderColor:'#a78bfa', backgroundColor:'#a78bfa22', fill:true, tension:0.2, pointRadius:0, borderWidth:2},
+        ]},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{labels:{color:'#e6e8ee'}}, tooltip:{mode:'index',intersect:false}},
+          scales:{
+            x:{ticks:{color:'#8a93a6',maxTicksLimit:10},grid:{color:'#1f2533'}},
+            y:{min:-100,max:100,title:{display:true,text:'Score',color:'#8a93a6'},ticks:{color:'#8a93a6'},grid:{color:'#1f2533'}},
+          },
+        },
+      });
+    } else {
+      // 7-day hourly price sparkline. sparkline_7d is ~168 hourly points;
+      // we render as a simple line with synthetic positional labels (no
+      // axes ticks) — sticking with Chart.js keeps the chart-card height
+      // consistent with the score-history charts above.
+      const series = (Array.isArray(s.sparkline_7d) ? s.sparkline_7d : [])
+        .map(Number)
+        .filter(v => isFinite(v));
+      if (series.length < 5){
+        // Defensive: poc-less coin with no usable sparkline. Leave the
+        // canvas blank rather than throwing.
+        return;
+      }
+      const labels = series.map((_, i) => i);
+      const up = series[series.length-1] >= series[0];
+      const lineColor = up ? '#22c55e' : '#ef4444';
+      const fillColor = up ? '#22c55e22' : '#ef444422';
+      charts[chartKey] = new Chart(canvas, {
+        type:'line',
+        data:{labels, datasets:[
+          {label:'Price', data:series, borderColor:lineColor, backgroundColor:fillColor, fill:true, tension:0.25, pointRadius:0, borderWidth:1.5},
+        ]},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{legend:{display:false}, tooltip:{mode:'index',intersect:false,callbacks:{title:()=>'',label:c=>'$'+Number(c.raw).toLocaleString(undefined,{maximumFractionDigits:c.raw>=1?2:6})}}},
+          scales:{
+            x:{display:false},
+            y:{ticks:{color:'#8a93a6',callback:v=>fmtUSD(v,'auto')},grid:{color:'#1f2533'}},
+          },
+        },
+      });
+    }
+  });
+  // Wire clicks on either block (signal card or chart card) → modal.
+  host.querySelectorAll('[data-per-coin-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-per-coin-symbol')))
+  );
 }
 
 function openSignalDetail(sym){
