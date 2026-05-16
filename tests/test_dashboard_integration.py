@@ -869,3 +869,36 @@ def test_symbol_search_supports_multiple_symbols():
         "symbolSearchForm submit handler no longer calls lookupSymbol with "
         "the raw input string."
     )
+
+
+# ---------- Recent symbol-lookup chips wiring -----------------------------
+#
+# The header symbol-search input remembers the last N successful lookups in
+# localStorage and surfaces them as clickable chips below the input. The
+# mount div (#symbolRecentChips) and the renderer (renderSymbolRecentChips)
+# must both survive a rebuild — otherwise the chip strip silently
+# disappears without raising any client-side error.
+
+
+def test_symbol_recent_chips_div_and_renderer_present():
+    """The recent-lookups chip row must have its mount div and renderer
+    wired into the built dashboard.html. Also asserts the storage key + cap
+    are pinned so a refactor doesn't silently change the persisted shape."""
+    html = _read_dashboard_or_skip()
+
+    assert 'id="symbolRecentChips"' in html, (
+        '#symbolRecentChips host div missing from dashboard.html — '
+        "the recent-lookups chip strip has no mount point."
+    )
+    assert "function renderSymbolRecentChips" in html, (
+        "renderSymbolRecentChips() function missing from dashboard.html — "
+        "the chip strip has no renderer."
+    )
+    assert "pushSymbolRecent" in html, (
+        "pushSymbolRecent() helper missing from dashboard.html — "
+        "successful lookups won't be persisted to the recents list."
+    )
+    # Storage key + cap are part of the persisted contract: pin them.
+    assert "'recentSymbolLookups'" in html or '"recentSymbolLookups"' in html, (
+        "localStorage key 'recentSymbolLookups' missing from dashboard.html"
+    )

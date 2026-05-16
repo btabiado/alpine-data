@@ -533,6 +533,24 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 #chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
 #chatFab:hover{transform:scale(1.08)}
 #chatFab.hidden{display:none}
+/* Recent symbol-lookup chips. Rendered below the header symbol-search form
+   by renderSymbolRecentChips(); hidden via .hidden when the localStorage
+   list is empty. The chip's × (.symbol-recent-chip-x) removes a single
+   entry; clicking the chip itself fills the input and submits the form. */
+.symbol-recent-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 8px;border:1px solid var(--border);border-radius:12px;
+  background:var(--panel);color:var(--text);font-size:11px;
+  cursor:pointer;white-space:nowrap;line-height:1.2;font-family:inherit;
+}
+.symbol-recent-chip:hover{background:#10151f}
+.symbol-recent-chip-x{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:12px;height:12px;border-radius:50%;
+  color:var(--muted);font-size:12px;line-height:1;
+  margin-left:1px;
+}
+.symbol-recent-chip-x:hover{color:var(--text);background:#1f2533}
 /* Mobile: tight layout — collapse multi-col grids, shrink header, KPI rows
    become 2-up instead of 1-up, chart heights capped. Desktop unchanged. */
 @media (max-width:860px){
@@ -901,9 +919,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
              aria-label="Search one or more stock or crypto symbols (comma-separated)"
              aria-autocomplete="list" aria-controls="symbolSearchSuggest" aria-expanded="false"
              style="background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;width:160px;outline:none">
-
       <button class="btn" id="symbolSearchBtn" type="submit" aria-label="Look up symbol">🔍</button>
       <div id="symbolSearchSuggest" class="symbol-suggest hidden" role="listbox" aria-label="Symbol suggestions"></div>
+      <!-- Recent-lookups chip row. Sits FURTHER BELOW the form than the
+           autocomplete dropdown (top:calc(100% + 4px) vs the dropdown's
+           top:100%) so they don't clash. Hidden when empty. Renderer:
+           renderSymbolRecentChips(). -->
+      <div id="symbolRecentChips" class="hidden"
+           style="position:absolute;top:calc(100% + 4px);left:0;display:flex;gap:4px;flex-wrap:nowrap;max-width:min(360px,calc(100vw - 24px));overflow-x:auto;z-index:30;padding-bottom:2px"
+           aria-label="Recent symbol lookups"></div>
     </form>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
@@ -9817,6 +9841,131 @@ async function resolveAndRenderSymbol(sym){
   return { html: '', found: false, sym: sym, displayName: '' };
 }
 
+// --- Recent symbol lookups ---------------------------------------------
+// Persisted FIFO (most-recent-first) of the last RECENT_SYMBOL_CAP symbols
+// the user successfully looked up. Backed by localStorage (key
+// `recentSymbolLookups`); falls back to an in-memory array when storage is
+// unavailable (Safari private mode, file:// origin restrictions, etc.).
+// Rendered as a chip strip below the header symbol-search form by
+// renderSymbolRecentChips(); chip click re-runs lookupSymbol, × removes a
+// single entry.
+const RECENT_SYMBOL_KEY = 'recentSymbolLookups';
+const RECENT_SYMBOL_CAP = 6;
+
+function _readSymbolRecents(){
+  // Returns an array of uppercased symbol strings. Anything malformed in
+  // storage (non-array, non-string entries, duplicates) gets normalised to
+  // an empty list rather than crashing the renderer.
+  try {
+    const raw = window.localStorage.getItem(RECENT_SYMBOL_KEY);
+    if (!raw) return (window._symbolRecents = []);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return (window._symbolRecents = []);
+    const seen = new Set();
+    const out = [];
+    for (const v of parsed){
+      if (typeof v !== 'string') continue;
+      const up = v.trim().toUpperCase();
+      if (!up || seen.has(up)) continue;
+      seen.add(up);
+      out.push(up);
+      if (out.length >= RECENT_SYMBOL_CAP) break;
+    }
+    return (window._symbolRecents = out);
+  } catch (_) {
+    // localStorage unavailable or JSON.parse threw — fall through to the
+    // in-memory cache so chips still work for the rest of the session.
+    if (!Array.isArray(window._symbolRecents)) window._symbolRecents = [];
+    return window._symbolRecents;
+  }
+}
+
+function _writeSymbolRecents(list){
+  window._symbolRecents = list.slice(0, RECENT_SYMBOL_CAP);
+  try {
+    window.localStorage.setItem(RECENT_SYMBOL_KEY, JSON.stringify(window._symbolRecents));
+  } catch (_) { /* private mode — in-memory only is fine */ }
+}
+
+function pushSymbolRecent(sym){
+  if (typeof sym !== 'string') return;
+  const up = sym.trim().toUpperCase();
+  if (!up) return;
+  const cur = _readSymbolRecents();
+  const next = [up];
+  for (const v of cur){
+    if (v !== up) next.push(v);
+    if (next.length >= RECENT_SYMBOL_CAP) break;
+  }
+  _writeSymbolRecents(next);
+  renderSymbolRecentChips();
+}
+
+function removeSymbolRecent(sym){
+  if (typeof sym !== 'string') return;
+  const up = sym.trim().toUpperCase();
+  if (!up) return;
+  const cur = _readSymbolRecents();
+  const next = cur.filter(v => v !== up);
+  _writeSymbolRecents(next);
+  renderSymbolRecentChips();
+}
+
+function renderSymbolRecentChips(){
+  const host = document.getElementById('symbolRecentChips');
+  if (!host) return;
+  const list = _readSymbolRecents();
+  if (!list.length){
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    return;
+  }
+  host.classList.remove('hidden');
+  // Build buttons via DOM (escapeHtml is fine but explicit nodes avoid any
+  // injection worry and let us bind handlers without inline strings).
+  host.innerHTML = '';
+  for (const sym of list){
+    const btn = document.createElement('button');
+    btn.type = 'button';                 // not 'submit' — we're inside the form
+    btn.className = 'symbol-recent-chip';
+    btn.setAttribute('data-symbol', sym);
+    btn.setAttribute('aria-label', 'Re-open ' + sym);
+    btn.title = 'Re-open ' + sym;
+    const label = document.createElement('span');
+    label.textContent = sym;
+    btn.appendChild(label);
+    const x = document.createElement('span');
+    x.className = 'symbol-recent-chip-x';
+    x.textContent = '×';            // ×
+    x.setAttribute('role', 'button');
+    x.setAttribute('aria-label', 'Remove ' + sym + ' from recents');
+    x.title = 'Remove from recents';
+    btn.appendChild(x);
+    btn.addEventListener('click', (e) => {
+      // Scope the × handler to the inner span so removing doesn't trigger
+      // a lookup on the same click.
+      if (e.target === x || (e.target && e.target.classList && e.target.classList.contains('symbol-recent-chip-x'))){
+        e.preventDefault();
+        e.stopPropagation();
+        removeSymbolRecent(sym);
+        return;
+      }
+      const input = document.getElementById('symbolSearchInput');
+      const form = document.getElementById('symbolSearchForm');
+      if (input) input.value = sym;
+      // Prefer the form's submit handler (consistent with manual submit);
+      // fall back to direct lookupSymbol if the form is missing.
+      if (form){
+        if (typeof form.requestSubmit === 'function') form.requestSubmit();
+        else lookupSymbol(sym);
+      } else {
+        lookupSymbol(sym);
+      }
+    });
+    host.appendChild(btn);
+  }
+}
+
 async function lookupSymbol(query){
   // Multi-symbol entry point. Accepts a raw input string; splits on
   // comma/semicolon/whitespace, dedupes, caps at 6, and routes to the
@@ -9893,6 +10042,7 @@ async function lookupSymbol(query){
         const payload = await liveServerSymbolLookup(sym);
         if (!stillCurrent()) return;
         body.innerHTML = renderServerSymbolSection(sym, payload);
+        pushSymbolRecent(sym);
         return;
       } catch (err){
         if (!stillCurrent()) return;
@@ -9906,6 +10056,7 @@ async function lookupSymbol(query){
       const rows = await liveCryptoLookup(sym);
       if (!stillCurrent()) return;
       body.innerHTML = renderLiveCryptoSection(sym, rows);
+      pushSymbolRecent(sym);
       return;
     } catch (err){
       cryptoErr = err;
@@ -9918,6 +10069,7 @@ async function lookupSymbol(query){
         const out = await liveStockLookup(sym);
         if (!stillCurrent()) return;
         body.innerHTML = renderLiveStockSection(sym, out.rows, out.source);
+        pushSymbolRecent(sym);
         return;
       } catch (err){
         if (!stillCurrent()) return;
@@ -9958,6 +10110,7 @@ async function lookupSymbol(query){
     displayName: displayName,
   });
   modal.classList.remove('hidden');
+  pushSymbolRecent(sym);
 }
 
 // Multi-symbol modal renderer. Opens the modal immediately with a spinner,
@@ -10197,6 +10350,8 @@ function _setSymbolSuggestActive(box, idx){
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeSymbolDetail();
   });
+  // Initial paint of any previously-stored recents (no-op if list is empty).
+  try { renderSymbolRecentChips(); } catch (_) { /* defensive — never block boot */ }
 })();
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
