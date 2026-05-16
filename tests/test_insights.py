@@ -446,9 +446,429 @@ def test_ainews_rules_defensive_on_malformed_summary():
 def test_ainews_tab_added_to_valid_tabs():
     """The VALID_TABS allowlist must include 'ainews' so the renderer accepts it."""
     assert "ainews" in insights.VALID_TABS
+# ---------- new POC-tab rules ----------
+
+def _empty_payload(**overrides):
+    """Tiny payload skeleton — every test fills in only what it needs."""
+    base = {"btc": {}, "eth": {}, "market": {}, "signals": {}}
+    base.update(overrides)
+    return base
+
+
+def test_poc_strong_migration_fires_and_tagged_poc():
+    payload = _empty_payload(market={"poc": {
+        "btc": {
+            "d30": {"poc": 80_000, "current": 79_000},
+            "d90": {"poc": 70_000, "current": 79_000},
+            "migration": {"delta_pct": 14.28, "direction": "UP",
+                          "magnitude": "STRONG", "between_pocs": False,
+                          "explanation": "..."},
+            "naked": [],
+        }
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "value migrating up" in i.get("headline", "").lower()]
+    assert hits, "expected POC strong-migration insight"
+    for i in hits:
+        assert i["tab"] == "poc"
+        assert i["asset"] == "btc"
+
+
+def test_poc_no_migration_when_flat():
+    payload = _empty_payload(market={"poc": {
+        "btc": {"migration": {"direction": "FLAT", "magnitude": "WEAK",
+                              "delta_pct": 0.3, "between_pocs": False}}
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "value migrating" in i.get("headline", "").lower()]
+    assert not hits, f"expected no migration insight, got {hits!r}"
+
+
+def test_poc_price_between_pocs_fires():
+    payload = _empty_payload(market={"poc": {
+        "eth": {
+            "d30": {"poc": 3500, "current": 3400},
+            "d90": {"poc": 3200, "current": 3400},
+            "migration": {"delta_pct": 9.4, "direction": "UP",
+                          "magnitude": "STRONG", "between_pocs": True,
+                          "explanation": "..."},
+            "naked": [],
+        }
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "sits between" in i.get("headline", "").lower()]
+    assert hits, "expected price-between-POCs insight"
+    for i in hits:
+        assert i["tab"] == "poc"
+
+
+def test_poc_naked_cluster_fires_across_two_assets():
+    """Two assets with ≥3 naked weekly POCs each → cluster insight."""
+    naked3 = [{"poc": 50_000, "days_ago": 30, "distance_pct": -1.0, "week_start": "2024-01-01"}] * 3
+    payload = _empty_payload(market={"poc": {
+        "btc": {"naked": naked3, "migration": {"direction": "FLAT"}},
+        "eth": {"naked": naked3, "migration": {"direction": "FLAT"}},
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "naked poc cluster" in i.get("headline", "").lower()]
+    assert hits, "expected naked-POC cluster insight"
+    for i in hits:
+        assert i["tab"] == "poc"
+
+
+def test_poc_dense_single_asset_fires():
+    """Single asset with ≥5 naked POCs → dense magnet structure insight."""
+    naked5 = [{"poc": 60_000 + i * 1000, "days_ago": 30 + i,
+               "distance_pct": -2.0 - i, "week_start": "2024-01-01"} for i in range(5)]
+    payload = _empty_payload(market={"poc": {
+        "btc": {"naked": naked5, "migration": {"direction": "FLAT"}},
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "naked weekly pocs" in i.get("headline", "").lower()]
+    assert hits, "expected dense-naked-POC insight"
+
+
+# ---------- new social-tab rules ----------
+
+def test_social_cc_news_sentiment_skew_fires():
+    payload = _empty_payload(market={"social": {
+        "cc_news": {"coins": {
+            "btc": {"net_score": 8, "article_count": 30,
+                    "positive": 20, "negative": 12, "neutral": 18},
+        }},
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "news sentiment skews" in i.get("headline", "").lower()]
+    assert hits, "expected CC news sentiment skew insight"
+    for i in hits:
+        assert i["tab"] == "social"
+
+
+def test_social_cc_news_silent_when_balanced():
+    payload = _empty_payload(market={"social": {
+        "cc_news": {"coins": {
+            "btc": {"net_score": 2, "article_count": 30,
+                    "positive": 12, "negative": 10, "neutral": 28},
+        }},
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "news sentiment skews" in i.get("headline", "").lower()]
+    assert not hits, f"expected no skew insight for balanced sentiment, got {hits!r}"
+
+
+def test_social_reddit_active_user_spike_fires():
+    """Three subs with normal active/subs ratios, plus one outlier ≥3× median."""
+    payload = _empty_payload(market={"social": {
+        "reddit": {"subreddits": {
+            "CryptoCurrency": {"subscribers": 1_000_000, "active_users": 5_000,
+                               "label": "All crypto", "sub": "CryptoCurrency"},
+            "Bitcoin":        {"subscribers": 4_000_000, "active_users": 12_000,
+                               "label": "BTC", "sub": "Bitcoin"},
+            "ethereum":       {"subscribers": 1_500_000, "active_users": 4_500,
+                               "label": "ETH", "sub": "ethereum"},
+            "Chainlink":      {"subscribers": 100_000, "active_users": 8_000,
+                               "label": "LINK", "sub": "Chainlink"},  # 8% — way above the others (~0.3%)
+        }},
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "active-user spike" in i.get("headline", "").lower()]
+    assert hits, "expected Reddit active-user spike insight"
+    for i in hits:
+        assert i["tab"] == "social"
+
+
+def test_social_santiment_daa_surge_fires():
+    payload = _empty_payload(market={"social": {
+        "santiment": {"coins": {
+            "btc": {"daily_active_addresses_delta_pct": 35.0,
+                    "daily_active_addresses_latest": 1_200_000},
+        }},
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "on-chain attention" in i.get("headline", "").lower()]
+    assert hits, "expected Santiment DAA surge insight"
+    for i in hits:
+        assert i["tab"] == "social"
+
+
+# ---------- new signals: RSI / MACD rules ----------
+
+def test_signals_rsi_overbought_fires():
+    payload = _empty_payload(signals={"btc": {
+        "label": "BUY", "score": 25,
+        "components": [{"name": "RSI(14)", "value": "78.5", "contribution": -15,
+                        "explanation": "overbought"}],
+        "history": [{"score": 25}, {"score": 25}],
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "rsi overbought" in i.get("headline", "").lower()]
+    assert hits, "expected RSI overbought insight"
+    for i in hits:
+        assert i["tab"] == "signals"
+        assert i["asset"] == "btc"
+
+
+def test_signals_rsi_oversold_fires():
+    payload = _empty_payload(signals={"eth": {
+        "label": "SELL", "score": -25,
+        "components": [{"name": "RSI(14)", "value": "22.4", "contribution": 15,
+                        "explanation": "oversold"}],
+        "history": [{"score": -25}, {"score": -25}],
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "rsi oversold" in i.get("headline", "").lower()]
+    assert hits, "expected RSI oversold insight"
+
+
+def test_signals_rsi_silent_when_neutral():
+    payload = _empty_payload(signals={"btc": {
+        "label": "HOLD", "score": 5,
+        "components": [{"name": "RSI(14)", "value": "55.0", "contribution": 0}],
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "rsi overbought" in i.get("headline", "").lower()
+            or "rsi oversold" in i.get("headline", "").lower()]
+    assert not hits
+
+
+def test_signals_macd_histogram_fires():
+    payload = _empty_payload(signals={"btc": {
+        "label": "BUY", "score": 30,
+        "components": [{"name": "MACD histogram", "value": "+1.50", "contribution": 10,
+                        "explanation": "momentum up"}],
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "macd histogram" in i.get("headline", "").lower()]
+    assert hits, "expected MACD histogram insight"
+    for i in hits:
+        assert i["tab"] == "signals"
+
+
+# ---------- new whale (ETH-side) rules ----------
+
+def test_whale_eth_large_transactions_fires():
+    payload = _empty_payload(whale={
+        "eth": {"large_transactions": [{"hash": f"0x{i}"} for i in range(35)]},
+    })
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "large-transaction surge" in i.get("headline", "").lower()]
+    assert hits, "expected ETH large-tx surge insight"
+    for i in hits:
+        assert i["tab"] == "whale"
+        assert i["asset"] == "eth"
+
+
+def test_whale_eth_large_transactions_silent_under_threshold():
+    payload = _empty_payload(whale={
+        "eth": {"large_transactions": [{"hash": f"0x{i}"} for i in range(10)]},
+    })
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "large-transaction surge" in i.get("headline", "").lower()]
+    assert not hits
+
+
+def test_whale_eth_coin_metrics_zscore_fires():
+    """30 days with normal variance then a big spike on day 31 trips ETH CM
+    whale-transfer z-score."""
+    # Add small variance so pstdev is finite.
+    series = [{"date": f"2024-01-{d:02d}", "value": 1.0e9 + (d % 4) * 5e7}
+              for d in range(1, 31)]
+    series.append({"date": "2024-01-31", "value": 5.0e9})
+    payload = _empty_payload(whale={
+        "eth": {"coin_metrics": {"transfer_value_adj_usd": series}},
+    })
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "eth whale transfer value" in i.get("headline", "").lower()]
+    assert hits, "expected ETH whale transfer z-score insight"
+    for i in hits:
+        assert i["tab"] == "whale"
+
+
+# ---------- new stocks rules ----------
+
+def test_stocks_news_alignment_fires():
+    """Buy-biased stocks + crypto news cluster → richer combined insight."""
+    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25} for i in range(20)]
+    payload = _empty_payload(market={
+        "stocks_signals": stocks,
+        "news": [
+            {"title": "BTC rally hits new high", "source": "x"},
+            {"title": "Bitcoin surge continues", "source": "x"},
+            {"title": "Ethereum joins the rally", "source": "x"},
+            {"title": "Unrelated tech story", "source": "x"},
+            {"title": "Markets quiet today", "source": "x"},
+        ],
+    })
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "risk-on alignment" in i.get("headline", "").lower()]
+    assert hits, "expected stocks+news risk-on alignment insight"
+    for i in hits:
+        assert i["tab"] == "stocks"
+
+
+def test_stocks_single_name_dispersion_fires():
+    """A clear outlier among 20 stocks → dispersion insight."""
+    stocks = [{"symbol": f"T{i}", "name": f"Co{i}", "score": 10} for i in range(19)]
+    stocks.append({"symbol": "MEGA", "name": "Mega Inc", "score": 70})
+    payload = _empty_payload(market={"stocks_signals": stocks})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "single-name dispersion" in i.get("headline", "").lower()]
+    assert hits, "expected single-name dispersion insight"
+
+
+# ---------- new ETF rules ----------
+
+def test_etf_extended_streak_fires():
+    """10+ positive-flow days in a row → extended streak milestone."""
+    daily = [{"date": f"2024-01-{d:02d}", "flow": 50.0, "cumulative": 50.0 * d}
+             for d in range(1, 12)]  # 11 positive days
+    payload = _empty_payload(btc={"daily": daily, "stats": {"all_time": 550.0}})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "extended" in i.get("headline", "").lower()
+            and "inflow streak" in i.get("headline", "").lower()]
+    assert hits, "expected extended inflow streak insight"
+    for i in hits:
+        assert i["tab"] == "etf"
+
+
+def test_etf_flow_with_news_cluster_fires():
+    """Large flow + ≥3 BTC-keyword headlines → composite insight."""
+    from datetime import datetime, timedelta
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    yesterday = (datetime.utcnow() - timedelta(days=1)).strftime("%Y-%m-%d")
+    daily = [
+        {"date": yesterday, "flow": 10.0, "cumulative": 10.0},
+        {"date": today, "flow": 250.0, "cumulative": 260.0},
+    ]
+    payload = _empty_payload(btc={"daily": daily, "stats": {"all_time": 260.0}},
+                             market={"news": [
+                                 {"title": "Bitcoin ETF inflows surge", "source": "x"},
+                                 {"title": "BTC hits new all-time high", "source": "x"},
+                                 {"title": "Bitcoin rally continues", "source": "x"},
+                             ]})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "alongside" in i.get("headline", "").lower()
+            and "headlines on btc" in i.get("headline", "").lower()]
+    assert hits, "expected ETF flow+news cluster insight"
+    for i in hits:
+        assert i["tab"] == "etf"
+
+
+# ---------- new DeFi rules ----------
+
+def test_defi_chain_tvl_zscore_fires():
+    """TVL history with normal variance then a spike → chain TVL z-score anomaly."""
+    # Add small variance so pstdev is non-zero and the resulting z-score is
+    # finite. Day-31 value is well above the 30-day mean.
+    series = [{"date": f"2024-01-{d:02d}", "value": 5.0e9 + (d % 5) * 1e8}
+              for d in range(1, 31)]
+    series.append({"date": "2024-01-31", "value": 9.0e9})
+    payload = _empty_payload(market={"defi": {"tvl_history": {"Solana": series}}})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "tvl" in i.get("headline", "").lower()
+            and "σ vs 30d" in i.get("headline", "")]
+    assert hits, "expected chain TVL z-score insight"
+    for i in hits:
+        assert i["tab"] == "defi"
+
+
+def test_defi_bridge_flow_leader_fires():
+    payload = _empty_payload(market={"defi": {
+        "bridges": [
+            {"name": "Across", "volume_24h_usd": 250_000_000},
+            {"name": "Stargate", "volume_24h_usd": 80_000_000},
+        ],
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "bridge flow leader" in i.get("headline", "").lower()]
+    assert hits, "expected bridge-flow leader insight"
+    for i in hits:
+        assert i["tab"] == "defi"
+
+
+def test_defi_bridge_flow_silent_under_threshold():
+    payload = _empty_payload(market={"defi": {
+        "bridges": [{"name": "Tiny", "volume_24h_usd": 10_000_000}],
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "bridge flow leader" in i.get("headline", "").lower()]
+    assert not hits
+
+
+# ---------- new trading rules ----------
+
+def test_trading_fng_threshold_crossing_fires():
+    """F&G crosses 75 going up → milestone insight on the trading tab."""
+    payload = _empty_payload(market={"fear_greed": [
+        {"value": 70, "label": "Greed"},
+        {"value": 78, "label": "Extreme Greed"},
+    ]})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "fear & greed crossed above 75" in i.get("headline", "").lower()]
+    assert hits, "expected F&G crossing-75 insight"
+    for i in hits:
+        assert i["tab"] == "trading"
+
+
+def test_trading_fng_threshold_silent_when_no_cross():
+    payload = _empty_payload(market={"fear_greed": [
+        {"value": 80, "label": "Extreme Greed"},
+        {"value": 82, "label": "Extreme Greed"},
+    ]})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "crossed above" in i.get("headline", "").lower()
+            or "crossed below" in i.get("headline", "").lower()]
+    # The original F&G ≥75 absolute rule is allowed to fire elsewhere; we
+    # explicitly check there's no *crossing* insight when the threshold isn't
+    # transitioned.
+    assert not [h for h in hits if "fear & greed" in h["headline"].lower()]
+
+
+def test_trading_oi_vs_price_divergence_fires():
+    """OI +10% over 7d while price -10% → divergence anomaly."""
+    oi = [{"date": f"2024-01-{d:02d}", "oi_usd": 10e9} for d in range(1, 8)]
+    oi.append({"date": "2024-01-08", "oi_usd": 11.5e9})
+    price = [{"date": f"2024-01-{d:02d}", "value": 70_000} for d in range(1, 8)]
+    price.append({"date": "2024-01-08", "value": 63_000})
+    payload = _empty_payload(market={"btc": {
+        "open_interest_usd": oi,
+        "price": price,
+    }})
+    out = insights.build_insights(payload, limit=100)
+    hits = [i for i in out if "oi vs price divergence" in i.get("headline", "").lower()]
+    assert hits, "expected OI-vs-price divergence insight"
+    for i in hits:
+        assert i["tab"] == "trading"
 
 
 # ---------- regression: existing behaviour still holds ----------
+
+def test_new_rules_idempotent_on_repeat_invocation():
+    """Running build_insights() twice on the same payload must return the
+    same insights set (same headlines, same tabs, same count). Guards against
+    accidental mutation of payload-derived state."""
+    payload = _empty_payload(
+        market={
+            "fear_greed": [{"value": 70}, {"value": 78}],
+            "stocks_signals": [{"symbol": f"T{i}", "name": f"Co{i}", "score": 25}
+                               for i in range(20)],
+            "poc": {"btc": {"d30": {"poc": 80_000, "current": 79_000},
+                            "d90": {"poc": 70_000, "current": 79_000},
+                            "migration": {"delta_pct": 14.28, "direction": "UP",
+                                          "magnitude": "STRONG", "between_pocs": False},
+                            "naked": []}},
+            "social": {"cc_news": {"coins": {"btc": {"net_score": 8, "article_count": 30,
+                                                     "positive": 20, "negative": 12,
+                                                     "neutral": 18}}}},
+        },
+        whale={"eth": {"large_transactions": [{"hash": f"0x{i}"} for i in range(35)]}},
+    )
+    first = insights.build_insights(payload, limit=100)
+    second = insights.build_insights(payload, limit=100)
+    h1 = sorted((i["headline"], i["tab"]) for i in first)
+    h2 = sorted((i["headline"], i["tab"]) for i in second)
+    assert h1 == h2
+
 
 def test_build_insights_respects_limit():
     """Verify the explicit limit argument truncates the output."""

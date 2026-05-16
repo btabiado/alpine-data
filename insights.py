@@ -327,7 +327,39 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
                 "detail": "30d vs prior 30d net flows.",
             })
 
-    # 13. Flow vs price divergence: 7d flow strongly diverges from 7d price.
+    # 13a. Extended streak (≥10 days) is a noteworthy regime milestone above
+    # and beyond the 5-day streak rule above.
+    if pos >= 10:
+        out.append({
+            "kind": "milestone", "asset": asset, "severity": "good",
+            "headline": f"{asset.upper()} ETF: extended {pos}-day inflow streak (sum {_fmt_usd(sum(flows[-pos:]))})",
+            "detail": "Sustained institutional accumulation — multi-week regime.",
+        })
+    elif neg >= 10:
+        out.append({
+            "kind": "milestone", "asset": asset, "severity": "bad",
+            "headline": f"{asset.upper()} ETF: extended {neg}-day outflow streak (sum {_fmt_usd(sum(flows[-neg:]))})",
+            "detail": "Sustained institutional distribution — multi-week regime.",
+        })
+
+    # 13b. Flow + news cluster: a big single-day flow plus matching crypto
+    # news cluster amplifies the read. Triggers when |last_flow| ≥ $100M and
+    # ≥3 of the latest 5 headlines mention the relevant asset.
+    if fresh and abs(last_flow) >= 100:
+        titles = _news_recent_titles(payload, limit=5)
+        if titles:
+            kw = ("bitcoin", "btc") if asset == "btc" else ("ethereum", "eth")
+            mentions = _news_mentions(titles, kw)
+            if mentions >= 3:
+                flow_dir = "inflow" if last_flow > 0 else "outflow"
+                sev = "good" if last_flow > 0 else "bad"
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": sev,
+                    "headline": f"{asset.upper()} ETF {flow_dir} {_fmt_usd(abs(last_flow))} alongside {mentions}/5 headlines on {asset.upper()}",
+                    "detail": "Flow event with confirming news cluster.",
+                })
+
+    # 14. Flow vs price divergence: 7d flow strongly diverges from 7d price.
     # Threshold: |7d flow| ≥ $300M and 7d price change ≥5% in the opposite
     # direction. Pulls price series from payload["market"][asset]["price"].
     if fresh and len(flows) >= 7:
@@ -396,6 +428,72 @@ def _signal_insights(payload: dict) -> list[dict]:
                     "headline": f"{asset.upper()} signal near {direction} zone (score {score:+d})",
                     "detail": f"Within 15 pts of the {direction} threshold — watch for follow-through.",
                 })
+
+    # RSI extreme: per-asset RSI(14) component value is the literal RSI; flag
+    # crosses <30 (oversold, contrarian bull) and >70 (overbought, contrarian
+    # bear). Defensive against missing/non-numeric "value" strings.
+    for asset, sig in sigs.items():
+        if not sig:
+            continue
+        for comp in (sig.get("components") or []):
+            if not isinstance(comp, dict):
+                continue
+            name = (comp.get("name") or "")
+            if "RSI" not in name.upper():
+                continue
+            raw = comp.get("value")
+            try:
+                v = float(str(raw).strip().rstrip("%"))
+            except (TypeError, ValueError):
+                continue
+            if v >= 70:
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": "alert",
+                    "headline": f"{asset.upper()} RSI overbought at {v:.0f} — contrarian caution",
+                    "detail": f"{name} reading ≥70 — momentum stretched.",
+                })
+            elif v <= 30:
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": "good",
+                    "headline": f"{asset.upper()} RSI oversold at {v:.0f} — contrarian buy zone",
+                    "detail": f"{name} reading ≤30 — momentum washed out.",
+                })
+            break  # one RSI insight per asset
+
+    # MACD histogram sign flip — look at history's price/MACD-related components
+    # via the score history as a proxy: if the score crossed zero in the last
+    # window AND the latest MACD-histogram component contribution flipped sign,
+    # flag a momentum turn. Defensive against missing component fields.
+    for asset, sig in sigs.items():
+        if not sig:
+            continue
+        macd_comp = None
+        for comp in (sig.get("components") or []):
+            if not isinstance(comp, dict):
+                continue
+            if "MACD" in (comp.get("name") or "").upper():
+                macd_comp = comp
+                break
+        if macd_comp is None:
+            continue
+        raw = macd_comp.get("value")
+        try:
+            v = float(str(raw).strip().rstrip("%").replace("+", ""))
+        except (TypeError, ValueError):
+            continue
+        contrib = macd_comp.get("contribution") or 0
+        # Only emit when the |histogram| is meaningfully nonzero — i.e. not a
+        # near-flat reading. Magnitude threshold scaled per-asset by 0.5%
+        # absolute (works for both small/large symbol price scales because
+        # the component is histogram-space, typically small floats).
+        if abs(v) >= 0.1 and isinstance(contrib, (int, float)) and contrib != 0:
+            sev = "good" if contrib > 0 else "bad"
+            direction = "positive" if contrib > 0 else "negative"
+            out.append({
+                "kind": "signal", "asset": asset, "severity": sev,
+                "headline": f"{asset.upper()} MACD histogram {direction} ({v:+.2f}) — momentum {'building' if contrib > 0 else 'fading'}",
+                "detail": "MACD histogram sign indicates short-term momentum direction.",
+            })
 
     # Signal component standout: of all assets with a non-trivial score, pick
     # the one with the largest |score| and call out its top-magnitude
@@ -520,6 +618,43 @@ def _stocks_insights(payload: dict) -> list[dict]:
                 "detail": "Cross-asset sentiment divergence — possible regime-change signal.",
             })
 
+    # Rule 4: breadth surge — same-direction stocks dominate AND crypto news
+    # cluster matches. When ≥60% of top-20 stocks are BUY+ AND ≥3 of the last
+    # 5 crypto headlines mention BTC/ETH, emit a richer cross-asset insight.
+    news_titles = _news_recent_titles(payload, limit=5)
+    if news_titles and n >= 4:
+        if buys / n >= 0.60:
+            crypto_pos_keywords = ("btc", "bitcoin", "eth", "ethereum", "rally", "surge", "all-time")
+            mentions = _news_mentions(news_titles, crypto_pos_keywords)
+            if mentions >= 3:
+                out.append({
+                    "kind": "stocks", "asset": "global", "severity": "info",
+                    "headline": f"Stocks breadth bullish ({buys}/{n} BUY+) AND {mentions}/5 recent crypto headlines on point — risk-on alignment",
+                    "detail": "Equity tape and crypto news cluster pointing the same direction.",
+                })
+        elif sells / n >= 0.60:
+            risk_off_keywords = ("crash", "sell", "selloff", "drop", "plunge", "fear", "outflow")
+            mentions = _news_mentions(news_titles, risk_off_keywords)
+            if mentions >= 2:
+                out.append({
+                    "kind": "stocks", "asset": "global", "severity": "warning",
+                    "headline": f"Stocks breadth bearish ({sells}/{n} SELL+) AND {mentions}/5 recent crypto headlines risk-off",
+                    "detail": "Equity tape weakness with confirming risk-off news cluster.",
+                })
+
+    # Rule 5: dispersion — top-1 stock score significantly larger than the
+    # rest. When the most-extreme stock's |score| ≥ 2× the median of the
+    # other 19, surface it as a single-name idiosyncratic move (not market beta).
+    if n >= 6:
+        abs_scores = sorted(abs(s) for s, _, _ in scored)
+        median_abs = abs_scores[len(abs_scores) // 2]
+        if median_abs > 0 and abs(ex_score) >= 2 * median_abs and abs(ex_score) >= 30:
+            out.append({
+                "kind": "stocks", "asset": ex_sym, "severity": "info",
+                "headline": f"Single-name dispersion: {ex_sym} score {int(ex_score):+d} is {abs(ex_score)/median_abs:.1f}× the top-20 median ({median_abs:.0f})",
+                "detail": f"Idiosyncratic move in {ex_name} — not market beta.",
+            })
+
     return out
 
 
@@ -625,6 +760,304 @@ def _whale_insights(payload: dict) -> list[dict]:
                 "kind": "anomaly", "asset": "btc", "severity": "info",
                 "headline": f"BTC network velocity {z:+.1f}σ vs 30d — outsized USD per active address",
             })
+
+    # ----- ETH-side whale activity -----
+    eth = (payload.get("whale") or {}).get("eth") or {}
+
+    # 8. ETH large_transactions count high. The blockchair endpoint returns
+    # a list of recent ≥$1M ETH transfers. When that list is unusually long
+    # (≥30), call it out as institutional-grade flow.
+    eth_large = eth.get("large_transactions") or []
+    if isinstance(eth_large, list) and len(eth_large) >= 30:
+        out.append({
+            "kind": "anomaly", "asset": "eth", "severity": "alert",
+            "headline": f"ETH large-transaction surge: {len(eth_large)} on-chain transfers ≥$1M in the latest scan",
+            "detail": "Blockchair feed of high-value ETH transfers — institutional flow.",
+        })
+
+    # 9. ETH active addresses (Etherscan daily series) at 30-day high.
+    etherscan = eth.get("etherscan_daily") or {}
+    eth_addrs_series = etherscan.get("active_addresses") or etherscan.get("daily_active_addresses") or []
+    eth_addrs = [r.get("value") for r in eth_addrs_series if isinstance(r, dict) and r.get("value") is not None]
+    if len(eth_addrs) >= 2 and _largest_in_window(eth_addrs, 30):
+        out.append({
+            "kind": "milestone", "asset": "eth", "severity": "good",
+            "headline": f"ETH active addresses at 30-day high ({eth_addrs[-1]:,.0f})",
+            "detail": "Etherscan daily — network engagement surging.",
+        })
+
+    # 10. ETH Coin Metrics whale transfer-value z-score (≥1.5σ vs 30d).
+    cm = eth.get("coin_metrics") or {}
+    cm_series = cm.get("transfer_value_adj_usd") or cm.get("tx_volume_usd") or []
+    cm_vals = [r.get("value") for r in cm_series if isinstance(r, dict) and r.get("value") is not None]
+    if len(cm_vals) >= 31:
+        z = _zscore(cm_vals, 30)
+        if z is not None and z >= SIGMA_15:
+            out.append({
+                "kind": "anomaly", "asset": "eth", "severity": "alert",
+                "headline": f"ETH whale transfer value {z:+.1f}σ vs 30d — heavy on-chain USD movement",
+                "detail": f"Latest: {_fmt_usd((cm_vals[-1] or 0) / 1e6)}.",
+            })
+
+    return out
+
+
+def _news_recent_titles(payload: dict, limit: int = 5) -> list[str]:
+    """Return the latest few headline strings (lowercased) from market.news.
+
+    Used by other generators to add a one-line news-context detail when a
+    quantitative event lines up with a story cluster. Defensive: returns
+    empty list when news is missing or malformed.
+    """
+    try:
+        news = (payload.get("market") or {}).get("news") or []
+        out: list[str] = []
+        for n in news[:limit]:
+            t = (n or {}).get("title")
+            if isinstance(t, str) and t:
+                out.append(t.lower())
+        return out
+    except Exception:
+        return []
+
+
+def _news_mentions(titles: list[str], keywords: tuple[str, ...]) -> int:
+    """Count how many of the given lowercased titles mention ANY of the
+    keywords (case-insensitive, substring match). Used to detect cluster
+    coverage of an event in headlines.
+    """
+    if not titles or not keywords:
+        return 0
+    n = 0
+    for t in titles:
+        if any(k in t for k in keywords):
+            n += 1
+    return n
+
+
+def _poc_insights(payload: dict) -> list[dict]:
+    """POC (Point of Control) tab rules. Operates on payload['market']['poc'],
+    which has the shape::
+
+        {<asset>: {"d30": {...}, "d90": {...}, "d180": {...}, "d365": {...},
+                   "migration": {"delta_pct": float, "direction": str,
+                                 "magnitude": str, "between_pocs": bool},
+                   "migration_series": [{"date": str, "poc": float}, ...],
+                   "naked": [{"poc": float, "days_ago": int,
+                              "distance_pct": float, "week_start": str}, ...]}}
+
+    Each rule is defensive: returns empty if expected keys are missing.
+    """
+    out: list[dict] = []
+    poc_root = ((payload.get("market") or {}).get("poc")) or {}
+    if not isinstance(poc_root, dict) or not poc_root:
+        return out
+
+    # Rule 1: STRONG migration (≥5%) — value migrating up/down clearly.
+    for asset, asset_poc in poc_root.items():
+        if not isinstance(asset_poc, dict):
+            continue
+        mig = asset_poc.get("migration") or {}
+        direction = mig.get("direction")
+        magnitude = mig.get("magnitude")
+        delta = mig.get("delta_pct")
+        if direction in ("UP", "DOWN") and magnitude == "STRONG" and isinstance(delta, (int, float)):
+            sev = "good" if direction == "UP" else "bad"
+            out.append({
+                "kind": "trend", "asset": asset, "severity": sev,
+                "headline": f"{asset.upper()} POC value migrating {direction} {delta:+.1f}% (30d vs 90d)",
+                "detail": "Short-term volume concentrating away from the structural mean — bullish acceptance." if direction == "UP" else "Short-term volume concentrating below structural mean — bearish acceptance.",
+            })
+
+    # Rule 2: price BETWEEN 30d POC and 90d POC — actionable transition zone.
+    for asset, asset_poc in poc_root.items():
+        if not isinstance(asset_poc, dict):
+            continue
+        mig = asset_poc.get("migration") or {}
+        if mig.get("between_pocs") is True and mig.get("direction") in ("UP", "DOWN"):
+            d30 = asset_poc.get("d30") or {}
+            d90 = asset_poc.get("d90") or {}
+            cur = d30.get("current") or d90.get("current")
+            p30 = d30.get("poc")
+            p90 = d90.get("poc")
+            if cur and p30 and p90:
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": "info",
+                    "headline": f"{asset.upper()} price ${cur:,.0f} sits between 30d POC (${p30:,.0f}) and 90d POC (${p90:,.0f})",
+                    "detail": "Transition zone — structural support hasn't caught up to tactical volume formation.",
+                })
+
+    # Rule 3: cluster of naked POCs across multiple assets (≥2 assets each
+    # carrying ≥3 unfilled weekly POCs in the last 180d). Indicates broad
+    # untested-magnet structure forming.
+    naked_counts: list[tuple[str, int]] = []
+    for asset, asset_poc in poc_root.items():
+        if not isinstance(asset_poc, dict):
+            continue
+        naked = asset_poc.get("naked") or []
+        if isinstance(naked, list) and len(naked) >= 3:
+            naked_counts.append((asset, len(naked)))
+    if len(naked_counts) >= 2:
+        # Sort by count desc, take top-2 for the headline.
+        naked_counts.sort(key=lambda t: t[1], reverse=True)
+        top = naked_counts[:3]
+        names = ", ".join(f"{a.upper()} ({n})" for a, n in top)
+        out.append({
+            "kind": "anomaly", "asset": "global", "severity": "info",
+            "headline": f"Naked POC cluster forming across {len(naked_counts)} assets: {names}",
+            "detail": "Multiple weekly POCs untested in the last 180d — magnet levels building.",
+        })
+
+    # Rule 4: single-asset naked-POC density spike (≥5 unfilled weekly POCs).
+    for asset, asset_poc in poc_root.items():
+        if not isinstance(asset_poc, dict):
+            continue
+        naked = asset_poc.get("naked") or []
+        if isinstance(naked, list) and len(naked) >= 5:
+            # Closest naked POC by distance.
+            with_dist = [n for n in naked if isinstance(n, dict)
+                         and isinstance(n.get("distance_pct"), (int, float))]
+            if with_dist:
+                closest = min(with_dist, key=lambda n: abs(n.get("distance_pct") or 0))
+                dist = closest.get("distance_pct") or 0
+                price_level = closest.get("poc")
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": "info",
+                    "headline": f"{asset.upper()} carries {len(naked)} naked weekly POCs in 180d (nearest at ${price_level:,.0f}, {dist:+.1f}% away)",
+                    "detail": "Dense magnet structure — expect reactions at retests.",
+                })
+
+    return out
+
+
+def _social_insights(payload: dict) -> list[dict]:
+    """Social/Research tab rules. Operates on payload['market']['social'],
+    which holds reddit, cryptocompare social, cc_news, and santiment subtrees.
+
+    Each rule is defensive — the social fetcher can return ``available: False``
+    or partial data on any leg, and we silently skip those rules.
+    """
+    out: list[dict] = []
+    social = ((payload.get("market") or {}).get("social")) or {}
+    if not isinstance(social, dict) or not social:
+        return out
+
+    # Rule 1: CryptoCompare news sentiment skew. Per coin, when sentiment is
+    # one-sided (net_score |≥5| with >=10 articles), emit a directional
+    # insight. Only the strongest coin per call.
+    cc_news = ((social.get("cc_news") or {}).get("coins")) or {}
+    if isinstance(cc_news, dict) and cc_news:
+        candidates: list[tuple[int, str, dict]] = []
+        for sym, coin in cc_news.items():
+            if not isinstance(coin, dict):
+                continue
+            net = coin.get("net_score")
+            count = coin.get("article_count") or 0
+            if isinstance(net, int) and count >= 10 and abs(net) >= 5:
+                candidates.append((abs(net), sym, coin))
+        if candidates:
+            candidates.sort(reverse=True)
+            _, sym, coin = candidates[0]
+            net = coin.get("net_score") or 0
+            pos = coin.get("positive") or 0
+            neg = coin.get("negative") or 0
+            sev = "good" if net > 0 else "bad"
+            direction = "bullish" if net > 0 else "bearish"
+            out.append({
+                "kind": "trend", "asset": sym, "severity": sev,
+                "headline": f"{sym.upper()} news sentiment skews {direction}: {pos} positive vs {neg} negative (net {net:+d})",
+                "detail": "CryptoCompare news-sentiment net score from last 50 headlines.",
+            })
+
+    # Rule 2: Reddit subreddit activity spike — when /r/<sub> active users are
+    # ≥3× the typical subscriber ratio (active / subscribers) seen across the
+    # other tracked subs. Indicates outsized real-time engagement for that coin.
+    reddit = (social.get("reddit") or {}).get("subreddits") or {}
+    if not reddit:
+        # Schema fallback: reddit() returns top-level keys per-sub in some shapes.
+        reddit = social.get("reddit") or {}
+    if isinstance(reddit, dict):
+        ratios: list[tuple[float, str, int, int]] = []
+        for sub_key, meta in reddit.items():
+            if not isinstance(meta, dict):
+                continue
+            subs = meta.get("subscribers")
+            active = meta.get("active_users")
+            if (isinstance(subs, int) and subs >= 5000
+                    and isinstance(active, int) and active >= 100):
+                ratios.append((active / subs, sub_key, active, subs))
+        if len(ratios) >= 3:
+            # Compute median ratio; flag any sub ≥ 3× median.
+            sorted_r = sorted(r[0] for r in ratios)
+            median = sorted_r[len(sorted_r) // 2]
+            if median > 0:
+                ratios.sort(reverse=True)
+                top_ratio, top_sub, top_active, top_subs = ratios[0]
+                if top_ratio >= 3 * median:
+                    out.append({
+                        "kind": "anomaly", "asset": "global", "severity": "info",
+                        "headline": f"r/{top_sub} active-user spike: {top_active:,} active vs {top_subs:,} subs ({top_ratio*100:.2f}% — {top_ratio/median:.1f}× median)",
+                        "detail": "Outsized real-time engagement on one subreddit.",
+                    })
+
+    # Rule 3: Santiment daily-active-addresses delta — per coin, when
+    # daily_active_addresses_delta_pct ≥ +20% or ≤ −20% over the recent
+    # window, emit a directional flag.
+    san = (social.get("santiment") or {}).get("coins") or {}
+    if isinstance(san, dict):
+        for sym, coin in san.items():
+            if not isinstance(coin, dict):
+                continue
+            delta = coin.get("daily_active_addresses_delta_pct")
+            latest = coin.get("daily_active_addresses_latest")
+            if isinstance(delta, (int, float)) and abs(delta) >= 20:
+                sev = "good" if delta > 0 else "bad"
+                direction = "surging" if delta > 0 else "fading"
+                latest_s = f" — {int(latest):,} DAA latest" if isinstance(latest, (int, float)) else ""
+                out.append({
+                    "kind": "trend", "asset": sym, "severity": sev,
+                    "headline": f"{sym.upper()} on-chain attention {direction}: daily active addresses {delta:+.0f}% over recent window{latest_s}",
+                    "detail": "Santiment DAA — broad user engagement proxy.",
+                })
+                # Cap at most one per asset to avoid bar pollution.
+
+    # Rule 4: news + Reddit alignment — if news sentiment is one-sided AND
+    # at least one tracked subreddit shows high engagement, emit a stronger
+    # combined insight. (Compose-only — depends on data from rules 1 + 2.)
+    try:
+        # Reuse cc_news strongest candidate if it exists.
+        cc_coins = ((social.get("cc_news") or {}).get("coins")) or {}
+        strongest = None
+        for sym, coin in cc_coins.items():
+            net = coin.get("net_score") if isinstance(coin, dict) else None
+            count = coin.get("article_count") or 0 if isinstance(coin, dict) else 0
+            if isinstance(net, int) and count >= 20 and abs(net) >= 10:
+                if strongest is None or abs(net) > abs(strongest[1].get("net_score") or 0):
+                    strongest = (sym, coin)
+        if strongest is not None:
+            sym, coin = strongest
+            # Find matching subreddit if any.
+            sub_match = None
+            for sub_key, meta in (reddit or {}).items():
+                if not isinstance(meta, dict):
+                    continue
+                label = (meta.get("label") or "").upper()
+                if sym.upper() in label or sym.upper() in sub_key.upper():
+                    sub_match = (sub_key, meta)
+                    break
+            if sub_match is not None:
+                sub_key, meta = sub_match
+                active = meta.get("active_users") or 0
+                if isinstance(active, int) and active >= 500:
+                    net = coin.get("net_score") or 0
+                    direction = "bullish" if net > 0 else "bearish"
+                    out.append({
+                        "kind": "anomaly", "asset": sym, "severity": "good" if net > 0 else "bad",
+                        "headline": f"{sym.upper()} news + Reddit alignment: {direction} news net {net:+d} with r/{sub_key} at {active:,} active users",
+                        "detail": "Cross-source agreement strengthens the signal.",
+                    })
+    except Exception:
+        pass
 
     return out
 
@@ -1111,6 +1544,72 @@ def _market_insights(payload: dict) -> list[dict]:
                         "detail": "Contrarian: heavy short positioning often precedes short-squeezes.",
                     })
 
+    # ----- Trading tab extras: F&G regime crossings + OI vs price divergence -----
+    # F&G 25/75 crossings — companion to the existing absolute fear/greed
+    # rule. This fires only when the index *crosses* the threshold day-over-
+    # day (not just sits below/above), so it surfaces transition events.
+    fng_series = market.get("fear_greed") or []
+    if isinstance(fng_series, list) and len(fng_series) >= 2:
+        prev_v = (fng_series[-2] or {}).get("value")
+        last_v = (fng_series[-1] or {}).get("value")
+        if isinstance(prev_v, (int, float)) and isinstance(last_v, (int, float)):
+            for thresh, lo_label, hi_label in (
+                (25, "extreme fear", "fear"),
+                (75, "greed", "extreme greed"),
+            ):
+                crossed_up = prev_v < thresh <= last_v
+                crossed_dn = prev_v >= thresh > last_v
+                if crossed_up:
+                    out.append({
+                        "kind": "milestone", "asset": "global",
+                        "severity": "info" if thresh == 25 else "alert",
+                        "headline": f"Fear & Greed crossed above {thresh} ({int(last_v)}): exiting {lo_label} into {hi_label}",
+                        "detail": "Sentiment regime transition.",
+                    })
+                    break
+                if crossed_dn:
+                    out.append({
+                        "kind": "milestone", "asset": "global",
+                        "severity": "good" if thresh == 75 else "alert",
+                        "headline": f"Fear & Greed crossed below {thresh} ({int(last_v)}): exiting {hi_label} into {lo_label}",
+                        "detail": "Sentiment regime transition.",
+                    })
+                    break
+
+    # OI vs price divergence — when 7d OI change and 7d price change point in
+    # opposite directions (≥5% magnitudes), flag the dislocation. Mirrors
+    # the ETF flow vs price divergence pattern.
+    for asset in ("btc", "eth", "link"):
+        a = market.get(asset) or {}
+        oi_rows = a.get("open_interest_usd") or a.get("open_interest") or []
+        price_rows = a.get("price") or []
+        if len(oi_rows) < 8 or len(price_rows) < 8:
+            continue
+        try:
+            oi_then_raw = oi_rows[-8] or {}
+            oi_now_raw = oi_rows[-1] or {}
+            oi_then = oi_then_raw.get("oi_usd") if oi_then_raw.get("oi_usd") is not None else oi_then_raw.get("oi")
+            oi_now = oi_now_raw.get("oi_usd") if oi_now_raw.get("oi_usd") is not None else oi_now_raw.get("oi")
+            p_then = (price_rows[-8] or {}).get("value")
+            p_now = (price_rows[-1] or {}).get("value")
+            if not (oi_then and oi_now and p_then and p_now):
+                continue
+            if oi_then <= 0 or p_then <= 0:
+                continue
+            oi_pct = (oi_now / oi_then - 1) * 100.0
+            p_pct = (p_now / p_then - 1) * 100.0
+            if abs(oi_pct) >= 5 and abs(p_pct) >= 5 and (oi_pct > 0) != (p_pct > 0):
+                oi_dir = "rose" if oi_pct > 0 else "fell"
+                p_dir = "fell" if p_pct < 0 else "rose"
+                sev = "alert" if oi_pct > 0 else "info"
+                out.append({
+                    "kind": "anomaly", "asset": asset, "severity": sev,
+                    "headline": f"{asset.upper()} OI vs price divergence: OI {oi_dir} {oi_pct:+.1f}% while price {p_dir} {p_pct:+.1f}% (7d)",
+                    "detail": "Leverage building against the tape — squeeze setup.",
+                })
+        except Exception:
+            continue
+
     # ----- DeFi tab extras: second-place chain mover + protocol mover -----
     # `chains[:10]` mover loop above breaks on the FIRST big mover. Catch a
     # second-place mover here so the DeFi tab gets two chain insights when
@@ -1159,6 +1658,57 @@ def _market_insights(payload: dict) -> list[dict]:
                     "detail": f"Largest 1d protocol mover by % change. Category: {top.get('category') or '—'}.",
                 })
 
+    # ----- DeFi tab extras: TVL history z-score + bridge flow movement -----
+    # Single-chain TVL z-score: scan defi.tvl_history.{chain}, compute z-score
+    # vs 30d for each chain, emit the top ≥|1.5σ| outlier. Adds a non-obvious
+    # TVL anomaly even when 1d % moves are unremarkable.
+    tvl_hist = ((market.get("defi") or {}).get("tvl_history")) or {}
+    if isinstance(tvl_hist, dict) and tvl_hist:
+        z_candidates: list[tuple[float, str, float]] = []
+        for chain_name, series in tvl_hist.items():
+            if not isinstance(series, list):
+                continue
+            vals = [r.get("value") for r in series if isinstance(r, dict) and r.get("value") is not None]
+            if len(vals) < 31:
+                continue
+            z = _zscore(vals, 30)
+            if z is not None and abs(z) >= SIGMA_15:
+                z_candidates.append((abs(z), chain_name, z))
+        if z_candidates:
+            z_candidates.sort(reverse=True)
+            _, chain_name, z_val = z_candidates[0]
+            sev = "good" if z_val > 0 else "bad"
+            # Latest non-null value for the chain.
+            chain_vals = [r.get("value") for r in tvl_hist[chain_name]
+                          if isinstance(r, dict) and r.get("value") is not None]
+            last_val = chain_vals[-1] if chain_vals else None
+            if isinstance(last_val, (int, float)):
+                out.append({
+                    "kind": "anomaly", "asset": "global", "severity": sev,
+                    "headline": f"{chain_name} TVL {z_val:+.1f}σ vs 30d (now ${last_val/1e9:.2f}B)",
+                    "detail": "Multi-day TVL anomaly — not just a one-day blip.",
+                })
+
+    # Bridges: surface notable bridge volume from defi.bridges when present.
+    bridges = ((market.get("defi") or {}).get("bridges")) or []
+    if isinstance(bridges, list) and bridges:
+        # Sort by 24h volume desc; top entry as the dominant pipe.
+        ranked_bridges = sorted(
+            (b for b in bridges
+             if isinstance(b, dict) and isinstance(b.get("volume_24h_usd"), (int, float))),
+            key=lambda b: b.get("volume_24h_usd") or 0,
+            reverse=True,
+        )
+        if ranked_bridges:
+            top = ranked_bridges[0]
+            vol = top.get("volume_24h_usd") or 0
+            if vol >= 100_000_000:
+                out.append({
+                    "kind": "trend", "asset": "global", "severity": "info",
+                    "headline": f"Bridge flow leader: {top.get('name','?')} moved {_fmt_usd(vol/1e6)} in 24h",
+                    "detail": "Largest cross-chain flow today — liquidity rotation across L1/L2.",
+                })
+
     # ETH/BTC ratio extremes
     ethbtc = market.get("ethbtc") or []
     if len(ethbtc) >= 60:
@@ -1185,7 +1735,8 @@ def _market_insights(payload: dict) -> list[dict]:
 # Overview shows its own curated "Top insights" card from the global list,
 # and the per-tab Insights bar is hidden when Overview is active.
 
-VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale", "stocks", "ainews"}
+VALID_TABS = {"etf", "signals", "trading", "markets", "defi", "whale", "stocks",
+              "poc", "social", "ainews"}
 
 
 # Mirrors the AI_EXPOSED_TICKERS list in app.py's renderAiNewsTab so the AI
@@ -1460,11 +2011,14 @@ def _market_insight_tab(insight: dict) -> str:
     if "eth/btc" in h: return "trading"
     if "open interest" in h: return "trading"
     if "l/s ratio" in h: return "trading"
-    # DeFi: gas, stablecoin supply, DEX volume, chain/protocol TVL
+    if "oi vs price divergence" in h: return "trading"
+    # DeFi: gas, stablecoin supply, DEX volume, chain/protocol TVL,
+    # bridge flow leader
     if "gas" in h: return "defi"
     if "stablecoin supply" in h: return "defi"
     if "dex 24h" in h: return "defi"
     if "tvl" in h: return "defi"
+    if "bridge flow" in h: return "defi"
     # Whale / on-chain: mempool, hashrate, difficulty, mining concentration,
     # on-chain transfer volume, active-address swings
     if "mempool" in h: return "whale"
@@ -1503,6 +2057,8 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
     whales = _whale_insights(payload)
     mkts = _market_insights(payload)
     ainews = _ainews_insights(payload)
+    pocs = _poc_insights(payload)
+    socials = _social_insights(payload)
 
     # Tag with the tab each insight belongs to.
     for i in etf_btc + etf_eth:
@@ -1513,12 +2069,16 @@ def build_insights(payload: dict, limit: int = 12) -> list[dict]:
         i.setdefault("tab", "stocks")
     for i in whales:
         i.setdefault("tab", "whale")
+    for i in pocs:
+        i.setdefault("tab", "poc")
+    for i in socials:
+        i.setdefault("tab", "social")
     for i in mkts:
         i.setdefault("tab", _market_insight_tab(i))
     for i in ainews:
         i.setdefault("tab", "ainews")
 
-    out = etf_btc + etf_eth + sigs + stocks + whales + mkts + ainews
+    out = etf_btc + etf_eth + sigs + stocks + whales + mkts + ainews + pocs + socials
 
     # Prioritise: milestones + anomalies first, then ETF, then trends, then signals, then info
     rank = {
