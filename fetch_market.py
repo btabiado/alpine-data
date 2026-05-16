@@ -2908,7 +2908,7 @@ def _yahoo_gold(days: int = 1095) -> list[dict]:
 
 # ----- Yahoo most-active stocks + signal scoring ----------------------------
 
-def yahoo_most_active(limit: int = 20) -> list[dict]:
+def yahoo_most_active(limit: int = 50) -> list[dict]:
     """Yahoo Finance most-active US stocks predefined screener.
 
     Returns a list of dicts with symbol, name, last_price, change_pct, volume.
@@ -3126,7 +3126,7 @@ def _label_from_score(score: int) -> str:
 
 
 def compute_stock_signal(history: list[dict]) -> dict:
-    """Compute a signal score, label, components, and a 30d rolling history
+    """Compute a signal score, label, components, and a 90d rolling history
     from daily OHLC history. `history` is the list returned by
     `yahoo_chart_history` — each item has {date, close, volume}.
 
@@ -3135,7 +3135,7 @@ def compute_stock_signal(history: list[dict]) -> dict:
             "score": int,            # -100..+100
             "label": str,
             "components": [...],
-            "history": [{date, score}, ...]   # last 30d, oldest first
+            "history": [{date, score}, ...]   # last 90d, oldest first
         }
     """
     if not history:
@@ -3150,10 +3150,10 @@ def compute_stock_signal(history: list[dict]) -> dict:
     final_score = int(round(max(-100.0, min(100.0, raw_total * 1.8))))
     label = _label_from_score(final_score)
 
-    # Rolling 30d history: compute signal at each day for the last 30
+    # Rolling 90d history: compute signal at each day for the last 90
     rolling: list[dict] = []
     n = len(closes)
-    window = min(30, n)
+    window = min(90, n)
     start = n - window
     for i in range(start, n):
         sub_closes = closes[: i + 1]
@@ -3170,7 +3170,7 @@ def compute_stock_signal(history: list[dict]) -> dict:
     }
 
 
-def fetch_stocks_signals(limit: int = 20) -> list[dict]:
+def fetch_stocks_signals(limit: int = 50) -> list[dict]:
     """Pull the top-N most-active US stocks and compute a signal for each.
 
     Paces requests to Yahoo (~0.3s sleep between chart calls) since their
@@ -3371,7 +3371,7 @@ def fetch_trading() -> dict:
     print("  Yahoo Finance indices (Dow / S&P / NASDAQ / VIX)...")
     yahoo_idx = yahoo_indices()
     print("  Yahoo most-active stocks + signals...")
-    stocks_signals = fetch_stocks_signals(20)
+    stocks_signals = fetch_stocks_signals(50)
     print("  Fear & Greed...")
     fng = fear_greed()
 

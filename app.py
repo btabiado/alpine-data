@@ -507,6 +507,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* --- Cap chart heights on mobile (was 380px each, way too tall) --- */
   .chart-wrap.tall{height:280px}
   .chart-wrap{min-height:0}
+  /* Breadth charts: tighter on phone */
+  #stocksBreadthChart, #cryptoSignalsBreadthChart{}
+  .chart-wrap:has(>#stocksBreadthChart),
+  .chart-wrap:has(>#cryptoSignalsBreadthChart){height:160px !important}
 
   /* --- GLOBAL CARD TIGHTENING (every tab, not just Overview) ---
      User reported all phone pages had boxes wasting too much space.
@@ -1107,10 +1111,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ STOCKS TAB ============ -->
   <div id="tab-stocks" class="hidden">
     <div class="container">
+      <!-- Signal breadth chart (top of tab, before filter chips) -->
       <div class="chart-card">
         <div class="head">
-          <h2>Stock signals — Top 20 most active <span class="tag">Yahoo</span></h2>
-          <span class="desc">Daily-volume leaders on US exchanges &middot; signal score across SMA / RSI / MACD / momentum / volume &middot; sorted Strong Buy &rarr; Strong Sell</span>
+          <h2>Stock signal breadth — 50 most active <span class="tag">Yahoo</span></h2>
+          <span class="desc">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 most-active US stocks &middot; last 90 days</span>
+        </div>
+        <div class="chart-wrap" style="height:220px"><canvas id="stocksBreadthChart"></canvas></div>
+      </div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="head">
+          <h2>Stock signals — Top 50 most active <span class="tag">Yahoo</span></h2>
+          <span class="desc">Daily-volume leaders on US exchanges &middot; signal score across SMA / RSI / MACD / momentum / volume &middot; grouped by bucket Strong Buy &rarr; Strong Sell</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <span class="lbl" style="margin:0">Filter</span>
@@ -1121,7 +1133,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-stocksfilter="sell">SELL+</button>
           <button class="btn" data-stocksfilter="strong_sell">STRONG SELL</button>
         </div>
-        <div id="stocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px"></div>
+        <div id="stocksGrid"></div>
       </div>
     </div>
   </div>
@@ -1173,6 +1185,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-signals" class="hidden">
     <div id="signalsEmpty" class="empty hidden">No signal data — needs price history. Run <code>--fetch-market</code>.</div>
     <div id="signalsContent">
+      <!-- Signal breadth chart (top of tab) -->
+      <div class="chart-card" style="margin-bottom:14px">
+        <div class="head">
+          <h2>Crypto signal breadth — top 50 by market cap <span class="tag">CoinGecko</span></h2>
+          <span class="desc">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 by market cap &middot; last 90 days</span>
+        </div>
+        <div class="chart-wrap" style="height:220px"><canvas id="cryptoSignalsBreadthChart"></canvas></div>
+      </div>
       <!-- ============ TOP-50 COMPACT SIGNALS STRIP (moved to top of tab) ============ -->
       <div class="card" style="padding:12px 14px;margin-bottom:14px">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
@@ -2293,6 +2313,18 @@ function renderSignalChart(canvasId, asset){
   });
 }
 
+// Render the top-of-tab breadth chart for the Crypto Signals tab. Sources
+// signals_top20 (each entry carries `history: [{date,score}, ...]`). Safe to
+// call when DATA isn't loaded — the helper renders an empty-state message.
+function renderCryptoSignalsBreadth(){
+  const items = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
+  renderBreadthChart(
+    'cryptoSignalsBreadthChart',
+    computeSignalBreadth(items, 90),
+    null
+  );
+}
+
 function renderSignals(){
   const sigData = DATA.signals || {};
   const top20  = DATA.signals_top20 || [];
@@ -2300,6 +2332,8 @@ function renderSignals(){
   document.getElementById('signalsEmpty').classList.toggle('hidden', !empty);
   document.getElementById('signalsContent').classList.toggle('hidden', empty);
   if (empty) return;
+  // Breadth chart at the top of the tab (first visible widget).
+  renderCryptoSignalsBreadth();
   // Sort cards descending by score so the strongest signals appear first.
   const sortedAssets = Object.entries(sigData)
     .filter(([k, v]) => v && typeof v.score === 'number')
@@ -4637,14 +4671,28 @@ function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
   const rows = ((DATA.market||{}).stocks_signals) || [];
+  // Always (re)render the breadth chart first so it appears whether or not
+  // there are scoreable rows. computeSignalBreadth/renderBreadthChart both
+  // handle empty input gracefully with a "No data available." message.
+  renderBreadthChart(
+    'stocksBreadthChart',
+    computeSignalBreadth(Array.isArray(rows) ? rows : [], 90),
+    null
+  );
   if (!Array.isArray(rows) || rows.length === 0){
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1">Stock signals not yet loaded &mdash; run python app.py --fetch-market</div>';
+    grid.innerHTML = '<div class="empty">Stock signals not yet loaded &mdash; run python app.py --fetch-market</div>';
     return;
   }
   const sorted = rows.slice().sort((a, b) => (Number(b.score)||0) - (Number(a.score)||0));
-  // COMPACT cards — small title, gauge, price+change, score. Click anywhere
-  // on the card opens the full-screen modal with components + sparkline.
-  const cards = sorted.map(s => {
+  // Group rows by bucket so we can render section headers above each grid.
+  const byBucket = {strong_buy:[], buy:[], hold:[], sell:[], strong_sell:[]};
+  sorted.forEach(s => {
+    const b = stockLabelBucket(s.label);
+    if (byBucket[b]) byBucket[b].push(s);
+    else byBucket.hold.push(s);
+  });
+  // Render a single compact stock card. Click anywhere opens the full modal.
+  const cardHtml = s => {
     const score = Number(s.score) || 0;
     const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
     const chPct = Number(s.change_pct);
@@ -4678,8 +4726,35 @@ function renderStocksTab(){
         <div style="color:${chColor};font-weight:600">${chTxt}</div>
       </div>
     </div>`;
+  };
+  // Section metadata: glyph + display label + pill color per bucket.
+  const sections = [
+    {key:'strong_buy',  glyph:'🔥', label:'STRONG BUY',  color:'#16a34a'},
+    {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
+    {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
+    {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+  ];
+  const html = sections.map(sec => {
+    const items = byBucket[sec.key];
+    const n = items.length;
+    const cards = items.map(cardHtml).join('');
+    const empty = n === 0
+      ? `<div class="sub" data-stock-bucket="${sec.key}" style="color:var(--muted);padding:10px 4px;font-size:12px">No stocks in this bucket.</div>`
+      : '';
+    return `<div class="stocks-section" data-stocks-section="${sec.key}" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin:0 0 8px 0">
+        <h3 style="margin:0;font-size:14px;font-weight:700;letter-spacing:0.2px;color:var(--text)">
+          <span aria-hidden="true">${escapeHtml(sec.glyph)}</span>
+          ${escapeHtml(sec.label)}
+          <span style="color:var(--muted);font-weight:500;margin-left:4px">(${n})</span>
+        </h3>
+        <span class="tag" style="background:${sec.color}22;color:${sec.color};border:1px solid ${sec.color}66;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700">${escapeHtml(sec.label)}</span>
+      </div>
+      <div class="row stocks-section-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">${cards}${empty}</div>
+    </div>`;
   }).join('');
-  grid.innerHTML = cards;
+  grid.innerHTML = html;
   applyStocksFilter();
 }
 
@@ -4986,6 +5061,12 @@ function applyStocksFilter(bucket){
     const allChip = document.querySelector('[data-stocksfilter="all"]');
     if (allChip) allChip.classList.add('active');
   }
+  // Section-level filter: hide whole sections that don't match the chip.
+  document.querySelectorAll('#stocksGrid [data-stocks-section]').forEach(sec => {
+    sec.style.display = (target === 'all' || sec.getAttribute('data-stocks-section') === target) ? '' : 'none';
+  });
+  // Card-level filter: also hide individual cards whose bucket doesn't match
+  // (defensive — in case cards live outside a wrapped section).
   document.querySelectorAll('#stocksGrid [data-stock-bucket]').forEach(card => {
     card.style.display = (target === 'all' || card.getAttribute('data-stock-bucket') === target) ? '' : 'none';
   });
@@ -5002,6 +5083,131 @@ function applyStocksFilter(bucket){
     applyStocksFilter(bucket);
   });
 })();
+
+// ============ SIGNAL BREADTH HELPERS ============
+// Aggregate per-asset rolling score histories into a per-day distribution
+// across STRONG BUY / BUY / HOLD / SELL / STRONG SELL buckets.
+//
+// Input: array of items, each with `history: [{date, score}, ...]`.
+// Output: one snapshot per date in the union of histories, capped to last
+// `days` entries:
+//   [{date, strong_buy, buy, hold, sell, strong_sell, total}, ...]
+// Buckets: >=50 STRONG BUY · >=20 BUY · > -20 HOLD · > -50 SELL · else STRONG SELL.
+function computeSignalBreadth(items, days){
+  const cap = (typeof days === 'number' && days > 0) ? days : 90;
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const dates = new Set();
+  items.forEach(it => {
+    const h = it && Array.isArray(it.history) ? it.history : null;
+    if (!h) return;
+    h.forEach(pt => { if (pt && pt.date) dates.add(String(pt.date)); });
+  });
+  const allDates = Array.from(dates).sort();
+  if (!allDates.length) return [];
+  const recent = allDates.slice(-cap);
+  const recentSet = new Set(recent);
+  // Bucket each (item, date) — only over dates that survived the cap.
+  const acc = new Map();
+  recent.forEach(d => acc.set(d, {date:d, strong_buy:0, buy:0, hold:0, sell:0, strong_sell:0, total:0}));
+  items.forEach(it => {
+    const h = it && Array.isArray(it.history) ? it.history : null;
+    if (!h) return;
+    h.forEach(pt => {
+      if (!pt || !pt.date || !recentSet.has(String(pt.date))) return;
+      const sc = Number(pt.score);
+      if (!isFinite(sc)) return;
+      const row = acc.get(String(pt.date));
+      if (!row) return;
+      if      (sc >= 50)  row.strong_buy   += 1;
+      else if (sc >= 20)  row.buy          += 1;
+      else if (sc > -20)  row.hold         += 1;
+      else if (sc > -50)  row.sell         += 1;
+      else                row.strong_sell  += 1;
+      row.total += 1;
+    });
+  });
+  return recent.map(d => acc.get(d));
+}
+
+// Render a stacked-bar breadth chart into the given canvas id using a
+// [{date, strong_buy, buy, hold, sell, strong_sell, total}, ...] series.
+// Stacking order bottom-up: strong_sell, sell, hold, buy, strong_buy.
+// X labels shown every ~10 days. Empty input renders an inline message.
+function renderBreadthChart(canvasId, breadth, title){
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  destroy(canvasId);
+  if (!Array.isArray(breadth) || breadth.length === 0){
+    // Replace the canvas with an inline empty-state so the card still
+    // signals presence-of-section but doesn't render a blank chart.
+    const wrap = canvas.parentElement;
+    if (wrap){
+      wrap.innerHTML = '<div class="empty" style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:12px">No data available.</div>';
+    }
+    return;
+  }
+  const labels = breadth.map(r => r.date);
+  // Show roughly every 10th date so labels don't collide.
+  const step = Math.max(1, Math.ceil(labels.length / 10));
+  const datasets = [
+    {label:'STRONG SELL', data: breadth.map(r => r.strong_sell), backgroundColor: '#b91c1c'},
+    {label:'SELL',        data: breadth.map(r => r.sell),        backgroundColor: '#ef4444'},
+    {label:'HOLD',        data: breadth.map(r => r.hold),        backgroundColor: '#f59e0b'},
+    {label:'BUY',         data: breadth.map(r => r.buy),         backgroundColor: '#22c55e'},
+    {label:'STRONG BUY',  data: breadth.map(r => r.strong_buy),  backgroundColor: '#16a34a'},
+  ];
+  charts[canvasId] = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#e6e8ee', font: { size: 10 }, boxWidth: 12 } },
+        title: title ? { display: true, text: String(title), color: '#e6e8ee', font: { size: 12 } } : { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            title: (items) => {
+              if (!items || !items.length) return '';
+              const idx = items[0].dataIndex;
+              return breadth[idx] ? breadth[idx].date : '';
+            },
+            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}`,
+            footer: (items) => {
+              if (!items || !items.length) return '';
+              const idx = items[0].dataIndex;
+              const r = breadth[idx];
+              return r ? `Total: ${r.total}` : '';
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          stacked: true,
+          ticks: {
+            color: '#8a93a6',
+            autoSkip: false,
+            maxRotation: 0,
+            callback: function(_value, index){
+              const lab = labels[index];
+              return (index % step === 0) ? lab : '';
+            },
+          },
+          grid: { color: '#1f2533', display: false },
+        },
+        y: {
+          stacked: true,
+          title: { display: true, text: 'Count', color: '#8a93a6' },
+          ticks: { color: '#8a93a6', precision: 0 },
+          grid: { color: '#1f2533' },
+        },
+      },
+    },
+  });
+}
 
 // Tiny inline SVG sparkline of the rolling-30d POC over the last 90 days.
 // Stroke color slopes green/red based on first→last direction.

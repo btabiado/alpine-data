@@ -7,7 +7,7 @@ Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broade
 1. **Overview** — sortable top 25 by market cap with sparklines, 1h/24h/7d/30d %, trending coins, global stats.
 2. **Crypto Signals** — transparent rules-based composite score (−100…+100) per asset with full component breakdown. Not investment advice.
 3. **Whale Activity** — BTC on-chain proxies, mining pool concentration, Lightning Network, difficulty adjustment. BTC/ETH switcher with a separate ETH panel (24h EIP-1559 burn, largest tx, ERC-20/721 activity, supply) plus a dedicated **ETH whale-tx feed** (top 10 recent transactions ≥$1M USD via Blockchair). Whale Alerts feed scans mempool.space for BTC transactions ≥$1M in the latest block. A **multi-chain whale snapshot** beneath the BTC panel surfaces 24h network stats + largest single tx for LTC, BCH, and DOGE.
-4. **Stocks** — signals for the top 20 most-active US stocks via Yahoo Finance. Compact cards show symbol/name header, big colored score, label (STRONG BUY → STRONG SELL), price + change %, and 30d score sparkline. Click any card to open a modal with the full per-component breakdown (SMA, RSI(14), MACD, 5-day momentum, volume z-score, 50/200 cross). Sorted Strong Buy → Strong Sell.
+4. **Stocks** — signals for the top 50 most active US stocks via Yahoo Finance, grouped by signal bucket. Compact cards show symbol/name header, big colored score, label (STRONG BUY → STRONG SELL), price + change %, and 30d score sparkline. Click any card to open a modal with the full per-component breakdown (SMA, RSI(14), MACD, 5-day momentum, volume z-score, 50/200 cross). Sorted Strong Buy → Strong Sell.
 5. **Point of Control** — volume-weighted price levels for the **top 50 by market cap** across 30d / 90d / 180d windows. Cards are sorted by signal score (Strong Buy → Strong Sell) and filterable via chips (Strong Buy / Buy / Hold / Sell / Strong Sell). Click any card to open a full breakdown modal with the POC ladder, migration sparkline, and naked POCs.
 6. **Research** — Reddit subreddit stats, CryptoCompare social/news depth, Santiment daily active addresses.
 7. **DeFi** — overhauled tab leads with a KPI strip (total TVL, 24h change, top chain share, dominant category) above a chain selector for **Ethereum / Solana / Arbitrum / Base**. Selecting a chain swaps the panel below to that chain's TVL sparkline, protocols filtered to that chain, and the chain's share of the total. Stablecoin yields and 365-day TVL history per chain still surface beneath the per-chain view.
@@ -167,9 +167,9 @@ Classification:
 The 90-day signal history is plotted alongside price so you can see how
 the indicator behaved through past regimes.
 
-## Stock signals (top 20 most active)
+## Stock signals (top 50 most active)
 
-The Stocks tab applies the same `−100 … +100` score idea to the 20 most-active US stocks (by daily volume) pulled from Yahoo Finance. Same five-bucket label scheme (STRONG BUY → STRONG SELL), different components — the crypto-specific inputs (funding, DVOL, F&G, ETF flows) don't exist for equities, so the score is built from price/volume only:
+The Stocks tab applies the same `−100 … +100` score idea to the 50 most active US stocks (by daily volume) pulled from Yahoo Finance, grouped on screen by signal bucket. Same five-bucket label scheme (STRONG BUY → STRONG SELL), different components — the crypto-specific inputs (funding, DVOL, F&G, ETF flows) don't exist for equities, so the score is built from price/volume only:
 
 | Component | Source | Notes |
 |---|---|---|
@@ -182,6 +182,10 @@ The Stocks tab applies the same `−100 … +100` score idea to the 20 most-acti
 | 50/200 cross | derived | golden / death cross state |
 
 Cards are sorted Strong Buy → Strong Sell. Each compact card shows the symbol/name header, the colored score, the label, current price + change %, and a 30-day score sparkline. Click any card to open a modal with the full component breakdown.
+
+Above the card grid, a **90-day signal breadth chart** stacks the count of stocks in each bucket (STRONG BUY → STRONG SELL) per day, so you can see at a glance how the population of signals has rotated over the last three months. Green bars expanding from the bottom mean buys are accumulating; red bars expanding from the top mean sells are taking over. The Crypto Signals tab carries a matching **90-day breadth chart** built from the top-25 markets — same five buckets, same stacked shape, same colour key.
+
+Both breadth charts answer "is the market shifting toward more buys or more sells?" at a portfolio level without forcing you to scan dozens of individual cards.
 
 Not investment advice — same caveat as the crypto signal.
 

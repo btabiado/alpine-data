@@ -212,8 +212,8 @@ def test_compute_stock_signal_climbing_prices_bullish():
     cross = next(c for c in sig["components"] if c["name"] == "50/200 cross")
     assert cross["value"] == "above"
     assert cross["score"] == 10
-    # Rolling history has up to 30 entries
-    assert 1 <= len(sig["history"]) <= 30
+    # Rolling history has up to 90 entries
+    assert 1 <= len(sig["history"]) <= 90
     for h in sig["history"]:
         assert set(h.keys()) == {"date", "score"}
 
