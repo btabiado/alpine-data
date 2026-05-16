@@ -986,16 +986,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 </div>
 
-<!-- ============ SIGNAL DETAIL MODAL (top-20 strip → full breakdown) ============ -->
-<div id="signalDetailModal" class="modal-bg hidden">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:8px;overflow:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 id="signalDetailTitle" style="margin:0;font-size:14px">Signal detail</h2>
-      <button class="btn" id="signalDetailClose" aria-label="Close signal detail">×</button>
-    </div>
-    <div id="signalDetailBody"></div>
-  </div>
-</div>
+<!-- (Legacy SIGNAL DETAIL MODAL retired here. Every entry point that
+     previously opened #signalDetailModal now routes through openSignalDetail
+     → lookupSymbol → the universal #symbolDetailModal which pairs Signal
+     + POC side-by-side. Keeping this comment so a future grep finds the
+     intentional removal.) -->
 
 <!-- ============ STOCK DETAIL MODAL (Stocks tab card → full breakdown) ============ -->
 <div id="stockDetailModal" class="modal-bg hidden">
@@ -1303,11 +1298,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
 
-    <!-- Bottom-of-Overview: breaking news feed (top 10 most recent) -->
+    <!-- Bottom-of-Overview: continues the news feed past the top-4 teaser
+         (items 5-14) so the user doesn't read the same headlines twice. -->
     <div class="chart-card">
       <div class="head">
-        <h2>Breaking news</h2>
-        <span class="desc">latest crypto headlines</span>
+        <h2>More headlines</h2>
+        <span class="desc">items 5-14 from the same feed</span>
       </div>
       <div id="overviewNewsHost"></div>
     </div>
@@ -3335,7 +3331,7 @@ function renderTop20Signals(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
+    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
@@ -3466,13 +3462,13 @@ function renderPerCoinSignalList(){
       : 'Recent price trend · click for full breakdown';
     // Block A: rich signal card (score + components).
     chunks.push(
-      `<div data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
+      `<div data-per-coin-symbol="${escapeHtml(sym)}" role="button" tabindex="0" aria-label="Open ${escapeHtml(sym)} signal detail" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
       renderSignalCardFromObj(s) +
       `</div>`
     );
     // Block B: history/price chart card.
     chunks.push(
-      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
+      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" role="button" tabindex="0" aria-label="Open ${escapeHtml(sym)} signal detail" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
         <div class="head"><h2>${escapeHtml(chartTitle)}</h2><span class="desc">${chartDesc}</span></div>
         <div class="chart-wrap"><canvas id="perCoinChart-${escapeHtml(sym)}"></canvas></div>
       </div>`
@@ -3564,15 +3560,12 @@ function openSignalDetail(sym){
   //
   // For symbols outside `poc_top`, the POC slot renders an empty-state
   // card instead of being absent — consistent with the symbol-search UX.
-  // The legacy `#signalDetailModal` element stays in the DOM but is no
-  // longer opened; safe to remove later once nothing else references it.
   if (!sym) return;
   if (typeof lookupSymbol === 'function') lookupSymbol(String(sym));
 }
-function closeSignalDetail(){
-  const m = document.getElementById('signalDetailModal');
-  if (m) m.classList.add('hidden');
-}
+// (closeSignalDetail removed — the legacy #signalDetailModal element was
+// retired so there's nothing for this function to close. Click + keydown
+// handlers that referenced it were also removed in wireTop20Modals below.)
 
 // Apply the active Top-50 filter chip — hides both whole sections and any
 // individual cards whose bucket doesn't match. Chip semantics:
@@ -3609,8 +3602,6 @@ function applyTop20Filter(bucket){
 (function wireTop20Modals(){
   if (window._top20Wired) return; window._top20Wired = true;
   document.addEventListener('click', e => {
-    if (e.target && e.target.id === 'signalDetailClose') closeSignalDetail();
-    if (e.target && e.target.id === 'signalDetailModal') closeSignalDetail();
     const fb = e.target && e.target.closest && e.target.closest('[data-top20filter]');
     if (fb){
       const bucket = fb.getAttribute('data-top20filter');
@@ -3623,9 +3614,27 @@ function applyTop20Filter(bucket){
     const sigChart = e.target && e.target.closest && e.target.closest('[data-sig-asset]');
     if (sigChart) openSignalDetail(sigChart.getAttribute('data-sig-asset'));
   });
+  // Keyboard activation for every clickable coin card across the dashboard.
+  // Cards already carry role="button" + tabindex="0" + the appropriate
+  // data-* attribute; one delegated handler keeps Enter/Space working
+  // everywhere without per-renderer duplication. Skips elements with
+  // their own keydown logic (form inputs, the symbol-search box, etc).
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target;
+    if (!t || typeof t.getAttribute !== 'function') return;
+    // Don't steal Enter from form inputs / textareas / buttons that have
+    // their own behaviour.
+    const tag = (t.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const sym = t.getAttribute('data-symbol') || t.getAttribute('data-per-coin-symbol');
+    if (sym){
+      e.preventDefault();
+      openSignalDetail(sym);
+    }
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      closeSignalDetail();
       const pm = document.getElementById('pocExplainerModal');
       if (pm && !pm.classList.contains('hidden')) pm.classList.add('hidden');
     }
@@ -4918,8 +4927,11 @@ function renderInsights(){
       : `${label} · none right now`;
   }
   // Re-label the strong "Insights" header if present (the bar's title).
+  // Always set the strong header — was previously only setting it for
+  // non-Overview tabs, which left a stale "ETF" or "Whale" label visible
+  // if the user returned to Overview with the bar shown via the toggle.
   const headerStrong = host?.parentElement?.querySelector('strong');
-  if (headerStrong && tab !== 'overview') headerStrong.textContent = label;
+  if (headerStrong) headerStrong.textContent = (tab === 'overview') ? 'Insights' : label;
   if (!list.length){
     const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
     host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
@@ -5520,7 +5532,7 @@ function renderOverviewTop15(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+    return `<div class="card" data-symbol="${sym}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
@@ -5570,7 +5582,7 @@ function renderOverviewStrongBuys(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+    return `<div class="card" data-symbol="${sym}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
@@ -5868,14 +5880,18 @@ function renderOverviewNews(){
       ).join('');
     }
   }
-  // Bottom-of-Overview "Breaking news" feed: 10 most recent items.
+  // Bottom-of-Overview "More headlines" feed. Picks up where the top
+  // 4-item teaser left off so the user doesn't read the same titles
+  // twice on a single page. If we have fewer than 14 total items we
+  // simply render whatever is past index 4.
   const bottom = document.getElementById('overviewNewsHost');
   if (bottom){
-    if (!news.length){
-      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
+    const more = news.slice(4, 14);
+    if (!more.length){
+      bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No additional headlines beyond the top 4 above.</div>';
       return;
     }
-    bottom.innerHTML = news.slice(0,10).map(n =>
+    bottom.innerHTML = more.map(n =>
       `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
         <div style="font-weight:600;font-size:13px">${escapeHtml(n.title)}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source)} · ${escapeHtml(n.date)}</div>
@@ -6314,7 +6330,10 @@ function renderStocksTab(){
 // Reads DATA.market.ai_news (produced by fetch_market.py). Defensive: when
 // available=false or missing, shows an empty state pointing to the fetcher.
 const AI_EXPOSED_TICKERS = ['NVDA','GOOGL','MSFT','META','AMZN','AAPL','TSLA','AMD','INTC','ORCL','CRM','PLTR','SMCI','ARM','AVGO'];
-const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#f59e0b'};
+// Neutral is intentionally a muted grey, not amber. Amber means "caution"
+// per the palette spec; painting a neutral headline amber made it look
+// like a warning. Grey reads as "no signal" which is the actual semantic.
+const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#94a3b8'};
 
 function renderAiNewsTab(){
   const ai = ((DATA.market||{}).ai_news) || null;
@@ -8365,7 +8384,9 @@ function openNewsSentimentDetail(symbol){
     }).join('');
     const chipsBlock = chips ? `<div style="margin-top:10px;line-height:1.8">${chips}</div>` : '';
     // Top articles from CC (different from RSS-matched — these are CC's curated picks).
-    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
+    // Neutral = muted grey (not amber). Amber = caution per the palette
+    // spec; using it for NEUTRAL made neutral headlines look like warnings.
+    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#94a3b8'};
     const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
@@ -9365,6 +9386,15 @@ if (!isServer){
   }
   const _sb = document.getElementById('shareBtn');
   if (_sb) _sb.style.display = 'none';
+  // ETF Flows tab: "Paste BTC", "Paste ETH", "Seed BTC (mirror)" + the
+  // inline "Seed BTC from GitHub mirror" all POST to /api/upload-csv or
+  // /api/seed-etf, which only exist in local Flask mode. On the static
+  // mirror they 404 — hide the buttons entirely. Public-mirror users
+  // refresh the ETF CSVs via the hourly Pages workflow, not by clicking.
+  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = 'none';
+  });
 }
 
 // ---------- Share modal (owner side) ----------
