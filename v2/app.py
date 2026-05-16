@@ -425,6 +425,158 @@ HTML_TEMPLATE = r"""<!doctype html>
   --bg:#0b0d12; --panel:#141821; --panel2:#1b2030; --border:#252b3a;
   --text:#e6e8ee; --muted:#8a93a6; --btc:#f7931a; --eth:#627eea; --link:#2a5ada; --ltc:#bfbbbb;
   --green:#22c55e; --red:#ef4444; --amber:#f59e0b; --purple:#a78bfa; --cyan:#06b6d4;
+  /* V2 design tokens. Anchor every new component to these so semantic
+     meaning ("positive / risk / caution / info / AI") stays consistent
+     across every tab. Tints/borders are derived from the base color so
+     we don't sprinkle hex literals through the markup.
+       --v2-good   green   = positive / inflow / above trend
+       --v2-bad    red     = risk / outflow / below trend / alert
+       --v2-warn   amber   = caution / mixed / divergence
+       --v2-info   cyan    = neutral info / data / metadata
+       --v2-ai     purple  = AI / research / synthesized takes  */
+  --v2-good:#22c55e; --v2-good-bg:rgba(34,197,94,0.14); --v2-good-bd:rgba(34,197,94,0.36);
+  --v2-bad:#ef4444;  --v2-bad-bg:rgba(239,68,68,0.14);  --v2-bad-bd:rgba(239,68,68,0.36);
+  --v2-warn:#f59e0b; --v2-warn-bg:rgba(245,158,11,0.14); --v2-warn-bd:rgba(245,158,11,0.36);
+  --v2-info:#06b6d4; --v2-info-bg:rgba(6,182,212,0.14);  --v2-info-bd:rgba(6,182,212,0.36);
+  --v2-ai:#a78bfa;   --v2-ai-bg:rgba(167,139,250,0.14); --v2-ai-bd:rgba(167,139,250,0.36);
+  /* Spacing scale — small set, used pervasively in V2 layouts so mobile
+     and desktop both feel deliberate instead of guessed-each-time. */
+  --v2-s1:4px; --v2-s2:8px; --v2-s3:12px; --v2-s4:16px; --v2-s5:24px;
+  --v2-radius:10px;
+}
+/* --- V2 PREVIEW BANNER ---------------------------------------------------
+   Sticky at the very top of the page so anyone landing on /v2/ sees they
+   are NOT looking at production. Solid contrasting bar with a link back to
+   the production URL — keeps the user one click away from the canonical
+   experience while the cleanup sprint stabilises. */
+.v2-banner{position:sticky;top:0;z-index:50;
+  background:linear-gradient(90deg,var(--v2-ai-bg),var(--v2-info-bg));
+  border-bottom:1px solid var(--v2-ai-bd);
+  color:var(--text);font-size:12px;font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;padding:8px 16px;text-align:center}
+.v2-banner a{color:var(--v2-ai);text-decoration:underline;font-weight:700}
+.v2-banner a:hover{color:#c4b5fd}
+.v2-banner .v2-tag{background:var(--v2-ai);color:#0b0d12;padding:2px 8px;border-radius:4px;margin-right:8px;letter-spacing:.08em}
+/* --- V2 REUSABLE CARD SYSTEM --------------------------------------------
+   `.v2-card` is the one card class V2 components should use. It composes
+   like `.chart-card` does today (background + border + padding) but with
+   consistent spacing tokens, a semantic title row, optional severity
+   accent stripe on the left, and a compatible metric row. Hover lift is
+   subtle so clickable cards (data-v2-action) feel interactive without
+   making every static panel jump. */
+.v2-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--v2-radius);
+  padding:var(--v2-s4);display:flex;flex-direction:column;gap:var(--v2-s3);min-width:0}
+.v2-card[data-v2-action="open"]{cursor:pointer;transition:border-color .12s,transform .08s}
+.v2-card[data-v2-action="open"]:hover{border-color:var(--v2-ai)}
+.v2-card[data-v2-action="open"]:active{transform:scale(0.995)}
+.v2-card[data-v2-action="open"]:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
+.v2-card.v2-card--good{border-left:3px solid var(--v2-good)}
+.v2-card.v2-card--bad {border-left:3px solid var(--v2-bad)}
+.v2-card.v2-card--warn{border-left:3px solid var(--v2-warn)}
+.v2-card.v2-card--info{border-left:3px solid var(--v2-info)}
+.v2-card.v2-card--ai  {border-left:3px solid var(--v2-ai)}
+.v2-card__head{display:flex;align-items:center;justify-content:space-between;gap:var(--v2-s2);min-width:0}
+.v2-card__title{margin:0;font-size:13px;font-weight:600;color:var(--text);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2-card__subtitle{font-size:11px;color:var(--muted);font-weight:500}
+.v2-card__metric-row{display:flex;align-items:baseline;gap:var(--v2-s4);flex-wrap:wrap}
+.v2-card__metric{display:flex;flex-direction:column;gap:2px;min-width:0}
+.v2-card__metric .v2-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.v2-card__metric .v2-value{font-size:18px;font-weight:700;line-height:1.15}
+.v2-card__metric .v2-value--lg{font-size:24px}
+.v2-card__metric .v2-value.v2-good{color:var(--v2-good)}
+.v2-card__metric .v2-value.v2-bad {color:var(--v2-bad)}
+.v2-card__metric .v2-value.v2-warn{color:var(--v2-warn)}
+.v2-card__metric .v2-value.v2-info{color:var(--v2-info)}
+.v2-card__metric .v2-value.v2-ai  {color:var(--v2-ai)}
+.v2-card__body{font-size:12px;color:var(--text);line-height:1.5}
+.v2-card__footer{font-size:11px;color:var(--muted)}
+.v2-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:4px;
+  font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.v2-chip--good{background:var(--v2-good-bg);color:var(--v2-good);border:1px solid var(--v2-good-bd)}
+.v2-chip--bad {background:var(--v2-bad-bg); color:var(--v2-bad); border:1px solid var(--v2-bad-bd)}
+.v2-chip--warn{background:var(--v2-warn-bg);color:var(--v2-warn);border:1px solid var(--v2-warn-bd)}
+.v2-chip--info{background:var(--v2-info-bg);color:var(--v2-info);border:1px solid var(--v2-info-bd)}
+.v2-chip--ai  {background:var(--v2-ai-bg);  color:var(--v2-ai);  border:1px solid var(--v2-ai-bd)}
+/* --- V2 SKELETON / LOADING / EMPTY STATES -------------------------------
+   `.v2-skel` is the loading-block primitive (animated shimmer). Empty/fallback
+   states use `.v2-empty` — never render an unstyled blank panel. */
+@keyframes v2skel{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.v2-skel{display:inline-block;background:linear-gradient(90deg,#1b2030 0%,#252b3a 50%,#1b2030 100%);
+  background-size:200% 100%;animation:v2skel 1.2s ease-in-out infinite;
+  border-radius:4px;min-height:14px;height:14px;width:100%}
+.v2-skel--metric{height:22px;width:80%}
+.v2-skel--title{height:14px;width:60%}
+.v2-skel--line{height:10px;margin-top:6px;width:90%}
+.v2-skel--line.v2-skel--short{width:55%}
+.v2-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:18px 12px;text-align:center;color:var(--muted);font-size:12px;
+  border:1px dashed var(--border);border-radius:var(--v2-radius);background:#0f131c}
+.v2-empty__icon{font-size:22px;line-height:1}
+.v2-empty__title{font-size:12px;font-weight:600;color:var(--text)}
+.v2-empty__sub{font-size:11px;color:var(--muted)}
+.v2-empty.v2-empty--warm{border-color:var(--v2-info-bd);background:var(--v2-info-bg)}
+.v2-empty.v2-empty--warm .v2-empty__title{color:var(--v2-info)}
+/* --- V2 TOOLTIPS --------------------------------------------------------
+   CSS-only tooltip on any element with `data-v2-tip="..."`. Touch devices
+   activate via :focus (because tap → focus on focusable elements). Keep it
+   short — long copy gets truncated to maxlen via CSS clamp.
+   Pair with `.v2-tip-anchor` to inherit the dotted-underline affordance. */
+[data-v2-tip]{position:relative}
+.v2-tip-anchor{border-bottom:1px dotted var(--muted);cursor:help}
+[data-v2-tip]:hover::after,[data-v2-tip]:focus::after,[data-v2-tip]:focus-visible::after{
+  content:attr(data-v2-tip);position:absolute;bottom:calc(100% + 6px);left:50%;
+  transform:translateX(-50%);background:#0b0d12;color:var(--text);
+  border:1px solid var(--v2-ai-bd);border-radius:6px;
+  padding:6px 10px;font-size:11px;font-weight:500;line-height:1.4;
+  white-space:normal;width:max-content;max-width:280px;text-align:left;
+  letter-spacing:.01em;text-transform:none;z-index:60;
+  box-shadow:0 4px 16px rgba(0,0,0,.6);pointer-events:none}
+[data-v2-tip]:hover::before,[data-v2-tip]:focus::before,[data-v2-tip]:focus-visible::before{
+  content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--v2-ai-bd);z-index:60}
+/* --- V2 INSIGHT CARDS ---------------------------------------------------
+   A page-agnostic wrapper any tab can use to render an insight slot. When
+   the source is empty the same shell renders a "data warming" fallback so
+   the page never shows a blank rectangle. Severity classes mirror the
+   --v2-* palette: good / bad / warn / info / ai. */
+.v2-insight{display:flex;flex-direction:column;gap:6px;padding:10px 12px;
+  border-radius:8px;border:1px solid var(--border);background:#0f131c;font-size:12px}
+.v2-insight.v2-insight--good{border-color:var(--v2-good-bd);background:var(--v2-good-bg)}
+.v2-insight.v2-insight--bad {border-color:var(--v2-bad-bd); background:var(--v2-bad-bg)}
+.v2-insight.v2-insight--warn{border-color:var(--v2-warn-bd);background:var(--v2-warn-bg)}
+.v2-insight.v2-insight--info{border-color:var(--v2-info-bd);background:var(--v2-info-bg)}
+.v2-insight.v2-insight--ai  {border-color:var(--v2-ai-bd);  background:var(--v2-ai-bg)}
+.v2-insight__head{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.v2-insight__headline{font-size:13px;font-weight:600;color:var(--text);line-height:1.35}
+.v2-insight__detail{font-size:11px;color:var(--muted);line-height:1.45}
+/* --- V2 "TODAY'S AI TAKE" SUMMARY LAYER --------------------------------
+   Persistent header band on each major tab. Compact 2-3 bullet summary
+   pulled from `insights` (filtered by tab). Visually anchored to --v2-ai
+   so users learn at a glance "purple = synthesized take." */
+.v2-ai-take{display:flex;flex-direction:column;gap:var(--v2-s2);
+  padding:var(--v2-s3) var(--v2-s4);border-radius:var(--v2-radius);
+  border:1px solid var(--v2-ai-bd);background:var(--v2-ai-bg)}
+.v2-ai-take__head{display:flex;align-items:center;gap:var(--v2-s2);
+  font-size:11px;color:var(--v2-ai);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.v2-ai-take__bullets{margin:0;padding:0;list-style:none;display:flex;
+  flex-direction:column;gap:6px}
+.v2-ai-take__bullet{display:flex;gap:8px;font-size:13px;line-height:1.45;color:var(--text)}
+.v2-ai-take__bullet::before{content:"▸";color:var(--v2-ai);flex:0 0 auto;font-weight:700}
+.v2-ai-take__empty{font-size:12px;color:var(--muted);font-style:italic}
+/* --- V2 MOBILE ADJUSTMENTS ---------------------------------------------
+   Tightens spacing tokens on phones so cards don't waste 1/3 of the screen
+   on padding. Wave 2 (mobile pass) layers more specific overrides on top
+   of these defaults. */
+@media (max-width:480px){
+  :root{ --v2-s3:8px; --v2-s4:12px; --v2-s5:16px; }
+  .v2-card{padding:12px;gap:8px}
+  .v2-card__title{font-size:12px}
+  .v2-card__metric .v2-value{font-size:16px}
+  .v2-card__metric .v2-value--lg{font-size:20px}
+  .v2-banner{font-size:11px;padding:6px 12px}
+  .v2-ai-take{padding:10px 12px}
+  .v2-ai-take__bullet{font-size:12px}
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
@@ -929,9 +1081,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </style>
 </head>
 <body>
+<div class="v2-banner" role="status" aria-live="polite">
+  <span class="v2-tag">V2 preview</span>
+  UX cleanup sprint — production dashboard is unchanged.
+  <a href="../" rel="noopener">Back to production →</a>
+</div>
 <header>
   <div>
-    <h1>Crypto Trading Dashboard</h1>
+    <h1>Crypto Trading Dashboard <span class="v2-chip v2-chip--ai" style="margin-left:8px;vertical-align:middle">V2</span></h1>
     <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span></div>
   </div>
   <div class="controls" style="border:0;padding:0">
@@ -4930,6 +5087,202 @@ function renderInsights(){
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// ============================================================================
+// V2 helpers — reusable card / insight / empty / skeleton / tooltip / AI-take
+// builders. All output is pure HTML strings (matches the rest of this file's
+// rendering style). Components in any tab opt in by calling these instead of
+// hand-rolling markup. Anchored to the --v2-* CSS tokens so semantics stay
+// consistent across the whole dashboard.
+// ============================================================================
+const V2 = (function(){
+  // --- severity normalization ---------------------------------------------
+  // Insights / signals across the existing payload use mixed severity words:
+  //   good, bad, alert, warning, info, neutral, ai
+  // Collapse them into the V2 five-color palette so downstream renderers
+  // only need to know "good|bad|warn|info|ai".
+  function sevClass(sev, kind){
+    const s = String(sev || '').toLowerCase();
+    if (kind === 'ai' || s === 'ai' || s === 'research') return 'ai';
+    if (s === 'good' || s === 'success' || s === 'positive') return 'good';
+    if (s === 'bad'  || s === 'alert'   || s === 'danger'  || s === 'negative') return 'bad';
+    if (s === 'warn' || s === 'warning' || s === 'caution' || s === 'mixed')    return 'warn';
+    return 'info';
+  }
+  function sevIcon(sevCls, kind){
+    if (kind === 'milestone') return '🏁';
+    if (kind === 'anomaly')   return sevCls === 'bad' ? '⚠️' : '✨';
+    if (kind === 'trend')     return sevCls === 'bad' ? '↘'  : '↗';
+    if (kind === 'signal')    return sevCls === 'bad' ? '🔻' : '🔺';
+    if (kind === 'ai' || kind === 'ainews') return '🧠';
+    if (sevCls === 'good') return '✓';
+    if (sevCls === 'bad')  return '!';
+    if (sevCls === 'warn') return '!';
+    return 'i';
+  }
+
+  // --- v2 card builder ----------------------------------------------------
+  // opts: { title, subtitle, severity, action, footer, body, head_right }
+  // `body` may be a string of HTML to inject; `head_right` is the
+  // top-right slot (chip, value, button). When `severity` is set we
+  // render the accent stripe on the left. `action: 'open'` makes the
+  // card clickable with hover lift + focus ring.
+  function card(opts){
+    const o = opts || {};
+    const cls = ['v2-card'];
+    const sev = o.severity ? sevClass(o.severity, o.kind) : null;
+    if (sev) cls.push('v2-card--' + sev);
+    const action = o.action ? ' data-v2-action="' + escapeHtml(o.action) + '"' : '';
+    const role   = o.action === 'open' ? ' role="button" tabindex="0"' : '';
+    const tip    = o.tip ? ' data-v2-tip="' + escapeHtml(o.tip) + '"' : '';
+    const id     = o.id ? ' id="' + escapeHtml(o.id) + '"' : '';
+    const titleHtml = o.title
+      ? '<h2 class="v2-card__title">' + escapeHtml(o.title) +
+        (o.tipOnTitle ? ' <span class="v2-tip-anchor" data-v2-tip="' + escapeHtml(o.tipOnTitle) + '">?</span>' : '') +
+        '</h2>'
+      : '';
+    const subHtml = o.subtitle ? '<div class="v2-card__subtitle">' + escapeHtml(o.subtitle) + '</div>' : '';
+    const head = (titleHtml || subHtml || o.head_right)
+      ? '<div class="v2-card__head"><div style="min-width:0">' + titleHtml + subHtml + '</div>' +
+        (o.head_right ? '<div>' + o.head_right + '</div>' : '') + '</div>'
+      : '';
+    const body   = o.body   ? '<div class="v2-card__body">'   + o.body   + '</div>' : '';
+    const footer = o.footer ? '<div class="v2-card__footer">' + o.footer + '</div>' : '';
+    return '<div class="' + cls.join(' ') + '"' + id + action + role + tip + '>' +
+             head + body + footer +
+           '</div>';
+  }
+
+  // --- chip ---------------------------------------------------------------
+  function chip(text, severity, kind){
+    const sev = sevClass(severity, kind);
+    return '<span class="v2-chip v2-chip--' + sev + '">' + escapeHtml(text) + '</span>';
+  }
+
+  // --- v2 metric block (value + label, optional severity tint + tip) -----
+  function metric(opts){
+    const o = opts || {};
+    const sev = o.severity ? ' ' + sevClass(o.severity, o.kind) : '';
+    const lg  = o.large ? ' v2-value--lg' : '';
+    const tip = o.tip ? ' data-v2-tip="' + escapeHtml(o.tip) + '"' : '';
+    const label = o.label
+      ? '<div class="v2-label"' + tip + '>' + escapeHtml(o.label) +
+        (o.tip ? ' <span class="v2-tip-anchor" style="font-weight:700;color:var(--v2-ai)">?</span>' : '') +
+        '</div>'
+      : '';
+    return '<div class="v2-card__metric">' + label +
+           '<div class="v2-value v2-' + sev.trim() + lg + '">' + (o.html || escapeHtml(o.value || '')) + '</div>' +
+           '</div>';
+  }
+
+  // --- skeleton blocks ----------------------------------------------------
+  // shape: 'metric' | 'title' | 'line' | 'lines:3' (custom count)
+  function skel(shape){
+    const s = String(shape || 'line');
+    if (s === 'metric') return '<div class="v2-skel v2-skel--metric"></div>';
+    if (s === 'title')  return '<div class="v2-skel v2-skel--title"></div>';
+    if (s.indexOf('lines:') === 0){
+      const n = Math.max(1, Math.min(10, parseInt(s.slice(6), 10) || 1));
+      let out = '';
+      for (let i=0; i<n; i++){
+        const short = (i === n - 1) ? ' v2-skel--short' : '';
+        out += '<div class="v2-skel v2-skel--line' + short + '"></div>';
+      }
+      return out;
+    }
+    return '<div class="v2-skel v2-skel--line"></div>';
+  }
+
+  // --- empty / fallback state --------------------------------------------
+  function empty(opts){
+    const o = opts || {};
+    const cls = ['v2-empty'];
+    if (o.warm) cls.push('v2-empty--warm');
+    return '<div class="' + cls.join(' ') + '">' +
+             (o.icon  ? '<div class="v2-empty__icon">'  + escapeHtml(o.icon)  + '</div>' : '') +
+             (o.title ? '<div class="v2-empty__title">' + escapeHtml(o.title) + '</div>' : '') +
+             (o.sub   ? '<div class="v2-empty__sub">'   + escapeHtml(o.sub)   + '</div>' : '') +
+           '</div>';
+  }
+
+  // --- insight card (one entry from DATA.insights, or fallback) ----------
+  function insightCard(i){
+    if (!i) {
+      return '<div class="v2-insight">' +
+               '<div class="v2-insight__head">Insight unavailable</div>' +
+               '<div class="v2-insight__detail">Data warming — refresh in a moment.</div>' +
+             '</div>';
+    }
+    const sev = sevClass(i.severity, i.kind);
+    const icon = sevIcon(sev, i.kind);
+    const detail = i.detail
+      ? '<div class="v2-insight__detail">' + escapeHtml(i.detail) + '</div>'
+      : '';
+    return '<div class="v2-insight v2-insight--' + sev + '">' +
+             '<div class="v2-insight__head">' + escapeHtml(icon) + ' ' + escapeHtml(i.kind || 'insight') + '</div>' +
+             '<div class="v2-insight__headline">' + escapeHtml(i.headline || '') + '</div>' +
+             detail +
+           '</div>';
+  }
+
+  // --- insights list with graceful empty state ---------------------------
+  // hostElOrId can be an element or an id string. `filter` defaults to
+  // matching `i.tab === tabId`; pass a custom predicate to override.
+  function renderInsightsFor(tabId, hostElOrId, opts){
+    const o = opts || {};
+    const limit = o.limit || 4;
+    const all = (window.DATA && window.DATA.insights) || [];
+    const pred = o.filter || (i => (i && (i.tab || 'markets') === tabId));
+    const list = all.filter(pred).slice(0, limit);
+    const host = (typeof hostElOrId === 'string')
+      ? document.getElementById(hostElOrId) : hostElOrId;
+    if (!host) return;
+    if (!list.length){
+      host.innerHTML = empty({
+        icon: '📡', title: 'Insights warming up',
+        sub: o.emptySub || 'No notable signals from this tab\'s rules yet — refresh in a moment.',
+        warm: true,
+      });
+      return;
+    }
+    host.innerHTML = list.map(insightCard).join('');
+  }
+
+  // --- "Today's AI Take" persistent summary band -------------------------
+  // Pulls the highest-ranked insights for the tab and renders 2-3 bullets.
+  // Falls back to a "warming" message when nothing fires. Use at the top
+  // of major tab content so the page leads with synthesis, not raw data.
+  function aiTake(tabId, opts){
+    const o = opts || {};
+    const all = (window.DATA && window.DATA.insights) || [];
+    const pool = all.filter(i => i && (i.tab || 'markets') === tabId);
+    const bullets = pool.slice(0, o.limit || 3);
+    const title = o.title || "Today's AI Take";
+    const bulletHtml = bullets.length
+      ? '<ul class="v2-ai-take__bullets">' +
+        bullets.map(i => {
+          const sev = sevClass(i.severity, i.kind);
+          const chipText = (i.kind || 'insight').toUpperCase();
+          return '<li class="v2-ai-take__bullet">' +
+                   '<span><span class="v2-chip v2-chip--' + sev + '" style="margin-right:6px">' +
+                     escapeHtml(chipText) + '</span>' +
+                     escapeHtml(i.headline || '') +
+                   '</span>' +
+                 '</li>';
+        }).join('') +
+        '</ul>'
+      : '<div class="v2-ai-take__empty">No major moves on this tab right now — check back after the next refresh.</div>';
+    return '<div class="v2-ai-take">' +
+             '<div class="v2-ai-take__head">🧠 ' + escapeHtml(title) + '</div>' +
+             bulletHtml +
+           '</div>';
+  }
+
+  return {
+    sevClass, sevIcon, card, chip, metric, skel, empty,
+    insightCard, renderInsightsFor, aiTake,
+  };
+})();
 
 // ---------- Markets tab ----------
 const marketState = { sort: 'rank' };
