@@ -424,10 +424,16 @@ header .meta{color:var(--muted);font-size:12px}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-/* Empty-bucket pill in the Top-25 signals strip. Uses a class (not inline
-   style) so applyTop20Filter()'s `sec.style.display = ''` reset doesn't
-   collapse the row layout back to block. */
-.signals-section.signals-empty-pill{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;color:var(--muted);grid-column:1/-1;margin:0}
+/* Top-25 signals strip layout. Outer #top20SignalCards is a flex-wrap row;
+   populated bucket sections (.signals-section) grow to share available
+   width, empty pills (.signals-empty-pill) flex-basis 100% to take their
+   own row. Was a CSS grid with auto-fit minmax(220px,1fr), but the
+   grid-column:1/-1 on empty pills forced the grid to instantiate ~9
+   implicit 220px tracks on wide viewports — populated sections then got
+   1 track each (~220px) and the right half of the viewport sat empty.
+   Flex with grow:1 lets 2 populated sections split 50/50 cleanly. */
+.signals-section{flex:1 1 280px;min-width:0}
+.signals-section.signals-empty-pill{display:flex;align-items:center;gap:8px;padding:4px 2px;font-size:12px;color:var(--muted);flex:1 1 100%;min-width:100%;margin:0}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px}
 .card h3{margin:0 0 4px;font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
 .card .v{font-size:20px;font-weight:600;margin-top:2px}
@@ -525,17 +531,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      sees Strong Buys + news above the fold. Was ~110px tall each → ~55px.
      Hides redundant fields (full coin name, "as of" date) that already
      live in the header / tooltips. */
-  /* Top-25 signal strip: outer grid was forced to 2 columns, which made each
-     populated .signals-section render its inner cards in a single ~175px
-     column (the inner grid's auto-fit minmax(220px,1fr) collapsed to 1 col
-     because no two 220px cells fit). Net effect: empty buckets spanned the
-     full width via .signals-empty-pill (grid-column:1/-1) but populated
-     buckets shrank to a narrow column — visually inconsistent ("out of
-     sorts"). Switch the outer to 1 col on phones so each section block flows
-     full-width, and force the inner card grid to 2-up so users actually see
-     2 cards per row instead of 1 on phones. */
-  #top20SignalCards{grid-template-columns:1fr !important;gap:8px}
-  #top20SignalCards .signals-section{grid-column:1/-1}
+  /* Top-25 signal strip on mobile. Outer #top20SignalCards is flex-wrap
+     (see desktop rules) — on a phone the section's flex-basis:280px
+     naturally wraps each section to its own row, so no outer override
+     needed. Just force the INNER card grid to 2-up so users see 2 cards
+     side-by-side per section instead of 1 narrow column. */
+  #top20SignalCards .signals-section{flex:1 1 100%}
   #top20SignalCards .signals-section-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px !important}
   #overviewSignals{grid-template-columns:repeat(2,minmax(0,1fr)) !important;gap:6px}
   #overviewSignals .card{padding:6px 10px;border-left-width:3px}
@@ -1680,7 +1681,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <div class="sub" style="color:var(--muted);font-size:11px">Simplified score from CoinGecko price/volume only · click any card for the full breakdown</div>
           </div>
         </div>
-        <div id="top20SignalCards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+        <div id="top20SignalCards" style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start"></div>
       </div>
 
       <div class="note"><strong>Composite indicator, not investment advice.</strong> Score is a transparent sum of contributions from price trend (SMA50/200), momentum (RSI, MACD), positioning (funding), sentiment (Fear &amp; Greed), institutional flows (ETF 7d), and volatility (DVOL z-score). Range −100 to +100. Read the components below — that's where the score comes from. Do your own evaluation.</div>
