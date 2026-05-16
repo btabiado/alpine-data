@@ -2661,18 +2661,39 @@ def blockchair_eth_stats() -> dict:
     erc20  = (layer_2.get("erc_20")  if isinstance(layer_2, dict) else None) or {}
     erc721 = (layer_2.get("erc_721") if isinstance(layer_2, dict) else None) or {}
 
+    txs_24h = d.get("transactions_24h")
+    avg_tx_val_eth = d.get("average_transaction_value_24h")
+    mkt_px = d.get("market_price_usd")
+
+    # Honest on-chain 24h transfer volume in USD: txs * avg-value-per-tx * price.
+    # Coin Metrics' TxTfrValAdjUSD is paid-only, so we derive an equivalent from
+    # the three free Blockchair fields above. None if any input is missing.
+    # Upgrade path: if ETHERSCAN_API_KEY is set, the stats?module=stats&action=
+    # ethdailytx endpoint can back a historical series via daily tx count *
+    # daily avg-value * daily price. Skipped for now — gating on a key adds
+    # setup friction and this single live value already replaces the misleading
+    # CoinGecko trading-volume KPI.
+    try:
+        if txs_24h in (None, "") or avg_tx_val_eth in (None, "") or mkt_px in (None, ""):
+            transfer_volume_24h_usd = None
+        else:
+            transfer_volume_24h_usd = float(txs_24h) * float(avg_tx_val_eth) * float(mkt_px)
+    except (TypeError, ValueError):
+        transfer_volume_24h_usd = None
+
     return {
         "blocks_24h": d.get("blocks_24h"),
-        "transactions_24h": d.get("transactions_24h"),
+        "transactions_24h": txs_24h,
         "avg_tx_fee_eth_24h": d.get("average_transaction_fee_24h"),
-        "avg_tx_value_eth_24h": d.get("average_transaction_value_24h"),
+        "avg_tx_value_eth_24h": avg_tx_val_eth,
+        "transfer_volume_24h_usd": transfer_volume_24h_usd,
         "supply_eth": _wei_to_eth(d.get("circulation_approximate")),
         "burned_eth_total": _wei_to_eth(d.get("burned")),
         "burned_eth_24h": _wei_to_eth(d.get("burned_24h")),
         "inflation_eth_24h": _wei_to_eth(d.get("inflation_24h")) or 0.0,
         "erc20_transactions_24h": erc20.get("transactions_24h"),
         "erc721_transactions_24h": erc721.get("transactions_24h"),
-        "market_price_usd": d.get("market_price_usd"),
+        "market_price_usd": mkt_px,
         "largest_tx_24h": {
             "hash": largest.get("hash"),
             "value_usd": largest.get("value_usd"),

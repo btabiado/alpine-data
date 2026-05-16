@@ -772,6 +772,32 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div id="overviewIndices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px"></div>
     </div>
+    <!-- CRYPTO MARKET SENTIMENT — composite of Fear & Greed, top-50 signal
+         score avg, and average perp funding rate. Rendered by
+         renderOverviewSentiment(). Mirrors the visual pattern of
+         #pocSentimentCard on the POC tab. -->
+    <div class="card" id="overviewSentimentCard" style="padding:14px 16px;margin-bottom:6px;border-left:4px solid #a78bfa">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 CRYPTO MARKET SENTIMENT</div>
+          <div style="font-size:11px;color:var(--muted)" id="overviewSentimentSubline">—</div>
+        </div>
+        <div style="text-align:right">
+          <div id="overviewSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+          <div id="overviewSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+        </div>
+      </div>
+      <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
+        <div style="background:#22c55e;width:0%" id="overviewSentimentBarPos"></div>
+        <div style="background:#94a3b8;width:0%" id="overviewSentimentBarNeu"></div>
+        <div style="background:#ef4444;width:0%" id="overviewSentimentBarNeg"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+        <span style="color:#22c55e">BULLISH inputs</span>
+        <span>NEUTRAL</span>
+        <span style="color:#ef4444">BEARISH inputs</span>
+      </div>
+    </div>
     <!-- Row 1: Signal cards (HERO — clickable) -->
     <div style="display:flex;justify-content:flex-end;margin-bottom:-6px">
       <button class="btn" id="configSignalsBtn" style="font-size:11px;padding:3px 8px" title="Pick which assets show signal cards">⚙️ Configure</button>
@@ -888,6 +914,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ ETF FLOWS TAB ============ -->
   <div id="tab-etf" class="hidden">
+    <!-- ETF FLOW SENTIMENT — composite of 7d net flow sum and 30d net flow
+         sum, weighted 60/40 toward the 7d. Tracks the BTC/ETH toggle below.
+         Rendered by renderEtfFlowSentiment(). -->
+    <div class="card" id="etfFlowSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">💰 ETF FLOW SENTIMENT</div>
+          <div style="font-size:11px;color:var(--muted)" id="etfFlowSentimentSubline">—</div>
+        </div>
+        <div style="text-align:right">
+          <div id="etfFlowSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+          <div id="etfFlowSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+        </div>
+      </div>
+      <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
+        <div style="background:#22c55e;width:0%" id="etfFlowSentimentBarPos"></div>
+        <div style="background:#94a3b8;width:0%" id="etfFlowSentimentBarNeu"></div>
+        <div style="background:#ef4444;width:0%" id="etfFlowSentimentBarNeg"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+        <span style="color:#22c55e">INFLOWS</span>
+        <span>BALANCED</span>
+        <span style="color:#ef4444">OUTFLOWS</span>
+      </div>
+    </div>
     <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
       <span class="lbl" style="margin:0">Load data</span>
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
@@ -993,6 +1044,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <p class="sub" style="font-size:12px;line-height:1.5;color:var(--muted);margin:0">
           Derivatives positioning for BTC, ETH, LINK, LTC. <strong style="color:var(--text)">Funding rate</strong> shows perp traders paying to hold longs (positive) or shorts (negative); extremes signal crowded positioning. <strong style="color:var(--text)">Open interest</strong> is total notional in active perp contracts. <strong style="color:var(--text)">Long/short ratio</strong> from OKX shows top-account positioning bias. <strong style="color:var(--text)">DVOL</strong> is Deribit's BTC/ETH implied-volatility index. The two tables list Coinbase International Exchange perps with the most extreme positive (crowded longs) and negative (crowded shorts) funding rates.
         </p>
+      </div>
+      <!-- FUTURES POSITIONING SENTIMENT — composite of funding rate, long/short
+           ratio, and 7d OI change for the currently-selected asset. Rendered
+           by renderFuturesSentiment(). -->
+      <div class="card" id="futuresSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🎯 FUTURES POSITIONING SENTIMENT</div>
+            <div style="font-size:11px;color:var(--muted)" id="futuresSentimentSubline">—</div>
+          </div>
+          <div style="text-align:right">
+            <div id="futuresSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+            <div id="futuresSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+          </div>
+        </div>
+        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
+          <div style="background:#22c55e;width:0%" id="futuresSentimentBarPos"></div>
+          <div style="background:#94a3b8;width:0%" id="futuresSentimentBarNeu"></div>
+          <div style="background:#ef4444;width:0%" id="futuresSentimentBarNeg"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+          <span style="color:#22c55e">CROWDED LONGS</span>
+          <span>BALANCED</span>
+          <span style="color:#ef4444">CROWDED SHORTS</span>
+        </div>
       </div>
       <!-- Per-tab asset toggle: BTC / ETH / LINK / LTC (full original set with
            derivatives data). Coupled to state.asset on click since Futures
@@ -1139,6 +1215,32 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ STOCKS TAB ============ -->
   <div id="tab-stocks" class="hidden">
     <div class="container">
+      <!-- STOCK SIGNAL SENTIMENT — aggregate signal-score buckets across the
+           top-50 most-active stocks (DATA.market.stocks_signals). Mirrors the
+           POC sentiment card pattern: net index in [-100,+100] (positive =
+           broad buy, negative = broad sell). Rendered by renderStocksSentiment(). -->
+      <div class="card" id="stocksSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 STOCK SIGNAL SENTIMENT — TOP 50 MOST ACTIVE</div>
+            <div style="font-size:11px;color:var(--muted)" id="stocksSentimentSubline">—</div>
+          </div>
+          <div style="text-align:right">
+            <div id="stocksSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+            <div id="stocksSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+          </div>
+        </div>
+        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="stocksSentimentBar">
+          <div style="background:#22c55e;width:0%" id="stocksSentimentBarBuy"></div>
+          <div style="background:#f59e0b;width:0%" id="stocksSentimentBarHold"></div>
+          <div style="background:#ef4444;width:0%" id="stocksSentimentBarSell"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+          <span style="color:#22c55e">↑ <span id="stocksSentimentBuyCount">0</span> BUY+</span>
+          <span>· <span id="stocksSentimentHoldCount">0</span> HOLD</span>
+          <span style="color:#ef4444">↓ <span id="stocksSentimentSellCount">0</span> SELL+</span>
+        </div>
+      </div>
       <!-- Signal breadth chart (top of tab, before filter chips) -->
       <div class="chart-card">
         <div class="head">
@@ -1265,6 +1367,32 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-signals" class="hidden">
     <div id="signalsEmpty" class="empty hidden">No signal data — needs price history. Run <code>--fetch-market</code>.</div>
     <div id="signalsContent">
+      <!-- CRYPTO SIGNAL SENTIMENT — aggregate signal-score buckets across the
+           top-50 by market cap (DATA.signals_top20). Mirrors the POC sentiment
+           card pattern: net index in [-100,+100] (positive = broad buy signals,
+           negative = broad sell signals). Rendered by renderCryptoSignalsSentiment(). -->
+      <div class="card" id="cryptoSignalsSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📈 CRYPTO SIGNAL SENTIMENT — TOP 50 BY MARKET CAP</div>
+            <div style="font-size:11px;color:var(--muted)" id="cryptoSignalsSentimentSubline">—</div>
+          </div>
+          <div style="text-align:right">
+            <div id="cryptoSignalsSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+            <div id="cryptoSignalsSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+          </div>
+        </div>
+        <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="cryptoSignalsSentimentBar">
+          <div style="background:#22c55e;width:0%" id="cryptoSignalsSentimentBarBuy"></div>
+          <div style="background:#f59e0b;width:0%" id="cryptoSignalsSentimentBarHold"></div>
+          <div style="background:#ef4444;width:0%" id="cryptoSignalsSentimentBarSell"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+          <span style="color:#22c55e">↑ <span id="cryptoSignalsSentimentBuyCount">0</span> BUY+</span>
+          <span>· <span id="cryptoSignalsSentimentHoldCount">0</span> HOLD</span>
+          <span style="color:#ef4444">↓ <span id="cryptoSignalsSentimentSellCount">0</span> SELL+</span>
+        </div>
+      </div>
       <!-- Signal breadth chart (top of tab) -->
       <div class="chart-card" style="margin-bottom:14px">
         <div class="head">
@@ -1380,6 +1508,30 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ DeFi TAB ============ -->
   <div id="tab-defi" class="hidden">
+    <!-- DEFI SENTIMENT — composite of TVL-weighted 7d chain momentum and
+         stablecoin mcap 7d change. Rendered by renderDefiSentiment(). -->
+    <div class="card" id="defiSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🌊 DEFI SENTIMENT</div>
+          <div style="font-size:11px;color:var(--muted)" id="defiSentimentSubline">—</div>
+        </div>
+        <div style="text-align:right">
+          <div id="defiSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
+          <div id="defiSentimentLabel" style="font-size:11px;font-weight:700;letter-spacing:.05em">—</div>
+        </div>
+      </div>
+      <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
+        <div style="background:#22c55e;width:0%" id="defiSentimentBarPos"></div>
+        <div style="background:#94a3b8;width:0%" id="defiSentimentBarNeu"></div>
+        <div style="background:#ef4444;width:0%" id="defiSentimentBarNeg"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+        <span style="color:#22c55e">EXPANSION</span>
+        <span>STABLE</span>
+        <span style="color:#ef4444">CONTRACTION</span>
+      </div>
+    </div>
     <!-- 4-card KPI strip (mirrors Whale tab pattern) -->
     <div class="row" id="defiKpis"></div>
     <!-- Per-chain selector (mirrors Whale BTC/ETH toggle). Default Ethereum;
@@ -2457,6 +2609,76 @@ function renderCryptoSignalsBreadth(){
   );
 }
 
+// CRYPTO SIGNAL SENTIMENT — aggregate signal-score buckets across the top-50
+// by market cap (DATA.signals_top20, stablecoins filtered). Mirrors the POC
+// sentiment card pattern. Net index = ((BUY+STRONG_BUY) - (SELL+STRONG_SELL))
+// / total × 100, clamped to [-100,+100]. Labels: STRONG ACCUMULATION /
+// ACCUMULATION / NEUTRAL / DISTRIBUTION / STRONG DISTRIBUTION (mirroring POC).
+function renderCryptoSignalsSentiment(){
+  const card = document.getElementById('cryptoSignalsSentimentCard');
+  if (!card) return;
+  const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  const list = (Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [])
+    .filter(s => s && !isStable(s.symbol));
+  if (list.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  // Bucket each entry by score using the standard thresholds.
+  let strongBuy = 0, buy = 0, hold = 0, sell = 0, strongSell = 0;
+  for (const s of list){
+    const score = Number(s && s.score);
+    if (!isFinite(score)) continue;
+    if      (score >=  50) strongBuy++;
+    else if (score >=  20) buy++;
+    else if (score >  -20) hold++;
+    else if (score >  -50) sell++;
+    else                   strongSell++;
+  }
+  const buyTotal  = strongBuy + buy;
+  const sellTotal = strongSell + sell;
+  const total = Math.max(buyTotal + hold + sellTotal, 1);
+  const net = Math.round(((buyTotal - sellTotal) / total) * 100);
+  const label = net >=  50 ? 'STRONG ACCUMULATION'
+              : net >=  20 ? 'ACCUMULATION'
+              : net >  -20 ? 'NEUTRAL'
+              : net >  -50 ? 'DISTRIBUTION'
+              :              'STRONG DISTRIBUTION';
+  const color = net >=  20 ? '#22c55e'
+              : net <= -20 ? '#ef4444'
+              :              '#f59e0b';
+  const scoreEl   = document.getElementById('cryptoSignalsSentimentScore');
+  const labelEl   = document.getElementById('cryptoSignalsSentimentLabel');
+  const sublineEl = document.getElementById('cryptoSignalsSentimentSubline');
+  if (scoreEl){
+    scoreEl.textContent = (net >= 0 ? '+' : '') + net;
+    scoreEl.style.color = color;
+  }
+  if (labelEl){
+    labelEl.textContent = label;
+    labelEl.style.color = color;
+  }
+  if (sublineEl){
+    sublineEl.textContent = `${total} coins · positive = broad buy signals · negative = broad sell signals`;
+  }
+  const pctBuy  = (buyTotal  / total) * 100;
+  const pctHold = (hold      / total) * 100;
+  const pctSell = (sellTotal / total) * 100;
+  const buyBar  = document.getElementById('cryptoSignalsSentimentBarBuy');
+  const holdBar = document.getElementById('cryptoSignalsSentimentBarHold');
+  const sellBar = document.getElementById('cryptoSignalsSentimentBarSell');
+  if (buyBar)  buyBar.style.width  = pctBuy.toFixed(1)  + '%';
+  if (holdBar) holdBar.style.width = pctHold.toFixed(1) + '%';
+  if (sellBar) sellBar.style.width = pctSell.toFixed(1) + '%';
+  const buyCount  = document.getElementById('cryptoSignalsSentimentBuyCount');
+  const holdCount = document.getElementById('cryptoSignalsSentimentHoldCount');
+  const sellCount = document.getElementById('cryptoSignalsSentimentSellCount');
+  if (buyCount)  buyCount.textContent  = String(buyTotal);
+  if (holdCount) holdCount.textContent = String(hold);
+  if (sellCount) sellCount.textContent = String(sellTotal);
+}
+
 function renderSignals(){
   const sigData = DATA.signals || {};
   const top20  = DATA.signals_top20 || [];
@@ -2464,6 +2686,8 @@ function renderSignals(){
   document.getElementById('signalsEmpty').classList.toggle('hidden', !empty);
   document.getElementById('signalsContent').classList.toggle('hidden', empty);
   if (empty) return;
+  // Sentiment card at the very top of the tab (mirrors POC pattern).
+  renderCryptoSignalsSentiment();
   // Breadth chart at the top of the tab (first visible widget).
   renderCryptoSignalsBreadth();
   // Sort cards descending by score so the strongest signals appear first.
@@ -3226,15 +3450,26 @@ function renderWhaleEth(){
   const txc = lastVal('TxCnt');
   const txv = ethMarketVol.length ? ethMarketVol[ethMarketVol.length-1].value : null;
   const sup = lastVal('SplyCur');
+  // Prefer Blockchair-derived on-chain transfer volume (txs × avg-value × price).
+  // Falls back to CoinGecko 24h trading volume (clearly labeled) if Blockchair
+  // didn't return all three inputs.
+  const onChainVol = bc.transfer_volume_24h_usd;
+  const volKpi = (onChainVol != null)
+    ? {label:'On-chain transfer volume (24h)',
+       val: fmtUSD(onChainVol, 'auto'),
+       sub:'via Blockchair — transactions_24h × avg_tx_value × price'}
+    : {label:'24h trading volume',
+       val: txv != null ? fmtUSD(txv, 'auto') : '—',
+       sub:'CoinGecko — exchange-traded volume (on-chain feed unavailable)'};
   const kpis = [
     {label:'Active addresses (24h)', val: aa  != null ? fmtNum(aa, 0)                   : '—'},
     {label:'Transactions (24h)',     val: txc != null ? fmtNum(txc, 0)                  : '—'},
-    {label:'24h trading volume',     val: txv != null ? fmtUSD(txv, 'auto')             : '—'},
+    volKpi,
     {label:'Supply (ETH)',           val: sup != null ? fmtNum(sup/1e6, 2) + 'M'        : '—'},
   ];
   const kpiHost = document.getElementById('whaleEthKpis');
   if (kpiHost) kpiHost.innerHTML = kpis.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div></div>`
+    `<div class="card"><h3>${i.label}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
   ).join('');
 
   // Largest tx (24h) — Blockchair. Validate hash as 0x + 64 hex chars to defang
@@ -3921,6 +4156,9 @@ function renderDefi(){
   const yields = defi.yields_stablecoin || [];
   const bridges = ((defi.bridges || {}).top_bridges) || [];
 
+  // ---- DeFi sentiment composite card (top of tab) ----
+  renderDefiSentiment();
+
   // ---- 4-card KPI strip (mirrors Whale tab layout) ----
   const totalTvl = chains.reduce((s, c) => s + (c.tvl_usd || 0), 0);
   const stable7d = llama.stablecoin_7d_change_usd;
@@ -4324,6 +4562,7 @@ function renderWhaleExtras(){
 // ---------- Overview tab (landing page) ----------
 function renderOverview(){
   renderOverviewIndices();        // top bar — moved from deleted Markets tab
+  renderOverviewSentiment();      // crypto market sentiment composite card
   renderOverviewSignals();
   renderCoinbaseSpot();           // compact Coinbase exchange bid/ask + 24h range
   renderOverviewStrongBuys();
@@ -4964,10 +5203,79 @@ function fmtVolumeCompact(v){
   if (n >= 1e3)  return (n/1e3 ).toFixed(n>=1e4 ?0:1).replace(/\.0$/,'') + 'K';
   return fmtNum(n, 0);
 }
+// STOCK SIGNAL SENTIMENT — aggregate signal-score buckets across the top-50
+// most-active stocks (DATA.market.stocks_signals). Mirrors the POC sentiment
+// card pattern. Net index = ((BUY+STRONG_BUY) - (SELL+STRONG_SELL)) / total
+// × 100, clamped to [-100,+100]. Labels: STRONG ACCUMULATION / ACCUMULATION /
+// NEUTRAL / DISTRIBUTION / STRONG DISTRIBUTION (mirroring POC).
+function renderStocksSentiment(){
+  const card = document.getElementById('stocksSentimentCard');
+  if (!card) return;
+  const list = ((DATA.market||{}).stocks_signals) || [];
+  if (!Array.isArray(list) || list.length === 0){
+    card.style.display = 'none';
+    return;
+  }
+  card.style.display = '';
+  let strongBuy = 0, buy = 0, hold = 0, sell = 0, strongSell = 0;
+  for (const s of list){
+    const score = Number(s && s.score);
+    if (!isFinite(score)) continue;
+    if      (score >=  50) strongBuy++;
+    else if (score >=  20) buy++;
+    else if (score >  -20) hold++;
+    else if (score >  -50) sell++;
+    else                   strongSell++;
+  }
+  const buyTotal  = strongBuy + buy;
+  const sellTotal = strongSell + sell;
+  const total = Math.max(buyTotal + hold + sellTotal, 1);
+  const net = Math.round(((buyTotal - sellTotal) / total) * 100);
+  const label = net >=  50 ? 'STRONG ACCUMULATION'
+              : net >=  20 ? 'ACCUMULATION'
+              : net >  -20 ? 'NEUTRAL'
+              : net >  -50 ? 'DISTRIBUTION'
+              :              'STRONG DISTRIBUTION';
+  const color = net >=  20 ? '#22c55e'
+              : net <= -20 ? '#ef4444'
+              :              '#f59e0b';
+  const scoreEl   = document.getElementById('stocksSentimentScore');
+  const labelEl   = document.getElementById('stocksSentimentLabel');
+  const sublineEl = document.getElementById('stocksSentimentSubline');
+  if (scoreEl){
+    scoreEl.textContent = (net >= 0 ? '+' : '') + net;
+    scoreEl.style.color = color;
+  }
+  if (labelEl){
+    labelEl.textContent = label;
+    labelEl.style.color = color;
+  }
+  if (sublineEl){
+    sublineEl.textContent = `${total} stocks · positive = broad buy · negative = broad sell`;
+  }
+  const pctBuy  = (buyTotal  / total) * 100;
+  const pctHold = (hold      / total) * 100;
+  const pctSell = (sellTotal / total) * 100;
+  const buyBar  = document.getElementById('stocksSentimentBarBuy');
+  const holdBar = document.getElementById('stocksSentimentBarHold');
+  const sellBar = document.getElementById('stocksSentimentBarSell');
+  if (buyBar)  buyBar.style.width  = pctBuy.toFixed(1)  + '%';
+  if (holdBar) holdBar.style.width = pctHold.toFixed(1) + '%';
+  if (sellBar) sellBar.style.width = pctSell.toFixed(1) + '%';
+  const buyCount  = document.getElementById('stocksSentimentBuyCount');
+  const holdCount = document.getElementById('stocksSentimentHoldCount');
+  const sellCount = document.getElementById('stocksSentimentSellCount');
+  if (buyCount)  buyCount.textContent  = String(buyTotal);
+  if (holdCount) holdCount.textContent = String(hold);
+  if (sellCount) sellCount.textContent = String(sellTotal);
+}
+
 function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
   const rows = ((DATA.market||{}).stocks_signals) || [];
+  // Sentiment card at the very top of the tab (mirrors POC pattern).
+  renderStocksSentiment();
   // Always (re)render the breadth chart first so it appears whether or not
   // there are scoreable rows. computeSignalBreadth/renderBreadthChart both
   // handle empty input gracefully with a "No data available." message.
@@ -5883,6 +6191,261 @@ function renderPocCards(){
   }).join('');
 }
 
+// ===== Sentiment composite cards (Overview / DeFi / ETF Flows / Futures) =====
+// Each tab has its own domain-specific sentiment composite card mirroring the
+// visual pattern of #pocSentimentCard. paintSentimentCard() is the shared
+// writer — given a card id prefix, a net score in [-100, +100], a label
+// tier, a positive/neutral/negative weight split for the bar, and a
+// subline, it paints all the DOM elements consistently across the 4 cards.
+function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, subline){
+  const card = document.getElementById(prefix + 'Card');
+  if (!card) return;
+  card.style.display = '';
+  const scoreEl = document.getElementById(prefix + 'Score');
+  const labelEl = document.getElementById(prefix + 'Label');
+  const sublineEl = document.getElementById(prefix + 'Subline');
+  const barPos = document.getElementById(prefix + 'BarPos');
+  const barNeu = document.getElementById(prefix + 'BarNeu');
+  const barNeg = document.getElementById(prefix + 'BarNeg');
+  if (scoreEl){
+    scoreEl.textContent = (net >= 0 ? '+' : '') + net;
+    scoreEl.style.color = color;
+  }
+  if (labelEl){
+    labelEl.textContent = label;
+    labelEl.style.color = color;
+  }
+  if (sublineEl){
+    sublineEl.textContent = subline;
+  }
+  if (barPos) barPos.style.width = posPct.toFixed(1) + '%';
+  if (barNeu) barNeu.style.width = neuPct.toFixed(1) + '%';
+  if (barNeg) barNeg.style.width = negPct.toFixed(1) + '%';
+}
+function hideSentimentCard(prefix){
+  const card = document.getElementById(prefix + 'Card');
+  if (card) card.style.display = 'none';
+}
+// Given a composite net score in [-100,+100], plus an array of normalized
+// component scores in [-100,+100], compute the proportional bar split (pos /
+// neu / neg) by summing absolute positive contributions, absolute negative
+// contributions, and a "neutral" slack for anything in [-20,+20]. Returns
+// percentages that sum to 100 (or all zeros if no components are finite).
+function sentimentBarSplit(components){
+  let pos = 0, neg = 0, neu = 0;
+  for (const c of components){
+    if (!isFinite(c)) continue;
+    if (c >= 20) pos += c;
+    else if (c <= -20) neg += -c;
+    else neu += 20;
+  }
+  const total = pos + neg + neu;
+  if (total <= 0) return { pos: 0, neu: 100, neg: 0 };
+  return { pos: (pos / total) * 100, neu: (neu / total) * 100, neg: (neg / total) * 100 };
+}
+// Standard 5-bucket label + color from a net score in [-100,+100], with
+// caller-supplied labels for each bucket so each tab can use domain-specific
+// terminology (BULLISH vs INFLOWS vs CROWDED LONGS, etc.).
+function sentimentBucket(net, labels){
+  const label = net >=  50 ? labels[0]
+              : net >=  20 ? labels[1]
+              : net >  -20 ? labels[2]
+              : net >  -50 ? labels[3]
+              :              labels[4];
+  const color = net >=  20 ? '#22c55e'
+              : net <= -20 ? '#ef4444'
+              :              '#f59e0b';
+  return { label, color };
+}
+function clampScore(v){
+  if (!isFinite(v)) return null;
+  if (v >  100) return  100;
+  if (v < -100) return -100;
+  return v;
+}
+
+// ---- Overview: composite of Fear & Greed, top-50 signal avg, and avg perp
+// funding rate. Subline lists the 3 inputs.
+function renderOverviewSentiment(){
+  const m = DATA.market || {};
+  const components = [];
+  const inputLabels = [];
+  // 1) Fear & Greed: 0..100 → (-100..+100)
+  const fngArr = Array.isArray(m.fear_greed) ? m.fear_greed : [];
+  const fngLast = fngArr.length ? fngArr[fngArr.length - 1] : null;
+  const fngVal = fngLast && Number(fngLast.value);
+  if (fngLast && isFinite(fngVal)){
+    components.push(clampScore((fngVal - 50) * 2));
+    inputLabels.push('F&G');
+  }
+  // 2) Top-50 signal-score average (excluding stables — score is the per-coin
+  //    composite already in ±100 range).
+  const sigs = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
+  const STABLES = new Set(['USDT','USDC','DAI','TUSD','USDE','FDUSD','PYUSD','BUSD','USDD']);
+  const sigScores = sigs
+    .filter(s => s && !STABLES.has(String(s.symbol||'').toUpperCase()))
+    .map(s => Number(s.score))
+    .filter(v => isFinite(v));
+  if (sigScores.length){
+    const avg = sigScores.reduce((a,b)=>a+b,0) / sigScores.length;
+    components.push(clampScore(avg));
+    inputLabels.push('signal avg');
+  }
+  // 3) Avg Coinbase Intl perp funding rate. > 0.0001 (0.01%) per +0.0001
+  //    contributes +20; clamp to ±100. Positive funding = crowded longs.
+  const perps = Array.isArray(m.coinbase_intl_perps) ? m.coinbase_intl_perps : [];
+  const rates = perps
+    .map(p => p && Number(p.funding_rate))
+    .filter(v => isFinite(v));
+  if (rates.length){
+    const avgRate = rates.reduce((a,b)=>a+b,0) / rates.length;
+    components.push(clampScore((avgRate / 0.0001) * 20));
+    inputLabels.push('perp funding');
+  }
+  if (!components.length){
+    hideSentimentCard('overviewSentiment');
+    return;
+  }
+  const net = Math.round(components.reduce((a,b)=>a+b,0) / components.length);
+  const bucket = sentimentBucket(net,
+    ['STRONG BULLISH','BULLISH','NEUTRAL','BEARISH','STRONG BEARISH']);
+  const split = sentimentBarSplit(components);
+  paintSentimentCard('overviewSentiment', net, bucket.label, bucket.color,
+    split.pos, split.neu, split.neg,
+    `Composite of Fear & Greed · Top-50 signal avg · perp funding rate (${components.length} inputs)`);
+}
+
+// ---- DeFi: TVL-weighted 7d chain momentum + stablecoin mcap 7d Δ.
+function renderDefiSentiment(){
+  const m = DATA.market || {};
+  const defi = m.defi || {};
+  const llama = m.defillama || {};
+  const chains = Array.isArray(defi.chains) ? defi.chains : [];
+  const components = [];
+  // 1) TVL-weighted 7d chain momentum: Σ(tvl × change_7d_pct) / Σ(tvl).
+  //    Clip absolute to ±50% → ±100.
+  let wsum = 0, wnorm = 0;
+  for (const c of chains){
+    const tvl = Number(c && c.tvl_usd);
+    const chg = Number(c && c.change_7d_pct);
+    if (!isFinite(tvl) || tvl <= 0 || !isFinite(chg)) continue;
+    wsum  += tvl * chg;
+    wnorm += tvl;
+  }
+  if (wnorm > 0){
+    const avgPct = wsum / wnorm;
+    components.push(clampScore((avgPct / 50) * 100));
+  }
+  // 2) Stablecoin mcap 7d change as % of mcap → ±5% → ±100.
+  const stableD = Number(llama && llama.stablecoin_7d_change_usd);
+  const stableM = Number(llama && llama.stablecoin_mcap_usd);
+  if (isFinite(stableD) && isFinite(stableM) && stableM > 0){
+    const pct = (stableD / stableM) * 100;
+    components.push(clampScore((pct / 5) * 100));
+  }
+  if (!components.length){
+    hideSentimentCard('defiSentiment');
+    return;
+  }
+  const net = Math.round(components.reduce((a,b)=>a+b,0) / components.length);
+  const bucket = sentimentBucket(net,
+    ['STRONG EXPANSION','EXPANSION','NEUTRAL','CONTRACTION','STRONG CONTRACTION']);
+  const split = sentimentBarSplit(components);
+  paintSentimentCard('defiSentiment', net, bucket.label, bucket.color,
+    split.pos, split.neu, split.neg,
+    `TVL-weighted 7d chain momentum · stablecoin mcap 7d Δ (${components.length} inputs)`);
+}
+
+// ---- ETF Flows: 7d net flow sum + 30d net flow sum, weighted 60/40 toward
+// the 7d. Tracks state.etfAsset.
+function renderEtfFlowSentiment(){
+  const d = etfData();
+  const daily = Array.isArray(d && d.daily) ? d.daily : [];
+  if (!daily.length){
+    hideSentimentCard('etfFlowSentiment');
+    return;
+  }
+  const flowVal = r => {
+    if (!r) return null;
+    const v = Number(r.flow);
+    return isFinite(v) ? v : null;
+  };
+  // Daily flow is in USD millions (Farside convention). $500M = 500.
+  const NORM = 500;
+  const last7 = daily.slice(-7).map(flowVal).filter(v => v != null);
+  const last30 = daily.slice(-30).map(flowVal).filter(v => v != null);
+  const components = [];
+  if (last7.length){
+    const sum7 = last7.reduce((a,b)=>a+b,0);
+    components.push({ s: clampScore((sum7 / NORM) * 100), w: 0.6 });
+  }
+  if (last30.length){
+    const sum30 = last30.reduce((a,b)=>a+b,0);
+    components.push({ s: clampScore((sum30 / NORM) * 100), w: 0.4 });
+  }
+  if (!components.length){
+    hideSentimentCard('etfFlowSentiment');
+    return;
+  }
+  const totalW = components.reduce((a,b)=>a+b.w,0);
+  const net = Math.round(components.reduce((a,b)=>a+b.s*b.w,0) / totalW);
+  const sym = (etfAsset() || 'btc').toUpperCase();
+  const bucket = sentimentBucket(net,
+    ['STRONG INFLOWS','INFLOWS','BALANCED','OUTFLOWS','STRONG OUTFLOWS']);
+  const split = sentimentBarSplit(components.map(c => c.s));
+  paintSentimentCard('etfFlowSentiment', net, bucket.label, bucket.color,
+    split.pos, split.neu, split.neg,
+    `${sym} ETF · 7d net flow sum (60%) · 30d net flow sum (40%)`);
+}
+
+// ---- Futures: funding rate + long/short ratio + 7d OI %Δ. Tracks state.asset
+// (toggle on the Futures tab mirrors choice into state.asset).
+function renderFuturesSentiment(){
+  const m = DATA.market || {};
+  const asset = state && state.asset ? state.asset : 'btc';
+  const a = m[asset] || {};
+  const components = [];
+  // 1) Funding rate. > 0.05% = +100, < -0.05% = -100, linear in between.
+  const fundArr = Array.isArray(a.funding) ? a.funding : [];
+  const fundLast = fundArr.length ? fundArr[fundArr.length - 1] : null;
+  const rate = fundLast && Number(fundLast.rate);
+  if (isFinite(rate)){
+    // 0.05% as a fraction = 0.0005. Map ±0.0005 → ±100.
+    components.push(clampScore((rate / 0.0005) * 100));
+  }
+  // 2) Long/short ratio. > 2 = +100, < 0.5 = -100. Log-scale linear: take
+  //    log2(ratio); ±1 → ±100. Clamps via clampScore.
+  const lsArr = Array.isArray(a.long_short_ratio) ? a.long_short_ratio : [];
+  const lsLast = lsArr.length ? lsArr[lsArr.length - 1] : null;
+  const ratio = lsLast && Number(lsLast.ratio);
+  if (isFinite(ratio) && ratio > 0){
+    const lg = Math.log2(ratio);
+    components.push(clampScore(lg * 100));
+  }
+  // 3) 7d OI % change. ±50% → ±100.
+  const oiArr = Array.isArray(a.open_interest_usd) ? a.open_interest_usd : [];
+  if (oiArr.length > 7){
+    const cur = Number(oiArr[oiArr.length - 1] && oiArr[oiArr.length - 1].oi_usd);
+    const prev = Number(oiArr[oiArr.length - 1 - 7] && oiArr[oiArr.length - 1 - 7].oi_usd);
+    if (isFinite(cur) && isFinite(prev) && prev > 0){
+      const pct = (cur / prev - 1) * 100;
+      components.push(clampScore((pct / 50) * 100));
+    }
+  }
+  if (!components.length){
+    hideSentimentCard('futuresSentiment');
+    return;
+  }
+  const net = Math.round(components.reduce((a,b)=>a+b,0) / components.length);
+  const sym = asset.toUpperCase();
+  const bucket = sentimentBucket(net,
+    ['STRONG CROWDED LONGS','CROWDED LONGS','BALANCED','CROWDED SHORTS','STRONG CROWDED SHORTS']);
+  const split = sentimentBarSplit(components);
+  paintSentimentCard('futuresSentiment', net, bucket.label, bucket.color,
+    split.pos, split.neu, split.neg,
+    `${sym} · funding rate · long/short ratio · 7d OI Δ (${components.length} inputs)`);
+}
+
 // ===== POC top-25 grid (Point of Control tab) =====
 // Renders one card per top-25 coin from DATA.market.poc_top. Reuses the
 // renderPocCards() layout but keyed off coin metadata (image/symbol/name/price)
@@ -6628,11 +7191,19 @@ function renderAll(){
   document.getElementById('whaleContent').classList.toggle('hidden', whEmpty);
 
   if (state.tab === 'etf' && !etfEmpty){
+    renderEtfFlowSentiment();
     renderEtfKpis(); renderEtfFundTable(); renderFlow(); renderCum(); renderYoy();
     renderFundKpis(); renderFundStack(); renderFundCompare();
+  } else if (state.tab === 'etf'){
+    // Empty-state safety: hide the sentiment card cleanly if there's no
+    // ETF data loaded yet (otherwise it would persist stale numbers).
+    renderEtfFlowSentiment();
   }
   if (state.tab === 'trading' && !trEmpty){
+    renderFuturesSentiment();
     renderTradingKpis(); renderPriceVol(); renderFunding(); renderOI(); renderLS(); renderCoinbaseIntlPerps(); renderCadliChart(); renderDvol(); renderFng(); renderEthBtc(); renderGlobalTable();
+  } else if (state.tab === 'trading'){
+    renderFuturesSentiment();
   }
   if (state.tab === 'signals'){
     renderSignals();
