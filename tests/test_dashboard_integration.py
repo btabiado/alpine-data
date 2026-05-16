@@ -993,6 +993,43 @@ def test_symbol_fuzzy_match_helpers_present():
     )
 
 
+def test_signal_detail_unified_with_universal_symbol_modal():
+    """Every coin-card click (Top-25 by mcap, Top-50 signals strip, per-coin
+    sentiment, signal-history chart) used to open a signal-only modal that
+    did not show the POC pair. The unified entry point routes them all
+    through `lookupSymbol`, which renders the Signal + POC pair side-by-side
+    (with an empty-state POC card when the coin is outside `poc_top`).
+
+    Guard: `openSignalDetail` must delegate to `lookupSymbol` and must NOT
+    open the legacy `#signalDetailModal` itself."""
+    html = _read_dashboard_or_skip()
+
+    # The dispatcher must still exist (called from at least 4 click handlers).
+    assert "function openSignalDetail" in html, (
+        "openSignalDetail() missing — coin-card click handlers will throw."
+    )
+
+    # Delegation: the function body must call lookupSymbol.
+    body_match = re.search(
+        r"function openSignalDetail\([^)]*\)\s*\{([\s\S]*?)\n\}",
+        html,
+    )
+    assert body_match, "could not isolate openSignalDetail() body for inspection"
+    body = body_match.group(1)
+    assert "lookupSymbol(" in body, (
+        "openSignalDetail() no longer delegates to lookupSymbol — coin "
+        "clicks have regressed back to the signal-only modal."
+    )
+    # And must NOT open #signalDetailModal in EXECUTABLE code inside its
+    # body — that was the legacy path. Comments are allowed (the function
+    # docstring explains why the legacy element is left in the DOM).
+    code_only = re.sub(r"//[^\n]*", "", body)
+    assert "signalDetailModal" not in code_only, (
+        "openSignalDetail() still references signalDetailModal in code — "
+        "the legacy signal-only modal path was re-introduced."
+    )
+
+
 def test_symbol_suggestion_chip_wiring():
     html = _read_dashboard_or_skip()
     assert "symbol-suggest-chip" in html, (

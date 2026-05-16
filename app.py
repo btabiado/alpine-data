@@ -3528,23 +3528,23 @@ function renderPerCoinSignalList(){
 }
 
 function openSignalDetail(sym){
-  // Look up the signal: first the top-50 strip cache, then fall back to
-  // the main 4 signals (so the history-chart click handlers work too).
-  const upper = (sym||'').toUpperCase();
-  const lower = upper.toLowerCase();
-  let s = (window._top20SignalsCache || {})[upper];
-  if (!s){
-    const main = (DATA.signals || {})[lower];
-    if (main){
-      // Reshape main-signal output to match renderSignalCardFromObj's expected shape
-      s = {...main, symbol: upper, name: main.name || upper, image: null};
-    }
-  }
-  const modal = document.getElementById('signalDetailModal');
-  if (!modal || !s) return;
-  document.getElementById('signalDetailTitle').textContent = `${upper} · ${s.name||''} · signal detail`;
-  document.getElementById('signalDetailBody').innerHTML = renderSignalCardFromObj(s);
-  modal.classList.remove('hidden');
+  // Unified entry point — every click that previously opened a signal-only
+  // modal (Top-25 by market cap, Top-50 signals strip, per-coin sentiment
+  // cards, signal-history chart cards) now routes through `lookupSymbol`
+  // so the user always gets the universal Signal + POC pair side-by-side.
+  //
+  // `lookupSymbol` handles all the same fallbacks the old function did:
+  //   * `signals_top20` (top-50 strip)
+  //   * `DATA.signals[sym]` for pinned BTC/ETH/LINK/LTC
+  //   * Stock cards (when ticker is in stocks_signals)
+  //   * Live lookup chain for unknown symbols (with fuzzy-suggest chips)
+  //
+  // For symbols outside `poc_top`, the POC slot renders an empty-state
+  // card instead of being absent — consistent with the symbol-search UX.
+  // The legacy `#signalDetailModal` element stays in the DOM but is no
+  // longer opened; safe to remove later once nothing else references it.
+  if (!sym) return;
+  if (typeof lookupSymbol === 'function') lookupSymbol(String(sym));
 }
 function closeSignalDetail(){
   const m = document.getElementById('signalDetailModal');
