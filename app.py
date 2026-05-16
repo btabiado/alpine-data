@@ -2985,32 +2985,6 @@ function renderSignalCard(asset, container){
     </div>`;
 }
 
-function renderSignalChart(canvasId, asset){
-  const s = (DATA.signals||{})[asset];
-  destroy('sig_'+asset);
-  if (!s) return;
-  const labels = s.history.map(r=>r.date);
-  const scores = s.history.map(r=>r.score);
-  const prices = s.history.map(r=>r.price);
-  const accent = accentFor(asset);
-  charts['sig_'+asset] = new Chart(document.getElementById(canvasId), {
-    type:'line',
-    data:{labels, datasets:[
-      {label:'Score', data:scores, borderColor:'#a78bfa', backgroundColor:'#a78bfa22', fill:true, tension:0.2, pointRadius:0, borderWidth:2, yAxisID:'yScore'},
-      {label:'Price', data:prices, borderColor:accent, backgroundColor:'transparent', tension:0.2, pointRadius:0, borderWidth:1.5, yAxisID:'yPrice'},
-    ]},
-    options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{labels:{color:'#e6e8ee'}}, tooltip:{mode:'index',intersect:false}},
-      scales:{
-        x:{ticks:{color:'#8a93a6',maxTicksLimit:10},grid:{color:'#1f2533'}},
-        yScore:{position:'left',min:-100,max:100,title:{display:true,text:'Score',color:'#8a93a6'},ticks:{color:'#8a93a6'},grid:{color:'#1f2533'}},
-        yPrice:{position:'right',title:{display:true,text:'Price',color:'#8a93a6'},ticks:{color:'#8a93a6',callback:v=>fmtUSD(v,'auto')},grid:{display:false}},
-      },
-    },
-  });
-}
-
 // Render the top-of-tab breadth chart for the Crypto Signals tab. Sources
 // DATA.market.poc_top — each entry carries `signal_history: [{date,score}, ...90]`
 // (signals_top20 has no history). Defensive: coins without a usable history
@@ -3330,9 +3304,9 @@ function renderTop20Signals(){
 //   A) The rich signal card (via renderSignalCardFromObj) — score, label,
 //      component breakdown table, inline sparkline.
 //   B) A history chart card. If the coin has a 90d signal/price history in
-//      DATA.market.poc_top (joined by uppercase symbol), draw the same
-//      score+price overlay used by the legacy renderSignalChart. Otherwise
-//      fall back to a 7-day price-only sparkline from s.sparkline_7d.
+//      DATA.market.poc_top (joined by uppercase symbol), draw a score+price
+//      overlay. Otherwise fall back to a 7-day price-only sparkline from
+//      s.sparkline_7d.
 // Clicks on either block open the existing signal-detail modal.
 function renderPerCoinSignalList(){
   const host = document.getElementById('perCoinSignalList');
@@ -7801,96 +7775,6 @@ function renderSantimentCards(){
   }).join('');
 }
 
-// ===== CryptoCompare news sentiment (keyless data-api) =====
-function renderCCNewsCards(){
-  const coins = (socialData().cc_news || {}).coins || {};
-  const host = document.getElementById('ccNewsCards');
-  if (!host) return;
-  const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
-  host.innerHTML = RESEARCH_ASSETS.map(a => {
-    const c = coins[a];
-    const accent = RESEARCH_ACCENT(a);
-    if (!c){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">${a.toUpperCase()}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no news</div></div>`;
-    }
-    const total = (c.positive || 0) + (c.negative || 0) + (c.neutral || 0) || 1;
-    const posPct = (c.positive || 0) / total * 100;
-    const negPct = (c.negative || 0) / total * 100;
-    const neuPct = (c.neutral || 0) / total * 100;
-    const netColor = c.net_score == null ? 'var(--muted)' : (c.net_score > 0 ? '#22c55e' : (c.net_score < 0 ? '#ef4444' : '#f59e0b'));
-    const articles = (c.top_articles || []).slice(0, 4).map(art => {
-      const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
-      const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px"></span>`;
-      return `<a href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:5px 0;border-top:1px solid var(--border);line-height:1.3">
-        ${dot}<strong style="color:${sc}">${(art.sentiment||'?').slice(0,3)}</strong>
-        <span style="color:var(--muted)"> · ${(art.source||'').slice(0,20)}</span>
-        <span style="display:block;color:var(--text);margin-top:2px">${(art.title||'').replace(/</g,'&lt;')}</span>
-      </a>`;
-    }).join('');
-    // 7-day sentiment sparkline (mini bar chart of daily net sentiment)
-    const trend = c.trend_7d || [];
-    let sparkBlock = '';
-    if (trend.length) {
-      const maxAbs = Math.max(1, ...trend.map(d => Math.abs(d.net || 0)));
-      const sparkW = 110, sparkH = 28, barW = sparkW / trend.length;
-      const bars = trend.map((d, i) => {
-        const h = Math.max(1, Math.round((Math.abs(d.net) / maxAbs) * (sparkH/2 - 1)));
-        const y = d.net >= 0 ? (sparkH/2 - h) : (sparkH/2);
-        const fill = d.net > 0 ? '#22c55e' : (d.net < 0 ? '#ef4444' : '#6b7280');
-        return `<rect x="${i*barW}" y="${y}" width="${Math.max(1,barW-1)}" height="${h}" fill="${fill}"><title>${d.date}: net ${d.net} (+${d.pos}/−${d.neg})</title></rect>`;
-      }).join('');
-      sparkBlock = `<div style="margin-top:6px;display:flex;align-items:center;gap:6px">
-        <span class="sub" style="font-size:10px;color:var(--muted)">7d:</span>
-        <svg width="${sparkW}" height="${sparkH}" viewBox="0 0 ${sparkW} ${sparkH}">
-          <line x1="0" y1="${sparkH/2}" x2="${sparkW}" y2="${sparkH/2}" stroke="#374151" stroke-width="1"/>${bars}
-        </svg>
-      </div>`;
-    }
-    // Keyword cloud chips. Click filters the article list (DOM-only).
-    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? '#22c55e' : sk < -0.3 ? '#ef4444' : '#a1a1aa';
-    const chips = (c.top_keywords || []).slice(0, 8).map(k => {
-      const bg = skewColor(k.sentiment_skew);
-      return `<button type="button" data-kw="${encodeURIComponent(k.kw)}" class="cc-kw-chip" style="border:1px solid ${bg};background:transparent;color:${bg};border-radius:10px;padding:2px 7px;margin:2px 3px 0 0;font-size:10px;cursor:pointer;line-height:1.3">${k.kw} <span style="opacity:.65">${k.count}</span></button>`;
-    }).join('');
-    const chipsBlock = chips ? `<div style="margin-top:6px">${chips}</div>` : '';
-    return `<div class="card" data-coin="${a}" style="border-left:4px solid ${accent}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
-        <span class="sub" style="color:${netColor};font-size:12px;font-weight:600">net ${c.net_score > 0 ? '+' : ''}${c.net_score ?? 0}</span>
-      </div>
-      <div style="display:flex;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:${posPct}%" title="${c.positive} positive"></div>
-        <div style="background:#f59e0b;width:${neuPct}%" title="${c.neutral} neutral"></div>
-        <div style="background:#ef4444;width:${negPct}%" title="${c.negative} negative"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
-        <span style="color:#22c55e">${c.positive} +</span>
-        <span>${c.neutral} ◯</span>
-        <span style="color:#ef4444">${c.negative} −</span>
-        <span>${c.article_count} total</span>
-      </div>
-      ${sparkBlock}
-      ${chipsBlock}
-      <div class="cc-articles" style="margin-top:6px">${articles || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No articles.</div>'}</div>
-    </div>`;
-  }).join('');
-  // Wire keyword chip filters (one active chip per card, click again to clear)
-  host.querySelectorAll('[data-coin]').forEach(card => {
-    let active = null;
-    card.querySelectorAll('.cc-kw-chip').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const kw = decodeURIComponent(btn.dataset.kw || '');
-        active = (active === kw) ? null : kw;
-        card.querySelectorAll('.cc-kw-chip').forEach(b =>
-          b.style.fontWeight = (decodeURIComponent(b.dataset.kw) === active) ? '700' : '400'
-        );
-        // No raw-keyword data on the article elements (we'd need to add that
-        // to make the filter work). For now this is a visual highlight only.
-      });
-    });
-  });
-}
-
 // Keyword lists for headline sentiment scoring (same approach the Python
 // `_AI_NEWS_*` lists use server-side for the AI tab). Lowercased; matched
 // substring-wise against title+body. POSITIVE iff ≥1 positive hit and 0
@@ -8051,7 +7935,7 @@ function openNewsSentimentDetail(symbol){
     const ccNegPct = (ccCoin.negative || 0) / ccTotal * 100;
     const ccNetColor = ccCoin.net_score == null ? 'var(--muted)' : ccCoin.net_score > 0 ? '#22c55e' : ccCoin.net_score < 0 ? '#ef4444' : '#f59e0b';
     const ccNetTxt = (ccCoin.net_score > 0 ? '+' : '') + (ccCoin.net_score ?? 0);
-    // 7-day daily-net sparkline (same SVG pattern as the old renderCCNewsCards).
+    // 7-day daily-net sparkline (inline SVG bar chart of daily net sentiment).
     const trend = ccCoin.trend_7d || [];
     let sparkBlock = '';
     if (trend.length){
