@@ -1173,9 +1173,27 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-poc" class="hidden">
     <div class="container">
       <div class="chart-card">
-        <div class="head">
-          <h2>Point of Control — Top 50 by market cap, sorted by signal score</h2>
-          <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
+        <div class="head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div style="min-width:0;flex:1">
+            <h2 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0">
+              Point of Control — Top 50 by market cap, sorted by signal score
+              <button class="btn" data-poc-help="1" aria-label="What is Point of Control?" title="What is Point of Control?" style="padding:1px 8px;font-size:11px;font-weight:700;line-height:1.4">?</button>
+            </h2>
+            <span class="desc">Volume-weighted price levels across 30d / 90d / 180d · naked POCs + value-area drift sparkline per coin</span>
+          </div>
+          <button class="btn" data-poc-help="1" style="font-size:11px;white-space:nowrap">📊 Learn about POC</button>
+        </div>
+        <div class="note" style="margin:6px 0 10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:#0e1620;color:var(--text);font-size:11px;line-height:1.5">
+          <strong>How to read this page.</strong>
+          Each card shows one coin's 90d Point of Control — the price where the most volume has traded.
+          The big arrow on the right tells you which way value is migrating:
+          <span style="color:#22c55e;font-weight:700">↑ UP</span> (POC drifting higher · accumulation)
+          ·
+          <span style="color:#ef4444;font-weight:700">↓ DOWN</span> (POC drifting lower · distribution)
+          ·
+          <span style="color:var(--muted);font-weight:700">· FLAT</span> (value stable).
+          Distance % shows where current price sits relative to that POC.
+          Click any card for the full value-area ladder, naked POCs, and drift detail.
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <span class="lbl" style="margin:0">Filter</span>
@@ -1186,7 +1204,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-pocfilter="sell">SELL+</button>
           <button class="btn" data-pocfilter="strong_sell">STRONG SELL</button>
         </div>
-        <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px"></div>
+        <div id="pocTopGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
       </div>
     </div>
   </div>
@@ -1495,7 +1513,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <div class="chart-wrap"><canvas id="ethActiveAddrChart"></canvas></div>
           </div>
           <div class="chart-card">
-            <div class="head"><h2>ETH transfer volume (USD)</h2><span class="desc">Adjusted daily transfer value (Coin Metrics)</span></div>
+            <div class="head"><h2>ETH 24h trading volume (CoinGecko)</h2><span class="desc">Exchange-traded volume in USD — on-chain transfer volume requires a paid feed</span></div>
             <div class="chart-wrap"><canvas id="ethTxVolChart"></canvas></div>
           </div>
         </div>
@@ -2437,7 +2455,9 @@ function closeSignalDetail(){
       if (pm && !pm.classList.contains('hidden')) pm.classList.add('hidden');
     }
   });
-  // POC explainer: rewrite the TrendSpider link to open the in-dashboard modal
+  // POC explainer: opened from (a) any legacy TrendSpider link, and
+  // (b) the POC-tab "?" / "Learn about POC" buttons via data-poc-help.
+  // Single delegated listener so dynamically rendered triggers also work.
   const pocModal = document.getElementById('pocExplainerModal');
   if (pocModal){
     const openPoc = e => { if (e) e.preventDefault(); pocModal.classList.remove('hidden'); };
@@ -2446,6 +2466,10 @@ function closeSignalDetail(){
       a.addEventListener('click', openPoc);
       a.setAttribute('href', '#');
       a.setAttribute('title', 'What is POC?');
+    });
+    document.addEventListener('click', e => {
+      const trig = e.target && e.target.closest && e.target.closest('[data-poc-help]');
+      if (trig) openPoc(e);
     });
     document.getElementById('pocExplainerClose')?.addEventListener('click', closePoc);
     pocModal.addEventListener('click', e => { if (e.target.id === 'pocExplainerModal') closePoc(); });
@@ -2908,16 +2932,19 @@ function renderWhaleEth(){
   const bc  = eth.blockchair || {};
   const cm  = eth.coin_metrics || {};
   const gas = ((DATA.market || {}).eth_gas) || {};
+  // Coin Metrics' TxTfrValAdjUSD is paid-only, so the on-chain transfer-volume
+  // KPI/chart falls back to CoinGecko 24h trading volume (clearly labeled).
+  const ethMarketVol = (((DATA.market || {}).eth) || {}).volume || [];
 
   const lastVal = (m) => { const s = cm[m] || []; return s.length ? s[s.length-1].value : null; };
   const aa  = lastVal('AdrActCnt');
   const txc = lastVal('TxCnt');
-  const txv = lastVal('TxTfrValAdjUSD');
+  const txv = ethMarketVol.length ? ethMarketVol[ethMarketVol.length-1].value : null;
   const sup = lastVal('SplyCur');
   const kpis = [
     {label:'Active addresses (24h)', val: aa  != null ? fmtNum(aa, 0)                   : '—'},
     {label:'Transactions (24h)',     val: txc != null ? fmtNum(txc, 0)                  : '—'},
-    {label:'Transfer volume (USD)',  val: txv != null ? fmtUSD(txv, 'auto')             : '—'},
+    {label:'24h trading volume',     val: txv != null ? fmtUSD(txv, 'auto')             : '—'},
     {label:'Supply (ETH)',           val: sup != null ? fmtNum(sup/1e6, 2) + 'M'        : '—'},
   ];
   const kpiHost = document.getElementById('whaleEthKpis');
@@ -2950,7 +2977,7 @@ function renderWhaleEth(){
   // 180-day charts from Coin Metrics
   const slice180 = (arr) => (arr || []).slice(-180);
   lineChart('ethActiveAddrChart', 'ethActiveAddr', slice180(cm.AdrActCnt),      '#06b6d4', v=>fmtNum(v,0));
-  lineChart('ethTxVolChart',      'ethTxVol',      slice180(cm.TxTfrValAdjUSD), '#22c55e', v=>fmtUSD(v,'auto'));
+  lineChart('ethTxVolChart',      'ethTxVol',      slice180(ethMarketVol),      '#22c55e', v=>fmtUSD(v,'auto'));
   lineChart('ethTxCountChart',    'ethTxCount',    slice180(cm.TxCnt),          '#a78bfa', v=>fmtNum(v,0));
   lineChart('ethSupplyChart',     'ethSupply',     slice180(cm.SplyCur),        '#627eea', v=>fmtNum(v/1e6,2)+'M');
 
@@ -4938,26 +4965,57 @@ function renderPocTopCards(){
     const dp = anchor && anchor.distance_pct != null ? anchor.distance_pct : null;
     const dpColor = dp == null ? 'var(--muted)' : (dp >= 0 ? '#22c55e' : '#ef4444');
     const dpTxt = dp == null ? '—' : ((dp >= 0 ? '+' : '') + dp.toFixed(1) + '%');
+    const inVA = anchor && anchor.in_value_area;
+    const vaTag = anchor
+      ? (inVA
+          ? '<span style="background:#22c55e22;color:#22c55e;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+          : '<span style="background:#f59e0b22;color:#f59e0b;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>')
+      : '';
+    // BIG migration arrow on the right edge — primary visual cue for direction.
+    // UP / DOWN / FLAT (·) with label, color-coded green/red/muted.
     const mig = d.migration;
-    let migDot = '';
+    let migBlock;
     if (mig){
-      const cfg = mig.direction === 'UP' ? {fg:'#22c55e', arrow:'↑'}
-                : mig.direction === 'DOWN' ? {fg:'#ef4444', arrow:'↓'}
-                : {fg:'var(--muted)', arrow:'·'};
-      migDot = `<span style="color:${cfg.fg};font-weight:700;font-size:12px" title="${escapeHtml(mig.explanation || '')}">${cfg.arrow}</span>`;
+      const dlt = Number(mig.delta_pct);
+      const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(1) + '%') : '';
+      const cfg = mig.direction === 'UP'
+        ? {fg:'#22c55e', arrow:'↑', label:'UP'}
+        : mig.direction === 'DOWN'
+        ? {fg:'#ef4444', arrow:'↓', label:'DOWN'}
+        : {fg:'#94a3b8',  arrow:'·', label:'FLAT'};
+      const tip = escapeHtml(mig.explanation || `POC migration ${cfg.label}`);
+      migBlock = `<div title="${tip}" style="flex:0 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:${cfg.fg}">
+        <div style="font-size:26px;line-height:1;font-weight:700">${cfg.arrow}</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:.04em">${cfg.label}</div>
+        ${dltTxt ? `<div style="font-size:9px;opacity:.85">${dltTxt}</div>` : ''}
+      </div>`;
+    } else {
+      migBlock = `<div title="No migration data" style="flex:0 0 44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:var(--muted)">
+        <div style="font-size:26px;line-height:1;font-weight:700">·</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:.04em">—</div>
+      </div>`;
     }
+    // 30d POC drift sparkline (tiny inline SVG). Falls back to empty string
+    // when the migration series is too short.
+    const spark = pocMigrationSparkline(d.migration_series);
     return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
-        ${img}
-        <span style="font-weight:700;font-size:12px">${sym}</span>
-        ${migDot}
-        ${sigBadge}
-        <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
-      </div>
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:11px">
-        <span style="color:var(--muted);font-size:10px">90d POC</span>
-        <span style="font-weight:600">${anchorPoc}</span>
-        <span style="color:${dpColor};font-weight:600">${dpTxt}</span>
+      <div style="display:flex;align-items:stretch;gap:8px">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${img}
+            <span style="font-weight:700;font-size:12px">${sym}</span>
+            ${sigBadge}
+            <span class="sub" style="font-size:10px;color:var(--muted);margin-left:auto">${priceTxt}</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;font-size:11px">
+            <span style="color:var(--muted);font-size:10px">90d POC</span>
+            <span style="font-weight:600">${anchorPoc}</span>
+            <span style="color:${dpColor};font-weight:600">${dpTxt}</span>
+            ${vaTag}
+          </div>
+          ${spark || '<div style="height:30px;margin-top:6px;border-radius:3px;background:#0b0d12;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)">no drift data</div>'}
+        </div>
+        ${migBlock}
       </div>
     </div>`;
   }).join('');
@@ -5077,6 +5135,13 @@ function pocDetailHtml(c){
       }).join('')}
     </div>` : '';
   const sparkline = pocMigrationSparkline(d.migration_series);
+  // Volume profile mini-chart for the modal (90d primary, 30d overlay as
+  // dashed gray). Only renders when the upstream buckets are present.
+  const volProfile = (d.d90 && d.d90.buckets && d.d90.buckets.length)
+    ? volumeProfileSVG(d.d90, d.d30, cur)
+    : ((d.d30 && d.d30.buckets && d.d30.buckets.length)
+        ? volumeProfileSVG(d.d30, null, cur)
+        : '');
   return `<div style="display:flex;flex-direction:column;gap:14px">
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       ${img}
@@ -5088,17 +5153,24 @@ function pocDetailHtml(c){
         <div style="font-size:11px;color:var(--muted)">Current price</div>
         <div style="font-size:18px;font-weight:700">${priceTxt}</div>
       </div>
+      <button class="btn" data-poc-help="1" aria-label="What is POC?" title="What is Point of Control?" style="padding:1px 8px;font-size:11px;font-weight:700;line-height:1.4">?</button>
     </div>
     ${migBadge ? `<div>${migBadge}</div>` : ''}
     ${sparkline ? `<div><div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">30d POC drift · last 90 days</div>${sparkline}</div>` : ''}
-    <div>
-      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Value-area ladder</div>
-      <table style="width:100%;font-size:13px;border-collapse:collapse">
-        <thead><tr style="color:var(--muted);font-size:10px;text-align:left">
-          <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px">VA</th>
-        </tr></thead>
-        <tbody>${ladder}</tbody>
-      </table>
+    <div style="display:flex;gap:14px;flex-wrap:wrap">
+      <div style="flex:1;min-width:240px">
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Value-area ladder</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <thead><tr style="color:var(--muted);font-size:10px;text-align:left">
+            <th style="padding:5px 8px">Window</th><th style="padding:5px 8px">POC</th><th style="text-align:right;padding:5px 8px">Δ vs price</th><th style="text-align:right;padding:5px 8px">VA</th>
+          </tr></thead>
+          <tbody>${ladder}</tbody>
+        </table>
+      </div>
+      ${volProfile ? `<div style="flex:0 0 140px;min-width:120px">
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Volume profile · 90d (30d dashed)</div>
+        ${volProfile}
+      </div>` : ''}
     </div>
     ${nakedHtml}
   </div>`;
