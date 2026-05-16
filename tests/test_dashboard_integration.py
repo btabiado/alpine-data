@@ -562,3 +562,56 @@ def test_top_news_sentiment_card_wiring():
         "renderSocial() does not call renderTopNewsSentiment() — the new "
         "Top-15 sentiment card won't render when the user opens Research."
     )
+
+
+# ---------- 7. ETH whale-panel parity cards (Activity Tracker + Proxy) ------
+#
+# The Whale tab's ETH panel was missing two BTC-parallel cards: the multi-
+# horizon Activity Tracker (Today / 1d / 7d / 30d / 90d delta table) and the
+# two-axis Whale Activity Proxy chart. Both have been ported using ETH-side
+# data already in the whale.eth.* payload (Coin Metrics + Etherscan). The
+# host divs, renderer functions, and call-sites inside renderWhaleEth() must
+# all survive a rebuild — otherwise the cards silently disappear.
+def test_eth_whale_tracker_and_proxy_cards_wired():
+    html = _read_dashboard_or_skip()
+
+    # Host divs present inside the ETH whale panel markup.
+    for host_id in ("ethWhaleTrackerCard", "ethWhaleTrackerTable",
+                    "ethWhaleProxyCard", "ethWhaleProxyChart"):
+        assert f'id="{host_id}"' in html, (
+            f"{host_id} div/canvas missing from dashboard.html — the ETH "
+            "whale-panel parity card has no mount point."
+        )
+
+    # Renderer functions defined.
+    for fn in ("function renderEthWhaleTracker",
+               "function renderEthWhaleProxyChart"):
+        assert fn in html, f"{fn}() missing from dashboard.html"
+
+    # renderWhaleEth() must invoke both. Scope the search to the function
+    # body so a stray comment elsewhere wouldn't pass the test.
+    m = re.search(r"function\s+renderWhaleEth\s*\(\s*\)\s*\{", html)
+    assert m, "renderWhaleEth() function not found in dashboard.html"
+    start = m.end()
+    depth = 1
+    i = start
+    body = None
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                body = html[start:i]
+                break
+        i += 1
+    assert body is not None, "Unterminated renderWhaleEth function body"
+    assert "renderEthWhaleTracker()" in body, (
+        "renderWhaleEth() does not invoke renderEthWhaleTracker() — the new "
+        "multi-horizon table won't render when the user opens Whale → ETH."
+    )
+    assert "renderEthWhaleProxyChart()" in body, (
+        "renderWhaleEth() does not invoke renderEthWhaleProxyChart() — the "
+        "new activity-proxy chart won't render when the user opens Whale → ETH."
+    )

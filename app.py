@@ -2188,13 +2188,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <!-- Headline: ETH Whale Sentiment Index (composite ±100 from on-chain proxies) -->
         <div class="chart-card" id="whaleEthSentimentCard" style="position:relative"></div>
         <div class="row" id="whaleEthKpis"></div>
-        <div class="chart-card">
-          <div class="head">
-            <h2>Largest ETH transaction (last 24h) <span class="tag">Blockchair</span></h2>
-            <span class="desc">Single biggest tx by USD value on Ethereum mainnet over the past 24 hours</span>
-          </div>
-          <div id="ethLargestTxBox" class="sub" style="font-size:13px;color:var(--text);line-height:1.6;padding:6px 4px"></div>
-        </div>
+        <!-- Recent ETH whale tx feed — promoted directly after Sentiment+KPIs
+             to mirror the BTC panel ordering. Hidden until data arrives. -->
         <div class="chart-card hidden" id="ethWhaleAlertsCard">
           <div class="head">
             <h2>Recent ETH whale transactions <span class="tag">Blockchair</span></h2>
@@ -2208,6 +2203,45 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
               <tbody id="ethWhaleAlertsBody"></tbody>
             </table>
           </div>
+        </div>
+        <!-- ETH Whale Activity Tracker — multi-horizon delta table. Mirrors
+             the BTC panel's whaleTrackerTable but reads CM + Blockchair +
+             Etherscan series available on the ETH side. Hidden when no row
+             has any data. -->
+        <div class="chart-card hidden" id="ethWhaleTrackerCard">
+          <div class="head">
+            <h2>ETH Whale Activity Tracker</h2>
+            <span class="desc">snapshot across multiple time horizons (Coin Metrics + Etherscan)</span>
+          </div>
+          <div style="overflow:auto">
+            <table id="ethWhaleTrackerTable" class="tracker-grid">
+              <thead><tr>
+                <th>Metric</th><th>Today</th><th>1d Δ</th><th>7d Δ</th><th>30d Δ</th><th>90d Δ</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- ETH whale activity proxy: combined two-axis chart of daily
+             transactions + active addresses. Both rising together = whale-
+             shaped activity (more txs per active wallet). ETH parallel of the
+             BTC whaleProxyChart card. -->
+        <div class="chart-card hidden" id="ethWhaleProxyCard">
+          <div class="head">
+            <h2>ETH whale activity proxy <span class="tag">FREE</span></h2>
+            <span class="desc">Daily transactions (left axis) &middot; active addresses (right axis) &middot; Coin Metrics community tier &middot; both rising = whale-shaped activity</span>
+          </div>
+          <div class="chart-wrap tall"><canvas id="ethWhaleProxyChart"></canvas></div>
+          <div class="note" style="margin-top:10px;font-size:11px">
+            ⚠️ Best free <em>activity</em> proxy. True ETH cohort flow (volume by ≥10K ETH wallets) requires Glassnode / Nansen — both paid.
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="head">
+            <h2>Largest ETH transaction (last 24h) <span class="tag">Blockchair</span></h2>
+            <span class="desc">Single biggest tx by USD value on Ethereum mainnet over the past 24 hours</span>
+          </div>
+          <div id="ethLargestTxBox" class="sub" style="font-size:13px;color:var(--text);line-height:1.6;padding:6px 4px"></div>
         </div>
         <div class="grid2">
           <div class="chart-card">
@@ -4087,9 +4121,14 @@ function renderWhaleEth(){
     }
   }
 
-  // Recent ETH whale transactions feed (≥ $1M, 24h) — sits right below the
-  // single-largest card to give users both the headline and the full feed.
+  // Recent ETH whale transactions feed (≥ $1M, 24h) — sits right above the
+  // single-largest card to give users the full feed first, headline second.
   renderEthWhaleAlerts();
+  // Multi-horizon delta table + activity proxy chart — ETH parallels of the
+  // BTC Tracker and Whale-Proxy cards. Each hides itself when the underlying
+  // CM/Etherscan series are empty.
+  renderEthWhaleTracker();
+  renderEthWhaleProxyChart();
 
   // 180-day charts from Coin Metrics
   const slice180 = (arr) => (arr || []).slice(-180);
@@ -4235,6 +4274,136 @@ function renderEthWhaleAlerts(){
       <td style="color:var(--muted);font-size:12px">${time}</td>
     </tr>`;
   }).join('');
+}
+
+// ETH parallel of renderWhaleTracker(): multi-horizon snapshot table across
+// the on-chain series we *do* have free access to on the ETH side. Rows are
+// sourced from Coin Metrics (active addresses, tx count, supply), the
+// Blockchair 24h snapshot (transfer volume, burn), and Etherscan
+// (blocks/day, env-gated). Each row hides via "—" if its series is missing
+// or too short; the whole card hides if no row has any data at all.
+function renderEthWhaleTracker(){
+  const card = document.getElementById('ethWhaleTrackerCard');
+  const tbody = document.querySelector('#ethWhaleTrackerTable tbody');
+  if (!card || !tbody) return;
+  const eth = ((DATA.whale||{}).eth) || {};
+  const cm  = eth.coin_metrics || {};
+  const bc  = eth.blockchair || {};
+  const eds = eth.etherscan_daily || {};
+  // CM transfer-value (paid feed). May be missing; falls back to a dash.
+  const txTfr = cm.TxTfrValAdjUSD || [];
+  const edsSeries = Array.isArray(eds.series) ? eds.series : [];
+
+  const rows = [
+    { label: 'Active addresses',  series: cm.AdrActCnt || [],
+      fmt: v => fmtNum(v, 0) },
+    { label: 'Transactions (network)', series: cm.TxCnt || [],
+      fmt: v => fmtNum(v, 0) },
+    { label: 'Circulating supply (ETH)', series: cm.SplyCur || [],
+      fmt: v => fmtNum(v/1e6, 2) + 'M ETH' },
+    // Optional rows — these only populate when their feed returned data.
+    { label: 'Transfer value (USD)', series: txTfr,
+      fmt: v => fmtUSD(v, 'auto'),
+      empty_note: 'paid feed' },
+    { label: 'Blocks mined per day', series: edsSeries,
+      fmt: v => fmtNum(v, 0) + ' blocks',
+      empty_note: 'needs ETHERSCAN_API_KEY' },
+  ];
+
+  // Reuse the BTC tracker's pct-change helper for consistency.
+  const dCell = (series, days) => {
+    const d = _pctChange(series, days);
+    if (d == null) return '<td>—</td>';
+    const cls = d >= 0 ? 'green' : 'red';
+    const sign = d >= 0 ? '+' : '';
+    return `<td class="${cls}">${sign}${d.toFixed(2)}%</td>`;
+  };
+
+  let anyRowHasData = false;
+  const html = rows.map(r => {
+    const arr = r.series || [];
+    const cur = arr.length ? arr[arr.length-1]?.value : null;
+    if (cur != null) anyRowHasData = true;
+    let today;
+    if (cur != null){
+      today = r.fmt(cur);
+    } else if (r.empty_note){
+      today = `<span style="color:var(--muted);font-size:11px">— (${r.empty_note})</span>`;
+    } else {
+      today = '—';
+    }
+    return `<tr>
+      <td>${r.label}</td>
+      <td>${today}</td>
+      ${dCell(arr, 1)}
+      ${dCell(arr, 7)}
+      ${dCell(arr, 30)}
+      ${dCell(arr, 90)}
+    </tr>`;
+  }).join('');
+
+  if (!anyRowHasData){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  tbody.innerHTML = html;
+}
+
+// ETH parallel of renderWhaleProxyChart(): two-axis combined view of daily
+// transactions + active addresses. When both rise together that's whale-
+// shaped activity (more txs per active wallet). Hidden when either series
+// is missing — we need both to make the cross-axis read meaningful.
+function renderEthWhaleProxyChart(){
+  const card = document.getElementById('ethWhaleProxyCard');
+  if (!card) return;
+  const eth = ((DATA.whale||{}).eth) || {};
+  const cm  = eth.coin_metrics || {};
+  const txc = cm.TxCnt || [];
+  const aa  = cm.AdrActCnt || [];
+  destroy('ethWhaleProxy');
+  if (!txc.length || !aa.length){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+
+  // Last 180 days, aligned on the union of dates so two y-axes stay synced.
+  const slice = arr => (arr || []).slice(-180);
+  const txcSeries = slice(txc);
+  const aaSeries  = slice(aa);
+  const dateSet = new Set([...txcSeries.map(r=>r.date), ...aaSeries.map(r=>r.date)]);
+  const dates = Array.from(dateSet).sort();
+  const txcByDate = Object.fromEntries(txcSeries.map(r=>[r.date, r.value]));
+  const aaByDate  = Object.fromEntries(aaSeries.map(r=>[r.date, r.value]));
+  const txcData = dates.map(d => txcByDate[d] ?? null);
+  const aaData  = dates.map(d => aaByDate[d]  ?? null);
+  charts.ethWhaleProxy = new Chart(document.getElementById('ethWhaleProxyChart'), {
+    type:'line',
+    data:{
+      labels: dates,
+      datasets:[
+        {label:'Transactions per day', yAxisID:'y1', data:txcData,
+         borderColor:'#a78bfa', backgroundColor:'#a78bfa22', fill:true,
+         tension:0.2, pointRadius:0, borderWidth:1.8, spanGaps:true},
+        {label:'Active addresses', yAxisID:'y2', data:aaData,
+         borderColor:'#06b6d4', backgroundColor:'transparent', fill:false,
+         tension:0.2, pointRadius:0, borderWidth:1.8, spanGaps:true},
+      ],
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#e6e8ee'}},
+        tooltip:{mode:'index', intersect:false,
+          callbacks:{label:ctx => {
+            const v = ctx.parsed.y;
+            return ctx.dataset.label + ': ' + fmtNum(v, 0);
+          }}},
+      },
+      scales:{
+        x:{ticks:{color:'#8a93a6', maxTicksLimit:10}, grid:{color:'#1f2533'}},
+        y1:{type:'linear', position:'left', title:{display:true, text:'Transactions', color:'#a78bfa'},
+            ticks:{color:'#8a93a6', callback:v=>fmtNum(v,0)}, grid:{color:'#1f2533'}},
+        y2:{type:'linear', position:'right', title:{display:true, text:'Active addresses', color:'#06b6d4'},
+            ticks:{color:'#8a93a6', callback:v=>fmtNum(v,0)}, grid:{display:false}},
+      },
+    },
+  });
 }
 
 // Multi-chain whale snapshot: LTC / BCH / DOGE 24h Blockchair stats + the
