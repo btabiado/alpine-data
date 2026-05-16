@@ -661,8 +661,93 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   .chart-wrap:has(>#cryptoSignalsBreadthChart){height:160px !important}
   /* AI funding quadrant chart had inline height:380px which overrides
      .chart-wrap above; force it down on phones so it doesn't tower over
-     the AI News tab. !important needed to beat the inline style. */
-  .chart-wrap:has(>#aiQuadrantChart){height:280px !important;min-height:0 !important}
+     the AI News tab. !important needed to beat the inline style.
+     Drop further to 240px on the smallest widths — the bottom legend +
+     two axis-title rows ("Last round size (USD, log)" / "Valuation
+     (USD, log)") were eating ~70px of the 280px box, leaving the actual
+     scatter area cramped. !important needed to beat the inline style. */
+  .chart-wrap:has(>#aiQuadrantChart){height:240px !important;min-height:0 !important}
+  /* Tighten the quadrant card padding so the chart gets a few extra px
+     of horizontal room — log-axis tick labels ("$1B","$10B","$100B")
+     were running right up to the card edge on 360px screens. */
+  #aiQuadrantCard{padding:8px 10px !important}
+
+  /* --- AI investment KPIs / Research benchmarks (#aiInvestmentKpisCard,
+     #aiWhitepaperKpisCard) ---------------------------------------------
+     Each KPI is rendered as an INNER <div class="chart-card"> with inline
+     padding:12px 14px, an inline 24px value, an 11px label, source text,
+     plus a delta pill — and the outer grid uses inline
+     repeat(auto-fit,minmax(220px,1fr)) which collapses to 1-up on phones,
+     so each card was ~135px tall × full-width. User feedback: "boxes
+     pretty large on mobile" / "boxes really big on mobile". Force a
+     tight 2-column grid, shrink the inner card padding + value + delta
+     fonts, and hide the redundant prior_value/source fields on phone
+     (clicking the card already opens the source URL in a new tab). */
+  #aiInvestmentKpis,
+  #aiWhitepaperKpis{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:6px !important;
+  }
+  /* Inner KPI cell: shrink padding + radius. Inline padding on the inner
+     <div> wrapper still applies, so override that too via descendant. */
+  #aiInvestmentKpis > .chart-card,
+  #aiInvestmentKpis > a.chart-card,
+  #aiWhitepaperKpis > .chart-card,
+  #aiWhitepaperKpis > a.chart-card{
+    padding:0 !important;
+    border-radius:6px;
+  }
+  #aiInvestmentKpis > .chart-card > div,
+  #aiInvestmentKpis > a.chart-card > div,
+  #aiWhitepaperKpis > .chart-card > div,
+  #aiWhitepaperKpis > a.chart-card > div{
+    padding:8px 10px !important;
+    gap:4px !important;
+  }
+  /* Label row (uppercase, 11px). Drop to 10px and clamp to 2 lines so
+     long labels don't cause uneven card heights. */
+  #aiInvestmentKpis > .chart-card > div > div:first-child,
+  #aiInvestmentKpis > a.chart-card > div > div:first-child,
+  #aiWhitepaperKpis > .chart-card > div > div:first-child,
+  #aiWhitepaperKpis > a.chart-card > div > div:first-child{
+    font-size:9px !important;
+    letter-spacing:.03em !important;
+    line-height:1.25 !important;
+  }
+  /* Big value (was 24px, way too dominant in a 160px-wide cell on 360px
+     phones). Drop to 17px. The inline "unit" span inside scales with em
+     so it's covered too. */
+  #aiInvestmentKpis > .chart-card > div > div:nth-child(2),
+  #aiInvestmentKpis > a.chart-card > div > div:nth-child(2),
+  #aiWhitepaperKpis > .chart-card > div > div:nth-child(2),
+  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(2){
+    font-size:17px !important;
+    line-height:1.1 !important;
+  }
+  #aiInvestmentKpis > .chart-card > div > div:nth-child(2) span,
+  #aiInvestmentKpis > a.chart-card > div > div:nth-child(2) span,
+  #aiWhitepaperKpis > .chart-card > div > div:nth-child(2) span,
+  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(2) span{
+    font-size:10px !important;
+  }
+  /* Delta pill row: shrink the pill so it doesn't push the prior label
+     to its own row in a 160px cell. */
+  #aiInvestmentKpis > .chart-card > div > div:nth-child(3) > span,
+  #aiInvestmentKpis > a.chart-card > div > div:nth-child(3) > span,
+  #aiWhitepaperKpis > .chart-card > div > div:nth-child(3) > span,
+  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(3) > span{
+    padding:1px 6px !important;
+    font-size:10px !important;
+  }
+  /* Hide the source attribution line on phone — same info is on the
+     desktop view, and tapping the card opens the source URL anyway.
+     Saves ~16px per cell × N cells. */
+  #aiInvestmentKpis > .chart-card > div > div.sub,
+  #aiInvestmentKpis > a.chart-card > div > div.sub,
+  #aiWhitepaperKpis > .chart-card > div > div.sub,
+  #aiWhitepaperKpis > a.chart-card > div > div.sub{
+    display:none !important;
+  }
 
   /* --- GLOBAL CARD TIGHTENING (every tab, not just Overview) ---
      User reported all phone pages had boxes wasting too much space.
