@@ -1101,7 +1101,14 @@ def test_symbol_recent_chips_div_and_renderer_present():
 
 
 def _extract_function_body(html: str, name: str) -> str:
-    """Return the body of a top-level ``function <name>(...)`` declaration."""
+    """Return the body of a top-level ``function <name>(...)`` declaration.
+
+    The walker handles JS string literals (', ", `) AND line / block comments
+    so apostrophes inside ``// the foo's bar`` style comments don't trick it
+    into entering string mode and miscounting braces — that exact bug
+    masquerades as "unterminated function body" on first hit and has burned
+    us twice now.
+    """
     m = re.search(r"function\s+" + re.escape(name) + r"\s*\([^)]*\)\s*\{", html)
     assert m, f"function {name}(...) not found in dashboard.html"
     start = m.end()
@@ -1110,9 +1117,19 @@ def _extract_function_body(html: str, name: str) -> str:
     in_str = False
     str_ch = ""
     esc = False
+    in_line_comment = False
+    in_block_comment = False
     while i < len(html) and depth > 0:
         ch = html[i]
-        if in_str:
+        nxt = html[i + 1] if i + 1 < len(html) else ""
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+        elif in_block_comment:
+            if ch == "*" and nxt == "/":
+                in_block_comment = False
+                i += 1
+        elif in_str:
             if esc:
                 esc = False
             elif ch == "\\":
@@ -1120,7 +1137,13 @@ def _extract_function_body(html: str, name: str) -> str:
             elif ch == str_ch:
                 in_str = False
         else:
-            if ch in ("'", '"', "`"):
+            if ch == "/" and nxt == "/":
+                in_line_comment = True
+                i += 1
+            elif ch == "/" and nxt == "*":
+                in_block_comment = True
+                i += 1
+            elif ch in ("'", '"', "`"):
                 in_str = True
                 str_ch = ch
             elif ch == "{":
