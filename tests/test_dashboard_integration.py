@@ -746,3 +746,76 @@ def test_news_matcher_avoids_substring_false_positives():
         assert not matcher(headline), (
             f"{sym} matcher incorrectly hit on benign headline: {headline!r}"
         )
+
+
+def test_symbol_search_typeahead_wiring():
+    """The header symbol-search input gets a typeahead dropdown that filters
+    DATA.market.markets_top, DATA.market.stocks_signals, and
+    DATA.signals_top20 as the user types. Guard the four moving pieces:
+
+    1. The dropdown mount point ``#symbolSearchSuggest`` must be in the
+       built HTML so JS has a container to render into.
+    2. The CSS class names rendered into the dropdown rows
+       (``symbol-suggest-row`` / ``symbol-suggest-sym`` /
+       ``symbol-suggest-name``) must be present — the CSS rules and the
+       render function both reference them.
+    3. The suggestion-builder function ``buildSymbolSuggestions`` and the
+       renderer ``renderSymbolSuggestions`` must both be defined so the
+       ``input`` event listener has something to call.
+    4. The wiring must read from all three data sources, not just one.
+    """
+    html = _read_dashboard_or_skip()
+
+    # 1) Mount point.
+    assert 'id="symbolSearchSuggest"' in html, (
+        "symbolSearchSuggest div missing from dashboard.html — the header "
+        "typeahead dropdown has no mount point."
+    )
+
+    # 2) CSS class names rendered into each row.
+    for cls in (
+        "symbol-suggest-row",
+        "symbol-suggest-sym",
+        "symbol-suggest-name",
+    ):
+        assert cls in html, (
+            f"{cls!r} class missing from dashboard.html — the typeahead "
+            "row markup or its CSS hook is gone."
+        )
+
+    # 3) Renderer + builder functions defined.
+    assert "function buildSymbolSuggestions" in html, (
+        "buildSymbolSuggestions() missing from dashboard.html — the "
+        "typeahead has no way to compute matches from the data payload."
+    )
+    assert "function renderSymbolSuggestions" in html, (
+        "renderSymbolSuggestions() missing from dashboard.html — the "
+        "typeahead has no way to paint rows into the dropdown."
+    )
+
+    # 4) All three data sources must be referenced from the builder. We
+    # scope the search to buildSymbolSuggestions' body to avoid passing
+    # only because some unrelated renderer happens to mention the same
+    # paths elsewhere.
+    m = re.search(r"function\s+buildSymbolSuggestions\s*\([^)]*\)\s*\{", html)
+    assert m, "buildSymbolSuggestions() function header not found"
+    start = m.end()
+    depth = 1
+    i = start
+    body = None
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                body = html[start:i]
+                break
+        i += 1
+    assert body is not None, "Unterminated buildSymbolSuggestions() body"
+    for path in ("markets_top", "stocks_signals", "signals_top20"):
+        assert path in body, (
+            f"buildSymbolSuggestions() does not consult {path!r} — the "
+            "typeahead is missing a data source."
+        )

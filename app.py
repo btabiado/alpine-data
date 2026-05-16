@@ -871,6 +871,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .futures-explainer summary::-webkit-details-marker{display:none}
 .futures-explainer summary::before{content:"\25B8 ";color:var(--purple)}
 .futures-explainer[open] summary::before{content:"\25BE "}
+/* Symbol search typeahead dropdown — floats under the header search input
+   and shows up to 8 matching symbols pulled from DATA.market.markets_top,
+   DATA.market.stocks_signals, and DATA.signals_top20. Anchored to the
+   form's right edge so it doesn't overflow on the tight mobile (84px)
+   input. Has min-width:200px so rows stay readable even when the input
+   itself is narrower than the dropdown. */
+.symbol-suggest{position:absolute;top:calc(100% + 4px);right:0;min-width:200px;max-width:320px;max-height:280px;overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:4px;z-index:60;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+.symbol-suggest-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 10px;border-radius:4px;cursor:pointer;font-size:12px}
+.symbol-suggest-row:hover,.symbol-suggest-row.active{background:#10151f}
+.symbol-suggest-sym{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--text)}
+.symbol-suggest-name{color:var(--muted);font-size:11px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
+.symbol-suggest-empty{padding:8px 10px;color:var(--muted);font-size:11px;font-style:italic}
 </style>
 </head>
 <body>
@@ -884,11 +896,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          request — most tabs aren't asset-specific. ETF Flows + Futures stay
          pinned to BTC (state.asset='btc' default); add an inline toggle to
          those tabs if per-asset switching is needed. -->
-    <form id="symbolSearchForm" style="margin:0;display:flex;gap:4px" onsubmit="return false">
+    <form id="symbolSearchForm" style="margin:0;display:flex;gap:4px;position:relative" onsubmit="return false">
       <input id="symbolSearchInput" type="text" placeholder="Symbol (BTC, NVDA…)" autocomplete="off"
              aria-label="Search any stock or crypto symbol"
+             aria-autocomplete="list" aria-controls="symbolSearchSuggest" aria-expanded="false"
              style="background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;width:130px;outline:none">
       <button class="btn" id="symbolSearchBtn" type="submit" aria-label="Look up symbol">🔍</button>
+      <div id="symbolSearchSuggest" class="symbol-suggest hidden" role="listbox" aria-label="Symbol suggestions"></div>
     </form>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
@@ -9839,19 +9853,184 @@ function closeSymbolDetail(){
   if (m) m.classList.add('hidden');
 }
 
+// Build the deduped suggestion list for the header symbol typeahead. Walks
+// three sources (top-50 stocks + top-25 crypto markets + scored top-20
+// crypto signals) once per keystroke. Prefix-match on the symbol field is
+// preferred — it surfaces "BTC" when the user types "B" even though dozens
+// of names also contain a "b". Substring-on-name is a fallback so a user
+// who knows the brand ("Nvidia", "Solana") but not the ticker still gets
+// hits. Dedupe by uppercased symbol so the same coin doesn't appear twice
+// when it lives in both markets_top and signals_top20.
+function buildSymbolSuggestions(rawQuery){
+  const q = String(rawQuery || '').trim();
+  if (!q) return [];
+  const qUp = q.toUpperCase();
+  const qLo = q.toLowerCase();
+  const market = DATA.market || {};
+  const sources = [
+    { rows: market.markets_top || [],   kind: 'crypto' },
+    { rows: DATA.signals_top20 || [],   kind: 'crypto' },
+    { rows: market.stocks_signals || [],kind: 'stock'  },
+  ];
+  const seen = new Set();
+  const prefixHits = [];
+  const nameHits = [];
+  for (const src of sources){
+    for (const row of src.rows){
+      if (!row) continue;
+      const sym = String(row.symbol || '').toUpperCase();
+      if (!sym || seen.has(sym)) continue;
+      const name = String(row.name || '');
+      const symPrefix = sym.startsWith(qUp);
+      const nameSub = name && name.toLowerCase().includes(qLo);
+      if (!symPrefix && !nameSub) continue;
+      seen.add(sym);
+      const entry = { symbol: sym, name: name, kind: src.kind };
+      if (symPrefix) prefixHits.push(entry);
+      else nameHits.push(entry);
+      if (prefixHits.length + nameHits.length >= 32) break;
+    }
+  }
+  // Prefix matches first (more relevant), name-substring matches after.
+  return prefixHits.concat(nameHits).slice(0, 8);
+}
+
+function renderSymbolSuggestions(list){
+  const box = document.getElementById('symbolSearchSuggest');
+  const input = document.getElementById('symbolSearchInput');
+  if (!box) return;
+  if (!list || !list.length){
+    box.innerHTML = '';
+    box.classList.add('hidden');
+    if (input) input.setAttribute('aria-expanded', 'false');
+    return;
+  }
+  const esc = s => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  const html = list.map((r, i) =>
+    '<div class="symbol-suggest-row" role="option" data-symbol="' + esc(r.symbol) +
+    '" data-idx="' + i + '" tabindex="-1">' +
+      '<span class="symbol-suggest-sym">' + esc(r.symbol) + '</span>' +
+      '<span class="symbol-suggest-name">' + esc(r.name || '') + '</span>' +
+    '</div>'
+  ).join('');
+  box.innerHTML = html;
+  box.classList.remove('hidden');
+  if (input) input.setAttribute('aria-expanded', 'true');
+}
+
+function _setSymbolSuggestActive(box, idx){
+  if (!box) return;
+  const rows = box.querySelectorAll('.symbol-suggest-row');
+  rows.forEach(r => r.classList.remove('active'));
+  if (idx == null || idx < 0 || idx >= rows.length){
+    box._activeIdx = -1;
+    return;
+  }
+  rows[idx].classList.add('active');
+  box._activeIdx = idx;
+  // Keep highlighted row visible inside the scroll container.
+  const r = rows[idx];
+  if (r && r.scrollIntoView) r.scrollIntoView({block:'nearest'});
+}
+
 (function wireSymbolSearch(){
   if (window._symbolSearchWired) return; window._symbolSearchWired = true;
   const form = document.getElementById('symbolSearchForm');
   const input = document.getElementById('symbolSearchInput');
+  const suggest = document.getElementById('symbolSearchSuggest');
   if (form){
     form.addEventListener('submit', e => {
       e.preventDefault();
-      if (input) lookupSymbol(input.value);
+      if (suggest){ suggest.classList.add('hidden'); suggest._activeIdx = -1; }
+      if (input){
+        input.setAttribute('aria-expanded', 'false');
+        lookupSymbol(input.value);
+      }
     });
   }
+
+  // Debounced typeahead: rebuild + render at most every ~120ms while typing.
+  if (input){
+    let debounceTimer = null;
+    input.addEventListener('input', () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const list = buildSymbolSuggestions(input.value);
+        renderSymbolSuggestions(list);
+        if (suggest) suggest._activeIdx = -1;
+      }, 120);
+    });
+    // Re-show suggestions on focus if there's still a query — covers the
+    // case where the user blurred to click elsewhere then returned.
+    input.addEventListener('focus', () => {
+      if (!input.value) return;
+      const list = buildSymbolSuggestions(input.value);
+      renderSymbolSuggestions(list);
+    });
+    // Keyboard navigation: arrows + enter + escape.
+    input.addEventListener('keydown', e => {
+      if (!suggest || suggest.classList.contains('hidden')) return;
+      const rows = suggest.querySelectorAll('.symbol-suggest-row');
+      if (!rows.length) return;
+      const cur = typeof suggest._activeIdx === 'number' ? suggest._activeIdx : -1;
+      if (e.key === 'ArrowDown'){
+        e.preventDefault();
+        _setSymbolSuggestActive(suggest, (cur + 1) % rows.length);
+      } else if (e.key === 'ArrowUp'){
+        e.preventDefault();
+        _setSymbolSuggestActive(suggest, cur <= 0 ? rows.length - 1 : cur - 1);
+      } else if (e.key === 'Enter' && cur >= 0){
+        e.preventDefault();
+        const sym = rows[cur].getAttribute('data-symbol');
+        if (sym){
+          input.value = sym;
+          suggest.classList.add('hidden');
+          suggest._activeIdx = -1;
+          input.setAttribute('aria-expanded', 'false');
+          lookupSymbol(sym);
+        }
+      } else if (e.key === 'Escape'){
+        suggest.classList.add('hidden');
+        suggest._activeIdx = -1;
+        input.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // Event-delegated click handler — bound once on the container, not per
+  // keystroke. Picking a row fills the input and submits the form.
+  if (suggest){
+    suggest.addEventListener('click', e => {
+      const row = e.target && e.target.closest && e.target.closest('.symbol-suggest-row');
+      if (!row) return;
+      const sym = row.getAttribute('data-symbol');
+      if (!sym || !input) return;
+      input.value = sym;
+      suggest.classList.add('hidden');
+      suggest._activeIdx = -1;
+      input.setAttribute('aria-expanded', 'false');
+      lookupSymbol(sym);
+    });
+    // Prevent the global document click-listener below from closing the
+    // dropdown when the user is mousedown-ing on a row.
+    suggest.addEventListener('mousedown', e => { e.preventDefault(); });
+  }
+
   document.addEventListener('click', e => {
     if (e.target && e.target.id === 'symbolDetailClose') closeSymbolDetail();
     if (e.target && e.target.id === 'symbolDetailModal') closeSymbolDetail();
+    // Close the suggestion dropdown on any click outside the input/dropdown.
+    if (suggest && !suggest.classList.contains('hidden')){
+      const t = e.target;
+      if (!(t === input || (suggest.contains && suggest.contains(t)) ||
+            (form && form.contains && form.contains(t)))){
+        suggest.classList.add('hidden');
+        suggest._activeIdx = -1;
+        if (input) input.setAttribute('aria-expanded', 'false');
+      }
+    }
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeSymbolDetail();
