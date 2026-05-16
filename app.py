@@ -1317,7 +1317,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="card" id="pocSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
             <div>
-              <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🐋 POC SENTIMENT — TOP 25 BY SIGNAL SCORE</div>
+              <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🐋 POC SENTIMENT — TOP 50 BY MARKET CAP</div>
               <div style="font-size:11px;color:var(--muted)" id="pocSentimentSubline">—</div>
             </div>
             <div style="text-align:right">
@@ -5763,20 +5763,11 @@ function renderPocSentimentIndex(){
     return;
   }
   card.style.display = '';
-  // Join signals_top20 to get score per coin so we can pick the top 25.
-  const sigArr = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
-  const sigBySym = {};
-  sigArr.forEach(s => {
-    if (!s) return;
-    const k = String(s.symbol || '').toUpperCase();
-    if (k) sigBySym[k] = s;
-  });
-  const scored = list.map(c => {
-    const sk = String(c.symbol || c.coin_id || '').toUpperCase();
-    const sig = sigBySym[sk];
-    return {c, score: sig && sig.score != null ? Number(sig.score) : -Infinity};
-  }).sort((a, b) => b.score - a.score).slice(0, 25).map(x => x.c);
-  // Count migration direction across the 25.
+  // Use ALL coins on the POC tab (top 50 by market cap) per user request.
+  // No score-based filtering — the index represents broad migration across
+  // the full top-50 universe.
+  const scored = list;
+  // Count migration direction across the full top 50.
   let up = 0, down = 0, flat = 0, considered = 0;
   for (const c of scored){
     const dir = c && c.poc && c.poc.migration && c.poc.migration.direction;
