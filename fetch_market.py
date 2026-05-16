@@ -2660,6 +2660,134 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
     }
 
 
+def compute_whale_sentiment_eth(whale: dict) -> dict | None:
+    """ETH parallel of ``compute_whale_sentiment`` — composite ±100 whale-
+    sentiment score from existing ETH on-chain proxies (no new API calls).
+
+    Components (each saturates at ±2σ over a 30-day baseline):
+
+      ±25  Active addresses z-score(30d)        (Coin Metrics AdrActCnt)
+      ±25  Transactions per day z-score(30d)    (Coin Metrics TxCnt)
+      ±25  Transfer volume USD z-score(30d)     (Coin Metrics TxTfrValAdjUSD;
+                                                  community-tier may omit)
+      ±25  Blocks per day vs 7200 (post-Merge)  (Etherscan daily series)
+
+    Output dict shape is identical to ``compute_whale_sentiment`` so the
+    same renderer pattern can be reused. Returns ``None`` (or an empty-
+    state marker) when data is too thin to compute any component.
+    """
+    if not isinstance(whale, dict):
+        return None
+    eth = whale.get("eth") or {}
+    cm = eth.get("coin_metrics") or {}
+    eds = eth.get("etherscan_daily") or {}
+
+    def _last_values(series: list[dict], n: int) -> list[float]:
+        vals = [
+            r.get("value") for r in (series or [])
+            if isinstance(r, dict) and r.get("value") is not None
+        ]
+        return vals[-n:]
+
+    def _mean(arr: list[float]) -> float:
+        return sum(arr) / len(arr) if arr else 0.0
+
+    def _std(arr: list[float]) -> float:
+        if not arr:
+            return 1.0
+        m = _mean(arr)
+        var = _mean([(x - m) ** 2 for x in arr])
+        return (var ** 0.5) or 1.0
+
+    def _z30(series: list[dict]) -> tuple[float | None, float | None]:
+        v = _last_values(series, 31)
+        if len(v) < 31:
+            return None, None
+        history, today = v[:-1], v[-1]
+        m = _mean(history)
+        s = _std(history)
+        if not s:
+            return None, today
+        return (today - m) / s, today
+
+    def _clamp(x: float, lo: float, hi: float) -> int:
+        return int(max(lo, min(hi, round(x))))
+
+    comps: list[dict] = []
+
+    def add(name: str, value: str, c: int, explanation: str):
+        comps.append({
+            "name": name, "value": value,
+            "contribution": int(c), "explanation": explanation,
+        })
+
+    # 1) Active addresses z-score(30d) — ±25 saturates at ±2σ
+    aa_z, aa_now = _z30(cm.get("AdrActCnt") or [])
+    if aa_z is not None:
+        c = _clamp(aa_z / 2 * 25, -25, 25)
+        add("Active addr z30", f"{aa_z:.2f}σ", c,
+            "demand picking up" if c > 0 else "demand softening" if c < 0 else "flat")
+
+    # 2) Tx count z-score(30d) — ±25 saturates at ±2σ
+    tx_z, tx_now = _z30(cm.get("TxCnt") or [])
+    if tx_z is not None:
+        c = _clamp(tx_z / 2 * 25, -25, 25)
+        add("Tx count z30", f"{tx_z:.2f}σ", c,
+            "network activity rising" if c > 0 else "network quieter")
+
+    # 3) Transfer volume USD z-score(30d) — Coin Metrics paid metric, may be
+    #    absent on the community tier (the fetcher silently drops it). Still
+    #    try both the canonical and friendly keys.
+    vol_series = cm.get("TxTfrValAdjUSD") or cm.get("transfer_volume_usd") or []
+    vol_z, vol_now = _z30(vol_series)
+    if vol_z is not None:
+        c = _clamp(vol_z / 2 * 25, -25, 25)
+        add("Transfer vol USD z30", f"{vol_z:.2f}σ", c,
+            "economic throughput rising" if c > 0 else "economic throughput cooling")
+
+    # 4) Blocks per day vs the post-Merge 7,200 target — well above = network
+    #    saturated by demand, well below = soft demand or proposer issues.
+    eds_series = eds.get("series") if isinstance(eds, dict) else None
+    bp_vals = _last_values(eds_series or [], 7)
+    if bp_vals:
+        bp_avg = _mean(bp_vals)
+        TARGET = 7200.0
+        bp_pct = (bp_avg - TARGET) / TARGET * 100
+        # ±25 saturates at ±2% deviation from target (blocks/day is tight)
+        c = _clamp(bp_pct / 2 * 25, -25, 25)
+        add("Blocks/day vs 7200", f"{bp_pct:+.2f}%", c,
+            "demand saturating slots" if c > 0 else "slots underused" if c < 0 else "at target")
+
+    if not comps:
+        return {
+            "available": False,
+            "score": 0,
+            "label": "NO DATA",
+            "components": [],
+            "as_of": (whale.get("fetched_at") or "")[:10],
+            "disclaimer": "Not enough ETH on-chain data to compute sentiment yet.",
+        }
+
+    score = max(-100, min(100, sum(x["contribution"] for x in comps)))
+    if   score >=  50: label = "STRONG WHALE BUY"
+    elif score >=  20: label = "WHALE ACCUMULATION"
+    elif score >  -20: label = "NEUTRAL"
+    elif score >  -50: label = "WHALE DISTRIBUTION"
+    else:              label = "STRONG WHALE DUMP"
+
+    return {
+        "available": True,
+        "score": int(score),
+        "label": label,
+        "components": comps,
+        "as_of": (whale.get("fetched_at") or "")[:10],
+        "disclaimer": ("Proxy composite from free Coin Metrics community + "
+                       "Etherscan daily series. Directional indicator, not a "
+                       "trading signal. ETH-specific whale cohorts (≥10K ETH "
+                       "addresses) require a paid feed."),
+    }
+
+
 async def _fetch_social_async() -> dict:
     """Concurrent implementation of ``fetch_social``. Schema-identical to
     the sequential version; just runs the 4 independent sub-fetchers in

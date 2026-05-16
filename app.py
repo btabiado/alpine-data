@@ -304,6 +304,17 @@ def build_payload() -> dict:
     except Exception as e:
         print(f"[whale-sentiment] error: {e}", file=sys.stderr)
     try:
+        # ETH parallel of the whale sentiment index. Attaches under
+        # whale.eth.sentiment so the ETH whale panel can render its
+        # own gauge card. Defensive: must never crash the build.
+        import fetch_market as fm_mod_eth
+        if isinstance(whale, dict):
+            whale.setdefault("eth", {})["sentiment"] = (
+                fm_mod_eth.compute_whale_sentiment_eth(whale)
+            )
+    except Exception as e:
+        print(f"[whale-sentiment-eth] error: {e}", file=sys.stderr)
+    try:
         import insights as ins_mod
         # Was limit=12 (Overview "Top insights" only needed 4). With every
         # tab now contributing its own insight pool, 12 wasn't enough to
@@ -884,6 +895,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="pocDetailClose" aria-label="Close POC detail">×</button>
     </div>
     <div id="pocDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ NEWS SENTIMENT DETAIL MODAL (Research tab — click any Top-25 row) ============ -->
+<div id="newsSentimentDetailModal" class="modal-bg hidden">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(720px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2 id="newsSentimentDetailTitle" style="margin:0;font-size:15px">News sentiment</h2>
+      <button class="btn" id="newsSentimentDetailClose" aria-label="Close news sentiment detail">×</button>
+    </div>
+    <div id="newsSentimentDetailBody"></div>
   </div>
 </div>
 
@@ -1892,7 +1914,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          the AI news sentiment. Mobile-responsive grid (single column ≤480px). ===== -->
     <div class="chart-card" style="padding:12px 16px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">News sentiment — Top 15 by market cap <span class="tag">RSS</span></h2>
+        <h2 style="margin:0;font-size:15px">News sentiment — Top 25 by market cap <span class="tag">RSS</span></h2>
+        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px">Click any row for the full headline breakdown</div>
         <span class="desc">Per-coin mention counts + POSITIVE / NEGATIVE / NEUTRAL split, text-matched against the latest headlines (CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine)</span>
       </div>
       <div id="topNewsSentimentCards" class="top-news-sentiment-grid"></div>
@@ -2093,6 +2116,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <!-- ===== ETH PANEL ===== -->
       <div id="whaleEthPanel" class="hidden">
         <div class="note">ETH whale view: Blockchair (24h tx, largest tx, supply) + Coin Metrics Community (active addresses, transfer volume). True ETH whale cohorts (≥10K ETH addresses) require a paid feed.</div>
+        <!-- Headline: ETH Whale Sentiment Index (composite ±100 from on-chain proxies) -->
+        <div class="chart-card" id="whaleEthSentimentCard" style="position:relative"></div>
         <div class="row" id="whaleEthKpis"></div>
         <div class="chart-card">
           <div class="head">
@@ -3785,7 +3810,50 @@ function renderWhalePanel(){
 
 // ETH whale view — KPIs from Coin Metrics, largest 24h tx + network stats
 // from Blockchair, gas oracle from the existing Etherscan v2 fetcher.
+// ETH parallel of renderWhaleSentiment(). Reads DATA.whale.eth.sentiment
+// (computed Python-side in fetch_market.compute_whale_sentiment_eth()) and
+// renders into #whaleEthSentimentCard. Same gauge/composite-bar pattern as
+// the BTC version so it inherits the same mobile-responsive behavior.
+function renderWhaleSentimentEth(){
+  const host = document.getElementById('whaleEthSentimentCard');
+  if (!host) return;
+  const s = (((DATA.whale || {}).eth) || {}).sentiment;
+  if (!s || s.available === false || !Array.isArray(s.components) || !s.components.length){
+    // Empty-state: hide cleanly so the panel doesn't show an awkward gap.
+    host.style.display = 'none';
+    return;
+  }
+  host.style.display = '';
+  const color = signalColor(s.score);
+  const pct = ((s.score + 100) / 200) * 100;
+  const compRows = (s.components||[]).map(c => {
+    const cls = c.contribution > 0 ? 'green' : (c.contribution < 0 ? 'red' : 'amber');
+    const sign = (c.contribution>=0?'+':'') + c.contribution;
+    return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
+  }).join('');
+  host.innerHTML = `
+    <div class="head" style="align-items:flex-start">
+      <div>
+        <h2 style="font-size:15px">🐋 ETH Whale Sentiment Index</h2>
+        <div class="desc">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
+        <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
+      </div>
+    </div>
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+    </div>
+    <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
+    <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer||'')}</div>
+  `;
+}
+
 function renderWhaleEth(){
+  // Sentiment card sits above the KPI strip. Safe to call even if data is
+  // missing — it hides itself cleanly.
+  renderWhaleSentimentEth();
   const eth = ((DATA.whale || {}).eth) || {};
   const bc  = eth.blockchair || {};
   const cm  = eth.coin_metrics || {};
@@ -7330,6 +7398,18 @@ function closePocDetail(){
   });
 })();
 
+// Wire up News Sentiment detail modal — close on × / click-outside / Escape.
+(function wireNewsSentimentDetail(){
+  if (window._newsSentimentDetailWired) return; window._newsSentimentDetailWired = true;
+  document.addEventListener('click', e => {
+    if (e.target && e.target.id === 'newsSentimentDetailClose') closeNewsSentimentDetail();
+    if (e.target && e.target.id === 'newsSentimentDetailModal') closeNewsSentimentDetail();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeNewsSentimentDetail();
+  });
+})();
+
 // ===== CryptoCompare social + dev stats =====
 function renderCCSocialCards(){
   const cc = (socialData().cryptocompare || {}).coins || {};
@@ -7615,14 +7695,12 @@ function scoreNewsItemSentiment(item){
 //             recent: [{title, sentiment, url}] }, …] sorted by total desc,
 //          then by net_score desc, capped at `topN`.
 function groupNewsBySymbol(news, marketsTop, topN){
-  const coins = (marketsTop || []).slice(0, topN || 15);
+  const coins = (marketsTop || []).slice(0, topN || 25);
   if (!coins.length || !news || !news.length) return [];
-  // Build per-coin matcher regexes once. For the symbol we require a word
-  // boundary (\b) so 'BTC' doesn't match the middle of unrelated tickers.
-  // For the name we just do a case-insensitive substring — coin names are
-  // long enough that false-positives are rare ('Bitcoin', 'Ethereum').
-  // Special-case: '$SYM' cashtags are common in headlines, so we accept
-  // those too.
+  // Build per-coin matcher regexes once. Symbol requires word-boundary so
+  // 'BTC' doesn't match the middle of unrelated tickers; '$SYM' cashtags
+  // are accepted. Name is a case-insensitive substring — coin names are
+  // long enough that false-positives are rare.
   const escapeRe = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const matchers = coins.map(c => {
     const sym = (c.symbol || '').toUpperCase();
@@ -7639,7 +7717,8 @@ function groupNewsBySymbol(news, marketsTop, topN){
   }));
   const out = matchers.map(m => {
     let pos = 0, neg = 0, neu = 0;
-    const recent = [];
+    const recent = [];  // top 3 for the compact-row hover tooltip
+    const allItems = []; // every matched item, for the click-to-expand modal
     for (let i = 0; i < scored.length; i++){
       const s = scored[i];
       const hit = (m.symRe && m.symRe.test(s.text)) || (m.nameRe && m.nameRe.test(s.text));
@@ -7647,13 +7726,16 @@ function groupNewsBySymbol(news, marketsTop, topN){
       if (s.sentiment === 'POSITIVE') pos++;
       else if (s.sentiment === 'NEGATIVE') neg++;
       else neu++;
-      if (recent.length < 3){
-        recent.push({
-          title: (s.item && s.item.title) || '',
-          sentiment: s.sentiment,
-          url: (s.item && s.item.url) || '',
-        });
-      }
+      const entry = {
+        title:     (s.item && s.item.title) || '',
+        body:      (s.item && s.item.body) || '',
+        source:    (s.item && s.item.source) || '',
+        date:      (s.item && s.item.date) || '',
+        sentiment: s.sentiment,
+        url:       (s.item && s.item.url) || '',
+      };
+      allItems.push(entry);
+      if (recent.length < 3) recent.push(entry);
     }
     return {
       symbol: m.symbol,
@@ -7664,13 +7746,84 @@ function groupNewsBySymbol(news, marketsTop, topN){
       neutral: neu,
       net_score: pos - neg,
       recent,
+      allItems,
     };
   });
   // Sort by total mentions desc, then net_score desc as tiebreak; keep all
-  // top-15 coins in the list so users see zero-mention rows too (turns out
+  // top-N coins in the list so users see zero-mention rows too (turns out
   // to be useful signal: 'no news this week' is itself meaningful).
   out.sort((a, b) => (b.total - a.total) || (b.net_score - a.net_score));
   return out;
+}
+
+// Stash the most recent groupNewsBySymbol output indexed by symbol so the
+// detail modal (openNewsSentimentDetail) can look up matched items without
+// recomputing the regex pass on click.
+window._top25NewsCache = window._top25NewsCache || {};
+
+function openNewsSentimentDetail(symbol){
+  const upper = (symbol || '').toUpperCase();
+  const row = (window._top25NewsCache || {})[upper];
+  const modal = document.getElementById('newsSentimentDetailModal');
+  const body  = document.getElementById('newsSentimentDetailBody');
+  const title = document.getElementById('newsSentimentDetailTitle');
+  if (!modal || !body || !title) return;
+  if (!row){
+    title.textContent = upper + ' · news sentiment';
+    body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No matched headlines for this coin.</div>';
+    modal.classList.remove('hidden');
+    return;
+  }
+  title.textContent = `${row.symbol} · ${row.name || ''} · news sentiment`;
+  const total = row.total || 1;
+  const posPct = (row.positive / total) * 100;
+  const neuPct = (row.neutral  / total) * 100;
+  const negPct = (row.negative / total) * 100;
+  const netColor = row.net_score > 0 ? '#22c55e' : row.net_score < 0 ? '#ef4444' : 'var(--muted)';
+  const netTxt = row.total === 0 ? '—' : (row.net_score > 0 ? '+' : '') + row.net_score;
+  // Sort matched items by date desc (string-sortable ISO dates), then list all.
+  const items = (row.allItems || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  const itemsHtml = items.length
+    ? items.map(n => {
+        const col = n.sentiment === 'POSITIVE' ? '#22c55e' : n.sentiment === 'NEGATIVE' ? '#ef4444' : '#f59e0b';
+        const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:6px;vertical-align:middle"></span>`;
+        return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+          <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
+            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source || '')}</span>
+            <span>· ${escapeHtml(n.date || '')}</span>
+            <span style="color:${col};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment || '').slice(0,3))}</span>
+          </div>
+          <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title || '')}</div>
+        </a>`;
+      }).join('')
+    : '<div class="sub" style="color:var(--muted);padding:14px">No matched headlines for this coin in the current window.</div>';
+  body.innerHTML = `
+    <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <div>
+        <div style="font-size:13px;color:var(--muted)">${row.total} mention${row.total === 1 ? '' : 's'} across recent headlines</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:28px;font-weight:700;line-height:1;color:${netColor}">${netTxt}</div>
+        <div style="font-size:11px;color:var(--muted)">net score</div>
+      </div>
+    </div>
+    <div style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#1f2533;margin-bottom:4px">
+      <div style="background:#22c55e;width:${posPct}%"></div>
+      <div style="background:#f59e0b;width:${neuPct}%"></div>
+      <div style="background:#ef4444;width:${negPct}%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:14px">
+      <span style="color:#22c55e">${row.positive} positive</span>
+      <span>${row.neutral} neutral</span>
+      <span style="color:#ef4444">${row.negative} negative</span>
+    </div>
+    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:6px">MATCHED HEADLINES</div>
+    <div>${itemsHtml}</div>`;
+  modal.classList.remove('hidden');
+}
+function closeNewsSentimentDetail(){
+  const m = document.getElementById('newsSentimentDetailModal');
+  if (m) m.classList.add('hidden');
 }
 
 function renderTopNewsSentiment(){
@@ -7679,13 +7832,17 @@ function renderTopNewsSentiment(){
   const news = ((DATA.market || {}).news) || [];
   const marketsTop = ((DATA.market || {}).markets_top) || [];
   if (!news.length || !marketsTop.length){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-15 coins in the current window.</div>';
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-25 coins in the current window.</div>';
     return;
   }
-  const rows = groupNewsBySymbol(news, marketsTop, 15);
+  const rows = groupNewsBySymbol(news, marketsTop, 25);
+  // Stash by symbol so click-to-expand can read matched items without
+  // recomputing the regex pass.
+  window._top25NewsCache = {};
+  rows.forEach(r => { if (r.symbol) window._top25NewsCache[r.symbol] = r; });
   const anyMentions = rows.some(r => r.total > 0);
   if (!anyMentions){
-    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-15 coins in the current window.</div>';
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No news headlines reference top-25 coins in the current window.</div>';
     return;
   }
   host.innerHTML = rows.map(r => {
@@ -7706,7 +7863,7 @@ function renderTopNewsSentiment(){
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
-    return `<div class="top-news-sentiment-row" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
+    return `<div class="top-news-sentiment-row" data-tns-symbol="${escapeHtml(r.symbol)}" style="cursor:pointer" title="${escapeHtml(titleAttr || (r.symbol + ': no headline matches'))}">
       <div>
         <div class="tns-sym">${escapeHtml(r.symbol)}</div>
         <div class="tns-name">${escapeHtml(r.name)}</div>
@@ -7723,6 +7880,11 @@ function renderTopNewsSentiment(){
       <div class="tns-net" style="color:${netColor}">net ${netLbl}</div>
     </div>`;
   }).join('');
+  // Click any row → open the detail modal for that coin. Delegated so
+  // re-renders don't need to re-bind.
+  host.querySelectorAll('[data-tns-symbol]').forEach(el =>
+    el.addEventListener('click', () => openNewsSentimentDetail(el.getAttribute('data-tns-symbol')))
+  );
 }
 
 function renderResearchNews(){
