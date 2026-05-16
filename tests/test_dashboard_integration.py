@@ -1088,3 +1088,96 @@ def test_symbol_detail_modal_width_fits_two_cards():
         f"symbolDetailModal width is {width_px}px — needs ≥900px to comfortably "
         "host two 360px-min cards side-by-side (currently they'd wrap to 1-col)"
     )
+
+
+# ---------- Stock-detail modal POC card-slot wiring ----------
+def _extract_open_stock_detail_body(html: str) -> str:
+    """Return the body of ``function openStockDetail(symbol){ ... }``."""
+    m = re.search(r"function\s+openStockDetail\s*\(\s*symbol\s*\)\s*\{", html)
+    assert m, "openStockDetail(symbol) function not found in dashboard.html"
+    start = m.end()
+    depth = 1
+    i = start
+    while i < len(html) and depth > 0:
+        ch = html[i]
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return html[start:i]
+        i += 1
+    raise AssertionError("Unterminated openStockDetail function body")
+
+
+def test_stock_detail_modal_wraps_signal_and_poc_in_grid2():
+    """``openStockDetail`` must inject a ``.grid2`` container holding the
+    Signal card + POC card into ``#stockDetailBody``. The 2-column grid
+    drops to 1-column at ≤860px via the global ``.grid2`` mobile rule, so
+    the cards stack on mobile without any new media query."""
+    html = _read_dashboard_or_skip()
+    body = _extract_open_stock_detail_body(html)
+
+    # Body is set via innerHTML assignment that wraps everything in .grid2.
+    assert "stockDetailBody" in body and "innerHTML" in body, (
+        "openStockDetail() no longer assigns to #stockDetailBody innerHTML"
+    )
+    assert 'grid2 stocks-modal-body' in body, (
+        "openStockDetail() body no longer wraps content in "
+        '"grid2 stocks-modal-body" — Signal + POC cards won\'t sit '
+        "side-by-side on desktop."
+    )
+    # Both cells must be composed: the existing Signal card and the new POC
+    # empty-state slot.
+    assert "stockDetailHtml(s)" in body, (
+        "openStockDetail() no longer calls stockDetailHtml(s) — Signal card "
+        "left column is missing."
+    )
+    assert "stockPocEmptyHtml()" in body, (
+        "openStockDetail() no longer calls stockPocEmptyHtml() — POC card "
+        "right column is missing."
+    )
+
+    # The global .grid2 mobile rule (≤860px → 1fr) must still exist so the
+    # 2-column layout collapses to a stack on phones.
+    assert re.search(
+        r"\.grid2\s*\{[^}]*grid-template-columns\s*:\s*1fr\s*!important",
+        html,
+    ), (
+        ".grid2 ≤860px → 1fr !important mobile rule missing — the stock "
+        "detail modal won't stack to a single column on phone viewports."
+    )
+
+
+def test_stock_detail_modal_poc_empty_state_copy_present():
+    """The empty-state POC card must render its explanation copy so the user
+    sees *why* there's no POC for stocks (crypto-only compute) rather than a
+    blank/loading card. The wording is exact-match — copy changes are
+    intentional and should update this test alongside the renderer."""
+    html = _read_dashboard_or_skip()
+
+    # Renderer must exist and produce a .stock-poc-card chart-card.
+    assert "function stockPocEmptyHtml" in html, (
+        "stockPocEmptyHtml() function missing from dashboard.html — the "
+        "Stocks-tab modal has no POC card slot renderer."
+    )
+    assert "stock-poc-card" in html, (
+        "stock-poc-card class missing from dashboard.html — POC slot "
+        "marker class dropped from the empty-state card."
+    )
+
+    # Card header copy.
+    assert ">Point of Control<" in html, (
+        "POC card header text 'Point of Control' missing from dashboard.html"
+    )
+
+    # The two key sentences of the empty-state explanation must both be
+    # present so the user understands the limitation.
+    assert "POC volume-profile coverage is currently crypto-only" in html, (
+        "Stock POC card empty-state lede missing from dashboard.html — "
+        "user won't see the crypto-only explanation."
+    )
+    assert "Stock POC is not yet computed" in html, (
+        "Stock POC card empty-state follow-up missing from dashboard.html — "
+        "user won't see the 'backend extension required' callout."
+    )

@@ -6756,6 +6756,23 @@ function stockDetailHtml(s){
   </div>`;
 }
 
+// Empty-state POC card for stock-detail modal. POC volume-profile compute
+// (see compute_poc_all in fetch_market.py) is crypto-only today — it runs
+// over markets_top / coin price+volume series; stocks have no comparable
+// cached price+volume window. The card explains the limitation rather than
+// rendering fabricated data. Backend POC-for-stocks is a separate task
+// (would need ~30–90d daily price+volume per stock; could plug into the
+// existing Yahoo fetcher pattern but adds ~50 extra API calls per build).
+function stockPocEmptyHtml(){
+  return `<div class="chart-card stock-poc-card">
+    <div class="head"><h2 style="margin:0;font-size:14px">Point of Control</h2></div>
+    <div class="sub" style="color:var(--muted);padding:14px 6px;font-size:12px">
+      POC volume-profile coverage is currently crypto-only (top-50 by score).
+      Stock POC is not yet computed — backend extension required.
+    </div>
+  </div>`;
+}
+
 function openStockDetail(symbol){
   const rows = ((DATA.market||{}).stocks_signals) || [];
   const s = rows.find(r => r && String(r.symbol||'') === symbol);
@@ -6763,7 +6780,16 @@ function openStockDetail(symbol){
   const modal = document.getElementById('stockDetailModal');
   if (!modal) return;
   document.getElementById('stockDetailTitle').textContent = `${s.symbol} · ${s.name||''}`;
-  document.getElementById('stockDetailBody').innerHTML = stockDetailHtml(s);
+  // 2-column grid on desktop (.grid2 = auto-fit minmax(420px,1fr)); the global
+  // mobile rule at ≤860px collapses .grid2 → 1fr automatically so the Signal
+  // card stacks on top of the POC card on phone viewports. No extra media
+  // query required. Left = existing Signal card (Score + breakdown), Right =
+  // empty-state POC slot (crypto-only today — see stockPocEmptyHtml).
+  document.getElementById('stockDetailBody').innerHTML =
+    '<div class="grid2 stocks-modal-body">' +
+      '<div class="chart-card stock-signal-card">' + stockDetailHtml(s) + '</div>' +
+      stockPocEmptyHtml() +
+    '</div>';
   modal.classList.remove('hidden');
 }
 function closeStockDetail(){
