@@ -458,14 +458,23 @@ def test_compute_poc_top_markets_happy_path(tmp_path, monkeypatch):
         out = fetch_market.compute_poc_top_markets(top, n=2, days=60)
 
     assert len(out) == 2
-    expected_keys = {
+    required_keys = {
         "coin_id", "symbol", "name", "image", "current_price", "poc",
+        "signal_history",
     }
     for entry in out:
-        assert set(entry.keys()) == expected_keys
+        # Subset check: required keys present; additive fields allowed.
+        assert required_keys <= set(entry.keys())
         # POC sub-dict must have d30/d90/d180/migration/naked/migration_series
         for k in ("d30", "d90", "d180", "migration", "naked", "migration_series"):
             assert k in entry["poc"]
+        # signal_history mirrors stocks_signals[i].history shape so the
+        # crypto breadth chart can render off it.
+        assert isinstance(entry["signal_history"], list)
+        for h in entry["signal_history"]:
+            assert isinstance(h.get("date"), str)
+            assert isinstance(h.get("score"), int)
+            assert -100 <= h["score"] <= 100
     assert out[0]["coin_id"] == "bitcoin"
     assert out[0]["symbol"] == "BTC"  # uppercased
     assert out[0]["current_price"] == 50_000.0

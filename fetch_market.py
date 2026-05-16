@@ -2086,6 +2086,20 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
                 stale["stale"] = True
                 out.append(stale)
             continue
+        # Build a date-aligned closes/volumes pair so we can compute the
+        # same rolling -100..+100 score the stocks breadth chart uses.
+        # Intersection on date matches the convention in poc_migration_series
+        # and naked_pocs above.
+        p_by = {p.get("date"): p.get("value") for p in prices
+                if p.get("date") and p.get("value") is not None}
+        v_by = {v.get("date"): v.get("value") for v in volumes
+                if v.get("date") and v.get("value") is not None}
+        common = sorted(set(p_by) & set(v_by))
+        aligned_closes = [float(p_by[d]) for d in common]
+        aligned_vols   = [float(v_by[d]) for d in common]
+        signal_history = _signal_history_from_prices(
+            aligned_closes, aligned_vols, common, days=90,
+        )
         entry = {
             "coin_id":       coin_id,
             "symbol":        (c.get("symbol") or "").upper(),
@@ -2098,6 +2112,7 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
                 "naked":            naked_pocs(prices, volumes, lookback_days=180),
                 "migration_series": poc_migration_series(prices, volumes),
             },
+            "signal_history": signal_history,
         }
         out.append(entry)
     return out
@@ -3288,6 +3303,36 @@ def _score_components_from_series(closes: list[float], volumes: list[float]) -> 
 
     raw_total = sum(c["score"] for c in components)
     return components, raw_total
+
+
+def _signal_history_from_prices(closes: list[float], volumes: list[float],
+                                 dates: list[str], days: int = 90) -> list[dict]:
+    """Rolling -100..+100 signal score for the last `days` aligned closes.
+
+    Uses the same component algorithm as `compute_stock_signal` so the
+    crypto breadth chart in the UI can share the stocks rendering path.
+    For each as-of point `t` in the trailing window we recompute components
+    against `closes[:t+1]` / `volumes[:t+1]` and emit `{date, score}`.
+    The component function gracefully returns zero-scored components when
+    history is short, so early entries are naturally muted rather than
+    raising.
+
+    Inputs are pre-aligned: `closes[i]`, `volumes[i]`, `dates[i]` describe
+    the same trading day. Returns entries oldest -> newest.
+    """
+    n = min(len(closes), len(volumes), len(dates))
+    if n == 0:
+        return []
+    window = min(days, n)
+    start = n - window
+    out: list[dict] = []
+    for i in range(start, n):
+        sub_c = closes[: i + 1]
+        sub_v = volumes[: i + 1]
+        _comps, raw_total = _score_components_from_series(sub_c, sub_v)
+        score = int(round(max(-100.0, min(100.0, (raw_total or 0) * 1.8))))
+        out.append({"date": dates[i], "score": score})
+    return out
 
 
 def _label_from_score(score: int) -> str:

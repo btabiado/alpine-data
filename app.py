@@ -2363,14 +2363,20 @@ function renderSignalChart(canvasId, asset){
 }
 
 // Render the top-of-tab breadth chart for the Crypto Signals tab. Sources
-// signals_top20 (each entry carries `history: [{date,score}, ...]`). Safe to
-// call when DATA isn't loaded — the helper renders an empty-state message.
+// DATA.market.poc_top — each entry carries `signal_history: [{date,score}, ...90]`
+// (signals_top20 has no history). Defensive: coins without a usable history
+// array are filtered out and simply don't contribute to the breadth (they
+// still show up on the Top 50 cards). Safe to call when DATA isn't loaded —
+// the helper renders an empty-state message.
 function renderCryptoSignalsBreadth(){
-  const items = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
+  const raw = ((DATA.market || {}).poc_top) || [];
+  const items = (Array.isArray(raw) ? raw : [])
+    .filter(e => e && Array.isArray(e.signal_history) && e.signal_history.length > 0)
+    .map(e => ({history: e.signal_history}));
   renderBreadthChart(
     'cryptoSignalsBreadthChart',
     computeSignalBreadth(items, 90),
-    null
+    'Crypto signal breadth — top 50 by market cap'
   );
 }
 
@@ -2497,10 +2503,12 @@ function renderTop20Signals(){
     return;
   }
   window._top20SignalsCache = {};
-  host.innerHTML = all.map(s => {
+  // Build a single compact card. Uses stockLabelBucket so the bucket key
+  // matches the section grouping AND the filter chips (data-top20filter).
+  const cardHtml = s => {
     const sym = (s.symbol||'').toUpperCase();
     const color = signalColor(s.score);
-    const bucket = labelBucket(s.label);
+    const bucket = stockLabelBucket(s.label);
     const img = sanitizeUrl(s.image, '')
       ? `<img src="${sanitizeUrl(s.image, '')}" alt="" style="width:32px;height:32px;border-radius:50%">`
       : `<div style="width:32px;height:32px;border-radius:50%;background:${color}33"></div>`;
@@ -2524,11 +2532,49 @@ function renderTop20Signals(){
         <div style="font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums">${score} / ±100</div>
       </div>
     </div>`;
+  };
+  // Group by bucket so we can render section headers above each sub-grid.
+  // Mirrors renderStocksTab(): same five buckets, same glyphs/colors, same
+  // data-* hook names so the filter chips can hide whole sections too.
+  const byBucket = {strong_buy:[], buy:[], hold:[], sell:[], strong_sell:[]};
+  all.forEach(s => {
+    const b = stockLabelBucket(s.label);
+    if (byBucket[b]) byBucket[b].push(s);
+    else byBucket.hold.push(s);
+  });
+  const sections = [
+    {key:'strong_buy',  glyph:'🔥', label:'STRONG BUY',  color:'#16a34a'},
+    {key:'buy',         glyph:'✓',  label:'BUY',         color:'#22c55e'},
+    {key:'hold',        glyph:'◯',  label:'HOLD',        color:'#f59e0b'},
+    {key:'sell',        glyph:'↓',  label:'SELL',        color:'#ef4444'},
+    {key:'strong_sell', glyph:'⛔', label:'STRONG SELL', color:'#b91c1c'},
+  ];
+  host.innerHTML = sections.map(sec => {
+    const items = byBucket[sec.key];
+    const n = items.length;
+    const cards = items.map(cardHtml).join('');
+    const empty = n === 0
+      ? `<div class="sub" style="color:var(--muted);padding:8px 4px;font-size:11px">No coins in this bucket.</div>`
+      : '';
+    return `<div class="signals-section" data-signals-section="${sec.key}" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin:0 0 6px 0">
+        <h3 style="margin:0;font-size:13px;font-weight:700;letter-spacing:0.2px;color:var(--text)">
+          <span aria-hidden="true">${escapeHtml(sec.glyph)}</span>
+          ${escapeHtml(sec.label)}
+          <span style="color:var(--muted);font-weight:500;margin-left:4px">(${n})</span>
+        </h3>
+        <span class="tag" style="background:${sec.color}22;color:${sec.color};border:1px solid ${sec.color}66;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:700">${escapeHtml(sec.label)}</span>
+      </div>
+      <div class="row signals-section-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${cards}${empty}</div>
+    </div>`;
   }).join('');
   // Bind click → modal
   host.querySelectorAll('[data-symbol]').forEach(el =>
     el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
   );
+  // Re-apply the active filter chip so section visibility matches selection
+  // on re-render (e.g. after data refresh while a non-"all" chip is active).
+  applyTop20Filter();
 }
 
 function openSignalDetail(sym){
@@ -2555,6 +2601,37 @@ function closeSignalDetail(){
   if (m) m.classList.add('hidden');
 }
 
+// Apply the active Top-50 filter chip — hides both whole sections and any
+// individual cards whose bucket doesn't match. Chip semantics:
+//   all  → all 5 sections visible
+//   buy  → STRONG BUY + BUY only
+//   hold → HOLD only
+//   sell → SELL + STRONG SELL only
+// Idempotent — safe to call on every re-render so post-refresh state matches
+// whatever chip is currently active.
+function applyTop20Filter(bucket){
+  let target = bucket;
+  if (target == null){
+    // Read from the chip with .active (single source of truth — chips are
+    // wired by wireTop20Modals below). Default to 'all' if none is active.
+    const activeChip = document.querySelector('[data-top20filter].active');
+    target = activeChip ? activeChip.getAttribute('data-top20filter') : 'all';
+  }
+  // Buckets the active chip covers. 'buy' covers strong_buy too; 'sell'
+  // covers strong_sell. 'all' covers everything.
+  const allowed = target === 'all'  ? null
+                : target === 'buy'  ? new Set(['strong_buy', 'buy'])
+                : target === 'sell' ? new Set(['sell', 'strong_sell'])
+                : target === 'hold' ? new Set(['hold'])
+                : null;
+  document.querySelectorAll('#top20SignalCards [data-signals-section]').forEach(sec => {
+    sec.style.display = (!allowed || allowed.has(sec.getAttribute('data-signals-section'))) ? '' : 'none';
+  });
+  document.querySelectorAll('#top20SignalCards [data-symbol]').forEach(c => {
+    c.style.display = (!allowed || allowed.has(c.getAttribute('data-bucket'))) ? '' : 'none';
+  });
+}
+
 // One-time wiring for the detail modal + filter chips + POC explainer. Idempotent.
 (function wireTop20Modals(){
   if (window._top20Wired) return; window._top20Wired = true;
@@ -2565,9 +2642,7 @@ function closeSignalDetail(){
     if (fb){
       const bucket = fb.getAttribute('data-top20filter');
       fb.parentElement.querySelectorAll('[data-top20filter]').forEach(b => b.classList.toggle('active', b===fb));
-      document.querySelectorAll('#top20SignalCards [data-symbol]').forEach(c => {
-        c.style.display = (bucket==='all' || c.getAttribute('data-bucket')===bucket) ? '' : 'none';
-      });
+      applyTop20Filter(bucket);
     }
     // Click on any signal history chart-card → open the detail modal for
     // that asset. Uses the generalized openSignalDetail which falls back
