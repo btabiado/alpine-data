@@ -962,7 +962,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   /* --- AI investment KPIs / Research benchmarks (#aiInvestmentKpisCard,
      #aiWhitepaperKpisCard) ---------------------------------------------
-     Each KPI is rendered as an INNER <div class="chart-card"> with inline
+     Each KPI is rendered as an INNER <div class="v2-card"> with inline
      padding:12px 14px, an inline 24px value, an 11px label, source text,
      plus a delta pill — and the outer grid uses inline
      repeat(auto-fit,minmax(220px,1fr)) which collapses to 1-up on phones,
@@ -978,26 +978,26 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   }
   /* Inner KPI cell: shrink padding + radius. Inline padding on the inner
      <div> wrapper still applies, so override that too via descendant. */
-  #aiInvestmentKpis > .chart-card,
-  #aiInvestmentKpis > a.chart-card,
-  #aiWhitepaperKpis > .chart-card,
-  #aiWhitepaperKpis > a.chart-card{
+  #aiInvestmentKpis > .v2-card,
+  #aiInvestmentKpis > a.v2-card,
+  #aiWhitepaperKpis > .v2-card,
+  #aiWhitepaperKpis > a.v2-card{
     padding:0 !important;
     border-radius:6px;
   }
-  #aiInvestmentKpis > .chart-card > div,
-  #aiInvestmentKpis > a.chart-card > div,
-  #aiWhitepaperKpis > .chart-card > div,
-  #aiWhitepaperKpis > a.chart-card > div{
+  #aiInvestmentKpis > .v2-card > div,
+  #aiInvestmentKpis > a.v2-card > div,
+  #aiWhitepaperKpis > .v2-card > div,
+  #aiWhitepaperKpis > a.v2-card > div{
     padding:8px 10px !important;
     gap:4px !important;
   }
   /* Label row (uppercase, 11px). Drop to 10px and clamp to 2 lines so
      long labels don't cause uneven card heights. */
-  #aiInvestmentKpis > .chart-card > div > div:first-child,
-  #aiInvestmentKpis > a.chart-card > div > div:first-child,
-  #aiWhitepaperKpis > .chart-card > div > div:first-child,
-  #aiWhitepaperKpis > a.chart-card > div > div:first-child{
+  #aiInvestmentKpis > .v2-card > div > div:first-child,
+  #aiInvestmentKpis > a.v2-card > div > div:first-child,
+  #aiWhitepaperKpis > .v2-card > div > div:first-child,
+  #aiWhitepaperKpis > a.v2-card > div > div:first-child{
     font-size:9px !important;
     letter-spacing:.03em !important;
     line-height:1.25 !important;
@@ -1005,35 +1005,35 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* Big value (was 24px, way too dominant in a 160px-wide cell on 360px
      phones). Drop to 17px. The inline "unit" span inside scales with em
      so it's covered too. */
-  #aiInvestmentKpis > .chart-card > div > div:nth-child(2),
-  #aiInvestmentKpis > a.chart-card > div > div:nth-child(2),
-  #aiWhitepaperKpis > .chart-card > div > div:nth-child(2),
-  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(2){
+  #aiInvestmentKpis > .v2-card > div > div:nth-child(2),
+  #aiInvestmentKpis > a.v2-card > div > div:nth-child(2),
+  #aiWhitepaperKpis > .v2-card > div > div:nth-child(2),
+  #aiWhitepaperKpis > a.v2-card > div > div:nth-child(2){
     font-size:17px !important;
     line-height:1.1 !important;
   }
-  #aiInvestmentKpis > .chart-card > div > div:nth-child(2) span,
-  #aiInvestmentKpis > a.chart-card > div > div:nth-child(2) span,
-  #aiWhitepaperKpis > .chart-card > div > div:nth-child(2) span,
-  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(2) span{
+  #aiInvestmentKpis > .v2-card > div > div:nth-child(2) span,
+  #aiInvestmentKpis > a.v2-card > div > div:nth-child(2) span,
+  #aiWhitepaperKpis > .v2-card > div > div:nth-child(2) span,
+  #aiWhitepaperKpis > a.v2-card > div > div:nth-child(2) span{
     font-size:10px !important;
   }
   /* Delta pill row: shrink the pill so it doesn't push the prior label
      to its own row in a 160px cell. */
-  #aiInvestmentKpis > .chart-card > div > div:nth-child(3) > span,
-  #aiInvestmentKpis > a.chart-card > div > div:nth-child(3) > span,
-  #aiWhitepaperKpis > .chart-card > div > div:nth-child(3) > span,
-  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(3) > span{
+  #aiInvestmentKpis > .v2-card > div > div:nth-child(3) > span,
+  #aiInvestmentKpis > a.v2-card > div > div:nth-child(3) > span,
+  #aiWhitepaperKpis > .v2-card > div > div:nth-child(3) > span,
+  #aiWhitepaperKpis > a.v2-card > div > div:nth-child(3) > span{
     padding:1px 6px !important;
     font-size:10px !important;
   }
   /* Hide the source attribution line on phone — same info is on the
      desktop view, and tapping the card opens the source URL anyway.
      Saves ~16px per cell × N cells. */
-  #aiInvestmentKpis > .chart-card > div > div.sub,
-  #aiInvestmentKpis > a.chart-card > div > div.sub,
-  #aiWhitepaperKpis > .chart-card > div > div.sub,
-  #aiWhitepaperKpis > a.chart-card > div > div.sub{
+  #aiInvestmentKpis > .v2-card > div > div.sub,
+  #aiInvestmentKpis > a.v2-card > div > div.sub,
+  #aiWhitepaperKpis > .v2-card > div > div.sub,
+  #aiWhitepaperKpis > a.v2-card > div > div.sub{
     display:none !important;
   }
 
@@ -1190,17 +1190,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn active" id="configSignalsSave">Save</button>
     </div>
     <div id="configSignalsStatus" class="sub" style="color:var(--muted);min-height:14px"></div>
-  </div>
-</div>
-
-<!-- ============ SIGNAL DETAIL MODAL (top-20 strip → full breakdown) ============ -->
-<div id="signalDetailModal" class="modal-bg hidden">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:8px;overflow:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 id="signalDetailTitle" style="margin:0;font-size:14px">Signal detail</h2>
-      <button class="btn" id="signalDetailClose" aria-label="Close signal detail">×</button>
-    </div>
-    <div id="signalDetailBody"></div>
   </div>
 </div>
 
@@ -2488,7 +2477,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div id="whaleBtcPanel">
       <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed.</div>
       <!-- Headline: Whale Sentiment Index (composite ±100 from on-chain proxies) -->
-      <div class="chart-card" id="whaleSentimentCard" style="position:relative"></div>
+      <div class="v2-card whaleSentimentCard" id="whaleSentimentCard" style="position:relative"></div>
       <div class="row" id="whaleKpis"></div>
       <div class="v2-card">
         <div class="v2-card__head"><div style="min-width:0">
@@ -2623,7 +2612,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div id="whaleEthPanel" class="hidden">
         <div class="note">ETH whale view: Blockchair (24h tx, largest tx, supply) + Coin Metrics Community (active addresses, transfer volume). True ETH whale cohorts (≥10K ETH addresses) require a paid feed.</div>
         <!-- Headline: ETH Whale Sentiment Index (composite ±100 from on-chain proxies) -->
-        <div class="chart-card" id="whaleEthSentimentCard" style="position:relative"></div>
+        <div class="v2-card whaleEthSentimentCard" id="whaleEthSentimentCard" style="position:relative"></div>
         <div class="row" id="whaleEthKpis"></div>
         <!-- Recent ETH whale tx feed — promoted directly after Sentiment+KPIs
              to mirror the BTC panel ordering. Hidden until data arrives. -->
@@ -3650,7 +3639,7 @@ function signalColor(score){
 function renderSignalCard(asset, container){
   const s = (DATA.signals||{})[asset];
   if (!s){
-    return `<div class="chart-card"><h2 style="margin:0">${asset.toUpperCase()}</h2><div class="empty">No signal — need more price history</div></div>`;
+    return `<div class="v2-card"><h2 class="v2-card__title" style="margin:0">${asset.toUpperCase()}</h2><div class="empty">No signal — need more price history</div></div>`;
   }
   const color = signalColor(s.score);
   const accent = accentFor(asset);
@@ -3662,11 +3651,11 @@ function renderSignalCard(asset, container){
   // Gauge: -100 to +100, 0 in middle
   const pct = ((s.score + 100) / 200) * 100;
   return `
-    <div class="chart-card" style="position:relative">
-      <div class="head" style="align-items:flex-start">
-        <div>
-          <h2 style="font-size:15px">${asset.toUpperCase()} <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score: 50d SMA, RSI(14), MACD signal cross, 5d momentum, volume z-score, 50/200 SMA cross. ≥50 STRONG BUY; ≤-50 STRONG SELL.">signal</span> <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
-          <div class="desc">as of ${escapeHtml(s.as_of)}</div>
+    <div class="v2-card" style="position:relative">
+      <div class="v2-card__head" style="align-items:flex-start">
+        <div style="min-width:0">
+          <h2 class="v2-card__title" style="font-size:15px">${asset.toUpperCase()} <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score: 50d SMA, RSI(14), MACD signal cross, 5d momentum, volume z-score, 50/200 SMA cross. ≥50 STRONG BUY; ≤-50 STRONG SELL.">signal</span> <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
+          <div class="v2-card__subtitle">as of ${escapeHtml(s.as_of)}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${s.label}</div>
@@ -3904,7 +3893,7 @@ function renderSignalSparkline(s){
 // Mirrors renderSignalCard(asset) but keys off the object directly so the
 // modal works for any coin, not just the four pinned in DATA.signals.
 function renderSignalCardFromObj(s){
-  if (!s) return '<div class="chart-card"><div class="empty">No data available.</div></div>';
+  if (!s) return '<div class="v2-card"><div class="empty">No data available.</div></div>';
   const color = signalColor(s.score);
   const sym = (s.symbol||'').toUpperCase();
   const compRows = (s.components||[]).map(c => {
@@ -3917,11 +3906,11 @@ function renderSignalCardFromObj(s){
     ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1?2:6})
     : '—';
   return `
-    <div class="chart-card" style="position:relative">
-      <div class="head" style="align-items:flex-start">
-        <div>
-          <h2 style="font-size:15px">${sym} signal <span class="tag">${priceStr}</span></h2>
-          <div class="desc">${escapeHtml(s.name||'')} · as of ${escapeHtml(s.as_of||'')}</div>
+    <div class="v2-card" style="position:relative">
+      <div class="v2-card__head" style="align-items:flex-start">
+        <div style="min-width:0">
+          <h2 class="v2-card__title" style="font-size:15px">${sym} signal <span class="tag">${priceStr}</span></h2>
+          <div class="v2-card__subtitle">${escapeHtml(s.name||'')} · as of ${escapeHtml(s.as_of||'')}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
@@ -4117,8 +4106,8 @@ function renderPerCoinSignalList(){
     );
     // Block B: history/price chart card.
     chunks.push(
-      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
-        <div class="head"><h2>${escapeHtml(chartTitle)}</h2><span class="desc">${chartDesc}</span></div>
+      `<div class="v2-card" data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
+        <div class="v2-card__head"><h2 class="v2-card__title">${escapeHtml(chartTitle)}</h2><span class="v2-card__subtitle">${chartDesc}</span></div>
         <div class="chart-wrap"><canvas id="perCoinChart-${escapeHtml(sym)}"></canvas></div>
       </div>`
     );
@@ -4253,8 +4242,6 @@ function applyTop20Filter(bucket){
 (function wireTop20Modals(){
   if (window._top20Wired) return; window._top20Wired = true;
   document.addEventListener('click', e => {
-    if (e.target && e.target.id === 'signalDetailClose') closeSignalDetail();
-    if (e.target && e.target.id === 'signalDetailModal') closeSignalDetail();
     const fb = e.target && e.target.closest && e.target.closest('[data-top20filter]');
     if (fb){
       const bucket = fb.getAttribute('data-top20filter');
@@ -4415,10 +4402,10 @@ function renderWhaleSentiment(){
     return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
   }).join('');
   host.innerHTML = `
-    <div class="head" style="align-items:flex-start">
-      <div>
-        <h2 style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score from on-chain whale proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).">Whale Sentiment Index</span></h2>
-        <div class="desc">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+    <div class="v2-card__head" style="align-items:flex-start">
+      <div style="min-width:0">
+        <h2 class="v2-card__title" style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score from on-chain whale proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).">Whale Sentiment Index</span></h2>
+        <div class="v2-card__subtitle">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
@@ -4842,10 +4829,10 @@ function renderWhaleSentimentEth(){
     return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
   }).join('');
   host.innerHTML = `
-    <div class="head" style="align-items:flex-start">
-      <div>
-        <h2 style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics.">ETH Whale Sentiment Index</span></h2>
-        <div class="desc">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+    <div class="v2-card__head" style="align-items:flex-start">
+      <div style="min-width:0">
+        <h2 class="v2-card__title" style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics.">ETH Whale Sentiment Index</span></h2>
+        <div class="v2-card__subtitle">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
@@ -7730,9 +7717,9 @@ function renderAiInvestmentKpis(){
         ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
       </div>`;
     if (srcUrl){
-      return '<a class="chart-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
+      return '<a class="v2-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
     }
-    return '<div class="chart-card">'+inner+'</div>';
+    return '<div class="v2-card">'+inner+'</div>';
   }).join('');
 }
 
@@ -7936,9 +7923,9 @@ function renderAiWhitepaperKpis(){
         ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
       </div>`;
     if (srcUrl){
-      return '<a class="chart-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
+      return '<a class="v2-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
     }
-    return '<div class="chart-card">'+inner+'</div>';
+    return '<div class="v2-card">'+inner+'</div>';
   }).join('');
 }
 
@@ -8001,8 +7988,8 @@ function stockDetailHtml(s){
 // returns None). The common path now renders the real volume-profile card
 // via `pocCompactCardHtml` since stocks carry `poc` data alongside crypto.
 function stockPocEmptyHtml(){
-  return `<div class="chart-card stock-poc-card">
-    <div class="head"><h2 style="margin:0;font-size:14px">Point of Control</h2></div>
+  return `<div class="v2-card stock-poc-card">
+    <div class="v2-card__head"><h2 class="v2-card__title" style="margin:0;font-size:14px">Point of Control</h2></div>
     <div class="sub" style="color:var(--muted);padding:14px 6px;font-size:12px">
       Not enough trading history for a volume profile on this ticker.
     </div>
@@ -8025,7 +8012,7 @@ function openStockDetail(symbol){
   const pocCard = s.poc ? pocCompactCardHtml(s) : stockPocEmptyHtml();
   document.getElementById('stockDetailBody').innerHTML =
     '<div class="grid2 stocks-modal-body">' +
-      '<div class="chart-card stock-signal-card">' + stockDetailHtml(s) + '</div>' +
+      '<div class="v2-card stock-signal-card">' + stockDetailHtml(s) + '</div>' +
       pocCard +
     '</div>';
   modal.classList.remove('hidden');
@@ -11440,7 +11427,7 @@ function buildSymbolSectionsHtml(resolved){
           '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">' + escapeHtml(signalLabel) + '</div>' +
           signalHtml +
         '</div>'
-      : '<div class="chart-card" style="opacity:.85"><div class="empty" style="padding:18px 8px;font-size:12px">No signal data for <strong>' + escapeHtml(sym) + '</strong> in this build.</div></div>';
+      : '<div class="v2-card" style="opacity:.85"><div class="empty" style="padding:18px 8px;font-size:12px">No signal data for <strong>' + escapeHtml(sym) + '</strong> in this build.</div></div>';
     const pocSection = '<div>' +
         '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
         pocCardHtml +
@@ -11739,10 +11726,10 @@ function pocCompactCardHtml(coin){
   }).join('');
   const sparkline = pocMigrationSparkline(d.migration_series);
   // Whole card is the click target — reuses wirePocDetail() in app.py.
-  return `<div class="chart-card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} full POC detail" title="Click for full POC breakdown" style="cursor:pointer;display:flex;flex-direction:column;gap:8px">
+  return `<div class="v2-card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} full POC detail" title="Click for full POC breakdown" style="cursor:pointer;display:flex;flex-direction:column;gap:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;min-width:0">
-        <h2 style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
+        <h2 class="v2-card__title" style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
         ${migChip}
       </div>
       <div style="text-align:right">
@@ -11783,9 +11770,9 @@ function pocEmptyCardHtml(sym, kind){
   const sub = isStock
     ? 'Stock POC needs at least 30 daily bars from Yahoo. Recent IPOs and thinly-traded tickers may not have enough history yet.'
     : 'The POC tab tracks the top 50 cryptos by signal score; symbols outside that set fall back to this empty state.';
-  return `<div class="chart-card" style="display:flex;flex-direction:column;gap:8px;opacity:.85">
+  return `<div class="v2-card" style="display:flex;flex-direction:column;gap:8px;opacity:.85">
     <div style="display:flex;align-items:center;gap:8px">
-      <h2 style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
+      <h2 class="v2-card__title" style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
       <span class="tag" style="font-size:9px">not available</span>
     </div>
     <div class="empty" style="padding:18px 8px;font-size:12px;line-height:1.5">
