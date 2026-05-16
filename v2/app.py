@@ -1924,6 +1924,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-stocks" class="hidden">
     <div class="container">
       <div id="aiTake-stocks" class="aiTake-slot"></div>
+      <!-- Wave-3c spotlight row — top 3 stock signals (strongest BUY,
+           weakest SELL, highest-volume mover). Populated by
+           renderStocksSpotlight() from DATA.market.stocks_signals. -->
+      <div id="stocksSpotlight" style="margin-bottom:10px"></div>
       <!-- Traditional indices — DOW / S&P / NDX / VIX with 1d % + 90d
            sparkline. Moved here from the Crypto tab so macro equity context
            lives alongside the equity-signal grid that follows. -->
@@ -1961,17 +1965,21 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <!-- Signal breadth chart (top of tab, before filter chips) -->
-      <div class="chart-card">
-        <div class="head">
-          <h2>Stock signal breadth — 50 most active <span class="tag">Yahoo</span></h2>
-          <span class="desc">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 most-active US stocks &middot; last 90 days</span>
+      <div class="v2-card">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Stock signal breadth — 50 most active <span class="tag">Yahoo</span></h2>
+            <div class="v2-card__subtitle">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 most-active US stocks &middot; last 90 days</div>
+          </div>
         </div>
-        <div class="chart-wrap" style="height:220px"><canvas id="stocksBreadthChart"></canvas></div>
+        <div class="v2-card__body"><div class="chart-wrap" style="height:220px"><canvas id="stocksBreadthChart"></canvas></div></div>
       </div>
-      <div class="chart-card" style="margin-top:12px">
-        <div class="head">
-          <h2>Stock signals — Top 50 most active <span class="tag">Yahoo</span></h2>
-          <span class="desc">Daily-volume leaders on US exchanges &middot; signal score across SMA / RSI / MACD / momentum / volume &middot; grouped by bucket Strong Buy &rarr; Strong Sell</span>
+      <div class="v2-card" style="margin-top:12px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Stock signals — Top 50 most active <span class="tag">Yahoo</span></h2>
+            <div class="v2-card__subtitle">Daily-volume leaders on US exchanges &middot; signal score across SMA / RSI / MACD / momentum / volume &middot; grouped by bucket Strong Buy &rarr; Strong Sell</div>
+          </div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <span class="lbl" style="margin:0">Filter</span>
@@ -1991,43 +1999,54 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-ainews" class="hidden">
     <div class="container">
       <div id="aiTake-ainews" class="aiTake-slot"></div>
+      <!-- Wave-3c spotlight row — net sentiment today, busiest source,
+           top AI-exposed ticker. Populated by renderAiNewsSpotlight(). -->
+      <div id="aiNewsSpotlight" style="margin-bottom:10px"></div>
       <div id="aiNewsEmpty" class="empty hidden">AI news not yet loaded. Run <code>python app.py --fetch-market</code> to populate.</div>
       <div id="aiNewsContent">
         <!-- Top: AI sentiment summary card -->
-        <div class="chart-card" id="aiNewsSummaryCard">
-          <div class="head">
-            <h2>AI news sentiment <span class="tag">live</span></h2>
-            <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
+        <div class="v2-card" id="aiNewsSummaryCard">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">AI news sentiment <span class="tag">live</span></h2>
+              <div class="v2-card__subtitle">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</div>
+            </div>
           </div>
-          <div id="aiNewsSummary"></div>
+          <div class="v2-card__body" id="aiNewsSummary"></div>
         </div>
 
         <!-- Quadrant scatter chart — pinned right under sentiment per user
              request (the big visual lead-in before the numbers). -->
-        <div class="chart-card" id="aiQuadrantCard" style="margin-top:12px">
-          <div class="head">
-            <h2>AI funding quadrant <span class="tag">last round &times; valuation</span></h2>
-            <span class="desc">X = last round size &middot; Y = total valuation &middot; log scale both axes &middot; each dot is a company (hover for name)</span>
+        <div class="v2-card" id="aiQuadrantCard" style="margin-top:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">AI funding quadrant <span class="tag">last round &times; valuation</span></h2>
+              <div class="v2-card__subtitle">X = last round size &middot; Y = total valuation &middot; log scale both axes &middot; each dot is a company (hover for name)</div>
+            </div>
           </div>
-          <div class="chart-wrap" style="height:380px"><canvas id="aiQuadrantChart"></canvas></div>
+          <div class="v2-card__body"><div class="chart-wrap" style="height:380px"><canvas id="aiQuadrantChart"></canvas></div></div>
         </div>
 
         <!-- AI investment KPI strip (curated) -->
-        <div class="chart-card" id="aiInvestmentKpisCard" style="margin-top:12px">
-          <div class="head">
-            <h2>AI investment KPIs <span class="tag">Stanford AI Index &middot; Goldman &middot; McKinsey &middot; Epoch</span></h2>
-            <span class="desc">Headline numbers from authoritative published sources &middot; click any card for source link</span>
+        <div class="v2-card" id="aiInvestmentKpisCard" style="margin-top:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">AI investment KPIs <span class="tag">Stanford AI Index &middot; Goldman &middot; McKinsey &middot; Epoch</span></h2>
+              <div class="v2-card__subtitle">Headline numbers from authoritative published sources &middot; click any card for source link</div>
+            </div>
           </div>
-          <div class="row" id="aiInvestmentKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
+          <div class="v2-card__body"><div class="row" id="aiInvestmentKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div></div>
         </div>
 
         <!-- Top funded AI companies table -->
-        <div class="chart-card" id="aiTopFundedCard" style="margin-top:12px">
-          <div class="head">
-            <h2>Top funded AI companies <span class="tag">curated, public valuations</span></h2>
-            <span class="desc">Sorted by latest known valuation &middot; click company for the source URL</span>
+        <div class="v2-card" id="aiTopFundedCard" style="margin-top:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Top funded AI companies <span class="tag">curated, public valuations</span></h2>
+              <div class="v2-card__subtitle">Sorted by latest known valuation &middot; click company for the source URL</div>
+            </div>
           </div>
-          <div style="overflow:auto;max-height:420px">
+          <div class="v2-card__body" style="overflow:auto;max-height:420px">
             <table id="aiTopFundedTable" class="tracker-grid">
               <thead><tr>
                 <th>Company</th>
@@ -2045,12 +2064,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <!-- (AI funding quadrant moved up — sits right under sentiment.) -->
 
         <!-- SEC EDGAR Form D — most-recent AI private placements -->
-        <div class="chart-card" id="aiSecFormDCard" style="margin-top:12px">
-          <div class="head">
-            <h2>SEC Form D — recent AI private placements <span class="tag" id="aiSecFormDBadge">EDGAR</span></h2>
-            <span class="desc">Rule 506(b)/506(c) filings from AI-adjacent issuers in the last 60 days &middot; click any issuer for the EDGAR filing</span>
+        <div class="v2-card" id="aiSecFormDCard" style="margin-top:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">SEC Form D — recent AI private placements <span class="tag" id="aiSecFormDBadge">EDGAR</span></h2>
+              <div class="v2-card__subtitle">Rule 506(b)/506(c) filings from AI-adjacent issuers in the last 60 days &middot; click any issuer for the EDGAR filing</div>
+            </div>
           </div>
-          <div style="overflow:auto;max-height:420px">
+          <div class="v2-card__body" style="overflow:auto;max-height:420px">
             <table id="aiSecFormDTable" class="tracker-grid">
               <thead><tr>
                 <th>Issuer</th>
@@ -2066,39 +2087,47 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
 
         <!-- White paper / research KPIs -->
-        <div class="chart-card" id="aiWhitepaperKpisCard" style="margin-top:12px">
-          <div class="head">
-            <h2>Research benchmarks <span class="tag">Stanford AI Index &middot; Epoch &middot; IEA &middot; MLPerf</span></h2>
-            <span class="desc">From peer-reviewed and major institutional reports &middot; click any card for source</span>
+        <div class="v2-card" id="aiWhitepaperKpisCard" style="margin-top:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Research benchmarks <span class="tag">Stanford AI Index &middot; Epoch &middot; IEA &middot; MLPerf</span></h2>
+              <div class="v2-card__subtitle">From peer-reviewed and major institutional reports &middot; click any card for source</div>
+            </div>
           </div>
-          <div class="row" id="aiWhitepaperKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
+          <div class="v2-card__body"><div class="row" id="aiWhitepaperKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div></div>
         </div>
 
         <div class="grid2" style="margin-top:12px">
           <!-- Middle: AI news feed -->
-          <div class="chart-card">
-            <div class="head">
-              <h2>Latest AI news <span class="tag" id="aiNewsHeaderBadge"></span></h2>
-              <span class="desc">Top 30 most recent &middot; click any row to open the article</span>
+          <div class="v2-card">
+            <div class="v2-card__head">
+              <div>
+                <h2 class="v2-card__title">Latest AI news <span class="tag" id="aiNewsHeaderBadge"></span></h2>
+                <div class="v2-card__subtitle">Top 30 most recent &middot; click any row to open the article</div>
+              </div>
             </div>
-            <div id="aiNewsFeed" style="max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
+            <div class="v2-card__body" id="aiNewsFeed" style="max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
           </div>
           <!-- Bottom right: AI-exposed stock signal cards -->
-          <div class="chart-card">
-            <div class="head">
-              <h2>AI-exposed stocks</h2>
-              <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
+          <div class="v2-card">
+            <div class="v2-card__head">
+              <div>
+                <h2 class="v2-card__title">AI-exposed stocks</h2>
+                <div class="v2-card__subtitle">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</div>
+              </div>
             </div>
-            <div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+            <div class="v2-card__body"><div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div></div>
           </div>
         </div>
         <!-- Bottom left: source breakdown -->
-        <div class="chart-card" style="margin-top:12px">
-          <div class="head">
-            <h2>Source breakdown</h2>
-            <span class="desc">Which publications are most positive / negative on AI coverage</span>
+        <div class="v2-card" style="margin-top:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Source breakdown</h2>
+              <div class="v2-card__subtitle">Which publications are most positive / negative on AI coverage</div>
+            </div>
           </div>
-          <div id="aiNewsSources"></div>
+          <div class="v2-card__body" id="aiNewsSources"></div>
         </div>
       </div>
     </div>
@@ -2249,6 +2278,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ DeFi TAB ============ -->
   <div id="tab-defi" class="hidden">
     <div id="aiTake-defi" class="aiTake-slot"></div>
+    <!-- Wave-3c spotlight row — top stablecoin mcap, top DEX 24h volume,
+         top yield. Populated by renderDefiSpotlight() from DATA.defi. -->
+    <div id="defiSpotlight" style="margin-bottom:10px"></div>
     <!-- Loading state shown while the lazy-loaded /data-defi.json sidecar
          is in-flight (see SIDECAR_FOR_TAB.defi). Toggled by renderAll
          based on SIDECAR_STATE.defi — hidden on first paint when defi is
@@ -2295,19 +2327,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <!-- Per-chain content area: summary + TVL history + top protocols -->
     <div class="row" id="defiChainSummary" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:10px"></div>
     <div class="grid2">
-      <div class="chart-card">
-        <div class="head">
-          <h2><span id="defiTvlHistoryTitle">Ethereum</span> TVL history</h2>
-          <span class="desc">Last 365 days · selected chain</span>
+      <div class="v2-card">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title"><span id="defiTvlHistoryTitle">Ethereum</span> TVL history</h2>
+            <div class="v2-card__subtitle">Last 365 days · selected chain</div>
+          </div>
         </div>
-        <div class="chart-wrap"><canvas id="defiTvlHistoryChart"></canvas></div>
+        <div class="v2-card__body"><div class="chart-wrap"><canvas id="defiTvlHistoryChart"></canvas></div></div>
       </div>
-      <div class="chart-card">
-        <div class="head">
-          <h2>Top protocols on <span id="defiTopProtoTitle">Ethereum</span></h2>
-          <span class="desc">Top 10 by TVL · multi-chain protocols filtered to selected chain</span>
+      <div class="v2-card">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Top protocols on <span id="defiTopProtoTitle">Ethereum</span></h2>
+            <div class="v2-card__subtitle">Top 10 by TVL · multi-chain protocols filtered to selected chain</div>
+          </div>
         </div>
-        <div style="max-height:380px;overflow:auto">
+        <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiChainProtocolsTable">
             <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th></tr></thead>
             <tbody></tbody>
@@ -2317,18 +2353,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <!-- Global tables: protocols (top 15) + yields -->
     <div class="grid2">
-      <div class="chart-card">
-        <div class="head"><h2>Top 15 DeFi protocols (global)</h2><span class="desc">All chains · by TVL · 1d/7d/30d %</span></div>
-        <div style="max-height:380px;overflow:auto">
+      <div class="v2-card">
+        <div class="v2-card__head"><div><h2 class="v2-card__title">Top 15 DeFi protocols (global)</h2><div class="v2-card__subtitle">All chains · by TVL · 1d/7d/30d %</div></div></div>
+        <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiProtocolsTable">
             <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
       </div>
-      <div class="chart-card">
-        <div class="head"><h2>Top stablecoin yields</h2><span class="desc">Sorted by TVL, ≥$5M</span></div>
-        <div style="max-height:380px;overflow:auto">
+      <div class="v2-card">
+        <div class="v2-card__head"><div><h2 class="v2-card__title">Top stablecoin yields</h2><div class="v2-card__subtitle">Sorted by TVL, ≥$5M</div></div></div>
+        <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiYieldsTable">
             <thead><tr><th>Pool</th><th>Chain</th><th>TVL</th><th>APY</th></tr></thead>
             <tbody></tbody>
@@ -2337,9 +2373,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
     <!-- Optional: bridges (only renders if data present) -->
-    <div class="chart-card hidden" id="defiBridgesCard">
-      <div class="head"><h2>Top bridges by volume</h2><span class="desc">DefiLlama bridge volume</span></div>
-      <div style="max-height:300px;overflow:auto">
+    <div class="v2-card hidden" id="defiBridgesCard">
+      <div class="v2-card__head"><div><h2 class="v2-card__title">Top bridges by volume</h2><div class="v2-card__subtitle">DefiLlama bridge volume</div></div></div>
+      <div class="v2-card__body" style="max-height:300px;overflow:auto">
         <table id="defiBridgesTable">
           <thead><tr><th>#</th><th>Bridge</th><th>24h volume</th><th>7d volume</th></tr></thead>
           <tbody></tbody>
@@ -2352,25 +2388,32 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
     <div id="aiTake-social" class="aiTake-slot"></div>
+    <!-- Wave-3c spotlight row — top trending coin (social), biggest
+         positive sentiment skew, biggest mention count. Populated by
+         renderSocialSpotlight() from DATA.market.social + news. -->
+    <div id="socialSpotlight" style="margin-bottom:10px"></div>
     <!-- ===== Per-coin news sentiment for the top 25 by market cap. Sourced
          from DATA.market.news (crypto_news_rss, all 5 free feeds) — items are
          keyword-matched to coin name/symbol on the client and scored
          POSITIVE/NEGATIVE/NEUTRAL via the same word-list approach we use for
          the AI news sentiment. Mobile-responsive grid (single column ≤480px). ===== -->
-    <div class="chart-card" style="padding:12px 16px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">News sentiment — Top 25 by market cap <span class="tag">RSS</span></h2>
-        <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px">Click any row for the full headline breakdown</div>
-        <span class="desc">Per-coin mention counts + POSITIVE / NEGATIVE / NEUTRAL split, text-matched against the latest headlines (CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine)</span>
+    <div class="v2-card" style="padding:12px 16px">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title" style="margin:0;font-size:15px">News sentiment — Top 25 by market cap <span class="tag">RSS</span></h2>
+          <div class="v2-card__subtitle" style="margin-top:2px">Click any row for the full headline breakdown · Per-coin mention counts + POSITIVE / NEGATIVE / NEUTRAL split, text-matched against the latest headlines (CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine)</div>
+        </div>
       </div>
-      <div id="topNewsSentimentCards" class="top-news-sentiment-grid"></div>
+      <div class="v2-card__body"><div id="topNewsSentimentCards" class="top-news-sentiment-grid"></div></div>
     </div>
-    <div class="chart-card">
-      <div class="head">
-        <h2>Top crypto news</h2>
-        <span class="desc">latest headlines · CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine</span>
+    <div class="v2-card">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">Top crypto news</h2>
+          <div class="v2-card__subtitle">latest headlines · CoinDesk · Cointelegraph · Decrypt · The Block · Bitcoin Magazine</div>
+        </div>
       </div>
-      <div id="researchNewsHost"></div>
+      <div class="v2-card__body" id="researchNewsHost"></div>
     </div>
     <div id="socialEmpty" class="empty hidden">
       No research data yet — all free sources (Reddit, CryptoCompare, Santiment) returned empty.
@@ -2388,32 +2431,38 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
 
       <!-- ===== CryptoCompare social + dev stats ===== -->
-      <div class="chart-card" style="padding:12px 16px">
-        <div class="head">
-          <h2 style="margin:0;font-size:15px">Social + developer stats <span class="tag">CryptoCompare</span></h2>
-          <span class="desc">Twitter followers · Reddit subscribers · GitHub stars / forks / open PRs</span>
+      <div class="v2-card" style="padding:12px 16px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title" style="margin:0;font-size:15px">Social + developer stats <span class="tag">CryptoCompare</span></h2>
+            <div class="v2-card__subtitle">Twitter followers · Reddit subscribers · GitHub stars / forks / open PRs</div>
+          </div>
         </div>
-        <div class="row" id="ccSocialCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+        <div class="v2-card__body"><div class="row" id="ccSocialCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div></div>
       </div>
 
       <!-- ===== Reddit pulse ===== -->
-      <div class="chart-card" style="padding:12px 16px">
-        <div class="head">
-          <h2 style="margin:0;font-size:15px">Reddit pulse <span class="tag">/r/crypto subs</span></h2>
-          <span class="desc">Subscribers · active users now · top 24h posts (Reddit blocks cloud IPs — local-only on the public mirror)</span>
+      <div class="v2-card" style="padding:12px 16px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title" style="margin:0;font-size:15px">Reddit pulse <span class="tag">/r/crypto subs</span></h2>
+            <div class="v2-card__subtitle">Subscribers · active users now · top 24h posts (Reddit blocks cloud IPs — local-only on the public mirror)</div>
+          </div>
         </div>
-        <div class="row" id="redditCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
+        <div class="v2-card__body"><div class="row" id="redditCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div></div>
       </div>
 
       <!-- (CC news sentiment moved to the top of the tab, outside socialContent) -->
 
       <!-- ===== Santiment on-chain + dev ===== -->
-      <div class="chart-card" style="padding:12px 16px">
-        <div class="head">
-          <h2 style="margin:0;font-size:15px">On-chain &amp; dev activity <span class="tag">Santiment</span></h2>
-          <span class="desc">Daily-active addresses · dev activity (7d) · refreshed once daily</span>
+      <div class="v2-card" style="padding:12px 16px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title" style="margin:0;font-size:15px">On-chain &amp; dev activity <span class="tag">Santiment</span></h2>
+            <div class="v2-card__subtitle">Daily-active addresses · dev activity (7d) · refreshed once daily</div>
+          </div>
         </div>
-        <div class="row" id="santimentCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div>
+        <div class="v2-card__body"><div class="row" id="santimentCards" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))"></div></div>
       </div>
 
     </div>
@@ -5876,6 +5925,58 @@ const DEFI_CHAIN_COLORS = {
   'Base':     '#0052ff',
 };
 
+// Wave-3c — top-3 spotlight for the DeFi tab:
+// (1) total stablecoin mcap (DefiLlama aggregate — proxy for "top stable"),
+// (2) top DEX 24h volume (DefiLlama),
+// (3) top stablecoin yield pool (highest APY in yields_stablecoin).
+// Reads DATA.defi (sidecar) and DATA.market.defillama. Renders skeleton
+// metrics while the sidecar is loading.
+function renderDefiSpotlight(){
+  const host = document.getElementById('defiSpotlight');
+  if (!host) return;
+  const defi = DATA.defi || {};
+  const llama = (DATA.market || {}).defillama || {};
+  const yields = defi.yields_stablecoin || [];
+  const hasAny = (llama && (llama.stablecoin_mcap_usd != null || llama.dex_volume_24h_usd != null))
+              || (Array.isArray(yields) && yields.length);
+  if (!hasAny){
+    host.innerHTML = V2.card({
+      title: 'Top DeFi signals',
+      severity: 'info',
+      body: '<div class="v2-card__metric-row">'
+          + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
+          + '</div>',
+    });
+    return;
+  }
+  const stableMcap = llama.stablecoin_mcap_usd;
+  const stable7d   = llama.stablecoin_7d_change_usd;
+  const stableSev  = (stable7d == null) ? 'info' : (stable7d >= 0 ? 'good' : 'bad');
+  const stableVal  = (stableMcap == null) ? '—' : escapeHtml(fmtUSD(stableMcap, 'auto'));
+  const dexVal     = (llama.dex_volume_24h_usd == null) ? '—' : escapeHtml(fmtUSD(llama.dex_volume_24h_usd, 'auto'));
+  // Top yield — sort by APY desc; require TVL ≥ $5M so we don't surface
+  // a tiny pool. The yields list is already filtered to stablecoins.
+  const ranked = (Array.isArray(yields) ? yields : []).filter(y => (Number(y.tvl_usd)||0) >= 5e6 && isFinite(Number(y.apy_pct)));
+  ranked.sort((a,b) => (Number(b.apy_pct)||0) - (Number(a.apy_pct)||0));
+  const topY = ranked[0];
+  let yieldVal = '—';
+  let yieldSev = 'info';
+  if (topY){
+    const apy = Number(topY.apy_pct) || 0;
+    yieldVal = `${escapeHtml(String(topY.project||''))} ${apy.toFixed(2)}%`;
+    yieldSev = apy >= 8 ? 'good' : (apy >= 4 ? 'warn' : 'info');
+  }
+  const body = '<div class="v2-card__metric-row">'
+    + V2.metric({label:'Stablecoin mcap',  html:stableVal, severity:stableSev, large:true,
+                 tip:'Total stablecoin market cap across all chains (DefiLlama). 7d colour reflects expansion vs. contraction.'})
+    + V2.metric({label:'DEX 24h volume',   html:dexVal,    severity:'info', large:true,
+                 tip:'Aggregate DEX trading volume in the last 24h (DefiLlama).'})
+    + V2.metric({label:'Top stablecoin yield', html:yieldVal, severity:yieldSev, large:true,
+                 tip:'Highest APY across stablecoin pools with TVL ≥ $5M.'})
+    + '</div>';
+  host.innerHTML = V2.card({ title: 'Top DeFi signals', severity: 'ai', body });
+}
+
 function renderDefi(){
   // DATA.defi is lazy-loaded via the sidecar mechanism (see SIDECAR_KEYS /
   // SIDECAR_FOR_TAB). On first paint after switching to this tab it may be
@@ -5887,6 +5988,9 @@ function renderDefi(){
   const protocols = defi.protocols || [];
   const yields = defi.yields_stablecoin || [];
   const bridges = ((defi.bridges || {}).top_bridges) || [];
+
+  // Wave-3c — top-3 spotlight (between AI Take and Sentiment).
+  renderDefiSpotlight();
 
   // ---- DeFi sentiment composite card (top of tab) ----
   renderDefiSentiment();
@@ -7114,10 +7218,68 @@ function renderStocksSentiment(){
   if (sellCount) sellCount.textContent = String(sellTotal);
 }
 
+// Wave-3c — top-3 spotlight row for the Stocks tab. Surfaces the three
+// most decision-relevant signals at the top of the tab: strongest BUY
+// score, weakest SELL score (most negative), and highest-volume mover
+// (largest absolute change_pct as a proxy when avg_volume isn't on the
+// row). Renders skeletons while DATA.market.stocks_signals is loading.
+function renderStocksSpotlight(){
+  const host = document.getElementById('stocksSpotlight');
+  if (!host) return;
+  const rows = ((DATA.market||{}).stocks_signals) || [];
+  if (!Array.isArray(rows) || !rows.length){
+    host.innerHTML = V2.card({
+      title: 'Top signals',
+      severity: 'info',
+      body: '<div class="v2-card__metric-row">'
+          + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
+          + '</div>',
+    });
+    return;
+  }
+  const scored = rows.filter(s => s && isFinite(Number(s.score)));
+  const sortedByScore = scored.slice().sort((a,b)=>(Number(b.score)||0)-(Number(a.score)||0));
+  const topBuy   = sortedByScore[0];
+  const topSell  = sortedByScore[sortedByScore.length-1];
+  // Highest-volume mover: prefer explicit volume fields when present;
+  // otherwise fall back to the absolute single-day change_pct (a decent
+  // proxy for activity in the current snapshot).
+  const volKey = (s) => {
+    if (s == null) return -Infinity;
+    const v = Number(s.volume ?? s.avg_volume ?? s.dollar_volume);
+    if (isFinite(v)) return v;
+    const ch = Number(s.change_pct);
+    return isFinite(ch) ? Math.abs(ch) : -Infinity;
+  };
+  const topVol = scored.slice().sort((a,b)=>volKey(b)-volKey(a))[0];
+  const fmtScore = s => {
+    const v = Number(s && s.score) || 0;
+    return (v >= 0 ? '+' : '') + (Number.isInteger(v) ? v : v.toFixed(1));
+  };
+  const fmtChange = s => {
+    const v = Number(s && s.change_pct);
+    return isFinite(v) ? ((v >= 0 ? '+' : '') + v.toFixed(2) + '%') : '—';
+  };
+  const buyVal  = topBuy  ? `${escapeHtml(String(topBuy.symbol||''))} ${fmtScore(topBuy)}`   : '—';
+  const sellVal = topSell ? `${escapeHtml(String(topSell.symbol||''))} ${fmtScore(topSell)}` : '—';
+  const volVal  = topVol  ? `${escapeHtml(String(topVol.symbol||''))} ${fmtChange(topVol)}`  : '—';
+  const body = '<div class="v2-card__metric-row">'
+    + V2.metric({label:'Strongest BUY', html:buyVal,  severity:'good', large:true,
+                 tip:'Highest signal score in the top-50 most-active US equities right now.'})
+    + V2.metric({label:'Weakest SELL',  html:sellVal, severity:'bad',  large:true,
+                 tip:'Lowest signal score — strongest distribution signal in the universe.'})
+    + V2.metric({label:'Top mover',     html:volVal,  severity:'info', large:true,
+                 tip:'Largest single-day move among scored stocks (volume proxy).'})
+    + '</div>';
+  host.innerHTML = V2.card({ title: 'Top stock signals', severity: 'ai', body });
+}
+
 function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
   const rows = ((DATA.market||{}).stocks_signals) || [];
+  // Wave-3c — top-3 signals spotlight (below AI Take, above charts).
+  renderStocksSpotlight();
   // Traditional indices bar (DOW / S&P / NDX / VIX) moved here from the
   // Crypto tab — macro equity context belongs alongside the equity-signal grid.
   renderOverviewIndices();
@@ -7164,7 +7326,7 @@ function renderStocksTab(){
     const pct = ((clamped + 100) / 200) * 100;
     const bucket = stockLabelBucket(s.label);
     const symbol = escapeHtml(String(s.symbol || ''));
-    return `<div class="chart-card stock-card" data-stock-symbol="${symbol}" data-stock-bucket="${bucket}" role="button" tabindex="0" aria-label="Open full ${symbol} signal detail" title="Click for full breakdown" style="padding:10px 12px;cursor:pointer">
+    return `<div class="v2-card stock-card" data-stock-symbol="${symbol}" data-stock-bucket="${bucket}" role="button" tabindex="0" aria-label="Open full ${symbol} signal detail" title="Click for full breakdown" style="padding:10px 12px;cursor:pointer">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
         <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
           <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
@@ -7223,12 +7385,78 @@ function renderStocksTab(){
 const AI_EXPOSED_TICKERS = ['NVDA','GOOGL','MSFT','META','AMZN','AAPL','TSLA','AMD','INTC','ORCL','CRM','PLTR','SMCI','ARM','AVGO'];
 const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#f59e0b'};
 
+// Wave-3c — top-3 spotlight for the AI News tab:
+// (1) today's net sentiment label + article count,
+// (2) busiest source by article count,
+// (3) top AI-exposed ticker (BUY or SELL extremum).
+// Reads DATA.market.ai_news.summary + stocks_signals filtered to AI tickers.
+function renderAiNewsSpotlight(){
+  const host = document.getElementById('aiNewsSpotlight');
+  if (!host) return;
+  const ai = ((DATA.market||{}).ai_news) || null;
+  if (!ai || !ai.available){
+    host.innerHTML = V2.card({
+      title: 'Top AI signals',
+      severity: 'info',
+      body: '<div class="v2-card__metric-row">'
+          + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
+          + '</div>',
+    });
+    return;
+  }
+  const sum = ai.summary || {};
+  const net = (sum.net_score == null) ? 0 : Number(sum.net_score);
+  const tot = Number(sum.total) || 0;
+  const label = String(sum.sentiment_label || '—');
+  const netSev = net > 0 ? 'good' : (net < 0 ? 'bad' : 'warn');
+  const netTxt = (net >= 0 ? '+' : '') + (Number.isInteger(net) ? net : net.toFixed(1));
+  const netHtml = `${escapeHtml(netTxt)} <span class="sub" style="font-size:11px;color:var(--muted);font-weight:600">${escapeHtml(label)}</span>`;
+  // Busiest source — group items by source name.
+  const items = Array.isArray(ai.items) ? ai.items : [];
+  const bySrc = new Map();
+  items.forEach(n => {
+    const k = String((n && n.source) || 'unknown');
+    bySrc.set(k, (bySrc.get(k) || 0) + 1);
+  });
+  const topSrcEntry = Array.from(bySrc.entries()).sort((a,b) => b[1]-a[1])[0];
+  const srcVal = topSrcEntry ? `${escapeHtml(topSrcEntry[0])} (${topSrcEntry[1]})` : '—';
+  // Top AI-exposed ticker — pick the largest |score| among the AI universe.
+  const allStocks = ((DATA.market||{}).stocks_signals) || [];
+  const set = new Set(AI_EXPOSED_TICKERS);
+  const subset = (Array.isArray(allStocks) ? allStocks : [])
+    .filter(s => s && s.symbol && set.has(String(s.symbol).toUpperCase())
+            && isFinite(Number(s.score)));
+  const topTicker = subset.slice().sort(
+    (a,b) => Math.abs(Number(b.score)||0) - Math.abs(Number(a.score)||0)
+  )[0];
+  let tickerVal = '—';
+  let tickerSev = 'info';
+  if (topTicker){
+    const sc = Number(topTicker.score) || 0;
+    const scTxt = (sc >= 0 ? '+' : '') + (Number.isInteger(sc) ? sc : sc.toFixed(1));
+    tickerVal = `${escapeHtml(String(topTicker.symbol||''))} ${scTxt}`;
+    tickerSev = sc >= 20 ? 'good' : (sc <= -20 ? 'bad' : 'warn');
+  }
+  const body = '<div class="v2-card__metric-row">'
+    + V2.metric({label:'Net sentiment today', html:netHtml, severity:netSev, large:true,
+                 tip:`Aggregate net score across ${tot} AI articles right now (positive - negative).`})
+    + V2.metric({label:'Busiest source',      html:srcVal,  severity:'info', large:true,
+                 tip:'Publication with the most AI-related articles in the current window.'})
+    + V2.metric({label:'Top AI-exposed ticker', html:tickerVal, severity:tickerSev, large:true,
+                 tip:'Largest absolute signal score among the AI-exposed universe (NVDA, GOOGL, MSFT, …).'})
+    + '</div>';
+  host.innerHTML = V2.card({ title: 'Top AI signals', severity: 'ai', body });
+}
+
 function renderAiNewsTab(){
   const ai = ((DATA.market||{}).ai_news) || null;
   const empty = document.getElementById('aiNewsEmpty');
   const content = document.getElementById('aiNewsContent');
   if (!empty || !content) return;
   const ok = ai && ai.available && Array.isArray(ai.items);
+  // Wave-3c — top-3 spotlight (sits between AI Take and the rest).
+  // Always called: renders skeletons when ai_news isn't available yet.
+  renderAiNewsSpotlight();
   empty.classList.toggle('hidden', !!ok);
   content.classList.toggle('hidden', !ok);
   if (!ok) return;
@@ -7331,7 +7559,7 @@ function renderAiNewsTab(){
         const clamped = Math.max(-100, Math.min(100, score));
         const pct = ((clamped + 100) / 200) * 100;
         const symbol = escapeHtml(String(s.symbol || ''));
-        return `<div class="chart-card" style="padding:10px 12px">
+        return `<div class="v2-card" style="padding:10px 12px">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
             <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
               <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
@@ -9575,6 +9803,85 @@ function renderResearchNews(){
   ).join('');
 }
 
+// Wave-3c — top-3 spotlight for the Social/Research tab:
+// (1) top trending coin from CryptoCompare social (by combined
+//     twitter+reddit follower count among RESEARCH_ASSETS),
+// (2) biggest positive sentiment skew today (top net_score row from
+//     the per-coin news grouping),
+// (3) biggest news-mention count (top total row).
+// Reads DATA.market.social + DATA.market.news + DATA.market.markets_top.
+// Renders skeletons when nothing is available yet.
+function renderSocialSpotlight(){
+  const host = document.getElementById('socialSpotlight');
+  if (!host) return;
+  const social = socialData();
+  const cc = (social.cryptocompare || {}).coins || {};
+  const news = ((DATA.market || {}).news) || [];
+  const marketsTop = ((DATA.market || {}).markets_top) || [];
+  const ccByCoin = (((DATA.market || {}).news_sentiment_by_coin) || {}).coins || {};
+  const hasCc = Object.keys(cc).length > 0;
+  const hasNews = marketsTop.length && (news.length || Object.keys(ccByCoin).length);
+  if (!hasCc && !hasNews){
+    host.innerHTML = V2.card({
+      title: 'Top research signals',
+      severity: 'info',
+      body: '<div class="v2-card__metric-row">'
+          + V2.skel('metric') + V2.skel('metric') + V2.skel('metric')
+          + '</div>',
+    });
+    return;
+  }
+  // (1) Top trending coin — highest combined social reach among the
+  // CryptoCompare-covered RESEARCH_ASSETS (twitter + reddit subscribers).
+  let trendVal = '—';
+  let trendSev = 'info';
+  if (hasCc){
+    let best = null;
+    let bestScore = -Infinity;
+    RESEARCH_ASSETS.forEach(a => {
+      const c = cc[a];
+      if (!c) return;
+      const sc = (Number(c.twitter_followers)||0) + (Number(c.reddit_subscribers)||0);
+      if (sc > bestScore){ bestScore = sc; best = {sym: a, c}; }
+    });
+    if (best){
+      trendVal = `${best.sym.toUpperCase()} · ${escapeHtml(fmtNumShort(bestScore))}`;
+      trendSev = 'ai';
+    }
+  }
+  // (2) + (3) — biggest positive sentiment skew + biggest mention count.
+  let skewVal = '—', skewSev = 'info';
+  let mentionVal = '—';
+  if (hasNews){
+    const rows = groupNewsBySymbol(news, marketsTop, 25, ccByCoin);
+    const withMentions = rows.filter(r => r.total > 0);
+    if (withMentions.length){
+      const byNet = withMentions.slice().sort((a,b)=>(b.net_score||0)-(a.net_score||0));
+      const topSkew = byNet[0];
+      if (topSkew && topSkew.net_score > 0){
+        skewVal = `${escapeHtml(topSkew.symbol)} +${topSkew.net_score}`;
+        skewSev = 'good';
+      } else if (topSkew){
+        // No positive skew anywhere — surface least-negative as info.
+        skewVal = `${escapeHtml(topSkew.symbol)} ${topSkew.net_score >= 0 ? '+' : ''}${topSkew.net_score}`;
+        skewSev = topSkew.net_score < 0 ? 'bad' : 'warn';
+      }
+      const byTotal = withMentions.slice().sort((a,b)=>(b.total||0)-(a.total||0));
+      const topMen = byTotal[0];
+      if (topMen) mentionVal = `${escapeHtml(topMen.symbol)} · ${topMen.total} mentions`;
+    }
+  }
+  const body = '<div class="v2-card__metric-row">'
+    + V2.metric({label:'Top trending coin',    html:trendVal,   severity:trendSev, large:true,
+                 tip:'Coin with the largest combined Twitter + Reddit reach among CC-covered assets.'})
+    + V2.metric({label:'Top sentiment skew',   html:skewVal,    severity:skewSev,  large:true,
+                 tip:'Coin with the highest net (positive − negative) headline sentiment in the current window.'})
+    + V2.metric({label:'Most-mentioned coin',  html:mentionVal, severity:'info',   large:true,
+                 tip:'Coin referenced in the most RSS + CryptoCompare headlines today.'})
+    + '</div>';
+  host.innerHTML = V2.card({ title: 'Top research signals', severity: 'ai', body });
+}
+
 function renderSocial(){
   const social = socialData();
   const poc = (DATA.market||{}).poc || {};
@@ -9588,6 +9895,8 @@ function renderSocial(){
   document.getElementById('socialContent').classList.toggle('hidden', !hasAny);
   const asOf = document.getElementById('socialAsOf');
   if (asOf) asOf.textContent = social.fetched_at ? 'Fetched ' + social.fetched_at : '';
+  // Wave-3c — top-3 spotlight (between AI Take and per-coin news cards).
+  renderSocialSpotlight();
   renderResearchNews();
   // Top-15 news-sentiment card sources data from DATA.market.news +
   // markets_top — independent of the social aggregate (`hasAny`), so render
@@ -9712,6 +10021,10 @@ function renderAll(){
       }
     }
     if (defiContent) defiContent.classList.toggle('hidden', defiLoadingActive);
+    // Wave-3c — spotlight row stays above the loading state so the top of
+    // the tab is consistent (skeleton metrics → real metrics) regardless of
+    // sidecar status.
+    renderDefiSpotlight();
     if (!defiLoadingActive) renderDefi();
   }
   if (state.tab === 'trading' && !trEmpty){
