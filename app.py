@@ -5025,6 +5025,42 @@ function pocMigrationSparkline(series){
   </svg>`;
 }
 
+// Beefier version of pocMigrationSparkline used on STRONG BUY / BUY cards so
+// the buy-rated coins stand out visually with an actual chart thumbnail.
+// Same data (30d POC over last ~90d), filled area + gridline + min/max
+// markers + larger viewport. Same min-length / null guards.
+function pocMigrationSparklineLarge(series){
+  if (!series || series.length < 5) return '';
+  const values = series.map(p => p.poc).filter(v => typeof v === 'number' && isFinite(v));
+  if (values.length < 5) return '';
+  const lo = Math.min(...values), hi = Math.max(...values);
+  const range = (hi - lo) || 1;
+  const n = values.length;
+  const w = 200, h = 68, padTop = 14, padBot = 8, padX = 2;
+  const xFor = i => padX + (i / (n - 1)) * (w - padX * 2);
+  const yFor = v => padTop + (1 - (v - lo) / range) * (h - padTop - padBot);
+  const pts = values.map((v, i) => `${xFor(i).toFixed(1)},${yFor(v).toFixed(1)}`).join(' ');
+  const first = values[0], last = values[values.length - 1];
+  const up = last > first * 1.005;
+  const down = last < first * 0.995;
+  const trend = up ? '#22c55e' : down ? '#ef4444' : '#94a3b8';
+  const fill  = up ? '#22c55e22' : down ? '#ef444422' : '#94a3b822';
+  const areaPts = `${padX},${(h - padBot).toFixed(1)} ${pts} ${(w - padX).toFixed(1)},${(h - padBot).toFixed(1)}`;
+  // Midline reference: the first value, so the slope is intuitive at a glance.
+  const yMid = yFor(first);
+  const chgPct = first > 0 ? ((last - first) / first * 100) : null;
+  const chgTxt = chgPct == null ? '' : (chgPct >= 0 ? '+' : '') + chgPct.toFixed(1) + '%';
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="width:100%;height:64px;display:block;margin-top:6px;border-radius:4px;background:#0b0d12">
+    <line x1="${padX}" y1="${yMid.toFixed(1)}" x2="${w - padX}" y2="${yMid.toFixed(1)}" stroke="#1f2533" stroke-width="1" stroke-dasharray="2,3"/>
+    <polygon points="${areaPts}" fill="${fill}" stroke="none"/>
+    <polyline points="${pts}" fill="none" stroke="${trend}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+    <text x="4" y="10" font-size="7" fill="#94a3b8">30d POC · last ${n}d</text>
+    <text x="${w - 4}" y="10" font-size="7" fill="${trend}" text-anchor="end" font-weight="700">${chgTxt}</text>
+    <text x="4" y="${(h - 2).toFixed(1)}" font-size="6" fill="#64748b">${fmtUsdShort(lo)}</text>
+    <text x="${w - 4}" y="${(h - 2).toFixed(1)}" font-size="6" fill="#64748b" text-anchor="end">${fmtUsdShort(hi)}</text>
+  </svg>`;
+}
+
 function renderPocCards(){
   const poc = (DATA.market||{}).poc || {};
   const host = document.getElementById('pocCards');
@@ -5214,9 +5250,14 @@ function renderPocTopCards(){
         <div style="font-size:9px;font-weight:700;letter-spacing:.04em">—</div>
       </div>`;
     }
-    // 30d POC drift sparkline (tiny inline SVG). Falls back to empty string
-    // when the migration series is too short.
-    const spark = pocMigrationSparkline(d.migration_series);
+    // 30d POC drift sparkline. STRONG BUY / BUY cards get the beefier
+    // version (taller, filled area, change-% callout) so buy-rated coins
+    // are visually distinct from HOLD / SELL at a glance. Falls back to
+    // empty string when the series is too short.
+    const isBuy = bucket === 'strong-buy' || bucket === 'buy';
+    const spark = isBuy
+      ? pocMigrationSparklineLarge(d.migration_series)
+      : pocMigrationSparkline(d.migration_series);
     return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
       <div style="display:flex;align-items:stretch;gap:8px">
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
@@ -5232,7 +5273,7 @@ function renderPocTopCards(){
             <span style="color:${dpColor};font-weight:600">${dpTxt}</span>
             ${vaTag}
           </div>
-          ${spark || '<div style="height:30px;margin-top:6px;border-radius:3px;background:#0b0d12;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)">no drift data</div>'}
+          ${spark || `<div style="height:${isBuy ? '64' : '30'}px;margin-top:6px;border-radius:3px;background:#0b0d12;display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--muted)">no drift data</div>`}
         </div>
         ${migBlock}
       </div>
