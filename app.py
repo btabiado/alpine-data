@@ -1914,16 +1914,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
-    <!-- ===== CryptoCompare news sentiment — pinned to TOP per user request,
-         BTC card renders first (RESEARCH_ASSETS = [btc,eth,link,ltc]) ===== -->
-    <div class="chart-card" style="padding:12px 16px">
-      <div class="head">
-        <h2 style="margin:0;font-size:15px">News sentiment by coin <span class="tag">CryptoCompare</span></h2>
-        <span class="desc">POSITIVE / NEGATIVE / NEUTRAL split from CryptoCompare's keyless news API · 50 most recent articles per coin · 7d trend bars + clickable keyword chips</span>
-      </div>
-      <div class="row" id="ccNewsCards" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))"></div>
-    </div>
-    <!-- ===== Per-coin news sentiment for the top 15 by market cap. Sourced
+    <!-- ===== Per-coin news sentiment for the top 25 by market cap. Sourced
          from DATA.market.news (crypto_news_rss, all 5 free feeds) — items are
          keyword-matched to coin name/symbol on the client and scored
          POSITIVE/NEGATIVE/NEUTRAL via the same word-list approach we use for
@@ -7916,26 +7907,111 @@ window._top25NewsCache = window._top25NewsCache || {};
 
 function openNewsSentimentDetail(symbol){
   const upper = (symbol || '').toUpperCase();
+  const lower = upper.toLowerCase();
   const row = (window._top25NewsCache || {})[upper];
   const modal = document.getElementById('newsSentimentDetailModal');
   const body  = document.getElementById('newsSentimentDetailBody');
   const title = document.getElementById('newsSentimentDetailTitle');
   if (!modal || !body || !title) return;
-  if (!row){
+  // CryptoCompare deep data — only populated for RESEARCH_ASSETS (btc/eth/link/ltc).
+  // When available we surface the richer view (7d trend, keyword chips, top
+  // articles) above the RSS-matched headlines list.
+  const ccCoin = ((socialData().cc_news || {}).coins || {})[lower] || null;
+  if (!row && !ccCoin){
     title.textContent = upper + ' · news sentiment';
     body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No matched headlines for this coin.</div>';
     modal.classList.remove('hidden');
     return;
   }
-  title.textContent = `${row.symbol} · ${row.name || ''} · news sentiment`;
-  const total = row.total || 1;
-  const posPct = (row.positive / total) * 100;
-  const neuPct = (row.neutral  / total) * 100;
-  const negPct = (row.negative / total) * 100;
-  const netColor = row.net_score > 0 ? '#22c55e' : row.net_score < 0 ? '#ef4444' : 'var(--muted)';
-  const netTxt = row.total === 0 ? '—' : (row.net_score > 0 ? '+' : '') + row.net_score;
-  // Sort matched items by date desc (string-sortable ISO dates), then list all.
-  const items = (row.allItems || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  // Prefer row metadata; fall back to CC if row missing (shouldn't happen for
+  // top-25 but defensive).
+  const sym = (row && row.symbol) || upper;
+  const nm  = (row && row.name) || '';
+  title.textContent = `${sym}${nm ? ' · ' + nm : ''} · news sentiment`;
+  const rsv = row || {total:0, positive:0, negative:0, neutral:0, net_score:0, allItems:[]};
+  const total = rsv.total || 1;
+  const posPct = (rsv.positive / total) * 100;
+  const neuPct = (rsv.neutral  / total) * 100;
+  const negPct = (rsv.negative / total) * 100;
+  const netColor = rsv.net_score > 0 ? '#22c55e' : rsv.net_score < 0 ? '#ef4444' : 'var(--muted)';
+  const netTxt = rsv.total === 0 ? '—' : (rsv.net_score > 0 ? '+' : '') + rsv.net_score;
+
+  // --- Optional CryptoCompare deep section (only for the 4 covered coins) ---
+  let ccBlock = '';
+  if (ccCoin){
+    const ccTotal = (ccCoin.positive || 0) + (ccCoin.negative || 0) + (ccCoin.neutral || 0) || 1;
+    const ccPosPct = (ccCoin.positive || 0) / ccTotal * 100;
+    const ccNeuPct = (ccCoin.neutral  || 0) / ccTotal * 100;
+    const ccNegPct = (ccCoin.negative || 0) / ccTotal * 100;
+    const ccNetColor = ccCoin.net_score == null ? 'var(--muted)' : ccCoin.net_score > 0 ? '#22c55e' : ccCoin.net_score < 0 ? '#ef4444' : '#f59e0b';
+    const ccNetTxt = (ccCoin.net_score > 0 ? '+' : '') + (ccCoin.net_score ?? 0);
+    // 7-day daily-net sparkline (same SVG pattern as the old renderCCNewsCards).
+    const trend = ccCoin.trend_7d || [];
+    let sparkBlock = '';
+    if (trend.length){
+      const maxAbs = Math.max(1, ...trend.map(d => Math.abs(d.net || 0)));
+      const sparkW = 260, sparkH = 36, barW = sparkW / trend.length;
+      const bars = trend.map((d, i) => {
+        const h = Math.max(1, Math.round((Math.abs(d.net) / maxAbs) * (sparkH/2 - 1)));
+        const y = d.net >= 0 ? (sparkH/2 - h) : (sparkH/2);
+        const fill = d.net > 0 ? '#22c55e' : (d.net < 0 ? '#ef4444' : '#6b7280');
+        return `<rect x="${i*barW}" y="${y}" width="${Math.max(1,barW-1)}" height="${h}" fill="${fill}"><title>${escapeHtml(d.date||'')}: net ${d.net} (+${d.pos||0}/−${d.neg||0})</title></rect>`;
+      }).join('');
+      sparkBlock = `<div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+        <span class="sub" style="font-size:11px;color:var(--muted);min-width:30px">7d:</span>
+        <svg width="${sparkW}" height="${sparkH}" viewBox="0 0 ${sparkW} ${sparkH}">
+          <line x1="0" y1="${sparkH/2}" x2="${sparkW}" y2="${sparkH/2}" stroke="#374151" stroke-width="1"/>${bars}
+        </svg>
+      </div>`;
+    }
+    // Keyword chips (visual only — no filter logic in the modal).
+    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? '#22c55e' : sk < -0.3 ? '#ef4444' : '#a1a1aa';
+    const chips = (ccCoin.top_keywords || []).slice(0, 10).map(k => {
+      const bg = skewColor(k.sentiment_skew);
+      return `<span style="border:1px solid ${bg};color:${bg};border-radius:10px;padding:2px 8px;margin:2px 4px 0 0;font-size:11px;display:inline-block">${escapeHtml(k.kw)} <span style="opacity:.65">${k.count}</span></span>`;
+    }).join('');
+    const chipsBlock = chips ? `<div style="margin-top:10px;line-height:1.8">${chips}</div>` : '';
+    // Top articles from CC (different from RSS-matched — these are CC's curated picks).
+    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
+    const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
+      const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
+      const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
+      return `<a href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;padding:6px 0;font-size:12px;color:var(--text);text-decoration:none;border-top:1px solid var(--border);line-height:1.35">
+        ${dot}<strong style="color:${sc}">${escapeHtml((art.sentiment||'?').slice(0,3))}</strong>
+        <span style="color:var(--muted)"> · ${escapeHtml((art.source||'').slice(0,24))}</span>
+        <div style="color:var(--text);margin-top:2px">${escapeHtml(art.title || '')}</div>
+      </a>`;
+    }).join('');
+    const articlesBlock = articles
+      ? `<div style="margin-top:12px">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:4px">CRYPTOCOMPARE TOP ARTICLES</div>
+          ${articles}
+        </div>`
+      : '';
+    ccBlock = `
+      <div style="background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em">CRYPTOCOMPARE · DEEP COVERAGE</div>
+          <div style="font-size:11px;color:${ccNetColor};font-weight:700">net ${ccNetTxt} · ${ccCoin.article_count || 0} articles</div>
+        </div>
+        <div style="display:flex;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:#1f2533">
+          <div style="background:#22c55e;width:${ccPosPct}%"></div>
+          <div style="background:#f59e0b;width:${ccNeuPct}%"></div>
+          <div style="background:#ef4444;width:${ccNegPct}%"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
+          <span style="color:#22c55e">${ccCoin.positive || 0} +</span>
+          <span>${ccCoin.neutral || 0} ◯</span>
+          <span style="color:#ef4444">${ccCoin.negative || 0} −</span>
+        </div>
+        ${sparkBlock}
+        ${chipsBlock}
+        ${articlesBlock}
+      </div>`;
+  }
+
+  // --- RSS-matched headlines (always present for top-25 rows) ---
+  const items = (rsv.allItems || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const itemsHtml = items.length
     ? items.map(n => {
         const col = n.sentiment === 'POSITIVE' ? '#22c55e' : n.sentiment === 'NEGATIVE' ? '#ef4444' : '#f59e0b';
@@ -7949,11 +8025,11 @@ function openNewsSentimentDetail(symbol){
           <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title || '')}</div>
         </a>`;
       }).join('')
-    : '<div class="sub" style="color:var(--muted);padding:14px">No matched headlines for this coin in the current window.</div>';
+    : '<div class="sub" style="color:var(--muted);padding:14px">No RSS-matched headlines for this coin in the current window.</div>';
   body.innerHTML = `
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px">
       <div>
-        <div style="font-size:13px;color:var(--muted)">${row.total} mention${row.total === 1 ? '' : 's'} across recent headlines</div>
+        <div style="font-size:13px;color:var(--muted)">${rsv.total} mention${rsv.total === 1 ? '' : 's'} across recent headlines (RSS feeds)</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:28px;font-weight:700;line-height:1;color:${netColor}">${netTxt}</div>
@@ -7966,11 +8042,12 @@ function openNewsSentimentDetail(symbol){
       <div style="background:#ef4444;width:${negPct}%"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:14px">
-      <span style="color:#22c55e">${row.positive} positive</span>
-      <span>${row.neutral} neutral</span>
-      <span style="color:#ef4444">${row.negative} negative</span>
+      <span style="color:#22c55e">${rsv.positive} positive</span>
+      <span>${rsv.neutral} neutral</span>
+      <span style="color:#ef4444">${rsv.negative} negative</span>
     </div>
-    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:6px">MATCHED HEADLINES</div>
+    ${ccBlock}
+    <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:6px">MATCHED RSS HEADLINES</div>
     <div>${itemsHtml}</div>`;
   modal.classList.remove('hidden');
 }
@@ -8082,7 +8159,10 @@ function renderSocial(){
   renderTopNewsSentiment();
   if (!hasAny) return;
   renderCCSocialCards();
-  renderCCNewsCards();
+  // renderCCNewsCards removed — the always-on top 4 deep cards (BTC/ETH/LINK/LTC)
+  // were folded into the Top-25 click-to-expand modal. Click any row for the
+  // detail; CC-covered coins surface the richer 7d trend + chips + curated
+  // articles inside the modal alongside the RSS-matched headlines.
   renderRedditCards();
   renderSantimentCards();
 }
