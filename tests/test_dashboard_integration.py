@@ -1225,10 +1225,11 @@ def test_stock_detail_modal_wraps_signal_and_poc_in_grid2():
 
 
 def test_stock_detail_modal_poc_empty_state_copy_present():
-    """The empty-state POC card must render its explanation copy so the user
-    sees *why* there's no POC for stocks (crypto-only compute) rather than a
-    blank/loading card. The wording is exact-match — copy changes are
-    intentional and should update this test alongside the renderer."""
+    """The empty-state POC card must still render its explanation copy so a
+    user opening a recently-listed ticker (where compute_stock_poc returned
+    None for lack of history) sees *why* the slot is empty rather than a
+    blank card. Stock POC is now computed inline (compute_stock_poc), so
+    the empty-state is the rare exception, not the default."""
     html = _read_dashboard_or_skip()
 
     # Renderer must exist and produce a .stock-poc-card chart-card.
@@ -1246,13 +1247,10 @@ def test_stock_detail_modal_poc_empty_state_copy_present():
         "POC card header text 'Point of Control' missing from dashboard.html"
     )
 
-    # The two key sentences of the empty-state explanation must both be
-    # present so the user understands the limitation.
-    assert "POC volume-profile coverage is currently crypto-only" in html, (
-        "Stock POC card empty-state lede missing from dashboard.html — "
-        "user won't see the crypto-only explanation."
-    )
-    assert "Stock POC is not yet computed" in html, (
-        "Stock POC card empty-state follow-up missing from dashboard.html — "
-        "user won't see the 'backend extension required' callout."
+    # The empty-state explanation must mention insufficient history so the
+    # user understands the slot is empty because the ticker is too new, not
+    # because the build is broken.
+    assert "Not enough trading history" in html, (
+        "Stock POC empty-state lede missing from dashboard.html — user won't "
+        "see the 'insufficient history' explanation."
     )

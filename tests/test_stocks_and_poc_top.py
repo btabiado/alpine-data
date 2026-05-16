@@ -288,7 +288,7 @@ def test_fetch_stocks_signals_happy_path():
     assert len(out) == 2
     expected_keys = {
         "symbol", "name", "last_price", "change_pct", "volume",
-        "score", "label", "components", "history",
+        "score", "label", "components", "history", "poc",
     }
     for entry in out:
         assert set(entry.keys()) == expected_keys
@@ -296,6 +296,10 @@ def test_fetch_stocks_signals_happy_path():
     assert out[1]["symbol"] == "NVDA"
     assert isinstance(out[0]["score"], int)
     assert out[0]["label"] in {"STRONG BUY", "BUY", "HOLD", "SELL", "STRONG SELL"}
+    # POC computed from the same 220-day OHLCV history. Shape matches
+    # compute_poc_top_markets so the frontend renders the same card.
+    assert out[0]["poc"] is not None
+    assert {"d30", "d90", "d180", "migration", "migration_series", "naked"} <= set(out[0]["poc"].keys())
 
 
 def test_fetch_stocks_signals_empty_movers_returns_empty():

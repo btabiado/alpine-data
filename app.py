@@ -6756,19 +6756,15 @@ function stockDetailHtml(s){
   </div>`;
 }
 
-// Empty-state POC card for stock-detail modal. POC volume-profile compute
-// (see compute_poc_all in fetch_market.py) is crypto-only today — it runs
-// over markets_top / coin price+volume series; stocks have no comparable
-// cached price+volume window. The card explains the limitation rather than
-// rendering fabricated data. Backend POC-for-stocks is a separate task
-// (would need ~30–90d daily price+volume per stock; could plug into the
-// existing Yahoo fetcher pattern but adds ~50 extra API calls per build).
+// Empty-state POC card for stock-detail modal — shown only when the stock
+// has no `poc` payload (recent IPOs / <30d of OHLCV bars where compute_stock_poc
+// returns None). The common path now renders the real volume-profile card
+// via `pocCompactCardHtml` since stocks carry `poc` data alongside crypto.
 function stockPocEmptyHtml(){
   return `<div class="chart-card stock-poc-card">
     <div class="head"><h2 style="margin:0;font-size:14px">Point of Control</h2></div>
     <div class="sub" style="color:var(--muted);padding:14px 6px;font-size:12px">
-      POC volume-profile coverage is currently crypto-only (top-50 by score).
-      Stock POC is not yet computed — backend extension required.
+      Not enough trading history for a volume profile on this ticker.
     </div>
   </div>`;
 }
@@ -6784,11 +6780,13 @@ function openStockDetail(symbol){
   // mobile rule at ≤860px collapses .grid2 → 1fr automatically so the Signal
   // card stacks on top of the POC card on phone viewports. No extra media
   // query required. Left = existing Signal card (Score + breakdown), Right =
-  // empty-state POC slot (crypto-only today — see stockPocEmptyHtml).
+  // real POC card from compute_stock_poc (or empty-state for tickers with
+  // <30d of OHLCV).
+  const pocCard = s.poc ? pocCompactCardHtml(s) : stockPocEmptyHtml();
   document.getElementById('stockDetailBody').innerHTML =
     '<div class="grid2 stocks-modal-body">' +
       '<div class="chart-card stock-signal-card">' + stockDetailHtml(s) + '</div>' +
-      stockPocEmptyHtml() +
+      pocCard +
     '</div>';
   modal.classList.remove('hidden');
 }
@@ -7698,7 +7696,10 @@ function pocDetailHtml(c){
   const img = imgUrl
     ? `<img src="${imgUrl}" alt="" style="width:32px;height:32px;border-radius:50%">`
     : '<div style="width:32px;height:32px;border-radius:50%;background:#1f2533"></div>';
-  const priceTxt = fmtUsdShort(c.current_price);
+  // Stocks expose `last_price` rather than `current_price`; fall through to
+  // the POC anchor's last close as a final fallback.
+  const curPrice = c.current_price != null ? c.current_price : c.last_price;
+  const priceTxt = fmtUsdShort(curPrice);
   const d = c.poc || {};
   const mig = d.migration;
   let migBadge = '';
@@ -7733,7 +7734,7 @@ function pocDetailHtml(c){
   }).join('');
   const nakedArr = Array.isArray(d.naked) ? d.naked.slice(0, 5) : [];
   const anchor = d.d90 || d.d30 || d.d180;
-  const cur = c.current_price != null ? c.current_price : (anchor && anchor.current);
+  const cur = curPrice != null ? curPrice : (anchor && anchor.current);
   const nakedHtml = nakedArr.length ? `
     <div>
       <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs · untested magnet levels (last 180d)</div>
@@ -7798,7 +7799,15 @@ function pocDetailHtml(c){
 
 function openPocDetail(coinId){
   const list = ((DATA.market || {}).poc_top) || [];
-  const c = list.find(r => r && String(r.coin_id || r.symbol || '') === coinId);
+  let c = list.find(r => r && String(r.coin_id || r.symbol || '') === coinId);
+  if (!c){
+    // Stock POC is embedded on stocks_signals rows (compute_stock_poc, same
+    // shape). When clicked from the universal symbol modal we land here with
+    // the ticker symbol as `coinId` — fall back to that source.
+    const stocks = ((DATA.market || {}).stocks_signals) || [];
+    const s = stocks.find(r => r && String(r.symbol || '') === coinId && r.poc);
+    if (s) c = s;
+  }
   if (!c) return;
   const modal = document.getElementById('pocDetailModal');
   if (!modal) return;
@@ -9766,7 +9775,10 @@ function resolveSymbolFromCache(sym){
   const eq = (a, b) => String(a || '').toUpperCase() === b;
   const stock = (market.stocks_signals || []).find(s => s && eq(s.symbol, sym));
   const cryptoSignal = (DATA.signals_top20 || []).find(s => s && eq(s.symbol, sym));
-  const poc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
+  // Crypto POC lives in market.poc_top; stock POC is embedded on the
+  // stock row itself (compute_stock_poc, same shape as poc_top entries).
+  const cryptoPoc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
+  const poc = cryptoPoc || (stock && stock.poc ? stock : null);
   let newsRegex = null;
   try { newsRegex = new RegExp('\\b' + sym.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '\\b', 'i'); }
   catch(_) { newsRegex = null; }
@@ -10077,7 +10089,12 @@ function pocCompactCardHtml(coin){
   const cid = escapeHtml(String(coin.coin_id || coin.symbol || ''));
   const d = coin.poc || {};
   const anchor = d.d90 || d.d30 || d.d180 || null;
-  const cur = coin.current_price != null ? coin.current_price : (anchor && anchor.current);
+  // Stocks expose `last_price`; crypto entries use `current_price`. Either
+  // works as the "Current" readout — fall back through the POC anchor's
+  // own `current` (last close at compute time) as a last resort.
+  const cur = coin.current_price != null
+    ? coin.current_price
+    : (coin.last_price != null ? coin.last_price : (anchor && anchor.current));
   const priceTxt = fmtUsdShort(cur);
   // Migration chip — UP / DOWN / FLAT — mirrors the POC tab styling.
   const mig = d.migration;
@@ -10160,10 +10177,10 @@ function pocEmptyCardHtml(sym, kind){
   const safeSym = escapeHtml(String(sym || '').toUpperCase());
   const isStock = kind === 'stock';
   const msg = isStock
-    ? 'POC data is computed from crypto OHLCV only in this build.'
+    ? `Not enough trading history for <strong>${safeSym}</strong> to compute a volume profile.`
     : `<strong>${safeSym}</strong> isn't in the top-50 crypto POC window.`;
   const sub = isStock
-    ? 'Volume-profile POC for stocks is on the roadmap — for now this card surfaces only for cryptos in <code>poc_top</code>.'
+    ? 'Stock POC needs at least 30 daily bars from Yahoo. Recent IPOs and thinly-traded tickers may not have enough history yet.'
     : 'The POC tab tracks the top 50 cryptos by signal score; symbols outside that set fall back to this empty state.';
   return `<div class="chart-card" style="display:flex;flex-direction:column;gap:8px;opacity:.85">
     <div style="display:flex;align-items:center;gap:8px">
@@ -10203,7 +10220,10 @@ async function lookupSymbol(query){
   let cryptoSignal = (DATA.signals_top20 || []).find(s => s && eq(s.symbol, sym));
   // 3) POC entry (top-50 by score — covers more obscure coins than
   //    signals_top20). May be empty if poc_top fetch was rate-limited.
-  const poc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
+  //    Stocks compute their own POC inline (compute_stock_poc); fall back
+  //    to the stock row when there's no crypto match.
+  const cryptoPoc = (market.poc_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.coin_id, sym)));
+  const poc = cryptoPoc || (stock && stock.poc ? stock : null);
   // 4) markets_top backup (top-25 by mcap) — covers stables (USDT, USDC)
   //    and any coin filtered out of signals_top20.
   const marketTop = (market.markets_top || []).find(r => r && (eq(r.symbol, sym) || eq(r.id, sym)));

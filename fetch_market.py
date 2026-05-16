@@ -4203,6 +4203,44 @@ def compute_stock_signal(history: list[dict]) -> dict:
     }
 
 
+def compute_stock_poc(history: list[dict]) -> dict | None:
+    """Volume-profile POC for a single stock, computed from the same daily
+    OHLCV history `compute_stock_signal` consumes.
+
+    Returns the same shape `compute_poc_top_markets` emits for each crypto
+    entry — d30/d90/d180 timeframes plus migration / migration_series /
+    naked POCs — so the frontend can render `pocCompactCardHtml(stock)`
+    without a schema fork. Returns None when the history is too short for
+    a meaningful 30d window (the inner `point_of_control` already guards
+    `>= 10` overlapping days; we additionally require ≥30 daily bars so
+    the d30 timeframe carries weight).
+
+    Daily bars from Yahoo are trading-days only (~21/month, ~125 in 6mo).
+    The same lookback labels (`d30`, `d90`, `d180`) therefore cover ~6
+    calendar weeks / ~4½ calendar months / the full 6mo window respectively
+    — close enough to crypto semantics for the UI's purposes and the
+    label names stay consistent.
+    """
+    if not history or len(history) < 30:
+        return None
+    price_series = [{"date": h["date"], "value": float(h["close"])}
+                    for h in history if h.get("date") and h.get("close") is not None]
+    volume_series = [{"date": h["date"], "value": float(h.get("volume") or 0)}
+                     for h in history if h.get("date") and h.get("close") is not None]
+    LOOKBACKS = (("d30", 30, 60), ("d90", 90, 80), ("d180", 180, 100))
+    tfs = {k: point_of_control(price_series, volume_series,
+                                lookback_days=lb, bins=b)
+           for k, lb, b in LOOKBACKS}
+    if not any(tfs.values()):
+        return None
+    return {
+        **tfs,
+        "migration":        compute_poc_migration(tfs.get("d30"), tfs.get("d90")),
+        "migration_series": poc_migration_series(price_series, volume_series),
+        "naked":            naked_pocs(price_series, volume_series, lookback_days=180),
+    }
+
+
 async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
     """Concurrent implementation of ``fetch_stocks_signals``. Schema-
     identical to the sequential version. Yahoo's chart endpoint tolerates
@@ -4226,6 +4264,10 @@ async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
                 sym = m["symbol"]
                 hist = yahoo_chart_history(sym, "6mo")
                 sig = compute_stock_signal(hist)
+                # POC reuses the same daily OHLCV — no extra fetch. Returns
+                # None for tickers with <30d of bars (recent IPOs, etc.); the
+                # frontend falls back to the empty-state card in that case.
+                poc = compute_stock_poc(hist)
                 return {
                     "symbol":     sym,
                     "name":       m["name"],
@@ -4236,6 +4278,7 @@ async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
                     "label":      sig["label"],
                     "components": sig["components"],
                     "history":    sig["history"],
+                    "poc":        poc,
                 }
             try:
                 return await asyncio.to_thread(_work)
