@@ -592,7 +592,7 @@ header .meta{color:var(--muted);font-size:12px}
 .controls{display:flex;gap:6px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid var(--border);background:#0e1118}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px}
 .btn:hover{background:#222838}
-.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,a:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+.btn:focus-visible,.tab:focus-visible,.chip:focus-visible,a:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
 .btn.active{background:var(--btc);color:#000;border-color:var(--btc)}
 .btn.active.eth{background:var(--eth);color:#fff;border-color:var(--eth)}
 .btn.active.link{background:var(--link);color:#fff;border-color:var(--link)}
@@ -616,9 +616,9 @@ header .meta{color:var(--muted);font-size:12px}
 .green{color:var(--green)} .red{color:var(--red)} .amber{color:var(--amber)}
 .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
 .stock-card,.poc-card{transition:border-color .12s, transform .08s}
-.stock-card:hover,.poc-card:hover{border-color:#a78bfa}
+.stock-card:hover,.poc-card:hover{border-color:var(--v2-ai)}
 .stock-card:active,.poc-card:active{transform:scale(0.99)}
-.stock-card:focus-visible,.poc-card:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+.stock-card:focus-visible,.poc-card:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
 .chart-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
@@ -735,17 +735,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
 .msg{padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.4;max-width:90%;white-space:pre-wrap;word-wrap:break-word}
 .msg.user{background:#1f2533;align-self:flex-end;border:1px solid var(--border)}
-.msg.bot{background:#10151f;align-self:flex-start;border:1px solid var(--border);border-left:3px solid #a78bfa}
+.msg.bot{background:#10151f;align-self:flex-start;border:1px solid var(--border);border-left:3px solid var(--v2-ai)}
 .msg.err{background:#3b1414;align-self:flex-start;border:1px solid #6b1f1f;color:#fca5a5}
 .chat-suggestions{padding:0 14px 8px;display:flex;flex-wrap:wrap;gap:6px}
 .chat-suggestions .chip{font-size:10px;background:var(--panel2);border:1px solid var(--border);color:var(--muted);padding:3px 8px;border-radius:999px;cursor:pointer}
 .chat-suggestions .chip:hover{background:#222838;color:var(--text)}
 .chat-form{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px}
 .chat-form input{flex:1;background:#0b0d12;color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px 10px;font-size:13px;outline:none}
-.chat-form input:focus{border-color:#a78bfa}
-.chat-form button{background:#a78bfa;color:#000;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+.chat-form input:focus{border-color:var(--v2-ai)}
+.chat-form button{background:var(--v2-ai);color:#000;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
 .chat-form button:disabled{opacity:.4;cursor:not-allowed}
-#chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:#a78bfa;color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
+#chatFab{position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;background:var(--v2-ai);color:#000;border:0;cursor:pointer;font-size:24px;box-shadow:0 4px 14px rgba(167,139,250,.4);z-index:39;transition:transform .15s}
 #chatFab:hover{transform:scale(1.08)}
 #chatFab.hidden{display:none}
 /* Recent symbol-lookup chips. Rendered below the header symbol-search form
@@ -962,7 +962,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   /* --- AI investment KPIs / Research benchmarks (#aiInvestmentKpisCard,
      #aiWhitepaperKpisCard) ---------------------------------------------
-     Each KPI is rendered as an INNER <div class="chart-card"> with inline
+     Each KPI is rendered as an INNER <div class="v2-card"> with inline
      padding:12px 14px, an inline 24px value, an 11px label, source text,
      plus a delta pill — and the outer grid uses inline
      repeat(auto-fit,minmax(220px,1fr)) which collapses to 1-up on phones,
@@ -978,26 +978,26 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   }
   /* Inner KPI cell: shrink padding + radius. Inline padding on the inner
      <div> wrapper still applies, so override that too via descendant. */
-  #aiInvestmentKpis > .chart-card,
-  #aiInvestmentKpis > a.chart-card,
-  #aiWhitepaperKpis > .chart-card,
-  #aiWhitepaperKpis > a.chart-card{
+  #aiInvestmentKpis > .v2-card,
+  #aiInvestmentKpis > a.v2-card,
+  #aiWhitepaperKpis > .v2-card,
+  #aiWhitepaperKpis > a.v2-card{
     padding:0 !important;
     border-radius:6px;
   }
-  #aiInvestmentKpis > .chart-card > div,
-  #aiInvestmentKpis > a.chart-card > div,
-  #aiWhitepaperKpis > .chart-card > div,
-  #aiWhitepaperKpis > a.chart-card > div{
+  #aiInvestmentKpis > .v2-card > div,
+  #aiInvestmentKpis > a.v2-card > div,
+  #aiWhitepaperKpis > .v2-card > div,
+  #aiWhitepaperKpis > a.v2-card > div{
     padding:8px 10px !important;
     gap:4px !important;
   }
   /* Label row (uppercase, 11px). Drop to 10px and clamp to 2 lines so
      long labels don't cause uneven card heights. */
-  #aiInvestmentKpis > .chart-card > div > div:first-child,
-  #aiInvestmentKpis > a.chart-card > div > div:first-child,
-  #aiWhitepaperKpis > .chart-card > div > div:first-child,
-  #aiWhitepaperKpis > a.chart-card > div > div:first-child{
+  #aiInvestmentKpis > .v2-card > div > div:first-child,
+  #aiInvestmentKpis > a.v2-card > div > div:first-child,
+  #aiWhitepaperKpis > .v2-card > div > div:first-child,
+  #aiWhitepaperKpis > a.v2-card > div > div:first-child{
     font-size:9px !important;
     letter-spacing:.03em !important;
     line-height:1.25 !important;
@@ -1005,35 +1005,35 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   /* Big value (was 24px, way too dominant in a 160px-wide cell on 360px
      phones). Drop to 17px. The inline "unit" span inside scales with em
      so it's covered too. */
-  #aiInvestmentKpis > .chart-card > div > div:nth-child(2),
-  #aiInvestmentKpis > a.chart-card > div > div:nth-child(2),
-  #aiWhitepaperKpis > .chart-card > div > div:nth-child(2),
-  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(2){
+  #aiInvestmentKpis > .v2-card > div > div:nth-child(2),
+  #aiInvestmentKpis > a.v2-card > div > div:nth-child(2),
+  #aiWhitepaperKpis > .v2-card > div > div:nth-child(2),
+  #aiWhitepaperKpis > a.v2-card > div > div:nth-child(2){
     font-size:17px !important;
     line-height:1.1 !important;
   }
-  #aiInvestmentKpis > .chart-card > div > div:nth-child(2) span,
-  #aiInvestmentKpis > a.chart-card > div > div:nth-child(2) span,
-  #aiWhitepaperKpis > .chart-card > div > div:nth-child(2) span,
-  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(2) span{
+  #aiInvestmentKpis > .v2-card > div > div:nth-child(2) span,
+  #aiInvestmentKpis > a.v2-card > div > div:nth-child(2) span,
+  #aiWhitepaperKpis > .v2-card > div > div:nth-child(2) span,
+  #aiWhitepaperKpis > a.v2-card > div > div:nth-child(2) span{
     font-size:10px !important;
   }
   /* Delta pill row: shrink the pill so it doesn't push the prior label
      to its own row in a 160px cell. */
-  #aiInvestmentKpis > .chart-card > div > div:nth-child(3) > span,
-  #aiInvestmentKpis > a.chart-card > div > div:nth-child(3) > span,
-  #aiWhitepaperKpis > .chart-card > div > div:nth-child(3) > span,
-  #aiWhitepaperKpis > a.chart-card > div > div:nth-child(3) > span{
+  #aiInvestmentKpis > .v2-card > div > div:nth-child(3) > span,
+  #aiInvestmentKpis > a.v2-card > div > div:nth-child(3) > span,
+  #aiWhitepaperKpis > .v2-card > div > div:nth-child(3) > span,
+  #aiWhitepaperKpis > a.v2-card > div > div:nth-child(3) > span{
     padding:1px 6px !important;
     font-size:10px !important;
   }
   /* Hide the source attribution line on phone — same info is on the
      desktop view, and tapping the card opens the source URL anyway.
      Saves ~16px per cell × N cells. */
-  #aiInvestmentKpis > .chart-card > div > div.sub,
-  #aiInvestmentKpis > a.chart-card > div > div.sub,
-  #aiWhitepaperKpis > .chart-card > div > div.sub,
-  #aiWhitepaperKpis > a.chart-card > div > div.sub{
+  #aiInvestmentKpis > .v2-card > div > div.sub,
+  #aiInvestmentKpis > a.v2-card > div > div.sub,
+  #aiWhitepaperKpis > .v2-card > div > div.sub,
+  #aiWhitepaperKpis > a.v2-card > div > div.sub{
     display:none !important;
   }
 
@@ -1193,17 +1193,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 </div>
 
-<!-- ============ SIGNAL DETAIL MODAL (top-20 strip → full breakdown) ============ -->
-<div id="signalDetailModal" class="modal-bg hidden">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px;width:min(720px,100%);max-height:90vh;display:flex;flex-direction:column;gap:8px;overflow:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <h2 id="signalDetailTitle" style="margin:0;font-size:14px">Signal detail</h2>
-      <button class="btn" id="signalDetailClose" aria-label="Close signal detail">×</button>
-    </div>
-    <div id="signalDetailBody"></div>
-  </div>
-</div>
-
 <!-- ============ STOCK DETAIL MODAL (Stocks tab card → full breakdown) ============ -->
 <div id="stockDetailModal" class="modal-bg hidden">
   <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(820px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
@@ -1295,8 +1284,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <p><strong>POC price</strong> — fair-value magnet. <strong>VAH / VAL</strong> — the top and bottom of the 70% Value Area. <span class="tag">IN VA</span> means current price sits inside that band (consolidation / accepted value). <span class="tag">OUTSIDE</span> means price has broken above VAH or below VAL.</p>
 
       <p style="margin-top:6px"><strong>The big arrow on each card</strong> tells you which way value is migrating:
-      <span style="color:#22c55e;font-weight:700">↑ UP</span> means the POC is drifting higher (accumulation) ·
-      <span style="color:#ef4444;font-weight:700">↓ DOWN</span> means the POC is drifting lower (distribution) ·
+      <span style="color:var(--v2-good);font-weight:700">↑ UP</span> means the POC is drifting higher (accumulation) ·
+      <span style="color:var(--v2-bad);font-weight:700">↓ DOWN</span> means the POC is drifting lower (distribution) ·
       <span style="color:var(--muted);font-weight:700">· FLAT</span> means value is stable.
       The little chart on each card is the 30d POC's drift over the last 90 days. Distance % shows where current price sits relative to that POC.</p>
 
@@ -1396,7 +1385,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          score avg, and average perp funding rate. Rendered by
          renderOverviewSentiment(). Mirrors the visual pattern of
          #pocSentimentCard on the POC tab. -->
-    <div class="card" id="overviewSentimentCard" style="padding:14px 16px;margin-bottom:6px;border-left:4px solid #a78bfa">
+    <div class="card" id="overviewSentimentCard" style="padding:14px 16px;margin-bottom:6px;border-left:4px solid var(--v2-ai)">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 CRYPTO MARKET SENTIMENT</div>
@@ -1408,14 +1397,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:0%" id="overviewSentimentBarPos"></div>
+        <div style="background:var(--v2-good);width:0%" id="overviewSentimentBarPos"></div>
         <div style="background:#94a3b8;width:0%" id="overviewSentimentBarNeu"></div>
-        <div style="background:#ef4444;width:0%" id="overviewSentimentBarNeg"></div>
+        <div style="background:var(--v2-bad);width:0%" id="overviewSentimentBarNeg"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-        <span style="color:#22c55e">BULLISH inputs</span>
+        <span style="color:var(--v2-good)">BULLISH inputs</span>
         <span>NEUTRAL</span>
-        <span style="color:#ef4444">BEARISH inputs</span>
+        <span style="color:var(--v2-bad)">BEARISH inputs</span>
       </div>
     </div>
 
@@ -1440,15 +1429,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div>
 
-    <!-- Top 25 by market cap: structural "what's the market doing" view.
-         Re-sorts signals_top20 by CoinGecko market-cap rank (not by score)
-         so the largest 25 coins are always visible, regardless of bull/bear.
-         Each card shows symbol + price + label + score, click → full modal. -->
+    <!-- Other top coins by market cap: structural "what's the rest of the
+         market doing" view. The four pinned assets (BTC/ETH/LINK/LTC)
+         already appear in their own big cards above with signal score
+         surfaced — this grid skips them so cards don't duplicate. -->
     <div id="overviewTop15Wrap" class="v2-card hidden" style="margin-top:6px">
       <div class="v2-card__head">
         <div>
-          <h2 class="v2-card__title">🏆 Top 25 by market cap</h2>
-          <div class="v2-card__subtitle">Largest 25 coins · price + signal · click any card for the full breakdown</div>
+          <h2 class="v2-card__title">🏆 Other top coins by market cap</h2>
+          <div class="v2-card__subtitle">Top non-pinned coins · price + signal · click any card for the full breakdown</div>
         </div>
       </div>
       <div class="v2-card__body">
@@ -1533,7 +1522,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="v2-card">
       <div class="v2-card__head">
         <div>
-          <h2 class="v2-card__title">Breaking news</h2>
+          <h2 class="v2-card__title">More headlines</h2>
           <div class="v2-card__subtitle">latest crypto headlines</div>
         </div>
       </div>
@@ -1547,7 +1536,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <!-- ETF FLOW SENTIMENT — composite of 7d net flow sum and 30d net flow
          sum, weighted 60/40 toward the 7d. Tracks the BTC/ETH toggle below.
          Rendered by renderEtfFlowSentiment(). -->
-    <div class="card" id="etfFlowSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+    <div class="card" id="etfFlowSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">💰 ETF FLOW SENTIMENT</div>
@@ -1559,14 +1548,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:0%" id="etfFlowSentimentBarPos"></div>
+        <div style="background:var(--v2-good);width:0%" id="etfFlowSentimentBarPos"></div>
         <div style="background:#94a3b8;width:0%" id="etfFlowSentimentBarNeu"></div>
-        <div style="background:#ef4444;width:0%" id="etfFlowSentimentBarNeg"></div>
+        <div style="background:var(--v2-bad);width:0%" id="etfFlowSentimentBarNeg"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-        <span style="color:#22c55e">INFLOWS</span>
+        <span style="color:var(--v2-good)">INFLOWS</span>
         <span>BALANCED</span>
-        <span style="color:#ef4444">OUTFLOWS</span>
+        <span style="color:var(--v2-bad)">OUTFLOWS</span>
       </div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px">
@@ -1688,7 +1677,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <!-- FUTURES POSITIONING SENTIMENT — composite of funding rate, long/short
            ratio, and 7d OI change for the currently-selected asset. Rendered
            by renderFuturesSentiment(). -->
-      <div class="card" id="futuresSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div class="card" id="futuresSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🎯 FUTURES POSITIONING SENTIMENT</div>
@@ -1700,14 +1689,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-          <div style="background:#22c55e;width:0%" id="futuresSentimentBarPos"></div>
+          <div style="background:var(--v2-good);width:0%" id="futuresSentimentBarPos"></div>
           <div style="background:#94a3b8;width:0%" id="futuresSentimentBarNeu"></div>
-          <div style="background:#ef4444;width:0%" id="futuresSentimentBarNeg"></div>
+          <div style="background:var(--v2-bad);width:0%" id="futuresSentimentBarNeg"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">CROWDED LONGS</span>
+          <span style="color:var(--v2-good)">CROWDED LONGS</span>
           <span>BALANCED</span>
-          <span style="color:#ef4444">CROWDED SHORTS</span>
+          <span style="color:var(--v2-bad)">CROWDED SHORTS</span>
         </div>
       </div>
       <!-- Per-tab asset toggle: BTC / ETH / LINK / LTC (full original set with
@@ -1868,7 +1857,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card">
           <div class="v2-card__head">
             <div>
-              <h2 class="v2-card__title">ETH/BTC ratio <span class="tag">CoinGecko</span></h2>
+              <h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Price of 1 ETH expressed in BTC. Falls when BTC outperforms; rises when ETH outperforms. ~6-month extremes often mark rotation pivots.">ETH/BTC ratio</span> <span class="tag">CoinGecko</span></h2>
               <div class="v2-card__subtitle">Relative strength</div>
             </div>
           </div>
@@ -1942,7 +1931,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            top-50 most-active stocks (DATA.market.stocks_signals). Mirrors the
            POC sentiment card pattern: net index in [-100,+100] (positive =
            broad buy, negative = broad sell). Rendered by renderStocksSentiment(). -->
-      <div class="card" id="stocksSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div class="card" id="stocksSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 STOCK SIGNAL SENTIMENT — TOP 50 MOST ACTIVE</div>
@@ -1954,14 +1943,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="stocksSentimentBar">
-          <div style="background:#22c55e;width:0%" id="stocksSentimentBarBuy"></div>
-          <div style="background:#f59e0b;width:0%" id="stocksSentimentBarHold"></div>
-          <div style="background:#ef4444;width:0%" id="stocksSentimentBarSell"></div>
+          <div style="background:var(--v2-good);width:0%" id="stocksSentimentBarBuy"></div>
+          <div style="background:var(--v2-warn);width:0%" id="stocksSentimentBarHold"></div>
+          <div style="background:var(--v2-bad);width:0%" id="stocksSentimentBarSell"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">↑ <span id="stocksSentimentBuyCount">0</span> BUY+</span>
+          <span style="color:var(--v2-good)">↑ <span id="stocksSentimentBuyCount">0</span> BUY+</span>
           <span>· <span id="stocksSentimentHoldCount">0</span> HOLD</span>
-          <span style="color:#ef4444">↓ <span id="stocksSentimentSellCount">0</span> SELL+</span>
+          <span style="color:var(--v2-bad)">↓ <span id="stocksSentimentSellCount">0</span> SELL+</span>
         </div>
       </div>
       <!-- Signal breadth chart (top of tab, before filter chips) -->
@@ -2143,7 +2132,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            top-50 by market cap (DATA.signals_top20). Mirrors the POC sentiment
            card pattern: net index in [-100,+100] (positive = broad buy signals,
            negative = broad sell signals). Rendered by renderCryptoSignalsSentiment(). -->
-      <div class="card" id="cryptoSignalsSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+      <div class="card" id="cryptoSignalsSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📈 CRYPTO SIGNAL SENTIMENT — TOP 50 BY MARKET CAP</div>
@@ -2155,14 +2144,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
         </div>
         <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="cryptoSignalsSentimentBar">
-          <div style="background:#22c55e;width:0%" id="cryptoSignalsSentimentBarBuy"></div>
-          <div style="background:#f59e0b;width:0%" id="cryptoSignalsSentimentBarHold"></div>
-          <div style="background:#ef4444;width:0%" id="cryptoSignalsSentimentBarSell"></div>
+          <div style="background:var(--v2-good);width:0%" id="cryptoSignalsSentimentBarBuy"></div>
+          <div style="background:var(--v2-warn);width:0%" id="cryptoSignalsSentimentBarHold"></div>
+          <div style="background:var(--v2-bad);width:0%" id="cryptoSignalsSentimentBarSell"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">↑ <span id="cryptoSignalsSentimentBuyCount">0</span> BUY+</span>
+          <span style="color:var(--v2-good)">↑ <span id="cryptoSignalsSentimentBuyCount">0</span> BUY+</span>
           <span>· <span id="cryptoSignalsSentimentHoldCount">0</span> HOLD</span>
-          <span style="color:#ef4444">↓ <span id="cryptoSignalsSentimentSellCount">0</span> SELL+</span>
+          <span style="color:var(--v2-bad)">↓ <span id="cryptoSignalsSentimentSellCount">0</span> SELL+</span>
         </div>
       </div>
       <!-- Signal breadth chart (top of tab) -->
@@ -2232,7 +2221,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
              Computes UP / DOWN / FLAT migration counts + a net index in
              [-100,+100] (positive = broad accumulation, negative = broad
              distribution). Rendered by renderPocSentimentIndex(). -->
-        <div class="card" id="pocSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+        <div class="card" id="pocSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
             <div>
               <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🐋 POC SENTIMENT — TOP 50 BY MARKET CAP</div>
@@ -2244,14 +2233,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             </div>
           </div>
           <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533" id="pocSentimentBar">
-            <div style="background:#22c55e;width:0%" id="pocSentimentBarUp"></div>
+            <div style="background:var(--v2-good);width:0%" id="pocSentimentBarUp"></div>
             <div style="background:#94a3b8;width:0%" id="pocSentimentBarFlat"></div>
-            <div style="background:#ef4444;width:0%" id="pocSentimentBarDown"></div>
+            <div style="background:var(--v2-bad);width:0%" id="pocSentimentBarDown"></div>
           </div>
           <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-            <span style="color:#22c55e">↑ <span id="pocSentimentUpCount">0</span> UP</span>
+            <span style="color:var(--v2-good)">↑ <span id="pocSentimentUpCount">0</span> UP</span>
             <span>· <span id="pocSentimentFlatCount">0</span> FLAT</span>
-            <span style="color:#ef4444">↓ <span id="pocSentimentDownCount">0</span> DOWN</span>
+            <span style="color:var(--v2-bad)">↓ <span id="pocSentimentDownCount">0</span> DOWN</span>
           </div>
         </div>
 
@@ -2291,7 +2280,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="defiContent">
     <!-- DEFI SENTIMENT — composite of TVL-weighted 7d chain momentum and
          stablecoin mcap 7d change. Rendered by renderDefiSentiment(). -->
-    <div class="card" id="defiSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+    <div class="card" id="defiSentimentCard" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--v2-ai)">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🌊 DEFI SENTIMENT</div>
@@ -2303,14 +2292,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
       <div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:0%" id="defiSentimentBarPos"></div>
+        <div style="background:var(--v2-good);width:0%" id="defiSentimentBarPos"></div>
         <div style="background:#94a3b8;width:0%" id="defiSentimentBarNeu"></div>
-        <div style="background:#ef4444;width:0%" id="defiSentimentBarNeg"></div>
+        <div style="background:var(--v2-bad);width:0%" id="defiSentimentBarNeg"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-        <span style="color:#22c55e">EXPANSION</span>
+        <span style="color:var(--v2-good)">EXPANSION</span>
         <span>STABLE</span>
-        <span style="color:#ef4444">CONTRACTION</span>
+        <span style="color:var(--v2-bad)">CONTRACTION</span>
       </div>
     </div>
     <!-- 4-card KPI strip (mirrors Whale tab pattern) -->
@@ -2357,7 +2346,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card__head"><div><h2 class="v2-card__title">Top 15 DeFi protocols (global)</h2><div class="v2-card__subtitle">All chains · by TVL · 1d/7d/30d %</div></div></div>
         <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiProtocolsTable">
-            <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th>TVL</th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
+            <thead><tr><th>#</th><th>Protocol</th><th>Category</th><th><span class="v2-tip-anchor" data-v2-tip="Total Value Locked: USD value of assets deposited into a chain or protocol&#39;s smart contracts. Cycle peak indicator; sustained growth = real adoption.">TVL</span></th><th>1d</th><th>7d</th><th>30d</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -2366,7 +2355,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card__head"><div><h2 class="v2-card__title">Top stablecoin yields</h2><div class="v2-card__subtitle">Sorted by TVL, ≥$5M</div></div></div>
         <div class="v2-card__body" style="max-height:380px;overflow:auto">
           <table id="defiYieldsTable">
-            <thead><tr><th>Pool</th><th>Chain</th><th>TVL</th><th>APY</th></tr></thead>
+            <thead><tr><th>Pool</th><th>Chain</th><th><span class="v2-tip-anchor" data-v2-tip="Total Value Locked: USD value of assets deposited into the pool's smart contracts. Cycle peak indicator; sustained growth = real adoption.">TVL</span></th><th><span class="v2-tip-anchor" data-v2-tip="Annualized percentage yield on a stablecoin lending or LP position. >5% on a $5M+ TVL pool is competitive.">APY</span></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -2488,7 +2477,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div id="whaleBtcPanel">
       <div class="note">Free BTC on-chain proxies (blockchain.info + bitinfocharts cohorts). Glassnode-level metrics (true exchange flows, SOPR) require paid feed.</div>
       <!-- Headline: Whale Sentiment Index (composite ±100 from on-chain proxies) -->
-      <div class="chart-card" id="whaleSentimentCard" style="position:relative"></div>
+      <div class="v2-card whaleSentimentCard" id="whaleSentimentCard" style="position:relative"></div>
       <div class="row" id="whaleKpis"></div>
       <div class="v2-card">
         <div class="v2-card__head"><div style="min-width:0">
@@ -2567,11 +2556,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <!-- BTC network state additions -->
       <div class="grid2">
         <div class="card" style="padding:12px 14px">
-          <h3>Difficulty adjustment</h3>
+          <h3><span class="v2-tip-anchor" data-v2-tip="BTC mining difficulty resets every 2,016 blocks (~2 weeks) to keep block times near 10 min. Positive adjustments = network is growing.">Difficulty adjustment</span></h3>
           <div id="diffAdjBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
         </div>
         <div class="card" style="padding:12px 14px">
-          <h3>Lightning Network</h3>
+          <h3><span class="v2-tip-anchor" data-v2-tip="Total BTC locked in Lightning Network channels. Proxy for off-chain L2 adoption.">Lightning Network</span></h3>
           <div id="lightningBox" class="sub" style="font-size:12px;color:var(--muted);line-height:1.5"></div>
         </div>
       </div>
@@ -2591,11 +2580,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="grid2">
         <div class="v2-card">
-          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Active addresses</h2><div class="v2-card__subtitle">Unique addresses used per day</div></div></div>
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Unique addresses transacting in the last 24h. Proxy for network usage; large swings often precede price moves.">Active addresses</span></h2><div class="v2-card__subtitle">Unique addresses used per day</div></div></div>
           <div class="v2-card__body"><div class="chart-wrap"><canvas id="addrChart"></canvas></div></div>
         </div>
         <div class="v2-card">
-          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title">Hash rate (TH/s)</h2><div class="v2-card__subtitle">Miner commitment, log scale</div></div></div>
+          <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Total computational power securing the BTC network (EH/s). Rising = stronger miner confidence and security; falling = miner stress.">Hash rate</span> (TH/s)</h2><div class="v2-card__subtitle">Miner commitment, log scale</div></div></div>
           <div class="v2-card__body"><div class="chart-wrap"><canvas id="hashChart"></canvas></div></div>
         </div>
       </div>
@@ -2623,7 +2612,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div id="whaleEthPanel" class="hidden">
         <div class="note">ETH whale view: Blockchair (24h tx, largest tx, supply) + Coin Metrics Community (active addresses, transfer volume). True ETH whale cohorts (≥10K ETH addresses) require a paid feed.</div>
         <!-- Headline: ETH Whale Sentiment Index (composite ±100 from on-chain proxies) -->
-        <div class="chart-card" id="whaleEthSentimentCard" style="position:relative"></div>
+        <div class="v2-card whaleEthSentimentCard" id="whaleEthSentimentCard" style="position:relative"></div>
         <div class="row" id="whaleEthKpis"></div>
         <!-- Recent ETH whale tx feed — promoted directly after Sentiment+KPIs
              to mirror the BTC panel ordering. Hidden until data arrives. -->
@@ -2776,7 +2765,7 @@ window.addEventListener('error', e => {
     b.id = '__jsErrBanner';
     b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;'
       + 'background:#7f1d1d;color:#fff;padding:8px 14px;font:12px/1.4 monospace;'
-      + 'border-bottom:2px solid #ef4444;cursor:pointer;white-space:pre-wrap';
+      + 'border-bottom:2px solid var(--v2-bad);cursor:pointer;white-space:pre-wrap';
     const where = e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno : '';
     b.textContent = '⚠ JS error: ' + (e.message || 'unknown') + where +
       '\n(click to dismiss)';
@@ -3388,7 +3377,7 @@ function renderTradingKpis(){
 
   const items = [
     {label:'Spot price', val: lastPrice ? fmtUSD(lastPrice.value, 'auto') : '—', sub: chgPct!=null ? (chgPct>=0?'+':'')+(chgPct*100).toFixed(2)+'% ' + lbLabel : '', cls: chgPct==null?'':(chgPct>=0?'green':'red')},
-    {label:'24h volume', val: lastVol ? fmtUSD(lastVol.value,'auto') : '—'},
+    {label:'<span class="v2-tip-anchor" data-v2-tip="24h trading volume in USD. Rising volume confirms price moves; falling volume on a rally = weakening conviction.">24h volume</span>', val: lastVol ? fmtUSD(lastVol.value,'auto') : '—'},
     {label:'Market cap', val: a.market_cap && a.market_cap.length ? fmtUSD(a.market_cap.slice(-1)[0].value,'auto') : '—'},
     {label:'Funding rate', val: lastFund ? (lastFund.rate*100).toFixed(4)+'%' : '—', cls: lastFund ? (lastFund.rate>=0?'green':'red') : '', sub: lastFund ? lastFund.date : ''},
     {label:'Open interest', val: lastOI ? fmtUSD(lastOI.oi_usd,'auto') : '—'},
@@ -3399,11 +3388,11 @@ function renderTradingKpis(){
     // "LINK dominance" metric, so fall back to the broader BTC dominance
     // (the macro-context number most relevant regardless of asset focus).
     (state.asset === 'btc')
-      ? {label:'BTC dominance', val: fmtNum(g.btc_dominance,2)+'%'}
+      ? {label:'<span class="v2-tip-anchor" data-v2-tip="BTC&#39;s share of total crypto market cap. Rising dominance = capital concentrating in BTC (risk-off rotation); falling = alt-season.">BTC dominance</span>', val: fmtNum(g.btc_dominance,2)+'%'}
       : (state.asset === 'eth')
         ? {label:'ETH dominance', val: fmtNum(g.eth_dominance,2)+'%'}
-        : {label:'BTC dominance', val: fmtNum(g.btc_dominance,2)+'%', sub:'macro context'},
-    {label:'ETH/BTC', val: ethbtc ? ethbtc.value.toFixed(5) : '—'},
+        : {label:'<span class="v2-tip-anchor" data-v2-tip="BTC&#39;s share of total crypto market cap. Rising dominance = capital concentrating in BTC (risk-off rotation); falling = alt-season.">BTC dominance</span>', val: fmtNum(g.btc_dominance,2)+'%', sub:'macro context'},
+    {label:'<span class="v2-tip-anchor" data-v2-tip="Price of 1 ETH expressed in BTC. Falls when BTC outperforms; rises when ETH outperforms. ~6-month extremes often mark rotation pivots.">ETH/BTC</span>', val: ethbtc ? ethbtc.value.toFixed(5) : '—'},
   ];
   document.getElementById('tradingKpis').innerHTML = items.map(i =>
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
@@ -3629,9 +3618,9 @@ function renderEthBtc(){
 function renderGlobalTable(){
   const g = (DATA.market||{}).global || {};
   const rows = [
-    ['Total market cap (all crypto)', fmtUSD(g.total_market_cap_usd,'auto')],
+    ['<span class="v2-tip-anchor" data-v2-tip="Sum of all cryptocurrency market caps tracked by CoinGecko. The cycle reference number.">Total market cap (all crypto)</span>', fmtUSD(g.total_market_cap_usd,'auto')],
     ['Total 24h volume', fmtUSD(g.total_volume_usd,'auto')],
-    ['BTC dominance', fmtNum(g.btc_dominance,2)+'%'],
+    ['<span class="v2-tip-anchor" data-v2-tip="BTC&#39;s share of total crypto market cap. Rising dominance = capital concentrating in BTC (risk-off rotation); falling = alt-season.">BTC dominance</span>', fmtNum(g.btc_dominance,2)+'%'],
     ['ETH dominance', fmtNum(g.eth_dominance,2)+'%'],
     ['Active cryptocurrencies', fmtNum(g.active_cryptos,0)],
   ];
@@ -3641,16 +3630,16 @@ function renderGlobalTable(){
 // ---------- Signals tab ----------
 function signalColor(score){
   if (score >= 50) return '#16a34a';
-  if (score >= 20) return '#22c55e';
-  if (score > -20) return '#f59e0b';
-  if (score > -50) return '#ef4444';
+  if (score >= 20) return 'var(--v2-good)';
+  if (score > -20) return 'var(--v2-warn)';
+  if (score > -50) return 'var(--v2-bad)';
   return '#b91c1c';
 }
 
 function renderSignalCard(asset, container){
   const s = (DATA.signals||{})[asset];
   if (!s){
-    return `<div class="chart-card"><h2 style="margin:0">${asset.toUpperCase()}</h2><div class="empty">No signal — need more price history</div></div>`;
+    return `<div class="v2-card"><h2 class="v2-card__title" style="margin:0">${asset.toUpperCase()}</h2><div class="empty">No signal — need more price history</div></div>`;
   }
   const color = signalColor(s.score);
   const accent = accentFor(asset);
@@ -3662,18 +3651,18 @@ function renderSignalCard(asset, container){
   // Gauge: -100 to +100, 0 in middle
   const pct = ((s.score + 100) / 200) * 100;
   return `
-    <div class="chart-card" style="position:relative">
-      <div class="head" style="align-items:flex-start">
-        <div>
-          <h2 style="font-size:15px">${asset.toUpperCase()} <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score: 50d SMA, RSI(14), MACD signal cross, 5d momentum, volume z-score, 50/200 SMA cross. ≥50 STRONG BUY; ≤-50 STRONG SELL.">signal</span> <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
-          <div class="desc">as of ${escapeHtml(s.as_of)}</div>
+    <div class="v2-card" style="position:relative">
+      <div class="v2-card__head" style="align-items:flex-start">
+        <div style="min-width:0">
+          <h2 class="v2-card__title" style="font-size:15px">${asset.toUpperCase()} <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score: 50d SMA, RSI(14), MACD signal cross, 5d momentum, volume z-score, 50/200 SMA cross. ≥50 STRONG BUY; ≤-50 STRONG SELL.">signal</span> <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
+          <div class="v2-card__subtitle">as of ${escapeHtml(s.as_of)}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${s.label}</div>
           <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
         </div>
       </div>
-      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       ${signalScoreSparkline(s.history)}
@@ -3736,9 +3725,9 @@ function renderCryptoSignalsSentiment(){
               : net >  -20 ? 'NEUTRAL'
               : net >  -50 ? 'DISTRIBUTION'
               :              'STRONG DISTRIBUTION';
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   const scoreEl   = document.getElementById('cryptoSignalsSentimentScore');
   const labelEl   = document.getElementById('cryptoSignalsSentimentLabel');
   const sublineEl = document.getElementById('cryptoSignalsSentimentSubline');
@@ -3904,7 +3893,7 @@ function renderSignalSparkline(s){
 // Mirrors renderSignalCard(asset) but keys off the object directly so the
 // modal works for any coin, not just the four pinned in DATA.signals.
 function renderSignalCardFromObj(s){
-  if (!s) return '<div class="chart-card"><div class="empty">No data available.</div></div>';
+  if (!s) return '<div class="v2-card"><div class="empty">No data available.</div></div>';
   const color = signalColor(s.score);
   const sym = (s.symbol||'').toUpperCase();
   const compRows = (s.components||[]).map(c => {
@@ -3917,18 +3906,18 @@ function renderSignalCardFromObj(s){
     ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1?2:6})
     : '—';
   return `
-    <div class="chart-card" style="position:relative">
-      <div class="head" style="align-items:flex-start">
-        <div>
-          <h2 style="font-size:15px">${sym} signal <span class="tag">${priceStr}</span></h2>
-          <div class="desc">${escapeHtml(s.name||'')} · as of ${escapeHtml(s.as_of||'')}</div>
+    <div class="v2-card" style="position:relative">
+      <div class="v2-card__head" style="align-items:flex-start">
+        <div style="min-width:0">
+          <h2 class="v2-card__title" style="font-size:15px">${sym} signal <span class="tag">${priceStr}</span></h2>
+          <div class="v2-card__subtitle">${escapeHtml(s.name||'')} · as of ${escapeHtml(s.as_of||'')}</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
           <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
         </div>
       </div>
-      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
         <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       ${renderSignalSparkline(s)}
@@ -3975,7 +3964,7 @@ function renderTop20Signals(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
+    return `<div class="card" data-symbol="${sym}" data-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:80px;max-height:100px;border-left:3px solid ${color};transition:transform .08s ease,background .08s ease">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">
@@ -4111,14 +4100,14 @@ function renderPerCoinSignalList(){
       : 'Recent price trend · click for full breakdown';
     // Block A: rich signal card (score + components).
     chunks.push(
-      `<div data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
+      `<div data-per-coin-symbol="${escapeHtml(sym)}" role="button" tabindex="0" aria-label="Open ${escapeHtml(sym)} signal detail" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">` +
       renderSignalCardFromObj(s) +
       `</div>`
     );
     // Block B: history/price chart card.
     chunks.push(
-      `<div class="chart-card" data-per-coin-symbol="${escapeHtml(sym)}" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
-        <div class="head"><h2>${escapeHtml(chartTitle)}</h2><span class="desc">${chartDesc}</span></div>
+      `<div class="v2-card" data-per-coin-symbol="${escapeHtml(sym)}" role="button" tabindex="0" aria-label="Open ${escapeHtml(sym)} signal detail" style="cursor:pointer" title="Click to open ${escapeHtml(sym)} signal detail">
+        <div class="v2-card__head"><h2 class="v2-card__title">${escapeHtml(chartTitle)}</h2><span class="v2-card__subtitle">${chartDesc}</span></div>
         <div class="chart-wrap"><canvas id="perCoinChart-${escapeHtml(sym)}"></canvas></div>
       </div>`
     );
@@ -4213,10 +4202,9 @@ function openSignalDetail(sym){
   if (!sym) return;
   if (typeof lookupSymbol === 'function') lookupSymbol(String(sym));
 }
-function closeSignalDetail(){
-  const m = document.getElementById('signalDetailModal');
-  if (m) m.classList.add('hidden');
-}
+// (closeSignalDetail removed — the legacy #signalDetailModal element was
+// retired in wave 4a so nothing references this function. The Escape
+// handler that used to call it was rewired in wireTop20Modals below.)
 
 // Apply the active Top-50 filter chip — hides both whole sections and any
 // individual cards whose bucket doesn't match. Chip semantics:
@@ -4253,8 +4241,6 @@ function applyTop20Filter(bucket){
 (function wireTop20Modals(){
   if (window._top20Wired) return; window._top20Wired = true;
   document.addEventListener('click', e => {
-    if (e.target && e.target.id === 'signalDetailClose') closeSignalDetail();
-    if (e.target && e.target.id === 'signalDetailModal') closeSignalDetail();
     const fb = e.target && e.target.closest && e.target.closest('[data-top20filter]');
     if (fb){
       const bucket = fb.getAttribute('data-top20filter');
@@ -4267,9 +4253,24 @@ function applyTop20Filter(bucket){
     const sigChart = e.target && e.target.closest && e.target.closest('[data-sig-asset]');
     if (sigChart) openSignalDetail(sigChart.getAttribute('data-sig-asset'));
   });
+  // Keyboard activation for every clickable coin card. Cards across all
+  // tabs carry role="button" + tabindex="0" + one of the data-* attrs
+  // below; one delegated handler keeps Enter/Space working everywhere
+  // without per-renderer duplication.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target;
+    if (!t || typeof t.getAttribute !== 'function') return;
+    const tag = (t.tagName || '').toUpperCase();
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const sym = t.getAttribute('data-symbol') || t.getAttribute('data-per-coin-symbol');
+    if (sym){
+      e.preventDefault();
+      openSignalDetail(sym);
+    }
+  });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-      closeSignalDetail();
       const pm = document.getElementById('pocExplainerModal');
       if (pm && !pm.classList.contains('hidden')) pm.classList.add('hidden');
     }
@@ -4415,17 +4416,17 @@ function renderWhaleSentiment(){
     return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
   }).join('');
   host.innerHTML = `
-    <div class="head" style="align-items:flex-start">
-      <div>
-        <h2 style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score from on-chain whale proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).">Whale Sentiment Index</span></h2>
-        <div class="desc">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+    <div class="v2-card__head" style="align-items:flex-start">
+      <div style="min-width:0">
+        <h2 class="v2-card__title" style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score from on-chain whale proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).">Whale Sentiment Index</span></h2>
+        <div class="v2-card__subtitle">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
         <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
       </div>
     </div>
-    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
       <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
     </div>
     <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
@@ -4551,7 +4552,7 @@ function renderWhaleKpisV2(){
       const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
       const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
       asOfEl.textContent = `data as of ${freshest} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})`;
-      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
+      asOfEl.style.color = ageDays > 7 ? 'var(--v2-warn)' : '';
     }
   }
 }
@@ -4587,7 +4588,7 @@ function renderWhaleKpis(){
     const d = delta1d(w.active_addresses);
     const avg30 = meanN(w.active_addresses, 30);
     items.push({
-      label: 'Active addresses',
+      label: '<span class="v2-tip-anchor" data-v2-tip="Unique addresses transacting in the last 24h. Proxy for network usage; large swings often precede price moves.">Active addresses</span>',
       val: cur ? fmtNum(cur.value, 0) : '—',
       cls: deltaClass(d),
       sub: `1d ${deltaStr(d)}${avg30 != null ? ` · 30d avg ${fmtNum(avg30, 0)}` : ''}`,
@@ -4645,7 +4646,7 @@ function renderWhaleKpis(){
     const d = delta1d(w.hash_rate);
     const eh = cur ? cur.value / 1e9 : null;
     items.push({
-      label: 'Hash rate',
+      label: '<span class="v2-tip-anchor" data-v2-tip="Total computational power securing the BTC network (EH/s). Rising = stronger miner confidence and security; falling = miner stress.">Hash rate</span>',
       val: eh != null ? fmtNum(eh, 0) + ' EH/s' : '—',
       cls: deltaClass(d),
       sub: `1d ${deltaStr(d)}`,
@@ -4759,7 +4760,7 @@ function renderWhaleKpis(){
       const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
       const ageStr = ageDays <= 0 ? 'today' : `${ageDays}d ago`;
       asOfEl.textContent = `data as of ${freshest} (${ageStr})`;
-      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
+      asOfEl.style.color = ageDays > 7 ? 'var(--v2-warn)' : '';
     }
   }
 }
@@ -4842,17 +4843,17 @@ function renderWhaleSentimentEth(){
     return `<tr><td>${escapeHtml(c.name)}</td><td>${escapeHtml(String(c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.explanation||'')}</td></tr>`;
   }).join('');
   host.innerHTML = `
-    <div class="head" style="align-items:flex-start">
-      <div>
-        <h2 style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics.">ETH Whale Sentiment Index</span></h2>
-        <div class="desc">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+    <div class="v2-card__head" style="align-items:flex-start">
+      <div style="min-width:0">
+        <h2 class="v2-card__title" style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics.">ETH Whale Sentiment Index</span></h2>
+        <div class="v2-card__subtitle">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
         <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${s.score>=0?'+':''}${s.score}</strong> / ±100</div>
       </div>
     </div>
-    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
       <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
     </div>
     <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
@@ -4911,7 +4912,7 @@ function renderWhaleEth(){
       const shortHash = hash.slice(0, 10) + '…' + hash.slice(-8);
       ltBox.innerHTML = `<strong style="color:var(--text);font-size:18px">${valFmt}</strong>
         <span style="color:var(--muted)"> in a single transaction</span><br>
-        <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`;
+        <a href="https://etherscan.io/tx/${hash}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`;
     } else {
       ltBox.innerHTML = V2.empty({
         icon: '🐋',
@@ -4952,7 +4953,7 @@ function renderWhaleEth(){
     if (edsNoKey){
       edsNoKey.classList.remove('hidden');
       edsNoKey.innerHTML = noKeyReason
-        ? 'Add <code>ETHERSCAN_API_KEY</code> to light up — free key from <a href="https://etherscan.io/apis" target="_blank" rel="noopener" style="color:#a78bfa">etherscan.io/apis</a>'
+        ? 'Add <code>ETHERSCAN_API_KEY</code> to light up — free key from <a href="https://etherscan.io/apis" target="_blank" rel="noopener" style="color:var(--v2-ai)">etherscan.io/apis</a>'
         : 'No data yet — Etherscan fetch may have failed or rate-limited.';
     }
   } else {
@@ -4995,7 +4996,7 @@ function renderWhaleEth(){
         <div>Blocks (24h): <strong style="color:var(--text)">${fmtNum(bc.blocks_24h||0, 0)}</strong></div>
         <div>Txs (24h): <strong style="color:var(--text)">${fmtNum(bc.transactions_24h||0, 0)}</strong></div>
         ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
-        ${burn != null ? `<div>EIP-1559 burn (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
+        ${burn != null ? `<div><span class="v2-tip-anchor" data-v2-tip="ETH base fee permanently destroyed by every transaction since the London upgrade. Net deflationary when burn > issuance.">EIP-1559 burn</span> (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
         ${erc20  != null ? `<div>ERC-20 tx (24h): <strong style="color:var(--text)">${fmtNum(erc20, 0)}</strong></div>` : ''}
         ${erc721 != null ? `<div>ERC-721 tx (24h): <strong style="color:var(--text)">${fmtNum(erc721, 0)}</strong></div>` : ''}`;
     } else {
@@ -5035,7 +5036,7 @@ function renderWhaleAlerts(){
       <td>${blk}</td>
       <td class="${cls}" style="text-align:right">${fmtUSD(t.value_usd, 'auto')}</td>
       <td style="text-align:right">${fmtNum(t.value_btc, 2)} BTC</td>
-      <td><a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortId} ↗</a></td>
+      <td><a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortId} ↗</a></td>
     </tr>`;
   }).join('');
 }
@@ -5066,7 +5067,7 @@ function renderEthWhaleAlerts(){
     const cls = (t.value_usd != null && t.value_usd >= 10_000_000) ? 'green' : '';
     const time = t.time ? escapeHtml(String(t.time)) : '—';
     const linkCell = hash
-      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
+      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`
       : '—';
     return `<tr>
       <td>${linkCell}</td>
@@ -5240,7 +5241,7 @@ function renderMultichainWhale(){
     const shortHash = hash ? (hash.slice(0,8) + '…' + hash.slice(-6)) : '—';
     const ltUsd = lt.value_usd != null ? fmtUSD(lt.value_usd, 'auto') : '—';
     const ltLink = hash
-      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none">${shortHash} ↗</a>`
+      ? `<a href="${txUrl}" target="_blank" rel="noopener" style="color:var(--v2-ai);text-decoration:none">${shortHash} ↗</a>`
       : '<span style="color:var(--muted)">—</span>';
     return `<div class="card" style="padding:12px 14px">
       <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px">
@@ -5589,11 +5590,11 @@ function renderCoverage(){
 // ---------- Insights bar ----------
 function severityColor(sev){
   return ({
-    good:   '#22c55e',
-    bad:    '#ef4444',
-    alert:  '#f59e0b',
-    info:   '#06b6d4',
-  })[sev] || '#a78bfa';
+    good:   'var(--v2-good)',
+    bad:    'var(--v2-bad)',
+    alert:  'var(--v2-warn)',
+    info:   'var(--v2-info)',
+  })[sev] || 'var(--v2-ai)';
 }
 function severityIcon(sev, kind){
   if (kind === 'milestone') return '🏁';
@@ -5656,8 +5657,10 @@ function renderInsights(){
       : `${label} · none right now`;
   }
   // Re-label the strong "Insights" header if present (the bar's title).
+  // Always set the strong header so a stale tab label doesn't linger
+  // after returning to Overview with the bar shown via the toggle.
   const headerStrong = host?.parentElement?.querySelector('strong');
-  if (headerStrong && tab !== 'overview') headerStrong.textContent = label;
+  if (headerStrong) headerStrong.textContent = (tab === 'overview') ? 'Insights' : label;
   if (!list.length){
     const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
     host.innerHTML = V2.empty({ icon: '📡', title: 'Insights warming up', sub: empty, warm: true });
@@ -6023,14 +6026,20 @@ function renderDefi(){
     ? '—'
     : `7d ${stable7d>=0?'+':''}${fmtUSD(stable7d,'auto')}`;
   const items = [
-    {label: 'Stablecoin mcap',  val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: stable7dStr},
-    {label: 'DEX 24h volume',   val: fmtUSD(llama.dex_volume_24h_usd,  'auto'), sub: 'DefiLlama'},
+    {label: 'Stablecoin mcap',  val: fmtUSD(llama.stablecoin_mcap_usd, 'auto'), sub: stable7dStr,
+     tip: 'Aggregate USD supply of all stablecoins (USDT, USDC, DAI, etc). Rising = sidelined capital available; falling = capital flight.'},
+    {label: 'DEX 24h volume',   val: fmtUSD(llama.dex_volume_24h_usd,  'auto'), sub: 'DefiLlama',
+     tip: 'On-chain decentralized-exchange trading volume in the last 24h. Reflects active spot trading not routed through CEXes.'},
     {label: 'Protocol fees 24h',val: fmtUSD(llama.fees_24h_usd,        'auto'), sub: 'DefiLlama'},
-    {label: 'Total DeFi TVL',   val: fmtUSD(totalTvl,                  'auto'), sub: `${chains.length} chains`},
+    {label: 'Total DeFi TVL',   val: fmtUSD(totalTvl,                  'auto'), sub: `${chains.length} chains`,
+     tip: 'Total Value Locked: USD value of assets deposited into DeFi smart contracts across all tracked chains. Cycle peak indicator; sustained growth = real adoption.'},
   ];
-  document.getElementById('defiKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${escapeHtml(i.label)}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${escapeHtml(i.sub)}</div>`:''}</div>`
-  ).join('');
+  document.getElementById('defiKpis').innerHTML = items.map(i => {
+    const labelHtml = i.tip
+      ? `<span class="v2-tip-anchor" data-v2-tip="${escapeHtml(i.tip)}">${escapeHtml(i.label)}</span>`
+      : escapeHtml(i.label);
+    return `<div class="card"><h3>${labelHtml}</h3><div class="v">${i.val}</div>${i.sub?`<div class="sub">${escapeHtml(i.sub)}</div>`:''}</div>`;
+  }).join('');
 
   // ---- Per-chain section (TVL history + summary + top protocols on chain) ----
   renderDefiChainSection();
@@ -6198,7 +6207,7 @@ function renderNews(){
   host.innerHTML = news.slice(0, 25).map(n =>
     `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
       <div style="font-size:12px;color:var(--muted);margin-bottom:3px">
-        <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+        <span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
       </div>
       <div style="font-size:13px;line-height:1.35;margin-bottom:3px">${escapeHtml(n.title||'')}</div>
       ${n.body ? `<div class="sub" style="font-size:11px;color:var(--muted)">${escapeHtml(n.body)}</div>` : ''}
@@ -6552,9 +6561,13 @@ function renderOverviewTop15(){
   const host = document.getElementById('overviewTop15');
   if (!wrap || !host) return;
   const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  // The four pinned assets (BTC/ETH/LINK/LTC) already render in their own
+  // big cards above this grid with their signal score chip surfaced. Skip
+  // them here so the grid is "OTHER coins worth watching."
+  const PINNED_ON_TOP = new Set(['BTC', 'ETH', 'LINK', 'LTC']);
   // signals_top20 is sorted by SCORE — re-sort by rank for this widget.
   const top15 = (DATA.signals_top20 || [])
-    .filter(s => s && !isStable(s.symbol))
+    .filter(s => s && !isStable(s.symbol) && !PINNED_ON_TOP.has((s.symbol || '').toUpperCase()))
     .slice()
     .sort((a,b) => (a.rank ?? 999) - (b.rank ?? 999))
     .slice(0, 25);
@@ -6574,7 +6587,7 @@ function renderOverviewTop15(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+    return `<div class="card" data-symbol="${sym}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
@@ -6624,7 +6637,7 @@ function renderOverviewStrongBuys(){
     const priceStr = (s.price != null)
       ? '$' + Number(s.price).toLocaleString(undefined, {maximumFractionDigits: s.price>=1000?0:s.price>=1?2:6})
       : '';
-    return `<div class="card" data-symbol="${sym}" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
+    return `<div class="card" data-symbol="${sym}" role="button" tabindex="0" aria-label="Open ${sym} signal detail" style="cursor:pointer;padding:8px 10px;display:flex;align-items:center;gap:9px;min-height:72px;border-left:3px solid ${color}">
       ${img}
       <div style="flex:1;min-width:0;overflow:hidden">
         <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
@@ -6665,12 +6678,15 @@ function getSignalOrder(){
 }
 
 function renderOverviewSignals(){
-  // Top-row asset cards on the Overview tab. Shows latest price, 24h
-  // % change, and 24h volume for each configured asset. Click jumps
-  // to the Trading tab for that asset.
+  // Top-row asset cards on the Overview tab. Shows latest price + 24h
+  // change + 24h volume + the composite signal score chip so the four
+  // pinned assets carry their own decision-relevant info up front
+  // (avoids duplicating them in the "Other top coins" grid below).
+  // Click opens the universal Signal + POC modal — same entry point as
+  // every other coin card on the dashboard.
   const market = DATA.market || {};
   const order = getSignalOrder();
-  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+  const accent = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || 'var(--v2-ai)';
   const ASSET_NAMES = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
   const fmtPrice = p => {
     if (p == null) return '—';
@@ -6685,6 +6701,7 @@ function renderOverviewSignals(){
   };
   const host = document.getElementById('overviewSignals');
   if (!host) return;
+  const sigsAll = DATA.signals || {};
   host.innerHTML = order.map(a => {
     const m = market[a] || {};
     const prices = m.price || [];
@@ -6693,13 +6710,22 @@ function renderOverviewSignals(){
     const prevP = prices.length > 1 ? prices[prices.length-2].value : null;
     const lastV = vols.length ? vols[vols.length-1].value : null;
     const pct = (lastP != null && prevP && prevP > 0) ? (lastP / prevP - 1) * 100 : null;
-    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? '#22c55e' : '#ef4444');
+    const pctColor = pct == null ? 'var(--muted)' : (pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const pctTxt  = pct == null ? '—' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
     const asOf = prices.length ? prices[prices.length-1].date : '—';
-    // 90-day price sparkline — uses the same renderSparkline helper as the
-    // Traditional Indices bar. SVG scales via viewBox; width is responsive
-    // (svg style="width:100%") so the chart fills the card regardless of
-    // grid column width. Hidden when there's not enough history (<2 points).
+    // Signal chip — label + score from DATA.signals[a].
+    const sig = sigsAll[a];
+    let signalChip = '';
+    if (sig && typeof sig.score === 'number'){
+      const sc = sig.score;
+      const lbl = sig.label || '';
+      const col = signalColor(sc);
+      const txt = lbl + ' ' + (sc >= 0 ? '+' : '') + sc;
+      signalChip = '<span style="background:' + col + '22;color:' + col +
+        ';border:1px solid ' + col + '55;padding:2px 8px;border-radius:4px;' +
+        'font-size:11px;font-weight:700;white-space:nowrap;letter-spacing:.02em">' +
+        escapeHtml(txt) + '</span>';
+    }
     const sparkVals = prices.slice(-90).map(p => p.value).filter(v => typeof v === 'number' && isFinite(v));
     const sparkUp = sparkVals.length >= 2 ? (sparkVals[sparkVals.length-1] >= sparkVals[0]) : true;
     const sparkSvg = sparkVals.length >= 2
@@ -6708,10 +6734,11 @@ function renderOverviewSignals(){
     const sparkBlock = sparkSvg
       ? `<div style="margin-top:8px;line-height:0">${sparkSvg}</div>`
       : '';
-    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-jump="trading" data-asset="${a}" title="Open Trading tab for ${a.toUpperCase()}">
-      <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">${a.toUpperCase()}</h3>
-        <span class="sub" style="color:var(--muted);font-size:11px">${ASSET_NAMES[a] || a}</span>
+    const SYM = a.toUpperCase();
+    return `<div class="card" style="cursor:pointer;border-left:4px solid ${accent(a)}" data-symbol="${SYM}" role="button" tabindex="0" aria-label="Open ${SYM} signal detail" title="Open ${SYM} Signal + POC detail">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h3 style="font-size:13px;color:var(--text);margin:0">${SYM}</h3>
+        ${signalChip}
       </div>
       <div class="v" style="font-size:26px;font-weight:700;margin-top:6px;color:var(--text)">${fmtPrice(lastP)}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px">
@@ -6719,13 +6746,12 @@ function renderOverviewSignals(){
         <span class="sub" style="font-size:12px;color:var(--muted)">24h vol ${fmtVol(lastV)}</span>
       </div>
       ${sparkBlock}
-      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">as of ${asOf}</div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:6px">${ASSET_NAMES[a] || a} &middot; as of ${asOf}</div>
     </div>`;
   }).join('');
 
-  // Wire click-to-jump on cards (now jumps to Trading tab)
-  host.querySelectorAll('[data-jump]').forEach(el =>
-    el.addEventListener('click', () => selectTab(el.dataset.jump))
+  host.querySelectorAll('[data-symbol]').forEach(el =>
+    el.addEventListener('click', () => openSignalDetail(el.getAttribute('data-symbol')))
   );
 }
 
@@ -6889,26 +6915,29 @@ function renderOverviewNews(){
       host.innerHTML = news.slice(0,4).map(n =>
         `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
-            <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
+            <span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
           </div>
           <div style="font-size:13px;line-height:1.35">${escapeHtml(n.title||'')}</div>
         </a>`
       ).join('');
     }
   }
-  // Bottom-of-Overview "Breaking news" feed: 10 most recent items.
+  // Bottom-of-Overview "More headlines" feed. Picks up where the top-4
+  // teaser left off so the user never reads the same title twice on
+  // one page.
   const bottom = document.getElementById('overviewNewsHost');
   if (bottom){
-    if (!news.length){
+    const more = news.slice(4, 14);
+    if (!more.length){
       bottom.innerHTML = V2.empty({
         icon: '📰',
-        title: 'Breaking news warming up',
-        sub: 'No recent headlines — they will appear after the next refresh.',
+        title: 'No additional headlines',
+        sub: 'The feed has 4 or fewer items right now — all shown in the top teaser.',
         warm: true,
       });
       return;
     }
-    bottom.innerHTML = news.slice(0,10).map(n =>
+    bottom.innerHTML = more.map(n =>
       `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
         <div style="font-weight:600;font-size:13px">${escapeHtml(n.title)}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source)} · ${escapeHtml(n.date)}</div>
@@ -6942,7 +6971,7 @@ document.addEventListener('click', (e) => {
 // ---------- Research tab (one-stop social + dev + on-chain + POC) ----------
 function socialData(){ return (DATA.market||{}).social || {}; }
 const RESEARCH_ASSETS = ['btc','eth','link','ltc'];
-const RESEARCH_ACCENT = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || '#a78bfa';
+const RESEARCH_ACCENT = a => ({btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'})[a] || 'var(--v2-ai)';
 const ASSET_FULLNAME = {btc:'Bitcoin', eth:'Ethereum', link:'Chainlink', ltc:'Litecoin'};
 const fmtNumShort = n => n == null ? '—' :
   (n >= 1e9 ? (n/1e9).toFixed(2) + 'B' :
@@ -7205,9 +7234,9 @@ function renderStocksSentiment(){
               : net >  -20 ? 'NEUTRAL'
               : net >  -50 ? 'DISTRIBUTION'
               :              'STRONG DISTRIBUTION';
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   const scoreEl   = document.getElementById('stocksSentimentScore');
   const labelEl   = document.getElementById('stocksSentimentLabel');
   const sublineEl = document.getElementById('stocksSentimentSubline');
@@ -7334,9 +7363,9 @@ function renderStocksTab(){
   // Render a single compact stock card. Click anywhere opens the full modal.
   const cardHtml = s => {
     const score = Number(s.score) || 0;
-    const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+    const color = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
     const chPct = Number(s.change_pct);
-    const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+    const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
     const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
     const price  = Number(s.last_price);
     const priceTxt = isFinite(price)
@@ -7358,7 +7387,7 @@ function renderStocksTab(){
           <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
         </div>
       </div>
-      <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+      <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
         <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:10px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
       </div>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px">
@@ -7404,7 +7433,11 @@ function renderStocksTab(){
 // Reads DATA.market.ai_news (produced by fetch_market.py). Defensive: when
 // available=false or missing, shows an empty state pointing to the fetcher.
 const AI_EXPOSED_TICKERS = ['NVDA','GOOGL','MSFT','META','AMZN','AAPL','TSLA','AMD','INTC','ORCL','CRM','PLTR','SMCI','ARM','AVGO'];
-const AI_SENT_COLOR = {POSITIVE:'#22c55e', NEGATIVE:'#ef4444', NEUTRAL:'#f59e0b'};
+// NEUTRAL is muted grey, not amber. Amber/warn means "caution" per the
+// palette spec; painting a neutral headline warn made benign news look
+// like a warning. --muted reads as "no signal," which is the actual
+// semantic.
+const AI_SENT_COLOR = {POSITIVE:'var(--v2-good)', NEGATIVE:'var(--v2-bad)', NEUTRAL:'var(--muted)'};
 
 // Wave-3c — top-3 spotlight for the AI News tab:
 // (1) today's net sentiment label + article count,
@@ -7488,7 +7521,7 @@ function renderAiNewsTab(){
   const tot = Number(sum.total) || (pos+neg+neu) || 1;
   const posPct = pos/tot*100, negPct = neg/tot*100, neuPct = neu/tot*100;
   const net = (sum.net_score == null) ? 0 : Number(sum.net_score);
-  const netColor = net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b');
+  const netColor = net > 0 ? 'var(--v2-good)' : (net < 0 ? 'var(--v2-bad)' : 'var(--v2-warn)');
   const netTxt = (net >= 0 ? '+' : '') + (Number.isInteger(net) ? net : net.toFixed(1));
   const label = sum.sentiment_label || '—';
   const summaryHost = document.getElementById('aiNewsSummary');
@@ -7501,20 +7534,20 @@ function renderAiNewsTab(){
           <div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px">net score · ${tot} articles</div>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--muted);min-width:140px">
-          <div><span style="color:#22c55e;font-weight:600">${pos}</span> positive</div>
-          <div><span style="color:#f59e0b;font-weight:600">${neu}</span> neutral</div>
-          <div><span style="color:#ef4444;font-weight:600">${neg}</span> negative</div>
+          <div><span style="color:var(--v2-good);font-weight:600">${pos}</span> positive</div>
+          <div><span style="color:var(--v2-warn);font-weight:600">${neu}</span> neutral</div>
+          <div><span style="color:var(--v2-bad);font-weight:600">${neg}</span> negative</div>
         </div>
       </div>
       <div style="display:flex;height:14px;margin-top:10px;border-radius:4px;overflow:hidden;background:#1f2533">
-        <div style="background:#22c55e;width:${posPct.toFixed(2)}%" title="${pos} positive"></div>
-        <div style="background:#f59e0b;width:${neuPct.toFixed(2)}%" title="${neu} neutral"></div>
-        <div style="background:#ef4444;width:${negPct.toFixed(2)}%" title="${neg} negative"></div>
+        <div style="background:var(--v2-good);width:${posPct.toFixed(2)}%" title="${pos} positive"></div>
+        <div style="background:var(--v2-warn);width:${neuPct.toFixed(2)}%" title="${neu} neutral"></div>
+        <div style="background:var(--v2-bad);width:${negPct.toFixed(2)}%" title="${neg} negative"></div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:10px;color:var(--muted)">
-        <span style="color:#22c55e">${posPct.toFixed(0)}% +</span>
+        <span style="color:var(--v2-good)">${posPct.toFixed(0)}% +</span>
         <span>${neuPct.toFixed(0)}% ◯</span>
-        <span style="color:#ef4444">${negPct.toFixed(0)}% −</span>
+        <span style="color:var(--v2-bad)">${negPct.toFixed(0)}% −</span>
       </div>`;
   }
 
@@ -7539,7 +7572,7 @@ function renderAiNewsTab(){
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
         return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
-            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span>
+            ${dot}<span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source||'')}</span>
             <span>· ${escapeHtml(n.date||'')}</span>
             <span style="color:${sc};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment||'').slice(0,3))}</span>
           </div>
@@ -7568,9 +7601,9 @@ function renderAiNewsTab(){
     } else {
       aiGrid.innerHTML = subset.map(s => {
         const score = Number(s.score) || 0;
-        const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+        const color = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
         const chPct = Number(s.change_pct);
-        const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+        const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
         const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
         const price  = Number(s.last_price);
         const priceTxt = isFinite(price)
@@ -7591,7 +7624,7 @@ function renderAiNewsTab(){
               <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
             </div>
           </div>
-          <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+          <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
             <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:10px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
           </div>
           <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:12px">
@@ -7632,20 +7665,20 @@ function renderAiNewsTab(){
         <thead><tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border)">
           <th style="padding:6px 8px">Source</th>
           <th style="padding:6px 8px;text-align:right">Total</th>
-          <th style="padding:6px 8px;text-align:right;color:#22c55e">+</th>
+          <th style="padding:6px 8px;text-align:right;color:var(--v2-good)">+</th>
           <th style="padding:6px 8px;text-align:right">◯</th>
-          <th style="padding:6px 8px;text-align:right;color:#ef4444">−</th>
+          <th style="padding:6px 8px;text-align:right;color:var(--v2-bad)">−</th>
           <th style="padding:6px 8px;text-align:right">Net</th>
         </tr></thead><tbody>
         ${rows.map(r => {
-          const netColor = r.net > 0 ? '#22c55e' : (r.net < 0 ? '#ef4444' : 'var(--muted)');
+          const netColor = r.net > 0 ? 'var(--v2-good)' : (r.net < 0 ? 'var(--v2-bad)' : 'var(--muted)');
           const netTxt = (r.net >= 0 ? '+' : '') + r.net;
           return `<tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 8px;color:#a78bfa;font-weight:600">${escapeHtml(r.src)}</td>
+            <td style="padding:6px 8px;color:var(--v2-ai);font-weight:600">${escapeHtml(r.src)}</td>
             <td style="padding:6px 8px;text-align:right">${r.total}</td>
-            <td style="padding:6px 8px;text-align:right;color:#22c55e">${r.positive}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--v2-good)">${r.positive}</td>
             <td style="padding:6px 8px;text-align:right">${r.neutral}</td>
-            <td style="padding:6px 8px;text-align:right;color:#ef4444">${r.negative}</td>
+            <td style="padding:6px 8px;text-align:right;color:var(--v2-bad)">${r.negative}</td>
             <td style="padding:6px 8px;text-align:right;color:${netColor};font-weight:600">${netTxt}</td>
           </tr>`;
         }).join('')}
@@ -7715,7 +7748,7 @@ function renderAiInvestmentKpis(){
     const deltaRaw = k.delta == null ? null : Number(k.delta);
     const deltaTxt = (k.delta == null) ? (k.delta_label ? escapeHtml(String(k.delta_label)) : '')
                    : (isFinite(deltaRaw) ? ((deltaRaw >= 0 ? '+' : '') + deltaRaw.toLocaleString(undefined,{maximumFractionDigits:2})) : escapeHtml(String(k.delta)));
-    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)');
+    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)');
     const src       = escapeHtml(String(k.source || k.source_label || k.publisher || ''));
     const srcUrl    = sanitizeUrl(k.source_url || k.url, '');
     const unit      = escapeHtml(String(k.unit || ''));
@@ -7727,12 +7760,12 @@ function renderAiInvestmentKpis(){
           ${deltaTxt ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:'+deltaColor+';border:1px solid '+deltaColor+'">'+deltaTxt+'</span>' : ''}
           ${prior ? '<span class="sub" style="font-size:10px;color:var(--muted)">prior: '+prior+'</span>' : ''}
         </div>
-        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
+        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:var(--v2-ai);font-weight:600">'+src+'</span></div>' : ''}
       </div>`;
     if (srcUrl){
-      return '<a class="chart-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
+      return '<a class="v2-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
     }
-    return '<div class="chart-card">'+inner+'</div>';
+    return '<div class="v2-card">'+inner+'</div>';
   }).join('');
 }
 
@@ -7757,7 +7790,7 @@ function renderAiTopFunded(){
     const cat     = escapeHtml(String(c.category || c.sector || ''));
     const url     = sanitizeUrl(c.source_url || c.url, '');
     const nameCell = url
-      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:600;text-decoration:none">'+name+'</a>'
+      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--v2-ai);font-weight:600;text-decoration:none">'+name+'</a>'
       : '<span style="font-weight:600">'+name+'</span>';
     return `<tr>
       <td>${nameCell}</td>
@@ -7801,7 +7834,7 @@ function renderAiSecFormD(){
     const exTxt = escapeHtml(String(exemptions || ''));
     const url   = sanitizeUrl(f.filing_url, '');
     const issuerCell = url
-      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:#a78bfa;font-weight:600;text-decoration:none">'+issuer+'</a>'
+      ? '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--v2-ai);font-weight:600;text-decoration:none">'+issuer+'</a>'
       : '<span style="font-weight:600">'+issuer+'</span>';
     return `<tr>
       <td>${issuerCell}</td>
@@ -7921,7 +7954,7 @@ function renderAiWhitepaperKpis(){
     const deltaRaw = k.delta == null ? null : Number(k.delta);
     const deltaTxt = (k.delta == null) ? (k.delta_label ? escapeHtml(String(k.delta_label)) : '')
                    : (isFinite(deltaRaw) ? ((deltaRaw >= 0 ? '+' : '') + deltaRaw.toLocaleString(undefined,{maximumFractionDigits:2})) : escapeHtml(String(k.delta)));
-    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)');
+    const deltaColor = (isFinite(deltaRaw) ? (deltaRaw >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)');
     const src       = escapeHtml(String(k.source || k.source_label || k.publisher || ''));
     const srcUrl    = sanitizeUrl(k.source_url || k.url, '');
     const unit      = escapeHtml(String(k.unit || ''));
@@ -7933,21 +7966,21 @@ function renderAiWhitepaperKpis(){
           ${deltaTxt ? '<span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;color:'+deltaColor+';border:1px solid '+deltaColor+'">'+deltaTxt+'</span>' : ''}
           ${prior ? '<span class="sub" style="font-size:10px;color:var(--muted)">prior: '+prior+'</span>' : ''}
         </div>
-        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:#a78bfa;font-weight:600">'+src+'</span></div>' : ''}
+        ${src ? '<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">source: <span style="color:var(--v2-ai);font-weight:600">'+src+'</span></div>' : ''}
       </div>`;
     if (srcUrl){
-      return '<a class="chart-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
+      return '<a class="v2-card" href="'+srcUrl+'" target="_blank" rel="noopener" style="text-decoration:none;color:var(--text);display:block">'+inner+'</a>';
     }
-    return '<div class="chart-card">'+inner+'</div>';
+    return '<div class="v2-card">'+inner+'</div>';
   }).join('');
 }
 
 // Build the full stock-detail card body (rendered into the modal).
 function stockDetailHtml(s){
   const score = Number(s.score) || 0;
-  const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+  const color = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
   const chPct = Number(s.change_pct);
-  const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+  const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
   const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
   const price  = Number(s.last_price);
   const priceTxt = isFinite(price)
@@ -7960,7 +7993,7 @@ function stockDetailHtml(s){
   const comps = Array.isArray(s.components) ? s.components : [];
   const compRows = comps.map(c => {
     const cs = Number(c.score) || 0;
-    const csColor = cs > 0 ? '#22c55e' : (cs < 0 ? '#ef4444' : 'var(--muted)');
+    const csColor = cs > 0 ? 'var(--v2-good)' : (cs < 0 ? 'var(--v2-bad)' : 'var(--muted)');
     const csTxt = (cs >= 0 ? '+' : '') + (Number.isInteger(cs) ? cs : cs.toFixed(1));
     return `<tr>
       <td style="padding:4px 6px">${escapeHtml(String(c.name || ''))}</td>
@@ -7980,7 +8013,7 @@ function stockDetailHtml(s){
         <div style="font-size:13px;color:${color};font-weight:600;margin-top:3px">${escapeHtml(String(s.label||''))}</div>
       </div>
     </div>
-    <div style="height:12px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:6px;position:relative">
+    <div style="height:12px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:6px;position:relative">
       <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
     </div>
     <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;font-size:15px">
@@ -8001,8 +8034,8 @@ function stockDetailHtml(s){
 // returns None). The common path now renders the real volume-profile card
 // via `pocCompactCardHtml` since stocks carry `poc` data alongside crypto.
 function stockPocEmptyHtml(){
-  return `<div class="chart-card stock-poc-card">
-    <div class="head"><h2 style="margin:0;font-size:14px">Point of Control</h2></div>
+  return `<div class="v2-card stock-poc-card">
+    <div class="v2-card__head"><h2 class="v2-card__title" style="margin:0;font-size:14px">Point of Control</h2></div>
     <div class="sub" style="color:var(--muted);padding:14px 6px;font-size:12px">
       Not enough trading history for a volume profile on this ticker.
     </div>
@@ -8025,7 +8058,7 @@ function openStockDetail(symbol){
   const pocCard = s.poc ? pocCompactCardHtml(s) : stockPocEmptyHtml();
   document.getElementById('stockDetailBody').innerHTML =
     '<div class="grid2 stocks-modal-body">' +
-      '<div class="chart-card stock-signal-card">' + stockDetailHtml(s) + '</div>' +
+      '<div class="v2-card stock-signal-card">' + stockDetailHtml(s) + '</div>' +
       pocCard +
     '</div>';
   modal.classList.remove('hidden');
@@ -8077,9 +8110,9 @@ function applyStocksFilter(bucket){
     // Inline color the active chip (the .btn.active rule already styles it,
     // but we want the matching bucket color to bleed through).
     if (isActive){
-      const c = target.indexOf('buy')  >= 0 ? '#22c55e'
-              : target.indexOf('sell') >= 0 ? '#ef4444'
-              : target === 'hold'           ? '#f59e0b'
+      const c = target.indexOf('buy')  >= 0 ? 'var(--v2-good)'
+              : target.indexOf('sell') >= 0 ? 'var(--v2-bad)'
+              : target === 'hold'           ? 'var(--v2-warn)'
               : '';
       b.style.borderColor = c || '';
       b.style.color       = c || '';
@@ -8322,16 +8355,16 @@ function renderPocCards(){
     // Cluster badge: 3+ TFs within 2%
     const clustered = pocClustered(rows);
     const clusterBadge = clustered
-      ? '<span style="background:#a78bfa22;color:#a78bfa;padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
+      ? '<span style="background:var(--v2-ai-bg);color:var(--v2-ai);padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600" title="3+ timeframes within 2%">🎯 CLUSTERED</span>'
       : '';
     // Migration badge: 30d vs 90d POC delta
     const mig = d.migration;
     let migBadge = '';
     if (mig){
       const cfg = mig.direction === 'UP'
-        ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
+        ? {bg:'var(--v2-good-bg)', fg:'var(--v2-good)', arrow:'↑', label:`Migrating UP ${mig.delta_pct >= 0 ? '+' : ''}${mig.delta_pct}%`}
         : mig.direction === 'DOWN'
-        ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
+        ? {bg:'var(--v2-bad-bg)', fg:'var(--v2-bad)', arrow:'↓', label:`Migrating DOWN ${mig.delta_pct}%`}
         : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
       const tip = (mig.explanation || '').replace(/"/g,'&quot;');
       migBadge = `<span title="${tip}" style="background:${cfg.bg};color:${cfg.fg};padding:2px 6px;border-radius:3px;font-size:10px;font-weight:600;cursor:help">${cfg.arrow} ${cfg.label}${mig.between_pocs ? ' ⇆' : ''}</span>`;
@@ -8342,9 +8375,9 @@ function renderPocCards(){
       if (!r) return `<tr><td style="color:var(--muted);font-size:10px">${label}</td><td colspan="3" style="color:var(--muted)">—</td></tr>`;
       const inVA = r.in_value_area;
       const tag = inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
-      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+        ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+        : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>';
+      const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
       const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
       return `<tr>
         <td style="color:var(--muted);font-size:10px">${label}</td>
@@ -8361,7 +8394,7 @@ function renderPocCards(){
         <div style="font-size:11px;color:var(--muted);margin-bottom:4px"><span class="v2-tip-anchor" data-v2-tip="A POC from a prior week that price hasn't subsequently traded through. Theory: untested POCs act as future magnet levels.">Naked POCs</span> <span style="opacity:.7">(untested magnet levels, 180d)</span></div>
         ${naked.map(n => {
           const isSupport = cur != null && cur > n.poc;
-          const col = isSupport ? '#22c55e' : '#ef4444';
+          const col = isSupport ? 'var(--v2-good)' : 'var(--v2-bad)';
           const sign = n.distance_pct >= 0 ? '+' : '';
           return `<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0">
             <span style="color:${col};font-weight:600">${fmtUsdShort(n.poc)}</span>
@@ -8455,9 +8488,9 @@ function sentimentBucket(net, labels){
               : net >  -20 ? labels[2]
               : net >  -50 ? labels[3]
               :              labels[4];
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   return { label, color };
 }
 function clampScore(v){
@@ -8770,9 +8803,9 @@ function renderPocSentimentIndex(){
               : net >  -20 ? 'NEUTRAL'
               : net >  -50 ? 'DISTRIBUTION'
               :              'STRONG DISTRIBUTION';
-  const color = net >=  20 ? '#22c55e'
-              : net <= -20 ? '#ef4444'
-              :              '#f59e0b';
+  const color = net >=  20 ? 'var(--v2-good)'
+              : net <= -20 ? 'var(--v2-bad)'
+              :              'var(--v2-warn)';
   // Write values into the DOM
   const scoreEl = document.getElementById('pocSentimentScore');
   const labelEl = document.getElementById('pocSentimentLabel');
@@ -8872,7 +8905,7 @@ function renderPocTopCards(){
     }
     const d = c.poc || {};
     if (!d.d30 && !d.d90 && !d.d180){
-      return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid #a78bfa;padding:8px 10px;cursor:pointer">
+      return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="border-left:4px solid var(--v2-ai);padding:8px 10px;cursor:pointer">
         <div style="display:flex;align-items:center;gap:6px">
           ${img}
           <span style="font-weight:700;font-size:12px">${sym}</span>
@@ -8885,13 +8918,13 @@ function renderPocTopCards(){
     const anchor = d.d90 || d.d30 || d.d180;
     const anchorPoc = anchor ? fmtUsdShort(anchor.poc) : '—';
     const dp = anchor && anchor.distance_pct != null ? anchor.distance_pct : null;
-    const dpColor = dp == null ? 'var(--muted)' : (dp >= 0 ? '#22c55e' : '#ef4444');
+    const dpColor = dp == null ? 'var(--muted)' : (dp >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const dpTxt = dp == null ? '—' : ((dp >= 0 ? '+' : '') + dp.toFixed(1) + '%');
     const inVA = anchor && anchor.in_value_area;
     const vaTag = anchor
       ? (inVA
-          ? '<span style="background:#22c55e22;color:#22c55e;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
-          : '<span style="background:#f59e0b22;color:#f59e0b;padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>')
+          ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">IN VA</span>'
+          : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:0 4px;border-radius:3px;font-size:9px;font-weight:600">OUT</span>')
       : '';
     // BIG migration arrow on the right edge — primary visual cue for direction.
     // Featured cards get an even bigger arrow rail.
@@ -8904,9 +8937,9 @@ function renderPocTopCards(){
       const dlt = Number(mig.delta_pct);
       const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(1) + '%') : '';
       const cfg = mig.direction === 'UP'
-        ? {fg:'#22c55e', arrow:'↑', label:'UP'}
+        ? {fg:'var(--v2-good)', arrow:'↑', label:'UP'}
         : mig.direction === 'DOWN'
-        ? {fg:'#ef4444', arrow:'↓', label:'DOWN'}
+        ? {fg:'var(--v2-bad)', arrow:'↓', label:'DOWN'}
         : {fg:'#94a3b8',  arrow:'·', label:'FLAT'};
       const tip = escapeHtml(mig.explanation || `POC migration ${cfg.label}`);
       migBlock = `<div title="${tip}" style="flex:0 0 ${railW}px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px 0;border-left:1px solid var(--border);color:${cfg.fg}">
@@ -8936,8 +8969,8 @@ function renderPocTopCards(){
     // the main #pocTopGrid below), so no grid-column span is needed — the
     // separate grid handles even spacing.
     const featuredCSS = featured
-      ? 'border-left:6px solid #a78bfa;background:#10151f'
-      : 'border-left:4px solid #a78bfa';
+      ? 'border-left:6px solid var(--v2-ai);background:#10151f'
+      : 'border-left:4px solid var(--v2-ai)';
     return `<div class="card poc-card" data-poc-coin-id="${cid}" data-poc-bucket="${bucket}" ${featured ? 'data-poc-featured="1"' : ''} role="button" tabindex="0" aria-label="Open ${sym} POC detail" title="Click for full breakdown" style="${featuredCSS};padding:${cardPad};cursor:pointer">
       <div style="display:flex;align-items:stretch;gap:${featured ? 12 : 8}px">
         <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:${featured ? 6 : 3}px">
@@ -8984,9 +9017,9 @@ function applyPocFilter(bucket){
     if (isActive) found = true;
     b.classList.toggle('active', isActive);
     if (isActive){
-      const c = target.indexOf('buy')  >= 0 ? '#22c55e'
-              : target.indexOf('sell') >= 0 ? '#ef4444'
-              : target === 'hold'           ? '#f59e0b'
+      const c = target.indexOf('buy')  >= 0 ? 'var(--v2-good)'
+              : target.indexOf('sell') >= 0 ? 'var(--v2-bad)'
+              : target === 'hold'           ? 'var(--v2-warn)'
               : '';
       b.style.borderColor = c || '';
       b.style.color       = c || '';
@@ -9040,9 +9073,9 @@ function pocDetailHtml(c){
     const dlt = Number(mig.delta_pct);
     const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(2) + '%') : '?';
     const cfg = mig.direction === 'UP'
-      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:`Migrating UP ${dltTxt}`}
+      ? {bg:'var(--v2-good-bg)', fg:'var(--v2-good)', arrow:'↑', label:`Migrating UP ${dltTxt}`}
       : mig.direction === 'DOWN'
-      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:`Migrating DOWN ${dltTxt}`}
+      ? {bg:'var(--v2-bad-bg)', fg:'var(--v2-bad)', arrow:'↓', label:`Migrating DOWN ${dltTxt}`}
       : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'Value stable'};
     migBadge = `<span style="background:${cfg.bg};color:${cfg.fg};padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600">${cfg.arrow} ${cfg.label}</span>`;
   }
@@ -9052,9 +9085,9 @@ function pocDetailHtml(c){
     if (!r) return `<tr><td style="color:var(--muted);padding:5px 8px">${label}</td><td colspan="3" style="color:var(--muted);padding:5px 8px">—</td></tr>`;
     const inVA = r.in_value_area;
     const tag = inVA
-      ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
-      : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>';
-    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+      ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+      : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>';
+    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + r.distance_pct.toFixed(1) + '%';
     return `<tr>
       <td style="color:var(--muted);padding:5px 8px">${label}</td>
@@ -9071,7 +9104,7 @@ function pocDetailHtml(c){
       <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Naked POCs · untested magnet levels (last 180d)</div>
       ${nakedArr.map(n => {
         const isSupport = cur != null && cur > n.poc;
-        const col = isSupport ? '#22c55e' : '#ef4444';
+        const col = isSupport ? 'var(--v2-good)' : 'var(--v2-bad)';
         // Coerce both to finite numbers so a stringy or null upstream value
         // can't reflect into the DOM unescaped.
         const dp = Number(n.distance_pct);
@@ -9268,7 +9301,7 @@ function renderRedditCards(){
   const labelAccent = {bitcoin:'#f7931a', ethereum:'#627eea', chainlink:'#2a5ada', litecoin:'#bfbbbb', cryptocurrency:'#a78bfa', cryptomarkets:'#8b5cf6', solana:'#14f195', cardano:'#0033ad', defi:'#22c55e'};
   host.innerHTML = order.map(name => {
     const s = subs[name];
-    const accent = labelAccent[name] || '#a78bfa';
+    const accent = labelAccent[name] || 'var(--v2-ai)';
     if (!s || !s.ok){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${s?.sub || name}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
     }
@@ -9280,7 +9313,7 @@ function renderRedditCards(){
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
     const trending = (s.trending || []).slice(0, 3).map(p => `
       <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
-        <span style="color:#f59e0b">🔥 ${fmtNumShort(p.score)}</span>
+        <span style="color:var(--v2-warn)">🔥 ${fmtNumShort(p.score)}</span>
         <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
       </a>
@@ -9290,7 +9323,7 @@ function renderRedditCards(){
       : '';
     const sent = s.sentiment || {label:'neutral', score:0, n:0};
     const sentBg = sent.label==='bullish' ? '#16331f' : sent.label==='bearish' ? '#3a1414' : '#27272a';
-    const sentFg = sent.label==='bullish' ? '#22c55e' : sent.label==='bearish' ? '#ef4444' : '#a1a1aa';
+    const sentFg = sent.label==='bullish' ? 'var(--v2-good)' : sent.label==='bearish' ? 'var(--v2-bad)' : '#a1a1aa';
     const sentPill = sent.n
       ? `<div style="margin-top:6px"><span style="display:inline-block;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;background:${sentBg};color:${sentFg}">${sent.label} ${sent.score>=0?'+':''}${sent.score}</span></div>`
       : '';
@@ -9322,15 +9355,15 @@ function renderSantimentCards(){
   const stale = (socialData().santiment || {}).stale;
   const host = document.getElementById('santimentCards');
   if (!host) return;
-  const pct = v => v == null ? '' : `<span style="color:${v>=0?'#22c55e':'#ef4444'};font-weight:600">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
+  const pct = v => v == null ? '' : `<span style="color:${v>=0?'var(--v2-good)':'var(--v2-bad)'};font-weight:600">${v>=0?'+':''}${v.toFixed(1)}%</span>`;
   const stalePill = lag => lag ? `<span class="tag" style="background:#27272a;color:#a1a1aa;font-size:9px">~${lag}d</span>` : '';
   const mvrvTag = v => v == null ? '' :
-      v < 1 ? '<span class="tag" style="background:#16331f;color:#22c55e;font-size:9px">undervalued</span>' :
-      v > 3 ? '<span class="tag" style="background:#3a1414;color:#ef4444;font-size:9px">overvalued</span>' :
+      v < 1 ? '<span class="tag" style="background:#16331f;color:var(--v2-good);font-size:9px">undervalued</span>' :
+      v > 3 ? '<span class="tag" style="background:#3a1414;color:var(--v2-bad);font-size:9px">overvalued</span>' :
               '<span class="tag" style="background:#27272a;color:#a1a1aa;font-size:9px">normal</span>';
   const flowTag = v => v == null ? '' :
-      v > 0 ? '<span class="tag" style="background:#16331f;color:#22c55e;font-size:9px">supply leaving exch</span>' :
-              '<span class="tag" style="background:#3a1414;color:#ef4444;font-size:9px">supply hitting exch</span>';
+      v > 0 ? '<span class="tag" style="background:#16331f;color:var(--v2-good);font-size:9px">supply leaving exch</span>' :
+              '<span class="tag" style="background:#3a1414;color:var(--v2-bad);font-size:9px">supply hitting exch</span>';
   host.innerHTML = RESEARCH_ASSETS.map(a => {
     const c = coins[a];
     const accent = RESEARCH_ACCENT(a);
@@ -9600,7 +9633,7 @@ function openNewsSentimentDetail(symbol){
   const posPct = (rsv.positive / total) * 100;
   const neuPct = (rsv.neutral  / total) * 100;
   const negPct = (rsv.negative / total) * 100;
-  const netColor = rsv.net_score > 0 ? '#22c55e' : rsv.net_score < 0 ? '#ef4444' : 'var(--muted)';
+  const netColor = rsv.net_score > 0 ? 'var(--v2-good)' : rsv.net_score < 0 ? 'var(--v2-bad)' : 'var(--muted)';
   const netTxt = rsv.total === 0 ? '—' : (rsv.net_score > 0 ? '+' : '') + rsv.net_score;
 
   // --- Optional CryptoCompare deep section (only for the 4 covered coins) ---
@@ -9610,7 +9643,7 @@ function openNewsSentimentDetail(symbol){
     const ccPosPct = (ccCoin.positive || 0) / ccTotal * 100;
     const ccNeuPct = (ccCoin.neutral  || 0) / ccTotal * 100;
     const ccNegPct = (ccCoin.negative || 0) / ccTotal * 100;
-    const ccNetColor = ccCoin.net_score == null ? 'var(--muted)' : ccCoin.net_score > 0 ? '#22c55e' : ccCoin.net_score < 0 ? '#ef4444' : '#f59e0b';
+    const ccNetColor = ccCoin.net_score == null ? 'var(--muted)' : ccCoin.net_score > 0 ? 'var(--v2-good)' : ccCoin.net_score < 0 ? 'var(--v2-bad)' : 'var(--v2-warn)';
     const ccNetTxt = (ccCoin.net_score > 0 ? '+' : '') + (ccCoin.net_score ?? 0);
     // 7-day daily-net sparkline (inline SVG bar chart of daily net sentiment).
     const trend = ccCoin.trend_7d || [];
@@ -9632,14 +9665,15 @@ function openNewsSentimentDetail(symbol){
       </div>`;
     }
     // Keyword chips (visual only — no filter logic in the modal).
-    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? '#22c55e' : sk < -0.3 ? '#ef4444' : '#a1a1aa';
+    const skewColor = sk => sk == null ? '#6b7280' : sk > 0.3 ? 'var(--v2-good)' : sk < -0.3 ? 'var(--v2-bad)' : '#a1a1aa';
     const chips = (ccCoin.top_keywords || []).slice(0, 10).map(k => {
       const bg = skewColor(k.sentiment_skew);
       return `<span style="border:1px solid ${bg};color:${bg};border-radius:10px;padding:2px 8px;margin:2px 4px 0 0;font-size:11px;display:inline-block">${escapeHtml(k.kw)} <span style="opacity:.65">${k.count}</span></span>`;
     }).join('');
     const chipsBlock = chips ? `<div style="margin-top:10px;line-height:1.8">${chips}</div>` : '';
     // Top articles from CC (different from RSS-matched — these are CC's curated picks).
-    const SENT_COLOR = {POSITIVE: '#22c55e', NEGATIVE: '#ef4444', NEUTRAL: '#f59e0b'};
+    // NEUTRAL = muted grey (not warn). Same reasoning as AI_SENT_COLOR.
+    const SENT_COLOR = {POSITIVE: 'var(--v2-good)', NEGATIVE: 'var(--v2-bad)', NEUTRAL: 'var(--muted)'};
     const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
@@ -9662,14 +9696,14 @@ function openNewsSentimentDetail(symbol){
           <div style="font-size:11px;color:${ccNetColor};font-weight:700">net ${ccNetTxt} · ${ccCoin.article_count || 0} articles</div>
         </div>
         <div style="display:flex;height:10px;margin-top:8px;border-radius:3px;overflow:hidden;background:#1f2533">
-          <div style="background:#22c55e;width:${ccPosPct}%"></div>
-          <div style="background:#f59e0b;width:${ccNeuPct}%"></div>
-          <div style="background:#ef4444;width:${ccNegPct}%"></div>
+          <div style="background:var(--v2-good);width:${ccPosPct}%"></div>
+          <div style="background:var(--v2-warn);width:${ccNeuPct}%"></div>
+          <div style="background:var(--v2-bad);width:${ccNegPct}%"></div>
         </div>
         <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">
-          <span style="color:#22c55e">${ccCoin.positive || 0} +</span>
+          <span style="color:var(--v2-good)">${ccCoin.positive || 0} +</span>
           <span>${ccCoin.neutral || 0} ◯</span>
-          <span style="color:#ef4444">${ccCoin.negative || 0} −</span>
+          <span style="color:var(--v2-bad)">${ccCoin.negative || 0} −</span>
         </div>
         ${sparkBlock}
         ${chipsBlock}
@@ -9681,11 +9715,11 @@ function openNewsSentimentDetail(symbol){
   const items = (rsv.allItems || []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const itemsHtml = items.length
     ? items.map(n => {
-        const col = n.sentiment === 'POSITIVE' ? '#22c55e' : n.sentiment === 'NEGATIVE' ? '#ef4444' : '#f59e0b';
+        const col = n.sentiment === 'POSITIVE' ? 'var(--v2-good)' : n.sentiment === 'NEGATIVE' ? 'var(--v2-bad)' : 'var(--v2-warn)';
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:6px;vertical-align:middle"></span>`;
         return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
-            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source || '')}</span>
+            ${dot}<span style="color:var(--v2-ai);font-weight:600">${escapeHtml(n.source || '')}</span>
             <span>· ${escapeHtml(n.date || '')}</span>
             <span style="color:${col};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment || '').slice(0,3))}</span>
           </div>
@@ -9704,14 +9738,14 @@ function openNewsSentimentDetail(symbol){
       </div>
     </div>
     <div style="display:flex;height:12px;border-radius:4px;overflow:hidden;background:#1f2533;margin-bottom:4px">
-      <div style="background:#22c55e;width:${posPct}%"></div>
-      <div style="background:#f59e0b;width:${neuPct}%"></div>
-      <div style="background:#ef4444;width:${negPct}%"></div>
+      <div style="background:var(--v2-good);width:${posPct}%"></div>
+      <div style="background:var(--v2-warn);width:${neuPct}%"></div>
+      <div style="background:var(--v2-bad);width:${negPct}%"></div>
     </div>
     <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:14px">
-      <span style="color:#22c55e">${rsv.positive} positive</span>
+      <span style="color:var(--v2-good)">${rsv.positive} positive</span>
       <span>${rsv.neutral} neutral</span>
-      <span style="color:#ef4444">${rsv.negative} negative</span>
+      <span style="color:var(--v2-bad)">${rsv.negative} negative</span>
     </div>
     ${ccBlock}
     <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.06em;margin-bottom:6px">MATCHED RSS HEADLINES</div>
@@ -9761,16 +9795,16 @@ function renderTopNewsSentiment(){
     const posPct = (r.positive / total) * 100;
     const neuPct = (r.neutral  / total) * 100;
     const negPct = (r.negative / total) * 100;
-    const netColor = r.net_score > 0 ? '#22c55e'
-                    : r.net_score < 0 ? '#ef4444'
+    const netColor = r.net_score > 0 ? 'var(--v2-good)'
+                    : r.net_score < 0 ? 'var(--v2-bad)'
                     : 'var(--muted)';
     const netLbl = r.total === 0 ? '—'
                   : (r.net_score > 0 ? '+' : '') + r.net_score;
     const barInner = r.total === 0
       ? `<div style="background:#1f2533;width:100%;height:100%"></div>`
-      : `<div style="background:#22c55e;width:${posPct}%" title="${r.positive} positive"></div>
-         <div style="background:#f59e0b;width:${neuPct}%" title="${r.neutral} neutral"></div>
-         <div style="background:#ef4444;width:${negPct}%" title="${r.negative} negative"></div>`;
+      : `<div style="background:var(--v2-good);width:${posPct}%" title="${r.positive} positive"></div>
+         <div style="background:var(--v2-warn);width:${neuPct}%" title="${r.neutral} neutral"></div>
+         <div style="background:var(--v2-bad);width:${negPct}%" title="${r.negative} negative"></div>`;
     const titleAttr = r.recent
       .map(rc => `${rc.sentiment[0]} · ${(rc.title || '').replace(/"/g, '”').slice(0, 100)}`)
       .join('\n');
@@ -9783,9 +9817,9 @@ function renderTopNewsSentiment(){
         <div class="tns-bar">${barInner}</div>
         <div class="tns-stats">
           <span>${r.total} mention${r.total === 1 ? '' : 's'}</span>
-          <span style="color:#22c55e">${r.positive} +</span>
+          <span style="color:var(--v2-good)">${r.positive} +</span>
           <span>${r.neutral} ○</span>
-          <span style="color:#ef4444">${r.negative} −</span>
+          <span style="color:var(--v2-bad)">${r.negative} −</span>
         </div>
       </div>
       <div class="tns-net" style="color:${netColor}">net ${netLbl}</div>
@@ -10337,19 +10371,206 @@ async function streamChat(question){
   }
 }
 
-// On first chat-dock open in public-mirror mode, drop in a one-time
-// intro message explaining the feature is local-only — so the user
-// understands BEFORE typing why their question won't get an answer.
+// ---- Client-side Anthropic chat for the public mirror ----
+// On the public GH Pages site there is no /api/chat backend, but the user
+// can paste their own Anthropic API key once (stored in localStorage,
+// sent only to api.anthropic.com) and chat works end-to-end. Same
+// pattern as the Twelvedata stock-lookup key.
+const ANTHROPIC_KEY_LS = 'anthropic_api_key';
+function getAnthropicKey(){
+  try { return localStorage.getItem(ANTHROPIC_KEY_LS) || ''; } catch(_) { return ''; }
+}
+function promptForAnthropicKey(){
+  const k = window.prompt(
+    "Paste your Anthropic API key to enable chat on this URL.\n\n" +
+    "The key is stored ONLY in this browser's localStorage and sent\n" +
+    "ONLY to api.anthropic.com (the same call the local server makes).\n\n" +
+    "Get one at: console.anthropic.com → API Keys\n" +
+    "Format: sk-ant-...\n\n" +
+    "(To clear later, type /clearkey into the chat box.)"
+  );
+  if (!k) return '';
+  const trimmed = String(k).trim();
+  if (!/^sk-ant-/.test(trimmed)){
+    alert("That doesn't look like an Anthropic key (should start with sk-ant-).");
+    return '';
+  }
+  try { localStorage.setItem(ANTHROPIC_KEY_LS, trimmed); } catch(_) {}
+  return trimmed;
+}
+function clearAnthropicKey(){
+  try { localStorage.removeItem(ANTHROPIC_KEY_LS); } catch(_) {}
+}
+
+function buildChatContext(){
+  const out = { generated_at: DATA.generated_at };
+  for (const asset of ['btc','eth','link']){
+    const a = DATA[asset]; if (!a) continue;
+    out[asset] = {
+      stats: a.stats || {},
+      last_date: a.last_date,
+      recent_daily: (a.daily || []).slice(-30),
+      by_fund_top: (a.by_fund || []).slice(0, 8),
+    };
+  }
+  const sigs = DATA.signals || {};
+  out.signals = {};
+  for (const k of Object.keys(sigs)){
+    const v = sigs[k]; if (!v) continue;
+    out.signals[k] = {
+      score: v.score, label: v.label, as_of: v.as_of,
+      components: v.components, price: v.price,
+    };
+  }
+  const m = DATA.market || {};
+  const snap = { global: m.global || {} };
+  const lastVal = (arr, key) => (arr && arr.length) ? arr[arr.length - 1][key] : null;
+  for (const asset of ['btc','eth','link']){
+    const ma = m[asset] || {};
+    snap[asset] = {
+      last_price:       lastVal(ma.price, 'value'),
+      last_volume:      lastVal(ma.volume, 'value'),
+      last_funding:     lastVal(ma.funding, 'rate'),
+      last_oi_usd:      lastVal(ma.open_interest_usd, 'oi_usd'),
+      last_long_short:  lastVal(ma.long_short_ratio, 'ratio'),
+      last_dvol:        lastVal(ma.dvol, 'dvol'),
+    };
+  }
+  snap.fear_greed_latest = (m.fear_greed && m.fear_greed.length) ? m.fear_greed[m.fear_greed.length - 1] : null;
+  snap.ethbtc_latest     = (m.ethbtc     && m.ethbtc.length)     ? m.ethbtc[m.ethbtc.length - 1] : null;
+  out.market_snapshot = snap;
+  const whale = ((DATA.whale || {}).btc) || {};
+  const wlast = {};
+  for (const k of Object.keys(whale)){
+    const v = whale[k];
+    if (Array.isArray(v)) wlast[k] = v.length ? v[v.length - 1] : null;
+  }
+  out.btc_whale_latest = wlast;
+  out.insights = DATA.insights || [];
+  return out;
+}
+
+const CHAT_CLIENT_SYSTEM_PROMPT =
+  "You are an analyst embedded in a private dashboard that tracks U.S. spot " +
+  "BTC and ETH ETF flows, LINK trading metrics, perpetual funding, open " +
+  "interest, implied volatility (DVOL), Fear & Greed, and BTC on-chain whale " +
+  "proxies. You ALSO see a rules-based composite signal (-100..+100) per asset.\n\n" +
+  "When the user asks a question, answer concisely using ONLY the dashboard " +
+  "context below. If the data needed is not present, say so plainly.\n\n" +
+  "NEVER give explicit investment advice or recommendations to buy or sell " +
+  "specific assets. If asked, you may explain what the indicators say and let " +
+  "the user draw their own conclusions. You may discuss risk factors.\n\n" +
+  "Format:\n" +
+  "- Lead with the direct answer in 1-2 sentences.\n" +
+  "- Then give 2-4 bullet points with the supporting numbers from the data.\n" +
+  "- Cite the date and metric explicitly (e.g. \"as of 2026-05-12, BTC ETF " +
+  "7-day net = +$543M\").\n" +
+  "- Keep total response under ~200 words unless the user asks for more.\n\n" +
+  "Dashboard context (JSON):\n";
+
+async function clientSideChatStream(question, botEl){
+  let key = getAnthropicKey();
+  if (!key){
+    key = promptForAnthropicKey();
+    if (!key){
+      botEl.className = 'msg bot';
+      botEl.textContent = "No key entered. Chat needs your Anthropic key to answer questions on this URL. Submit again to try the prompt once more.";
+      return;
+    }
+  }
+  let ctxJson;
+  try { ctxJson = JSON.stringify(buildChatContext()); }
+  catch(_) { ctxJson = '{}'; }
+  if (ctxJson.length > 50000) ctxJson = ctxJson.slice(0, 50000) + '"...(truncated)"}';
+  const system = CHAT_CLIENT_SYSTEM_PROMPT + ctxJson;
+
+  let acc = '';
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 800,
+        stream: true,
+        system: system,
+        messages: [{ role: 'user', content: question }],
+      }),
+    });
+    if (!resp.ok || !resp.body){
+      const errText = await resp.text().catch(()=>'(no body)');
+      botEl.className = 'msg err';
+      let msg = 'HTTP ' + resp.status;
+      try {
+        const j = JSON.parse(errText);
+        if (j && j.error && j.error.message) msg = j.error.message;
+      } catch(_) { msg = errText.slice(0, 200); }
+      if (resp.status === 401){
+        msg = 'Invalid Anthropic key (HTTP 401). Type /clearkey in the chat box to reset and re-enter.';
+      } else if (resp.status === 429){
+        msg = 'Rate limited (HTTP 429). Wait a moment and try again, or check your Anthropic console for usage limits.';
+      }
+      botEl.textContent = msg;
+      return;
+    }
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true){
+      const {value, done} = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, {stream:true});
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0){
+        const evt = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        for (const line of evt.split('\n')){
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (!data || data === '[DONE]') continue;
+          try {
+            const j = JSON.parse(data);
+            if (j.type === 'content_block_delta' && j.delta && j.delta.type === 'text_delta'){
+              if (acc === '') botEl.textContent = '';
+              acc += j.delta.text;
+              botEl.textContent = acc;
+              chatMsgs.scrollTop = chatMsgs.scrollHeight;
+            } else if (j.type === 'message_stop'){
+              return;
+            } else if (j.type === 'error' && j.error){
+              botEl.className = 'msg err';
+              botEl.textContent = (j.error.message || 'stream error').slice(0, 300);
+              return;
+            }
+          } catch(_) { /* heartbeat / non-JSON event */ }
+        }
+      }
+    }
+  } catch(e){
+    botEl.className = 'msg err';
+    botEl.textContent = 'Network error: ' + e.message;
+  }
+}
+
+// On first chat-dock open in public-mirror mode, drop in a one-time intro
+// explaining the BYO-key flow up front (so the user understands the
+// prompt that will appear on first submit instead of being surprised).
 let _chatIntroShown = false;
 function _maybeShowChatIntro(){
   if (_chatIntroShown || _chatIsServer) return;
   _chatIntroShown = true;
   const el = appendMsg('bot',
-    "Hi! Chat needs to run locally (python server.py) — the public dashboard " +
-    "is a static site with no backend. Your dashboard data is all here, but " +
-    "I can't answer questions about it from this URL.\n\n" +
-    "To use chat: clone the repo, run `python server.py`, open localhost:5000. " +
-    "Same dashboard, plus a working assistant."
+    "Chat is wired to call Anthropic's API directly from your browser. " +
+    "On the first question I'll prompt for your Anthropic API key — paste it " +
+    "once and it's saved in this browser's localStorage (never sent anywhere " +
+    "except api.anthropic.com).\n\n" +
+    "Get a key: console.anthropic.com → API Keys. Cost on Haiku ≈ $0.001/msg.\n\n" +
+    "Type /clearkey to reset the stored key."
   );
   el.className = 'msg bot';
 }
@@ -10360,16 +10581,21 @@ chatForm?.addEventListener('submit', (e) => {
   const q = chatInput.value.trim();
   if (!q) return;
   chatInput.value = '';
-  // Public mirror: intercept the submit so we never fire the /api/chat
-  // request that would return 405. Show a friendly per-question reply
-  // instead of an HTTP error blob.
+  if (!_chatIsServer && /^\/clear\s*key$/i.test(q)){
+    clearAnthropicKey();
+    appendMsg('user', q);
+    appendMsg('bot', 'Anthropic key cleared. The next question will prompt for a new key.');
+    chatInput.focus();
+    return;
+  }
   if (!_chatIsServer){
     appendMsg('user', q);
-    appendMsg('bot',
-      "Chat is local-only on this build. Run `python server.py` locally " +
-      "(needs ANTHROPIC_API_KEY) to ask questions about this dashboard's data."
-    );
-    chatInput.focus();
+    const botEl = appendMsg('bot', '…');
+    chatSend.disabled = true;
+    clientSideChatStream(q, botEl).finally(() => {
+      chatSend.disabled = false;
+      chatInput.focus();
+    });
     return;
   }
   chatSend.disabled = true;
@@ -10550,6 +10776,12 @@ if (!isServer){
   }
   const _sb = document.getElementById('shareBtn');
   if (_sb) _sb.style.display = 'none';
+  // ETF Flows tab Paste/Seed buttons POST to /api/* endpoints that only
+  // exist in local Flask mode. Hide them on the static mirror.
+  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.display = 'none';
+  });
 }
 
 // ---------- Share modal (owner side) ----------
@@ -10867,10 +11099,10 @@ function liveComputeSignal(rows){
 
 function liveSignalColor(label){
   if (label === 'STRONG BUY') return '#16a34a';
-  if (label === 'BUY') return '#22c55e';
+  if (label === 'BUY') return 'var(--v2-good)';
   if (label === 'STRONG SELL') return '#b91c1c';
-  if (label === 'SELL') return '#ef4444';
-  return '#f59e0b';
+  if (label === 'SELL') return 'var(--v2-bad)';
+  return 'var(--v2-warn)';
 }
 
 function liveFmtUsd(v){
@@ -11023,7 +11255,7 @@ function renderLiveStockSection(sym, rows, source){
   const ch5  = n > 5  ? ((last - closes[n - 6])  / closes[n - 6])  * 100 : null;
   const ch30 = n > 30 ? ((last - closes[n - 31]) / closes[n - 31]) * 100 : null;
   const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
-  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   const sparkVals = closes.slice(-30);
   const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
   const spark = renderSparkline(sparkVals, sparkUp, 160, 36);
@@ -11146,7 +11378,7 @@ function renderServerSymbolSection(sym, payload){
   const vaHigh = poc && (poc.value_area_high != null ? poc.value_area_high : poc.va_high);
   const pocDistPct = (last != null && pocPrice) ? ((last - pocPrice) / pocPrice) * 100 : null;
   const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
-  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   return (
     '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:8px">' +
       '<div style="font-size:26px;font-weight:700;letter-spacing:0.4px">' + escapeHtml(sym) + '</div>' +
@@ -11191,7 +11423,7 @@ function renderLiveCryptoSection(sym, rows){
   const ch5  = n > 5  ? ((last - closes[n - 6])  / closes[n - 6])  * 100 : null;
   const ch30 = n > 30 ? ((last - closes[n - 31]) / closes[n - 31]) * 100 : null;
   const fmtPct   = (p) => p == null ? '—' : (p >= 0 ? '+' : '') + p.toFixed(2) + '%';
-  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? '#22c55e' : '#ef4444');
+  const pctColor = (p) => p == null ? 'var(--muted)' : (p >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   const sparkVals = closes.slice(-30);
   const sparkUp = sparkVals.length >= 2 && sparkVals[sparkVals.length - 1] >= sparkVals[0];
   const spark = renderSparkline(sparkVals, sparkUp, 160, 36);
@@ -11440,7 +11672,7 @@ function buildSymbolSectionsHtml(resolved){
           '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">' + escapeHtml(signalLabel) + '</div>' +
           signalHtml +
         '</div>'
-      : '<div class="chart-card" style="opacity:.85"><div class="empty" style="padding:18px 8px;font-size:12px">No signal data for <strong>' + escapeHtml(sym) + '</strong> in this build.</div></div>';
+      : '<div class="v2-card" style="opacity:.85"><div class="empty" style="padding:18px 8px;font-size:12px">No signal data for <strong>' + escapeHtml(sym) + '</strong> in this build.</div></div>';
     const pocSection = '<div>' +
         '<div class="sub" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Point of Control</div>' +
         pocCardHtml +
@@ -11483,7 +11715,7 @@ function buildSymbolSectionsHtml(resolved){
     const negPct = (neg / total) * 100;
     const neuPct = (neu / total) * 100;
     const net = sentiment.net_score;
-    const netColor = net == null ? 'var(--muted)' : (net > 0 ? '#22c55e' : (net < 0 ? '#ef4444' : '#f59e0b'));
+    const netColor = net == null ? 'var(--muted)' : (net > 0 ? 'var(--v2-good)' : (net < 0 ? 'var(--v2-bad)' : 'var(--v2-warn)'));
     const netTxt = net == null ? '—' : ((net > 0 ? '+' : '') + net);
     sections.push(
       '<div>' +
@@ -11493,14 +11725,14 @@ function buildSymbolSectionsHtml(resolved){
           '<span style="color:' + netColor + ';font-weight:700;font-size:14px">net ' + netTxt + '</span>' +
         '</div>' +
         '<div style="display:flex;height:10px;margin-top:6px;border-radius:3px;overflow:hidden;background:#1f2533">' +
-          '<div style="background:#22c55e;width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
-          '<div style="background:#f59e0b;width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
-          '<div style="background:#ef4444;width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
+          '<div style="background:var(--v2-good);width:' + posPct.toFixed(1) + '%" title="' + pos + ' positive"></div>' +
+          '<div style="background:var(--v2-warn);width:' + neuPct.toFixed(1) + '%" title="' + neu + ' neutral"></div>' +
+          '<div style="background:var(--v2-bad);width:' + negPct.toFixed(1) + '%" title="' + neg + ' negative"></div>' +
         '</div>' +
         '<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;color:var(--muted)">' +
-          '<span style="color:#22c55e">' + pos + ' positive</span>' +
+          '<span style="color:var(--v2-good)">' + pos + ' positive</span>' +
           '<span>' + neu + ' neutral</span>' +
-          '<span style="color:#ef4444">' + neg + ' negative</span>' +
+          '<span style="color:var(--v2-bad)">' + neg + ' negative</span>' +
         '</div>' +
       '</div>'
     );
@@ -11704,22 +11936,22 @@ function pocCompactCardHtml(coin){
     const dlt = Number(mig.delta_pct);
     const dltTxt = isFinite(dlt) ? ((dlt >= 0 ? '+' : '') + dlt.toFixed(2) + '%') : '';
     const cfg = mig.direction === 'UP'
-      ? {bg:'#22c55e22', fg:'#22c55e', arrow:'↑', label:'UP'}
+      ? {bg:'var(--v2-good-bg)', fg:'var(--v2-good)', arrow:'↑', label:'UP'}
       : mig.direction === 'DOWN'
-      ? {bg:'#ef444422', fg:'#ef4444', arrow:'↓', label:'DOWN'}
+      ? {bg:'var(--v2-bad-bg)', fg:'var(--v2-bad)', arrow:'↓', label:'DOWN'}
       : {bg:'#6b728022', fg:'var(--muted)', arrow:'·', label:'FLAT'};
     migChip = `<span style="background:${cfg.bg};color:${cfg.fg};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;white-space:nowrap">${cfg.arrow} ${cfg.label}${dltTxt ? ' ' + dltTxt : ''}</span>`;
   }
   // 90d POC distance + IN VA / OUT badge.
   const pocPrice = anchor ? anchor.poc : null;
   const distPct  = anchor && anchor.distance_pct != null ? Number(anchor.distance_pct) : null;
-  const dColor = distPct == null ? 'var(--muted)' : (distPct >= 0 ? '#22c55e' : '#ef4444');
+  const dColor = distPct == null ? 'var(--muted)' : (distPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
   const dTxt   = distPct == null ? '—' : ((distPct >= 0 ? '+' : '') + distPct.toFixed(2) + '%');
   const inVA = anchor && anchor.in_value_area;
   const vaTag = anchor
     ? (inVA
-        ? '<span style="background:#22c55e22;color:#22c55e;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
-        : '<span style="background:#f59e0b22;color:#f59e0b;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>')
+        ? '<span style="background:var(--v2-good-bg);color:var(--v2-good);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">IN VA</span>'
+        : '<span style="background:var(--v2-warn-bg);color:var(--v2-warn);padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">OUT</span>')
     : '';
   // Mini ladder — 30d / 90d POC + distance%. 180d intentionally omitted to
   // keep the card visually paired with the Signal card height.
@@ -11729,7 +11961,7 @@ function pocCompactCardHtml(coin){
     if (!r) {
       return `<tr><td style="color:var(--muted);padding:3px 6px">${label}</td><td colspan="2" style="color:var(--muted);padding:3px 6px">—</td></tr>`;
     }
-    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? '#22c55e' : '#ef4444');
+    const dc = r.distance_pct == null ? 'var(--muted)' : (r.distance_pct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)');
     const dt = r.distance_pct == null ? '—' : (r.distance_pct >= 0 ? '+' : '') + Number(r.distance_pct).toFixed(1) + '%';
     return `<tr>
       <td style="color:var(--muted);padding:3px 6px">${label}</td>
@@ -11739,10 +11971,10 @@ function pocCompactCardHtml(coin){
   }).join('');
   const sparkline = pocMigrationSparkline(d.migration_series);
   // Whole card is the click target — reuses wirePocDetail() in app.py.
-  return `<div class="chart-card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} full POC detail" title="Click for full POC breakdown" style="cursor:pointer;display:flex;flex-direction:column;gap:8px">
+  return `<div class="v2-card poc-card" data-poc-coin-id="${cid}" role="button" tabindex="0" aria-label="Open ${sym} full POC detail" title="Click for full POC breakdown" style="cursor:pointer;display:flex;flex-direction:column;gap:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
       <div style="display:flex;align-items:center;gap:8px;min-width:0">
-        <h2 style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
+        <h2 class="v2-card__title" style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
         ${migChip}
       </div>
       <div style="text-align:right">
@@ -11783,9 +12015,9 @@ function pocEmptyCardHtml(sym, kind){
   const sub = isStock
     ? 'Stock POC needs at least 30 daily bars from Yahoo. Recent IPOs and thinly-traded tickers may not have enough history yet.'
     : 'The POC tab tracks the top 50 cryptos by signal score; symbols outside that set fall back to this empty state.';
-  return `<div class="chart-card" style="display:flex;flex-direction:column;gap:8px;opacity:.85">
+  return `<div class="v2-card" style="display:flex;flex-direction:column;gap:8px;opacity:.85">
     <div style="display:flex;align-items:center;gap:8px">
-      <h2 style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
+      <h2 class="v2-card__title" style="margin:0;font-size:13px;font-weight:600">Point of Control</h2>
       <span class="tag" style="font-size:9px">not available</span>
     </div>
     <div class="empty" style="padding:18px 8px;font-size:12px;line-height:1.5">
