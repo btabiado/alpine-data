@@ -8,12 +8,12 @@ Phase 1 pillars:
 - adoption       — Adoption Momentum (revenue growth + Google Trends slope)
 - institutional  — Institutional Confidence (90d momentum + 13F stub)
 - financial      — Financial Evolution (rev growth + gross margin trend + OCF)
-- thesis         — (Week 5) Thesis Integrity (Alpha Vantage news sentiment)
-- des            — (Week 5) Demand Environment Score (FRED + EIA macro)
+- thesis         — Thesis Integrity (Alpha Vantage news sentiment)
+- des            — Demand Environment Score (FRED + EIA macro with sector tilts)
 """
 
 from __future__ import annotations
 
-from lthcs.pillars import adoption, financial, institutional
+from lthcs.pillars import adoption, des, financial, institutional, thesis
 
-__all__ = ["adoption", "financial", "institutional"]
+__all__ = ["adoption", "des", "financial", "institutional", "thesis"]

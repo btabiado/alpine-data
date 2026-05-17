@@ -1,0 +1,132 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-05-16",
+  "description": "Sector-specific sensitivities for the Demand Environment Score (DES) pillar. Each tilt is in [-1.0, +1.0]: positive means the sector benefits from higher values of that macro signal; negative means it suffers. The DES formula linearly combines macro_tilt[signal] (normalized from raw input to [-1, +1] via signal-specific bounds) with sector_sensitivity[signal], scales by DES_MAGNITUDE_SCALE (V1: 30 points), and adds to neutral baseline 50.0.",
+  "signal_normalization": {
+    "_comment": "How each raw macro signal is mapped to a [-1, +1] tilt. 'low' -> -1, 'high' -> +1, linear in between, clipped.",
+    "cpi_yoy_pct":         {"low": 0.0,  "high": 6.0,  "neutral": 2.0, "_note": "annual CPI inflation; >2% accelerating tilts positive"},
+    "fed_funds_pct":       {"low": 0.0,  "high": 6.0,  "neutral": 2.5, "_note": "Fed Funds rate level"},
+    "ten_y_yield_pct":     {"low": 1.0,  "high": 6.0,  "neutral": 3.5, "_note": "10Y Treasury yield"},
+    "ten_y_30d_change_bp": {"low": -50,  "high": 50,   "neutral": 0,   "_note": "30-day move in 10Y in basis points"},
+    "unemployment_pct":    {"low": 2.5,  "high": 8.0,  "neutral": 4.5, "_note": "U-3 unemployment rate; HIGHER unemployment maps to +1, but most sectors have negative sensitivity to that"},
+    "wti_oil_usd":         {"low": 40.0, "high": 130.0,"neutral": 75.0,"_note": "WTI crude spot price USD"}
+  },
+  "sectors": {
+    "Energy": {
+      "wti_oil_usd":         0.70,
+      "cpi_yoy_pct":         0.30,
+      "fed_funds_pct":       0.00,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp": 0.00,
+      "unemployment_pct":   -0.10
+    },
+    "Materials": {
+      "wti_oil_usd":         0.20,
+      "cpi_yoy_pct":         0.30,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.20,
+      "ten_y_30d_change_bp":-0.10,
+      "unemployment_pct":   -0.30
+    },
+    "Industrials": {
+      "wti_oil_usd":        -0.10,
+      "cpi_yoy_pct":        -0.20,
+      "fed_funds_pct":      -0.20,
+      "ten_y_yield_pct":    -0.20,
+      "ten_y_30d_change_bp":-0.10,
+      "unemployment_pct":   -0.50
+    },
+    "Consumer Discretionary": {
+      "wti_oil_usd":        -0.40,
+      "cpi_yoy_pct":        -0.30,
+      "fed_funds_pct":      -0.40,
+      "ten_y_yield_pct":    -0.30,
+      "ten_y_30d_change_bp":-0.20,
+      "unemployment_pct":   -0.60
+    },
+    "Consumer Staples": {
+      "wti_oil_usd":        -0.10,
+      "cpi_yoy_pct":        -0.20,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.20,
+      "ten_y_30d_change_bp":-0.10,
+      "unemployment_pct":   -0.20
+    },
+    "Health Care": {
+      "wti_oil_usd":         0.00,
+      "cpi_yoy_pct":        -0.10,
+      "fed_funds_pct":      -0.20,
+      "ten_y_yield_pct":    -0.20,
+      "ten_y_30d_change_bp":-0.10,
+      "unemployment_pct":   -0.10
+    },
+    "Financials": {
+      "wti_oil_usd":         0.00,
+      "cpi_yoy_pct":         0.10,
+      "fed_funds_pct":       0.45,
+      "ten_y_yield_pct":     0.50,
+      "ten_y_30d_change_bp": 0.30,
+      "unemployment_pct":   -0.35
+    },
+    "Information Technology": {
+      "wti_oil_usd":         0.00,
+      "cpi_yoy_pct":        -0.30,
+      "fed_funds_pct":      -0.45,
+      "ten_y_yield_pct":    -0.45,
+      "ten_y_30d_change_bp":-0.20,
+      "unemployment_pct":   -0.20
+    },
+    "Technology": {
+      "_alias_of":           "Information Technology",
+      "wti_oil_usd":         0.00,
+      "cpi_yoy_pct":        -0.30,
+      "fed_funds_pct":      -0.45,
+      "ten_y_yield_pct":    -0.45,
+      "ten_y_30d_change_bp":-0.20,
+      "unemployment_pct":   -0.20
+    },
+    "Communication Services": {
+      "wti_oil_usd":        -0.10,
+      "cpi_yoy_pct":        -0.20,
+      "fed_funds_pct":      -0.30,
+      "ten_y_yield_pct":    -0.30,
+      "ten_y_30d_change_bp":-0.15,
+      "unemployment_pct":   -0.20
+    },
+    "Utilities": {
+      "wti_oil_usd":        -0.10,
+      "cpi_yoy_pct":        -0.10,
+      "fed_funds_pct":      -0.30,
+      "ten_y_yield_pct":    -0.55,
+      "ten_y_30d_change_bp":-0.20,
+      "unemployment_pct":   -0.10
+    },
+    "Real Estate": {
+      "wti_oil_usd":        -0.10,
+      "cpi_yoy_pct":         0.10,
+      "fed_funds_pct":      -0.50,
+      "ten_y_yield_pct":    -0.60,
+      "ten_y_30d_change_bp":-0.30,
+      "unemployment_pct":   -0.30
+    }
+  },
+  "ticker_overrides": {
+    "_comment": "Per-ticker overrides for cases where industry differs from sector default. E.g. EV automakers benefit from higher oil even though Consumer Discretionary doesn't.",
+    "TSLA": {
+      "wti_oil_usd":         0.50,
+      "_note": "EV manufacturer — higher gasoline accelerates EV adoption substitution"
+    },
+    "LCID": {
+      "wti_oil_usd":         0.60,
+      "_note": "Pure-play EV — most exposed to fuel substitution dynamic"
+    },
+    "F": {
+      "wti_oil_usd":        -0.20,
+      "_note": "Ford has EV exposure but ICE truck dominance keeps net oil sensitivity negative"
+    },
+    "GE": {
+      "wti_oil_usd":         0.10,
+      "_note": "Aerospace + power gen — modestly oil-positive via energy segment"
+    }
+  }
+}
