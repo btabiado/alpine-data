@@ -63,7 +63,9 @@ from lthcs.sources import (
     finnhub,
     fred,
     fred_breadth,
+    google_trends,
     sec_8k,
+    sec_13f,
     sec_edgar,
     sec_form4,
     sector_etf,
@@ -189,6 +191,19 @@ class PipelineState:
     # dict (regime, breadth_score in [-1,+1], firm_count, raw_actions).
     # Persisted to data/lthcs/analyst_breadth/<date>.json.
     analyst_breadth_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Per-ticker SEC 13F institutional holdings aggregated across 21
+    # tracked managers (BlackRock, Vanguard, State Street, etc.).
+    # Quarterly cadence; first-run is slow (~8min cold cache, near-instant
+    # warm). Map of ticker → holdings dict (regime, conviction_signal,
+    # signal_score, manager_count, top_holders, quarter_over_quarter).
+    # Persisted to data/lthcs/holdings/<date>.json.
+    holdings_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Per-ticker Google Trends acceleration (read from weekly cache;
+    # daily pipeline never calls pytrends — rate limit). Map of ticker
+    # → trends dict (acceleration_4w_pct, regime, signal_score).
+    # Populated from data/lthcs/trends/<YYYY-Www>.json written by the
+    # scripts/lthcs_trends_weekly.py batch.
+    trends_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     # Per-ticker SEC Form 4 insider transactions (open-market only,
     # 10b5-1 / awards / exercises filtered). Map of ticker → insider
     # dict (regime, conviction_score, cluster_buying flag, ceo_cfo_action).
@@ -878,8 +893,47 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 if state.args.verbose:
                     print("  sec_form4 fetch failed: %s" % exc)
                 state.insider_by_ticker = {}
+
+            # --- SEC 13F institutional holdings (quarterly cadence) ---
+            # Aggregates across 21 tracked managers. First-run is slow
+            # (~8 min cold cache fetching ~600MB of 13F XMLs); cached
+            # extractions are tiny (~18MB) and quarter-stable so re-runs
+            # within the quarter are near-instant.
+            try:
+                state.holdings_by_ticker = (
+                    sec_13f.fetch_universe_institutional_holdings(
+                        state.active_tickers
+                    )
+                )
+                counts["holdings_covered"] = sum(
+                    1 for v in state.holdings_by_ticker.values()
+                    if isinstance(v, dict) and v.get("manager_count", 0) > 0
+                )
+            except Exception as exc:
+                if state.args.verbose:
+                    print("  sec_13f fetch failed: %s" % exc)
+                state.holdings_by_ticker = {}
         else:
             state.insider_by_ticker = {}
+            state.holdings_by_ticker = {}
+
+        # --- Google Trends acceleration (cache-read-only) ---
+        # Runs in skip-thesis paths too because there's no network call;
+        # we just read the most recent data/lthcs/trends/<YYYY-Www>.json.
+        # The weekly batch script populates the cache; if no file exists
+        # yet, this returns an empty dict and Adoption falls back to
+        # revenue-only (legacy behavior).
+        try:
+            state.trends_by_ticker = (
+                google_trends.get_universe_trends_acceleration(
+                    state.active_tickers
+                )
+            )
+            counts["trends_covered"] = len(state.trends_by_ticker)
+        except Exception as exc:
+            if state.args.verbose:
+                print("  google_trends read failed: %s" % exc)
+            state.trends_by_ticker = {}
 
     state.fetch_counts = counts
     counts["finnhub_supplement"] = finnhub_supplement_count
@@ -1007,7 +1061,9 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         my_peer_growths = _peer_growths_for(sym)
         try:
             ad = adoption.compute_adoption(
-                sym, state.rev_by_ticker.get(sym, []), [], my_peer_growths
+                sym, state.rev_by_ticker.get(sym, []), [], my_peer_growths,
+                trends_data=state.trends_by_ticker.get(sym),
+                universe_trends_data=state.trends_by_ticker,
             )
         except Exception:
             ad = _neutral_pillar_result(sym, "adoption_momentum")
@@ -1017,6 +1073,7 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 state.momentum_by_ticker.get(sym),
                 state.momentum_by_ticker,
                 insider_data=state.insider_by_ticker.get(sym),
+                holdings_data=state.holdings_by_ticker.get(sym),
             )
         except Exception:
             ins = _neutral_pillar_result(sym, "institutional_confidence")
@@ -1277,6 +1334,14 @@ def stage_8_persist(state: PipelineState) -> bool:
                 insider_dir.mkdir(parents=True, exist_ok=True)
                 (insider_dir / ("%s.json" % state.calc_date)).write_text(
                     json.dumps(state.insider_by_ticker, indent=2, sort_keys=True)
+                )
+            # Per-ticker 13F institutional holdings (quarterly cadence,
+            # daily persist so the dashboard's detail-modal can read).
+            if state.holdings_by_ticker:
+                holdings_dir = persist.data_root / "holdings"
+                holdings_dir.mkdir(parents=True, exist_ok=True)
+                (holdings_dir / ("%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.holdings_by_ticker, indent=2, sort_keys=True)
                 )
         except Exception as exc:
             if state.args.verbose:

@@ -115,6 +115,7 @@ def test_compute_institutional_momentum_present_inst_none() -> None:
         "has_momentum": True,
         "has_inst_holdings": False,
         "has_insider": False,
+        "has_holdings": False,
     }
 
     comps = result["components"]
@@ -141,6 +142,7 @@ def test_compute_institutional_momentum_none_inst_none() -> None:
         "has_momentum": False,
         "has_inst_holdings": False,
         "has_insider": False,
+        "has_holdings": False,
     }
     assert result["components"]["momentum_pct_90d"] is None
     assert result["components"]["momentum_subscore"] == 50.0
@@ -174,6 +176,7 @@ def test_compute_institutional_both_components_present() -> None:
         "has_momentum": True,
         "has_inst_holdings": True,
         "has_insider": False,
+        "has_holdings": False,
     }
 
     comps = result["components"]
@@ -199,6 +202,7 @@ def test_compute_institutional_inst_present_momentum_none() -> None:
         "has_momentum": False,
         "has_inst_holdings": True,
         "has_insider": False,
+        "has_holdings": False,
     }
     assert result["components"]["momentum_subscore"] == 50.0
     # +0.05 hits the upper bound -> 100.
@@ -257,6 +261,8 @@ def test_compute_institutional_returns_expected_keys() -> None:
         "inst_holdings_subscore",
         "base_sub_score",
         "insider",
+        "holdings",
+        "combined_adjustment_pts",
     }
     assert set(result["weights"].keys()) == {"momentum", "inst_holdings"}
     assert set(result["effective_weights"].keys()) == {"momentum", "inst_holdings"}
@@ -264,6 +270,7 @@ def test_compute_institutional_returns_expected_keys() -> None:
         "has_momentum",
         "has_inst_holdings",
         "has_insider",
+        "has_holdings",
     }
     # The insider component dict shape (always present, even for missing data).
     assert set(result["components"]["insider"].keys()) == {
@@ -271,6 +278,17 @@ def test_compute_institutional_returns_expected_keys() -> None:
         "conviction_score",
         "cluster_buying",
         "ceo_cfo_action",
+        "adjustment_pts",
+    }
+    # The holdings component dict shape (always present, even for missing data).
+    assert set(result["components"]["holdings"].keys()) == {
+        "conviction_signal",
+        "signal_score",
+        "manager_count",
+        "data_quality",
+        "share_change_pct",
+        "net_buyers",
+        "net_sellers",
         "adjustment_pts",
     }
 
@@ -628,4 +646,245 @@ def test_insider_malformed_conviction_score_treated_as_missing() -> None:
     )
     assert result["components"]["insider"]["adjustment_pts"] == 0.0
     assert result["components"]["insider"]["conviction_score"] is None
+    assert result["sub_score"] == base_sub
+
+
+# --- 13F holdings adjustment -----------------------------------------------
+
+
+def _holdings(
+    *,
+    conviction_signal: str = "steady",
+    signal_score: Optional[float] = 0.0,
+    manager_count: int = 15,
+    data_quality: str = "good",
+    share_change_pct: float = 0.0,
+    net_buyers: int = 0,
+    net_sellers: int = 0,
+) -> Dict[str, object]:
+    """Build a minimal 13F holdings payload for tests."""
+    return {
+        "ticker": "TEST",
+        "conviction_signal": conviction_signal,
+        "signal_score": signal_score,
+        "manager_count": manager_count,
+        "data_quality": data_quality,
+        "quarter_over_quarter": {
+            "share_change_pct": share_change_pct,
+            "net_buyers": net_buyers,
+            "net_sellers": net_sellers,
+            "unchanged": 0,
+            "manager_count_change": 0,
+            "prior_quarter": "2025-Q4",
+        },
+    }
+
+
+def test_holdings_strong_accumulating_adds_five_points() -> None:
+    """signal > +0.5 with accumulating signal -> +5 pts."""
+    peers = _peer_momentums_universe("MSFT", 0.0)
+    base = institutional.compute_institutional("MSFT", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    holdings = _holdings(conviction_signal="accumulating", signal_score=0.75)
+    result = institutional.compute_institutional(
+        "MSFT", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == pytest.approx(5.0)
+    assert result["components"]["combined_adjustment_pts"] == pytest.approx(5.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub + 5.0, 1))
+    assert result["data_quality"]["has_holdings"] is True
+
+
+def test_holdings_mild_accumulating_adds_three_points() -> None:
+    """+0.3 <= signal <= +0.5 with accumulating -> +3 pts."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    holdings = _holdings(conviction_signal="accumulating", signal_score=0.4)
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == pytest.approx(3.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub + 3.0, 1))
+
+
+def test_holdings_mild_distributing_subtracts_two_points() -> None:
+    """-0.5 <= signal <= -0.3 with distributing -> -2 pts."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    holdings = _holdings(conviction_signal="distributing", signal_score=-0.4)
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == pytest.approx(-2.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub - 2.0, 1))
+
+
+def test_holdings_strong_distributing_subtracts_three_points() -> None:
+    """signal < -0.5 with distributing -> -3 pts."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    holdings = _holdings(conviction_signal="distributing", signal_score=-0.8)
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == pytest.approx(-3.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub - 3.0, 1))
+
+
+def test_holdings_steady_zero_adjustment() -> None:
+    """conviction_signal=='steady' -> 0 pts regardless of score."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    holdings = _holdings(conviction_signal="steady", signal_score=0.0)
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == 0.0
+    assert result["sub_score"] == base_sub
+
+
+def test_holdings_sparse_data_quality_zeros_adjustment() -> None:
+    """A "sparse" data_quality must NOT contribute adjustment even with strong score."""
+    peers = _peer_momentums_universe("OBSC", 0.0)
+    base = institutional.compute_institutional("OBSC", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    # Sparse data: manager_count=2, but signal looks "accumulating" because both buyers.
+    holdings = _holdings(
+        conviction_signal="accumulating",
+        signal_score=1.0,
+        manager_count=2,
+        data_quality="sparse",
+    )
+    result = institutional.compute_institutional(
+        "OBSC", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == 0.0
+    assert result["sub_score"] == base_sub
+
+
+def test_holdings_absent_does_not_break_insider_path() -> None:
+    """Existing insider-only behavior must still work when holdings is None."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    insider = _insider(
+        regime="mild_buying",
+        conviction_score=0.30,
+        cluster_buying=False,
+        ceo_cfo_action="neutral",
+    )
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, insider_data=insider, holdings_data=None
+    )
+    # Insider-only behavior: +3 pts.
+    assert result["components"]["insider"]["adjustment_pts"] == pytest.approx(3.0)
+    assert result["components"]["holdings"]["adjustment_pts"] == 0.0
+    assert result["components"]["combined_adjustment_pts"] == pytest.approx(3.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub + 3.0, 1))
+    assert result["data_quality"]["has_holdings"] is False
+
+
+def test_combined_insider_holdings_cap_binding_at_plus_twelve() -> None:
+    """Insider +10 (max) + holdings +5 = +15 must clamp to +12 outer cap."""
+    peers = _peer_momentums_universe("CSGP", 0.0)
+    base = institutional.compute_institutional("CSGP", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    # Insider maxes at +10 via cluster + CEO/CFO buying.
+    insider = _insider(
+        regime="strong_buying",
+        conviction_score=0.97,
+        cluster_buying=True,
+        ceo_cfo_action="buying",
+    )
+    holdings = _holdings(conviction_signal="accumulating", signal_score=0.8)
+    result = institutional.compute_institutional(
+        "CSGP", 0.0, peers, insider_data=insider, holdings_data=holdings
+    )
+    assert result["components"]["insider"]["adjustment_pts"] == pytest.approx(10.0)
+    assert result["components"]["holdings"]["adjustment_pts"] == pytest.approx(5.0)
+    # +10 + +5 = +15, clamped to +12.
+    assert result["components"]["combined_adjustment_pts"] == pytest.approx(12.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub + 12.0, 1))
+
+
+def test_combined_insider_holdings_cap_binding_at_minus_seven() -> None:
+    """Insider -4 (natural worst case) + holdings -3 = -7 lands at floor."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    insider = _insider(
+        regime="heavy_selling",
+        conviction_score=-1.0,
+        cluster_buying=False,
+        ceo_cfo_action="selling",
+    )
+    holdings = _holdings(conviction_signal="distributing", signal_score=-0.9)
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, insider_data=insider, holdings_data=holdings
+    )
+    assert result["components"]["insider"]["adjustment_pts"] == pytest.approx(-4.0)
+    assert result["components"]["holdings"]["adjustment_pts"] == pytest.approx(-3.0)
+    # -4 + -3 = -7 at the floor.
+    assert result["components"]["combined_adjustment_pts"] == pytest.approx(-7.0)
+    assert result["sub_score"] == pytest.approx(round(base_sub - 7.0, 1))
+
+
+def test_holdings_component_detail_surfaces_qoq_fields() -> None:
+    """The holdings component dict must expose share_change_pct + net_buyers/sellers."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    holdings = _holdings(
+        conviction_signal="accumulating",
+        signal_score=0.55,
+        manager_count=18,
+        data_quality="good",
+        share_change_pct=2.5,
+        net_buyers=13,
+        net_sellers=3,
+    )
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, holdings_data=holdings
+    )
+    h = result["components"]["holdings"]
+    assert h["conviction_signal"] == "accumulating"
+    assert h["signal_score"] == pytest.approx(0.55)
+    assert h["manager_count"] == 18
+    assert h["data_quality"] == "good"
+    assert h["share_change_pct"] == pytest.approx(2.5)
+    assert h["net_buyers"] == 13
+    assert h["net_sellers"] == 3
+    assert h["adjustment_pts"] == pytest.approx(5.0)  # strong accumulating
+
+
+def test_holdings_malformed_signal_score_treated_as_missing() -> None:
+    """A non-numeric signal_score must NOT crash and must contribute 0."""
+    peers = _peer_momentums_universe("AAPL", 0.0)
+    base = institutional.compute_institutional("AAPL", 0.0, peers)
+    base_sub = base["sub_score"]
+
+    holdings = {
+        "ticker": "AAPL",
+        "conviction_signal": "accumulating",
+        "signal_score": "not a number",
+        "manager_count": 15,
+        "data_quality": "good",
+        "quarter_over_quarter": {},
+    }
+    result = institutional.compute_institutional(
+        "AAPL", 0.0, peers, holdings_data=holdings
+    )
+    assert result["components"]["holdings"]["adjustment_pts"] == 0.0
+    assert result["components"]["holdings"]["signal_score"] is None
     assert result["sub_score"] == base_sub
