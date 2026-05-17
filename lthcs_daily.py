@@ -60,8 +60,10 @@ from lthcs.sources import (
     eia,
     finnhub,
     fred,
+    fred_breadth,
     sec_8k,
     sec_edgar,
+    sector_etf,
     sector_rss,
     yahoo,
     yahoo_events,
@@ -166,6 +168,14 @@ class PipelineState:
 
     # Stage 2
     macro_inputs: Dict[str, Optional[float]] = field(default_factory=dict)
+    # FRED breadth / regime snapshot (HY OAS, IG OAS, 2s10s, broad dollar).
+    # Additive market-health layer; downstream scoring will start consuming
+    # in a follow-up commit. Persisted to data/lthcs/macro/breadth_<date>.json.
+    breadth_snapshot: Optional[Dict[str, Any]] = None
+    # Sector ETF (XLK/XLF/XLE/etc. vs SPY) 1m + 3m relative strength.
+    # Additive sector-context layer for downstream Adoption / Thesis use.
+    # Persisted to data/lthcs/macro/sector_strength_<date>.json.
+    sector_strength: Optional[Dict[str, Any]] = None
     av_response: Optional[Dict[str, Any]] = None       # legacy single-anchor path (kept for backward-compat)
     av_anchor_ticker: Optional[str] = None             # legacy single-anchor path
     rotation: Optional[ThesisRotation] = None
@@ -471,6 +481,33 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             counts["eia_ok"] = 1
     except Exception:
         state.macro_inputs = {}
+
+    # FRED breadth / regime snapshot (HY OAS, IG OAS, 2s10s, broad dollar).
+    # Additive: persisted today; downstream scoring will consume in a
+    # follow-up commit. A full failure must not crash the pipeline.
+    try:
+        state.breadth_snapshot = fred_breadth.fetch_breadth_snapshot()
+        ok = state.breadth_snapshot.get("data_quality", {}).get("sources_ok", 0)
+        counts["fred_breadth_ok"] = ok
+    except Exception as exc:
+        if state.args.verbose:
+            print("  fred_breadth fetch failed: %s" % exc)
+        state.breadth_snapshot = None
+
+    # Sector ETF relative strength (XLK/XLF/XLE/... vs SPY).
+    # Additive: persisted today; downstream Adoption / Thesis consumption
+    # in a follow-up commit. Skip in --skip-thesis runs to keep test
+    # pipelines fast (yfinance can be slow under flaky network).
+    if not state.args.skip_thesis:
+        try:
+            state.sector_strength = sector_etf.fetch_sector_strength()
+            counts["sector_etf_ok"] = len(state.sector_strength.get("sectors", {}))
+        except Exception as exc:
+            if state.args.verbose:
+                print("  sector_etf fetch failed: %s" % exc)
+            state.sector_strength = None
+    else:
+        state.sector_strength = None
 
     # Alpha Vantage: rotation — score up to 25 least-recently-scored tickers,
     # each via a single-ticker call. Sentiment files live in
@@ -1130,6 +1167,23 @@ def stage_8_persist(state: PipelineState) -> bool:
             state.snapshot_rows, state.calc_date, MODEL_VERSION
         )
         persist.rebuild_index(MODEL_VERSION)
+        # Macro / regime snapshots: simple dated JSON dumps. Additive layer;
+        # not part of the canonical scored-rows path so failures are logged
+        # but don't fail Stage 8.
+        macro_dir = persist.data_root / "macro"
+        try:
+            macro_dir.mkdir(parents=True, exist_ok=True)
+            if state.breadth_snapshot is not None:
+                (macro_dir / ("breadth_%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.breadth_snapshot, indent=2, sort_keys=True)
+                )
+            if state.sector_strength is not None:
+                (macro_dir / ("sector_strength_%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.sector_strength, indent=2, sort_keys=True)
+                )
+        except Exception as exc:
+            if state.args.verbose:
+                print("  macro snapshot persist failed: %s" % exc)
     except FileExistsError as exc:
         print(
             "✗ Stage 8: %s — re-run with --force to overwrite." % exc
