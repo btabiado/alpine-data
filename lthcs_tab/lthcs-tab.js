@@ -4,6 +4,10 @@
 
 'use strict';
 
+// --- Week 9 (detail modal) hookup ---
+import { openDetail } from './lthcs-detail.js';
+// --- end Week 9 hookup ---
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -452,7 +456,31 @@ function wireEvents() {
   wireSearch();
   wireChips();
   wireRefresh();
+  wireCardClicks();
 }
+
+// --- Week 9 (detail modal) hookup ---
+// Delegated click handler on the card grid. When a card is clicked, look up
+// the underlying snapshot row + universe entry from in-memory state and open
+// the detail modal. Narratives aren't loaded into state yet (V1) — pass null.
+function wireCardClicks() {
+  const container = $('#lthcs-cards');
+  if (!container) return;
+  container.addEventListener('click', (e) => {
+    const cardEl = e.target.closest('.lthcs-card');
+    if (!cardEl || !container.contains(cardEl)) return;
+    const ticker = cardEl.dataset.ticker;
+    if (!ticker) return;
+    const scores = (state.snapshot && state.snapshot.scores) || [];
+    const snapshotRow = scores.find((r) => r && r.ticker === ticker) || null;
+    if (!snapshotRow) return;
+    const universeEntry = state.universeByTicker[ticker] || null;
+    const narrative = (state.narrativesByTicker && state.narrativesByTicker[ticker]) || null;
+    const calcDate = (state.snapshot && state.snapshot.calc_date) || null;
+    openDetail({ ticker, snapshotRow, universeEntry, narrative, calcDate });
+  });
+}
+// --- end Week 9 hookup ---
 
 // ---------------------------------------------------------------------------
 // Top-level flow

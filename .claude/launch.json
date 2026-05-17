@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lthcs",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8801"],
+      "port": 8801
+    }
+  ]
+}
