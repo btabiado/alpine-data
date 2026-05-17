@@ -1,0 +1,6017 @@
+{
+  "AAPL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 4.88,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "AAPL",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 1184.843,
+        "value_bn": 291.03
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 615.115,
+        "value_bn": 153.016
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 127.821,
+        "value_bn": 31.19
+      },
+      {
+        "manager": "Wellington",
+        "rank": 4,
+        "shares_mm": 65.033,
+        "value_bn": 16.505
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 5,
+        "shares_mm": 64.036,
+        "value_bn": 16.25
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 61.652,
+        "value_bn": 14.13
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 27.14,
+        "value_bn": 6.887
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 15.461,
+        "value_bn": 3.641
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.563,
+        "value_bn": 0.143
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 205.061,
+        "value_bn": 0.051
+      }
+    ],
+    "total_shares_held_mm": 2366.727,
+    "total_value_held_bn": 532.843
+  },
+  "ABBV": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 6.43,
+      "unchanged": 0
+    },
+    "signal_score": 0.1,
+    "ticker": "ABBV",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 150.75,
+        "value_bn": 32.787
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 81.218,
+        "value_bn": 17.664
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 31.255,
+        "value_bn": 6.797
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 16.438,
+        "value_bn": 3.575
+      },
+      {
+        "manager": "Capital World",
+        "rank": 5,
+        "shares_mm": 15.841,
+        "value_bn": 3.445
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 6.898,
+        "value_bn": 1.5
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 3.737,
+        "value_bn": 0.813
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.889,
+        "value_bn": 0.193
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.03,
+        "value_bn": 0.007
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 13.004,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 320.06,
+    "total_value_held_bn": 66.784
+  },
+  "ABNB": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ABNB",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ABT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ABT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ACN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ACN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ADBE": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "distributing",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 2,
+      "net_sellers": 7,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.41,
+      "unchanged": 0
+    },
+    "signal_score": -0.5,
+    "ticker": "ADBE",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 40.81,
+        "value_bn": 9.92
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 19.913,
+        "value_bn": 4.84
+      },
+      {
+        "manager": "Citadel",
+        "rank": 3,
+        "shares_mm": 4.77,
+        "value_bn": 1.159
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 4.319,
+        "value_bn": 1.05
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 5,
+        "shares_mm": 4.232,
+        "value_bn": 1.023
+      },
+      {
+        "manager": "Capital World",
+        "rank": 6,
+        "shares_mm": 1.533,
+        "value_bn": 0.373
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 7,
+        "shares_mm": 0.726,
+        "value_bn": 0.177
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 0.048,
+        "value_bn": 0.012
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.001,
+        "value_bn": 0.0
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 1.098,
+        "value_bn": 0.0
+      }
+    ],
+    "total_shares_held_mm": 77.452,
+    "total_value_held_bn": 18.554
+  },
+  "ADI": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ADI",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ADP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ADP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ADSK": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ADSK",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AEP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "AEP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AMAT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "AMAT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AMD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 3,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.56,
+      "unchanged": 0
+    },
+    "signal_score": -0.3,
+    "ticker": "AMD",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 145.766,
+        "value_bn": 29.653
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 74.771,
+        "value_bn": 15.211
+      },
+      {
+        "manager": "Citadel",
+        "rank": 3,
+        "shares_mm": 27.386,
+        "value_bn": 5.571
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 19.297,
+        "value_bn": 3.926
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 6.969,
+        "value_bn": 1.418
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 6,
+        "shares_mm": 1.731,
+        "value_bn": 0.352
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 7,
+        "shares_mm": 1.293,
+        "value_bn": 0.263
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.981,
+        "value_bn": 0.197
+      },
+      {
+        "manager": "Capital World",
+        "rank": 9,
+        "shares_mm": 0.588,
+        "value_bn": 0.12
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 28.846,
+        "value_bn": 0.006
+      }
+    ],
+    "total_shares_held_mm": 307.628,
+    "total_value_held_bn": 56.716
+  },
+  "AMGN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "AMGN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AMT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "AMT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AMZN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 6,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.24,
+      "unchanged": 0
+    },
+    "signal_score": 0.182,
+    "ticker": "AMZN",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 736.693,
+        "value_bn": 153.431
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 390.45,
+        "value_bn": 81.319
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 118.434,
+        "value_bn": 24.664
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 76.671,
+        "value_bn": 15.968
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 62.407,
+        "value_bn": 12.997
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 51.582,
+        "value_bn": 10.743
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 50.419,
+        "value_bn": 10.5
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 8,
+        "shares_mm": 10.0,
+        "value_bn": 2.083
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 9,
+        "shares_mm": 9.469,
+        "value_bn": 1.958
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 4.389,
+        "value_bn": 0.914
+      }
+    ],
+    "total_shares_held_mm": 1633.513,
+    "total_value_held_bn": 314.603
+  },
+  "ANSS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ANSS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ARM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ARM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ASML": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ASML",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AVGO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "accumulating",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 7,
+      "net_sellers": 3,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.11,
+      "unchanged": 0
+    },
+    "signal_score": 0.364,
+    "ticker": "AVGO",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 386.014,
+        "value_bn": 119.475
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 191.38,
+        "value_bn": 59.234
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 116.188,
+        "value_bn": 35.956
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 116.025,
+        "value_bn": 35.905
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 49.688,
+        "value_bn": 15.379
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 6,
+        "shares_mm": 38.609,
+        "value_bn": 11.95
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 20.918,
+        "value_bn": 6.474
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 6.186,
+        "value_bn": 1.867
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 3.585,
+        "value_bn": 1.11
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 1.835,
+        "value_bn": 0.568
+      }
+    ],
+    "total_shares_held_mm": 1014.899,
+    "total_value_held_bn": 287.944
+  },
+  "AXP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "AXP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "AZN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "AZN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BA": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 3,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.01,
+      "unchanged": 0
+    },
+    "signal_score": 0.222,
+    "ticker": "BA",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 58.225,
+        "value_bn": 11.589
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 37.424,
+        "value_bn": 7.449
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 25.728,
+        "value_bn": 5.12
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 9.354,
+        "value_bn": 1.862
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 4.102,
+        "value_bn": 0.816
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 6,
+        "shares_mm": 4.069,
+        "value_bn": 0.81
+      },
+      {
+        "manager": "Wellington",
+        "rank": 7,
+        "shares_mm": 2.304,
+        "value_bn": 0.458
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 1.294,
+        "value_bn": 0.258
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 11.872,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 154.373,
+    "total_value_held_bn": 28.363
+  },
+  "BAC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 4.24,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "BAC",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 539.5,
+        "value_bn": 26.301
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 294.909,
+        "value_bn": 14.377
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 144.289,
+        "value_bn": 7.033
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 67.677,
+        "value_bn": 3.299
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 46.63,
+        "value_bn": 2.273
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 19.846,
+        "value_bn": 0.967
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 9.78,
+        "value_bn": 0.471
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 8,
+        "shares_mm": 4.693,
+        "value_bn": 0.229
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 1.043,
+        "value_bn": 0.051
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 99.582,
+        "value_bn": 0.005
+      }
+    ],
+    "total_shares_held_mm": 1227.949,
+    "total_value_held_bn": 55.005
+  },
+  "BIIB": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "BIIB",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BK": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "BK",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BKNG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "BKNG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BKR": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "BKR",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BLK": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "BLK",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BMY": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "BMY",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "BRK.B": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 8,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 3,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.13,
+      "unchanged": 0
+    },
+    "signal_score": 0.125,
+    "ticker": "BRK.B",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 121.208,
+        "value_bn": 58.083
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 74.099,
+        "value_bn": 35.508
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 10.982,
+        "value_bn": 5.262
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 5.081,
+        "value_bn": 2.435
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 5,
+        "shares_mm": 1.929,
+        "value_bn": 0.924
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 1.646,
+        "value_bn": 0.789
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 1.642,
+        "value_bn": 0.787
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 8,
+        "shares_mm": 9.824,
+        "value_bn": 0.005
+      }
+    ],
+    "total_shares_held_mm": 226.41,
+    "total_value_held_bn": 103.793
+  },
+  "C": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "distributing",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 1,
+      "net_sellers": 8,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": -5.82,
+      "unchanged": 0
+    },
+    "signal_score": -0.778,
+    "ticker": "C",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 153.78,
+        "value_bn": 17.44
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 78.043,
+        "value_bn": 8.851
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 40.721,
+        "value_bn": 4.618
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 20.849,
+        "value_bn": 2.364
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 11.234,
+        "value_bn": 1.274
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 5.422,
+        "value_bn": 0.604
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 7,
+        "shares_mm": 0.793,
+        "value_bn": 0.09
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 0.162,
+        "value_bn": 0.018
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 26.432,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 337.435,
+    "total_value_held_bn": 35.263
+  },
+  "CAT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 1.78,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "CAT",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 37.186,
+        "value_bn": 26.345
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 34.881,
+        "value_bn": 24.712
+      },
+      {
+        "manager": "Citadel",
+        "rank": 3,
+        "shares_mm": 3.939,
+        "value_bn": 2.79
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 3.544,
+        "value_bn": 2.508
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 3.422,
+        "value_bn": 2.424
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 6,
+        "shares_mm": 3.201,
+        "value_bn": 2.268
+      },
+      {
+        "manager": "Wellington",
+        "rank": 7,
+        "shares_mm": 1.119,
+        "value_bn": 0.793
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.267,
+        "value_bn": 0.184
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.083,
+        "value_bn": 0.058
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 5.582,
+        "value_bn": 0.004
+      }
+    ],
+    "total_shares_held_mm": 93.222,
+    "total_value_held_bn": 62.086
+  },
+  "CCEP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CCEP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CDNS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CDNS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CDW": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CDW",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CEG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CEG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CHTR": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CHTR",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CL",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CMCSA": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CMCSA",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "COF": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "COF",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "COP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "COP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "COST": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.2,
+      "unchanged": 0
+    },
+    "signal_score": 0.1,
+    "ticker": "COST",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 34.947,
+        "value_bn": 34.822
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 18.152,
+        "value_bn": 18.087
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 3.47,
+        "value_bn": 3.458
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 2.965,
+        "value_bn": 2.955
+      },
+      {
+        "manager": "Capital World",
+        "rank": 5,
+        "shares_mm": 2.034,
+        "value_bn": 2.027
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 1.028,
+        "value_bn": 1.024
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 7,
+        "shares_mm": 0.607,
+        "value_bn": 0.605
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 0.203,
+        "value_bn": 0.203
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.028,
+        "value_bn": 0.028
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 2.576,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 66.011,
+    "total_value_held_bn": 63.211
+  },
+  "CRM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 6.49,
+      "unchanged": 0
+    },
+    "signal_score": -0.111,
+    "ticker": "CRM",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 79.691,
+        "value_bn": 14.876
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 48.953,
+        "value_bn": 9.138
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 16.712,
+        "value_bn": 3.12
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 13.706,
+        "value_bn": 2.558
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 11.587,
+        "value_bn": 2.163
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 6,
+        "shares_mm": 9.16,
+        "value_bn": 1.71
+      },
+      {
+        "manager": "Wellington",
+        "rank": 7,
+        "shares_mm": 2.864,
+        "value_bn": 0.535
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 2.665,
+        "value_bn": 0.495
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 6.623,
+        "value_bn": 0.001
+      }
+    ],
+    "total_shares_held_mm": 191.96,
+    "total_value_held_bn": 34.595
+  },
+  "CRWD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CRWD",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CSCO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CSCO",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CSGP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CSGP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CTAS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CTAS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CTSH": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CTSH",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CVS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "CVS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "CVX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "accumulating",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 2,
+      "net_buyers": 7,
+      "net_sellers": 2,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.52,
+      "unchanged": 0
+    },
+    "signal_score": 0.5,
+    "ticker": "CVX",
+    "top_holders": [
+      {
+        "manager": "State Street",
+        "rank": 1,
+        "shares_mm": 153.138,
+        "value_bn": 31.684
+      },
+      {
+        "manager": "BlackRock",
+        "rank": 2,
+        "shares_mm": 144.72,
+        "value_bn": 29.943
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 12.377,
+        "value_bn": 2.561
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 10.853,
+        "value_bn": 2.245
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 8.252,
+        "value_bn": 1.707
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 6,
+        "shares_mm": 2.602,
+        "value_bn": 0.538
+      },
+      {
+        "manager": "Wellington",
+        "rank": 7,
+        "shares_mm": 2.518,
+        "value_bn": 0.521
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 1.493,
+        "value_bn": 0.309
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 19.028,
+        "value_bn": 0.004
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 0.003,
+        "value_bn": 0.001
+      }
+    ],
+    "total_shares_held_mm": 354.983,
+    "total_value_held_bn": 69.513
+  },
+  "DASH": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "DASH",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "DDOG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "DDOG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "DE": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "DE",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "DHR": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "DHR",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "DIS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "accumulating",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 2,
+      "net_buyers": 7,
+      "net_sellers": 1,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 11.3,
+      "unchanged": 0
+    },
+    "signal_score": 0.667,
+    "ticker": "DIS",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 136.458,
+        "value_bn": 13.152
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 83.703,
+        "value_bn": 8.067
+      },
+      {
+        "manager": "Wellington",
+        "rank": 3,
+        "shares_mm": 27.893,
+        "value_bn": 2.689
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 12.561,
+        "value_bn": 1.211
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 8.325,
+        "value_bn": 0.802
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 6.432,
+        "value_bn": 0.62
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 2.771,
+        "value_bn": 0.264
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 8,
+        "shares_mm": 0.024,
+        "value_bn": 0.002
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 17.028,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 295.195,
+    "total_value_held_bn": 26.808
+  },
+  "DUK": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "DUK",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "DXCM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "DXCM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "EA": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "EA",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "EMR": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "EMR",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "EXC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "EXC",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "F": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "F",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "FANG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "FANG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "FAST": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "FAST",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "FTNT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "FTNT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "GD",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GE": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 6.24,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "GE",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 90.779,
+        "value_bn": 25.76
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 45.337,
+        "value_bn": 12.886
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 34.725,
+        "value_bn": 9.853
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 15.366,
+        "value_bn": 4.36
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 12.007,
+        "value_bn": 3.407
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 4.218,
+        "value_bn": 1.197
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 3.948,
+        "value_bn": 1.104
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 3.446,
+        "value_bn": 0.978
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.121,
+        "value_bn": 0.034
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 23.91,
+        "value_bn": 0.007
+      }
+    ],
+    "total_shares_held_mm": 233.856,
+    "total_value_held_bn": 59.586
+  },
+  "GEHC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "GEHC",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GFS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "GFS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GILD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "GILD",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "GM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GOOG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "GOOG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "GOOGL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.31,
+      "unchanged": 1
+    },
+    "signal_score": 0.091,
+    "ticker": "GOOGL",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 811.966,
+        "value_bn": 233.233
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 411.974,
+        "value_bn": 118.337
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 110.107,
+        "value_bn": 31.628
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 97.852,
+        "value_bn": 28.106
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 97.053,
+        "value_bn": 27.884
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 61.398,
+        "value_bn": 17.646
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 55.102,
+        "value_bn": 15.831
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 10.982,
+        "value_bn": 3.11
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 10.631,
+        "value_bn": 3.057
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 2.385,
+        "value_bn": 0.685
+      }
+    ],
+    "total_shares_held_mm": 1817.803,
+    "total_value_held_bn": 479.561
+  },
+  "GS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.46,
+      "unchanged": 0
+    },
+    "signal_score": 0.1,
+    "ticker": "GS",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 23.989,
+        "value_bn": 20.295
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 19.255,
+        "value_bn": 16.29
+      },
+      {
+        "manager": "Citadel",
+        "rank": 3,
+        "shares_mm": 5.951,
+        "value_bn": 5.034
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 3.003,
+        "value_bn": 2.54
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 1.061,
+        "value_bn": 0.898
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 0.459,
+        "value_bn": 0.379
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 7,
+        "shares_mm": 0.258,
+        "value_bn": 0.219
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 8,
+        "shares_mm": 0.005,
+        "value_bn": 0.004
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.004,
+        "value_bn": 0.004
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 2.748,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 56.734,
+    "total_value_held_bn": 45.665
+  },
+  "HD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 9.48,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "HD",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 78.784,
+        "value_bn": 25.911
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 46.676,
+        "value_bn": 15.351
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 16.144,
+        "value_bn": 5.309
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 14.986,
+        "value_bn": 4.929
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 9.637,
+        "value_bn": 3.169
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 6,
+        "shares_mm": 9.068,
+        "value_bn": 2.982
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 3.751,
+        "value_bn": 1.234
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.297,
+        "value_bn": 0.097
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 10.198,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 189.54,
+    "total_value_held_bn": 58.986
+  },
+  "HON": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "HON",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "IBM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "IBM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "IDXX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "IDXX",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ILMN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ILMN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "INTC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.14,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "INTC",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 447.794,
+        "value_bn": 19.761
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 214.321,
+        "value_bn": 9.458
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 79.877,
+        "value_bn": 3.525
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 77.302,
+        "value_bn": 3.411
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 55.186,
+        "value_bn": 2.435
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 6,
+        "shares_mm": 25.818,
+        "value_bn": 1.139
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 11.47,
+        "value_bn": 0.487
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 2.455,
+        "value_bn": 0.108
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 1.639,
+        "value_bn": 0.072
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 52.061,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 967.922,
+    "total_value_held_bn": 40.4
+  },
+  "INTU": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "INTU",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ISRG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ISRG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "JNJ": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 8.09,
+      "unchanged": 0
+    },
+    "signal_score": 0.1,
+    "ticker": "JNJ",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 213.386,
+        "value_bn": 52.16
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 133.476,
+        "value_bn": 32.627
+      },
+      {
+        "manager": "Wellington",
+        "rank": 3,
+        "shares_mm": 20.075,
+        "value_bn": 4.907
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 18.691,
+        "value_bn": 4.569
+      },
+      {
+        "manager": "Capital World",
+        "rank": 5,
+        "shares_mm": 11.749,
+        "value_bn": 2.872
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 6,
+        "shares_mm": 8.74,
+        "value_bn": 2.136
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 8.187,
+        "value_bn": 2.001
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 3.543,
+        "value_bn": 0.864
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.697,
+        "value_bn": 0.17
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 16.491,
+        "value_bn": 0.004
+      }
+    ],
+    "total_shares_held_mm": 435.036,
+    "total_value_held_bn": 102.311
+  },
+  "JPM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "distributing",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 2,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.84,
+      "unchanged": 0
+    },
+    "signal_score": -0.444,
+    "ticker": "JPM",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 208.261,
+        "value_bn": 61.262
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 124.277,
+        "value_bn": 36.557
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 27.413,
+        "value_bn": 8.063
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 25.28,
+        "value_bn": 7.347
+      },
+      {
+        "manager": "Capital World",
+        "rank": 5,
+        "shares_mm": 15.421,
+        "value_bn": 4.535
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 12.091,
+        "value_bn": 3.557
+      },
+      {
+        "manager": "Wellington",
+        "rank": 7,
+        "shares_mm": 3.826,
+        "value_bn": 1.125
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 1.638,
+        "value_bn": 0.474
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 27.487,
+        "value_bn": 0.008
+      }
+    ],
+    "total_shares_held_mm": 445.694,
+    "total_value_held_bn": 122.929
+  },
+  "KDP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "KDP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "KHC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "KHC",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "KLAC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "KLAC",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "KO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 11.84,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "KO",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 333.597,
+        "value_bn": 25.37
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 167.222,
+        "value_bn": 12.805
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 34.207,
+        "value_bn": 2.601
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 29.477,
+        "value_bn": 2.242
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 26.615,
+        "value_bn": 2.024
+      },
+      {
+        "manager": "Capital World",
+        "rank": 6,
+        "shares_mm": 16.778,
+        "value_bn": 1.276
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 16.083,
+        "value_bn": 1.223
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 1.501,
+        "value_bn": 0.114
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.225,
+        "value_bn": 0.017
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 28.037,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 653.743,
+    "total_value_held_bn": 47.674
+  },
+  "LCID": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "LCID",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "LIN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "LIN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "LLY": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.19,
+      "unchanged": 0
+    },
+    "signal_score": 0.1,
+    "ticker": "LLY",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 66.494,
+        "value_bn": 61.159
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 35.61,
+        "value_bn": 32.753
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 24.633,
+        "value_bn": 22.655
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 15.622,
+        "value_bn": 14.367
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 13.427,
+        "value_bn": 12.35
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 6,
+        "shares_mm": 6.978,
+        "value_bn": 6.419
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 3.545,
+        "value_bn": 3.26
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.855,
+        "value_bn": 0.786
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.071,
+        "value_bn": 0.065
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 13.992,
+        "value_bn": 0.013
+      }
+    ],
+    "total_shares_held_mm": 181.227,
+    "total_value_held_bn": 153.826
+  },
+  "LMT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "LMT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "LOW": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "LOW",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "LRCX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "LRCX",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "LULU": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "LULU",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MA": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 3,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.06,
+      "unchanged": 0
+    },
+    "signal_score": -0.3,
+    "ticker": "MA",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 67.035,
+        "value_bn": 33.495
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 36.478,
+        "value_bn": 18.227
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 13.885,
+        "value_bn": 6.937
+      },
+      {
+        "manager": "Wellington",
+        "rank": 4,
+        "shares_mm": 13.002,
+        "value_bn": 6.496
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 8.463,
+        "value_bn": 4.229
+      },
+      {
+        "manager": "Capital World",
+        "rank": 6,
+        "shares_mm": 3.944,
+        "value_bn": 1.97
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 2.859,
+        "value_bn": 1.429
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.776,
+        "value_bn": 0.386
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 18.575,
+        "value_bn": 0.009
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 0.004,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 165.021,
+    "total_value_held_bn": 73.18
+  },
+  "MAR": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MAR",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MCD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 5,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 4.18,
+      "unchanged": 0
+    },
+    "signal_score": 0.111,
+    "ticker": "MCD",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 55.353,
+        "value_bn": 17.203
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 35.434,
+        "value_bn": 11.012
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 6.894,
+        "value_bn": 2.143
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 5.449,
+        "value_bn": 1.693
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 3.415,
+        "value_bn": 1.061
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 2.289,
+        "value_bn": 0.712
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 0.659,
+        "value_bn": 0.203
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 8,
+        "shares_mm": 0.051,
+        "value_bn": 0.016
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 9.735,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 119.279,
+    "total_value_held_bn": 34.047
+  },
+  "MCHP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MCHP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MDB": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MDB",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MDLZ": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MDLZ",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MDT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MDT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MELI": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MELI",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MET": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MET",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "META": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 6,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.9,
+      "unchanged": 0
+    },
+    "signal_score": 0.182,
+    "ticker": "META",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 168.866,
+        "value_bn": 96.613
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 88.524,
+        "value_bn": 50.647
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 41.055,
+        "value_bn": 23.486
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 30.91,
+        "value_bn": 17.682
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 23.967,
+        "value_bn": 13.712
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 6,
+        "shares_mm": 20.649,
+        "value_bn": 11.814
+      },
+      {
+        "manager": "Wellington",
+        "rank": 7,
+        "shares_mm": 11.69,
+        "value_bn": 6.689
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 8,
+        "shares_mm": 3.087,
+        "value_bn": 1.766
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 9,
+        "shares_mm": 1.872,
+        "value_bn": 1.043
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 0.292,
+        "value_bn": 0.167
+      }
+    ],
+    "total_shares_held_mm": 423.898,
+    "total_value_held_bn": 223.638
+  },
+  "MMM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MMM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MNST": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MNST",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MO",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MRK": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "distributing",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 8,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 2,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.54,
+      "unchanged": 0
+    },
+    "signal_score": -0.5,
+    "ticker": "MRK",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 225.926,
+        "value_bn": 27.177
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 119.326,
+        "value_bn": 14.453
+      },
+      {
+        "manager": "Wellington",
+        "rank": 3,
+        "shares_mm": 84.315,
+        "value_bn": 10.142
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 21.832,
+        "value_bn": 2.626
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 13.116,
+        "value_bn": 1.578
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 8.628,
+        "value_bn": 1.038
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 7,
+        "shares_mm": 2.062,
+        "value_bn": 0.248
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 8,
+        "shares_mm": 23.043,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 498.248,
+    "total_value_held_bn": 57.265
+  },
+  "MRVL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MRVL",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "MS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 6,
+      "net_sellers": 3,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 4.11,
+      "unchanged": 0
+    },
+    "signal_score": 0.3,
+    "ticker": "MS",
+    "top_holders": [
+      {
+        "manager": "State Street",
+        "rank": 1,
+        "shares_mm": 101.34,
+        "value_bn": 16.678
+      },
+      {
+        "manager": "BlackRock",
+        "rank": 2,
+        "shares_mm": 96.397,
+        "value_bn": 15.864
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 20.271,
+        "value_bn": 3.335
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 16.925,
+        "value_bn": 2.785
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 7.281,
+        "value_bn": 1.198
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 4.658,
+        "value_bn": 0.767
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 1.616,
+        "value_bn": 0.266
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.562,
+        "value_bn": 0.091
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 17.015,
+        "value_bn": 0.003
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 0.015,
+        "value_bn": 0.002
+      }
+    ],
+    "total_shares_held_mm": 266.08,
+    "total_value_held_bn": 40.99
+  },
+  "MSFT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 6,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 6.97,
+      "unchanged": 0
+    },
+    "signal_score": 0.182,
+    "ticker": "MSFT",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 593.456,
+        "value_bn": 219.68
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 306.708,
+        "value_bn": 113.534
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 96.093,
+        "value_bn": 35.567
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 70.334,
+        "value_bn": 26.036
+      },
+      {
+        "manager": "Capital World",
+        "rank": 5,
+        "shares_mm": 61.734,
+        "value_bn": 22.849
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 52.742,
+        "value_bn": 19.524
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 32.176,
+        "value_bn": 11.911
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 10.036,
+        "value_bn": 3.684
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 2.5,
+        "value_bn": 0.925
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 1.085,
+        "value_bn": 0.402
+      }
+    ],
+    "total_shares_held_mm": 1344.108,
+    "total_value_held_bn": 454.155
+  },
+  "MU": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "MU",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "NEE": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "NEE",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "NFLX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 6,
+      "net_sellers": 3,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.32,
+      "unchanged": 1
+    },
+    "signal_score": 0.273,
+    "ticker": "NFLX",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 346.371,
+        "value_bn": 33.304
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 171.655,
+        "value_bn": 16.505
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 99.104,
+        "value_bn": 9.528
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 69.439,
+        "value_bn": 6.677
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 5,
+        "shares_mm": 68.046,
+        "value_bn": 6.542
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 35.396,
+        "value_bn": 3.403
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 7,
+        "shares_mm": 33.077,
+        "value_bn": 3.18
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 2.935,
+        "value_bn": 0.279
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 2.439,
+        "value_bn": 0.235
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 99.032,
+        "value_bn": 0.01
+      }
+    ],
+    "total_shares_held_mm": 927.571,
+    "total_value_held_bn": 79.67
+  },
+  "NKE": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "NKE",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "NOW": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "NOW",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "NVDA": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 11,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.26,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "NVDA",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 1928.629,
+        "value_bn": 336.353
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 993.886,
+        "value_bn": 173.343
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 220.573,
+        "value_bn": 38.468
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 193.038,
+        "value_bn": 33.664
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 137.243,
+        "value_bn": 23.935
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 133.858,
+        "value_bn": 23.345
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 130.266,
+        "value_bn": 22.716
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 32.118,
+        "value_bn": 5.463
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 12.012,
+        "value_bn": 2.095
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 4.693,
+        "value_bn": 0.818
+      }
+    ],
+    "total_shares_held_mm": 4156.419,
+    "total_value_held_bn": 660.265
+  },
+  "NXPI": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "NXPI",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ODFL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ODFL",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ON": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ON",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ORCL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 3,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.58,
+      "unchanged": 0
+    },
+    "signal_score": -0.3,
+    "ticker": "ORCL",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 143.382,
+        "value_bn": 21.093
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 76.303,
+        "value_bn": 11.225
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 32.139,
+        "value_bn": 4.728
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 20.031,
+        "value_bn": 2.947
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 17.172,
+        "value_bn": 2.526
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 2.882,
+        "value_bn": 0.424
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 1.764,
+        "value_bn": 0.251
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 8,
+        "shares_mm": 1.592,
+        "value_bn": 0.234
+      },
+      {
+        "manager": "Capital World",
+        "rank": 9,
+        "shares_mm": 1.137,
+        "value_bn": 0.167
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 18.494,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 314.897,
+    "total_value_held_bn": 43.598
+  },
+  "ORLY": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ORLY",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "PANW": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "PANW",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "PAYX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "PAYX",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "PCAR": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "PCAR",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "PDD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "PDD",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "PEP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.71,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "PEP",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 115.841,
+        "value_bn": 17.989
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 59.419,
+        "value_bn": 9.227
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 12.856,
+        "value_bn": 1.996
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 4,
+        "shares_mm": 5.856,
+        "value_bn": 0.909
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 5,
+        "shares_mm": 4.945,
+        "value_bn": 0.768
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 3.33,
+        "value_bn": 0.517
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 2.675,
+        "value_bn": 0.415
+      },
+      {
+        "manager": "Capital World",
+        "rank": 8,
+        "shares_mm": 1.352,
+        "value_bn": 0.21
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.104,
+        "value_bn": 0.016
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 3.854,
+        "value_bn": 0.001
+      }
+    ],
+    "total_shares_held_mm": 210.234,
+    "total_value_held_bn": 32.049
+  },
+  "PFE": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "accumulating",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 8,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 5,
+      "net_sellers": 2,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 5.82,
+      "unchanged": 0
+    },
+    "signal_score": 0.375,
+    "ticker": "PFE",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 498.258,
+        "value_bn": 13.991
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 301.59,
+        "value_bn": 8.469
+      },
+      {
+        "manager": "Wellington",
+        "rank": 3,
+        "shares_mm": 49.917,
+        "value_bn": 1.402
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 49.81,
+        "value_bn": 1.399
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 28.406,
+        "value_bn": 0.798
+      },
+      {
+        "manager": "Capital World",
+        "rank": 6,
+        "shares_mm": 21.947,
+        "value_bn": 0.616
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 11.879,
+        "value_bn": 0.334
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 8,
+        "shares_mm": 15.675,
+        "value_bn": 0.0
+      }
+    ],
+    "total_shares_held_mm": 977.482,
+    "total_value_held_bn": 27.008
+  },
+  "PG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.11,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "PG",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 187.03,
+        "value_bn": 27.015
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 101.251,
+        "value_bn": 14.625
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 18.434,
+        "value_bn": 2.663
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 8.433,
+        "value_bn": 1.218
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 8.325,
+        "value_bn": 1.203
+      },
+      {
+        "manager": "Capital World",
+        "rank": 6,
+        "shares_mm": 7.435,
+        "value_bn": 1.074
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 7,
+        "shares_mm": 4.039,
+        "value_bn": 0.579
+      },
+      {
+        "manager": "Citadel",
+        "rank": 8,
+        "shares_mm": 3.689,
+        "value_bn": 0.533
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.158,
+        "value_bn": 0.023
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 32.092,
+        "value_bn": 0.005
+      }
+    ],
+    "total_shares_held_mm": 370.886,
+    "total_value_held_bn": 48.935
+  },
+  "PM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "PM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "PYPL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "PYPL",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "QCOM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 4,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.58,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "QCOM",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 106.016,
+        "value_bn": 13.653
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 52.092,
+        "value_bn": 6.708
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 11.531,
+        "value_bn": 1.485
+      },
+      {
+        "manager": "Wellington",
+        "rank": 4,
+        "shares_mm": 8.353,
+        "value_bn": 1.076
+      },
+      {
+        "manager": "Citadel",
+        "rank": 5,
+        "shares_mm": 7.008,
+        "value_bn": 0.903
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 2.174,
+        "value_bn": 0.279
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 7,
+        "shares_mm": 1.434,
+        "value_bn": 0.185
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 8,
+        "shares_mm": 0.224,
+        "value_bn": 0.029
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 7.551,
+        "value_bn": 0.001
+      }
+    ],
+    "total_shares_held_mm": 196.382,
+    "total_value_held_bn": 24.318
+  },
+  "REGN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "REGN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ROP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ROP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "ROST": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ROST",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "RTX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "RTX",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SBUX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SBUX",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SCHW": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SCHW",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SHW": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SHW",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SMCI": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SMCI",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SNPS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SNPS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SO",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "SPG": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "SPG",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "T": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 2,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 9.6,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "T",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 560.998,
+        "value_bn": 16.263
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 315.805,
+        "value_bn": 9.155
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 109.244,
+        "value_bn": 3.167
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 61.572,
+        "value_bn": 1.785
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 59.853,
+        "value_bn": 1.735
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 18.345,
+        "value_bn": 0.526
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 15.548,
+        "value_bn": 0.451
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 5.227,
+        "value_bn": 0.152
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.16,
+        "value_bn": 0.005
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 13.706,
+        "value_bn": 0.0
+      }
+    ],
+    "total_shares_held_mm": 1160.459,
+    "total_value_held_bn": 33.239
+  },
+  "TEAM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TEAM",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TGT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TGT",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TMO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TMO",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TMUS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TMUS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TRV": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TRV",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TSLA": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 2,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 3.73,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "TSLA",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 208.129,
+        "value_bn": 77.372
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 114.695,
+        "value_bn": 42.638
+      },
+      {
+        "manager": "Citadel",
+        "rank": 3,
+        "shares_mm": 63.923,
+        "value_bn": 23.763
+      },
+      {
+        "manager": "Capital World",
+        "rank": 4,
+        "shares_mm": 42.904,
+        "value_bn": 15.948
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 34.135,
+        "value_bn": 12.69
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 9.151,
+        "value_bn": 3.402
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 7,
+        "shares_mm": 8.625,
+        "value_bn": 3.206
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 2.26,
+        "value_bn": 0.823
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 24.809,
+        "value_bn": 0.009
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 0.002,
+        "value_bn": 0.001
+      }
+    ],
+    "total_shares_held_mm": 508.632,
+    "total_value_held_bn": 179.852
+  },
+  "TTD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TTD",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TTWO": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TTWO",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "TXN": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "TXN",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "UNH": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 5,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.9,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "UNH",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 73.468,
+        "value_bn": 19.88
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 45.332,
+        "value_bn": 12.266
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 27.783,
+        "value_bn": 7.517
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 17.764,
+        "value_bn": 4.807
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 5,
+        "shares_mm": 17.112,
+        "value_bn": 4.63
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 10.092,
+        "value_bn": 2.731
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 7,
+        "shares_mm": 9.046,
+        "value_bn": 2.448
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 0.977,
+        "value_bn": 0.26
+      },
+      {
+        "manager": "Tiger Global",
+        "rank": 9,
+        "shares_mm": 0.35,
+        "value_bn": 0.095
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 20.874,
+        "value_bn": 0.006
+      }
+    ],
+    "total_shares_held_mm": 222.799,
+    "total_value_held_bn": 54.639
+  },
+  "UNP": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "UNP",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "UPS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "UPS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "USB": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "USB",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "V": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 4,
+      "net_sellers": 5,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 4.02,
+      "unchanged": 0
+    },
+    "signal_score": -0.1,
+    "ticker": "V",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 136.191,
+        "value_bn": 41.162
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 82.306,
+        "value_bn": 24.876
+      },
+      {
+        "manager": "Capital World",
+        "rank": 3,
+        "shares_mm": 25.178,
+        "value_bn": 7.61
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 4,
+        "shares_mm": 17.226,
+        "value_bn": 5.206
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 10.239,
+        "value_bn": 3.095
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 6,
+        "shares_mm": 6.022,
+        "value_bn": 1.82
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 5.311,
+        "value_bn": 1.605
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 1.327,
+        "value_bn": 0.398
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 41.076,
+        "value_bn": 0.012
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 10,
+        "shares_mm": 0.025,
+        "value_bn": 0.008
+      }
+    ],
+    "total_shares_held_mm": 324.901,
+    "total_value_held_bn": 85.793
+  },
+  "VRSK": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "VRSK",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "VRTX": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "VRTX",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "VZ": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 3,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 4.44,
+      "unchanged": 0
+    },
+    "signal_score": -0.3,
+    "ticker": "VZ",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 368.028,
+        "value_bn": 18.475
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 214.854,
+        "value_bn": 10.786
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 39.445,
+        "value_bn": 1.98
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 17.858,
+        "value_bn": 0.896
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 5,
+        "shares_mm": 11.663,
+        "value_bn": 0.585
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 6,
+        "shares_mm": 8.65,
+        "value_bn": 0.432
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 4.25,
+        "value_bn": 0.213
+      },
+      {
+        "manager": "Wellington",
+        "rank": 8,
+        "shares_mm": 2.066,
+        "value_bn": 0.104
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.435,
+        "value_bn": 0.022
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 8.149,
+        "value_bn": 0.0
+      }
+    ],
+    "total_shares_held_mm": 675.396,
+    "total_value_held_bn": 33.494
+  },
+  "WBD": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "WBD",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "WDAY": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "WDAY",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "WFC": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "distributing",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 2,
+      "net_sellers": 7,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 7.48,
+      "unchanged": 0
+    },
+    "signal_score": -0.5,
+    "ticker": "WFC",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 260.936,
+        "value_bn": 20.773
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 135.494,
+        "value_bn": 10.787
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 3,
+        "shares_mm": 72.894,
+        "value_bn": 5.803
+      },
+      {
+        "manager": "Wellington",
+        "rank": 4,
+        "shares_mm": 65.846,
+        "value_bn": 5.242
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 5,
+        "shares_mm": 24.632,
+        "value_bn": 1.961
+      },
+      {
+        "manager": "Capital World",
+        "rank": 6,
+        "shares_mm": 14.887,
+        "value_bn": 1.185
+      },
+      {
+        "manager": "Citadel",
+        "rank": 7,
+        "shares_mm": 12.446,
+        "value_bn": 0.991
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 2.874,
+        "value_bn": 0.227
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.943,
+        "value_bn": 0.075
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 14.536,
+        "value_bn": 0.001
+      }
+    ],
+    "total_shares_held_mm": 605.487,
+    "total_value_held_bn": 47.044
+  },
+  "WMT": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "mixed",
+    "data_quality": "good",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 10,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 3,
+      "net_sellers": 6,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 6.93,
+      "unchanged": 0
+    },
+    "signal_score": -0.3,
+    "ticker": "WMT",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 353.77,
+        "value_bn": 43.966
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 185.929,
+        "value_bn": 23.153
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 42.211,
+        "value_bn": 5.246
+      },
+      {
+        "manager": "Citadel",
+        "rank": 4,
+        "shares_mm": 17.157,
+        "value_bn": 2.132
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 5,
+        "shares_mm": 9.543,
+        "value_bn": 1.185
+      },
+      {
+        "manager": "Wellington",
+        "rank": 6,
+        "shares_mm": 9.185,
+        "value_bn": 1.141
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 7.028,
+        "value_bn": 0.873
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 8,
+        "shares_mm": 1.383,
+        "value_bn": 0.172
+      },
+      {
+        "manager": "Bridgewater",
+        "rank": 9,
+        "shares_mm": 0.252,
+        "value_bn": 0.031
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 10,
+        "shares_mm": 21.471,
+        "value_bn": 0.003
+      }
+    ],
+    "total_shares_held_mm": 647.928,
+    "total_value_held_bn": 77.903
+  },
+  "XEL": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "XEL",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  },
+  "XOM": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "accumulating",
+    "data_quality": "partial",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 9,
+    "quarter_over_quarter": {
+      "manager_count_change": 1,
+      "net_buyers": 7,
+      "net_sellers": 1,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 11.49,
+      "unchanged": 0
+    },
+    "signal_score": 0.667,
+    "ticker": "XOM",
+    "top_holders": [
+      {
+        "manager": "BlackRock",
+        "rank": 1,
+        "shares_mm": 322.741,
+        "value_bn": 54.756
+      },
+      {
+        "manager": "State Street",
+        "rank": 2,
+        "shares_mm": 213.904,
+        "value_bn": 36.291
+      },
+      {
+        "manager": "Goldman Sachs",
+        "rank": 3,
+        "shares_mm": 35.359,
+        "value_bn": 5.999
+      },
+      {
+        "manager": "Capital Research",
+        "rank": 4,
+        "shares_mm": 33.701,
+        "value_bn": 5.718
+      },
+      {
+        "manager": "Wellington",
+        "rank": 5,
+        "shares_mm": 22.509,
+        "value_bn": 3.819
+      },
+      {
+        "manager": "Citadel",
+        "rank": 6,
+        "shares_mm": 16.086,
+        "value_bn": 2.729
+      },
+      {
+        "manager": "Capital World",
+        "rank": 7,
+        "shares_mm": 10.445,
+        "value_bn": 1.772
+      },
+      {
+        "manager": "AQR Capital",
+        "rank": 8,
+        "shares_mm": 3.844,
+        "value_bn": 0.652
+      },
+      {
+        "manager": "T. Rowe Price",
+        "rank": 9,
+        "shares_mm": 33.285,
+        "value_bn": 0.006
+      }
+    ],
+    "total_shares_held_mm": 691.874,
+    "total_value_held_bn": 111.742
+  },
+  "ZS": {
+    "as_of": "2026-05-17",
+    "conviction_signal": "steady",
+    "data_quality": "sparse",
+    "latest_quarter": "2026-Q1",
+    "manager_count": 0,
+    "quarter_over_quarter": {
+      "manager_count_change": 0,
+      "net_buyers": 0,
+      "net_sellers": 0,
+      "prior_quarter": "2025-Q4",
+      "share_change_pct": 0.0,
+      "unchanged": 0
+    },
+    "signal_score": 0.0,
+    "ticker": "ZS",
+    "top_holders": [],
+    "total_shares_held_mm": 0.0,
+    "total_value_held_bn": 0.0
+  }
+}
