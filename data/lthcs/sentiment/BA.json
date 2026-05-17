@@ -2,14 +2,14 @@
   "ticker": "BA",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 50,
-  "mean_sentiment_score": 0.11514902,
-  "mean_relevance_score": 0.7002038799999998,
+  "article_count": 1,
+  "mean_sentiment_score": 0.7,
+  "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 2,
-    "Somewhat-Bearish": 7,
-    "Neutral": 22,
-    "Somewhat-Bullish": 9,
-    "Bullish": 10
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 0,
+    "Somewhat-Bullish": 0,
+    "Bullish": 1
   }
 }

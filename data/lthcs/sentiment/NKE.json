@@ -1,0 +1,15 @@
+{
+  "ticker": "NKE",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 3,
+  "mean_sentiment_score": -0.39999999999999997,
+  "mean_relevance_score": 0.5,
+  "label_counts": {
+    "Bearish": 2,
+    "Somewhat-Bearish": 0,
+    "Neutral": 1,
+    "Somewhat-Bullish": 0,
+    "Bullish": 0
+  }
+}

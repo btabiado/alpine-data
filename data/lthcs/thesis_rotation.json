@@ -6,10 +6,10 @@
       "last_scored": "2026-05-17"
     },
     "AMZN": {
-      "last_scored": null
+      "last_scored": "2026-05-17"
     },
     "AVGO": {
-      "last_scored": null
+      "last_scored": "2026-05-17"
     },
     "ABNB": {
       "last_scored": "2026-05-17"
@@ -126,6 +126,384 @@
       "last_scored": "2026-05-17"
     },
     "BLK": {
+      "last_scored": "2026-05-17"
+    },
+    "ABBV": {
+      "last_scored": null
+    },
+    "ADSK": {
+      "last_scored": "2026-05-17"
+    },
+    "AMAT": {
+      "last_scored": "2026-05-17"
+    },
+    "AMT": {
+      "last_scored": "2026-05-17"
+    },
+    "AXP": {
+      "last_scored": "2026-05-17"
+    },
+    "BAC": {
+      "last_scored": "2026-05-17"
+    },
+    "BIIB": {
+      "last_scored": "2026-05-17"
+    },
+    "BKR": {
+      "last_scored": "2026-05-17"
+    },
+    "BMY": {
+      "last_scored": "2026-05-17"
+    },
+    "BRK.B": {
+      "last_scored": null
+    },
+    "C": {
+      "last_scored": "2026-05-17"
+    },
+    "CAT": {
+      "last_scored": "2026-05-17"
+    },
+    "CDNS": {
+      "last_scored": "2026-05-17"
+    },
+    "CDW": {
+      "last_scored": null
+    },
+    "CEG": {
+      "last_scored": "2026-05-17"
+    },
+    "CHTR": {
+      "last_scored": "2026-05-17"
+    },
+    "CL": {
+      "last_scored": "2026-05-17"
+    },
+    "CMCSA": {
+      "last_scored": "2026-05-17"
+    },
+    "COF": {
+      "last_scored": "2026-05-17"
+    },
+    "COP": {
+      "last_scored": "2026-05-17"
+    },
+    "COST": {
+      "last_scored": null
+    },
+    "CRWD": {
+      "last_scored": null
+    },
+    "CSCO": {
+      "last_scored": "2026-05-17"
+    },
+    "CSGP": {
+      "last_scored": "2026-05-17"
+    },
+    "CTAS": {
+      "last_scored": null
+    },
+    "CTSH": {
+      "last_scored": "2026-05-17"
+    },
+    "CVS": {
+      "last_scored": "2026-05-17"
+    },
+    "CVX": {
+      "last_scored": "2026-05-17"
+    },
+    "DASH": {
+      "last_scored": "2026-05-17"
+    },
+    "DE": {
+      "last_scored": "2026-05-17"
+    },
+    "DHR": {
+      "last_scored": "2026-05-17"
+    },
+    "DIS": {
+      "last_scored": "2026-05-17"
+    },
+    "DUK": {
+      "last_scored": "2026-05-17"
+    },
+    "DXCM": {
+      "last_scored": "2026-05-17"
+    },
+    "EA": {
+      "last_scored": "2026-05-17"
+    },
+    "EMR": {
+      "last_scored": "2026-05-17"
+    },
+    "EXC": {
+      "last_scored": null
+    },
+    "F": {
+      "last_scored": "2026-05-17"
+    },
+    "FANG": {
+      "last_scored": "2026-05-17"
+    },
+    "FAST": {
+      "last_scored": null
+    },
+    "GD": {
+      "last_scored": "2026-05-17"
+    },
+    "GE": {
+      "last_scored": "2026-05-17"
+    },
+    "GEHC": {
+      "last_scored": "2026-05-17"
+    },
+    "GILD": {
+      "last_scored": "2026-05-17"
+    },
+    "GM": {
+      "last_scored": "2026-05-17"
+    },
+    "GS": {
+      "last_scored": "2026-05-17"
+    },
+    "HD": {
+      "last_scored": "2026-05-17"
+    },
+    "HON": {
+      "last_scored": "2026-05-17"
+    },
+    "IDXX": {
+      "last_scored": null
+    },
+    "ILMN": {
+      "last_scored": "2026-05-17"
+    },
+    "ISRG": {
+      "last_scored": "2026-05-17"
+    },
+    "JNJ": {
+      "last_scored": "2026-05-17"
+    },
+    "JPM": {
+      "last_scored": "2026-05-17"
+    },
+    "KDP": {
+      "last_scored": "2026-05-17"
+    },
+    "KHC": {
+      "last_scored": "2026-05-17"
+    },
+    "KLAC": {
+      "last_scored": null
+    },
+    "KO": {
+      "last_scored": "2026-05-17"
+    },
+    "LIN": {
+      "last_scored": null
+    },
+    "LLY": {
+      "last_scored": "2026-05-17"
+    },
+    "LMT": {
+      "last_scored": "2026-05-17"
+    },
+    "LOW": {
+      "last_scored": null
+    },
+    "LRCX": {
+      "last_scored": "2026-05-17"
+    },
+    "LULU": {
+      "last_scored": "2026-05-17"
+    },
+    "MA": {
+      "last_scored": "2026-05-17"
+    },
+    "MAR": {
+      "last_scored": "2026-05-17"
+    },
+    "MCD": {
+      "last_scored": "2026-05-17"
+    },
+    "MCHP": {
+      "last_scored": "2026-05-17"
+    },
+    "MDLZ": {
+      "last_scored": "2026-05-17"
+    },
+    "MDT": {
+      "last_scored": null
+    },
+    "MELI": {
+      "last_scored": null
+    },
+    "MET": {
+      "last_scored": "2026-05-17"
+    },
+    "MMM": {
+      "last_scored": "2026-05-17"
+    },
+    "MNST": {
+      "last_scored": "2026-05-17"
+    },
+    "MO": {
+      "last_scored": "2026-05-17"
+    },
+    "MRK": {
+      "last_scored": "2026-05-17"
+    },
+    "MRVL": {
+      "last_scored": null
+    },
+    "MS": {
+      "last_scored": "2026-05-17"
+    },
+    "NEE": {
+      "last_scored": "2026-05-17"
+    },
+    "NKE": {
+      "last_scored": "2026-05-17"
+    },
+    "NXPI": {
+      "last_scored": null
+    },
+    "ODFL": {
+      "last_scored": "2026-05-17"
+    },
+    "ON": {
+      "last_scored": "2026-05-17"
+    },
+    "ORLY": {
+      "last_scored": "2026-05-17"
+    },
+    "PAYX": {
+      "last_scored": null
+    },
+    "PCAR": {
+      "last_scored": null
+    },
+    "PEP": {
+      "last_scored": "2026-05-17"
+    },
+    "PFE": {
+      "last_scored": "2026-05-17"
+    },
+    "PG": {
+      "last_scored": null
+    },
+    "PM": {
+      "last_scored": "2026-05-17"
+    },
+    "PYPL": {
+      "last_scored": "2026-05-17"
+    },
+    "QCOM": {
+      "last_scored": "2026-05-17"
+    },
+    "REGN": {
+      "last_scored": "2026-05-17"
+    },
+    "ROP": {
+      "last_scored": "2026-05-17"
+    },
+    "ROST": {
+      "last_scored": "2026-05-17"
+    },
+    "RTX": {
+      "last_scored": "2026-05-17"
+    },
+    "SBUX": {
+      "last_scored": "2026-05-17"
+    },
+    "SCHW": {
+      "last_scored": null
+    },
+    "SHW": {
+      "last_scored": "2026-05-17"
+    },
+    "SNPS": {
+      "last_scored": "2026-05-17"
+    },
+    "SO": {
+      "last_scored": "2026-05-17"
+    },
+    "SPG": {
+      "last_scored": "2026-05-17"
+    },
+    "T": {
+      "last_scored": "2026-05-17"
+    },
+    "TEAM": {
+      "last_scored": "2026-05-17"
+    },
+    "TGT": {
+      "last_scored": "2026-05-17"
+    },
+    "TMO": {
+      "last_scored": "2026-05-17"
+    },
+    "TMUS": {
+      "last_scored": "2026-05-17"
+    },
+    "TRV": {
+      "last_scored": "2026-05-17"
+    },
+    "TTD": {
+      "last_scored": "2026-05-17"
+    },
+    "TXN": {
+      "last_scored": "2026-05-17"
+    },
+    "UNH": {
+      "last_scored": "2026-05-17"
+    },
+    "UNP": {
+      "last_scored": null
+    },
+    "UPS": {
+      "last_scored": "2026-05-17"
+    },
+    "USB": {
+      "last_scored": "2026-05-17"
+    },
+    "V": {
+      "last_scored": "2026-05-17"
+    },
+    "VRSK": {
+      "last_scored": "2026-05-17"
+    },
+    "VRTX": {
+      "last_scored": "2026-05-17"
+    },
+    "VZ": {
+      "last_scored": null
+    },
+    "WBD": {
+      "last_scored": "2026-05-17"
+    },
+    "WFC": {
+      "last_scored": null
+    },
+    "WMT": {
+      "last_scored": null
+    },
+    "XEL": {
+      "last_scored": null
+    },
+    "XOM": {
+      "last_scored": "2026-05-17"
+    },
+    "CCEP": {
+      "last_scored": "2026-05-17"
+    },
+    "GFS": {
+      "last_scored": "2026-05-17"
+    },
+    "PDD": {
+      "last_scored": "2026-05-17"
+    },
+    "TTWO": {
       "last_scored": "2026-05-17"
     }
   }

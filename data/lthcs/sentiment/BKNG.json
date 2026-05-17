@@ -2,14 +2,14 @@
   "ticker": "BKNG",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 50,
-  "mean_sentiment_score": 0.020832199999999985,
-  "mean_relevance_score": 0.7937035,
+  "article_count": 1,
+  "mean_sentiment_score": 0.4,
+  "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 7,
-    "Somewhat-Bearish": 6,
-    "Neutral": 18,
-    "Somewhat-Bullish": 15,
-    "Bullish": 4
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 0,
+    "Somewhat-Bullish": 1,
+    "Bullish": 0
   }
 }

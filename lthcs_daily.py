@@ -54,7 +54,16 @@ if str(REPO_ROOT) not in sys.path:
 from lthcs import MODEL_VERSION, narratives, score
 from lthcs.persist import LthcsPersist
 from lthcs.pillars import adoption, des, financial, institutional, thesis
-from lthcs.sources import ai_news, alpha_vantage, eia, fred, sec_edgar, yahoo
+from lthcs.sources import (
+    ai_news,
+    alpha_vantage,
+    eia,
+    fred,
+    sec_8k,
+    sec_edgar,
+    yahoo,
+    yahoo_events,
+)
 from lthcs.sources.thesis_rotation import ThesisRotation
 
 # Top ~30 broadly-watched mega-caps that get rotation priority for
@@ -541,13 +550,103 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         else:
             av_status = "no picks"
 
-    # AI news supplement — free, no rate limit. Aggregates HN + TC + VB
-    # mentions per ticker (only AI-cohort tickers in TICKER_KEYWORDS;
-    # other tickers return empty). When a ticker doesn't have fresh AV
-    # sentiment but DOES have ≥3 AI-news mentions, we write a sentiment
-    # file from the AI-news engagement so Thesis stops renorming it out.
+    # Supplement priority for tickers without fresh AV sentiment:
+    #   1. SEC 8-K material events     (highest information — discrete,
+    #                                    structured corporate events)
+    #   2. Yahoo earnings surprise      (recent quarter beat/miss; concrete
+    #                                    direction)
+    #   3. Yahoo analyst actions        (recent broker upgrades/downgrades;
+    #                                    weighted by recency)
+    #   4. AI news engagement           (HN/TC/VB; fallback for AI cohort)
+    #
+    # Each step writes to the per-ticker sentiment file ONLY if no fresher
+    # signal is already there. This keeps the cascade respectful: real AV
+    # sentiment > 8-K events > earnings/analyst > engagement heuristic.
     ai_news_supplement_count = 0
+    sec_8k_supplement_count = 0
+    yahoo_event_supplement_count = 0
+
+    def _has_fresh_sentiment(sym: str) -> bool:
+        if state.rotation is None:
+            return False
+        existing = state.rotation.read_sentiment(sym)
+        if existing is None:
+            return False
+        return not state.rotation.is_stale(existing, today=state.calc_date)
+
+    # Sentiment "meaningfulness" threshold: a supplement write must give
+    # sentiment that's at least this far from neutral. Otherwise we let
+    # the composite-renorm path keep dropping the Thesis pillar — which is
+    # the right behavior when the supplement source has no directional
+    # signal (routine 8-K items, no recent earnings event, etc.).
+    _MIN_MEANINGFUL_SENTIMENT = 0.15
+
+    def _write_supplement(sym: str, sig: Dict[str, Any]) -> bool:
+        if state.rotation is None:
+            return False
+        score_val = sig.get("mean_sentiment_score")
+        if score_val is None:
+            return False
+        if abs(float(score_val)) < _MIN_MEANINGFUL_SENTIMENT:
+            return False
+        try:
+            state.rotation.write_sentiment(
+                ticker=sym,
+                article_count=sig.get("article_count", 0),
+                mean_sentiment_score=score_val,
+                mean_relevance_score=sig.get("mean_relevance_score"),
+                label_counts=sig.get("label_counts", {}),
+                today=state.calc_date,
+            )
+            state.rotation.record_scored(sym, today=state.calc_date)
+            return True
+        except Exception:
+            return False
+
     if not state.args.skip_thesis and state.active_tickers:
+        # --- Step 1: SEC 8-K material events ---
+        # Real-time structured events (CEO changes, restatements, material
+        # agreements). Highest signal-to-noise; runs across the entire
+        # active universe.
+        for sym in state.active_tickers:
+            if _has_fresh_sentiment(sym):
+                continue
+            try:
+                sig = sec_8k.event_signal_for_ticker(sym, days=90)
+            except Exception:
+                continue
+            if sig.get("article_count", 0) <= 0:
+                continue
+            if _write_supplement(sym, sig):
+                sec_8k_supplement_count += 1
+
+        # --- Step 2: Yahoo earnings + analyst actions ---
+        # Earnings surprise gives concrete sentiment direction; analyst
+        # actions are recency-weighted broker signal.
+        for sym in state.active_tickers:
+            if _has_fresh_sentiment(sym):
+                continue
+            try:
+                earnings = yahoo_events.get_earnings_dates(sym, limit=4)
+                sig = yahoo_events.summarize_earnings_for_thesis(earnings)
+            except Exception:
+                sig = {}
+            if sig.get("mean_sentiment_score") is not None:
+                if _write_supplement(sym, sig):
+                    yahoo_event_supplement_count += 1
+                    continue
+            # Try analyst actions if no earnings signal.
+            try:
+                actions = yahoo_events.get_analyst_actions(sym, days=90)
+                sig = yahoo_events.summarize_analyst_actions_for_thesis(actions)
+            except Exception:
+                continue
+            if sig.get("mean_sentiment_score") is None:
+                continue
+            if _write_supplement(sym, sig):
+                yahoo_event_supplement_count += 1
+
+        # --- Step 3: AI news engagement (fallback, AI cohort only) ---
         try:
             state.ai_news_by_ticker = ai_news.aggregate_ai_news(
                 state.active_tickers
@@ -560,29 +659,15 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         for sym, news_dict in state.ai_news_by_ticker.items():
             if news_dict.get("total_mentions", 0) < 3:
                 continue
-            # Don't overwrite fresh AV sentiment.
-            existing = state.rotation.read_sentiment(sym) if state.rotation else None
-            if existing is not None and not state.rotation.is_stale(
-                existing, today=state.calc_date
-            ):
+            if _has_fresh_sentiment(sym):
                 continue
             sig = ai_news.compute_thesis_signal_from_news(news_dict)
-            if state.rotation is None or sig.get("mean_sentiment_score") is None:
-                continue
-            try:
-                state.rotation.write_sentiment(
-                    ticker=sym,
-                    article_count=sig.get("article_count", 0),
-                    mean_sentiment_score=sig.get("mean_sentiment_score"),
-                    mean_relevance_score=sig.get("mean_relevance_score"),
-                    label_counts=sig.get("label_counts", {}),
-                    today=state.calc_date,
-                )
-                state.rotation.record_scored(sym, today=state.calc_date)
+            if _write_supplement(sym, sig):
                 ai_news_supplement_count += 1
-            except Exception:
-                pass
+
     state.fetch_counts = counts
+    counts["sec_8k_supplement"] = sec_8k_supplement_count
+    counts["yahoo_event_supplement"] = yahoo_event_supplement_count
     counts["ai_news_supplement"] = ai_news_supplement_count
 
     if state.args.verbose:
