@@ -574,20 +574,26 @@
       "ticker": "ADBE",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.12627624,
+        "mean_relevance_score": 0.7505618,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 5,
+          "Neutral": 23,
+          "Somewhat-Bullish": 10,
+          "Bullish": 10
+        },
+        "sentiment_subscore_raw": 56.313812,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 56.3,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -672,20 +678,26 @@
       "ticker": "ADI",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.25454412000000004,
+        "mean_relevance_score": 0.8960336,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 6,
+          "Neutral": 10,
+          "Somewhat-Bullish": 6,
+          "Bullish": 26
+        },
+        "sentiment_subscore_raw": 62.727206,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.7,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2003,20 +2015,26 @@
       "ticker": "AZN",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.24378224000000004,
+        "mean_relevance_score": 0.97607208,
+        "label_counts": {
+          "Bearish": 4,
+          "Somewhat-Bearish": 5,
+          "Neutral": 7,
+          "Somewhat-Bullish": 7,
+          "Bullish": 27
+        },
+        "sentiment_subscore_raw": 62.189112,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.2,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2713,20 +2731,26 @@
       "ticker": "BLK",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.12401548000000004,
+        "mean_relevance_score": 0.7246551799999998,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 0,
+          "Neutral": 30,
+          "Somewhat-Bullish": 15,
+          "Bullish": 3
+        },
+        "sentiment_subscore_raw": 56.200773999999996,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 56.2,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -3007,20 +3031,26 @@
       "ticker": "C",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.13963572000000002,
+        "mean_relevance_score": 0.6726250000000001,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 1,
+          "Neutral": 25,
+          "Somewhat-Bullish": 18,
+          "Bullish": 6
+        },
+        "sentiment_subscore_raw": 56.981786,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 57.0,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -3509,20 +3539,26 @@
       "ticker": "CEG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.1741693,
+        "mean_relevance_score": 0.7137882799999998,
+        "label_counts": {
+          "Bearish": 3,
+          "Somewhat-Bearish": 2,
+          "Neutral": 19,
+          "Somewhat-Bullish": 11,
+          "Bullish": 15
+        },
+        "sentiment_subscore_raw": 58.708465,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 58.7,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -4005,20 +4041,26 @@
       "ticker": "COP",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.18603667999999998,
+        "mean_relevance_score": 0.7134844799999999,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 1,
+          "Neutral": 21,
+          "Somewhat-Bullish": 24,
+          "Bullish": 4
+        },
+        "sentiment_subscore_raw": 59.301834,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 59.3,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -4201,20 +4243,26 @@
       "ticker": "CRM",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.19012228000000003,
+        "mean_relevance_score": 0.7863956000000002,
+        "label_counts": {
+          "Bearish": 1,
+          "Somewhat-Bearish": 2,
+          "Neutral": 19,
+          "Somewhat-Bullish": 18,
+          "Bullish": 10
+        },
+        "sentiment_subscore_raw": 59.506114,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 59.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -4691,20 +4739,26 @@
       "ticker": "CTSH",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.07499684000000001,
+        "mean_relevance_score": 0.7033472599999999,
+        "label_counts": {
+          "Bearish": 5,
+          "Somewhat-Bearish": 4,
+          "Neutral": 29,
+          "Somewhat-Bullish": 9,
+          "Bullish": 3
+        },
+        "sentiment_subscore_raw": 53.749842,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 53.7,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {

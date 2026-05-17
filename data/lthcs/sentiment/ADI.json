@@ -1,0 +1,15 @@
+{
+  "ticker": "ADI",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.25454412000000004,
+  "mean_relevance_score": 0.8960336,
+  "label_counts": {
+    "Bearish": 2,
+    "Somewhat-Bearish": 6,
+    "Neutral": 10,
+    "Somewhat-Bullish": 6,
+    "Bullish": 26
+  }
+}

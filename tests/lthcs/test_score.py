@@ -445,3 +445,83 @@ class TestComputeLthcsScore:
         )
         assert r["modifiers"]["volatility_mod"] == -3.0
         assert r["lthcs_score"] == 47.0
+
+
+# --- Composite renormalization for stubbed pillars -------------------------
+
+class TestRenormalizeOnStubbedThesis:
+    """Verify the composite drops a stubbed pillar instead of letting it
+    dilute the score with a neutral 50.
+
+    The pipeline emits a 'thesis_unavailable' data_quality_flag when AV
+    sentiment isn't fresh for that ticker yet (rotation ramping). Without
+    composite-level renormalization, every such ticker mechanically caps
+    at ~78 even with strong real signals on all other pillars.
+    """
+
+    def _subs(self, **overrides):
+        # Start from a strong-conviction tech ticker.
+        base = {
+            "adoption_momentum": 100.0,
+            "institutional_confidence": 100.0,
+            "financial_evolution": 100.0,
+            "thesis_integrity": 50.0,  # stubbed neutral placeholder
+            "des": 50.0,
+        }
+        base.update(overrides)
+        return base
+
+    def test_no_flag_no_renorm(self, weights_config):
+        """Documented 5-pillar formula when no stub flag is present."""
+        subs = self._subs()
+        r = compute_lthcs_score(
+            ticker="X", sector="Technology",
+            maturity_stage="standard_compounder",
+            pillar_subscores=subs,
+            weights_config=weights_config,
+            data_quality_flags=[],
+        )
+        # 0.25*100 + 0.20*100 + 0.15*100 + 0.20*50 + 0.20*50 = 80
+        assert r["lthcs_score"] == pytest.approx(80.0)
+        assert r["effective_weights"] == r["weights_used"]
+        assert r["dropped_pillars"] == []
+
+    def test_thesis_flag_renormalizes(self, weights_config):
+        """thesis_unavailable → thesis weight redistributed proportionally."""
+        subs = self._subs()
+        r = compute_lthcs_score(
+            ticker="X", sector="Technology",
+            maturity_stage="standard_compounder",
+            pillar_subscores=subs,
+            weights_config=weights_config,
+            data_quality_flags=["thesis_unavailable"],
+        )
+        # Documented weights: [0.25, 0.20, 0.15, 0.20, 0.20]. Drop index 3
+        # (thesis = 0.20). Remaining sum = 0.80. Renormalized:
+        #   adoption: 0.25 / 0.80 = 0.3125
+        #   inst:     0.20 / 0.80 = 0.250
+        #   fin:      0.15 / 0.80 = 0.1875
+        #   thesis:   0.00
+        #   des:      0.20 / 0.80 = 0.250
+        # Composite = 0.3125*100 + 0.25*100 + 0.1875*100 + 0*50 + 0.25*50
+        #           = 31.25 + 25 + 18.75 + 0 + 12.5 = 87.5
+        assert r["lthcs_score"] == pytest.approx(87.5)
+        assert r["dropped_pillars"] == ["thesis_integrity"]
+        assert r["effective_weights"][3] == 0.0
+        assert sum(r["effective_weights"]) == pytest.approx(1.0)
+        # Documented weights remain intact so the audit trail is preserved.
+        assert r["weights_used"] == [0.25, 0.20, 0.15, 0.20, 0.20]
+
+    def test_other_flags_dont_trigger_renorm(self, weights_config):
+        """Only flags in _FLAGS_TO_DROPPED_PILLAR drop a pillar."""
+        subs = self._subs()
+        r = compute_lthcs_score(
+            ticker="X", sector="Y",
+            maturity_stage="standard_compounder",
+            pillar_subscores=subs,
+            weights_config=weights_config,
+            data_quality_flags=["trends_unavailable", "volatility_unavailable"],
+        )
+        # No renorm — these flags don't drop a whole pillar.
+        assert r["lthcs_score"] == pytest.approx(80.0)
+        assert r["dropped_pillars"] == []

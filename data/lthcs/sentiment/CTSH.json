@@ -1,0 +1,15 @@
+{
+  "ticker": "CTSH",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.07499684000000001,
+  "mean_relevance_score": 0.7033472599999999,
+  "label_counts": {
+    "Bearish": 5,
+    "Somewhat-Bearish": 4,
+    "Neutral": 29,
+    "Somewhat-Bullish": 9,
+    "Bullish": 3
+  }
+}

@@ -38,6 +38,24 @@ from typing import Any, Dict, List, Optional
 
 
 # Order of pillars in the weights vector. Must match ``weights.json``.
+# Maps data_quality_flags emitted by the daily pipeline to the pillar they
+# render unavailable. When a flag is present in `data_quality_flags`, that
+# pillar's documented weight is REDISTRIBUTED across the remaining pillars
+# (proportional renormalization) rather than letting the pillar's neutral-50
+# placeholder dilute the composite. Without this, a ticker with great real
+# data on 4 pillars and a stubbed Thesis caps at ~78 (the neutral-50
+# placeholder consumes 20% of the score regardless of conviction).
+#
+# Why "thesis_unavailable" but NOT "trends_unavailable":
+# - thesis_unavailable means the ENTIRE Thesis pillar is stubbed → drop it.
+# - trends_unavailable means a SUB-COMPONENT inside the Adoption pillar
+#   is stubbed; the pillar already renormalizes that internally
+#   (lthcs/pillars/adoption.py). Adoption's pillar-level score is real,
+#   so we keep its weight.
+_FLAGS_TO_DROPPED_PILLAR = {
+    "thesis_unavailable": "thesis_integrity",
+}
+
 PILLAR_ORDER = (
     "adoption_momentum",
     "institutional_confidence",
@@ -162,13 +180,21 @@ def compute_volatility_modifier(
 # --- Banding ----------------------------------------------------------------
 
 def assign_band(score: float, score_bands: Dict[str, Dict[str, Any]]) -> str:
-    """Return the band key whose ``[min, max]`` inclusive range covers ``score``.
+    """Return the band key covering ``score``.
 
-    Bands are inclusive on both ends. The score is clamped to ``[0, 100]``
-    before lookup so out-of-range inputs still resolve. If no band
-    matches (shouldn't happen with the standard config) the lowest band
-    is returned as a safe fallback.
+    Bands in weights.json are INTEGER-bounded (e.g. constructive=70..79,
+    high_confidence=80..89) but composite scores carry one decimal place,
+    so fractional scores like 79.4 sit in a gap between bands and would
+    otherwise be wrongly assigned. We treat each band as covering the
+    half-open interval ``[min, max+1)`` so a score of 79.4 lands in
+    constructive (since 70 ≤ 79.4 < 80), 89.99 lands in high_confidence,
+    100.0 lands in elite. Equivalent to flooring ``score`` to its integer
+    part before doing the inclusive lookup.
+
+    Out-of-range inputs are clamped to [0, 100] before lookup.
     """
+    import math
+
     try:
         s = float(score)
     except (TypeError, ValueError):
@@ -176,23 +202,27 @@ def assign_band(score: float, score_bands: Dict[str, Dict[str, Any]]) -> str:
     if s != s:  # NaN
         s = 0.0
     s = max(0.0, min(100.0, s))
+    floored = int(math.floor(s))
+    # Special-case the top: a perfect 100.0 floors to 100, which fits
+    # elite's max=100 inclusive check below — no extra handling needed.
     for name, spec in (score_bands or {}).items():
         try:
-            lo = float(spec["min"])
-            hi = float(spec["max"])
+            lo = int(float(spec["min"]))
+            hi = int(float(spec["max"]))
         except (KeyError, TypeError, ValueError):
             continue
-        if lo <= s <= hi:
+        if lo <= floored <= hi:
             return name
-    # Fallback: return the band with the lowest min.
+    # Fallback: return the band whose min is closest below the score.
+    # (Defensive — the standard config tiles [0,100] without gaps.)
     best_name: Optional[str] = None
-    best_lo = float("inf")
+    best_lo = float("-inf")
     for name, spec in (score_bands or {}).items():
         try:
             lo = float(spec["min"])
         except (KeyError, TypeError, ValueError):
             continue
-        if lo < best_lo:
+        if lo <= s and lo > best_lo:
             best_lo = lo
             best_name = name
     return best_name or "review"
@@ -281,11 +311,39 @@ def compute_lthcs_score(
     if missing:
         raise ValueError("pillar_subscores missing required keys: %s" % missing)
 
-    weights = get_maturity_weights(maturity_stage, weights_config)
+    documented_weights = get_maturity_weights(maturity_stage, weights_config)
+
+    # Renormalize away stubbed pillars driven by data_quality_flags. A ticker
+    # whose Thesis sentiment hasn't been scored yet (rotation hasn't reached
+    # it on the AV free-tier budget) shouldn't carry a 50.0 placeholder at
+    # full pillar weight — that mechanically caps composites at ~78.
+    # Proportionally redistribute the dropped pillars' weight across the
+    # remaining ones so they still sum to 1.0.
+    flags_set = set(data_quality_flags or [])
+    dropped_pillars = {
+        _FLAGS_TO_DROPPED_PILLAR[f]
+        for f in flags_set
+        if f in _FLAGS_TO_DROPPED_PILLAR
+    }
+    effective_weights: List[float] = []
+    if dropped_pillars and len(dropped_pillars) < len(PILLAR_ORDER):
+        # Build the proportional renormalization.
+        retained = [
+            (w, n) for w, n in zip(documented_weights, PILLAR_ORDER)
+            if n not in dropped_pillars
+        ]
+        retained_sum = sum(w for w, _ in retained) or 1.0
+        for w, name in zip(documented_weights, PILLAR_ORDER):
+            if name in dropped_pillars:
+                effective_weights.append(0.0)
+            else:
+                effective_weights.append(float(w) / retained_sum)
+    else:
+        effective_weights = [float(w) for w in documented_weights]
 
     weighted_components: List[float] = []
     weighted_sum = 0.0
-    for w, name in zip(weights, PILLAR_ORDER):
+    for w, name in zip(effective_weights, PILLAR_ORDER):
         sub = float(pillar_subscores[name])
         contrib = w * sub
         weighted_components.append(float(contrib))
@@ -329,7 +387,9 @@ def compute_lthcs_score(
             "volatility_mod": float(vol_mod),
         },
         "maturity_stage": maturity_stage,
-        "weights_used": [float(w) for w in weights],
+        "weights_used": [float(w) for w in documented_weights],
+        "effective_weights": effective_weights,
+        "dropped_pillars": sorted(dropped_pillars),
         "weighted_components": weighted_components,
         "sector": sector,
     }

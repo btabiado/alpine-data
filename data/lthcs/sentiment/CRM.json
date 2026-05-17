@@ -1,0 +1,15 @@
+{
+  "ticker": "CRM",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.19012228000000003,
+  "mean_relevance_score": 0.7863956000000002,
+  "label_counts": {
+    "Bearish": 1,
+    "Somewhat-Bearish": 2,
+    "Neutral": 19,
+    "Somewhat-Bullish": 18,
+    "Bullish": 10
+  }
+}

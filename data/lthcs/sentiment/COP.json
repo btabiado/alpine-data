@@ -1,0 +1,15 @@
+{
+  "ticker": "COP",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.18603667999999998,
+  "mean_relevance_score": 0.7134844799999999,
+  "label_counts": {
+    "Bearish": 0,
+    "Somewhat-Bearish": 1,
+    "Neutral": 21,
+    "Somewhat-Bullish": 24,
+    "Bullish": 4
+  }
+}

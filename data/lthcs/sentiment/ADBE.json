@@ -1,0 +1,15 @@
+{
+  "ticker": "ADBE",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.12627624,
+  "mean_relevance_score": 0.7505618,
+  "label_counts": {
+    "Bearish": 2,
+    "Somewhat-Bearish": 5,
+    "Neutral": 23,
+    "Somewhat-Bullish": 10,
+    "Bullish": 10
+  }
+}

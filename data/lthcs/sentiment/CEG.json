@@ -1,0 +1,15 @@
+{
+  "ticker": "CEG",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.1741693,
+  "mean_relevance_score": 0.7137882799999998,
+  "label_counts": {
+    "Bearish": 3,
+    "Somewhat-Bearish": 2,
+    "Neutral": 19,
+    "Somewhat-Bullish": 11,
+    "Bullish": 15
+  }
+}
