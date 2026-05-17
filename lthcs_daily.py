@@ -1016,6 +1016,7 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 sym,
                 state.momentum_by_ticker.get(sym),
                 state.momentum_by_ticker,
+                insider_data=state.insider_by_ticker.get(sym),
             )
         except Exception:
             ins = _neutral_pillar_result(sym, "institutional_confidence")

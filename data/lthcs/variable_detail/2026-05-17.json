@@ -24,12 +24,21 @@
         "momentum_pct_90d": 0.14646986290402753,
         "momentum_subscore": 71.51515151515152,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 71.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 71.5,
+      "sub_score": 68.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -134,12 +143,21 @@
         "momentum_pct_90d": -0.04504881685215267,
         "momentum_subscore": 41.21212121212121,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 41.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8695572104597801,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 41.2,
+      "sub_score": 38.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -244,12 +262,21 @@
         "momentum_pct_90d": -0.03745832494497958,
         "momentum_subscore": 43.63636363636363,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 43.6,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 43.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -354,12 +381,21 @@
         "momentum_pct_90d": -0.33142504901547554,
         "momentum_subscore": 7.878787878787878,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 7.9,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.8296978541308005,
+          "cluster_buying": false,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 7.0
+        }
       },
-      "sub_score": 7.9,
+      "sub_score": 14.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -464,12 +500,21 @@
         "momentum_pct_90d": -0.3829896397826279,
         "momentum_subscore": 4.848484848484849,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 4.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 4.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -574,12 +619,21 @@
         "momentum_pct_90d": -0.2630732661684403,
         "momentum_subscore": 15.757575757575756,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 15.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 15.8,
+      "sub_score": 11.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -684,12 +738,21 @@
         "momentum_pct_90d": 0.4296347324762966,
         "momentum_subscore": 92.12121212121212,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 92.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8979921745395137,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 92.1,
+      "sub_score": 89.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -794,12 +857,21 @@
         "momentum_pct_90d": -0.17182857754938774,
         "momentum_subscore": 22.424242424242426,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 22.4,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 22.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -904,12 +976,21 @@
         "momentum_pct_90d": -0.19289155002370773,
         "momentum_subscore": 21.21212121212121,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 21.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 21.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1014,12 +1095,21 @@
         "momentum_pct_90d": 0.10444722230226922,
         "momentum_subscore": 67.87878787878789,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 67.9,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 67.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1124,12 +1214,21 @@
         "momentum_pct_90d": 0.4768572606516348,
         "momentum_subscore": 93.33333333333333,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 93.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9502408935818908,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 93.3,
+      "sub_score": 89.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1239,12 +1338,21 @@
         "momentum_pct_90d": 0.9785397435384529,
         "momentum_subscore": 98.18181818181819,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 98.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 98.2,
+      "sub_score": 95.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1354,12 +1462,21 @@
         "momentum_pct_90d": 0.00267206650093188,
         "momentum_subscore": 53.333333333333336,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 53.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 53.3,
+      "sub_score": 50.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1464,12 +1581,21 @@
         "momentum_pct_90d": -0.01982215093066164,
         "momentum_subscore": 47.27272727272727,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 47.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.7896172316156945,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 47.3,
+      "sub_score": 44.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1574,12 +1700,21 @@
         "momentum_pct_90d": 0.09633512920033116,
         "momentum_subscore": 66.06060606060606,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 66.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 66.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1684,12 +1819,21 @@
         "momentum_pct_90d": 0.8104388978803583,
         "momentum_subscore": 96.96969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 97.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 97.0,
+      "sub_score": 94.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -1794,12 +1938,21 @@
         "momentum_pct_90d": 0.21324077086390592,
         "momentum_subscore": 82.42424242424242,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 82.4,
+        "insider": {
+          "regime": null,
+          "conviction_score": null,
+          "cluster_buying": null,
+          "ceo_cfo_action": null,
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 82.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": false
       }
     },
     {
@@ -1904,12 +2057,21 @@
         "momentum_pct_90d": 0.23943893266435823,
         "momentum_subscore": 84.24242424242424,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 84.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 84.2,
+      "sub_score": 80.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2019,12 +2181,21 @@
         "momentum_pct_90d": -0.18012552593467013,
         "momentum_subscore": 21.818181818181817,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 21.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9649861505826707,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 21.8,
+      "sub_score": 18.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2129,12 +2300,21 @@
         "momentum_pct_90d": -0.03394569131014202,
         "momentum_subscore": 44.24242424242424,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 44.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 44.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2239,12 +2419,21 @@
         "momentum_pct_90d": -0.04068043418770784,
         "momentum_subscore": 42.42424242424242,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 42.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8771315264065919,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 42.4,
+      "sub_score": 39.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2349,12 +2538,21 @@
         "momentum_pct_90d": -0.12574048238401758,
         "momentum_subscore": 25.454545454545453,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 25.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 25.5,
+      "sub_score": 21.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2462,12 +2660,21 @@
         "momentum_pct_90d": 0.05662338482739426,
         "momentum_subscore": 61.81818181818181,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 61.8,
+        "insider": {
+          "regime": "mild_buying",
+          "conviction_score": 0.3954250584492567,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 3.0
+        }
       },
-      "sub_score": 61.8,
+      "sub_score": 64.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2572,12 +2779,21 @@
         "momentum_pct_90d": 0.12238411926608639,
         "momentum_subscore": 69.6969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 69.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9739218800335843,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 69.7,
+      "sub_score": 66.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2682,12 +2898,21 @@
         "momentum_pct_90d": -0.27790594192930784,
         "momentum_subscore": 12.727272727272727,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 12.7,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 12.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2792,12 +3017,21 @@
         "momentum_pct_90d": 0.30775852967402817,
         "momentum_subscore": 89.0909090909091,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 89.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 89.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -2902,12 +3136,21 @@
         "momentum_pct_90d": -0.02189827501477981,
         "momentum_subscore": 46.06060606060606,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 46.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 46.1,
+      "sub_score": 42.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3012,12 +3255,21 @@
         "momentum_pct_90d": 0.05820889412831831,
         "momentum_subscore": 62.42424242424243,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 62.4,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 62.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3122,12 +3374,21 @@
         "momentum_pct_90d": null,
         "momentum_subscore": 50.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 50.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 50.0,
+      "sub_score": 47.0,
       "data_quality": {
         "has_momentum": false,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3232,12 +3493,21 @@
         "momentum_pct_90d": 0.01755248930060338,
         "momentum_subscore": 55.15151515151515,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 55.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9645204888582445,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 55.2,
+      "sub_score": 51.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3345,12 +3615,21 @@
         "momentum_pct_90d": 0.4317088819031858,
         "momentum_subscore": 92.72727272727272,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 92.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 92.7,
+      "sub_score": 88.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3455,12 +3734,21 @@
         "momentum_pct_90d": 0.05372245555621036,
         "momentum_subscore": 60.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 60.0,
+        "insider": {
+          "regime": null,
+          "conviction_score": null,
+          "cluster_buying": null,
+          "ceo_cfo_action": null,
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 60.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": false
       }
     },
     {
@@ -3565,12 +3853,21 @@
         "momentum_pct_90d": 0.10361039304667918,
         "momentum_subscore": 67.27272727272727,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 67.3,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.539511097337644,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 5.0
+        }
       },
-      "sub_score": 67.3,
+      "sub_score": 72.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3675,12 +3972,21 @@
         "momentum_pct_90d": -0.23637901529020633,
         "momentum_subscore": 18.787878787878785,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 18.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 18.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3785,12 +4091,21 @@
         "momentum_pct_90d": -0.24425014121309296,
         "momentum_subscore": 18.181818181818183,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 18.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 18.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -3895,12 +4210,21 @@
         "momentum_pct_90d": -0.33372896645935235,
         "momentum_subscore": 7.2727272727272725,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 7.3,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.9105512468652495,
+          "cluster_buying": true,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 10.0
+        }
       },
-      "sub_score": 7.3,
+      "sub_score": 17.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4005,12 +4329,21 @@
         "momentum_pct_90d": 0.1557087668434507,
         "momentum_subscore": 73.33333333333333,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 73.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8394294475118843,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 73.3,
+      "sub_score": 70.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4115,12 +4448,21 @@
         "momentum_pct_90d": -0.07580081980197317,
         "momentum_subscore": 35.15151515151515,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 35.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.7363106548461779,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 35.2,
+      "sub_score": 31.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4225,12 +4567,21 @@
         "momentum_pct_90d": -0.2715896783844961,
         "momentum_subscore": 13.939393939393941,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 13.9,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 13.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4335,12 +4686,21 @@
         "momentum_pct_90d": 0.2797796081548747,
         "momentum_subscore": 86.66666666666667,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 86.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 86.7,
+      "sub_score": 82.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4445,12 +4805,21 @@
         "momentum_pct_90d": 0.1831145977485158,
         "momentum_subscore": 76.96969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 77.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8792167362396122,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 77.0,
+      "sub_score": 74.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4555,12 +4924,21 @@
         "momentum_pct_90d": -0.33836457018706034,
         "momentum_subscore": 6.666666666666667,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 6.7,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.8571704801403118,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 5.0
+        }
       },
-      "sub_score": 6.7,
+      "sub_score": 11.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4665,12 +5043,21 @@
         "momentum_pct_90d": 0.29621227002116757,
         "momentum_subscore": 87.87878787878788,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 87.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 87.9,
+      "sub_score": 83.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4775,12 +5162,21 @@
         "momentum_pct_90d": 0.5798289741097644,
         "momentum_subscore": 95.15151515151516,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 95.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 95.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4885,12 +5281,21 @@
         "momentum_pct_90d": -0.5136904495643638,
         "momentum_subscore": 0.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 0.0,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.9682531446183041,
+          "cluster_buying": true,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 10.0
+        }
       },
-      "sub_score": 0.0,
+      "sub_score": 10.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -4995,12 +5400,21 @@
         "momentum_pct_90d": -0.09725803016908297,
         "momentum_subscore": 32.121212121212125,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 32.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8459261035810178,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 32.1,
+      "sub_score": 29.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5105,12 +5519,21 @@
         "momentum_pct_90d": -0.4402053019806964,
         "momentum_subscore": 3.0303030303030303,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 3.0,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 3.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5215,12 +5638,21 @@
         "momentum_pct_90d": 0.2085194968033377,
         "momentum_subscore": 81.21212121212122,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 81.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9706449234703356,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 81.2,
+      "sub_score": 78.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5325,12 +5757,21 @@
         "momentum_pct_90d": 0.23271638112449078,
         "momentum_subscore": 83.03030303030303,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 83.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 83.0,
+      "sub_score": 80.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5435,12 +5876,21 @@
         "momentum_pct_90d": -0.30595521161674244,
         "momentum_subscore": 9.090909090909092,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 9.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.990532434916761,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 9.1,
+      "sub_score": 5.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5545,12 +5995,21 @@
         "momentum_pct_90d": 0.5169947955400265,
         "momentum_subscore": 93.93939393939394,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 93.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 93.9,
+      "sub_score": 89.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5655,12 +6114,21 @@
         "momentum_pct_90d": 0.15945772530707614,
         "momentum_subscore": 74.54545454545455,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 74.5,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 74.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5765,12 +6233,21 @@
         "momentum_pct_90d": -0.3141927437379385,
         "momentum_subscore": 8.484848484848486,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 8.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8155836164386948,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 8.5,
+      "sub_score": 5.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5875,12 +6352,21 @@
         "momentum_pct_90d": -0.10343020429157268,
         "momentum_subscore": 30.303030303030305,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 30.3,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.7135314268867543,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 5.0
+        }
       },
-      "sub_score": 30.3,
+      "sub_score": 35.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -5985,12 +6471,21 @@
         "momentum_pct_90d": 0.044965154552846665,
         "momentum_subscore": 58.18181818181818,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 58.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9237412966841244,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 58.2,
+      "sub_score": 54.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6095,12 +6590,21 @@
         "momentum_pct_90d": -0.11818569743408258,
         "momentum_subscore": 26.060606060606062,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 26.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 26.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6205,12 +6709,21 @@
         "momentum_pct_90d": -0.01688937131323509,
         "momentum_subscore": 47.878787878787875,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 47.9,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 47.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6315,12 +6828,21 @@
         "momentum_pct_90d": -0.07910259139940301,
         "momentum_subscore": 34.54545454545455,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 34.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8441633029083572,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 34.5,
+      "sub_score": 30.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6425,12 +6947,21 @@
         "momentum_pct_90d": -0.0020198646350189087,
         "momentum_subscore": 52.121212121212125,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 52.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 52.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6535,12 +7066,21 @@
         "momentum_pct_90d": -0.006096861381145069,
         "momentum_subscore": 50.303030303030305,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 50.3,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.8980796706334708,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 5.0
+        }
       },
-      "sub_score": 50.3,
+      "sub_score": 55.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6647,12 +7187,21 @@
         "momentum_pct_90d": 0.4252303384729057,
         "momentum_subscore": 91.51515151515152,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 91.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 91.5,
+      "sub_score": 87.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6757,12 +7306,21 @@
         "momentum_pct_90d": 0.05274723295669537,
         "momentum_subscore": 59.3939393939394,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 59.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8917888947564826,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 59.4,
+      "sub_score": 56.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6867,12 +7425,21 @@
         "momentum_pct_90d": 0.5652727557092068,
         "momentum_subscore": 94.54545454545455,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 94.5,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 94.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -6977,12 +7544,21 @@
         "momentum_pct_90d": -0.06454895358809598,
         "momentum_subscore": 36.96969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 37.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 37.0,
+      "sub_score": 33.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7087,12 +7663,21 @@
         "momentum_pct_90d": -0.13921932546120408,
         "momentum_subscore": 24.848484848484848,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 24.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 24.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7199,12 +7784,21 @@
         "momentum_pct_90d": -0.29881591891132087,
         "momentum_subscore": 9.696969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 9.7,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.9660040337681277,
+          "cluster_buying": true,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 10.0
+        }
       },
-      "sub_score": 9.7,
+      "sub_score": 19.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7309,12 +7903,21 @@
         "momentum_pct_90d": 0.8023344088888933,
         "momentum_subscore": 96.36363636363636,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 96.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8311081450451229,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 96.4,
+      "sub_score": 93.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7419,12 +8022,21 @@
         "momentum_pct_90d": 0.07379608564720441,
         "momentum_subscore": 64.24242424242425,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 64.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 64.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7529,12 +8141,21 @@
         "momentum_pct_90d": -0.08691591228891205,
         "momentum_subscore": 32.72727272727273,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 32.7,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 32.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7639,12 +8260,21 @@
         "momentum_pct_90d": 0.2513021948330074,
         "momentum_subscore": 84.84848484848484,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 84.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 84.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7754,12 +8384,21 @@
         "momentum_pct_90d": 0.2631523979245407,
         "momentum_subscore": 86.06060606060606,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 86.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 86.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7869,12 +8508,21 @@
         "momentum_pct_90d": -0.002102043440004975,
         "momentum_subscore": 51.515151515151516,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 51.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 51.5,
+      "sub_score": 47.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -7982,12 +8630,21 @@
         "momentum_pct_90d": -0.14254907615737267,
         "momentum_subscore": 24.242424242424242,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 24.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8863914865892547,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 24.2,
+      "sub_score": 20.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8092,12 +8749,21 @@
         "momentum_pct_90d": 0.05141221689059727,
         "momentum_subscore": 58.78787878787879,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 58.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9149981094369825,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 58.8,
+      "sub_score": 54.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8202,12 +8868,21 @@
         "momentum_pct_90d": -0.2654690046471768,
         "momentum_subscore": 14.545454545454545,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 14.5,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.7219539323530447,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 5.0
+        }
       },
-      "sub_score": 14.5,
+      "sub_score": 19.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8312,12 +8987,21 @@
         "momentum_pct_90d": -0.2518852266567928,
         "momentum_subscore": 17.575757575757574,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 17.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 17.6,
+      "sub_score": 13.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8422,12 +9106,21 @@
         "momentum_pct_90d": -0.03106523897259217,
         "momentum_subscore": 44.84848484848485,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 44.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 44.8,
+      "sub_score": 41.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8532,12 +9225,21 @@
         "momentum_pct_90d": 1.7165333205795674,
         "momentum_subscore": 100.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 100.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9432524623953795,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 100.0,
+      "sub_score": 97.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8642,12 +9344,21 @@
         "momentum_pct_90d": -0.3897704646953365,
         "momentum_subscore": 4.242424242424243,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 4.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 4.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8752,12 +9463,21 @@
         "momentum_pct_90d": -0.28966852920761677,
         "momentum_subscore": 11.515151515151516,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 11.5,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 11.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8862,12 +9582,21 @@
         "momentum_pct_90d": 0.1129216863995346,
         "momentum_subscore": 69.0909090909091,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 69.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 69.1,
+      "sub_score": 65.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -8972,12 +9701,21 @@
         "momentum_pct_90d": -0.10542383160846713,
         "momentum_subscore": 29.6969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 29.7,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 29.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9085,12 +9823,21 @@
         "momentum_pct_90d": 0.06750272740958474,
         "momentum_subscore": 63.63636363636363,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 63.6,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 63.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9195,12 +9942,21 @@
         "momentum_pct_90d": -0.00873142961600093,
         "momentum_subscore": 49.09090909090909,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 49.1,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.9569933355600998,
+          "cluster_buying": false,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 7.0
+        }
       },
-      "sub_score": 49.1,
+      "sub_score": 56.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9305,12 +10061,21 @@
         "momentum_pct_90d": 0.2950999780075545,
         "momentum_subscore": 87.27272727272727,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 87.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8858810150917555,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 87.3,
+      "sub_score": 84.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9420,12 +10185,21 @@
         "momentum_pct_90d": 0.19952416438036003,
         "momentum_subscore": 79.39393939393939,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 79.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 79.4,
+      "sub_score": 75.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9530,12 +10304,21 @@
         "momentum_pct_90d": -0.47931036523916426,
         "momentum_subscore": 0.6060606060606061,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 0.6,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 0.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9642,12 +10425,21 @@
         "momentum_pct_90d": 0.16161122887707302,
         "momentum_subscore": 75.75757575757575,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 75.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9873595669202249,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 75.8,
+      "sub_score": 72.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9752,12 +10544,21 @@
         "momentum_pct_90d": -0.052357116923893665,
         "momentum_subscore": 38.18181818181819,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 38.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 38.2,
+      "sub_score": 35.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9862,12 +10663,21 @@
         "momentum_pct_90d": -0.006341482391881814,
         "momentum_subscore": 49.696969696969695,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 49.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.5462245726438753,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 49.7,
+      "sub_score": 46.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -9972,12 +10782,21 @@
         "momentum_pct_90d": -0.1056266514063583,
         "momentum_subscore": 29.09090909090909,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 29.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9180819420276147,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 29.1,
+      "sub_score": 26.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10082,12 +10901,21 @@
         "momentum_pct_90d": 0.3773730171032914,
         "momentum_subscore": 90.9090909090909,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 90.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 90.9,
+      "sub_score": 86.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10197,12 +11025,21 @@
         "momentum_pct_90d": -0.4481193408610401,
         "momentum_subscore": 1.8181818181818181,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 1.8,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.8777708429915746,
+          "cluster_buying": false,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 7.0
+        }
       },
-      "sub_score": 1.8,
+      "sub_score": 8.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10307,12 +11144,21 @@
         "momentum_pct_90d": -0.14568552871712181,
         "momentum_subscore": 23.636363636363637,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 23.6,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 23.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10417,12 +11263,21 @@
         "momentum_pct_90d": 0.099398463097915,
         "momentum_subscore": 66.66666666666666,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 66.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 66.7,
+      "sub_score": 62.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10527,12 +11382,21 @@
         "momentum_pct_90d": -0.08202925729265798,
         "momentum_subscore": 33.939393939393945,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 33.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9021793953491923,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 33.9,
+      "sub_score": 30.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10637,12 +11501,21 @@
         "momentum_pct_90d": 0.26088667411923727,
         "momentum_subscore": 85.45454545454545,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 85.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9279162579913844,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 85.5,
+      "sub_score": 82.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10747,12 +11620,21 @@
         "momentum_pct_90d": -0.2838066944587201,
         "momentum_subscore": 12.121212121212121,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 12.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 12.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10857,12 +11739,21 @@
         "momentum_pct_90d": 0.1561405034747736,
         "momentum_subscore": 73.93939393939394,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 73.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.5135561198233268,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 73.9,
+      "sub_score": 70.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -10967,12 +11858,21 @@
         "momentum_pct_90d": -0.2346551592725724,
         "momentum_subscore": 19.393939393939394,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 19.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9586150106137634,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 19.4,
+      "sub_score": 16.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11077,12 +11977,21 @@
         "momentum_pct_90d": -0.2927381159163378,
         "momentum_subscore": 10.909090909090908,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 10.9,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.7143352554742658,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 5.0
+        }
       },
-      "sub_score": 10.9,
+      "sub_score": 15.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11187,12 +12096,21 @@
         "momentum_pct_90d": -0.0026184674587722556,
         "momentum_subscore": 50.90909090909091,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 50.9,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 50.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11297,12 +12215,21 @@
         "momentum_pct_90d": -0.06942587984341897,
         "momentum_subscore": 35.75757575757576,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 35.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.944774806978725,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 35.8,
+      "sub_score": 31.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11412,12 +12339,21 @@
         "momentum_pct_90d": -0.11632208541434585,
         "momentum_subscore": 27.27272727272727,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 27.3,
+        "insider": {
+          "regime": "mild_buying",
+          "conviction_score": 0.46582771907311626,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 3.0
+        }
       },
-      "sub_score": 27.3,
+      "sub_score": 30.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11522,12 +12458,21 @@
         "momentum_pct_90d": 0.15015841169953315,
         "momentum_subscore": 72.12121212121212,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 72.1,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 72.1,
+      "sub_score": 68.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11632,12 +12577,21 @@
         "momentum_pct_90d": 0.3472572599790895,
         "momentum_subscore": 90.30303030303031,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 90.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8964967199960083,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 90.3,
+      "sub_score": 87.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11742,12 +12696,21 @@
         "momentum_pct_90d": 0.0306324940117797,
         "momentum_subscore": 56.96969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 57.0,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 57.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11852,12 +12815,21 @@
         "momentum_pct_90d": 1.0073204479919546,
         "momentum_subscore": 98.7878787878788,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 98.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9432670614979268,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 98.8,
+      "sub_score": 95.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -11962,12 +12934,21 @@
         "momentum_pct_90d": 0.03654589945903197,
         "momentum_subscore": 57.57575757575758,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 57.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 57.6,
+      "sub_score": 54.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12075,12 +13056,21 @@
         "momentum_pct_90d": -0.11625040454525082,
         "momentum_subscore": 27.878787878787882,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 27.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.926509191755445,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 27.9,
+      "sub_score": 24.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12190,12 +13180,21 @@
         "momentum_pct_90d": 1.110952575513024,
         "momentum_subscore": 99.39393939393939,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 99.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 99.4,
+      "sub_score": 96.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12305,12 +13304,21 @@
         "momentum_pct_90d": 0.15973573275306507,
         "momentum_subscore": 75.15151515151514,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 75.2,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 75.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12415,12 +13423,21 @@
         "momentum_pct_90d": -0.0400441789488134,
         "momentum_subscore": 43.03030303030303,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 43.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9698609268635544,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 43.0,
+      "sub_score": 39.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12525,12 +13542,21 @@
         "momentum_pct_90d": -0.35488935578904224,
         "momentum_subscore": 6.0606060606060606,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 6.1,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 6.1,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12635,12 +13661,21 @@
         "momentum_pct_90d": -0.36113163594811215,
         "momentum_subscore": 5.454545454545454,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 5.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8432884139684691,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 5.5,
+      "sub_score": 2.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12745,12 +13780,21 @@
         "momentum_pct_90d": 0.2034404709193265,
         "momentum_subscore": 80.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 80.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 80.0,
+      "sub_score": 77.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12860,12 +13904,21 @@
         "momentum_pct_90d": 0.191351114037976,
         "momentum_subscore": 78.78787878787878,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 78.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 78.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -12970,12 +14023,21 @@
         "momentum_pct_90d": 0.20442713882242458,
         "momentum_subscore": 80.60606060606061,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 80.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 80.6,
+      "sub_score": 77.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13080,12 +14142,21 @@
         "momentum_pct_90d": 0.8314443601743866,
         "momentum_subscore": 97.57575757575758,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 97.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9410118491586891,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 97.6,
+      "sub_score": 94.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13190,12 +14261,21 @@
         "momentum_pct_90d": 0.0019908008266529276,
         "momentum_subscore": 52.72727272727272,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 52.7,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 52.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13305,12 +14385,21 @@
         "momentum_pct_90d": -0.021020041361970554,
         "momentum_subscore": 46.666666666666664,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 46.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8914372739944486,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 46.7,
+      "sub_score": 42.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13415,12 +14504,21 @@
         "momentum_pct_90d": 0.30652104290120263,
         "momentum_subscore": 88.48484848484848,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 88.5,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.9682867141924892,
+          "cluster_buying": false,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 7.0
+        }
       },
-      "sub_score": 88.5,
+      "sub_score": 95.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13525,12 +14623,21 @@
         "momentum_pct_90d": -0.1576917233946601,
         "momentum_subscore": 23.03030303030303,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 23.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.6594379541813816,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 23.0,
+      "sub_score": 20.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13635,12 +14742,21 @@
         "momentum_pct_90d": -0.052350465089957776,
         "momentum_subscore": 38.78787878787879,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 38.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 38.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13745,12 +14861,21 @@
         "momentum_pct_90d": -0.21873472224053658,
         "momentum_subscore": 20.606060606060606,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 20.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.7597822447426474,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 20.6,
+      "sub_score": 17.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13855,12 +14980,21 @@
         "momentum_pct_90d": 0.08270174896706739,
         "momentum_subscore": 64.84848484848484,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 64.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9656294234589374,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 64.8,
+      "sub_score": 60.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -13965,12 +15099,21 @@
         "momentum_pct_90d": 0.02947004081379534,
         "momentum_subscore": 56.36363636363636,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 56.4,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 56.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14075,12 +15218,21 @@
         "momentum_pct_90d": 0.026722536658457363,
         "momentum_subscore": 55.757575757575765,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 55.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9377631505628804,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 55.8,
+      "sub_score": 51.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14185,12 +15337,21 @@
         "momentum_pct_90d": 0.23293782516313044,
         "momentum_subscore": 83.63636363636363,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 83.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 83.6,
+      "sub_score": 79.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14295,12 +15456,21 @@
         "momentum_pct_90d": -0.25523394866751803,
         "momentum_subscore": 16.969696969696972,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 17.0,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 17.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14405,12 +15575,21 @@
         "momentum_pct_90d": 0.1114478926984741,
         "momentum_subscore": 68.48484848484848,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 68.5,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 68.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14515,12 +15694,21 @@
         "momentum_pct_90d": -0.09973736075693618,
         "momentum_subscore": 30.909090909090907,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 30.9,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 30.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14625,12 +15813,21 @@
         "momentum_pct_90d": -0.26302735389331633,
         "momentum_subscore": 16.363636363636363,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 16.4,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 16.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14735,12 +15932,21 @@
         "momentum_pct_90d": 0.13689614146491547,
         "momentum_subscore": 70.3030303030303,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 70.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9635343086016085,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 70.3,
+      "sub_score": 66.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14845,12 +16051,21 @@
         "momentum_pct_90d": -0.09795922502558141,
         "momentum_subscore": 31.515151515151512,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 31.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 31.5,
+      "sub_score": 27.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -14955,12 +16170,21 @@
         "momentum_pct_90d": 0.20879729119662205,
         "momentum_subscore": 81.81818181818183,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 81.8,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 81.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15065,12 +16289,21 @@
         "momentum_pct_90d": -0.1164034147153804,
         "momentum_subscore": 26.666666666666668,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 26.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 26.7,
+      "sub_score": 23.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15175,12 +16408,21 @@
         "momentum_pct_90d": -0.11563533265308579,
         "momentum_subscore": 28.484848484848484,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 28.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.851693530364354,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 28.5,
+      "sub_score": 25.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15285,12 +16527,21 @@
         "momentum_pct_90d": 0.016371970694532223,
         "momentum_subscore": 54.54545454545454,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 54.5,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 54.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15395,12 +16646,21 @@
         "momentum_pct_90d": -0.012481034107864497,
         "momentum_subscore": 48.484848484848484,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 48.5,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 48.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15505,12 +16765,21 @@
         "momentum_pct_90d": 0.06577893882955888,
         "momentum_subscore": 63.030303030303024,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 63.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.829830519139706,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 63.0,
+      "sub_score": 60.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15615,12 +16884,21 @@
         "momentum_pct_90d": 0.08603519070864674,
         "momentum_subscore": 65.45454545454545,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 65.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.886139867915467,
+          "cluster_buying": true,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 8.0
+        }
       },
-      "sub_score": 65.5,
+      "sub_score": 73.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15725,12 +17003,21 @@
         "momentum_pct_90d": 0.009292339253658355,
         "momentum_subscore": 53.939393939393945,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 53.9,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 53.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15835,12 +17122,21 @@
         "momentum_pct_90d": -0.44771407711932254,
         "momentum_subscore": 2.4242424242424243,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 2.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8951400763134588,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 2.4,
+      "sub_score": -1.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -15945,12 +17241,21 @@
         "momentum_pct_90d": 0.1882655050815618,
         "momentum_subscore": 78.18181818181819,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 78.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9716155615843245,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 78.2,
+      "sub_score": 75.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16055,12 +17360,21 @@
         "momentum_pct_90d": -0.293121923669604,
         "momentum_subscore": 10.303030303030303,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 10.3,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 10.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16165,12 +17479,21 @@
         "momentum_pct_90d": -0.06288717368402441,
         "momentum_subscore": 37.57575757575757,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 37.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 37.6,
+      "sub_score": 33.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16275,12 +17598,21 @@
         "momentum_pct_90d": 0.054916116621260835,
         "momentum_subscore": 61.212121212121204,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 61.2,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 61.2,
+      "sub_score": 57.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16385,12 +17717,21 @@
         "momentum_pct_90d": -0.024759796360572905,
         "momentum_subscore": 45.45454545454545,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 45.5,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8505424555325467,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 45.5,
+      "sub_score": 41.5,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16497,12 +17838,21 @@
         "momentum_pct_90d": -0.46779067123214424,
         "momentum_subscore": 1.2121212121212122,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 1.2,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "buying",
+          "adjustment_pts": 7.0
+        }
       },
-      "sub_score": 1.2,
+      "sub_score": 8.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16607,12 +17957,21 @@
         "momentum_pct_90d": -0.04682525408417815,
         "momentum_subscore": 40.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 40.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 40.0,
+      "sub_score": 36.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16717,12 +18076,21 @@
         "momentum_pct_90d": 0.5942438289660279,
         "momentum_subscore": 95.75757575757575,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 95.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 95.8,
+      "sub_score": 91.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16827,12 +18195,21 @@
         "momentum_pct_90d": 0.13738121687677673,
         "momentum_subscore": 70.9090909090909,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 70.9,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.7790456907738207,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 70.9,
+      "sub_score": 66.9,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -16937,12 +18314,21 @@
         "momentum_pct_90d": 0.16417223510719148,
         "momentum_subscore": 76.36363636363637,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 76.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9860943483243444,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 76.4,
+      "sub_score": 72.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17047,12 +18433,21 @@
         "momentum_pct_90d": -0.04666758125741821,
         "momentum_subscore": 40.60606060606061,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 40.6,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 40.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17157,12 +18552,21 @@
         "momentum_pct_90d": -0.04300117038318885,
         "momentum_subscore": 41.81818181818181,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 41.8,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9461297337580946,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 41.8,
+      "sub_score": 38.8,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17270,12 +18674,21 @@
         "momentum_pct_90d": -0.08519289907480365,
         "momentum_subscore": 33.33333333333333,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 33.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.9375879027912278,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 33.3,
+      "sub_score": 29.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17380,12 +18793,21 @@
         "momentum_pct_90d": -0.2633845261529517,
         "momentum_subscore": 15.151515151515152,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 15.2,
+        "insider": {
+          "regime": "strong_buying",
+          "conviction_score": 0.8075025739555298,
+          "cluster_buying": true,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 8.0
+        }
       },
-      "sub_score": 15.2,
+      "sub_score": 23.2,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17490,12 +18912,21 @@
         "momentum_pct_90d": -0.06710361746472282,
         "momentum_subscore": 36.36363636363637,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 36.4,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 36.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17600,12 +19031,21 @@
         "momentum_pct_90d": 0.18818984579828335,
         "momentum_subscore": 77.57575757575758,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 77.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 77.6,
+      "sub_score": 74.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17710,12 +19150,21 @@
         "momentum_pct_90d": -0.052335785284660874,
         "momentum_subscore": 39.39393939393939,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 39.4,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 39.4,
+      "sub_score": 35.4,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17820,12 +19269,21 @@
         "momentum_pct_90d": -0.4055634792099183,
         "momentum_subscore": 3.6363636363636362,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 3.6,
+        "insider": {
+          "regime": "neutral",
+          "conviction_score": 0.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": 0.0
+        }
       },
       "sub_score": 3.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -17930,12 +19388,21 @@
         "momentum_pct_90d": -0.2301830023124174,
         "momentum_subscore": 20.0,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 20.0,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 20.0,
+      "sub_score": 17.0,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -18043,12 +19510,21 @@
         "momentum_pct_90d": 0.15419938209713568,
         "momentum_subscore": 72.72727272727273,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 72.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -1.0,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 72.7,
+      "sub_score": 69.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -18153,12 +19629,21 @@
         "momentum_pct_90d": 0.05462774117887359,
         "momentum_subscore": 60.60606060606061,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 60.6,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8780845946020994,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 60.6,
+      "sub_score": 57.6,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -18263,12 +19748,21 @@
         "momentum_pct_90d": 0.32219415514129546,
         "momentum_subscore": 89.6969696969697,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 89.7,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.815031572248732,
+          "cluster_buying": false,
+          "ceo_cfo_action": "neutral",
+          "adjustment_pts": -3.0
+        }
       },
-      "sub_score": 89.7,
+      "sub_score": 86.7,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
@@ -18373,12 +19867,21 @@
         "momentum_pct_90d": -0.27464755241544925,
         "momentum_subscore": 13.333333333333334,
         "inst_holdings_change_qoq": null,
-        "inst_holdings_subscore": 50.0
+        "inst_holdings_subscore": 50.0,
+        "base_sub_score": 13.3,
+        "insider": {
+          "regime": "heavy_selling",
+          "conviction_score": -0.8937518967991044,
+          "cluster_buying": false,
+          "ceo_cfo_action": "selling",
+          "adjustment_pts": -4.0
+        }
       },
-      "sub_score": 13.3,
+      "sub_score": 9.3,
       "data_quality": {
         "has_momentum": true,
-        "has_inst_holdings": false
+        "has_inst_holdings": false,
+        "has_insider": true
       }
     },
     {
