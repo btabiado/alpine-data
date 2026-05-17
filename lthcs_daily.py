@@ -57,6 +57,7 @@ from lthcs.pillars import adoption, des, financial, institutional, thesis
 from lthcs.sources import (
     ai_news,
     alpha_vantage,
+    analyst_breadth,
     breadth_sentiment,
     eia,
     finnhub,
@@ -182,6 +183,11 @@ class PipelineState:
     # data/lthcs/macro/breadth_sentiment_<date>.json. Downstream scoring
     # consumption deferred to follow-up commit.
     breadth_sentiment_snapshot: Optional[Dict[str, Any]] = None
+    # Per-ticker analyst-rating breadth derived from yahoo_events cache
+    # (cache-read-only — no extra network calls). Map of ticker → breadth
+    # dict (regime, breadth_score in [-1,+1], firm_count, raw_actions).
+    # Persisted to data/lthcs/analyst_breadth/<date>.json.
+    analyst_breadth_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     av_response: Optional[Dict[str, Any]] = None       # legacy single-anchor path (kept for backward-compat)
     av_anchor_ticker: Optional[str] = None             # legacy single-anchor path
     rotation: Optional[ThesisRotation] = None
@@ -526,6 +532,9 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         if state.args.verbose:
             print("  breadth_sentiment fetch failed: %s" % exc)
         state.breadth_sentiment_snapshot = None
+    # NOTE: analyst_breadth runs AFTER the Thesis cascade (Step 2 warms
+    # the yahoo_events recommendations cache it depends on). See Stage 2
+    # cascade section below.
 
     # Alpha Vantage: rotation — score up to 25 least-recently-scored tickers,
     # each via a single-ticker call. Sentiment files live in
@@ -829,6 +838,22 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             sig = ai_news.compute_thesis_signal_from_news(news_dict)
             if _write_supplement(sym, sig):
                 ai_news_supplement_count += 1
+
+        # --- Analyst-rating breadth (cache-read-only over yahoo_events) ---
+        # Runs AFTER the Thesis cascade so the yahoo_events recommendations
+        # cache is warm. Pure derivation, no extra network calls. 30d window
+        # is the spec default; we can also persist a 90d window if useful.
+        try:
+            state.analyst_breadth_by_ticker = (
+                analyst_breadth.compute_universe_breadth(
+                    state.active_tickers, window_days=30
+                )
+            )
+            counts["analyst_breadth_covered"] = len(state.analyst_breadth_by_ticker)
+        except Exception as exc:
+            if state.args.verbose:
+                print("  analyst_breadth compute failed: %s" % exc)
+            state.analyst_breadth_by_ticker = {}
 
     state.fetch_counts = counts
     counts["finnhub_supplement"] = finnhub_supplement_count
@@ -1202,6 +1227,14 @@ def stage_8_persist(state: PipelineState) -> bool:
             if state.breadth_sentiment_snapshot is not None:
                 (macro_dir / ("breadth_sentiment_%s.json" % state.calc_date)).write_text(
                     json.dumps(state.breadth_sentiment_snapshot, indent=2, sort_keys=True)
+                )
+            # Per-ticker analyst-rating breadth: separate dir to keep the
+            # macro/ tree limited to true system-wide signals.
+            if state.analyst_breadth_by_ticker:
+                analyst_dir = persist.data_root / "analyst_breadth"
+                analyst_dir.mkdir(parents=True, exist_ok=True)
+                (analyst_dir / ("%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.analyst_breadth_by_ticker, indent=2, sort_keys=True)
                 )
         except Exception as exc:
             if state.args.verbose:

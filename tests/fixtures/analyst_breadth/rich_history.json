@@ -1,0 +1,83 @@
+[
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_2__",
+    "firm": "Goldman Sachs",
+    "action": "Upgrades",
+    "from_grade": "Hold",
+    "to_grade": "Buy",
+    "direction": 1.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_5__",
+    "firm": "Morgan Stanley",
+    "action": "Upgrades",
+    "from_grade": "Equal-Weight",
+    "to_grade": "Overweight",
+    "direction": 1.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_8__",
+    "firm": "Bernstein",
+    "action": "Upgrades",
+    "from_grade": "Underperform",
+    "to_grade": "Outperform",
+    "direction": 1.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_12__",
+    "firm": "Wells Fargo",
+    "action": "Downgrades",
+    "from_grade": "Overweight",
+    "to_grade": "Equal-Weight",
+    "direction": -1.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_15__",
+    "firm": "Citi",
+    "action": "Initiates",
+    "from_grade": null,
+    "to_grade": "Buy",
+    "direction": 0.5
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_18__",
+    "firm": "JPMorgan",
+    "action": "Reiterates",
+    "from_grade": "Buy",
+    "to_grade": "Buy",
+    "direction": 0.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_22__",
+    "firm": "Bank of America",
+    "action": "Reiterates",
+    "from_grade": "Outperform",
+    "to_grade": "Outperform",
+    "direction": 0.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_25__",
+    "firm": "Barclays",
+    "action": "Maintains",
+    "from_grade": "Underweight",
+    "to_grade": "Underweight",
+    "direction": 0.0
+  },
+  {
+    "ticker": "NVDA",
+    "date": "__DAYS_AGO_120__",
+    "firm": "Way Too Old",
+    "action": "Upgrades",
+    "from_grade": "Hold",
+    "to_grade": "Buy",
+    "direction": 1.0
+  }
+]
