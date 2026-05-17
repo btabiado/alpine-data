@@ -35,6 +35,16 @@ from lthcs.normalize import (
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
 
+# Trends-data renorm weights (when callers pass ``trends_data`` from the
+# weekly-batch cache rather than the legacy ``interest_series``). The
+# legacy path keeps its documented 60/40 mix; the new path defers more
+# heavily to revenue (the higher-fidelity signal) and only lets trends
+# contribute 30%. Stale trends data drops further to 15%.
+REVENUE_WEIGHT_WITH_TRENDS_DICT = 0.70
+TRENDS_WEIGHT_WITH_TRENDS_DICT = 0.30
+REVENUE_WEIGHT_WITH_STALE_TRENDS = 0.85
+TRENDS_WEIGHT_WITH_STALE_TRENDS = 0.15
+
 # ``pytrends`` is only needed by the live fetcher; tests patch
 # ``adoption.TrendReq`` directly, so the import is at module top so the
 # patch target exists even when the lib raises at runtime.
@@ -357,6 +367,9 @@ def compute_adoption(
     revenue_rows: List[Dict[str, Any]],
     interest_series: List[float],
     peer_growths: Dict[str, Optional[float]],
+    *,
+    trends_data: Optional[Dict[str, Any]] = None,
+    universe_trends_data: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Compute the Adoption Momentum sub-score for one ticker.
 
@@ -364,6 +377,15 @@ def compute_adoption(
 
     * Revenue growth percentile within the peer universe (60% weight).
     * Google Trends interest slope mapped to 0-100 (40% weight).
+
+    When ``trends_data`` is supplied (from the weekly-batch
+    ``lthcs.sources.google_trends`` cache) it takes precedence over
+    ``interest_series``. In that path the pillar reweights to
+    revenue=0.70 / trends=0.30 (or 0.85 / 0.15 if the snapshot is
+    stale), and the trends sub-score is computed as a percentile of the
+    focal ticker's ``acceleration_4w_pct`` within the universe (passed
+    via ``universe_trends_data``) — cohort-relative because absolute
+    Trends % swings have huge per-ticker variance.
 
     Either component falling back to its neutral 50.0 midpoint is
     flagged in the returned ``data_quality`` dict so downstream
@@ -396,26 +418,100 @@ def compute_adoption(
             growth, peer_values, include_self=False
         )
 
-    trends_slope = compute_search_interest_slope(interest_series or [])
-    if trends_slope is None:
-        trends_subscore = 50.0
+    # --- Trends path: prefer the new weekly-batch ``trends_data`` dict when
+    # supplied (Phase 2). Falls back to the legacy ``interest_series`` slope
+    # otherwise so existing pipeline call sites (lthcs_daily.py passes []) keep
+    # the renorm-to-revenue behaviour exactly as before.
+    trends_subscore = 50.0
+    trends_slope: Optional[float] = None
+    trends_component: Optional[Dict[str, Any]] = None
+    has_trends = False
+    trends_quality_stale = False
+
+    if isinstance(trends_data, dict) and trends_data:
+        # New Phase 2 path: pre-computed acceleration block from the weekly
+        # google_trends snapshot. Quality drives the renorm weight ladder.
+        quality = trends_data.get("data_quality")
+        acc_4w = trends_data.get("acceleration_4w_pct")
+        if quality in ("good", "partial", "stale") and acc_4w is not None:
+            has_trends = True
+            trends_quality_stale = (quality == "stale")
+            # Cohort-relative scoring: rank focal's 4w acceleration within
+            # the universe. Absolute % swings have huge ticker-by-ticker
+            # variance (NVDA can spike +50% in a week while KO is dead flat),
+            # so a fixed bounded_linear mapping would compress everyone to
+            # the middle. Percentile-rank handles the distribution shape.
+            peer_acc: List[float] = []
+            if isinstance(universe_trends_data, dict):
+                for sym, blk in universe_trends_data.items():
+                    if sym == ticker:
+                        continue
+                    if not isinstance(blk, dict):
+                        continue
+                    v = blk.get("acceleration_4w_pct")
+                    if v is None:
+                        continue
+                    try:
+                        f = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                    if f != f:  # NaN
+                        continue
+                    peer_acc.append(f)
+            if peer_acc:
+                trends_subscore = peer_relative_percentile(
+                    float(acc_4w), peer_acc, include_self=False
+                )
+            else:
+                # No cohort distribution available — fall back to mapping the
+                # raw signal_score (already tanh-compressed to [-1, +1]) onto
+                # [0, 100] via a straight linear remap.
+                ss = trends_data.get("signal_score")
+                try:
+                    ss_f = float(ss) if ss is not None else 0.0
+                except (TypeError, ValueError):
+                    ss_f = 0.0
+                trends_subscore = float(50.0 + 50.0 * max(-1.0, min(1.0, ss_f)))
+            trends_component = {
+                "trend_week": trends_data.get("trend_week"),
+                "regime": trends_data.get("regime"),
+                "acceleration_4w_pct": acc_4w,
+                "acceleration_12w_pct": trends_data.get("acceleration_12w_pct"),
+                "signal_score": trends_data.get("signal_score"),
+                "quality": quality,
+            }
     else:
-        trends_subscore = bounded_linear(
-            trends_slope, _TRENDS_SLOPE_LOW, _TRENDS_SLOPE_HIGH
-        )
+        # Legacy path: raw daily ``interest_series`` -> slope -> bounded map.
+        trends_slope = compute_search_interest_slope(interest_series or [])
+        if trends_slope is None:
+            trends_subscore = 50.0
+        else:
+            has_trends = True
+            trends_subscore = bounded_linear(
+                trends_slope, _TRENDS_SLOPE_LOW, _TRENDS_SLOPE_HIGH
+            )
 
     # Renormalize when a sub-component is the V1 stub (data not available).
     # Mirrors the Institutional pillar's 13F-stub handling: when Trends data
     # isn't available (and it isn't in V1 for 168 tickers — pytrends rate-
     # limits aggressively), reweight so Revenue carries 100% of the pillar
     # rather than diluting toward the neutral-50 placeholder.
-    #
-    # Without this, every ticker's Adoption sub-score is capped at
-    # REVENUE_WEIGHT*100 + TRENDS_WEIGHT*50 = 80, which mechanically prevents
-    # Elite-band (>=90) composites and squashes the universe distribution.
     has_revenue = growth is not None
-    has_trends = trends_slope is not None
-    if has_trends:
+    if has_trends and trends_component is not None:
+        # Phase 2 trends_data path: tighter revenue tilt, with a further
+        # haircut for stale snapshots.
+        if trends_quality_stale:
+            effective_weights = (
+                REVENUE_WEIGHT_WITH_STALE_TRENDS,
+                TRENDS_WEIGHT_WITH_STALE_TRENDS,
+            )
+        else:
+            effective_weights = (
+                REVENUE_WEIGHT_WITH_TRENDS_DICT,
+                TRENDS_WEIGHT_WITH_TRENDS_DICT,
+            )
+    elif has_trends:
+        # Legacy interest_series path: documented 60/40.
         effective_weights = (REVENUE_WEIGHT, TRENDS_WEIGHT)
     elif has_revenue:
         effective_weights = (1.0, 0.0)  # Revenue carries the pillar alone
@@ -431,15 +527,20 @@ def compute_adoption(
     )
     sub_score = round(float(sub_score), 1)
 
+    variable_detail: Dict[str, Any] = {
+        "revenue_growth_yoy": growth,
+        "revenue_subscore": float(revenue_subscore),
+        "trends_slope": trends_slope,
+        "trends_subscore": float(trends_subscore),
+    }
+    if trends_component is not None:
+        variable_detail["trends"] = trends_component
+
     return {
         "ticker": ticker,
         "sub_score": sub_score,
-        "components": {
-            "revenue_growth_yoy": growth,
-            "revenue_subscore": float(revenue_subscore),
-            "trends_slope": trends_slope,
-            "trends_subscore": float(trends_subscore),
-        },
+        "components": variable_detail,
+        "variable_detail": variable_detail,
         "weights": {"revenue": REVENUE_WEIGHT, "trends": TRENDS_WEIGHT},
         "effective_weights": {
             "revenue": float(effective_weights[0]),

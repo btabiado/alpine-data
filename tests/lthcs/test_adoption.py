@@ -342,6 +342,165 @@ def test_compute_adoption_sub_score_rounded_to_one_decimal() -> None:
     assert result["sub_score"] == round(result["sub_score"], 1)
 
 
+# --- compute_adoption with trends_data (Phase 2 weekly-batch path) --------
+
+
+def _trends_blob(
+    ticker: str = "NVDA",
+    *,
+    acceleration_4w_pct: float = 25.0,
+    acceleration_12w_pct: float = 60.0,
+    regime: str = "accelerating",
+    signal_score: float = 0.6,
+    data_quality: str = "good",
+    trend_week: str = "2026-W19",
+) -> Dict[str, Any]:
+    return {
+        "ticker": ticker,
+        "as_of": "2026-05-17",
+        "trend_week": trend_week,
+        "search_interest_latest": 78,
+        "search_interest_4w_ago": 62,
+        "search_interest_12w_ago": 45,
+        "acceleration_4w_pct": acceleration_4w_pct,
+        "acceleration_12w_pct": acceleration_12w_pct,
+        "regime": regime,
+        "signal_score": signal_score,
+        "data_quality": data_quality,
+    }
+
+
+def test_compute_adoption_with_trends_data_uses_70_30_weights() -> None:
+    """When trends_data is supplied, revenue=70%, trends=30%."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("NVDA", 0.10)
+    trends = _trends_blob("NVDA", acceleration_4w_pct=25.0)
+    universe_trends = {
+        "NVDA": trends,
+        "P1": _trends_blob("P1", acceleration_4w_pct=-10.0),
+        "P2": _trends_blob("P2", acceleration_4w_pct=0.0),
+        "P3": _trends_blob("P3", acceleration_4w_pct=10.0),
+        "P4": _trends_blob("P4", acceleration_4w_pct=15.0),
+        "P5": _trends_blob("P5", acceleration_4w_pct=40.0),
+    }
+    result = adoption.compute_adoption(
+        "NVDA", rows, [], peer_growths,
+        trends_data=trends, universe_trends_data=universe_trends,
+    )
+    assert result["data_quality"]["has_trends"] is True
+    assert result["effective_weights"]["revenue"] == pytest.approx(0.70)
+    assert result["effective_weights"]["trends"] == pytest.approx(0.30)
+    # NVDA's 25.0 ranks above P1/P2/P3/P4 (4 of 5 peers) -> 80.0.
+    assert result["components"]["trends_subscore"] == pytest.approx(80.0)
+    # variable_detail surfaces the trends sub-block.
+    detail = result["variable_detail"]
+    assert "trends" in detail
+    assert detail["trends"]["regime"] == "accelerating"
+    assert detail["trends"]["acceleration_4w_pct"] == 25.0
+    assert detail["trends"]["quality"] == "good"
+
+
+def test_compute_adoption_with_stale_trends_drops_to_85_15() -> None:
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("NVDA", 0.10)
+    trends = _trends_blob("NVDA", data_quality="stale")
+    result = adoption.compute_adoption(
+        "NVDA", rows, [], peer_growths,
+        trends_data=trends, universe_trends_data={"NVDA": trends},
+    )
+    assert result["data_quality"]["has_trends"] is True
+    assert result["effective_weights"]["revenue"] == pytest.approx(0.85)
+    assert result["effective_weights"]["trends"] == pytest.approx(0.15)
+    assert result["variable_detail"]["trends"]["quality"] == "stale"
+
+
+def test_compute_adoption_with_trends_data_none_preserves_legacy() -> None:
+    """trends_data=None falls back to legacy interest_series path (revenue 100% renorm)."""
+    rows = [
+        _annual("2025-09-30", 200.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("AAPL", 1.0)
+    result = adoption.compute_adoption(
+        "AAPL", rows, [], peer_growths, trends_data=None,
+    )
+    # Same as the existing test_compute_adoption_revenue_only_trends_missing —
+    # revenue carries the full pillar weight.
+    assert result["effective_weights"]["revenue"] == 1.0
+    assert result["effective_weights"]["trends"] == 0.0
+    assert result["data_quality"]["has_trends"] is False
+
+
+def test_compute_adoption_with_trends_data_missing_quality_treated_as_no_signal() -> None:
+    """data_quality='missing' (or unknown) -> trends ignored, revenue carries 100%."""
+    rows = [
+        _annual("2025-09-30", 200.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("AAPL", 0.5)
+    trends = _trends_blob("AAPL", data_quality="missing")
+    result = adoption.compute_adoption(
+        "AAPL", rows, [], peer_growths,
+        trends_data=trends, universe_trends_data={},
+    )
+    assert result["data_quality"]["has_trends"] is False
+    assert result["effective_weights"]["revenue"] == 1.0
+    assert result["effective_weights"]["trends"] == 0.0
+
+
+def test_compute_adoption_with_trends_data_partial_quality_uses_70_30() -> None:
+    """data_quality='partial' is still real signal -> standard 70/30 split."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("NVDA", 0.10)
+    trends = _trends_blob("NVDA", data_quality="partial", acceleration_12w_pct=None)
+    result = adoption.compute_adoption(
+        "NVDA", rows, [], peer_growths,
+        trends_data=trends, universe_trends_data={"NVDA": trends},
+    )
+    assert result["data_quality"]["has_trends"] is True
+    assert result["effective_weights"]["revenue"] == pytest.approx(0.70)
+    assert result["effective_weights"]["trends"] == pytest.approx(0.30)
+
+
+def test_compute_adoption_with_trends_data_no_universe_falls_back_to_signal_score() -> None:
+    """Empty universe -> trends_subscore derived from signal_score directly (50 + 50*ss)."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("NVDA", 0.10)
+    trends = _trends_blob("NVDA", signal_score=0.5)
+    result = adoption.compute_adoption(
+        "NVDA", rows, [], peer_growths,
+        trends_data=trends, universe_trends_data=None,
+    )
+    # 50 + 50*0.5 = 75
+    assert result["components"]["trends_subscore"] == pytest.approx(75.0)
+
+
+def test_compute_adoption_has_trends_flag_with_trends_data() -> None:
+    """has_trends should reflect that the new trends_data path supplied signal."""
+    rows: List[Dict[str, Any]] = []
+    trends = _trends_blob("NVDA")
+    result = adoption.compute_adoption(
+        "NVDA", rows, [], {},
+        trends_data=trends, universe_trends_data={"NVDA": trends},
+    )
+    assert result["data_quality"]["has_trends"] is True
+    # Revenue has no rows -> has_revenue=False; but trends still carries
+    # its weight component, so subscore is not 50 exactly.
+    assert result["data_quality"]["has_revenue"] is False
+
+
 # --- fetch_google_trends_interest (mocked pytrends) ------------------------
 
 
