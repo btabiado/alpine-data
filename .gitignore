@@ -39,6 +39,12 @@ data/.stale/
 # LTHCS — local API response cache (raw vendor data, may have redistribution terms)
 .cache/
 
+# LTHCS — test pollution: unittest.mock occasionally writes a literal
+# `MagicMock/` directory when a patched filesystem call escapes its
+# context. Always safe to delete; recurring across the source-module
+# test suites.
+MagicMock/
+
 # Local env / secrets
 .env
 .env.local
