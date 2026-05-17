@@ -317,3 +317,188 @@ def test_revenue_history_missing_facts_key_returns_empty_list(ua: None) -> None:
             _fake_response({}),  # no "facts" key at all
         ]
         assert sec_edgar.get_revenue_history("AAPL") == []
+
+
+# --- Bank concepts: get_net_interest_income_history --------------------------
+
+
+def _facts_with_concepts(concept_to_series: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
+    """Build a facts payload with multiple us-gaap concepts at once."""
+    gaap: Dict[str, Any] = {}
+    for concept, series in concept_to_series.items():
+        gaap[concept] = {"label": concept, "units": {"USD": series}}
+    return {
+        "cik": 19617,
+        "entityName": "JPMorgan Chase & Co.",
+        "facts": {"us-gaap": gaap},
+    }
+
+
+def test_net_interest_income_history_extracts_primary_concept(ua: None) -> None:
+    """Banks reporting under ``InterestIncomeOperating`` should produce a series."""
+    facts = _facts_with_concepts({
+        "InterestIncomeOperating": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 25_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+            {"start": "2024-04-01", "end": "2024-06-30", "val": 26_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q2"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_net_interest_income_history("AAPL")
+    assert len(rows) == 2
+    # Desc by end_date.
+    assert rows[0]["end_date"] == "2024-06-30"
+    assert rows[0]["value"] == 26_000
+    assert rows[0]["concept"] == "InterestIncomeOperating"
+
+
+def test_net_interest_income_history_merges_legacy_and_modern(ua: None) -> None:
+    """The newer (later-in-tuple) concept wins on a period collision."""
+    facts = _facts_with_concepts({
+        # Legacy / dividend-form -- earlier in the tuple.
+        "InterestAndDividendIncomeOperating": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 25_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+            # Older year, no overlap.
+            {"start": "2018-01-01", "end": "2018-03-31", "val": 18_000,
+             "form": "10-Q", "fy": 2018, "fp": "Q1"},
+        ],
+        # ``NetInterestIncome`` is later in the tuple -- it wins on collision.
+        "NetInterestIncome": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 99_999,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_net_interest_income_history("AAPL")
+    by_end = {r["end_date"]: r for r in rows}
+    assert by_end["2024-03-31"]["value"] == 99_999
+    assert by_end["2024-03-31"]["concept"] == "NetInterestIncome"
+    # Legacy-only earlier year still present.
+    assert by_end["2018-03-31"]["value"] == 18_000
+
+
+def test_net_interest_income_history_empty_when_concepts_missing(ua: None) -> None:
+    """A non-bank company won't have any of these concepts -> empty series."""
+    facts = _facts_with_concepts({
+        # Only revenue, no bank concepts.
+        "Revenues": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 1_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_net_interest_income_history("AAPL")
+    assert rows == []
+
+
+# --- Bank concepts: get_provision_for_credit_losses_history ------------------
+
+
+def test_pcl_history_extracts_pre_cecl_concept(ua: None) -> None:
+    facts = _facts_with_concepts({
+        "ProvisionForLoanLeaseAndOtherLosses": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 3_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+            {"start": "2024-04-01", "end": "2024-06-30", "val": 3_200,
+             "form": "10-Q", "fy": 2024, "fp": "Q2"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_provision_for_credit_losses_history("AAPL")
+    assert len(rows) == 2
+    assert rows[0]["end_date"] == "2024-06-30"
+    assert rows[0]["value"] == 3_200
+    assert rows[0]["concept"] == "ProvisionForLoanLeaseAndOtherLosses"
+
+
+def test_pcl_history_modern_cecl_concept_wins_on_collision(ua: None) -> None:
+    """When JPM/BAC report under both legacy AND CECL-era concepts for the same
+    period, the post-2020 ``ProvisionForCreditLosses`` value wins."""
+    facts = _facts_with_concepts({
+        "ProvisionForLoanLeaseAndOtherLosses": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 1_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+        # Later in tuple -> wins on the same-period collision.
+        "ProvisionForCreditLosses": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 9_999,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_provision_for_credit_losses_history("AAPL")
+    assert len(rows) == 1
+    assert rows[0]["value"] == 9_999
+    assert rows[0]["concept"] == "ProvisionForCreditLosses"
+
+
+def test_pcl_history_empty_when_concepts_missing(ua: None) -> None:
+    facts = _facts_with_concepts({})  # no bank concepts at all
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_provision_for_credit_losses_history("AAPL")
+    assert rows == []
+
+
+# --- Bank concepts: get_noninterest_income_history ---------------------------
+
+
+def test_noninterest_income_history_extracts_series(ua: None) -> None:
+    facts = _facts_with_concepts({
+        "NoninterestIncome": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 12_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+            {"start": "2023-10-01", "end": "2023-12-31", "val": 11_500,
+             "form": "10-Q", "fy": 2023, "fp": "Q4"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_noninterest_income_history("AAPL")
+    assert [r["end_date"] for r in rows] == ["2024-03-31", "2023-12-31"]
+    assert rows[0]["concept"] == "NoninterestIncome"
+    assert rows[0]["value"] == 12_000
+
+
+def test_noninterest_income_history_empty_when_concept_missing(ua: None) -> None:
+    facts = _facts_with_concepts({
+        "Revenues": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 1_000,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_noninterest_income_history("AAPL")
+    assert rows == []

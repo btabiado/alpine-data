@@ -1,0 +1,15 @@
+{
+  "ticker": "MU",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 99,
+  "mean_sentiment_score": 0.45,
+  "mean_relevance_score": 0.5,
+  "label_counts": {
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 99,
+    "Somewhat-Bullish": 0,
+    "Bullish": 0
+  }
+}

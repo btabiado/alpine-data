@@ -2,14 +2,14 @@
   "ticker": "AMD",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 50,
-  "mean_sentiment_score": 0.13343826000000003,
-  "mean_relevance_score": 0.7038851600000001,
+  "article_count": 47,
+  "mean_sentiment_score": 0.25,
+  "mean_relevance_score": 0.5,
   "label_counts": {
-    "Bearish": 5,
-    "Somewhat-Bearish": 3,
-    "Neutral": 14,
-    "Somewhat-Bullish": 26,
-    "Bullish": 2
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 47,
+    "Somewhat-Bullish": 0,
+    "Bullish": 0
   }
 }

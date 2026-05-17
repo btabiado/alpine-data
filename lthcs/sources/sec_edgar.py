@@ -87,6 +87,48 @@ _OPERATING_CASH_FLOW_CONCEPTS = (
 )
 
 
+# --- Bank-specific concepts -------------------------------------------------
+#
+# Banks (JPM, BAC, GS, WFC, C, MS, USB, TFC, etc.) don't report ``GrossProfit``
+# or ``NetCashProvidedByOperatingActivities`` under the standard us-gaap
+# concepts that industrial / tech companies use. They use a different
+# financial-services concept family. The Financial Evolution pillar's
+# bank code path consumes these series.
+#
+# Concept-tuple ordering follows the same rule as the non-bank concepts:
+# the LATER entry wins on a period collision, so put the modern /
+# preferred concept last.
+
+# Net Interest Income (bank revenue analog) — interest earned minus interest
+# paid. Some filers report the operating gross via
+# ``InterestAndDividendIncomeOperating`` (income side only); the explicit
+# net concept ``NetInterestIncome`` is rarer and only appears for some
+# legacy JPM/BAC filings. We accept all three and let the merge dedup.
+_BANK_NET_INTEREST_INCOME_CONCEPTS = (
+    "InterestIncomeOperating",
+    "InterestAndDividendIncomeOperating",
+    "NetInterestIncome",
+)
+
+# Provision for Credit Losses (bank cost-of-revenue analog) — the
+# anticipated-loan-loss accrual. ``ProvisionForCreditLosses`` is the
+# post-2020 CECL-era concept used by JPM and BAC; the older
+# ``ProvisionForLoanLeaseAndOtherLosses`` is what most banks still file
+# under, with ``ProvisionForLoanAndLeaseLosses`` an even older variant.
+_BANK_PROVISION_FOR_CREDIT_LOSSES_CONCEPTS = (
+    "ProvisionForLoanAndLeaseLosses",
+    "ProvisionForLoanLeaseAndOtherLosses",
+    "ProvisionForCreditLosses",
+)
+
+# Noninterest Income (bank fee revenue) — trading, advisory, asset-mgmt
+# fees, etc. The single canonical concept is universal across the big
+# banks.
+_BANK_NONINTEREST_INCOME_CONCEPTS = (
+    "NoninterestIncome",
+)
+
+
 # --- Module state ------------------------------------------------------------
 
 def _cache_root() -> Path:
@@ -300,4 +342,51 @@ def get_operating_cash_flow_history(ticker: str) -> List[Dict[str, Any]]:
     """Operating cash flow history. Same schema as :func:`get_revenue_history`."""
     return _extract_concept_history(
         get_company_facts(ticker), _OPERATING_CASH_FLOW_CONCEPTS
+    )
+
+
+# --- Public API: bank-specific concepts -------------------------------------
+
+def get_net_interest_income_history(ticker: str) -> List[Dict[str, Any]]:
+    """Net Interest Income history (bank revenue analog).
+
+    Merges ``InterestIncomeOperating`` / ``InterestAndDividendIncomeOperating``
+    / ``NetInterestIncome`` so a single time series falls out regardless of
+    which concept the filer uses. Same row schema as
+    :func:`get_revenue_history`.
+
+    Note: most large banks report the gross interest-income side
+    (``InterestAndDividendIncomeOperating``) rather than a single
+    ``NetInterestIncome`` concept; in V1 we treat that as the bank's
+    "revenue line" for growth and ratio purposes since it's the dominant
+    series the SEC actually fills.
+    """
+    return _extract_concept_history(
+        get_company_facts(ticker), _BANK_NET_INTEREST_INCOME_CONCEPTS
+    )
+
+
+def get_provision_for_credit_losses_history(ticker: str) -> List[Dict[str, Any]]:
+    """Provision for Credit Losses history (bank cost-of-revenue analog).
+
+    Merges the older ``ProvisionForLoanAndLeaseLosses`` /
+    ``ProvisionForLoanLeaseAndOtherLosses`` and the post-2020 CECL-era
+    ``ProvisionForCreditLosses`` so a contiguous series is available
+    regardless of when the filer migrated concepts. Same row schema as
+    :func:`get_revenue_history`.
+    """
+    return _extract_concept_history(
+        get_company_facts(ticker), _BANK_PROVISION_FOR_CREDIT_LOSSES_CONCEPTS
+    )
+
+
+def get_noninterest_income_history(ticker: str) -> List[Dict[str, Any]]:
+    """Noninterest Income history (bank fee-revenue line).
+
+    Captures fees from trading, advisory, asset management, card / payments,
+    and similar non-interest sources. Same row schema as
+    :func:`get_revenue_history`.
+    """
+    return _extract_concept_history(
+        get_company_facts(ticker), _BANK_NONINTEREST_INCOME_CONCEPTS
     )

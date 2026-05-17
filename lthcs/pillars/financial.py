@@ -25,6 +25,34 @@ revenue/OCF sums) it falls back to the neutral 50.0 midpoint and the
 return value's ``data_quality`` dict flags the gap so downstream
 aggregation can apply a confidence haircut.
 
+Bank code path
+--------------
+
+Banks (JPM, BAC, GS, WFC, ...) don't report ``GrossProfit`` or
+``NetCashProvidedByOperatingActivities`` under the standard us-gaap
+XBRL concepts -- they have a different financial-services concept
+family (NetInterestIncome, ProvisionForCreditLosses,
+NoninterestIncome). For tickers in the strict-bank allowlist
+(:data:`BANK_TICKERS`) the pillar swaps the three sub-components:
+
+* **Net Interest Income growth YoY** (40%) -- the bank's "revenue line"
+  is interest income, not the us-gaap ``Revenues`` total. Computed the
+  same way as the standard revenue YoY but off the NII series, and
+  ranked against the same peer growth distribution the caller supplies.
+* **Provision-for-credit-losses / total revenue ratio** (30%) -- the
+  bank's "cost of revenue" pressure. Lower is better. Total revenue
+  here means ``NII + Noninterest Income`` (the standard bank revenue
+  decomposition); the us-gaap ``Revenues`` concept is unreliable for
+  banks. Mapped onto 0-100 with ``invert=True`` and bounds
+  ``[0.05, 0.30]`` -- a PCL/Rev ratio of 5% or below saturates to 100
+  ("benign credit cycle"), 30% or above saturates to 0
+  ("crisis-era loan-loss accrual").
+* **Noninterest-income / total revenue ratio** (30%) -- the bank's
+  revenue diversification. Higher is better (less rate-cycle
+  dependent). Mapped onto 0-100 with bounds ``[0.20, 0.60]`` -- a
+  20%-or-below ratio means a deposit-and-lend monoline; 60%-or-above
+  means a diversified universal bank like JPM.
+
 All math is pure -- no I/O. Tests for this module never touch the
 network: SEC EDGAR rows are passed in directly as fixtures.
 """
@@ -68,6 +96,61 @@ _MARGIN_SLOPE_HIGH = 0.05
 # negative-OCF names hard.
 _OCF_MARGIN_LOW = -0.10
 _OCF_MARGIN_HIGH = 0.30
+
+# --- Bank-specific constants ------------------------------------------------
+#
+# Allowlist of tickers routed through the bank code path. Restricted to
+# strict universal / commercial / investment banks where the bank
+# financial-services concept family (NII / PCL / Noninterest) is the
+# correct revenue decomposition. Adjacent financials that don't fit
+# (insurance, asset managers, payments, consumer finance, exchanges)
+# stay on the standard path so they don't get spurious neutral scores
+# from absent bank concepts.
+#
+# Notable exclusions and why:
+#   BLK   -- asset manager, fee-based; standard ``Revenues`` works.
+#   SCHW  -- brokerage / banking hybrid; partial fit. Skip in V1.
+#   COF   -- consumer-finance / cards; PCL dynamics differ.
+#   V/MA/AXP/PYPL -- payment networks, not banks.
+#   BRK.B -- conglomerate.
+#   PRU/MET/TRV/AIG/AFL/ALL -- insurance, different model.
+BANK_TICKERS = frozenset({
+    "JPM",
+    "BAC",
+    "WFC",
+    "C",
+    "GS",
+    "MS",
+    "USB",
+    "TFC",
+})
+
+# Bank PCL / total-revenue ratio bounds. ``invert=True`` (lower is
+# better). 5% is a benign-credit-cycle low water mark; 30% is the kind
+# of accrual we last saw in 2008-09 / Covid-era CECL provisioning.
+_BANK_PCL_RATIO_LOW = 0.05
+_BANK_PCL_RATIO_HIGH = 0.30
+
+# Bank Noninterest income / total revenue ratio bounds. 20% means a
+# nearly-pure deposit-and-lend franchise; 60% means a diversified
+# universal-bank revenue mix (JPM/GS/MS sit near or above this).
+_BANK_NONINT_RATIO_LOW = 0.20
+_BANK_NONINT_RATIO_HIGH = 0.60
+
+
+def is_bank_ticker(ticker: Optional[str], sector: Optional[str] = None) -> bool:
+    """True if ``ticker`` should route through the bank code path.
+
+    Strict allowlist check (``ticker in BANK_TICKERS``). The optional
+    ``sector`` arg is accepted for forward-compat / caller clarity but
+    isn't required to flip the routing -- the allowlist is the source
+    of truth in V1 because XBRL-industry inference is unreliable.
+    Callers may still gate on ``sector == "Financials"`` for an extra
+    sanity check; passing ``sector=None`` is fine.
+    """
+    if not ticker:
+        return False
+    return str(ticker).strip().upper() in BANK_TICKERS
 
 
 # --- Internal helpers -------------------------------------------------------
@@ -319,12 +402,247 @@ def _margin_trend_slope(
     return slope(margins)
 
 
+# --- Bank sub-component helpers --------------------------------------------
+
+def _ttm_quarterly_sum(rows: List[Dict[str, Any]]) -> Optional[float]:
+    """Sum the most recent 4 quarterly rows. Returns None on bad data.
+
+    Exposed separately from :func:`_trailing_quarterly_sum` only so
+    bank-path call sites read clearly at the use site; the body is the
+    same.
+    """
+    return _trailing_quarterly_sum(rows)
+
+
+def compute_bank_pcl_ratio_subscore(
+    nii_rows: List[Dict[str, Any]],
+    noninterest_rows: List[Dict[str, Any]],
+    pcl_rows: List[Dict[str, Any]],
+) -> float:
+    """Bank PCL-to-total-revenue ratio mapped onto 0-100 (lower is better).
+
+    ``total_revenue = TTM NII + TTM Noninterest Income`` -- the standard
+    bank revenue decomposition. ``ratio = TTM PCL / total_revenue``,
+    inverted onto [0, 100] via ``bounded_linear`` with bounds
+    ``[0.05, 0.30]``: 5% or below saturates to 100 (benign cycle),
+    30% or above to 0 (crisis-era accrual).
+
+    Returns ``50.0`` when any trailing-4 sum can't be formed (fewer than
+    4 quarterly rows on any input, or non-positive total revenue).
+    """
+    ttm_nii = _trailing_quarterly_sum(nii_rows)
+    ttm_nint = _trailing_quarterly_sum(noninterest_rows)
+    ttm_pcl = _trailing_quarterly_sum(pcl_rows)
+    if ttm_nii is None or ttm_nint is None or ttm_pcl is None:
+        return 50.0
+    total_rev = ttm_nii + ttm_nint
+    if total_rev <= 0:
+        return 50.0
+    ratio = ttm_pcl / total_rev
+    return float(bounded_linear(
+        ratio, _BANK_PCL_RATIO_LOW, _BANK_PCL_RATIO_HIGH, invert=True
+    ))
+
+
+def compute_bank_noninterest_ratio_subscore(
+    nii_rows: List[Dict[str, Any]],
+    noninterest_rows: List[Dict[str, Any]],
+) -> float:
+    """Noninterest-income share of total bank revenue mapped onto 0-100.
+
+    ``ratio = TTM Noninterest / (TTM NII + TTM Noninterest)``, mapped
+    via ``bounded_linear`` with bounds ``[0.20, 0.60]``. Higher is
+    better (more revenue diversification).
+
+    Returns ``50.0`` when either trailing-4 sum can't be formed or the
+    denominator is non-positive.
+    """
+    ttm_nii = _trailing_quarterly_sum(nii_rows)
+    ttm_nint = _trailing_quarterly_sum(noninterest_rows)
+    if ttm_nii is None or ttm_nint is None:
+        return 50.0
+    total_rev = ttm_nii + ttm_nint
+    if total_rev <= 0:
+        return 50.0
+    ratio = ttm_nint / total_rev
+    return float(bounded_linear(
+        ratio, _BANK_NONINT_RATIO_LOW, _BANK_NONINT_RATIO_HIGH
+    ))
+
+
+def _bank_pcl_ratio_value(
+    nii_rows: List[Dict[str, Any]],
+    noninterest_rows: List[Dict[str, Any]],
+    pcl_rows: List[Dict[str, Any]],
+) -> Optional[float]:
+    """Raw PCL/total-revenue ratio for explainability. None on bad data."""
+    ttm_nii = _trailing_quarterly_sum(nii_rows)
+    ttm_nint = _trailing_quarterly_sum(noninterest_rows)
+    ttm_pcl = _trailing_quarterly_sum(pcl_rows)
+    if ttm_nii is None or ttm_nint is None or ttm_pcl is None:
+        return None
+    total_rev = ttm_nii + ttm_nint
+    if total_rev <= 0:
+        return None
+    return float(ttm_pcl / total_rev)
+
+
+def _bank_noninterest_ratio_value(
+    nii_rows: List[Dict[str, Any]],
+    noninterest_rows: List[Dict[str, Any]],
+) -> Optional[float]:
+    """Raw Noninterest / total revenue ratio for explainability. None on bad data."""
+    ttm_nii = _trailing_quarterly_sum(nii_rows)
+    ttm_nint = _trailing_quarterly_sum(noninterest_rows)
+    if ttm_nii is None or ttm_nint is None:
+        return None
+    total_rev = ttm_nii + ttm_nint
+    if total_rev <= 0:
+        return None
+    return float(ttm_nint / total_rev)
+
+
+def _compute_bank_financial(
+    ticker: str,
+    nii_rows: List[Dict[str, Any]],
+    noninterest_rows: List[Dict[str, Any]],
+    pcl_rows: List[Dict[str, Any]],
+    peer_growths: Dict[str, Optional[float]],
+) -> Dict[str, Any]:
+    """Bank-sector Financial Evolution path.
+
+    Same 40/30/30 weight shape as :func:`compute_financial`, with bank
+    sub-components in place of revenue / margin / OCF:
+
+      - NII growth YoY               (40%)
+      - PCL / total-revenue ratio     (30%, inverted)
+      - Noninterest / total revenue   (30%)
+
+    Renormalizes weights away from sub-components whose underlying
+    inputs are unavailable (same semantics as the non-bank path), so a
+    bank with only NII history still scores cleanly off its growth
+    percentile.
+    """
+    nii_rows = nii_rows or []
+    noninterest_rows = noninterest_rows or []
+    pcl_rows = pcl_rows or []
+
+    # NII growth YoY (re-use the revenue-growth helper -- it's purely
+    # period-arithmetic on whatever quarterly / annual series it gets).
+    nii_growth = compute_revenue_growth_yoy(nii_rows)
+
+    peer_values: List[float] = []
+    for sym, g in (peer_growths or {}).items():
+        if sym == ticker:
+            continue
+        if g is None:
+            continue
+        try:
+            f = float(g)
+        except (TypeError, ValueError):
+            continue
+        if f != f:  # NaN
+            continue
+        peer_values.append(f)
+
+    if nii_growth is None:
+        revenue_subscore = 50.0
+    else:
+        revenue_subscore = float(
+            peer_relative_percentile(nii_growth, peer_values, include_self=False)
+        )
+
+    pcl_subscore = compute_bank_pcl_ratio_subscore(
+        nii_rows, noninterest_rows, pcl_rows
+    )
+    pcl_ratio_value = _bank_pcl_ratio_value(
+        nii_rows, noninterest_rows, pcl_rows
+    )
+
+    nint_subscore = compute_bank_noninterest_ratio_subscore(
+        nii_rows, noninterest_rows
+    )
+    nint_ratio_value = _bank_noninterest_ratio_value(
+        nii_rows, noninterest_rows
+    )
+
+    has_revenue = nii_growth is not None
+    has_pcl = pcl_ratio_value is not None
+    has_nint = nint_ratio_value is not None
+
+    pairs = [
+        (REVENUE_WEIGHT, revenue_subscore, has_revenue),
+        (MARGIN_WEIGHT, pcl_subscore, has_pcl),
+        (OCF_WEIGHT, nint_subscore, has_nint),
+    ]
+    real_pairs = [(w, s) for w, s, ok in pairs if ok]
+    if real_pairs:
+        real_sum = sum(w for w, _ in real_pairs)
+        sub_score = sum((w / real_sum) * s for w, s in real_pairs)
+        effective_weights = {
+            "revenue": REVENUE_WEIGHT / real_sum if has_revenue else 0.0,
+            "margin":  MARGIN_WEIGHT / real_sum if has_pcl else 0.0,
+            "ocf":     OCF_WEIGHT / real_sum if has_nint else 0.0,
+        }
+    else:
+        sub_score = (
+            REVENUE_WEIGHT * revenue_subscore
+            + MARGIN_WEIGHT * pcl_subscore
+            + OCF_WEIGHT * nint_subscore
+        )
+        effective_weights = {
+            "revenue": REVENUE_WEIGHT,
+            "margin": MARGIN_WEIGHT,
+            "ocf": OCF_WEIGHT,
+        }
+    sub_score = round(float(sub_score), 1)
+
+    return {
+        "ticker": ticker,
+        "sub_score": sub_score,
+        "components": {
+            # Bank-specific raw values surface alongside the standard
+            # component keys so downstream consumers and the narrative
+            # generator can pick them up by either name.
+            "revenue_growth_yoy": nii_growth,
+            "revenue_subscore": float(revenue_subscore),
+            "margin_subscore": float(pcl_subscore),
+            "ocf_subscore": float(nint_subscore),
+            "nii_growth_yoy": nii_growth,
+            "pcl_to_revenue_ratio": pcl_ratio_value,
+            "noninterest_to_revenue_ratio": nint_ratio_value,
+            # Standard explainability keys -- bank path doesn't compute these.
+            "ttm_ocf_margin": None,
+            "margin_trend_slope": None,
+        },
+        "weights": {
+            "revenue": REVENUE_WEIGHT,
+            "margin": MARGIN_WEIGHT,
+            "ocf": OCF_WEIGHT,
+        },
+        "effective_weights": effective_weights,
+        "data_quality": {
+            # Bank path uses NII as its revenue line, PCL ratio in the
+            # margin slot, and Noninterest ratio in the OCF slot.
+            "has_revenue": has_revenue,
+            "has_margin": has_pcl,
+            "has_ocf": has_nint,
+        },
+        "sector_path": "bank",
+    }
+
+
 def compute_financial(
     ticker: str,
     revenue_rows: List[Dict[str, Any]],
     gross_profit_rows: List[Dict[str, Any]],
     ocf_rows: List[Dict[str, Any]],
     peer_growths: Dict[str, Optional[float]],
+    *,
+    sector: Optional[str] = None,
+    nii_rows: Optional[List[Dict[str, Any]]] = None,
+    noninterest_rows: Optional[List[Dict[str, Any]]] = None,
+    pcl_rows: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Compute the Financial Evolution sub-score for one ticker.
 
@@ -334,21 +652,55 @@ def compute_financial(
     ----------
     ticker:
         Symbol of the focal entity. Used to exclude the focal's own
-        growth from the peer percentile distribution.
+        growth from the peer percentile distribution AND to route
+        strict-bank tickers (see :data:`BANK_TICKERS`) through the
+        bank code path when bank inputs are supplied.
     revenue_rows / gross_profit_rows / ocf_rows:
         SEC EDGAR period-dicts (see ``lthcs.sources.sec_edgar``).
     peer_growths:
         ``{symbol: yoy_growth or None}`` for the universe (including the
         focal). The focal's own entry is filtered out before
-        percentile-ranking.
+        percentile-ranking. The bank path re-uses the same peer
+        distribution -- NII growth and revenue growth are roughly
+        comparable in magnitude across the universe, and banks live in
+        the same maturity-stage cohort as their peers.
+    sector:
+        Optional GICS sector string. Accepted for forward-compat;
+        routing is allowlist-driven (``BANK_TICKERS``), not
+        sector-driven, because XBRL-industry inference is unreliable.
+        Pass it through if you have it -- it's stamped onto the result
+        for traceability.
+    nii_rows / noninterest_rows / pcl_rows:
+        Bank-specific quarterly series. When ``ticker`` is in
+        :data:`BANK_TICKERS` and at least ``nii_rows`` is non-empty the
+        bank code path runs and ``revenue_rows`` / ``gross_profit_rows``
+        / ``ocf_rows`` are ignored. If a strict-bank ticker arrives
+        without bank inputs we fall back to the standard path
+        (preserving existing behavior, but the result will be data-
+        renormed away from margin / OCF the way it already is today).
 
     Returns a dict with keys ``ticker``, ``sub_score``, ``components``,
     ``weights``, ``data_quality`` -- see the module docstring / the
-    ``Required public API`` block in the spec for the exact schema.
+    ``Required public API`` block in the spec for the exact schema. The
+    bank path additionally surfaces ``sector_path == "bank"`` and the
+    raw bank ratios in ``components`` (``nii_growth_yoy``,
+    ``pcl_to_revenue_ratio``, ``noninterest_to_revenue_ratio``).
     """
     revenue_rows = revenue_rows or []
     gross_profit_rows = gross_profit_rows or []
     ocf_rows = ocf_rows or []
+    nii_rows = nii_rows or []
+    noninterest_rows = noninterest_rows or []
+    pcl_rows = pcl_rows or []
+
+    # Bank routing: strict-allowlist ticker AND at least an NII series
+    # to score off. If a caller hasn't fetched bank inputs (e.g. legacy
+    # pipeline code) the bank path silently falls through and the
+    # standard path runs with its existing data-quality renorm.
+    if is_bank_ticker(ticker, sector) and nii_rows:
+        return _compute_bank_financial(
+            ticker, nii_rows, noninterest_rows, pcl_rows, peer_growths
+        )
 
     # --- Revenue subscore ---------------------------------------------------
     growth = compute_revenue_growth_yoy(revenue_rows)
@@ -446,4 +798,5 @@ def compute_financial(
             "has_margin": has_margin,
             "has_ocf": has_ocf,
         },
+        "sector_path": "standard",
     }

@@ -7,11 +7,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0642551178283274,
-        "revenue_subscore": 56.41025641025641,
+        "revenue_subscore": 50.0,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 56.4,
+      "sub_score": 50.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -37,13 +37,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0642551178283274,
-        "revenue_subscore": 56.41025641025641,
+        "revenue_subscore": 50.0,
         "margin_subscore": 58.32785764821479,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.35504743042974335,
         "margin_trend_slope": 0.00832785764821479
       },
-      "sub_score": 70.1,
+      "sub_score": 67.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -54,23 +54,23 @@
       "ticker": "AAPL",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
+        "article_count": 50,
+        "mean_sentiment_score": 0.24757572000000003,
+        "mean_relevance_score": 0.7986249200000002,
         "label_counts": {
           "Bearish": 0,
-          "Somewhat-Bearish": 0,
-          "Neutral": 0,
-          "Somewhat-Bullish": 0,
-          "Bullish": 0
+          "Somewhat-Bearish": 3,
+          "Neutral": 17,
+          "Somewhat-Bullish": 16,
+          "Bullish": 14
         },
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "sentiment_subscore_raw": 62.378786,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.4,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
+        "has_sentiment": true,
+        "article_count_sufficient": true,
         "is_stale": false,
         "days_since_scored": 0,
         "last_scored": "2026-05-17"
@@ -117,11 +117,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08566762523520431,
-        "revenue_subscore": 71.7948717948718,
+        "revenue_subscore": 63.04347826086957,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 71.8,
+      "sub_score": 63.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -147,13 +147,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08566762523520431,
-        "revenue_subscore": 71.7948717948718,
+        "revenue_subscore": 63.04347826086957,
         "margin_subscore": 61.33326510250555,
         "ocf_subscore": 79.50978207230297,
         "ttm_ocf_margin": 0.21803912828921188,
         "margin_trend_slope": 0.011333265102505555
       },
-      "sub_score": 71.0,
+      "sub_score": 67.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -164,26 +164,20 @@
       "ticker": "ABBV",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.19690182,
-        "mean_relevance_score": 0.8031718799999998,
-        "label_counts": {
-          "Bearish": 0,
-          "Somewhat-Bearish": 2,
-          "Neutral": 24,
-          "Somewhat-Bullish": 13,
-          "Bullish": 11
-        },
-        "sentiment_subscore_raw": 59.845091,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 59.8,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 1,
-        "last_scored": "2026-05-16"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -557,11 +551,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10527784236224134,
-        "revenue_subscore": 76.92307692307693,
+        "revenue_subscore": 67.3913043478261,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 76.9,
+      "sub_score": 67.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -587,13 +581,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10527784236224134,
-        "revenue_subscore": 76.92307692307693,
+        "revenue_subscore": 67.3913043478261,
         "margin_subscore": 51.663732946308585,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.34651482918283066,
         "margin_trend_slope": 0.0016637329463085825
       },
-      "sub_score": 76.3,
+      "sub_score": 72.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -777,11 +771,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07073521293991439,
-        "revenue_subscore": 61.53846153846154,
+        "revenue_subscore": 54.347826086956516,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 61.5,
+      "sub_score": 54.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -807,13 +801,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07073521293991439,
-        "revenue_subscore": 61.53846153846154,
+        "revenue_subscore": 54.347826086956516,
         "margin_subscore": 43.582255696690034,
         "ocf_subscore": 53.50290783458257,
         "ttm_ocf_margin": 0.1140116313383303,
         "margin_trend_slope": -0.0064177443033099696
       },
-      "sub_score": 53.7,
+      "sub_score": 50.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1101,11 +1095,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04386223138062997,
-        "revenue_subscore": 0.0,
+        "revenue_subscore": 32.608695652173914,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 0.0,
+      "sub_score": 32.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1131,13 +1125,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04386223138062997,
-        "revenue_subscore": 0.0,
+        "revenue_subscore": 32.608695652173914,
         "margin_subscore": 50.30119833651335,
         "ocf_subscore": 88.03358992302309,
         "ttm_ocf_margin": 0.25213435969209236,
         "margin_trend_slope": 0.0003011983365133571
       },
-      "sub_score": 41.5,
+      "sub_score": 54.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1210,11 +1204,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.34337793290672874,
-        "revenue_subscore": 70.0,
+        "revenue_subscore": 53.84615384615385,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 70.0,
+      "sub_score": 53.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1240,13 +1234,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.34337793290672874,
-        "revenue_subscore": 70.0,
+        "revenue_subscore": 53.84615384615385,
         "margin_subscore": 69.67824032193079,
         "ocf_subscore": 60.38934781352897,
         "ttm_ocf_margin": 0.14155739125411587,
         "margin_trend_slope": 0.019678240321930784
       },
-      "sub_score": 67.0,
+      "sub_score": 60.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1257,20 +1251,20 @@
       "ticker": "AMD",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.13343826000000003,
-        "mean_relevance_score": 0.7038851600000001,
+        "article_count": 47,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
         "label_counts": {
-          "Bearish": 5,
-          "Somewhat-Bearish": 3,
-          "Neutral": 14,
-          "Somewhat-Bullish": 26,
-          "Bullish": 2
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 47,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
         },
-        "sentiment_subscore_raw": 56.671913,
+        "sentiment_subscore_raw": 62.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 56.7,
+      "sub_score": 62.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1390,8 +1384,8 @@
         "has_sentiment": true,
         "article_count_sufficient": true,
         "is_stale": false,
-        "days_since_scored": 1,
-        "last_scored": "2026-05-16"
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -1539,11 +1533,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.12377754683294695,
-        "revenue_subscore": 82.05128205128204,
+        "revenue_subscore": 71.73913043478261,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 82.1,
+      "sub_score": 71.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1569,13 +1563,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.12377754683294695,
-        "revenue_subscore": 82.05128205128204,
+        "revenue_subscore": 71.73913043478261,
         "margin_subscore": 50.0,
         "ocf_subscore": 65.53932738443663,
         "ttm_ocf_margin": 0.16215730953774649,
         "margin_trend_slope": null
       },
-      "sub_score": 75.0,
+      "sub_score": 69.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1649,11 +1643,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23940612434271574,
-        "revenue_subscore": 55.00000000000001,
+        "revenue_subscore": 30.76923076923077,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 55.0,
+      "sub_score": 30.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1679,13 +1673,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23940612434271574,
-        "revenue_subscore": 55.00000000000001,
+        "revenue_subscore": 30.76923076923077,
         "margin_subscore": 51.592829541023,
         "ocf_subscore": 50.0,
         "ttm_ocf_margin": null,
         "margin_trend_slope": 0.0015928295410230044
       },
-      "sub_score": 53.5,
+      "sub_score": 39.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1696,20 +1690,26 @@
       "ticker": "ARM",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 51,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 51,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -1800,20 +1800,20 @@
       "ticker": "ASML",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.22918887999999996,
-        "mean_relevance_score": 0.95857578,
+        "article_count": 48,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
         "label_counts": {
-          "Bearish": 3,
-          "Somewhat-Bearish": 3,
-          "Neutral": 14,
-          "Somewhat-Bullish": 9,
-          "Bullish": 21
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 48,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
         },
-        "sentiment_subscore_raw": 61.459444,
+        "sentiment_subscore_raw": 62.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 61.5,
+      "sub_score": 62.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1863,11 +1863,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23874432853763525,
-        "revenue_subscore": 45.0,
+        "revenue_subscore": 100.0,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 45.0,
+      "sub_score": 100.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1893,13 +1893,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23874432853763525,
-        "revenue_subscore": 45.0,
+        "revenue_subscore": 100.0,
         "margin_subscore": 49.486977472637946,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.35628921651350814,
         "margin_trend_slope": -0.0005130225273620505
       },
-      "sub_score": 62.8,
+      "sub_score": 84.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1978,11 +1978,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06385061171925306,
-        "revenue_subscore": 53.84615384615385,
+        "revenue_subscore": 47.82608695652174,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 53.8,
+      "sub_score": 47.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2008,13 +2008,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06385061171925306,
-        "revenue_subscore": 53.84615384615385,
+        "revenue_subscore": 47.82608695652174,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.33618728442476575,
         "margin_trend_slope": null
       },
-      "sub_score": 73.6,
+      "sub_score": 70.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2129,26 +2129,20 @@
       "ticker": "AZN",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.24378224000000004,
-        "mean_relevance_score": 0.97607208,
-        "label_counts": {
-          "Bearish": 4,
-          "Somewhat-Bearish": 5,
-          "Neutral": 7,
-          "Somewhat-Bullish": 7,
-          "Bullish": 27
-        },
-        "sentiment_subscore_raw": 62.189112,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 62.2,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -2239,26 +2233,20 @@
       "ticker": "BA",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.11514902,
-        "mean_relevance_score": 0.7002038799999998,
-        "label_counts": {
-          "Bearish": 2,
-          "Somewhat-Bearish": 7,
-          "Neutral": 22,
-          "Somewhat-Bullish": 9,
-          "Bullish": 10
-        },
-        "sentiment_subscore_raw": 55.757451,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 55.8,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -2302,11 +2290,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06840424727932286,
-        "revenue_subscore": 58.97435897435898,
+        "revenue_subscore": 52.17391304347826,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 59.0,
+      "sub_score": 52.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2331,17 +2319,20 @@
       "ticker": "BAC",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": 0.06840424727932286,
-        "revenue_subscore": 58.97435897435898,
-        "margin_subscore": 50.0,
-        "ocf_subscore": 53.18386840010613,
-        "ttm_ocf_margin": 0.11273547360042452,
+        "revenue_growth_yoy": -0.054847312884105125,
+        "revenue_subscore": 0.0,
+        "margin_subscore": 100.0,
+        "ocf_subscore": 19.474095560812618,
+        "nii_growth_yoy": -0.054847312884105125,
+        "pcl_to_revenue_ratio": 0.017650792318626964,
+        "noninterest_to_revenue_ratio": 0.2778963822432505,
+        "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 56.5,
+      "sub_score": 35.8,
       "data_quality": {
         "has_revenue": true,
-        "has_margin": false,
+        "has_margin": true,
         "has_ocf": true
       }
     },
@@ -2349,26 +2340,20 @@
       "ticker": "BAC",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.02924572,
-        "mean_relevance_score": 0.8041459599999999,
-        "label_counts": {
-          "Bearish": 2,
-          "Somewhat-Bearish": 9,
-          "Neutral": 26,
-          "Somewhat-Bullish": 13,
-          "Bullish": 0
-        },
-        "sentiment_subscore_raw": 51.462286,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 51.5,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 1,
-        "last_scored": "2026-05-16"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -2563,26 +2548,20 @@
       "ticker": "BK",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.16705858000000004,
-        "mean_relevance_score": 0.7639528800000002,
-        "label_counts": {
-          "Bearish": 0,
-          "Somewhat-Bearish": 0,
-          "Neutral": 34,
-          "Somewhat-Bullish": 9,
-          "Bullish": 7
-        },
-        "sentiment_subscore_raw": 58.352928999999996,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 58.4,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -2673,26 +2652,20 @@
       "ticker": "BKNG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.020832199999999985,
-        "mean_relevance_score": 0.7937035,
-        "label_counts": {
-          "Bearish": 7,
-          "Somewhat-Bearish": 6,
-          "Neutral": 18,
-          "Somewhat-Bullish": 15,
-          "Bullish": 4
-        },
-        "sentiment_subscore_raw": 51.041610000000006,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 51.0,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -2887,26 +2860,20 @@
       "ticker": "BLK",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.12401548000000004,
-        "mean_relevance_score": 0.7246551799999998,
-        "label_counts": {
-          "Bearish": 2,
-          "Somewhat-Bearish": 0,
-          "Neutral": 30,
-          "Somewhat-Bullish": 15,
-          "Bullish": 3
-        },
-        "sentiment_subscore_raw": 56.200773999999996,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 56.2,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -3054,11 +3021,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.009891315665120899,
-        "revenue_subscore": 5.128205128205128,
+        "revenue_subscore": 4.3478260869565215,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 5.1,
+      "sub_score": 4.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3084,13 +3051,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.009891315665120899,
-        "revenue_subscore": 5.128205128205128,
+        "revenue_subscore": 4.3478260869565215,
         "margin_subscore": 50.0,
         "ocf_subscore": 65.98575795386175,
         "ttm_ocf_margin": 0.16394303181544698,
         "margin_trend_slope": null
       },
-      "sub_score": 31.2,
+      "sub_score": 30.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3158,11 +3125,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05578404895815267,
-        "revenue_subscore": 48.717948717948715,
+        "revenue_subscore": 43.47826086956522,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 48.7,
+      "sub_score": 43.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3187,17 +3154,20 @@
       "ticker": "C",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": 0.05578404895815267,
-        "revenue_subscore": 48.717948717948715,
-        "margin_subscore": 50.0,
+        "revenue_growth_yoy": -0.005907607523327744,
+        "revenue_subscore": 6.521739130434782,
+        "margin_subscore": 100.0,
         "ocf_subscore": 0.0,
-        "ttm_ocf_margin": -1.2770823837406355,
+        "nii_growth_yoy": -0.005907607523327744,
+        "pcl_to_revenue_ratio": 0.04735717004890334,
+        "noninterest_to_revenue_ratio": 0.16442062725116402,
+        "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 27.8,
+      "sub_score": 32.6,
       "data_quality": {
         "has_revenue": true,
-        "has_margin": false,
+        "has_margin": true,
         "has_ocf": true
       }
     },
@@ -3205,26 +3175,20 @@
       "ticker": "C",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.13963572000000002,
-        "mean_relevance_score": 0.6726250000000001,
-        "label_counts": {
-          "Bearish": 0,
-          "Somewhat-Bearish": 1,
-          "Neutral": 25,
-          "Somewhat-Bullish": 18,
-          "Bullish": 6
-        },
-        "sentiment_subscore_raw": 56.981786,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 57.0,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -3315,26 +3279,20 @@
       "ticker": "CAT",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.11919974,
-        "mean_relevance_score": 0.7947318400000002,
-        "label_counts": {
-          "Bearish": 2,
-          "Somewhat-Bearish": 8,
-          "Neutral": 18,
-          "Somewhat-Bullish": 13,
-          "Bullish": 9
-        },
-        "sentiment_subscore_raw": 55.959987,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 56.0,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -3529,26 +3487,20 @@
       "ticker": "CDNS",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.25159822000000004,
-        "mean_relevance_score": 0.8709499199999999,
-        "label_counts": {
-          "Bearish": 2,
-          "Somewhat-Bearish": 1,
-          "Neutral": 13,
-          "Somewhat-Bullish": 18,
-          "Bullish": 16
-        },
-        "sentiment_subscore_raw": 62.579910999999996,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 62.6,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 1,
-        "last_scored": "2026-05-16"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -3743,26 +3695,20 @@
       "ticker": "CEG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.1741693,
-        "mean_relevance_score": 0.7137882799999998,
-        "label_counts": {
-          "Bearish": 3,
-          "Somewhat-Bearish": 2,
-          "Neutral": 19,
-          "Somewhat-Bullish": 11,
-          "Bullish": 15
-        },
-        "sentiment_subscore_raw": 58.708465,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 58.7,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -3957,26 +3903,20 @@
       "ticker": "CL",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.17792464000000002,
-        "mean_relevance_score": 0.84393128,
-        "label_counts": {
-          "Bearish": 1,
-          "Somewhat-Bearish": 4,
-          "Neutral": 18,
-          "Somewhat-Bullish": 15,
-          "Bullish": 12
-        },
-        "sentiment_subscore_raw": 58.896232000000005,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 58.9,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -4275,26 +4215,20 @@
       "ticker": "COP",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.18603667999999998,
-        "mean_relevance_score": 0.7134844799999999,
-        "label_counts": {
-          "Bearish": 0,
-          "Somewhat-Bearish": 1,
-          "Neutral": 21,
-          "Somewhat-Bullish": 24,
-          "Bullish": 4
-        },
-        "sentiment_subscore_raw": 59.301834,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 59.3,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -4338,11 +4272,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08167323631476146,
-        "revenue_subscore": 66.66666666666666,
+        "revenue_subscore": 58.69565217391305,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 66.7,
+      "sub_score": 58.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4368,13 +4302,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08167323631476146,
-        "revenue_subscore": 66.66666666666666,
+        "revenue_subscore": 58.69565217391305,
         "margin_subscore": 50.0,
         "ocf_subscore": 39.41163316049607,
         "ttm_ocf_margin": 0.05764653264198429,
         "margin_trend_slope": null
       },
-      "sub_score": 55.0,
+      "sub_score": 50.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4442,11 +4376,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.09579100145137881,
-        "revenue_subscore": 74.35897435897436,
+        "revenue_subscore": 65.21739130434783,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 74.4,
+      "sub_score": 65.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4472,13 +4406,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.09579100145137881,
-        "revenue_subscore": 74.35897435897436,
+        "revenue_subscore": 65.21739130434783,
         "margin_subscore": 52.06671915319596,
         "ocf_subscore": 97.38860390263528,
         "ttm_ocf_margin": 0.2895544156105411,
         "margin_trend_slope": 0.002066719153195955
       },
-      "sub_score": 74.6,
+      "sub_score": 70.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -4489,20 +4423,20 @@
       "ticker": "CRM",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.19012228000000003,
-        "mean_relevance_score": 0.7863956000000002,
+        "article_count": 18,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
         "label_counts": {
-          "Bearish": 1,
-          "Somewhat-Bearish": 2,
-          "Neutral": 19,
-          "Somewhat-Bullish": 18,
-          "Bullish": 10
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 18,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
         },
-        "sentiment_subscore_raw": 59.506114,
+        "sentiment_subscore_raw": 62.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 59.5,
+      "sub_score": 62.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4656,11 +4590,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05298961024478189,
-        "revenue_subscore": 43.58974358974359,
+        "revenue_subscore": 39.130434782608695,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 43.6,
+      "sub_score": 39.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4686,13 +4620,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05298961024478189,
-        "revenue_subscore": 43.58974358974359,
+        "revenue_subscore": 39.130434782608695,
         "margin_subscore": 49.44775340072029,
         "ocf_subscore": 81.55965188789146,
         "ttm_ocf_margin": 0.22623860755156583,
         "margin_trend_slope": -0.0005522465992797123
       },
-      "sub_score": 56.7,
+      "sub_score": 55.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -5015,26 +4949,20 @@
       "ticker": "CTSH",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.07499684000000001,
-        "mean_relevance_score": 0.7033472599999999,
-        "label_counts": {
-          "Bearish": 5,
-          "Somewhat-Bearish": 4,
-          "Neutral": 29,
-          "Somewhat-Bullish": 9,
-          "Bullish": 3
-        },
-        "sentiment_subscore_raw": 53.749842,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 53.7,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -5229,26 +5157,20 @@
       "ticker": "CVX",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.16671674000000003,
-        "mean_relevance_score": 0.7633535,
-        "label_counts": {
-          "Bearish": 0,
-          "Somewhat-Bearish": 5,
-          "Neutral": 18,
-          "Somewhat-Bullish": 21,
-          "Bullish": 6
-        },
-        "sentiment_subscore_raw": 58.335837,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 58.3,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 1,
-        "last_scored": "2026-05-16"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -5292,11 +5214,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.27933221413915316,
-        "revenue_subscore": 65.0,
+        "revenue_subscore": 46.15384615384615,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 65.0,
+      "sub_score": 46.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5322,13 +5244,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.27933221413915316,
-        "revenue_subscore": 65.0,
+        "revenue_subscore": 46.15384615384615,
         "margin_subscore": 50.0,
         "ocf_subscore": 64.4803594723873,
         "ttm_ocf_margin": 0.1579214378895492,
         "margin_trend_slope": null
       },
-      "sub_score": 64.8,
+      "sub_score": 54.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5396,11 +5318,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.2767536858183308,
-        "revenue_subscore": 60.0,
+        "revenue_subscore": 38.46153846153847,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 60.0,
+      "sub_score": 38.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5426,13 +5348,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.2767536858183308,
-        "revenue_subscore": 60.0,
+        "revenue_subscore": 38.46153846153847,
         "margin_subscore": 49.87879684659419,
         "ocf_subscore": 93.39894379652854,
         "ttm_ocf_margin": 0.2735957751861142,
         "margin_trend_slope": -0.00012120315340580811
       },
-      "sub_score": 67.0,
+      "sub_score": 58.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -5443,20 +5365,26 @@
       "ticker": "DDOG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 10,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 10,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -5708,11 +5636,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03353728615054564,
-        "revenue_subscore": 30.76923076923077,
+        "revenue_subscore": 26.08695652173913,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 30.8,
+      "sub_score": 26.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5738,13 +5666,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03353728615054564,
-        "revenue_subscore": 30.76923076923077,
+        "revenue_subscore": 26.08695652173913,
         "margin_subscore": 50.0,
         "ocf_subscore": 38.08423084738874,
         "ttm_ocf_margin": 0.052336923389554965,
         "margin_trend_slope": null
       },
-      "sub_score": 33.9,
+      "sub_score": 31.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6646,11 +6574,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.14167702071929883,
-        "revenue_subscore": 5.0,
+        "revenue_subscore": 78.26086956521739,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 5.0,
+      "sub_score": 78.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6676,13 +6604,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.14167702071929883,
-        "revenue_subscore": 5.0,
+        "revenue_subscore": 78.26086956521739,
         "margin_subscore": 48.07655474103209,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.5112985973132469,
         "margin_trend_slope": -0.001923445258967914
       },
-      "sub_score": 46.4,
+      "sub_score": 75.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -6693,20 +6621,26 @@
       "ticker": "FTNT",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 49,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 49,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -6901,26 +6835,20 @@
       "ticker": "GE",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 50,
-        "mean_sentiment_score": 0.19365862000000003,
-        "mean_relevance_score": 0.7502413799999998,
-        "label_counts": {
-          "Bearish": 1,
-          "Somewhat-Bearish": 3,
-          "Neutral": 16,
-          "Somewhat-Bullish": 25,
-          "Bullish": 5
-        },
-        "sentiment_subscore_raw": 59.682931,
-        "confidence_blend": 1.0
+        "article_count": 0,
+        "mean_sentiment_score": null,
+        "mean_relevance_score": null,
+        "label_counts": {},
+        "sentiment_subscore_raw": 50.0,
+        "confidence_blend": 0.0
       },
-      "sub_score": 59.7,
+      "sub_score": 50.0,
       "data_quality": {
-        "has_sentiment": true,
-        "article_count_sufficient": true,
-        "is_stale": false,
-        "days_since_scored": 1,
-        "last_scored": "2026-05-16"
+        "has_sentiment": false,
+        "article_count_sufficient": false,
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -7382,11 +7310,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 93.58974358974359,
+        "revenue_subscore": 85.86956521739131,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 93.6,
+      "sub_score": 85.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7412,13 +7340,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 93.58974358974359,
+        "revenue_subscore": 85.86956521739131,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3366649619958687,
         "margin_trend_slope": null
       },
-      "sub_score": 96.3,
+      "sub_score": 91.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7429,20 +7357,26 @@
       "ticker": "GOOG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 121,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 121,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -7491,11 +7425,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 93.58974358974359,
+        "revenue_subscore": 85.86956521739131,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 93.6,
+      "sub_score": 85.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7521,13 +7455,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 93.58974358974359,
+        "revenue_subscore": 85.86956521739131,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3366649619958687,
         "margin_trend_slope": null
       },
-      "sub_score": 96.3,
+      "sub_score": 91.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7538,20 +7472,26 @@
       "ticker": "GOOGL",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 121,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 121,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -7629,18 +7569,21 @@
       "ticker": "GS",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": null,
-        "revenue_subscore": 50.0,
-        "margin_subscore": 50.0,
-        "ocf_subscore": 50.0,
+        "revenue_growth_yoy": -0.012580316227870807,
+        "revenue_subscore": 4.25531914893617,
+        "margin_subscore": 100.0,
+        "ocf_subscore": 44.07801610445464,
+        "nii_growth_yoy": -0.012580316227870807,
+        "pcl_to_revenue_ratio": 0.010248992504699066,
+        "noninterest_to_revenue_ratio": 0.37631206441781856,
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 50.0,
+      "sub_score": 44.9,
       "data_quality": {
-        "has_revenue": false,
-        "has_margin": false,
-        "has_ocf": false
+        "has_revenue": true,
+        "has_margin": true,
+        "has_ocf": true
       }
     },
     {
@@ -7704,11 +7647,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03240467921310982,
-        "revenue_subscore": 28.205128205128204,
+        "revenue_subscore": 23.91304347826087,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 28.2,
+      "sub_score": 23.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7734,13 +7677,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03240467921310982,
-        "revenue_subscore": 28.205128205128204,
+        "revenue_subscore": 23.91304347826087,
         "margin_subscore": 49.71709397837893,
         "ocf_subscore": 53.83138774579789,
         "ttm_ocf_margin": 0.11532555098319157,
         "margin_trend_slope": -0.00028290602162107465
       },
-      "sub_score": 42.3,
+      "sub_score": 40.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7912,11 +7855,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07620352811817761,
-        "revenue_subscore": 64.1025641025641,
+        "revenue_subscore": 56.52173913043478,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 64.1,
+      "sub_score": 56.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7942,13 +7885,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07620352811817761,
-        "revenue_subscore": 64.1025641025641,
+        "revenue_subscore": 56.52173913043478,
         "margin_subscore": 51.544014765965485,
         "ocf_subscore": 93.5357400495562,
         "ttm_ocf_margin": 0.27414296019822476,
         "margin_trend_slope": 0.0015440147659654844
       },
-      "sub_score": 69.2,
+      "sub_score": 66.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7959,20 +7902,26 @@
       "ticker": "IBM",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 47,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 47,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -8271,20 +8220,26 @@
       "ticker": "INTC",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 55,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 55,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -8328,11 +8283,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15634019035922628,
-        "revenue_subscore": 97.43589743589743,
+        "revenue_subscore": 89.13043478260869,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 97.4,
+      "sub_score": 89.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8358,13 +8313,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15634019035922628,
-        "revenue_subscore": 97.43589743589743,
+        "revenue_subscore": 89.13043478260869,
         "margin_subscore": 50.0,
         "ocf_subscore": 40.18293586135387,
         "ttm_ocf_margin": 0.060731743445415494,
         "margin_trend_slope": null
       },
-      "sub_score": 72.9,
+      "sub_score": 68.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8375,20 +8330,26 @@
       "ticker": "INTU",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 25,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 25,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -8432,11 +8393,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.20505022688904587,
-        "revenue_subscore": 15.0,
+        "revenue_subscore": 93.47826086956522,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 15.0,
+      "sub_score": 93.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8462,13 +8423,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.20505022688904587,
-        "revenue_subscore": 15.0,
+        "revenue_subscore": 93.47826086956522,
         "margin_subscore": 54.178361636889306,
         "ocf_subscore": 78.42150401733322,
         "ttm_ocf_margin": 0.21368601606933285,
         "margin_trend_slope": 0.004178361636889313
       },
-      "sub_score": 45.8,
+      "sub_score": 77.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8536,11 +8497,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06048119251078011,
-        "revenue_subscore": 51.28205128205128,
+        "revenue_subscore": 45.65217391304348,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 51.3,
+      "sub_score": 45.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8566,13 +8527,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06048119251078011,
-        "revenue_subscore": 51.28205128205128,
+        "revenue_subscore": 45.65217391304348,
         "margin_subscore": 51.43844647930699,
         "ocf_subscore": 61.294841553617744,
         "ttm_ocf_margin": 0.14517936621447097,
         "margin_trend_slope": 0.0014384464793069918
       },
-      "sub_score": 54.3,
+      "sub_score": 52.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8640,11 +8601,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.027546238933069005,
-        "revenue_subscore": 25.64102564102564,
+        "revenue_subscore": 21.73913043478261,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 25.6,
+      "sub_score": 21.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8669,17 +8630,20 @@
       "ticker": "JPM",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": 0.027546238933069005,
-        "revenue_subscore": 25.64102564102564,
-        "margin_subscore": 50.0,
-        "ocf_subscore": 0.0,
-        "ttm_ocf_margin": -7.689051787786099,
+        "revenue_growth_yoy": -0.0030526006404273643,
+        "revenue_subscore": 6.521739130434782,
+        "margin_subscore": 100.0,
+        "ocf_subscore": 29.705163592890177,
+        "nii_growth_yoy": -0.0030526006404273643,
+        "pcl_to_revenue_ratio": 0.04241987376711968,
+        "noninterest_to_revenue_ratio": 0.3188206543715607,
+        "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 14.7,
+      "sub_score": 41.5,
       "data_quality": {
         "has_revenue": true,
-        "has_margin": false,
+        "has_margin": true,
         "has_ocf": true
       }
     },
@@ -8952,11 +8916,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23887647752854163,
-        "revenue_subscore": 50.0,
+        "revenue_subscore": 23.076923076923077,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 50.0,
+      "sub_score": 23.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8982,13 +8946,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23887647752854163,
-        "revenue_subscore": 50.0,
+        "revenue_subscore": 23.076923076923077,
         "margin_subscore": 51.90443850939982,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3120623731367755,
         "margin_trend_slope": 0.001904438509399817
       },
-      "sub_score": 65.6,
+      "sub_score": 54.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9061,11 +9025,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.018699135164998618,
-        "revenue_subscore": 15.384615384615385,
+        "revenue_subscore": 13.043478260869565,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 15.4,
+      "sub_score": 13.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9091,13 +9055,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.018699135164998618,
-        "revenue_subscore": 15.384615384615385,
+        "revenue_subscore": 13.043478260869565,
         "margin_subscore": 50.18344496243008,
         "ocf_subscore": 12.173550657529173,
         "ttm_ocf_margin": -0.05130579736988331,
         "margin_trend_slope": 0.0001834449624300765
       },
-      "sub_score": 24.9,
+      "sub_score": 23.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9215,13 +9179,7 @@
         "article_count": 0,
         "mean_sentiment_score": null,
         "mean_relevance_score": null,
-        "label_counts": {
-          "Bearish": 0,
-          "Somewhat-Bearish": 0,
-          "Neutral": 0,
-          "Somewhat-Bullish": 0,
-          "Bullish": 0
-        },
+        "label_counts": {},
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0
       },
@@ -9229,9 +9187,9 @@
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
-        "is_stale": false,
-        "days_since_scored": 0,
-        "last_scored": "2026-05-17"
+        "is_stale": true,
+        "days_since_scored": null,
+        "last_scored": null
       }
     },
     {
@@ -9381,11 +9339,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.4470394955930999,
-        "revenue_subscore": 85.0,
+        "revenue_subscore": 76.92307692307693,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 85.0,
+      "sub_score": 76.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9411,13 +9369,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.4470394955930999,
-        "revenue_subscore": 85.0,
+        "revenue_subscore": 76.92307692307693,
         "margin_subscore": 50.0,
         "ocf_subscore": 62.66222892070669,
         "ttm_ocf_margin": 0.15064891568282676,
         "margin_trend_slope": null
       },
-      "sub_score": 75.4,
+      "sub_score": 70.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9693,11 +9651,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23684089764599187,
-        "revenue_subscore": 40.0,
+        "revenue_subscore": 15.384615384615385,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 40.0,
+      "sub_score": 15.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9723,13 +9681,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23684089764599187,
-        "revenue_subscore": 40.0,
+        "revenue_subscore": 15.384615384615385,
         "margin_subscore": 51.59905703245965,
         "ocf_subscore": 89.6258115692956,
         "ttm_ocf_margin": 0.25850324627718246,
         "margin_trend_slope": 0.0015990570324596457
       },
-      "sub_score": 58.4,
+      "sub_score": 48.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9906,11 +9864,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.16416373770724607,
-        "revenue_subscore": 100.0,
+        "revenue_subscore": 91.30434782608695,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 100.0,
+      "sub_score": 91.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9936,13 +9894,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.16416373770724607,
-        "revenue_subscore": 100.0,
+        "revenue_subscore": 91.30434782608695,
         "margin_subscore": 50.0,
         "ocf_subscore": 94.24929747089521,
         "ttm_ocf_margin": 0.2769971898835809,
         "margin_trend_slope": null
       },
-      "sub_score": 97.5,
+      "sub_score": 92.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10114,11 +10072,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03722993827160494,
-        "revenue_subscore": 33.33333333333333,
+        "revenue_subscore": 28.26086956521739,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 33.3,
+      "sub_score": 28.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10144,13 +10102,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03722993827160494,
-        "revenue_subscore": 33.33333333333333,
+        "revenue_subscore": 28.26086956521739,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.38895203455330757,
         "margin_trend_slope": null
       },
-      "sub_score": 61.9,
+      "sub_score": 59.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10322,11 +10280,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.22794268264784995,
-        "revenue_subscore": 30.0,
+        "revenue_subscore": 0.0,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 30.0,
+      "sub_score": 0.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10352,13 +10310,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.22794268264784995,
-        "revenue_subscore": 30.0,
+        "revenue_subscore": 0.0,
         "margin_subscore": 40.94049952976785,
         "ocf_subscore": 50.98298594491102,
         "ttm_ocf_margin": 0.10393194377964406,
         "margin_trend_slope": -0.009059500470232148
       },
-      "sub_score": 39.6,
+      "sub_score": 27.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -10369,20 +10327,26 @@
       "ticker": "MDB",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 15,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 15,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -10634,11 +10598,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.3433969743013807,
-        "revenue_subscore": 75.0,
+        "revenue_subscore": 61.53846153846154,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 75.0,
+      "sub_score": 61.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10664,13 +10628,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.3433969743013807,
-        "revenue_subscore": 75.0,
+        "revenue_subscore": 61.53846153846154,
         "margin_subscore": 39.911073402815376,
         "ocf_subscore": 92.57056849585472,
         "ttm_ocf_margin": 0.27028227398341886,
         "margin_trend_slope": -0.010088926597184628
       },
-      "sub_score": 69.7,
+      "sub_score": 64.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -10842,11 +10806,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.2216703849824621,
-        "revenue_subscore": 25.0,
+        "revenue_subscore": 97.82608695652173,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 25.0,
+      "sub_score": 97.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10872,13 +10836,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.2216703849824621,
-        "revenue_subscore": 25.0,
+        "revenue_subscore": 97.82608695652173,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4534129078998698,
         "margin_trend_slope": null
       },
-      "sub_score": 57.1,
+      "sub_score": 98.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10889,20 +10853,26 @@
       "ticker": "META",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 106,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 106,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -10951,11 +10921,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.015178026449643948,
-        "revenue_subscore": 12.82051282051282,
+        "revenue_subscore": 10.869565217391305,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 12.8,
+      "sub_score": 10.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10981,13 +10951,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.015178026449643948,
-        "revenue_subscore": 12.82051282051282,
+        "revenue_subscore": 10.869565217391305,
         "margin_subscore": 50.0,
         "ocf_subscore": 50.52827530690279,
         "ttm_ocf_margin": 0.10211310122761119,
         "margin_trend_slope": null
       },
-      "sub_score": 29.0,
+      "sub_score": 27.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -11263,11 +11233,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.01313738935294851,
-        "revenue_subscore": 10.256410256410255,
+        "revenue_subscore": 8.695652173913043,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 10.3,
+      "sub_score": 8.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11293,13 +11263,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.01313738935294851,
-        "revenue_subscore": 10.256410256410255,
+        "revenue_subscore": 8.695652173913043,
         "margin_subscore": 50.0,
         "ocf_subscore": 66.78544462764071,
         "ttm_ocf_margin": 0.1671417785105629,
         "margin_trend_slope": null
       },
-      "sub_score": 34.5,
+      "sub_score": 33.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -11367,11 +11337,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.42087285211450765,
-        "revenue_subscore": 80.0,
+        "revenue_subscore": 69.23076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 80.0,
+      "sub_score": 69.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11397,13 +11367,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.42087285211450765,
-        "revenue_subscore": 80.0,
+        "revenue_subscore": 69.23076923076923,
         "margin_subscore": 100.0,
         "ocf_subscore": 60.39108382274425,
         "ttm_ocf_margin": 0.14156433529097703,
         "margin_trend_slope": 0.08569497086050964
       },
-      "sub_score": 80.1,
+      "sub_score": 75.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11471,11 +11441,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.054842581479087806,
-        "revenue_subscore": 46.15384615384615,
+        "revenue_subscore": 41.30434782608695,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 46.2,
+      "sub_score": 41.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11500,17 +11470,20 @@
       "ticker": "MS",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": 0.054842581479087806,
-        "revenue_subscore": 46.15384615384615,
-        "margin_subscore": 50.0,
-        "ocf_subscore": 0.0,
-        "ttm_ocf_margin": -1.0976773496579042,
+        "revenue_growth_yoy": 0.09103168005911148,
+        "revenue_subscore": 63.04347826086957,
+        "margin_subscore": 100.0,
+        "ocf_subscore": 79.13094452993332,
+        "nii_growth_yoy": 0.09103168005911148,
+        "pcl_to_revenue_ratio": 0.004420996067511785,
+        "noninterest_to_revenue_ratio": 0.5165237781197333,
+        "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 26.4,
+      "sub_score": 79.0,
       "data_quality": {
         "has_revenue": true,
-        "has_margin": false,
+        "has_margin": true,
         "has_ocf": true
       }
     },
@@ -11575,11 +11548,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1493215623240672,
-        "revenue_subscore": 89.74358974358975,
+        "revenue_subscore": 82.6086956521739,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 89.7,
+      "sub_score": 82.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11605,13 +11578,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1493215623240672,
-        "revenue_subscore": 89.74358974358975,
+        "revenue_subscore": 82.6086956521739,
         "margin_subscore": 45.738293797911695,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.5275378489121444,
         "margin_trend_slope": -0.004261706202088306
       },
-      "sub_score": 79.6,
+      "sub_score": 76.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11622,20 +11595,26 @@
       "ticker": "MSFT",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 143,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 143,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -11684,11 +11663,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.48851101111066864,
-        "revenue_subscore": 95.0,
+        "revenue_subscore": 92.3076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 95.0,
+      "sub_score": 92.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11714,13 +11693,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.48851101111066864,
-        "revenue_subscore": 95.0,
+        "revenue_subscore": 92.3076923076923,
         "margin_subscore": 100.0,
         "ocf_subscore": 88.79769218149005,
         "ttm_ocf_margin": 0.25519076872596025,
         "margin_trend_slope": 0.1311855250126339
       },
-      "sub_score": 94.6,
+      "sub_score": 93.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11731,20 +11710,26 @@
       "ticker": "MU",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 99,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 99,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -11944,20 +11929,26 @@
       "ticker": "NFLX",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 34,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 34,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -12105,11 +12096,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.20884923525127458,
-        "revenue_subscore": 20.0,
+        "revenue_subscore": 95.65217391304348,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 20.0,
+      "sub_score": 95.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12135,13 +12126,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.20884923525127458,
-        "revenue_subscore": 20.0,
+        "revenue_subscore": 95.65217391304348,
         "margin_subscore": 38.245264103327244,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4146884272997033,
         "margin_trend_slope": -0.011754735896672752
       },
-      "sub_score": 49.5,
+      "sub_score": 79.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -12152,20 +12143,26 @@
       "ticker": "NOW",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 4,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 4,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -12256,20 +12253,26 @@
       "ticker": "NVDA",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 50,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -12630,11 +12633,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08379751137629576,
-        "revenue_subscore": 69.23076923076923,
+        "revenue_subscore": 60.86956521739131,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 69.2,
+      "sub_score": 60.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12660,13 +12663,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08379751137629576,
-        "revenue_subscore": 69.23076923076923,
+        "revenue_subscore": 60.86956521739131,
         "margin_subscore": 50.12023058898754,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4644164098613251,
         "margin_trend_slope": 0.00012023058898754052
       },
-      "sub_score": 72.7,
+      "sub_score": 69.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -12677,20 +12680,26 @@
       "ticker": "ORCL",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 87,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 87,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -12843,11 +12852,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1487387106820305,
-        "revenue_subscore": 10.0,
+        "revenue_subscore": 80.43478260869566,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 10.0,
+      "sub_score": 80.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12873,13 +12882,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1487387106820305,
-        "revenue_subscore": 10.0,
+        "revenue_subscore": 80.43478260869566,
         "margin_subscore": 51.66496884102355,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.628635323486582,
         "margin_trend_slope": 0.0016649688410235507
       },
-      "sub_score": 49.5,
+      "sub_score": 77.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -12890,20 +12899,26 @@
       "ticker": "PANW",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 3,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 3,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -13259,11 +13274,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.022546650118666578,
-        "revenue_subscore": 17.94871794871795,
+        "revenue_subscore": 15.217391304347828,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 17.9,
+      "sub_score": 15.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13289,13 +13304,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.022546650118666578,
-        "revenue_subscore": 17.94871794871795,
+        "revenue_subscore": 15.217391304347828,
         "margin_subscore": 47.18754110996005,
         "ocf_subscore": 17.963403748884264,
         "ttm_ocf_margin": -0.028146385004462957,
         "margin_trend_slope": -0.002812458890039949
       },
-      "sub_score": 26.7,
+      "sub_score": 25.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -13467,11 +13482,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0029153131284284676,
-        "revenue_subscore": 7.6923076923076925,
+        "revenue_subscore": 6.521739130434782,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 7.7,
+      "sub_score": 6.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13497,13 +13512,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0029153131284284676,
-        "revenue_subscore": 7.6923076923076925,
+        "revenue_subscore": 6.521739130434782,
         "margin_subscore": 50.0,
         "ocf_subscore": 79.56456982652882,
         "ttm_ocf_margin": 0.2182582793061153,
         "margin_trend_slope": null
       },
-      "sub_score": 38.5,
+      "sub_score": 37.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13675,11 +13690,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0432430732459037,
-        "revenue_subscore": 35.8974358974359,
+        "revenue_subscore": 30.434782608695656,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 35.9,
+      "sub_score": 30.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13705,13 +13720,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0432430732459037,
-        "revenue_subscore": 35.8974358974359,
+        "revenue_subscore": 30.434782608695656,
         "margin_subscore": 50.0,
         "ocf_subscore": 65.9525404121891,
         "ttm_ocf_margin": 0.16381016164875642,
         "margin_trend_slope": null
       },
-      "sub_score": 48.8,
+      "sub_score": 45.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13779,11 +13794,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1365946306657769,
-        "revenue_subscore": 87.17948717948718,
+        "revenue_subscore": 76.08695652173914,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 87.2,
+      "sub_score": 76.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13809,13 +13824,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1365946306657769,
-        "revenue_subscore": 87.17948717948718,
+        "revenue_subscore": 76.08695652173914,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3528905984839914,
         "margin_trend_slope": null
       },
-      "sub_score": 92.7,
+      "sub_score": 86.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14611,11 +14626,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.4658532304249225,
-        "revenue_subscore": 90.0,
+        "revenue_subscore": 84.61538461538461,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 90.0,
+      "sub_score": 84.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14641,13 +14656,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.4658532304249225,
-        "revenue_subscore": 90.0,
+        "revenue_subscore": 84.61538461538461,
         "margin_subscore": 48.107236816617366,
         "ocf_subscore": 25.579483436297984,
         "ttm_ocf_margin": 0.0023179337451919306,
         "margin_trend_slope": -0.0018927631833826361
       },
-      "sub_score": 58.1,
+      "sub_score": 56.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -14658,20 +14673,26 @@
       "ticker": "SMCI",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 5,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 5,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -15027,11 +15048,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.027072979335600315,
-        "revenue_subscore": 23.076923076923077,
+        "revenue_subscore": 19.565217391304348,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 23.1,
+      "sub_score": 19.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15057,13 +15078,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.027072979335600315,
-        "revenue_subscore": 23.076923076923077,
+        "revenue_subscore": 19.565217391304348,
         "margin_subscore": 50.0,
         "ocf_subscore": 83.62735269387491,
         "ttm_ocf_margin": 0.23450941077549964,
         "margin_trend_slope": null
       },
-      "sub_score": 49.0,
+      "sub_score": 47.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15547,11 +15568,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05180621674600952,
-        "revenue_subscore": 41.02564102564102,
+        "revenue_subscore": 36.95652173913043,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 41.0,
+      "sub_score": 37.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15577,13 +15598,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05180621674600952,
-        "revenue_subscore": 41.02564102564102,
+        "revenue_subscore": 36.95652173913043,
         "margin_subscore": 50.0,
         "ocf_subscore": 56.18791390728476,
         "ttm_ocf_margin": 0.12475165562913908,
         "margin_trend_slope": null
       },
-      "sub_score": 47.5,
+      "sub_score": 45.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15698,20 +15719,26 @@
       "ticker": "TSLA",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 51,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 51,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -15965,11 +15992,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.13049037785307846,
-        "revenue_subscore": 84.61538461538461,
+        "revenue_subscore": 73.91304347826086,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 84.6,
+      "sub_score": 73.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15995,13 +16022,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.13049037785307846,
-        "revenue_subscore": 84.61538461538461,
+        "revenue_subscore": 73.91304347826086,
         "margin_subscore": 53.029628725411335,
         "ocf_subscore": 87.84560937845609,
         "ttm_ocf_margin": 0.2513824375138244,
         "margin_trend_slope": 0.0030296287254113407
       },
-      "sub_score": 76.1,
+      "sub_score": 71.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -16410,17 +16437,20 @@
       "ticker": "USB",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": 0.04374430886905846,
-        "revenue_subscore": 41.05263157894737,
-        "margin_subscore": 50.0,
-        "ocf_subscore": 64.67073725462753,
-        "ttm_ocf_margin": 0.1586829490185101,
+        "revenue_growth_yoy": -0.02197941009284406,
+        "revenue_subscore": 13.684210526315791,
+        "margin_subscore": 99.54119850187266,
+        "ocf_subscore": 19.25912921348315,
+        "nii_growth_yoy": -0.02197941009284406,
+        "pcl_to_revenue_ratio": 0.05114700374531835,
+        "noninterest_to_revenue_ratio": 0.2770365168539326,
+        "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 51.2,
+      "sub_score": 41.1,
       "data_quality": {
         "has_revenue": true,
-        "has_margin": false,
+        "has_margin": true,
         "has_ocf": true
       }
     },
@@ -16485,11 +16515,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1133997661860491,
-        "revenue_subscore": 79.48717948717949,
+        "revenue_subscore": 69.56521739130434,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 79.5,
+      "sub_score": 69.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16515,13 +16545,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1133997661860491,
-        "revenue_subscore": 79.48717948717949,
+        "revenue_subscore": 69.56521739130434,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4764302933384252,
         "margin_trend_slope": null
       },
-      "sub_score": 88.3,
+      "sub_score": 82.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16797,11 +16827,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.025247054633943673,
-        "revenue_subscore": 20.51282051282051,
+        "revenue_subscore": 17.391304347826086,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 20.5,
+      "sub_score": 17.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16827,13 +16857,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.025247054633943673,
-        "revenue_subscore": 20.51282051282051,
+        "revenue_subscore": 17.391304347826086,
         "margin_subscore": 50.0,
         "ocf_subscore": 82.13577981651376,
         "ttm_ocf_margin": 0.22854311926605506,
         "margin_trend_slope": null
       },
-      "sub_score": 46.9,
+      "sub_score": 45.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -17052,20 +17082,26 @@
       "ticker": "WDAY",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 33,
+        "mean_sentiment_score": 0.25,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 33,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 62.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -17109,11 +17145,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.015565688362188686,
-        "revenue_subscore": 2.564102564102564,
+        "revenue_subscore": 2.1739130434782608,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 2.6,
+      "sub_score": 2.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -17138,17 +17174,20 @@
       "ticker": "WFC",
       "pillar": "financial_evolution",
       "components": {
-        "revenue_growth_yoy": -0.015565688362188686,
-        "revenue_subscore": 2.564102564102564,
-        "margin_subscore": 50.0,
-        "ocf_subscore": 3.367680732744523,
-        "ttm_ocf_margin": -0.08652927706902191,
+        "revenue_growth_yoy": -0.03814842966830805,
+        "revenue_subscore": 0.0,
+        "margin_subscore": 100.0,
+        "ocf_subscore": 23.94090222283271,
+        "nii_growth_yoy": -0.03814842966830805,
+        "pcl_to_revenue_ratio": 0.030324577209298566,
+        "noninterest_to_revenue_ratio": 0.29576360889133085,
+        "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 2.9,
+      "sub_score": 37.2,
       "data_quality": {
         "has_revenue": true,
-        "has_margin": false,
+        "has_margin": true,
         "has_ocf": true
       }
     },
@@ -17213,11 +17252,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04725456534694858,
-        "revenue_subscore": 38.46153846153847,
+        "revenue_subscore": 34.78260869565217,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 38.5,
+      "sub_score": 34.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -17243,13 +17282,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04725456534694858,
-        "revenue_subscore": 38.46153846153847,
+        "revenue_subscore": 34.78260869565217,
         "margin_subscore": 50.0,
         "ocf_subscore": 28.84206925425563,
         "ttm_ocf_margin": 0.015368277017022538,
         "margin_trend_slope": null
       },
-      "sub_score": 34.3,
+      "sub_score": 32.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -17525,11 +17564,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23311687443000206,
-        "revenue_subscore": 35.0,
+        "revenue_subscore": 7.6923076923076925,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 35.0,
+      "sub_score": 7.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -17555,13 +17594,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23311687443000206,
-        "revenue_subscore": 35.0,
+        "revenue_subscore": 7.6923076923076925,
         "margin_subscore": 47.98401618970769,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.39896211239208723,
         "margin_trend_slope": -0.002015983810292311
       },
-      "sub_score": 58.4,
+      "sub_score": 47.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -17572,20 +17611,26 @@
       "ticker": "ZS",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 5,
+        "mean_sentiment_score": 0.45,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 5,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
+        "sentiment_subscore_raw": 72.5,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 72.5,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {

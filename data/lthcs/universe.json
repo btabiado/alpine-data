@@ -1,5 +1,5 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "last_updated": "2026-05-17",
   "description": "LTHCS V2.1 universe \u2014 full DJIA 30 + NASDAQ-100 + S&P 100, deduped to 169 unique tickers with v1.1.0 maturity-stage split. Includes pre-profit (LCID) and recovery (INTC, BA, GE) test cases.",
   "tickers": [
@@ -150,9 +150,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductor Equipment",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Semi cap eq (AI capex)"
+      "maturity_note": "Scale semi cap eq; AI capex tailwind but not pre-profit hypergrowth"
     },
     {
       "ticker": "AMD",
@@ -262,9 +262,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Custom AI silicon (+24%)"
+      "maturity_note": "Scale chip + software mega-cap (~$750B); growth from VMware roll-up and AI silicon, not hypergrowth (+24%)"
     },
     {
       "ticker": "AXP",
@@ -600,9 +600,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Cybersecurity"
+      "maturity_note": "Scale cybersecurity platform; mid-growth not hypergrowth"
     },
     {
       "ticker": "CSCO",
@@ -869,9 +869,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Cybersecurity"
+      "maturity_note": "Scale cybersecurity; profitable mid-growth not pre-profit hypergrowth"
     },
     {
       "ticker": "GD",
@@ -1107,9 +1107,9 @@
       ],
       "sector": "Health Care",
       "industry": "Medical Devices",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Surgical robotics (+21%)"
+      "maturity_note": "Scale medical device leader (+21%); steady compounder not hypergrowth"
     },
     {
       "ticker": "JNJ",
@@ -1424,9 +1424,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Social Media",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "AI infra + ads (+22%)"
+      "maturity_note": "Mega-cap (~$1.5T) scale ad business with AI infra capex tailwind (+22%); not pre-profit hypergrowth"
     },
     {
       "ticker": "MMM",
@@ -1593,9 +1593,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Cloud SaaS (+21%)"
+      "maturity_note": "Scale enterprise SaaS (~$200B); steady mid-growth (+21%) not hypergrowth"
     },
     {
       "ticker": "NVDA",
@@ -1689,9 +1689,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "growth_compounder",
+      "maturity_stage": "mature_compounder",
       "active": true,
-      "maturity_note": "Cybersecurity"
+      "maturity_note": "Scale cybersecurity platform; mid-growth not pre-profit hypergrowth"
     },
     {
       "ticker": "PAYX",

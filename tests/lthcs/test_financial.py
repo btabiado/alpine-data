@@ -503,3 +503,287 @@ def test_compute_financial_intc_like_fixture_yields_low_score() -> None:
     assert out["components"]["margin_subscore"] < 50.0
     # Revenue near the bottom of peers (only P1 lower) -> below 50.
     assert out["components"]["revenue_subscore"] < 50.0
+
+
+# --- Bank code path: routing + sub-components -------------------------------
+
+
+def _eight_consecutive_quarters(
+    start_year: int, values: List[float]
+) -> List[Dict[str, Any]]:
+    """Build 8 contiguous quarterly rows starting Q1 of ``start_year``.
+
+    ``values`` is length 8 in ascending-period order (oldest first); the
+    returned list is the SEC desc-by-end_date convention.
+    """
+    if len(values) != 8:
+        raise ValueError("need exactly 8 quarterly values")
+    quarters = []
+    qdates = _quarter_dates_for_year(start_year) + _quarter_dates_for_year(start_year + 1)
+    for q, v in zip(qdates, values):
+        quarters.append(_q_row(q["start"], q["end"], v))
+    quarters.sort(key=lambda r: r["end_date"], reverse=True)
+    return quarters
+
+
+def _four_consecutive_quarters(
+    year: int, values: List[float]
+) -> List[Dict[str, Any]]:
+    """Build 4 quarterly rows for the calendar year, oldest-first values."""
+    if len(values) != 4:
+        raise ValueError("need exactly 4 quarterly values")
+    qdates = _quarter_dates_for_year(year)
+    rows = [_q_row(qdates[i]["start"], qdates[i]["end"], values[i]) for i in range(4)]
+    rows.sort(key=lambda r: r["end_date"], reverse=True)
+    return rows
+
+
+def test_compute_financial_bank_path_strong_growth_diversified() -> None:
+    """JPM-like profile: NII growing, low PCL/Rev, high noninterest mix -> elevated score."""
+    # 8 quarters of NII: prior-year total = 4000, this-year total = 4800 -> 20% YoY.
+    nii = _eight_consecutive_quarters(
+        2024, [950, 990, 1020, 1040, 1150, 1190, 1220, 1240]
+    )
+    # 4 quarters of noninterest income summing to 4800 -> total rev 9600.
+    noninterest = _four_consecutive_quarters(2025, [1100, 1180, 1240, 1280])
+    # 4 quarters of PCL summing to 960 -> ratio 0.10 (mid-band, score ~80).
+    pcl = _four_consecutive_quarters(2025, [200, 230, 250, 280])
+
+    # Peer growths: focal's 20% NII growth is the top of the peer cohort.
+    peer_growths = {"JPM": 0.20, "P1": -0.05, "P2": 0.02, "P3": 0.06}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=nii,
+        noninterest_rows=noninterest,
+        pcl_rows=pcl,
+    )
+
+    assert out["sector_path"] == "bank"
+    # NII growth ranks above all peers -> 100.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+    # Noninterest ratio = 4800 / 9600 = 0.50 -> mid-band (.20 to .60) -> 75.
+    assert out["components"]["ocf_subscore"] == pytest.approx(75.0, abs=1e-6)
+    # PCL ratio = 960 / 9600 = 0.10 -> in [.05, .30] inverted -> 80.
+    assert out["components"]["margin_subscore"] == pytest.approx(80.0, abs=1e-6)
+    # Sub-score should be well above 50 (strong on all three axes).
+    assert out["sub_score"] > 75.0
+    # Explainability keys for bank path.
+    assert out["components"]["nii_growth_yoy"] == pytest.approx(0.20, rel=1e-6)
+    assert out["components"]["pcl_to_revenue_ratio"] == pytest.approx(0.10, abs=1e-6)
+    assert out["components"]["noninterest_to_revenue_ratio"] == pytest.approx(
+        0.50, abs=1e-6
+    )
+    # Standard explainability fields should be None (bank path doesn't compute them).
+    assert out["components"]["ttm_ocf_margin"] is None
+    assert out["components"]["margin_trend_slope"] is None
+
+
+def test_compute_financial_bank_path_high_pcl_ratio_drags_score() -> None:
+    """A bank with a crisis-era PCL accrual (rising ratio) should land low."""
+    nii = _eight_consecutive_quarters(
+        2024, [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
+    )
+    # Noninterest small -> total rev 4 * 1100 = 4400.
+    noninterest = _four_consecutive_quarters(2025, [100, 100, 100, 100])
+    # PCL summing to 4 * 350 = 1400; total rev = 5400; ratio ~0.259.
+    # bounded_linear(0.259, .05, .30, invert=True) -> 100 - (.259-.05)/.25*100 ~ 16.
+    pcl = _four_consecutive_quarters(2025, [350, 350, 350, 350])
+
+    peer_growths = {"JPM": 0.0, "P1": 0.0, "P2": 0.0, "P3": 0.0}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=nii,
+        noninterest_rows=noninterest,
+        pcl_rows=pcl,
+    )
+
+    assert out["sector_path"] == "bank"
+    # PCL subscore visibly below 50 (high ratio).
+    assert out["components"]["margin_subscore"] < 30.0
+    # The PCL ratio explainability matches.
+    assert out["components"]["pcl_to_revenue_ratio"] > 0.20
+
+
+def test_compute_financial_bank_path_diversified_noninterest_boost() -> None:
+    """A universal-bank-style mix (>60% noninterest) saturates the ratio score."""
+    nii = _eight_consecutive_quarters(
+        2024, [500, 500, 500, 500, 500, 500, 500, 500]
+    )
+    # Noninterest much bigger than NII -> total rev 4 * (500+2000) = 10000;
+    # noninterest ratio = 8000/10000 = 0.80 -> saturates at 100.
+    noninterest = _four_consecutive_quarters(2025, [2000, 2000, 2000, 2000])
+    # Low PCL ratio so PCL subscore stays high.
+    pcl = _four_consecutive_quarters(2025, [100, 100, 100, 100])
+
+    peer_growths = {"GS": 0.0, "P1": 0.0}
+
+    out = financial.compute_financial(
+        "GS",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=nii,
+        noninterest_rows=noninterest,
+        pcl_rows=pcl,
+    )
+
+    assert out["sector_path"] == "bank"
+    # Noninterest ratio saturates -> 100.
+    assert out["components"]["ocf_subscore"] == pytest.approx(100.0)
+    assert out["components"]["noninterest_to_revenue_ratio"] == pytest.approx(
+        0.80, abs=1e-6
+    )
+
+
+def test_compute_financial_bank_path_missing_pcl_renormalizes() -> None:
+    """When PCL rows are absent the score should fall back to neutral on that axis
+    AND renormalize the weighting away from it (same semantics as the standard
+    path's data-quality renorm)."""
+    nii = _eight_consecutive_quarters(
+        2024, [950, 990, 1020, 1040, 1150, 1190, 1220, 1240]
+    )
+    noninterest = _four_consecutive_quarters(2025, [1100, 1180, 1240, 1280])
+    # No PCL rows.
+    peer_growths = {"JPM": 0.20, "P1": -0.05, "P2": 0.02, "P3": 0.06}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=nii,
+        noninterest_rows=noninterest,
+        pcl_rows=[],
+    )
+
+    assert out["sector_path"] == "bank"
+    assert out["data_quality"]["has_margin"] is False
+    assert out["data_quality"]["has_revenue"] is True
+    assert out["data_quality"]["has_ocf"] is True
+    # Effective margin weight should be 0.
+    assert out["effective_weights"]["margin"] == pytest.approx(0.0)
+    # The neutral 50 should not be polluting the score: subscore should be the
+    # weight-renormalized blend of revenue (100) and ocf (75) only.
+    # 40/70 * 100 + 30/70 * 75 ~ 89.3.
+    assert out["sub_score"] == pytest.approx(
+        round((40.0 / 70.0) * 100.0 + (30.0 / 70.0) * 75.0, 1),
+        abs=0.2,
+    )
+
+
+def test_compute_financial_bank_path_falls_back_to_standard_without_nii() -> None:
+    """A strict-bank ticker without bank inputs supplied must NOT route through
+    the bank path -- the caller may not have plumbed bank fetches yet."""
+    revenue_rows = _annual_pair(2025, 110.0, 100.0)
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=revenue_rows,
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths={"P1": 0.05},
+        sector="Financials",
+        # nii_rows not supplied -> standard path.
+    )
+    assert out.get("sector_path") != "bank"
+    # Standard path: still computed off revenue_rows.
+    assert out["components"]["revenue_growth_yoy"] == pytest.approx(0.10)
+
+
+def test_compute_financial_non_bank_ticker_unchanged_by_new_signature() -> None:
+    """Regression: a non-Financials ticker must score identically to pre-change.
+
+    Even if a caller accidentally passes bank rows for a non-bank ticker, the
+    standard path runs.
+    """
+    revenue_annual = _annual_pair(2025, 110.0, 100.0)
+    qd = _quarter_dates_for_year(2025)
+    revenue_quarters = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    revenue_rows = revenue_annual + revenue_quarters
+    gp_rows = [_q_row(q["start"], q["end"], 300.0) for q in qd]
+    ocf_rows = [_q_row(q["start"], q["end"], 200.0) for q in qd]
+
+    # Spurious bank-row inputs that would route a bank ticker but must be
+    # ignored for AAPL.
+    spurious_nii = _eight_consecutive_quarters(
+        2024, [1, 1, 1, 1, 1, 1, 1, 1]
+    )
+
+    peer_growths = {"AAPL": 0.10, "P1": -0.10, "P2": 0.0, "P3": 0.05}
+
+    baseline = financial.compute_financial(
+        "AAPL", revenue_rows, gp_rows, ocf_rows, peer_growths
+    )
+    with_bank_inputs = financial.compute_financial(
+        "AAPL",
+        revenue_rows,
+        gp_rows,
+        ocf_rows,
+        peer_growths,
+        sector="Technology",
+        nii_rows=spurious_nii,
+    )
+    assert with_bank_inputs.get("sector_path") != "bank"
+    assert with_bank_inputs["sub_score"] == baseline["sub_score"]
+    assert with_bank_inputs["components"]["revenue_subscore"] == baseline[
+        "components"
+    ]["revenue_subscore"]
+
+
+def test_compute_financial_bank_path_all_missing_yields_50() -> None:
+    """If a strict-bank ticker is routed in but all bank inputs are insufficient
+    (e.g. only 4 quarters of NII, no others) we still get the neutral fallback
+    -- and the renorm doesn't try to divide by zero."""
+    # 4 quarters only -> can't compute YoY (needs 8), can't compute ratios
+    # (PCL absent).
+    nii = _four_consecutive_quarters(2025, [1000, 1000, 1000, 1000])
+    out = financial.compute_financial(
+        "WFC",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths={"WFC": 0.0, "P1": 0.0},
+        sector="Financials",
+        nii_rows=nii,
+        noninterest_rows=[],
+        pcl_rows=[],
+    )
+    assert out["sector_path"] == "bank"
+    assert out["sub_score"] == 50.0
+    assert out["data_quality"] == {
+        "has_revenue": False,
+        "has_margin": False,
+        "has_ocf": False,
+    }
+
+
+def test_is_bank_ticker_helper() -> None:
+    """Allowlist semantics: strict membership, case-insensitive, trims whitespace."""
+    assert financial.is_bank_ticker("JPM") is True
+    assert financial.is_bank_ticker("jpm") is True
+    assert financial.is_bank_ticker("  JPM  ") is True
+    assert financial.is_bank_ticker("BAC") is True
+    # Not in allowlist.
+    assert financial.is_bank_ticker("BLK") is False
+    assert financial.is_bank_ticker("SCHW") is False
+    assert financial.is_bank_ticker("AAPL") is False
+    assert financial.is_bank_ticker("") is False
+    assert financial.is_bank_ticker(None) is False
+    # Sector argument is accepted but allowlist is authoritative.
+    assert financial.is_bank_ticker("AAPL", sector="Financials") is False
+    assert financial.is_bank_ticker("JPM", sector=None) is True

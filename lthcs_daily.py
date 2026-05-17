@@ -54,7 +54,7 @@ if str(REPO_ROOT) not in sys.path:
 from lthcs import MODEL_VERSION, narratives, score
 from lthcs.persist import LthcsPersist
 from lthcs.pillars import adoption, des, financial, institutional, thesis
-from lthcs.sources import alpha_vantage, eia, fred, sec_edgar, yahoo
+from lthcs.sources import ai_news, alpha_vantage, eia, fred, sec_edgar, yahoo
 from lthcs.sources.thesis_rotation import ThesisRotation
 
 # Top ~30 broadly-watched mega-caps that get rotation priority for
@@ -163,8 +163,16 @@ class PipelineState:
     rev_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     gp_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     ocf_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    # Bank-specific concept rows (only populated for tickers in
+    # financial.BANK_TICKERS allowlist). Stays empty for non-banks.
+    nii_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    pcl_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    noninterest_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     momentum_by_ticker: Dict[str, Optional[float]] = field(default_factory=dict)
     volatility_by_ticker: Dict[str, Optional[float]] = field(default_factory=dict)
+    # AI news aggregation — per-ticker mention counts + engagement (free,
+    # no rate limit; HN Algolia + TC/VB RSS).
+    ai_news_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     fetch_counts: Dict[str, int] = field(default_factory=dict)
 
     # Stage 3
@@ -421,6 +429,28 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         except Exception:
             state.ocf_by_ticker[sym] = []
 
+        # Bank-specific concepts (only for the strict-bank allowlist).
+        # Non-banks skip this fetch entirely to avoid wasted HTTP calls.
+        if financial.is_bank_ticker(sym):
+            try:
+                state.nii_by_ticker[sym] = (
+                    sec_edgar.get_net_interest_income_history(sym) or []
+                )
+            except Exception:
+                state.nii_by_ticker[sym] = []
+            try:
+                state.pcl_by_ticker[sym] = (
+                    sec_edgar.get_provision_for_credit_losses_history(sym) or []
+                )
+            except Exception:
+                state.pcl_by_ticker[sym] = []
+            try:
+                state.noninterest_by_ticker[sym] = (
+                    sec_edgar.get_noninterest_income_history(sym) or []
+                )
+            except Exception:
+                state.noninterest_by_ticker[sym] = []
+
     # Macro (one shot, shared across tickers)
     try:
         state.macro_inputs = build_macro_inputs()
@@ -510,7 +540,50 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             av_status = "all failed"
         else:
             av_status = "no picks"
+
+    # AI news supplement — free, no rate limit. Aggregates HN + TC + VB
+    # mentions per ticker (only AI-cohort tickers in TICKER_KEYWORDS;
+    # other tickers return empty). When a ticker doesn't have fresh AV
+    # sentiment but DOES have ≥3 AI-news mentions, we write a sentiment
+    # file from the AI-news engagement so Thesis stops renorming it out.
+    ai_news_supplement_count = 0
+    if not state.args.skip_thesis and state.active_tickers:
+        try:
+            state.ai_news_by_ticker = ai_news.aggregate_ai_news(
+                state.active_tickers
+            )
+        except Exception as exc:
+            if state.args.verbose:
+                print("  AI-news fetch failed: %s" % exc)
+            state.ai_news_by_ticker = {}
+
+        for sym, news_dict in state.ai_news_by_ticker.items():
+            if news_dict.get("total_mentions", 0) < 3:
+                continue
+            # Don't overwrite fresh AV sentiment.
+            existing = state.rotation.read_sentiment(sym) if state.rotation else None
+            if existing is not None and not state.rotation.is_stale(
+                existing, today=state.calc_date
+            ):
+                continue
+            sig = ai_news.compute_thesis_signal_from_news(news_dict)
+            if state.rotation is None or sig.get("mean_sentiment_score") is None:
+                continue
+            try:
+                state.rotation.write_sentiment(
+                    ticker=sym,
+                    article_count=sig.get("article_count", 0),
+                    mean_sentiment_score=sig.get("mean_sentiment_score"),
+                    mean_relevance_score=sig.get("mean_relevance_score"),
+                    label_counts=sig.get("label_counts", {}),
+                    today=state.calc_date,
+                )
+                state.rotation.record_scored(sym, today=state.calc_date)
+                ai_news_supplement_count += 1
+            except Exception:
+                pass
     state.fetch_counts = counts
+    counts["ai_news_supplement"] = ai_news_supplement_count
 
     if state.args.verbose:
         for k, v in counts.items():
@@ -651,6 +724,15 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 state.gp_by_ticker.get(sym, []),
                 state.ocf_by_ticker.get(sym, []),
                 my_peer_growths,
+                # Bank path: when the ticker is in BANK_TICKERS allowlist and
+                # we have its NII/PCL/Noninterest concepts (fetched in Stage
+                # 2 for those tickers), compute_financial routes through the
+                # bank decomposition instead of GP/OCF. Non-banks pass empty
+                # lists and stay on the standard path.
+                sector=sector,
+                nii_rows=state.nii_by_ticker.get(sym, []),
+                pcl_rows=state.pcl_by_ticker.get(sym, []),
+                noninterest_rows=state.noninterest_by_ticker.get(sym, []),
             )
         except Exception:
             fin = _neutral_pillar_result(sym, "financial_evolution")

@@ -2,14 +2,14 @@
   "ticker": "ASML",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 50,
-  "mean_sentiment_score": 0.22918887999999996,
-  "mean_relevance_score": 0.95857578,
+  "article_count": 48,
+  "mean_sentiment_score": 0.25,
+  "mean_relevance_score": 0.5,
   "label_counts": {
-    "Bearish": 3,
-    "Somewhat-Bearish": 3,
-    "Neutral": 14,
-    "Somewhat-Bullish": 9,
-    "Bullish": 21
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 48,
+    "Somewhat-Bullish": 0,
+    "Bullish": 0
   }
 }
