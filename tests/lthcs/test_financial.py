@@ -765,11 +765,10 @@ def test_compute_financial_bank_path_all_missing_yields_50() -> None:
     )
     assert out["sector_path"] == "bank"
     assert out["sub_score"] == 50.0
-    assert out["data_quality"] == {
-        "has_revenue": False,
-        "has_margin": False,
-        "has_ocf": False,
-    }
+    # Legacy data_quality keys must remain (downstream consumers check these).
+    assert out["data_quality"]["has_revenue"] is False
+    assert out["data_quality"]["has_margin"] is False
+    assert out["data_quality"]["has_ocf"] is False
 
 
 def test_is_bank_ticker_helper() -> None:
@@ -787,3 +786,487 @@ def test_is_bank_ticker_helper() -> None:
     # Sector argument is accepted but allowlist is authoritative.
     assert financial.is_bank_ticker("AAPL", sector="Financials") is False
     assert financial.is_bank_ticker("JPM", sector=None) is True
+
+
+# --- Bank cohort path (Tier-3 #15 audit fix) --------------------------------
+
+
+def _build_bank_cohort_dicts(
+    bank_data: Dict[str, Dict[str, List[Dict[str, Any]]]],
+) -> tuple:
+    """Helper: turn a {ticker: {"nii": rows, "nint": rows, "pcl": rows}} dict
+    into the three cohort dicts that compute_financial expects.
+    """
+    nii_dict: Dict[str, List[Dict[str, Any]]] = {}
+    nint_dict: Dict[str, List[Dict[str, Any]]] = {}
+    pcl_dict: Dict[str, List[Dict[str, Any]]] = {}
+    for t, d in bank_data.items():
+        nii_dict[t] = d.get("nii", [])
+        nint_dict[t] = d.get("nint", [])
+        pcl_dict[t] = d.get("pcl", [])
+    return nii_dict, nint_dict, pcl_dict
+
+
+def _jpm_like_inputs(
+    nii_yoy_pct: float = 0.20,
+    noninterest_each: float = 1200.0,
+    pcl_each: float = 240.0,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Build a bank's 4Q NII / Noninterest / PCL series.
+
+    Year prior to ``start_year`` (=2024) NII = 1000/qtr. This-year (2025)
+    NII = 1000 * (1 + nii_yoy_pct) / qtr.
+    """
+    prior = [1000.0] * 4
+    current = [1000.0 * (1.0 + nii_yoy_pct)] * 4
+    nii = _eight_consecutive_quarters(2024, prior + current)
+    noninterest = _four_consecutive_quarters(2025, [noninterest_each] * 4)
+    pcl = _four_consecutive_quarters(2025, [pcl_each] * 4)
+    return {"nii": nii, "nint": noninterest, "pcl": pcl}
+
+
+def test_bank_cohort_path_ranks_revenue_within_banks_not_universe() -> None:
+    """Tier-3 #15 fix: JPM revenue % rank vs banks ≠ JPM vs full universe.
+
+    With NVDA-like outliers in the universe (+65%) JPM (+3%) would land at
+    the bottom on universe peer_growths. Inside the bank cohort it's mid-pack.
+    """
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05)
+    bac = _jpm_like_inputs(nii_yoy_pct=0.02)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.01)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    # peer_growths: JPM rev = 0.03; tech megacaps far above.
+    peer_growths = {
+        "JPM": 0.03,
+        "BAC": 0.02,
+        "WFC": 0.01,
+        "NVDA": 0.65,
+        "AAPL": 0.06,
+        "MSFT": 0.12,
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    assert out["sector_path"] == "bank"
+    assert out["data_quality"]["is_bank_cohort"] is True
+    # JPM rev 0.03 vs BAC 0.02, WFC 0.01 (cohort) -> ranks above both -> 100.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+    # NII growth 0.05 same as cohort peers (since identical YoY structure),
+    # but JPM's NII growth (0.05) is also above BAC (0.02) and WFC (0.01) -> 100.
+    assert out["components"]["nii_subscore"] == pytest.approx(100.0)
+
+
+def test_bank_cohort_path_nii_is_primary_signal() -> None:
+    """NII subscore drives most of the score (50% weight)."""
+    # Focal has weak NII growth but strong revenue growth & diversification.
+    jpm = _jpm_like_inputs(nii_yoy_pct=-0.05)  # focal: -5% NII
+    bac = _jpm_like_inputs(nii_yoy_pct=0.20)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.20)
+    c   = _jpm_like_inputs(nii_yoy_pct=0.20)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc, "C": c}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.0, "BAC": 0.0, "WFC": 0.0, "C": 0.0}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    # JPM is at the bottom of NII growth -> nii_subscore = 0.
+    assert out["components"]["nii_subscore"] == pytest.approx(0.0)
+    # NII has weight 0.50 -> sub_score should be well below 50 even if
+    # the other axes are neutral.
+    assert out["sub_score"] < 50.0
+
+
+def test_bank_cohort_credit_subscore_inverted_lower_is_better() -> None:
+    """Credit subscore: focal with low PCL/NII ratio ranks high (inverted)."""
+    # Focal: low PCL -> low PCL/NII ratio (=0.05).
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05, pcl_each=50.0)  # PCL/NII = 200/4000=0.05
+    # Other banks: high PCL -> high PCL/NII ratio (=0.30).
+    bac = _jpm_like_inputs(nii_yoy_pct=0.05, pcl_each=300.0)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.05, pcl_each=350.0)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.05, "BAC": 0.05, "WFC": 0.05}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    # JPM has lowest PCL/NII -> inverted percentile = 100.
+    assert out["components"]["credit_subscore"] == pytest.approx(100.0)
+    # Also surfaces in legacy "margin" slot for back-compat.
+    assert out["components"]["margin_subscore"] == pytest.approx(100.0)
+
+
+def test_bank_cohort_diversification_higher_is_better() -> None:
+    """Diversification subscore: focal with high noninterest mix ranks high."""
+    # Focal: noninterest=2000 vs NII=1000 -> mix = 2000/3000 = 0.667.
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05, noninterest_each=2000.0)
+    # Other banks: low noninterest.
+    bac = _jpm_like_inputs(nii_yoy_pct=0.05, noninterest_each=100.0)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.05, noninterest_each=200.0)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.05, "BAC": 0.05, "WFC": 0.05}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    assert out["components"]["diversification_subscore"] == pytest.approx(100.0)
+    # Surfaces in legacy "ocf" slot.
+    assert out["components"]["ocf_subscore"] == pytest.approx(100.0)
+
+
+def test_bank_cohort_path_missing_pcl_renormalizes_weights() -> None:
+    """No PCL data -> credit subscore drops out, weights renormalize."""
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05)
+    jpm["pcl"] = []  # remove focal PCL data
+    bac = _jpm_like_inputs(nii_yoy_pct=0.02)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.01)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.03, "BAC": 0.02, "WFC": 0.01}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    assert out["data_quality"]["has_pcl"] is False
+    # Credit weight should renorm to 0.
+    assert out["effective_weights"]["credit"] == pytest.approx(0.0)
+    # NII + revenue + diversification should renorm to 1.0 total.
+    total = (
+        out["effective_weights"]["nii"]
+        + out["effective_weights"]["revenue"]
+        + out["effective_weights"]["diversification"]
+    )
+    assert total == pytest.approx(1.0)
+
+
+def test_bank_cohort_path_missing_nii_falls_back_to_revenue_only() -> None:
+    """When focal NII can't be computed but revenue can, score still works."""
+    # Focal: only 4 quarters NII -> no YoY computable. Still pass empty PCL.
+    jpm_nii_short = _four_consecutive_quarters(2025, [1000.0, 1000.0, 1000.0, 1000.0])
+    jpm_nint = _four_consecutive_quarters(2025, [200.0] * 4)
+    jpm = {"nii": jpm_nii_short, "nint": jpm_nint, "pcl": []}
+    bac = _jpm_like_inputs(nii_yoy_pct=0.02)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.01)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.03, "BAC": 0.02, "WFC": 0.01}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    assert out["data_quality"]["is_bank_cohort"] is True
+    assert out["data_quality"]["has_nii"] is False
+    assert out["data_quality"]["has_rev_pct"] is True
+    # Effective NII weight should be 0; revenue weight should be > 0.
+    assert out["effective_weights"]["nii"] == pytest.approx(0.0)
+    assert out["effective_weights"]["revenue"] > 0.0
+
+
+def test_bank_cohort_path_bank_ticker_membership_case_insensitive() -> None:
+    """Defensive: cohort dicts with mixed-case bank tickers are handled."""
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05)
+    # Cohort dict keys deliberately lower / mixed case.
+    cohort = {"jpm": jpm, "Bac": _jpm_like_inputs(nii_yoy_pct=0.02)}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.05, "BAC": 0.02}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    # Cohort filtering didn't drop the mixed-case banks: JPM still has a peer.
+    assert out["components"]["nii_subscore"] == pytest.approx(100.0)
+
+
+def test_bank_cohort_path_non_bank_in_cohort_dicts_ignored() -> None:
+    """Cohort dicts may accidentally contain non-bank tickers; they must be filtered."""
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05)
+    bac = _jpm_like_inputs(nii_yoy_pct=0.02)
+    # Spurious non-bank entry (AAPL) in the cohort dict -- should be ignored.
+    aapl_fake = _jpm_like_inputs(nii_yoy_pct=0.99)
+    cohort = {"JPM": jpm, "BAC": bac, "AAPL": aapl_fake}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.05, "BAC": 0.02, "AAPL": 0.99}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    # AAPL ignored -> JPM ranks vs BAC only. NII growth 0.05 > 0.02 -> 100.
+    assert out["components"]["nii_subscore"] == pytest.approx(100.0)
+    # Revenue: JPM 0.05 vs BAC 0.02 (AAPL 0.99 dropped) -> 100.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+
+
+def test_non_bank_ticker_path_completely_unchanged_with_cohort_dicts() -> None:
+    """Regression guard: passing bank cohort dicts must not affect a non-bank."""
+    revenue_annual = _annual_pair(2025, 110.0, 100.0)
+    qd = _quarter_dates_for_year(2025)
+    revenue_quarters = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    revenue_rows = revenue_annual + revenue_quarters
+    gp_rows = [_q_row(q["start"], q["end"], 300.0) for q in qd]
+    ocf_rows = [_q_row(q["start"], q["end"], 200.0) for q in qd]
+    peer_growths = {"AAPL": 0.10, "P1": -0.10, "P2": 0.0, "P3": 0.05}
+
+    baseline = financial.compute_financial(
+        "AAPL", revenue_rows, gp_rows, ocf_rows, peer_growths
+    )
+
+    # Pretend the caller naively passes bank cohort dicts -- AAPL must ignore them.
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05)
+    bac = _jpm_like_inputs(nii_yoy_pct=0.02)
+    cohort = {"JPM": jpm, "BAC": bac}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    with_cohort = financial.compute_financial(
+        "AAPL",
+        revenue_rows,
+        gp_rows,
+        ocf_rows,
+        peer_growths,
+        sector="Technology",
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    assert with_cohort["sub_score"] == baseline["sub_score"]
+    assert with_cohort["components"]["revenue_subscore"] == baseline[
+        "components"
+    ]["revenue_subscore"]
+    assert with_cohort["components"]["margin_subscore"] == baseline[
+        "components"
+    ]["margin_subscore"]
+    assert with_cohort["components"]["ocf_subscore"] == baseline[
+        "components"
+    ]["ocf_subscore"]
+    assert with_cohort.get("sector_path") != "bank"
+
+
+def test_bank_cohort_weights_sum_to_one() -> None:
+    """All four bank-cohort weights must sum to 1.0."""
+    total = (
+        financial._BANK_NII_WEIGHT
+        + financial._BANK_REVENUE_WEIGHT
+        + financial._BANK_CREDIT_WEIGHT
+        + financial._BANK_DIVERSIFICATION_WEIGHT
+    )
+    assert total == pytest.approx(1.0)
+
+
+def test_bank_cohort_data_quality_flags_all_present_path() -> None:
+    """When all bank inputs are present and cohort is supplied, all flags = True."""
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.05)
+    bac = _jpm_like_inputs(nii_yoy_pct=0.02)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.01)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    peer_growths = {"JPM": 0.03, "BAC": 0.02, "WFC": 0.01}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    dq = out["data_quality"]
+    assert dq["is_bank_cohort"] is True
+    assert dq["has_nii"] is True
+    assert dq["has_pcl"] is True
+    assert dq["has_noninterest"] is True
+    assert dq["has_rev_pct"] is True
+
+
+def test_bank_legacy_path_without_cohort_still_works() -> None:
+    """A bank ticker without cohort dicts uses the legacy 40/30/30 absolute path."""
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.20)
+    peer_growths = {"JPM": 0.20, "P1": -0.05, "P2": 0.02}
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        # No cohort dicts -> legacy path.
+    )
+
+    assert out["sector_path"] == "bank"
+    assert out["data_quality"]["is_bank_cohort"] is False
+    # Legacy path uses universe-wide percentile via peer_growths.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+
+
+def test_bank_cohort_revenue_subscore_differs_from_universe_subscore() -> None:
+    """The whole point of the fix: cohort-rank ≠ universe-rank for a bank near a tech-heavy universe."""
+    # Build a small cohort where JPM ranks high.
+    jpm = _jpm_like_inputs(nii_yoy_pct=0.03)
+    bac = _jpm_like_inputs(nii_yoy_pct=0.01)
+    wfc = _jpm_like_inputs(nii_yoy_pct=0.005)
+    cohort = {"JPM": jpm, "BAC": bac, "WFC": wfc}
+    nii_d, nint_d, pcl_d = _build_bank_cohort_dicts(cohort)
+
+    # Universe: banks plus hyper-growth tech.
+    peer_growths = {
+        "JPM": 0.03,
+        "BAC": 0.01,
+        "WFC": 0.005,
+        "NVDA": 0.65,
+        "AAPL": 0.06,
+        "MSFT": 0.12,
+    }
+
+    # Cohort path: JPM cohort-rank on revenue.
+    cohort_out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm["nii"],
+        noninterest_rows=jpm["nint"],
+        pcl_rows=jpm["pcl"],
+        bank_cohort_nii_rows=nii_d,
+        bank_cohort_noninterest_rows=nint_d,
+        bank_cohort_pcl_rows=pcl_d,
+    )
+
+    # Standard-path: JPM ranked vs full universe (the legacy buggy behavior).
+    # We force the standard path by NOT routing through bank (use a non-bank
+    # ticker with the same growth, ranked against the same universe).
+    rev_rows = _annual_pair(2025, 103.0, 100.0)  # 3% YoY
+    pg_for_universe = dict(peer_growths)
+    pg_for_universe["FOO"] = 0.03  # focal explicitly excluded
+    universe_out = financial.compute_financial(
+        "FOO", rev_rows, [], [], pg_for_universe
+    )
+
+    cohort_rev = cohort_out["components"]["revenue_subscore"]
+    universe_rev = universe_out["components"]["revenue_subscore"]
+    # Tier-3 #15: cohort rank must be visibly HIGHER than universe rank.
+    assert cohort_rev > universe_rev
+    # Sanity: cohort rank should be > 50 (JPM at top of bank cohort).
+    assert cohort_rev > 50.0
+    # And universe rank should be < 50 (NVDA/MSFT push JPM down).
+    assert universe_rev < 50.0

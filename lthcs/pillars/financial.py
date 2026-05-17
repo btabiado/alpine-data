@@ -502,35 +502,367 @@ def _bank_noninterest_ratio_value(
     return float(ttm_nint / total_rev)
 
 
+# Bank-cohort weights (apply when bank cohort data is provided so we can
+# rank the focal vs other banks instead of mapping its absolute ratio onto
+# bounded thresholds). NII is the primary top-line signal at 50%; revenue
+# % rank is a secondary 20% (the focal's universe-wide revenue growth %
+# rank, but re-computed within the bank cohort); credit (PCL/NII) is 20%
+# and diversification (noninterest mix) is 10%.
+_BANK_NII_WEIGHT = 0.50
+_BANK_REVENUE_WEIGHT = 0.20
+_BANK_CREDIT_WEIGHT = 0.20
+_BANK_DIVERSIFICATION_WEIGHT = 0.10
+
+
+def _pcl_to_nii_ratio(
+    nii_rows: List[Dict[str, Any]],
+    pcl_rows: List[Dict[str, Any]],
+) -> Optional[float]:
+    """Raw PCL/NII ratio (lower is better) for cohort percentile ranking.
+
+    Uses TTM PCL / TTM NII (not PCL / total revenue) -- the user-facing
+    spec is the bank credit-quality cycle indicator, which is canonically
+    expressed against NII (the loan-book's revenue line) rather than
+    against the broader top-line.
+
+    Returns ``None`` when either TTM sum is unavailable or NII is non-positive.
+    """
+    ttm_nii = _trailing_quarterly_sum(nii_rows)
+    ttm_pcl = _trailing_quarterly_sum(pcl_rows)
+    if ttm_nii is None or ttm_pcl is None:
+        return None
+    if ttm_nii <= 0:
+        return None
+    return float(ttm_pcl / ttm_nii)
+
+
+def _noninterest_mix_ratio(
+    nii_rows: List[Dict[str, Any]],
+    noninterest_rows: List[Dict[str, Any]],
+) -> Optional[float]:
+    """Noninterest / (NII + Noninterest) for cohort percentile ranking."""
+    return _bank_noninterest_ratio_value(nii_rows, noninterest_rows)
+
+
+def _filter_peer_growths_to_cohort(
+    ticker: str,
+    peer_growths: Dict[str, Optional[float]],
+    cohort: frozenset,
+) -> List[float]:
+    """Extract numeric peer growths for tickers in ``cohort``, excl focal."""
+    cohort_upper = {c.upper() for c in cohort}
+    peer_values: List[float] = []
+    focal_upper = (ticker or "").strip().upper()
+    for sym, g in (peer_growths or {}).items():
+        if not sym:
+            continue
+        sym_upper = str(sym).strip().upper()
+        if sym_upper == focal_upper:
+            continue
+        if sym_upper not in cohort_upper:
+            continue
+        if g is None:
+            continue
+        try:
+            f = float(g)
+        except (TypeError, ValueError):
+            continue
+        if f != f:  # NaN
+            continue
+        peer_values.append(f)
+    return peer_values
+
+
+def _cohort_nii_growths(
+    ticker: str,
+    bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]],
+) -> List[float]:
+    """NII growth YoY for every bank in the cohort (excl focal) with usable data."""
+    if not bank_cohort_nii_rows:
+        return []
+    focal_upper = (ticker or "").strip().upper()
+    out: List[float] = []
+    for sym, rows in bank_cohort_nii_rows.items():
+        if not sym:
+            continue
+        if str(sym).strip().upper() == focal_upper:
+            continue
+        if str(sym).strip().upper() not in {b.upper() for b in BANK_TICKERS}:
+            continue
+        g = compute_revenue_growth_yoy(rows or [])
+        if g is None:
+            continue
+        try:
+            f = float(g)
+        except (TypeError, ValueError):
+            continue
+        if f != f:  # NaN
+            continue
+        out.append(f)
+    return out
+
+
+def _cohort_pcl_nii_ratios(
+    ticker: str,
+    bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]],
+    bank_cohort_pcl_rows: Optional[Dict[str, List[Dict[str, Any]]]],
+) -> List[float]:
+    """PCL/NII ratio for every bank in the cohort (excl focal) with usable data."""
+    if not bank_cohort_nii_rows or not bank_cohort_pcl_rows:
+        return []
+    focal_upper = (ticker or "").strip().upper()
+    bank_upper = {b.upper() for b in BANK_TICKERS}
+    out: List[float] = []
+    for sym, nii in bank_cohort_nii_rows.items():
+        if not sym:
+            continue
+        sym_upper = str(sym).strip().upper()
+        if sym_upper == focal_upper or sym_upper not in bank_upper:
+            continue
+        pcl = (bank_cohort_pcl_rows or {}).get(sym) or []
+        r = _pcl_to_nii_ratio(nii or [], pcl)
+        if r is None:
+            continue
+        out.append(r)
+    return out
+
+
+def _cohort_noninterest_mixes(
+    ticker: str,
+    bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]],
+    bank_cohort_noninterest_rows: Optional[Dict[str, List[Dict[str, Any]]]],
+) -> List[float]:
+    """Noninterest / total revenue for every bank in cohort (excl focal)."""
+    if not bank_cohort_nii_rows or not bank_cohort_noninterest_rows:
+        return []
+    focal_upper = (ticker or "").strip().upper()
+    bank_upper = {b.upper() for b in BANK_TICKERS}
+    out: List[float] = []
+    for sym, nii in bank_cohort_nii_rows.items():
+        if not sym:
+            continue
+        sym_upper = str(sym).strip().upper()
+        if sym_upper == focal_upper or sym_upper not in bank_upper:
+            continue
+        nint = (bank_cohort_noninterest_rows or {}).get(sym) or []
+        r = _noninterest_mix_ratio(nii or [], nint)
+        if r is None:
+            continue
+        out.append(r)
+    return out
+
+
 def _compute_bank_financial(
     ticker: str,
     nii_rows: List[Dict[str, Any]],
     noninterest_rows: List[Dict[str, Any]],
     pcl_rows: List[Dict[str, Any]],
     peer_growths: Dict[str, Optional[float]],
+    *,
+    bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    bank_cohort_noninterest_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    bank_cohort_pcl_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> Dict[str, Any]:
     """Bank-sector Financial Evolution path.
 
-    Same 40/30/30 weight shape as :func:`compute_financial`, with bank
-    sub-components in place of revenue / margin / OCF:
+    Two operating modes:
 
-      - NII growth YoY               (40%)
-      - PCL / total-revenue ratio     (30%, inverted)
-      - Noninterest / total revenue   (30%)
+    * **Cohort mode** (when ``bank_cohort_nii_rows`` is provided): score
+      the focal bank by percentile-ranking it against other banks on
+      NII growth (50%), revenue growth (20%), PCL/NII (20%, inverted),
+      and noninterest mix (10%). This is the post-audit path that fixes
+      the Tier-3 #15 issue where JPM's +2-3% growth was being ranked
+      against NVDA's +65%.
+    * **Legacy / no-cohort mode** (when no bank cohort dicts are passed):
+      fall back to the original 40/30/30 NII-growth / PCL-ratio /
+      noninterest-ratio shape that uses absolute bounded thresholds.
+      This preserves backward compatibility for callers that haven't
+      plumbed the cohort dicts through yet.
 
     Renormalizes weights away from sub-components whose underlying
-    inputs are unavailable (same semantics as the non-bank path), so a
-    bank with only NII history still scores cleanly off its growth
-    percentile.
+    inputs are unavailable, so a bank with only NII history still scores
+    cleanly off its growth percentile.
     """
     nii_rows = nii_rows or []
     noninterest_rows = noninterest_rows or []
     pcl_rows = pcl_rows or []
 
+    # Decide whether to use cohort mode. We need at least the NII cohort
+    # dict to do anything useful -- if it's missing, fall back to the
+    # legacy 40/30/30 absolute-threshold shape.
+    use_cohort = bool(bank_cohort_nii_rows)
+
     # NII growth YoY (re-use the revenue-growth helper -- it's purely
     # period-arithmetic on whatever quarterly / annual series it gets).
     nii_growth = compute_revenue_growth_yoy(nii_rows)
+    has_nii = nii_growth is not None
 
+    # Focal's revenue growth from the supplied peer_growths dict (it was
+    # populated for every ticker including banks in Stage 4).
+    rev_growth_val: Optional[float] = None
+    raw_focal_rev = (peer_growths or {}).get(ticker)
+    if raw_focal_rev is None:
+        # Try case-insensitive lookup (defensive)
+        focal_upper = (ticker or "").strip().upper()
+        for sym, g in (peer_growths or {}).items():
+            if str(sym).strip().upper() == focal_upper:
+                raw_focal_rev = g
+                break
+    if raw_focal_rev is not None:
+        try:
+            f = float(raw_focal_rev)
+            if f == f:  # not NaN
+                rev_growth_val = f
+        except (TypeError, ValueError):
+            pass
+    has_rev = rev_growth_val is not None
+
+    if use_cohort:
+        # --- Cohort-relative path -----------------------------------------
+
+        # NII subscore: rank focal NII growth against other banks' NII growths.
+        cohort_nii_growths = _cohort_nii_growths(ticker, bank_cohort_nii_rows)
+        if has_nii and cohort_nii_growths:
+            nii_subscore = float(
+                peer_relative_percentile(
+                    nii_growth, cohort_nii_growths, include_self=False
+                )
+            )
+            has_nii_subscore = True
+        elif has_nii:
+            # Cohort too thin -- single bank against itself. Neutral.
+            nii_subscore = 50.0
+            has_nii_subscore = False
+        else:
+            nii_subscore = 50.0
+            has_nii_subscore = False
+
+        # Revenue subscore: rank focal revenue growth against other banks'.
+        bank_cohort_rev_growths = _filter_peer_growths_to_cohort(
+            ticker, peer_growths or {}, BANK_TICKERS
+        )
+        if has_rev and bank_cohort_rev_growths:
+            revenue_subscore = float(
+                peer_relative_percentile(
+                    rev_growth_val, bank_cohort_rev_growths, include_self=False
+                )
+            )
+            has_revenue_subscore = True
+        else:
+            revenue_subscore = 50.0
+            has_revenue_subscore = False
+
+        # Credit subscore: rank focal PCL/NII ratio against cohort, inverted.
+        focal_pcl_nii = _pcl_to_nii_ratio(nii_rows, pcl_rows)
+        cohort_pcl_nii_ratios = _cohort_pcl_nii_ratios(
+            ticker, bank_cohort_nii_rows, bank_cohort_pcl_rows
+        )
+        if focal_pcl_nii is not None and cohort_pcl_nii_ratios:
+            raw_pct = float(
+                peer_relative_percentile(
+                    focal_pcl_nii, cohort_pcl_nii_ratios, include_self=False
+                )
+            )
+            credit_subscore = 100.0 - raw_pct
+            has_credit = True
+        else:
+            credit_subscore = 50.0
+            has_credit = False
+
+        # Diversification subscore: rank focal noninterest mix against cohort.
+        focal_nint_mix = _noninterest_mix_ratio(nii_rows, noninterest_rows)
+        cohort_nint_mixes = _cohort_noninterest_mixes(
+            ticker, bank_cohort_nii_rows, bank_cohort_noninterest_rows
+        )
+        if focal_nint_mix is not None and cohort_nint_mixes:
+            diversification_subscore = float(
+                peer_relative_percentile(
+                    focal_nint_mix, cohort_nint_mixes, include_self=False
+                )
+            )
+            has_diversification = True
+        else:
+            diversification_subscore = 50.0
+            has_diversification = False
+
+        # Combine 50/20/20/10, renormalize when any component lacks data.
+        pairs = [
+            (_BANK_NII_WEIGHT, nii_subscore, has_nii_subscore),
+            (_BANK_REVENUE_WEIGHT, revenue_subscore, has_revenue_subscore),
+            (_BANK_CREDIT_WEIGHT, credit_subscore, has_credit),
+            (_BANK_DIVERSIFICATION_WEIGHT, diversification_subscore, has_diversification),
+        ]
+        real_pairs = [(w, s) for w, s, ok in pairs if ok]
+        if real_pairs:
+            real_sum = sum(w for w, _ in real_pairs)
+            sub_score = sum((w / real_sum) * s for w, s in real_pairs)
+            effective_weights = {
+                "nii": _BANK_NII_WEIGHT / real_sum if has_nii_subscore else 0.0,
+                "revenue": _BANK_REVENUE_WEIGHT / real_sum if has_revenue_subscore else 0.0,
+                "credit": _BANK_CREDIT_WEIGHT / real_sum if has_credit else 0.0,
+                "diversification": _BANK_DIVERSIFICATION_WEIGHT / real_sum if has_diversification else 0.0,
+            }
+        else:
+            # All components missing -> exact 50.
+            sub_score = 50.0
+            effective_weights = {
+                "nii": _BANK_NII_WEIGHT,
+                "revenue": _BANK_REVENUE_WEIGHT,
+                "credit": _BANK_CREDIT_WEIGHT,
+                "diversification": _BANK_DIVERSIFICATION_WEIGHT,
+            }
+        sub_score = round(float(sub_score), 1)
+
+        # Legacy explainability fields -- keep the same shape downstream
+        # consumers expect, mapping bank components into the legacy slots.
+        # "margin" slot continues to surface credit; "ocf" slot continues
+        # to surface diversification.
+        return {
+            "ticker": ticker,
+            "sub_score": sub_score,
+            "components": {
+                "revenue_growth_yoy": nii_growth,
+                "revenue_subscore": float(revenue_subscore),
+                "margin_subscore": float(credit_subscore),
+                "ocf_subscore": float(diversification_subscore),
+                "nii_growth_yoy": nii_growth,
+                "nii_subscore": float(nii_subscore),
+                "credit_subscore": float(credit_subscore),
+                "diversification_subscore": float(diversification_subscore),
+                "pcl_to_nii_ratio": focal_pcl_nii,
+                "pcl_to_revenue_ratio": _bank_pcl_ratio_value(
+                    nii_rows, noninterest_rows, pcl_rows
+                ),
+                "noninterest_to_revenue_ratio": focal_nint_mix,
+                "ttm_ocf_margin": None,
+                "margin_trend_slope": None,
+            },
+            "weights": {
+                "nii": _BANK_NII_WEIGHT,
+                "revenue": _BANK_REVENUE_WEIGHT,
+                "credit": _BANK_CREDIT_WEIGHT,
+                "diversification": _BANK_DIVERSIFICATION_WEIGHT,
+            },
+            "effective_weights": effective_weights,
+            "data_quality": {
+                # Legacy keys (kept for back-compat with downstream consumers).
+                "has_revenue": has_nii_subscore,
+                "has_margin": has_credit,
+                "has_ocf": has_diversification,
+                # New bank-path-specific quality flags.
+                "is_bank_cohort": True,
+                "has_nii": has_nii_subscore,
+                "has_pcl": has_credit,
+                "has_noninterest": has_diversification,
+                "has_rev_pct": has_revenue_subscore,
+            },
+            "sector_path": "bank",
+        }
+
+    # --- Legacy / no-cohort path: 40/30/30 absolute thresholds -------------
+    #
+    # Backward-compat: callers that haven't passed cohort dicts (existing
+    # unit tests, older callers) still get the original behavior.
     peer_values: List[float] = []
     for sym, g in (peer_growths or {}).items():
         if sym == ticker:
@@ -627,6 +959,10 @@ def _compute_bank_financial(
             "has_revenue": has_revenue,
             "has_margin": has_pcl,
             "has_ocf": has_nint,
+            "is_bank_cohort": False,
+            "has_nii": has_revenue,
+            "has_pcl": has_pcl,
+            "has_noninterest": has_nint,
         },
         "sector_path": "bank",
     }
@@ -643,6 +979,9 @@ def compute_financial(
     nii_rows: Optional[List[Dict[str, Any]]] = None,
     noninterest_rows: Optional[List[Dict[str, Any]]] = None,
     pcl_rows: Optional[List[Dict[str, Any]]] = None,
+    bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    bank_cohort_noninterest_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    bank_cohort_pcl_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
 ) -> Dict[str, Any]:
     """Compute the Financial Evolution sub-score for one ticker.
 
@@ -699,7 +1038,14 @@ def compute_financial(
     # standard path runs with its existing data-quality renorm.
     if is_bank_ticker(ticker, sector) and nii_rows:
         return _compute_bank_financial(
-            ticker, nii_rows, noninterest_rows, pcl_rows, peer_growths
+            ticker,
+            nii_rows,
+            noninterest_rows,
+            pcl_rows,
+            peer_growths,
+            bank_cohort_nii_rows=bank_cohort_nii_rows,
+            bank_cohort_noninterest_rows=bank_cohort_noninterest_rows,
+            bank_cohort_pcl_rows=bank_cohort_pcl_rows,
         )
 
     # --- Revenue subscore ---------------------------------------------------

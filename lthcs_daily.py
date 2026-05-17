@@ -1036,6 +1036,13 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 nii_rows=state.nii_by_ticker.get(sym, []),
                 pcl_rows=state.pcl_by_ticker.get(sym, []),
                 noninterest_rows=state.noninterest_by_ticker.get(sym, []),
+                # Bank cohort dicts: pass the universe-wide NII/PCL/Noninterest
+                # maps so the bank path can compute percentiles *within the
+                # bank cohort* (audit Tier-3 #15 fix). The function filters
+                # to BANK_TICKERS allowlist internally; non-banks ignore.
+                bank_cohort_nii_rows=state.nii_by_ticker,
+                bank_cohort_pcl_rows=state.pcl_by_ticker,
+                bank_cohort_noninterest_rows=state.noninterest_by_ticker,
             )
         except Exception:
             fin = _neutral_pillar_result(sym, "financial_evolution")
