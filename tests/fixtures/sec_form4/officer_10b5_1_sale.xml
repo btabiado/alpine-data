@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<ownershipDocument>
+    <schemaVersion>X0609</schemaVersion>
+    <documentType>4</documentType>
+    <periodOfReport>2026-05-06</periodOfReport>
+    <issuer>
+        <issuerCik>0000000999</issuerCik>
+        <issuerName>Example Corp</issuerName>
+        <issuerTradingSymbol>EXMP</issuerTradingSymbol>
+    </issuer>
+    <reportingOwner>
+        <reportingOwnerId>
+            <rptOwnerCik>0001999992</rptOwnerCik>
+            <rptOwnerName>Doe John A</rptOwnerName>
+        </reportingOwnerId>
+        <reportingOwnerRelationship>
+            <isDirector>0</isDirector>
+            <isOfficer>1</isOfficer>
+            <isTenPercentOwner>0</isTenPercentOwner>
+            <officerTitle>Principal Accounting Officer</officerTitle>
+        </reportingOwnerRelationship>
+    </reportingOwner>
+    <aff10b5One>1</aff10b5One>
+    <nonDerivativeTable>
+        <nonDerivativeTransaction>
+            <securityTitle>
+                <value>Common Stock</value>
+            </securityTitle>
+            <transactionDate>
+                <value>2026-05-06</value>
+            </transactionDate>
+            <transactionCoding>
+                <transactionFormType>4</transactionFormType>
+                <transactionCode>S</transactionCode>
+                <equitySwapInvolved>0</equitySwapInvolved>
+            </transactionCoding>
+            <transactionAmounts>
+                <transactionShares>
+                    <value>5000</value>
+                </transactionShares>
+                <transactionPricePerShare>
+                    <value>284.57</value>
+                    <footnoteId id="F1"/>
+                </transactionPricePerShare>
+                <transactionAcquiredDisposedCode>
+                    <value>D</value>
+                </transactionAcquiredDisposedCode>
+            </transactionAmounts>
+            <postTransactionAmounts>
+                <sharesOwnedFollowingTransaction>
+                    <value>20000</value>
+                </sharesOwnedFollowingTransaction>
+            </postTransactionAmounts>
+            <ownershipNature>
+                <directOrIndirectOwnership>
+                    <value>D</value>
+                </directOrIndirectOwnership>
+            </ownershipNature>
+        </nonDerivativeTransaction>
+    </nonDerivativeTable>
+    <footnotes>
+        <footnote id="F1">This transaction was made pursuant to a Rule 10b5-1 trading plan adopted by the reporting person on February 6, 2026.</footnote>
+    </footnotes>
+    <ownerSignature>
+        <signatureName>/s/ John A. Doe</signatureName>
+        <signatureDate>2026-05-07</signatureDate>
+    </ownerSignature>
+</ownershipDocument>

@@ -65,6 +65,7 @@ from lthcs.sources import (
     fred_breadth,
     sec_8k,
     sec_edgar,
+    sec_form4,
     sector_etf,
     sector_rss,
     yahoo,
@@ -188,6 +189,11 @@ class PipelineState:
     # dict (regime, breadth_score in [-1,+1], firm_count, raw_actions).
     # Persisted to data/lthcs/analyst_breadth/<date>.json.
     analyst_breadth_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Per-ticker SEC Form 4 insider transactions (open-market only,
+    # 10b5-1 / awards / exercises filtered). Map of ticker → insider
+    # dict (regime, conviction_score, cluster_buying flag, ceo_cfo_action).
+    # Persisted to data/lthcs/insider/<date>.json. 90-day rolling window.
+    insider_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     av_response: Optional[Dict[str, Any]] = None       # legacy single-anchor path (kept for backward-compat)
     av_anchor_ticker: Optional[str] = None             # legacy single-anchor path
     rotation: Optional[ThesisRotation] = None
@@ -855,6 +861,26 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 print("  analyst_breadth compute failed: %s" % exc)
             state.analyst_breadth_by_ticker = {}
 
+        # --- SEC Form 4 insider transactions (per-ticker, 90d window) ---
+        # Reuses sec_edgar's session/headers + its own 24h submissions
+        # cache + 30d XML cache. First-day run is slow (universe-wide
+        # backfill); subsequent runs hit cache. Skippable in test/dry-run
+        # paths via --skip-thesis to avoid hammering SEC during dev.
+        if not state.args.skip_thesis:
+            try:
+                state.insider_by_ticker = (
+                    sec_form4.fetch_universe_insider_transactions(
+                        state.active_tickers, window_days=90
+                    )
+                )
+                counts["insider_covered"] = len(state.insider_by_ticker)
+            except Exception as exc:
+                if state.args.verbose:
+                    print("  sec_form4 fetch failed: %s" % exc)
+                state.insider_by_ticker = {}
+        else:
+            state.insider_by_ticker = {}
+
     state.fetch_counts = counts
     counts["finnhub_supplement"] = finnhub_supplement_count
     counts["sec_8k_supplement"] = sec_8k_supplement_count
@@ -1235,6 +1261,14 @@ def stage_8_persist(state: PipelineState) -> bool:
                 analyst_dir.mkdir(parents=True, exist_ok=True)
                 (analyst_dir / ("%s.json" % state.calc_date)).write_text(
                     json.dumps(state.analyst_breadth_by_ticker, indent=2, sort_keys=True)
+                )
+            # Per-ticker SEC Form 4 insider transactions. Same shape:
+            # one daily JSON map keyed by ticker.
+            if state.insider_by_ticker:
+                insider_dir = persist.data_root / "insider"
+                insider_dir.mkdir(parents=True, exist_ok=True)
+                (insider_dir / ("%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.insider_by_ticker, indent=2, sort_keys=True)
                 )
         except Exception as exc:
             if state.args.verbose:
