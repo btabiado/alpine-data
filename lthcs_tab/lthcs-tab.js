@@ -20,6 +20,20 @@ const SNAPSHOTS_BASE = '../data/lthcs/snapshots';
 const UNIVERSE_URL = '../data/lthcs/universe.json';
 const INDEX_URL = `${SNAPSHOTS_BASE}/index.json`;
 const INSIDER_BASE = '../data/lthcs/insider';
+const HISTORY_BASE = '../data/lthcs/history/by_ticker';
+
+// Task 1: score-trend thresholds. Anything within +/-0.5 reads as
+// "flat / stable"; beyond is up/down. The lookback prefers 30 days,
+// but falls back through shorter windows so a freshly-deployed model
+// (only a few days of history on disk) still surfaces direction.
+// The actual period used is shown in the pill so the user knows
+// whether they're looking at a 30d move or a 1d move.
+const TREND_FLAT_THRESHOLD = 0.5;
+const TREND_LOOKBACK_DAYS = 30;
+// Fallback chain: try the longest period first, then progressively
+// shorter, then give up. Stops as soon as ANY anchor on-or-before the
+// target date exists in the history.
+const TREND_FALLBACK_DAYS = [30, 14, 7, 3, 1];
 
 const STORAGE_KEYS = {
   starred: 'lthcs.starred',
@@ -74,6 +88,7 @@ const state = {
   universeByTicker: {},  // ticker -> universe entry
   enriched: [],          // merged score+universe rows
   insiderByTicker: {},   // Week 11: ticker -> insider record (SEC Form 4)
+  trendByTicker: {},     // Task 1: ticker -> { delta, direction } (computed from history/by_ticker)
   activeFilters: {
     index: 'all',
     band: 'all',
@@ -177,6 +192,98 @@ function formatDrift(n) {
 }
 
 // ---------------------------------------------------------------------------
+// Task 1: 30-day score-trend helpers
+// ---------------------------------------------------------------------------
+
+// Parse a "YYYY-MM-DD" string into a UTC ms timestamp. Returns NaN on bad input.
+function parseISODateUTC(s) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s || ''));
+  if (!m) return NaN;
+  return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+}
+
+// Pick the history entry whose date is closest to (currentDate - lookbackDays),
+// preferring the latest entry that is on-or-before that target. Returns null
+// if no entry is at least `lookbackDays` days old.
+function pickAnchorForLookback(history, currentDateISO, lookbackDays) {
+  if (!Array.isArray(history) || !history.length) return null;
+  const currentMs = parseISODateUTC(currentDateISO);
+  if (!Number.isFinite(currentMs)) return null;
+  const targetMs = currentMs - lookbackDays * 24 * 60 * 60 * 1000;
+
+  let best = null;
+  let bestMs = -Infinity;
+  for (const entry of history) {
+    const ms = parseISODateUTC(entry && entry.date);
+    if (!Number.isFinite(ms)) continue;
+    // Take the most-recent date that is <= target.
+    if (ms <= targetMs && ms > bestMs) {
+      bestMs = ms;
+      best = entry;
+    }
+  }
+  return best;
+}
+
+// Try the longest lookback first; fall back through shorter windows
+// until an anchor exists. Returns { anchor, periodDays } or null.
+function pickAnchorWithFallback(history, currentDateISO) {
+  for (const days of TREND_FALLBACK_DAYS) {
+    const anchor = pickAnchorForLookback(history, currentDateISO, days);
+    if (anchor && Number.isFinite(Number(anchor.score))) {
+      return { anchor, periodDays: days };
+    }
+  }
+  return null;
+}
+
+// Back-compat alias used elsewhere in the file. Prefers 30 days when
+// possible but uses the fallback chain otherwise.
+function pickThirtyDayAnchor(history, currentDateISO) {
+  const result = pickAnchorWithFallback(history, currentDateISO);
+  return result ? result.anchor : null;
+}
+
+// Compute the score trend for a single ticker. Returns
+//   { delta, direction: 'up'|'down'|'flat', periodDays }  on success,
+//   { delta: null, direction: 'unknown', periodDays: null } otherwise.
+// periodDays is the ACTUAL window used (may be < 30 when history is
+// still warming up). Renderer should surface this so a "+1.5" pill
+// doesn't lie about being a 30d move when it's actually a 3d move.
+function computeTrend(historyDoc, currentDateISO, currentScore) {
+  if (!historyDoc || !Array.isArray(historyDoc.history)) {
+    return { delta: null, direction: 'unknown', periodDays: null };
+  }
+  const result = pickAnchorWithFallback(historyDoc.history, currentDateISO);
+  if (!result) {
+    return { delta: null, direction: 'unknown', periodDays: null };
+  }
+  const cur = Number(currentScore);
+  if (!Number.isFinite(cur)) {
+    return { delta: null, direction: 'unknown', periodDays: null };
+  }
+  const delta = cur - Number(result.anchor.score);
+  let direction = 'flat';
+  if (delta > TREND_FLAT_THRESHOLD) direction = 'up';
+  else if (delta < -TREND_FLAT_THRESHOLD) direction = 'down';
+  return { delta, direction, periodDays: result.periodDays };
+}
+
+function trendArrow(direction) {
+  if (direction === 'up') return '▲';
+  if (direction === 'down') return '▼';
+  if (direction === 'flat') return '→';
+  return '?';
+}
+
+function formatTrendValue(delta, direction) {
+  if (direction === 'unknown' || delta == null || !Number.isFinite(delta)) return '—';
+  if (direction === 'flat') return '0.0';
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toFixed(1)}`;
+}
+
+// ---------------------------------------------------------------------------
 // Data fetching
 // ---------------------------------------------------------------------------
 
@@ -206,6 +313,37 @@ async function fetchUniverse() {
     console.warn('LTHCS: universe fetch failed; proceeding without enrichment.', err);
     return { tickers: [] };
   }
+}
+
+// Task 1: load per-ticker history files in parallel. Returns
+//   { TICKER: { delta, direction }, ... }
+// Each fetch is best-effort — a missing or malformed file just yields an
+// "unknown" trend for that ticker.
+async function fetchTrendMap(tickers, calcDate) {
+  if (!Array.isArray(tickers) || !tickers.length) return {};
+
+  // Encode each ticker for the URL path (handles edge cases like "BRK.B").
+  const fetches = tickers.map(async (row) => {
+    const ticker = row && row.ticker;
+    if (!ticker) return [null, { delta: null, direction: 'unknown' }];
+    const url = `${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`;
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) return [ticker, { delta: null, direction: 'unknown' }];
+      const doc = await res.json();
+      const trend = computeTrend(doc, calcDate, row.score);
+      return [ticker, trend];
+    } catch {
+      return [ticker, { delta: null, direction: 'unknown' }];
+    }
+  });
+
+  const results = await Promise.all(fetches);
+  const map = {};
+  for (const [ticker, trend] of results) {
+    if (ticker) map[ticker] = trend;
+  }
+  return map;
 }
 
 async function fetchInsider(calcDate) {
@@ -300,8 +438,23 @@ function cardHTML(row) {
   const bandLabel = escapeHtml((row.snapshotBand || row.uiBand || '').replace(/_/g, ' ').toUpperCase());
   const direction = row.driftDirection;
   const sparkline = sparklineFor(direction);
-  const arrow = driftArrow(direction);
-  const driftText = `${arrow} ${formatDrift(row.drift30d)}`;
+
+  // Task 1: score-trend pill replaces the old "→ 0.0" arrow. The pillar
+  // of truth is state.trendByTicker, populated after history fetch.
+  // Period prefers 30d but falls back to 14/7/3/1 when history is
+  // shallow (e.g. just after a fresh deploy). The label reflects the
+  // ACTUAL period so a "+1.5 ▲" pill never claims 30d when it's 3d.
+  const trend = state.trendByTicker[row.ticker] || { delta: null, direction: 'unknown', periodDays: null };
+  const trendDir = trend.direction || 'unknown';
+  const trendArrowChar = trendArrow(trendDir);
+  const trendValue = formatTrendValue(trend.delta, trendDir);
+  const trendPeriodLabel = (trendDir === 'unknown' || !trend.periodDays)
+    ? '30d'
+    : `${trend.periodDays}d`;
+  const trendAria = trendDir === 'unknown'
+    ? 'Score trend unavailable'
+    : `${trendPeriodLabel} score change ${trendValue}`;
+
   const driverLine = row.topDriverKey
     ? `Top: ${escapeHtml(pillarDisplayName(row.topDriverKey))} ${formatScore(row.topDriverValue)}`
     : 'Top: —';
@@ -316,7 +469,11 @@ function cardHTML(row) {
       `<div class="lthcs-card-name">${name}</div>` +
       `<div class="lthcs-card-meta">` +
         `<span class="lthcs-card-sparkline">${sparkline}</span>` +
-        `<span class="lthcs-card-drift" data-drift-direction="${direction}">${driftText}</span>` +
+        `<span class="lthcs-card-trend" data-trend="${trendDir}" title="${trendAria}" aria-label="${trendAria}">` +
+          `<span class="lthcs-card-trend-label">${trendPeriodLabel}</span>` +
+          `<span class="lthcs-card-trend-arrow" aria-hidden="true">${trendArrowChar}</span>` +
+          `<span class="lthcs-card-trend-value">${trendValue}</span>` +
+        `</span>` +
       `</div>` +
       `<div class="lthcs-card-band">${bandLabel}</div>` +
       `<div class="lthcs-card-driver">${driverLine}</div>` +
@@ -394,9 +551,35 @@ function setChipActive(group, value) {
   }
 }
 
+// Task 2: mirror chip activation onto the clickable stat tiles at the top.
+// `group` is 'index' or 'band'; 'all' clears every tile in that group.
+function setStatActive(group, value) {
+  const attr = group === 'index' ? 'data-index' : 'data-band';
+  const tiles = $$(`.lthcs-stat-clickable[${attr}]`);
+  for (const tile of tiles) {
+    const tileVal = tile.getAttribute(attr);
+    if (value !== 'all' && tileVal === value) {
+      tile.classList.add('is-active');
+      tile.setAttribute('aria-pressed', 'true');
+    } else {
+      tile.classList.remove('is-active');
+      tile.setAttribute('aria-pressed', 'false');
+    }
+  }
+}
+
+// Single source of truth: push activeFilters[group] into both chips and stats.
+function syncFilterUI(group) {
+  const value = state.activeFilters[group] || 'all';
+  setChipActive(group, value);
+  if (group === 'index' || group === 'band') {
+    setStatActive(group, value);
+  }
+}
+
 function syncAllChips() {
   for (const group of FILTER_GROUPS) {
-    setChipActive(group, state.activeFilters[group] || 'all');
+    syncFilterUI(group);
   }
 }
 
@@ -485,7 +668,7 @@ function wireChips() {
       if (!group || !value) return;
       if (!FILTER_GROUPS.includes(group)) return;
       state.activeFilters[group] = value;
-      setChipActive(group, value);
+      syncFilterUI(group);
       persistFilterState();
       renderAll();
     });
@@ -502,7 +685,31 @@ function wireIndexStats() {
       if (!INDEX_FILTERS.includes(idx)) return;
       const next = state.activeFilters.index === idx ? 'all' : idx;
       state.activeFilters.index = next;
-      setChipActive('index', next);
+      syncFilterUI('index');
+      persistFilterState();
+      renderAll();
+    };
+    tile.addEventListener('click', activate);
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
+    });
+  }
+}
+
+// Task 2: Band stat tiles act as primary band filters. Same toggle behavior
+// as the index tiles — clicking the active band clears the filter.
+function wireBandStats() {
+  const tiles = $$('.lthcs-stat-clickable[data-band]');
+  for (const tile of tiles) {
+    const activate = () => {
+      const band = tile.dataset.band;
+      if (!UI_BANDS.includes(band)) return;
+      const next = state.activeFilters.band === band ? 'all' : band;
+      state.activeFilters.band = next;
+      syncFilterUI('band');
       persistFilterState();
       renderAll();
     };
@@ -528,6 +735,7 @@ function wireEvents() {
   wireSearch();
   wireChips();
   wireIndexStats();
+  wireBandStats();
   wireRefresh();
   wireCardClicks();
 }
@@ -598,6 +806,17 @@ async function refresh() {
     renderRegimeStrip(calcDate).catch((err) => {
       console.warn('LTHCS: regime strip render failed', err);
     });
+
+    // Task 1: side-load per-ticker history → 30d score-trend deltas.
+    // Cards render immediately with "?" placeholders, then re-render once
+    // the history fetches resolve. Best-effort; per-ticker errors don't bubble.
+    fetchTrendMap(state.enriched, calcDate)
+      .then((map) => {
+        state.trendByTicker = map || {};
+        // Re-render only the cards — stats/chips are unaffected by trend.
+        renderCards(applyFilters());
+      })
+      .catch((err) => console.warn('LTHCS: trend map load failed', err));
   } finally {
     if (btn) btn.disabled = false;
   }

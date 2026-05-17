@@ -443,6 +443,44 @@ input[type="search"] {
   letter-spacing: 0.6px;
 }
 
+/* Clickable stat tiles (index + band filter shortcuts) */
+.lthcs-stat-clickable {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background 140ms ease, border-color 140ms ease, transform 120ms ease;
+}
+
+.lthcs-stat-clickable:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.lthcs-stat-clickable:active {
+  transform: translateY(1px);
+}
+
+.lthcs-stat-clickable:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.22);
+}
+
+/* Active filter state — visually selected */
+.lthcs-stat-clickable.is-active {
+  background: var(--bg-chip-active);
+  border-color: var(--border-strong);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.lthcs-stat-clickable.is-active::before {
+  width: 5px;
+}
+
+.lthcs-stat-clickable.is-active .lthcs-stat-label {
+  color: var(--text-primary);
+}
+
 /* =========================================================================
    Controls (search + filter chips)
    ========================================================================= */
@@ -736,6 +774,55 @@ input[type="search"] {
 .lthcs-card[data-drift-direction="improving"] .lthcs-card-drift { color: var(--drift-improving); }
 .lthcs-card[data-drift-direction="stable"] .lthcs-card-drift { color: var(--drift-stable); }
 .lthcs-card[data-drift-direction="declining"] .lthcs-card-drift { color: var(--drift-declining); }
+
+/* 30-day score-trend pill (Task 1) — replaces the old "→ 0.0" arrow */
+.lthcs-card-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 8px 3px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.lthcs-card-trend-arrow {
+  font-size: 11px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.lthcs-card-trend-label {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  margin-right: 1px;
+}
+
+.lthcs-card-trend[data-trend="up"] {
+  color: var(--drift-improving);
+  border-color: rgba(74, 143, 95, 0.45);
+  background: rgba(74, 143, 95, 0.10);
+}
+.lthcs-card-trend[data-trend="down"] {
+  color: var(--drift-declining);
+  border-color: rgba(226, 109, 92, 0.45);
+  background: rgba(226, 109, 92, 0.10);
+}
+.lthcs-card-trend[data-trend="flat"] {
+  color: var(--drift-stable);
+}
+.lthcs-card-trend[data-trend="unknown"] {
+  color: var(--text-tertiary);
+}
 
 .lthcs-card-driver {
   font-size: 11.5px;
