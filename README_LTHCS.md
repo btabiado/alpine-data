@@ -28,7 +28,7 @@ All 10 weeks of the build plan shipped. The framework runs end-to-end:
 **Universe:** 75 entries / 74 active. WBA marked inactive (Walgreens taken private late 2025).
 
 **V1 limitations honestly disclosed in the About modal:**
-- Alpha Vantage NEWS_SENTIMENT is AND-semantics on multi-ticker, so the daily pipeline gets news for one sample ticker; Thesis falls back to neutral 50 for the rest. Phase 2 upgrade to AV Premium or alternate news source.
+- Thesis pillar uses a daily rotation: each run scores ~6–25 of the 74 tickers via per-ticker Alpha Vantage news calls. Tickers without fresh sentiment fall back to neutral 50 with a data-quality flag. Full universe refreshes every ~3–14 days depending on AV's actual throttle (free tier is officially 25/day but bursts often get throttled lower). Phase 2 upgrades to AV Premium or alternate news source.
 - Google Trends acceleration (40% of Adoption) is not driven for 74 tickers — Google rate-limits aggressively.
 - 13F holdings change (30% of Institutional) is a Phase 2 stub.
 - Banks score low on Financial Evolution (don't report GrossProfit / OCF the standard XBRL way). Sector-aware financial scoring is Phase 2.

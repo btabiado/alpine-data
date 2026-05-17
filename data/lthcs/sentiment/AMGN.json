@@ -1,0 +1,15 @@
+{
+  "ticker": "AMGN",
+  "last_scored": "2026-05-16",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.12535839999999995,
+  "mean_relevance_score": 0.7764503799999999,
+  "label_counts": {
+    "Bearish": 3,
+    "Somewhat-Bearish": 3,
+    "Neutral": 25,
+    "Somewhat-Bullish": 11,
+    "Bullish": 8
+  }
+}

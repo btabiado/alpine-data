@@ -1,0 +1,30 @@
+{
+  "model_version": "v1.0.0",
+  "last_updated": "2026-05-16",
+  "tickers": {
+    "AAPL": {
+      "last_scored": "2026-05-16"
+    },
+    "LCID": {
+      "last_scored": "2026-05-16"
+    },
+    "ABBV": {
+      "last_scored": "2026-05-16"
+    },
+    "AMGN": {
+      "last_scored": "2026-05-16"
+    },
+    "BAC": {
+      "last_scored": "2026-05-16"
+    },
+    "CDNS": {
+      "last_scored": "2026-05-16"
+    },
+    "CVX": {
+      "last_scored": "2026-05-16"
+    },
+    "GE": {
+      "last_scored": "2026-05-16"
+    }
+  }
+}

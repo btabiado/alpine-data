@@ -32,7 +32,7 @@ const SOURCE_LIST = [
 ];
 
 const V1_LIMITATIONS = [
-  "Alpha Vantage NEWS_SENTIMENT multi-ticker is AND-semantics, not OR — a batched call for 74 tickers returns 0 articles. Thesis pillar defaults to neutral 50 for non-sampled tickers in V1. Phase 2 upgrades to per-ticker calls (AV Premium) or alternate news source.",
+  "Thesis pillar uses a daily rotation — each run scores ≈6–25 of the 74 tickers via per-ticker Alpha Vantage news calls (free tier throttles bursts; daily cap is 25 nominal, often lower in practice). Tickers without fresh stored sentiment fall back to neutral 50 with a data-quality flag. Full universe is refreshed every ~3–14 days depending on throttle. Phase 2 unlocks AV Premium or an alternate news source to score all 74 daily.",
   "Google Trends acceleration (40% of Adoption pillar) is not driven for 74 tickers in V1 because Google rate-limits aggressively. Adoption uses revenue growth percentile only for V1.",
   "13F institutional holdings change (30% of Institutional pillar) is a Phase 2 stub. Institutional uses 90d momentum percentile alone in V1.",
   "Banks (e.g. JPM) score artificially low on Financial Evolution — they don't report GrossProfit / OCF the standard us-gaap way. Sector-aware financial scoring is Phase 2.",

@@ -256,28 +256,42 @@ class TestStage1:
 # ---------------------------------------------------------------------------
 
 class TestStage2:
-    def test_fetches_for_each_ticker(self, patched_configs, patched_sources):
+    def test_fetches_for_each_ticker(self, patched_configs, patched_sources, tmp_path, monkeypatch):
+        # Isolate rotation state to tmp_path so the test doesn't write to the
+        # real data/lthcs/ directory.
+        monkeypatch.setattr(
+            "lthcs.sources.thesis_rotation.get_default_data_root",
+            lambda: tmp_path,
+        )
         args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID"])
         state = lthcs_daily.PipelineState(args=args)
         lthcs_daily.stage_1_load_config(state)
+        # Point persist at tmp_path too so rotation inherits the right root.
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
         assert lthcs_daily.stage_2_fetch_data(state) is True
 
         assert patched_sources["yahoo_momentum"].call_count == 2
         assert patched_sources["sec_rev"].call_count == 2
-        assert state.av_anchor_ticker == "AAPL"
-        # AV called exactly once.
-        assert patched_sources["av"].call_count == 1
-        assert state.av_response is not None
+        # Rotation: one AV call per ticker selected (both AAPL and LCID
+        # are never-scored on a fresh tmp_path state, so both get picked).
+        assert patched_sources["av"].call_count == 2
+        assert state.rotation is not None
+        assert set(state.rotation_scored_today) == {"AAPL", "LCID"}
         # Macro inputs populated.
         assert "ten_y_yield_pct" in state.macro_inputs
 
-    def test_skip_thesis_avoids_av_call(self, patched_configs, patched_sources):
+    def test_skip_thesis_avoids_av_call(self, patched_configs, patched_sources, tmp_path, monkeypatch):
+        monkeypatch.setattr(
+            "lthcs.sources.thesis_rotation.get_default_data_root",
+            lambda: tmp_path,
+        )
         args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID", "--skip-thesis"])
         state = lthcs_daily.PipelineState(args=args)
         lthcs_daily.stage_1_load_config(state)
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
         assert lthcs_daily.stage_2_fetch_data(state) is True
         assert patched_sources["av"].call_count == 0
-        assert state.av_response is None
+        assert state.rotation_scored_today == []
 
     def test_source_exception_does_not_abort(self, patched_configs, patched_sources):
         # If yfinance momentum blows up, the stage still returns True.

@@ -1,0 +1,15 @@
+{
+  "ticker": "ABBV",
+  "last_scored": "2026-05-16",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.19690182,
+  "mean_relevance_score": 0.8031718799999998,
+  "label_counts": {
+    "Bearish": 0,
+    "Somewhat-Bearish": 2,
+    "Neutral": 24,
+    "Somewhat-Bullish": 13,
+    "Bullish": 11
+  }
+}

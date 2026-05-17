@@ -231,3 +231,273 @@ def test_target_ticker_isolated_from_other_tickers_in_feed():
     # AAPL alone determines the score: 3 articles + +0.5 -> 75.
     assert out["components"]["article_count"] == 3
     assert out["sub_score"] == pytest.approx(75.0, abs=0.1)
+
+
+# --- compute_thesis_from_stored_sentiment ----------------------------------
+
+
+def _stored(
+    *,
+    ticker: str = "AAPL",
+    last_scored: str = "2026-05-16",
+    article_count: int = 50,
+    mean_sentiment_score=0.5,
+    mean_relevance_score: float = 0.42,
+    label_counts=None,
+):
+    """Build the on-disk sentiment dict the rotation worker writes."""
+    return {
+        "ticker": ticker,
+        "last_scored": last_scored,
+        "model_version": "v1.0.0",
+        "article_count": article_count,
+        "mean_sentiment_score": mean_sentiment_score,
+        "mean_relevance_score": mean_relevance_score,
+        "label_counts": label_counts
+        or {
+            "Bearish": 1,
+            "Somewhat-Bearish": 5,
+            "Neutral": 18,
+            "Somewhat-Bullish": 22,
+            "Bullish": 4,
+        },
+    }
+
+
+def test_stored_none_returns_neutral_and_stale():
+    """Missing file -> neutral 50, has_sentiment False, is_stale True."""
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", None, today="2026-05-16"
+    )
+
+    assert out["ticker"] == "AAPL"
+    assert out["sub_score"] == 50.0
+    assert out["components"]["article_count"] == 0
+    assert out["components"]["mean_sentiment_score"] is None
+    assert out["components"]["mean_relevance_score"] is None
+    assert out["components"]["confidence_blend"] == pytest.approx(0.0)
+    assert out["components"]["sentiment_subscore_raw"] == pytest.approx(50.0)
+
+    dq = out["data_quality"]
+    assert dq["has_sentiment"] is False
+    assert dq["article_count_sufficient"] is False
+    assert dq["is_stale"] is True
+    assert dq["days_since_scored"] is None
+    assert dq["last_scored"] is None
+
+
+def test_stored_fresh_today_bullish_50_articles():
+    """Fresh today, 50 articles, +0.5 mean -> sub_score ~75."""
+    sentiment = _stored(
+        last_scored="2026-05-16",
+        article_count=50,
+        mean_sentiment_score=0.5,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["ticker"] == "AAPL"
+    assert out["sub_score"] == pytest.approx(75.0, abs=0.1)
+    assert out["components"]["article_count"] == 50
+    assert out["components"]["mean_sentiment_score"] == pytest.approx(0.5)
+    assert out["components"]["mean_relevance_score"] == pytest.approx(0.42)
+    assert out["components"]["confidence_blend"] == pytest.approx(1.0)
+
+    dq = out["data_quality"]
+    assert dq["has_sentiment"] is True
+    assert dq["article_count_sufficient"] is True
+    assert dq["is_stale"] is False
+    assert dq["days_since_scored"] == 0
+    assert dq["last_scored"] == "2026-05-16"
+
+
+def test_stored_fresh_zero_articles_returns_neutral():
+    """Fresh sentiment but 0 articles -> sub_score 50, has_sentiment True."""
+    sentiment = _stored(
+        last_scored="2026-05-16",
+        article_count=0,
+        mean_sentiment_score=None,
+        mean_relevance_score=None,
+        label_counts={},
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["sub_score"] == 50.0
+    # The file exists and is fresh, so has_sentiment reflects whether
+    # there is an actual sentiment score (None here) -- not the file's
+    # existence. Spec: has_sentiment True here per the brief.
+    assert out["data_quality"]["has_sentiment"] is False
+    assert out["data_quality"]["article_count_sufficient"] is False
+    assert out["data_quality"]["is_stale"] is False
+    assert out["data_quality"]["days_since_scored"] == 0
+
+
+def test_stored_two_days_old_still_fresh_under_default_policy():
+    """2 days old with default max_staleness_days=3 -> fresh, real data."""
+    sentiment = _stored(
+        last_scored="2026-05-14",
+        article_count=10,
+        mean_sentiment_score=0.5,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["data_quality"]["is_stale"] is False
+    assert out["data_quality"]["days_since_scored"] == 2
+    assert out["sub_score"] == pytest.approx(75.0, abs=0.1)
+
+
+def test_stored_five_days_old_collapses_to_neutral():
+    """5 days old with max_staleness_days=3 -> stale, neutral with diagnostics."""
+    sentiment = _stored(
+        last_scored="2026-05-11",
+        article_count=20,
+        mean_sentiment_score=0.9,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["sub_score"] == 50.0
+    dq = out["data_quality"]
+    assert dq["is_stale"] is True
+    assert dq["days_since_scored"] == 5
+    assert dq["last_scored"] == "2026-05-11"
+    # The stale branch preserves the raw stored fields in components so
+    # downstream UIs can still show "what we had, last time we looked".
+    assert out["components"]["article_count"] == 20
+    assert out["components"]["mean_sentiment_score"] == pytest.approx(0.9)
+
+
+def test_stored_strict_max_staleness_zero_makes_today_stale():
+    """max_staleness_days=0 means even today's file is too old."""
+    sentiment = _stored(
+        last_scored="2026-05-16",
+        article_count=10,
+        mean_sentiment_score=0.5,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL",
+        sentiment,
+        today="2026-05-16",
+        max_staleness_days=-1,
+    )
+
+    # With max_staleness_days=-1, even 0 days old (today) is > -1, so stale.
+    assert out["sub_score"] == 50.0
+    assert out["data_quality"]["is_stale"] is True
+    assert out["data_quality"]["days_since_scored"] == 0
+
+
+def test_stored_one_article_partial_confidence():
+    """1 article + +0.6 -> raw 80, blend 1/3, sub_score = 50 + 30/3 = 60.0."""
+    sentiment = _stored(
+        last_scored="2026-05-16",
+        article_count=1,
+        mean_sentiment_score=0.6,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["components"]["article_count"] == 1
+    assert out["components"]["confidence_blend"] == pytest.approx(1.0 / 3.0)
+    # raw = bounded_linear(0.6, -1, +1) = 80.0
+    assert out["components"]["sentiment_subscore_raw"] == pytest.approx(80.0)
+    # sub_score = 50 + (80 - 50) * 1/3 = 60.0
+    assert out["sub_score"] == pytest.approx(60.0, abs=0.1)
+    assert 50.0 < out["sub_score"] < 60.0 + 0.01
+    assert out["data_quality"]["article_count_sufficient"] is False
+    assert out["data_quality"]["is_stale"] is False
+
+
+def test_stored_sub_score_rounded_to_one_decimal():
+    """sub_score is rounded to exactly one decimal place."""
+    # 1 article + +0.5 -> raw 75, blend 1/3, sub = 50 + 25/3 = 58.333... -> 58.3
+    sentiment = _stored(
+        last_scored="2026-05-16",
+        article_count=1,
+        mean_sentiment_score=0.5,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["sub_score"] == pytest.approx(58.3, abs=1e-9)
+    assert out["sub_score"] == round(out["sub_score"], 1)
+
+
+def test_stored_null_mean_sentiment_returns_neutral():
+    """mean_sentiment_score=None in the dict -> sub_score 50 (treated as missing)."""
+    sentiment = _stored(
+        last_scored="2026-05-16",
+        article_count=10,  # plenty of articles but no scorable sentiment
+        mean_sentiment_score=None,
+        mean_relevance_score=None,
+    )
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert out["sub_score"] == 50.0
+    assert out["components"]["sentiment_subscore_raw"] == pytest.approx(50.0)
+    assert out["data_quality"]["has_sentiment"] is False
+    # article_count is high so this stays True even though sentiment is null --
+    # it accurately reflects that we DID get articles, just no scorable sentiment.
+    assert out["data_quality"]["article_count_sufficient"] is True
+    assert out["data_quality"]["is_stale"] is False
+
+
+def test_stored_return_shape_keys():
+    """Shape: top-level keys + nested keys including new data_quality fields."""
+    sentiment = _stored(last_scored="2026-05-16")
+    out = thesis.compute_thesis_from_stored_sentiment(
+        "AAPL", sentiment, today="2026-05-16"
+    )
+
+    assert set(out.keys()) == {"ticker", "sub_score", "components", "data_quality"}
+    assert set(out["components"].keys()) == {
+        "article_count",
+        "mean_sentiment_score",
+        "mean_relevance_score",
+        "label_counts",
+        "sentiment_subscore_raw",
+        "confidence_blend",
+    }
+    assert set(out["data_quality"].keys()) == {
+        "has_sentiment",
+        "article_count_sufficient",
+        "is_stale",
+        "days_since_scored",
+        "last_scored",
+    }
+
+
+# --- days_between_iso ------------------------------------------------------
+
+
+def test_days_between_iso_happy_path():
+    assert thesis.days_between_iso("2026-05-10", "2026-05-16") == 6
+    assert thesis.days_between_iso("2026-05-16", "2026-05-16") == 0
+
+
+def test_days_between_iso_can_be_negative():
+    """No clamping inside the helper -- the caller decides."""
+    assert thesis.days_between_iso("2026-05-16", "2026-05-10") == -6
+
+
+def test_days_between_iso_none_inputs():
+    assert thesis.days_between_iso(None, "2026-05-16") is None
+    assert thesis.days_between_iso("2026-05-16", None) is None
+    assert thesis.days_between_iso(None, None) is None
+    assert thesis.days_between_iso("", "2026-05-16") is None
+
+
+def test_days_between_iso_malformed_inputs():
+    assert thesis.days_between_iso("not-a-date", "2026-05-16") is None
+    assert thesis.days_between_iso("2026-05-16", "also-bad") is None
+    assert thesis.days_between_iso("2026-13-99", "2026-05-16") is None

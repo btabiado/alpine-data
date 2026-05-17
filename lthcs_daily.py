@@ -55,6 +55,7 @@ from lthcs import MODEL_VERSION, narratives, score
 from lthcs.persist import LthcsPersist
 from lthcs.pillars import adoption, des, financial, institutional, thesis
 from lthcs.sources import alpha_vantage, eia, fred, sec_edgar, yahoo
+from lthcs.sources.thesis_rotation import ThesisRotation
 
 
 UNIVERSE_PATH = REPO_ROOT / "data" / "lthcs" / "universe.json"
@@ -141,8 +142,11 @@ class PipelineState:
 
     # Stage 2
     macro_inputs: Dict[str, Optional[float]] = field(default_factory=dict)
-    av_response: Optional[Dict[str, Any]] = None
-    av_anchor_ticker: Optional[str] = None
+    av_response: Optional[Dict[str, Any]] = None       # legacy single-anchor path (kept for backward-compat)
+    av_anchor_ticker: Optional[str] = None             # legacy single-anchor path
+    rotation: Optional[ThesisRotation] = None
+    rotation_scored_today: List[str] = field(default_factory=list)
+    rotation_failures: List[str] = field(default_factory=list)
     rev_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     gp_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     ocf_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
@@ -391,27 +395,80 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     except Exception:
         state.macro_inputs = {}
 
-    # Alpha Vantage: one call, FIRST ticker only, unless skipped.
+    # Alpha Vantage: rotation — score up to 25 least-recently-scored tickers,
+    # each via a single-ticker call. Sentiment files live in
+    # <data_root>/sentiment/<TICKER>.json, committed to the repo so the
+    # browser tab can read them and replays work across days.
+    # data_root is taken from state.persist for test isolation.
+    persist_root = state.persist.data_root if state.persist is not None else None
+    rotation = ThesisRotation(data_root=persist_root, model_version="v1.0.0")
+    state.rotation = rotation
     av_status = "skipped"
     if not state.args.skip_thesis and state.active_tickers:
-        anchor = state.active_tickers[0]
         try:
-            state.av_response = alpha_vantage.get_news_sentiment([anchor], limit=50)
-            state.av_anchor_ticker = anchor
-            av_status = "yes"
+            todays_picks = rotation.select_tickers_for_today(
+                state.active_tickers, today=state.calc_date
+            )
         except Exception as exc:
             if state.args.verbose:
-                print("  AV fetch failed: %s" % exc)
-            state.av_response = None
-            av_status = "failed"
+                print("  rotation selection failed: %s" % exc)
+            todays_picks = []
+
+        scored_now: List[str] = []
+        failed_now: List[str] = []
+        for pick in todays_picks:
+            try:
+                # Per-ticker AV call (cached 24h; rate-limited 25/day by the
+                # token bucket inside alpha_vantage.py).
+                resp = alpha_vantage.get_news_sentiment([pick], limit=50)
+                summary = alpha_vantage.parse_ticker_sentiment(resp, pick)
+                rotation.write_sentiment(
+                    ticker=pick,
+                    article_count=summary["article_count"],
+                    mean_sentiment_score=summary["mean_sentiment_score"],
+                    mean_relevance_score=summary["mean_relevance_score"],
+                    label_counts=summary["label_counts"],
+                    today=state.calc_date,
+                )
+                rotation.record_scored(pick, today=state.calc_date)
+                scored_now.append(pick)
+            except Exception as exc:
+                failed_now.append(pick)
+                if state.args.verbose:
+                    print("  AV %s failed: %s" % (pick, type(exc).__name__))
+                # Stop attempting once we hit the rate-limit signal to save
+                # whatever budget the bucket may still grant on retry tomorrow.
+                if "RateLimit" in type(exc).__name__:
+                    break
+
+        state.rotation_scored_today = scored_now
+        state.rotation_failures = failed_now
+        if scored_now:
+            av_status = "%d scored (%d failed)" % (len(scored_now), len(failed_now))
+        elif failed_now:
+            av_status = "all failed"
+        else:
+            av_status = "no picks"
     state.fetch_counts = counts
 
     if state.args.verbose:
         for k, v in counts.items():
             print("  %s: %d" % (k, v))
 
+    coverage = (
+        state.rotation.coverage_stats(state.active_tickers, today=state.calc_date)
+        if state.rotation
+        else None
+    )
+    coverage_str = (
+        ""
+        if coverage is None
+        else "  (coverage: fresh %d, stale %d, never %d, today %d)"
+        % (coverage["fresh"], coverage["stale"], coverage["never_scored"], coverage["scored_today"])
+    )
+
     print(
-        "✓ Stage 2: Fetched %d/%d Yahoo, %d/%d SEC EDGAR, %d/1 FRED, %d/1 EIA, AV=%s"
+        "✓ Stage 2: Fetched %d/%d Yahoo, %d/%d SEC EDGAR, %d/1 FRED, %d/1 EIA, AV=%s%s"
         % (
             counts["yahoo_momentum_ok"],
             n,
@@ -420,6 +477,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             counts["fred_ok"],
             counts["eia_ok"],
             av_status,
+            coverage_str,
         )
     )
     return True
@@ -439,7 +497,15 @@ def stage_3_quality_checks(state: PipelineState) -> bool:
             flags.append("yahoo_unavailable")
         if not has_sec:
             flags.append("sec_unavailable")
-        if state.av_response is None or sym != state.av_anchor_ticker:
+        # Thesis: ticker is "available" iff we have fresh stored sentiment.
+        thesis_available = False
+        if state.rotation is not None and not state.args.skip_thesis:
+            sentiment = state.rotation.read_sentiment(sym)
+            if sentiment is not None and not state.rotation.is_stale(
+                sentiment, today=state.calc_date
+            ):
+                thesis_available = True
+        if not thesis_available:
             flags.append("thesis_unavailable")
         if state.volatility_by_ticker.get(sym) is None:
             flags.append("volatility_unavailable")
@@ -502,14 +568,15 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         except Exception:
             fin = _neutral_pillar_result(sym, "financial_evolution")
 
-        # Thesis: real AV data only when this ticker matches the anchor.
-        if (
-            state.av_response is not None
-            and sym == state.av_anchor_ticker
-            and not state.args.skip_thesis
-        ):
+        # Thesis: read per-ticker stored sentiment (written by the rotation
+        # over a 3-day cycle). If the file is missing or stale, the new
+        # function returns a neutral 50 with data_quality flags set.
+        if not state.args.skip_thesis and state.rotation is not None:
             try:
-                th = thesis.compute_thesis(sym, state.av_response)
+                sentiment = state.rotation.read_sentiment(sym)
+                th = thesis.compute_thesis_from_stored_sentiment(
+                    sym, sentiment, today=state.calc_date
+                )
             except Exception:
                 th = _neutral_thesis(sym)
         else:

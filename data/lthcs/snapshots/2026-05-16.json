@@ -784,21 +784,19 @@
     },
     {
       "ticker": "ABBV",
-      "lthcs_score": 50.2,
+      "lthcs_score": 52.1,
       "band": "weakening",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 54.2,
         "institutional_confidence": 38.9,
         "financial_evolution": 65.0,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 59.8,
         "des": 45.4
       },
       "modifiers": {
@@ -818,7 +816,7 @@
         13.55,
         7.78,
         9.75,
-        10.0,
+        11.96,
         9.08
       ],
       "sector": "Health Care"
@@ -907,21 +905,19 @@
     },
     {
       "ticker": "CVX",
-      "lthcs_score": 49.4,
-      "band": "review",
+      "lthcs_score": 51.0,
+      "band": "weakening",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 23.3,
         "institutional_confidence": 80.6,
         "financial_evolution": 33.5,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 58.3,
         "des": 61.9
       },
       "modifiers": {
@@ -941,7 +937,7 @@
         5.825,
         16.12,
         5.0249999999999995,
-        10.0,
+        11.66,
         12.38
       ],
       "sector": "Energy"
@@ -989,21 +985,19 @@
     },
     {
       "ticker": "BAC",
-      "lthcs_score": 47.1,
+      "lthcs_score": 47.4,
       "band": "review",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 49.2,
         "institutional_confidence": 19.4,
         "financial_evolution": 50.4,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 51.5,
         "des": 66.9
       },
       "modifiers": {
@@ -1023,7 +1017,7 @@
         12.3,
         3.88,
         7.56,
-        10.0,
+        10.3,
         13.380000000000003
       ],
       "sector": "Financials"
@@ -1973,21 +1967,19 @@
     },
     {
       "ticker": "CDNS",
-      "lthcs_score": 57.0,
-      "band": "weakening",
+      "lthcs_score": 59.6,
+      "band": "review",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 64.2,
         "institutional_confidence": 62.5,
         "financial_evolution": 71.1,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 62.6,
         "des": 39.1
       },
       "modifiers": {
@@ -2007,7 +1999,7 @@
         16.05,
         12.5,
         10.665,
-        10.0,
+        12.520000000000001,
         7.82
       ],
       "sector": "Technology"
@@ -2260,21 +2252,19 @@
     },
     {
       "ticker": "AMGN",
-      "lthcs_score": 51.7,
+      "lthcs_score": 52.9,
       "band": "weakening",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 57.5,
         "institutional_confidence": 51.4,
         "financial_evolution": 53.0,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 56.3,
         "des": 45.4
       },
       "modifiers": {
@@ -2294,7 +2284,7 @@
         14.375,
         10.280000000000001,
         7.949999999999999,
-        10.0,
+        11.26,
         9.08
       ],
       "sector": "Health Care"
@@ -2958,21 +2948,19 @@
     },
     {
       "ticker": "GE",
-      "lthcs_score": 53.1,
+      "lthcs_score": 55.0,
       "band": "weakening",
       "drift_1d": 0.0,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 70.8,
         "institutional_confidence": 18.1,
         "financial_evolution": 78.1,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 59.7,
         "des": 50.1
       },
       "modifiers": {
@@ -2992,7 +2980,7 @@
         17.7,
         3.6200000000000006,
         11.714999999999998,
-        10.0,
+        11.940000000000001,
         10.020000000000001
       ],
       "sector": "Industrials"
@@ -3005,10 +2993,8 @@
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
-      "confidence_level": "medium",
-      "data_quality_flags": [
-        "thesis_unavailable"
-      ],
+      "confidence_level": "high",
+      "data_quality_flags": [],
       "subscores": {
         "adoption_momentum": 80.0,
         "institutional_confidence": 0.0,
