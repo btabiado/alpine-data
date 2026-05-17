@@ -1,0 +1,11 @@
+{
+  "ticker": "ILMN",
+  "model_version": "v1.0.0",
+  "history": [
+    {
+      "date": "2026-05-17",
+      "score": 40.6,
+      "band": "review"
+    }
+  ]
+}

@@ -41,9 +41,17 @@
 
     <main class="lthcs-main">
       <section class="lthcs-section lthcs-summary" aria-label="Sentiment summary">
-        <div class="lthcs-stat" data-band="total">
-          <span class="lthcs-stat-count" id="lthcs-stat-total">&mdash;</span>
-          <span class="lthcs-stat-label">Total</span>
+        <div class="lthcs-stat lthcs-stat-clickable" data-index="djia" role="button" tabindex="0" aria-label="Filter to DJIA">
+          <span class="lthcs-stat-count" data-index-count="djia">&mdash;</span>
+          <span class="lthcs-stat-label">DJIA 30</span>
+        </div>
+        <div class="lthcs-stat lthcs-stat-clickable" data-index="nasdaq-100" role="button" tabindex="0" aria-label="Filter to NASDAQ-100">
+          <span class="lthcs-stat-count" data-index-count="nasdaq-100">&mdash;</span>
+          <span class="lthcs-stat-label">NASDAQ-100</span>
+        </div>
+        <div class="lthcs-stat lthcs-stat-clickable" data-index="sp-100" role="button" tabindex="0" aria-label="Filter to S&amp;P 100">
+          <span class="lthcs-stat-count" data-index-count="sp-100">&mdash;</span>
+          <span class="lthcs-stat-label">S&amp;P 100</span>
         </div>
         <div class="lthcs-stat" data-band="elite">
           <span class="lthcs-stat-count" data-band-count="elite">&mdash;</span>
@@ -84,12 +92,13 @@
           />
         </div>
 
-        <div class="lthcs-filter-row" role="group" aria-label="Exchange filter">
-          <span class="lthcs-filter-label">Exchange</span>
+        <div class="lthcs-filter-row" role="group" aria-label="Index filter">
+          <span class="lthcs-filter-label">Index</span>
           <div class="lthcs-chip-group">
-            <button type="button" class="lthcs-chip is-active" data-filter-group="exchange" data-filter-value="all">All</button>
-            <button type="button" class="lthcs-chip" data-filter-group="exchange" data-filter-value="NASDAQ">NASDAQ</button>
-            <button type="button" class="lthcs-chip" data-filter-group="exchange" data-filter-value="NYSE">NYSE</button>
+            <button type="button" class="lthcs-chip is-active" data-filter-group="index" data-filter-value="all">All</button>
+            <button type="button" class="lthcs-chip" data-filter-group="index" data-filter-value="djia">DJIA 30</button>
+            <button type="button" class="lthcs-chip" data-filter-group="index" data-filter-value="nasdaq-100">NASDAQ-100</button>
+            <button type="button" class="lthcs-chip" data-filter-group="index" data-filter-value="sp-100">S&amp;P 100</button>
           </div>
         </div>
 

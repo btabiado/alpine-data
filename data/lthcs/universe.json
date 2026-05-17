@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-05-16",
-  "description": "LTHCS V1 universe \u2014 75 US-listed names spanning S&P 500, NASDAQ-100, and DJIA with deliberate inclusion of pre-profit (LCID) and recovery (INTC) test cases.",
+  "version": "2.0.0",
+  "last_updated": "2026-05-17",
+  "description": "LTHCS V2 universe \u2014 full DJIA 30 + NASDAQ-100 + S&P 100, deduped to 169 unique tickers. Includes pre-profit (LCID) and recovery (INTC, BA, GE) test cases.",
   "tickers": [
     {
       "ticker": "AAPL",
@@ -9,6 +9,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100",
         "DJIA"
       ],
@@ -18,244 +19,12 @@
       "active": true
     },
     {
-      "ticker": "MSFT",
-      "name": "Microsoft Corporation",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100",
-        "DJIA"
-      ],
-      "sector": "Technology",
-      "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "NVDA",
-      "name": "NVIDIA Corporation",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100",
-        "DJIA"
-      ],
-      "sector": "Technology",
-      "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "AMZN",
-      "name": "Amazon.com, Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100",
-        "DJIA"
-      ],
-      "sector": "Consumer Discretionary",
-      "industry": "E-Commerce",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "GOOGL",
-      "name": "Alphabet Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Communication Services",
-      "industry": "Internet Services",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "META",
-      "name": "Meta Platforms, Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Communication Services",
-      "industry": "Social Media",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "TSLA",
-      "name": "Tesla, Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Consumer Discretionary",
-      "industry": "Automobiles",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "BRK.B",
-      "name": "Berkshire Hathaway Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Financials",
-      "industry": "Diversified",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "LLY",
-      "name": "Eli Lilly and Company",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Health Care",
-      "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "JPM",
-      "name": "JPMorgan Chase & Co.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Financials",
-      "industry": "Banks",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "V",
-      "name": "Visa Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Financials",
-      "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "UNH",
-      "name": "UnitedHealth Group Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Health Care",
-      "industry": "Managed Care",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "XOM",
-      "name": "Exxon Mobil Corporation",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Energy",
-      "industry": "Integrated Oil & Gas",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "MA",
-      "name": "Mastercard Incorporated",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Financials",
-      "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "JNJ",
-      "name": "Johnson & Johnson",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Health Care",
-      "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "PG",
-      "name": "Procter & Gamble Company",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Consumer Staples",
-      "industry": "Household Products",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "HD",
-      "name": "The Home Depot, Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Consumer Discretionary",
-      "industry": "Specialty Retail",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "COST",
-      "name": "Costco Wholesale Corporation",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Consumer Staples",
-      "industry": "Hypermarkets",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "MRK",
-      "name": "Merck & Co., Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Health Care",
-      "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
       "ticker": "ABBV",
       "name": "AbbVie Inc.",
       "exchange": "NYSE",
       "index_membership": [
-        "S&P 500"
+        "S&P 500",
+        "S&P 100"
       ],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
@@ -263,65 +32,41 @@
       "active": true
     },
     {
-      "ticker": "AVGO",
-      "name": "Broadcom Inc.",
+      "ticker": "ABNB",
+      "name": "Airbnb, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
-      "sector": "Technology",
-      "industry": "Semiconductors",
+      "sector": "Consumer Discretionary",
+      "industry": "Online Travel",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "ORCL",
-      "name": "Oracle Corporation",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Technology",
-      "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "CVX",
-      "name": "Chevron Corporation",
+      "ticker": "ABT",
+      "name": "Abbott Laboratories",
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
-        "DJIA"
+        "S&P 100"
       ],
-      "sector": "Energy",
-      "industry": "Integrated Oil & Gas",
+      "sector": "Health Care",
+      "industry": "Medical Devices",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "KO",
-      "name": "The Coca-Cola Company",
+      "ticker": "ACN",
+      "name": "Accenture plc",
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
-        "DJIA"
+        "S&P 100"
       ],
-      "sector": "Consumer Staples",
-      "industry": "Soft Drinks",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "BAC",
-      "name": "Bank of America Corporation",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Financials",
-      "industry": "Banks",
+      "sector": "Technology",
+      "industry": "IT Services",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -331,6 +76,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Technology",
@@ -339,8 +85,8 @@
       "active": true
     },
     {
-      "ticker": "AMD",
-      "name": "Advanced Micro Devices, Inc.",
+      "ticker": "ADI",
+      "name": "Analog Devices, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
@@ -348,45 +94,6 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "INTC",
-      "name": "Intel Corporation",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Technology",
-      "industry": "Semiconductors",
-      "maturity_stage": "recovery_stabilization",
-      "active": true
-    },
-    {
-      "ticker": "INTU",
-      "name": "Intuit Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Technology",
-      "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "ISRG",
-      "name": "Intuitive Surgical, Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Health Care",
-      "industry": "Medical Devices",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -404,67 +111,28 @@
       "active": true
     },
     {
-      "ticker": "NFLX",
-      "name": "Netflix, Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Communication Services",
-      "industry": "Streaming Media",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "CMCSA",
-      "name": "Comcast Corporation",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Communication Services",
-      "industry": "Media",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "PEP",
-      "name": "PepsiCo, Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100"
-      ],
-      "sector": "Consumer Staples",
-      "industry": "Soft Drinks",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "QCOM",
-      "name": "QUALCOMM Incorporated",
+      "ticker": "ADSK",
+      "name": "Autodesk, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
       "sector": "Technology",
-      "industry": "Semiconductors",
+      "industry": "Software",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "TXN",
-      "name": "Texas Instruments Incorporated",
+      "ticker": "AEP",
+      "name": "American Electric Power Company, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
-      "sector": "Technology",
-      "industry": "Semiconductors",
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -482,11 +150,199 @@
       "active": true
     },
     {
+      "ticker": "AMD",
+      "name": "Advanced Micro Devices, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "AMGN",
+      "name": "Amgen Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100",
+        "DJIA"
+      ],
+      "sector": "Health Care",
+      "industry": "Biotechnology",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "AMT",
+      "name": "American Tower Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Real Estate",
+      "industry": "Telecom REITs",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "AMZN",
+      "name": "Amazon.com, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100",
+        "DJIA"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "E-Commerce",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ANSS",
+      "name": "ANSYS, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Engineering Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ARM",
+      "name": "Arm Holdings plc",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ASML",
+      "name": "ASML Holding N.V.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductor Equipment",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "AVGO",
+      "name": "Broadcom Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "AXP",
+      "name": "American Express Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Financials",
+      "industry": "Payments",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "AZN",
+      "name": "AstraZeneca PLC",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Pharmaceuticals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "BA",
+      "name": "The Boeing Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Industrials",
+      "industry": "Aerospace & Defense",
+      "maturity_stage": "recovery_stabilization",
+      "active": true
+    },
+    {
+      "ticker": "BAC",
+      "name": "Bank of America Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Banks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "BIIB",
+      "name": "Biogen Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Biotechnology",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "BK",
+      "name": "The Bank of New York Mellon Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Banks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
       "ticker": "BKNG",
       "name": "Booking Holdings Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Consumer Discretionary",
@@ -495,11 +351,551 @@
       "active": true
     },
     {
-      "ticker": "MU",
-      "name": "Micron Technology, Inc.",
+      "ticker": "BKR",
+      "name": "Baker Hughes Company",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Energy",
+      "industry": "Oil & Gas Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "BLK",
+      "name": "BlackRock, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Asset Management",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "BMY",
+      "name": "Bristol-Myers Squibb Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Health Care",
+      "industry": "Pharmaceuticals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "BRK.B",
+      "name": "Berkshire Hathaway Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Diversified",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "C",
+      "name": "Citigroup Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Banks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CAT",
+      "name": "Caterpillar Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Industrials",
+      "industry": "Heavy Machinery",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CCEP",
+      "name": "Coca-Cola Europacific Partners plc",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Soft Drinks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CDNS",
+      "name": "Cadence Design Systems, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "EDA Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CDW",
+      "name": "CDW Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "IT Distribution",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CEG",
+      "name": "Constellation Energy Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CHTR",
+      "name": "Charter Communications, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Cable",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CL",
+      "name": "Colgate-Palmolive Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Household Products",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CMCSA",
+      "name": "Comcast Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Media",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "COF",
+      "name": "Capital One Financial Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Consumer Finance",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "COP",
+      "name": "ConocoPhillips",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Energy",
+      "industry": "Oil & Gas E&P",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "COST",
+      "name": "Costco Wholesale Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Hypermarkets",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CRM",
+      "name": "Salesforce, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CRWD",
+      "name": "CrowdStrike Holdings, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Cybersecurity",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CSCO",
+      "name": "Cisco Systems, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100",
+        "DJIA"
+      ],
+      "sector": "Technology",
+      "industry": "Networking Equipment",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CSGP",
+      "name": "CoStar Group, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Data Analytics",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CTAS",
+      "name": "Cintas Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Uniform Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CTSH",
+      "name": "Cognizant Technology Solutions",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "IT Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CVS",
+      "name": "CVS Health Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Drug Retail",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "CVX",
+      "name": "Chevron Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Energy",
+      "industry": "Integrated Oil & Gas",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DASH",
+      "name": "DoorDash, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Online Delivery",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DDOG",
+      "name": "Datadog, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DE",
+      "name": "Deere & Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Agricultural Machinery",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DHR",
+      "name": "Danaher Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Health Care",
+      "industry": "Life Sciences Tools",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DIS",
+      "name": "The Walt Disney Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Communication Services",
+      "industry": "Media & Entertainment",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DUK",
+      "name": "Duke Energy Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "DXCM",
+      "name": "DexCom, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Medical Devices",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "EA",
+      "name": "Electronic Arts Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Video Games",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "EMR",
+      "name": "Emerson Electric Co.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Diversified Industrials",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "EXC",
+      "name": "Exelon Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "F",
+      "name": "Ford Motor Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Automobiles",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "FANG",
+      "name": "Diamondback Energy, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Energy",
+      "industry": "Oil & Gas E&P",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "FAST",
+      "name": "Fastenal Company",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Industrial Distribution",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "FTNT",
+      "name": "Fortinet, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Cybersecurity",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "GD",
+      "name": "General Dynamics Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Aerospace & Defense",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "GE",
+      "name": "GE Aerospace",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Aerospace & Defense",
+      "maturity_stage": "recovery_rerating",
+      "active": true
+    },
+    {
+      "ticker": "GEHC",
+      "name": "GE HealthCare Technologies Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Medical Devices",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "GFS",
+      "name": "GlobalFoundries Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
         "NASDAQ-100"
       ],
       "sector": "Technology",
@@ -513,6 +909,7 @@
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Health Care",
@@ -521,63 +918,219 @@
       "active": true
     },
     {
-      "ticker": "PYPL",
-      "name": "PayPal Holdings, Inc.",
+      "ticker": "GM",
+      "name": "General Motors Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Automobiles",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "GOOG",
+      "name": "Alphabet Inc. Class C",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Internet Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "GOOGL",
+      "name": "Alphabet Inc. Class A",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Internet Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "GS",
+      "name": "The Goldman Sachs Group, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
       ],
       "sector": "Financials",
-      "industry": "Payments",
+      "industry": "Investment Banking",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "REGN",
-      "name": "Regeneron Pharmaceuticals",
+      "ticker": "HD",
+      "name": "The Home Depot, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Specialty Retail",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "HON",
+      "name": "Honeywell International Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100",
+        "DJIA"
+      ],
+      "sector": "Industrials",
+      "industry": "Diversified Industrials",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "IBM",
+      "name": "International Business Machines",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Technology",
+      "industry": "IT Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "IDXX",
+      "name": "IDEXX Laboratories, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
       "sector": "Health Care",
-      "industry": "Biotechnology",
+      "industry": "Diagnostics",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "VRTX",
-      "name": "Vertex Pharmaceuticals Inc.",
+      "ticker": "ILMN",
+      "name": "Illumina, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
       "sector": "Health Care",
-      "industry": "Biotechnology",
+      "industry": "Life Sciences Tools",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "LRCX",
-      "name": "Lam Research Corporation",
+      "ticker": "INTC",
+      "name": "Intel Corporation",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Technology",
-      "industry": "Semiconductor Equipment",
+      "industry": "Semiconductors",
+      "maturity_stage": "recovery_stabilization",
+      "active": true
+    },
+    {
+      "ticker": "INTU",
+      "name": "Intuit Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "MDLZ",
-      "name": "Mondelez International, Inc.",
+      "ticker": "ISRG",
+      "name": "Intuitive Surgical, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Medical Devices",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "JNJ",
+      "name": "Johnson & Johnson",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Health Care",
+      "industry": "Pharmaceuticals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "JPM",
+      "name": "JPMorgan Chase & Co.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Financials",
+      "industry": "Banks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "KDP",
+      "name": "Keurig Dr Pepper Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Soft Drinks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "KHC",
+      "name": "The Kraft Heinz Company",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
         "NASDAQ-100"
       ],
       "sector": "Consumer Staples",
@@ -599,15 +1152,482 @@
       "active": true
     },
     {
-      "ticker": "SBUX",
-      "name": "Starbucks Corporation",
+      "ticker": "KO",
+      "name": "The Coca-Cola Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Soft Drinks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "LCID",
+      "name": "Lucid Group, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
       "sector": "Consumer Discretionary",
+      "industry": "Automobiles",
+      "maturity_stage": "pre_profit_growth",
+      "active": true
+    },
+    {
+      "ticker": "LIN",
+      "name": "Linde plc",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Materials",
+      "industry": "Industrial Gases",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "LLY",
+      "name": "Eli Lilly and Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Health Care",
+      "industry": "Pharmaceuticals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "LMT",
+      "name": "Lockheed Martin Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Aerospace & Defense",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "LOW",
+      "name": "Lowe's Companies, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Specialty Retail",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "LRCX",
+      "name": "Lam Research Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductor Equipment",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "LULU",
+      "name": "Lululemon Athletica Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Apparel",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MA",
+      "name": "Mastercard Incorporated",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Payments",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MAR",
+      "name": "Marriott International, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Hotels",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MCD",
+      "name": "McDonald's Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Consumer Discretionary",
       "industry": "Restaurants",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MCHP",
+      "name": "Microchip Technology Incorporated",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MDB",
+      "name": "MongoDB, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MDLZ",
+      "name": "Mondelez International, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Packaged Foods",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MDT",
+      "name": "Medtronic plc",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Health Care",
+      "industry": "Medical Devices",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MELI",
+      "name": "MercadoLibre, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "E-Commerce",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MET",
+      "name": "MetLife, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Insurance",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "META",
+      "name": "Meta Platforms, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Social Media",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MMM",
+      "name": "3M Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Industrials",
+      "industry": "Diversified Industrials",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MNST",
+      "name": "Monster Beverage Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Soft Drinks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MO",
+      "name": "Altria Group, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Tobacco",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MRK",
+      "name": "Merck & Co., Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Health Care",
+      "industry": "Pharmaceuticals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MRVL",
+      "name": "Marvell Technology, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MS",
+      "name": "Morgan Stanley",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Investment Banking",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MSFT",
+      "name": "Microsoft Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100",
+        "DJIA"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron Technology, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "NEE",
+      "name": "NextEra Energy, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "NFLX",
+      "name": "Netflix, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Streaming Media",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "NKE",
+      "name": "NIKE, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Apparel",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "NOW",
+      "name": "ServiceNow, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "NVDA",
+      "name": "NVIDIA Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100",
+        "DJIA"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "NXPI",
+      "name": "NXP Semiconductors N.V.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ODFL",
+      "name": "Old Dominion Freight Line, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Trucking",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ON",
+      "name": "ON Semiconductor Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ORCL",
+      "name": "Oracle Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ORLY",
+      "name": "O'Reilly Automotive, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Auto Parts Retail",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -625,15 +1645,227 @@
       "active": true
     },
     {
-      "ticker": "CDNS",
-      "name": "Cadence Design Systems, Inc.",
+      "ticker": "PAYX",
+      "name": "Paychex, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "HR & Payroll Services",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PCAR",
+      "name": "PACCAR Inc",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Heavy Truck Manufacturing",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PDD",
+      "name": "PDD Holdings Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "E-Commerce",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PEP",
+      "name": "PepsiCo, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Soft Drinks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PFE",
+      "name": "Pfizer Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Health Care",
+      "industry": "Pharmaceuticals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PG",
+      "name": "Procter & Gamble Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Household Products",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PM",
+      "name": "Philip Morris International Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Consumer Staples",
+      "industry": "Tobacco",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "PYPL",
+      "name": "PayPal Holdings, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Financials",
+      "industry": "Payments",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "QCOM",
+      "name": "QUALCOMM Incorporated",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "REGN",
+      "name": "Regeneron Pharmaceuticals",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Biotechnology",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ROP",
+      "name": "Roper Technologies, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Diversified Industrials",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ROST",
+      "name": "Ross Stores, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Off-Price Retail",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "RTX",
+      "name": "RTX Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Aerospace & Defense",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "SBUX",
+      "name": "Starbucks Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Restaurants",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "SCHW",
+      "name": "The Charles Schwab Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Brokers",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "SHW",
+      "name": "The Sherwin-Williams Company",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "DJIA"
+      ],
+      "sector": "Materials",
+      "industry": "Specialty Chemicals",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "SMCI",
+      "name": "Super Micro Computer, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
         "NASDAQ-100"
       ],
       "sector": "Technology",
-      "industry": "EDA Software",
+      "industry": "Computer Hardware",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -651,12 +1883,51 @@
       "active": true
     },
     {
-      "ticker": "CRM",
-      "name": "Salesforce, Inc.",
+      "ticker": "SO",
+      "name": "The Southern Company",
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
-        "DJIA"
+        "S&P 100"
+      ],
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "SPG",
+      "name": "Simon Property Group, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Real Estate",
+      "industry": "Retail REITs",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "T",
+      "name": "AT&T Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Telecom",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "TEAM",
+      "name": "Atlassian Corporation",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
       ],
       "sector": "Technology",
       "industry": "Software",
@@ -664,95 +1935,42 @@
       "active": true
     },
     {
-      "ticker": "CAT",
-      "name": "Caterpillar Inc.",
+      "ticker": "TGT",
+      "name": "Target Corporation",
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Industrials",
-      "industry": "Heavy Machinery",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "MCD",
-      "name": "McDonald's Corporation",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
+        "S&P 100"
       ],
       "sector": "Consumer Discretionary",
-      "industry": "Restaurants",
+      "industry": "Discount Retail",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "AXP",
-      "name": "American Express Company",
+      "ticker": "TMO",
+      "name": "Thermo Fisher Scientific Inc.",
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Financials",
-      "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "HON",
-      "name": "Honeywell International Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100",
-        "DJIA"
-      ],
-      "sector": "Industrials",
-      "industry": "Diversified Industrials",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "AMGN",
-      "name": "Amgen Inc.",
-      "exchange": "NASDAQ",
-      "index_membership": [
-        "S&P 500",
-        "NASDAQ-100",
-        "DJIA"
+        "S&P 100"
       ],
       "sector": "Health Care",
-      "industry": "Biotechnology",
+      "industry": "Life Sciences Tools",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "BA",
-      "name": "The Boeing Company",
-      "exchange": "NYSE",
+      "ticker": "TMUS",
+      "name": "T-Mobile US, Inc.",
+      "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
-        "DJIA"
+        "S&P 100",
+        "NASDAQ-100"
       ],
-      "sector": "Industrials",
-      "industry": "Aerospace & Defense",
-      "maturity_stage": "recovery_stabilization",
-      "active": true
-    },
-    {
-      "ticker": "IBM",
-      "name": "International Business Machines",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Technology",
-      "industry": "IT Services",
+      "sector": "Communication Services",
+      "industry": "Telecom",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -770,81 +1988,149 @@
       "active": true
     },
     {
-      "ticker": "NKE",
-      "name": "NIKE, Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Consumer Discretionary",
-      "industry": "Apparel",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "DIS",
-      "name": "The Walt Disney Company",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Communication Services",
-      "industry": "Media & Entertainment",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "MMM",
-      "name": "3M Company",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Industrials",
-      "industry": "Diversified Industrials",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "DOW",
-      "name": "Dow Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Materials",
-      "industry": "Chemicals",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "WMT",
-      "name": "Walmart Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Consumer Staples",
-      "industry": "Hypermarkets",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "CSCO",
-      "name": "Cisco Systems, Inc.",
+      "ticker": "TSLA",
+      "name": "Tesla, Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
         "S&P 500",
-        "NASDAQ-100",
-        "DJIA"
+        "S&P 100",
+        "NASDAQ-100"
+      ],
+      "sector": "Consumer Discretionary",
+      "industry": "Automobiles",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "TTD",
+      "name": "The Trade Desk, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Digital Advertising",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "TTWO",
+      "name": "Take-Two Interactive Software, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Video Games",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "TXN",
+      "name": "Texas Instruments Incorporated",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "NASDAQ-100"
       ],
       "sector": "Technology",
-      "industry": "Networking Equipment",
+      "industry": "Semiconductors",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "UNH",
+      "name": "UnitedHealth Group Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Health Care",
+      "industry": "Managed Care",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "UNP",
+      "name": "Union Pacific Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Railroads",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "UPS",
+      "name": "United Parcel Service, Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Industrials",
+      "industry": "Logistics",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "USB",
+      "name": "U.S. Bancorp",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Banks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "V",
+      "name": "Visa Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
+        "DJIA"
+      ],
+      "sector": "Financials",
+      "industry": "Payments",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "VRSK",
+      "name": "Verisk Analytics, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Industrials",
+      "industry": "Data Analytics",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "VRTX",
+      "name": "Vertex Pharmaceuticals Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Health Care",
+      "industry": "Biotechnology",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -854,23 +2140,11 @@
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
+        "S&P 100",
         "DJIA"
       ],
       "sector": "Communication Services",
       "industry": "Telecom",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "GS",
-      "name": "The Goldman Sachs Group, Inc.",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500",
-        "DJIA"
-      ],
-      "sector": "Financials",
-      "industry": "Investment Banking",
       "maturity_stage": "standard_compounder",
       "active": true
     },
@@ -889,88 +2163,95 @@
       "inactive_reason": "Walgreens Boots Alliance taken private by Sycamore Partners (late 2025); no longer files with SEC."
     },
     {
-      "ticker": "SHW",
-      "name": "The Sherwin-Williams Company",
+      "ticker": "WBD",
+      "name": "Warner Bros. Discovery, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Communication Services",
+      "industry": "Media",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "WDAY",
+      "name": "Workday, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Software",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "WFC",
+      "name": "Wells Fargo & Company",
       "exchange": "NYSE",
       "index_membership": [
         "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Financials",
+      "industry": "Banks",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "WMT",
+      "name": "Walmart Inc.",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100",
         "DJIA"
       ],
-      "sector": "Materials",
-      "industry": "Specialty Chemicals",
+      "sector": "Consumer Staples",
+      "industry": "Hypermarkets",
       "maturity_stage": "standard_compounder",
       "active": true
     },
     {
-      "ticker": "LMT",
-      "name": "Lockheed Martin Corporation",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Industrials",
-      "industry": "Aerospace & Defense",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "DE",
-      "name": "Deere & Company",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Industrials",
-      "industry": "Agricultural Machinery",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "RTX",
-      "name": "RTX Corporation",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Industrials",
-      "industry": "Aerospace & Defense",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "F",
-      "name": "Ford Motor Company",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Consumer Discretionary",
-      "industry": "Automobiles",
-      "maturity_stage": "standard_compounder",
-      "active": true
-    },
-    {
-      "ticker": "GE",
-      "name": "GE Aerospace",
-      "exchange": "NYSE",
-      "index_membership": [
-        "S&P 500"
-      ],
-      "sector": "Industrials",
-      "industry": "Aerospace & Defense",
-      "maturity_stage": "recovery_rerating",
-      "active": true
-    },
-    {
-      "ticker": "LCID",
-      "name": "Lucid Group, Inc.",
+      "ticker": "XEL",
+      "name": "Xcel Energy Inc.",
       "exchange": "NASDAQ",
       "index_membership": [
+        "S&P 500",
         "NASDAQ-100"
       ],
-      "sector": "Consumer Discretionary",
-      "industry": "Automobiles",
-      "maturity_stage": "pre_profit_growth",
+      "sector": "Utilities",
+      "industry": "Electric Utilities",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "XOM",
+      "name": "Exxon Mobil Corporation",
+      "exchange": "NYSE",
+      "index_membership": [
+        "S&P 500",
+        "S&P 100"
+      ],
+      "sector": "Energy",
+      "industry": "Integrated Oil & Gas",
+      "maturity_stage": "standard_compounder",
+      "active": true
+    },
+    {
+      "ticker": "ZS",
+      "name": "Zscaler, Inc.",
+      "exchange": "NASDAQ",
+      "index_membership": [
+        "S&P 500",
+        "NASDAQ-100"
+      ],
+      "sector": "Technology",
+      "industry": "Cybersecurity",
+      "maturity_stage": "standard_compounder",
       "active": true
     }
   ]

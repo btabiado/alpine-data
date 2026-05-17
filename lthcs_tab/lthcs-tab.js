@@ -47,7 +47,17 @@ const SPARKLINE_IMPROVING = '▁▂▃▄▅▆▇█';
 const SPARKLINE_STABLE = '▄▄▅▄▅▄▄▄';
 const SPARKLINE_DECLINING = '█▇▆▅▄▃▂▁';
 
-const FILTER_GROUPS = ['exchange', 'band', 'drift'];
+const FILTER_GROUPS = ['index', 'band', 'drift'];
+
+// Map universe.json `index_membership` values → short DOM keys used in
+// filters and stat tiles.
+const INDEX_KEY_NORMALIZE = {
+  'DJIA': 'djia',
+  'NASDAQ-100': 'nasdaq-100',
+  'S&P 100': 'sp-100',
+  'S&P 500': 'sp-500',
+};
+const INDEX_FILTERS = ['djia', 'nasdaq-100', 'sp-100'];
 
 // ---------------------------------------------------------------------------
 // State
@@ -59,7 +69,7 @@ const state = {
   universeByTicker: {},  // ticker -> universe entry
   enriched: [],          // merged score+universe rows
   activeFilters: {
-    exchange: 'all',
+    index: 'all',
     band: 'all',
     drift: 'all',
   },
@@ -212,11 +222,16 @@ function enrichScores(snapshot, universeByTicker) {
     const direction = classifyDrift(row.drift_30d);
     const uiBand = uiBandFor(row.band);
     const driver = topDriver(row.subscores);
+    const indexMembership = Array.isArray(uni.index_membership) ? uni.index_membership : [];
+    const indices = indexMembership
+      .map((s) => INDEX_KEY_NORMALIZE[s])
+      .filter(Boolean);
     return {
       ticker: row.ticker,
       name: uni.name || row.ticker,
       exchange: uni.exchange || '',
       sector: uni.sector || row.sector || '',
+      indices,                         // normalized short keys, e.g. ['djia','nasdaq-100','sp-100','sp-500']
       score: Number(row.lthcs_score),
       snapshotBand: row.band,
       uiBand,
@@ -237,9 +252,9 @@ function enrichScores(snapshot, universeByTicker) {
 
 function applyFilters() {
   const q = state.searchQuery.trim().toLowerCase();
-  const { exchange, band, drift } = state.activeFilters;
+  const { index, band, drift } = state.activeFilters;
   return state.enriched.filter((row) => {
-    if (exchange !== 'all' && row.exchange !== exchange) return false;
+    if (index !== 'all' && !row.indices.includes(index)) return false;
     if (band !== 'all' && row.uiBand !== band) return false;
     if (drift !== 'all' && row.driftDirection !== drift) return false;
     if (q) {
@@ -270,8 +285,9 @@ function cardHTML(row) {
     ? `Top: ${escapeHtml(pillarDisplayName(row.topDriverKey))} ${formatScore(row.topDriverValue)}`
     : 'Top: —';
 
+  const indices = (row.indices || []).join(',');
   return (
-    `<div class="lthcs-card" data-ticker="${ticker}" data-band="${band}" data-exchange="${exchange}" data-drift-direction="${direction}">` +
+    `<div class="lthcs-card" data-ticker="${ticker}" data-band="${band}" data-exchange="${exchange}" data-indices="${indices}" data-drift-direction="${direction}">` +
       `<div class="lthcs-card-header">` +
         `<span class="lthcs-card-ticker">${ticker}</span>` +
         `<span class="lthcs-card-score">${score}</span>` +
@@ -302,17 +318,28 @@ function renderCards(filtered) {
 }
 
 function updateStats(filtered) {
-  const total = filtered.length;
-  const totalEl = $('#lthcs-stat-total');
-  if (totalEl) totalEl.textContent = String(total);
-
-  const counts = Object.fromEntries(UI_BANDS.map((b) => [b, 0]));
+  // Band counts (over the currently-filtered view).
+  const bandCounts = Object.fromEntries(UI_BANDS.map((b) => [b, 0]));
   for (const row of filtered) {
-    if (counts[row.uiBand] != null) counts[row.uiBand] += 1;
+    if (bandCounts[row.uiBand] != null) bandCounts[row.uiBand] += 1;
   }
   for (const band of UI_BANDS) {
     const el = document.querySelector(`[data-band-count="${band}"]`);
-    if (el) el.textContent = String(counts[band]);
+    if (el) el.textContent = String(bandCounts[band]);
+  }
+
+  // Index counts — always show the FULL universe count per index (not
+  // narrowed by current filter), since they double as filter buttons
+  // and the count should reflect "what you'd get if you click here."
+  const indexCounts = Object.fromEntries(INDEX_FILTERS.map((k) => [k, 0]));
+  for (const row of state.enriched) {
+    for (const idx of row.indices) {
+      if (indexCounts[idx] != null) indexCounts[idx] += 1;
+    }
+  }
+  for (const idx of INDEX_FILTERS) {
+    const el = document.querySelector(`[data-index-count="${idx}"]`);
+    if (el) el.textContent = String(indexCounts[idx]);
   }
 }
 
@@ -395,7 +422,7 @@ function restoreFilterState() {
 
 function persistFilterState() {
   const payload = {
-    exchange: state.activeFilters.exchange,
+    index: state.activeFilters.index,
     band: state.activeFilters.band,
     drift: state.activeFilters.drift,
     searchQuery: state.searchQuery,
@@ -444,6 +471,30 @@ function wireChips() {
   }
 }
 
+// Index stat tiles are also filter buttons — click to activate that
+// index filter (and toggle off back to "all" on a second click).
+function wireIndexStats() {
+  const tiles = $$('.lthcs-stat[data-index]');
+  for (const tile of tiles) {
+    const activate = () => {
+      const idx = tile.dataset.index;
+      if (!INDEX_FILTERS.includes(idx)) return;
+      const next = state.activeFilters.index === idx ? 'all' : idx;
+      state.activeFilters.index = next;
+      setChipActive('index', next);
+      persistFilterState();
+      renderAll();
+    };
+    tile.addEventListener('click', activate);
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        activate();
+      }
+    });
+  }
+}
+
 function wireRefresh() {
   const btn = $('#lthcs-refresh');
   if (!btn) return;
@@ -455,6 +506,7 @@ function wireRefresh() {
 function wireEvents() {
   wireSearch();
   wireChips();
+  wireIndexStats();
   wireRefresh();
   wireCardClicks();
 }

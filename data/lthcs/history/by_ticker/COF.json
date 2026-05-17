@@ -1,0 +1,11 @@
+{
+  "ticker": "COF",
+  "model_version": "v1.0.0",
+  "history": [
+    {
+      "date": "2026-05-17",
+      "score": 58.1,
+      "band": "weakening"
+    }
+  ]
+}

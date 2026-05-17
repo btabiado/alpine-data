@@ -1,12 +1,12 @@
 {
   "model_version": "v1.0.0",
-  "last_updated": "2026-05-16",
+  "last_updated": "2026-05-17",
   "tickers": {
     "AAPL": {
-      "last_scored": "2026-05-16"
+      "last_scored": "2026-05-17"
     },
     "LCID": {
-      "last_scored": "2026-05-16"
+      "last_scored": "2026-05-17"
     },
     "ABBV": {
       "last_scored": "2026-05-16"
@@ -25,6 +25,21 @@
     },
     "GE": {
       "last_scored": "2026-05-16"
+    },
+    "ABNB": {
+      "last_scored": "2026-05-17"
+    },
+    "ADP": {
+      "last_scored": "2026-05-17"
+    },
+    "AMZN": {
+      "last_scored": "2026-05-17"
+    },
+    "ASML": {
+      "last_scored": "2026-05-17"
+    },
+    "BK": {
+      "last_scored": "2026-05-17"
     }
   }
 }
