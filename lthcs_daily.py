@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -1227,6 +1228,48 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
 
 def stage_7_generate_narratives(state: PipelineState) -> bool:
     state.narrative_rows = []
+    use_llm = os.getenv("LTHCS_NARRATIVES_LLM_ENABLED") == "1"
+    if use_llm:
+        # Opt-in LLM path. Falls back per-ticker on any failure so a bad
+        # API key / network blip never breaks the daily pipeline.
+        try:
+            from lthcs.narratives_llm import generate_universe_narratives
+
+            variable_detail_by_ticker: Dict[str, List[Dict[str, Any]]] = {}
+            for sym, pillars in state.pillar_results.items():
+                variable_detail_by_ticker[sym] = [
+                    {
+                        "ticker": sym,
+                        "pillar": pillar_name,
+                        "components": dict(result.get("components") or {}),
+                        "sub_score": float(result.get("sub_score", 50.0)),
+                        "data_quality": dict(result.get("data_quality") or {}),
+                    }
+                    for pillar_name, result in pillars.items()
+                ]
+            llm_results = generate_universe_narratives(
+                snapshot_rows=state.snapshot_rows,
+                variable_detail_by_ticker=variable_detail_by_ticker,
+                insider_by_ticker=state.insider_by_ticker,
+                holdings_by_ticker=state.holdings_by_ticker,
+                macro_breadth=state.breadth_snapshot,
+                model=os.getenv("LTHCS_NARRATIVES_LLM_MODEL", "claude-sonnet-4-5"),
+            )
+            state.narrative_rows = [
+                llm_results[row["ticker"]]
+                for row in state.snapshot_rows
+                if row.get("ticker") in llm_results
+            ]
+            fallback_count = sum(1 for n in state.narrative_rows if n.get("fallback"))
+            print(
+                "✓ Stage 7: Generated %d LLM narratives (%d fell back to template)"
+                % (len(state.narrative_rows), fallback_count)
+            )
+            return True
+        except Exception as exc:
+            print("! Stage 7 LLM path failed (%s); falling back to template" % exc)
+            state.narrative_rows = []
+
     for row in state.snapshot_rows:
         try:
             narr = narratives.generate_narratives(row)
