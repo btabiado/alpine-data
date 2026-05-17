@@ -68,6 +68,36 @@ const SPARKLINE_DECLINING = '█▇▆▅▄▃▂▁';
 
 const FILTER_GROUPS = ['index', 'band', 'drift'];
 
+// Human-readable labels for the active-filters breadcrumb. Keys are the
+// filter values stored in state.activeFilters; falls back to the raw key
+// if a value isn't listed (so a future band wouldn't render as "undefined").
+const FILTER_VALUE_LABELS = {
+  index: {
+    djia: 'DJIA 30',
+    'nasdaq-100': 'NASDAQ-100',
+    'sp-100': 'S&P 100',
+  },
+  band: {
+    elite: 'Elite',
+    high: 'High Confidence',
+    constructive: 'Constructive',
+    monitor: 'Monitor',
+    weakening: 'Weakening',
+    review: 'Review',
+  },
+  drift: {
+    improving: 'Improving',
+    stable: 'Stable',
+    declining: 'Declining',
+  },
+};
+
+const FILTER_GROUP_LABELS = {
+  index: 'Index',
+  band: 'Band',
+  drift: 'Drift',
+};
+
 // Map universe.json `index_membership` values → short DOM keys used in
 // filters and stat tiles.
 const INDEX_KEY_NORMALIZE = {
@@ -460,6 +490,10 @@ function cardHTML(row) {
     : 'Top: —';
 
   const indices = (row.indices || []).join(',');
+  // Band badge is a button — clicking it filters to that band rather
+  // than opening the detail modal. The click handler on the grid checks
+  // for `[data-band-filter]` first and stops propagation.
+  const bandFilterAria = `Filter to ${bandLabel} band`;
   return (
     `<div class="lthcs-card" data-ticker="${ticker}" data-band="${band}" data-exchange="${exchange}" data-indices="${indices}" data-drift-direction="${direction}">` +
       `<div class="lthcs-card-header">` +
@@ -475,7 +509,7 @@ function cardHTML(row) {
           `<span class="lthcs-card-trend-value">${trendValue}</span>` +
         `</span>` +
       `</div>` +
-      `<div class="lthcs-card-band">${bandLabel}</div>` +
+      `<button type="button" class="lthcs-card-band" data-band-filter="${band}" aria-label="${bandFilterAria}">${bandLabel}</button>` +
       `<div class="lthcs-card-driver">${driverLine}</div>` +
     `</div>`
   );
@@ -521,10 +555,94 @@ function updateStats(filtered) {
   }
 }
 
+// Render the "Active filters" breadcrumb above the result grid.
+// Stays hidden when no filters are active. Each pill names the active
+// filter and carries an "×" that clears just that filter; "Clear all"
+// appears whenever 2+ filters (including search) are active.
+function renderActiveFilters() {
+  const el = $('#lthcs-active-filters');
+  if (!el) return;
+
+  const active = [];
+  for (const group of FILTER_GROUPS) {
+    const value = state.activeFilters[group];
+    if (value && value !== 'all') {
+      const label = (FILTER_VALUE_LABELS[group] && FILTER_VALUE_LABELS[group][value]) || value;
+      active.push({ group, value, label });
+    }
+  }
+  const hasSearch = !!(state.searchQuery && state.searchQuery.trim());
+
+  if (!active.length && !hasSearch) {
+    el.innerHTML = '';
+    el.classList.add('hidden');
+    return;
+  }
+
+  const parts = ['<span class="lthcs-active-filters-label">Active filters</span>'];
+
+  for (const f of active) {
+    const groupLabel = escapeHtml(FILTER_GROUP_LABELS[f.group] || f.group);
+    const valueLabel = escapeHtml(f.label);
+    const bandAttr = f.group === 'band' ? ` data-band="${escapeHtml(f.value)}"` : '';
+    parts.push(
+      `<span class="lthcs-active-filter-pill" data-group="${escapeHtml(f.group)}"${bandAttr}>` +
+        `<span class="lthcs-active-filter-pill-kind">${groupLabel}</span>` +
+        `<span class="lthcs-active-filter-pill-value">${valueLabel}</span>` +
+        `<button type="button" class="lthcs-active-filter-pill-clear" data-clear-group="${escapeHtml(f.group)}" aria-label="Clear ${groupLabel} filter">&times;</button>` +
+      `</span>`
+    );
+  }
+
+  if (hasSearch) {
+    const searchLabel = escapeHtml(state.searchQuery.trim());
+    parts.push(
+      `<span class="lthcs-active-filter-pill" data-group="search">` +
+        `<span class="lthcs-active-filter-pill-kind">Search</span>` +
+        `<span class="lthcs-active-filter-pill-value">${searchLabel}</span>` +
+        `<button type="button" class="lthcs-active-filter-pill-clear" data-clear-group="search" aria-label="Clear search">&times;</button>` +
+      `</span>`
+    );
+  }
+
+  // "Clear all" appears as soon as there are 2+ active filters (including
+  // search). With only one, the per-pill × is enough.
+  const totalActive = active.length + (hasSearch ? 1 : 0);
+  if (totalActive >= 2) {
+    parts.push(
+      `<button type="button" class="lthcs-active-filters-clear-all" data-clear-group="__all__">Clear all</button>`
+    );
+  }
+
+  el.innerHTML = parts.join('');
+  el.classList.remove('hidden');
+}
+
+function clearFilter(group) {
+  if (group === 'search') {
+    state.searchQuery = '';
+    const input = $('#lthcs-search');
+    if (input) input.value = '';
+  } else if (group === '__all__') {
+    for (const g of FILTER_GROUPS) state.activeFilters[g] = 'all';
+    state.searchQuery = '';
+    const input = $('#lthcs-search');
+    if (input) input.value = '';
+  } else if (FILTER_GROUPS.includes(group)) {
+    state.activeFilters[group] = 'all';
+  } else {
+    return;
+  }
+  syncAllChips();
+  persistFilterState();
+  renderAll();
+}
+
 function renderAll() {
   const filtered = applyFilters();
   renderCards(filtered);
   updateStats(filtered);
+  renderActiveFilters();
 }
 
 function renderMeta(snapshot) {
@@ -731,6 +849,18 @@ function wireRefresh() {
   });
 }
 
+// Delegated click handler for the active-filters breadcrumb.
+// Each clear button carries data-clear-group=<group|'search'|'__all__'>.
+function wireActiveFilters() {
+  const el = $('#lthcs-active-filters');
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-clear-group]');
+    if (!btn || !el.contains(btn)) return;
+    clearFilter(btn.dataset.clearGroup);
+  });
+}
+
 function wireEvents() {
   wireSearch();
   wireChips();
@@ -738,6 +868,7 @@ function wireEvents() {
   wireBandStats();
   wireRefresh();
   wireCardClicks();
+  wireActiveFilters();
 }
 
 // --- Week 9 (detail modal) hookup ---
@@ -748,6 +879,23 @@ function wireCardClicks() {
   const container = $('#lthcs-cards');
   if (!container) return;
   container.addEventListener('click', (e) => {
+    // Band badge: clicking it filters to that band instead of opening
+    // the detail modal. Toggle behaviour matches the band tiles above —
+    // a second click on the active band clears the filter.
+    const bandBtn = e.target.closest('[data-band-filter]');
+    if (bandBtn && container.contains(bandBtn)) {
+      e.stopPropagation();
+      const band = bandBtn.dataset.bandFilter;
+      if (UI_BANDS.includes(band)) {
+        const next = state.activeFilters.band === band ? 'all' : band;
+        state.activeFilters.band = next;
+        syncFilterUI('band');
+        persistFilterState();
+        renderAll();
+      }
+      return;
+    }
+
     const cardEl = e.target.closest('.lthcs-card');
     if (!cardEl || !container.contains(cardEl)) return;
     const ticker = cardEl.dataset.ticker;

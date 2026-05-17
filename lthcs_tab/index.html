@@ -100,40 +100,13 @@
           />
         </div>
 
-        <div class="lthcs-filter-row" role="group" aria-label="Index filter">
-          <span class="lthcs-filter-label">Index</span>
-          <div class="lthcs-chip-group">
-            <button type="button" class="lthcs-chip is-active" data-filter-group="index" data-filter-value="all">All</button>
-            <button type="button" class="lthcs-chip" data-filter-group="index" data-filter-value="djia">DJIA 30</button>
-            <button type="button" class="lthcs-chip" data-filter-group="index" data-filter-value="nasdaq-100">NASDAQ-100</button>
-            <button type="button" class="lthcs-chip" data-filter-group="index" data-filter-value="sp-100">S&amp;P 100</button>
-          </div>
-        </div>
-
-        <div class="lthcs-filter-row" role="group" aria-label="Score band filter">
-          <span class="lthcs-filter-label">Band</span>
-          <div class="lthcs-chip-group">
-            <button type="button" class="lthcs-chip is-active" data-filter-group="band" data-filter-value="all">All</button>
-            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="elite">
-              <span class="lthcs-chip-dot" data-band="elite" aria-hidden="true"></span>Elite
-            </button>
-            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="high">
-              <span class="lthcs-chip-dot" data-band="high" aria-hidden="true"></span>High
-            </button>
-            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="constructive">
-              <span class="lthcs-chip-dot" data-band="constructive" aria-hidden="true"></span>Constructive
-            </button>
-            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="monitor">
-              <span class="lthcs-chip-dot" data-band="monitor" aria-hidden="true"></span>Monitor
-            </button>
-            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="weakening">
-              <span class="lthcs-chip-dot" data-band="weakening" aria-hidden="true"></span>Weakening
-            </button>
-            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="review">
-              <span class="lthcs-chip-dot" data-band="review" aria-hidden="true"></span>Review
-            </button>
-          </div>
-        </div>
+        <!--
+          Active filters breadcrumb. Populated by lthcs-tab.js whenever a
+          band/index/drift/search filter is set. Stays hidden when no filters
+          are active. The tiles above are the primary controls for band+index;
+          this breadcrumb makes it obvious how to clear them.
+        -->
+        <div id="lthcs-active-filters" class="lthcs-active-filters hidden" aria-live="polite"></div>
 
         <div class="lthcs-filter-row" role="group" aria-label="Drift filter">
           <span class="lthcs-filter-label">Drift</span>
