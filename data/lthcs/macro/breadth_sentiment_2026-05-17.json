@@ -1,0 +1,16 @@
+{
+  "aaii": null,
+  "as_of": "2026-05-17",
+  "composite_regime": "mixed",
+  "data_quality": {
+    "failed_sources": [
+      "put_call",
+      "aaii",
+      "naaim"
+    ],
+    "sources_failed": 3,
+    "sources_ok": 0
+  },
+  "naaim": null,
+  "put_call": null
+}

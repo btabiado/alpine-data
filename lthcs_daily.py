@@ -57,6 +57,7 @@ from lthcs.pillars import adoption, des, financial, institutional, thesis
 from lthcs.sources import (
     ai_news,
     alpha_vantage,
+    breadth_sentiment,
     eia,
     finnhub,
     fred,
@@ -176,6 +177,11 @@ class PipelineState:
     # Additive sector-context layer for downstream Adoption / Thesis use.
     # Persisted to data/lthcs/macro/sector_strength_<date>.json.
     sector_strength: Optional[Dict[str, Any]] = None
+    # Breadth sentiment regime (CBOE put/call + AAII bull/bear + NAAIM
+    # active-manager exposure). Additive market-state layer; persisted to
+    # data/lthcs/macro/breadth_sentiment_<date>.json. Downstream scoring
+    # consumption deferred to follow-up commit.
+    breadth_sentiment_snapshot: Optional[Dict[str, Any]] = None
     av_response: Optional[Dict[str, Any]] = None       # legacy single-anchor path (kept for backward-compat)
     av_anchor_ticker: Optional[str] = None             # legacy single-anchor path
     rotation: Optional[ThesisRotation] = None
@@ -508,6 +514,18 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             state.sector_strength = None
     else:
         state.sector_strength = None
+
+    # Breadth sentiment regime (put/call, AAII, NAAIM). Three independent
+    # public sources; module always returns a dict, never raises. We gate
+    # downstream usage on data_quality.sources_ok >= 2 in a later commit.
+    try:
+        state.breadth_sentiment_snapshot = breadth_sentiment.fetch_breadth_sentiment()
+        ok = state.breadth_sentiment_snapshot.get("data_quality", {}).get("sources_ok", 0)
+        counts["breadth_sentiment_ok"] = ok
+    except Exception as exc:
+        if state.args.verbose:
+            print("  breadth_sentiment fetch failed: %s" % exc)
+        state.breadth_sentiment_snapshot = None
 
     # Alpha Vantage: rotation — score up to 25 least-recently-scored tickers,
     # each via a single-ticker call. Sentiment files live in
@@ -1180,6 +1198,10 @@ def stage_8_persist(state: PipelineState) -> bool:
             if state.sector_strength is not None:
                 (macro_dir / ("sector_strength_%s.json" % state.calc_date)).write_text(
                     json.dumps(state.sector_strength, indent=2, sort_keys=True)
+                )
+            if state.breadth_sentiment_snapshot is not None:
+                (macro_dir / ("breadth_sentiment_%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.breadth_sentiment_snapshot, indent=2, sort_keys=True)
                 )
         except Exception as exc:
             if state.args.verbose:
