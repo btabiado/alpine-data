@@ -135,6 +135,23 @@ jobs:
               cp "$f" "_site/v2/$(basename "$f")"
             done
           fi
+          # Stage the LTHCS standalone tab under /lthcs/ when present.
+          # The page is committed under lthcs_tab/ and reads its data from
+          # data/lthcs/ (also committed). CI doesn't run lthcs_daily.py —
+          # snapshots are produced locally on Bryan's laptop and pushed.
+          # Missing lthcs_tab/index.html means LTHCS hasn't shipped yet;
+          # the rest of the site is unaffected.
+          if [ -f lthcs_tab/index.html ]; then
+            mkdir -p _site/lthcs
+            cp -R lthcs_tab/* _site/lthcs/
+            # JS fetches "../data/lthcs/..." from _site/lthcs/index.html,
+            # which resolves to _site/data/lthcs/. Stage the committed JSON
+            # snapshot tree there.
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/data
+              cp -R data/lthcs _site/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
