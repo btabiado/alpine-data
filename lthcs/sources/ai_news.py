@@ -72,6 +72,26 @@ _ENGAGEMENT_MIN_MENTIONS = 3
 _ENGAGEMENT_POINTS_THRESHOLD = 50.0
 _ENGAGEMENT_COMMENTS_THRESHOLD = 30.0
 
+# Mention-count multiplier tiers for the 3+ mention path. Allows
+# very-frequently-mentioned names (think NVDA with 20+ AI mentions in a
+# week) to cross above the +0.60 ceiling. Capped below so AI-news
+# engagement never claims the top of the confidence band — that's
+# reserved for real sentiment sources (Finnhub, Alpha Vantage).
+_MENTION_MULTIPLIER_TIERS: Tuple[Tuple[int, float], ...] = (
+    # (min_mentions_inclusive, multiplier)
+    (21, 1.3),
+    (11, 1.2),
+    (6,  1.1),
+    (3,  1.0),
+)
+_SENTIMENT_CAP = 0.75
+
+# Base sentiment values for the 3+ mention engagement tiers.
+_BASE_SENTIMENT_LOW_ENGAGEMENT = 0.35
+_BASE_SENTIMENT_HIGH_ENGAGEMENT = 0.60
+# Floor signal for the 1-2 mention path (no multiplier applied).
+_SENTIMENT_WEAK = 0.15
+
 # Ticker -> search keywords. Limited to the AI cohort + mega-caps; tickers
 # outside this map don't have enough AI-news coverage to be worth a search.
 TICKER_KEYWORDS: Dict[str, List[str]] = {
@@ -558,17 +578,44 @@ def _empty_label_counts() -> Dict[str, int]:
     return {label: 0 for label in _SENTIMENT_LABELS}
 
 
-def _engagement_sentiment(
+def _mention_count_multiplier(total_mentions: int) -> float:
+    """Logarithmic-ish multiplier on the base engagement sentiment.
+
+    Lets very-frequently-mentioned names (NVDA with 20+ AI mentions in
+    a week) edge above the +0.60 ceiling without changing behavior for
+    moderately-mentioned names. The tiers are deliberately coarse — we
+    don't want a 6th mention to dramatically swing the signal.
+
+    Tier table::
+
+         3-5  mentions -> 1.0x  (no change)
+         6-10 mentions -> 1.1x
+        11-20 mentions -> 1.2x
+        21+  mentions  -> 1.3x
+    """
+    for min_mentions, mult in _MENTION_MULTIPLIER_TIERS:
+        if total_mentions >= min_mentions:
+            return mult
+    return 1.0
+
+
+def _engagement_sentiment_detail(
     total_mentions: int, hn_total_points: int, hn_total_comments: int
-) -> Optional[float]:
+) -> Dict[str, Any]:
     """V1 sentiment heuristic based on aggregate news engagement.
 
-    Returns:
+    Returns a diagnostic dict with the math broken out, plus the final
+    ``sentiment`` value (or ``None`` for no-signal). Keeping the
+    intermediate fields in the return value lets ``compute_thesis_signal_from_news``
+    surface them in ``variable_detail`` for downstream transparency.
+
+    Returned ``sentiment`` values:
         ``None``  — no mentions at all; Thesis treats as no signal.
         ``+0.15`` — 1-2 mentions; weak engaged-but-niche signal.
-        ``+0.35`` — 3+ mentions, low average engagement.
-        ``+0.60`` — 3+ mentions AND high average engagement (HN points or
-                    comments above threshold).
+        ``base * multiplier`` (capped at ``_SENTIMENT_CAP``) — for 3+
+        mentions, where ``base`` is +0.35 (low engagement) or +0.60
+        (high engagement) and ``multiplier`` is the mention-count tier
+        from ``_mention_count_multiplier``.
 
     Tuning history:
     - V1 (initial): uniform +0.2 / 0.0 scheme. Caused regression: for
@@ -578,24 +625,68 @@ def _engagement_sentiment(
       subscore ~80).
     - V2 (bumped 2026-05-17 same-day): +0.45 high-engagement (subscore
       ~72). Better, but still under renorm baseline for top names.
-    - V3 (current): +0.60 high-engagement (subscore ~80). Matches the
-      renorm baseline for the strongest names so AI news is strictly an
-      upgrade — adds real engagement signal without dropping any name
-      below where the renorm path would have placed it.
+    - V3 (2026-05-17): +0.60 high-engagement (subscore ~80). Matched
+      the renorm baseline for the strongest names so AI news is
+      strictly an upgrade.
+    - V4 (current, 2026-05-17): mention-count multiplier on top of the
+      engagement tier so very-frequently-mentioned names (NVDA with
+      20+ AI mentions/week) can cross the +0.60 ceiling. Capped at
+      +0.75 (subscore ~88) — engagement-as-proxy never claims the top
+      of the band; that's reserved for real sentiment scorers.
     """
+    detail: Dict[str, Any] = {
+        "mention_count": int(total_mentions),
+        "engagement_tier": None,
+        "base_sentiment": None,
+        "multiplier": None,
+        "final_sentiment": None,
+        "capped": False,
+    }
     if total_mentions <= 0:
-        return None
+        return detail
     if total_mentions < _ENGAGEMENT_MIN_MENTIONS:
-        return 0.15  # weak signal; still some interest
+        detail["engagement_tier"] = "weak"
+        detail["base_sentiment"] = _SENTIMENT_WEAK
+        detail["multiplier"] = 1.0
+        detail["final_sentiment"] = _SENTIMENT_WEAK
+        return detail
     # Use averages so a single viral post doesn't dominate.
     avg_points = hn_total_points / max(total_mentions, 1)
     avg_comments = hn_total_comments / max(total_mentions, 1)
-    if (
+    high_engagement = (
         avg_points >= _ENGAGEMENT_POINTS_THRESHOLD
         or avg_comments >= _ENGAGEMENT_COMMENTS_THRESHOLD
-    ):
-        return 0.60  # in the news cycle with real engagement (subscore ~80)
-    return 0.35      # in the news cycle, lower engagement (subscore ~67)
+    )
+    base = (
+        _BASE_SENTIMENT_HIGH_ENGAGEMENT
+        if high_engagement
+        else _BASE_SENTIMENT_LOW_ENGAGEMENT
+    )
+    multiplier = _mention_count_multiplier(total_mentions)
+    raw = base * multiplier
+    capped = raw > _SENTIMENT_CAP
+    final = min(raw, _SENTIMENT_CAP)
+    # Round to 4 dp so a 0.60 * 1.1 = 0.66 doesn't surface as 0.66000000000001.
+    final = round(final, 4)
+    detail["engagement_tier"] = "high" if high_engagement else "low"
+    detail["base_sentiment"] = base
+    detail["multiplier"] = multiplier
+    detail["final_sentiment"] = final
+    detail["capped"] = capped
+    return detail
+
+
+def _engagement_sentiment(
+    total_mentions: int, hn_total_points: int, hn_total_comments: int
+) -> Optional[float]:
+    """Back-compat thin wrapper returning just the final sentiment value.
+
+    Existing callers (and tests) read only the scalar score; the new
+    diagnostic fields are surfaced through ``_engagement_sentiment_detail``.
+    """
+    return _engagement_sentiment_detail(
+        total_mentions, hn_total_points, hn_total_comments
+    )["final_sentiment"]
 
 
 def compute_thesis_signal_from_news(news_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -616,7 +707,8 @@ def compute_thesis_signal_from_news(news_dict: Dict[str, Any]) -> Dict[str, Any]
         # Phase 2 will replace this with an LLM-scored breakdown.
         label_counts["Neutral"] = total_mentions
 
-    sentiment_score = _engagement_sentiment(total_mentions, hn_points, hn_comments)
+    detail = _engagement_sentiment_detail(total_mentions, hn_points, hn_comments)
+    sentiment_score = detail["final_sentiment"]
     # Relevance score is meaningful only when we have any signal at all.
     # Use a flat 0.5 ("matched a keyword") so downstream consumers can
     # weight us below AV's per-article relevance numbers.
@@ -630,6 +722,14 @@ def compute_thesis_signal_from_news(news_dict: Dict[str, Any]) -> Dict[str, Any]
         "label_counts": label_counts,
         "source": "ai_news_aggregate",
         "last_scored": _today_iso(),
+        # Additive diagnostic fields for variable_detail transparency.
+        # Downstream consumers reading ``mean_sentiment_score`` are
+        # unchanged; UIs/inspectors that want to explain the score can
+        # render the engagement breakdown from these keys.
+        "engagement_tier": detail["engagement_tier"],
+        "base_sentiment": detail["base_sentiment"],
+        "mention_multiplier": detail["multiplier"],
+        "sentiment_capped": detail["capped"],
     }
 
 

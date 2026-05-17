@@ -546,6 +546,178 @@ def test_thesis_signal_engagement_via_comments_only() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Mention-count multiplier (V4 polish)
+# ---------------------------------------------------------------------------
+
+
+def _agg(
+    *,
+    ticker: str = "NVDA",
+    mentions: int,
+    points: int,
+    comments: int,
+) -> Dict[str, Any]:
+    """Helper: build an aggregate dict with the engagement totals we care about."""
+    return {
+        "ticker": ticker,
+        "hn_mention_count": mentions,
+        "hn_total_points": points,
+        "hn_total_comments": comments,
+        "rss_mention_count": 0,
+        "total_mentions": mentions,
+        "sample_titles": [],
+        "first_seen": None,
+        "last_seen": None,
+    }
+
+
+def test_mention_multiplier_25_mentions_high_engagement_caps_at_075() -> None:
+    # 25 mentions, plenty of points => high-engagement * 1.3 = 0.78 -> cap 0.75.
+    agg = _agg(mentions=25, points=2500, comments=500)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.75)
+    assert sig["engagement_tier"] == "high"
+    assert sig["base_sentiment"] == pytest.approx(0.60)
+    assert sig["mention_multiplier"] == pytest.approx(1.3)
+    assert sig["sentiment_capped"] is True
+
+
+def test_mention_multiplier_8_mentions_high_engagement_is_066() -> None:
+    # 8 mentions => 1.1 multiplier; high engagement => 0.60 * 1.1 = 0.66.
+    agg = _agg(mentions=8, points=8 * 60, comments=8 * 5)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.66)
+    assert sig["engagement_tier"] == "high"
+    assert sig["base_sentiment"] == pytest.approx(0.60)
+    assert sig["mention_multiplier"] == pytest.approx(1.1)
+    assert sig["sentiment_capped"] is False
+
+
+def test_mention_multiplier_15_mentions_low_engagement_is_042() -> None:
+    # 15 mentions => 1.2 multiplier; low engagement (avg points/comments
+    # well below thresholds) => 0.35 * 1.2 = 0.42.
+    agg = _agg(mentions=15, points=15 * 5, comments=15 * 2)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.42)
+    assert sig["engagement_tier"] == "low"
+    assert sig["base_sentiment"] == pytest.approx(0.35)
+    assert sig["mention_multiplier"] == pytest.approx(1.2)
+    assert sig["sentiment_capped"] is False
+
+
+def test_mention_multiplier_3_mentions_low_engagement_unchanged() -> None:
+    # 3 mentions, low engagement => 1.0 multiplier => 0.35 * 1.0 = 0.35.
+    # Confirms backward compat with the pre-V4 behavior for low-mention
+    # tickers.
+    agg = _agg(mentions=3, points=30, comments=15)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.35)
+    assert sig["engagement_tier"] == "low"
+    assert sig["mention_multiplier"] == pytest.approx(1.0)
+    assert sig["sentiment_capped"] is False
+
+
+def test_mention_multiplier_zero_mentions_returns_none() -> None:
+    agg = _agg(mentions=0, points=0, comments=0)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] is None
+    # Diagnostic fields exist but are null/empty.
+    assert sig["engagement_tier"] is None
+    assert sig["base_sentiment"] is None
+    assert sig["mention_multiplier"] is None
+    assert sig["sentiment_capped"] is False
+
+
+def test_mention_multiplier_two_mentions_weak_floor_unchanged() -> None:
+    # Floor signal (1-2 mentions) does NOT receive a multiplier.
+    agg = _agg(mentions=2, points=999, comments=999)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.15)
+    assert sig["engagement_tier"] == "weak"
+    assert sig["base_sentiment"] == pytest.approx(0.15)
+    assert sig["mention_multiplier"] == pytest.approx(1.0)
+    assert sig["sentiment_capped"] is False
+
+
+# --- multiplier tier boundaries ---
+
+
+@pytest.mark.parametrize(
+    "mentions,expected_multiplier",
+    [
+        (5, 1.0),    # last of the 3-5 tier
+        (6, 1.1),    # first of the 6-10 tier
+        (10, 1.1),   # last of the 6-10 tier
+        (11, 1.2),   # first of the 11-20 tier
+        (20, 1.2),   # last of the 11-20 tier
+        (21, 1.3),   # first of the 21+ tier
+        (50, 1.3),   # well into the 21+ tier
+    ],
+)
+def test_mention_multiplier_boundary_tiers(
+    mentions: int, expected_multiplier: float
+) -> None:
+    assert ain._mention_count_multiplier(mentions) == pytest.approx(
+        expected_multiplier
+    )
+
+
+def test_mention_multiplier_below_floor_returns_one() -> None:
+    # Below 3 mentions the multiplier path isn't entered, but the helper
+    # is total so verify it still returns 1.0 for safety.
+    assert ain._mention_count_multiplier(0) == pytest.approx(1.0)
+    assert ain._mention_count_multiplier(1) == pytest.approx(1.0)
+    assert ain._mention_count_multiplier(2) == pytest.approx(1.0)
+
+
+# --- cap binding tests ---
+
+
+def test_cap_binds_at_exactly_075_for_high_engagement_50_mentions() -> None:
+    # 50 mentions, high engagement: 0.60 * 1.3 = 0.78 -> capped to 0.75.
+    agg = _agg(mentions=50, points=50 * 100, comments=50 * 10)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.75)
+    assert sig["sentiment_capped"] is True
+
+
+def test_cap_does_not_bind_for_low_engagement_21_mentions() -> None:
+    # 21 mentions, low engagement: 0.35 * 1.3 = 0.455 -> below cap.
+    agg = _agg(mentions=21, points=21 * 5, comments=21 * 2)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.455)
+    assert sig["sentiment_capped"] is False
+
+
+def test_cap_does_not_bind_for_high_engagement_10_mentions() -> None:
+    # 10 mentions (1.1 tier), high engagement: 0.60 * 1.1 = 0.66 -> below cap.
+    agg = _agg(mentions=10, points=10 * 100, comments=10 * 10)
+    sig = ain.compute_thesis_signal_from_news(agg)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.66)
+    assert sig["sentiment_capped"] is False
+
+
+def test_variable_detail_fields_present_on_signal_dict() -> None:
+    # Ensure the additive diagnostic keys exist on every code path, so a
+    # downstream variable_detail renderer can rely on them.
+    for agg in [
+        _agg(mentions=0, points=0, comments=0),
+        _agg(mentions=2, points=10, comments=5),
+        _agg(mentions=5, points=20, comments=10),
+        _agg(mentions=25, points=2500, comments=500),
+    ]:
+        sig = ain.compute_thesis_signal_from_news(agg)
+        for key in (
+            "mean_sentiment_score",
+            "engagement_tier",
+            "base_sentiment",
+            "mention_multiplier",
+            "sentiment_capped",
+        ):
+            assert key in sig, f"missing diagnostic key: {key}"
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
