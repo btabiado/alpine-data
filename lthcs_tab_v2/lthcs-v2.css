@@ -1,0 +1,723 @@
+/* =========================================================================
+   LTHCS V2 — crypto-dashboard-style visual treatment
+   Standalone stylesheet. Mirrors the palette + spacing tokens from
+   /Users/bryantabiadon/Documents/btc-eth-etf-dashboard/app.py (the crypto
+   dashboard), then maps LTHCS bands onto the same bright signal-pill colors.
+   ========================================================================= */
+
+:root {
+  /* Crypto-dashboard base palette (copied 1:1 from app.py @ line 412). */
+  --bg: #0b0d12;
+  --panel: #141821;
+  --panel2: #1b2030;
+  --border: #252b3a;
+  --text: #e6e8ee;
+  --muted: #8a93a6;
+  --btc: #f7931a;
+  --eth: #627eea;
+  --link: #2a5ada;
+  --green: #22c55e;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --purple: #a78bfa;
+  --cyan: #06b6d4;
+
+  /* LTHCS band → crypto-dashboard signal-pill color mapping.
+     Bright, saturated tones — chosen to read at a glance on the dark
+     panel chrome the same way the crypto signal pills do. */
+  --band-elite-fg: #34d399;            /* mint-green (HOLD+10 vibe) */
+  --band-elite-bg: rgba(52, 211, 153, 0.16);
+  --band-elite-border: rgba(52, 211, 153, 0.55);
+
+  --band-high-fg: #22c55e;             /* bright green (HOLD+5 vibe) */
+  --band-high-bg: rgba(34, 197, 94, 0.16);
+  --band-high-border: rgba(34, 197, 94, 0.50);
+
+  --band-constructive-fg: #facc15;     /* yellow-gold (HOLD 0 vibe) */
+  --band-constructive-bg: rgba(250, 204, 21, 0.16);
+  --band-constructive-border: rgba(250, 204, 21, 0.55);
+
+  --band-monitor-fg: #f59e0b;          /* amber (HOLD- / mild SELL) */
+  --band-monitor-bg: rgba(245, 158, 11, 0.16);
+  --band-monitor-border: rgba(245, 158, 11, 0.55);
+
+  --band-weakening-fg: #fb7185;        /* salmon-red (SELL- vibe) */
+  --band-weakening-bg: rgba(251, 113, 133, 0.16);
+  --band-weakening-border: rgba(251, 113, 133, 0.55);
+
+  --band-review-fg: #ef4444;           /* deep red (STRONG SELL vibe) */
+  --band-review-bg: rgba(239, 68, 68, 0.18);
+  --band-review-border: rgba(239, 68, 68, 0.55);
+
+  /* Trend pill (drift) colors — green/red/blue trio used by the crypto
+     dashboard's HOLD/SELL arrows. Bright on dark. */
+  --trend-up: #22c55e;
+  --trend-down: #ef4444;
+  --trend-flat: #60a5fa;
+  --trend-unknown: #6b7280;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+/* ===== Header (mirrors crypto-dashboard @ line 419) ===== */
+header {
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+header h1 {
+  font-size: 17px;
+  margin: 0;
+  font-weight: 600;
+}
+header .meta {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+/* ===== Tabs (mirrors crypto-dashboard @ line 422) =====
+   These are nav links, NOT in-page tab switches — each goes to a sibling
+   page (../table/, ../heatmap/, ../). The visual matches the crypto-
+   dashboard tab strip exactly. */
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  padding: 11px 18px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  flex: 0 0 auto;
+  background: transparent;
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  font-family: inherit;
+}
+.tab:hover { color: var(--text); text-decoration: none; }
+.tab.active { color: var(--text); border-bottom-color: var(--purple); }
+.tab-classic {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12px;
+}
+.tab-button {
+  /* The About tab is a button so it can fire openAbout() instead of nav. */
+  cursor: pointer;
+}
+
+/* ===== Layout shell ===== */
+.container {
+  padding: 18px 24px;
+  display: grid;
+  gap: 18px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.btn {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 5px 11px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+}
+.btn:hover { background: #222838; }
+.btn:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+.chart-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.chart-card .head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chart-card h2 { font-size: 13px; margin: 0; font-weight: 600; }
+.chart-card .desc { font-size: 11px; color: var(--muted); }
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 18px;
+}
+.tag {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  margin-left: 6px;
+}
+
+/* ===== Sentiment gauge (mirrors crypto-dashboard #overviewSentimentCard) ===== */
+#lthcs-v2-sentiment-card {
+  padding: 14px 16px;
+  border-left: 4px solid var(--purple);
+}
+.sentiment-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.sentiment-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+.sentiment-subline {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.sentiment-score-block { text-align: right; }
+.sentiment-score {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}
+.sentiment-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+/* Bright score color drives the eye to the headline read. */
+#lthcs-v2-sentiment-card[data-tone="bullish"] .sentiment-score,
+#lthcs-v2-sentiment-card[data-tone="bullish"] .sentiment-label { color: var(--green); }
+#lthcs-v2-sentiment-card[data-tone="cautious"] .sentiment-score,
+#lthcs-v2-sentiment-card[data-tone="cautious"] .sentiment-label { color: var(--amber); }
+#lthcs-v2-sentiment-card[data-tone="bearish"] .sentiment-score,
+#lthcs-v2-sentiment-card[data-tone="bearish"] .sentiment-label { color: var(--red); }
+#lthcs-v2-sentiment-card[data-tone="neutral"] .sentiment-score,
+#lthcs-v2-sentiment-card[data-tone="neutral"] .sentiment-label { color: var(--text); }
+
+/* Border-left echoes the tone so the whole card breathes color. */
+#lthcs-v2-sentiment-card[data-tone="bullish"] { border-left-color: var(--green); }
+#lthcs-v2-sentiment-card[data-tone="cautious"] { border-left-color: var(--amber); }
+#lthcs-v2-sentiment-card[data-tone="bearish"] { border-left-color: var(--red); }
+#lthcs-v2-sentiment-card[data-tone="neutral"] { border-left-color: var(--purple); }
+
+.sentiment-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #1f2533;
+}
+.sentiment-bar-pos { background: var(--green); }
+.sentiment-bar-neu { background: #94a3b8; }
+.sentiment-bar-neg { background: var(--red); }
+.sentiment-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.sentiment-legend .legend-pos { color: var(--green); }
+.sentiment-legend .legend-neg { color: var(--red); }
+
+/* ===== Movers list (gainers/decliners cards) ===== */
+.movers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.movers-empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.mover-row {
+  display: grid;
+  grid-template-columns: 56px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel2);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease;
+  width: 100%;
+}
+.mover-row:hover {
+  background: #222838;
+  border-color: var(--purple);
+}
+.mover-row[data-kind="gainers"] { border-left: 3px solid var(--green); }
+.mover-row[data-kind="decliners"] { border-left: 3px solid var(--red); }
+.mover-sym {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.mover-name {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mover-delta {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.mover-row[data-kind="gainers"] .mover-delta { color: var(--green); }
+.mover-row[data-kind="decliners"] .mover-delta { color: var(--red); }
+.mover-period {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ===== Market-regime card body ===== */
+.regime-empty {
+  padding: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+.regime-macro {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.regime-chip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel2);
+}
+.regime-chip-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.regime-chip[data-tone="risk-on"] { border-left: 3px solid var(--green); }
+.regime-chip[data-tone="risk-on"] .regime-chip-dot { background: var(--green); box-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
+.regime-chip[data-tone="caution"] { border-left: 3px solid var(--amber); }
+.regime-chip[data-tone="caution"] .regime-chip-dot { background: var(--amber); box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+.regime-chip[data-tone="risk-off"] { border-left: 3px solid var(--red); }
+.regime-chip[data-tone="risk-off"] .regime-chip-dot { background: var(--red); box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+.regime-chip[data-tone="neutral"] { border-left: 3px solid var(--muted); }
+.regime-chip-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 700;
+}
+.regime-chip-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.regime-chip-sub {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ===== Sectors leaders/laggards ===== */
+.sectors-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sectors-col h3 {
+  margin: 0 0 6px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--muted);
+}
+.sectors-col[data-kind="top"] h3 { color: var(--green); }
+.sectors-col[data-kind="bottom"] h3 { color: var(--red); }
+.sector-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel2);
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+.sector-row[data-kind="top"] { border-left: 3px solid var(--green); }
+.sector-row[data-kind="bottom"] { border-left: 3px solid var(--red); }
+.sector-name {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.sector-rel {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.sector-row[data-kind="top"] .sector-rel { color: var(--green); }
+.sector-row[data-kind="bottom"] .sector-rel { color: var(--red); }
+
+/* ===== Band distribution pills (clickable filters) ===== */
+.band-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.band-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  font-family: inherit;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.band-pill:hover { transform: translateY(-1px); }
+.band-pill[data-band="elite"]      { background: var(--band-elite-bg);        border-color: var(--band-elite-border);        color: var(--band-elite-fg); }
+.band-pill[data-band="high"]       { background: var(--band-high-bg);         border-color: var(--band-high-border);         color: var(--band-high-fg); }
+.band-pill[data-band="constructive"]{ background: var(--band-constructive-bg); border-color: var(--band-constructive-border); color: var(--band-constructive-fg); }
+.band-pill[data-band="monitor"]    { background: var(--band-monitor-bg);      border-color: var(--band-monitor-border);      color: var(--band-monitor-fg); }
+.band-pill[data-band="weakening"]  { background: var(--band-weakening-bg);    border-color: var(--band-weakening-border);    color: var(--band-weakening-fg); }
+.band-pill[data-band="review"]     { background: var(--band-review-bg);       border-color: var(--band-review-border);       color: var(--band-review-fg); }
+.band-pill.is-active {
+  outline: 2px solid var(--purple);
+  outline-offset: 1px;
+}
+.band-pill-count {
+  font-size: 14px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.band-pill-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Filter bar ===== */
+.filter-bar { padding: 12px 14px; }
+.filter-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+.filter-search-wrap {
+  position: relative;
+  flex: 0 0 260px;
+  max-width: 260px;
+}
+.filter-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.filter-search-input {
+  width: 100%;
+  padding: 7px 10px 7px 28px;
+  background: #0b0d12;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.filter-search-input:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15); }
+.filter-group { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.filter-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.chip {
+  background: var(--panel2);
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 11px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: 500;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+.chip:hover { color: var(--text); background: #222838; }
+.chip.is-active {
+  background: var(--purple);
+  color: #000;
+  border-color: var(--purple);
+}
+.filter-result-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ===== Ticker grid (cards in crypto-dashboard border style) ===== */
+.ticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+.ticker-card {
+  position: relative;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--muted);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+.ticker-card:hover {
+  transform: translateY(-2px);
+  background: #222838;
+}
+.ticker-card:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 2px;
+}
+.ticker-card[data-band="elite"]       { border-left-color: var(--band-elite-fg); }
+.ticker-card[data-band="high"]        { border-left-color: var(--band-high-fg); }
+.ticker-card[data-band="constructive"]{ border-left-color: var(--band-constructive-fg); }
+.ticker-card[data-band="monitor"]     { border-left-color: var(--band-monitor-fg); }
+.ticker-card[data-band="weakening"]   { border-left-color: var(--band-weakening-fg); }
+.ticker-card[data-band="review"]      { border-left-color: var(--band-review-fg); }
+
+.ticker-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ticker-sym {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.ticker-band {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.ticker-card[data-band="elite"]        .ticker-band { background: var(--band-elite-bg);        border-color: var(--band-elite-border);        color: var(--band-elite-fg); }
+.ticker-card[data-band="high"]         .ticker-band { background: var(--band-high-bg);         border-color: var(--band-high-border);         color: var(--band-high-fg); }
+.ticker-card[data-band="constructive"] .ticker-band { background: var(--band-constructive-bg); border-color: var(--band-constructive-border); color: var(--band-constructive-fg); }
+.ticker-card[data-band="monitor"]      .ticker-band { background: var(--band-monitor-bg);      border-color: var(--band-monitor-border);      color: var(--band-monitor-fg); }
+.ticker-card[data-band="weakening"]    .ticker-band { background: var(--band-weakening-bg);    border-color: var(--band-weakening-border);    color: var(--band-weakening-fg); }
+.ticker-card[data-band="review"]       .ticker-band { background: var(--band-review-bg);       border-color: var(--band-review-border);       color: var(--band-review-fg); }
+
+.ticker-score {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+.ticker-trend-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.ticker-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  white-space: nowrap;
+}
+.ticker-trend[data-trend="up"] { color: var(--trend-up); border-color: rgba(34, 197, 94, 0.45); background: rgba(34, 197, 94, 0.12); }
+.ticker-trend[data-trend="down"] { color: var(--trend-down); border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.12); }
+.ticker-trend[data-trend="flat"] { color: var(--trend-flat); border-color: rgba(96, 165, 250, 0.35); background: rgba(96, 165, 250, 0.10); }
+.ticker-trend[data-trend="unknown"] { color: var(--trend-unknown); }
+.ticker-trend-arrow { font-size: 12px; line-height: 1; font-weight: 900; }
+.ticker-trend-period {
+  font-size: 9px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+.ticker-name {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ticker-sector {
+  font-size: 10px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ===== Loading / empty / error states ===== */
+.grid-loading,
+.grid-empty,
+.grid-error {
+  padding: 28px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--muted);
+  background: var(--panel2);
+}
+.grid-error {
+  border-style: solid;
+  border-color: var(--red);
+  color: var(--red);
+  background: rgba(239, 68, 68, 0.08);
+}
+.hidden { display: none !important; }
+
+footer {
+  padding: 18px 24px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  margin-top: 24px;
+}
+footer a { color: var(--muted); }
+
+/* =========================================================================
+   Mobile (mirrors crypto-dashboard @media (max-width: 860px))
+   ========================================================================= */
+@media (max-width: 860px) {
+  .container { padding: 10px 12px; gap: 10px; }
+  .grid2 { grid-template-columns: 1fr !important; gap: 10px; }
+  .chart-card { padding: 10px 12px; border-radius: 6px; }
+  .chart-card h2 { font-size: 13px; }
+  .card, .chart-card { border-radius: 8px; }
+  header { padding: 10px 12px; gap: 8px; }
+  header h1 { font-size: 15px; }
+  .tabs { padding: 0 10px; }
+  .tab { padding: 9px 12px; font-size: 13px; min-height: 44px; display: inline-flex; align-items: center; }
+  .tab-classic { font-size: 11px; }
+  .sentiment-score { font-size: 26px; }
+  .sectors-grid { grid-template-columns: 1fr; gap: 8px; }
+  .ticker-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .ticker-score { font-size: 20px; }
+  .filter-search-wrap { flex: 1 1 auto; max-width: 100%; }
+  .filter-result-count { margin-left: 0; width: 100%; }
+  .mover-row { grid-template-columns: 48px 1fr auto; gap: 6px; }
+  .mover-period { display: none; }
+  /* a11y: clickable controls hit 44px on phone */
+  .btn, .tab, .chip, .band-pill { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+}
+
+@media (max-width: 375px) {
+  .ticker-grid { grid-template-columns: 1fr; }
+  .sentiment-score { font-size: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-card, .mover-row, .band-pill, .chip { transition: none; }
+}

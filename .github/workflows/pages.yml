@@ -180,6 +180,33 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the LTHCS V2 visual-only experiment under /lthcs/v2/.
+          # Source lives at lthcs_tab_v2/ and reuses three things from the
+          # classic /lthcs/ page via relative paths:
+          #   ../lthcs_tab/lthcs-detail.js   (ticker detail modal)
+          #   ../lthcs_tab/lthcs-detail.css
+          #   ../lthcs_tab/lthcs-about.{js,css}
+          # In production the V2 page lives at /lthcs/v2/index.html, so we
+          # mirror lthcs_tab/ next to it as /lthcs/v2/../lthcs_tab/ →
+          # /lthcs/lthcs_tab/ — which is already produced by the table-view
+          # staging branch above, so the import resolves with no extra copy.
+          # We still need a sibling /lthcs/v2/../data/ for "../data/lthcs/..."
+          # data fetches — that's also produced by earlier branches. The only
+          # work this branch does is drop the V2 page payload itself.
+          # V1 (`/`), V2 (`/v2/`), and classic /lthcs/ are all untouched.
+          if [ -f lthcs_tab_v2/index.html ]; then
+            mkdir -p _site/lthcs/v2
+            cp -R lthcs_tab_v2/* _site/lthcs/v2/
+            # Defensive: re-mirror lthcs_tab/ and data/lthcs/ in case the
+            # table-view branch above didn't run (e.g. lthcs_table/ deleted
+            # but V2 still wanted). Idempotent — `cp -R` overwrites existing.
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS V2 — Long-Term Hold Confidence Score</title>
+    <!-- V2 stylesheet (crypto-dashboard look + ticker grid mimicking the
+         existing LTHCS card colors). Standalone — does NOT import lthcs.css
+         from the classic /lthcs/ page; tokens are intentionally redeclared
+         here so a future restyle of /lthcs/ can't accidentally break /v2/. -->
+    <link rel="stylesheet" href="./lthcs-v2.css" />
+    <!-- Reuse the detail-modal stylesheet from /lthcs_tab/ so opening a
+         ticker shows the same modal chrome users already know. In CI this
+         resolves to /lthcs/v2/lthcs_tab/lthcs-detail.css via the staging
+         step that mirrors lthcs_tab/ next to lthcs_tab_v2/. -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs-detail.css" />
+    <!-- About-modal stylesheet from /lthcs_tab/ — same reuse story. -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs-about.css" />
+  </head>
+  <body>
+    <!-- =============================================================
+         HEADER — mirrors crypto-dashboard:
+           title | meta (symbols + generated + reload)
+         ============================================================= -->
+    <header>
+      <div>
+        <h1>LTHCS &middot; Long-Term Hold Confidence Score</h1>
+        <div class="meta">
+          <span id="lthcs-v2-coverage">&hellip;</span>
+          &middot;
+          <span id="lthcs-v2-generated">generated &hellip;</span>
+        </div>
+      </div>
+      <div class="controls" style="border:0;padding:0">
+        <button class="btn" id="lthcs-v2-refresh" title="Reload snapshot data">&#x21bb; Reload</button>
+      </div>
+    </header>
+
+    <!-- =============================================================
+         TAB STRIP — mirrors crypto-dashboard tabs row. These are NOT
+         in-page tabs; each one is a navigation link to a sibling page.
+         "Card View" is the active page; the others link out.
+         ============================================================= -->
+    <div class="tabs" role="tablist">
+      <div class="tab active" role="tab" aria-selected="true">Card View</div>
+      <a class="tab" role="tab" href="../table/">Table</a>
+      <a class="tab" role="tab" href="../heatmap/">Heatmap</a>
+      <button type="button" class="tab tab-button" id="lthcs-v2-about-tab">About</button>
+      <a class="tab tab-classic" role="tab" href="../" title="Original /lthcs/ page (untouched fallback)">&larr; Classic /lthcs/</a>
+    </div>
+
+    <div class="container">
+      <!-- =============================================================
+           SENTIMENT GAUGE — composite of band distribution, macro regime
+           flags, and breadth sentiment. Same visual pattern as the crypto
+           dashboard's #overviewSentimentCard.
+           ============================================================= -->
+      <div class="card" id="lthcs-v2-sentiment-card">
+        <div class="sentiment-row">
+          <div>
+            <div class="sentiment-title">&#x1F4CA; LTHCS SENTIMENT GAUGE</div>
+            <div class="sentiment-subline" id="lthcs-v2-sentiment-subline">Composite of band distribution &middot; macro regime &middot; breadth (3 inputs)</div>
+          </div>
+          <div class="sentiment-score-block">
+            <div id="lthcs-v2-sentiment-score" class="sentiment-score">&mdash;</div>
+            <div id="lthcs-v2-sentiment-label" class="sentiment-label">&mdash;</div>
+          </div>
+        </div>
+        <div class="sentiment-bar" aria-hidden="true">
+          <div class="sentiment-bar-pos" id="lthcs-v2-sentiment-bar-pos" style="width:0%"></div>
+          <div class="sentiment-bar-neu" id="lthcs-v2-sentiment-bar-neu" style="width:0%"></div>
+          <div class="sentiment-bar-neg" id="lthcs-v2-sentiment-bar-neg" style="width:0%"></div>
+        </div>
+        <div class="sentiment-legend">
+          <span class="legend-pos">BULLISH inputs</span>
+          <span>NEUTRAL</span>
+          <span class="legend-neg">BEARISH inputs</span>
+        </div>
+      </div>
+
+      <!-- =============================================================
+           ROW 1 — Movers cards (gainers / decliners). Two-column layout
+           same as crypto-dashboard's "Latest news / Top insights".
+           ============================================================= -->
+      <div class="grid2">
+        <div class="chart-card">
+          <div class="head">
+            <h2>&#x1F4C8; Top Gainers</h2>
+            <span class="desc">Highest score-trend deltas &middot; click any tile</span>
+          </div>
+          <div id="lthcs-v2-gainers" class="movers-list">
+            <div class="movers-empty">Loading&hellip;</div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="head">
+            <h2>&#x1F4C9; Top Decliners</h2>
+            <span class="desc">Largest score declines &middot; click any tile</span>
+          </div>
+          <div id="lthcs-v2-decliners" class="movers-list">
+            <div class="movers-empty">Loading&hellip;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================
+           ROW 2 — Market regime + sector leaders
+           ============================================================= -->
+      <div class="grid2">
+        <div class="chart-card">
+          <div class="head">
+            <h2>&#x1F30D; Market Regime <span class="tag">FRED</span></h2>
+            <span class="desc">HY OAS &middot; 2s10s &middot; broad dollar</span>
+          </div>
+          <div id="lthcs-v2-regime-macro" class="regime-macro">
+            <div class="regime-empty">Loading&hellip;</div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="head">
+            <h2>&#x1F3C6; Sector Leaders</h2>
+            <span class="desc">Top 3 / Bottom 3 by 1m vs SPY</span>
+          </div>
+          <div id="lthcs-v2-sectors" class="sectors-grid">
+            <div class="regime-empty">Loading&hellip;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- =============================================================
+           BAND DISTRIBUTION — quick visual + filter pills (clickable)
+           Replaces the classic page's "summary strip" with a compact
+           single-row chip row in the crypto-dashboard chip style.
+           ============================================================= -->
+      <div class="chart-card" id="lthcs-v2-bands-card">
+        <div class="head">
+          <h2>Band distribution</h2>
+          <span class="desc">Click a band to filter the grid below</span>
+        </div>
+        <div id="lthcs-v2-band-pills" class="band-pills"></div>
+      </div>
+
+      <!-- =============================================================
+           FILTER ROW — search + drift chips. Compact top-bar style.
+           ============================================================= -->
+      <div class="chart-card filter-bar">
+        <div class="filter-bar-inner">
+          <div class="filter-search-wrap">
+            <span class="filter-search-icon" aria-hidden="true">&#x1F50D;</span>
+            <input
+              id="lthcs-v2-search"
+              class="filter-search-input"
+              type="search"
+              placeholder="Search ticker or company&hellip;"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="filter-group" role="group" aria-label="Drift filter">
+            <span class="filter-label">Drift</span>
+            <button type="button" class="chip is-active" data-filter-group="drift" data-filter-value="all">All</button>
+            <button type="button" class="chip" data-filter-group="drift" data-filter-value="improving">&uarr; Improving</button>
+            <button type="button" class="chip" data-filter-group="drift" data-filter-value="stable">&rarr; Stable</button>
+            <button type="button" class="chip" data-filter-group="drift" data-filter-value="declining">&darr; Declining</button>
+          </div>
+          <div class="filter-group" role="group" aria-label="Index filter">
+            <span class="filter-label">Index</span>
+            <button type="button" class="chip is-active" data-filter-group="index" data-filter-value="all">All</button>
+            <button type="button" class="chip" data-filter-group="index" data-filter-value="djia">DJIA</button>
+            <button type="button" class="chip" data-filter-group="index" data-filter-value="nasdaq-100">NDX</button>
+            <button type="button" class="chip" data-filter-group="index" data-filter-value="sp-100">S&amp;P 100</button>
+          </div>
+          <div id="lthcs-v2-result-count" class="filter-result-count">&mdash; tickers shown</div>
+        </div>
+      </div>
+
+      <!-- =============================================================
+           TICKER GRID — cards in crypto-dashboard border style.
+           Card border-left color carries the band identity (HOLD-green,
+           SELL-red, etc.). Trend pill mirrors STRONG SELL / HOLD treatment.
+           ============================================================= -->
+      <div class="chart-card" id="lthcs-v2-grid-card">
+        <div class="head">
+          <h2>&#x1F4CB; Universe</h2>
+          <span class="desc">168 US-listed names &middot; click for full breakdown</span>
+        </div>
+        <div id="lthcs-v2-loading" class="grid-loading">Loading scores&hellip;</div>
+        <div id="lthcs-v2-empty" class="grid-empty hidden">No tickers match current filters.</div>
+        <div id="lthcs-v2-error" class="grid-error hidden" role="alert"></div>
+        <div id="lthcs-v2-cards" class="ticker-grid" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        <strong>Not investment advice.</strong> LTHCS V2 visual treatment &middot;
+        V1 page at <a href="../">/lthcs/</a> stays unchanged.
+      </p>
+    </footer>
+
+    <!-- Detail modal root — populated by ../lthcs_tab/lthcs-detail.js. -->
+    <div id="lthcs-modal-root" class="lthcs-modal-root hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
+
+    <script type="module" src="./lthcs-v2.js"></script>
+  </body>
+</html>
