@@ -2129,20 +2129,26 @@
       "ticker": "AZN",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.24378224000000004,
+        "mean_relevance_score": 0.97607208,
+        "label_counts": {
+          "Bearish": 4,
+          "Somewhat-Bearish": 5,
+          "Neutral": 7,
+          "Somewhat-Bullish": 7,
+          "Bullish": 27
+        },
+        "sentiment_subscore_raw": 62.189112,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 62.2,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2233,20 +2239,26 @@
       "ticker": "BA",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.11514902,
+        "mean_relevance_score": 0.7002038799999998,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 7,
+          "Neutral": 22,
+          "Somewhat-Bullish": 9,
+          "Bullish": 10
+        },
+        "sentiment_subscore_raw": 55.757451,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 55.8,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2548,20 +2560,26 @@
       "ticker": "BK",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.16705858000000004,
+        "mean_relevance_score": 0.7639528800000002,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 34,
+          "Somewhat-Bullish": 9,
+          "Bullish": 7
+        },
+        "sentiment_subscore_raw": 58.352928999999996,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 58.4,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2652,20 +2670,26 @@
       "ticker": "BKNG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.020832199999999985,
+        "mean_relevance_score": 0.7937035,
+        "label_counts": {
+          "Bearish": 7,
+          "Somewhat-Bearish": 6,
+          "Neutral": 18,
+          "Somewhat-Bullish": 15,
+          "Bullish": 4
+        },
+        "sentiment_subscore_raw": 51.041610000000006,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 51.0,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2860,20 +2884,26 @@
       "ticker": "BLK",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.12401548000000004,
+        "mean_relevance_score": 0.7246551799999998,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 0,
+          "Neutral": 30,
+          "Somewhat-Bullish": 15,
+          "Bullish": 3
+        },
+        "sentiment_subscore_raw": 56.200773999999996,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 56.2,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -9179,7 +9209,13 @@
         "article_count": 0,
         "mean_sentiment_score": null,
         "mean_relevance_score": null,
-        "label_counts": {},
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 0,
+          "Neutral": 0,
+          "Somewhat-Bullish": 0,
+          "Bullish": 0
+        },
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0
       },
@@ -9187,9 +9223,9 @@
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
