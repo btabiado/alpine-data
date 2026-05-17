@@ -7,11 +7,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0642551178283274,
-        "revenue_subscore": 46.25,
+        "revenue_subscore": 46.794871794871796,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 47.8,
+      "sub_score": 46.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -37,13 +37,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0642551178283274,
-        "revenue_subscore": 46.25,
+        "revenue_subscore": 46.794871794871796,
         "margin_subscore": 58.32785764821479,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.35504743042974335,
         "margin_trend_slope": 0.00832785764821479
       },
-      "sub_score": 66.0,
+      "sub_score": 66.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -111,11 +111,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08566762523520431,
-        "revenue_subscore": 58.75,
+        "revenue_subscore": 59.61538461538461,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 55.2,
+      "sub_score": 59.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -141,13 +141,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08566762523520431,
-        "revenue_subscore": 58.75,
+        "revenue_subscore": 59.61538461538461,
         "margin_subscore": 61.33326510250555,
         "ocf_subscore": 79.50978207230297,
         "ttm_ocf_margin": 0.21803912828921188,
         "margin_trend_slope": 0.011333265102505555
       },
-      "sub_score": 65.8,
+      "sub_score": 66.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -215,11 +215,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10259412718429112,
-        "revenue_subscore": 63.74999999999999,
+        "revenue_subscore": 64.74358974358975,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 58.2,
+      "sub_score": 64.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -245,13 +245,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10259412718429112,
-        "revenue_subscore": 63.74999999999999,
+        "revenue_subscore": 64.74358974358975,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.5771353265793592,
         "margin_trend_slope": null
       },
-      "sub_score": 70.5,
+      "sub_score": 70.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -319,11 +319,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0566865315852205,
-        "revenue_subscore": 43.125,
+        "revenue_subscore": 43.58974358974359,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 45.9,
+      "sub_score": 43.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -349,13 +349,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0566865315852205,
-        "revenue_subscore": 43.125,
+        "revenue_subscore": 43.58974358974359,
         "margin_subscore": 53.398375604862956,
         "ocf_subscore": 52.82004405786569,
         "ttm_ocf_margin": 0.11128017623146276,
         "margin_trend_slope": 0.003398375604862962
       },
-      "sub_score": 49.1,
+      "sub_score": 49.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -423,11 +423,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07360205326441206,
-        "revenue_subscore": 51.24999999999999,
+        "revenue_subscore": 51.92307692307693,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 50.7,
+      "sub_score": 51.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -453,13 +453,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07360205326441206,
-        "revenue_subscore": 51.24999999999999,
+        "revenue_subscore": 51.92307692307693,
         "margin_subscore": 50.0,
         "ocf_subscore": 37.760073377567224,
         "ttm_ocf_margin": 0.05104029351026889,
         "margin_trend_slope": null
       },
-      "sub_score": 46.8,
+      "sub_score": 47.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -470,20 +470,26 @@
       "ticker": "ACN",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.20551697999999996,
+        "mean_relevance_score": 0.66732706,
+        "label_counts": {
+          "Bearish": 0,
+          "Somewhat-Bearish": 3,
+          "Neutral": 16,
+          "Somewhat-Bullish": 28,
+          "Bullish": 3
+        },
+        "sentiment_subscore_raw": 60.275849,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 60.3,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -521,11 +527,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10527784236224134,
-        "revenue_subscore": 65.0,
+        "revenue_subscore": 66.02564102564102,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 59.0,
+      "sub_score": 66.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -551,13 +557,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10527784236224134,
-        "revenue_subscore": 65.0,
+        "revenue_subscore": 66.02564102564102,
         "margin_subscore": 51.663732946308585,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.34651482918283066,
         "margin_trend_slope": 0.0016637329463085825
       },
-      "sub_score": 71.5,
+      "sub_score": 71.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -619,11 +625,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1689321605654812,
-        "revenue_subscore": 80.0,
+        "revenue_subscore": 81.41025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 68.0,
+      "sub_score": 81.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -649,13 +655,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1689321605654812,
-        "revenue_subscore": 80.0,
+        "revenue_subscore": 81.41025641025641,
         "margin_subscore": 68.14135402069994,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.45393801593014604,
         "margin_trend_slope": 0.018141354020699937
       },
-      "sub_score": 82.4,
+      "sub_score": 83.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -717,11 +723,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07073521293991439,
-        "revenue_subscore": 50.0,
+        "revenue_subscore": 50.641025641025635,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 50.0,
+      "sub_score": 50.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -747,13 +753,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07073521293991439,
-        "revenue_subscore": 50.0,
+        "revenue_subscore": 50.641025641025635,
         "margin_subscore": 43.582255696690034,
         "ocf_subscore": 53.50290783458257,
         "ttm_ocf_margin": 0.1140116313383303,
         "margin_trend_slope": -0.0064177443033099696
       },
-      "sub_score": 49.1,
+      "sub_score": 49.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -821,11 +827,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.17533844397325068,
-        "revenue_subscore": 80.625,
+        "revenue_subscore": 82.05128205128204,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 68.4,
+      "sub_score": 82.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -851,13 +857,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.17533844397325068,
-        "revenue_subscore": 80.625,
+        "revenue_subscore": 82.05128205128204,
         "margin_subscore": 52.15493415415642,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3248276873441854,
         "margin_trend_slope": 0.0021549341541564236
       },
-      "sub_score": 77.9,
+      "sub_score": 78.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -919,11 +925,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08673009514271407,
-        "revenue_subscore": 59.375,
+        "revenue_subscore": 60.256410256410255,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 55.6,
+      "sub_score": 60.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -949,13 +955,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08673009514271407,
-        "revenue_subscore": 59.375,
+        "revenue_subscore": 60.256410256410255,
         "margin_subscore": 50.0,
         "ocf_subscore": 81.81339861317264,
         "ttm_ocf_margin": 0.22725359445269058,
         "margin_trend_slope": null
       },
-      "sub_score": 63.3,
+      "sub_score": 63.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1023,11 +1029,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04386223138062997,
-        "revenue_subscore": 35.0,
+        "revenue_subscore": 35.256410256410255,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 41.0,
+      "sub_score": 35.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1053,13 +1059,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04386223138062997,
-        "revenue_subscore": 35.0,
+        "revenue_subscore": 35.256410256410255,
         "margin_subscore": 50.30119833651335,
         "ocf_subscore": 88.03358992302309,
         "ttm_ocf_margin": 0.25213435969209236,
         "margin_trend_slope": 0.0003011983365133571
       },
-      "sub_score": 55.5,
+      "sub_score": 55.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1126,11 +1132,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.34337793290672874,
-        "revenue_subscore": 93.125,
+        "revenue_subscore": 94.23076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 75.9,
+      "sub_score": 94.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1156,13 +1162,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.34337793290672874,
-        "revenue_subscore": 93.125,
+        "revenue_subscore": 94.23076923076923,
         "margin_subscore": 69.67824032193079,
         "ocf_subscore": 60.38934781352897,
         "ttm_ocf_margin": 0.14155739125411587,
         "margin_trend_slope": 0.019678240321930784
       },
-      "sub_score": 76.3,
+      "sub_score": 76.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1173,20 +1179,26 @@
       "ticker": "AMD",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.13343826000000003,
+        "mean_relevance_score": 0.7038851600000001,
+        "label_counts": {
+          "Bearish": 5,
+          "Somewhat-Bearish": 3,
+          "Neutral": 14,
+          "Somewhat-Bullish": 26,
+          "Bullish": 2
+        },
+        "sentiment_subscore_raw": 56.671913,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 56.7,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -1229,11 +1241,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0995392532312111,
-        "revenue_subscore": 62.5,
+        "revenue_subscore": 63.46153846153846,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 57.5,
+      "sub_score": 63.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1259,13 +1271,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0995392532312111,
-        "revenue_subscore": 62.5,
+        "revenue_subscore": 63.46153846153846,
         "margin_subscore": 30.80607929497922,
         "ocf_subscore": 62.553164521308055,
         "ttm_ocf_margin": 0.15021265808523224,
         "margin_trend_slope": -0.01919392070502078
       },
-      "sub_score": 53.0,
+      "sub_score": 53.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1333,11 +1345,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.20823650916602118,
-        "revenue_subscore": 85.625,
+        "revenue_subscore": 86.53846153846155,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 71.4,
+      "sub_score": 86.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1363,13 +1375,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.20823650916602118,
-        "revenue_subscore": 85.625,
+        "revenue_subscore": 86.53846153846155,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 5.416970607165844,
         "margin_trend_slope": null
       },
-      "sub_score": 79.2,
+      "sub_score": 79.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1431,11 +1443,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.12377754683294695,
-        "revenue_subscore": 68.75,
+        "revenue_subscore": 69.87179487179486,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 61.2,
+      "sub_score": 69.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1461,13 +1473,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.12377754683294695,
-        "revenue_subscore": 68.75,
+        "revenue_subscore": 69.87179487179486,
         "margin_subscore": 50.0,
         "ocf_subscore": 65.53932738443663,
         "ttm_ocf_margin": 0.16215730953774649,
         "margin_trend_slope": null
       },
-      "sub_score": 62.2,
+      "sub_score": 62.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1535,11 +1547,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23940612434271574,
-        "revenue_subscore": 91.25,
+        "revenue_subscore": 92.3076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 74.8,
+      "sub_score": 92.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1565,13 +1577,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23940612434271574,
-        "revenue_subscore": 91.25,
+        "revenue_subscore": 92.3076923076923,
         "margin_subscore": 51.592829541023,
         "ocf_subscore": 50.0,
         "ttm_ocf_margin": null,
         "margin_trend_slope": 0.0015928295410230044
       },
-      "sub_score": 67.0,
+      "sub_score": 67.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1633,11 +1645,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15583680372502468,
-        "revenue_subscore": 76.875,
+        "revenue_subscore": 78.2051282051282,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 66.1,
+      "sub_score": 78.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1663,13 +1675,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15583680372502468,
-        "revenue_subscore": 76.875,
+        "revenue_subscore": 78.2051282051282,
         "margin_subscore": 50.0,
         "ocf_subscore": 50.0,
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 60.8,
+      "sub_score": 61.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1737,11 +1749,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23874432853763525,
-        "revenue_subscore": 90.0,
+        "revenue_subscore": 91.02564102564102,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 74.0,
+      "sub_score": 91.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1767,13 +1779,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23874432853763525,
-        "revenue_subscore": 90.0,
+        "revenue_subscore": 91.02564102564102,
         "margin_subscore": 49.486977472637946,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.35628921651350814,
         "margin_trend_slope": -0.0005130225273620505
       },
-      "sub_score": 80.8,
+      "sub_score": 81.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1846,11 +1858,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06385061171925306,
-        "revenue_subscore": 45.0,
+        "revenue_subscore": 45.51282051282051,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 47.0,
+      "sub_score": 45.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -1876,13 +1888,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06385061171925306,
-        "revenue_subscore": 45.0,
+        "revenue_subscore": 45.51282051282051,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.33618728442476575,
         "margin_trend_slope": null
       },
-      "sub_score": 63.0,
+      "sub_score": 63.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2046,7 +2058,7 @@
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 76.6,
+      "sub_score": 94.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2089,20 +2101,26 @@
       "ticker": "BA",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.11514902,
+        "mean_relevance_score": 0.7002038799999998,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 7,
+          "Neutral": 22,
+          "Somewhat-Bullish": 9,
+          "Bullish": 10
+        },
+        "sentiment_subscore_raw": 55.757451,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 55.8,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -2140,11 +2158,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06840424727932286,
-        "revenue_subscore": 48.75,
+        "revenue_subscore": 49.358974358974365,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 49.2,
+      "sub_score": 49.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2170,13 +2188,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06840424727932286,
-        "revenue_subscore": 48.75,
+        "revenue_subscore": 49.358974358974365,
         "margin_subscore": 50.0,
         "ocf_subscore": 53.18386840010613,
         "ttm_ocf_margin": 0.11273547360042452,
         "margin_trend_slope": null
       },
-      "sub_score": 50.5,
+      "sub_score": 50.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2244,11 +2262,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0221891503632737,
-        "revenue_subscore": 22.5,
+        "revenue_subscore": 22.435897435897438,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 33.5,
+      "sub_score": 22.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2274,13 +2292,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0221891503632737,
-        "revenue_subscore": 22.5,
+        "revenue_subscore": 22.435897435897438,
         "margin_subscore": 34.82054830360687,
         "ocf_subscore": 72.4105461393597,
         "ttm_ocf_margin": 0.18964218455743878,
         "margin_trend_slope": -0.015179451696393134
       },
-      "sub_score": 41.2,
+      "sub_score": 41.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -2342,11 +2360,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07846823137655083,
-        "revenue_subscore": 53.75,
+        "revenue_subscore": 54.48717948717948,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 52.2,
+      "sub_score": 54.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2372,13 +2390,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07846823137655083,
-        "revenue_subscore": 53.75,
+        "revenue_subscore": 54.48717948717948,
         "margin_subscore": 50.0,
         "ocf_subscore": 0.0,
         "ttm_ocf_margin": -0.26068439928272563,
         "margin_trend_slope": null
       },
-      "sub_score": 36.5,
+      "sub_score": 36.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2446,11 +2464,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1338725304351489,
-        "revenue_subscore": 70.625,
+        "revenue_subscore": 71.7948717948718,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 62.4,
+      "sub_score": 71.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2476,13 +2494,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1338725304351489,
-        "revenue_subscore": 70.625,
+        "revenue_subscore": 71.7948717948718,
         "margin_subscore": 56.70384204188785,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4632567049808429,
         "margin_trend_slope": 0.006703842041887854
       },
-      "sub_score": 75.3,
+      "sub_score": 75.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -2550,11 +2568,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.0034496388659312227,
-        "revenue_subscore": 13.125,
+        "revenue_subscore": 12.82051282051282,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 27.9,
+      "sub_score": 12.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2580,13 +2598,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.0034496388659312227,
-        "revenue_subscore": 13.125,
+        "revenue_subscore": 12.82051282051282,
         "margin_subscore": 60.064388451963154,
         "ocf_subscore": 47.77790153709066,
         "ttm_ocf_margin": 0.09111160614836267,
         "margin_trend_slope": 0.010064388451963155
       },
-      "sub_score": 37.6,
+      "sub_score": 37.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -2648,11 +2666,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.18665163914343116,
-        "revenue_subscore": 82.5,
+        "revenue_subscore": 83.33333333333334,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 69.5,
+      "sub_score": 83.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2678,13 +2696,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.18665163914343116,
-        "revenue_subscore": 82.5,
+        "revenue_subscore": 83.33333333333334,
         "margin_subscore": 50.0,
         "ocf_subscore": 50.0,
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 63.0,
+      "sub_score": 63.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2746,11 +2764,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.0021946169772256727,
-        "revenue_subscore": 13.750000000000002,
+        "revenue_subscore": 13.461538461538462,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 28.2,
+      "sub_score": 13.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2776,13 +2794,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.0021946169772256727,
-        "revenue_subscore": 13.750000000000002,
+        "revenue_subscore": 13.461538461538462,
         "margin_subscore": 75.93357712372281,
         "ocf_subscore": 71.95746169008711,
         "ttm_ocf_margin": 0.18782984676034845,
         "margin_trend_slope": 0.025933577123722802
       },
-      "sub_score": 49.9,
+      "sub_score": 49.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -2844,11 +2862,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.009891315665120899,
-        "revenue_subscore": 10.625,
+        "revenue_subscore": 10.897435897435898,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 26.4,
+      "sub_score": 10.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2874,13 +2892,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.009891315665120899,
-        "revenue_subscore": 10.625,
+        "revenue_subscore": 10.897435897435898,
         "margin_subscore": 50.0,
         "ocf_subscore": 65.98575795386175,
         "ttm_ocf_margin": 0.16394303181544698,
         "margin_trend_slope": null
       },
-      "sub_score": 39.0,
+      "sub_score": 39.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2942,11 +2960,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05578404895815267,
-        "revenue_subscore": 41.875,
+        "revenue_subscore": 42.30769230769231,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 45.1,
+      "sub_score": 42.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -2972,13 +2990,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05578404895815267,
-        "revenue_subscore": 41.875,
+        "revenue_subscore": 42.30769230769231,
         "margin_subscore": 50.0,
         "ocf_subscore": 0.0,
         "ttm_ocf_margin": -1.2770823837406355,
         "margin_trend_slope": null
       },
-      "sub_score": 31.8,
+      "sub_score": 31.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3040,11 +3058,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04289527689055533,
-        "revenue_subscore": 32.5,
+        "revenue_subscore": 32.69230769230769,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 39.5,
+      "sub_score": 32.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3070,13 +3088,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04289527689055533,
-        "revenue_subscore": 32.5,
+        "revenue_subscore": 32.69230769230769,
         "margin_subscore": 51.087254546064955,
         "ocf_subscore": 48.97003745318352,
         "ttm_ocf_margin": 0.09588014981273409,
         "margin_trend_slope": 0.001087254546064951
       },
-      "sub_score": 43.0,
+      "sub_score": 43.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -3242,11 +3260,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.14123200059294191,
-        "revenue_subscore": 71.875,
+        "revenue_subscore": 73.07692307692307,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 63.1,
+      "sub_score": 73.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3272,13 +3290,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.14123200059294191,
-        "revenue_subscore": 71.875,
+        "revenue_subscore": 73.07692307692307,
         "margin_subscore": 50.0,
         "ocf_subscore": 88.94065503440812,
         "ttm_ocf_margin": 0.25576262013763246,
         "margin_trend_slope": null
       },
-      "sub_score": 70.4,
+      "sub_score": 70.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3346,11 +3364,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06788039259573211,
-        "revenue_subscore": 48.125,
+        "revenue_subscore": 48.717948717948715,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 48.9,
+      "sub_score": 48.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3376,13 +3394,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06788039259573211,
-        "revenue_subscore": 48.125,
+        "revenue_subscore": 48.717948717948715,
         "margin_subscore": 49.21011439244653,
         "ocf_subscore": 40.130859694859886,
         "ttm_ocf_margin": 0.06052343877943956,
         "margin_trend_slope": -0.0007898856075534705
       },
-      "sub_score": 46.1,
+      "sub_score": 46.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -3444,11 +3462,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1950537861210715,
-        "revenue_subscore": 83.75,
+        "revenue_subscore": 84.61538461538461,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 70.2,
+      "sub_score": 84.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3474,13 +3492,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1950537861210715,
-        "revenue_subscore": 83.75,
+        "revenue_subscore": 84.61538461538461,
         "margin_subscore": 50.0,
         "ocf_subscore": 13.52555995267431,
         "ttm_ocf_margin": -0.045897760189302764,
         "margin_trend_slope": null
       },
-      "sub_score": 52.6,
+      "sub_score": 52.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3542,11 +3560,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.005645820096214941,
-        "revenue_subscore": 11.875,
+        "revenue_subscore": 12.179487179487179,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 27.1,
+      "sub_score": 12.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3572,13 +3590,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.005645820096214941,
-        "revenue_subscore": 11.875,
+        "revenue_subscore": 12.179487179487179,
         "margin_subscore": 50.0,
         "ocf_subscore": 93.81048018988497,
         "ttm_ocf_margin": 0.2752419207595399,
         "margin_trend_slope": null
       },
-      "sub_score": 47.9,
+      "sub_score": 48.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3640,11 +3658,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.013979404009750758,
-        "revenue_subscore": 20.0,
+        "revenue_subscore": 19.871794871794872,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 32.0,
+      "sub_score": 19.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3670,7 +3688,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.013979404009750758,
-        "revenue_subscore": 20.0,
+        "revenue_subscore": 19.871794871794872,
         "margin_subscore": 48.677092927246186,
         "ocf_subscore": 58.73461613596406,
         "ttm_ocf_margin": 0.13493846454385622,
@@ -3687,20 +3705,26 @@
       "ticker": "CL",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.17792464000000002,
+        "mean_relevance_score": 0.84393128,
+        "label_counts": {
+          "Bearish": 1,
+          "Somewhat-Bearish": 4,
+          "Neutral": 18,
+          "Somewhat-Bullish": 15,
+          "Bullish": 12
+        },
+        "sentiment_subscore_raw": 58.896232000000005,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 58.9,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -3738,11 +3762,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.00019396917506526255,
-        "revenue_subscore": 15.0,
+        "revenue_subscore": 14.743589743589745,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 29.0,
+      "sub_score": 14.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3768,13 +3792,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.00019396917506526255,
-        "revenue_subscore": 15.0,
+        "revenue_subscore": 14.743589743589745,
         "margin_subscore": 50.0,
         "ocf_subscore": 86.57869032599405,
         "ttm_ocf_margin": 0.24631476130397623,
         "margin_trend_slope": null
       },
-      "sub_score": 47.0,
+      "sub_score": 46.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3836,11 +3860,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.36297548605240915,
-        "revenue_subscore": 96.25,
+        "revenue_subscore": 96.7948717948718,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 77.8,
+      "sub_score": 96.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3866,13 +3890,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.36297548605240915,
-        "revenue_subscore": 96.25,
+        "revenue_subscore": 96.7948717948718,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 2.0797408422626464,
         "margin_trend_slope": null
       },
-      "sub_score": 83.5,
+      "sub_score": 83.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3934,11 +3958,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0486867133433162,
-        "revenue_subscore": 37.5,
+        "revenue_subscore": 37.82051282051282,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 42.5,
+      "sub_score": 37.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -3964,13 +3988,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0486867133433162,
-        "revenue_subscore": 37.5,
+        "revenue_subscore": 37.82051282051282,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.38559801249606024,
         "margin_trend_slope": null
       },
-      "sub_score": 60.0,
+      "sub_score": 60.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4032,11 +4056,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08167323631476146,
-        "revenue_subscore": 56.25,
+        "revenue_subscore": 57.05128205128205,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 53.8,
+      "sub_score": 57.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4062,13 +4086,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08167323631476146,
-        "revenue_subscore": 56.25,
+        "revenue_subscore": 57.05128205128205,
         "margin_subscore": 50.0,
         "ocf_subscore": 39.41163316049607,
         "ttm_ocf_margin": 0.05764653264198429,
         "margin_trend_slope": null
       },
-      "sub_score": 49.3,
+      "sub_score": 49.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4130,11 +4154,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.09579100145137881,
-        "revenue_subscore": 61.25000000000001,
+        "revenue_subscore": 62.17948717948718,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 56.8,
+      "sub_score": 62.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4160,13 +4184,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.09579100145137881,
-        "revenue_subscore": 61.25000000000001,
+        "revenue_subscore": 62.17948717948718,
         "margin_subscore": 52.06671915319596,
         "ocf_subscore": 97.38860390263528,
         "ttm_ocf_margin": 0.2895544156105411,
         "margin_trend_slope": 0.002066719153195955
       },
-      "sub_score": 69.3,
+      "sub_score": 69.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -4326,11 +4350,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05298961024478189,
-        "revenue_subscore": 38.75,
+        "revenue_subscore": 39.1025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 43.2,
+      "sub_score": 39.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4356,13 +4380,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05298961024478189,
-        "revenue_subscore": 38.75,
+        "revenue_subscore": 39.1025641025641,
         "margin_subscore": 49.44775340072029,
         "ocf_subscore": 81.55965188789146,
         "ttm_ocf_margin": 0.22623860755156583,
         "margin_trend_slope": -0.0005522465992797123
       },
-      "sub_score": 54.8,
+      "sub_score": 54.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -4424,11 +4448,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.18676900584795322,
-        "revenue_subscore": 83.125,
+        "revenue_subscore": 83.97435897435898,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 69.9,
+      "sub_score": 84.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4454,13 +4478,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.18676900584795322,
-        "revenue_subscore": 83.125,
+        "revenue_subscore": 83.97435897435898,
         "margin_subscore": 47.972714402957116,
         "ocf_subscore": 61.052282746077246,
         "ttm_ocf_margin": 0.14420913098430901,
         "margin_trend_slope": -0.002027285597042885
       },
-      "sub_score": 66.0,
+      "sub_score": 66.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -4522,11 +4546,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07748211218226426,
-        "revenue_subscore": 53.125,
+        "revenue_subscore": 53.84615384615385,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 51.9,
+      "sub_score": 53.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4552,13 +4576,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07748211218226426,
-        "revenue_subscore": 53.125,
+        "revenue_subscore": 53.84615384615385,
         "margin_subscore": 51.40099921043253,
         "ocf_subscore": 59.41466764070948,
         "ttm_ocf_margin": 0.13765867056283793,
         "margin_trend_slope": 0.0014009992104325347
       },
-      "sub_score": 54.5,
+      "sub_score": 54.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -4620,11 +4644,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06951763275233076,
-        "revenue_subscore": 49.375,
+        "revenue_subscore": 50.0,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 49.6,
+      "sub_score": 50.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4650,13 +4674,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06951763275233076,
-        "revenue_subscore": 49.375,
+        "revenue_subscore": 50.0,
         "margin_subscore": 50.0,
         "ocf_subscore": 42.67509911270531,
         "ttm_ocf_margin": 0.07070039645082123,
         "margin_trend_slope": null
       },
-      "sub_score": 47.6,
+      "sub_score": 47.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4718,11 +4742,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07847986502471775,
-        "revenue_subscore": 54.37499999999999,
+        "revenue_subscore": 55.12820512820513,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 52.6,
+      "sub_score": 55.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4748,13 +4772,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07847986502471775,
-        "revenue_subscore": 54.37499999999999,
+        "revenue_subscore": 55.12820512820513,
         "margin_subscore": 47.913442273876996,
         "ocf_subscore": 38.32283266129032,
         "ttm_ocf_margin": 0.05329133064516129,
         "margin_trend_slope": -0.002086557726123008
       },
-      "sub_score": 47.6,
+      "sub_score": 47.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -4816,11 +4840,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.04643924431530293,
-        "revenue_subscore": 5.0,
+        "revenue_subscore": 5.128205128205128,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 23.0,
+      "sub_score": 5.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4846,7 +4870,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.04643924431530293,
-        "revenue_subscore": 5.0,
+        "revenue_subscore": 5.128205128205128,
         "margin_subscore": 50.0,
         "ocf_subscore": 54.183516737289274,
         "ttm_ocf_margin": 0.1167340669491571,
@@ -4920,11 +4944,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.27933221413915316,
-        "revenue_subscore": 92.5,
+        "revenue_subscore": 93.58974358974359,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 75.5,
+      "sub_score": 93.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -4950,13 +4974,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.27933221413915316,
-        "revenue_subscore": 92.5,
+        "revenue_subscore": 93.58974358974359,
         "margin_subscore": 50.0,
         "ocf_subscore": 64.4803594723873,
         "ttm_ocf_margin": 0.1579214378895492,
         "margin_trend_slope": null
       },
-      "sub_score": 71.3,
+      "sub_score": 71.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5018,11 +5042,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.2767536858183308,
-        "revenue_subscore": 91.875,
+        "revenue_subscore": 92.94871794871796,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 75.1,
+      "sub_score": 92.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5048,13 +5072,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.2767536858183308,
-        "revenue_subscore": 91.875,
+        "revenue_subscore": 92.94871794871796,
         "margin_subscore": 49.87879684659419,
         "ocf_subscore": 93.39894379652854,
         "ttm_ocf_margin": 0.2735957751861142,
         "margin_trend_slope": -0.00012120315340580811
       },
-      "sub_score": 79.7,
+      "sub_score": 80.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -5116,11 +5140,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.11663701755742903,
-        "revenue_subscore": 1.875,
+        "revenue_subscore": 1.9230769230769231,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 21.1,
+      "sub_score": 1.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5146,7 +5170,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.11663701755742903,
-        "revenue_subscore": 1.875,
+        "revenue_subscore": 1.9230769230769231,
         "margin_subscore": 62.222176030890374,
         "ocf_subscore": 0.6643356643356648,
         "ttm_ocf_margin": -0.09734265734265735,
@@ -5214,11 +5238,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.029026178010471203,
-        "revenue_subscore": 26.875,
+        "revenue_subscore": 26.923076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 36.1,
+      "sub_score": 26.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5244,13 +5268,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.029026178010471203,
-        "revenue_subscore": 26.875,
+        "revenue_subscore": 26.923076923076923,
         "margin_subscore": 46.41143353902971,
         "ocf_subscore": 91.58291457286433,
         "ttm_ocf_margin": 0.2663316582914573,
         "margin_trend_slope": -0.0035885664609702885
       },
-      "sub_score": 52.1,
+      "sub_score": 52.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -5312,11 +5336,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03353728615054564,
-        "revenue_subscore": 30.0,
+        "revenue_subscore": 30.128205128205128,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 38.0,
+      "sub_score": 30.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5342,13 +5366,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03353728615054564,
-        "revenue_subscore": 30.0,
+        "revenue_subscore": 30.128205128205128,
         "margin_subscore": 50.0,
         "ocf_subscore": 38.08423084738874,
         "ttm_ocf_margin": 0.052336923389554965,
         "margin_trend_slope": null
       },
-      "sub_score": 38.4,
+      "sub_score": 38.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5410,11 +5434,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.3506779544359557,
-        "revenue_subscore": 95.0,
+        "revenue_subscore": 95.51282051282051,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 77.0,
+      "sub_score": 95.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5440,13 +5464,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.3506779544359557,
-        "revenue_subscore": 95.0,
+        "revenue_subscore": 95.51282051282051,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.338408427016022,
         "margin_trend_slope": null
       },
-      "sub_score": 83.0,
+      "sub_score": 83.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5508,11 +5532,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1559633027522936,
-        "revenue_subscore": 77.5,
+        "revenue_subscore": 78.84615384615384,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 66.5,
+      "sub_score": 78.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5538,13 +5562,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1559633027522936,
-        "revenue_subscore": 77.5,
+        "revenue_subscore": 78.84615384615384,
         "margin_subscore": 69.24302964102039,
         "ocf_subscore": 83.4419824565222,
         "ttm_ocf_margin": 0.23376792982608885,
         "margin_trend_slope": 0.01924302964102039
       },
-      "sub_score": 76.8,
+      "sub_score": 77.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -5606,11 +5630,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.009111617312072893,
-        "revenue_subscore": 16.25,
+        "revenue_subscore": 16.025641025641026,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 29.8,
+      "sub_score": 16.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5636,13 +5660,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.009111617312072893,
-        "revenue_subscore": 16.25,
+        "revenue_subscore": 16.025641025641026,
         "margin_subscore": 36.66722084477609,
         "ocf_subscore": 39.326843981354536,
         "ttm_ocf_margin": 0.05730737592541815,
         "margin_trend_slope": -0.013332779155223915
       },
-      "sub_score": 29.3,
+      "sub_score": 29.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -5704,11 +5728,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.02995655156643037,
-        "revenue_subscore": 28.125,
+        "revenue_subscore": 28.205128205128204,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 36.9,
+      "sub_score": 28.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5734,7 +5758,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.02995655156643037,
-        "revenue_subscore": 28.125,
+        "revenue_subscore": 28.205128205128204,
         "margin_subscore": 44.17841460851245,
         "ocf_subscore": 56.51616073378466,
         "ttm_ocf_margin": 0.12606464293513867,
@@ -5802,11 +5826,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05341323606044815,
-        "revenue_subscore": 40.0,
+        "revenue_subscore": 40.38461538461539,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 44.0,
+      "sub_score": 40.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5832,13 +5856,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05341323606044815,
-        "revenue_subscore": 40.0,
+        "revenue_subscore": 40.38461538461539,
         "margin_subscore": 50.0,
         "ocf_subscore": 67.16498006746396,
         "ttm_ocf_margin": 0.16865992026985588,
         "margin_trend_slope": null
       },
-      "sub_score": 51.1,
+      "sub_score": 51.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5900,11 +5924,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.01229782909531223,
-        "revenue_subscore": 18.75,
+        "revenue_subscore": 18.58974358974359,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 31.2,
+      "sub_score": 18.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -5930,7 +5954,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.01229782909531223,
-        "revenue_subscore": 18.75,
+        "revenue_subscore": 18.58974358974359,
         "margin_subscore": 50.0,
         "ocf_subscore": 37.43026593727997,
         "ttm_ocf_margin": 0.04972106374911986,
@@ -6000,11 +6024,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.35785288270377735,
-        "revenue_subscore": 95.625,
+        "revenue_subscore": 96.15384615384616,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 77.4,
+      "sub_score": 96.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6030,13 +6054,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.35785288270377735,
-        "revenue_subscore": 95.625,
+        "revenue_subscore": 96.15384615384616,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4368785399622404,
         "margin_trend_slope": null
       },
-      "sub_score": 83.2,
+      "sub_score": 83.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6098,11 +6122,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08673469387755102,
-        "revenue_subscore": 60.0,
+        "revenue_subscore": 60.89743589743589,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 56.0,
+      "sub_score": 60.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6128,13 +6152,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08673469387755102,
-        "revenue_subscore": 60.0,
+        "revenue_subscore": 60.89743589743589,
         "margin_subscore": 48.54827944681498,
         "ocf_subscore": 63.98945633873452,
         "ttm_ocf_margin": 0.1559578253549381,
         "margin_trend_slope": -0.0014517205531850196
       },
-      "sub_score": 57.8,
+      "sub_score": 58.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -6196,11 +6220,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.14167702071929883,
-        "revenue_subscore": 72.5,
+        "revenue_subscore": 73.71794871794873,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 63.5,
+      "sub_score": 73.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6226,13 +6250,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.14167702071929883,
-        "revenue_subscore": 72.5,
+        "revenue_subscore": 73.71794871794873,
         "margin_subscore": 48.07655474103209,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.5112985973132469,
         "margin_trend_slope": -0.001923445258967914
       },
-      "sub_score": 73.4,
+      "sub_score": 73.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -6294,11 +6318,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10130773744655881,
-        "revenue_subscore": 63.125,
+        "revenue_subscore": 64.1025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 57.9,
+      "sub_score": 64.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6324,13 +6348,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10130773744655881,
-        "revenue_subscore": 63.125,
+        "revenue_subscore": 64.1025641025641,
         "margin_subscore": 50.0,
         "ocf_subscore": 40.44470688453497,
         "ttm_ocf_margin": 0.06177882753813986,
         "margin_trend_slope": null
       },
-      "sub_score": 52.4,
+      "sub_score": 52.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6396,7 +6420,7 @@
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 69.1,
+      "sub_score": 81.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6498,11 +6522,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.048444489629930865,
-        "revenue_subscore": 36.25,
+        "revenue_subscore": 36.53846153846153,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 41.8,
+      "sub_score": 36.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6528,13 +6552,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.048444489629930865,
-        "revenue_subscore": 36.25,
+        "revenue_subscore": 36.53846153846153,
         "margin_subscore": 38.28492134315815,
         "ocf_subscore": 42.785920829594176,
         "ttm_ocf_margin": 0.07114368331837671,
         "margin_trend_slope": -0.011715078656841847
       },
-      "sub_score": 38.8,
+      "sub_score": 38.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -6694,11 +6718,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.023961883564025874,
-        "revenue_subscore": 23.75,
+        "revenue_subscore": 23.717948717948715,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 34.2,
+      "sub_score": 23.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6724,7 +6748,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.023961883564025874,
-        "revenue_subscore": 23.75,
+        "revenue_subscore": 23.717948717948715,
         "margin_subscore": 50.04285923964172,
         "ocf_subscore": 97.54722944026969,
         "ttm_ocf_margin": 0.29018891776107875,
@@ -6792,11 +6816,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.021182243045114974,
-        "revenue_subscore": 8.125,
+        "revenue_subscore": 8.333333333333332,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 24.9,
+      "sub_score": 8.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6822,13 +6846,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.021182243045114974,
-        "revenue_subscore": 8.125,
+        "revenue_subscore": 8.333333333333332,
         "margin_subscore": 0.0,
         "ocf_subscore": 47.91910902696365,
         "ttm_ocf_margin": 0.09167643610785463,
         "margin_trend_slope": -0.059341314903348236
       },
-      "sub_score": 17.6,
+      "sub_score": 17.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -6890,11 +6914,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 75.3125,
+        "revenue_subscore": 76.6025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 65.2,
+      "sub_score": 76.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -6920,13 +6944,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 75.3125,
+        "revenue_subscore": 76.6025641025641,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3366649619958687,
         "margin_trend_slope": null
       },
-      "sub_score": 75.1,
+      "sub_score": 75.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6993,11 +7017,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 75.3125,
+        "revenue_subscore": 76.6025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 65.2,
+      "sub_score": 76.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7023,13 +7047,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15090081081544376,
-        "revenue_subscore": 75.3125,
+        "revenue_subscore": 76.6025641025641,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3366649619958687,
         "margin_trend_slope": null
       },
-      "sub_score": 75.1,
+      "sub_score": 75.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7194,11 +7218,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03240467921310982,
-        "revenue_subscore": 29.375,
+        "revenue_subscore": 29.48717948717949,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 37.6,
+      "sub_score": 29.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7224,13 +7248,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03240467921310982,
-        "revenue_subscore": 29.375,
+        "revenue_subscore": 29.48717948717949,
         "margin_subscore": 49.71709397837893,
         "ocf_subscore": 53.83138774579789,
         "ttm_ocf_margin": 0.11532555098319157,
         "margin_trend_slope": -0.00028290602162107465
       },
-      "sub_score": 42.8,
+      "sub_score": 42.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7292,11 +7316,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0784918051674972,
-        "revenue_subscore": 55.00000000000001,
+        "revenue_subscore": 55.769230769230774,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 53.0,
+      "sub_score": 55.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7322,13 +7346,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0784918051674972,
-        "revenue_subscore": 55.00000000000001,
+        "revenue_subscore": 55.769230769230774,
         "margin_subscore": 35.26584764687003,
         "ocf_subscore": 22.417684545937338,
         "ttm_ocf_margin": -0.010329261816250664,
         "margin_trend_slope": -0.014734152353129972
       },
-      "sub_score": 39.3,
+      "sub_score": 39.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7390,11 +7414,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07620352811817761,
-        "revenue_subscore": 51.87500000000001,
+        "revenue_subscore": 52.56410256410257,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 51.1,
+      "sub_score": 52.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7420,13 +7444,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07620352811817761,
-        "revenue_subscore": 51.87500000000001,
+        "revenue_subscore": 52.56410256410257,
         "margin_subscore": 51.544014765965485,
         "ocf_subscore": 93.5357400495562,
         "ttm_ocf_margin": 0.27414296019822476,
         "margin_trend_slope": 0.0015440147659654844
       },
-      "sub_score": 64.3,
+      "sub_score": 64.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7488,11 +7512,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10422003415519265,
-        "revenue_subscore": 64.375,
+        "revenue_subscore": 65.38461538461539,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 58.6,
+      "sub_score": 65.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7518,13 +7542,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10422003415519265,
-        "revenue_subscore": 64.375,
+        "revenue_subscore": 65.38461538461539,
         "margin_subscore": 51.95894646225982,
         "ocf_subscore": 75.91402207148784,
         "ttm_ocf_margin": 0.2036560882859514,
         "margin_trend_slope": 0.001958946462259807
       },
-      "sub_score": 64.1,
+      "sub_score": 64.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7586,11 +7610,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.006633119853613907,
-        "revenue_subscore": 11.25,
+        "revenue_subscore": 11.538461538461538,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 26.8,
+      "sub_score": 11.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7616,13 +7640,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.006633119853613907,
-        "revenue_subscore": 11.25,
+        "revenue_subscore": 11.538461538461538,
         "margin_subscore": 53.42048258076145,
         "ocf_subscore": 61.023391812865505,
         "ttm_ocf_margin": 0.144093567251462,
         "margin_trend_slope": 0.0034204825807614535
       },
-      "sub_score": 38.8,
+      "sub_score": 38.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7688,7 +7712,7 @@
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 27.5,
+      "sub_score": 12.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7782,11 +7806,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15634019035922628,
-        "revenue_subscore": 78.125,
+        "revenue_subscore": 79.48717948717949,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 66.9,
+      "sub_score": 79.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7812,13 +7836,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15634019035922628,
-        "revenue_subscore": 78.125,
+        "revenue_subscore": 79.48717948717949,
         "margin_subscore": 50.0,
         "ocf_subscore": 40.18293586135387,
         "ttm_ocf_margin": 0.060731743445415494,
         "margin_trend_slope": null
       },
-      "sub_score": 58.3,
+      "sub_score": 58.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7880,11 +7904,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.20505022688904587,
-        "revenue_subscore": 85.0,
+        "revenue_subscore": 85.8974358974359,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 71.0,
+      "sub_score": 85.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -7910,13 +7934,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.20505022688904587,
-        "revenue_subscore": 85.0,
+        "revenue_subscore": 85.8974358974359,
         "margin_subscore": 54.178361636889306,
         "ocf_subscore": 78.42150401733322,
         "ttm_ocf_margin": 0.21368601606933285,
         "margin_trend_slope": 0.004178361636889313
       },
-      "sub_score": 73.8,
+      "sub_score": 74.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -7978,11 +8002,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06048119251078011,
-        "revenue_subscore": 44.375,
+        "revenue_subscore": 44.871794871794876,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 46.6,
+      "sub_score": 44.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8008,13 +8032,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06048119251078011,
-        "revenue_subscore": 44.375,
+        "revenue_subscore": 44.871794871794876,
         "margin_subscore": 51.43844647930699,
         "ocf_subscore": 61.294841553617744,
         "ttm_ocf_margin": 0.14517936621447097,
         "margin_trend_slope": 0.0014384464793069918
       },
-      "sub_score": 51.6,
+      "sub_score": 51.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8076,11 +8100,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.027546238933069005,
-        "revenue_subscore": 25.624999999999996,
+        "revenue_subscore": 25.64102564102564,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 35.4,
+      "sub_score": 25.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8106,13 +8130,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.027546238933069005,
-        "revenue_subscore": 25.624999999999996,
+        "revenue_subscore": 25.64102564102564,
         "margin_subscore": 50.0,
         "ocf_subscore": 0.0,
         "ttm_ocf_margin": -7.689051787786099,
         "margin_trend_slope": null
       },
-      "sub_score": 25.2,
+      "sub_score": 25.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8174,11 +8198,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08155820467721972,
-        "revenue_subscore": 55.625,
+        "revenue_subscore": 56.41025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 53.4,
+      "sub_score": 56.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8204,13 +8228,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08155820467721972,
-        "revenue_subscore": 55.625,
+        "revenue_subscore": 56.41025641025641,
         "margin_subscore": 44.650974789813986,
         "ocf_subscore": 35.04353233830846,
         "ttm_ocf_margin": 0.040174129353233834,
         "margin_trend_slope": -0.005349025210186013
       },
-      "sub_score": 46.2,
+      "sub_score": 46.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8272,11 +8296,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.0007135799758480624,
-        "revenue_subscore": 14.374999999999998,
+        "revenue_subscore": 14.102564102564102,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 28.6,
+      "sub_score": 14.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8302,13 +8326,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.0007135799758480624,
-        "revenue_subscore": 14.374999999999998,
+        "revenue_subscore": 14.102564102564102,
         "margin_subscore": 0.0,
         "ocf_subscore": 65.96402087338643,
         "ttm_ocf_margin": 0.16385608349354572,
         "margin_trend_slope": -0.07981456473320933
       },
-      "sub_score": 25.5,
+      "sub_score": 25.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8370,11 +8394,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23887647752854163,
-        "revenue_subscore": 90.625,
+        "revenue_subscore": 91.66666666666666,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 74.4,
+      "sub_score": 91.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8400,13 +8424,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23887647752854163,
-        "revenue_subscore": 90.625,
+        "revenue_subscore": 91.66666666666666,
         "margin_subscore": 51.90443850939982,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3120623731367755,
         "margin_trend_slope": 0.001904438509399817
       },
-      "sub_score": 81.8,
+      "sub_score": 82.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8473,11 +8497,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.018699135164998618,
-        "revenue_subscore": 21.25,
+        "revenue_subscore": 21.153846153846153,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 32.8,
+      "sub_score": 21.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8503,7 +8527,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.018699135164998618,
-        "revenue_subscore": 21.25,
+        "revenue_subscore": 21.153846153846153,
         "margin_subscore": 50.18344496243008,
         "ocf_subscore": 12.173550657529173,
         "ttm_ocf_margin": -0.05130579736988331,
@@ -8575,7 +8599,7 @@
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 80.0,
+      "sub_score": 100.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8677,11 +8701,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.029722769277382214,
-        "revenue_subscore": 27.500000000000004,
+        "revenue_subscore": 27.564102564102566,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 36.5,
+      "sub_score": 27.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8707,13 +8731,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.029722769277382214,
-        "revenue_subscore": 27.500000000000004,
+        "revenue_subscore": 27.564102564102566,
         "margin_subscore": 50.0,
         "ocf_subscore": 85.75199247125254,
         "ttm_ocf_margin": 0.24300796988501014,
         "margin_trend_slope": null
       },
-      "sub_score": 51.7,
+      "sub_score": 51.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8775,11 +8799,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.4470394955930999,
-        "revenue_subscore": 97.5,
+        "revenue_subscore": 98.07692307692307,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 78.5,
+      "sub_score": 98.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8805,13 +8829,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.4470394955930999,
-        "revenue_subscore": 97.5,
+        "revenue_subscore": 98.07692307692307,
         "margin_subscore": 50.0,
         "ocf_subscore": 62.66222892070669,
         "ttm_ocf_margin": 0.15064891568282676,
         "margin_trend_slope": null
       },
-      "sub_score": 72.8,
+      "sub_score": 73.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8873,11 +8897,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0563743085173768,
-        "revenue_subscore": 42.5,
+        "revenue_subscore": 42.94871794871795,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 45.5,
+      "sub_score": 42.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -8903,13 +8927,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0563743085173768,
-        "revenue_subscore": 42.5,
+        "revenue_subscore": 42.94871794871795,
         "margin_subscore": 53.79078294663573,
         "ocf_subscore": 41.591521416396326,
         "ttm_ocf_margin": 0.06636608566558531,
         "margin_trend_slope": 0.003790782946635737
       },
-      "sub_score": 45.6,
+      "sub_score": 45.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -8971,11 +8995,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03121638740827497,
-        "revenue_subscore": 28.749999999999996,
+        "revenue_subscore": 28.846153846153843,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 37.2,
+      "sub_score": 28.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9001,7 +9025,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03121638740827497,
-        "revenue_subscore": 28.749999999999996,
+        "revenue_subscore": 28.846153846153843,
         "margin_subscore": 51.92369801800355,
         "ocf_subscore": 62.04350661449599,
         "ttm_ocf_margin": 0.14817402645798397,
@@ -9069,11 +9093,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23684089764599187,
-        "revenue_subscore": 89.375,
+        "revenue_subscore": 90.38461538461539,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 73.6,
+      "sub_score": 90.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9099,13 +9123,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23684089764599187,
-        "revenue_subscore": 89.375,
+        "revenue_subscore": 90.38461538461539,
         "margin_subscore": 51.59905703245965,
         "ocf_subscore": 89.6258115692956,
         "ttm_ocf_margin": 0.25850324627718246,
         "margin_trend_slope": 0.0015990570324596457
       },
-      "sub_score": 78.1,
+      "sub_score": 78.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9172,11 +9196,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04858971266492295,
-        "revenue_subscore": 36.875,
+        "revenue_subscore": 37.17948717948718,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 42.1,
+      "sub_score": 37.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9202,13 +9226,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04858971266492295,
-        "revenue_subscore": 36.875,
+        "revenue_subscore": 37.17948717948718,
         "margin_subscore": 41.42357081937654,
         "ocf_subscore": 20.202521002521795,
         "ttm_ocf_margin": -0.019189915989912824,
         "margin_trend_slope": -0.008576429180623459
       },
-      "sub_score": 33.2,
+      "sub_score": 33.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9270,11 +9294,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.16416373770724607,
-        "revenue_subscore": 79.375,
+        "revenue_subscore": 80.76923076923077,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 67.6,
+      "sub_score": 80.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9300,13 +9324,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.16416373770724607,
-        "revenue_subscore": 79.375,
+        "revenue_subscore": 80.76923076923077,
         "margin_subscore": 50.0,
         "ocf_subscore": 94.24929747089521,
         "ttm_ocf_margin": 0.2769971898835809,
         "margin_trend_slope": null
       },
-      "sub_score": 75.0,
+      "sub_score": 75.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9368,11 +9392,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04326693227091633,
-        "revenue_subscore": 33.75,
+        "revenue_subscore": 33.97435897435898,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 40.2,
+      "sub_score": 34.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9398,13 +9422,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04326693227091633,
-        "revenue_subscore": 33.75,
+        "revenue_subscore": 33.97435897435898,
         "margin_subscore": 50.0,
         "ocf_subscore": 55.315487571701716,
         "ttm_ocf_margin": 0.12126195028680688,
         "margin_trend_slope": null
       },
-      "sub_score": 45.1,
+      "sub_score": 45.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9466,11 +9490,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03722993827160494,
-        "revenue_subscore": 31.25,
+        "revenue_subscore": 31.41025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 38.8,
+      "sub_score": 31.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9496,13 +9520,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03722993827160494,
-        "revenue_subscore": 31.25,
+        "revenue_subscore": 31.41025641025641,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.38895203455330757,
         "margin_trend_slope": null
       },
-      "sub_score": 57.5,
+      "sub_score": 57.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9568,7 +9592,7 @@
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 20.0,
+      "sub_score": 0.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9662,11 +9686,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.22794268264784995,
-        "revenue_subscore": 88.125,
+        "revenue_subscore": 89.1025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 72.9,
+      "sub_score": 89.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9692,13 +9716,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.22794268264784995,
-        "revenue_subscore": 88.125,
+        "revenue_subscore": 89.1025641025641,
         "margin_subscore": 40.94049952976785,
         "ocf_subscore": 50.98298594491102,
         "ttm_ocf_margin": 0.10393194377964406,
         "margin_trend_slope": -0.009059500470232148
       },
-      "sub_score": 62.8,
+      "sub_score": 63.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9760,11 +9784,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05751763123953788,
-        "revenue_subscore": 43.75,
+        "revenue_subscore": 44.230769230769226,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 46.2,
+      "sub_score": 44.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9790,13 +9814,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05751763123953788,
-        "revenue_subscore": 43.75,
+        "revenue_subscore": 44.230769230769226,
         "margin_subscore": 49.25973094924496,
         "ocf_subscore": 51.27160882453241,
         "ttm_ocf_margin": 0.10508643529812964,
         "margin_trend_slope": -0.0007402690507550416
       },
-      "sub_score": 47.7,
+      "sub_score": 47.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -9858,11 +9882,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03624397478680015,
-        "revenue_subscore": 30.625000000000004,
+        "revenue_subscore": 30.76923076923077,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 38.4,
+      "sub_score": 30.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9888,7 +9912,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03624397478680015,
-        "revenue_subscore": 30.625000000000004,
+        "revenue_subscore": 30.76923076923077,
         "margin_subscore": 31.45720008282533,
         "ocf_subscore": 53.925619834710744,
         "ttm_ocf_margin": 0.11570247933884298,
@@ -9956,11 +9980,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.3433969743013807,
-        "revenue_subscore": 93.75,
+        "revenue_subscore": 94.87179487179486,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 76.2,
+      "sub_score": 94.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -9986,13 +10010,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.3433969743013807,
-        "revenue_subscore": 93.75,
+        "revenue_subscore": 94.87179487179486,
         "margin_subscore": 39.911073402815376,
         "ocf_subscore": 92.57056849585472,
         "ttm_ocf_margin": 0.27028227398341886,
         "margin_trend_slope": -0.010088926597184628
       },
-      "sub_score": 77.2,
+      "sub_score": 77.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -10054,11 +10078,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08507795100222718,
-        "revenue_subscore": 58.12500000000001,
+        "revenue_subscore": 58.97435897435898,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 54.9,
+      "sub_score": 59.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10084,13 +10108,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08507795100222718,
-        "revenue_subscore": 58.12500000000001,
+        "revenue_subscore": 58.97435897435898,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 4.398054474708172,
         "margin_trend_slope": null
       },
-      "sub_score": 68.2,
+      "sub_score": 68.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10152,11 +10176,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.2216703849824621,
-        "revenue_subscore": 87.5,
+        "revenue_subscore": 88.46153846153845,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 72.5,
+      "sub_score": 88.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10182,13 +10206,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.2216703849824621,
-        "revenue_subscore": 87.5,
+        "revenue_subscore": 88.46153846153845,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4534129078998698,
         "margin_trend_slope": null
       },
-      "sub_score": 80.0,
+      "sub_score": 80.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10255,11 +10279,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.015178026449643948,
-        "revenue_subscore": 20.625,
+        "revenue_subscore": 20.51282051282051,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 32.4,
+      "sub_score": 20.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10285,7 +10309,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.015178026449643948,
-        "revenue_subscore": 20.625,
+        "revenue_subscore": 20.51282051282051,
         "margin_subscore": 50.0,
         "ocf_subscore": 50.52827530690279,
         "ttm_ocf_margin": 0.10211310122761119,
@@ -10353,11 +10377,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10698854045979898,
-        "revenue_subscore": 66.25,
+        "revenue_subscore": 67.3076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 59.8,
+      "sub_score": 67.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10383,13 +10407,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10698854045979898,
-        "revenue_subscore": 66.25,
+        "revenue_subscore": 67.3076923076923,
         "margin_subscore": 45.37418719442106,
         "ocf_subscore": 82.21788473567034,
         "ttm_ocf_margin": 0.22887153894268134,
         "margin_trend_slope": -0.004625812805578936
       },
-      "sub_score": 64.8,
+      "sub_score": 65.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -10451,11 +10475,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.03076859022399867,
-        "revenue_subscore": 5.625,
+        "revenue_subscore": 5.769230769230769,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 23.4,
+      "sub_score": 5.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10481,7 +10505,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.03076859022399867,
-        "revenue_subscore": 5.625,
+        "revenue_subscore": 5.769230769230769,
         "margin_subscore": 58.119516730229094,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.47701325401338524,
@@ -10549,11 +10573,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.01313738935294851,
-        "revenue_subscore": 19.375,
+        "revenue_subscore": 19.230769230769234,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 31.6,
+      "sub_score": 19.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10579,13 +10603,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.01313738935294851,
-        "revenue_subscore": 19.375,
+        "revenue_subscore": 19.230769230769234,
         "margin_subscore": 50.0,
         "ocf_subscore": 66.78544462764071,
         "ttm_ocf_margin": 0.1671417785105629,
         "margin_trend_slope": null
       },
-      "sub_score": 42.8,
+      "sub_score": 42.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10647,11 +10671,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.42087285211450765,
-        "revenue_subscore": 96.875,
+        "revenue_subscore": 97.43589743589743,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 78.1,
+      "sub_score": 97.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10677,13 +10701,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.42087285211450765,
-        "revenue_subscore": 96.875,
+        "revenue_subscore": 97.43589743589743,
         "margin_subscore": 100.0,
         "ocf_subscore": 60.39108382274425,
         "ttm_ocf_margin": 0.14156433529097703,
         "margin_trend_slope": 0.08569497086050964
       },
-      "sub_score": 86.9,
+      "sub_score": 87.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -10745,11 +10769,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.054842581479087806,
-        "revenue_subscore": 41.25,
+        "revenue_subscore": 41.66666666666667,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 44.8,
+      "sub_score": 41.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10775,13 +10799,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.054842581479087806,
-        "revenue_subscore": 41.25,
+        "revenue_subscore": 41.66666666666667,
         "margin_subscore": 50.0,
         "ocf_subscore": 0.0,
         "ttm_ocf_margin": -1.0976773496579042,
         "margin_trend_slope": null
       },
-      "sub_score": 31.5,
+      "sub_score": 31.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10843,11 +10867,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1493215623240672,
-        "revenue_subscore": 74.375,
+        "revenue_subscore": 75.64102564102564,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 64.6,
+      "sub_score": 75.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10873,13 +10897,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1493215623240672,
-        "revenue_subscore": 74.375,
+        "revenue_subscore": 75.64102564102564,
         "margin_subscore": 45.738293797911695,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.5275378489121444,
         "margin_trend_slope": -0.004261706202088306
       },
-      "sub_score": 73.5,
+      "sub_score": 74.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -10946,11 +10970,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.48851101111066864,
-        "revenue_subscore": 98.75,
+        "revenue_subscore": 99.35897435897436,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 79.2,
+      "sub_score": 99.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -10976,13 +11000,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.48851101111066864,
-        "revenue_subscore": 98.75,
+        "revenue_subscore": 99.35897435897436,
         "margin_subscore": 100.0,
         "ocf_subscore": 88.79769218149005,
         "ttm_ocf_margin": 0.25519076872596025,
         "margin_trend_slope": 0.1311855250126339
       },
-      "sub_score": 96.1,
+      "sub_score": 96.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11049,11 +11073,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.07072550681181149,
-        "revenue_subscore": 3.125,
+        "revenue_subscore": 3.205128205128205,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 21.9,
+      "sub_score": 3.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11079,13 +11103,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.07072550681181149,
-        "revenue_subscore": 3.125,
+        "revenue_subscore": 3.205128205128205,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.6809354210066528,
         "margin_trend_slope": null
       },
-      "sub_score": 46.2,
+      "sub_score": 46.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -11147,11 +11171,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15851068919677527,
-        "revenue_subscore": 78.75,
+        "revenue_subscore": 80.12820512820514,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 67.2,
+      "sub_score": 80.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11177,13 +11201,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15851068919677527,
-        "revenue_subscore": 78.75,
+        "revenue_subscore": 80.12820512820514,
         "margin_subscore": 48.34011449526067,
         "ocf_subscore": 98.42022660907354,
         "ttm_ocf_margin": 0.29368090643629413,
         "margin_trend_slope": -0.0016598855047393233
       },
-      "sub_score": 75.5,
+      "sub_score": 76.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11245,11 +11269,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.09838012538452552,
-        "revenue_subscore": 2.5,
+        "revenue_subscore": 2.564102564102564,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 21.5,
+      "sub_score": 2.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11275,7 +11299,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.09838012538452552,
-        "revenue_subscore": 2.5,
+        "revenue_subscore": 2.564102564102564,
         "margin_subscore": 44.454250647621926,
         "ocf_subscore": 29.85598029767641,
         "ttm_ocf_margin": 0.019423921190705642,
@@ -11343,11 +11367,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.20884923525127458,
-        "revenue_subscore": 86.25,
+        "revenue_subscore": 87.17948717948718,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 71.8,
+      "sub_score": 87.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11373,13 +11397,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.20884923525127458,
-        "revenue_subscore": 86.25,
+        "revenue_subscore": 87.17948717948718,
         "margin_subscore": 38.245264103327244,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4146884272997033,
         "margin_trend_slope": -0.011754735896672752
       },
-      "sub_score": 76.0,
+      "sub_score": 76.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11441,11 +11465,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.654735357900948,
-        "revenue_subscore": 99.375,
+        "revenue_subscore": 100.0,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 79.6,
+      "sub_score": 100.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11471,13 +11495,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.654735357900948,
-        "revenue_subscore": 99.375,
+        "revenue_subscore": 100.0,
         "margin_subscore": 58.46432493285732,
         "ocf_subscore": 89.79334911669665,
         "ttm_ocf_margin": 0.2591733964667866,
         "margin_trend_slope": 0.008464324932857332
       },
-      "sub_score": 84.2,
+      "sub_score": 84.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11544,11 +11568,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.027350562866656096,
-        "revenue_subscore": 6.875000000000001,
+        "revenue_subscore": 7.051282051282051,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 24.1,
+      "sub_score": 7.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11574,13 +11598,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.027350562866656096,
-        "revenue_subscore": 6.875000000000001,
+        "revenue_subscore": 7.051282051282051,
         "margin_subscore": 56.48233550964301,
         "ocf_subscore": 83.6256706562113,
         "ttm_ocf_margin": 0.23450268262484522,
         "margin_trend_slope": 0.0064823355096430115
       },
-      "sub_score": 44.8,
+      "sub_score": 44.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11740,11 +11764,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.15346709402312808,
-        "revenue_subscore": 1.25,
+        "revenue_subscore": 1.282051282051282,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 20.8,
+      "sub_score": 1.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11770,13 +11794,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.15346709402312808,
-        "revenue_subscore": 1.25,
+        "revenue_subscore": 1.282051282051282,
         "margin_subscore": 100.0,
         "ocf_subscore": 98.13585120262269,
         "ttm_ocf_margin": 0.29254340481049074,
         "margin_trend_slope": 0.054912488758403016
       },
-      "sub_score": 59.9,
+      "sub_score": 60.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11838,11 +11862,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08379751137629576,
-        "revenue_subscore": 56.875,
+        "revenue_subscore": 57.692307692307686,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 54.1,
+      "sub_score": 57.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11868,13 +11892,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08379751137629576,
-        "revenue_subscore": 56.875,
+        "revenue_subscore": 57.692307692307686,
         "margin_subscore": 50.12023058898754,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4644164098613251,
         "margin_trend_slope": 0.00012023058898754052
       },
-      "sub_score": 67.8,
+      "sub_score": 68.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -11941,11 +11965,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0642495944723634,
-        "revenue_subscore": 45.625,
+        "revenue_subscore": 46.15384615384615,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 47.4,
+      "sub_score": 46.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -11971,13 +11995,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0642495944723634,
-        "revenue_subscore": 45.625,
+        "revenue_subscore": 46.15384615384615,
         "margin_subscore": 50.99478266936814,
         "ocf_subscore": 69.7062304076306,
         "ttm_ocf_margin": 0.17882492163052244,
         "margin_trend_slope": 0.0009947826693681432
       },
-      "sub_score": 54.5,
+      "sub_score": 54.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -12039,11 +12063,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1487387106820305,
-        "revenue_subscore": 73.75,
+        "revenue_subscore": 75.0,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 64.2,
+      "sub_score": 75.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12069,13 +12093,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1487387106820305,
-        "revenue_subscore": 73.75,
+        "revenue_subscore": 75.0,
         "margin_subscore": 51.66496884102355,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.628635323486582,
         "margin_trend_slope": 0.0016649688410235507
       },
-      "sub_score": 75.0,
+      "sub_score": 75.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -12137,11 +12161,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05416991426344505,
-        "revenue_subscore": 40.625,
+        "revenue_subscore": 41.02564102564102,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 44.4,
+      "sub_score": 41.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12167,13 +12191,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05416991426344505,
-        "revenue_subscore": 40.625,
+        "revenue_subscore": 41.02564102564102,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.37364618033763014,
         "margin_trend_slope": null
       },
-      "sub_score": 61.2,
+      "sub_score": 61.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12235,11 +12259,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.15503300281014026,
-        "revenue_subscore": 0.625,
+        "revenue_subscore": 0.641025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 20.4,
+      "sub_score": 0.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12265,7 +12289,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.15503300281014026,
-        "revenue_subscore": 0.625,
+        "revenue_subscore": 0.641025641025641,
         "margin_subscore": 50.0,
         "ocf_subscore": 60.526663262970715,
         "ttm_ocf_margin": 0.1421066530518829,
@@ -12333,11 +12357,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1445231243537709,
-        "revenue_subscore": 73.125,
+        "revenue_subscore": 74.35897435897436,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 63.9,
+      "sub_score": 74.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12363,13 +12387,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1445231243537709,
-        "revenue_subscore": 73.125,
+        "revenue_subscore": 74.35897435897436,
         "margin_subscore": 50.0,
         "ocf_subscore": 50.0,
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 59.2,
+      "sub_score": 59.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12431,11 +12455,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.022546650118666578,
-        "revenue_subscore": 23.125,
+        "revenue_subscore": 23.076923076923077,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 33.9,
+      "sub_score": 23.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12461,7 +12485,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.022546650118666578,
-        "revenue_subscore": 23.125,
+        "revenue_subscore": 23.076923076923077,
         "margin_subscore": 47.18754110996005,
         "ocf_subscore": 17.963403748884264,
         "ttm_ocf_margin": -0.028146385004462957,
@@ -12529,11 +12553,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.01647099501783834,
-        "revenue_subscore": 9.375,
+        "revenue_subscore": 9.615384615384617,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 25.6,
+      "sub_score": 9.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12559,13 +12583,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.01647099501783834,
-        "revenue_subscore": 9.375,
+        "revenue_subscore": 9.615384615384617,
         "margin_subscore": 50.0,
         "ocf_subscore": 55.48442150219427,
         "ttm_ocf_margin": 0.1219376860087771,
         "margin_trend_slope": null
       },
-      "sub_score": 35.4,
+      "sub_score": 35.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12627,11 +12651,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0029153131284284676,
-        "revenue_subscore": 15.625,
+        "revenue_subscore": 15.384615384615385,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 29.4,
+      "sub_score": 15.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12657,13 +12681,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0029153131284284676,
-        "revenue_subscore": 15.625,
+        "revenue_subscore": 15.384615384615385,
         "margin_subscore": 50.0,
         "ocf_subscore": 79.56456982652882,
         "ttm_ocf_margin": 0.2182582793061153,
         "margin_trend_slope": null
       },
-      "sub_score": 45.1,
+      "sub_score": 45.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12725,11 +12749,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07312952109403875,
-        "revenue_subscore": 50.625,
+        "revenue_subscore": 51.28205128205128,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 50.4,
+      "sub_score": 51.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12755,13 +12779,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07312952109403875,
-        "revenue_subscore": 50.625,
+        "revenue_subscore": 51.28205128205128,
         "margin_subscore": 52.117024193996386,
         "ocf_subscore": 15.953947368421053,
         "ttm_ocf_margin": -0.03618421052631579,
         "margin_trend_slope": 0.0021170241939963883
       },
-      "sub_score": 40.7,
+      "sub_score": 40.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -12823,11 +12847,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0432430732459037,
-        "revenue_subscore": 33.125,
+        "revenue_subscore": 33.33333333333333,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 39.9,
+      "sub_score": 33.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12853,13 +12877,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0432430732459037,
-        "revenue_subscore": 33.125,
+        "revenue_subscore": 33.33333333333333,
         "margin_subscore": 50.0,
         "ocf_subscore": 65.9525404121891,
         "ttm_ocf_margin": 0.16381016164875642,
         "margin_trend_slope": null
       },
-      "sub_score": 48.0,
+      "sub_score": 48.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12921,11 +12945,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1365946306657769,
-        "revenue_subscore": 71.25,
+        "revenue_subscore": 72.43589743589743,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 62.8,
+      "sub_score": 72.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -12951,13 +12975,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1365946306657769,
-        "revenue_subscore": 71.25,
+        "revenue_subscore": 72.43589743589743,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3528905984839914,
         "margin_trend_slope": null
       },
-      "sub_score": 73.5,
+      "sub_score": 74.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13019,11 +13043,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.00992113786790593,
-        "revenue_subscore": 16.875,
+        "revenue_subscore": 16.666666666666664,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 30.1,
+      "sub_score": 16.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13049,13 +13073,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.00992113786790593,
-        "revenue_subscore": 16.875,
+        "revenue_subscore": 16.666666666666664,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.35580915813424346,
         "margin_trend_slope": null
       },
-      "sub_score": 51.8,
+      "sub_score": 51.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13117,11 +13141,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.12264177747471304,
-        "revenue_subscore": 68.125,
+        "revenue_subscore": 69.23076923076923,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 60.9,
+      "sub_score": 69.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13147,13 +13171,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.12264177747471304,
-        "revenue_subscore": 68.125,
+        "revenue_subscore": 69.23076923076923,
         "margin_subscore": 52.336546398182406,
         "ocf_subscore": 91.63139862958487,
         "ttm_ocf_margin": 0.2665255945183394,
         "margin_trend_slope": 0.002336546398182408
       },
-      "sub_score": 70.4,
+      "sub_score": 70.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -13215,11 +13239,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.07673449738014453,
-        "revenue_subscore": 52.5,
+        "revenue_subscore": 53.205128205128204,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 51.5,
+      "sub_score": 53.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13245,13 +13269,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.07673449738014453,
-        "revenue_subscore": 52.5,
+        "revenue_subscore": 53.205128205128204,
         "margin_subscore": 50.0,
         "ocf_subscore": 34.15115543572409,
         "ttm_ocf_margin": 0.03660462174289638,
         "margin_trend_slope": null
       },
-      "sub_score": 46.2,
+      "sub_score": 46.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13313,11 +13337,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.09741385716762863,
-        "revenue_subscore": 61.875,
+        "revenue_subscore": 62.82051282051282,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 57.1,
+      "sub_score": 62.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13343,13 +13367,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.09741385716762863,
-        "revenue_subscore": 61.875,
+        "revenue_subscore": 62.82051282051282,
         "margin_subscore": 14.395540337553184,
         "ocf_subscore": 32.632373526451566,
         "ttm_ocf_margin": 0.03052949410580627,
         "margin_trend_slope": -0.03560445966244682
       },
-      "sub_score": 38.9,
+      "sub_score": 39.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -13411,11 +13435,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.027869151541621288,
-        "revenue_subscore": 26.25,
+        "revenue_subscore": 26.282051282051285,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 35.8,
+      "sub_score": 26.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13441,7 +13465,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.027869151541621288,
-        "revenue_subscore": 26.25,
+        "revenue_subscore": 26.282051282051285,
         "margin_subscore": 50.0,
         "ocf_subscore": 75.75642121696465,
         "ttm_ocf_margin": 0.2030256848678586,
@@ -13509,11 +13533,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.22008568805467715,
-        "revenue_subscore": 86.875,
+        "revenue_subscore": 87.82051282051282,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 72.1,
+      "sub_score": 87.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13539,13 +13563,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.22008568805467715,
-        "revenue_subscore": 86.875,
+        "revenue_subscore": 87.82051282051282,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.9194747995180123,
         "margin_trend_slope": null
       },
-      "sub_score": 79.8,
+      "sub_score": 80.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13607,11 +13631,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.02059874017793363,
-        "revenue_subscore": 21.875,
+        "revenue_subscore": 21.794871794871796,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 33.1,
+      "sub_score": 21.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13637,13 +13661,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.02059874017793363,
-        "revenue_subscore": 21.875,
+        "revenue_subscore": 21.794871794871796,
         "margin_subscore": 52.27161131927378,
         "ocf_subscore": 26.134474927364,
         "ttm_ocf_margin": 0.0045378997094560015,
         "margin_trend_slope": 0.0022716113192737812
       },
-      "sub_score": 32.3,
+      "sub_score": 32.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -13705,11 +13729,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.4658532304249225,
-        "revenue_subscore": 98.125,
+        "revenue_subscore": 98.71794871794873,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 78.9,
+      "sub_score": 98.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13735,13 +13759,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.4658532304249225,
-        "revenue_subscore": 98.125,
+        "revenue_subscore": 98.71794871794873,
         "margin_subscore": 48.107236816617366,
         "ocf_subscore": 25.579483436297984,
         "ttm_ocf_margin": 0.0023179337451919306,
         "margin_trend_slope": -0.0018927631833826361
       },
-      "sub_score": 61.4,
+      "sub_score": 61.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -13803,11 +13827,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.15124466416295496,
-        "revenue_subscore": 76.25,
+        "revenue_subscore": 77.56410256410257,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 65.8,
+      "sub_score": 77.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13833,13 +13857,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.15124466416295496,
-        "revenue_subscore": 76.25,
+        "revenue_subscore": 77.56410256410257,
         "margin_subscore": 24.24012855965467,
         "ocf_subscore": 53.31315422781764,
         "ttm_ocf_margin": 0.11325261691127057,
         "margin_trend_slope": -0.02575987144034533
       },
-      "sub_score": 53.8,
+      "sub_score": 54.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -13901,11 +13925,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.10585990121239336,
-        "revenue_subscore": 65.625,
+        "revenue_subscore": 66.66666666666666,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 59.4,
+      "sub_score": 66.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -13931,13 +13955,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.10585990121239336,
-        "revenue_subscore": 65.625,
+        "revenue_subscore": 66.66666666666666,
         "margin_subscore": 50.0,
         "ocf_subscore": 62.385365538620505,
         "ttm_ocf_margin": 0.14954146215448205,
         "margin_trend_slope": null
       },
-      "sub_score": 60.0,
+      "sub_score": 60.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13999,11 +14023,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0671899014688291,
-        "revenue_subscore": 47.5,
+        "revenue_subscore": 48.07692307692308,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 48.5,
+      "sub_score": 48.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14029,13 +14053,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0671899014688291,
-        "revenue_subscore": 47.5,
+        "revenue_subscore": 48.07692307692308,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.490687794367103,
         "margin_trend_slope": null
       },
-      "sub_score": 64.0,
+      "sub_score": 64.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14101,7 +14125,7 @@
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 35.0,
+      "sub_score": 25.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14195,11 +14219,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.19655403348274664,
-        "revenue_subscore": 84.375,
+        "revenue_subscore": 85.25641025641025,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 70.6,
+      "sub_score": 85.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14225,13 +14249,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.19655403348274664,
-        "revenue_subscore": 84.375,
+        "revenue_subscore": 85.25641025641025,
         "margin_subscore": 57.48269735649971,
         "ocf_subscore": 86.93356489313281,
         "ttm_ocf_margin": 0.2477342595725312,
         "margin_trend_slope": 0.007482697356499714
       },
-      "sub_score": 77.1,
+      "sub_score": 77.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -14293,11 +14317,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.01675956684120639,
-        "revenue_subscore": 8.75,
+        "revenue_subscore": 8.974358974358974,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 25.2,
+      "sub_score": 9.0,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14323,13 +14347,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.01675956684120639,
-        "revenue_subscore": 8.75,
+        "revenue_subscore": 8.974358974358974,
         "margin_subscore": 36.88816101861418,
         "ocf_subscore": 28.11765588279414,
         "ttm_ocf_margin": 0.01247062353117656,
         "margin_trend_slope": -0.013111838981385826
       },
-      "sub_score": 23.0,
+      "sub_score": 23.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -14391,11 +14415,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.03911005387252501,
-        "revenue_subscore": 31.874999999999996,
+        "revenue_subscore": 32.05128205128205,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 39.1,
+      "sub_score": 32.1,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14421,13 +14445,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.03911005387252501,
-        "revenue_subscore": 31.874999999999996,
+        "revenue_subscore": 32.05128205128205,
         "margin_subscore": 50.09762062762616,
         "ocf_subscore": 47.464587274489,
         "ttm_ocf_margin": 0.08985834909795598,
         "margin_trend_slope": 9.762062762616282e-05
       },
-      "sub_score": 42.0,
+      "sub_score": 42.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -14489,11 +14513,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.08487714987714988,
-        "revenue_subscore": 57.49999999999999,
+        "revenue_subscore": 58.333333333333336,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 54.5,
+      "sub_score": 58.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14519,13 +14543,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.08487714987714988,
-        "revenue_subscore": 57.49999999999999,
+        "revenue_subscore": 58.333333333333336,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.32748443995314763,
         "margin_trend_slope": null
       },
-      "sub_score": 68.0,
+      "sub_score": 68.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14587,11 +14611,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05180621674600952,
-        "revenue_subscore": 38.125,
+        "revenue_subscore": 38.46153846153847,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 42.9,
+      "sub_score": 38.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14617,13 +14641,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05180621674600952,
-        "revenue_subscore": 38.125,
+        "revenue_subscore": 38.46153846153847,
         "margin_subscore": 50.0,
         "ocf_subscore": 56.18791390728476,
         "ttm_ocf_margin": 0.12475165562913908,
         "margin_trend_slope": null
       },
-      "sub_score": 47.1,
+      "sub_score": 47.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14685,11 +14709,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.029306991503736307,
-        "revenue_subscore": 6.25,
+        "revenue_subscore": 6.41025641025641,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 23.8,
+      "sub_score": 6.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14715,13 +14739,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.029306991503736307,
-        "revenue_subscore": 6.25,
+        "revenue_subscore": 6.41025641025641,
         "margin_subscore": 65.07969500361405,
         "ocf_subscore": 48.96195552089089,
         "ttm_ocf_margin": 0.09584782208356353,
         "margin_trend_slope": 0.015079695003614044
       },
-      "sub_score": 36.7,
+      "sub_score": 36.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -14785,11 +14809,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.18465611733489964,
-        "revenue_subscore": 81.25,
+        "revenue_subscore": 82.6923076923077,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 68.8,
+      "sub_score": 82.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14815,13 +14839,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.18465611733489964,
-        "revenue_subscore": 81.25,
+        "revenue_subscore": 82.6923076923077,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.3857370314240327,
         "margin_trend_slope": null
       },
-      "sub_score": 77.5,
+      "sub_score": 78.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14883,11 +14907,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.05308808135187677,
-        "revenue_subscore": 39.375,
+        "revenue_subscore": 39.743589743589745,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 43.6,
+      "sub_score": 39.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -14913,13 +14937,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.05308808135187677,
-        "revenue_subscore": 39.375,
+        "revenue_subscore": 39.743589743589745,
         "margin_subscore": 41.737496930053645,
         "ocf_subscore": 19.874850072596427,
         "ttm_ocf_margin": -0.020500599709614292,
         "margin_trend_slope": -0.008262503069946352
       },
-      "sub_score": 34.2,
+      "sub_score": 34.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -14981,11 +15005,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.13049037785307846,
-        "revenue_subscore": 69.375,
+        "revenue_subscore": 70.51282051282051,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 61.6,
+      "sub_score": 70.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15011,13 +15035,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.13049037785307846,
-        "revenue_subscore": 69.375,
+        "revenue_subscore": 70.51282051282051,
         "margin_subscore": 53.029628725411335,
         "ocf_subscore": 87.84560937845609,
         "ttm_ocf_margin": 0.2513824375138244,
         "margin_trend_slope": 0.0030296287254113407
       },
-      "sub_score": 70.0,
+      "sub_score": 70.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -15079,11 +15103,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.11814039242726306,
-        "revenue_subscore": 67.5,
+        "revenue_subscore": 68.58974358974359,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 60.5,
+      "sub_score": 68.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15109,13 +15133,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.11814039242726306,
-        "revenue_subscore": 67.5,
+        "revenue_subscore": 68.58974358974359,
         "margin_subscore": 50.0,
         "ocf_subscore": 42.84405243088014,
         "ttm_ocf_margin": 0.07137620972352059,
         "margin_trend_slope": null
       },
-      "sub_score": 54.9,
+      "sub_score": 55.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15177,11 +15201,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.010721649484536083,
-        "revenue_subscore": 17.5,
+        "revenue_subscore": 17.307692307692307,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 30.5,
+      "sub_score": 17.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15207,13 +15231,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.010721649484536083,
-        "revenue_subscore": 17.5,
+        "revenue_subscore": 17.307692307692307,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.34948461975489004,
         "margin_trend_slope": null
       },
-      "sub_score": 52.0,
+      "sub_score": 51.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15275,11 +15299,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.0264521796420336,
-        "revenue_subscore": 7.5,
+        "revenue_subscore": 7.6923076923076925,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 24.5,
+      "sub_score": 7.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15305,7 +15329,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.0264521796420336,
-        "revenue_subscore": 7.5,
+        "revenue_subscore": 7.6923076923076925,
         "margin_subscore": 50.0,
         "ocf_subscore": 54.90899934413942,
         "ttm_ocf_margin": 0.11963599737655767,
@@ -15373,11 +15397,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04374430886905846,
-        "revenue_subscore": 34.375,
+        "revenue_subscore": 34.61538461538461,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 40.6,
+      "sub_score": 34.6,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15403,7 +15427,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04374430886905846,
-        "revenue_subscore": 34.375,
+        "revenue_subscore": 34.61538461538461,
         "margin_subscore": 50.0,
         "ocf_subscore": 64.67073725462753,
         "ttm_ocf_margin": 0.1586829490185101,
@@ -15471,11 +15495,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1133997661860491,
-        "revenue_subscore": 66.875,
+        "revenue_subscore": 67.94871794871796,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 60.1,
+      "sub_score": 67.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15501,13 +15525,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1133997661860491,
-        "revenue_subscore": 66.875,
+        "revenue_subscore": 67.94871794871796,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4764302933384252,
         "margin_trend_slope": null
       },
-      "sub_score": 71.8,
+      "sub_score": 72.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15569,11 +15593,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.06628032064406426,
-        "revenue_subscore": 46.875,
+        "revenue_subscore": 47.43589743589743,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 48.1,
+      "sub_score": 47.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15599,13 +15623,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.06628032064406426,
-        "revenue_subscore": 46.875,
+        "revenue_subscore": 47.43589743589743,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.4820737851454575,
         "margin_trend_slope": null
       },
-      "sub_score": 63.8,
+      "sub_score": 64.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15667,11 +15691,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.0890373045616646,
-        "revenue_subscore": 60.62499999999999,
+        "revenue_subscore": 61.53846153846154,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 56.4,
+      "sub_score": 61.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15697,13 +15721,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.0890373045616646,
-        "revenue_subscore": 60.62499999999999,
+        "revenue_subscore": 61.53846153846154,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.37747283483921273,
         "margin_trend_slope": null
       },
-      "sub_score": 69.2,
+      "sub_score": 69.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15765,11 +15789,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.025247054633943673,
-        "revenue_subscore": 24.375,
+        "revenue_subscore": 24.358974358974358,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 34.6,
+      "sub_score": 24.4,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15795,7 +15819,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.025247054633943673,
-        "revenue_subscore": 24.375,
+        "revenue_subscore": 24.358974358974358,
         "margin_subscore": 50.0,
         "ocf_subscore": 82.13577981651376,
         "ttm_ocf_margin": 0.22854311926605506,
@@ -15863,11 +15887,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.05149919890135042,
-        "revenue_subscore": 3.75,
+        "revenue_subscore": 3.8461538461538463,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 22.2,
+      "sub_score": 3.8,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15893,7 +15917,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.05149919890135042,
-        "revenue_subscore": 3.75,
+        "revenue_subscore": 3.8461538461538463,
         "margin_subscore": 50.0,
         "ocf_subscore": 27.03517656347845,
         "ttm_ocf_margin": 0.0081407062539138,
@@ -15961,11 +15985,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.1309495619228037,
-        "revenue_subscore": 70.0,
+        "revenue_subscore": 71.15384615384616,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 62.0,
+      "sub_score": 71.2,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -15991,13 +16015,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.1309495619228037,
-        "revenue_subscore": 70.0,
+        "revenue_subscore": 71.15384615384616,
         "margin_subscore": 50.0,
         "ocf_subscore": 74.1830065359477,
         "ttm_ocf_margin": 0.19673202614379084,
         "margin_trend_slope": null
       },
-      "sub_score": 65.3,
+      "sub_score": 65.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16059,11 +16083,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.015565688362188686,
-        "revenue_subscore": 10.0,
+        "revenue_subscore": 10.256410256410255,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 26.0,
+      "sub_score": 10.3,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16089,13 +16113,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.015565688362188686,
-        "revenue_subscore": 10.0,
+        "revenue_subscore": 10.256410256410255,
         "margin_subscore": 50.0,
         "ocf_subscore": 3.367680732744523,
         "ttm_ocf_margin": -0.08652927706902191,
         "margin_trend_slope": null
       },
-      "sub_score": 20.0,
+      "sub_score": 20.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16157,11 +16181,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.04725456534694858,
-        "revenue_subscore": 35.625,
+        "revenue_subscore": 35.8974358974359,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 41.4,
+      "sub_score": 35.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16187,13 +16211,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.04725456534694858,
-        "revenue_subscore": 35.625,
+        "revenue_subscore": 35.8974358974359,
         "margin_subscore": 50.0,
         "ocf_subscore": 28.84206925425563,
         "ttm_ocf_margin": 0.015368277017022538,
         "margin_trend_slope": null
       },
-      "sub_score": 37.9,
+      "sub_score": 38.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16255,11 +16279,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.011662574535250788,
-        "revenue_subscore": 18.125,
+        "revenue_subscore": 17.94871794871795,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 30.9,
+      "sub_score": 17.9,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16285,7 +16309,7 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.011662574535250788,
-        "revenue_subscore": 18.125,
+        "revenue_subscore": 17.94871794871795,
         "margin_subscore": 50.0,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.45749720093015245,
@@ -16353,11 +16377,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": -0.04962169429466367,
-        "revenue_subscore": 4.375,
+        "revenue_subscore": 4.487179487179487,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 22.6,
+      "sub_score": 4.5,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16383,13 +16407,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": -0.04962169429466367,
-        "revenue_subscore": 4.375,
+        "revenue_subscore": 4.487179487179487,
         "margin_subscore": 50.0,
         "ocf_subscore": 64.29277042272015,
         "ttm_ocf_margin": 0.15717108169088065,
         "margin_trend_slope": null
       },
-      "sub_score": 36.0,
+      "sub_score": 36.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16451,11 +16475,11 @@
       "pillar": "adoption_momentum",
       "components": {
         "revenue_growth_yoy": 0.23311687443000206,
-        "revenue_subscore": 88.75,
+        "revenue_subscore": 89.74358974358975,
         "trends_slope": null,
         "trends_subscore": 50.0
       },
-      "sub_score": 73.2,
+      "sub_score": 89.7,
       "data_quality": {
         "has_revenue": true,
         "has_trends": false
@@ -16481,13 +16505,13 @@
       "pillar": "financial_evolution",
       "components": {
         "revenue_growth_yoy": 0.23311687443000206,
-        "revenue_subscore": 88.75,
+        "revenue_subscore": 89.74358974358975,
         "margin_subscore": 47.98401618970769,
         "ocf_subscore": 100.0,
         "ttm_ocf_margin": 0.39896211239208723,
         "margin_trend_slope": -0.002015983810292311
       },
-      "sub_score": 79.9,
+      "sub_score": 80.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,

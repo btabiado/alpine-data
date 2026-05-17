@@ -1,0 +1,15 @@
+{
+  "ticker": "BA",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.11514902,
+  "mean_relevance_score": 0.7002038799999998,
+  "label_counts": {
+    "Bearish": 2,
+    "Somewhat-Bearish": 7,
+    "Neutral": 22,
+    "Somewhat-Bullish": 9,
+    "Bullish": 10
+  }
+}

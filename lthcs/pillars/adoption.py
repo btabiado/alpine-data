@@ -404,7 +404,31 @@ def compute_adoption(
             trends_slope, _TRENDS_SLOPE_LOW, _TRENDS_SLOPE_HIGH
         )
 
-    sub_score = REVENUE_WEIGHT * revenue_subscore + TRENDS_WEIGHT * trends_subscore
+    # Renormalize when a sub-component is the V1 stub (data not available).
+    # Mirrors the Institutional pillar's 13F-stub handling: when Trends data
+    # isn't available (and it isn't in V1 for 168 tickers — pytrends rate-
+    # limits aggressively), reweight so Revenue carries 100% of the pillar
+    # rather than diluting toward the neutral-50 placeholder.
+    #
+    # Without this, every ticker's Adoption sub-score is capped at
+    # REVENUE_WEIGHT*100 + TRENDS_WEIGHT*50 = 80, which mechanically prevents
+    # Elite-band (>=90) composites and squashes the universe distribution.
+    has_revenue = growth is not None
+    has_trends = trends_slope is not None
+    if has_trends:
+        effective_weights = (REVENUE_WEIGHT, TRENDS_WEIGHT)
+    elif has_revenue:
+        effective_weights = (1.0, 0.0)  # Revenue carries the pillar alone
+    else:
+        # Neither signal available — keep the documented 60/40 contract so
+        # the result is exactly 50.0 (both components are the neutral
+        # midpoint anyway).
+        effective_weights = (REVENUE_WEIGHT, TRENDS_WEIGHT)
+
+    sub_score = (
+        effective_weights[0] * revenue_subscore
+        + effective_weights[1] * trends_subscore
+    )
     sub_score = round(float(sub_score), 1)
 
     return {
@@ -417,8 +441,12 @@ def compute_adoption(
             "trends_subscore": float(trends_subscore),
         },
         "weights": {"revenue": REVENUE_WEIGHT, "trends": TRENDS_WEIGHT},
+        "effective_weights": {
+            "revenue": float(effective_weights[0]),
+            "trends": float(effective_weights[1]),
+        },
         "data_quality": {
-            "has_revenue": growth is not None,
-            "has_trends": trends_slope is not None,
+            "has_revenue": has_revenue,
+            "has_trends": has_trends,
         },
     }

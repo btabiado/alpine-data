@@ -231,7 +231,15 @@ def test_compute_adoption_both_components_present() -> None:
 
 
 def test_compute_adoption_revenue_only_trends_missing() -> None:
-    """Empty trends list -> trends falls back to 50, revenue still drives."""
+    """Empty trends list -> Adoption RENORMALIZES so revenue carries 100%.
+
+    Per the 13F-stub handling pattern in the Institutional pillar:
+    when Trends data isn't available (V1 reality on free-tier pytrends),
+    the pillar reweights to revenue=1.0/trends=0.0 rather than
+    diluting toward the neutral-50 placeholder. Without this renorm,
+    the Adoption pillar would mechanically cap at 80 and prevent any
+    composite from reaching Elite (>=90).
+    """
     rows = [
         _annual("2025-09-30", 200.0, 2025),
         _annual("2024-09-30", 100.0, 2024),
@@ -245,11 +253,18 @@ def test_compute_adoption_revenue_only_trends_missing() -> None:
     assert result["components"]["trends_subscore"] == 50.0
     # Focal growth (1.0) is above all 9 peers (max 0.30) -> 100.
     assert result["components"]["revenue_subscore"] == pytest.approx(100.0)
-    assert result["sub_score"] == pytest.approx(0.60 * 100.0 + 0.40 * 50.0)
+    # RENORMALIZED: revenue carries 100% when trends is unavailable.
+    assert result["effective_weights"]["revenue"] == 1.0
+    assert result["effective_weights"]["trends"] == 0.0
+    assert result["sub_score"] == pytest.approx(100.0)
 
 
 def test_compute_adoption_trends_only_revenue_missing() -> None:
-    """No revenue data -> revenue falls back to 50, trends still drives."""
+    """No revenue data + Trends present -> documented 60/40 weighting kicks in.
+
+    Asymmetric to the renorm path above: when Trends IS present, it has
+    real signal and gets its documented 40% weight. Revenue falls back
+    to neutral 50 (since we genuinely don't know the growth)."""
     interest = [float(i) for i in range(50, 100)]  # slope = 1.0 -> 100.
     # peer_growths has values but the focal isn't computable from rows=[]
     peer_growths = {"P1": 0.05, "P2": 0.10}
@@ -260,6 +275,9 @@ def test_compute_adoption_trends_only_revenue_missing() -> None:
     assert result["components"]["revenue_growth_yoy"] is None
     assert result["components"]["revenue_subscore"] == 50.0
     assert result["components"]["trends_subscore"] == pytest.approx(100.0)
+    # Documented weights apply (Trends is real signal; no renorm).
+    assert result["effective_weights"]["revenue"] == 0.60
+    assert result["effective_weights"]["trends"] == 0.40
     assert result["sub_score"] == pytest.approx(0.60 * 50.0 + 0.40 * 100.0)
 
 

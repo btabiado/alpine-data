@@ -539,13 +539,39 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         except Exception:
             peer_growths[sym] = None
 
+    # Maturity-stage-relative peer groups for revenue_growth_yoy percentile.
+    # Without this, AAPL's +6% growth gets ranked against LCID's +68% growth
+    # and lands at the universe median (~46th percentile) — mechanically
+    # under-representing every standard_compounder. Standard compounders
+    # should be benchmarked against other standard compounders; pre-profit
+    # growth names against each other; recovery names against each other.
+    # Fall back to the universe-wide distribution if a maturity stage has
+    # fewer than _MIN_MATURITY_PEERS members (too few for percentile).
+    _MIN_MATURITY_PEERS = 5
+    peer_growths_by_stage: Dict[str, Dict[str, Optional[float]]] = {}
+    for sym, g in peer_growths.items():
+        stage = (state.by_ticker.get(sym, {}) or {}).get(
+            "maturity_stage", "standard_compounder"
+        )
+        peer_growths_by_stage.setdefault(stage, {})[sym] = g
+
+    def _peer_growths_for(sym: str) -> Dict[str, Optional[float]]:
+        stage = (state.by_ticker.get(sym, {}) or {}).get(
+            "maturity_stage", "standard_compounder"
+        )
+        bucket = peer_growths_by_stage.get(stage, {})
+        if len(bucket) >= _MIN_MATURITY_PEERS:
+            return bucket
+        return peer_growths  # fall back to full universe
+
     state.pillar_results = {}
     for sym in state.scored_tickers:
         entry = state.by_ticker.get(sym, {})
         sector = entry.get("sector", "")
+        my_peer_growths = _peer_growths_for(sym)
         try:
             ad = adoption.compute_adoption(
-                sym, state.rev_by_ticker.get(sym, []), [], peer_growths
+                sym, state.rev_by_ticker.get(sym, []), [], my_peer_growths
             )
         except Exception:
             ad = _neutral_pillar_result(sym, "adoption_momentum")
@@ -563,7 +589,7 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 state.rev_by_ticker.get(sym, []),
                 state.gp_by_ticker.get(sym, []),
                 state.ocf_by_ticker.get(sym, []),
-                peer_growths,
+                my_peer_growths,
             )
         except Exception:
             fin = _neutral_pillar_result(sym, "financial_evolution")
