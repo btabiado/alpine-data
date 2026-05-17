@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Sector Heatmap</title>
+    <!-- Reuse the main tab's palette + theme tokens for band colors. -->
+    <link rel="stylesheet" href="../lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-heatmap.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Sector Heatmap</h1>
+          <p class="lthcs-subtitle">Daily LTHCS scores grouped by GICS sector</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Last updated</span>
+            <span id="hm-last-updated" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a class="lthcs-refresh-btn hm-back-link" href="../" aria-label="Back to LTHCS card view">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card view</span>
+          </a>
+          <button id="hm-about-btn" type="button" class="lthcs-refresh-btn" aria-label="About this heatmap">
+            <span aria-hidden="true">&#x2139;</span>
+            <span class="lthcs-refresh-label">About</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main hm-main" role="main">
+      <!-- Filters -->
+      <section class="lthcs-section hm-filters" aria-label="Heatmap filters">
+        <div class="lthcs-controls">
+          <div class="lthcs-filter-row">
+            <span class="lthcs-filter-label">Index</span>
+            <div class="lthcs-chip-group" id="hm-filter-index" role="group" aria-label="Filter by index membership">
+              <button type="button" class="lthcs-chip is-active" data-filter="index" data-value="all">All</button>
+              <button type="button" class="lthcs-chip" data-filter="index" data-value="djia">DJIA 30</button>
+              <button type="button" class="lthcs-chip" data-filter="index" data-value="nasdaq-100">NASDAQ-100</button>
+              <button type="button" class="lthcs-chip" data-filter="index" data-value="sp-100">S&amp;P 100</button>
+            </div>
+          </div>
+          <div class="lthcs-filter-row">
+            <span class="lthcs-filter-label">Band</span>
+            <div class="lthcs-chip-group" id="hm-filter-band" role="group" aria-label="Filter by band">
+              <button type="button" class="lthcs-chip is-active" data-filter="band" data-value="all">All</button>
+              <button type="button" class="lthcs-chip" data-filter="band" data-value="elite">
+                <span class="lthcs-chip-dot" data-band="elite"></span>Elite
+              </button>
+              <button type="button" class="lthcs-chip" data-filter="band" data-value="high">
+                <span class="lthcs-chip-dot" data-band="high"></span>High
+              </button>
+              <button type="button" class="lthcs-chip" data-filter="band" data-value="constructive">
+                <span class="lthcs-chip-dot" data-band="constructive"></span>Constructive
+              </button>
+              <button type="button" class="lthcs-chip" data-filter="band" data-value="monitor">
+                <span class="lthcs-chip-dot" data-band="monitor"></span>Monitor
+              </button>
+              <button type="button" class="lthcs-chip" data-filter="band" data-value="weakening">
+                <span class="lthcs-chip-dot" data-band="weakening"></span>Weakening
+              </button>
+              <button type="button" class="lthcs-chip" data-filter="band" data-value="review">
+                <span class="lthcs-chip-dot" data-band="review"></span>Review
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Status panes -->
+      <section class="lthcs-section">
+        <div id="hm-loading" class="lthcs-loading" role="status" aria-live="polite">Loading&hellip;</div>
+        <div id="hm-empty" class="lthcs-empty hidden" role="status" aria-live="polite">
+          No tickers match current filters.
+        </div>
+        <div id="hm-error" class="lthcs-error hidden" role="alert">
+          <p>Could not load LTHCS data. Try refreshing.</p>
+          <button type="button" id="hm-error-refresh" class="lthcs-refresh-btn">
+            <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
+            <span class="lthcs-refresh-label">Refresh</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Heatmap grid (sectors injected here) -->
+      <section id="hm-grid" class="lthcs-section hm-grid hidden" aria-label="Sector heatmap"></section>
+
+      <footer class="lthcs-footer">
+        <p>
+          Sector-grouped equal-cell grid. Not a market-cap treemap.
+          <a class="lthcs-footer-link" href="../">Open card view &rarr;</a>
+        </p>
+      </footer>
+    </main>
+
+    <!-- About modal -->
+    <div id="hm-about-modal" class="hm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="hm-about-title" hidden>
+      <div class="hm-modal-backdrop" data-close="1"></div>
+      <div class="hm-modal-panel" role="document">
+        <header class="hm-modal-header">
+          <h2 id="hm-about-title">About the Sector Heatmap</h2>
+          <button type="button" class="hm-modal-close" data-close="1" aria-label="Close">&times;</button>
+        </header>
+        <div class="hm-modal-body">
+          <p>
+            Each cell is one ticker in the LTHCS universe. Cells are
+            <strong>colored by score band</strong> (Elite, High, Constructive,
+            Monitor, Weakening, Review) and <strong>grouped by GICS sector</strong>.
+            The sector header shows the name count and average score.
+          </p>
+          <p>
+            <strong>This is not a Finviz market-cap treemap.</strong> The LTHCS pipeline
+            does not currently carry market-cap data per ticker, so every cell is the
+            same size. Sectors are ordered by ticker count (largest first, ties
+            broken alphabetically), counting only tickers visible under the current
+            filters.
+          </p>
+          <p>
+            Click any cell to open the card view in a new tab with that ticker pinned
+            in the URL fragment (e.g. <code>../#ticker=AAPL</code>). The card view
+            doesn't yet auto-open the detail modal from that fragment &mdash; that's a
+            planned follow-up.
+          </p>
+          <p>
+            Data sources:
+            <code>../../data/lthcs/snapshots/&lt;latest&gt;.json</code> for scores,
+            <code>../../data/lthcs/universe.json</code> for sector + index membership.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./lthcs-heatmap.js"></script>
+  </body>
+</html>

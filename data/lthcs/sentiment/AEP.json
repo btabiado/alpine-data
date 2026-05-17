@@ -1,0 +1,15 @@
+{
+  "ticker": "AEP",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.11411576,
+  "mean_relevance_score": 0.80532476,
+  "label_counts": {
+    "Bearish": 3,
+    "Somewhat-Bearish": 11,
+    "Neutral": 15,
+    "Somewhat-Bullish": 9,
+    "Bullish": 12
+  }
+}

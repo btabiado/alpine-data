@@ -70,28 +70,30 @@
     },
     "Information Technology": {
       "wti_oil_usd":         0.00,
-      "cpi_yoy_pct":        -0.30,
-      "fed_funds_pct":      -0.45,
-      "ten_y_yield_pct":    -0.45,
-      "ten_y_30d_change_bp":-0.20,
-      "unemployment_pct":   -0.20
+      "cpi_yoy_pct":        -0.15,
+      "fed_funds_pct":      -0.22,
+      "ten_y_yield_pct":    -0.22,
+      "ten_y_30d_change_bp":-0.10,
+      "unemployment_pct":   -0.20,
+      "_note_v2": "Softened 2026-05-17 (was -0.30/-0.45/-0.45/-0.20) to reflect that Tech mega-caps are increasingly insulated from rate cycle via AI capex demand. See docs/des-analysis.md."
     },
     "Technology": {
       "_alias_of":           "Information Technology",
       "wti_oil_usd":         0.00,
-      "cpi_yoy_pct":        -0.30,
-      "fed_funds_pct":      -0.45,
-      "ten_y_yield_pct":    -0.45,
-      "ten_y_30d_change_bp":-0.20,
+      "cpi_yoy_pct":        -0.15,
+      "fed_funds_pct":      -0.22,
+      "ten_y_yield_pct":    -0.22,
+      "ten_y_30d_change_bp":-0.10,
       "unemployment_pct":   -0.20
     },
     "Communication Services": {
       "wti_oil_usd":        -0.10,
-      "cpi_yoy_pct":        -0.20,
-      "fed_funds_pct":      -0.30,
-      "ten_y_yield_pct":    -0.30,
-      "ten_y_30d_change_bp":-0.15,
-      "unemployment_pct":   -0.20
+      "cpi_yoy_pct":        -0.10,
+      "fed_funds_pct":      -0.15,
+      "ten_y_yield_pct":    -0.15,
+      "ten_y_30d_change_bp":-0.08,
+      "unemployment_pct":   -0.20,
+      "_note_v2": "Softened 2026-05-17 (was -0.20/-0.30/-0.30/-0.15) — Alphabet/Meta have similar AI-capex-orthogonal demand to Tech mega-caps."
     },
     "Utilities": {
       "wti_oil_usd":        -0.10,
@@ -111,7 +113,7 @@
     }
   },
   "ticker_overrides": {
-    "_comment": "Per-ticker overrides for cases where industry differs from sector default. E.g. EV automakers benefit from higher oil even though Consumer Discretionary doesn't.",
+    "_comment": "Per-ticker overrides for cases where industry differs from sector default. E.g. EV automakers benefit from higher oil even though Consumer Discretionary doesn't. Also used for AI-tier secular-demand offset on rate-sensitive sectors.",
     "TSLA": {
       "wti_oil_usd":         0.50,
       "_note": "EV manufacturer — higher gasoline accelerates EV adoption substitution"
@@ -127,6 +129,90 @@
     "GE": {
       "wti_oil_usd":         0.10,
       "_note": "Aerospace + power gen — modestly oil-positive via energy segment"
+    },
+    "NVDA": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "AI capex demand orthogonal to rate cycle 2024-2026; revisit quarterly"
+    },
+    "AVGO": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Custom AI silicon exposure"
+    },
+    "AMD": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "AI accelerator + datacenter CPU exposure"
+    },
+    "MU": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "HBM/AI-memory demand"
+    },
+    "KLAC": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Semi-cap-equipment beneficiary of AI capex cycle"
+    },
+    "LRCX": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Semi-cap-equipment beneficiary of AI capex cycle"
+    },
+    "AMAT": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Semi-cap-equipment beneficiary of AI capex cycle"
+    },
+    "MSFT": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Azure + OpenAI capex tailwind"
+    },
+    "GOOG": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Gemini + Cloud AI infrastructure demand"
+    },
+    "GOOGL": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "Gemini + Cloud AI infrastructure demand (class A)"
+    },
+    "META": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "AI infra capex + ad-monetization"
+    },
+    "ORCL": {
+      "cpi_yoy_pct":        -0.05,
+      "fed_funds_pct":      -0.10,
+      "ten_y_yield_pct":    -0.10,
+      "ten_y_30d_change_bp":-0.05,
+      "_note": "OCI / AI inference customer cohort"
     }
   }
 }

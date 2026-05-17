@@ -1,0 +1,286 @@
+/* =========================================================================
+   LTHCS Sector Heatmap — supplemental stylesheet
+   Layered ON TOP of ../lthcs.css. We reuse the band custom properties
+   (--band-elite, --band-high, ...) and theme tokens defined there.
+   ========================================================================= */
+
+/* Wider gutter on the main column for the wider grid. */
+.hm-main {
+  gap: 16px;
+}
+
+/* ----- Back link styled as a chip-button (matches refresh-btn shape) ----- */
+.hm-back-link {
+  text-decoration: none;
+}
+.hm-back-link:hover {
+  text-decoration: none;
+}
+
+/* =========================================================================
+   Grid container & sector clusters
+   ========================================================================= */
+.hm-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.hm-sector {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px 14px;
+}
+
+.hm-sector-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 10px;
+}
+
+.hm-sector-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+}
+
+.hm-sector-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Cell row — fluid grid that adapts cell size by breakpoint. */
+.hm-sector-cells {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 6px;
+}
+
+/* =========================================================================
+   Cell
+   ========================================================================= */
+.hm-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 60px;
+  padding: 6px 4px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  background: var(--bg-card);
+  text-decoration: none;
+  text-align: center;
+  overflow: hidden;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hm-cell:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.35);
+  text-decoration: none;
+}
+
+.hm-cell:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.hm-cell-ticker {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.hm-cell-score {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  opacity: 0.92;
+}
+
+/* ----- Band tints — reuse palette from ../lthcs.css ---------------------- */
+/* We mix a strong tint with the dark card bg so the score stays readable.  */
+.hm-cell[data-band="elite"]        { background: color-mix(in srgb, var(--band-elite) 55%, var(--bg-card)); }
+.hm-cell[data-band="high"]         { background: color-mix(in srgb, var(--band-high) 55%, var(--bg-card)); }
+.hm-cell[data-band="constructive"] { background: color-mix(in srgb, var(--band-constructive) 55%, var(--bg-card)); }
+.hm-cell[data-band="monitor"]      { background: color-mix(in srgb, var(--band-monitor) 55%, var(--bg-card)); }
+.hm-cell[data-band="weakening"]    { background: color-mix(in srgb, var(--band-weakening) 55%, var(--bg-card)); }
+.hm-cell[data-band="review"]       { background: color-mix(in srgb, var(--band-review) 60%, var(--bg-card)); }
+
+/* Fallback for browsers without color-mix() (older Safari) — solid band tone. */
+@supports not (background: color-mix(in srgb, red, blue)) {
+  .hm-cell[data-band="elite"]        { background: var(--band-elite); }
+  .hm-cell[data-band="high"]         { background: var(--band-high); }
+  .hm-cell[data-band="constructive"] { background: var(--band-constructive); }
+  .hm-cell[data-band="monitor"]      { background: var(--band-monitor); }
+  .hm-cell[data-band="weakening"]    { background: var(--band-weakening); }
+  .hm-cell[data-band="review"]       { background: var(--band-review); }
+}
+
+/* Improve contrast for ticker/score over lighter bands. */
+.hm-cell[data-band="constructive"] .hm-cell-ticker,
+.hm-cell[data-band="monitor"] .hm-cell-ticker,
+.hm-cell[data-band="constructive"] .hm-cell-score,
+.hm-cell[data-band="monitor"] .hm-cell-score {
+  color: #0E1216;
+}
+
+/* =========================================================================
+   About modal
+   ========================================================================= */
+.hm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.hm-modal.hidden {
+  display: none !important;
+}
+
+.hm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.hm-modal-panel {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  width: 100%;
+  max-height: 85vh;
+  overflow: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+}
+
+.hm-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.hm-modal-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.hm-modal-close {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+.hm-modal-close:hover {
+  color: var(--text-primary);
+  background: var(--bg-chip-active);
+}
+
+.hm-modal-body {
+  padding: 16px 18px 18px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.hm-modal-body p {
+  margin: 0 0 10px;
+}
+.hm-modal-body p:last-child {
+  margin-bottom: 0;
+}
+.hm-modal-body code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg-chip);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: var(--text-primary);
+}
+
+/* =========================================================================
+   Responsive — tablet & mobile cell sizing
+   ========================================================================= */
+@media (max-width: 900px) {
+  .hm-sector-cells {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+    gap: 5px;
+  }
+  .hm-cell {
+    min-height: 52px;
+  }
+  .hm-cell-ticker { font-size: 12.5px; }
+  .hm-cell-score  { font-size: 11px; }
+}
+
+@media (max-width: 560px) {
+  .hm-main {
+    padding: 14px;
+    gap: 12px;
+  }
+  .hm-sector {
+    padding: 10px 10px 12px;
+    border-radius: var(--radius-md);
+  }
+  .hm-sector-cells {
+    grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+    gap: 4px;
+  }
+  .hm-cell {
+    min-height: 46px;
+    padding: 4px 2px;
+    border-radius: 5px;
+  }
+  .hm-cell-ticker { font-size: 11.5px; letter-spacing: 0.3px; }
+  .hm-cell-score  { font-size: 10.5px; }
+  .hm-sector-header {
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+  .hm-sector-name { font-size: 12.5px; }
+  .hm-sector-meta { font-size: 10px; letter-spacing: 0.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-cell {
+    transition: none;
+  }
+}

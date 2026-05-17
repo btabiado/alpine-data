@@ -90,16 +90,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -366,20 +366,26 @@
       "ticker": "ABT",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.04544502,
+        "mean_relevance_score": 0.7274100000000001,
+        "label_counts": {
+          "Bearish": 5,
+          "Somewhat-Bearish": 3,
+          "Neutral": 29,
+          "Somewhat-Bullish": 12,
+          "Bullish": 1
+        },
+        "sentiment_subscore_raw": 52.272251000000004,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 52.3,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -494,16 +500,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -592,16 +598,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -690,16 +696,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -892,16 +898,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -960,20 +966,26 @@
       "ticker": "AEP",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.11411576,
+        "mean_relevance_score": 0.80532476,
+        "label_counts": {
+          "Bearish": 3,
+          "Somewhat-Bearish": 11,
+          "Neutral": 15,
+          "Somewhat-Bullish": 9,
+          "Bullish": 12
+        },
+        "sentiment_subscore_raw": 55.705788,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 55.7,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -1088,16 +1100,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -1186,16 +1203,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -1590,16 +1612,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -1694,16 +1716,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -1762,20 +1784,26 @@
       "ticker": "AVGO",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.26683614,
+        "mean_relevance_score": 0.7629211800000003,
+        "label_counts": {
+          "Bearish": 1,
+          "Somewhat-Bearish": 3,
+          "Neutral": 10,
+          "Somewhat-Bullish": 18,
+          "Bullish": 18
+        },
+        "sentiment_subscore_raw": 63.341807,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 63.3,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -1792,16 +1820,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -2460,20 +2493,26 @@
       "ticker": "BKNG",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.020832199999999985,
+        "mean_relevance_score": 0.7937035,
+        "label_counts": {
+          "Bearish": 7,
+          "Somewhat-Bearish": 6,
+          "Neutral": 18,
+          "Somewhat-Bullish": 15,
+          "Bullish": 4
+        },
+        "sentiment_subscore_raw": 51.041610000000006,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 51.0,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -3048,20 +3087,26 @@
       "ticker": "CAT",
       "pillar": "thesis_integrity",
       "components": {
-        "article_count": 0,
-        "mean_sentiment_score": null,
-        "mean_relevance_score": null,
-        "label_counts": {},
-        "sentiment_subscore_raw": 50.0,
-        "confidence_blend": 0.0
+        "article_count": 50,
+        "mean_sentiment_score": 0.11919974,
+        "mean_relevance_score": 0.7947318400000002,
+        "label_counts": {
+          "Bearish": 2,
+          "Somewhat-Bearish": 8,
+          "Neutral": 18,
+          "Somewhat-Bullish": 13,
+          "Bullish": 9
+        },
+        "sentiment_subscore_raw": 55.959987,
+        "confidence_blend": 1.0
       },
-      "sub_score": 50.0,
+      "sub_score": 56.0,
       "data_quality": {
-        "has_sentiment": false,
-        "article_count_sufficient": false,
-        "is_stale": true,
-        "days_since_scored": null,
-        "last_scored": null
+        "has_sentiment": true,
+        "article_count_sufficient": true,
+        "is_stale": false,
+        "days_since_scored": 0,
+        "last_scored": "2026-05-17"
       }
     },
     {
@@ -3280,16 +3325,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -3378,16 +3423,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -3574,16 +3619,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -3770,16 +3815,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -4162,16 +4207,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -4260,16 +4305,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -4358,16 +4403,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -4652,16 +4697,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -5050,16 +5095,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -5344,16 +5389,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -5638,16 +5683,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -6228,16 +6273,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -6628,16 +6673,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -6922,16 +6967,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
-        "applied_overrides": []
+        "total_contribution": -0.07120763263256136,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 41.8,
+      "sub_score": 47.9,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -7020,16 +7070,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
-        "applied_overrides": []
+        "total_contribution": -0.07120763263256136,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 41.8,
+      "sub_score": 47.9,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -7412,16 +7467,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -7706,16 +7761,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -7804,16 +7859,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -8392,16 +8447,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -9086,16 +9146,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -9576,16 +9641,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -9674,16 +9739,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -10164,16 +10229,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
-        "applied_overrides": []
+        "total_contribution": -0.07120763263256136,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 41.8,
+      "sub_score": 47.9,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -10654,16 +10724,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -10850,16 +10920,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -10948,16 +11023,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -11144,16 +11224,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -11340,16 +11420,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -11438,16 +11518,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -11536,16 +11621,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -11732,16 +11817,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -11830,16 +11915,21 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.012987430612359374,
+          "fed_funds_pct": -0.02133333333333334,
+          "ten_y_yield_pct": -0.038799999999999994,
+          "ten_y_30d_change_bp": -0.020999999999999998,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
-        "applied_overrides": []
+        "total_contribution": -0.025029854854783595,
+        "applied_overrides": [
+          "cpi_yoy_pct",
+          "fed_funds_pct",
+          "ten_y_30d_change_bp",
+          "ten_y_yield_pct"
+        ]
       },
-      "sub_score": 39.1,
+      "sub_score": 49.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -12026,16 +12116,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -12908,16 +12998,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -13692,16 +13782,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -13790,16 +13880,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -14084,16 +14174,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -14182,16 +14272,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -14476,16 +14566,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -14772,16 +14862,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -14870,16 +14960,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -14968,16 +15058,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -15752,16 +15842,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -15850,16 +15940,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": -0.04617777777777779,
-          "cpi_yoy_pct": -0.0519497224494375,
-          "fed_funds_pct": -0.06400000000000002,
-          "ten_y_yield_pct": -0.11639999999999996,
-          "ten_y_30d_change_bp": -0.06299999999999999,
+          "cpi_yoy_pct": -0.02597486122471875,
+          "fed_funds_pct": -0.03200000000000001,
+          "ten_y_yield_pct": -0.05819999999999998,
+          "ten_y_30d_change_bp": -0.0336,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.27243659113630614,
+        "total_contribution": -0.1268617299115874,
         "applied_overrides": []
       },
-      "sub_score": 41.8,
+      "sub_score": 46.2,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -15948,16 +16038,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,
@@ -16438,16 +16528,16 @@
         },
         "signal_contributions": {
           "wti_oil_usd": 0.0,
-          "cpi_yoy_pct": -0.07792458367415624,
-          "fed_funds_pct": -0.09600000000000002,
-          "ten_y_yield_pct": -0.17459999999999995,
-          "ten_y_30d_change_bp": -0.08399999999999999,
+          "cpi_yoy_pct": -0.03896229183707812,
+          "fed_funds_pct": -0.04693333333333334,
+          "ten_y_yield_pct": -0.08535999999999998,
+          "ten_y_30d_change_bp": -0.041999999999999996,
           "unemployment_pct": 0.06909090909090912
         },
-        "total_contribution": -0.36343367458324705,
+        "total_contribution": -0.1441647160795023,
         "applied_overrides": []
       },
-      "sub_score": 39.1,
+      "sub_score": 45.7,
       "data_quality": {
         "has_macro_inputs": true,
         "macro_signals_present": 6,

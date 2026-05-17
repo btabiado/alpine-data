@@ -1,0 +1,15 @@
+{
+  "ticker": "CAT",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.11919974,
+  "mean_relevance_score": 0.7947318400000002,
+  "label_counts": {
+    "Bearish": 2,
+    "Somewhat-Bearish": 8,
+    "Neutral": 18,
+    "Somewhat-Bullish": 13,
+    "Bullish": 9
+  }
+}

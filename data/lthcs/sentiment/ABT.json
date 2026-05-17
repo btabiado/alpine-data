@@ -1,0 +1,15 @@
+{
+  "ticker": "ABT",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.04544502,
+  "mean_relevance_score": 0.7274100000000001,
+  "label_counts": {
+    "Bearish": 5,
+    "Somewhat-Bearish": 3,
+    "Neutral": 29,
+    "Somewhat-Bullish": 12,
+    "Bullish": 1
+  }
+}
