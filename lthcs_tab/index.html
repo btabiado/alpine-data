@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS — Long-Term Hold Confidence Score</title>
+    <link rel="stylesheet" href="./lthcs.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Long-Term Hold Confidence Score</h1>
+          <p class="lthcs-subtitle">Daily scoring across 74 US-listed names</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Last updated</span>
+            <span id="lthcs-last-updated" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Model</span>
+            <span id="lthcs-model-version" class="lthcs-meta-value">v1.0.0</span>
+          </div>
+          <button id="lthcs-refresh" type="button" class="lthcs-refresh-btn" aria-label="Refresh LTHCS data">
+            <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
+            <span class="lthcs-refresh-label">Refresh</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main">
+      <section class="lthcs-section lthcs-summary" aria-label="Sentiment summary">
+        <div class="lthcs-stat" data-band="total">
+          <span class="lthcs-stat-count" id="lthcs-stat-total">&mdash;</span>
+          <span class="lthcs-stat-label">Total</span>
+        </div>
+        <div class="lthcs-stat" data-band="elite">
+          <span class="lthcs-stat-count" data-band-count="elite">&mdash;</span>
+          <span class="lthcs-stat-label">Elite</span>
+        </div>
+        <div class="lthcs-stat" data-band="high">
+          <span class="lthcs-stat-count" data-band-count="high">&mdash;</span>
+          <span class="lthcs-stat-label">High Confidence</span>
+        </div>
+        <div class="lthcs-stat" data-band="constructive">
+          <span class="lthcs-stat-count" data-band-count="constructive">&mdash;</span>
+          <span class="lthcs-stat-label">Constructive</span>
+        </div>
+        <div class="lthcs-stat" data-band="monitor">
+          <span class="lthcs-stat-count" data-band-count="monitor">&mdash;</span>
+          <span class="lthcs-stat-label">Monitor</span>
+        </div>
+        <div class="lthcs-stat" data-band="weakening">
+          <span class="lthcs-stat-count" data-band-count="weakening">&mdash;</span>
+          <span class="lthcs-stat-label">Weakening</span>
+        </div>
+        <div class="lthcs-stat" data-band="review">
+          <span class="lthcs-stat-count" data-band-count="review">&mdash;</span>
+          <span class="lthcs-stat-label">Review</span>
+        </div>
+      </section>
+
+      <section class="lthcs-section lthcs-controls" aria-label="Filter and search">
+        <div class="lthcs-search-wrap">
+          <span class="lthcs-search-icon" aria-hidden="true">&#x1F50D;</span>
+          <input
+            id="lthcs-search"
+            class="lthcs-search-input"
+            type="search"
+            placeholder="Search ticker or company&hellip;"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="lthcs-filter-row" role="group" aria-label="Exchange filter">
+          <span class="lthcs-filter-label">Exchange</span>
+          <div class="lthcs-chip-group">
+            <button type="button" class="lthcs-chip is-active" data-filter-group="exchange" data-filter-value="all">All</button>
+            <button type="button" class="lthcs-chip" data-filter-group="exchange" data-filter-value="NASDAQ">NASDAQ</button>
+            <button type="button" class="lthcs-chip" data-filter-group="exchange" data-filter-value="NYSE">NYSE</button>
+          </div>
+        </div>
+
+        <div class="lthcs-filter-row" role="group" aria-label="Score band filter">
+          <span class="lthcs-filter-label">Band</span>
+          <div class="lthcs-chip-group">
+            <button type="button" class="lthcs-chip is-active" data-filter-group="band" data-filter-value="all">All</button>
+            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="elite">
+              <span class="lthcs-chip-dot" data-band="elite" aria-hidden="true"></span>Elite
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="high">
+              <span class="lthcs-chip-dot" data-band="high" aria-hidden="true"></span>High
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="constructive">
+              <span class="lthcs-chip-dot" data-band="constructive" aria-hidden="true"></span>Constructive
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="monitor">
+              <span class="lthcs-chip-dot" data-band="monitor" aria-hidden="true"></span>Monitor
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="weakening">
+              <span class="lthcs-chip-dot" data-band="weakening" aria-hidden="true"></span>Weakening
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="band" data-filter-value="review">
+              <span class="lthcs-chip-dot" data-band="review" aria-hidden="true"></span>Review
+            </button>
+          </div>
+        </div>
+
+        <div class="lthcs-filter-row" role="group" aria-label="Drift filter">
+          <span class="lthcs-filter-label">Drift</span>
+          <div class="lthcs-chip-group">
+            <button type="button" class="lthcs-chip is-active" data-filter-group="drift" data-filter-value="all">All</button>
+            <button type="button" class="lthcs-chip" data-filter-group="drift" data-filter-value="improving">
+              <span class="lthcs-drift-arrow lthcs-drift-improving" aria-hidden="true">&uarr;</span>Improving
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="drift" data-filter-value="stable">
+              <span class="lthcs-drift-arrow lthcs-drift-stable" aria-hidden="true">&rarr;</span>Stable
+            </button>
+            <button type="button" class="lthcs-chip" data-filter-group="drift" data-filter-value="declining">
+              <span class="lthcs-drift-arrow lthcs-drift-declining" aria-hidden="true">&darr;</span>Declining
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="lthcs-section lthcs-results" aria-label="Scores">
+        <div id="lthcs-loading" class="lthcs-loading">Loading scores&hellip;</div>
+        <div id="lthcs-empty" class="lthcs-empty hidden">No tickers match current filters.</div>
+        <div id="lthcs-error" class="lthcs-error hidden" role="alert"></div>
+        <div id="lthcs-cards" class="lthcs-card-grid" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        Not investment advice. LTHCS V1, computed daily from free-tier data.
+        See methodology at <a href="#" class="lthcs-footer-link">methodology (link placeholder)</a>.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-tab.js"></script>
+  </body>
+</html>
