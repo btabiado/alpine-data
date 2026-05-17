@@ -152,6 +152,34 @@ jobs:
               cp -R data/lthcs _site/data/
             fi
           fi
+          # Stage the LTHCS table view under /lthcs/table/. The committed
+          # page lives at lthcs_table/index.html and uses "../lthcs_tab/..."
+          # and "../data/..." relative paths so the same source works under
+          # the dev server (where the page lives at /lthcs_table/, sibling
+          # to /lthcs_tab/ and /data/).
+          #
+          # In production the page lives one directory deeper, at
+          # /lthcs/table/index.html, so we mirror "lthcs_tab" and "data"
+          # one level above it inside _site/lthcs/. That way:
+          #   /lthcs/table/index.html  →  ../lthcs_tab/...  =  /lthcs/lthcs_tab/...
+          #   /lthcs/table/index.html  →  ../data/lthcs/... =  /lthcs/data/lthcs/...
+          # both resolve to real files. The existing card-view stage at
+          # /lthcs/ (without /table) is untouched.
+          if [ -f lthcs_table/index.html ]; then
+            mkdir -p _site/lthcs/table
+            cp -R lthcs_table/* _site/lthcs/table/
+            # Sibling lthcs_tab/ copy for the table page's relative
+            # references. The card view at _site/lthcs/ is unaffected.
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            # Sibling data/lthcs copy so "../data/lthcs/..." resolves from
+            # /lthcs/table/. The card-view's /lthcs/ stage already gets
+            # /data/lthcs/ via the earlier branch.
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot

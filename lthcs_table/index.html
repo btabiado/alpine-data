@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS — Table view</title>
+    <!-- Reuse the LTHCS palette + detail-modal styles directly from the
+         neighboring lthcs_tab/ so the table page picks up the same colors,
+         shadows, and modal chrome without duplicating tokens. The detail
+         modal is opened via dynamic import of lthcs_tab/lthcs-detail.js. -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="../lthcs_tab/lthcs-detail.css" />
+    <link rel="stylesheet" href="./lthcs-table.css" />
+  </head>
+  <body class="lthcs-table-page">
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Table view</h1>
+          <p class="lthcs-subtitle">
+            <span id="lthcs-table-count">&hellip;</span> tickers &middot;
+            Updated <span id="lthcs-table-last-updated">&hellip;</span> &middot;
+            Model <span id="lthcs-table-model-version">v1.1.0</span>
+          </p>
+        </div>
+        <div class="lthcs-header-meta">
+          <a href="../lthcs/" class="lthcs-refresh-btn" aria-label="Switch to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card view</span>
+          </a>
+          <button
+            id="lthcs-table-export"
+            type="button"
+            class="lthcs-refresh-btn"
+            aria-label="Download current view as CSV"
+          >
+            <span aria-hidden="true">&#x2913;</span>
+            <span class="lthcs-refresh-label">Export CSV</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-table-main">
+      <section class="lthcs-table-controls" aria-label="Filter and search">
+        <div class="lthcs-search-wrap">
+          <span class="lthcs-search-icon" aria-hidden="true">&#x1F50D;</span>
+          <input
+            id="lthcs-table-search"
+            class="lthcs-search-input"
+            type="search"
+            placeholder="Search ticker or company&hellip;"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="lthcs-table-filter-group" role="group" aria-label="Index filter">
+          <label for="lthcs-table-filter-index">Index</label>
+          <select id="lthcs-table-filter-index" class="lthcs-table-select">
+            <option value="all">All indices</option>
+            <option value="djia">DJIA 30</option>
+            <option value="nasdaq-100">NASDAQ-100</option>
+            <option value="sp-100">S&amp;P 100</option>
+          </select>
+        </div>
+
+        <div class="lthcs-table-filter-group" role="group" aria-label="Band filter">
+          <label for="lthcs-table-filter-band">Band</label>
+          <select id="lthcs-table-filter-band" class="lthcs-table-select">
+            <option value="all">All bands</option>
+            <option value="elite">Elite</option>
+            <option value="high">High Confidence</option>
+            <option value="constructive">Constructive</option>
+            <option value="monitor">Monitor</option>
+            <option value="weakening">Weakening</option>
+            <option value="review">Review</option>
+          </select>
+        </div>
+
+        <div class="lthcs-table-filter-group" role="group" aria-label="Drift filter">
+          <label for="lthcs-table-filter-drift">Drift</label>
+          <select id="lthcs-table-filter-drift" class="lthcs-table-select">
+            <option value="all">All drift</option>
+            <option value="improving">Improving</option>
+            <option value="stable">Stable</option>
+            <option value="declining">Declining</option>
+          </select>
+        </div>
+
+        <div class="lthcs-table-result-count" aria-live="polite">
+          <span id="lthcs-table-shown">0</span> shown
+        </div>
+      </section>
+
+      <section class="lthcs-table-results" aria-label="Universe table">
+        <div id="lthcs-table-loading" class="lthcs-table-loading">Loading scores&hellip;</div>
+        <div id="lthcs-table-empty" class="lthcs-table-empty hidden">
+          No tickers match the current filters.
+        </div>
+        <div id="lthcs-table-error" class="lthcs-table-error hidden" role="alert"></div>
+
+        <div id="lthcs-table-scroll" class="lthcs-table-scroll hidden">
+          <table id="lthcs-table" class="lthcs-table" aria-label="LTHCS universe sortable table">
+            <thead>
+              <tr id="lthcs-table-head"></tr>
+            </thead>
+            <tbody id="lthcs-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="lthcs-table-hint">
+        Click a column header to sort &middot;
+        Shift-click for secondary sort &middot;
+        Click a row to open the detail panel
+      </p>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Not investment advice.</strong> LTHCS V1, computed daily from free-tier data.
+      </p>
+    </footer>
+
+    <!-- Detail modal root — reused by the imported openDetail() from lthcs_tab. -->
+    <div id="lthcs-modal-root" class="lthcs-modal-root hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
+
+    <script type="module" src="./lthcs-table.js"></script>
+  </body>
+</html>

@@ -1,0 +1,531 @@
+/* =========================================================================
+   LTHCS — Table view (Bloomberg-style sortable table)
+   Companion stylesheet to lthcs_tab/lthcs.css. Reuses the same CSS
+   custom properties (--band-*, --bg-*, --text-*) — do not redefine.
+   ========================================================================= */
+
+.lthcs-table-page {
+  /* Allow the table page to push wider than the card grid for dense data. */
+  min-height: 100vh;
+}
+
+.lthcs-table-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+}
+
+/* ----- Controls bar ---------------------------------------------------- */
+
+.lthcs-table-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.lthcs-table-controls .lthcs-search-wrap {
+  position: relative;
+  flex: 1 1 280px;
+  min-width: 220px;
+}
+
+.lthcs-table-controls .lthcs-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.lthcs-table-controls .lthcs-search-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 8px 10px 8px 30px;
+  outline: none;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.lthcs-table-controls .lthcs-search-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-card);
+}
+
+.lthcs-table-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.lthcs-table-filter-group label {
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+}
+
+.lthcs-table-select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  min-width: 130px;
+}
+
+.lthcs-table-select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.lthcs-table-result-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  background: var(--bg-chip);
+  border-radius: var(--radius-sm);
+}
+
+.lthcs-table-result-count #lthcs-table-shown {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ----- State + scaffolding -------------------------------------------- */
+
+.lthcs-table-loading,
+.lthcs-table-empty,
+.lthcs-table-error {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 13.5px;
+}
+
+.lthcs-table-error {
+  border-color: rgba(var(--drift-declining-rgb), 0.5);
+  color: var(--drift-declining-bright);
+  background: rgba(var(--drift-declining-rgb), 0.08);
+}
+
+/* ----- Table scroller ------------------------------------------------- */
+
+.lthcs-table-scroll {
+  /* The scroll container is the positioning context for sticky header/cells.
+     overflow: auto enables horizontal scroll on narrow viewports while
+     keeping the first column locked via position: sticky. */
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  /* Cap the height so the sticky header has something to stick against on
+     desktops while still letting the page scroll if the user prefers. */
+  max-height: calc(100vh - 220px);
+}
+
+.lthcs-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--text-primary);
+  /* fixed layout keeps columns from jumping when re-sorted */
+  table-layout: auto;
+}
+
+.lthcs-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  /* needed so the cell shadow shows beneath while scrolling */
+  box-shadow: 0 1px 0 var(--border-subtle);
+}
+
+.lthcs-table thead th[data-align="right"] {
+  text-align: right;
+}
+
+.lthcs-table thead th:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.lthcs-table thead th.is-sorted {
+  color: var(--text-primary);
+  background: var(--bg-chip-active);
+}
+
+.lthcs-table thead th .lthcs-table-sort-indicator {
+  display: inline-block;
+  width: 1em;
+  margin-left: 4px;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.lthcs-table thead th .lthcs-table-sort-rank {
+  font-size: 9px;
+  margin-left: 2px;
+  color: var(--accent);
+  vertical-align: super;
+}
+
+.lthcs-table tbody tr {
+  cursor: pointer;
+  transition: background 80ms ease;
+}
+
+.lthcs-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.lthcs-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.lthcs-table tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.lthcs-table tbody td[data-align="right"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}
+
+/* Sticky first two columns (star + ticker). The ticker is the
+   identity anchor and should stay visible during horizontal scroll. */
+.lthcs-table thead th.lthcs-col-star,
+.lthcs-table tbody td.lthcs-col-star {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-card);
+  width: 32px;
+  text-align: center;
+  padding-left: 6px;
+  padding-right: 0;
+}
+
+.lthcs-table thead th.lthcs-col-star {
+  z-index: 4;
+  background: var(--bg-elevated);
+}
+
+.lthcs-table thead th.lthcs-col-ticker,
+.lthcs-table tbody td.lthcs-col-ticker {
+  position: sticky;
+  left: 32px;
+  z-index: 2;
+  background: var(--bg-card);
+  font-weight: 600;
+  color: var(--text-primary);
+  /* Ensure the sticky cell paints over scrolled content beneath it. */
+  box-shadow: 1px 0 0 var(--border-subtle);
+}
+
+.lthcs-table thead th.lthcs-col-ticker {
+  z-index: 4;
+  background: var(--bg-elevated);
+}
+
+.lthcs-table tbody tr:hover td.lthcs-col-star,
+.lthcs-table tbody tr:hover td.lthcs-col-ticker {
+  background: var(--bg-card-hover);
+}
+
+/* ----- Score cell ----------------------------------------------------- */
+
+.lthcs-col-score {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ----- Band pill ------------------------------------------------------ */
+
+.lthcs-table-band-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.lthcs-table-band-pill[data-band="elite"] {
+  background: rgba(var(--band-elite-rgb), 0.22);
+  color: var(--band-elite-bright);
+  border: 1px solid rgba(var(--band-elite-rgb), 0.45);
+}
+.lthcs-table-band-pill[data-band="high"] {
+  background: rgba(var(--band-high-rgb), 0.20);
+  color: var(--band-high-bright);
+  border: 1px solid rgba(var(--band-high-rgb), 0.45);
+}
+.lthcs-table-band-pill[data-band="constructive"] {
+  background: rgba(var(--band-constructive-rgb), 0.20);
+  color: var(--band-constructive-bright);
+  border: 1px solid rgba(var(--band-constructive-rgb), 0.45);
+}
+.lthcs-table-band-pill[data-band="monitor"] {
+  background: rgba(var(--band-monitor-rgb), 0.22);
+  color: var(--band-monitor-bright);
+  border: 1px solid rgba(var(--band-monitor-rgb), 0.45);
+}
+.lthcs-table-band-pill[data-band="weakening"] {
+  background: rgba(var(--band-weakening-rgb), 0.24);
+  color: var(--band-weakening-bright);
+  border: 1px solid rgba(var(--band-weakening-rgb), 0.45);
+}
+.lthcs-table-band-pill[data-band="review"] {
+  background: rgba(var(--band-review-rgb), 0.26);
+  color: var(--band-review-bright);
+  border: 1px solid rgba(var(--band-review-rgb), 0.45);
+}
+
+/* ----- Trend pill (▲▼→ + delta) -------------------------------------- */
+
+.lthcs-table-trend {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  border: 1px solid transparent;
+  font-variant-numeric: tabular-nums;
+}
+
+.lthcs-table-trend[data-trend="up"] {
+  color: var(--drift-improving-bright);
+  background: rgba(var(--drift-improving-rgb), 0.12);
+  border-color: rgba(var(--drift-improving-rgb), 0.35);
+}
+
+.lthcs-table-trend[data-trend="down"] {
+  color: var(--drift-declining-bright);
+  background: rgba(var(--drift-declining-rgb), 0.12);
+  border-color: rgba(var(--drift-declining-rgb), 0.35);
+}
+
+.lthcs-table-trend[data-trend="flat"] {
+  color: var(--drift-flat-accent);
+  background: rgba(var(--drift-flat-rgb), 0.10);
+  border-color: rgba(var(--drift-flat-rgb), 0.30);
+}
+
+.lthcs-table-trend[data-trend="unknown"] {
+  color: var(--text-tertiary);
+  background: var(--bg-chip);
+  border-color: var(--border-subtle);
+}
+
+.lthcs-table-trend-arrow {
+  font-size: 10px;
+}
+
+/* ----- Insider + Holdings badges -------------------------------------- */
+
+.lthcs-table-signal {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-transform: lowercase;
+  letter-spacing: 0.2px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Insider regimes — mirror the band tonal mapping (buy = green, sell = red). */
+.lthcs-table-signal[data-regime="strong_buying"] {
+  color: var(--drift-improving-bright);
+  background: rgba(var(--drift-improving-rgb), 0.16);
+  border-color: rgba(var(--drift-improving-rgb), 0.4);
+}
+.lthcs-table-signal[data-regime="mild_buying"] {
+  color: var(--band-high-bright);
+  background: rgba(var(--band-high-rgb), 0.14);
+  border-color: rgba(var(--band-high-rgb), 0.35);
+}
+.lthcs-table-signal[data-regime="neutral"],
+.lthcs-table-signal[data-regime="none"],
+.lthcs-table-signal[data-regime=""] {
+  color: var(--text-tertiary);
+  background: var(--bg-chip);
+  border-color: var(--border-subtle);
+}
+.lthcs-table-signal[data-regime="mild_selling"] {
+  color: var(--band-weakening-bright);
+  background: rgba(var(--band-weakening-rgb), 0.16);
+  border-color: rgba(var(--band-weakening-rgb), 0.4);
+}
+.lthcs-table-signal[data-regime="heavy_selling"] {
+  color: var(--band-review-bright);
+  background: rgba(var(--band-review-rgb), 0.22);
+  border-color: rgba(var(--band-review-rgb), 0.45);
+}
+
+/* Holdings conviction signals — buyer-driven greens, seller-driven oranges. */
+.lthcs-table-signal[data-signal="accumulating"] {
+  color: var(--drift-improving-bright);
+  background: rgba(var(--drift-improving-rgb), 0.16);
+  border-color: rgba(var(--drift-improving-rgb), 0.4);
+}
+.lthcs-table-signal[data-signal="steady"] {
+  color: var(--band-high-bright);
+  background: rgba(var(--band-high-rgb), 0.14);
+  border-color: rgba(var(--band-high-rgb), 0.35);
+}
+.lthcs-table-signal[data-signal="mixed"] {
+  color: var(--band-constructive-bright);
+  background: rgba(var(--band-constructive-rgb), 0.14);
+  border-color: rgba(var(--band-constructive-rgb), 0.35);
+}
+.lthcs-table-signal[data-signal="distributing"] {
+  color: var(--band-monitor-bright);
+  background: rgba(var(--band-monitor-rgb), 0.18);
+  border-color: rgba(var(--band-monitor-rgb), 0.4);
+}
+.lthcs-table-signal[data-signal="dumping"] {
+  color: var(--band-review-bright);
+  background: rgba(var(--band-review-rgb), 0.22);
+  border-color: rgba(var(--band-review-rgb), 0.45);
+}
+.lthcs-table-signal[data-signal="unknown"],
+.lthcs-table-signal[data-signal="—"] {
+  color: var(--text-tertiary);
+  background: var(--bg-chip);
+  border-color: var(--border-subtle);
+}
+
+/* ----- Index memberships ---------------------------------------------- */
+
+.lthcs-table-indices {
+  font-size: 10.5px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* ----- Star toggle ---------------------------------------------------- */
+
+.lthcs-table-star {
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 4px;
+  cursor: pointer;
+  transition: color 100ms ease, transform 100ms ease;
+}
+
+.lthcs-table-star:hover {
+  color: var(--band-constructive-bright);
+  transform: scale(1.1);
+}
+
+.lthcs-table-star[aria-pressed="true"] {
+  color: var(--band-constructive-bright);
+}
+
+/* ----- Name truncation ------------------------------------------------ */
+
+.lthcs-col-name {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+/* ----- Hint line under the table -------------------------------------- */
+
+.lthcs-table-hint {
+  margin: 12px 2px 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ----- Responsive: narrow viewports ----------------------------------- */
+
+@media (max-width: 768px) {
+  .lthcs-table-main {
+    padding: 12px 12px 24px;
+  }
+
+  /* Hide the sub-score pillar columns on small screens; keep score + band +
+     trend + insider + holdings. The visibility is driven by .is-hidden-mobile
+     applied to both the th and the td so the column collapses entirely. */
+  .lthcs-table thead th.is-hidden-mobile,
+  .lthcs-table tbody td.is-hidden-mobile {
+    display: none;
+  }
+
+  .lthcs-table-controls {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .lthcs-table-select {
+    min-width: 100px;
+    font-size: 12px;
+  }
+
+  .lthcs-table-result-count {
+    margin-left: 0;
+  }
+
+  .lthcs-table {
+    font-size: 11.5px;
+  }
+
+  .lthcs-col-name {
+    max-width: 120px;
+  }
+}
