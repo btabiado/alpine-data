@@ -38,7 +38,7 @@ respective research docs.
 | 3 | **yfinance earnings_dates + recommendations** | news-feeds-earnings-events §1.1, §2.1 | S (~½ swarm) | Earnings beats/misses + analyst actions for entire universe. Already pulling Yahoo for prices. |
 | 4 | **FDA Press Announcements RSS** | news-feeds-sector-specific §2.1 | M | Event-driven Thesis lift for ~15 pharma names. Highest signal-to-noise per the audit. |
 | 5 | **EIA "Today in Energy" + Fed press-release RSS** | news-feeds-sector-specific §2.2, §2.4 | S | Sector signal for ~30 energy + financials names. |
-| 6 | **AI-news threshold polish** | (this audit) | XS | Final pass: keep `+0.60` for top-engagement; consider weighting by mention count so very-frequently-mentioned names cross 80. |
+| 6 | **AI-news threshold polish** | (this audit) | XS | ✅ SHIPPED `36c48aa` — mention-count multiplier (3-5: 1.0×, 6-10: 1.1×, 11-20: 1.2×, 21+: 1.3×) on top of engagement tier, cap at +0.75. MSFT/META/GOOGL/TSLA/PLTR live: 0.60→0.75 (cap binds, Constructive→low High). NVDA/AMD low-engagement: 0.35→0.455. Doesn't fire today (Finnhub/SEC/Yahoo cascade pre-empts AI news) — materializes when earlier-cascade sentiment goes stale. |
 
 **If items 1+2+3 shipped together**: probably 8-12 names move from
 Constructive → High Confidence given more honest sentiment data;
@@ -49,14 +49,14 @@ rotations.
 
 ## TIER 2 — Open items needing more design before build
 
-| # | Item | Source | Effort | Why deferred |
+| # | Item | Source | Effort | Status |
 |---|---|---|---|---|
-| 7 | **Compound peer-group key** `(maturity_stage, sector_group)` | peer-group-audit §3.4 | M | Naive version makes AAPL worse (13.2 vs 46.8 inside Tech-compounder bimodal cohort). Needs a curated Hardware/Software split first. |
-| 8 | **De-dup `Technology` ↔ `Information Technology`** in sector_des_weights.json | des-audit §6 | XS | Currently a comment only; the duplicated values are a drift risk on next retune. 5-min fix but needs care. |
-| 9 | **Tier 2 macro signals**: Brent crude, gasoline cracks, ISM PMI, housing starts, consumer confidence, U-6 | des-audit | M-L | Lower marginal value than the 3 we shipped today. Build only when DES re-tilts. |
-| 10 | **`peer_groups.json`** config file (declarative per-pillar peer-group strategy) | peer-group-audit §3.5 | L | Architecturally cleaner than hard-coded grouping in lthcs_daily.py but premature for V1 universe size. |
-| 11 | **Volatility modifier → `modifiers.json`** | tuning-kit §4 | S | Decouple from code constants so it's tunable. Optional. |
-| 12 | **`growth_compounder` weight retune** (currently 0.30/0.20/0.10/0.20/0.20) | tuning-kit + peer-group-audit | XS | The 0.30 Adoption weight amplified the AVGO/META drag pre-reclassification; may be too aggressive. Worth re-evaluating now that cohort changed. |
+| 7 | **Compound peer-group key** `(maturity_stage, sector_group)` | peer-group-audit §3.4 | M | ❌ DEFERRED — Naive version makes AAPL worse (13.2 vs 46.8 inside Tech-compounder bimodal cohort). Needs a curated Hardware/Software split first. |
+| 8 | **De-dup `Technology` ↔ `Information Technology`** in sector_des_weights.json | des-audit §6 | XS | ✅ SHIPPED `09147a7` — canonical "Information Technology" + `_alias_of` resolver in des.py with defensive handling (broken alias → neutral fallback). DES scores identical pre/post for AAPL/MSFT/NVDA/AVGO/ORCL. |
+| 9 | **Tier 2 macro signals**: Brent crude, gasoline cracks, ISM PMI, housing starts, consumer confidence, U-6 | des-audit | M-L | ❌ DEFERRED — Lower marginal value than the 3 we shipped today. Build only when DES re-tilts. |
+| 10 | **`peer_groups.json`** config file (declarative per-pillar peer-group strategy) | peer-group-audit §3.5 | L | ❌ DEFERRED — Architecturally cleaner than hard-coded grouping in lthcs_daily.py but premature for V1 universe size. |
+| 11 | **Volatility modifier → `modifiers.json`** | tuning-kit §4 | S | ✅ SHIPPED `df7cfc3` — `weights.json` modifiers block now runtime-consumed via `_parse_trigger_expression` + `_load_volatility_modifier_config`. Fallback to defaults + WARNING log on malformed config. 31 new tests. |
+| 12 | **`growth_compounder` weight retune** | tuning-kit + peer-group-audit | XS | ✅ ANALYZED — current weights `[0.25, 0.20, 0.15, 0.20, 0.20]` ARE correct post-v1.1.0 reclass. Adoption-pillar mean for cohort (50.0) ≈ universe (50.5) — NOT penalized. Adoption stdev 32.2 + correlation 0.83 means the 0.25 weight is doing real work. Pre-reclass drag was a cohort-membership problem (AVGO/META in wrong profile), resolved by reclass not reweighting. High confidence; no change. |
 
 ---
 
