@@ -13,4 +13,5 @@ pydantic>=2.5
 python-dotenv>=1.0
 # LTHCS Phase 1 (Week 2: data sources)
 yfinance>=0.2.40
-# pytrends>=4.9   # Week 3 — Adoption pillar (Google Trends signal)
+# LTHCS Phase 1 (Week 3: Adoption pillar — Google Trends)
+pytrends>=4.9

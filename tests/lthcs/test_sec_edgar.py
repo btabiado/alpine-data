@@ -206,9 +206,12 @@ def test_cache_miss_refetches(ua: None) -> None:
 
 def test_revenue_history_extracts_and_sorts(ua: None) -> None:
     facts = _facts_with("Revenues", [
-        {"end": "2022-12-31", "val": 80, "form": "10-K", "fy": 2022, "fp": "FY"},
-        {"end": "2024-12-31", "val": 120, "form": "10-K", "fy": 2024, "fp": "FY"},
-        {"end": "2023-12-31", "val": 100, "form": "10-K", "fy": 2023, "fp": "FY"},
+        {"start": "2022-01-01", "end": "2022-12-31", "val": 80,
+         "form": "10-K", "fy": 2022, "fp": "FY"},
+        {"start": "2024-01-01", "end": "2024-12-31", "val": 120,
+         "form": "10-K", "fy": 2024, "fp": "FY"},
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY"},
     ])
 
     with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
@@ -220,11 +223,13 @@ def test_revenue_history_extracts_and_sorts(ua: None) -> None:
 
     assert [r["end_date"] for r in rows] == ["2024-12-31", "2023-12-31", "2022-12-31"]
     assert rows[0] == {
+        "start_date": "2024-01-01",
         "end_date": "2024-12-31",
         "value": 120,
         "form": "10-K",
         "fy": 2024,
         "fp": "FY",
+        "concept": "Revenues",
     }
 
 
@@ -244,20 +249,30 @@ def test_revenue_history_falls_back_to_asc606_concept(ua: None) -> None:
     assert rows[0]["value"] == 999
 
 
-def test_revenue_history_prefers_revenues_over_fallback(ua: None) -> None:
+def test_revenue_history_merges_both_concepts_preferring_modern(ua: None) -> None:
+    """When both concepts report the same period, the modern (ASC 606) value wins.
+
+    This matters because AAPL et al. report under ``Revenues`` historically but
+    only ``RevenueFromContractWithCustomerExcludingAssessedTax`` is updated
+    after 2018. We merge both and prefer the modern value when periods collide.
+    """
     facts = {
         "facts": {
             "us-gaap": {
                 "Revenues": {
                     "units": {"USD": [
-                        {"end": "2024-12-31", "val": 111, "form": "10-K",
-                         "fy": 2024, "fp": "FY"},
+                        {"start": "2024-01-01", "end": "2024-12-31",
+                         "val": 111, "form": "10-K", "fy": 2024, "fp": "FY"},
+                        # Legacy-only earlier year, no overlap.
+                        {"start": "2018-01-01", "end": "2018-12-31",
+                         "val": 50, "form": "10-K", "fy": 2018, "fp": "FY"},
                     ]},
                 },
                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
                     "units": {"USD": [
-                        {"end": "2024-12-31", "val": 222, "form": "10-K",
-                         "fy": 2024, "fp": "FY"},
+                        # Modern value for the SAME period wins on collision.
+                        {"start": "2024-01-01", "end": "2024-12-31",
+                         "val": 222, "form": "10-K", "fy": 2024, "fp": "FY"},
                     ]},
                 },
             }
@@ -271,13 +286,14 @@ def test_revenue_history_prefers_revenues_over_fallback(ua: None) -> None:
         ]
         rows = sec_edgar.get_revenue_history("AAPL")
 
-    assert rows == [{
-        "end_date": "2024-12-31",
-        "value": 111,
-        "form": "10-K",
-        "fy": 2024,
-        "fp": "FY",
-    }]
+    # Modern concept wins on the colliding 2024 period.
+    assert rows[0]["end_date"] == "2024-12-31"
+    assert rows[0]["value"] == 222
+    assert rows[0]["concept"] == "RevenueFromContractWithCustomerExcludingAssessedTax"
+    # Legacy-only period stays.
+    assert rows[1]["end_date"] == "2018-12-31"
+    assert rows[1]["value"] == 50
+    assert rows[1]["concept"] == "Revenues"
 
 
 def test_revenue_history_empty_facts_returns_empty_list(ua: None) -> None:

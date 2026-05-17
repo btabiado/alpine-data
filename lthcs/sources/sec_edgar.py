@@ -145,10 +145,25 @@ def _get_json(url: str, cache_key: str) -> Any:
 # --- Public API --------------------------------------------------------------
 
 def get_cik(ticker: str) -> Optional[str]:
-    """Return the 10-digit zero-padded CIK for ``ticker``, or None."""
+    """Return the 10-digit zero-padded CIK for ``ticker``, or None.
+
+    Tries exact match first, then a dot-stripped match (e.g. ``BRK.B`` ->
+    ``BRKB``) because the SEC ticker file uses different separator conventions
+    than Yahoo / S&P (e.g. SEC has ``BRKB``, Yahoo has ``BRK-B`` or ``BRK.B``).
+    """
     if not ticker:
         return None
     norm = ticker.strip().upper()
+    # SEC uses ``BRK-B`` style; Yahoo/S&P use ``BRK.B``. Try all common
+    # separator substitutions so the same universe entry works across sources.
+    candidates = {
+        norm,
+        norm.replace(".", ""),
+        norm.replace("-", ""),
+        norm.replace(".", "").replace("-", ""),
+        norm.replace(".", "-"),
+        norm.replace("-", "."),
+    }
 
     raw = _get_json(TICKERS_URL, cache_key="company_tickers")
     # SEC ships this file as ``{"0": {"cik_str": 320193, "ticker": "AAPL", "title": "Apple Inc."}, "1": {...}}``.
@@ -157,7 +172,7 @@ def get_cik(ticker: str) -> Optional[str]:
     for entry in raw.values():
         if not isinstance(entry, dict):
             continue
-        if str(entry.get("ticker", "")).upper() == norm:
+        if str(entry.get("ticker", "")).upper() in candidates:
             cik = entry.get("cik_str")
             if cik is None:
                 return None
@@ -191,62 +206,71 @@ def get_company_facts(ticker: str) -> Dict[str, Any]:
 def get_revenue_history(ticker: str) -> List[Dict[str, Any]]:
     """Extract revenue rows from XBRL company facts.
 
-    Tries ``us-gaap:Revenues`` first, then falls back to
-    ``RevenueFromContractWithCustomerExcludingAssessedTax``. Returns an
-    empty list (not an exception) if neither concept is present.
+    Merges ``us-gaap:Revenues`` (legacy, pre-ASC 606) and
+    ``RevenueFromContractWithCustomerExcludingAssessedTax`` (post-ASC 606)
+    so coverage spans the 2018 concept-change boundary. Most large companies
+    will have both — we de-duplicate by ``(start_date, end_date)`` and
+    prefer the modern concept's value when both report the same period.
 
-    Each row: ``{"end_date": str, "value": number, "form": str, "fy": int, "fp": str}``,
-    sorted by ``end_date`` descending.
+    Each row::
+
+        {"start_date": "2023-10-01", "end_date": "2024-09-28",
+         "value": 391_035_000_000, "form": "10-K", "fy": 2024,
+         "fp": "FY", "concept": "RevenueFromContract..."}
+
+    sorted by ``end_date`` descending. Returns an empty list (not an
+    exception) if no revenue facts are present.
+
+    Note: ``form`` / ``fy`` / ``fp`` describe the FILING that reported the
+    fact, not the fact's period. A 10-K filing contains both annual and
+    quarterly facts. Callers that need annual values should filter by
+    period duration (end - start ≈ 365 days), not by these tags.
     """
-    try:
-        facts = get_company_facts(ticker)
-    except SECEdgarError:
-        raise
+    facts = get_company_facts(ticker)
 
     gaap = (facts or {}).get("facts", {}).get("us-gaap", {})
     if not isinstance(gaap, dict):
         return []
 
-    chosen_units: Optional[List[Dict[str, Any]]] = None
-    for concept in _REVENUE_CONCEPTS:
+    # Walk both concepts and merge by (start, end). Later concepts in the
+    # list win on collision -- so put the modern concept last to prefer it.
+    merge_order = ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax")
+    by_period: Dict[tuple, Dict[str, Any]] = {}
+    for concept in merge_order:
         node = gaap.get(concept)
         if not isinstance(node, dict):
             continue
         units = node.get("units", {})
         if not isinstance(units, dict):
             continue
-        # Prefer USD; if absent take the first unit available.
         usd = units.get("USD")
-        if isinstance(usd, list) and usd:
-            chosen_units = usd
-            break
-        for _, series in units.items():
-            if isinstance(series, list) and series:
-                chosen_units = series
-                break
-        if chosen_units is not None:
-            break
-
-    if not chosen_units:
-        return []
-
-    rows: List[Dict[str, Any]] = []
-    for item in chosen_units:
-        if not isinstance(item, dict):
+        series = usd if isinstance(usd, list) else None
+        if series is None:
+            for _, candidate in units.items():
+                if isinstance(candidate, list) and candidate:
+                    series = candidate
+                    break
+        if not series:
             continue
-        end = item.get("end")
-        val = item.get("val")
-        if end is None or val is None:
-            continue
-        rows.append(
-            {
+        for item in series:
+            if not isinstance(item, dict):
+                continue
+            end = item.get("end")
+            val = item.get("val")
+            if end is None or val is None:
+                continue
+            start = item.get("start")
+            key = (str(start) if start is not None else None, str(end))
+            by_period[key] = {
+                "start_date": str(start) if start is not None else None,
                 "end_date": str(end),
                 "value": val,
                 "form": item.get("form"),
                 "fy": item.get("fy"),
                 "fp": item.get("fp"),
+                "concept": concept,
             }
-        )
 
+    rows = list(by_period.values())
     rows.sort(key=lambda r: r["end_date"], reverse=True)
     return rows
