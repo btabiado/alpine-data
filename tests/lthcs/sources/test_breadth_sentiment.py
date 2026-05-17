@@ -129,18 +129,18 @@ def test_naaim_regime_boundaries(exposure: float, expected: str) -> None:
 
 
 def test_fetch_put_call_happy_path() -> None:
-    csv_text = _fixture("cboe_sample.csv")
+    html_text = _fixture("cboe_sample.html")
     with patch.object(
-        bs.requests, "get", return_value=_mock_response(text=csv_text)
+        bs.requests, "get", return_value=_mock_response(text=html_text)
     ):
         result = bs.fetch_put_call()
 
     assert result is not None
     assert result["latest"] == 1.05
     assert result["regime"] == "elevated_hedging"
-    assert result["source"] == "cboe_daily_csv"
-    # last_updated is some date (whichever weekday we ended up requesting)
-    assert isinstance(result["last_updated"], str)
+    assert result["source"] == "cboe_daily_html"
+    # last_updated is the page's selectedDate (2026-05-16 in the fixture).
+    assert result["last_updated"] == "2026-05-16"
 
 
 def test_fetch_put_call_all_404_returns_none() -> None:
@@ -249,13 +249,13 @@ def test_fetch_naaim_exposure_empty_html_returns_none() -> None:
 
 def _all_sources_url_stub() -> Any:
     """Side effect that returns the right fixture for each URL."""
-    cboe_csv = _fixture("cboe_sample.csv")
+    cboe_html = _fixture("cboe_sample.html")
     aaii_html = _fixture("aaii_sample.html")
     naaim_html = _fixture("naaim_sample.html")
 
     def _stub(url: str, **_kwargs: Any) -> MagicMock:
-        if url.startswith(bs.CBOE_DAILY_CSV_PREFIX):
-            return _mock_response(text=cboe_csv)
+        if url == bs.CBOE_DAILY_HTML:
+            return _mock_response(text=cboe_html)
         if url == bs.AAII_SENTIMENT_URL:
             return _mock_response(text=aaii_html)
         if url == bs.NAAIM_EXPOSURE_URL:
@@ -280,12 +280,12 @@ def test_fetch_breadth_sentiment_all_sources_ok() -> None:
 
 def test_fetch_breadth_sentiment_one_source_fails() -> None:
     """If NAAIM 500s, the other two still come back and data_quality flags it."""
-    cboe_csv = _fixture("cboe_sample.csv")
+    cboe_html = _fixture("cboe_sample.html")
     aaii_html = _fixture("aaii_sample.html")
 
     def _stub(url: str, **_kwargs: Any) -> MagicMock:
-        if url.startswith(bs.CBOE_DAILY_CSV_PREFIX):
-            return _mock_response(text=cboe_csv)
+        if url == bs.CBOE_DAILY_HTML:
+            return _mock_response(text=cboe_html)
         if url == bs.AAII_SENTIMENT_URL:
             return _mock_response(text=aaii_html)
         if url == bs.NAAIM_EXPOSURE_URL:
@@ -426,23 +426,20 @@ def test_composite_all_none_is_mixed() -> None:
 
 
 def test_fetch_put_call_caches_within_day() -> None:
-    csv_text = _fixture("cboe_sample.csv")
+    html_text = _fixture("cboe_sample.html")
     with patch.object(
-        bs.requests, "get", return_value=_mock_response(text=csv_text)
+        bs.requests, "get", return_value=_mock_response(text=html_text)
     ) as mg:
         a = bs.fetch_put_call()
         b = bs.fetch_put_call()
 
     assert a == b
-    # Second call should have been served from cache — only one
-    # successful HTTP burst.
-    # (We don't pin an exact count because the first call may walk back
-    # over weekend dates; we just assert the second call didn't add
-    # any new GETs.)
-    first_count = mg.call_count
+    # First call hits HTTP exactly once (single HTML page, no fallback);
+    # second is served from cache.
+    assert mg.call_count == 1
     # Run a third call and confirm count didn't grow.
     with patch.object(
-        bs.requests, "get", return_value=_mock_response(text=csv_text)
+        bs.requests, "get", return_value=_mock_response(text=html_text)
     ) as mg2:
         c = bs.fetch_put_call()
     assert c == a

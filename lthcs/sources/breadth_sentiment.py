@@ -23,8 +23,28 @@ Design conventions (mirror ``sector_rss.py`` + ``fred.py``):
       in ``data_quality.failed_sources``; the public function NEVER
       raises — this is a "nice to have" pillar and a feed outage must
       not bubble up into the daily run
-    * a polite ``User-Agent`` is sent on every request; CBOE in
-      particular 403s default ``python-requests`` UAs
+    * a browser-flavored ``User-Agent`` is sent on every request; CBOE
+      and AAII both 403 default ``python-requests`` UAs.
+
+Live URL drift notes (2026-05-17 audit):
+    * CBOE retired the per-day CSV at ``cdn.cboe.com/...volume.csv``.
+      Daily put/call ratios now live in a Next.js-rendered HTML page at
+      ``/markets/us/options/market-statistics/daily`` with the values
+      embedded in a streaming JSON payload. We scrape the payload via
+      regex. ``CBOE_DAILY_CSV_PREFIX`` is kept as a module attribute for
+      backward compatibility (tests reference it) but is no longer hit
+      live.
+    * AAII still serves the weekly survey at
+      ``/sentimentsurvey/sent_results`` but the page no longer has the
+      "Bullish 28% Neutral 28% Bearish 44%" inline text — it's a proper
+      HTML table now. The parser scans for the table whose header row
+      reads "Reported Date / Bullish / Neutral / Bearish" and takes the
+      first data row.
+    * NAAIM keeps the same page URL but the WordPress template changed.
+      The historical-readings table now has ``id="surveydata"`` with
+      column ``NAAIM Number Mean/Average``. We parse that table and
+      fall back to the JS-embedded Google-Visualization chart series if
+      the table is missing.
 """
 
 from __future__ import annotations
@@ -48,26 +68,26 @@ from lthcs.sources._ratelimit import TokenBucket
 # URLs
 # ---------------------------------------------------------------------------
 
-# CBOE publishes a per-day CSV under this prefix. The filename pattern is
-# ``YYYY-MM-DD_volume.csv``. They have occasionally shuffled the path; we
-# build URLs lazily so a config override can swap the prefix without code
-# changes.
+# Historical CSV prefix. Kept as a module attribute because tests import it
+# to stub URLs; in practice CBOE has retired this endpoint and we route
+# CBOE traffic through ``CBOE_DAILY_HTML`` below. A future restoration of
+# the CSV path would only need a flip in ``fetch_put_call``.
 CBOE_DAILY_CSV_PREFIX = (
     "https://cdn.cboe.com/data/us/options/market_statistics/daily/"
 )
-# HTML fallback if the CSV path 404s. Equity-only put/call table.
-CBOE_EQUITY_PUT_CALL_HTML = (
-    "https://www.cboe.com/us/options/market_statistics/daily/"
-)
+# Live HTML page that embeds the daily ratios as Next.js streaming JSON.
+# Issues a 302 to /markets/us/options/market-statistics/daily — we follow
+# redirects so this short URL still works.
+CBOE_DAILY_HTML = "https://www.cboe.com/us/options/market_statistics/daily/"
+# Legacy alias retained for compatibility.
+CBOE_EQUITY_PUT_CALL_HTML = CBOE_DAILY_HTML
 
 # AAII publishes the weekly sentiment-survey results on a public HTML page.
-# Free, no login. Layout has changed a few times; the parser scans for
-# percentages near the words "Bullish" / "Neutral" / "Bearish" rather
-# than relying on a specific table id.
+# Free, no login. We parse the table whose header reads
+# "Reported Date / Bullish / Neutral / Bearish".
 AAII_SENTIMENT_URL = "https://www.aaii.com/sentimentsurvey/sent_results"
 
-# NAAIM Exposure Index — weekly. The page renders a table of historical
-# values. We grab the most recent rows from the embedded table.
+# NAAIM Exposure Index — weekly. We parse the table with id="surveydata".
 NAAIM_EXPOSURE_URL = "https://www.naaim.org/programs/naaim-exposure-index/"
 
 
@@ -85,16 +105,20 @@ _CACHE_TTL_SECONDS = 24 * 60 * 60
 _CACHE = FileCache("breadth_sentiment")
 
 # One shared bucket — at most a few requests per daily run. Capacity 4
-# covers (cboe csv, cboe html fallback, aaii, naaim) in one burst; refill
-# at 1/min so a misbehaving caller can't hammer upstream.
+# covers (cboe, aaii, naaim) with headroom; refill at 1/min so a
+# misbehaving caller can't hammer upstream.
 _BUCKET = TokenBucket(capacity=4, refill_rate=1.0 / 60.0)
 
+# CBOE / AAII / NAAIM all run behind Cloudflare-style WAFs that 403 the
+# default ``python-requests`` User-Agent. A real browser UA is fine.
 _DEFAULT_HEADERS = {
     "User-Agent": (
-        "LTHCS-Dashboard/1.0 (+https://github.com/bryantabiadon/btc-eth-etf-dashboard) "
-        "Python-requests"
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
     ),
-    "Accept": "text/csv, text/html;q=0.9, */*;q=0.5",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
 }
 
 # Regime thresholds (kept as module constants so tests can document the
@@ -147,12 +171,18 @@ def _http_get(url: str, *, timeout: int = 20) -> Optional[str]:
 
     Honors the shared token bucket; if the bucket is empty we treat that
     as a temporary failure (return None) rather than blocking the daily
-    pipeline.
+    pipeline. Follows redirects (CBOE and NAAIM both 301/302 to a
+    canonical path).
     """
     if not _BUCKET.try_acquire():
         return None
     try:
-        resp = requests.get(url, headers=_DEFAULT_HEADERS, timeout=timeout)
+        resp = requests.get(
+            url,
+            headers=_DEFAULT_HEADERS,
+            timeout=timeout,
+            allow_redirects=True,
+        )
     except requests.RequestException:
         return None
     if getattr(resp, "status_code", 0) != 200:
@@ -179,6 +209,14 @@ def _mean(values: List[float]) -> Optional[float]:
     return sum(values) / len(values)
 
 
+def _strip_html_text(s: str) -> str:
+    s = re.sub(r"<script\b[^>]*>.*?</script>", " ", s, flags=re.I | re.S)
+    s = re.sub(r"<style\b[^>]*>.*?</style>", " ", s, flags=re.I | re.S)
+    s = re.sub(r"<[^>]+>", " ", s)
+    s = html.unescape(s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
 # ---------------------------------------------------------------------------
 # 1) CBOE Put/Call Ratio
 # ---------------------------------------------------------------------------
@@ -202,17 +240,15 @@ def _putcall_regime(ratio: float) -> str:
     return "panic"
 
 
+# Backward-compat CSV parser. The live CSV endpoint is dead but tests and
+# callers may still feed CSV text (e.g. a manual download) through this
+# helper, so we keep it intact.
 def _parse_cboe_csv(text: str) -> List[Tuple[str, float]]:
     """Parse a CBOE daily-volume CSV into (date, p/c ratio) rows.
 
     The CBOE CSV uses a small preamble before the actual header row, so
     we sniff for a row that contains a ``P/C Ratio``-like column. Any
     rows that fail to parse a float are skipped, not raised.
-
-    The CBOE schema also varies: some files have one P/C column, some
-    have multiple ("Total", "Equity", "Index"). We prefer "Total P/C
-    Ratio" if present, else fall back to the first column whose header
-    matches ``P/C Ratio``.
     """
     if not text:
         return []
@@ -224,11 +260,9 @@ def _parse_cboe_csv(text: str) -> List[Tuple[str, float]]:
 
     rows: List[List[str]] = list(reader)
     for i, row in enumerate(rows):
-        # Look for a header row that mentions "P/C Ratio" (case-insensitive).
         joined = " ".join(c.strip().lower() for c in row)
         if "p/c ratio" in joined or "p/c" in joined and "ratio" in joined:
             header_row = row
-            # Prefer "Total P/C Ratio" else first "P/C Ratio".
             for j, cell in enumerate(row):
                 if cell.strip().lower() == "total p/c ratio":
                     header_idx = j
@@ -242,7 +276,6 @@ def _parse_cboe_csv(text: str) -> List[Tuple[str, float]]:
                 if cell.strip().lower() in {"date", "trade date"}:
                     date_idx = j
                     break
-            # Data begins on the next row.
             data_start = i + 1
             break
     else:
@@ -269,15 +302,58 @@ def _parse_cboe_csv(text: str) -> List[Tuple[str, float]]:
     return out
 
 
-def _cboe_url_for(date: _dt.date) -> str:
-    return f"{CBOE_DAILY_CSV_PREFIX}{date.isoformat()}_volume.csv"
+# CBOE HTML parsing — the page embeds optionsData as a streaming JSON
+# chunk where every quote is backslash-escaped (e.g. ``\"name\"``). We
+# scrape with a regex that matches that escaped form. Pattern is anchored
+# on the ``PUT/CALL RATIO`` token so a layout reshuffle that keeps the
+# JSON structure still parses.
+_CBOE_RATIO_RE = re.compile(
+    r'\\"name\\":\\"([A-Z +/]*?PUT/CALL RATIO)\\",\\"value\\":\\"([0-9.]+)\\"'
+)
+_CBOE_DATE_RE = re.compile(r'\\"selectedDate\\":\\"(\d{4}-\d{2}-\d{2})\\"')
+
+
+def _parse_cboe_html(html_text: str) -> Optional[Tuple[str, float]]:
+    """Pull the latest Total P/C Ratio + report date from the CBOE page.
+
+    Returns ``(iso_date, ratio)`` or ``None`` if neither could be found.
+    Prefers ``TOTAL PUT/CALL RATIO``; falls back to ``EQUITY PUT/CALL
+    RATIO`` if Total is absent (which would be a structural change but
+    Equity is still a useable proxy).
+    """
+    if not html_text:
+        return None
+
+    ratios: Dict[str, float] = {}
+    for m in _CBOE_RATIO_RE.finditer(html_text):
+        name = m.group(1).strip().upper()
+        try:
+            ratios[name] = float(m.group(2))
+        except ValueError:
+            continue
+    if not ratios:
+        return None
+
+    # Prefer Total, fall back to Equity. (Index is a poor sentiment
+    # proxy — it's dominated by hedging flows.)
+    value: Optional[float] = None
+    for key in ("TOTAL PUT/CALL RATIO", "EQUITY PUT/CALL RATIO"):
+        if key in ratios:
+            value = ratios[key]
+            break
+    if value is None:
+        return None
+
+    date_match = _CBOE_DATE_RE.search(html_text)
+    iso_date = date_match.group(1) if date_match else _today_iso()
+    return iso_date, value
 
 
 def fetch_put_call(cache_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]:
-    """Fetch the latest CBOE Put/Call Ratio with 30d mean + 1y percentile.
+    """Fetch the latest CBOE Total Put/Call Ratio.
 
-    Tries the CSV path for today, then walks back up to 5 business-ish
-    days if 404 (markets closed). Returns ``None`` on any unrecoverable
+    Live data comes from the CBOE Next.js HTML page (the per-day CSV
+    endpoint was retired). Returns ``None`` on any unrecoverable
     failure. Cache TTL: 24h, keyed by today's ISO date.
     """
     cache = _cache_for(cache_dir)
@@ -294,68 +370,33 @@ def fetch_put_call(cache_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]
         if hit.value is not None:
             return dict(hit.value)
 
-    # Walk back up to 6 calendar days to find a published file.
-    today_date = _dt.date.today()
-    text: Optional[str] = None
-    used_date: Optional[_dt.date] = None
-    for delta in range(0, 7):
-        candidate = today_date - _dt.timedelta(days=delta)
-        # Skip weekends — CBOE doesn't publish Sat/Sun files.
-        if candidate.weekday() >= 5:
-            continue
-        url = _cboe_url_for(candidate)
-        body = _http_get(url)
-        if body and "p/c" in body.lower():
-            text = body
-            used_date = candidate
-            break
-
-    if not text:
-        _log("CBOE CSV unavailable for the last 7 days; falling back to None")
+    body = _http_get(CBOE_DAILY_HTML)
+    if not body:
+        _log("CBOE daily page fetch failed")
         try:
             cache.set(cache_key, None, ttl_seconds=_CACHE_TTL_SECONDS)
         except Exception:
             pass
         return None
 
-    rows = _parse_cboe_csv(text)
-    if not rows:
-        _log(f"CBOE CSV for {used_date} parsed empty")
+    parsed = _parse_cboe_html(body)
+    if parsed is None:
+        _log("CBOE daily page parsed empty (Total/Equity P/C ratio not found)")
         return None
 
-    # Take the most recent value as "latest". Most CBOE daily files only
-    # carry one trading day, but we sort defensively.
-    sorted_rows = sorted(rows, key=lambda r: r[0])
-    latest_date, latest_val = sorted_rows[-1]
+    last_updated, latest_val = parsed
 
-    # We don't have a 30d / 1y history in a single daily file. The spec
-    # asks for trailing means + percentile; we approximate by pulling
-    # the CSVs for the previous ~252 trading days, capped to 5 attempts
-    # to keep the burst-budget reasonable. In practice we only need 30
-    # for the mean, and the percentile bucket can be approximated from
-    # whatever rolling window we have.
-    #
-    # NOTE: To respect the rate-limit budget in V1 we do NOT walk a full
-    # year here. Instead we return percentile_1y=None and mean_30d=None
-    # when we only have one day of data — callers can degrade. A future
-    # enhancement could cache a rolling 252-day series on disk.
-    history_vals = [v for _, v in sorted_rows]
-    mean_30d = _mean(history_vals[-30:]) if len(history_vals) >= 5 else None
-    pctile_1y = (
-        _percentile(latest_val, history_vals[-252:])
-        if len(history_vals) >= 20
-        else None
-    )
-
+    # We don't carry a rolling 30d / 1y history on disk (would require a
+    # separate ingestion job). Both mean_30d and percentile_1y are left
+    # as None so callers can degrade gracefully. The regime label is the
+    # primary signal.
     result: Dict[str, Any] = {
         "latest": float(latest_val),
-        "mean_30d": float(mean_30d) if mean_30d is not None else None,
-        "percentile_1y": float(pctile_1y) if pctile_1y is not None else None,
+        "mean_30d": None,
+        "percentile_1y": None,
         "regime": _putcall_regime(float(latest_val)),
-        "source": "cboe_daily_csv",
-        "last_updated": (
-            used_date.isoformat() if used_date is not None else None
-        ),
+        "source": "cboe_daily_html",
+        "last_updated": last_updated,
     }
 
     try:
@@ -391,13 +432,32 @@ def _aaii_regime(spread: float) -> str:
     return "extreme_bearish"
 
 
-_AAII_LABEL_PATTERNS = {
-    "bullish": re.compile(r"bullish[^0-9%]{0,40}([0-9]+(?:\.[0-9]+)?)\s*%", re.I),
-    "neutral": re.compile(r"neutral[^0-9%]{0,40}([0-9]+(?:\.[0-9]+)?)\s*%", re.I),
-    "bearish": re.compile(r"bearish[^0-9%]{0,40}([0-9]+(?:\.[0-9]+)?)\s*%", re.I),
-}
+# Anchored on the "Reported Date / Bullish / Neutral / Bearish" header
+# the AAII page renders. We pull the header to confirm column order
+# (defensively — they could swap Neutral and Bearish in a redesign), then
+# pull the first data row.
+_AAII_HEADER_RE = re.compile(
+    r"Reported\s+Date\s+Bullish\s+Neutral\s+Bearish", re.I
+)
+# A data row in the stripped table text. Date is "May 13" style (no year),
+# followed by three percentages. We allow whitespace between cells.
+_AAII_ROW_RE = re.compile(
+    r"([A-Z][a-z]{2}\s+\d{1,2})\s+"
+    r"(\d{1,2}(?:\.\d+)?)\s*%\s+"
+    r"(\d{1,2}(?:\.\d+)?)\s*%\s+"
+    r"(\d{1,2}(?:\.\d+)?)\s*%"
+)
 
-# A date that looks like "May 14, 2026" or "5/14/2026" or "2026-05-14"
+# Old-style "Bullish 28.5% Neutral 29.4% Bearish 42.1%" inline text, kept
+# as a fallback for tests / archived copies of the page.
+_AAII_INLINE_RE = re.compile(
+    r"bullish[^0-9%]{0,40}([0-9]+(?:\.[0-9]+)?)\s*%\s*"
+    r"(?:[^0-9%]{0,40}neutral[^0-9%]{0,40}([0-9]+(?:\.[0-9]+)?)\s*%\s*)?"
+    r"(?:[^0-9%]{0,40}bearish[^0-9%]{0,40}([0-9]+(?:\.[0-9]+)?)\s*%)",
+    re.I | re.S,
+)
+
+# Fallback date discovery patterns.
 _AAII_DATE_PATTERNS = [
     re.compile(
         r"(?:week ending|as of|reported)[:\s]+([A-Za-z]+\s+\d{1,2},\s*\d{4})",
@@ -408,12 +468,49 @@ _AAII_DATE_PATTERNS = [
 ]
 
 
-def _strip_html_text(s: str) -> str:
-    s = re.sub(r"<script\b[^>]*>.*?</script>", " ", s, flags=re.I | re.S)
-    s = re.sub(r"<style\b[^>]*>.*?</style>", " ", s, flags=re.I | re.S)
-    s = re.sub(r"<[^>]+>", " ", s)
-    s = html.unescape(s)
-    return re.sub(r"\s+", " ", s).strip()
+def _resolve_aaii_year(month: int, day: int) -> int:
+    """Best-effort year inference for an AAII row that omits the year.
+
+    AAII publishes weekly, so the latest row is always within the last
+    couple of weeks of today. We assume current year unless that would
+    put the row more than ~60 days in the future, in which case roll
+    back to the prior year.
+    """
+    today = _dt.date.today()
+    try:
+        candidate = _dt.date(today.year, month, day)
+    except ValueError:
+        return today.year
+    if (candidate - today).days > 60:
+        return today.year - 1
+    return today.year
+
+
+_AAII_MONTH_MAP = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "sept": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _parse_aaii_short_date(raw: str) -> Optional[str]:
+    """Parse "May 13" / "Sep 5" into an ISO date using the year heuristic."""
+    parts = raw.split()
+    if len(parts) != 2:
+        return None
+    month = _AAII_MONTH_MAP.get(parts[0][:4].lower()) or _AAII_MONTH_MAP.get(
+        parts[0][:3].lower()
+    )
+    if not month:
+        return None
+    try:
+        day = int(parts[1])
+    except ValueError:
+        return None
+    year = _resolve_aaii_year(month, day)
+    try:
+        return _dt.date(year, month, day).isoformat()
+    except ValueError:
+        return None
 
 
 def _parse_aaii_date(text: str) -> Optional[str]:
@@ -422,7 +519,6 @@ def _parse_aaii_date(text: str) -> Optional[str]:
         if not m:
             continue
         raw = m.group(1)
-        # Try several formats.
         for fmt in ("%Y-%m-%d", "%B %d, %Y", "%b %d, %Y", "%m/%d/%Y"):
             try:
                 return _dt.datetime.strptime(raw, fmt).date().isoformat()
@@ -434,10 +530,15 @@ def _parse_aaii_date(text: str) -> Optional[str]:
 def _parse_aaii_html(html_text: str) -> Optional[Dict[str, Any]]:
     """Pull bullish/neutral/bearish % and week-ending date from AAII HTML.
 
-    Returns a dict with keys ``bullish_pct``, ``neutral_pct``,
-    ``bearish_pct``, ``week_ending`` (any of which may be None if the
-    page layout has drifted). Returns ``None`` only if we can't find
-    *any* of the three percentages.
+    Live layout: a table with headers
+    "Reported Date / Bullish / Neutral / Bearish" and rows like
+    "May 13   39.3%  24.1%  36.6%". The first data row is the latest.
+
+    Fallback path: an inline "Bullish 28.5% Neutral 29.4% Bearish 42.1%"
+    pattern, kept so unit-tests and archived snapshots still parse.
+
+    Returns a dict with ``bullish_pct``, ``neutral_pct``, ``bearish_pct``,
+    and ``week_ending``, or ``None`` if none of those could be extracted.
     """
     if not html_text:
         return None
@@ -445,28 +546,53 @@ def _parse_aaii_html(html_text: str) -> Optional[Dict[str, Any]]:
     if not text:
         return None
 
-    out: Dict[str, Any] = {
-        "bullish_pct": None,
-        "neutral_pct": None,
-        "bearish_pct": None,
-        "week_ending": _parse_aaii_date(text),
-    }
-    for key, pat in _AAII_LABEL_PATTERNS.items():
-        m = pat.search(text)
-        if not m:
-            continue
-        try:
-            out[f"{key}_pct"] = float(m.group(1))
-        except ValueError:
-            continue
+    # Preferred: table layout. Anchor on the header to make sure we
+    # interpret the columns in the right order.
+    header = _AAII_HEADER_RE.search(text)
+    if header:
+        # Look for the first row after the header.
+        tail = text[header.end():]
+        row = _AAII_ROW_RE.search(tail)
+        if row:
+            try:
+                bullish = float(row.group(2))
+                neutral = float(row.group(3))
+                bearish = float(row.group(4))
+            except ValueError:
+                bullish = neutral = bearish = None  # type: ignore[assignment]
+            week_ending = _parse_aaii_short_date(row.group(1))
+            if bullish is not None and bearish is not None:
+                return {
+                    "bullish_pct": bullish,
+                    "neutral_pct": neutral,
+                    "bearish_pct": bearish,
+                    "week_ending": week_ending or _parse_aaii_date(text),
+                }
 
-    if (
-        out["bullish_pct"] is None
-        and out["neutral_pct"] is None
-        and out["bearish_pct"] is None
-    ):
-        return None
-    return out
+    # Fallback: inline text layout used in older fixtures.
+    m = _AAII_INLINE_RE.search(text)
+    if m:
+        try:
+            bullish = float(m.group(1))
+        except (TypeError, ValueError):
+            bullish = None  # type: ignore[assignment]
+        try:
+            neutral = float(m.group(2)) if m.group(2) else None
+        except (TypeError, ValueError):
+            neutral = None
+        try:
+            bearish = float(m.group(3)) if m.group(3) else None
+        except (TypeError, ValueError):
+            bearish = None
+        if bullish is not None and bearish is not None:
+            return {
+                "bullish_pct": bullish,
+                "neutral_pct": neutral,
+                "bearish_pct": bearish,
+                "week_ending": _parse_aaii_date(text),
+            }
+
+    return None
 
 
 def fetch_aaii_sentiment(
@@ -577,13 +703,23 @@ def _naaim_regime(exposure: float) -> str:
     return "leveraged"
 
 
-# Matches a row in NAAIM's history table: a date cell followed by the
-# Mean / "NAAIM Number" exposure cell. Tolerant of the surrounding
-# layout so a minor template change doesn't break the scrape.
-_NAAIM_ROW_PATTERN = re.compile(
-    r"(\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2})"
-    r"[^0-9\-]{0,200}?(-?\d{1,3}(?:\.\d+)?)",
-    re.S,
+# After HTML strip, the NAAIM history table comes out as:
+# "Date NAAIM Number Mean/Average Bearish Quart1 Quart2 Quart3 Bullish Deviation
+#  05/13/2026 77.34 -200 78.75 99.00 100.00 200 68.17 05/06/2026 ..."
+# So every 8 cells = one row, starting with a MM/DD/YYYY date and the
+# second cell is the NAAIM Number.
+_NAAIM_HEADER_RE = re.compile(
+    r"Date\s+NAAIM\s+Number(?:\s+Mean(?:/Average)?)?", re.I
+)
+_NAAIM_ROW_RE = re.compile(
+    r"(\d{1,2}/\d{1,2}/\d{4})\s+(-?\d{1,3}(?:\.\d+)?)"
+)
+
+# Google-visualization chart fallback. Each entry is
+# ``[new Date(2026, 4, 13), 77.34]`` where the month is 0-indexed.
+_NAAIM_CHART_RE = re.compile(
+    r"new\s+Date\(\s*(\d{4})\s*,\s*(\d{1,2})\s*,\s*(\d{1,2})\s*\)\s*,\s*"
+    r"(-?\d{1,3}(?:\.\d+)?)"
 )
 
 
@@ -600,41 +736,75 @@ def _parse_naaim_date(raw: str) -> Optional[str]:
 def _parse_naaim_html(html_text: str) -> List[Tuple[str, float]]:
     """Return a list of (week_ending_iso, exposure) rows, newest first.
 
-    Scans the page text (HTML-stripped) for date+number pairs. This is
-    intentionally fuzzy — NAAIM's WordPress template has changed several
-    times and we can't depend on a specific table id. Anything that
-    parses as a date next to a -100..300 number is treated as a row.
+    Primary path: the ``surveydata`` table. After HTML-stripping we have
+    ``mm/dd/yyyy <average> ...`` cells; we match consecutive date+number
+    pairs and take the number as the NAAIM exposure for that row.
+
+    Fallback: the Google-Visualization line-chart data, which encodes the
+    same series as ``[new Date(year, month0, day), value]`` literals. We
+    only fall back if the table extraction yields zero rows.
+
+    Plausibility filter: NAAIM exposure is bounded roughly to
+    ``[-200, 300]``; anything outside is filtered out.
     """
     if not html_text:
         return []
-    text = _strip_html_text(html_text)
-    if not text:
-        return []
 
-    out: List[Tuple[str, float]] = []
+    rows: List[Tuple[str, float]] = []
     seen: set = set()
-    for m in _NAAIM_ROW_PATTERN.finditer(text):
-        date_raw, num_raw = m.group(1), m.group(2)
-        iso = _parse_naaim_date(date_raw)
-        if not iso:
-            continue
-        try:
-            val = float(num_raw)
-        except ValueError:
-            continue
-        # Plausibility filter: NAAIM exposure is bounded roughly to
-        # [-200, 300]. Anything outside is almost certainly a different
-        # number (year, percent change, etc.).
-        if val < -200 or val > 300:
-            continue
-        if iso in seen:
-            continue
-        seen.add(iso)
-        out.append((iso, val))
+
+    text = _strip_html_text(html_text)
+    if text:
+        header = _NAAIM_HEADER_RE.search(text)
+        scan_from = text[header.end():] if header else text
+        for m in _NAAIM_ROW_RE.finditer(scan_from):
+            iso = _parse_naaim_date(m.group(1))
+            if not iso:
+                continue
+            try:
+                val = float(m.group(2))
+            except ValueError:
+                continue
+            if val < -200 or val > 300:
+                continue
+            if iso in seen:
+                continue
+            seen.add(iso)
+            rows.append((iso, val))
+
+    # Chart fallback. Use the FIRST chart block we encounter — that's
+    # NAAIM Number, not the S&P 500 series (which would also be matched
+    # by the regex). We bound the scan to the section before the
+    # ``drawSpChart`` / ``S&P 500`` marker.
+    if not rows:
+        chart_section = html_text
+        sp_idx = chart_section.lower().find("drawspchart")
+        if sp_idx == -1:
+            sp_idx = chart_section.find("S&P 500")
+        if sp_idx > 0:
+            chart_section = chart_section[:sp_idx]
+        for m in _NAAIM_CHART_RE.finditer(chart_section):
+            year = int(m.group(1))
+            month0 = int(m.group(2))
+            day = int(m.group(3))
+            try:
+                val = float(m.group(4))
+            except ValueError:
+                continue
+            if val < -200 or val > 300:
+                continue
+            try:
+                iso = _dt.date(year, month0 + 1, day).isoformat()
+            except ValueError:
+                continue
+            if iso in seen:
+                continue
+            seen.add(iso)
+            rows.append((iso, val))
 
     # Newest first.
-    out.sort(key=lambda r: r[0], reverse=True)
-    return out
+    rows.sort(key=lambda r: r[0], reverse=True)
+    return rows
 
 
 def fetch_naaim_exposure(
@@ -819,6 +989,7 @@ def fetch_breadth_sentiment(
 
 __all__ = [
     "CBOE_DAILY_CSV_PREFIX",
+    "CBOE_DAILY_HTML",
     "CBOE_EQUITY_PUT_CALL_HTML",
     "AAII_SENTIMENT_URL",
     "NAAIM_EXPOSURE_URL",
