@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="./lthcs.css" />
     <!-- Week 9 (detail modal) stylesheet -->
     <link rel="stylesheet" href="./lthcs-detail.css" />
+    <!-- Week 10 (about modal) stylesheet -->
+    <link rel="stylesheet" href="./lthcs-about.css" />
   </head>
   <body>
     <header class="lthcs-header" role="banner">
@@ -27,6 +29,11 @@
           <button id="lthcs-refresh" type="button" class="lthcs-refresh-btn" aria-label="Refresh LTHCS data">
             <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
             <span class="lthcs-refresh-label">Refresh</span>
+          </button>
+          <!-- Week 10 (about modal) trigger -->
+          <button id="lthcs-about-btn" type="button" class="lthcs-refresh-btn" aria-label="About LTHCS">
+            <span aria-hidden="true">&#x2139;</span>
+            <span class="lthcs-refresh-label">About</span>
           </button>
         </div>
       </div>
@@ -138,12 +145,21 @@
 
     <footer class="lthcs-footer">
       <p>
-        Not investment advice. LTHCS V1, computed daily from free-tier data.
-        See methodology at <a href="#" class="lthcs-footer-link">methodology (link placeholder)</a>.
+        <strong>Not investment advice.</strong> LTHCS V1, computed daily from free-tier data.
+        See <button type="button" class="lthcs-footer-link" id="lthcs-footer-about-link" aria-label="About LTHCS methodology">methodology &amp; sources</button>
+        or the spec on
+        <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/PHASE_1_BUILD_SPEC.md" target="_blank" rel="noopener" class="lthcs-footer-link">GitHub</a>.
       </p>
     </footer>
 
     <script type="module" src="./lthcs-tab.js"></script>
+    <!-- Week 10 (about modal) -->
+    <script type="module" src="./lthcs-about.js"></script>
+    <script type="module">
+      // Wire the footer "methodology & sources" link to the same modal.
+      import { openAbout } from './lthcs-about.js';
+      document.getElementById('lthcs-footer-about-link')?.addEventListener('click', openAbout);
+    </script>
 
     <!-- Week 9 (detail modal) root — populated by lthcs-detail.js -->
     <div id="lthcs-modal-root" class="lthcs-modal-root hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>

@@ -1,8 +1,37 @@
 # LTHCS Phase 1 / V1 — README
 
-**Long-Term Hold Confidence Score** — a new tab on the `btc-eth-etf-dashboard` GitHub Pages site, with a daily Python pipeline that computes scores for 75 US-listed tickers and persists them as JSON files in the repo.
+**Long-Term Hold Confidence Score** — a sibling page on the `btc-eth-etf-dashboard` GitHub Pages site, with a daily Python pipeline that computes scores for 74 active US-listed tickers and persists them as JSON files in the repo.
+
+🌐 **Live URL:** https://btabiado.github.io/btc-eth-etf-dashboard/lthcs/
 
 This README is for Bryan to set the project up the first time and run it daily after that. The full build specification for Claude Code is in [`PHASE_1_BUILD_SPEC.md`](PHASE_1_BUILD_SPEC.md). The project conventions Claude Code reads on every session are in [`SKILL.md`](SKILL.md).
+
+---
+
+## V1 status (2026-05-16)
+
+All 10 weeks of the build plan shipped. The framework runs end-to-end:
+
+| Week | Module | Status |
+|---|---|---|
+| 1 | Schemas + validate gate | ✅ |
+| 2 | 5 source clients (Yahoo, SEC EDGAR, FRED, EIA, Alpha Vantage) | ✅ |
+| 3 | normalize + Adoption pillar | ✅ |
+| 4 | Institutional + Financial pillars | ✅ |
+| 5 | Thesis + DES pillars | ✅ |
+| 6 | Score combiner + templated narratives | ✅ |
+| 7 | Daily pipeline (`lthcs_daily.py`) + JSON persistence | ✅ |
+| 8 | Tab UI (cards grid + search + filters) | ✅ |
+| 9 | Detail modal + 90-day SVG sparkline + variable detail | ✅ |
+| 10 | About modal + README updates + polish | ✅ |
+
+**Universe:** 75 entries / 74 active. WBA marked inactive (Walgreens taken private late 2025).
+
+**V1 limitations honestly disclosed in the About modal:**
+- Alpha Vantage NEWS_SENTIMENT is AND-semantics on multi-ticker, so the daily pipeline gets news for one sample ticker; Thesis falls back to neutral 50 for the rest. Phase 2 upgrade to AV Premium or alternate news source.
+- Google Trends acceleration (40% of Adoption) is not driven for 74 tickers — Google rate-limits aggressively.
+- 13F holdings change (30% of Institutional) is a Phase 2 stub.
+- Banks score low on Financial Evolution (don't report GrossProfit / OCF the standard XBRL way). Sector-aware financial scoring is Phase 2.
 
 ---
 

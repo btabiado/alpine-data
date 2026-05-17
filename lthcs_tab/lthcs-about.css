@@ -1,0 +1,197 @@
+/* lthcs-about.css — About LTHCS info modal scoped styles. */
+
+.lthcs-about-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.lthcs-about-root.hidden {
+  display: none !important;
+}
+
+.lthcs-about-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 11, 16, 0.78);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+}
+
+.lthcs-about-panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  background: var(--panel, #171c22);
+  border: 1px solid var(--border, #2a323d);
+  border-radius: 10px;
+  color: var(--text, #e6e9ee);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.lthcs-about-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border, #2a323d);
+  background: var(--panel2, #1b2030);
+}
+
+.lthcs-about-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.lthcs-about-close {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--muted, #9ca3af);
+  font-size: 22px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.lthcs-about-close:hover,
+.lthcs-about-close:focus-visible {
+  color: var(--text, #e6e9ee);
+  border-color: var(--border, #2a323d);
+  outline: none;
+}
+
+.lthcs-about-body {
+  padding: 18px 24px 24px;
+  overflow-y: auto;
+  line-height: 1.55;
+  font-size: 14px;
+}
+
+.lthcs-about-body h3 {
+  margin: 24px 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted, #9ca3af);
+}
+
+.lthcs-about-body h3:first-child {
+  margin-top: 0;
+}
+
+.lthcs-about-lead {
+  margin: 0 0 4px;
+  color: var(--text, #e6e9ee);
+}
+
+.lthcs-about-note {
+  margin-top: 6px;
+  font-size: 12.5px;
+  color: var(--muted, #9ca3af);
+}
+
+.lthcs-about-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.lthcs-about-table th,
+.lthcs-about-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border, #2a323d);
+  vertical-align: top;
+}
+
+.lthcs-about-table th {
+  color: var(--muted, #9ca3af);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lthcs-about-table code {
+  font-size: 12px;
+  background: var(--panel2, #1b2030);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border, #2a323d);
+}
+
+.lthcs-about-list {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+
+.lthcs-about-list li {
+  margin: 4px 0;
+}
+
+.lthcs-about-list strong {
+  color: var(--text, #e6e9ee);
+}
+
+.lthcs-about-disclaimer {
+  margin-top: 22px;
+  padding: 12px 14px;
+  border-left: 3px solid var(--band-weakening, #b85a3e);
+  background: rgba(184, 90, 62, 0.08);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text, #e6e9ee);
+}
+
+.lthcs-about-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.lthcs-about-dot[data-band="elite"]            { background: var(--band-elite, #1f3a5f); }
+.lthcs-about-dot[data-band="high_confidence"]  { background: var(--band-high, #4a8f5f); }
+.lthcs-about-dot[data-band="constructive"]     { background: var(--band-constructive, #c9a227); }
+.lthcs-about-dot[data-band="monitor"]          { background: var(--band-monitor, #d89148); }
+.lthcs-about-dot[data-band="weakening"]        { background: var(--band-weakening, #b85a3e); }
+.lthcs-about-dot[data-band="review"]           { background: var(--band-review, #7a2e1f); }
+
+.lthcs-about-body a {
+  color: var(--link, #93b6ff);
+  text-decoration: underline;
+}
+
+.lthcs-about-body a:hover {
+  filter: brightness(1.15);
+}
+
+@media (max-width: 640px) {
+  .lthcs-about-root { padding: 0; }
+  .lthcs-about-panel {
+    max-width: none;
+    max-height: 100vh;
+    height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+  .lthcs-about-header { padding: 14px 16px; }
+  .lthcs-about-body { padding: 14px 16px 22px; }
+}
