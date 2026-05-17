@@ -8,7 +8,7 @@
 
 'use strict';
 
-import { renderSparkline, bandColorForScore } from './lthcs-sparkline.js';
+import { bandColorForScore } from './lthcs-sparkline.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -16,6 +16,21 @@ import { renderSparkline, bandColorForScore } from './lthcs-sparkline.js';
 
 const HISTORY_BASE = '../data/lthcs/history/by_ticker';
 const VARDETAIL_BASE = '../data/lthcs/variable_detail';
+const HOLDINGS_BASE = '../data/lthcs/holdings';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// Band buckets, lowest first. Each: [minInclusive, maxExclusive, key, color]
+// Matches lthcs-sparkline DEFAULT_BAND_COLORS — kept here so we can tint with
+// low alpha without re-parsing hex.
+const BAND_BUCKETS = [
+  { min:  0, max: 50,  key: 'review',       color: '#7A2E1F' },
+  { min: 50, max: 60,  key: 'weakening',    color: '#B85A3E' },
+  { min: 60, max: 70,  key: 'monitor',      color: '#D89148' },
+  { min: 70, max: 80,  key: 'constructive', color: '#C9A227' },
+  { min: 80, max: 90,  key: 'high',         color: '#4A8F5F' },
+  { min: 90, max: 101, key: 'elite',        color: '#1F3A5F' },
+];
 
 const PILLAR_ORDER = [
   'adoption_momentum',
@@ -71,6 +86,10 @@ const moduleState = {
   vardetailCache: new Map(),
   // current toggle state for variable-detail section
   vardetailLoaded: false,
+  // cached per-ticker history payloads keyed by ticker
+  historyCache: new Map(),
+  // cached holdings maps keyed by calc_date
+  holdingsCache: new Map(),
 };
 
 // ---------------------------------------------------------------------------
@@ -190,6 +209,8 @@ function buildShell() {
       <h3 class="lthcs-modal-section-heading">Score history</h3>
       <div class="lthcs-modal-chart-wrap">
         <div class="lthcs-modal-chart" data-slot="chart"></div>
+        <div class="lthcs-modal-chart-tooltip" data-slot="chart-tooltip" aria-hidden="true"></div>
+        <div class="lthcs-modal-chart-note" data-slot="chart-note" hidden></div>
       </div>
     </div>
 
@@ -204,6 +225,8 @@ function buildShell() {
     </div>
 
     <div data-slot="insider-wrap"></div>
+
+    <div data-slot="holdings-wrap"></div>
 
     <div data-slot="flags-wrap"></div>
 
@@ -301,16 +324,113 @@ function renderHero(panel, { snapshotRow }) {
 function renderChartSkeleton(panel) {
   const chartEl = panel.querySelector('[data-slot="chart"]');
   clear(chartEl);
+  setChartNote(panel, '');
+  const tipEl = panel.querySelector('[data-slot="chart-tooltip"]');
+  if (tipEl) { tipEl.textContent = ''; tipEl.classList.remove('visible'); }
   chartEl.appendChild(el('div', {
     className: 'lthcs-modal-chart-placeholder',
     text: 'Loading history…',
   }));
 }
 
+function setChartNote(panel, text) {
+  const noteEl = panel.querySelector('[data-slot="chart-note"]');
+  if (!noteEl) return;
+  if (!text) {
+    noteEl.textContent = '';
+    noteEl.setAttribute('hidden', '');
+    return;
+  }
+  noteEl.textContent = text;
+  noteEl.removeAttribute('hidden');
+}
+
+// SVG helpers --------------------------------------------------------------
+
+function svgEl(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null || v === false) continue;
+      node.setAttribute(k, String(v));
+    }
+  }
+  return node;
+}
+
+// Sort + normalize: returns ascending-by-date list of {date, score, band}.
+function normalizeHistory(series) {
+  const rows = [];
+  for (const raw of series) {
+    if (!raw) continue;
+    const d = String(raw.date || '');
+    // Both legacy `composite_score` and current `score` are accepted.
+    const sRaw = (raw.composite_score != null) ? raw.composite_score : raw.score;
+    const s = Number(sRaw);
+    if (!d || !Number.isFinite(s)) continue;
+    rows.push({ date: d, score: s, band: raw.band || null });
+  }
+  rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return rows;
+}
+
+function formatTickDate(iso) {
+  // iso = "YYYY-MM-DD"; produce "MMM DD" (e.g. "May 17")
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+  if (!m) return iso || '';
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mi = Number(m[2]) - 1;
+  return `${months[mi] || ''} ${String(Number(m[3]))}`;
+}
+
+// Pick ~4-6 evenly spaced tick indices across the series.
+function pickTickIndices(n, target = 5) {
+  if (n <= target) return Array.from({ length: n }, (_, i) => i);
+  const out = new Set();
+  for (let k = 0; k < target; k++) {
+    out.add(Math.round(k * (n - 1) / (target - 1)));
+  }
+  return Array.from(out).sort((a, b) => a - b);
+}
+
+// Catmull-Rom → cubic Bezier smoothing for the line path.
+function smoothPath(points) {
+  if (points.length === 0) return '';
+  if (points.length === 1) {
+    const [x, y] = points[0];
+    return `M${x.toFixed(2)},${y.toFixed(2)}`;
+  }
+  if (points.length === 2) {
+    return `M${points[0][0].toFixed(2)},${points[0][1].toFixed(2)} L${points[1][0].toFixed(2)},${points[1][1].toFixed(2)}`;
+  }
+  const tension = 0.5; // mild smoothing
+  const parts = [`M${points[0][0].toFixed(2)},${points[0][1].toFixed(2)}`];
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    const c1x = p1[0] + (p2[0] - p0[0]) * tension / 3;
+    const c1y = p1[1] + (p2[1] - p0[1]) * tension / 3;
+    const c2x = p2[0] - (p3[0] - p1[0]) * tension / 3;
+    const c2y = p2[1] - (p3[1] - p1[1]) * tension / 3;
+    parts.push(`C${c1x.toFixed(2)},${c1y.toFixed(2)} ${c2x.toFixed(2)},${c2y.toFixed(2)} ${p2[0].toFixed(2)},${p2[1].toFixed(2)}`);
+  }
+  return parts.join(' ');
+}
+
 function renderChart(panel, history) {
   const chartEl = panel.querySelector('[data-slot="chart"]');
+  const tooltipEl = panel.querySelector('[data-slot="chart-tooltip"]');
   clear(chartEl);
-  const series = (history && Array.isArray(history.history)) ? history.history : [];
+  if (tooltipEl) {
+    tooltipEl.textContent = '';
+    tooltipEl.classList.remove('visible');
+  }
+  setChartNote(panel, '');
+
+  const raw = (history && Array.isArray(history.history)) ? history.history : [];
+  const series = normalizeHistory(raw);
   if (series.length === 0) {
     chartEl.appendChild(el('div', {
       className: 'lthcs-modal-chart-placeholder',
@@ -318,31 +438,280 @@ function renderChart(panel, history) {
     }));
     return;
   }
-  try {
-    const svg = renderSparkline(series, {
-      width: 600,
-      height: 220,
-      showBands: true,
-      showAxes: true,
-      showLastDot: true,
-      fillColor: 'currentColor',
-    });
-    // Strip width/height so it scales — the CSS sets width:100%.
-    svg.removeAttribute('width');
-    svg.removeAttribute('height');
-    chartEl.appendChild(svg);
-  } catch (err) {
-    console.warn('LTHCS detail: sparkline render failed', err);
-    chartEl.appendChild(el('div', {
-      className: 'lthcs-modal-chart-placeholder',
-      text: 'History not available.',
+
+  // ---- Geometry ----
+  // viewBox uses fixed units; CSS scales width to 100%. Height aspect ratio is
+  // preserved via preserveAspectRatio=none on the wrapper rules, but for the
+  // chart we keep aspect ratio so axes stay legible.
+  const W = 640;
+  const H = 240;
+  const M = { top: 14, right: 14, bottom: 28, left: 36 };
+  const plotW = W - M.left - M.right;
+  const plotH = H - M.top - M.bottom;
+
+  const xFor = (i) => {
+    if (series.length === 1) return M.left + plotW / 2;
+    return M.left + (i / (series.length - 1)) * plotW;
+  };
+  const yFor = (s) => {
+    const clamped = Math.max(0, Math.min(100, s));
+    return M.top + (1 - clamped / 100) * plotH;
+  };
+
+  // ---- SVG root ----
+  const svg = svgEl('svg', {
+    viewBox: `0 0 ${W} ${H}`,
+    role: 'img',
+    'aria-label': 'Composite score history chart',
+    class: 'lthcs-chart-svg',
+    preserveAspectRatio: 'xMidYMid meet',
+  });
+
+  // ---- Band-tinted backgrounds ----
+  const bandsGroup = svgEl('g', { class: 'lthcs-chart-bands' });
+  for (const b of BAND_BUCKETS) {
+    const yTop = yFor(Math.min(100, b.max));
+    const yBot = yFor(b.min);
+    const h = Math.max(0, yBot - yTop);
+    if (h <= 0) continue;
+    bandsGroup.appendChild(svgEl('rect', {
+      x: M.left,
+      y: yTop,
+      width: plotW,
+      height: h,
+      fill: b.color,
+      'fill-opacity': '0.06',
     }));
+  }
+  svg.appendChild(bandsGroup);
+
+  // ---- Gridlines at 50/60/70/80/90 ----
+  const gridGroup = svgEl('g', { class: 'lthcs-chart-grid' });
+  for (const yVal of [50, 60, 70, 80, 90]) {
+    const y = yFor(yVal);
+    gridGroup.appendChild(svgEl('line', {
+      x1: M.left, x2: M.left + plotW,
+      y1: y, y2: y,
+      stroke: 'currentColor',
+      'stroke-opacity': '0.10',
+      'stroke-dasharray': '2 4',
+    }));
+  }
+  svg.appendChild(gridGroup);
+
+  // ---- Y-axis ticks ----
+  const yAxisGroup = svgEl('g', { class: 'lthcs-chart-axis lthcs-chart-yaxis' });
+  for (const v of [0, 25, 50, 75, 100]) {
+    const y = yFor(v);
+    const t = svgEl('text', {
+      x: M.left - 6,
+      y: y + 3,
+      'text-anchor': 'end',
+      'font-size': '10',
+      fill: 'currentColor',
+      'fill-opacity': '0.55',
+    });
+    t.textContent = String(v);
+    yAxisGroup.appendChild(t);
+  }
+  svg.appendChild(yAxisGroup);
+
+  // ---- X-axis ticks ----
+  const xAxisGroup = svgEl('g', { class: 'lthcs-chart-axis lthcs-chart-xaxis' });
+  const tickIdx = pickTickIndices(series.length, 5);
+  for (const i of tickIdx) {
+    const x = xFor(i);
+    xAxisGroup.appendChild(svgEl('line', {
+      x1: x, x2: x,
+      y1: M.top + plotH, y2: M.top + plotH + 3,
+      stroke: 'currentColor', 'stroke-opacity': '0.35',
+    }));
+    const t = svgEl('text', {
+      x,
+      y: M.top + plotH + 16,
+      'text-anchor': 'middle',
+      'font-size': '10',
+      fill: 'currentColor',
+      'fill-opacity': '0.55',
+    });
+    t.textContent = formatTickDate(series[i].date);
+    xAxisGroup.appendChild(t);
+  }
+  svg.appendChild(xAxisGroup);
+
+  // ---- Line path (colored by latest band) ----
+  const points = series.map((row, i) => [xFor(i), yFor(row.score)]);
+  const latestScore = series[series.length - 1].score;
+  const lineColor = bandColorForScore(latestScore) || '#6EA8FE';
+  const d = smoothPath(points);
+  if (d) {
+    // Faint fill below the line for visual weight
+    const fillD = `${d} L${points[points.length-1][0].toFixed(2)},${(M.top+plotH).toFixed(2)} L${points[0][0].toFixed(2)},${(M.top+plotH).toFixed(2)} Z`;
+    svg.appendChild(svgEl('path', {
+      d: fillD,
+      fill: lineColor,
+      'fill-opacity': '0.08',
+      stroke: 'none',
+    }));
+    svg.appendChild(svgEl('path', {
+      d,
+      fill: 'none',
+      stroke: lineColor,
+      'stroke-width': '2',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+    }));
+  }
+
+  // ---- Dots ----
+  const dotsGroup = svgEl('g', { class: 'lthcs-chart-dots' });
+  for (let i = 0; i < series.length; i++) {
+    const [x, y] = points[i];
+    dotsGroup.appendChild(svgEl('circle', {
+      cx: x, cy: y, r: 2.5,
+      fill: bandColorForScore(series[i].score) || lineColor,
+      stroke: 'var(--bg-card, #171C22)',
+      'stroke-width': '1.5',
+    }));
+  }
+  svg.appendChild(dotsGroup);
+
+  // Last-point highlight
+  {
+    const [x, y] = points[points.length - 1];
+    const halo = svgEl('circle', {
+      cx: x, cy: y, r: 6,
+      fill: lineColor,
+      'fill-opacity': '0.20',
+    });
+    svg.appendChild(halo);
+    svg.appendChild(svgEl('circle', {
+      cx: x, cy: y, r: 3.5,
+      fill: lineColor,
+      stroke: 'var(--bg-card, #171C22)',
+      'stroke-width': '1.5',
+    }));
+  }
+
+  // ---- Hover interactivity ----
+  // Vertical guide + invisible overlay that snaps to nearest point.
+  const guide = svgEl('line', {
+    x1: 0, x2: 0,
+    y1: M.top, y2: M.top + plotH,
+    stroke: 'currentColor',
+    'stroke-opacity': '0.30',
+    'stroke-dasharray': '2 3',
+    visibility: 'hidden',
+    class: 'lthcs-chart-guide',
+  });
+  svg.appendChild(guide);
+
+  const hoverDot = svgEl('circle', {
+    cx: 0, cy: 0, r: 4.5,
+    fill: lineColor,
+    stroke: 'var(--bg-card, #171C22)',
+    'stroke-width': '2',
+    visibility: 'hidden',
+    class: 'lthcs-chart-hover-dot',
+  });
+  svg.appendChild(hoverDot);
+
+  // Transparent overlay catches all pointer events across the whole plot.
+  const overlay = svgEl('rect', {
+    x: M.left, y: M.top,
+    width: plotW, height: plotH,
+    fill: 'transparent',
+    class: 'lthcs-chart-overlay',
+  });
+  svg.appendChild(overlay);
+
+  const hideHover = () => {
+    guide.setAttribute('visibility', 'hidden');
+    hoverDot.setAttribute('visibility', 'hidden');
+    if (tooltipEl) {
+      tooltipEl.classList.remove('visible');
+      tooltipEl.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  const showHoverAt = (clientX, clientY) => {
+    if (!tooltipEl) return;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const localX = (clientX - rect.left) * (W / rect.width);
+    // Find nearest series index by x
+    let bestI = 0;
+    let bestDx = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const dx = Math.abs(points[i][0] - localX);
+      if (dx < bestDx) { bestDx = dx; bestI = i; }
+    }
+    const [px, py] = points[bestI];
+    guide.setAttribute('x1', px);
+    guide.setAttribute('x2', px);
+    guide.setAttribute('visibility', 'visible');
+    hoverDot.setAttribute('cx', px);
+    hoverDot.setAttribute('cy', py);
+    hoverDot.setAttribute('visibility', 'visible');
+
+    const row = series[bestI];
+    const bandLabel = row.band ? humanCase(row.band) : (function () {
+      // Derive from score if band is missing
+      for (const b of BAND_BUCKETS) if (row.score >= b.min && row.score < b.max) return humanCase(b.key);
+      return '';
+    })();
+    tooltipEl.textContent = '';
+    const dateEl = el('span', { className: 'lthcs-chart-tip-date', text: formatTickDate(row.date) });
+    const scoreEl = el('strong', { className: 'lthcs-chart-tip-score', text: row.score.toFixed(1) });
+    const bandEl = el('span', { className: 'lthcs-chart-tip-band', text: bandLabel });
+    if (bandLabel) bandEl.setAttribute('data-band', row.band || '');
+    tooltipEl.appendChild(dateEl);
+    tooltipEl.appendChild(scoreEl);
+    if (bandLabel) tooltipEl.appendChild(bandEl);
+
+    // Position tooltip — clamped to chart wrap
+    const wrap = chartEl.parentElement;
+    const wrapRect = wrap ? wrap.getBoundingClientRect() : rect;
+    // svg-local px → wrap-local px
+    const pxScale = rect.width / W;
+    let left = (px * pxScale) + (rect.left - wrapRect.left) + 8;
+    const tipW = tooltipEl.offsetWidth || 140;
+    if (left + tipW > wrapRect.width - 4) left = (px * pxScale) + (rect.left - wrapRect.left) - tipW - 8;
+    if (left < 4) left = 4;
+    let top = (py * (rect.height / H)) + (rect.top - wrapRect.top) - 12;
+    if (top < 4) top = 4;
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+    tooltipEl.classList.add('visible');
+    tooltipEl.setAttribute('aria-hidden', 'false');
+  };
+
+  overlay.addEventListener('mousemove', (e) => showHoverAt(e.clientX, e.clientY));
+  overlay.addEventListener('mouseleave', hideHover);
+  overlay.addEventListener('touchstart', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) showHoverAt(t.clientX, t.clientY);
+  }, { passive: true });
+  overlay.addEventListener('touchmove', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) showHoverAt(t.clientX, t.clientY);
+  }, { passive: true });
+  overlay.addEventListener('touchend', hideHover);
+
+  chartEl.appendChild(svg);
+
+  // Sparse-history note
+  if (series.length > 0 && series.length < 30) {
+    setChartNote(panel,
+      `Only ${series.length} day${series.length === 1 ? '' : 's'} of history; full chart available after 30+ days.`,
+    );
   }
 }
 
 function renderChartError(panel) {
   const chartEl = panel.querySelector('[data-slot="chart"]');
   clear(chartEl);
+  setChartNote(panel, '');
   chartEl.appendChild(el('div', {
     className: 'lthcs-modal-chart-placeholder',
     text: 'History not available.',
@@ -629,6 +998,289 @@ function renderInsider(panel, { insider }) {
   wrap.appendChild(section);
 }
 
+// ---------------------------------------------------------------------------
+// 13F institutional holdings (Week 11+) — universe-wide JSON, lazy-loaded
+// ---------------------------------------------------------------------------
+
+const HOLDINGS_SIGNAL_LABEL = {
+  accumulating: 'Accumulating',
+  steady: 'Steady',
+  distributing: 'Distributing',
+  mixed: 'Mixed',
+};
+
+function fmtSignedPct(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  const sign = v > 0 ? '+' : v < 0 ? '−' : '';
+  return `${sign}${Math.abs(v).toFixed(2)}%`;
+}
+
+function fmtSignedInt(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '0';
+  const sign = v > 0 ? '+' : v < 0 ? '−' : '';
+  return `${sign}${Math.abs(Math.trunc(v))}`;
+}
+
+function fmtSignalText(score) {
+  const v = Number(score);
+  if (!Number.isFinite(v)) return '—';
+  const sign = v > 0 ? '+' : v < 0 ? '−' : '';
+  return `${sign}${Math.abs(v).toFixed(2)}`;
+}
+
+function fmtSharesMm(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toFixed(2)}B`;
+  return `${v.toFixed(1)}M`;
+}
+
+function fmtValueBn(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1000) return `$${(v / 1000).toFixed(2)}T`;
+  if (Math.abs(v) >= 1) return `$${v.toFixed(2)}B`;
+  return `$${(v * 1000).toFixed(0)}M`;
+}
+
+async function loadHoldings(calcDate) {
+  if (!calcDate) throw new Error('no calc_date');
+  if (moduleState.holdingsCache.has(calcDate)) {
+    return moduleState.holdingsCache.get(calcDate);
+  }
+  const res = await fetch(`${HOLDINGS_BASE}/${calcDate}.json`, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`holdings fetch failed: ${res.status}`);
+  const data = await res.json();
+  moduleState.holdingsCache.set(calcDate, data);
+  return data;
+}
+
+function renderHoldingsSkeleton(panel) {
+  const wrap = panel.querySelector('[data-slot="holdings-wrap"]');
+  if (!wrap) return;
+  clear(wrap);
+  const section = el('div', { className: 'lthcs-modal-holdings' });
+  section.appendChild(el('h3', {
+    className: 'lthcs-modal-section-heading',
+    text: 'Institutional holdings',
+  }));
+  section.appendChild(el('div', {
+    className: 'lthcs-holdings-loading',
+    text: 'Loading institutional holdings…',
+  }));
+  wrap.appendChild(section);
+}
+
+function renderHoldingsEmpty(panel, message) {
+  const wrap = panel.querySelector('[data-slot="holdings-wrap"]');
+  if (!wrap) return;
+  clear(wrap);
+  const section = el('div', { className: 'lthcs-modal-holdings' });
+  section.appendChild(el('h3', {
+    className: 'lthcs-modal-section-heading',
+    text: 'Institutional holdings',
+  }));
+  section.appendChild(el('div', {
+    className: 'lthcs-holdings-empty',
+    text: message,
+  }));
+  wrap.appendChild(section);
+}
+
+function renderHoldings(panel, { holdings }) {
+  const wrap = panel.querySelector('[data-slot="holdings-wrap"]');
+  if (!wrap) return;
+  clear(wrap);
+
+  if (!holdings || typeof holdings !== 'object') {
+    renderHoldingsEmpty(panel,
+      "No tracked-manager 13F coverage for this ticker (small/mid-cap; the 21 tracked institutions don't hold it).",
+    );
+    return;
+  }
+
+  const signal = String(holdings.conviction_signal || 'steady');
+  const signalLabel = HOLDINGS_SIGNAL_LABEL[signal] || humanCase(signal);
+  const signalScore = Number(holdings.signal_score);
+  const managerCount = Number(holdings.manager_count) || 0;
+  const quarter = String(holdings.latest_quarter || '');
+  const dataQuality = String(holdings.data_quality || '');
+  const totalShares = Number(holdings.total_shares_held_mm);
+  const totalValue = Number(holdings.total_value_held_bn);
+  const qoq = (holdings.quarter_over_quarter && typeof holdings.quarter_over_quarter === 'object')
+    ? holdings.quarter_over_quarter : {};
+  const holders = Array.isArray(holdings.top_holders) ? holdings.top_holders : [];
+
+  if (managerCount === 0 && holders.length === 0) {
+    renderHoldingsEmpty(panel,
+      "No tracked-manager 13F coverage for this ticker (small/mid-cap; the 21 tracked institutions don't hold it).",
+    );
+    return;
+  }
+
+  const section = el('div', { className: 'lthcs-modal-holdings' });
+  const heading = el('h3', { className: 'lthcs-modal-section-heading' });
+  heading.textContent = quarter
+    ? `Institutional holdings (${quarter})`
+    : 'Institutional holdings';
+  section.appendChild(heading);
+
+  // Header row: signal badge + manager count + data quality
+  const headerRow = el('div', { className: 'lthcs-holdings-header' });
+  headerRow.appendChild(el('span', {
+    className: 'lthcs-holdings-signal',
+    text: signalLabel,
+    attrs: { 'data-signal': signal },
+  }));
+
+  if (Number.isFinite(signalScore)) {
+    headerRow.appendChild(el('span', {
+      className: 'lthcs-holdings-signal-score',
+      text: `${fmtSignalText(signalScore)} conviction`,
+    }));
+  }
+
+  headerRow.appendChild(el('span', {
+    className: 'lthcs-holdings-managers',
+    text: `${managerCount} tracked manager${managerCount === 1 ? '' : 's'}`,
+  }));
+
+  if (dataQuality) {
+    headerRow.appendChild(el('span', {
+      className: 'lthcs-holdings-quality',
+      text: dataQuality,
+      attrs: { 'data-quality': dataQuality },
+    }));
+  }
+  section.appendChild(headerRow);
+
+  // Conviction bipolar bar (mirrors insider style)
+  const convWrap = el('div', { className: 'lthcs-holdings-conviction' });
+  const convLabel = el('div', { className: 'lthcs-holdings-conviction-label' });
+  convLabel.appendChild(el('span', { text: 'Signal' }));
+  convLabel.appendChild(el('strong', { text: fmtSignalText(signalScore) }));
+  convWrap.appendChild(convLabel);
+  const track = el('div', { className: 'lthcs-holdings-conviction-track' });
+  track.appendChild(el('div', { className: 'lthcs-holdings-conviction-mid', attrs: { 'aria-hidden': 'true' } }));
+  const fill = el('div', { className: 'lthcs-holdings-conviction-fill' });
+  if (Number.isFinite(signalScore)) {
+    // signal_score in [-1, 1]; map to bar width centered at 50%
+    const pct = Math.max(0, Math.min(100, ((signalScore + 1) / 2) * 100));
+    fill.style.left = signalScore >= 0 ? '50%' : `${pct}%`;
+    fill.style.width = `${Math.abs(pct - 50)}%`;
+    fill.setAttribute('data-direction',
+      signalScore > 0 ? 'accumulating'
+      : signalScore < 0 ? 'distributing'
+      : 'neutral');
+  }
+  track.appendChild(fill);
+  convWrap.appendChild(track);
+  section.appendChild(convWrap);
+
+  // Net flow line
+  const netBuyers = Number(qoq.net_buyers) || 0;
+  const netSellers = Number(qoq.net_sellers) || 0;
+  const unchanged = Number(qoq.unchanged) || 0;
+  const shareChange = Number(qoq.share_change_pct);
+  const mgrChange = Number(qoq.manager_count_change);
+  const priorQ = String(qoq.prior_quarter || '');
+
+  const flowRow = el('div', { className: 'lthcs-holdings-flow' });
+  const flowLabel = el('span', {
+    className: 'lthcs-holdings-flow-label',
+    text: priorQ ? `Net flow vs ${priorQ}:` : 'Net flow:',
+  });
+  flowRow.appendChild(flowLabel);
+  flowRow.appendChild(el('span', {
+    className: 'lthcs-holdings-flow-stat',
+    text: `${netBuyers} buyer${netBuyers === 1 ? '' : 's'}`,
+    attrs: { 'data-kind': 'buy' },
+  }));
+  flowRow.appendChild(el('span', { className: 'lthcs-holdings-flow-sep', text: '/' }));
+  flowRow.appendChild(el('span', {
+    className: 'lthcs-holdings-flow-stat',
+    text: `${netSellers} seller${netSellers === 1 ? '' : 's'}`,
+    attrs: { 'data-kind': 'sell' },
+  }));
+  flowRow.appendChild(el('span', { className: 'lthcs-holdings-flow-sep', text: '/' }));
+  flowRow.appendChild(el('span', {
+    className: 'lthcs-holdings-flow-stat',
+    text: `${unchanged} unchanged`,
+    attrs: { 'data-kind': 'flat' },
+  }));
+  section.appendChild(flowRow);
+
+  // Totals + QoQ deltas
+  const totalsRow = el('div', { className: 'lthcs-holdings-totals' });
+  if (Number.isFinite(totalShares)) {
+    const stat = el('div', { className: 'lthcs-holdings-total' });
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-num', text: fmtSharesMm(totalShares) }));
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-label', text: 'tracked shares' }));
+    totalsRow.appendChild(stat);
+  }
+  if (Number.isFinite(totalValue)) {
+    const stat = el('div', { className: 'lthcs-holdings-total' });
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-num', text: fmtValueBn(totalValue) }));
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-label', text: 'tracked value' }));
+    totalsRow.appendChild(stat);
+  }
+  if (Number.isFinite(shareChange) && shareChange !== 0) {
+    const stat = el('div', { className: 'lthcs-holdings-total', attrs: { 'data-dir': shareChange >= 0 ? 'up' : 'down' } });
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-num', text: fmtSignedPct(shareChange) }));
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-label', text: 'QoQ shares' }));
+    totalsRow.appendChild(stat);
+  }
+  if (Number.isFinite(mgrChange) && mgrChange !== 0) {
+    const stat = el('div', { className: 'lthcs-holdings-total', attrs: { 'data-dir': mgrChange >= 0 ? 'up' : 'down' } });
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-num', text: fmtSignedInt(mgrChange) }));
+    stat.appendChild(el('span', { className: 'lthcs-holdings-total-label', text: 'manager Δ' }));
+    totalsRow.appendChild(stat);
+  }
+  if (totalsRow.childElementCount > 0) section.appendChild(totalsRow);
+
+  // Top holders (collapsible details, default open)
+  if (holders.length > 0) {
+    const details = el('details', { className: 'lthcs-holdings-holders', attrs: { open: 'open' } });
+    const summary = el('summary', { className: 'lthcs-holdings-holders-summary' });
+    const topN = Math.min(3, holders.length);
+    summary.textContent = `Top ${topN} holder${topN === 1 ? '' : 's'} (of ${holders.length})`;
+    details.appendChild(summary);
+
+    const tableWrap = el('div', { className: 'lthcs-holdings-holders-wrap' });
+    const table = el('table', { className: 'lthcs-holdings-holders-table' });
+    const thead = el('thead');
+    const headRow = el('tr');
+    for (const h of ['Manager', 'Shares', 'Value', 'Rank']) {
+      headRow.appendChild(el('th', { text: h }));
+    }
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = el('tbody');
+    for (const h of holders.slice(0, 3)) {
+      const tr = el('tr');
+      tr.appendChild(el('td', { text: String(h.manager || '—') }));
+      tr.appendChild(el('td', { text: fmtSharesMm(h.shares_mm) }));
+      tr.appendChild(el('td', { text: fmtValueBn(h.value_bn) }));
+      const rankTd = el('td');
+      rankTd.appendChild(el('span', {
+        className: 'lthcs-holdings-rank',
+        text: `#${h.rank || '—'}`,
+      }));
+      tr.appendChild(rankTd);
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    details.appendChild(tableWrap);
+    section.appendChild(details);
+  }
+
+  wrap.appendChild(section);
+}
+
 function renderFlags(panel, { snapshotRow }) {
   const wrap = panel.querySelector('[data-slot="flags-wrap"]');
   clear(wrap);
@@ -835,6 +1487,7 @@ export function openDetail(args) {
   renderPillars(panel, { snapshotRow });
   renderNarrative(panel, { snapshotRow, narrative });
   renderInsider(panel, { insider });
+  renderHoldingsSkeleton(panel);
   renderFlags(panel, { snapshotRow });
   wireVardetailToggle(panel, { ticker, calcDate });
 
@@ -857,22 +1510,45 @@ export function openDetail(args) {
     try { panel.focus(); } catch { /* ignore */ }
   }
 
-  // Async: fetch history
+  // Async: fetch history (cached per ticker)
   const requestedTicker = ticker;
-  fetch(`${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`, { cache: 'no-store' })
-    .then((res) => {
-      if (!res.ok) throw new Error(`history ${res.status}`);
-      return res.json();
-    })
-    .then((history) => {
-      if (moduleState.activeTicker !== requestedTicker) return;
-      renderChart(panel, history);
-    })
-    .catch((err) => {
-      console.warn('LTHCS detail: history fetch failed for', requestedTicker, err);
-      if (moduleState.activeTicker !== requestedTicker) return;
-      renderChartError(panel);
-    });
+  const cachedHistory = moduleState.historyCache.get(requestedTicker);
+  if (cachedHistory) {
+    renderChart(panel, cachedHistory);
+  } else {
+    fetch(`${HISTORY_BASE}/${encodeURIComponent(ticker)}.json`, { cache: 'no-store' })
+      .then((res) => {
+        if (!res.ok) throw new Error(`history ${res.status}`);
+        return res.json();
+      })
+      .then((history) => {
+        moduleState.historyCache.set(requestedTicker, history);
+        if (moduleState.activeTicker !== requestedTicker) return;
+        renderChart(panel, history);
+      })
+      .catch((err) => {
+        console.warn('LTHCS detail: history fetch failed for', requestedTicker, err);
+        if (moduleState.activeTicker !== requestedTicker) return;
+        renderChartError(panel);
+      });
+  }
+
+  // Async: fetch holdings (cached per calc_date)
+  if (calcDate) {
+    loadHoldings(calcDate)
+      .then((map) => {
+        if (moduleState.activeTicker !== requestedTicker) return;
+        const entry = (map && typeof map === 'object') ? map[requestedTicker] : null;
+        renderHoldings(panel, { holdings: entry || null });
+      })
+      .catch((err) => {
+        console.warn('LTHCS detail: holdings fetch failed for', requestedTicker, err);
+        if (moduleState.activeTicker !== requestedTicker) return;
+        renderHoldings(panel, { holdings: null });
+      });
+  } else {
+    renderHoldings(panel, { holdings: null });
+  }
 }
 
 export function closeDetail() {
