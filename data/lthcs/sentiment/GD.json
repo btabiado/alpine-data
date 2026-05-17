@@ -2,14 +2,14 @@
   "ticker": "GD",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 1,
-  "mean_sentiment_score": 0.7,
+  "article_count": 33,
+  "mean_sentiment_score": 0.3939393939393939,
   "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 0,
+    "Bearish": 1,
     "Somewhat-Bearish": 0,
-    "Neutral": 0,
+    "Neutral": 11,
     "Somewhat-Bullish": 0,
-    "Bullish": 1
+    "Bullish": 21
   }
 }

@@ -58,6 +58,7 @@ from lthcs.sources import (
     ai_news,
     alpha_vantage,
     eia,
+    finnhub,
     fred,
     sec_8k,
     sec_edgar,
@@ -551,17 +552,18 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             av_status = "no picks"
 
     # Supplement priority for tickers without fresh AV sentiment:
-    #   1. SEC 8-K material events     (highest information — discrete,
-    #                                    structured corporate events)
-    #   2. Yahoo earnings surprise      (recent quarter beat/miss; concrete
-    #                                    direction)
-    #   3. Yahoo analyst actions        (recent broker upgrades/downgrades;
-    #                                    weighted by recency)
-    #   4. AI news engagement           (HN/TC/VB; fallback for AI cohort)
+    #   1. Finnhub news_sentiment      (REAL sentiment direction; primary)
+    #   2. SEC 8-K material events     (structured corporate events)
+    #   3. Yahoo earnings surprise      (recent quarter beat/miss)
+    #   4. Yahoo analyst actions        (recent broker upgrades/downgrades)
+    #   5. AI news engagement           (HN/TC/VB; fallback for AI cohort)
     #
     # Each step writes to the per-ticker sentiment file ONLY if no fresher
-    # signal is already there. This keeps the cascade respectful: real AV
-    # sentiment > 8-K events > earnings/analyst > engagement heuristic.
+    # signal is already there. Steps 2-5 require |sentiment| >= 0.15 to
+    # avoid neutral signals replacing the composite-renorm path. Finnhub
+    # (step 1) writes unconditionally — its score is real news data even
+    # when split bullish/bearish, which is meaningful itself.
+    finnhub_supplement_count = 0
     ai_news_supplement_count = 0
     sec_8k_supplement_count = 0
     yahoo_event_supplement_count = 0
@@ -603,8 +605,89 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         except Exception:
             return False
 
+    def _write_supplement_unconditional(sym: str, sig: Dict[str, Any]) -> bool:
+        """Same as _write_supplement but skips the meaningfulness threshold.
+        Used for Finnhub where the score is real sentiment (not engagement
+        or routine-event noise) so even a split bullish/bearish reading
+        carries information."""
+        if state.rotation is None:
+            return False
+        score_val = sig.get("mean_sentiment_score")
+        if score_val is None:
+            return False
+        try:
+            state.rotation.write_sentiment(
+                ticker=sym,
+                article_count=sig.get("article_count", 0),
+                mean_sentiment_score=score_val,
+                mean_relevance_score=sig.get("mean_relevance_score"),
+                label_counts=sig.get("label_counts", {}),
+                today=state.calc_date,
+            )
+            state.rotation.record_scored(sym, today=state.calc_date)
+            return True
+        except Exception:
+            return False
+
     if not state.args.skip_thesis and state.active_tickers:
-        # --- Step 1: SEC 8-K material events ---
+        # --- Step 1: Finnhub analyst-recommendation consensus ---
+        # Finnhub's news_sentiment endpoint is PAID-tier-only (HTTP 403 on
+        # free), so we use recommendation_trends instead: aggregated
+        # analyst buy/hold/sell counts that yield a real directional
+        # consensus_score in [-1, +1]. This is genuine sentiment with
+        # direction — not engagement-derived — so it slots at the top of
+        # the cascade. Available free for any US-listed name covered by
+        # at least one analyst.
+        finnhub_keyless = False
+        for sym in state.active_tickers:
+            if finnhub_keyless:
+                break
+            if _has_fresh_sentiment(sym):
+                continue
+            try:
+                reco_history = finnhub.get_recommendation_trends(sym)
+            except finnhub.FinnhubAPIKeyMissing:
+                finnhub_keyless = True
+                break
+            except finnhub.FinnhubRateLimit:
+                break
+            except Exception:
+                continue
+            if not reco_history:
+                continue
+            reco_signal = finnhub.parse_recommendation_signal(reco_history)
+            consensus = reco_signal.get("consensus_score")
+            total = reco_signal.get("total_analysts", 0)
+            if consensus is None or total < 3:
+                continue
+            # Convert consensus_score in [-1, +1] to a Thesis-pillar payload.
+            # Label counts split: total_analysts spread across the 3 buckets
+            # we map (Bullish from buy_count, Neutral from hold_count,
+            # Bearish from sell_count). The intermediate "Somewhat-*"
+            # buckets stay at zero — analyst trends don't give that
+            # granularity.
+            buy_n = reco_signal.get("buy_count", 0)
+            hold_n = reco_signal.get("hold_count", 0)
+            sell_n = reco_signal.get("sell_count", 0)
+            sig = {
+                "ticker": sym,
+                "article_count": int(total),
+                "mean_sentiment_score": float(consensus),
+                "mean_relevance_score": 1.0,
+                "label_counts": {
+                    "Bearish": int(sell_n),
+                    "Somewhat-Bearish": 0,
+                    "Neutral": int(hold_n),
+                    "Somewhat-Bullish": 0,
+                    "Bullish": int(buy_n),
+                },
+                "source": "finnhub_recommendation",
+                "last_scored": state.calc_date,
+            }
+            if _write_supplement_unconditional(sym, sig):
+                finnhub_supplement_count += 1
+
+        # --- Step 2: SEC 8-K material events ---
         # Real-time structured events (CEO changes, restatements, material
         # agreements). Highest signal-to-noise; runs across the entire
         # active universe.
@@ -666,6 +749,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 ai_news_supplement_count += 1
 
     state.fetch_counts = counts
+    counts["finnhub_supplement"] = finnhub_supplement_count
     counts["sec_8k_supplement"] = sec_8k_supplement_count
     counts["yahoo_event_supplement"] = yahoo_event_supplement_count
     counts["ai_news_supplement"] = ai_news_supplement_count

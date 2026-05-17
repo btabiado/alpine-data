@@ -1,15 +1,15 @@
 {
-  "ticker": "CL",
+  "ticker": "COST",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 30,
-  "mean_sentiment_score": 0.38333333333333336,
+  "article_count": 44,
+  "mean_sentiment_score": 0.4772727272727273,
   "mean_relevance_score": 1.0,
   "label_counts": {
     "Bearish": 1,
     "Somewhat-Bearish": 0,
-    "Neutral": 9,
+    "Neutral": 13,
     "Somewhat-Bullish": 0,
-    "Bullish": 20
+    "Bullish": 30
   }
 }

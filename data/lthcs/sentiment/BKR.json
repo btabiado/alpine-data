@@ -2,14 +2,14 @@
   "ticker": "BKR",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 1,
-  "mean_sentiment_score": 0.7,
+  "article_count": 26,
+  "mean_sentiment_score": 0.5384615384615384,
   "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 0,
+    "Bearish": 1,
     "Somewhat-Bearish": 0,
-    "Neutral": 0,
+    "Neutral": 3,
     "Somewhat-Bullish": 0,
-    "Bullish": 1
+    "Bullish": 22
   }
 }

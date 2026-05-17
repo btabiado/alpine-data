@@ -2,14 +2,14 @@
   "ticker": "DDOG",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 1,
-  "mean_sentiment_score": 0.7,
+  "article_count": 56,
+  "mean_sentiment_score": 0.6071428571428571,
   "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 0,
+    "Bearish": 1,
     "Somewhat-Bearish": 0,
-    "Neutral": 0,
+    "Neutral": 4,
     "Somewhat-Bullish": 0,
-    "Bullish": 1
+    "Bullish": 51
   }
 }

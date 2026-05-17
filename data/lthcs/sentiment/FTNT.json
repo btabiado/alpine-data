@@ -2,14 +2,14 @@
   "ticker": "FTNT",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 1,
-  "mean_sentiment_score": 0.7,
+  "article_count": 52,
+  "mean_sentiment_score": 0.18269230769230768,
   "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 0,
+    "Bearish": 4,
     "Somewhat-Bearish": 0,
-    "Neutral": 0,
+    "Neutral": 31,
     "Somewhat-Bullish": 0,
-    "Bullish": 1
+    "Bullish": 17
   }
 }

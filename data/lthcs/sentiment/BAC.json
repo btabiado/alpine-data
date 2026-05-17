@@ -2,14 +2,14 @@
   "ticker": "BAC",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 1,
-  "mean_sentiment_score": 0.4,
+  "article_count": 30,
+  "mean_sentiment_score": 0.5333333333333333,
   "mean_relevance_score": 1.0,
   "label_counts": {
     "Bearish": 0,
     "Somewhat-Bearish": 0,
-    "Neutral": 0,
-    "Somewhat-Bullish": 1,
-    "Bullish": 0
+    "Neutral": 5,
+    "Somewhat-Bullish": 0,
+    "Bullish": 25
   }
 }

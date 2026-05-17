@@ -2,14 +2,14 @@
   "ticker": "EA",
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
-  "article_count": 1,
-  "mean_sentiment_score": -0.7,
+  "article_count": 32,
+  "mean_sentiment_score": 0.25,
   "mean_relevance_score": 1.0,
   "label_counts": {
-    "Bearish": 1,
+    "Bearish": 0,
     "Somewhat-Bearish": 0,
-    "Neutral": 0,
+    "Neutral": 21,
     "Somewhat-Bullish": 0,
-    "Bullish": 0
+    "Bullish": 11
   }
 }
