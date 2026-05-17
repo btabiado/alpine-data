@@ -220,15 +220,18 @@ class TestComputeDes:
         # metadata and must NOT appear.
         assert result["components"]["applied_overrides"] == ["wti_oil_usd"]
 
-    def test_alias_of_and_metadata_keys_skipped(self):
+    def test_metadata_keys_skipped(self):
+        # Underscore-prefixed keys (_comment, _note, ...) inside a
+        # canonical sector block are metadata and must not influence
+        # the score; only numeric per-signal keys count.
         weights = {
             "signal_normalization": {
                 "wti_oil_usd": {"low": 40, "high": 130, "neutral": 75},
             },
             "sectors": {
                 "Technology": {
-                    "_alias_of": "Information Technology",
                     "_comment": "some note",
+                    "_note": "another",
                     "wti_oil_usd": 0.1,
                 },
             },
@@ -236,8 +239,6 @@ class TestComputeDes:
         }
         macro = {"wti_oil_usd": 130.0}
         result = compute_des("MSFT", "Technology", macro, weights)
-        # Only wti_oil_usd should appear in contributions; _alias_of /
-        # _comment are silently skipped.
         contribs = result["components"]["signal_contributions"]
         assert set(contribs.keys()) == {"wti_oil_usd"}
         # 0.1 sensitivity * +1.0 tilt * 30 magnitude = +3 from 50 -> 53.0
@@ -549,3 +550,211 @@ class TestExpandedMacroSignals:
         # Both benefit from M2 expansion.
         assert tech["m2_yoy_pct"] > 0
         assert re_["m2_yoy_pct"] > 0
+
+
+# --- Sector alias resolution (_alias_of) ------------------------------------
+
+
+# Synthetic fixture mirroring the prod JSON shape: a canonical
+# "Information Technology" block with full numeric weights, and a
+# "Technology" block that is purely an alias pointer. Both keys must
+# resolve to the same compute_des output.
+ALIAS_WEIGHTS: Dict[str, Any] = {
+    "signal_normalization": {
+        "wti_oil_usd":     {"low": 40, "high": 130, "neutral": 75},
+        "ten_y_yield_pct": {"low": 1,  "high": 6,   "neutral": 3.5},
+    },
+    "sectors": {
+        "Information Technology": {
+            "wti_oil_usd":     0.05,
+            "ten_y_yield_pct": -0.22,
+        },
+        "Technology": {
+            "_alias_of": "Information Technology",
+            "_note":     "yfinance returns 'Technology' for some tickers",
+        },
+    },
+    "ticker_overrides": {},
+}
+
+
+class TestSectorAliasResolution:
+    """Coverage for the ``_alias_of`` indirection in sector blocks.
+
+    yfinance returns both "Technology" and "Information Technology"
+    depending on the ticker / vintage. Rather than duplicate the
+    canonical block (drift-prone), the JSON declares ``Technology``
+    as an alias of ``Information Technology`` and des.py follows it.
+    """
+
+    def test_canonical_key_returns_full_block(self):
+        macro = {"wti_oil_usd": 130.0, "ten_y_yield_pct": 5.5}
+        result = compute_des(
+            "MSFT", "Information Technology", macro, ALIAS_WEIGHTS
+        )
+        contribs = result["components"]["signal_contributions"]
+        assert set(contribs.keys()) == {"wti_oil_usd", "ten_y_yield_pct"}
+        assert result["data_quality"]["sector_known"] is True
+
+    def test_alias_key_returns_same_values_as_canonical(self):
+        # The whole point of aliasing: identical input -> identical output,
+        # regardless of which spelling yfinance hands us.
+        macro = {"wti_oil_usd": 130.0, "ten_y_yield_pct": 5.5}
+        canonical = compute_des(
+            "MSFT", "Information Technology", macro, ALIAS_WEIGHTS
+        )
+        aliased = compute_des(
+            "MSFT", "Technology", macro, ALIAS_WEIGHTS
+        )
+        # sub_score must be byte-equal.
+        assert aliased["sub_score"] == canonical["sub_score"]
+        # And every component (tilts, contributions, total) must match.
+        assert (
+            aliased["components"]["signal_tilts"]
+            == canonical["components"]["signal_tilts"]
+        )
+        assert (
+            aliased["components"]["signal_contributions"]
+            == canonical["components"]["signal_contributions"]
+        )
+        assert (
+            aliased["components"]["total_contribution"]
+            == canonical["components"]["total_contribution"]
+        )
+        # Both should report the sector as known (alias resolved).
+        assert aliased["data_quality"]["sector_known"] is True
+        assert canonical["data_quality"]["sector_known"] is True
+
+    def test_broken_alias_falls_back_to_neutral(self):
+        # Alias points at a key that does not exist in the sectors dict.
+        # We should NOT crash; we should fall back to the unknown-sector
+        # neutral 50.0 with sector_known=False.
+        broken = {
+            "signal_normalization": ALIAS_WEIGHTS["signal_normalization"],
+            "sectors": {
+                "Technology": {"_alias_of": "DoesNotExist"},
+            },
+            "ticker_overrides": {},
+        }
+        macro = {"wti_oil_usd": 130.0}
+        result = compute_des("MSFT", "Technology", macro, broken)
+        assert result["sub_score"] == 50.0
+        assert result["data_quality"]["sector_known"] is False
+        assert result["weights_source"] == "sector_missing"
+
+    def test_alias_target_is_non_string_falls_back(self):
+        # Defensive: if _alias_of is something other than a string
+        # (typo, list, dict, None), treat as broken alias.
+        broken = {
+            "signal_normalization": ALIAS_WEIGHTS["signal_normalization"],
+            "sectors": {
+                "Technology": {"_alias_of": ["Information Technology"]},
+            },
+            "ticker_overrides": {},
+        }
+        result = compute_des(
+            "MSFT", "Technology", {"wti_oil_usd": 130.0}, broken
+        )
+        assert result["sub_score"] == 50.0
+        assert result["data_quality"]["sector_known"] is False
+
+    def test_alias_chain_refused(self):
+        # Aliases are meant for single-hop renames, not chains. If the
+        # alias target is itself an alias, we treat it as broken and
+        # fall back to neutral rather than risk a cycle or surprising
+        # transitive resolution.
+        chained = {
+            "signal_normalization": ALIAS_WEIGHTS["signal_normalization"],
+            "sectors": {
+                "Information Technology": {
+                    "_alias_of": "Tech Mega Cap",
+                },
+                "Technology": {"_alias_of": "Information Technology"},
+                "Tech Mega Cap": {"wti_oil_usd": 0.1},
+            },
+            "ticker_overrides": {},
+        }
+        result = compute_des(
+            "MSFT", "Technology", {"wti_oil_usd": 130.0}, chained
+        )
+        # Refused -> neutral fallback.
+        assert result["sub_score"] == 50.0
+        assert result["data_quality"]["sector_known"] is False
+
+    def test_unknown_sector_still_neutral(self):
+        # Pre-existing behavior unchanged: a sector name not in the
+        # dict at all still resolves to neutral 50.0 with the flag.
+        result = compute_des(
+            "ZZZZ", "TotallyMadeUpSector",
+            {"wti_oil_usd": 130.0}, ALIAS_WEIGHTS,
+        )
+        assert result["sub_score"] == 50.0
+        assert result["data_quality"]["sector_known"] is False
+        assert result["weights_source"] == "sector_missing"
+
+    def test_ticker_override_works_on_alias_key(self):
+        # If the caller passes the alias spelling, ticker_overrides
+        # (which key off the ticker symbol, not the sector) must still
+        # apply on top of the resolved canonical sensitivities.
+        weights = {
+            "signal_normalization": ALIAS_WEIGHTS["signal_normalization"],
+            "sectors": ALIAS_WEIGHTS["sectors"],
+            "ticker_overrides": {
+                "MSFT": {"wti_oil_usd": 0.5, "_note": "test override"},
+            },
+        }
+        macro = {"wti_oil_usd": 130.0}
+        result = compute_des("MSFT", "Technology", macro, weights)
+        assert "wti_oil_usd" in result["components"]["applied_overrides"]
+        # Sensitivity 0.5 * tilt +1.0 = +0.5 contribution.
+        assert (
+            result["components"]["signal_contributions"]["wti_oil_usd"]
+            == pytest.approx(0.5, abs=1e-6)
+        )
+
+    # --- Live prod JSON: Technology must resolve to Information Technology ---
+
+    def test_real_config_technology_resolves_to_information_technology(self):
+        real = load_sector_weights()
+        # Both keys must be present in the file (one is an alias).
+        assert "Information Technology" in real["sectors"]
+        assert "Technology" in real["sectors"]
+        # The "Technology" block must be an alias pointer, NOT a
+        # duplicated weight block. (Drift prevention.)
+        tech_block = real["sectors"]["Technology"]
+        assert tech_block.get("_alias_of") == "Information Technology", (
+            "Technology must point at Information Technology via _alias_of; "
+            "do not duplicate weights."
+        )
+        # No numeric signals on the alias block — keep it pure-pointer
+        # so retunes can't diverge.
+        numeric_keys = [
+            k for k, v in tech_block.items()
+            if not k.startswith("_") and isinstance(v, (int, float))
+        ]
+        assert numeric_keys == [], (
+            "Alias block has numeric signals %r — these will be ignored "
+            "(alias is followed first) and create drift confusion. Remove them."
+            % numeric_keys
+        )
+
+    def test_real_config_tech_alias_produces_same_score_as_canonical(self):
+        real = load_sector_weights()
+        macro = {
+            "cpi_yoy_pct": 2.9,
+            "fed_funds_pct": 3.64,
+            "ten_y_yield_pct": 4.47,
+            "ten_y_30d_change_bp": 0.0,
+            "unemployment_pct": 4.0,
+            "wti_oil_usd": 105.78,
+            "real_10y_yield_pct": 1.5,
+            "vix_index": 18.0,
+            "m2_yoy_pct": 4.0,
+        }
+        canonical = compute_des("MSFT", "Information Technology", macro, real)
+        aliased = compute_des("MSFT", "Technology", macro, real)
+        assert aliased["sub_score"] == canonical["sub_score"]
+        assert (
+            aliased["components"]["signal_contributions"]
+            == canonical["components"]["signal_contributions"]
+        )

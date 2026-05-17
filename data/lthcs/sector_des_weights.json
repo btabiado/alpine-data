@@ -105,17 +105,8 @@
       "_note_v2": "Softened 2026-05-17 (was -0.30/-0.45/-0.45/-0.20) to reflect that Tech mega-caps are increasingly insulated from rate cycle via AI capex demand. See docs/des-analysis.md."
     },
     "Technology": {
-      "_drift_warning": "VALUES BELOW MUST BE IDENTICAL TO 'Information Technology'. The _alias_of marker is purely documentary — des.py does NOT follow it. When retuning Tech, edit BOTH blocks. (True aliasing requires a des.py code change to resolve _alias_to references; deferred.)",
-      "_alias_of":           "Information Technology",
-      "wti_oil_usd":         0.00,
-      "cpi_yoy_pct":        -0.15,
-      "fed_funds_pct":      -0.22,
-      "ten_y_yield_pct":    -0.22,
-      "ten_y_30d_change_bp":-0.10,
-      "unemployment_pct":   -0.20,
-      "real_10y_yield_pct": -0.20,
-      "vix_index":          -0.10,
-      "m2_yoy_pct":          0.15
+      "_alias_of": "Information Technology",
+      "_note": "yfinance returns 'Technology' for some tickers; GICS canonical is 'Information Technology'. des.py follows _alias_of to the canonical block."
     },
     "Communication Services": {
       "wti_oil_usd":        -0.10,

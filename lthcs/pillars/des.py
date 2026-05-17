@@ -123,6 +123,52 @@ def normalize_macro_signal(
     return float((value - low) / span * 2.0 - 1.0)
 
 
+def _resolve_sector_block(
+    sectors_block: Dict[str, Any], sector: str
+) -> Optional[Dict[str, Any]]:
+    """Look up ``sector`` in ``sectors_block`` and follow ``_alias_of`` once.
+
+    Returns the resolved sector dict, or ``None`` if the sector is
+    missing or the alias chain is broken.
+
+    A sector block may declare ``"_alias_of": "<canonical name>"`` to
+    point at another sector's weights. This lets us store duplicate
+    sector names (e.g. yfinance's "Technology" vs GICS's "Information
+    Technology") as a single canonical block without risking drift.
+
+    Defensive behavior:
+
+    * Empty / non-string sector name -> ``None``.
+    * Sector not in ``sectors_block`` -> ``None`` (unknown sector;
+      caller falls back to the neutral 50.0 path).
+    * ``_alias_of`` target missing or not a dict -> ``None`` (broken
+      alias; caller falls back to neutral, same as unknown sector).
+    * Cycle detection: we only follow ``_alias_of`` for a single hop.
+      If the target is itself an alias (i.e. has its own
+      ``_alias_of``), we treat the chain as broken and return ``None``.
+      Aliases are intended for renames, not chains.
+    """
+    if not isinstance(sectors_block, dict) or not isinstance(sector, str):
+        return None
+    block = sectors_block.get(sector)
+    if not isinstance(block, dict):
+        return None
+    alias_target = block.get("_alias_of")
+    if alias_target is None:
+        return block
+    # Defensive: only follow a single hop. If the alias target itself
+    # is missing or is also an alias, treat as broken.
+    if not isinstance(alias_target, str):
+        return None
+    canonical = sectors_block.get(alias_target)
+    if not isinstance(canonical, dict):
+        return None
+    if "_alias_of" in canonical:
+        # Chain detected — refuse to follow.
+        return None
+    return canonical
+
+
 def _sector_sensitivities(sector_block: Dict[str, Any]) -> Dict[str, float]:
     """Extract numeric per-signal sensitivities from a sector dict.
 
@@ -174,7 +220,10 @@ def compute_des(
     signal_norm = sector_weights.get("signal_normalization") or {}
 
     # --- Resolve sector sensitivities --------------------------------------
-    sector_block = sectors_block.get(sector) if isinstance(sectors_block, dict) else None
+    # Follows ``_alias_of`` (single hop) so e.g. yfinance's "Technology"
+    # and GICS's "Information Technology" both resolve to the same
+    # canonical weight block. See ``_resolve_sector_block``.
+    sector_block = _resolve_sector_block(sectors_block, sector) if isinstance(sectors_block, dict) else None
     sector_known = isinstance(sector_block, dict)
 
     # Count non-None macro inputs for data-quality reporting (independent
