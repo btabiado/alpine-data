@@ -57,6 +57,19 @@ from lthcs.pillars import adoption, des, financial, institutional, thesis
 from lthcs.sources import alpha_vantage, eia, fred, sec_edgar, yahoo
 from lthcs.sources.thesis_rotation import ThesisRotation
 
+# Top ~30 broadly-watched mega-caps that get rotation priority for
+# Alpha Vantage news sentiment. These names drive composite-band shifts
+# in the published dashboard, and on free-tier AV (~5-25 calls/day) the
+# alphabetical default leaves them waiting weeks for refresh.
+# Priority names get up to half the daily quota; the rest of the universe
+# still rotates through normally.
+PRIORITY_THESIS_TICKERS = [
+    "AAPL", "MSFT", "NVDA", "GOOG", "GOOGL", "AMZN", "META",
+    "BRK.B", "TSLA", "AVGO", "LLY", "JPM", "V", "UNH", "XOM",
+    "MA", "COST", "HD", "PG", "JNJ", "ORCL", "NFLX", "KO",
+    "MRK", "BAC", "CRM", "CVX", "AMD", "PEP", "WMT", "ABBV",
+]
+
 
 UNIVERSE_PATH = REPO_ROOT / "data" / "lthcs" / "universe.json"
 WEIGHTS_PATH = REPO_ROOT / "data" / "lthcs" / "weights.json"
@@ -406,9 +419,34 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     av_status = "skipped"
     if not state.args.skip_thesis and state.active_tickers:
         try:
-            todays_picks = rotation.select_tickers_for_today(
-                state.active_tickers, today=state.calc_date
+            # PRIORITY ROTATION: highest-impact mega-caps (the ~30 most
+            # broadly-watched index leaders) jump the alphabetical queue.
+            # Without this, AAPL → ABBV → ABNB → ABT → ACN... means top-of-
+            # universe names where conviction matters most wait weeks for
+            # their alphabetical turn. Priority list is intentionally
+            # narrow so the rest of the universe still rotates.
+            active_set = set(state.active_tickers)
+            priority_due = [
+                t for t in PRIORITY_THESIS_TICKERS
+                if t in active_set and rotation.is_stale(
+                    rotation.read_sentiment(t), today=state.calc_date
+                )
+            ]
+            non_priority = [
+                t for t in state.active_tickers if t not in PRIORITY_THESIS_TICKERS
+            ]
+            # Reserve up to half the daily budget for priority names.
+            priority_budget = min(len(priority_due), rotation.DAILY_BUDGET // 2 + 1)
+            non_priority_budget = rotation.DAILY_BUDGET - priority_budget
+
+            priority_picks = priority_due[:priority_budget]
+            remainder = rotation.select_tickers_for_today(
+                non_priority, today=state.calc_date, budget=non_priority_budget
             )
+            # De-dup just in case the rotation manager re-picks priority
+            # names from the non-priority pool.
+            seen = set(priority_picks)
+            todays_picks = priority_picks + [t for t in remainder if t not in seen]
         except Exception as exc:
             if state.args.verbose:
                 print("  rotation selection failed: %s" % exc)

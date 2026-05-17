@@ -251,7 +251,7 @@
         "ttm_ocf_margin": 0.5771353265793592,
         "margin_trend_slope": null
       },
-      "sub_score": 70.9,
+      "sub_score": 79.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -459,7 +459,7 @@
         "ttm_ocf_margin": 0.05104029351026889,
         "margin_trend_slope": null
       },
-      "sub_score": 47.1,
+      "sub_score": 45.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -973,7 +973,7 @@
         "ttm_ocf_margin": 0.22725359445269058,
         "margin_trend_slope": null
       },
-      "sub_score": 63.6,
+      "sub_score": 69.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1393,7 +1393,7 @@
         "ttm_ocf_margin": 5.416970607165844,
         "margin_trend_slope": null
       },
-      "sub_score": 79.6,
+      "sub_score": 92.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1491,7 +1491,7 @@
         "ttm_ocf_margin": 0.16215730953774649,
         "margin_trend_slope": null
       },
-      "sub_score": 62.6,
+      "sub_score": 68.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1595,7 +1595,7 @@
         "ttm_ocf_margin": null,
         "margin_trend_slope": 0.0015928295410230044
       },
-      "sub_score": 67.4,
+      "sub_score": 74.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": true,
@@ -1693,7 +1693,7 @@
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 61.3,
+      "sub_score": 78.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -1906,7 +1906,7 @@
         "ttm_ocf_margin": 0.33618728442476575,
         "margin_trend_slope": null
       },
-      "sub_score": 63.2,
+      "sub_score": 68.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2212,7 +2212,7 @@
         "ttm_ocf_margin": 0.11273547360042452,
         "margin_trend_slope": null
       },
-      "sub_score": 50.7,
+      "sub_score": 51.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2414,7 +2414,7 @@
         "ttm_ocf_margin": -0.26068439928272563,
         "margin_trend_slope": null
       },
-      "sub_score": 36.8,
+      "sub_score": 31.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2720,7 +2720,7 @@
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 63.3,
+      "sub_score": 83.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -2922,7 +2922,7 @@
         "ttm_ocf_margin": 0.16394303181544698,
         "margin_trend_slope": null
       },
-      "sub_score": 39.2,
+      "sub_score": 34.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3020,7 +3020,7 @@
         "ttm_ocf_margin": -1.2770823837406355,
         "margin_trend_slope": null
       },
-      "sub_score": 31.9,
+      "sub_score": 24.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3326,7 +3326,7 @@
         "ttm_ocf_margin": 0.25576262013763246,
         "margin_trend_slope": null
       },
-      "sub_score": 70.9,
+      "sub_score": 79.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3528,7 +3528,7 @@
         "ttm_ocf_margin": -0.045897760189302764,
         "margin_trend_slope": null
       },
-      "sub_score": 52.9,
+      "sub_score": 54.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3632,7 +3632,7 @@
         "ttm_ocf_margin": 0.2752419207595399,
         "margin_trend_slope": null
       },
-      "sub_score": 48.0,
+      "sub_score": 47.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3834,7 +3834,7 @@
         "ttm_ocf_margin": 0.24631476130397623,
         "margin_trend_slope": null
       },
-      "sub_score": 46.9,
+      "sub_score": 45.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -3932,7 +3932,7 @@
         "ttm_ocf_margin": 2.0797408422626464,
         "margin_trend_slope": null
       },
-      "sub_score": 83.7,
+      "sub_score": 98.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4030,7 +4030,7 @@
         "ttm_ocf_margin": 0.38559801249606024,
         "margin_trend_slope": null
       },
-      "sub_score": 60.1,
+      "sub_score": 64.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4134,7 +4134,7 @@
         "ttm_ocf_margin": 0.05764653264198429,
         "margin_trend_slope": null
       },
-      "sub_score": 49.6,
+      "sub_score": 49.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4728,7 +4728,7 @@
         "ttm_ocf_margin": 0.07070039645082123,
         "margin_trend_slope": null
       },
-      "sub_score": 47.8,
+      "sub_score": 46.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -4930,7 +4930,7 @@
         "ttm_ocf_margin": 0.1167340669491571,
         "margin_trend_slope": null
       },
-      "sub_score": 33.3,
+      "sub_score": 26.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5034,7 +5034,7 @@
         "ttm_ocf_margin": 0.1579214378895492,
         "margin_trend_slope": null
       },
-      "sub_score": 71.8,
+      "sub_score": 81.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5426,7 +5426,7 @@
         "ttm_ocf_margin": 0.052336923389554965,
         "margin_trend_slope": null
       },
-      "sub_score": 38.5,
+      "sub_score": 33.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5524,7 +5524,7 @@
         "ttm_ocf_margin": 0.338408427016022,
         "margin_trend_slope": null
       },
-      "sub_score": 83.2,
+      "sub_score": 97.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -5916,7 +5916,7 @@
         "ttm_ocf_margin": 0.16865992026985588,
         "margin_trend_slope": null
       },
-      "sub_score": 51.3,
+      "sub_score": 51.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6014,7 +6014,7 @@
         "ttm_ocf_margin": 0.04972106374911986,
         "margin_trend_slope": null
       },
-      "sub_score": 33.7,
+      "sub_score": 26.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6114,7 +6114,7 @@
         "ttm_ocf_margin": 0.4368785399622404,
         "margin_trend_slope": null
       },
-      "sub_score": 83.5,
+      "sub_score": 97.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -6408,7 +6408,7 @@
         "ttm_ocf_margin": 0.06177882753813986,
         "margin_trend_slope": null
       },
-      "sub_score": 52.8,
+      "sub_score": 54.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7004,7 +7004,7 @@
         "ttm_ocf_margin": 0.3366649619958687,
         "margin_trend_slope": null
       },
-      "sub_score": 75.6,
+      "sub_score": 86.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7107,7 +7107,7 @@
         "ttm_ocf_margin": 0.3366649619958687,
         "margin_trend_slope": null
       },
-      "sub_score": 75.6,
+      "sub_score": 86.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -7896,7 +7896,7 @@
         "ttm_ocf_margin": 0.060731743445415494,
         "margin_trend_slope": null
       },
-      "sub_score": 58.8,
+      "sub_score": 62.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8190,7 +8190,7 @@
         "ttm_ocf_margin": -7.689051787786099,
         "margin_trend_slope": null
       },
-      "sub_score": 25.3,
+      "sub_score": 14.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8685,7 +8685,7 @@
         "ttm_ocf_margin": -2.6333319862598503,
         "margin_trend_slope": null
       },
-      "sub_score": 55.0,
+      "sub_score": 57.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8791,7 +8791,7 @@
         "ttm_ocf_margin": 0.24300796988501014,
         "margin_trend_slope": null
       },
-      "sub_score": 51.8,
+      "sub_score": 52.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -8889,7 +8889,7 @@
         "ttm_ocf_margin": 0.15064891568282676,
         "margin_trend_slope": null
       },
-      "sub_score": 73.0,
+      "sub_score": 82.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9384,7 +9384,7 @@
         "ttm_ocf_margin": 0.2769971898835809,
         "margin_trend_slope": null
       },
-      "sub_score": 75.6,
+      "sub_score": 86.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9482,7 +9482,7 @@
         "ttm_ocf_margin": 0.12126195028680688,
         "margin_trend_slope": null
       },
-      "sub_score": 45.2,
+      "sub_score": 43.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -9580,7 +9580,7 @@
         "ttm_ocf_margin": 0.38895203455330757,
         "margin_trend_slope": null
       },
-      "sub_score": 57.6,
+      "sub_score": 60.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10168,7 +10168,7 @@
         "ttm_ocf_margin": 4.398054474708172,
         "margin_trend_slope": null
       },
-      "sub_score": 68.6,
+      "sub_score": 76.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10266,7 +10266,7 @@
         "ttm_ocf_margin": 0.4534129078998698,
         "margin_trend_slope": null
       },
-      "sub_score": 80.4,
+      "sub_score": 93.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10369,7 +10369,7 @@
         "ttm_ocf_margin": 0.10211310122761119,
         "margin_trend_slope": null
       },
-      "sub_score": 38.4,
+      "sub_score": 33.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10663,7 +10663,7 @@
         "ttm_ocf_margin": 0.1671417785105629,
         "margin_trend_slope": null
       },
-      "sub_score": 42.7,
+      "sub_score": 39.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -10859,7 +10859,7 @@
         "ttm_ocf_margin": -1.0976773496579042,
         "margin_trend_slope": null
       },
-      "sub_score": 31.7,
+      "sub_score": 23.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -11163,7 +11163,7 @@
         "ttm_ocf_margin": 0.6809354210066528,
         "margin_trend_slope": null
       },
-      "sub_score": 46.3,
+      "sub_score": 44.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12251,7 +12251,7 @@
         "ttm_ocf_margin": 0.37364618033763014,
         "margin_trend_slope": null
       },
-      "sub_score": 61.4,
+      "sub_score": 66.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12349,7 +12349,7 @@
         "ttm_ocf_margin": 0.1421066530518829,
         "margin_trend_slope": null
       },
-      "sub_score": 33.4,
+      "sub_score": 26.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12447,7 +12447,7 @@
         "ttm_ocf_margin": null,
         "margin_trend_slope": null
       },
-      "sub_score": 59.7,
+      "sub_score": 74.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12643,7 +12643,7 @@
         "ttm_ocf_margin": 0.1219376860087771,
         "margin_trend_slope": null
       },
-      "sub_score": 35.5,
+      "sub_score": 29.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12741,7 +12741,7 @@
         "ttm_ocf_margin": 0.2182582793061153,
         "margin_trend_slope": null
       },
-      "sub_score": 45.0,
+      "sub_score": 42.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -12937,7 +12937,7 @@
         "ttm_ocf_margin": 0.16381016164875642,
         "margin_trend_slope": null
       },
-      "sub_score": 48.1,
+      "sub_score": 47.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13035,7 +13035,7 @@
         "ttm_ocf_margin": 0.3528905984839914,
         "margin_trend_slope": null
       },
-      "sub_score": 74.0,
+      "sub_score": 84.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13133,7 +13133,7 @@
         "ttm_ocf_margin": 0.35580915813424346,
         "margin_trend_slope": null
       },
-      "sub_score": 51.7,
+      "sub_score": 52.4,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13329,7 +13329,7 @@
         "ttm_ocf_margin": 0.03660462174289638,
         "margin_trend_slope": null
       },
-      "sub_score": 46.5,
+      "sub_score": 45.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13525,7 +13525,7 @@
         "ttm_ocf_margin": 0.2030256848678586,
         "margin_trend_slope": null
       },
-      "sub_score": 48.2,
+      "sub_score": 47.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -13623,7 +13623,7 @@
         "ttm_ocf_margin": 0.9194747995180123,
         "margin_trend_slope": null
       },
-      "sub_score": 80.1,
+      "sub_score": 93.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14015,7 +14015,7 @@
         "ttm_ocf_margin": 0.14954146215448205,
         "margin_trend_slope": null
       },
-      "sub_score": 60.4,
+      "sub_score": 64.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14113,7 +14113,7 @@
         "ttm_ocf_margin": 0.490687794367103,
         "margin_trend_slope": null
       },
-      "sub_score": 64.2,
+      "sub_score": 70.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14603,7 +14603,7 @@
         "ttm_ocf_margin": 0.32748443995314763,
         "margin_trend_slope": null
       },
-      "sub_score": 68.3,
+      "sub_score": 76.2,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14701,7 +14701,7 @@
         "ttm_ocf_margin": 0.12475165562913908,
         "margin_trend_slope": null
       },
-      "sub_score": 47.2,
+      "sub_score": 46.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -14899,7 +14899,7 @@
         "ttm_ocf_margin": 0.3857370314240327,
         "margin_trend_slope": null
       },
-      "sub_score": 78.1,
+      "sub_score": 90.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15193,7 +15193,7 @@
         "ttm_ocf_margin": 0.07137620972352059,
         "margin_trend_slope": null
       },
-      "sub_score": 55.3,
+      "sub_score": 57.6,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15291,7 +15291,7 @@
         "ttm_ocf_margin": 0.34948461975489004,
         "margin_trend_slope": null
       },
-      "sub_score": 51.9,
+      "sub_score": 52.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15389,7 +15389,7 @@
         "ttm_ocf_margin": 0.11963599737655767,
         "margin_trend_slope": null
       },
-      "sub_score": 34.5,
+      "sub_score": 27.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15487,7 +15487,7 @@
         "ttm_ocf_margin": 0.1586829490185101,
         "margin_trend_slope": null
       },
-      "sub_score": 48.2,
+      "sub_score": 47.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15585,7 +15585,7 @@
         "ttm_ocf_margin": 0.4764302933384252,
         "margin_trend_slope": null
       },
-      "sub_score": 72.2,
+      "sub_score": 81.7,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15683,7 +15683,7 @@
         "ttm_ocf_margin": 0.4820737851454575,
         "margin_trend_slope": null
       },
-      "sub_score": 64.0,
+      "sub_score": 70.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15781,7 +15781,7 @@
         "ttm_ocf_margin": 0.37747283483921273,
         "margin_trend_slope": null
       },
-      "sub_score": 69.6,
+      "sub_score": 78.0,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15879,7 +15879,7 @@
         "ttm_ocf_margin": 0.22854311926605506,
         "margin_trend_slope": null
       },
-      "sub_score": 49.4,
+      "sub_score": 49.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -15977,7 +15977,7 @@
         "ttm_ocf_margin": 0.0081407062539138,
         "margin_trend_slope": null
       },
-      "sub_score": 24.6,
+      "sub_score": 13.8,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16075,7 +16075,7 @@
         "ttm_ocf_margin": 0.19673202614379084,
         "margin_trend_slope": null
       },
-      "sub_score": 65.7,
+      "sub_score": 72.5,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16173,7 +16173,7 @@
         "ttm_ocf_margin": -0.08652927706902191,
         "margin_trend_slope": null
       },
-      "sub_score": 20.1,
+      "sub_score": 7.3,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16271,7 +16271,7 @@
         "ttm_ocf_margin": 0.015368277017022538,
         "margin_trend_slope": null
       },
-      "sub_score": 38.0,
+      "sub_score": 32.9,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16369,7 +16369,7 @@
         "ttm_ocf_margin": 0.45749720093015245,
         "margin_trend_slope": null
       },
-      "sub_score": 52.2,
+      "sub_score": 53.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,
@@ -16467,7 +16467,7 @@
         "ttm_ocf_margin": 0.15717108169088065,
         "margin_trend_slope": null
       },
-      "sub_score": 36.1,
+      "sub_score": 30.1,
       "data_quality": {
         "has_revenue": true,
         "has_margin": false,

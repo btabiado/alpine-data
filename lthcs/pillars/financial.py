@@ -383,11 +383,45 @@ def compute_financial(
     ttm_ocf_margin = _ttm_ocf_margin(revenue_rows, ocf_rows)
 
     # --- Combine ------------------------------------------------------------
-    sub_score = (
-        REVENUE_WEIGHT * revenue_subscore
-        + MARGIN_WEIGHT * margin_subscore
-        + OCF_WEIGHT * ocf_subscore
-    )
+    # Renormalize away sub-components that have no real data. Banks (JPM,
+    # BAC, GS, etc.) don't report GrossProfit or NetCashProvidedByOperating-
+    # Activities in the standard us-gaap XBRL concepts — they use bank-
+    # specific concepts (NetInterestIncome, ProvisionForCreditLosses) which
+    # this V1 pillar doesn't extract. Without renorm, banks get
+    # margin_subscore=50 (30%) + ocf_subscore=50 (30%) baked in at neutral
+    # despite having strong revenue percentiles, mechanically capping
+    # banks at Weakening band. Same pattern as Adoption Trends-stub renorm.
+    has_revenue = growth is not None
+    has_margin = margin_slope_value is not None
+    has_ocf = ttm_ocf_margin is not None
+
+    pairs = [
+        (REVENUE_WEIGHT, revenue_subscore, has_revenue),
+        (MARGIN_WEIGHT, margin_subscore, has_margin),
+        (OCF_WEIGHT, ocf_subscore, has_ocf),
+    ]
+    real_pairs = [(w, s) for w, s, ok in pairs if ok]
+    if real_pairs:
+        real_sum = sum(w for w, _ in real_pairs)
+        sub_score = sum((w / real_sum) * s for w, s in real_pairs)
+        effective_weights = {
+            "revenue": REVENUE_WEIGHT / real_sum if has_revenue else 0.0,
+            "margin":  MARGIN_WEIGHT / real_sum if has_margin else 0.0,
+            "ocf":     OCF_WEIGHT / real_sum if has_ocf else 0.0,
+        }
+    else:
+        # No real sub-component at all — keep documented weights, all
+        # components fall through neutral 50, result is exactly 50.
+        sub_score = (
+            REVENUE_WEIGHT * revenue_subscore
+            + MARGIN_WEIGHT * margin_subscore
+            + OCF_WEIGHT * ocf_subscore
+        )
+        effective_weights = {
+            "revenue": REVENUE_WEIGHT,
+            "margin": MARGIN_WEIGHT,
+            "ocf": OCF_WEIGHT,
+        }
     sub_score = round(float(sub_score), 1)
 
     return {
@@ -406,9 +440,10 @@ def compute_financial(
             "margin": MARGIN_WEIGHT,
             "ocf": OCF_WEIGHT,
         },
+        "effective_weights": effective_weights,
         "data_quality": {
-            "has_revenue": growth is not None,
-            "has_margin": margin_slope_value is not None,
-            "has_ocf": ttm_ocf_margin is not None,
+            "has_revenue": has_revenue,
+            "has_margin": has_margin,
+            "has_ocf": has_ocf,
         },
     }
