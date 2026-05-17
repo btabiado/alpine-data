@@ -1,0 +1,11 @@
+{
+  "ticker": "PYPL",
+  "model_version": "v1.0.0",
+  "history": [
+    {
+      "date": "2026-05-16",
+      "score": 43.1,
+      "band": "review"
+    }
+  ]
+}

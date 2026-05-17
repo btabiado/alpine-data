@@ -1,0 +1,756 @@
+"""LTHCS daily pipeline CLI.
+
+One-command runner that orchestrates the five LTHCS pillars + the score
+combiner + templated narratives + persistence in a single end-to-end
+daily run, per PHASE_1_BUILD_SPEC.md sections 6 and 11.
+
+Stage layout (see :class:`PipelineState`)::
+
+    Stage 1: Load universe + weights config
+    Stage 2: Fetch raw data per source (with caching + rate-limit)
+    Stage 3: Data quality checks (freshness, nulls, outliers)
+    Stage 4: Normalize raw values to 0-100 sub-scores per pillar
+    Stage 5: Apply sector + macro + volatility modifiers
+    Stage 6: Calculate final LTHCS score, cap [0, 100], assign band + drift
+    Stage 7: Generate templated narratives
+    Stage 8: Persist snapshot, variable detail, narratives; rebuild history
+
+Each stage prints exactly one line beginning with ``✓`` or ``✗``
+so a human glancing at the log can spot the failure point.
+
+Phase 2 note: a ``--stage N`` resume flag is intentionally NOT
+implemented in V1. The pipeline is fast enough end-to-end (~minutes per
+75-ticker universe with warm caches) that staged resume is overkill;
+Phase 2 may add it once we have a snapshot of intermediate state on
+disk.
+
+Usage::
+
+    python lthcs_daily.py                       # Full run, all active tickers
+    python lthcs_daily.py --tickers AAPL,LCID   # Subset
+    python lthcs_daily.py --dry-run             # Compute but don't write
+    python lthcs_daily.py --force               # Overwrite today's snapshot
+    python lthcs_daily.py --skip-thesis         # Bypass AV (don't burn token)
+    python lthcs_daily.py --verbose             # Extra stage diagnostics
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from dataclasses import dataclass, field
+from datetime import date, datetime
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional
+
+# Repo-root self-locator so the script works whether invoked from cwd or via
+# an absolute path. (The test suite also benefits because importing this
+# module never depends on cwd.)
+REPO_ROOT = Path(__file__).resolve().parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from lthcs import MODEL_VERSION, narratives, score
+from lthcs.persist import LthcsPersist
+from lthcs.pillars import adoption, des, financial, institutional, thesis
+from lthcs.sources import alpha_vantage, eia, fred, sec_edgar, yahoo
+
+
+UNIVERSE_PATH = REPO_ROOT / "data" / "lthcs" / "universe.json"
+WEIGHTS_PATH = REPO_ROOT / "data" / "lthcs" / "weights.json"
+SECTOR_WEIGHTS_PATH = REPO_ROOT / "data" / "lthcs" / "sector_des_weights.json"
+
+DEFAULT_WEIGHTS_PROFILE = "standard_compounder"
+
+# Standard band names so Stage 6 always prints a stable column order even
+# when the universe happens to contain zero of a band.
+_BAND_ORDER_DISPLAY = [
+    ("elite", "Elite"),
+    ("high_confidence", "High"),
+    ("constructive", "Constructive"),
+    ("monitor", "Monitor"),
+    ("weakening", "Weakening"),
+    ("review", "Review"),
+]
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    """Parse the CLI flags. Pure -- no side effects.
+
+    ``--tickers`` accepts a comma-separated list (whitespace tolerated).
+    """
+    p = argparse.ArgumentParser(
+        prog="lthcs_daily",
+        description="LTHCS daily pipeline runner (all 5 pillars + score + persist).",
+    )
+    p.add_argument(
+        "--tickers",
+        default=None,
+        help="Comma-separated ticker subset (default: all active in universe.json).",
+    )
+    p.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Compute everything but skip persistence (no disk writes).",
+    )
+    p.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite today's snapshot/narratives/variable_detail if present.",
+    )
+    p.add_argument(
+        "--skip-thesis",
+        action="store_true",
+        help="Skip Alpha Vantage call entirely (Thesis falls back to neutral 50).",
+    )
+    p.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Emit extra per-stage diagnostics.",
+    )
+    return p.parse_args(argv)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline state
+# ---------------------------------------------------------------------------
+
+@dataclass
+class PipelineState:
+    """All intermediate data the eight stages mutate in turn.
+
+    Each stage reads what it needs, writes its outputs, and returns
+    True/False. The state is the seam tests poke at when they want to
+    exercise a single stage in isolation.
+    """
+    args: argparse.Namespace
+    calc_date: str = ""
+    persist: Optional[LthcsPersist] = None
+
+    # Stage 1
+    universe: Dict[str, Any] = field(default_factory=dict)
+    weights_config: Dict[str, Any] = field(default_factory=dict)
+    sector_weights: Dict[str, Any] = field(default_factory=dict)
+    active_tickers: List[str] = field(default_factory=list)
+    by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+
+    # Stage 2
+    macro_inputs: Dict[str, Optional[float]] = field(default_factory=dict)
+    av_response: Optional[Dict[str, Any]] = None
+    av_anchor_ticker: Optional[str] = None
+    rev_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    gp_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    ocf_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    momentum_by_ticker: Dict[str, Optional[float]] = field(default_factory=dict)
+    volatility_by_ticker: Dict[str, Optional[float]] = field(default_factory=dict)
+    fetch_counts: Dict[str, int] = field(default_factory=dict)
+
+    # Stage 3
+    data_quality_flags: Dict[str, List[str]] = field(default_factory=dict)
+    scored_tickers: List[str] = field(default_factory=list)
+
+    # Stage 4
+    pillar_results: Dict[str, Dict[str, Dict[str, Any]]] = field(default_factory=dict)
+
+    # Stage 6
+    snapshot_rows: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Stage 7
+    narrative_rows: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Stage 8
+    variable_detail_rows: List[Dict[str, Any]] = field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------
+# Macro input helpers (copied from scripts/lthcs_check_week5_distribution.py
+# because we can't import from scripts/)
+# ---------------------------------------------------------------------------
+
+def _yoy_change_pct(series: List[Dict[str, Any]], _days=(350, 380)) -> Optional[float]:
+    if not series or len(series) < 13:
+        return None
+    latest = series[-1]
+    if latest.get("value") is None:
+        return None
+    for prior in reversed(series[:-1]):
+        if prior.get("value") is None:
+            continue
+        try:
+            delta = (
+                datetime.fromisoformat(latest["date"])
+                - datetime.fromisoformat(prior["date"])
+            ).days
+        except (ValueError, KeyError):
+            continue
+        if _days[0] <= delta <= _days[1]:
+            try:
+                return (latest["value"] / prior["value"] - 1.0) * 100.0
+            except ZeroDivisionError:
+                return None
+    return None
+
+
+def _bp_change_30d(series: List[Dict[str, Any]]) -> Optional[float]:
+    if not series or len(series) < 25:
+        return None
+    latest = series[-1]
+    if latest.get("value") is None:
+        return None
+    for prior in reversed(series[:-1]):
+        if prior.get("value") is None:
+            continue
+        try:
+            d = (
+                datetime.fromisoformat(latest["date"])
+                - datetime.fromisoformat(prior["date"])
+            ).days
+        except (ValueError, KeyError):
+            continue
+        if 25 <= d <= 35:
+            return (latest["value"] - prior["value"]) * 100.0
+    return None
+
+
+def build_macro_inputs() -> Dict[str, Optional[float]]:
+    """Pull the macro state from FRED + EIA. Any one signal failing returns None.
+
+    Wraps each network call in a try/except so a single source outage
+    doesn't crash the whole pipeline -- the DES pillar tolerates None
+    inputs (they contribute 0 tilt).
+    """
+    try:
+        cpi_series = fred.get_series("CPIAUCSL")
+    except Exception:
+        cpi_series = []
+    try:
+        ten_y_series = fred.get_series("DGS10")
+    except Exception:
+        ten_y_series = []
+    try:
+        ff = fred.get_latest_value("FEDFUNDS")
+    except Exception:
+        ff = None
+    try:
+        unrate = fred.get_latest_value("UNRATE")
+    except Exception:
+        unrate = None
+    try:
+        wti = eia.get_latest_value("wti")
+    except Exception:
+        wti = None
+
+    return {
+        "cpi_yoy_pct": _yoy_change_pct(cpi_series),
+        "fed_funds_pct": ff["value"] if ff else None,
+        "ten_y_yield_pct": (
+            ten_y_series[-1]["value"] if ten_y_series else None
+        ),
+        "ten_y_30d_change_bp": _bp_change_30d(ten_y_series),
+        "unemployment_pct": unrate["value"] if unrate else None,
+        "wti_oil_usd": wti["value"] if wti else None,
+    }
+
+
+def _empty_av_response() -> Dict[str, Any]:
+    """A minimal AV-shaped payload that parse_ticker_sentiment handles."""
+    return {"items": "0", "feed": []}
+
+
+# ---------------------------------------------------------------------------
+# Stages
+# ---------------------------------------------------------------------------
+
+def stage_1_load_config(state: PipelineState) -> bool:
+    try:
+        state.universe = json.loads(UNIVERSE_PATH.read_text())
+        state.weights_config = json.loads(WEIGHTS_PATH.read_text())
+        state.sector_weights = json.loads(SECTOR_WEIGHTS_PATH.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        print("✗ Stage 1: config load failed: %s" % exc)
+        return False
+
+    by_ticker: Dict[str, Dict[str, Any]] = {}
+    active = []
+    for entry in state.universe.get("tickers", []):
+        if not isinstance(entry, dict):
+            continue
+        sym = entry.get("ticker")
+        if not isinstance(sym, str):
+            continue
+        by_ticker[sym] = entry
+        if entry.get("active", True):
+            active.append(sym)
+
+    subset: Optional[List[str]] = None
+    if state.args.tickers:
+        subset = [t.strip().upper() for t in state.args.tickers.split(",") if t.strip()]
+        # Restrict to those that are present in the universe; warn on any unknowns.
+        unknown = [t for t in subset if t not in by_ticker]
+        if unknown:
+            print(
+                "  warning: unknown tickers in --tickers, dropping: %s"
+                % ", ".join(unknown)
+            )
+        subset = [t for t in subset if t in by_ticker]
+
+    if subset is not None:
+        state.active_tickers = subset
+    else:
+        state.active_tickers = active
+
+    state.by_ticker = by_ticker
+    state.calc_date = date.today().isoformat()
+    if state.persist is None:
+        state.persist = LthcsPersist()
+
+    profiles = (state.weights_config or {}).get("profiles") or {}
+    print(
+        "✓ Stage 1: Loaded %d tickers, %d weight profiles"
+        % (len(state.active_tickers), len(profiles))
+    )
+    return True
+
+
+def stage_2_fetch_data(state: PipelineState) -> bool:
+    """Per-ticker source fan-out.
+
+    Each individual fetch is wrapped in try/except so a single bad
+    ticker / source outage doesn't take down the whole run -- the
+    failure surfaces as missing data, which Stage 3 catches.
+    """
+    counts = {
+        "yahoo_prices_ok": 0,
+        "yahoo_momentum_ok": 0,
+        "yahoo_vol_ok": 0,
+        "sec_rev_ok": 0,
+        "sec_gp_ok": 0,
+        "sec_ocf_ok": 0,
+        "fred_ok": 0,
+        "eia_ok": 0,
+    }
+
+    n = len(state.active_tickers)
+    for sym in state.active_tickers:
+        # Yahoo
+        try:
+            yahoo.get_daily_prices(sym)
+            counts["yahoo_prices_ok"] += 1
+        except Exception:
+            pass
+        try:
+            mom = yahoo.get_momentum_pct(sym, days=90)
+            state.momentum_by_ticker[sym] = mom
+            if mom is not None:
+                counts["yahoo_momentum_ok"] += 1
+        except Exception:
+            state.momentum_by_ticker[sym] = None
+        try:
+            vol = yahoo.get_volatility(sym, window=30)
+            state.volatility_by_ticker[sym] = vol
+            if vol is not None:
+                counts["yahoo_vol_ok"] += 1
+        except Exception:
+            state.volatility_by_ticker[sym] = None
+
+        # SEC EDGAR
+        try:
+            rev = sec_edgar.get_revenue_history(sym)
+            state.rev_by_ticker[sym] = rev or []
+            if rev:
+                counts["sec_rev_ok"] += 1
+        except Exception:
+            state.rev_by_ticker[sym] = []
+        try:
+            gp = sec_edgar.get_gross_profit_history(sym)
+            state.gp_by_ticker[sym] = gp or []
+            if gp:
+                counts["sec_gp_ok"] += 1
+        except Exception:
+            state.gp_by_ticker[sym] = []
+        try:
+            ocf = sec_edgar.get_operating_cash_flow_history(sym)
+            state.ocf_by_ticker[sym] = ocf or []
+            if ocf:
+                counts["sec_ocf_ok"] += 1
+        except Exception:
+            state.ocf_by_ticker[sym] = []
+
+    # Macro (one shot, shared across tickers)
+    try:
+        state.macro_inputs = build_macro_inputs()
+        if state.macro_inputs.get("ten_y_yield_pct") is not None:
+            counts["fred_ok"] = 1
+        if state.macro_inputs.get("wti_oil_usd") is not None:
+            counts["eia_ok"] = 1
+    except Exception:
+        state.macro_inputs = {}
+
+    # Alpha Vantage: one call, FIRST ticker only, unless skipped.
+    av_status = "skipped"
+    if not state.args.skip_thesis and state.active_tickers:
+        anchor = state.active_tickers[0]
+        try:
+            state.av_response = alpha_vantage.get_news_sentiment([anchor], limit=50)
+            state.av_anchor_ticker = anchor
+            av_status = "yes"
+        except Exception as exc:
+            if state.args.verbose:
+                print("  AV fetch failed: %s" % exc)
+            state.av_response = None
+            av_status = "failed"
+    state.fetch_counts = counts
+
+    if state.args.verbose:
+        for k, v in counts.items():
+            print("  %s: %d" % (k, v))
+
+    print(
+        "✓ Stage 2: Fetched %d/%d Yahoo, %d/%d SEC EDGAR, %d/1 FRED, %d/1 EIA, AV=%s"
+        % (
+            counts["yahoo_momentum_ok"],
+            n,
+            counts["sec_rev_ok"],
+            n,
+            counts["fred_ok"],
+            counts["eia_ok"],
+            av_status,
+        )
+    )
+    return True
+
+
+def stage_3_quality_checks(state: PipelineState) -> bool:
+    flagged = 0
+    sufficient = 0
+    state.data_quality_flags = {}
+    state.scored_tickers = []
+    for sym in state.active_tickers:
+        flags: List[str] = []
+        has_prices = state.momentum_by_ticker.get(sym) is not None
+        has_sec = bool(state.rev_by_ticker.get(sym))
+
+        if not has_prices:
+            flags.append("yahoo_unavailable")
+        if not has_sec:
+            flags.append("sec_unavailable")
+        if state.av_response is None or sym != state.av_anchor_ticker:
+            flags.append("thesis_unavailable")
+        if state.volatility_by_ticker.get(sym) is None:
+            flags.append("volatility_unavailable")
+
+        state.data_quality_flags[sym] = flags
+
+        # A ticker can still be scored as long as one of Yahoo OR SEC has
+        # data; both being empty means every pillar collapses to 50.
+        if has_prices or has_sec:
+            sufficient += 1
+            state.scored_tickers.append(sym)
+        if flags:
+            flagged += 1
+
+    n = len(state.active_tickers)
+    print(
+        "✓ Stage 3: Quality passed; %d/%d with sufficient data, %d flagged"
+        % (sufficient, n, flagged)
+    )
+    return True
+
+
+def stage_4_compute_subscores(state: PipelineState) -> bool:
+    # Build peer growth distribution once (every ticker contributes once).
+    peer_growths: Dict[str, Optional[float]] = {}
+    for sym in state.scored_tickers:
+        try:
+            peer_growths[sym] = adoption.compute_revenue_growth_yoy(
+                state.rev_by_ticker.get(sym, [])
+            )
+        except Exception:
+            peer_growths[sym] = None
+
+    state.pillar_results = {}
+    for sym in state.scored_tickers:
+        entry = state.by_ticker.get(sym, {})
+        sector = entry.get("sector", "")
+        try:
+            ad = adoption.compute_adoption(
+                sym, state.rev_by_ticker.get(sym, []), [], peer_growths
+            )
+        except Exception:
+            ad = _neutral_pillar_result(sym, "adoption_momentum")
+        try:
+            ins = institutional.compute_institutional(
+                sym,
+                state.momentum_by_ticker.get(sym),
+                state.momentum_by_ticker,
+            )
+        except Exception:
+            ins = _neutral_pillar_result(sym, "institutional_confidence")
+        try:
+            fin = financial.compute_financial(
+                sym,
+                state.rev_by_ticker.get(sym, []),
+                state.gp_by_ticker.get(sym, []),
+                state.ocf_by_ticker.get(sym, []),
+                peer_growths,
+            )
+        except Exception:
+            fin = _neutral_pillar_result(sym, "financial_evolution")
+
+        # Thesis: real AV data only when this ticker matches the anchor.
+        if (
+            state.av_response is not None
+            and sym == state.av_anchor_ticker
+            and not state.args.skip_thesis
+        ):
+            try:
+                th = thesis.compute_thesis(sym, state.av_response)
+            except Exception:
+                th = _neutral_thesis(sym)
+        else:
+            th = _neutral_thesis(sym)
+
+        try:
+            de = des.compute_des(
+                ticker=sym,
+                sector=sector,
+                macro_inputs=state.macro_inputs,
+                sector_weights=state.sector_weights,
+            )
+        except Exception:
+            de = _neutral_pillar_result(sym, "des")
+
+        state.pillar_results[sym] = {
+            "adoption_momentum": ad,
+            "institutional_confidence": ins,
+            "financial_evolution": fin,
+            "thesis_integrity": th,
+            "des": de,
+        }
+
+    print(
+        "✓ Stage 4: Sub-scores computed for %d tickers across 5 pillars"
+        % len(state.pillar_results)
+    )
+    return True
+
+
+def _neutral_pillar_result(ticker: str, pillar: str) -> Dict[str, Any]:
+    return {
+        "ticker": ticker,
+        "sub_score": 50.0,
+        "components": {},
+        "data_quality": {pillar + "_unavailable": True},
+    }
+
+
+def _neutral_thesis(ticker: str) -> Dict[str, Any]:
+    return {
+        "ticker": ticker,
+        "sub_score": 50.0,
+        "components": {
+            "article_count": 0,
+            "mean_sentiment_score": None,
+            "mean_relevance_score": None,
+            "label_counts": {},
+        },
+        "data_quality": {
+            "has_sentiment": False,
+            "article_count_sufficient": False,
+        },
+    }
+
+
+def stage_5_apply_modifiers(state: PipelineState) -> bool:
+    """V1: modifiers are applied inside compute_lthcs_score, not here.
+
+    Kept as a discrete stage purely for the eight-line operator log.
+    """
+    print(
+        "✓ Stage 5: Modifiers will be applied in Stage 6 by "
+        "compute_lthcs_score (macro, sector stub, volatility)"
+    )
+    return True
+
+
+def stage_6_compute_final_scores(state: PipelineState) -> bool:
+    peer_vols = [
+        v for v in state.volatility_by_ticker.values() if v is not None
+    ]
+    state.snapshot_rows = []
+
+    for sym in state.scored_tickers:
+        entry = state.by_ticker.get(sym, {})
+        pillars = state.pillar_results.get(sym) or {}
+        subs = {
+            name: float((pillars.get(name) or {}).get("sub_score", 50.0))
+            for name in score.PILLAR_ORDER
+        }
+        flags = list(state.data_quality_flags.get(sym, []))
+        try:
+            row = score.compute_lthcs_score(
+                ticker=sym,
+                sector=entry.get("sector", ""),
+                maturity_stage=entry.get("maturity_stage", DEFAULT_WEIGHTS_PROFILE),
+                pillar_subscores=subs,
+                weights_config=state.weights_config,
+                ten_y_30d_change_bp=state.macro_inputs.get("ten_y_30d_change_bp"),
+                ticker_volatility=state.volatility_by_ticker.get(sym),
+                universe_volatilities=peer_vols,
+                data_quality_flags=flags,
+            )
+        except Exception as exc:
+            print("  warning: scoring failed for %s: %s" % (sym, exc))
+            continue
+        state.snapshot_rows.append(row)
+
+    # Band distribution
+    counts = {b: 0 for b, _ in _BAND_ORDER_DISPLAY}
+    for row in state.snapshot_rows:
+        b = row.get("band")
+        if b in counts:
+            counts[b] += 1
+    distribution = ", ".join(
+        "%s %d" % (label, counts[key]) for key, label in _BAND_ORDER_DISPLAY
+    )
+    print("✓ Stage 6: Band distribution: %s" % distribution)
+    return True
+
+
+def stage_7_generate_narratives(state: PipelineState) -> bool:
+    state.narrative_rows = []
+    for row in state.snapshot_rows:
+        try:
+            narr = narratives.generate_narratives(row)
+        except Exception:
+            continue
+        state.narrative_rows.append(narr)
+    print(
+        "✓ Stage 7: Generated %d templated narratives"
+        % len(state.narrative_rows)
+    )
+    return True
+
+
+def stage_8_persist(state: PipelineState) -> bool:
+    # Build variable_detail rows -- one per (ticker, pillar) for V1.
+    state.variable_detail_rows = []
+    for sym, pillars in state.pillar_results.items():
+        for pillar_name, result in pillars.items():
+            state.variable_detail_rows.append(
+                {
+                    "ticker": sym,
+                    "pillar": pillar_name,
+                    "components": dict(result.get("components") or {}),
+                    "sub_score": float(result.get("sub_score", 50.0)),
+                    "data_quality": dict(result.get("data_quality") or {}),
+                }
+            )
+
+    if state.args.dry_run:
+        print(
+            "✓ Stage 8 (dry-run): would have written %d snapshots"
+            % len(state.snapshot_rows)
+        )
+        return True
+
+    persist = state.persist
+    if persist is None:
+        # Defensive: stage 1 builds the persistor, but tests may inject.
+        persist = LthcsPersist()
+        state.persist = persist
+
+    # Pre-flight existence check so we can fail with a clear hint before
+    # write_snapshot raises FileExistsError mid-write.
+    if not state.args.force and persist.snapshot_exists(state.calc_date):
+        print(
+            "✗ Stage 8: snapshot for %s already exists. "
+            "Re-run with --force to overwrite." % state.calc_date
+        )
+        return False
+
+    try:
+        persist.write_snapshot(
+            state.calc_date,
+            MODEL_VERSION,
+            DEFAULT_WEIGHTS_PROFILE,
+            state.snapshot_rows,
+            overwrite=state.args.force,
+        )
+        persist.write_variable_detail(
+            state.calc_date,
+            MODEL_VERSION,
+            state.variable_detail_rows,
+            overwrite=state.args.force,
+        )
+        persist.write_narratives(
+            state.calc_date,
+            MODEL_VERSION,
+            state.narrative_rows,
+            overwrite=state.args.force,
+        )
+        history_count = persist.rebuild_history_for_all_tickers(
+            state.snapshot_rows, state.calc_date, MODEL_VERSION
+        )
+        persist.rebuild_index(MODEL_VERSION)
+    except FileExistsError as exc:
+        print(
+            "✗ Stage 8: %s — re-run with --force to overwrite." % exc
+        )
+        return False
+    except Exception as exc:
+        print("✗ Stage 8: persist error: %s" % exc)
+        return False
+
+    print(
+        "✓ Stage 8: Wrote snapshot (%d rows), variable_detail (%d rows), "
+        "narratives (%d rows); updated %d history files"
+        % (
+            len(state.snapshot_rows),
+            len(state.variable_detail_rows),
+            len(state.narrative_rows),
+            history_count,
+        )
+    )
+    return True
+
+
+# Module-level stage list so tests can import + reorder + introspect.
+STAGES: List[Callable[[PipelineState], bool]] = [
+    stage_1_load_config,
+    stage_2_fetch_data,
+    stage_3_quality_checks,
+    stage_4_compute_subscores,
+    stage_5_apply_modifiers,
+    stage_6_compute_final_scores,
+    stage_7_generate_narratives,
+    stage_8_persist,
+]
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    args = parse_args(argv)
+    state = PipelineState(args=args)
+    for fn in STAGES:
+        if not fn(state):
+            # snapshot-exists collision deserves a distinct exit code so
+            # cron / wrapping scripts can detect "needs --force" vs other
+            # failures.
+            if fn is stage_8_persist and state.persist is not None:
+                if (
+                    not args.force
+                    and not args.dry_run
+                    and state.persist.snapshot_exists(state.calc_date)
+                ):
+                    return 2
+            return 1
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover - thin entry point
+    raise SystemExit(main())
