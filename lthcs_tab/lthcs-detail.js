@@ -203,6 +203,8 @@ function buildShell() {
       <div class="lthcs-modal-narrative" data-slot="narrative"></div>
     </div>
 
+    <div data-slot="insider-wrap"></div>
+
     <div data-slot="flags-wrap"></div>
 
     <div class="lthcs-modal-vardetail" data-slot="vardetail">
@@ -214,7 +216,7 @@ function buildShell() {
     </div>
 
     <div class="lthcs-modal-footer">
-      Sources: yfinance (prices), SEC EDGAR (financials), FRED (macro), EIA (energy), Alpha Vantage (news). Not investment advice.
+      Sources: yfinance (prices), SEC EDGAR (financials + Form 4 insider), FRED (macro + credit spreads), EIA (energy), Alpha Vantage (news). Not investment advice.
     </div>
   `;
   root.appendChild(panel);
@@ -433,6 +435,200 @@ function renderNarrative(panel, { snapshotRow, narrative }) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Insider conviction (Week 11) — SEC Form 4 90-day window
+// ---------------------------------------------------------------------------
+
+const INSIDER_REGIME_LABEL = {
+  strong_buying: 'Strong buying',
+  mild_buying: 'Mild buying',
+  neutral: 'Neutral',
+  mild_selling: 'Mild selling',
+  heavy_selling: 'Heavy selling',
+};
+
+function fmtDollars(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e9) return `${sign}$${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}$${(abs / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}$${(abs / 1e3).toFixed(1)}K`;
+  return `${sign}$${abs.toFixed(0)}`;
+}
+
+function fmtShares(n) {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return '—';
+  if (Math.abs(v) >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
+  if (Math.abs(v) >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  return String(Math.round(v));
+}
+
+function fmtConvictionPct(score) {
+  const v = Number(score);
+  if (!Number.isFinite(v)) return 0;
+  // score is in [-1, 1]; map to [0, 100] for bar width.
+  return Math.max(0, Math.min(100, ((v + 1) / 2) * 100));
+}
+
+function fmtConvictionText(score) {
+  const v = Number(score);
+  if (!Number.isFinite(v)) return '—';
+  const sign = v > 0 ? '+' : v < 0 ? '−' : '';
+  return `${sign}${Math.abs(v).toFixed(2)}`;
+}
+
+function renderInsider(panel, { insider }) {
+  const wrap = panel.querySelector('[data-slot="insider-wrap"]');
+  if (!wrap) return;
+  clear(wrap);
+
+  if (!insider || typeof insider !== 'object') {
+    // No record at all: render a tiny "no activity" line so the section is acknowledged.
+    const section = el('div', { className: 'lthcs-modal-insider' });
+    section.appendChild(el('h3', { className: 'lthcs-modal-section-heading', text: 'Insider conviction' }));
+    section.appendChild(el('div', {
+      className: 'lthcs-insider-empty',
+      text: 'No recent Form 4 activity in 90-day window.',
+    }));
+    wrap.appendChild(section);
+    return;
+  }
+
+  const regime = String(insider.regime || 'neutral');
+  const regimeLabel = INSIDER_REGIME_LABEL[regime] || humanCase(regime);
+  const conviction = Number(insider.conviction_score);
+  const buyCount = Number(insider.buy_count) || 0;
+  const sellCount = Number(insider.sell_count) || 0;
+  const windowDays = Number(insider.window_days) || 90;
+  const cluster = !!insider.cluster_buying;
+  const ceoCfo = String(insider.ceo_cfo_action || 'neutral');
+  const netDollar = Number(insider.net_dollar_value);
+
+  const section = el('div', { className: 'lthcs-modal-insider' });
+  section.appendChild(el('h3', { className: 'lthcs-modal-section-heading', text: 'Insider conviction' }));
+
+  // Header row: regime badge + (optional) cluster badge
+  const headerRow = el('div', { className: 'lthcs-insider-header' });
+  headerRow.appendChild(el('span', {
+    className: 'lthcs-insider-regime',
+    text: regimeLabel,
+    attrs: { 'data-regime': regime },
+  }));
+  if (cluster) {
+    headerRow.appendChild(el('span', {
+      className: 'lthcs-insider-cluster',
+      text: '🔥 CLUSTER BUYING',
+      attrs: { 'aria-label': 'Cluster buying flag' },
+    }));
+  }
+  headerRow.appendChild(el('span', {
+    className: 'lthcs-insider-window',
+    text: `${windowDays}-day window`,
+  }));
+  section.appendChild(headerRow);
+
+  // Conviction bar
+  const convWrap = el('div', { className: 'lthcs-insider-conviction' });
+  const convLabel = el('div', { className: 'lthcs-insider-conviction-label' });
+  convLabel.appendChild(el('span', { text: 'Conviction' }));
+  convLabel.appendChild(el('strong', { text: fmtConvictionText(conviction) }));
+  convWrap.appendChild(convLabel);
+  const track = el('div', { className: 'lthcs-insider-conviction-track' });
+  // mid-line marker at 50%
+  track.appendChild(el('div', { className: 'lthcs-insider-conviction-mid', attrs: { 'aria-hidden': 'true' } }));
+  const fill = el('div', { className: 'lthcs-insider-conviction-fill' });
+  if (Number.isFinite(conviction)) {
+    const pct = fmtConvictionPct(conviction);
+    fill.style.left = conviction >= 0 ? '50%' : `${pct}%`;
+    fill.style.width = `${Math.abs(pct - 50)}%`;
+    fill.setAttribute('data-direction', conviction >= 0 ? 'buy' : 'sell');
+  }
+  track.appendChild(fill);
+  convWrap.appendChild(track);
+  section.appendChild(convWrap);
+
+  // Counts + dollar value
+  const stats = el('div', { className: 'lthcs-insider-stats' });
+  const buyStat = el('div', { className: 'lthcs-insider-stat', attrs: { 'data-kind': 'buy' } });
+  buyStat.appendChild(el('span', { className: 'lthcs-insider-stat-num', text: String(buyCount) }));
+  buyStat.appendChild(el('span', { className: 'lthcs-insider-stat-label', text: buyCount === 1 ? 'open-market buy' : 'open-market buys' }));
+  stats.appendChild(buyStat);
+
+  const sellStat = el('div', { className: 'lthcs-insider-stat', attrs: { 'data-kind': 'sell' } });
+  sellStat.appendChild(el('span', { className: 'lthcs-insider-stat-num', text: String(sellCount) }));
+  sellStat.appendChild(el('span', { className: 'lthcs-insider-stat-label', text: sellCount === 1 ? 'sell' : 'sells' }));
+  stats.appendChild(sellStat);
+
+  if (Number.isFinite(netDollar) && netDollar !== 0) {
+    const netStat = el('div', {
+      className: 'lthcs-insider-stat',
+      attrs: { 'data-kind': netDollar >= 0 ? 'buy' : 'sell' },
+    });
+    netStat.appendChild(el('span', { className: 'lthcs-insider-stat-num', text: fmtDollars(netDollar) }));
+    netStat.appendChild(el('span', { className: 'lthcs-insider-stat-label', text: 'net 90d' }));
+    stats.appendChild(netStat);
+  }
+  section.appendChild(stats);
+
+  // CEO/CFO action — only if not neutral
+  if (ceoCfo && ceoCfo !== 'neutral') {
+    const ceoLine = el('div', {
+      className: 'lthcs-insider-ceo',
+      attrs: { 'data-action': ceoCfo },
+    });
+    ceoLine.appendChild(el('span', { className: 'lthcs-insider-ceo-label', text: 'CEO/CFO:' }));
+    ceoLine.appendChild(el('strong', { text: ceoCfo }));
+    section.appendChild(ceoLine);
+  }
+
+  // Raw transactions (collapsible)
+  const txns = Array.isArray(insider.raw_transactions) ? insider.raw_transactions : [];
+  if (txns.length > 0) {
+    const details = el('details', { className: 'lthcs-insider-txns' });
+    const summary = el('summary', { className: 'lthcs-insider-txns-summary' });
+    summary.textContent = `Recent transactions (showing ${Math.min(5, txns.length)} of ${txns.length})`;
+    details.appendChild(summary);
+
+    const tableWrap = el('div', { className: 'lthcs-insider-txns-wrap' });
+    const table = el('table', { className: 'lthcs-insider-txns-table' });
+    const thead = el('thead');
+    const headRow = el('tr');
+    for (const h of ['Date', 'Insider', 'Role', 'Code', 'Shares', 'Value']) {
+      headRow.appendChild(el('th', { text: h }));
+    }
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = el('tbody');
+    for (const tx of txns.slice(0, 5)) {
+      const tr = el('tr');
+      tr.appendChild(el('td', { text: String(tx.date || '—') }));
+      tr.appendChild(el('td', { text: String(tx.insider || '—') }));
+      tr.appendChild(el('td', { text: String(tx.role || '—') }));
+      const codeTd = el('td');
+      const code = String(tx.code || '');
+      codeTd.appendChild(el('span', {
+        className: 'lthcs-insider-code',
+        text: code || '—',
+        attrs: { 'data-code': code },
+      }));
+      tr.appendChild(codeTd);
+      tr.appendChild(el('td', { text: fmtShares(tx.shares) }));
+      tr.appendChild(el('td', { text: fmtDollars(tx.value) }));
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    tableWrap.appendChild(table);
+    details.appendChild(tableWrap);
+    section.appendChild(details);
+  }
+
+  wrap.appendChild(section);
+}
+
 function renderFlags(panel, { snapshotRow }) {
   const wrap = panel.querySelector('[data-slot="flags-wrap"]');
   clear(wrap);
@@ -606,6 +802,7 @@ function trapKeydown(e) {
  * @param {Object} [args.universeEntry]
  * @param {Object|null} [args.narrative]
  * @param {string} [args.calcDate] Optional explicit calc_date for variable_detail fetch.
+ * @param {Object|null} [args.insider] Optional SEC Form 4 record for this ticker.
  */
 export function openDetail(args) {
   const { ticker } = args || {};
@@ -617,6 +814,7 @@ export function openDetail(args) {
   const universeEntry = (args && args.universeEntry) || {};
   const narrative = (args && args.narrative) || null;
   const calcDate = (args && args.calcDate) || snapshotRow.calc_date || null;
+  const insider = (args && args.insider) || null;
 
   // Save prior focus for restoration on close
   if (!moduleState.rootEl || moduleState.rootEl.classList.contains('hidden')) {
@@ -636,6 +834,7 @@ export function openDetail(args) {
   renderChartSkeleton(panel);
   renderPillars(panel, { snapshotRow });
   renderNarrative(panel, { snapshotRow, narrative });
+  renderInsider(panel, { insider });
   renderFlags(panel, { snapshotRow });
   wireVardetailToggle(panel, { ticker, calcDate });
 

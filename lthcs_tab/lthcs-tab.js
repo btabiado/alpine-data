@@ -8,6 +8,10 @@
 import { openDetail } from './lthcs-detail.js';
 // --- end Week 9 hookup ---
 
+// --- Week 11 (market regime strip) hookup ---
+import { renderRegimeStrip } from './lthcs-regime.js';
+// --- end Week 11 hookup ---
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -15,6 +19,7 @@ import { openDetail } from './lthcs-detail.js';
 const SNAPSHOTS_BASE = '../data/lthcs/snapshots';
 const UNIVERSE_URL = '../data/lthcs/universe.json';
 const INDEX_URL = `${SNAPSHOTS_BASE}/index.json`;
+const INSIDER_BASE = '../data/lthcs/insider';
 
 const STORAGE_KEYS = {
   starred: 'lthcs.starred',
@@ -68,6 +73,7 @@ const state = {
   universe: null,        // raw universe JSON
   universeByTicker: {},  // ticker -> universe entry
   enriched: [],          // merged score+universe rows
+  insiderByTicker: {},   // Week 11: ticker -> insider record (SEC Form 4)
   activeFilters: {
     index: 'all',
     band: 'all',
@@ -199,6 +205,21 @@ async function fetchUniverse() {
     // Universe is enrichment only — proceed without it on failure.
     console.warn('LTHCS: universe fetch failed; proceeding without enrichment.', err);
     return { tickers: [] };
+  }
+}
+
+async function fetchInsider(calcDate) {
+  // Week 11: SEC Form 4 insider conviction map (universe-wide).
+  // Optional enrichment — missing file is normal on older snapshots.
+  if (!calcDate) return {};
+  try {
+    const res = await fetch(`${INSIDER_BASE}/${calcDate}.json`, { cache: 'no-store' });
+    if (!res.ok) return {};
+    const data = await res.json();
+    return (data && typeof data === 'object') ? data : {};
+  } catch (err) {
+    console.warn('LTHCS: insider fetch failed; modal will skip insider section.', err);
+    return {};
   }
 }
 
@@ -529,7 +550,8 @@ function wireCardClicks() {
     const universeEntry = state.universeByTicker[ticker] || null;
     const narrative = (state.narrativesByTicker && state.narrativesByTicker[ticker]) || null;
     const calcDate = (state.snapshot && state.snapshot.calc_date) || null;
-    openDetail({ ticker, snapshotRow, universeEntry, narrative, calcDate });
+    const insider = (state.insiderByTicker && state.insiderByTicker[ticker]) || null;
+    openDetail({ ticker, snapshotRow, universeEntry, narrative, calcDate, insider });
   });
 }
 // --- end Week 9 hookup ---
@@ -566,6 +588,16 @@ async function refresh() {
     persistSnapshotDate(snapshot && snapshot.calc_date);
     hide($('#lthcs-loading'));
     renderAll();
+
+    // Week 11: side-load insider map + regime strip. Both are best-effort
+    // and must never block the main render or surface errors to the user.
+    const calcDate = snapshot && snapshot.calc_date;
+    fetchInsider(calcDate)
+      .then((map) => { state.insiderByTicker = map || {}; })
+      .catch((err) => console.warn('LTHCS: insider load failed', err));
+    renderRegimeStrip(calcDate).catch((err) => {
+      console.warn('LTHCS: regime strip render failed', err);
+    });
   } finally {
     if (btn) btn.disabled = false;
   }

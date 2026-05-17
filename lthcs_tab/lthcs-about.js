@@ -26,7 +26,9 @@ const PILLAR_LIST = [
 const SOURCE_LIST = [
   ["Yahoo Finance (yfinance)", "Daily prices, 90d momentum, 30d volatility. No API key."],
   ["SEC EDGAR XBRL", "Annual + quarterly revenue, gross profit, operating cash flow. User-Agent required."],
-  ["FRED", "CPI, Fed Funds Rate, 10-Year Treasury, Unemployment Rate. Free API key."],
+  ["SEC Form 4 (insider conviction)", "90-day rolling window of insider open-market buys vs sells, with cluster-buying and CEO/CFO flags. Shown in the per-ticker detail modal."],
+  ["FRED", "CPI, Fed Funds Rate, 10-Year Treasury, Unemployment Rate, HY/IG OAS credit spreads, 2s10s curve, broad dollar. Free API key."],
+  ["SPDR sector ETFs", "11 sector ETFs (XLK / XLF / XLE / etc.) ranked vs SPY on 1m and 3m total return. Drives the Market Regime strip."],
   ["EIA", "WTI / Brent / gasoline prices. Free API key."],
   ["Alpha Vantage", "News sentiment. Free tier: 25 req/day; V1 limitation documented below."],
 ];

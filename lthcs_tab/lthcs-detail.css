@@ -520,3 +520,308 @@
     transition: none;
   }
 }
+
+/* =========================================================================
+   Insider conviction section (Week 11)
+   ========================================================================= */
+.lthcs-modal-root .lthcs-modal-insider {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lthcs-modal-root .lthcs-insider-empty {
+  font-size: 12.5px;
+  color: var(--text-tertiary, #6B7280);
+  padding: 10px 12px;
+  background: var(--bg-card, #171C22);
+  border: 1px dashed var(--border-subtle, #2A323D);
+  border-radius: var(--radius-md, 10px);
+}
+
+.lthcs-modal-root .lthcs-insider-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.lthcs-modal-root .lthcs-insider-regime {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary, #9CA3AF);
+  border: 1px solid var(--border-subtle, #2A323D);
+}
+
+.lthcs-modal-root .lthcs-insider-regime[data-regime="strong_buying"] {
+  background: rgba(74, 143, 95, 0.18);
+  color: #B6DCC1;
+  border-color: rgba(74, 143, 95, 0.45);
+}
+.lthcs-modal-root .lthcs-insider-regime[data-regime="mild_buying"] {
+  background: rgba(74, 143, 95, 0.10);
+  color: #B6DCC1;
+  border-color: rgba(74, 143, 95, 0.30);
+}
+.lthcs-modal-root .lthcs-insider-regime[data-regime="neutral"] {
+  background: rgba(156, 163, 175, 0.10);
+  color: var(--text-secondary, #9CA3AF);
+}
+.lthcs-modal-root .lthcs-insider-regime[data-regime="mild_selling"] {
+  background: rgba(216, 145, 72, 0.12);
+  color: #EFC79A;
+  border-color: rgba(216, 145, 72, 0.35);
+}
+.lthcs-modal-root .lthcs-insider-regime[data-regime="heavy_selling"] {
+  background: rgba(184, 90, 62, 0.18);
+  color: #ECB1A0;
+  border-color: rgba(184, 90, 62, 0.45);
+}
+
+.lthcs-modal-root .lthcs-insider-cluster {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  background: rgba(74, 143, 95, 0.20);
+  color: #C6E5CF;
+  border: 1px solid rgba(74, 143, 95, 0.55);
+}
+
+.lthcs-modal-root .lthcs-insider-window {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary, #6B7280);
+}
+
+.lthcs-modal-root .lthcs-insider-conviction {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lthcs-modal-root .lthcs-insider-conviction-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary, #6B7280);
+}
+
+.lthcs-modal-root .lthcs-insider-conviction-label strong {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 13px;
+  color: var(--text-primary, #E6E9EE);
+  text-transform: none;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.lthcs-modal-root .lthcs-insider-conviction-track {
+  position: relative;
+  height: 8px;
+  background: var(--bg-card, #171C22);
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.lthcs-modal-root .lthcs-insider-conviction-mid {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong, #3A4452);
+  transform: translateX(-0.5px);
+}
+
+.lthcs-modal-root .lthcs-insider-conviction-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--drift-stable, #9CA3AF);
+  border-radius: 999px;
+  min-width: 2px;
+}
+
+.lthcs-modal-root .lthcs-insider-conviction-fill[data-direction="buy"] {
+  background: linear-gradient(90deg, rgba(74, 143, 95, 0.65), var(--drift-improving, #4A8F5F));
+}
+.lthcs-modal-root .lthcs-insider-conviction-fill[data-direction="sell"] {
+  background: linear-gradient(90deg, var(--drift-declining, #E26D5C), rgba(226, 109, 92, 0.65));
+}
+
+.lthcs-modal-root .lthcs-insider-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lthcs-modal-root .lthcs-insider-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-card, #171C22);
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: var(--radius-md, 10px);
+}
+
+.lthcs-modal-root .lthcs-insider-stat[data-kind="buy"] {
+  border-color: rgba(74, 143, 95, 0.35);
+}
+.lthcs-modal-root .lthcs-insider-stat[data-kind="sell"] {
+  border-color: rgba(226, 109, 92, 0.35);
+}
+
+.lthcs-modal-root .lthcs-insider-stat-num {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #E6E9EE);
+  font-variant-numeric: tabular-nums;
+}
+.lthcs-modal-root .lthcs-insider-stat[data-kind="buy"] .lthcs-insider-stat-num {
+  color: #B6DCC1;
+}
+.lthcs-modal-root .lthcs-insider-stat[data-kind="sell"] .lthcs-insider-stat-num {
+  color: #ECB1A0;
+}
+
+.lthcs-modal-root .lthcs-insider-stat-label {
+  font-size: 11px;
+  color: var(--text-secondary, #9CA3AF);
+  text-transform: lowercase;
+  letter-spacing: 0.2px;
+}
+
+.lthcs-modal-root .lthcs-insider-ceo {
+  font-size: 12px;
+  color: var(--text-secondary, #9CA3AF);
+}
+
+.lthcs-modal-root .lthcs-insider-ceo strong {
+  text-transform: capitalize;
+  margin-left: 4px;
+}
+
+.lthcs-modal-root .lthcs-insider-ceo[data-action="buying"] strong {
+  color: var(--drift-improving, #4A8F5F);
+}
+.lthcs-modal-root .lthcs-insider-ceo[data-action="selling"] strong {
+  color: var(--drift-declining, #E26D5C);
+}
+
+.lthcs-modal-root .lthcs-insider-ceo-label {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10.5px;
+  color: var(--text-tertiary, #6B7280);
+}
+
+.lthcs-modal-root .lthcs-insider-txns {
+  margin-top: 2px;
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: var(--radius-md, 10px);
+  background: var(--bg-card, #171C22);
+}
+
+.lthcs-modal-root .lthcs-insider-txns-summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary, #9CA3AF);
+  list-style: none;
+  user-select: none;
+}
+.lthcs-modal-root .lthcs-insider-txns-summary::-webkit-details-marker {
+  display: none;
+}
+.lthcs-modal-root .lthcs-insider-txns-summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--text-tertiary, #6B7280);
+  transition: transform 120ms ease;
+}
+.lthcs-modal-root .lthcs-insider-txns[open] .lthcs-insider-txns-summary::before {
+  transform: rotate(90deg);
+}
+
+.lthcs-modal-root .lthcs-insider-txns-wrap {
+  border-top: 1px solid var(--border-subtle, #2A323D);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lthcs-modal-root .lthcs-insider-txns-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11.5px;
+}
+
+.lthcs-modal-root .lthcs-insider-txns-table th,
+.lthcs-modal-root .lthcs-insider-txns-table td {
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle, #2A323D);
+  white-space: nowrap;
+}
+
+.lthcs-modal-root .lthcs-insider-txns-table th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary, #6B7280);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lthcs-modal-root .lthcs-insider-txns-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lthcs-modal-root .lthcs-insider-code {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary, #9CA3AF);
+}
+.lthcs-modal-root .lthcs-insider-code[data-code="P"] {
+  background: rgba(74, 143, 95, 0.18);
+  color: #B6DCC1;
+}
+.lthcs-modal-root .lthcs-insider-code[data-code="S"] {
+  background: rgba(226, 109, 92, 0.18);
+  color: #ECB1A0;
+}
+
+@media (max-width: 640px) {
+  .lthcs-modal-root .lthcs-insider-stats {
+    gap: 6px;
+  }
+  .lthcs-modal-root .lthcs-insider-stat {
+    padding: 5px 8px;
+  }
+  .lthcs-modal-root .lthcs-insider-txns-table {
+    font-size: 11px;
+  }
+}
