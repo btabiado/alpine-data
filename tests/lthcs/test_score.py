@@ -16,6 +16,8 @@ from lthcs.score import (
     compute_macro_adjustment,
     compute_volatility_modifier,
     get_maturity_weights,
+    _load_volatility_modifier_config,
+    _parse_trigger_expression,
 )
 
 
@@ -525,3 +527,282 @@ class TestRenormalizeOnStubbedThesis:
         # No renorm — these flags don't drop a whole pillar.
         assert r["lthcs_score"] == pytest.approx(80.0)
         assert r["dropped_pillars"] == []
+
+
+# --- Trigger-expression parser ---------------------------------------------
+
+class TestParseTriggerExpression:
+    """Verify the modifier trigger-string parser."""
+
+    def test_strict_gt(self):
+        assert _parse_trigger_expression(
+            "trailing_30d_volatility_percentile > 90"
+        ) == ("trailing_30d_volatility_percentile", ">", 90.0)
+
+    def test_gte(self):
+        assert _parse_trigger_expression("x >= 5") == ("x", ">=", 5.0)
+
+    def test_lt(self):
+        assert _parse_trigger_expression("x < 10") == ("x", "<", 10.0)
+
+    def test_lte(self):
+        assert _parse_trigger_expression("x <= 10.5") == ("x", "<=", 10.5)
+
+    def test_whitespace_tolerant(self):
+        assert _parse_trigger_expression("  metric  >   42  ") == (
+            "metric", ">", 42.0,
+        )
+
+    def test_empty_returns_none(self):
+        assert _parse_trigger_expression("") is None
+
+    def test_none_returns_none(self):
+        assert _parse_trigger_expression(None) is None  # type: ignore[arg-type]
+
+    def test_no_operator_returns_none(self):
+        assert _parse_trigger_expression("just_a_metric") is None
+
+    def test_non_numeric_threshold_returns_none(self):
+        assert _parse_trigger_expression("metric > banana") is None
+
+    def test_empty_metric_returns_none(self):
+        assert _parse_trigger_expression(" > 5") is None
+
+    def test_unsupported_operator_returns_none(self):
+        # '==' is not a supported comparator.
+        assert _parse_trigger_expression("x == 5") is None
+
+
+# --- Volatility modifier config loader -------------------------------------
+
+class TestLoadVolatilityModifierConfig:
+    """Verify the loader pulls config from weights.json and falls back
+    gracefully when the block is missing or malformed."""
+
+    def test_loads_from_weights_json(self, weights_config):
+        # Real on-disk weights.json matches the documented defaults.
+        assert _load_volatility_modifier_config(weights_config) == (90.0, ">", -3.0)
+
+    def test_custom_threshold(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "trailing_30d_volatility_percentile > 80",
+                    "magnitude": -3.0,
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        assert _load_volatility_modifier_config(cfg) == (80.0, ">", -3.0)
+
+    def test_custom_magnitude(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "trailing_30d_volatility_percentile > 90",
+                    "magnitude": -5.0,
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        assert _load_volatility_modifier_config(cfg) == (90.0, ">", -5.0)
+
+    def test_missing_modifiers_block_falls_back(self):
+        assert _load_volatility_modifier_config({}) == (90.0, ">", -3.0)
+
+    def test_missing_volatility_block_falls_back(self):
+        assert _load_volatility_modifier_config({"modifiers": {}}) == (
+            90.0, ">", -3.0,
+        )
+
+    def test_malformed_trigger_falls_back(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "this is not parseable",
+                    "magnitude": -3.0,
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        assert _load_volatility_modifier_config(cfg) == (90.0, ">", -3.0)
+
+    def test_unknown_metric_falls_back(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "unrelated_metric > 50",
+                    "magnitude": -3.0,
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        assert _load_volatility_modifier_config(cfg) == (90.0, ">", -3.0)
+
+    def test_malformed_magnitude_falls_back(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "trailing_30d_volatility_percentile > 90",
+                    "magnitude": "very negative",
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        assert _load_volatility_modifier_config(cfg) == (90.0, ">", -3.0)
+
+    def test_unsupported_applies_to_falls_back(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "trailing_30d_volatility_percentile > 50",
+                    "magnitude": -10.0,
+                    "applies_to": "tech_only",
+                },
+            },
+        }
+        # Unsupported applies_to -> we fall back to defaults rather than
+        # quietly apply a config that we can't faithfully honour.
+        assert _load_volatility_modifier_config(cfg) == (90.0, ">", -3.0)
+
+    def test_gte_operator_supported(self):
+        cfg = {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "trailing_30d_volatility_percentile >= 90",
+                    "magnitude": -3.0,
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        assert _load_volatility_modifier_config(cfg) == (90.0, ">=", -3.0)
+
+
+# --- Modifier wiring into compute_volatility_modifier ----------------------
+
+class TestVolatilityModifierFromConfig:
+    """End-to-end: configuration in weights.json drives the modifier."""
+
+    _UNIVERSE_1_TO_100 = [float(x) for x in range(1, 101)]
+
+    def _cfg(self, trigger, magnitude, applies_to="all_tickers"):
+        return {
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": trigger,
+                    "magnitude": magnitude,
+                    "applies_to": applies_to,
+                },
+            },
+        }
+
+    def test_default_from_real_weights_json(self, weights_config):
+        """The on-disk weights.json drives the modifier with the canonical
+        90th-percentile / -3.0 contract."""
+        # universe 1..100; p90 = 1 + (100-1)*0.9 = 90.1
+        assert compute_volatility_modifier(
+            91.0, self._UNIVERSE_1_TO_100, weights_config=weights_config,
+        ) == -3.0
+        # Below p90 -> no penalty.
+        assert compute_volatility_modifier(
+            50.0, self._UNIVERSE_1_TO_100, weights_config=weights_config,
+        ) == 0.0
+
+    def test_boundary_at_exact_p90_strict_does_not_fire(self):
+        # Construct a universe whose p90 is exactly 90.0.
+        universe = [0.0] + [90.0] * 99
+        cfg = self._cfg("trailing_30d_volatility_percentile > 90", -3.0)
+        assert compute_volatility_modifier(
+            90.0, universe, weights_config=cfg,
+        ) == 0.0
+
+    def test_just_above_p90_fires(self):
+        universe = [0.0] + [90.0] * 99
+        cfg = self._cfg("trailing_30d_volatility_percentile > 90", -3.0)
+        assert compute_volatility_modifier(
+            90.01, universe, weights_config=cfg,
+        ) == -3.0
+
+    def test_custom_magnitude_applied(self):
+        cfg = self._cfg("trailing_30d_volatility_percentile > 90", -5.0)
+        # universe 1..100; p90=90.1, ticker 99 > 90.1.
+        assert compute_volatility_modifier(
+            99.0, self._UNIVERSE_1_TO_100, weights_config=cfg,
+        ) == -5.0
+
+    def test_custom_threshold_applied(self):
+        # Threshold = 80th percentile. universe 1..100; p80 = 1 + (100-1)*0.8 = 80.2
+        cfg = self._cfg("trailing_30d_volatility_percentile > 80", -3.0)
+        # ticker 81 > 80.2 -> fires.
+        assert compute_volatility_modifier(
+            81.0, self._UNIVERSE_1_TO_100, weights_config=cfg,
+        ) == -3.0
+        # ticker 80 < 80.2 -> does not fire.
+        assert compute_volatility_modifier(
+            80.0, self._UNIVERSE_1_TO_100, weights_config=cfg,
+        ) == 0.0
+
+    def test_missing_block_falls_back_to_defaults(self):
+        # No modifiers block at all.
+        cfg = {}
+        # Universe 1..100; default p90=90.1 with -3.0 magnitude.
+        assert compute_volatility_modifier(
+            95.0, self._UNIVERSE_1_TO_100, weights_config=cfg,
+        ) == -3.0
+
+    def test_malformed_trigger_falls_back_to_defaults(self, caplog):
+        cfg = self._cfg("garbage expression", -3.0)
+        with caplog.at_level("WARNING", logger="lthcs.score"):
+            result = compute_volatility_modifier(
+                95.0, self._UNIVERSE_1_TO_100, weights_config=cfg,
+            )
+        assert result == -3.0
+        # Warning emitted at least once.
+        assert any("malformed" in rec.message for rec in caplog.records)
+
+    def test_weights_config_none_uses_defaults(self):
+        # Passing weights_config=None should be safe and use defaults.
+        assert compute_volatility_modifier(
+            95.0, self._UNIVERSE_1_TO_100, weights_config=None,
+        ) == -3.0
+
+    def test_compute_lthcs_score_uses_config(self, weights_config, neutral_subscores):
+        """Smoke test that compute_lthcs_score passes the config through."""
+        # Use real weights.json -- volatility modifier should fire at -3.
+        r = compute_lthcs_score(
+            ticker="X", sector="Y",
+            maturity_stage="standard_compounder",
+            pillar_subscores=neutral_subscores,
+            weights_config=weights_config,
+            ticker_volatility=95.0,
+            universe_volatilities=self._UNIVERSE_1_TO_100,
+        )
+        assert r["modifiers"]["volatility_mod"] == -3.0
+        assert r["lthcs_score"] == 47.0
+
+    def test_compute_lthcs_score_respects_overridden_magnitude(self, neutral_subscores):
+        # Build a weights_config with a -7 magnitude override.
+        cfg = {
+            "profiles": {"standard_compounder": [0.25, 0.20, 0.15, 0.20, 0.20]},
+            "score_bands": {
+                "review": {"min": 0, "max": 49},
+                "weakening": {"min": 50, "max": 59},
+            },
+            "modifiers": {
+                "volatility_modifier": {
+                    "trigger": "trailing_30d_volatility_percentile > 90",
+                    "magnitude": -7.0,
+                    "applies_to": "all_tickers",
+                },
+            },
+        }
+        r = compute_lthcs_score(
+            ticker="X", sector="Y",
+            maturity_stage="standard_compounder",
+            pillar_subscores=neutral_subscores,
+            weights_config=cfg,
+            ticker_volatility=95.0,
+            universe_volatilities=self._UNIVERSE_1_TO_100,
+        )
+        assert r["modifiers"]["volatility_mod"] == -7.0
+        assert r["lthcs_score"] == 43.0
