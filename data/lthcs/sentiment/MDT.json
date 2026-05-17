@@ -1,0 +1,15 @@
+{
+  "ticker": "MDT",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 37,
+  "mean_sentiment_score": 0.40540540540540543,
+  "mean_relevance_score": 1.0,
+  "label_counts": {
+    "Bearish": 1,
+    "Somewhat-Bearish": 0,
+    "Neutral": 13,
+    "Somewhat-Bullish": 0,
+    "Bullish": 23
+  }
+}

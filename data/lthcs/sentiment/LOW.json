@@ -1,0 +1,15 @@
+{
+  "ticker": "LOW",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 41,
+  "mean_sentiment_score": 0.4268292682926829,
+  "mean_relevance_score": 1.0,
+  "label_counts": {
+    "Bearish": 1,
+    "Somewhat-Bearish": 0,
+    "Neutral": 14,
+    "Somewhat-Bullish": 0,
+    "Bullish": 26
+  }
+}

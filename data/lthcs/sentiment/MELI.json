@@ -1,0 +1,15 @@
+{
+  "ticker": "MELI",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 31,
+  "mean_sentiment_score": 0.6129032258064516,
+  "mean_relevance_score": 1.0,
+  "label_counts": {
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 3,
+    "Somewhat-Bullish": 0,
+    "Bullish": 28
+  }
+}

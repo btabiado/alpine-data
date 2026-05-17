@@ -1,0 +1,15 @@
+{
+  "ticker": "NXPI",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 39,
+  "mean_sentiment_score": 0.48717948717948717,
+  "mean_relevance_score": 1.0,
+  "label_counts": {
+    "Bearish": 1,
+    "Somewhat-Bearish": 0,
+    "Neutral": 7,
+    "Somewhat-Bullish": 0,
+    "Bullish": 31
+  }
+}

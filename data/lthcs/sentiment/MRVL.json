@@ -1,0 +1,15 @@
+{
+  "ticker": "MRVL",
+  "last_scored": "2026-05-17",
+  "model_version": "v1.0.0",
+  "article_count": 50,
+  "mean_sentiment_score": 0.55,
+  "mean_relevance_score": 1.0,
+  "label_counts": {
+    "Bearish": 0,
+    "Somewhat-Bearish": 0,
+    "Neutral": 8,
+    "Somewhat-Bullish": 0,
+    "Bullish": 42
+  }
+}

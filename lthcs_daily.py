@@ -62,6 +62,7 @@ from lthcs.sources import (
     fred,
     sec_8k,
     sec_edgar,
+    sector_rss,
     yahoo,
     yahoo_events,
 )
@@ -552,21 +553,26 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             av_status = "no picks"
 
     # Supplement priority for tickers without fresh AV sentiment:
-    #   1. Finnhub news_sentiment      (REAL sentiment direction; primary)
+    #   1. Finnhub recommendation       (REAL analyst-consensus direction;
+    #                                    free for any US-listed name with
+    #                                    analyst coverage)
     #   2. SEC 8-K material events     (structured corporate events)
-    #   3. Yahoo earnings surprise      (recent quarter beat/miss)
-    #   4. Yahoo analyst actions        (recent broker upgrades/downgrades)
+    #   3. Yahoo earnings + analyst    (recent quarter beat/miss; broker
+    #                                    upgrades/downgrades)
+    #   4. Sector RSS                  (FDA/EIA/Fed RSS for 36 mapped
+    #                                    pharma/energy/financials names)
     #   5. AI news engagement           (HN/TC/VB; fallback for AI cohort)
     #
     # Each step writes to the per-ticker sentiment file ONLY if no fresher
     # signal is already there. Steps 2-5 require |sentiment| >= 0.15 to
     # avoid neutral signals replacing the composite-renorm path. Finnhub
-    # (step 1) writes unconditionally — its score is real news data even
-    # when split bullish/bearish, which is meaningful itself.
+    # (step 1) writes unconditionally — analyst consensus is real
+    # directional sentiment.
     finnhub_supplement_count = 0
     ai_news_supplement_count = 0
     sec_8k_supplement_count = 0
     yahoo_event_supplement_count = 0
+    sector_rss_supplement_count = 0
 
     def _has_fresh_sentiment(sym: str) -> bool:
         if state.rotation is None:
@@ -729,7 +735,28 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if _write_supplement(sym, sig):
                 yahoo_event_supplement_count += 1
 
-        # --- Step 3: AI news engagement (fallback, AI cohort only) ---
+        # --- Step 4: Sector RSS (FDA + EIA + Fed) ---
+        # Free, no auth. Fires for the 36 ticker-keyword-mapped names in
+        # pharma / energy / financials. Additive on top of earlier steps.
+        try:
+            sector_events = sector_rss.aggregate_sector_events(
+                state.active_tickers
+            )
+        except Exception as exc:
+            if state.args.verbose:
+                print("  sector-RSS fetch failed: %s" % exc)
+            sector_events = {}
+
+        for sym, ev in sector_events.items():
+            if ev.get("event_count", 0) <= 0:
+                continue
+            if _has_fresh_sentiment(sym):
+                continue
+            sig = sector_rss.parse_thesis_signal(ev)
+            if _write_supplement(sym, sig):
+                sector_rss_supplement_count += 1
+
+        # --- Step 5: AI news engagement (fallback, AI cohort only) ---
         try:
             state.ai_news_by_ticker = ai_news.aggregate_ai_news(
                 state.active_tickers
