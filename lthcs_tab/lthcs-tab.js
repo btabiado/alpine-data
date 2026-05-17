@@ -12,6 +12,10 @@ import { openDetail } from './lthcs-detail.js';
 import { renderRegimeStrip } from './lthcs-regime.js';
 // --- end Week 11 hookup ---
 
+// --- Tier 4 #18 (movers leaderboard strip) hookup ---
+import { renderMoversStrip } from './lthcs-movers.js';
+// --- end Tier 4 #18 hookup ---
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -868,7 +872,30 @@ function wireEvents() {
   wireBandStats();
   wireRefresh();
   wireCardClicks();
+  wireMoverClicks();
   wireActiveFilters();
+}
+
+// Tier 4 #18: clicking a mover tile opens the same detail modal the cards
+// use. Delegated handler — the strip is innerHTML'd on every refresh, so we
+// bind once to the host section.
+function wireMoverClicks() {
+  const host = $('#lthcs-movers-strip');
+  if (!host) return;
+  host.addEventListener('click', (e) => {
+    const tile = e.target.closest('[data-ticker]');
+    if (!tile || !host.contains(tile)) return;
+    const ticker = tile.dataset.ticker;
+    if (!ticker) return;
+    const scores = (state.snapshot && state.snapshot.scores) || [];
+    const snapshotRow = scores.find((r) => r && r.ticker === ticker) || null;
+    if (!snapshotRow) return;
+    const universeEntry = state.universeByTicker[ticker] || null;
+    const narrative = (state.narrativesByTicker && state.narrativesByTicker[ticker]) || null;
+    const calcDate = (state.snapshot && state.snapshot.calc_date) || null;
+    const insider = (state.insiderByTicker && state.insiderByTicker[ticker]) || null;
+    openDetail({ ticker, snapshotRow, universeEntry, narrative, calcDate, insider });
+  });
 }
 
 // --- Week 9 (detail modal) hookup ---
@@ -963,6 +990,11 @@ async function refresh() {
         state.trendByTicker = map || {};
         // Re-render only the cards — stats/chips are unaffected by trend.
         renderCards(applyFilters());
+        // Tier 4 #18: paint the movers strip once trends are known. The
+        // strip reads state.trendByTicker directly, so we wait until it's
+        // populated before showing anything (the section starts hidden).
+        try { renderMoversStrip(state); }
+        catch (e) { console.warn('LTHCS: movers strip render failed', e); }
       })
       .catch((err) => console.warn('LTHCS: trend map load failed', err));
   } finally {

@@ -429,6 +429,228 @@ input[type="search"] {
 }
 
 /* =========================================================================
+   Movers leaderboard strip (Tier 4 #18)
+   Two side-by-side sections (gainers / decliners) of compact ticker tiles
+   that link straight into the detail modal. Hidden entirely when trends
+   resolve to no movers in either direction.
+   ========================================================================= */
+.lthcs-movers-strip {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+}
+
+.lthcs-movers-strip-inner {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+
+.lthcs-movers-title {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  flex-shrink: 0;
+  align-self: center;
+  margin-right: 2px;
+}
+
+.lthcs-movers-sections {
+  display: flex;
+  flex: 1 1 auto;
+  gap: 14px;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.lthcs-movers-section {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lthcs-movers-section-label {
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+/* Tinted label colors so the section identity reads at a glance. */
+.lthcs-movers-section[data-kind="gainers"] .lthcs-movers-section-label {
+  color: var(--drift-improving-bright);
+}
+.lthcs-movers-section[data-kind="decliners"] .lthcs-movers-section-label {
+  color: var(--drift-declining-bright);
+}
+
+/* Tile row scrolls horizontally — keeps the strip a single line even when
+   the section has the full 10 tiles on narrow viewports. */
+.lthcs-movers-tiles {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  /* Hide the scrollbar visually but keep keyboard/touch scrolling. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.lthcs-movers-tiles::-webkit-scrollbar {
+  height: 6px;
+}
+.lthcs-movers-tiles::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+}
+.lthcs-movers-tiles::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lthcs-mover-tile {
+  flex: 0 0 auto;
+  width: 70px;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 4px 5px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.lthcs-mover-tile:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.lthcs-mover-tile:active {
+  transform: translateY(0);
+}
+
+.lthcs-mover-tile:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.22);
+}
+
+/* Tinted backgrounds + accent borders, matching the trend-pill treatment
+   from the cards. Gainers: green family. Decliners: red family. */
+.lthcs-mover-tile[data-kind="gainers"] {
+  background: rgba(var(--drift-improving-rgb), 0.10);
+  border-color: rgba(var(--drift-improving-rgb), 0.35);
+}
+.lthcs-mover-tile[data-kind="gainers"]:hover {
+  background: rgba(var(--drift-improving-rgb), 0.18);
+  border-color: rgba(var(--drift-improving-rgb), 0.55);
+}
+
+.lthcs-mover-tile[data-kind="decliners"] {
+  background: rgba(var(--drift-declining-rgb), 0.10);
+  border-color: rgba(var(--drift-declining-rgb), 0.35);
+}
+.lthcs-mover-tile[data-kind="decliners"]:hover {
+  background: rgba(var(--drift-declining-rgb), 0.18);
+  border-color: rgba(var(--drift-declining-rgb), 0.55);
+}
+
+.lthcs-mover-ticker {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.lthcs-mover-delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.lthcs-mover-arrow {
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.lthcs-mover-value {
+  font-size: 12.5px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  letter-spacing: -0.2px;
+}
+
+.lthcs-mover-tile[data-kind="gainers"] .lthcs-mover-arrow,
+.lthcs-mover-tile[data-kind="gainers"] .lthcs-mover-value {
+  color: var(--drift-improving-bright);
+}
+.lthcs-mover-tile[data-kind="decliners"] .lthcs-mover-arrow,
+.lthcs-mover-tile[data-kind="decliners"] .lthcs-mover-value {
+  color: var(--drift-declining-bright);
+}
+
+.lthcs-mover-period {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  line-height: 1;
+}
+
+/* ≤768px — sections stack vertically so each gets the full width and the
+   tile row inside can scroll comfortably without crowding. */
+@media (max-width: 768px) {
+  .lthcs-movers-sections {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .lthcs-movers-title {
+    width: 100%;
+    align-self: flex-start;
+  }
+}
+
+/* ≤480px — shrink each tile so two or three fit per visible viewport width,
+   forcing a horizontal scroll within each section rather than a wrapped grid. */
+@media (max-width: 480px) {
+  .lthcs-movers-strip {
+    padding: 8px 10px;
+  }
+  .lthcs-mover-tile {
+    width: 58px;
+    min-height: 50px;
+    padding: 5px 3px 4px;
+  }
+  .lthcs-mover-ticker {
+    font-size: 11.5px;
+  }
+  .lthcs-mover-value {
+    font-size: 11.5px;
+  }
+}
+
+/* =========================================================================
    Summary strip
    ========================================================================= */
 .lthcs-summary {
