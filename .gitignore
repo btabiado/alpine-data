@@ -1,5 +1,6 @@
 # Python
 .venv/
+venv/
 __pycache__/
 *.py[cod]
 *$py.class
@@ -8,8 +9,10 @@ __pycache__/
 
 # OS / editor
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
+*.swp
 
 # Generated dashboard output
 dashboard.html
@@ -33,6 +36,10 @@ data/.stale/
 # Keep schema templates if you want to re-add them later (manually)
 !data/.gitkeep
 
+# LTHCS — local API response cache (raw vendor data, may have redistribution terms)
+.cache/
+
 # Local env / secrets
 .env
+.env.local
 *.local

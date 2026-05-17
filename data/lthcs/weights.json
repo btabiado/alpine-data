@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-05-16",
+  "description": "Pillar weights by maturity stage. Order is [adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des]. Weights must sum to 1.0 within each profile.",
+  "pillar_order": [
+    "adoption_momentum",
+    "institutional_confidence",
+    "financial_evolution",
+    "thesis_integrity",
+    "des"
+  ],
+  "profiles": {
+    "standard_compounder":       [0.25, 0.20, 0.15, 0.20, 0.20],
+    "pre_revenue":               [0.35, 0.20, 0.05, 0.20, 0.20],
+    "pre_profit_growth":         [0.30, 0.20, 0.15, 0.20, 0.15],
+    "path_to_profitability":    [0.25, 0.20, 0.20, 0.20, 0.15],
+    "profitability_inflection":  [0.25, 0.20, 0.20, 0.20, 0.15],
+    "recovery_stabilization":    [0.15, 0.15, 0.35, 0.20, 0.15],
+    "recovery_operational":      [0.20, 0.20, 0.30, 0.15, 0.15],
+    "recovery_earnings":         [0.20, 0.25, 0.25, 0.15, 0.15],
+    "recovery_rerating":         [0.25, 0.20, 0.15, 0.20, 0.20]
+  },
+  "score_bands": {
+    "elite":            {"min": 90, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
+    "high_confidence":  {"min": 80, "max": 89,  "color": "#4A8F5F", "label": "High Confidence Hold"},
+    "constructive":     {"min": 70, "max": 79,  "color": "#C9A227", "label": "Constructive Hold"},
+    "monitor":          {"min": 60, "max": 69,  "color": "#D89148", "label": "Monitor Closely"},
+    "weakening":        {"min": 50, "max": 59,  "color": "#B85A3E", "label": "Confidence Weakening"},
+    "review":           {"min": 0,  "max": 49,  "color": "#7A2E1F", "label": "Structural Review Required"}
+  },
+  "modifiers": {
+    "macro_adjustment": {
+      "trigger": "10y_yield_30d_change_abs_bp > 25",
+      "magnitude": 2.0,
+      "applies_to": "all_tickers"
+    },
+    "volatility_modifier": {
+      "trigger": "trailing_30d_volatility_percentile > 90",
+      "magnitude": -3.0,
+      "applies_to": "all_tickers"
+    },
+    "sector_adjustment_table": "data/lthcs/sector_des_weights.json"
+  }
+}
