@@ -565,23 +565,28 @@ def _engagement_sentiment(
 
     Returns:
         ``None``  — no mentions at all; Thesis treats as no signal.
-        ``+0.1``  — 1-2 mentions; weak engaged-but-niche signal.
-        ``+0.25`` — 3+ mentions, low average engagement.
-        ``+0.45`` — 3+ mentions AND high average engagement (HN points or
+        ``+0.15`` — 1-2 mentions; weak engaged-but-niche signal.
+        ``+0.35`` — 3+ mentions, low average engagement.
+        ``+0.60`` — 3+ mentions AND high average engagement (HN points or
                     comments above threshold).
 
-    Tuning note: these values were bumped 2026-05-17 from a uniform
-    +0.2/+0.0 scheme that caused a net regression — for top-pillar tickers
-    where other pillars score 80+, writing a +0.2 sentiment (subscore 60)
-    is LOWER than the composite-renorm path which redistributes thesis
-    weight to other strong pillars. Bumping to +0.45 (subscore ~72) puts
-    engaged AI-cohort names above the renorm-baseline so AI news is a net
-    positive signal.
+    Tuning history:
+    - V1 (initial): uniform +0.2 / 0.0 scheme. Caused regression: for
+      top-pillar tickers where other pillars score 80+, writing a +0.2
+      sentiment (subscore 60) is LOWER than the composite-renorm path
+      that redistributes thesis weight to strong pillars (effective
+      subscore ~80).
+    - V2 (bumped 2026-05-17 same-day): +0.45 high-engagement (subscore
+      ~72). Better, but still under renorm baseline for top names.
+    - V3 (current): +0.60 high-engagement (subscore ~80). Matches the
+      renorm baseline for the strongest names so AI news is strictly an
+      upgrade — adds real engagement signal without dropping any name
+      below where the renorm path would have placed it.
     """
     if total_mentions <= 0:
         return None
     if total_mentions < _ENGAGEMENT_MIN_MENTIONS:
-        return 0.1  # weak signal; still some interest
+        return 0.15  # weak signal; still some interest
     # Use averages so a single viral post doesn't dominate.
     avg_points = hn_total_points / max(total_mentions, 1)
     avg_comments = hn_total_comments / max(total_mentions, 1)
@@ -589,8 +594,8 @@ def _engagement_sentiment(
         avg_points >= _ENGAGEMENT_POINTS_THRESHOLD
         or avg_comments >= _ENGAGEMENT_COMMENTS_THRESHOLD
     ):
-        return 0.45  # in the news cycle with real engagement
-    return 0.25      # in the news cycle, lower engagement
+        return 0.60  # in the news cycle with real engagement (subscore ~80)
+    return 0.35      # in the news cycle, lower engagement (subscore ~67)
 
 
 def compute_thesis_signal_from_news(news_dict: Dict[str, Any]) -> Dict[str, Any]:

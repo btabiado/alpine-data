@@ -1252,7 +1252,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 47,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -1261,10 +1261,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1691,7 +1691,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 51,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -1700,10 +1700,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1801,7 +1801,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 48,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -1810,10 +1810,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4424,7 +4424,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 18,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -4433,10 +4433,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -5366,7 +5366,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 10,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -5375,10 +5375,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -6622,7 +6622,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 49,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -6631,10 +6631,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7358,7 +7358,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 121,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -7367,10 +7367,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7473,7 +7473,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 121,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -7482,10 +7482,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7903,7 +7903,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 47,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -7912,10 +7912,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8221,7 +8221,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 55,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -8230,10 +8230,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8331,7 +8331,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 25,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -8340,10 +8340,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -10328,7 +10328,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 15,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -10337,10 +10337,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -10854,7 +10854,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 106,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -10863,10 +10863,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11596,7 +11596,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 143,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -11605,10 +11605,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11711,7 +11711,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 99,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -11720,10 +11720,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11930,7 +11930,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 34,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -11939,10 +11939,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12144,7 +12144,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 4,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -12153,10 +12153,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12254,7 +12254,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 50,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -12263,10 +12263,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12681,7 +12681,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 87,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -12690,10 +12690,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12900,7 +12900,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 3,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -12909,10 +12909,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -14674,7 +14674,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 5,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -14683,10 +14683,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -15720,7 +15720,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 51,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -15729,10 +15729,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17083,7 +17083,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 33,
-        "mean_sentiment_score": 0.25,
+        "mean_sentiment_score": 0.35,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -17092,10 +17092,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 62.5,
+        "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0
       },
-      "sub_score": 62.5,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17612,7 +17612,7 @@
       "pillar": "thesis_integrity",
       "components": {
         "article_count": 5,
-        "mean_sentiment_score": 0.45,
+        "mean_sentiment_score": 0.6,
         "mean_relevance_score": 0.5,
         "label_counts": {
           "Bearish": 0,
@@ -17621,10 +17621,10 @@
           "Somewhat-Bullish": 0,
           "Bullish": 0
         },
-        "sentiment_subscore_raw": 72.5,
+        "sentiment_subscore_raw": 80.0,
         "confidence_blend": 1.0
       },
-      "sub_score": 72.5,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,

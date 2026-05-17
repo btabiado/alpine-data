@@ -485,7 +485,7 @@ def test_thesis_signal_low_engagement_neutral() -> None:
     sig = ain.compute_thesis_signal_from_news(agg)
     # 1-2 mentions => neutral 0.0, not None
     assert sig["article_count"] == 2
-    assert sig["mean_sentiment_score"] == pytest.approx(0.1)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.15)
     assert sig["label_counts"]["Neutral"] == 2
 
 
@@ -504,7 +504,7 @@ def test_thesis_signal_high_engagement_positive() -> None:
     }
     sig = ain.compute_thesis_signal_from_news(agg)
     assert sig["article_count"] == 5
-    assert sig["mean_sentiment_score"] == pytest.approx(0.45)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.60)
     assert sig["mean_relevance_score"] == 0.5
     assert sig["label_counts"]["Neutral"] == 5
 
@@ -525,7 +525,7 @@ def test_thesis_signal_3_mentions_low_engagement() -> None:
         "last_seen": None,
     }
     sig = ain.compute_thesis_signal_from_news(agg)
-    assert sig["mean_sentiment_score"] == pytest.approx(0.25)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.35)
 
 
 def test_thesis_signal_engagement_via_comments_only() -> None:
@@ -542,7 +542,7 @@ def test_thesis_signal_engagement_via_comments_only() -> None:
         "last_seen": None,
     }
     sig = ain.compute_thesis_signal_from_news(agg)
-    assert sig["mean_sentiment_score"] == pytest.approx(0.45)
+    assert sig["mean_sentiment_score"] == pytest.approx(0.60)
 
 
 # ---------------------------------------------------------------------------

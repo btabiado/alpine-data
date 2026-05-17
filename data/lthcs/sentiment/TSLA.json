@@ -3,7 +3,7 @@
   "last_scored": "2026-05-17",
   "model_version": "v1.0.0",
   "article_count": 51,
-  "mean_sentiment_score": 0.45,
+  "mean_sentiment_score": 0.6,
   "mean_relevance_score": 0.5,
   "label_counts": {
     "Bearish": 0,
