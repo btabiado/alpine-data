@@ -1,11 +1,11 @@
 {
   "ticker": "ORCL",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 56.3,
-      "band": "weakening"
+      "score": 60.8,
+      "band": "monitor"
     },
     {
       "date": "2026-05-16",

@@ -1,11 +1,11 @@
 {
   "ticker": "ARM",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 75.6,
-      "band": "constructive"
+      "score": 59.8,
+      "band": "weakening"
     }
   ]
 }

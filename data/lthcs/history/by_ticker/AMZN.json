@@ -1,10 +1,10 @@
 {
   "ticker": "AMZN",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 60.1,
+      "score": 63.8,
       "band": "monitor"
     },
     {

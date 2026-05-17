@@ -1,10 +1,10 @@
 {
   "ticker": "CSGP",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 50.5,
+      "score": 54.0,
       "band": "weakening"
     }
   ]

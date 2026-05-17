@@ -1,11 +1,11 @@
 {
   "ticker": "PANW",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 71.1,
-      "band": "constructive"
+      "score": 43.3,
+      "band": "review"
     },
     {
       "date": "2026-05-16",

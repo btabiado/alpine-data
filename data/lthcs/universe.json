@@ -1,7 +1,7 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "last_updated": "2026-05-17",
-  "description": "LTHCS V2 universe \u2014 full DJIA 30 + NASDAQ-100 + S&P 100, deduped to 169 unique tickers. Includes pre-profit (LCID) and recovery (INTC, BA, GE) test cases.",
+  "description": "LTHCS V2.1 universe \u2014 full DJIA 30 + NASDAQ-100 + S&P 100, deduped to 169 unique tickers with v1.1.0 maturity-stage split. Includes pre-profit (LCID) and recovery (INTC, BA, GE) test cases.",
   "tickers": [
     {
       "ticker": "AAPL",
@@ -15,8 +15,9 @@
       ],
       "sector": "Technology",
       "industry": "Consumer Electronics",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mega-cap +6%"
     },
     {
       "ticker": "ABBV",
@@ -28,8 +29,9 @@
       ],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature pharma"
     },
     {
       "ticker": "ABNB",
@@ -81,8 +83,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature compounder"
     },
     {
       "ticker": "ADI",
@@ -107,8 +110,9 @@
       ],
       "sector": "Industrials",
       "industry": "HR & Payroll Services",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature"
     },
     {
       "ticker": "ADSK",
@@ -146,8 +150,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductor Equipment",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Semi cap eq (AI capex)"
     },
     {
       "ticker": "AMD",
@@ -160,8 +165,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "AI accelerators (+34%)"
     },
     {
       "ticker": "AMGN",
@@ -203,8 +209,9 @@
       ],
       "sector": "Consumer Discretionary",
       "industry": "E-Commerce",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mega-cap +11%"
     },
     {
       "ticker": "ANSS",
@@ -228,8 +235,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Mobile+AI (+24%)"
     },
     {
       "ticker": "ASML",
@@ -254,8 +262,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Custom AI silicon (+24%)"
     },
     {
       "ticker": "AXP",
@@ -268,8 +277,9 @@
       ],
       "sector": "Financials",
       "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature payments"
     },
     {
       "ticker": "AZN",
@@ -307,8 +317,9 @@
       ],
       "sector": "Financials",
       "industry": "Banks",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Bank mature"
     },
     {
       "ticker": "BIIB",
@@ -399,8 +410,9 @@
       ],
       "sector": "Financials",
       "industry": "Diversified",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Conglomerate mature"
     },
     {
       "ticker": "C",
@@ -412,8 +424,9 @@
       ],
       "sector": "Financials",
       "industry": "Banks",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Bank mature"
     },
     {
       "ticker": "CAT",
@@ -558,8 +571,9 @@
       ],
       "sector": "Consumer Staples",
       "industry": "Hypermarkets",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature retail"
     },
     {
       "ticker": "CRM",
@@ -572,8 +586,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature compounder"
     },
     {
       "ticker": "CRWD",
@@ -585,8 +600,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Cybersecurity"
     },
     {
       "ticker": "CSCO",
@@ -600,8 +616,9 @@
       ],
       "sector": "Technology",
       "industry": "Networking Equipment",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature"
     },
     {
       "ticker": "CSGP",
@@ -679,8 +696,9 @@
       ],
       "sector": "Consumer Discretionary",
       "industry": "Online Delivery",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Delivery growth (+28%)"
     },
     {
       "ticker": "DDOG",
@@ -692,8 +710,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Observability/AI (+28%)"
     },
     {
       "ticker": "DE",
@@ -732,8 +751,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Media & Entertainment",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Media mature"
     },
     {
       "ticker": "DUK",
@@ -849,8 +869,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Cybersecurity"
     },
     {
       "ticker": "GD",
@@ -941,8 +962,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Internet Services",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mega-cap +12%"
     },
     {
       "ticker": "GOOGL",
@@ -955,8 +977,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Internet Services",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mega-cap +12% class A"
     },
     {
       "ticker": "GS",
@@ -969,8 +992,9 @@
       ],
       "sector": "Financials",
       "industry": "Investment Banking",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Bank mature"
     },
     {
       "ticker": "HD",
@@ -983,8 +1007,9 @@
       ],
       "sector": "Consumer Discretionary",
       "industry": "Specialty Retail",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature retail"
     },
     {
       "ticker": "HON",
@@ -1012,8 +1037,9 @@
       ],
       "sector": "Technology",
       "industry": "IT Services",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature"
     },
     {
       "ticker": "IDXX",
@@ -1066,8 +1092,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature compounder"
     },
     {
       "ticker": "ISRG",
@@ -1080,8 +1107,9 @@
       ],
       "sector": "Health Care",
       "industry": "Medical Devices",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Surgical robotics (+21%)"
     },
     {
       "ticker": "JNJ",
@@ -1094,8 +1122,9 @@
       ],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature pharma"
     },
     {
       "ticker": "JPM",
@@ -1108,8 +1137,9 @@
       ],
       "sector": "Financials",
       "industry": "Banks",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Bank mature"
     },
     {
       "ticker": "KDP",
@@ -1148,8 +1178,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductor Equipment",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Semi cap eq (+24%)"
     },
     {
       "ticker": "KO",
@@ -1162,8 +1193,9 @@
       ],
       "sector": "Consumer Staples",
       "industry": "Soft Drinks",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature staples"
     },
     {
       "ticker": "LCID",
@@ -1202,8 +1234,9 @@
       ],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "GLP-1 demand (+45%)"
     },
     {
       "ticker": "LMT",
@@ -1241,8 +1274,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductor Equipment",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Semi cap eq (+24%)"
     },
     {
       "ticker": "LULU",
@@ -1267,8 +1301,9 @@
       ],
       "sector": "Financials",
       "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature payments"
     },
     {
       "ticker": "MAR",
@@ -1294,8 +1329,9 @@
       ],
       "sector": "Consumer Discretionary",
       "industry": "Restaurants",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature restaurants"
     },
     {
       "ticker": "MCHP",
@@ -1320,8 +1356,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Database growth (+23%)"
     },
     {
       "ticker": "MDLZ",
@@ -1359,8 +1396,9 @@
       ],
       "sector": "Consumer Discretionary",
       "industry": "E-Commerce",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "LatAm e-commerce (+34%)"
     },
     {
       "ticker": "MET",
@@ -1386,8 +1424,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Social Media",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "AI infra + ads (+22%)"
     },
     {
       "ticker": "MMM",
@@ -1400,8 +1439,9 @@
       ],
       "sector": "Industrials",
       "industry": "Diversified Industrials",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Industrial mature"
     },
     {
       "ticker": "MNST",
@@ -1440,8 +1480,9 @@
       ],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature pharma"
     },
     {
       "ticker": "MRVL",
@@ -1453,8 +1494,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "AI custom silicon (+42%)"
     },
     {
       "ticker": "MS",
@@ -1466,8 +1508,9 @@
       ],
       "sector": "Financials",
       "industry": "Investment Banking",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Bank mature"
     },
     {
       "ticker": "MSFT",
@@ -1481,8 +1524,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mega-cap +15%"
     },
     {
       "ticker": "MU",
@@ -1494,8 +1538,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "HBM/AI memory (+49%)"
     },
     {
       "ticker": "NEE",
@@ -1548,8 +1593,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Cloud SaaS (+21%)"
     },
     {
       "ticker": "NVDA",
@@ -1563,8 +1609,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "AI capex (+65%)"
     },
     {
       "ticker": "NXPI",
@@ -1615,8 +1662,9 @@
       ],
       "sector": "Technology",
       "industry": "Software",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature (no override-tier growth)"
     },
     {
       "ticker": "ORLY",
@@ -1641,8 +1689,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Cybersecurity"
     },
     {
       "ticker": "PAYX",
@@ -1693,8 +1742,9 @@
       ],
       "sector": "Consumer Staples",
       "industry": "Soft Drinks",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature staples"
     },
     {
       "ticker": "PFE",
@@ -1706,8 +1756,9 @@
       ],
       "sector": "Health Care",
       "industry": "Pharmaceuticals",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature pharma"
     },
     {
       "ticker": "PG",
@@ -1720,8 +1771,9 @@
       ],
       "sector": "Consumer Staples",
       "industry": "Household Products",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature staples"
     },
     {
       "ticker": "PM",
@@ -1747,8 +1799,9 @@
       ],
       "sector": "Financials",
       "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature payments"
     },
     {
       "ticker": "QCOM",
@@ -1761,8 +1814,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature"
     },
     {
       "ticker": "REGN",
@@ -1866,8 +1920,9 @@
       ],
       "sector": "Technology",
       "industry": "Computer Hardware",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "AI servers (+47%)"
     },
     {
       "ticker": "SNPS",
@@ -1918,8 +1973,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Telecom",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Telecom mature"
     },
     {
       "ticker": "TEAM",
@@ -1984,8 +2040,9 @@
       ],
       "sector": "Financials",
       "industry": "Insurance",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature insurance"
     },
     {
       "ticker": "TSLA",
@@ -2038,8 +2095,9 @@
       ],
       "sector": "Technology",
       "industry": "Semiconductors",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Tech mature"
     },
     {
       "ticker": "UNH",
@@ -2105,8 +2163,9 @@
       ],
       "sector": "Financials",
       "industry": "Payments",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature payments"
     },
     {
       "ticker": "VRSK",
@@ -2145,8 +2204,9 @@
       ],
       "sector": "Communication Services",
       "industry": "Telecom",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Telecom mature"
     },
     {
       "ticker": "WBA",
@@ -2198,8 +2258,9 @@
       ],
       "sector": "Financials",
       "industry": "Banks",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Bank mature"
     },
     {
       "ticker": "WMT",
@@ -2212,8 +2273,9 @@
       ],
       "sector": "Consumer Staples",
       "industry": "Hypermarkets",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "mature_compounder",
+      "active": true,
+      "maturity_note": "Mature retail"
     },
     {
       "ticker": "XEL",
@@ -2251,8 +2313,9 @@
       ],
       "sector": "Technology",
       "industry": "Cybersecurity",
-      "maturity_stage": "standard_compounder",
-      "active": true
+      "maturity_stage": "growth_compounder",
+      "active": true,
+      "maturity_note": "Cybersecurity (+23%)"
     }
   ]
 }

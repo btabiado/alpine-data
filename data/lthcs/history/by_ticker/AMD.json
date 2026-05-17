@@ -1,11 +1,11 @@
 {
   "ticker": "AMD",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 72.9,
-      "band": "constructive"
+      "score": 65.4,
+      "band": "monitor"
     },
     {
       "date": "2026-05-16",

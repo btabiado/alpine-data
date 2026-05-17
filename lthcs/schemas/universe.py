@@ -12,7 +12,12 @@ MaturityStage = Literal[
     "pre_profit_growth",
     "path_to_profitability",
     "profitability_inflection",
+    # Compounder family — split in v1.1.0 so peer-relative percentiles
+    # benchmark like-for-like instead of mixing AAPL's +6% growth with
+    # NVDA's +65% AI-cycle growth in one pool.
     "standard_compounder",
+    "mature_compounder",   # added v1.1.0
+    "growth_compounder",   # added v1.1.0
     "recovery_stabilization",
     "recovery_operational",
     "recovery_earnings",
@@ -37,6 +42,10 @@ class UniverseEntry(BaseModel):
     # private, acquired, delisted). Required to be readable in the JSON
     # file, so retained as an optional field rather than a sidecar log.
     inactive_reason: Optional[str] = None
+    # Free-text note explaining a non-default maturity_stage choice — e.g.
+    # "growth_compounder: AI capex (+65%)" for NVDA. Documentation only;
+    # not consumed by scoring code.
+    maturity_note: Optional[str] = None
 
     @field_validator("ticker")
     @classmethod

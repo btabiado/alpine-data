@@ -261,6 +261,22 @@ def build_macro_inputs() -> Dict[str, Optional[float]]:
         wti = eia.get_latest_value("wti")
     except Exception:
         wti = None
+    # --- Phase 1.5 expanded macro signals (des-audit-framework HIGH gaps) ---
+    # Each wrapped in try/except per the existing pattern: a single FRED
+    # outage for one series must not crash the pipeline. Missing values
+    # propagate as None -> DES treats them as 0 tilt (no contribution).
+    try:
+        real_10y_series = fred.get_series("DFII10")
+    except Exception:
+        real_10y_series = []
+    try:
+        vix_series = fred.get_series("VIXCLS")
+    except Exception:
+        vix_series = []
+    try:
+        m2_series = fred.get_series("M2SL")
+    except Exception:
+        m2_series = []
 
     return {
         "cpi_yoy_pct": _yoy_change_pct(cpi_series),
@@ -271,6 +287,13 @@ def build_macro_inputs() -> Dict[str, Optional[float]]:
         "ten_y_30d_change_bp": _bp_change_30d(ten_y_series),
         "unemployment_pct": unrate["value"] if unrate else None,
         "wti_oil_usd": wti["value"] if wti else None,
+        "real_10y_yield_pct": (
+            real_10y_series[-1]["value"] if real_10y_series else None
+        ),
+        "vix_index": (
+            vix_series[-1]["value"] if vix_series else None
+        ),
+        "m2_yoy_pct": _yoy_change_pct(m2_series),
     }
 
 

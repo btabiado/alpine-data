@@ -1,10 +1,10 @@
 {
   "ticker": "GILD",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 44.9,
+      "score": 47.0,
       "band": "review"
     },
     {

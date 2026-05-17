@@ -1,11 +1,11 @@
 {
   "ticker": "NOW",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 51.4,
-      "band": "weakening"
+      "score": 23.3,
+      "band": "review"
     }
   ]
 }

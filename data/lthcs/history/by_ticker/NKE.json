@@ -1,10 +1,10 @@
 {
   "ticker": "NKE",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 16.7,
+      "score": 17.2,
       "band": "review"
     },
     {

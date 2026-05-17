@@ -1,11 +1,11 @@
 {
   "ticker": "AMAT",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 57.1,
-      "band": "weakening"
+      "score": 40.6,
+      "band": "review"
     },
     {
       "date": "2026-05-16",

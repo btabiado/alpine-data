@@ -1,11 +1,11 @@
 {
   "ticker": "IDXX",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 48.3,
-      "band": "review"
+      "score": 51.4,
+      "band": "weakening"
     }
   ]
 }

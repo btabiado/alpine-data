@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-05-16",
-  "description": "Pillar weights by maturity stage. Order is [adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des]. Weights must sum to 1.0 within each profile.",
+  "version": "1.1.0",
+  "last_updated": "2026-05-17",
+  "description": "Pillar weights by maturity stage. Order is [adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des]. Weights must sum to 1.0 within each profile. v1.1.0 splits 'standard_compounder' into 'mature_compounder' and 'growth_compounder' so peer-relative percentiles benchmark like-for-like (AAPL/PG/KO vs. each other, NVDA/MU/AVGO vs. each other). 'standard_compounder' remains as a fallback for tickers not explicitly reclassified.",
   "pillar_order": [
     "adoption_momentum",
     "institutional_confidence",
@@ -11,6 +11,8 @@
   ],
   "profiles": {
     "standard_compounder":       [0.25, 0.20, 0.15, 0.20, 0.20],
+    "mature_compounder":         [0.20, 0.20, 0.20, 0.20, 0.20],
+    "growth_compounder":         [0.30, 0.20, 0.10, 0.20, 0.20],
     "pre_revenue":               [0.35, 0.20, 0.05, 0.20, 0.20],
     "pre_profit_growth":         [0.30, 0.20, 0.15, 0.20, 0.15],
     "path_to_profitability":    [0.25, 0.20, 0.20, 0.20, 0.15],

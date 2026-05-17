@@ -1,10 +1,10 @@
 {
   "ticker": "KHC",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 32.7,
+      "score": 34.5,
       "band": "review"
     }
   ]

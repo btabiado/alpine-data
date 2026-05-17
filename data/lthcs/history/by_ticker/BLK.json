@@ -1,11 +1,11 @@
 {
   "ticker": "BLK",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 67.2,
-      "band": "monitor"
+      "score": 70.8,
+      "band": "constructive"
     }
   ]
 }

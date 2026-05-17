@@ -1,11 +1,11 @@
 {
   "ticker": "ASML",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 69.2,
-      "band": "monitor"
+      "score": 71.9,
+      "band": "constructive"
     }
   ]
 }

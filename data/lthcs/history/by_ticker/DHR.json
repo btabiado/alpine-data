@@ -1,10 +1,10 @@
 {
   "ticker": "DHR",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 31.7,
+      "score": 33.4,
       "band": "review"
     }
   ]

@@ -1,11 +1,11 @@
 {
   "ticker": "SO",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 58.2,
-      "band": "weakening"
+      "score": 61.6,
+      "band": "monitor"
     }
   ]
 }

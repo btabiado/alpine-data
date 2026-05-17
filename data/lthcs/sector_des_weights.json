@@ -9,7 +9,10 @@
     "ten_y_yield_pct":     {"low": 1.0,  "high": 6.0,  "neutral": 3.5, "_note": "10Y Treasury yield"},
     "ten_y_30d_change_bp": {"low": -50,  "high": 50,   "neutral": 0,   "_note": "30-day move in 10Y in basis points"},
     "unemployment_pct":    {"low": 2.5,  "high": 8.0,  "neutral": 4.5, "_note": "U-3 unemployment rate; HIGHER unemployment maps to +1, but most sectors have negative sensitivity to that"},
-    "wti_oil_usd":         {"low": 40.0, "high": 130.0,"neutral": 75.0,"_note": "WTI crude spot price USD"}
+    "wti_oil_usd":         {"low": 40.0, "high": 130.0,"neutral": 75.0,"_note": "WTI crude spot price USD"},
+    "real_10y_yield_pct":  {"low": -1.0, "high": 3.5,  "neutral": 1.5, "_note": "10Y TIPS yield (FRED DFII10) — true real rate; compresses long-duration assets"},
+    "vix_index":           {"low": 10.0, "high": 40.0, "neutral": 18.0,"_note": "CBOE VIX (FRED VIXCLS) — vol-regime gate; high VIX => risk-off tilt"},
+    "m2_yoy_pct":          {"low": -2.0, "high": 12.0, "neutral": 4.0, "_note": "M2 broad money YoY (FRED M2SL) — liquidity, supportive of risk assets when expanding"}
   },
   "sectors": {
     "Energy": {
@@ -18,7 +21,10 @@
       "fed_funds_pct":       0.00,
       "ten_y_yield_pct":    -0.10,
       "ten_y_30d_change_bp": 0.00,
-      "unemployment_pct":   -0.10
+      "unemployment_pct":   -0.10,
+      "real_10y_yield_pct": -0.05,
+      "vix_index":           0.00,
+      "m2_yoy_pct":          0.10
     },
     "Materials": {
       "wti_oil_usd":         0.20,
@@ -26,7 +32,10 @@
       "fed_funds_pct":      -0.10,
       "ten_y_yield_pct":    -0.20,
       "ten_y_30d_change_bp":-0.10,
-      "unemployment_pct":   -0.30
+      "unemployment_pct":   -0.30,
+      "real_10y_yield_pct": -0.05,
+      "vix_index":           0.00,
+      "m2_yoy_pct":          0.10
     },
     "Industrials": {
       "wti_oil_usd":        -0.10,
@@ -34,7 +43,10 @@
       "fed_funds_pct":      -0.20,
       "ten_y_yield_pct":    -0.20,
       "ten_y_30d_change_bp":-0.10,
-      "unemployment_pct":   -0.50
+      "unemployment_pct":   -0.50,
+      "real_10y_yield_pct": -0.10,
+      "vix_index":          -0.10,
+      "m2_yoy_pct":          0.10
     },
     "Consumer Discretionary": {
       "wti_oil_usd":        -0.40,
@@ -42,7 +54,10 @@
       "fed_funds_pct":      -0.40,
       "ten_y_yield_pct":    -0.30,
       "ten_y_30d_change_bp":-0.20,
-      "unemployment_pct":   -0.60
+      "unemployment_pct":   -0.60,
+      "real_10y_yield_pct": -0.15,
+      "vix_index":          -0.10,
+      "m2_yoy_pct":          0.15
     },
     "Consumer Staples": {
       "wti_oil_usd":        -0.10,
@@ -50,7 +65,10 @@
       "fed_funds_pct":      -0.10,
       "ten_y_yield_pct":    -0.20,
       "ten_y_30d_change_bp":-0.10,
-      "unemployment_pct":   -0.20
+      "unemployment_pct":   -0.20,
+      "real_10y_yield_pct": -0.10,
+      "vix_index":           0.05,
+      "m2_yoy_pct":          0.05
     },
     "Health Care": {
       "wti_oil_usd":         0.00,
@@ -58,7 +76,10 @@
       "fed_funds_pct":      -0.20,
       "ten_y_yield_pct":    -0.20,
       "ten_y_30d_change_bp":-0.10,
-      "unemployment_pct":   -0.10
+      "unemployment_pct":   -0.10,
+      "real_10y_yield_pct": -0.10,
+      "vix_index":           0.05,
+      "m2_yoy_pct":          0.05
     },
     "Financials": {
       "wti_oil_usd":         0.00,
@@ -66,7 +87,10 @@
       "fed_funds_pct":       0.45,
       "ten_y_yield_pct":     0.50,
       "ten_y_30d_change_bp": 0.30,
-      "unemployment_pct":   -0.35
+      "unemployment_pct":   -0.35,
+      "real_10y_yield_pct":  0.10,
+      "vix_index":          -0.05,
+      "m2_yoy_pct":          0.05
     },
     "Information Technology": {
       "wti_oil_usd":         0.00,
@@ -75,6 +99,9 @@
       "ten_y_yield_pct":    -0.22,
       "ten_y_30d_change_bp":-0.10,
       "unemployment_pct":   -0.20,
+      "real_10y_yield_pct": -0.20,
+      "vix_index":          -0.10,
+      "m2_yoy_pct":          0.15,
       "_note_v2": "Softened 2026-05-17 (was -0.30/-0.45/-0.45/-0.20) to reflect that Tech mega-caps are increasingly insulated from rate cycle via AI capex demand. See docs/des-analysis.md."
     },
     "Technology": {
@@ -84,7 +111,10 @@
       "fed_funds_pct":      -0.22,
       "ten_y_yield_pct":    -0.22,
       "ten_y_30d_change_bp":-0.10,
-      "unemployment_pct":   -0.20
+      "unemployment_pct":   -0.20,
+      "real_10y_yield_pct": -0.20,
+      "vix_index":          -0.10,
+      "m2_yoy_pct":          0.15
     },
     "Communication Services": {
       "wti_oil_usd":        -0.10,
@@ -93,6 +123,9 @@
       "ten_y_yield_pct":    -0.15,
       "ten_y_30d_change_bp":-0.08,
       "unemployment_pct":   -0.20,
+      "real_10y_yield_pct": -0.20,
+      "vix_index":          -0.10,
+      "m2_yoy_pct":          0.15,
       "_note_v2": "Softened 2026-05-17 (was -0.20/-0.30/-0.30/-0.15) — Alphabet/Meta have similar AI-capex-orthogonal demand to Tech mega-caps."
     },
     "Utilities": {
@@ -101,7 +134,10 @@
       "fed_funds_pct":      -0.30,
       "ten_y_yield_pct":    -0.55,
       "ten_y_30d_change_bp":-0.20,
-      "unemployment_pct":   -0.10
+      "unemployment_pct":   -0.10,
+      "real_10y_yield_pct": -0.10,
+      "vix_index":           0.05,
+      "m2_yoy_pct":          0.05
     },
     "Real Estate": {
       "wti_oil_usd":        -0.10,
@@ -109,7 +145,10 @@
       "fed_funds_pct":      -0.50,
       "ten_y_yield_pct":    -0.60,
       "ten_y_30d_change_bp":-0.30,
-      "unemployment_pct":   -0.30
+      "unemployment_pct":   -0.30,
+      "real_10y_yield_pct": -0.30,
+      "vix_index":          -0.10,
+      "m2_yoy_pct":          0.10
     }
   },
   "ticker_overrides": {

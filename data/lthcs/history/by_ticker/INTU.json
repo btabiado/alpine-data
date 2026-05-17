@@ -1,11 +1,11 @@
 {
   "ticker": "INTU",
-  "model_version": "v1.0.0",
+  "model_version": "v1.1.0",
   "history": [
     {
       "date": "2026-05-17",
-      "score": 49.1,
-      "band": "review"
+      "score": 54.9,
+      "band": "weakening"
     },
     {
       "date": "2026-05-16",

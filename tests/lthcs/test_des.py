@@ -387,3 +387,165 @@ class TestRealWorldSpecAssertions:
         )
         assert result["sub_score"] > 55.0, result
         assert "wti_oil_usd" in result["components"]["applied_overrides"]
+
+
+# --- Expanded macro signals (real_10y_yield, VIX, M2 YoY) -------------------
+
+
+SAMPLE_WEIGHTS_EXPANDED: Dict[str, Any] = {
+    "signal_normalization": {
+        "wti_oil_usd":         {"low": 40,    "high": 130,  "neutral": 75},
+        "fed_funds_pct":       {"low": 0,     "high": 6,    "neutral": 2.5},
+        "ten_y_yield_pct":     {"low": 1,     "high": 6,    "neutral": 3.5},
+        "real_10y_yield_pct":  {"low": -1.0,  "high": 3.5,  "neutral": 1.5},
+        "vix_index":           {"low": 10.0,  "high": 40.0, "neutral": 18.0},
+        "m2_yoy_pct":          {"low": -2.0,  "high": 12.0, "neutral": 4.0},
+    },
+    "sectors": {
+        "Technology": {
+            "wti_oil_usd":         0.00,
+            "ten_y_yield_pct":    -0.22,
+            "real_10y_yield_pct": -0.20,
+            "vix_index":          -0.10,
+            "m2_yoy_pct":          0.15,
+        },
+        "Real Estate": {
+            "wti_oil_usd":        -0.10,
+            "ten_y_yield_pct":    -0.60,
+            "real_10y_yield_pct": -0.30,
+            "vix_index":          -0.10,
+            "m2_yoy_pct":          0.10,
+        },
+        "Financials": {
+            "wti_oil_usd":         0.00,
+            "ten_y_yield_pct":     0.50,
+            "real_10y_yield_pct":  0.10,
+            "vix_index":          -0.05,
+            "m2_yoy_pct":          0.05,
+        },
+    },
+    "ticker_overrides": {},
+}
+
+
+class TestExpandedMacroSignals:
+    """Regression coverage for the three Phase-1.5 macro additions
+    (real_10y_yield_pct, vix_index, m2_yoy_pct)."""
+
+    def test_fixture_extends_with_new_signals(self):
+        norms = SAMPLE_WEIGHTS_EXPANDED["signal_normalization"]
+        assert "real_10y_yield_pct" in norms
+        assert "vix_index" in norms
+        assert "m2_yoy_pct" in norms
+        # Each Tech / Real Estate / Financials sector has all three.
+        for sec in ("Technology", "Real Estate", "Financials"):
+            block = SAMPLE_WEIGHTS_EXPANDED["sectors"][sec]
+            assert "real_10y_yield_pct" in block
+            assert "vix_index" in block
+            assert "m2_yoy_pct" in block
+
+    def test_tech_drops_on_high_real_yield_and_high_vix(self):
+        # Real 10Y at 3.5 (high=+1 tilt), VIX at 40 (high=+1 tilt), and
+        # ten_y_yield at 5.5 (tilt > 0). All three signals carry NEGATIVE
+        # Tech sensitivities -> sub_score must drop below 50.
+        macro = {
+            "ten_y_yield_pct": 5.5,
+            "real_10y_yield_pct": 3.5,
+            "vix_index": 40.0,
+            "m2_yoy_pct": 4.0,  # neutral
+        }
+        result = compute_des("MSFT", "Technology", macro, SAMPLE_WEIGHTS_EXPANDED)
+        assert result["sub_score"] < 50.0, result
+        contribs = result["components"]["signal_contributions"]
+        assert contribs["real_10y_yield_pct"] < 0.0
+        assert contribs["vix_index"] < 0.0
+
+    def test_real_estate_more_sensitive_than_tech_to_falling_real_yield(self):
+        # Real 10Y at -1.0 (low=-1 tilt). RE sensitivity is -0.30 -> the
+        # contribution is +0.30. Tech sensitivity is -0.20 -> +0.20. So
+        # holding everything else equal, RE should lift more than Tech.
+        macro = {"real_10y_yield_pct": -1.0}
+        re_result = compute_des(
+            "AMT", "Real Estate", macro, SAMPLE_WEIGHTS_EXPANDED
+        )
+        tech_result = compute_des(
+            "MSFT", "Technology", macro, SAMPLE_WEIGHTS_EXPANDED
+        )
+        # Both lift above 50; RE lifts more.
+        assert re_result["sub_score"] > tech_result["sub_score"]
+        assert re_result["sub_score"] > 50.0
+        assert tech_result["sub_score"] > 50.0
+        # Numerically: RE contrib = -0.30 * -1.0 = +0.30 (vs Tech +0.20).
+        re_contrib = re_result["components"]["signal_contributions"][
+            "real_10y_yield_pct"
+        ]
+        tech_contrib = tech_result["components"]["signal_contributions"][
+            "real_10y_yield_pct"
+        ]
+        assert re_contrib == pytest.approx(0.30, abs=1e-6)
+        assert tech_contrib == pytest.approx(0.20, abs=1e-6)
+
+    def test_missing_new_signals_contribute_zero(self):
+        # Backwards-compat: if real_10y/vix/m2 are absent (or None),
+        # they must contribute 0 tilt and the score derives entirely
+        # from the other signals.
+        macro_with = {
+            "ten_y_yield_pct": 3.5,  # neutral midpoint -> tilt 0
+            "real_10y_yield_pct": None,
+            "vix_index": None,
+            "m2_yoy_pct": None,
+        }
+        macro_without = {"ten_y_yield_pct": 3.5}
+        a = compute_des("MSFT", "Technology", macro_with, SAMPLE_WEIGHTS_EXPANDED)
+        b = compute_des("MSFT", "Technology", macro_without, SAMPLE_WEIGHTS_EXPANDED)
+        assert a["sub_score"] == b["sub_score"]
+        # And both should be ~50 since the only present signal is at neutral.
+        assert a["sub_score"] == pytest.approx(50.0, abs=0.1)
+        # The new signals' per-signal contributions must each be 0.
+        for sig in ("real_10y_yield_pct", "vix_index", "m2_yoy_pct"):
+            assert a["components"]["signal_contributions"][sig] == 0.0
+
+    def test_high_vix_pushes_financials_down(self):
+        # Financials has vix sensitivity -0.05. With VIX=40 (tilt +1),
+        # contribution = -0.05. Other signals neutral. Sub-score should
+        # drop slightly below 50.
+        macro = {"vix_index": 40.0}
+        result = compute_des("JPM", "Financials", macro, SAMPLE_WEIGHTS_EXPANDED)
+        assert result["sub_score"] < 50.0
+        assert (
+            result["components"]["signal_contributions"]["vix_index"]
+            == pytest.approx(-0.05, abs=1e-6)
+        )
+
+    def test_m2_expansion_lifts_tech(self):
+        # M2 at 12% YoY -> tilt +1. Tech sensitivity +0.15 -> contribution +0.15.
+        macro = {"m2_yoy_pct": 12.0}
+        result = compute_des("MSFT", "Technology", macro, SAMPLE_WEIGHTS_EXPANDED)
+        assert result["sub_score"] > 50.0
+        assert (
+            result["components"]["signal_contributions"]["m2_yoy_pct"]
+            == pytest.approx(0.15, abs=1e-6)
+        )
+
+    # --- Live-config (real sector_des_weights.json) assertions ---
+
+    def test_real_config_has_new_normalization_entries(self):
+        real = load_sector_weights()
+        norms = real.get("signal_normalization", {})
+        for sig in ("real_10y_yield_pct", "vix_index", "m2_yoy_pct"):
+            assert sig in norms, sig
+            b = norms[sig]
+            assert "low" in b and "high" in b and "neutral" in b
+            assert b["low"] < b["high"]
+
+    def test_real_config_tech_real_estate_sensitivities(self):
+        real = load_sector_weights()
+        tech = real["sectors"]["Information Technology"]
+        re_ = real["sectors"]["Real Estate"]
+        # Real Estate must be more rate-sensitive than Tech on real yields.
+        assert re_["real_10y_yield_pct"] < tech["real_10y_yield_pct"] <= 0
+        # Both have negative VIX sensitivity.
+        assert tech["vix_index"] < 0
+        # Both benefit from M2 expansion.
+        assert tech["m2_yoy_pct"] > 0
+        assert re_["m2_yoy_pct"] > 0
