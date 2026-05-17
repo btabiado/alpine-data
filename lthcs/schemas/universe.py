@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -33,6 +33,10 @@ class UniverseEntry(BaseModel):
     industry: str
     maturity_stage: MaturityStage = "standard_compounder"
     active: bool = True
+    # Free-text note explaining why a ticker was deactivated (e.g. taken
+    # private, acquired, delisted). Required to be readable in the JSON
+    # file, so retained as an optional field rather than a sidecar log.
+    inactive_reason: Optional[str] = None
 
     @field_validator("ticker")
     @classmethod

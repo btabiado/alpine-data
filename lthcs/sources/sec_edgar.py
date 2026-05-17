@@ -64,12 +64,26 @@ CACHE_TTL_SECONDS = 7 * 24 * 60 * 60
 _RATE_CAPACITY = 10
 _RATE_REFILL = 10.0
 
-# Concept names to try (in order) when extracting revenue from XBRL.
-# US GAAP uses ``Revenues`` historically; newer filings under ASC 606
-# moved to ``RevenueFromContractWithCustomerExcludingAssessedTax``.
+# Concept-name lists per metric. Order matters: when both concepts report
+# the SAME period for the same company, the later one in the tuple wins
+# on the merge (so put the modern / preferred concept last).
+#
+# Revenue: US GAAP used ``Revenues`` historically; newer filings under
+# ASC 606 (effective 2018) moved to RevenueFromContractWithCustomerExcludingAssessedTax.
 _REVENUE_CONCEPTS = (
     "Revenues",
     "RevenueFromContractWithCustomerExcludingAssessedTax",
+)
+
+# Gross profit — single canonical concept.
+_GROSS_PROFIT_CONCEPTS = (
+    "GrossProfit",
+)
+
+# Operating cash flow — two equivalent labels; SEC has used both.
+_OPERATING_CASH_FLOW_CONCEPTS = (
+    "NetCashProvidedByOperatingActivities",
+    "NetCashProvidedByUsedInOperatingActivities",
 )
 
 
@@ -203,14 +217,13 @@ def get_company_facts(ticker: str) -> Dict[str, Any]:
     return _get_json(url, cache_key="company_facts/{}".format(cik))
 
 
-def get_revenue_history(ticker: str) -> List[Dict[str, Any]]:
-    """Extract revenue rows from XBRL company facts.
+def _extract_concept_history(
+    facts: Dict[str, Any], concepts: tuple
+) -> List[Dict[str, Any]]:
+    """Walk the XBRL ``us-gaap`` block and merge the given concepts.
 
-    Merges ``us-gaap:Revenues`` (legacy, pre-ASC 606) and
-    ``RevenueFromContractWithCustomerExcludingAssessedTax`` (post-ASC 606)
-    so coverage spans the 2018 concept-change boundary. Most large companies
-    will have both — we de-duplicate by ``(start_date, end_date)`` and
-    prefer the modern concept's value when both report the same period.
+    De-duplicates by ``(start_date, end_date)`` — later concepts in the
+    tuple win on collision. Returns rows sorted by ``end_date`` desc.
 
     Each row::
 
@@ -218,25 +231,19 @@ def get_revenue_history(ticker: str) -> List[Dict[str, Any]]:
          "value": 391_035_000_000, "form": "10-K", "fy": 2024,
          "fp": "FY", "concept": "RevenueFromContract..."}
 
-    sorted by ``end_date`` descending. Returns an empty list (not an
-    exception) if no revenue facts are present.
+    Returns an empty list if none of ``concepts`` are present.
 
-    Note: ``form`` / ``fy`` / ``fp`` describe the FILING that reported the
-    fact, not the fact's period. A 10-K filing contains both annual and
-    quarterly facts. Callers that need annual values should filter by
-    period duration (end - start ≈ 365 days), not by these tags.
+    Note: ``form`` / ``fy`` / ``fp`` describe the FILING that reported
+    the fact, not the fact's period. A 10-K filing contains both annual
+    and quarterly facts. Callers that need annual values should filter
+    by period duration (end - start ≈ 365 days), not by these tags.
     """
-    facts = get_company_facts(ticker)
-
     gaap = (facts or {}).get("facts", {}).get("us-gaap", {})
     if not isinstance(gaap, dict):
         return []
 
-    # Walk both concepts and merge by (start, end). Later concepts in the
-    # list win on collision -- so put the modern concept last to prefer it.
-    merge_order = ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax")
     by_period: Dict[tuple, Dict[str, Any]] = {}
-    for concept in merge_order:
+    for concept in concepts:
         node = gaap.get(concept)
         if not isinstance(node, dict):
             continue
@@ -274,3 +281,23 @@ def get_revenue_history(ticker: str) -> List[Dict[str, Any]]:
     rows = list(by_period.values())
     rows.sort(key=lambda r: r["end_date"], reverse=True)
     return rows
+
+
+def get_revenue_history(ticker: str) -> List[Dict[str, Any]]:
+    """Revenue history merged across legacy + post-ASC 606 concepts.
+
+    See :func:`_extract_concept_history` for the row schema.
+    """
+    return _extract_concept_history(get_company_facts(ticker), _REVENUE_CONCEPTS)
+
+
+def get_gross_profit_history(ticker: str) -> List[Dict[str, Any]]:
+    """Gross profit history. Same schema as :func:`get_revenue_history`."""
+    return _extract_concept_history(get_company_facts(ticker), _GROSS_PROFIT_CONCEPTS)
+
+
+def get_operating_cash_flow_history(ticker: str) -> List[Dict[str, Any]]:
+    """Operating cash flow history. Same schema as :func:`get_revenue_history`."""
+    return _extract_concept_history(
+        get_company_facts(ticker), _OPERATING_CASH_FLOW_CONCEPTS
+    )
