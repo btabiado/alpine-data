@@ -731,6 +731,18 @@ input[type="search"] {
   line-height: 1;
 }
 
+/* Current composite score, rendered as a quieter secondary line between the
+   ticker and the delta. Keeps the absolute level visible (e.g. a +5 move
+   from 80 reads very differently from a +5 move from 30). */
+.lthcs-mover-score {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
 .lthcs-mover-delta {
   display: inline-flex;
   align-items: baseline;
