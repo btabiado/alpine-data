@@ -1,0 +1,85 @@
+name: lthcs-daily
+
+# Daily LTHCS history accumulation. Runs lthcs_daily.py once per day,
+# commits the resulting data/lthcs/ artifacts, and pushes back to main so
+# pages.yml picks them up on its next hourly build. Distinct concurrency
+# group from pages.yml so the two workflows don't block each other.
+#
+# Schedule rationale: 23:00 UTC = ~18:00 ET (after US market close, after
+# Yahoo end-of-day prints have settled, before next-day pre-market churn).
+on:
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch: {}
+
+# Push back to main requires contents:write. Pages deployment lives in
+# pages.yml — we intentionally do NOT request pages:write here so the
+# two workflows can't race over the gh-pages artifact.
+permissions:
+  contents: write
+
+# Per-ref group so two pushes to main don't queue forever, but
+# cancel-in-progress is false so a manually-triggered run in the middle
+# of the cron run still queues (vs. being killed mid-write).
+concurrency:
+  group: lthcs-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the push back to main has a complete refspec.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches the local dev env (.venv = 3.9.6); 3.9 is the lowest
+          # supported and lets pip pick the same wheels.
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run LTHCS daily pipeline (with --catch-up to fill any gaps)
+        env:
+          # Optional API keys — every source degrades gracefully if its
+          # secret is absent (empty string env -> source returns
+          # {available: False} or falls back to a free alternative).
+          # See README_LTHCS.md for the full degradation matrix.
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        # --skip-thesis: do not burn the ~5-25/day Alpha Vantage quota in
+        # CI; the rotation file is curated locally and Thesis falls back
+        # to neutral 50 in CI runs (V1 daily pipeline behavior).
+        # --catch-up: forward-fill any missed days since the last snapshot.
+        # --force: re-running on a date that already has a snapshot is OK.
+        run: python lthcs_daily.py --force --catch-up --skip-thesis
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          git add data/lthcs/
+          # Only commit if there's an actual diff — a no-op cron run
+          # shouldn't pollute git history. `git diff --staged --quiet`
+          # exits 0 when there are no staged changes.
+          if git diff --staged --quiet; then
+            echo "No data changes; skipping commit."
+          else
+            # [skip ci] prevents pages.yml from triggering its own
+            # rebuild on every snapshot push (it catches up on the next
+            # hourly cron anyway).
+            git commit -m "lthcs: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
+            git push origin HEAD:main
+          fi

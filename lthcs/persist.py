@@ -21,6 +21,7 @@ import json
 import os
 import re
 import tempfile
+from datetime import date as _date_cls, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -345,6 +346,154 @@ class LthcsPersist:
             )
             count += 1
         return count
+
+    # ------------------------------------------------------------------
+    # Catch-up / gap-fill
+    # ------------------------------------------------------------------
+
+    def fill_history_gaps(self, today: str, *, max_entries: int = 365) -> int:
+        """Forward-fill missing days between each ticker's last entry and ``today``.
+
+        For every per-ticker history file under ``history/by_ticker/``:
+          * Read the file and find the most recent real entry (latest date).
+          * If that date is already ``today - 1`` (or later), do nothing.
+          * Otherwise, for each calendar day strictly between
+            ``last_date + 1`` and ``today - 1`` inclusive, append a
+            synthetic entry copying the most recent entry's score + band
+            and marked ``synthetic: True``. ``today``'s own entry is NOT
+            written here — the caller (Stage 8) writes that via
+            :meth:`rebuild_history_for_all_tickers`.
+
+        Idempotent: a ticker whose history already runs up to ``today - 1``
+        (real or synthetic) gets no new writes. A ticker whose history is
+        empty (never scored) is skipped — there's nothing to forward-fill
+        from. Each ticker is written atomically so a crash mid-loop never
+        leaves a half-rewritten file.
+
+        Returns the total number of synthetic entries written across all
+        tickers. Use the count to detect when catch-up was active (>0)
+        vs. a quiet no-op (==0).
+        """
+        _validate_calc_date(today)
+        try:
+            today_dt = _date_cls.fromisoformat(today)
+        except ValueError as exc:
+            raise ValueError("today must parse as ISO date: %s" % exc) from exc
+
+        total_synthetic = 0
+        affected_tickers = 0
+
+        if not self.history_dir.exists():
+            return 0
+
+        for entry in sorted(self.history_dir.iterdir()):
+            if not entry.is_file():
+                continue
+            if entry.suffix != ".json":
+                continue
+            if entry.name.startswith(".tmp-"):
+                continue
+
+            try:
+                payload = _read_json(entry)
+            except (OSError, json.JSONDecodeError):
+                # Corrupt file — let a real --force re-run rebuild it.
+                continue
+
+            history: List[Dict[str, Any]] = list(payload.get("history") or [])
+            if not history:
+                # Nothing to forward-fill from; first real entry will be
+                # written by rebuild_history_for_all_tickers in Stage 8.
+                continue
+
+            # Latest entry (already kept sorted desc by append_history_entry).
+            # Defensive re-sort in case a legacy file is ordered differently.
+            history_sorted = sorted(
+                history,
+                key=lambda r: r.get("date") or "",
+                reverse=True,
+            )
+            latest = history_sorted[0]
+            latest_date_str = latest.get("date")
+            if not isinstance(latest_date_str, str):
+                continue
+            try:
+                latest_dt = _date_cls.fromisoformat(latest_date_str)
+            except ValueError:
+                continue
+
+            # Only forward-fill strictly into the past relative to today.
+            # If the latest entry is already today or later, the schedule
+            # is up-to-date and nothing to do.
+            gap_end = today_dt - timedelta(days=1)
+            if latest_dt >= gap_end:
+                continue
+
+            last_score = latest.get("score")
+            last_band = latest.get("band") or "review"
+
+            existing_dates = {row.get("date") for row in history_sorted}
+            new_entries: List[Dict[str, Any]] = []
+            cursor = latest_dt + timedelta(days=1)
+            while cursor <= gap_end:
+                cursor_str = cursor.isoformat()
+                # Idempotency: skip dates that already have an entry —
+                # important so running --catch-up twice doesn't duplicate
+                # synthetic rows.
+                if cursor_str not in existing_dates:
+                    new_entries.append(
+                        {
+                            "date": cursor_str,
+                            "score": last_score,
+                            "band": last_band,
+                            "synthetic": True,
+                        }
+                    )
+                cursor += timedelta(days=1)
+
+            if not new_entries:
+                continue
+
+            merged = history_sorted + new_entries
+            merged.sort(key=lambda r: r.get("date") or "", reverse=True)
+            if len(merged) > max_entries:
+                merged = merged[:max_entries]
+
+            payload["history"] = merged
+            _atomic_write_json(entry, payload)
+            total_synthetic += len(new_entries)
+            affected_tickers += 1
+
+        if total_synthetic:
+            print(
+                "✓ Catch-up: filled %d synthetic entries across %d tickers"
+                % (total_synthetic, affected_tickers)
+            )
+        return total_synthetic
+
+    def clear_synthetic_entries(self, ticker: str) -> int:
+        """Remove every entry marked ``synthetic: true`` from a ticker's history.
+
+        Useful for testing / cleanup when you want to undo a catch-up
+        backfill on a specific ticker. Returns the number of entries
+        removed. A no-op for tickers with no synthetic entries (or no
+        history file at all).
+        """
+        path = self.history_path(ticker)
+        if not path.exists():
+            return 0
+        try:
+            payload = _read_json(path)
+        except (OSError, json.JSONDecodeError):
+            return 0
+        history: List[Dict[str, Any]] = list(payload.get("history") or [])
+        kept = [row for row in history if not row.get("synthetic")]
+        removed = len(history) - len(kept)
+        if removed == 0:
+            return 0
+        payload["history"] = kept
+        _atomic_write_json(path, payload)
+        return removed
 
     # ------------------------------------------------------------------
     # Index

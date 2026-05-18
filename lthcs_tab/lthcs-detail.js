@@ -358,7 +358,13 @@ function svgEl(tag, attrs) {
   return node;
 }
 
-// Sort + normalize: returns ascending-by-date list of {date, score, band}.
+// Sort + normalize: returns ascending-by-date list of
+// {date, score, band, synthetic}. The `synthetic` flag is preserved
+// from the source payload — written by `LthcsPersist.fill_history_gaps`
+// when the daily CI cron missed a run and forward-filled the gap with
+// copies of the last real entry. Consumers (chart + trend pill) decide
+// how to render. Trend pill ignores it (delta is already zero across
+// flat synthetics); chart draws hollow markers + dashed line segments.
 function normalizeHistory(series) {
   const rows = [];
   for (const raw of series) {
@@ -368,7 +374,12 @@ function normalizeHistory(series) {
     const sRaw = (raw.composite_score != null) ? raw.composite_score : raw.score;
     const s = Number(sRaw);
     if (!d || !Number.isFinite(s)) continue;
-    rows.push({ date: d, score: s, band: raw.band || null });
+    rows.push({
+      date: d,
+      score: s,
+      band: raw.band || null,
+      synthetic: raw.synthetic === true,
+    });
   }
   rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return rows;
@@ -544,6 +555,7 @@ function renderChart(panel, history) {
   const latestScore = series[series.length - 1].score;
   const lineColor = bandColorForScore(latestScore) || '#6EA8FE';
   const d = smoothPath(points);
+  const hasSynthetic = series.some(r => r.synthetic);
   if (d) {
     // Faint fill below the line for visual weight
     const fillD = `${d} L${points[points.length-1][0].toFixed(2)},${(M.top+plotH).toFixed(2)} L${points[0][0].toFixed(2)},${(M.top+plotH).toFixed(2)} Z`;
@@ -561,18 +573,65 @@ function renderChart(panel, history) {
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
     }));
+    // If the series contains any synthetic (backfilled) entries, overlay
+    // dashed segments on top of the solid line for the synthetic-adjacent
+    // span. A segment from i-1 → i is considered "backfilled" if either
+    // endpoint is synthetic. The dashed overlay sits ON TOP of the solid
+    // line so it visually replaces it without us having to redo the
+    // smoothing math for fragments. Background color matches the chart
+    // wrap so the underlying line is masked between dashes.
+    if (hasSynthetic) {
+      for (let i = 1; i < points.length; i++) {
+        const isBackfilled = series[i - 1].synthetic || series[i].synthetic;
+        if (!isBackfilled) continue;
+        // Mask the solid line for this segment with the card background,
+        // then draw the dashed indicator on top in lineColor.
+        const segPath = `M${points[i-1][0].toFixed(2)},${points[i-1][1].toFixed(2)} L${points[i][0].toFixed(2)},${points[i][1].toFixed(2)}`;
+        svg.appendChild(svgEl('path', {
+          d: segPath,
+          fill: 'none',
+          stroke: 'var(--bg-card, #171C22)',
+          'stroke-width': '2.5',
+          'stroke-linecap': 'butt',
+        }));
+        svg.appendChild(svgEl('path', {
+          d: segPath,
+          fill: 'none',
+          stroke: lineColor,
+          'stroke-width': '2',
+          'stroke-linecap': 'round',
+          'stroke-dasharray': '3 3',
+          'stroke-opacity': '0.75',
+        }));
+      }
+    }
   }
 
   // ---- Dots ----
+  // Real entries get a filled marker (band-colored, card-stroked ring).
+  // Synthetic entries get a HOLLOW marker: stroked in the band color,
+  // filled with the card background, so they read as a distinct
+  // "this is backfilled, not measured" visual at a glance.
   const dotsGroup = svgEl('g', { class: 'lthcs-chart-dots' });
   for (let i = 0; i < series.length; i++) {
     const [x, y] = points[i];
-    dotsGroup.appendChild(svgEl('circle', {
-      cx: x, cy: y, r: 2.5,
-      fill: bandColorForScore(series[i].score) || lineColor,
-      stroke: 'var(--bg-card, #171C22)',
-      'stroke-width': '1.5',
-    }));
+    const markerColor = bandColorForScore(series[i].score) || lineColor;
+    if (series[i].synthetic) {
+      dotsGroup.appendChild(svgEl('circle', {
+        cx: x, cy: y, r: 2.75,
+        fill: 'var(--bg-card, #171C22)',
+        stroke: markerColor,
+        'stroke-width': '1.5',
+        class: 'lthcs-chart-dot-synthetic',
+      }));
+    } else {
+      dotsGroup.appendChild(svgEl('circle', {
+        cx: x, cy: y, r: 2.5,
+        fill: markerColor,
+        stroke: 'var(--bg-card, #171C22)',
+        'stroke-width': '1.5',
+      }));
+    }
   }
   svg.appendChild(dotsGroup);
 
@@ -700,12 +759,19 @@ function renderChart(panel, history) {
 
   chartEl.appendChild(svg);
 
-  // Sparse-history note
-  if (series.length > 0 && series.length < 30) {
-    setChartNote(panel,
-      `Only ${series.length} day${series.length === 1 ? '' : 's'} of history; full chart available after 30+ days.`,
-    );
+  // Chart footnote. Composable messages, joined by " · " so both can fire.
+  // The synthetic note explains the hollow-marker / dashed-line visual
+  // when the daily cron missed a run and `--catch-up` forward-filled the
+  // gap. Persist layer marks those rows with synthetic=true; the chart
+  // is the only consumer that surfaces them visually.
+  const notes = [];
+  if (hasSynthetic) {
+    notes.push('Hollow markers = backfilled days (CI gap).');
   }
+  if (series.length > 0 && series.length < 30) {
+    notes.push(`Only ${series.length} day${series.length === 1 ? '' : 's'} of history; full chart available after 30+ days.`);
+  }
+  if (notes.length) setChartNote(panel, notes.join(' · '));
 }
 
 function renderChartError(panel) {

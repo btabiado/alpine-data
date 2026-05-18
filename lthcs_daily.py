@@ -31,6 +31,7 @@ Usage::
     python lthcs_daily.py --dry-run             # Compute but don't write
     python lthcs_daily.py --force               # Overwrite today's snapshot
     python lthcs_daily.py --skip-thesis         # Bypass AV (don't burn token)
+    python lthcs_daily.py --catch-up            # Forward-fill any missed days
     python lthcs_daily.py --verbose             # Extra stage diagnostics
 """
 
@@ -39,6 +40,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -143,11 +145,52 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="Skip Alpha Vantage call entirely (Thesis falls back to neutral 50).",
     )
     p.add_argument(
+        "--catch-up",
+        action="store_true",
+        help=(
+            "Forward-fill any missing dates between the last history entry "
+            "and today. Each gap day gets a synthetic history entry equal to "
+            "the last actual snapshot (marked synthetic=True) so charts have "
+            "no visible gaps when the daily cron missed a run. Idempotent."
+        ),
+    )
+    p.add_argument(
+        "--as-of",
+        dest="as_of",
+        default=None,
+        help=(
+            "Compute the LTHCS pipeline as if today were the given date "
+            "(YYYY-MM-DD). Used by scripts/lthcs_backfill.py for historical "
+            "reconstruction. When set: state.calc_date = the as-of date, all "
+            "source-module fetches receive as_of=<date>, snapshot is written "
+            "to snapshots/<as-of>.json, and history entries are appended for "
+            "that date. Mutually exclusive with --catch-up."
+        ),
+    )
+    p.add_argument(
         "--verbose",
         action="store_true",
         help="Emit extra per-stage diagnostics.",
     )
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+
+    # --- Validate --as-of (must be YYYY-MM-DD, not in the future) ---
+    if args.as_of is not None:
+        if not isinstance(args.as_of, str) or not re.match(r"^\d{4}-\d{2}-\d{2}$", args.as_of):
+            p.error("--as-of must be a YYYY-MM-DD date string, got %r" % args.as_of)
+        try:
+            as_of_dt = date.fromisoformat(args.as_of)
+        except ValueError:
+            p.error("--as-of %r is not a real calendar date" % args.as_of)
+        if as_of_dt > date.today():
+            p.error(
+                "--as-of %s is in the future (today=%s)"
+                % (args.as_of, date.today().isoformat())
+            )
+        if args.catch_up:
+            p.error("--as-of and --catch-up are mutually exclusive")
+
+    return args
 
 
 # ---------------------------------------------------------------------------
@@ -303,31 +346,38 @@ def _bp_change_30d(series: List[Dict[str, Any]]) -> Optional[float]:
     return None
 
 
-def build_macro_inputs() -> Dict[str, Optional[float]]:
+def build_macro_inputs(as_of: Optional[str] = None) -> Dict[str, Optional[float]]:
     """Pull the macro state from FRED + EIA. Any one signal failing returns None.
 
     Wraps each network call in a try/except so a single source outage
     doesn't crash the whole pipeline -- the DES pillar tolerates None
     inputs (they contribute 0 tilt).
+
+    When ``as_of`` is provided, every FRED/EIA fetch receives ``as_of=...``
+    so the macro snapshot reflects what was known at that historical
+    date. Sources that don't yet support ``as_of`` (or fail) drop to
+    ``None`` per the standard try/except guard.
     """
+    fred_kw: Dict[str, Any] = {"as_of": as_of} if as_of else {}
+    eia_kw: Dict[str, Any] = {"as_of": as_of} if as_of else {}
     try:
-        cpi_series = fred.get_series("CPIAUCSL")
+        cpi_series = fred.get_series("CPIAUCSL", **fred_kw)
     except Exception:
         cpi_series = []
     try:
-        ten_y_series = fred.get_series("DGS10")
+        ten_y_series = fred.get_series("DGS10", **fred_kw)
     except Exception:
         ten_y_series = []
     try:
-        ff = fred.get_latest_value("FEDFUNDS")
+        ff = fred.get_latest_value("FEDFUNDS", **fred_kw)
     except Exception:
         ff = None
     try:
-        unrate = fred.get_latest_value("UNRATE")
+        unrate = fred.get_latest_value("UNRATE", **fred_kw)
     except Exception:
         unrate = None
     try:
-        wti = eia.get_latest_value("wti")
+        wti = eia.get_latest_value("wti", **eia_kw)
     except Exception:
         wti = None
     # --- Phase 1.5 expanded macro signals (des-audit-framework HIGH gaps) ---
@@ -335,15 +385,15 @@ def build_macro_inputs() -> Dict[str, Optional[float]]:
     # outage for one series must not crash the pipeline. Missing values
     # propagate as None -> DES treats them as 0 tilt (no contribution).
     try:
-        real_10y_series = fred.get_series("DFII10")
+        real_10y_series = fred.get_series("DFII10", **fred_kw)
     except Exception:
         real_10y_series = []
     try:
-        vix_series = fred.get_series("VIXCLS")
+        vix_series = fred.get_series("VIXCLS", **fred_kw)
     except Exception:
         vix_series = []
     try:
-        m2_series = fred.get_series("M2SL")
+        m2_series = fred.get_series("M2SL", **fred_kw)
     except Exception:
         m2_series = []
 
@@ -414,7 +464,13 @@ def stage_1_load_config(state: PipelineState) -> bool:
         state.active_tickers = active
 
     state.by_ticker = by_ticker
-    state.calc_date = date.today().isoformat()
+    # --as-of overrides today's date so historical backfill writes to the
+    # right snapshot file and downstream code consumes the requested date.
+    as_of_override = getattr(state.args, "as_of", None)
+    if as_of_override:
+        state.calc_date = as_of_override
+    else:
+        state.calc_date = date.today().isoformat()
     if state.persist is None:
         state.persist = LthcsPersist()
 
@@ -444,23 +500,30 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         "eia_ok": 0,
     }
 
+    # Historical-backfill mode: pass as_of=<date> to every source that
+    # supports it; warn-and-skip sources that have no historical archive.
+    as_of: Optional[str] = getattr(state.args, "as_of", None)
+    as_of_kw: Dict[str, Any] = {"as_of": as_of} if as_of else {}
+    if as_of and state.args.verbose:
+        print("  --as-of %s active; sources without history will be skipped" % as_of)
+
     n = len(state.active_tickers)
     for sym in state.active_tickers:
         # Yahoo
         try:
-            yahoo.get_daily_prices(sym)
+            yahoo.get_daily_prices(sym, **as_of_kw)
             counts["yahoo_prices_ok"] += 1
         except Exception:
             pass
         try:
-            mom = yahoo.get_momentum_pct(sym, days=90)
+            mom = yahoo.get_momentum_pct(sym, days=90, **as_of_kw)
             state.momentum_by_ticker[sym] = mom
             if mom is not None:
                 counts["yahoo_momentum_ok"] += 1
         except Exception:
             state.momentum_by_ticker[sym] = None
         try:
-            vol = yahoo.get_volatility(sym, window=30)
+            vol = yahoo.get_volatility(sym, window=30, **as_of_kw)
             state.volatility_by_ticker[sym] = vol
             if vol is not None:
                 counts["yahoo_vol_ok"] += 1
@@ -469,21 +532,21 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
 
         # SEC EDGAR
         try:
-            rev = sec_edgar.get_revenue_history(sym)
+            rev = sec_edgar.get_revenue_history(sym, **as_of_kw)
             state.rev_by_ticker[sym] = rev or []
             if rev:
                 counts["sec_rev_ok"] += 1
         except Exception:
             state.rev_by_ticker[sym] = []
         try:
-            gp = sec_edgar.get_gross_profit_history(sym)
+            gp = sec_edgar.get_gross_profit_history(sym, **as_of_kw)
             state.gp_by_ticker[sym] = gp or []
             if gp:
                 counts["sec_gp_ok"] += 1
         except Exception:
             state.gp_by_ticker[sym] = []
         try:
-            ocf = sec_edgar.get_operating_cash_flow_history(sym)
+            ocf = sec_edgar.get_operating_cash_flow_history(sym, **as_of_kw)
             state.ocf_by_ticker[sym] = ocf or []
             if ocf:
                 counts["sec_ocf_ok"] += 1
@@ -495,26 +558,26 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         if financial.is_bank_ticker(sym):
             try:
                 state.nii_by_ticker[sym] = (
-                    sec_edgar.get_net_interest_income_history(sym) or []
+                    sec_edgar.get_net_interest_income_history(sym, **as_of_kw) or []
                 )
             except Exception:
                 state.nii_by_ticker[sym] = []
             try:
                 state.pcl_by_ticker[sym] = (
-                    sec_edgar.get_provision_for_credit_losses_history(sym) or []
+                    sec_edgar.get_provision_for_credit_losses_history(sym, **as_of_kw) or []
                 )
             except Exception:
                 state.pcl_by_ticker[sym] = []
             try:
                 state.noninterest_by_ticker[sym] = (
-                    sec_edgar.get_noninterest_income_history(sym) or []
+                    sec_edgar.get_noninterest_income_history(sym, **as_of_kw) or []
                 )
             except Exception:
                 state.noninterest_by_ticker[sym] = []
 
     # Macro (one shot, shared across tickers)
     try:
-        state.macro_inputs = build_macro_inputs()
+        state.macro_inputs = build_macro_inputs(as_of=as_of)
         if state.macro_inputs.get("ten_y_yield_pct") is not None:
             counts["fred_ok"] = 1
         if state.macro_inputs.get("wti_oil_usd") is not None:
@@ -526,7 +589,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # Additive: persisted today; downstream scoring will consume in a
     # follow-up commit. A full failure must not crash the pipeline.
     try:
-        state.breadth_snapshot = fred_breadth.fetch_breadth_snapshot()
+        state.breadth_snapshot = fred_breadth.fetch_breadth_snapshot(**as_of_kw)
         ok = state.breadth_snapshot.get("data_quality", {}).get("sources_ok", 0)
         counts["fred_breadth_ok"] = ok
     except Exception as exc:
@@ -540,7 +603,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # pipelines fast (yfinance can be slow under flaky network).
     if not state.args.skip_thesis:
         try:
-            state.sector_strength = sector_etf.fetch_sector_strength()
+            state.sector_strength = sector_etf.fetch_sector_strength(**as_of_kw)
             counts["sector_etf_ok"] = len(state.sector_strength.get("sectors", {}))
         except Exception as exc:
             if state.args.verbose:
@@ -552,14 +615,24 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     # Breadth sentiment regime (put/call, AAII, NAAIM). Three independent
     # public sources; module always returns a dict, never raises. We gate
     # downstream usage on data_quality.sources_ok >= 2 in a later commit.
-    try:
-        state.breadth_sentiment_snapshot = breadth_sentiment.fetch_breadth_sentiment()
-        ok = state.breadth_sentiment_snapshot.get("data_quality", {}).get("sources_ok", 0)
-        counts["breadth_sentiment_ok"] = ok
-    except Exception as exc:
-        if state.args.verbose:
-            print("  breadth_sentiment fetch failed: %s" % exc)
+    # In --as-of mode this source has no historical archive (live polls
+    # only); skip with a warning rather than write today's reading into a
+    # past snapshot.
+    if as_of:
+        print(
+            "  WARNING: skipping breadth_sentiment in backfill mode "
+            "(no historical reconstruction available)"
+        )
         state.breadth_sentiment_snapshot = None
+    else:
+        try:
+            state.breadth_sentiment_snapshot = breadth_sentiment.fetch_breadth_sentiment()
+            ok = state.breadth_sentiment_snapshot.get("data_quality", {}).get("sources_ok", 0)
+            counts["breadth_sentiment_ok"] = ok
+        except Exception as exc:
+            if state.args.verbose:
+                print("  breadth_sentiment fetch failed: %s" % exc)
+            state.breadth_sentiment_snapshot = None
     # NOTE: analyst_breadth runs AFTER the Thesis cascade (Step 2 warms
     # the yahoo_events recommendations cache it depends on). See Stage 2
     # cascade section below.
@@ -573,7 +646,15 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     rotation = ThesisRotation(data_root=persist_root, model_version="v1.0.0")
     state.rotation = rotation
     av_status = "skipped"
-    if not state.args.skip_thesis and state.active_tickers:
+    # Alpha Vantage free tier has no historical news archive, so backfill
+    # mode forces the same fallback as --skip-thesis (Thesis pillar drops
+    # to neutral 50, recomposed via renorm in the downstream weights).
+    if as_of:
+        print(
+            "  WARNING: skipping alpha_vantage in backfill mode "
+            "(no historical reconstruction available)"
+        )
+    if not state.args.skip_thesis and not as_of and state.active_tickers:
         try:
             # PRIORITY ROTATION: highest-impact mega-caps (the ~30 most
             # broadly-watched index leaders) jump the alphabetical queue.
@@ -743,7 +824,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if _has_fresh_sentiment(sym):
                 continue
             try:
-                reco_history = finnhub.get_recommendation_trends(sym)
+                reco_history = finnhub.get_recommendation_trends(sym, **as_of_kw)
             except finnhub.FinnhubAPIKeyMissing:
                 finnhub_keyless = True
                 break
@@ -793,7 +874,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if _has_fresh_sentiment(sym):
                 continue
             try:
-                sig = sec_8k.event_signal_for_ticker(sym, days=90)
+                sig = sec_8k.event_signal_for_ticker(sym, days=90, **as_of_kw)
             except Exception:
                 continue
             if sig.get("article_count", 0) <= 0:
@@ -808,7 +889,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if _has_fresh_sentiment(sym):
                 continue
             try:
-                earnings = yahoo_events.get_earnings_dates(sym, limit=4)
+                earnings = yahoo_events.get_earnings_dates(sym, limit=4, **as_of_kw)
                 sig = yahoo_events.summarize_earnings_for_thesis(earnings)
             except Exception:
                 sig = {}
@@ -818,7 +899,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                     continue
             # Try analyst actions if no earnings signal.
             try:
-                actions = yahoo_events.get_analyst_actions(sym, days=90)
+                actions = yahoo_events.get_analyst_actions(sym, days=90, **as_of_kw)
                 sig = yahoo_events.summarize_analyst_actions_for_thesis(actions)
             except Exception:
                 continue
@@ -849,23 +930,34 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 sector_rss_supplement_count += 1
 
         # --- Step 5: AI news engagement (fallback, AI cohort only) ---
-        try:
-            state.ai_news_by_ticker = ai_news.aggregate_ai_news(
-                state.active_tickers
+        # Skip in --as-of mode: HN Algolia + RSS feeds expose only "now",
+        # not the archive that would have been visible on the historical
+        # date. We'd otherwise pollute a 2026-04-15 snapshot with 2026-05-17
+        # news engagement scores.
+        if as_of:
+            print(
+                "  WARNING: skipping ai_news in backfill mode "
+                "(no historical reconstruction available)"
             )
-        except Exception as exc:
-            if state.args.verbose:
-                print("  AI-news fetch failed: %s" % exc)
             state.ai_news_by_ticker = {}
+        else:
+            try:
+                state.ai_news_by_ticker = ai_news.aggregate_ai_news(
+                    state.active_tickers
+                )
+            except Exception as exc:
+                if state.args.verbose:
+                    print("  AI-news fetch failed: %s" % exc)
+                state.ai_news_by_ticker = {}
 
-        for sym, news_dict in state.ai_news_by_ticker.items():
-            if news_dict.get("total_mentions", 0) < 3:
-                continue
-            if _has_fresh_sentiment(sym):
-                continue
-            sig = ai_news.compute_thesis_signal_from_news(news_dict)
-            if _write_supplement(sym, sig):
-                ai_news_supplement_count += 1
+            for sym, news_dict in state.ai_news_by_ticker.items():
+                if news_dict.get("total_mentions", 0) < 3:
+                    continue
+                if _has_fresh_sentiment(sym):
+                    continue
+                sig = ai_news.compute_thesis_signal_from_news(news_dict)
+                if _write_supplement(sym, sig):
+                    ai_news_supplement_count += 1
 
         # --- Analyst-rating breadth (cache-read-only over yahoo_events) ---
         # Runs AFTER the Thesis cascade so the yahoo_events recommendations
@@ -892,7 +984,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             try:
                 state.insider_by_ticker = (
                     sec_form4.fetch_universe_insider_transactions(
-                        state.active_tickers, window_days=90
+                        state.active_tickers, window_days=90, **as_of_kw
                     )
                 )
                 counts["insider_covered"] = len(state.insider_by_ticker)
@@ -909,7 +1001,7 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             try:
                 state.holdings_by_ticker = (
                     sec_13f.fetch_universe_institutional_holdings(
-                        state.active_tickers
+                        state.active_tickers, **as_of_kw
                     )
                 )
                 counts["holdings_covered"] = sum(
@@ -1373,6 +1465,13 @@ def stage_8_persist(state: PipelineState) -> bool:
             state.narrative_rows,
             overwrite=state.args.force,
         )
+        # Forward-fill any missed days BEFORE writing today's row so the
+        # synthetic entries land between the previous real snapshot and
+        # today's new one. No-op when no gap exists.
+        if state.args.catch_up:
+            synthetic_total = persist.fill_history_gaps(today=state.calc_date)
+            if state.args.verbose and synthetic_total:
+                print("  catch-up filled %d synthetic entries" % synthetic_total)
         history_count = persist.rebuild_history_for_all_tickers(
             state.snapshot_rows, state.calc_date, MODEL_VERSION
         )
