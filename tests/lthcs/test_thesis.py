@@ -658,3 +658,303 @@ def test_finnhub_return_shape_keys():
     }
     assert "source" in out["data_quality"]
     assert out["data_quality"]["source"] == "finnhub_recommendation"
+
+
+# --- compute_thesis_with_refinement (8-K + Yahoo earnings refinement) -----
+#
+# These cover the new refinement layer that blends event-driven signals
+# (SEC 8-K material events, Yahoo earnings surprises) onto the Finnhub
+# analyst-consensus base. See lthcs/pillars/thesis.py for the math.
+
+
+def _sec_8k_sig(score=-0.5, count=2):
+    """Build a fake output of ``sec_8k.event_signal_for_ticker``.
+
+    Only the fields the refinement helper reads are populated.
+    """
+    return {
+        "ticker": "AAPL",
+        "article_count": count,
+        "mean_sentiment_score": score,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+            "Bearish": 0,
+            "Somewhat-Bearish": 0,
+            "Neutral": 0,
+            "Somewhat-Bullish": 0,
+            "Bullish": 0,
+        },
+        "source": "sec_8k",
+        "last_scored": "2026-05-18",
+    }
+
+
+def _yahoo_earnings_sig(score=0.7, count=1):
+    """Build a fake output of ``yahoo_events.summarize_earnings_for_thesis``."""
+    return {
+        "ticker": "AAPL",
+        "article_count": count,
+        "mean_sentiment_score": score,
+        "mean_relevance_score": 1.0,
+        "label_counts": {
+            "Bearish": 0,
+            "Somewhat-Bearish": 0,
+            "Neutral": 0,
+            "Somewhat-Bullish": 0,
+            "Bullish": 1,
+        },
+        "source": "yahoo_earnings",
+        "last_scored": "2026-05-18",
+    }
+
+
+def test_refinement_no_events_matches_finnhub_base():
+    """Without 8-K / Yahoo signals the refined sub_score == Finnhub base."""
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    base = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, today="2026-05-18"
+    )
+    assert refined["sub_score"] == base["sub_score"]
+    # Marker fields are added but the base sub_score is preserved.
+    assert refined["components"]["has_sec_8k"] is False
+    assert refined["components"]["has_yahoo_earnings"] is False
+    assert refined["components"]["sec_8k_score"] is None
+    assert refined["components"]["yahoo_earnings_score"] is None
+    assert refined["components"]["events_score_raw"] is None
+    assert refined["components"]["base_sub_score"] == base["sub_score"]
+
+
+def test_refinement_negative_8k_pulls_score_down():
+    """A -0.5 8-K refinement on a +75 Finnhub base lowers the score."""
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    sec_sig = _sec_8k_sig(score=-0.5, count=2)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=sec_sig, today="2026-05-18"
+    )
+    # Base = 75. Events score = -0.5 -> bounded_linear -> 25.
+    # With w=0.25 default: 75 * 0.75 + 25 * 0.25 = 56.25 + 6.25 = 62.5
+    assert refined["sub_score"] == pytest.approx(62.5, abs=0.1)
+    assert refined["components"]["has_sec_8k"] is True
+    assert refined["components"]["has_yahoo_earnings"] is False
+    assert refined["components"]["sec_8k_score"] == pytest.approx(-0.5)
+    assert refined["components"]["yahoo_earnings_score"] is None
+    assert refined["components"]["events_score_raw"] == pytest.approx(25.0, abs=0.1)
+    assert refined["components"]["events_weight"] == pytest.approx(0.25)
+    assert refined["components"]["base_sub_score"] == pytest.approx(75.0, abs=0.1)
+    # Refinement source recorded in data_quality for audit.
+    assert refined["data_quality"]["has_events_refinement"] is True
+    assert refined["data_quality"]["events_refinement_sources"] == ["sec_8k"]
+
+
+def test_refinement_positive_yahoo_earnings_boosts_score():
+    """Strong earnings beat (+0.7) on a +50 base pushes score up."""
+    reco = _reco(consensus_score=0.0, total_analysts=10,
+                 buy_count=3, hold_count=4, sell_count=3)
+    yh = _yahoo_earnings_sig(score=0.7, count=1)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, yahoo_earnings_signal=yh, today="2026-05-18"
+    )
+    # Base = 50. Events = +0.7 -> bounded_linear -> 85.
+    # Refined = 50 * 0.75 + 85 * 0.25 = 37.5 + 21.25 = 58.75
+    assert refined["sub_score"] == pytest.approx(58.8, abs=0.1)
+    assert refined["components"]["has_sec_8k"] is False
+    assert refined["components"]["has_yahoo_earnings"] is True
+    assert refined["components"]["yahoo_earnings_score"] == pytest.approx(0.7)
+    assert refined["data_quality"]["events_refinement_sources"] == ["yahoo_earnings"]
+
+
+def test_refinement_both_signals_blend_5050():
+    """Both 8-K and Yahoo present -> equal-weight blend of refinement scores."""
+    reco = _reco(consensus_score=0.0, total_analysts=10,
+                 buy_count=3, hold_count=4, sell_count=3)
+    sec_sig = _sec_8k_sig(score=-1.0, count=1)  # restatement
+    yh = _yahoo_earnings_sig(score=1.0, count=1)  # blowout beat
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=sec_sig, yahoo_earnings_signal=yh,
+        today="2026-05-18"
+    )
+    # Events score = 0.5*(-1) + 0.5*(+1) = 0 -> bounded_linear -> 50.
+    # Base = 50, refined = 50 (no change because conflicting signals cancel).
+    assert refined["sub_score"] == pytest.approx(50.0, abs=0.1)
+    assert refined["components"]["has_sec_8k"] is True
+    assert refined["components"]["has_yahoo_earnings"] is True
+    assert refined["data_quality"]["events_refinement_sources"] == [
+        "sec_8k", "yahoo_earnings"
+    ]
+
+
+def test_refinement_empty_signal_dicts_treated_as_absent():
+    """Signals with article_count=0 contribute nothing."""
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    empty_sec = _sec_8k_sig(score=-0.5, count=0)  # no events
+    empty_yh = _yahoo_earnings_sig(score=0.7, count=0)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=empty_sec,
+        yahoo_earnings_signal=empty_yh, today="2026-05-18"
+    )
+    base = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+    # No refinement applied — sub_score matches base.
+    assert refined["sub_score"] == base["sub_score"]
+    assert refined["components"]["has_sec_8k"] is False
+    assert refined["components"]["has_yahoo_earnings"] is False
+
+
+def test_refinement_weight_zero_disables_refinement():
+    """events_weight=0 should be identity with the Finnhub base."""
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    sec_sig = _sec_8k_sig(score=-1.0, count=3)  # extreme negative
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=sec_sig,
+        events_weight=0.0, today="2026-05-18"
+    )
+    base = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+    # Refinement weight 0 -> no movement.
+    assert refined["sub_score"] == base["sub_score"]
+    # But marker fields still record the signal existed.
+    assert refined["components"]["has_sec_8k"] is True
+
+
+def test_refinement_weight_one_full_override_by_events():
+    """events_weight=1 effectively replaces the base with events score."""
+    reco = _reco(consensus_score=1.0, total_analysts=30,
+                 buy_count=30, hold_count=0, sell_count=0)
+    # base = 100. Sec 8-K events score = -1.0 -> 0.
+    sec_sig = _sec_8k_sig(score=-1.0, count=2)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=sec_sig,
+        events_weight=1.0, today="2026-05-18"
+    )
+    # Refined = 100*0 + 0*1 = 0.
+    assert refined["sub_score"] == pytest.approx(0.0, abs=0.1)
+
+
+def test_refinement_no_finnhub_no_events_returns_neutral():
+    """None reco + no events -> neutral 50."""
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", None, today="2026-05-18"
+    )
+    assert refined["sub_score"] == 50.0
+    assert refined["components"]["has_sec_8k"] is False
+    assert refined["components"]["has_yahoo_earnings"] is False
+    assert refined["components"]["base_sub_score"] == 50.0
+
+
+def test_refinement_no_finnhub_with_8k_uses_events_only():
+    """When Finnhub is absent, 8-K events alone refine off the neutral 50."""
+    sec_sig = _sec_8k_sig(score=-0.8, count=1)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", None, sec_8k_signal=sec_sig, today="2026-05-18"
+    )
+    # Base = 50, events = -0.8 -> 10. Refined = 50*0.75 + 10*0.25 = 40.
+    assert refined["sub_score"] == pytest.approx(40.0, abs=0.1)
+    assert refined["components"]["has_sec_8k"] is True
+    assert refined["components"]["sec_8k_score"] == pytest.approx(-0.8)
+
+
+def test_refinement_invalid_score_in_signal_is_skipped():
+    """A signal with mean_sentiment_score=None is treated as absent."""
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    bad_sec = _sec_8k_sig(score=None, count=2)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=bad_sec, today="2026-05-18"
+    )
+    base = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+    assert refined["sub_score"] == base["sub_score"]
+    assert refined["components"]["has_sec_8k"] is False
+
+
+def test_refinement_clamps_extreme_score_to_unit_interval():
+    """A score outside [-1, +1] is clamped before blending."""
+    reco = _reco(consensus_score=0.0, total_analysts=10,
+                 buy_count=3, hold_count=4, sell_count=3)
+    sec_sig = _sec_8k_sig(score=-5.0, count=2)  # malformed extreme
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=sec_sig, today="2026-05-18"
+    )
+    # Clamped to -1.0 -> events score 0. Refined = 50*0.75 + 0*0.25 = 37.5
+    assert refined["sub_score"] == pytest.approx(37.5, abs=0.1)
+    assert refined["components"]["sec_8k_score"] == pytest.approx(-1.0)
+
+
+def test_refinement_preserves_shape_keys():
+    """Refinement output has the same top-level keys as the base."""
+    reco = _reco(consensus_score=0.3, total_analysts=10,
+                 buy_count=6, hold_count=3, sell_count=1)
+    sec_sig = _sec_8k_sig(score=0.5, count=1)
+    yh = _yahoo_earnings_sig(score=0.4, count=1)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=sec_sig, yahoo_earnings_signal=yh,
+        today="2026-05-18"
+    )
+    assert set(refined.keys()) == {
+        "ticker", "sub_score", "components", "data_quality"
+    }
+    # Required refinement marker fields exist.
+    for key in ("has_sec_8k", "has_yahoo_earnings", "sec_8k_score",
+                "yahoo_earnings_score", "events_score_raw",
+                "events_weight", "base_sub_score"):
+        assert key in refined["components"]
+    assert "has_events_refinement" in refined["data_quality"]
+    assert "events_refinement_sources" in refined["data_quality"]
+
+
+def test_refinement_neutral_event_score_treated_as_absent():
+    """A signal with mean_sentiment_score=0.0 doesn't pull the base toward 50.
+
+    This is the key anti-flattening guard: most 8-K filings carry direction=0
+    (Reg-FD disclosures, exhibits), and treating them as a "pull to 50"
+    force would shrink the cross-sectional stdev of Thesis sub-scores —
+    exactly the opposite of what refinement is supposed to do.
+    """
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    neutral_sec = _sec_8k_sig(score=0.0, count=5)  # 5 neutral 8-K events
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco, sec_8k_signal=neutral_sec, today="2026-05-18"
+    )
+    base = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+    # Neutral 8-K should not move the score AT ALL — it carries no
+    # directional information.
+    assert refined["sub_score"] == base["sub_score"]
+    # Marker fields reflect that no refinement actually fired.
+    assert refined["components"]["has_sec_8k"] is False
+    assert refined["components"]["sec_8k_score"] is None
+
+
+def test_refinement_refines_off_stored_sentiment_when_no_finnhub():
+    """Fallback to stored sentiment when no Finnhub signal; refinement still applies."""
+    stored = {
+        "ticker": "AAPL",
+        "last_scored": "2026-05-18",
+        "article_count": 10,
+        "mean_sentiment_score": 0.5,
+        "mean_relevance_score": 0.5,
+        "label_counts": {"Bullish": 8, "Neutral": 2,
+                          "Bearish": 0, "Somewhat-Bullish": 0,
+                          "Somewhat-Bearish": 0},
+    }
+    sec_sig = _sec_8k_sig(score=-1.0, count=2)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", None, sec_8k_signal=sec_sig, stored_sentiment=stored,
+        today="2026-05-18"
+    )
+    # Stored base = 75. Events = 0. Refined = 75*0.75 + 0*0.25 = 56.25
+    assert refined["sub_score"] == pytest.approx(56.2, abs=0.2)
+    assert refined["components"]["has_sec_8k"] is True
+    assert refined["components"]["base_sub_score"] == pytest.approx(75.0, abs=0.5)

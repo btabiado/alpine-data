@@ -458,3 +458,295 @@ def compute_thesis_from_finnhub_recommendation(
             "source": "finnhub_recommendation",
         },
     }
+
+
+# --- Event-driven refinement (8-K + Yahoo earnings) ------------------------
+#
+# The Finnhub recommendation base is the PRIMARY Thesis signal (analyst
+# consensus, real direction, ~12 months of history). 8-K material events
+# and Yahoo earnings surprises are REFINEMENT signals: they nudge the base
+# when a discrete, high-information event landed, but they do NOT replace
+# the analyst consensus. Rationale: a single restatement (Item 4.02) might
+# warrant a -10pt nudge on a ticker the Street still loves; an earnings
+# beat by +12% deserves a small +pt bump. But we want analysts to remain
+# the anchor — they're the cross-sectional differentiator.
+#
+# This implements Pattern C from docs/news-feeds-earnings-events.md §5.
+
+# Weight of the events refinement when blending with the Finnhub base.
+# 0.0 = base only (no refinement); 1.0 = events only (replace base).
+# 0.25 leaves the base dominant while letting strong events move the
+# needle ~5-10 points on extreme cases.
+_EVENTS_REFINEMENT_WEIGHT = 0.25
+
+# Sub-weights inside the events score: 8-K = 50%, Yahoo earnings = 50%.
+# Both are present infrequently, so when only one fires it carries the
+# full events_score by itself.
+_SEC_8K_WEIGHT = 0.5
+_YAHOO_EARNINGS_WEIGHT = 0.5
+
+
+def _extract_event_score(signal: Optional[Dict[str, Any]]) -> Optional[float]:
+    """Pull a [-1, +1] sentiment score from a refinement signal dict.
+
+    Accepts the output shape of:
+      * ``lthcs.sources.sec_8k.event_signal_for_ticker``
+      * ``lthcs.sources.yahoo_events.summarize_earnings_for_thesis``
+      * ``lthcs.sources.yahoo_events.summarize_analyst_actions_for_thesis``
+
+    Returns ``None`` when:
+      * the signal is None / empty / not a dict
+      * ``mean_sentiment_score`` is missing or None
+      * ``article_count`` is 0 (no underlying events)
+      * ``mean_sentiment_score`` is 0.0 — a neutral signal is treated as
+        absent rather than as "pull toward 50". This is critical for
+        cross-sectional stdev: most 8-K filings are direction=0 (Item
+        7.01 Reg-FD disclosures, Item 9.01 financial-statements exhibits,
+        etc.) and treating them as a "pull to 50" force would flatten
+        the distribution toward the midpoint and undo the analyst-
+        consensus signal the base captures.
+
+    The score is clamped to [-1, +1] defensively in case a future source
+    emits something out of range.
+    """
+    if not isinstance(signal, dict):
+        return None
+    count = signal.get("article_count")
+    try:
+        if int(count or 0) <= 0:
+            return None
+    except (TypeError, ValueError):
+        return None
+    raw = signal.get("mean_sentiment_score")
+    if raw is None:
+        return None
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if val == 0.0:
+        # See docstring: neutral signals are treated as absent so the
+        # refinement does not flatten the cross-sectional distribution.
+        return None
+    if val > 1.0:
+        val = 1.0
+    elif val < -1.0:
+        val = -1.0
+    return val
+
+
+def _blend_events_score(
+    sec_8k_score: Optional[float],
+    yahoo_earnings_score: Optional[float],
+) -> Optional[float]:
+    """Weighted blend of refinement scores in [-1, +1].
+
+    Both inputs are optional. If both are None, returns None
+    (no refinement). If only one is present, it carries 100% weight
+    (we don't dilute a real signal with absent ones). If both are
+    present, blend 50/50.
+    """
+    have_sec = sec_8k_score is not None
+    have_yh = yahoo_earnings_score is not None
+    if not have_sec and not have_yh:
+        return None
+    if have_sec and not have_yh:
+        return float(sec_8k_score)
+    if have_yh and not have_sec:
+        return float(yahoo_earnings_score)
+    return (
+        _SEC_8K_WEIGHT * float(sec_8k_score)
+        + _YAHOO_EARNINGS_WEIGHT * float(yahoo_earnings_score)
+    )
+
+
+def compute_thesis_with_refinement(
+    ticker: str,
+    reco_signal: Optional[Dict[str, Any]],
+    *,
+    sec_8k_signal: Optional[Dict[str, Any]] = None,
+    yahoo_earnings_signal: Optional[Dict[str, Any]] = None,
+    stored_sentiment: Optional[Dict[str, Any]] = None,
+    today: Optional[str] = None,
+    events_weight: float = _EVENTS_REFINEMENT_WEIGHT,
+) -> Dict[str, Any]:
+    """Compute the Thesis Integrity sub-score with event-driven refinement.
+
+    Cascade:
+      1. BASE: Finnhub recommendation consensus (via
+         ``compute_thesis_from_finnhub_recommendation``) if usable;
+         else stored sentiment fallback via
+         ``compute_thesis_from_stored_sentiment``; else neutral 50.
+      2. REFINEMENT: blend ``sec_8k_signal`` and ``yahoo_earnings_signal``
+         into a single events_score in [-1, +1], map to 0-100, and blend
+         with the base using ``events_weight``::
+
+             sub_score = base * (1 - w) + events_subscore * w
+
+    The refinement is intentionally a SMALL adjustment by default (w=0.25)
+    so analyst consensus remains the anchor. The base path also still runs
+    when no events are present — refinement is purely additive.
+
+    Components surfaces:
+      * ``has_sec_8k`` (bool) — whether the 8-K refinement fired
+      * ``has_yahoo_earnings`` (bool) — whether the Yahoo earnings
+        refinement fired
+      * ``sec_8k_score`` (float in [-1, +1] or None) — raw 8-K sentiment
+      * ``yahoo_earnings_score`` (float in [-1, +1] or None) — raw
+        Yahoo earnings sentiment
+      * ``events_score_raw`` (float in [0, 100] or None) — events score
+        mapped to 0-100 (matches ``sentiment_subscore_raw`` scale)
+      * ``events_weight`` (float) — the refinement weight used
+      * ``base_sub_score`` (float in [0, 100]) — what the sub_score would
+        have been pre-refinement
+
+    Parameters
+    ----------
+    ticker:
+        Subject ticker.
+    reco_signal:
+        Finnhub recommendation signal dict (see
+        ``compute_thesis_from_finnhub_recommendation``). Pass ``None``
+        when Finnhub has no coverage; the function falls back through
+        ``stored_sentiment`` or to a neutral base.
+    sec_8k_signal:
+        Output of ``sec_8k.event_signal_for_ticker``. Refinement only
+        fires when ``article_count > 0`` and ``mean_sentiment_score``
+        is a real float.
+    yahoo_earnings_signal:
+        Output of ``yahoo_events.summarize_earnings_for_thesis``.
+        Same gates as 8-K.
+    stored_sentiment:
+        Fallback AV-rotation sentiment dict consumed by
+        ``compute_thesis_from_stored_sentiment``. Only used when
+        Finnhub doesn't produce a usable base.
+    today:
+        ISO date for ``last_scored``. Defaults to today.
+    events_weight:
+        Blend weight for the events refinement (in [0, 1]). Default
+        0.25 keeps analyst consensus dominant; tests pass 0.0 to
+        verify the base path is preserved verbatim.
+
+    Returns
+    -------
+    dict
+        Same top-level shape as ``compute_thesis_from_finnhub_recommendation``,
+        but with extra component fields documenting the refinement.
+
+    Notes
+    -----
+    * The base path is preserved exactly when both refinement signals
+      are missing — this function reduces to the prior Finnhub-or-AV
+      cascade with extra ``has_sec_8k=False`` / ``has_yahoo_earnings=False``
+      markers.
+    * Refinement never moves a sub_score outside [0, 100]: the
+      events_subscore is itself in [0, 100], and a weighted average of
+      two values in [0, 100] stays in [0, 100].
+    """
+    # --- Step 1: compute the base sub_score ------------------------------
+    base_result: Dict[str, Any]
+    used_finnhub_base = False
+    if reco_signal is not None:
+        consensus = reco_signal.get("consensus_score")
+        total = int(reco_signal.get("total_analysts") or 0)
+        if consensus is not None and total >= _MIN_ANALYSTS_FOR_THESIS:
+            base_result = compute_thesis_from_finnhub_recommendation(
+                ticker, reco_signal, today=today
+            )
+            used_finnhub_base = True
+        else:
+            base_result = compute_thesis_from_finnhub_recommendation(
+                ticker, reco_signal, today=today
+            )
+    elif stored_sentiment is not None:
+        base_result = compute_thesis_from_stored_sentiment(
+            ticker, stored_sentiment, today=today
+        )
+    else:
+        base_result = compute_thesis_from_finnhub_recommendation(
+            ticker, None, today=today
+        )
+
+    base_sub_score = float(base_result.get("sub_score", _NEUTRAL))
+
+    # --- Step 2: extract refinement scores -------------------------------
+    sec_8k_score = _extract_event_score(sec_8k_signal)
+    yahoo_score = _extract_event_score(yahoo_earnings_signal)
+    has_sec_8k = sec_8k_score is not None
+    has_yahoo = yahoo_score is not None
+
+    # --- Step 3: blend events into a single score ------------------------
+    events_score = _blend_events_score(sec_8k_score, yahoo_score)
+
+    if events_score is None:
+        # No refinement applies — return the base with marker fields set
+        # so downstream variable_detail rows are uniform in shape.
+        components = dict(base_result.get("components") or {})
+        components["has_sec_8k"] = False
+        components["has_yahoo_earnings"] = False
+        components["sec_8k_score"] = None
+        components["yahoo_earnings_score"] = None
+        components["events_score_raw"] = None
+        components["events_weight"] = float(events_weight)
+        components["base_sub_score"] = base_sub_score
+        out = dict(base_result)
+        out["components"] = components
+        return out
+
+    # Map events_score from [-1, +1] to [0, 100] using the same
+    # bounded_linear the base path uses for analyst consensus.
+    events_subscore = float(
+        bounded_linear(float(events_score), _SENTIMENT_LOW, _SENTIMENT_HIGH)
+    )
+
+    # Clamp the weight defensively. A negative or >1 weight here would
+    # produce a nonsensical sub_score; failing closed (clamp) is gentler
+    # than raising in production.
+    w = float(events_weight)
+    if w < 0.0:
+        w = 0.0
+    elif w > 1.0:
+        w = 1.0
+
+    refined = base_sub_score * (1.0 - w) + events_subscore * w
+    # Defensive clamp (mathematically already in [0, 100] given both inputs).
+    if refined > 100.0:
+        refined = 100.0
+    elif refined < 0.0:
+        refined = 0.0
+    refined = round(refined, 1)
+
+    components = dict(base_result.get("components") or {})
+    components["has_sec_8k"] = bool(has_sec_8k)
+    components["has_yahoo_earnings"] = bool(has_yahoo)
+    components["sec_8k_score"] = (
+        float(sec_8k_score) if sec_8k_score is not None else None
+    )
+    components["yahoo_earnings_score"] = (
+        float(yahoo_score) if yahoo_score is not None else None
+    )
+    components["events_score_raw"] = round(events_subscore, 2)
+    components["events_weight"] = w
+    components["base_sub_score"] = base_sub_score
+
+    data_quality = dict(base_result.get("data_quality") or {})
+    # A refinement always means we have *some* signal — even if the base
+    # was neutral/stale, an 8-K event is a real data point. Don't flip
+    # has_sentiment on the basis of refinement alone, but do mark the
+    # refinement source.
+    data_quality["has_events_refinement"] = True
+    # Track which event sources contributed for the audit trail.
+    refinement_sources: list = []
+    if has_sec_8k:
+        refinement_sources.append("sec_8k")
+    if has_yahoo:
+        refinement_sources.append("yahoo_earnings")
+    data_quality["events_refinement_sources"] = refinement_sources
+
+    return {
+        "ticker": base_result.get("ticker", ticker.upper() if isinstance(ticker, str) else ticker),
+        "sub_score": refined,
+        "components": components,
+        "data_quality": data_quality,
+    }
+
