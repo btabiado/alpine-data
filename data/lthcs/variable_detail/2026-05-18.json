@@ -107,15 +107,15 @@
         },
         "sentiment_subscore_raw": 74.07407407407408,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 74.1
       },
-      "sub_score": 70.6,
+      "sub_score": 73.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -125,7 +125,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -298,15 +297,15 @@
         },
         "sentiment_subscore_raw": 73.75,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 73.8
       },
-      "sub_score": 67.8,
+      "sub_score": 73.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -314,16 +313,7 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -493,15 +483,15 @@
         },
         "sentiment_subscore_raw": 66.3265306122449,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 32.5,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 66.3
       },
-      "sub_score": 57.8,
+      "sub_score": 53.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -511,7 +501,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -685,14 +674,14 @@
         "sentiment_subscore_raw": 75.0,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": 0.07142857142857142,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 51.79,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 53.57,
         "events_weight": 0.25,
         "base_sub_score": 75.0
       },
-      "sub_score": 69.2,
+      "sub_score": 69.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -702,8 +691,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       }
@@ -1066,15 +1054,15 @@
         },
         "sentiment_subscore_raw": 64.67391304347827,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 64.7
       },
-      "sub_score": 63.5,
+      "sub_score": 66.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1084,7 +1072,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -1257,15 +1244,15 @@
         },
         "sentiment_subscore_raw": 78.04878048780488,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 78.0
       },
-      "sub_score": 73.5,
+      "sub_score": 76.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1275,7 +1262,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -1449,14 +1435,14 @@
         "sentiment_subscore_raw": 57.608695652173914,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": 0.25,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 56.25,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 62.5,
         "events_weight": 0.25,
         "base_sub_score": 57.6
       },
-      "sub_score": 57.3,
+      "sub_score": 58.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1466,8 +1452,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       }
@@ -1639,15 +1624,15 @@
         },
         "sentiment_subscore_raw": 78.75,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 78.8
       },
-      "sub_score": 74.1,
+      "sub_score": 76.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -1657,7 +1642,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -2018,15 +2002,15 @@
         },
         "sentiment_subscore_raw": 77.32558139534885,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 77.3
       },
-      "sub_score": 73.0,
+      "sub_score": 75.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -2036,7 +2020,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -2439,11 +2422,7 @@
           "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -2610,15 +2589,15 @@
         },
         "sentiment_subscore_raw": 73.27586206896551,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.3
       },
-      "sub_score": 71.8,
+      "sub_score": 76.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -2628,7 +2607,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -3380,15 +3358,15 @@
         },
         "sentiment_subscore_raw": 80.70175438596492,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 80.7
       },
-      "sub_score": 73.0,
+      "sub_score": 80.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -3396,11 +3374,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -3576,15 +3549,15 @@
         },
         "sentiment_subscore_raw": 63.57142857142857,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 63.6
       },
-      "sub_score": 62.7,
+      "sub_score": 65.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -3594,7 +3567,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -3768,14 +3740,14 @@
         "sentiment_subscore_raw": 78.47222222222221,
         "confidence_blend": 1.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 78.5
       },
-      "sub_score": 71.4,
+      "sub_score": 78.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -3783,10 +3755,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -3957,15 +3925,15 @@
         },
         "sentiment_subscore_raw": 79.72972972972974,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 79.7
       },
-      "sub_score": 76.7,
+      "sub_score": 81.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -3975,7 +3943,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -4156,15 +4123,15 @@
         },
         "sentiment_subscore_raw": 76.66666666666666,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 76.7
       },
-      "sub_score": 72.5,
+      "sub_score": 75.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4174,7 +4141,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -4348,14 +4314,14 @@
         "sentiment_subscore_raw": 68.6046511627907,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": 0.1,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 52.5,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 55.0,
         "events_weight": 0.25,
         "base_sub_score": 68.6
       },
-      "sub_score": 64.6,
+      "sub_score": 65.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4365,14 +4331,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -4550,15 +4511,15 @@
         },
         "sentiment_subscore_raw": 73.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.0
       },
-      "sub_score": 71.6,
+      "sub_score": 76.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4568,7 +4529,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -4741,15 +4701,15 @@
         },
         "sentiment_subscore_raw": 77.17391304347827,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 77.2
       },
-      "sub_score": 72.9,
+      "sub_score": 75.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4759,7 +4719,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -4929,15 +4888,15 @@
         },
         "sentiment_subscore_raw": 76.92307692307692,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 76.9
       },
-      "sub_score": 74.6,
+      "sub_score": 78.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -4947,7 +4906,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -5117,15 +5075,15 @@
         },
         "sentiment_subscore_raw": 75.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 75.0
       },
-      "sub_score": 71.2,
+      "sub_score": 73.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -5135,7 +5093,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -5308,15 +5265,15 @@
         },
         "sentiment_subscore_raw": 63.19444444444444,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 63.2
       },
-      "sub_score": 64.3,
+      "sub_score": 68.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -5326,14 +5283,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -5503,15 +5455,15 @@
         },
         "sentiment_subscore_raw": 30.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 30.0
       },
-      "sub_score": 37.5,
+      "sub_score": 40.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -5521,7 +5473,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -5702,15 +5653,15 @@
         },
         "sentiment_subscore_raw": 78.33333333333333,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 78.3
       },
-      "sub_score": 75.6,
+      "sub_score": 80.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -5720,7 +5671,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -5893,15 +5843,15 @@
         },
         "sentiment_subscore_raw": 66.91176470588236,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 66.9
       },
-      "sub_score": 67.1,
+      "sub_score": 71.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -5911,7 +5861,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -6274,15 +6223,15 @@
         },
         "sentiment_subscore_raw": 79.6875,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 79.7
       },
-      "sub_score": 74.8,
+      "sub_score": 77.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -6292,7 +6241,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -6465,15 +6413,15 @@
         },
         "sentiment_subscore_raw": 70.58823529411764,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 70.6
       },
-      "sub_score": 65.4,
+      "sub_score": 70.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -6481,11 +6429,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -6653,15 +6596,15 @@
         },
         "sentiment_subscore_raw": 73.14814814814815,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 73.1
       },
-      "sub_score": 69.8,
+      "sub_score": 72.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -6671,7 +6614,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -6844,15 +6786,15 @@
         },
         "sentiment_subscore_raw": 46.55172413793103,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 40.0,
+        "events_score_raw": 30.0,
         "events_weight": 0.25,
         "base_sub_score": 46.6
       },
-      "sub_score": 45.0,
+      "sub_score": 42.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -6862,7 +6804,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -7036,14 +6977,14 @@
         "sentiment_subscore_raw": 69.16666666666667,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": -0.16,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 46.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 42.0,
         "events_weight": 0.25,
         "base_sub_score": 69.2
       },
-      "sub_score": 63.4,
+      "sub_score": 62.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7053,8 +6994,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       }
@@ -7226,15 +7166,15 @@
         },
         "sentiment_subscore_raw": 60.256410256410255,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 60.3
       },
-      "sub_score": 60.2,
+      "sub_score": 62.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7244,7 +7184,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -7425,15 +7364,15 @@
         },
         "sentiment_subscore_raw": 77.67857142857143,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 40.0,
+        "events_score_raw": 30.0,
         "events_weight": 0.25,
         "base_sub_score": 77.7
       },
-      "sub_score": 68.3,
+      "sub_score": 65.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7443,7 +7382,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -7613,15 +7551,15 @@
         },
         "sentiment_subscore_raw": 73.48484848484848,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.5
       },
-      "sub_score": 72.0,
+      "sub_score": 76.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7631,14 +7569,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 9,
-        "sector_rss_sectors": [
-          "energy"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -7808,15 +7741,15 @@
         },
         "sentiment_subscore_raw": 73.86363636363636,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 73.9
       },
-      "sub_score": 67.9,
+      "sub_score": 73.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -7824,11 +7757,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -7999,15 +7927,15 @@
         },
         "sentiment_subscore_raw": 73.70689655172413,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.7
       },
-      "sub_score": 72.2,
+      "sub_score": 76.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8017,7 +7945,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -8190,15 +8117,15 @@
         },
         "sentiment_subscore_raw": 74.59677419354838,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 74.6
       },
-      "sub_score": 68.4,
+      "sub_score": 74.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8206,11 +8133,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -8382,14 +8304,14 @@
         "sentiment_subscore_raw": 73.4375,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": -0.26666666666666666,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 43.33,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 36.67,
         "events_weight": 0.25,
         "base_sub_score": 73.4
       },
-      "sub_score": 65.9,
+      "sub_score": 64.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8399,8 +8321,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       }
@@ -8572,15 +8493,15 @@
         },
         "sentiment_subscore_raw": 75.92592592592592,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 75.9
       },
-      "sub_score": 73.8,
+      "sub_score": 78.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8590,7 +8511,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -8764,14 +8684,14 @@
         "sentiment_subscore_raw": 65.74074074074075,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": -0.033333333333333326,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 49.17,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 48.33,
         "events_weight": 0.25,
         "base_sub_score": 65.7
       },
-      "sub_score": 61.6,
+      "sub_score": 61.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8781,8 +8701,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       }
@@ -8954,15 +8873,15 @@
         },
         "sentiment_subscore_raw": 66.21621621621621,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 66.2
       },
-      "sub_score": 64.7,
+      "sub_score": 67.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -8972,7 +8891,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -9145,15 +9063,15 @@
         },
         "sentiment_subscore_raw": 75.75757575757575,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 75.8
       },
-      "sub_score": 73.7,
+      "sub_score": 78.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -9163,7 +9081,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -9333,15 +9250,15 @@
         },
         "sentiment_subscore_raw": 73.38709677419355,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.4
       },
-      "sub_score": 71.9,
+      "sub_score": 76.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -9351,14 +9268,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 9,
-        "sector_rss_sectors": [
-          "energy"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -9528,15 +9440,15 @@
         },
         "sentiment_subscore_raw": 76.38888888888889,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 76.4
       },
-      "sub_score": 72.3,
+      "sub_score": 74.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -9546,7 +9458,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -9719,15 +9630,15 @@
         },
         "sentiment_subscore_raw": 80.35714285714286,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 80.4
       },
-      "sub_score": 77.2,
+      "sub_score": 81.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -9737,7 +9648,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -9910,15 +9820,15 @@
         },
         "sentiment_subscore_raw": 69.85294117647058,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 69.9
       },
-      "sub_score": 69.3,
+      "sub_score": 73.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -9928,7 +9838,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -10292,15 +10201,15 @@
         },
         "sentiment_subscore_raw": 77.7027027027027,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 40.0,
+        "events_score_raw": 30.0,
         "events_weight": 0.25,
         "base_sub_score": 77.7
       },
-      "sub_score": 68.3,
+      "sub_score": 65.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -10310,7 +10219,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -10671,15 +10579,15 @@
         },
         "sentiment_subscore_raw": 81.08108108108108,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 81.1
       },
-      "sub_score": 77.7,
+      "sub_score": 82.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -10689,7 +10597,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -10862,15 +10769,15 @@
         },
         "sentiment_subscore_raw": 62.5,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 32.5,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 62.5
       },
-      "sub_score": 55.0,
+      "sub_score": 50.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -10880,7 +10787,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -11053,15 +10959,15 @@
         },
         "sentiment_subscore_raw": 70.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 70.0
       },
-      "sub_score": 65.0,
+      "sub_score": 70.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11069,11 +10975,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -11241,15 +11142,15 @@
         },
         "sentiment_subscore_raw": 57.407407407407405,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 57.4
       },
-      "sub_score": 55.5,
+      "sub_score": 57.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11257,11 +11158,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -11440,15 +11336,15 @@
         },
         "sentiment_subscore_raw": 59.166666666666664,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 59.2
       },
-      "sub_score": 61.3,
+      "sub_score": 65.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11458,7 +11354,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -11821,15 +11716,15 @@
         },
         "sentiment_subscore_raw": 47.82608695652174,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 47.8
       },
-      "sub_score": 48.3,
+      "sub_score": 47.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -11837,11 +11732,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -12012,15 +11902,15 @@
         },
         "sentiment_subscore_raw": 59.13461538461539,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 59.1
       },
-      "sub_score": 61.2,
+      "sub_score": 65.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12030,7 +11920,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -12203,15 +12092,15 @@
         },
         "sentiment_subscore_raw": 69.6969696969697,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 69.7
       },
-      "sub_score": 69.2,
+      "sub_score": 73.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12221,7 +12110,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -12402,15 +12290,15 @@
         },
         "sentiment_subscore_raw": 78.2258064516129,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 78.2
       },
-      "sub_score": 75.5,
+      "sub_score": 79.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -12420,7 +12308,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -12997,11 +12884,7 @@
           "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -13171,15 +13054,15 @@
         },
         "sentiment_subscore_raw": 73.71794871794873,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.7
       },
-      "sub_score": 72.2,
+      "sub_score": 76.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -13189,7 +13072,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -13362,15 +13244,15 @@
         },
         "sentiment_subscore_raw": 79.64285714285715,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 79.6
       },
-      "sub_score": 76.6,
+      "sub_score": 80.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -13380,7 +13262,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -13558,15 +13439,15 @@
         },
         "sentiment_subscore_raw": 79.64285714285715,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 79.6
       },
-      "sub_score": 76.6,
+      "sub_score": 80.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -13576,7 +13457,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -13762,15 +13642,15 @@
         },
         "sentiment_subscore_raw": 65.625,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 65.6
       },
-      "sub_score": 64.2,
+      "sub_score": 66.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -13780,7 +13660,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -13953,15 +13832,15 @@
         },
         "sentiment_subscore_raw": 70.1086956521739,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 70.1
       },
-      "sub_score": 67.6,
+      "sub_score": 70.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -13971,7 +13850,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -14335,15 +14213,15 @@
         },
         "sentiment_subscore_raw": 71.42857142857143,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 71.4
       },
-      "sub_score": 68.6,
+      "sub_score": 71.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -14353,7 +14231,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -14526,15 +14403,15 @@
         },
         "sentiment_subscore_raw": 73.91304347826086,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 73.9
       },
-      "sub_score": 67.9,
+      "sub_score": 73.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -14542,11 +14419,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -14717,15 +14589,15 @@
         },
         "sentiment_subscore_raw": 66.96428571428572,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 67.0
       },
-      "sub_score": 65.2,
+      "sub_score": 67.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -14735,7 +14607,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -14916,15 +14787,15 @@
         },
         "sentiment_subscore_raw": 58.796296296296305,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 58.8
       },
-      "sub_score": 61.0,
+      "sub_score": 65.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -14934,7 +14805,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -15107,15 +14977,15 @@
         },
         "sentiment_subscore_raw": 77.4390243902439,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 77.4
       },
-      "sub_score": 74.9,
+      "sub_score": 79.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -15125,7 +14995,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -15298,15 +15167,15 @@
         },
         "sentiment_subscore_raw": 73.78048780487805,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.8
       },
-      "sub_score": 72.2,
+      "sub_score": 76.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -15316,14 +15185,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -15493,15 +15357,15 @@
         },
         "sentiment_subscore_raw": 70.3125,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 70.3
       },
-      "sub_score": 65.2,
+      "sub_score": 70.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -15509,16 +15373,7 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -15696,15 +15551,15 @@
         },
         "sentiment_subscore_raw": 66.93548387096774,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 66.9
       },
-      "sub_score": 65.2,
+      "sub_score": 67.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -15714,7 +15569,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -16078,15 +15932,15 @@
         },
         "sentiment_subscore_raw": 43.333333333333336,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 43.3
       },
-      "sub_score": 49.3,
+      "sub_score": 53.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -16096,7 +15950,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -16269,15 +16122,15 @@
         },
         "sentiment_subscore_raw": 73.61111111111111,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 73.6
       },
-      "sub_score": 67.7,
+      "sub_score": 73.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -16285,11 +16138,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -16473,15 +16321,15 @@
         },
         "sentiment_subscore_raw": 77.14285714285714,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 77.1
       },
-      "sub_score": 72.8,
+      "sub_score": 75.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -16491,7 +16339,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -16854,15 +16701,15 @@
         },
         "sentiment_subscore_raw": 74.16666666666667,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 74.2
       },
-      "sub_score": 68.2,
+      "sub_score": 74.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -16870,11 +16717,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -17045,15 +16887,15 @@
         },
         "sentiment_subscore_raw": 75.64102564102564,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 75.6
       },
-      "sub_score": 73.6,
+      "sub_score": 77.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17063,14 +16905,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 3,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -17240,15 +17077,15 @@
         },
         "sentiment_subscore_raw": 62.06896551724138,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 40.0,
+        "events_score_raw": 30.0,
         "events_weight": 0.25,
         "base_sub_score": 62.1
       },
-      "sub_score": 56.6,
+      "sub_score": 54.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17258,7 +17095,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -17431,15 +17267,15 @@
         },
         "sentiment_subscore_raw": 71.34146341463415,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 71.3
       },
-      "sub_score": 66.0,
+      "sub_score": 71.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17447,11 +17283,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -17622,15 +17453,15 @@
         },
         "sentiment_subscore_raw": 75.60975609756098,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 75.6
       },
-      "sub_score": 71.7,
+      "sub_score": 74.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17640,7 +17471,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -17818,15 +17648,15 @@
         },
         "sentiment_subscore_raw": 57.05128205128205,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 57.1
       },
-      "sub_score": 57.8,
+      "sub_score": 60.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -17836,7 +17666,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -18009,15 +17838,15 @@
         },
         "sentiment_subscore_raw": 79.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 79.0
       },
-      "sub_score": 71.8,
+      "sub_score": 79.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -18025,11 +17854,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -18200,15 +18024,15 @@
         },
         "sentiment_subscore_raw": 65.32258064516128,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 65.3
       },
-      "sub_score": 64.0,
+      "sub_score": 66.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -18218,7 +18042,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -18399,15 +18222,15 @@
         },
         "sentiment_subscore_raw": 68.45238095238095,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 68.5
       },
-      "sub_score": 66.4,
+      "sub_score": 68.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -18417,7 +18240,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -18590,15 +18412,15 @@
         },
         "sentiment_subscore_raw": 77.34375,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 77.3
       },
-      "sub_score": 74.8,
+      "sub_score": 79.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -18608,7 +18430,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -18781,15 +18602,15 @@
         },
         "sentiment_subscore_raw": 77.17391304347827,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 77.2
       },
-      "sub_score": 74.8,
+      "sub_score": 79.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -18799,7 +18620,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -19163,15 +18983,15 @@
         },
         "sentiment_subscore_raw": 70.27027027027027,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 32.5,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 70.3
       },
-      "sub_score": 60.8,
+      "sub_score": 56.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -19181,14 +19001,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -19358,15 +19173,15 @@
         },
         "sentiment_subscore_raw": 80.64516129032258,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 80.6
       },
-      "sub_score": 72.9,
+      "sub_score": 80.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -19374,11 +19189,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -19740,15 +19550,15 @@
         },
         "sentiment_subscore_raw": 80.13698630136986,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 80.1
       },
-      "sub_score": 75.1,
+      "sub_score": 77.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -19758,7 +19568,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -19936,15 +19745,15 @@
         },
         "sentiment_subscore_raw": 67.70833333333334,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 67.7
       },
-      "sub_score": 65.8,
+      "sub_score": 68.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -19954,7 +19763,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -20127,15 +19935,15 @@
         },
         "sentiment_subscore_raw": 70.3125,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 70.3
       },
-      "sub_score": 67.7,
+      "sub_score": 70.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -20145,7 +19953,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -20318,15 +20125,15 @@
         },
         "sentiment_subscore_raw": 66.66666666666666,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 66.7
       },
-      "sub_score": 65.0,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -20336,7 +20143,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -20509,15 +20315,15 @@
         },
         "sentiment_subscore_raw": 73.57142857142858,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 73.6
       },
-      "sub_score": 72.1,
+      "sub_score": 76.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -20527,14 +20333,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -20705,14 +20506,14 @@
         "sentiment_subscore_raw": 77.5,
         "confidence_blend": 1.0,
         "has_sec_8k": true,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": 0.08333333333333333,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 52.08,
+        "yahoo_earnings_score": null,
+        "events_score_raw": 54.17,
         "events_weight": 0.25,
         "base_sub_score": 77.5
       },
-      "sub_score": 71.1,
+      "sub_score": 71.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -20722,8 +20523,7 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
+          "sec_8k"
         ],
         "has_sector_rss": false
       }
@@ -20903,15 +20703,15 @@
         },
         "sentiment_subscore_raw": 69.6969696969697,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 69.7
       },
-      "sub_score": 69.2,
+      "sub_score": 73.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -20921,7 +20721,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -21094,15 +20893,15 @@
         },
         "sentiment_subscore_raw": 81.81818181818181,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 81.8
       },
-      "sub_score": 76.3,
+      "sub_score": 78.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -21112,7 +20911,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -21290,15 +21088,15 @@
         },
         "sentiment_subscore_raw": 80.66037735849056,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 80.7
       },
-      "sub_score": 77.4,
+      "sub_score": 81.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -21308,7 +21106,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -22072,15 +21869,15 @@
         },
         "sentiment_subscore_raw": 78.7037037037037,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 32.5,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 78.7
       },
-      "sub_score": 67.2,
+      "sub_score": 62.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -22090,7 +21887,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -22263,15 +22059,15 @@
         },
         "sentiment_subscore_raw": 81.33802816901408,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 81.3
       },
-      "sub_score": 76.0,
+      "sub_score": 78.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -22281,7 +22077,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -22459,15 +22254,15 @@
         },
         "sentiment_subscore_raw": 74.35897435897436,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 74.4
       },
-      "sub_score": 68.3,
+      "sub_score": 74.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -22475,11 +22270,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -22650,15 +22440,15 @@
         },
         "sentiment_subscore_raw": 62.5,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 62.5
       },
-      "sub_score": 61.9,
+      "sub_score": 64.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -22668,7 +22458,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -22841,15 +22630,15 @@
         },
         "sentiment_subscore_raw": 65.9090909090909,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 65.9
       },
-      "sub_score": 64.4,
+      "sub_score": 66.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -22859,7 +22648,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -23040,15 +22828,15 @@
         },
         "sentiment_subscore_raw": 77.40384615384616,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 77.4
       },
-      "sub_score": 73.1,
+      "sub_score": 75.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -23058,7 +22846,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -23427,15 +23214,15 @@
         },
         "sentiment_subscore_raw": 75.78125,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 75.8
       },
-      "sub_score": 71.8,
+      "sub_score": 74.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -23445,7 +23232,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -23618,15 +23404,15 @@
         },
         "sentiment_subscore_raw": 42.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 42.0
       },
-      "sub_score": 44.0,
+      "sub_score": 42.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -23634,11 +23420,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -23809,15 +23590,15 @@
         },
         "sentiment_subscore_raw": 64.81481481481481,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 64.8
       },
-      "sub_score": 61.1,
+      "sub_score": 64.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -23825,11 +23606,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -24190,15 +23966,15 @@
         },
         "sentiment_subscore_raw": 62.93103448275862,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 62.9
       },
-      "sub_score": 62.2,
+      "sub_score": 64.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -24208,7 +23984,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -24381,15 +24156,15 @@
         },
         "sentiment_subscore_raw": 61.80555555555556,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 61.8
       },
-      "sub_score": 61.3,
+      "sub_score": 63.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -24399,14 +24174,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -24576,15 +24346,15 @@
         },
         "sentiment_subscore_raw": 70.71428571428572,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 70.7
       },
-      "sub_score": 65.5,
+      "sub_score": 70.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -24592,11 +24362,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -24767,15 +24532,15 @@
         },
         "sentiment_subscore_raw": 75.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 75.0
       },
-      "sub_score": 71.2,
+      "sub_score": 73.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -24785,7 +24550,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -24958,15 +24722,15 @@
         },
         "sentiment_subscore_raw": 57.21153846153846,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 57.2
       },
-      "sub_score": 57.9,
+      "sub_score": 60.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -24976,7 +24740,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -25149,15 +24912,15 @@
         },
         "sentiment_subscore_raw": 59.895833333333336,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 59.9
       },
-      "sub_score": 59.9,
+      "sub_score": 62.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -25167,7 +24930,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -25340,15 +25102,15 @@
         },
         "sentiment_subscore_raw": 76.97368421052632,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 32.5,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 77.0
       },
-      "sub_score": 65.9,
+      "sub_score": 61.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -25358,14 +25120,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -25726,15 +25483,15 @@
         },
         "sentiment_subscore_raw": 78.0,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 78.0
       },
-      "sub_score": 73.5,
+      "sub_score": 76.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -25744,7 +25501,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -25917,15 +25673,15 @@
         },
         "sentiment_subscore_raw": 67.5,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 67.5
       },
-      "sub_score": 67.5,
+      "sub_score": 71.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -25935,7 +25691,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -26307,15 +26062,15 @@
         },
         "sentiment_subscore_raw": 76.78571428571428,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
-        "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
-        "yahoo_earnings_score": 0.0,
-        "events_score_raw": 50.0,
+        "has_sec_8k": false,
+        "has_yahoo_earnings": false,
+        "sec_8k_score": null,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 76.8
       },
-      "sub_score": 70.1,
+      "sub_score": 76.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -26323,11 +26078,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k",
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -26495,15 +26245,15 @@
         },
         "sentiment_subscore_raw": 67.74193548387098,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 67.7
       },
-      "sub_score": 65.8,
+      "sub_score": 68.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -26513,7 +26263,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -26686,15 +26435,15 @@
         },
         "sentiment_subscore_raw": 59.61538461538461,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 59.6
       },
-      "sub_score": 61.6,
+      "sub_score": 66.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -26704,7 +26453,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -26877,15 +26625,15 @@
         },
         "sentiment_subscore_raw": 73.38709677419355,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 73.4
       },
-      "sub_score": 70.1,
+      "sub_score": 72.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -26895,7 +26643,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -27065,15 +26812,15 @@
         },
         "sentiment_subscore_raw": 63.63636363636363,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 63.6
       },
-      "sub_score": 62.7,
+      "sub_score": 65.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -27083,7 +26830,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -27253,15 +26999,15 @@
         },
         "sentiment_subscore_raw": 68.26923076923077,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.7,
-        "events_score_raw": 32.5,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 68.3
       },
-      "sub_score": 59.3,
+      "sub_score": 55.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -27271,7 +27017,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -27444,15 +27189,15 @@
         },
         "sentiment_subscore_raw": 71.32352941176471,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 71.3
       },
-      "sub_score": 68.5,
+      "sub_score": 71.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -27462,7 +27207,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -27826,15 +27570,15 @@
         },
         "sentiment_subscore_raw": 61.04651162790697,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 61.0
       },
-      "sub_score": 62.6,
+      "sub_score": 67.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -27844,7 +27588,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -28017,15 +27760,15 @@
         },
         "sentiment_subscore_raw": 80.14705882352942,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 80.1
       },
-      "sub_score": 75.1,
+      "sub_score": 77.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -28035,14 +27778,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -28212,15 +27950,15 @@
         },
         "sentiment_subscore_raw": 75.67567567567568,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 75.7
       },
-      "sub_score": 73.7,
+      "sub_score": 78.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -28230,7 +27968,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -28403,15 +28140,15 @@
         },
         "sentiment_subscore_raw": 59.375,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 59.4
       },
-      "sub_score": 59.5,
+      "sub_score": 62.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -28421,7 +28158,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -28594,15 +28330,15 @@
         },
         "sentiment_subscore_raw": 61.885245901639344,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 61.9
       },
-      "sub_score": 63.3,
+      "sub_score": 67.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -28612,7 +28348,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -28787,15 +28522,15 @@
         },
         "sentiment_subscore_raw": 65.47619047619048,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": -0.4,
-        "events_score_raw": 40.0,
+        "events_score_raw": 30.0,
         "events_weight": 0.25,
         "base_sub_score": 65.5
       },
-      "sub_score": 59.1,
+      "sub_score": 56.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -28805,7 +28540,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -29168,15 +28902,15 @@
         },
         "sentiment_subscore_raw": 61.66666666666667,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 61.7
       },
-      "sub_score": 63.2,
+      "sub_score": 67.5,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -29186,7 +28920,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -29359,15 +29092,15 @@
         },
         "sentiment_subscore_raw": 72.79411764705883,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.4,
-        "events_score_raw": 60.0,
+        "events_score_raw": 70.0,
         "events_weight": 0.25,
         "base_sub_score": 72.8
       },
-      "sub_score": 69.6,
+      "sub_score": 72.1,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -29377,7 +29110,6 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
         "has_sector_rss": false
@@ -29550,15 +29282,15 @@
         },
         "sentiment_subscore_raw": 73.33333333333334,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 73.3
       },
-      "sub_score": 67.5,
+      "sub_score": 73.3,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -29566,10 +29298,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -29740,15 +29468,15 @@
         },
         "sentiment_subscore_raw": 65.44117647058823,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 65.4
       },
-      "sub_score": 61.6,
+      "sub_score": 65.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -29756,10 +29484,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -29938,15 +29662,15 @@
         },
         "sentiment_subscore_raw": 66.96428571428572,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 67.0
       },
-      "sub_score": 62.8,
+      "sub_score": 67.0,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -29954,10 +29678,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -30509,15 +30229,15 @@
         },
         "sentiment_subscore_raw": 77.56410256410257,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 77.6
       },
-      "sub_score": 70.7,
+      "sub_score": 77.6,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -30525,15 +30245,7 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 2,
-        "sector_rss_sectors": [
-          "pharma"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -30703,15 +30415,15 @@
         },
         "sentiment_subscore_raw": 67.85714285714286,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 67.9
       },
-      "sub_score": 63.4,
+      "sub_score": 67.9,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -30719,10 +30431,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -30893,15 +30601,15 @@
         },
         "sentiment_subscore_raw": 55.769230769230774,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 55.8
       },
-      "sub_score": 54.3,
+      "sub_score": 55.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -30909,10 +30617,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -31083,15 +30787,15 @@
         },
         "sentiment_subscore_raw": 70.83333333333334,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 70.8
       },
-      "sub_score": 65.6,
+      "sub_score": 70.8,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -31099,10 +30803,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -31281,15 +30981,15 @@
         },
         "sentiment_subscore_raw": 74.16666666666667,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 74.2
       },
-      "sub_score": 68.2,
+      "sub_score": 74.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -31297,10 +30997,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -31471,15 +31167,15 @@
         },
         "sentiment_subscore_raw": 80.20833333333333,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 80.2
       },
-      "sub_score": 72.7,
+      "sub_score": 80.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -31487,10 +31183,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -31658,15 +31350,15 @@
         },
         "sentiment_subscore_raw": 80.20833333333333,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 80.2
       },
-      "sub_score": 72.7,
+      "sub_score": 80.2,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -31674,10 +31366,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },
@@ -31845,15 +31533,15 @@
         },
         "sentiment_subscore_raw": 66.93548387096774,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": true,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": 0.7,
-        "events_score_raw": 67.5,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 66.9
       },
-      "sub_score": 67.1,
+      "sub_score": 71.4,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -31863,14 +31551,9 @@
         "source": "finnhub_recommendation",
         "has_events_refinement": true,
         "events_refinement_sources": [
-          "sec_8k",
           "yahoo_earnings"
         ],
-        "has_sector_rss": true,
-        "sector_rss_event_count": 9,
-        "sector_rss_sectors": [
-          "energy"
-        ]
+        "has_sector_rss": false
       }
     },
     {
@@ -32040,15 +31723,15 @@
         },
         "sentiment_subscore_raw": 76.72413793103448,
         "confidence_blend": 1.0,
-        "has_sec_8k": true,
+        "has_sec_8k": false,
         "has_yahoo_earnings": false,
-        "sec_8k_score": 0.0,
+        "sec_8k_score": null,
         "yahoo_earnings_score": null,
-        "events_score_raw": 50.0,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 76.7
       },
-      "sub_score": 70.0,
+      "sub_score": 76.7,
       "data_quality": {
         "has_sentiment": true,
         "article_count_sufficient": true,
@@ -32056,10 +31739,6 @@
         "days_since_scored": 0,
         "last_scored": "2026-05-18",
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "sec_8k"
-        ],
         "has_sector_rss": false
       }
     },

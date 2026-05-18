@@ -1,15 +1,15 @@
 {
   "ticker": "ARM",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 45,
-  "mean_sentiment_score": 0.35555555555555557,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.06078587999999998,
+  "mean_relevance_score": 0.9031637599999999,
   "label_counts": {
-    "Bearish": 2,
-    "Somewhat-Bearish": 0,
-    "Neutral": 14,
-    "Somewhat-Bullish": 0,
-    "Bullish": 29
+    "Bearish": 7,
+    "Somewhat-Bearish": 6,
+    "Neutral": 18,
+    "Somewhat-Bullish": 7,
+    "Bullish": 12
   }
 }

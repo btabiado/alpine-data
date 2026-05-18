@@ -4,10 +4,10 @@
   "color": "#F0A861",
   "components": [
     {
-      "delta": -21,
+      "delta": -20,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe distributing",
-      "value": "-70.1%"
+      "value": "-66.5%"
     },
     {
       "delta": 0,
@@ -28,10 +28,10 @@
       "value": 55.8
     },
     {
-      "delta": 3,
+      "delta": 4,
       "name": "Thesis pillar avg",
       "read": "sentiment supportive",
-      "value": 67.0
+      "value": 69.5
     },
     {
       "delta": -1,
@@ -60,5 +60,5 @@
   ],
   "label": "LTHCS NEUTRAL",
   "note": "Aggregate of 167-ticker LTHCS universe. Directional read, not a trading signal.",
-  "score": -15
+  "score": -13
 }

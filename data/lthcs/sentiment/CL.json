@@ -1,15 +1,15 @@
 {
   "ticker": "CL",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 30,
-  "mean_sentiment_score": 0.38333333333333336,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.20955752000000008,
+  "mean_relevance_score": 0.8565468399999997,
   "label_counts": {
-    "Bearish": 1,
-    "Somewhat-Bearish": 0,
-    "Neutral": 9,
-    "Somewhat-Bullish": 0,
-    "Bullish": 20
+    "Bearish": 0,
+    "Somewhat-Bearish": 3,
+    "Neutral": 16,
+    "Somewhat-Bullish": 19,
+    "Bullish": 12
   }
 }

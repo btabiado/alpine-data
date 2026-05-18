@@ -1,15 +1,15 @@
 {
   "ticker": "CSCO",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 32,
-  "mean_sentiment_score": 0.46875,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.26095141999999993,
+  "mean_relevance_score": 0.7667156399999999,
   "label_counts": {
     "Bearish": 0,
-    "Somewhat-Bearish": 0,
-    "Neutral": 9,
-    "Somewhat-Bullish": 0,
-    "Bullish": 23
+    "Somewhat-Bearish": 1,
+    "Neutral": 21,
+    "Somewhat-Bullish": 9,
+    "Bullish": 19
   }
 }
