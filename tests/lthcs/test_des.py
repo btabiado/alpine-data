@@ -758,3 +758,300 @@ class TestSectorAliasResolution:
             aliased["components"]["signal_contributions"]
             == canonical["components"]["signal_contributions"]
         )
+
+
+# --- Tier-2 macro refinement (Brent, gasoline, ISM, housing, sentiment, U-6) -
+
+
+def _tier2_block(
+    *,
+    percentile_2y: Optional[float] = 0.5,
+    current: float = 0.0,
+    change_3m_pct: Optional[float] = 0.0,
+    regime: Optional[str] = None,
+    change_3m_bp: Optional[float] = None,
+    crack_spread_per_gal: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Build a synthetic Tier-2 indicator block for tests."""
+    out: Dict[str, Any] = {
+        "current": current,
+        "percentile_2y": percentile_2y,
+    }
+    if change_3m_pct is not None:
+        out["change_3m_pct"] = change_3m_pct
+    if regime is not None:
+        out["regime"] = regime
+    if change_3m_bp is not None:
+        out["change_3m_bp"] = change_3m_bp
+    if crack_spread_per_gal is not None:
+        out["crack_spread_per_gal"] = crack_spread_per_gal
+    return out
+
+
+def _bullish_tier2() -> Dict[str, Any]:
+    """Tier-2 snapshot with every indicator pointing constructively for
+    cyclical / demand-side sectors (low oil, low gasoline, expansion
+    ISM, high housing, high sentiment, low U-6)."""
+    return {
+        "as_of": "2026-05-17",
+        "brent_crude":        _tier2_block(percentile_2y=0.10, current=60.0,
+                                            change_3m_pct=-0.10),
+        "gasoline_retail":    _tier2_block(percentile_2y=0.10, current=2.80,
+                                            crack_spread_per_gal=0.40),
+        "ism_pmi_proxy":      _tier2_block(percentile_2y=0.80, current=105.0,
+                                            change_3m_pct=0.02, regime="expansion"),
+        "housing_starts":     _tier2_block(percentile_2y=0.85, current=1600.0,
+                                            change_3m_pct=0.05),
+        "consumer_sentiment": _tier2_block(percentile_2y=0.90, current=85.0,
+                                            change_3m_pct=0.10),
+        "u6_unemployment":    _tier2_block(percentile_2y=0.10, current=6.5,
+                                            change_3m_bp=-20.0),
+        "data_quality": {"sources_ok": 6, "sources_failed": 0, "failed_sources": []},
+    }
+
+
+def _bearish_tier2() -> Dict[str, Any]:
+    """Mirror of _bullish_tier2 — every indicator points bearishly."""
+    return {
+        "as_of": "2026-05-17",
+        "brent_crude":        _tier2_block(percentile_2y=0.90, current=110.0,
+                                            change_3m_pct=0.20),
+        "gasoline_retail":    _tier2_block(percentile_2y=0.90, current=4.80,
+                                            crack_spread_per_gal=2.90),
+        "ism_pmi_proxy":      _tier2_block(percentile_2y=0.20, current=95.0,
+                                            change_3m_pct=-0.02, regime="contraction"),
+        "housing_starts":     _tier2_block(percentile_2y=0.15, current=1100.0,
+                                            change_3m_pct=-0.10),
+        "consumer_sentiment": _tier2_block(percentile_2y=0.10, current=55.0,
+                                            change_3m_pct=-0.15),
+        "u6_unemployment":    _tier2_block(percentile_2y=0.90, current=9.0,
+                                            change_3m_bp=40.0),
+        "data_quality": {"sources_ok": 6, "sources_failed": 0, "failed_sources": []},
+    }
+
+
+class TestTier2MacroRefinement:
+    """Tier-2 macro (Brent, gasoline crack, ISM PMI proxy, housing
+    starts, consumer sentiment, U-6 unemployment) is OPTIONAL: when
+    ``tier2_macro=None`` the result must be byte-equal to the
+    pre-Tier-2 behaviour.  When provided, it nudges the sub-score by
+    at most ±5 points, sector-scaled."""
+
+    def test_none_preserves_existing_behavior(self):
+        # Identical inputs, with and without tier2_macro=None, must
+        # produce identical sub_score AND identical components.
+        macro = {
+            "wti_oil_usd": 105.78,
+            "ten_y_yield_pct": 4.47,
+            "fed_funds_pct": 3.64,
+        }
+        real = load_sector_weights()
+        a = compute_des("AAPL", "Information Technology", macro, real)
+        b = compute_des(
+            "AAPL", "Information Technology", macro, real, tier2_macro=None
+        )
+        assert a == b
+
+    def test_components_unchanged_when_tier2_none(self):
+        # tier2_inputs / tier2_quality / tier2_total_pts must NOT appear
+        # in components when tier2_macro is None — keeps the wire format
+        # backwards-compatible.
+        real = load_sector_weights()
+        result = compute_des(
+            "AAPL", "Information Technology", {"wti_oil_usd": 80.0}, real
+        )
+        assert "tier2_inputs" not in result["components"]
+        assert "tier2_quality" not in result["components"]
+        assert "tier2_total_pts" not in result["components"]
+
+    def test_tier2_components_surfaced_when_provided(self):
+        real = load_sector_weights()
+        result = compute_des(
+            "AAPL",
+            "Information Technology",
+            {"wti_oil_usd": 80.0},
+            real,
+            tier2_macro=_bullish_tier2(),
+        )
+        assert "tier2_inputs" in result["components"]
+        assert "tier2_quality" in result["components"]
+        assert "tier2_total_pts" in result["components"]
+        # Six entries (one per indicator slot).
+        assert len(result["components"]["tier2_inputs"]) == 6
+        # Each entry has the documented shape.
+        for entry in result["components"]["tier2_inputs"]:
+            assert set(entry.keys()) == {"name", "value", "contribution_pts"}
+
+    def test_bullish_tier2_lifts_cyclical_sector(self):
+        # Consumer Discretionary should LIFT noticeably when every
+        # Tier-2 indicator is bullish.
+        real = load_sector_weights()
+        macro = {"wti_oil_usd": 75.0, "ten_y_yield_pct": 3.5}
+        baseline = compute_des("MCD", "Consumer Discretionary", macro, real)
+        lifted = compute_des(
+            "MCD", "Consumer Discretionary", macro, real,
+            tier2_macro=_bullish_tier2(),
+        )
+        assert lifted["sub_score"] > baseline["sub_score"]
+
+    def test_bearish_tier2_drags_cyclical_sector(self):
+        real = load_sector_weights()
+        macro = {"wti_oil_usd": 75.0, "ten_y_yield_pct": 3.5}
+        baseline = compute_des("MCD", "Consumer Discretionary", macro, real)
+        dragged = compute_des(
+            "MCD", "Consumer Discretionary", macro, real,
+            tier2_macro=_bearish_tier2(),
+        )
+        assert dragged["sub_score"] < baseline["sub_score"]
+
+    def test_tier2_total_clipped_to_five_points(self):
+        # Even in the most bullish Tier-2 scenario, on the most cyclical
+        # sector, the total Tier-2 contribution must clip at ±5 points.
+        real = load_sector_weights()
+        macro = {"wti_oil_usd": 75.0}
+        result = compute_des(
+            "MCD", "Consumer Discretionary", macro, real,
+            tier2_macro=_bullish_tier2(),
+        )
+        pts = result["components"]["tier2_total_pts"]
+        assert -5.0 <= pts <= 5.0
+        # In the synthetic bullish scenario, points should be clearly positive.
+        assert pts > 0.0
+
+    def test_defensive_sector_less_affected_than_cyclical(self):
+        # Same Tier-2 snapshot applied to a defensive sector should
+        # produce a SMALLER magnitude shift than a cyclical sector.
+        # Health Care is damped to 0.3, Consumer Discretionary stays at 1.0.
+        real = load_sector_weights()
+        # Use a neutral macro so the only delta is Tier-2.
+        macro: Dict[str, Optional[float]] = {}
+        tier2 = _bullish_tier2()
+
+        cyc_no = compute_des("MCD", "Consumer Discretionary", macro, real)
+        cyc_yes = compute_des(
+            "MCD", "Consumer Discretionary", macro, real, tier2_macro=tier2
+        )
+        def_no = compute_des("JNJ", "Health Care", macro, real)
+        def_yes = compute_des(
+            "JNJ", "Health Care", macro, real, tier2_macro=tier2
+        )
+        cyc_delta = cyc_yes["sub_score"] - cyc_no["sub_score"]
+        def_delta = def_yes["sub_score"] - def_no["sub_score"]
+        # Both move in the same direction (constructive), defensive moves less.
+        assert cyc_delta > 0
+        assert def_delta >= 0
+        assert abs(cyc_delta) > abs(def_delta)
+
+    def test_high_housing_starts_lifts_score(self):
+        # Single-signal isolation: only housing_starts at high percentile,
+        # all others at neutral.  Should lift a cyclical sector's score.
+        real = load_sector_weights()
+        tier2 = {
+            "as_of": "2026-05-17",
+            "brent_crude":        _tier2_block(percentile_2y=0.5),
+            "gasoline_retail":    _tier2_block(percentile_2y=0.5,
+                                                crack_spread_per_gal=1.75),
+            "ism_pmi_proxy":      _tier2_block(percentile_2y=0.5,
+                                                regime="neutral",
+                                                change_3m_pct=0.0),
+            "housing_starts":     _tier2_block(percentile_2y=0.95),
+            "consumer_sentiment": _tier2_block(percentile_2y=0.5),
+            "u6_unemployment":    _tier2_block(percentile_2y=0.5),
+        }
+        baseline = compute_des("MCD", "Consumer Discretionary", {}, real)
+        lifted = compute_des(
+            "MCD", "Consumer Discretionary", {}, real, tier2_macro=tier2
+        )
+        assert lifted["sub_score"] > baseline["sub_score"]
+        # And the housing_starts entry must carry a positive contribution.
+        housing_entry = next(
+            e for e in lifted["components"]["tier2_inputs"]
+            if e["name"] == "housing_starts"
+        )
+        assert housing_entry["contribution_pts"] > 0.0
+
+    def test_high_u6_unemployment_drags_score(self):
+        real = load_sector_weights()
+        tier2 = {
+            "as_of": "2026-05-17",
+            "brent_crude":        _tier2_block(percentile_2y=0.5),
+            "gasoline_retail":    _tier2_block(percentile_2y=0.5,
+                                                crack_spread_per_gal=1.75),
+            "ism_pmi_proxy":      _tier2_block(percentile_2y=0.5,
+                                                regime="neutral",
+                                                change_3m_pct=0.0),
+            "housing_starts":     _tier2_block(percentile_2y=0.5),
+            "consumer_sentiment": _tier2_block(percentile_2y=0.5),
+            "u6_unemployment":    _tier2_block(percentile_2y=0.95),
+        }
+        baseline = compute_des("MCD", "Consumer Discretionary", {}, real)
+        dragged = compute_des(
+            "MCD", "Consumer Discretionary", {}, real, tier2_macro=tier2
+        )
+        assert dragged["sub_score"] < baseline["sub_score"]
+
+    def test_energy_sector_high_brent_lifts(self):
+        # Energy gets a sign-flip on brent: high oil = revenue tailwind.
+        real = load_sector_weights()
+        tier2 = {
+            "as_of": "2026-05-17",
+            "brent_crude":        _tier2_block(percentile_2y=0.95, current=120.0,
+                                                change_3m_pct=0.30),
+            "gasoline_retail":    _tier2_block(percentile_2y=0.5,
+                                                crack_spread_per_gal=1.75),
+            "ism_pmi_proxy":      _tier2_block(percentile_2y=0.5,
+                                                regime="neutral",
+                                                change_3m_pct=0.0),
+            "housing_starts":     _tier2_block(percentile_2y=0.5),
+            "consumer_sentiment": _tier2_block(percentile_2y=0.5),
+            "u6_unemployment":    _tier2_block(percentile_2y=0.5),
+        }
+        baseline = compute_des("XOM", "Energy", {}, real)
+        lifted = compute_des(
+            "XOM", "Energy", {}, real, tier2_macro=tier2
+        )
+        # High brent at percentile 0.95 should LIFT Energy.
+        assert lifted["sub_score"] >= baseline["sub_score"]
+        brent_entry = next(
+            e for e in lifted["components"]["tier2_inputs"]
+            if e["name"] == "brent_crude"
+        )
+        assert brent_entry["contribution_pts"] > 0.0
+
+    def test_tier2_quality_good_when_all_six(self):
+        real = load_sector_weights()
+        result = compute_des(
+            "MCD", "Consumer Discretionary", {}, real,
+            tier2_macro=_bullish_tier2(),
+        )
+        assert result["components"]["tier2_quality"] == "good"
+
+    def test_tier2_quality_partial_when_some_missing(self):
+        real = load_sector_weights()
+        tier2 = _bullish_tier2()
+        # Knock out 3 of the 6 indicators -> 3 present -> "partial".
+        tier2["brent_crude"] = None
+        tier2["gasoline_retail"] = None
+        tier2["ism_pmi_proxy"] = None
+        result = compute_des(
+            "MCD", "Consumer Discretionary", {}, real, tier2_macro=tier2
+        )
+        assert result["components"]["tier2_quality"] == "partial"
+
+    def test_tier2_quality_missing_when_all_none(self):
+        real = load_sector_weights()
+        tier2 = {
+            "as_of": "2026-05-17",
+            "brent_crude": None,
+            "gasoline_retail": None,
+            "ism_pmi_proxy": None,
+            "housing_starts": None,
+            "consumer_sentiment": None,
+            "u6_unemployment": None,
+        }
+        result = compute_des(
+            "MCD", "Consumer Discretionary", {}, real, tier2_macro=tier2
+        )
+        assert result["components"]["tier2_quality"] == "missing"
+        # And the total points must be exactly 0.
+        assert result["components"]["tier2_total_pts"] == 0.0

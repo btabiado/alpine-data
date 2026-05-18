@@ -31,7 +31,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 __all__ = [
@@ -39,6 +39,7 @@ __all__ = [
     "normalize_macro_signal",
     "compute_des",
     "DEFAULT_MAGNITUDE_SCALE",
+    "TIER2_MAX_POINTS",
 ]
 
 
@@ -46,6 +47,49 @@ __all__ = [
 # score by 30 points from the neutral baseline. Multiple aligned signals
 # stack additively (clipped to [0, 100] at the end).
 DEFAULT_MAGNITUDE_SCALE = 30.0
+
+# Tier-2 macro signals (Brent crude + gasoline crack, ISM PMI proxy,
+# housing starts, consumer sentiment, U-6 unemployment) are a REFINEMENT
+# on top of the Tier-1 sub-score, not a re-derivation.  Total absolute
+# contribution from all Tier-2 inputs combined is clipped at ±5 points
+# so they can't override the Tier-1 signal.
+TIER2_MAX_POINTS = 5.0
+
+# Per-indicator point budget within the Tier-2 envelope.  These are
+# upper bounds: actual contribution scales linearly with how far each
+# indicator is from its "neutral" zone.  Sum-of-magnitudes equals
+# TIER2_MAX_POINTS so a maximally bearish/bullish day on every Tier-2
+# input lands at exactly ±5.
+_TIER2_BUDGET: Dict[str, float] = {
+    "brent_crude": 1.0,
+    "gasoline_crack": 0.5,
+    "ism_pmi_proxy": 1.0,
+    "housing_starts": 0.75,
+    "consumer_sentiment": 1.0,
+    "u6_unemployment": 0.75,
+}
+
+
+# Cyclical sectors get the full Tier-2 modifier; defensive sectors get
+# a damped version (Tier-2 is a demand/cyclical signal — applying it
+# undamped to Health Care or Utilities would be noise).  Keyed off the
+# canonical sector name (after _alias_of resolution).
+_TIER2_SECTOR_SCALING: Dict[str, float] = {
+    # Cyclical / industrial / consumer cyclical: full effect.
+    "Consumer Discretionary": 1.0,
+    "Industrials": 1.0,
+    "Materials": 1.0,
+    "Energy": 1.0,
+    "Financials": 0.8,
+    "Real Estate": 0.8,
+    "Information Technology": 0.6,
+    "Communication Services": 0.6,
+    # Defensive: damped — Tier-2 cyclical signal should barely move them.
+    "Consumer Staples": 0.3,
+    "Health Care": 0.3,
+    "Utilities": 0.3,
+}
+_TIER2_SECTOR_SCALING_DEFAULT = 0.6
 
 
 # Default repo-relative path to the config. Resolves to:
@@ -196,6 +240,204 @@ def _ticker_override_sensitivities(
     return _sector_sensitivities(ticker_block)
 
 
+# ---------------------------------------------------------------------------
+# Tier-2 macro refinement
+# ---------------------------------------------------------------------------
+
+
+def _tier2_indicator_tilt(
+    indicator: str, block: Optional[Dict[str, Any]]
+) -> Optional[float]:
+    """Map a single Tier-2 indicator block to a tilt in ``[-1, +1]``.
+
+    Returns ``None`` when the block is missing OR when there's not
+    enough data to compute the tilt (treated as 0 contribution
+    upstream).  Each indicator has its own mapping rule documented
+    inline; the rules are deliberately conservative so Tier-2 is a
+    nudge, not a re-derivation of the sub-score.
+    """
+    if not isinstance(block, dict):
+        return None
+
+    if indicator == "brent_crude":
+        # High Brent (high percentile_2y) = drag on consumer-cyclical;
+        # we let downstream sector scaling flip the sign for Energy.
+        # Mapping: 2y percentile in [0,1] -> tilt in [-1, +1] where
+        # percentile=0.5 (median) is neutral.  High oil = NEGATIVE tilt
+        # because Tier-2 is broadly a DEMAND signal — Energy sector
+        # scaling stays positive (1.0) but most others are dragged.
+        pct = block.get("percentile_2y")
+        if pct is None:
+            return None
+        return float(-(float(pct) - 0.5) * 2.0)
+
+    if indicator == "gasoline_crack":
+        # Widening crack spread = refiner margin expansion + consumer
+        # gas-price pain.  Net Tier-2 demand tilt: negative when
+        # spread is high (extracts consumer wallet share).  We score
+        # vs. an empirically-typical mid-cycle US crack spread of
+        # ~$1.50/gal; below = positive, above = negative.  Linear, clipped.
+        spread = block.get("crack_spread_per_gal")
+        if spread is None:
+            return None
+        # Spread typical band roughly [0.50, 3.00] $/gal historically.
+        # Map [0.50 -> +1, 3.00 -> -1], clipped.
+        s = float(spread)
+        if s <= 0.5:
+            return 1.0
+        if s >= 3.0:
+            return -1.0
+        return float(-((s - 0.5) / (3.0 - 0.5) * 2.0 - 1.0))
+
+    if indicator == "ism_pmi_proxy":
+        # Regime-driven: expansion = positive, contraction = negative,
+        # neutral = 0.  Magnitude proportional to 3m momentum.
+        regime = block.get("regime")
+        change = block.get("change_3m_pct")
+        if regime == "expansion":
+            base = 1.0
+        elif regime == "contraction":
+            base = -1.0
+        else:
+            base = 0.0
+        # Damp by momentum magnitude: a 1% 3m move maps to full ±1.
+        if change is None:
+            return base * 0.5
+        try:
+            scaled = min(1.0, max(-1.0, float(change) / 0.01))
+            # Always emit at least the regime sign at half-strength,
+            # otherwise scale by momentum sign-aligned with regime.
+            return float(scaled if base != 0 else 0.0)
+        except (TypeError, ValueError):
+            return base * 0.5
+
+    if indicator == "housing_starts":
+        # Housing starts above 2y median = constructive; below = drag.
+        # Same percentile-mapped tilt as brent but with the SIGN flipped
+        # (high starts = positive demand signal).
+        pct = block.get("percentile_2y")
+        if pct is None:
+            return None
+        return float((float(pct) - 0.5) * 2.0)
+
+    if indicator == "consumer_sentiment":
+        # High consumer sentiment = constructive for discretionary.
+        pct = block.get("percentile_2y")
+        if pct is None:
+            return None
+        return float((float(pct) - 0.5) * 2.0)
+
+    if indicator == "u6_unemployment":
+        # High U-6 (high percentile_2y) = labor slack = drag on demand.
+        pct = block.get("percentile_2y")
+        if pct is None:
+            return None
+        return float(-(float(pct) - 0.5) * 2.0)
+
+    return None
+
+
+def _compute_tier2_contribution(
+    sector: str,
+    tier2_macro: Dict[str, Any],
+) -> Tuple[float, List[Dict[str, Any]], str]:
+    """Compute the Tier-2 refinement points + per-indicator detail.
+
+    Returns ``(total_points, tier2_inputs, quality)`` where:
+
+      * ``total_points``  : signed delta to apply to the Tier-1 sub-score,
+                            clipped to ``[-TIER2_MAX_POINTS, +TIER2_MAX_POINTS]``
+                            and already sector-scaled.
+      * ``tier2_inputs``  : list of ``{name, value, contribution_pts}``
+                            dicts for explainability.
+      * ``quality``       : ``"good"`` (5-6 sources), ``"partial"`` (1-4),
+                            or ``"missing"`` (0).
+    """
+    sector_scale = _TIER2_SECTOR_SCALING.get(sector, _TIER2_SECTOR_SCALING_DEFAULT)
+
+    # Block lookups keyed by indicator name.  "gasoline_crack" is a
+    # synthetic derived from the gasoline block — surfaced separately
+    # in variable_detail so the user sees both.
+    gasoline_block = tier2_macro.get("gasoline_retail")
+    blocks: Dict[str, Optional[Dict[str, Any]]] = {
+        "brent_crude":        tier2_macro.get("brent_crude"),
+        "gasoline_crack":     gasoline_block,
+        "ism_pmi_proxy":      tier2_macro.get("ism_pmi_proxy"),
+        "housing_starts":     tier2_macro.get("housing_starts"),
+        "consumer_sentiment": tier2_macro.get("consumer_sentiment"),
+        "u6_unemployment":    tier2_macro.get("u6_unemployment"),
+    }
+
+    tier2_inputs: List[Dict[str, Any]] = []
+    total_points = 0.0
+    sources_present = 0
+
+    for name, block in blocks.items():
+        budget = _TIER2_BUDGET.get(name, 0.0)
+        tilt = _tier2_indicator_tilt(name, block)
+        if tilt is None:
+            # Still record the entry so detail rendering is uniform.
+            tier2_inputs.append(
+                {
+                    "name": name,
+                    "value": None,
+                    "contribution_pts": 0.0,
+                }
+            )
+            continue
+        sources_present += 1
+
+        # Per-indicator contribution = tilt * budget * sector_scale.
+        # Sign convention: Energy sector gets a positive flip for
+        # brent_crude (high oil = revenue tailwind).  We honour that by
+        # special-casing Energy on brent only — other Tier-2 indicators
+        # apply uniformly across sectors with the scaled magnitude.
+        contribution = float(tilt) * float(budget) * float(sector_scale)
+        if name == "brent_crude" and sector == "Energy":
+            # Flip sign: high oil is positive for Energy revenues.
+            contribution = -contribution
+        if name == "gasoline_crack" and sector == "Energy":
+            # Widening crack spread is positive for downstream Energy.
+            contribution = -contribution
+
+        # Record using a readable "value" field — pick the most natural
+        # scalar from the block (current level, percentile, or regime).
+        readable_value: Any
+        if isinstance(block, dict):
+            if name == "gasoline_crack":
+                readable_value = block.get("crack_spread_per_gal")
+            elif name == "ism_pmi_proxy":
+                readable_value = block.get("regime")
+            else:
+                readable_value = block.get("current")
+        else:
+            readable_value = None
+
+        tier2_inputs.append(
+            {
+                "name": name,
+                "value": readable_value,
+                "contribution_pts": round(float(contribution), 4),
+            }
+        )
+        total_points += contribution
+
+    # Clip total to ±TIER2_MAX_POINTS.
+    if total_points > TIER2_MAX_POINTS:
+        total_points = TIER2_MAX_POINTS
+    elif total_points < -TIER2_MAX_POINTS:
+        total_points = -TIER2_MAX_POINTS
+
+    if sources_present == 0:
+        quality = "missing"
+    elif sources_present >= 5:
+        quality = "good"
+    else:
+        quality = "partial"
+
+    return float(total_points), tier2_inputs, quality
+
+
 def compute_des(
     ticker: str,
     sector: str,
@@ -203,6 +445,7 @@ def compute_des(
     sector_weights: Dict[str, Any],
     *,
     magnitude_scale: float = DEFAULT_MAGNITUDE_SCALE,
+    tier2_macro: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Compute the DES sub-score for one ticker.
 
@@ -211,6 +454,16 @@ def compute_des(
     explainability (per-signal tilts, per-signal contributions, total
     contribution, list of signals whose sensitivity came from
     ``ticker_overrides`` rather than the sector default).
+
+    Optional ``tier2_macro``: when provided, the Tier-2 macro snapshot
+    (Brent crude, gasoline crack spread, ISM PMI proxy, housing starts,
+    consumer sentiment, U-6 unemployment) is layered on top of the
+    Tier-1 sub-score as a small (±5 max) sector-scaled refinement.
+    Cyclical sectors get the full effect; defensive sectors (Staples,
+    Health Care, Utilities) get a damped (~30%) effect.  When
+    ``tier2_macro=None`` (default), the result is byte-equal to the
+    pre-Tier-2 behaviour.  When provided, ``components`` gains
+    ``tier2_inputs``, ``tier2_quality``, and ``tier2_total_pts``.
     """
     macro_inputs = macro_inputs or {}
     sector_weights = sector_weights or {}
@@ -282,6 +535,23 @@ def compute_des(
         total_contribution += contribution
 
     raw_score = 50.0 + total_contribution * float(magnitude_scale)
+
+    # --- Optional Tier-2 macro refinement ----------------------------------
+    # When ``tier2_macro`` is provided, layer the Tier-2 indicators on top
+    # of the Tier-1 score as a small (±5 max) refinement.  Sector scaling
+    # damps the effect for defensive sectors and amplifies it for
+    # cyclicals.  When ``tier2_macro`` is None, behaviour is byte-equal
+    # to the pre-Tier-2 implementation.
+    tier2_points = 0.0
+    tier2_inputs: List[Dict[str, Any]] = []
+    tier2_quality: Optional[str] = None
+    if tier2_macro is not None:
+        tier2_points, tier2_inputs, tier2_quality = _compute_tier2_contribution(
+            sector=sector,
+            tier2_macro=tier2_macro,
+        )
+        raw_score = raw_score + tier2_points
+
     # Clip to [0, 100] and round to 1 decimal.
     if raw_score < 0.0:
         raw_score = 0.0
@@ -289,16 +559,22 @@ def compute_des(
         raw_score = 100.0
     sub_score = round(float(raw_score), 1)
 
+    components: Dict[str, Any] = {
+        "signal_tilts": signal_tilts,
+        "signal_contributions": signal_contributions,
+        "total_contribution": float(total_contribution),
+        "applied_overrides": applied_overrides,
+    }
+    if tier2_macro is not None:
+        components["tier2_inputs"] = tier2_inputs
+        components["tier2_quality"] = tier2_quality
+        components["tier2_total_pts"] = round(float(tier2_points), 4)
+
     return {
         "ticker": ticker,
         "sector": sector,
         "sub_score": sub_score,
-        "components": {
-            "signal_tilts": signal_tilts,
-            "signal_contributions": signal_contributions,
-            "total_contribution": float(total_contribution),
-            "applied_overrides": applied_overrides,
-        },
+        "components": components,
         "weights_source": weights_source,
         "data_quality": {
             "has_macro_inputs": has_macro_inputs,
