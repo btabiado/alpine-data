@@ -227,6 +227,26 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the LTHCS backtest validation page under /lthcs/backtest/.
+          # Source lives at lthcs_backtest/ and reuses ../lthcs_tab/lthcs.css
+          # for design tokens + reads its data via "../data/lthcs/backtest/..."
+          # and "../data/lthcs/adaptive_weights/...". Both resolve cleanly
+          # once we mirror lthcs_tab/ and data/lthcs/ one level above
+          # /lthcs/backtest/. V1 (`/`), V2 (`/v2/`), classic /lthcs/,
+          # /lthcs/table/, /lthcs/v2/, and /lthcs/health/ are all untouched.
+          if [ -f lthcs_backtest/index.html ]; then
+            mkdir -p _site/lthcs/backtest
+            cp -R lthcs_backtest/* _site/lthcs/backtest/
+            # Defensive idempotent re-mirror of lthcs_tab and data/lthcs in
+            # case earlier branches didn't run (e.g. lthcs_health/ deleted
+            # but backtest still wanted). `cp -R` overwrites existing.
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Backtest Validation</title>
+    <!--
+      Same import pattern as lthcs_health: pulls dark-theme + band tokens
+      from the card-view stylesheet. In production this page stages at
+      /lthcs/backtest/index.html and resolves ../lthcs_tab/lthcs.css
+      to /lthcs/lthcs_tab/lthcs.css (mirrored in by pages.yml). On the
+      dev server (python3 -m http.server in repo root) lthcs_tab/ sits
+      sibling to lthcs_backtest/ so the same relative path works.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-backtest.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Backtest Validation</h1>
+          <p class="lthcs-subtitle" id="bt-subtitle">Does the framework actually predict forward returns?</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Validated</span>
+            <span id="bt-generated" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card View</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lbt-main">
+      <section id="bt-loading" class="lthcs-section lbt-loading">Loading backtest results&hellip;</section>
+      <section id="bt-error" class="lthcs-section lbt-error hidden" role="alert"></section>
+
+      <div id="bt-content" class="hidden">
+        <!-- ===== Headline verdict ============================================ -->
+        <section class="lthcs-section lbt-section" aria-label="Headline verdict">
+          <div class="lbt-verdict-card" id="verdict-card">
+            <div class="lbt-verdict-row">
+              <span class="lbt-verdict-label">FRAMEWORK PREDICTS</span>
+              <span class="lbt-verdict-tag" id="verdict-tag">&hellip;</span>
+            </div>
+            <dl class="lbt-verdict-stats">
+              <div>
+                <dt>Composite IC (21d)</dt>
+                <dd id="verdict-ic">&hellip;</dd>
+              </div>
+              <div>
+                <dt>Band portfolio Sharpe</dt>
+                <dd id="verdict-sharpe">&hellip;</dd>
+              </div>
+              <div>
+                <dt>Walk-forward test IC</dt>
+                <dd id="verdict-wf">&hellip;</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <!-- ===== Per-pillar IC ranking ====================================== -->
+        <section class="lthcs-section lbt-section" aria-label="Per-pillar IC">
+          <h2 class="lbt-h2">Per-pillar IC ranking <span class="lbt-h2-sub">(which pillars predict?)</span></h2>
+          <p class="lbt-note">Information Coefficient = rank correlation between pillar score and forward return. |IC| &gt; 0.04 needed to clear the noise floor at this sample size.</p>
+          <div id="pillar-ic-chart" class="lbt-pillar-chart"></div>
+        </section>
+
+        <!-- ===== Band portfolio P&L curve ================================== -->
+        <section class="lthcs-section lbt-section" aria-label="Band portfolio P&amp;L">
+          <h2 class="lbt-h2">Band portfolio P&amp;L <span class="lbt-h2-sub">(long Elite/High/Constructive, short Review)</span></h2>
+          <div class="lbt-pnl-stats" id="pnl-stats"></div>
+          <div class="lbt-pnl-chart-wrap">
+            <svg id="pnl-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Cumulative return curve"></svg>
+          </div>
+        </section>
+
+        <!-- ===== Quintile spread per pillar ================================= -->
+        <section class="lthcs-section lbt-section" aria-label="Quintile spread">
+          <h2 class="lbt-h2">Quintile spread <span class="lbt-h2-sub">(Q5 &minus; Q1 forward returns per pillar)</span></h2>
+          <p class="lbt-note">If a pillar predicts, top quintile (Q5) should beat bottom quintile (Q1). Spread is the average end-of-window difference.</p>
+          <div id="quintile-chart" class="lbt-quintile-chart"></div>
+        </section>
+
+        <!-- ===== Walk-forward adaptive weights ============================== -->
+        <section class="lthcs-section lbt-section" aria-label="Walk-forward CV">
+          <h2 class="lbt-h2">Walk-forward adaptive weights</h2>
+          <div id="wf-status" class="lbt-note">&hellip;</div>
+          <div class="lbt-table-wrap">
+            <table class="lbt-table" id="wf-table">
+              <thead>
+                <tr>
+                  <th scope="col">Ridge &alpha;</th>
+                  <th scope="col">Train IC</th>
+                  <th scope="col">Test IC</th>
+                  <th scope="col">Overfit gap</th>
+                  <th scope="col">Verdict</th>
+                </tr>
+              </thead>
+              <tbody id="wf-tbody"></tbody>
+            </table>
+          </div>
+          <div id="wf-weights" class="lbt-weights"></div>
+        </section>
+
+        <!-- ===== Per-cohort breakdown ======================================= -->
+        <section class="lthcs-section lbt-section" aria-label="Per-cohort breakdown">
+          <h2 class="lbt-h2">Per-cohort breakdown <span class="lbt-h2-sub">(which cohort works best?)</span></h2>
+          <div id="cohort-status" class="lbt-note">&hellip;</div>
+          <div class="lbt-table-wrap">
+            <table class="lbt-table" id="cohort-table">
+              <thead>
+                <tr>
+                  <th scope="col">Cohort</th>
+                  <th scope="col">N tickers</th>
+                  <th scope="col">Composite IC</th>
+                  <th scope="col">Sharpe</th>
+                </tr>
+              </thead>
+              <tbody id="cohort-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ===== Sample size disclaimer ===================================== -->
+        <section class="lthcs-section lbt-section lbt-disclaimer" aria-label="Sample size disclaimer">
+          <h2 class="lbt-h2">Sample size disclaimer</h2>
+          <p>
+            90 calendar days = 63 trading days. IC estimates have a standard error of
+            <strong>~&plusmn;0.04</strong>. Numbers in the noise range (<strong>|x| &lt; 0.04</strong>)
+            are <em>NOT</em> distinguishable from zero. Treat the first 30 days post-backfill as
+            &ldquo;building confidence in report shape&rdquo;; 4+ months of history is when these
+            numbers become statistically credible.
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Read-only validation view.</strong> Consumes committed snapshot files under
+        <code>data/lthcs/backtest/</code> and <code>data/lthcs/adaptive_weights/</code> &mdash;
+        does not run the backtest. Refresh after the parallel agents complete to see results.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-backtest.js"></script>
+  </body>
+</html>

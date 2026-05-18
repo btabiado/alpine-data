@@ -1,0 +1,455 @@
+/* =========================================================================
+   LTHCS Backtest Validation
+   Layered on top of ../lthcs_tab/lthcs.css for shared design tokens.
+   Only contains styles unique to this page; everything else (header,
+   typography, dark theme, band colors) is inherited.
+   ========================================================================= */
+
+.hidden { display: none !important; }
+
+.lbt-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lbt-loading,
+.lbt-error {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.lbt-error {
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+  padding-left: 12px;
+}
+
+.lbt-section {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.lbt-h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+.lbt-h2-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+.lbt-note {
+  margin: -4px 0 14px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* ----- Headline verdict card ------------------------------------------- */
+.lbt-verdict-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lbt-verdict-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.lbt-verdict-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+}
+.lbt-verdict-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+.lbt-verdict-tag[data-verdict="yes"] {
+  background: rgba(var(--band-high-rgb), 0.20);
+  color: var(--band-high-bright);
+  border-color: rgba(var(--band-high-rgb), 0.40);
+}
+.lbt-verdict-tag[data-verdict="mixed"] {
+  background: rgba(var(--band-monitor-rgb), 0.20);
+  color: var(--band-monitor-bright);
+  border-color: rgba(var(--band-monitor-rgb), 0.40);
+}
+.lbt-verdict-tag[data-verdict="no"] {
+  background: rgba(var(--band-review-rgb), 0.25);
+  color: var(--band-review-bright);
+  border-color: rgba(var(--band-review-rgb), 0.40);
+}
+.lbt-verdict-tag[data-verdict="pending"] {
+  color: var(--text-tertiary);
+}
+.lbt-verdict-stats {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.lbt-verdict-stats > div {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+}
+.lbt-verdict-stats dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.lbt-verdict-stats dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.lbt-verdict-stats dd small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+.lbt-verdict-stats dd.pos { color: var(--band-high-bright); }
+.lbt-verdict-stats dd.neg { color: var(--band-review-bright); }
+.lbt-verdict-stats dd.neutral { color: var(--text-tertiary); }
+
+/* ----- Per-pillar horizontal bars -------------------------------------- */
+.lbt-pillar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lbt-pillar-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 80px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+.lbt-pillar-name {
+  color: var(--text-primary);
+}
+.lbt-pillar-bar {
+  position: relative;
+  height: 14px;
+  background: var(--bg-card);
+  border-radius: 3px;
+  overflow: hidden;
+}
+/* Center marker shows zero — bars extend right (positive) or left (negative). */
+.lbt-pillar-bar::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+  z-index: 1;
+}
+.lbt-pillar-bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--band-high-bright);
+  border-radius: 2px;
+}
+.lbt-pillar-bar-fill[data-sign="neg"] {
+  background: var(--band-review-bright);
+}
+.lbt-pillar-bar-fill[data-noise="true"] {
+  opacity: 0.35;
+}
+.lbt-pillar-stat {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.lbt-pillar-stat.pos { color: var(--band-high-bright); }
+.lbt-pillar-stat.neg { color: var(--band-review-bright); }
+.lbt-pillar-stat.noise { color: var(--text-tertiary); }
+
+/* ----- P&L curve + stat strip ------------------------------------------ */
+.lbt-pnl-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+.lbt-pnl-stats strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-left: 6px;
+}
+.lbt-pnl-chart-wrap {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  padding: 10px;
+}
+.lbt-pnl-chart {
+  width: 100%;
+  height: 280px;
+  display: block;
+}
+.lbt-pnl-axis {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+.lbt-pnl-grid {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.6;
+}
+.lbt-pnl-line {
+  fill: none;
+  stroke: var(--band-high-bright);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.lbt-pnl-area {
+  fill: var(--band-high-bright);
+  fill-opacity: 0.08;
+  stroke: none;
+}
+.lbt-pnl-zero {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.lbt-pnl-tick {
+  fill: var(--text-tertiary);
+  font-size: 10px;
+  font-family: var(--font-mono);
+}
+
+/* ----- Quintile grouped bars ------------------------------------------- */
+.lbt-quintile-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lbt-q-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 80px;
+  gap: 12px;
+  align-items: center;
+}
+.lbt-q-name {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.lbt-q-bars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  height: 60px;
+  align-items: end;
+}
+.lbt-q-bar {
+  position: relative;
+  background: var(--band-elite);
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+}
+.lbt-q-bar[data-q="Q1"] { background: var(--band-review-bright); opacity: 0.65; }
+.lbt-q-bar[data-q="Q2"] { background: var(--band-weakening-bright); opacity: 0.65; }
+.lbt-q-bar[data-q="Q3"] { background: var(--text-tertiary); opacity: 0.55; }
+.lbt-q-bar[data-q="Q4"] { background: var(--band-constructive-bright); opacity: 0.75; }
+.lbt-q-bar[data-q="Q5"] { background: var(--band-high-bright); }
+.lbt-q-bar-label {
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.lbt-q-spread {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.lbt-q-spread.pos { color: var(--band-high-bright); }
+.lbt-q-spread.neg { color: var(--band-review-bright); }
+
+/* ----- Tables (walk-forward + cohort) ---------------------------------- */
+.lbt-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.lbt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.lbt-table th,
+.lbt-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lbt-table th {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lbt-table tbody tr:last-child td { border-bottom: 0; }
+.lbt-table tbody tr:hover { background: var(--bg-card); }
+.lbt-table td.pos { color: var(--band-high-bright); }
+.lbt-table td.neg { color: var(--band-review-bright); }
+.lbt-table td.noise { color: var(--text-tertiary); }
+
+.lbt-pill {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.lbt-pill[data-verdict="ship"] {
+  background: rgba(var(--band-high-rgb), 0.18);
+  color: var(--band-high-bright);
+  border-color: rgba(var(--band-high-rgb), 0.40);
+}
+.lbt-pill[data-verdict="hold"] {
+  background: rgba(var(--band-monitor-rgb), 0.18);
+  color: var(--band-monitor-bright);
+  border-color: rgba(var(--band-monitor-rgb), 0.40);
+}
+.lbt-pill[data-verdict="reject"] {
+  background: rgba(var(--band-review-rgb), 0.20);
+  color: var(--band-review-bright);
+  border-color: rgba(var(--band-review-rgb), 0.40);
+}
+
+/* ----- Recommended weights block (only on SHIP verdict) ---------------- */
+.lbt-weights {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.lbt-weights-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+}
+.lbt-weights-card dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.lbt-weights-card dd {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* ----- Disclaimer card ------------------------------------------------- */
+.lbt-disclaimer p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.lbt-disclaimer strong { color: var(--text-primary); }
+.lbt-disclaimer em { color: var(--band-monitor-bright); font-style: normal; font-weight: 600; }
+
+/* ----- Placeholder + retry --------------------------------------------- */
+.lbt-placeholder {
+  background: var(--bg-card);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.lbt-placeholder-msg {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.lbt-retry-btn {
+  background: var(--bg-chip);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.lbt-retry-btn:hover { background: var(--bg-chip-active); }
+
+/* ----- Mobile ---------------------------------------------------------- */
+@media (max-width: 640px) {
+  .lbt-section { padding: 14px 12px; }
+  .lbt-verdict-stats {
+    grid-template-columns: 1fr;
+  }
+  .lbt-verdict-stats dd { font-size: 18px; }
+  .lbt-pillar-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .lbt-pillar-stat { text-align: left; }
+  .lbt-q-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .lbt-q-spread { text-align: left; }
+  .lbt-q-bars { height: 50px; }
+  .lbt-pnl-chart { height: 220px; }
+  .lbt-pnl-stats { gap: 8px 16px; }
+}

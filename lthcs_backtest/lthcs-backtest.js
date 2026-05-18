@@ -1,0 +1,799 @@
+/* =========================================================================
+   LTHCS Backtest Validation — vanilla-JS visualizer.
+
+   Read-only consumer of files under ../data/lthcs/backtest/ and
+   ../data/lthcs/adaptive_weights/. Renders:
+     - Headline verdict (composite IC, portfolio Sharpe, walk-forward test IC)
+     - Per-pillar IC ranking (horizontal bars, zero-centered)
+     - Band portfolio P&L curve (SVG line + area)
+     - Quintile spread per pillar (grouped bars Q1-Q5 + Q5-Q1 column)
+     - Walk-forward CV table parsed from markdown summary
+     - Per-cohort breakdown table parsed from the same markdown
+
+   Defensive: every section has a placeholder card + retry button so the
+   page stays usable while concurrent agents are mid-run. The validation
+   files under data/lthcs/backtest/<date>_validation/ are the canonical
+   shape; the per-horizon dirs (<date>_h1, _h5, _h21) are fallbacks.
+   ========================================================================= */
+
+const DATA_ROOT = '../data/lthcs';
+const VALIDATION_DATE = '2026-05-18';
+const HORIZON = 'horizon_21d';        // primary display horizon
+const HORIZON_DAYS = 21;
+const NOISE_FLOOR = 0.04;             // |IC| < 0.04 is in the noise band at this sample size
+const SHIP_GATE = 0.04;               // walk-forward test IC ship threshold
+
+/* ----- DOM helpers ------------------------------------------------------ */
+function $(id) { return document.getElementById(id); }
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') node.className = v;
+    else if (k === 'text') node.textContent = v;
+    else node.setAttribute(k, v);
+  }
+  for (const c of (Array.isArray(children) ? children : [children])) {
+    if (c == null) continue;
+    node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  }
+  return node;
+}
+function svgEl(tag, attrs = {}) {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
+}
+
+/* ----- Fetch helpers --------------------------------------------------- */
+async function tryFetch(url) {
+  try {
+    const r = await fetch(url, { cache: 'no-cache' });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+async function tryFetchText(url) {
+  try {
+    const r = await fetch(url, { cache: 'no-cache' });
+    if (!r.ok) return null;
+    return await r.text();
+  } catch { return null; }
+}
+
+/* ----- Number formatters ----------------------------------------------- */
+function fmtIC(x) {
+  if (x == null || Number.isNaN(x)) return 'n/a';
+  const sign = x >= 0 ? '+' : '';
+  return `${sign}${x.toFixed(3)}`;
+}
+function fmtPct(x) {
+  if (x == null || Number.isNaN(x)) return 'n/a';
+  const sign = x >= 0 ? '+' : '';
+  return `${sign}${(x * 100).toFixed(1)}%`;
+}
+function fmtSharpe(x) {
+  if (x == null || Number.isNaN(x)) return 'n/a';
+  const sign = x >= 0 ? '+' : '';
+  return `${sign}${x.toFixed(2)}`;
+}
+function icClass(x) {
+  if (x == null || Number.isNaN(x)) return 'noise';
+  if (Math.abs(x) < NOISE_FLOOR) return 'noise';
+  return x >= 0 ? 'pos' : 'neg';
+}
+
+/* ======================================================================
+   Bootstrap
+   ====================================================================== */
+async function main() {
+  const loading = $('bt-loading');
+  const errBox = $('bt-error');
+  const content = $('bt-content');
+
+  // Canonical paths first, per-horizon fallbacks second.
+  const base = `${DATA_ROOT}/backtest/${VALIDATION_DATE}_validation`;
+  const fallback = `${DATA_ROOT}/backtest/${VALIDATION_DATE}_h21`;
+
+  const [
+    summary, pillarIC, quintile, portfolio, bandReturns,
+    fbSummary, fbPillarIC, fbQuintile, fbPortfolio,
+  ] = await Promise.all([
+    tryFetch(`${base}/summary.json`),
+    tryFetch(`${base}/pillar_ic.json`),
+    tryFetch(`${base}/quintile_spreads.json`),
+    tryFetch(`${base}/portfolio_returns.json`),
+    tryFetch(`${base}/band_returns.json`),
+    tryFetch(`${fallback}/summary.json`),
+    tryFetch(`${fallback}/pillar_ic.json`),
+    tryFetch(`${fallback}/quintile_returns.json`),
+    tryFetch(`${fallback}/portfolio_returns.json`),
+  ]);
+  const wfMd = await tryFetchText(
+    `${DATA_ROOT}/adaptive_weights/${VALIDATION_DATE}_walk_forward_summary.md`,
+  );
+  const wf = parseWalkForwardMd(wfMd);
+
+  // Pull h21 slice out of validation dicts; the per-horizon fallbacks are
+  // already in flat shape (matching the older 2026-05-18_h21 layout).
+  const summaryH = pickHorizon(summary, HORIZON) || fbSummary;
+  const pillarRows = pickHorizon(pillarIC, HORIZON) || fbPillarIC;
+  const quintileH = pickHorizon(quintile, HORIZON) || fbQuintile;
+  const portfolioH = pickHorizon(portfolio, HORIZON) || fbPortfolio;
+
+  // Hard "nothing has landed yet" — entire backtest output missing AND
+  // no walk-forward markdown.
+  if (!summaryH && !pillarRows && !portfolioH && !quintileH && !wf) {
+    loading.classList.add('hidden');
+    errBox.classList.remove('hidden');
+    errBox.replaceChildren(
+      el('strong', { text: 'Validation in progress.' }),
+      el('br'),
+      document.createTextNode(
+        'No backtest or walk-forward output is on disk yet. The parallel agents are still running.',
+      ),
+      el('br'), el('br'),
+      makeRetryButton(),
+    );
+    return;
+  }
+
+  renderHeader(summary, summaryH);
+  renderVerdict(summary, summaryH, pillarRows, wf);
+  renderPillarIC(pillarRows);
+  renderPnL(portfolioH, summaryH);
+  renderQuintile(quintileH);
+  renderWalkForward(wf);
+  renderCohort(wf);
+
+  loading.classList.add('hidden');
+  content.classList.remove('hidden');
+}
+
+/* Pull a horizon slice from a {horizon_Nd: ...} dict. If the data is
+   already flat (older _h21 shape), pass through. */
+function pickHorizon(obj, horizonKey) {
+  if (!obj || typeof obj !== 'object') return null;
+  if (Object.prototype.hasOwnProperty.call(obj, horizonKey)) return obj[horizonKey];
+  return null;
+}
+
+function makeRetryButton() {
+  const btn = el('button', { class: 'lbt-retry-btn', type: 'button', text: 'Retry now' });
+  btn.addEventListener('click', () => window.location.reload());
+  return btn;
+}
+
+function renderHeader(summary, summaryH) {
+  const gen = summary?.generated_at;
+  let label = VALIDATION_DATE;
+  if (gen) {
+    const iso = gen.replace('T', ' ').replace(/\..+Z$/, ' UTC');
+    label = `${VALIDATION_DATE} (${iso})`;
+  }
+  $('bt-generated').textContent = label;
+
+  if (summary || summaryH) {
+    const days = summary?.n_observation_dates ?? summaryH?.n_observation_dates ?? 90;
+    const tradingDays = Math.round(days * (5 / 7));
+    const tickers = summary?.n_tickers ?? summaryH?.n_tickers ?? '?';
+    $('bt-subtitle').textContent =
+      `${days} days · ${tradingDays} trading days · ${tickers} tickers · horizon ${HORIZON_DAYS}d`;
+  }
+}
+
+/* ======================================================================
+   Headline verdict
+   ====================================================================== */
+function renderVerdict(summary, summaryH, pillarRows, wf) {
+  const composite = (pillarRows || [])
+    .find((p) => p.pillar === 'composite');
+  const compIC = composite?.ic_mean ?? null;
+  // Portfolio block shape varies between validation (sharpe_annualised on
+  // the horizon slice) and the older fallback (.sharpe at root).
+  const portfolioBlock = summary?.portfolio?.[HORIZON]
+    ?? summary?.portfolio
+    ?? summaryH?.portfolio
+    ?? summaryH
+    ?? null;
+  const sharpe = portfolioBlock?.sharpe_annualised
+    ?? portfolioBlock?.sharpe
+    ?? null;
+  const testIC = wf?.bestTestIC ?? null;
+
+  // Verdict: every gate has to clear noise/ship floor to say YES.
+  let verdict = 'pending';
+  let passed = 0, evaluated = 0;
+  if (compIC != null) {
+    evaluated += 1;
+    if (Math.abs(compIC) >= NOISE_FLOOR && compIC > 0) passed += 1;
+  }
+  if (sharpe != null) {
+    evaluated += 1;
+    if (sharpe > 0) passed += 1;
+  }
+  if (testIC != null) {
+    evaluated += 1;
+    if (testIC >= SHIP_GATE) passed += 1;
+  }
+  // If the walk-forward authoritatively says HOLD/REJECT, that downgrades
+  // the verdict even when the raw numbers look strong. The markdown for
+  // 2026-05-18 explicitly flags the test IC as a structural artifact.
+  const wfVerdict = (wf?.verdict || '').toLowerCase();
+  if (wfVerdict.includes('hold')) verdict = 'mixed';
+  else if (wfVerdict.includes('reject')) verdict = 'no';
+  else if (evaluated > 0) {
+    if (passed === evaluated) verdict = 'yes';
+    else if (passed === 0) verdict = 'no';
+    else verdict = 'mixed';
+  }
+
+  const tag = $('verdict-tag');
+  tag.dataset.verdict = verdict;
+  tag.textContent = verdict === 'pending' ? 'PENDING' : verdict.toUpperCase();
+
+  const icEl = $('verdict-ic');
+  icEl.className = icClass(compIC);
+  icEl.replaceChildren(
+    document.createTextNode(fmtIC(compIC)),
+    el('small', { text: composite ? `n=${composite.n_obs ?? 0} obs · noise floor ±${NOISE_FLOOR}` : 'data pending' }),
+  );
+
+  const shEl = $('verdict-sharpe');
+  shEl.className = sharpe == null ? 'neutral' : (sharpe > 0 ? 'pos' : 'neg');
+  shEl.replaceChildren(
+    document.createTextNode(fmtSharpe(sharpe)),
+    el('small', {
+      text: portfolioBlock
+        ? `cum. return ${fmtPct(portfolioBlock.cumulative_return)}`
+        : 'portfolio pending',
+    }),
+  );
+
+  const wfEl = $('verdict-wf');
+  if (testIC == null) {
+    wfEl.className = 'neutral';
+    wfEl.replaceChildren(
+      document.createTextNode('n/a'),
+      el('small', { text: 'walk-forward pending' }),
+    );
+  } else {
+    wfEl.className = icClass(testIC);
+    const gateHit = testIC >= SHIP_GATE ? '✓' : '✗';
+    wfEl.replaceChildren(
+      document.createTextNode(fmtIC(testIC)),
+      el('small', { text: `ship gate (>${SHIP_GATE.toFixed(2)}): ${gateHit}` }),
+    );
+  }
+}
+
+/* ======================================================================
+   Per-pillar IC ranking
+   ====================================================================== */
+const PILLAR_LABELS = {
+  composite: 'Composite',
+  institutional_confidence: 'Institutional Confidence',
+  financial_evolution: 'Financial Evolution',
+  des: 'DES',
+  adoption_momentum: 'Adoption Momentum',
+  thesis_integrity: 'Thesis Integrity',
+};
+
+function renderPillarIC(rows) {
+  const container = $('pillar-ic-chart');
+  container.replaceChildren();
+
+  if (!rows || rows.length === 0) {
+    container.appendChild(makePlaceholder(
+      'Pillar IC data not yet available. The per-pillar IC step of the backtest agent has not produced output.',
+    ));
+    return;
+  }
+
+  // Drop composite (shown in the verdict card), sort by ic_mean desc.
+  const pillars = rows
+    .filter((r) => r.pillar !== 'composite')
+    .sort((a, b) => (b.ic_mean ?? 0) - (a.ic_mean ?? 0));
+
+  // Symmetric scale around zero, padded so the noise band is legible.
+  const maxAbs = Math.max(
+    ...pillars.map((p) => Math.abs(p.ic_mean ?? 0)),
+    NOISE_FLOOR * 2,
+  );
+
+  for (const p of pillars) {
+    const ic = p.ic_mean ?? 0;
+    const isNoise = Math.abs(ic) < NOISE_FLOOR;
+    const sign = ic >= 0 ? 'pos' : 'neg';
+    const widthPct = (Math.abs(ic) / maxAbs) * 50;
+    const left = ic >= 0 ? 50 : 50 - widthPct;
+
+    const row = el('div', { class: 'lbt-pillar-row' });
+    row.appendChild(el('div', { class: 'lbt-pillar-name', text: PILLAR_LABELS[p.pillar] || p.pillar }));
+
+    const bar = el('div', { class: 'lbt-pillar-bar' });
+    const fill = el('div', { class: 'lbt-pillar-bar-fill' });
+    fill.dataset.sign = sign;
+    if (isNoise) fill.dataset.noise = 'true';
+    fill.style.left = `${left}%`;
+    fill.style.width = `${widthPct}%`;
+    bar.appendChild(fill);
+    row.appendChild(bar);
+
+    const statClass = isNoise ? 'noise' : sign;
+    const stat = el('div', { class: `lbt-pillar-stat ${statClass}`, text: fmtIC(ic) });
+    row.appendChild(stat);
+    container.appendChild(row);
+  }
+}
+
+/* ======================================================================
+   Band portfolio P&L curve (SVG)
+   ====================================================================== */
+function renderPnL(portfolioH, summaryH) {
+  const svg = $('pnl-chart');
+  const statsEl = $('pnl-stats');
+  svg.replaceChildren();
+  statsEl.replaceChildren();
+
+  // The validation file has shape {horizon_21d: {daily_returns: {date: val},
+  // cumulative_return, sharpe_annualised, max_drawdown, ...}}.
+  // The fallback _h21 file has the same inner shape but no outer horizon key.
+  const block = portfolioH || summaryH?.portfolio || null;
+  const dailyReturns = block?.daily_returns
+    ?? (summaryH?.portfolio?.[HORIZON]?.daily_returns)
+    ?? null;
+
+  if (!block || !dailyReturns) {
+    statsEl.appendChild(makePlaceholder(
+      'Portfolio P&L data not yet available. The band-portfolio step has not produced output.',
+    ));
+    return;
+  }
+
+  const dates = Object.keys(dailyReturns).sort();
+  // The series is a cumulative-return path (monotone-ish, ends at ~+280%).
+  // Chart the path directly; summary fields (sharpe, max_drawdown, hit_rate)
+  // are passed through verbatim.
+  const series = dates.map((d) => ({ d, v: dailyReturns[d] }));
+
+  // ----- Stat strip -----
+  const sharpe = block.sharpe_annualised ?? block.sharpe ?? null;
+  const stats = [
+    ['Sharpe (ann.)', fmtSharpe(sharpe)],
+    ['Cum. return', fmtPct(block.cumulative_return)],
+    ['Max DD', fmtPct(block.max_drawdown)],
+    ['Hit rate', block.hit_rate != null ? `${Math.round(block.hit_rate * 100)}%` : 'n/a'],
+    ['Rebalances', `${block.n_rebalances ?? series.length}`],
+  ];
+  for (const [k, v] of stats) {
+    const wrap = el('span');
+    wrap.appendChild(document.createTextNode(`${k}:`));
+    wrap.appendChild(el('strong', { text: v }));
+    statsEl.appendChild(wrap);
+  }
+
+  // ----- SVG chart -----
+  const VB_W = 800, VB_H = 280;
+  const ML = 60, MR = 16, MT = 14, MB = 26;
+  const W = VB_W - ML - MR;
+  const H = VB_H - MT - MB;
+
+  const vMin = Math.min(0, ...series.map((s) => s.v));
+  const vMax = Math.max(0, ...series.map((s) => s.v));
+  const vSpan = vMax - vMin || 1;
+
+  const xAt = (i) => ML + (W * i) / Math.max(1, series.length - 1);
+  const yAt = (v) => MT + H - ((v - vMin) / vSpan) * H;
+
+  const gridVals = [vMin, vMin + vSpan / 4, vMin + vSpan / 2, vMin + (3 * vSpan) / 4, vMax];
+  if (vMin < 0 && vMax > 0 && !gridVals.includes(0)) gridVals.push(0);
+
+  for (const gv of gridVals) {
+    const y = yAt(gv);
+    const isZero = Math.abs(gv) < 1e-9;
+    svg.appendChild(svgEl('line', {
+      x1: ML, x2: VB_W - MR, y1: y, y2: y,
+      class: isZero ? 'lbt-pnl-zero' : 'lbt-pnl-grid',
+    }));
+    const t = svgEl('text', {
+      x: ML - 6, y: y + 3,
+      class: 'lbt-pnl-tick',
+      'text-anchor': 'end',
+    });
+    t.textContent = fmtPct(gv);
+    svg.appendChild(t);
+  }
+
+  // X-axis: first/mid/last date.
+  const xTicks = [0, Math.floor(series.length / 2), series.length - 1];
+  for (const i of xTicks) {
+    const s = series[i];
+    if (!s) continue;
+    const t = svgEl('text', {
+      x: xAt(i), y: VB_H - 8,
+      class: 'lbt-pnl-tick',
+      'text-anchor': i === 0 ? 'start' : i === series.length - 1 ? 'end' : 'middle',
+    });
+    t.textContent = s.d;
+    svg.appendChild(t);
+  }
+
+  let linePath = '';
+  for (let i = 0; i < series.length; i += 1) {
+    const x = xAt(i);
+    const y = yAt(series[i].v);
+    linePath += `${i === 0 ? 'M' : 'L'}${x.toFixed(2)},${y.toFixed(2)} `;
+  }
+  const baselineY = yAt(Math.max(vMin, 0));
+  const areaPath = linePath
+    + `L${xAt(series.length - 1).toFixed(2)},${baselineY.toFixed(2)} `
+    + `L${xAt(0).toFixed(2)},${baselineY.toFixed(2)} Z`;
+
+  svg.appendChild(svgEl('path', { d: areaPath, class: 'lbt-pnl-area' }));
+  svg.appendChild(svgEl('path', { d: linePath.trim(), class: 'lbt-pnl-line' }));
+}
+
+/* ======================================================================
+   Quintile spread per pillar
+   ====================================================================== */
+function renderQuintile(quintileH) {
+  const container = $('quintile-chart');
+  container.replaceChildren();
+
+  if (!quintileH || typeof quintileH !== 'object') {
+    container.appendChild(makePlaceholder(
+      'Quintile-spread data not yet available. The quintile-spread step has not produced output.',
+    ));
+    return;
+  }
+
+  // Validation shape: {pillar: {Q1..Q5,Q5-Q1: {n_obs, mean, std, t_stat_vs_zero}}}
+  // Older shape: {pillar: {Q1..Q5: {date: value}}}  — handle both.
+  const pillars = Object.keys(quintileH);
+  const rowsData = [];
+  for (const p of pillars) {
+    const q = quintileH[p];
+    if (!q || typeof q !== 'object') continue;
+    const qVals = {};
+    for (const k of ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']) {
+      const cell = q[k];
+      if (!cell) { qVals[k] = null; continue; }
+      if (typeof cell === 'number') { qVals[k] = cell; continue; }
+      // Object — either {mean, ...} or {date: value, ...}
+      if (typeof cell.mean === 'number') { qVals[k] = cell.mean; continue; }
+      const dates = Object.keys(cell).sort();
+      qVals[k] = dates.length > 0 && typeof cell[dates[dates.length - 1]] === 'number'
+        ? cell[dates[dates.length - 1]]
+        : null;
+    }
+    // Pull Q5-Q1 directly if the producer included it.
+    const directSpread = (q['Q5-Q1'] && typeof q['Q5-Q1'] === 'object')
+      ? q['Q5-Q1'].mean
+      : null;
+    rowsData.push({ pillar: p, qVals, directSpread });
+  }
+  if (rowsData.length === 0) {
+    container.appendChild(makePlaceholder('Quintile data has unexpected shape; cannot render.'));
+    return;
+  }
+
+  const allValues = rowsData.flatMap((r) => Object.values(r.qVals).filter((v) => v != null));
+  const maxAbs = Math.max(...allValues.map((v) => Math.abs(v)), 0.05);
+
+  for (const { pillar, qVals, directSpread } of rowsData) {
+    const row = el('div', { class: 'lbt-q-row' });
+    row.appendChild(el('div', { class: 'lbt-q-name', text: PILLAR_LABELS[pillar] || pillar }));
+
+    const barsBox = el('div', { class: 'lbt-q-bars' });
+    for (const k of ['Q1', 'Q2', 'Q3', 'Q4', 'Q5']) {
+      const v = qVals[k];
+      const bar = el('div', { class: 'lbt-q-bar' });
+      bar.dataset.q = k;
+      if (v == null) {
+        bar.style.height = '2px';
+        bar.style.opacity = '0.2';
+      } else {
+        // Magnitude-only bars (mixed signs would be confusing in a stacked
+        // mini-chart). Signed answer lives in the spread column.
+        const h = Math.max(2, (Math.abs(v) / maxAbs) * 56);
+        bar.style.height = `${h}px`;
+        bar.title = `${k}: ${fmtPct(v)}`;
+      }
+      bar.appendChild(el('span', { class: 'lbt-q-bar-label', text: k }));
+      barsBox.appendChild(bar);
+    }
+    row.appendChild(barsBox);
+
+    let spread = directSpread;
+    if (spread == null && qVals.Q1 != null && qVals.Q5 != null) {
+      spread = qVals.Q5 - qVals.Q1;
+    }
+    const spreadCls = spread == null ? '' : (spread >= 0 ? 'pos' : 'neg');
+    row.appendChild(el('div', {
+      class: `lbt-q-spread ${spreadCls}`,
+      text: spread == null ? 'n/a' : fmtPct(spread),
+    }));
+    container.appendChild(row);
+  }
+}
+
+/* ======================================================================
+   Walk-forward CV — parse the markdown summary
+   ====================================================================== */
+function parseWalkForwardMd(md) {
+  if (!md) return null;
+  const out = { rows: [], verdict: null, weights: {}, bestTestIC: null, cohorts: [] };
+
+  // "**Verdict: HOLD.**" — strip bold + period.
+  const verdictMatch = md.match(/Verdict\s*[:=]\s*\**\s*([A-Za-z]+)/i);
+  if (verdictMatch) out.verdict = verdictMatch[1].toUpperCase();
+
+  // Parse markdown tables. We look for rows whose first cell is numeric
+  // (ridge_alpha sweep) or text (horizon / cohort sweep). Match defensively
+  // and bucket rows by surrounding heading context.
+  let currentTable = null;
+  let currentHeading = '';
+  const lines = md.split('\n');
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const trimmed = line.trim();
+    // Track section heading just before each table for context.
+    if (/^#+\s/.test(trimmed)) {
+      currentHeading = trimmed.replace(/^#+\s+/, '').toLowerCase();
+      currentTable = null;
+      continue;
+    }
+    if (/^\|[\s-:|]+\|$/.test(trimmed)) {
+      // Separator row — header was line above.
+      const header = (lines[i - 1] || '').trim();
+      const cols = parseTableRow(header).map((s) => s.toLowerCase());
+      currentTable = { header: cols, heading: currentHeading };
+      continue;
+    }
+    if (!currentTable || !trimmed.startsWith('|')) continue;
+    const cells = parseTableRow(trimmed);
+    if (cells.length === 0) continue;
+    const rec = {};
+    for (let c = 0; c < currentTable.header.length && c < cells.length; c += 1) {
+      rec[currentTable.header[c]] = cells[c];
+    }
+
+    // Identify the ridge_alpha sweep tables.
+    if ('ridge_alpha' in rec) {
+      out.rows.push({
+        alpha: parseLooseFloat(rec.ridge_alpha),
+        train_ic: parseLooseFloat(rec.train_ic),
+        test_ic: parseLooseFloat(rec.test_ic),
+        overfit_gap: parseLooseFloat(rec.overfit_gap),
+        rec: rec.rec || rec.recommendation || null,
+      });
+    }
+    // Per-horizon sweep table.
+    if ('horizon' in rec && 'test_ic' in rec) {
+      out.rows.push({
+        alpha: rec.horizon,
+        train_ic: parseLooseFloat(rec.train_ic),
+        test_ic: parseLooseFloat(rec.test_ic),
+        overfit_gap: parseLooseFloat(rec.overfit_gap),
+        rec: rec.rec || rec.recommendation || null,
+      });
+    }
+    // Per-cohort table.
+    if ('cohort' in rec && 'test_ic' in rec) {
+      // n_tickers might be "8" or "14"; sometimes "bank (8 tickers)" got into
+      // the cohort cell with the count omitted — handle both.
+      let cohortName = rec.cohort;
+      let n = parseLooseInt(rec.n_tickers);
+      const m = cohortName.match(/^(.*?)\s*\((\d+)\s*tickers?\)$/i);
+      if (m) {
+        cohortName = m[1].trim();
+        if (n == null) n = parseInt(m[2], 10);
+      }
+      out.cohorts.push({
+        cohort: cohortName,
+        n,
+        train_ic: parseLooseFloat(rec.train_ic),
+        test_ic: parseLooseFloat(rec.test_ic),
+        overfit_gap: parseLooseFloat(rec.overfit_gap),
+        weight: rec['dominant weight'] || rec.dominant_weight || null,
+      });
+    }
+  }
+
+  if (out.rows.length > 0) {
+    const testICs = out.rows.map((r) => r.test_ic).filter((x) => !Number.isNaN(x) && x != null);
+    out.bestTestIC = testICs.length > 0 ? Math.max(...testICs) : null;
+  }
+
+  // Bullet "- key: value" weights.
+  const weightLineRe = /^[-*]\s+([a-z_]+)\s*[:=]\s*([0-9.+-]+)/i;
+  for (const line of lines) {
+    const m = line.match(weightLineRe);
+    if (m) {
+      const k = m[1].toLowerCase();
+      const v = parseFloat(m[2]);
+      if (!Number.isNaN(v) && PILLAR_LABELS[k]) out.weights[k] = v;
+    }
+  }
+  return out;
+}
+
+/* Pull cells from a markdown table row, stripping the | wrappers and
+   normalizing whitespace. */
+function parseTableRow(line) {
+  return line
+    .replace(/^\||\|$/g, '')
+    .split('|')
+    .map((s) => s.trim());
+}
+/* Numbers in the spec come with leading + (e.g. "+0.0920") or unicode minus
+   "−0.1619" — handle both, plus an empty cell. */
+function parseLooseFloat(s) {
+  if (s == null) return NaN;
+  const normalized = String(s).replace(/[−–—]/g, '-').replace(/^\+/, '').trim();
+  if (normalized === '' || normalized === 'n/a') return NaN;
+  return parseFloat(normalized);
+}
+function parseLooseInt(s) {
+  if (s == null) return null;
+  const n = parseInt(String(s).trim(), 10);
+  return Number.isNaN(n) ? null : n;
+}
+
+function renderWalkForward(wf) {
+  const statusEl = $('wf-status');
+  const tbody = $('wf-tbody');
+  const weightsBox = $('wf-weights');
+  tbody.replaceChildren();
+  weightsBox.replaceChildren();
+  statusEl.replaceChildren();
+
+  if (!wf) {
+    statusEl.appendChild(makePlaceholder(
+      'Walk-forward summary not yet available. The adaptive-weights agent has not produced its markdown summary.',
+    ));
+    return;
+  }
+
+  const verdictKey = (wf.verdict || '').toLowerCase();
+  let pillVerdict = 'hold';
+  if (verdictKey.includes('ship')) pillVerdict = 'ship';
+  else if (verdictKey.includes('reject') || verdictKey === 'no') pillVerdict = 'reject';
+  else if (verdictKey.includes('hold')) pillVerdict = 'hold';
+
+  statusEl.append(
+    document.createTextNode('Verdict: '),
+    el('span', {
+      class: 'lbt-pill', 'data-verdict': pillVerdict,
+      text: wf.verdict || 'PENDING',
+    }),
+    document.createTextNode(
+      `  ·  Best test IC ${fmtIC(wf.bestTestIC)}  ·  ship gate >${SHIP_GATE.toFixed(2)}`,
+    ),
+  );
+
+  if (wf.rows.length === 0) {
+    tbody.appendChild(el('tr', {}, [
+      el('td', { colspan: '5', text: 'No ridge_alpha rows parsed from markdown summary.' }),
+    ]));
+  } else {
+    for (const r of wf.rows) {
+      const trainCls = icClass(r.train_ic);
+      const testCls = icClass(r.test_ic);
+      const gapCls = (r.overfit_gap != null && Math.abs(r.overfit_gap) > 0.10) ? 'neg' : '';
+      // Trust the markdown's own recommendation when present (the 2026-05-18
+      // summary marks rows "ship*" with a footnote — treat them as ship for
+      // the column display; the SECTION verdict above gives the honest answer).
+      let recPill = 'hold';
+      const recRaw = (r.rec || '').toLowerCase();
+      if (recRaw.includes('ship')) recPill = 'ship';
+      else if (recRaw.includes('reject')) recPill = 'reject';
+      else if (r.test_ic != null && r.test_ic >= SHIP_GATE) recPill = 'ship';
+
+      const tr = el('tr');
+      tr.appendChild(el('td', {
+        text: typeof r.alpha === 'number'
+          ? (Number.isNaN(r.alpha) ? 'n/a' : r.alpha.toFixed(3))
+          : String(r.alpha ?? 'n/a'),
+      }));
+      tr.appendChild(el('td', { class: trainCls, text: fmtIC(r.train_ic) }));
+      tr.appendChild(el('td', { class: testCls, text: fmtIC(r.test_ic) }));
+      tr.appendChild(el('td', { class: gapCls, text: fmtIC(r.overfit_gap) }));
+      const td = el('td');
+      td.appendChild(el('span', {
+        class: 'lbt-pill',
+        'data-verdict': recPill,
+        text: (r.rec || recPill).toString().replace(/\*+/g, '').trim() || recPill,
+      }));
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Recommended weights — only on a true SHIP verdict.
+  if (pillVerdict === 'ship' && Object.keys(wf.weights).length > 0) {
+    weightsBox.appendChild(el('h3', {
+      class: 'lbt-pillar-name',
+      style: 'margin:0 0 6px;font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;',
+      text: 'Recommended weights',
+    }));
+    for (const [k, v] of Object.entries(wf.weights)) {
+      const card = el('div', { class: 'lbt-weights-card' });
+      card.appendChild(el('dt', { text: PILLAR_LABELS[k] || k }));
+      card.appendChild(el('dd', { text: v.toFixed(3) }));
+      weightsBox.appendChild(card);
+    }
+  }
+}
+
+/* ======================================================================
+   Per-cohort breakdown — sourced from the walk-forward markdown table
+   ====================================================================== */
+function renderCohort(wf) {
+  const statusEl = $('cohort-status');
+  const tbody = $('cohort-tbody');
+  tbody.replaceChildren();
+  statusEl.replaceChildren();
+
+  const rows = wf?.cohorts || [];
+  if (rows.length === 0) {
+    statusEl.appendChild(makePlaceholder(
+      'Per-cohort breakdown not yet available. The walk-forward summary has no cohort table.',
+    ));
+    return;
+  }
+
+  statusEl.textContent = 'Train/test IC and overfit gap per cohort (parsed from walk-forward summary). Test IC is the "would this generalize?" number.';
+
+  // Re-target the header to match what we actually have.
+  const thead = document.querySelector('#cohort-table thead tr');
+  if (thead) {
+    thead.replaceChildren(
+      el('th', { scope: 'col', text: 'Cohort' }),
+      el('th', { scope: 'col', text: 'N' }),
+      el('th', { scope: 'col', text: 'Train IC' }),
+      el('th', { scope: 'col', text: 'Test IC' }),
+      el('th', { scope: 'col', text: 'Overfit gap' }),
+    );
+  }
+
+  // Sort by test_ic desc; missing test_ic to the bottom.
+  rows.sort((a, b) => (b.test_ic ?? -Infinity) - (a.test_ic ?? -Infinity));
+
+  for (const r of rows) {
+    const tr = el('tr');
+    tr.appendChild(el('td', { text: r.cohort }));
+    tr.appendChild(el('td', { text: r.n != null ? String(r.n) : 'n/a' }));
+    tr.appendChild(el('td', { class: icClass(r.train_ic), text: fmtIC(r.train_ic) }));
+    tr.appendChild(el('td', { class: icClass(r.test_ic), text: fmtIC(r.test_ic) }));
+    const gapCls = (r.overfit_gap != null && Math.abs(r.overfit_gap) > 0.10) ? 'neg' : '';
+    tr.appendChild(el('td', { class: gapCls, text: fmtIC(r.overfit_gap) }));
+    tbody.appendChild(tr);
+  }
+}
+
+/* ----- Placeholder card builder ---------------------------------------- */
+function makePlaceholder(msg) {
+  const wrap = el('div', { class: 'lbt-placeholder' });
+  wrap.appendChild(el('p', { class: 'lbt-placeholder-msg', text: msg }));
+  wrap.appendChild(makeRetryButton());
+  return wrap;
+}
+
+/* ======================================================================
+   Boot + auto-refresh
+   ====================================================================== */
+main().catch((e) => {
+  console.error('[lthcs-backtest] fatal', e);
+  $('bt-loading')?.classList.add('hidden');
+  const errBox = $('bt-error');
+  if (errBox) {
+    errBox.classList.remove('hidden');
+    errBox.textContent = `Failed to render backtest: ${e.message || e}`;
+  }
+});
+
+// Auto-refresh every 5 minutes while the page is open. The placeholder
+// cards inside each section have their own "Retry now" buttons for the
+// "agents still running" case called out in the spec.
+setTimeout(() => { window.location.reload(); }, 5 * 60 * 1000);
