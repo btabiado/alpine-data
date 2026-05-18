@@ -1,15 +1,15 @@
 {
   "ticker": "BMY",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 36,
-  "mean_sentiment_score": 0.2638888888888889,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.18219085999999998,
+  "mean_relevance_score": 0.74723766,
   "label_counts": {
-    "Bearish": 2,
-    "Somewhat-Bearish": 0,
-    "Neutral": 19,
-    "Somewhat-Bullish": 0,
-    "Bullish": 15
+    "Bearish": 1,
+    "Somewhat-Bearish": 1,
+    "Neutral": 23,
+    "Somewhat-Bullish": 17,
+    "Bullish": 8
   }
 }

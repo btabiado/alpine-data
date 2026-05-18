@@ -1,15 +1,15 @@
 {
   "ticker": "AMAT",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 43,
-  "mean_sentiment_score": 0.5465116279069767,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.28773506,
+  "mean_relevance_score": 0.7780486400000001,
   "label_counts": {
-    "Bearish": 0,
-    "Somewhat-Bearish": 0,
-    "Neutral": 7,
-    "Somewhat-Bullish": 0,
-    "Bullish": 36
+    "Bearish": 1,
+    "Somewhat-Bearish": 2,
+    "Neutral": 16,
+    "Somewhat-Bullish": 11,
+    "Bullish": 20
   }
 }

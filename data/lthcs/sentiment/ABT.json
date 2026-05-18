@@ -1,15 +1,15 @@
 {
   "ticker": "ABT",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
   "article_count": 50,
-  "mean_sentiment_score": 0.04544502,
-  "mean_relevance_score": 0.7274100000000001,
+  "mean_sentiment_score": 0.09098628,
+  "mean_relevance_score": 0.7681276200000002,
   "label_counts": {
-    "Bearish": 5,
-    "Somewhat-Bearish": 3,
-    "Neutral": 29,
-    "Somewhat-Bullish": 12,
+    "Bearish": 3,
+    "Somewhat-Bearish": 4,
+    "Neutral": 24,
+    "Somewhat-Bullish": 18,
     "Bullish": 1
   }
 }

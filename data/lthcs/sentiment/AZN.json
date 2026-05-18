@@ -1,15 +1,15 @@
 {
   "ticker": "AZN",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 36,
-  "mean_sentiment_score": 0.5694444444444444,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.28948273999999996,
+  "mean_relevance_score": 0.9778681,
   "label_counts": {
     "Bearish": 2,
-    "Somewhat-Bearish": 0,
-    "Neutral": 4,
-    "Somewhat-Bullish": 0,
-    "Bullish": 30
+    "Somewhat-Bearish": 4,
+    "Neutral": 7,
+    "Somewhat-Bullish": 8,
+    "Bullish": 29
   }
 }

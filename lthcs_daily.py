@@ -67,6 +67,7 @@ from lthcs.sources import (
     finnhub,
     fred,
     fred_breadth,
+    fred_tier2,
     google_trends,
     sec_8k,
     sec_13f,
@@ -231,6 +232,19 @@ class PipelineState:
     # data/lthcs/macro/breadth_sentiment_<date>.json. Downstream scoring
     # consumption deferred to follow-up commit.
     breadth_sentiment_snapshot: Optional[Dict[str, Any]] = None
+    # FRED Tier-2 macro snapshot (Brent crude, gasoline crack, ISM PMI
+    # proxy via INDPRO, housing starts, UMICH consumer sentiment, U-6
+    # unemployment). Sector-scaled refinement (±5 max) layered onto the
+    # DES Tier-1 sub-score by stage_4. Cyclical sectors get the full
+    # effect, defensive sectors damped. Persisted to
+    # data/lthcs/macro/fred_tier2_<date>.json.
+    tier2_macro: Optional[Dict[str, Any]] = None
+    # Per-ticker sector-RSS aggregate (FDA/EIA/Fed) across pharma /
+    # energy / financials. Populated alongside the Thesis supplement
+    # cascade so Stage 4 can surface ``has_sector_rss`` in the Thesis
+    # pillar's data_quality block. Map of ticker → aggregate dict with
+    # ``event_count``, ``event_titles``, ``sectors_matched``.
+    sector_rss_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     # Per-ticker analyst-rating breadth derived from yahoo_events cache
     # (cache-read-only — no extra network calls). Map of ticker → breadth
     # dict (regime, breadth_score in [-1,+1], firm_count, raw_actions).
@@ -265,12 +279,27 @@ class PipelineState:
     # signal across the full window). Stage 4 reads this first, falling back
     # to stored AV sentiment when Finnhub has no coverage.
     recommendation_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Event-driven Thesis refinement signals — populated in Stage 2 across
+    # the whole active universe (not gated on _has_fresh_sentiment) so the
+    # Stage 4 refinement runs even when a Finnhub base already exists.
+    # Maps ticker -> output of sec_8k.event_signal_for_ticker /
+    # yahoo_events.summarize_earnings_for_thesis.
+    sec_8k_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    yahoo_earnings_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     rotation: Optional[ThesisRotation] = None
     rotation_scored_today: List[str] = field(default_factory=list)
     rotation_failures: List[str] = field(default_factory=list)
     rev_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     gp_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     ocf_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    # Gross-margin fallback rows -- populated for every ticker so the
+    # Financial pillar can walk the fallback chain
+    # (SalesRevenueGross -> Revenue - CostOfRevenue -> OperatingIncomeLoss)
+    # when GrossProfit is missing (P3 audit fix-up, May 2026). Empty
+    # list when the ticker has no usable filings for that concept.
+    sales_revenue_gross_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    cost_of_revenue_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    operating_income_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     # Bank-specific concept rows (only populated for tickers in
     # financial.BANK_TICKERS allowlist). Stays empty for non-banks.
     nii_by_ticker: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
@@ -430,6 +459,67 @@ def _empty_av_response() -> Dict[str, Any]:
     return {"items": "0", "feed": []}
 
 
+def _load_recent_dated_json(
+    state: "PipelineState",
+    subdir: str,
+    *,
+    max_age_days: int = 7,
+) -> Optional[Dict[str, Any]]:
+    """Find the most-recent ``data/lthcs/<subdir>/<YYYY-MM-DD>.json`` file.
+
+    Used as a fallback for the insider/holdings fetches when today's SEC
+    fetch yielded nothing (rate-limit, transient 5xx, or any
+    ``--skip-thesis``-era backfill snapshot). The Form 4 conviction window
+    is 90d and 13F is quarterly, so a 7-day-stale file is still a
+    materially better signal than collapsing the Institutional pillar to
+    pure momentum.
+
+    Returns ``{"data": <parsed_json>, "date": "YYYY-MM-DD", "age_days":
+    int}`` or ``None`` if no acceptable file exists within
+    ``[calc_date - max_age_days, calc_date - 1]``. ``calc_date`` itself is
+    never returned (the caller already tried the live fetch for that date).
+    """
+    if state.persist is None:
+        return None
+    base = state.persist.data_root / subdir
+    if not base.is_dir():
+        return None
+    try:
+        anchor = date.fromisoformat(state.calc_date)
+    except (TypeError, ValueError):
+        return None
+    best_date: Optional[date] = None
+    for entry in base.iterdir():
+        if not entry.is_file() or entry.suffix != ".json":
+            continue
+        try:
+            d = date.fromisoformat(entry.stem)
+        except ValueError:
+            continue
+        # Strictly before calc_date (calc_date itself was just tried).
+        if d >= anchor:
+            continue
+        age = (anchor - d).days
+        if age > max_age_days:
+            continue
+        if best_date is None or d > best_date:
+            best_date = d
+    if best_date is None:
+        return None
+    path = base / ("%s.json" % best_date.isoformat())
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict) or not payload:
+        return None
+    return {
+        "data": payload,
+        "date": best_date.isoformat(),
+        "age_days": (anchor - best_date).days,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Stages
 # ---------------------------------------------------------------------------
@@ -562,6 +652,35 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         except Exception:
             state.ocf_by_ticker[sym] = []
 
+        # Gross-margin XBRL fallback chain (P3 audit fix-up, May 2026):
+        # fetch the three alternative concept families so the Financial
+        # pillar can derive a margin proxy when ``GrossProfit`` is
+        # missing. Each fetch is independently try-wrapped so one bad
+        # concept doesn't poison the others. Cache-hit on the same
+        # ``companyfacts`` payload makes these cheap (one HTTP call
+        # already covers all concepts the company files).
+        try:
+            srg = sec_edgar.get_sales_revenue_gross_history(sym, **as_of_kw)
+            state.sales_revenue_gross_by_ticker[sym] = srg or []
+            if srg:
+                counts["sec_srg_ok"] = counts.get("sec_srg_ok", 0) + 1
+        except Exception:
+            state.sales_revenue_gross_by_ticker[sym] = []
+        try:
+            cor = sec_edgar.get_cost_of_revenue_history(sym, **as_of_kw)
+            state.cost_of_revenue_by_ticker[sym] = cor or []
+            if cor:
+                counts["sec_cor_ok"] = counts.get("sec_cor_ok", 0) + 1
+        except Exception:
+            state.cost_of_revenue_by_ticker[sym] = []
+        try:
+            op_inc = sec_edgar.get_operating_income_history(sym, **as_of_kw)
+            state.operating_income_by_ticker[sym] = op_inc or []
+            if op_inc:
+                counts["sec_op_inc_ok"] = counts.get("sec_op_inc_ok", 0) + 1
+        except Exception:
+            state.operating_income_by_ticker[sym] = []
+
         # Bank-specific concepts (only for the strict-bank allowlist).
         # Non-banks skip this fetch entirely to avoid wasted HTTP calls.
         if financial.is_bank_ticker(sym):
@@ -642,6 +761,22 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if state.args.verbose:
                 print("  breadth_sentiment fetch failed: %s" % exc)
             state.breadth_sentiment_snapshot = None
+
+    # FRED Tier-2 macro snapshot (Brent crude, gasoline crack, ISM PMI
+    # proxy via INDPRO, housing starts, UMICH consumer sentiment, U-6
+    # unemployment).  Wired into DES via stage_4 (sector-scaled ±5
+    # refinement). Module always returns a dict — never raises — so a
+    # single bad series counts as ``sources_failed`` rather than
+    # collapsing the snapshot.  Forwards ``as_of`` for historical
+    # backfill (FRED supports as-of on every Tier-2 series).
+    try:
+        state.tier2_macro = fred_tier2.fetch_tier2_macro_snapshot(**as_of_kw)
+        ok = state.tier2_macro.get("data_quality", {}).get("sources_ok", 0)
+        counts["fred_tier2_ok"] = ok
+    except Exception as exc:
+        if state.args.verbose:
+            print("  fred_tier2 fetch failed: %s" % exc)
+        state.tier2_macro = None
     # NOTE: analyst_breadth runs AFTER the Thesis cascade (Step 2 warms
     # the yahoo_events recommendations cache it depends on). See Stage 2
     # cascade section below.
@@ -851,6 +986,126 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             )
             state.recommendation_by_ticker[sym] = reco_signal
 
+    # --- Event-driven Thesis refinement collection (universe-wide) ---
+    # Populates state.sec_8k_by_ticker and state.yahoo_earnings_by_ticker
+    # for EVERY active ticker, regardless of whether a fresh sentiment
+    # file already exists. Stage 4 needs the per-ticker signal to refine
+    # the Finnhub base sub_score even when the supplement-cascade below
+    # would have skipped the ticker (because Finnhub already won).
+    #
+    # Runs OUTSIDE --skip-thesis: backfill mode passes --skip-thesis to
+    # bypass Alpha Vantage, but 8-K and Yahoo earnings have historical
+    # `as_of` support so refinement still applies across the backfill
+    # window. Failures degrade gracefully — any per-ticker exception is
+    # swallowed and the ticker simply gets no refinement entry.
+    if state.active_tickers:
+        for sym in state.active_tickers:
+            try:
+                sig = sec_8k.event_signal_for_ticker(sym, days=90, **as_of_kw)
+            except Exception:
+                sig = None
+            if sig and int(sig.get("article_count") or 0) > 0:
+                state.sec_8k_by_ticker[sym] = sig
+
+        for sym in state.active_tickers:
+            try:
+                earnings = yahoo_events.get_earnings_dates(sym, limit=4, **as_of_kw)
+                sig = yahoo_events.summarize_earnings_for_thesis(earnings)
+            except Exception:
+                sig = None
+            if (
+                sig
+                and sig.get("mean_sentiment_score") is not None
+                and int(sig.get("article_count") or 0) > 0
+            ):
+                state.yahoo_earnings_by_ticker[sym] = sig
+
+        counts["sec_8k_refinement"] = len(state.sec_8k_by_ticker)
+        counts["yahoo_earnings_refinement"] = len(state.yahoo_earnings_by_ticker)
+
+    # --- SEC Form 4 insider transactions (per-ticker, 90d window) ---
+    # Reuses sec_edgar's session/headers + its own 24h submissions cache +
+    # 30d XML cache. First-day run is slow (universe-wide backfill);
+    # subsequent runs hit cache.
+    #
+    # CRITICAL: This block intentionally runs OUTSIDE the --skip-thesis
+    # gate. Form 4 / 13F are independent of Alpha Vantage sentiment (they
+    # feed the Institutional pillar, not Thesis). Before May 18 2026 they
+    # were nested inside `if not state.args.skip_thesis` which silently
+    # collapsed the Institutional pillar to pure momentum on every cron
+    # run that passed --skip-thesis (the data audit's P0 regression).
+    if state.active_tickers:
+        try:
+            state.insider_by_ticker = (
+                sec_form4.fetch_universe_insider_transactions(
+                    state.active_tickers, window_days=90, **as_of_kw
+                )
+            )
+            counts["insider_covered"] = len(state.insider_by_ticker)
+        except Exception as exc:
+            if state.args.verbose:
+                print("  sec_form4 fetch failed: %s" % exc)
+            state.insider_by_ticker = {}
+
+        # Fallback to most-recent on-disk snapshot (<=7d stale) when
+        # today's fetch yielded nothing. SEC EDGAR rate-limits or transient
+        # 5xx errors must not collapse the workhorse pillar to pure momentum;
+        # Form 4 conviction windows are 90d so a 7-day-stale signal is
+        # still informative.
+        if not state.insider_by_ticker:
+            fallback = _load_recent_dated_json(
+                state, "insider", max_age_days=7
+            )
+            if fallback:
+                state.insider_by_ticker = fallback["data"]
+                counts["insider_covered"] = len(state.insider_by_ticker)
+                counts["insider_fallback_age_days"] = fallback["age_days"]
+                if state.args.verbose:
+                    print(
+                        "  sec_form4 today empty; using fallback "
+                        "insider/%s.json (%d days stale)"
+                        % (fallback["date"], fallback["age_days"])
+                    )
+
+        # --- SEC 13F institutional holdings (quarterly cadence) ---
+        # Aggregates across 21 tracked managers. First-run is slow (~8min
+        # cold cache fetching ~600MB of 13F XMLs); cached extractions are
+        # tiny (~18MB) and quarter-stable so re-runs within the quarter
+        # are near-instant. Also un-gated from --skip-thesis (see Form 4
+        # comment above).
+        try:
+            state.holdings_by_ticker = (
+                sec_13f.fetch_universe_institutional_holdings(
+                    state.active_tickers, **as_of_kw
+                )
+            )
+            counts["holdings_covered"] = sum(
+                1 for v in state.holdings_by_ticker.values()
+                if isinstance(v, dict) and v.get("manager_count", 0) > 0
+            )
+        except Exception as exc:
+            if state.args.verbose:
+                print("  sec_13f fetch failed: %s" % exc)
+            state.holdings_by_ticker = {}
+
+        if not state.holdings_by_ticker:
+            fallback = _load_recent_dated_json(
+                state, "holdings", max_age_days=7
+            )
+            if fallback:
+                state.holdings_by_ticker = fallback["data"]
+                counts["holdings_covered"] = sum(
+                    1 for v in state.holdings_by_ticker.values()
+                    if isinstance(v, dict) and v.get("manager_count", 0) > 0
+                )
+                counts["holdings_fallback_age_days"] = fallback["age_days"]
+                if state.args.verbose:
+                    print(
+                        "  sec_13f today empty; using fallback "
+                        "holdings/%s.json (%d days stale)"
+                        % (fallback["date"], fallback["age_days"])
+                    )
+
     if not state.args.skip_thesis and state.active_tickers:
         # --- Step 1 (legacy supplement write): Finnhub -> sentiment file ---
         # Stage 4 now reads state.recommendation_by_ticker directly, so the
@@ -888,13 +1143,10 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         # --- Step 2: SEC 8-K material events ---
         # Real-time structured events (CEO changes, restatements, material
         # agreements). Highest signal-to-noise; runs across the entire
-        # active universe.
-        for sym in state.active_tickers:
+        # active universe. Sources from ``state.sec_8k_by_ticker``
+        # (populated universe-wide earlier) so we don't refetch.
+        for sym, sig in state.sec_8k_by_ticker.items():
             if _has_fresh_sentiment(sym):
-                continue
-            try:
-                sig = sec_8k.event_signal_for_ticker(sym, days=90, **as_of_kw)
-            except Exception:
                 continue
             if sig.get("article_count", 0) <= 0:
                 continue
@@ -903,16 +1155,14 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
 
         # --- Step 2: Yahoo earnings + analyst actions ---
         # Earnings surprise gives concrete sentiment direction; analyst
-        # actions are recency-weighted broker signal.
+        # actions are recency-weighted broker signal. Earnings come from
+        # ``state.yahoo_earnings_by_ticker``; analyst actions still
+        # fetched on-demand (not part of the Stage 4 refinement path).
         for sym in state.active_tickers:
             if _has_fresh_sentiment(sym):
                 continue
-            try:
-                earnings = yahoo_events.get_earnings_dates(sym, limit=4, **as_of_kw)
-                sig = yahoo_events.summarize_earnings_for_thesis(earnings)
-            except Exception:
-                sig = {}
-            if sig.get("mean_sentiment_score") is not None:
+            sig = state.yahoo_earnings_by_ticker.get(sym)
+            if sig and sig.get("mean_sentiment_score") is not None:
                 if _write_supplement(sym, sig):
                     yahoo_event_supplement_count += 1
                     continue
@@ -938,6 +1188,11 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if state.args.verbose:
                 print("  sector-RSS fetch failed: %s" % exc)
             sector_events = {}
+
+        # Persist the per-ticker aggregate on state so Stage 4 can stamp
+        # ``has_sector_rss`` on the Thesis pillar's data_quality block
+        # (per-ticker explainability in variable_detail).
+        state.sector_rss_by_ticker = sector_events
 
         for sym, ev in sector_events.items():
             if ev.get("event_count", 0) <= 0:
@@ -1012,53 +1267,19 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 print("  analyst_breadth compute failed: %s" % exc)
             state.analyst_breadth_by_ticker = {}
 
-        # --- SEC Form 4 insider transactions (per-ticker, 90d window) ---
-        # Reuses sec_edgar's session/headers + its own 24h submissions
-        # cache + 30d XML cache. First-day run is slow (universe-wide
-        # backfill); subsequent runs hit cache. Skippable in test/dry-run
-        # paths via --skip-thesis to avoid hammering SEC during dev.
-        if not state.args.skip_thesis:
-            try:
-                state.insider_by_ticker = (
-                    sec_form4.fetch_universe_insider_transactions(
-                        state.active_tickers, window_days=90, **as_of_kw
-                    )
-                )
-                counts["insider_covered"] = len(state.insider_by_ticker)
-            except Exception as exc:
-                if state.args.verbose:
-                    print("  sec_form4 fetch failed: %s" % exc)
-                state.insider_by_ticker = {}
+        # NOTE: sec_form4 + sec_13f fetches moved above (outside the
+        # --skip-thesis gate) so the Institutional pillar always has
+        # smart-money inputs. See the un-gated block earlier in this stage.
 
-            # --- SEC 13F institutional holdings (quarterly cadence) ---
-            # Aggregates across 21 tracked managers. First-run is slow
-            # (~8 min cold cache fetching ~600MB of 13F XMLs); cached
-            # extractions are tiny (~18MB) and quarter-stable so re-runs
-            # within the quarter are near-instant.
-            try:
-                state.holdings_by_ticker = (
-                    sec_13f.fetch_universe_institutional_holdings(
-                        state.active_tickers, **as_of_kw
-                    )
-                )
-                counts["holdings_covered"] = sum(
-                    1 for v in state.holdings_by_ticker.values()
-                    if isinstance(v, dict) and v.get("manager_count", 0) > 0
-                )
-            except Exception as exc:
-                if state.args.verbose:
-                    print("  sec_13f fetch failed: %s" % exc)
-                state.holdings_by_ticker = {}
-        else:
-            state.insider_by_ticker = {}
-            state.holdings_by_ticker = {}
-
-        # --- Google Trends acceleration (cache-read-only) ---
-        # Runs in skip-thesis paths too because there's no network call;
-        # we just read the most recent data/lthcs/trends/<YYYY-Www>.json.
-        # The weekly batch script populates the cache; if no file exists
-        # yet, this returns an empty dict and Adoption falls back to
-        # revenue-only (legacy behavior).
+    # --- Google Trends acceleration (cache-read-only) ---
+    # Pulled OUTSIDE the --skip-thesis gate: this is a pure filesystem
+    # read of the most recent data/lthcs/trends/<YYYY-Www>.json snapshot
+    # written by scripts/lthcs_trends_weekly.py. The Adoption pillar
+    # (not Thesis) consumes it, so gating it on --skip-thesis silently
+    # left has_trends=False on every snapshot for backfill runs and any
+    # --skip-thesis daily run — the exact failure mode the 2026-05-18
+    # audit flagged (0/167 has_trends=true across 91 days).
+    if state.active_tickers:
         try:
             state.trends_by_ticker = (
                 google_trends.get_universe_trends_acceleration(
@@ -1076,6 +1297,11 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
     counts["sec_8k_supplement"] = sec_8k_supplement_count
     counts["yahoo_event_supplement"] = yahoo_event_supplement_count
     counts["ai_news_supplement"] = ai_news_supplement_count
+    counts["sector_rss_supplement"] = sector_rss_supplement_count
+    counts["sector_rss_covered"] = sum(
+        1 for ev in state.sector_rss_by_ticker.values()
+        if isinstance(ev, dict) and ev.get("event_count", 0) > 0
+    )
 
     if state.args.verbose:
         for k, v in counts.items():
@@ -1200,6 +1426,17 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
             return bucket
         return peer_growths  # fall back to full universe
 
+    # Sector lookup for Adoption's sector-relative revenue rank (audit fix
+    # 2026-05-18). The Adoption pillar applies its own _MIN_SECTOR_COHORT
+    # gate; we just hand it the full {ticker: sector} map and let it
+    # decide whether to use the sector cohort or fall back to the
+    # maturity-stage / universe distribution.
+    peer_sectors: Dict[str, str] = {}
+    for sym in state.scored_tickers:
+        sec = (state.by_ticker.get(sym, {}) or {}).get("sector")
+        if isinstance(sec, str) and sec:
+            peer_sectors[sym] = sec
+
     state.pillar_results = {}
     for sym in state.scored_tickers:
         entry = state.by_ticker.get(sym, {})
@@ -1210,6 +1447,8 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 sym, state.rev_by_ticker.get(sym, []), [], my_peer_growths,
                 trends_data=state.trends_by_ticker.get(sym),
                 universe_trends_data=state.trends_by_ticker,
+                sector=sector if isinstance(sector, str) else None,
+                peer_sectors=peer_sectors,
             )
         except Exception:
             ad = _neutral_pillar_result(sym, "adoption_momentum")
@@ -1246,6 +1485,13 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 bank_cohort_nii_rows=state.nii_by_ticker,
                 bank_cohort_pcl_rows=state.pcl_by_ticker,
                 bank_cohort_noninterest_rows=state.noninterest_by_ticker,
+                # Gross-margin fallback chain inputs (P3 audit fix-up,
+                # May 2026). Non-bank standard path uses these to walk
+                # SalesRevenueGross / CostOfRevenue / OperatingIncomeLoss
+                # when canonical GrossProfit is missing.
+                sales_revenue_gross_rows=state.sales_revenue_gross_by_ticker.get(sym, []),
+                cost_of_revenue_rows=state.cost_of_revenue_by_ticker.get(sym, []),
+                operating_income_rows=state.operating_income_by_ticker.get(sym, []),
             )
         except Exception:
             fin = _neutral_pillar_result(sym, "financial_evolution")
@@ -1256,29 +1502,47 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         # for this ticker (no analyst coverage, missing API key, rate-limit
         # break partway through the universe). The fallback still respects
         # --skip-thesis so test paths can short-circuit.
+        #
+        # REFINEMENT layer: 8-K material events + Yahoo earnings surprises
+        # are blended into the base sub_score (default w=0.25). Refinement
+        # signals are collected universe-wide in Stage 2 so they apply even
+        # when Finnhub already produced a base. See
+        # ``thesis.compute_thesis_with_refinement`` for the math.
         th = None
         reco_signal = state.recommendation_by_ticker.get(sym)
+        sec_8k_sig = state.sec_8k_by_ticker.get(sym)
+        yahoo_sig = state.yahoo_earnings_by_ticker.get(sym)
+
+        # Optional stored-sentiment fallback for the refinement helper.
+        # Only loaded when Finnhub didn't produce a usable base — saves
+        # disk reads in the common case.
+        stored_sent = None
+        finnhub_usable = False
         if reco_signal is not None:
             consensus = reco_signal.get("consensus_score")
             total = int(reco_signal.get("total_analysts") or 0)
-            if consensus is not None and total >= 3:
-                try:
-                    th = thesis.compute_thesis_from_finnhub_recommendation(
-                        sym, reco_signal, today=state.calc_date
-                    )
-                except Exception:
-                    th = None
-        if th is None:
-            if not state.args.skip_thesis and state.rotation is not None:
-                try:
-                    sentiment = state.rotation.read_sentiment(sym)
-                    th = thesis.compute_thesis_from_stored_sentiment(
-                        sym, sentiment, today=state.calc_date
-                    )
-                except Exception:
-                    th = _neutral_thesis(sym)
-            else:
-                th = _neutral_thesis(sym)
+            finnhub_usable = (consensus is not None and total >= 3)
+        if (
+            not finnhub_usable
+            and not state.args.skip_thesis
+            and state.rotation is not None
+        ):
+            try:
+                stored_sent = state.rotation.read_sentiment(sym)
+            except Exception:
+                stored_sent = None
+
+        try:
+            th = thesis.compute_thesis_with_refinement(
+                sym,
+                reco_signal,
+                sec_8k_signal=sec_8k_sig,
+                yahoo_earnings_signal=yahoo_sig,
+                stored_sentiment=stored_sent,
+                today=state.calc_date,
+            )
+        except Exception:
+            th = _neutral_thesis(sym)
 
         try:
             de = des.compute_des(
@@ -1286,9 +1550,25 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 sector=sector,
                 macro_inputs=state.macro_inputs,
                 sector_weights=state.sector_weights,
+                tier2_macro=state.tier2_macro,
             )
         except Exception:
             de = _neutral_pillar_result(sym, "des")
+
+        # Stamp per-ticker sector-RSS coverage on the Thesis pillar so
+        # variable_detail surfaces it for the ~30 mapped pharma/energy/
+        # financials tickers. Always present (False when ticker isn't
+        # in a mapped sector OR has 0 events this window).
+        ev = state.sector_rss_by_ticker.get(sym) or {}
+        ev_count = int(ev.get("event_count") or 0)
+        if isinstance(th, dict):
+            dq = th.setdefault("data_quality", {})
+            dq["has_sector_rss"] = ev_count > 0
+            if ev_count > 0:
+                dq["sector_rss_event_count"] = ev_count
+                sectors_matched = ev.get("sectors_matched") or []
+                if sectors_matched:
+                    dq["sector_rss_sectors"] = list(sectors_matched)
 
         state.pillar_results[sym] = {
             "adoption_momentum": ad,
@@ -1556,6 +1836,10 @@ def stage_8_persist(state: PipelineState) -> bool:
             if state.breadth_sentiment_snapshot is not None:
                 (macro_dir / ("breadth_sentiment_%s.json" % state.calc_date)).write_text(
                     json.dumps(state.breadth_sentiment_snapshot, indent=2, sort_keys=True)
+                )
+            if state.tier2_macro is not None:
+                (macro_dir / ("fred_tier2_%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.tier2_macro, indent=2, sort_keys=True)
                 )
             # Per-ticker analyst-rating breadth: separate dir to keep the
             # macro/ tree limited to true system-wide signals.

@@ -1,15 +1,15 @@
 {
   "ticker": "ABNB",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
   "article_count": 50,
-  "mean_sentiment_score": 0.12706419999999996,
-  "mean_relevance_score": 0.7417929199999999,
+  "mean_sentiment_score": 0.12388020000000001,
+  "mean_relevance_score": 0.7207690200000001,
   "label_counts": {
     "Bearish": 1,
-    "Somewhat-Bearish": 3,
-    "Neutral": 25,
-    "Somewhat-Bullish": 14,
-    "Bullish": 7
+    "Somewhat-Bearish": 2,
+    "Neutral": 27,
+    "Somewhat-Bullish": 15,
+    "Bullish": 5
   }
 }

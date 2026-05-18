@@ -1,15 +1,15 @@
 {
   "ticker": "CTAS",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 27,
-  "mean_sentiment_score": 0.3148148148148148,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.14320022000000004,
+  "mean_relevance_score": 0.8671821,
   "label_counts": {
-    "Bearish": 1,
-    "Somewhat-Bearish": 0,
-    "Neutral": 12,
-    "Somewhat-Bullish": 0,
-    "Bullish": 14
+    "Bearish": 2,
+    "Somewhat-Bearish": 6,
+    "Neutral": 15,
+    "Somewhat-Bullish": 19,
+    "Bullish": 8
   }
 }

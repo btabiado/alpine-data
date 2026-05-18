@@ -4,49 +4,61 @@
   "color": "#F0A861",
   "components": [
     {
-      "delta": -17,
+      "delta": -21,
       "name": "Band lean (bullish % minus bearish %)",
-      "read": "universe weakening",
-      "value": "-58.1%"
+      "read": "universe distributing",
+      "value": "-70.1%"
     },
     {
       "delta": 0,
       "name": "Adoption pillar avg",
       "read": "adoption neutral",
-      "value": 50.5
+      "value": 51.6
     },
     {
       "delta": 0,
       "name": "Institutional pillar avg",
       "read": "institutional steady",
-      "value": 50.0
+      "value": 48.7
     },
     {
       "delta": 1,
       "name": "Financial pillar avg",
       "read": "fundamentals stable",
-      "value": 57.3
+      "value": 55.8
     },
     {
-      "delta": 4,
+      "delta": 3,
       "name": "Thesis pillar avg",
       "read": "sentiment supportive",
-      "value": 70.4
+      "value": 67.0
     },
     {
       "delta": -1,
       "name": "DES (demand environment) avg",
       "read": "macro neutral",
-      "value": 46.0
+      "value": 46.1
     },
     {
       "delta": 10,
       "name": "Macro regime (HY OAS / curve / USD)",
       "read": "risk-on backdrop",
       "value": "clean"
+    },
+    {
+      "delta": -7,
+      "name": "Insider conviction breadth",
+      "read": "insiders distributing",
+      "value": "108 active signals"
+    },
+    {
+      "delta": 0,
+      "name": "13F conviction breadth (acc vs dist)",
+      "read": "institutions balanced",
+      "value": "5 vs 5"
     }
   ],
   "label": "LTHCS NEUTRAL",
   "note": "Aggregate of 167-ticker LTHCS universe. Directional read, not a trading signal.",
-  "score": -3
+  "score": -15
 }

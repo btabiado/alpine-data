@@ -1,15 +1,15 @@
 {
   "ticker": "ACN",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
   "article_count": 50,
-  "mean_sentiment_score": 0.20551697999999996,
-  "mean_relevance_score": 0.66732706,
+  "mean_sentiment_score": 0.19103074000000003,
+  "mean_relevance_score": 0.6906539800000001,
   "label_counts": {
     "Bearish": 0,
     "Somewhat-Bearish": 3,
-    "Neutral": 16,
-    "Somewhat-Bullish": 28,
-    "Bullish": 3
+    "Neutral": 19,
+    "Somewhat-Bullish": 24,
+    "Bullish": 4
   }
 }

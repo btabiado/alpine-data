@@ -1,15 +1,15 @@
 {
   "ticker": "CEG",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 27,
-  "mean_sentiment_score": 0.46296296296296297,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.15535062,
+  "mean_relevance_score": 0.6959352399999998,
   "label_counts": {
-    "Bearish": 1,
-    "Somewhat-Bearish": 0,
-    "Neutral": 4,
-    "Somewhat-Bullish": 0,
-    "Bullish": 22
+    "Bearish": 3,
+    "Somewhat-Bearish": 2,
+    "Neutral": 20,
+    "Somewhat-Bullish": 13,
+    "Bullish": 12
   }
 }

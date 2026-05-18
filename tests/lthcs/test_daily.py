@@ -151,6 +151,15 @@ def patched_sources(monkeypatch):
     fred_latest_mock = MagicMock(return_value={"date": "2026-05-01", "value": 4.5})
     eia_latest_mock = MagicMock(return_value={"date": "2026-05-15", "value": 75.0})
     av_mock = MagicMock(return_value={"items": "0", "feed": []})
+    # Stub out the Thesis-refinement event sources too. The universe-wide
+    # 8-K and Yahoo earnings collection runs OUTSIDE --skip-thesis (so
+    # backfills get refinement); without explicit stubs they'd hit the
+    # SEC EDGAR / yfinance cache and inject non-deterministic signal into
+    # tests that assert specific Thesis sub_scores.
+    sec_8k_mock = MagicMock(return_value={"article_count": 0,
+                                           "mean_sentiment_score": None})
+    yahoo_earnings_dates_mock = MagicMock(return_value=[])
+    yahoo_analyst_actions_mock = MagicMock(return_value=[])
 
     monkeypatch.setattr(lthcs_daily.yahoo, "get_daily_prices", yahoo_prices_mock)
     monkeypatch.setattr(lthcs_daily.yahoo, "get_momentum_pct", yahoo_momentum_mock)
@@ -166,6 +175,15 @@ def patched_sources(monkeypatch):
     monkeypatch.setattr(lthcs_daily.fred, "get_latest_value", fred_latest_mock)
     monkeypatch.setattr(lthcs_daily.eia, "get_latest_value", eia_latest_mock)
     monkeypatch.setattr(lthcs_daily.alpha_vantage, "get_news_sentiment", av_mock)
+    monkeypatch.setattr(
+        lthcs_daily.sec_8k, "event_signal_for_ticker", sec_8k_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.yahoo_events, "get_earnings_dates", yahoo_earnings_dates_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.yahoo_events, "get_analyst_actions", yahoo_analyst_actions_mock
+    )
 
     return {
         "yahoo_prices": yahoo_prices_mock,
@@ -178,6 +196,9 @@ def patched_sources(monkeypatch):
         "fred_latest": fred_latest_mock,
         "eia_latest": eia_latest_mock,
         "av": av_mock,
+        "sec_8k": sec_8k_mock,
+        "yahoo_earnings_dates": yahoo_earnings_dates_mock,
+        "yahoo_analyst_actions": yahoo_analyst_actions_mock,
     }
 
 
@@ -534,3 +555,239 @@ class TestMain:
         rc = lthcs_daily.main(["--tickers", "AAPL", "--skip-thesis", "--dry-run"])
         assert rc == 0
         assert patched_sources["av"].call_count == 0
+
+
+# ---------------------------------------------------------------------------
+# Institutional smart-money inputs (Form 4 + 13F) must run regardless of
+# --skip-thesis. This is the regression flagged by the 2026-05-18 audit:
+# the workhorse pillar (IC +0.204) collapsed to pure momentum on every
+# cron run that passed --skip-thesis because both fetches were silently
+# gated behind that flag.
+# ---------------------------------------------------------------------------
+
+class TestInsiderHoldingsAlwaysFetched:
+    """Form 4 (sec_form4) + 13F (sec_13f) feed Institutional, not Thesis,
+    so --skip-thesis must NOT skip them."""
+
+    def test_skip_thesis_still_fetches_insider_and_holdings(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        monkeypatch.setattr(
+            "lthcs.sources.thesis_rotation.get_default_data_root",
+            lambda: tmp_path,
+        )
+        insider_mock = MagicMock(
+            return_value={
+                "AAPL": {
+                    "regime": "mild_buying",
+                    "conviction_score": 0.3,
+                    "cluster_buying": False,
+                    "ceo_cfo_action": None,
+                },
+            }
+        )
+        holdings_mock = MagicMock(
+            return_value={
+                "AAPL": {
+                    "conviction_signal": "accumulating",
+                    "signal_score": 0.4,
+                    "manager_count": 15,
+                    "data_quality": "ok",
+                    "quarter_over_quarter": {
+                        "share_change_pct": 0.02,
+                        "net_buyers": 9,
+                        "net_sellers": 6,
+                    },
+                },
+            }
+        )
+        monkeypatch.setattr(
+            lthcs_daily.sec_form4,
+            "fetch_universe_insider_transactions",
+            insider_mock,
+        )
+        monkeypatch.setattr(
+            lthcs_daily.sec_13f,
+            "fetch_universe_institutional_holdings",
+            holdings_mock,
+        )
+
+        args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID", "--skip-thesis"])
+        state = lthcs_daily.PipelineState(args=args)
+        lthcs_daily.stage_1_load_config(state)
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
+        assert lthcs_daily.stage_2_fetch_data(state) is True
+
+        # The P0 fix: these MUST be called even with --skip-thesis on.
+        assert insider_mock.call_count == 1
+        assert holdings_mock.call_count == 1
+        assert state.insider_by_ticker == insider_mock.return_value
+        assert state.holdings_by_ticker == holdings_mock.return_value
+
+    def test_skip_thesis_propagates_insider_into_pillar_data_quality(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        """After the fix, --skip-thesis runs must produce
+        ``has_insider=True`` / ``has_holdings=True`` on the institutional
+        pillar result when SEC fetch succeeds. Before the fix this was
+        always False (the data-audit symptom)."""
+        monkeypatch.setattr(
+            "lthcs.sources.thesis_rotation.get_default_data_root",
+            lambda: tmp_path,
+        )
+        monkeypatch.setattr(
+            lthcs_daily.sec_form4,
+            "fetch_universe_insider_transactions",
+            MagicMock(return_value={
+                "AAPL": {
+                    "regime": "mild_buying",
+                    "conviction_score": 0.25,
+                    "cluster_buying": False,
+                    "ceo_cfo_action": None,
+                },
+            }),
+        )
+        monkeypatch.setattr(
+            lthcs_daily.sec_13f,
+            "fetch_universe_institutional_holdings",
+            MagicMock(return_value={
+                "AAPL": {
+                    "conviction_signal": "steady",
+                    "signal_score": 0.0,
+                    "manager_count": 12,
+                    "data_quality": "ok",
+                    "quarter_over_quarter": {},
+                },
+            }),
+        )
+        args = lthcs_daily.parse_args(["--tickers", "AAPL", "--skip-thesis"])
+        state = lthcs_daily.PipelineState(args=args)
+        lthcs_daily.stage_1_load_config(state)
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
+        lthcs_daily.stage_2_fetch_data(state)
+        lthcs_daily.stage_3_quality_checks(state)
+        lthcs_daily.stage_4_compute_subscores(state)
+
+        inst = state.pillar_results["AAPL"]["institutional_confidence"]
+        assert inst["data_quality"]["has_insider"] is True
+        assert inst["data_quality"]["has_holdings"] is True
+
+
+class TestInsiderHoldingsFallback:
+    """When the live SEC fetch returns nothing (rate-limit, transient
+    failure, etc.) the pipeline must fall back to the most-recent on-disk
+    snapshot within a 7-day staleness window. Older than 7 days is dropped."""
+
+    def _write_dated_json(self, root, subdir, datestr, payload):
+        d = root / subdir
+        d.mkdir(parents=True, exist_ok=True)
+        (d / ("%s.json" % datestr)).write_text(json.dumps(payload))
+
+    def test_recent_dated_json_loader_picks_newest_within_window(
+        self, tmp_path
+    ):
+        """Standalone test for the fallback helper itself."""
+        self._write_dated_json(
+            tmp_path, "insider", "2026-05-10",
+            {"AAPL": {"regime": "mild_buying"}},
+        )
+        self._write_dated_json(
+            tmp_path, "insider", "2026-05-15",
+            {"AAPL": {"regime": "cluster_buying"}, "MSFT": {"regime": "neutral"}},
+        )
+        self._write_dated_json(
+            tmp_path, "insider", "2026-04-01",
+            {"AAPL": {"regime": "ancient"}},  # too old
+        )
+
+        # Build a minimal state with persist pointed at tmp_path.
+        args = lthcs_daily.parse_args(["--tickers", "AAPL"])
+        state = lthcs_daily.PipelineState(args=args)
+        state.calc_date = "2026-05-18"
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
+
+        result = lthcs_daily._load_recent_dated_json(
+            state, "insider", max_age_days=7
+        )
+        assert result is not None
+        assert result["date"] == "2026-05-15"
+        assert result["age_days"] == 3
+        assert result["data"]["AAPL"]["regime"] == "cluster_buying"
+
+    def test_recent_dated_json_loader_skips_files_older_than_window(
+        self, tmp_path
+    ):
+        self._write_dated_json(
+            tmp_path, "insider", "2026-05-01",
+            {"AAPL": {"regime": "stale"}},  # 17 days stale -> dropped
+        )
+        args = lthcs_daily.parse_args(["--tickers", "AAPL"])
+        state = lthcs_daily.PipelineState(args=args)
+        state.calc_date = "2026-05-18"
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
+        assert lthcs_daily._load_recent_dated_json(
+            state, "insider", max_age_days=7
+        ) is None
+
+    def test_recent_dated_json_loader_returns_none_when_dir_missing(
+        self, tmp_path
+    ):
+        args = lthcs_daily.parse_args(["--tickers", "AAPL"])
+        state = lthcs_daily.PipelineState(args=args)
+        state.calc_date = "2026-05-18"
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
+        assert lthcs_daily._load_recent_dated_json(
+            state, "insider", max_age_days=7
+        ) is None
+
+    def test_stage_2_uses_fallback_when_sec_fetch_returns_empty(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        """End-to-end: when sec_form4 + sec_13f return empty (e.g. SEC
+        rate-limited the whole batch), Stage 2 must populate
+        insider_by_ticker / holdings_by_ticker from the most-recent
+        on-disk file within 7 days of calc_date.
+
+        Pin calc_date via ``--as-of`` for cross-calendar determinism.
+        """
+        monkeypatch.setattr(
+            "lthcs.sources.thesis_rotation.get_default_data_root",
+            lambda: tmp_path,
+        )
+        # Empty live-fetch return for both SEC sources.
+        monkeypatch.setattr(
+            lthcs_daily.sec_form4,
+            "fetch_universe_insider_transactions",
+            MagicMock(return_value={}),
+        )
+        monkeypatch.setattr(
+            lthcs_daily.sec_13f,
+            "fetch_universe_institutional_holdings",
+            MagicMock(return_value={}),
+        )
+        # Seed 1-day-stale fallback files (well within 7-day window).
+        self._write_dated_json(
+            tmp_path, "insider", "2026-05-17",
+            {"AAPL": {"regime": "cluster_buying", "conviction_score": 0.8,
+                      "cluster_buying": True, "ceo_cfo_action": "buying"}},
+        )
+        self._write_dated_json(
+            tmp_path, "holdings", "2026-05-17",
+            {"AAPL": {"conviction_signal": "accumulating", "signal_score": 0.6,
+                      "manager_count": 18, "data_quality": "ok",
+                      "quarter_over_quarter": {"share_change_pct": 0.02,
+                                                "net_buyers": 14, "net_sellers": 4}}},
+        )
+
+        args = lthcs_daily.parse_args(
+            ["--tickers", "AAPL", "--as-of", "2026-05-18"]
+        )
+        state = lthcs_daily.PipelineState(args=args)
+        lthcs_daily.stage_1_load_config(state)
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
+        assert lthcs_daily.stage_2_fetch_data(state) is True
+
+        assert state.insider_by_ticker.get("AAPL", {}).get("regime") == "cluster_buying"
+        assert state.holdings_by_ticker.get("AAPL", {}).get("conviction_signal") == "accumulating"
+        assert state.fetch_counts.get("insider_fallback_age_days") == 1
+        assert state.fetch_counts.get("holdings_fallback_age_days") == 1

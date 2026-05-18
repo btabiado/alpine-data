@@ -1,15 +1,15 @@
 {
   "ticker": "COP",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 33,
-  "mean_sentiment_score": 0.4696969696969697,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.19290838000000005,
+  "mean_relevance_score": 0.7812905400000001,
   "label_counts": {
-    "Bearish": 1,
-    "Somewhat-Bearish": 0,
-    "Neutral": 9,
-    "Somewhat-Bullish": 0,
-    "Bullish": 23
+    "Bearish": 0,
+    "Somewhat-Bearish": 2,
+    "Neutral": 20,
+    "Somewhat-Bullish": 20,
+    "Bullish": 8
   }
 }

@@ -1,15 +1,15 @@
 {
   "ticker": "CHTR",
-  "last_scored": "2026-05-17",
+  "last_scored": "2026-05-18",
   "model_version": "v1.0.0",
-  "article_count": 29,
-  "mean_sentiment_score": -0.06896551724137931,
-  "mean_relevance_score": 1.0,
+  "article_count": 50,
+  "mean_sentiment_score": 0.11374383999999996,
+  "mean_relevance_score": 0.6824016399999998,
   "label_counts": {
-    "Bearish": 9,
-    "Somewhat-Bearish": 0,
-    "Neutral": 14,
-    "Somewhat-Bullish": 0,
-    "Bullish": 6
+    "Bearish": 1,
+    "Somewhat-Bearish": 1,
+    "Neutral": 36,
+    "Somewhat-Bullish": 11,
+    "Bullish": 1
   }
 }
