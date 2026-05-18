@@ -232,13 +232,38 @@
           </ul>
           <a class="open" href="./variant-b-drilldown/">Open Variant B &rarr;</a>
         </article>
+
+        <!-- Variant C card -->
+        <article class="variant-card">
+          <span class="tag">Variant C</span>
+          <h2>Indexed Drill-Down (B + filters)</h2>
+          <div class="preview b" aria-hidden="true">
+            <div class="row" style="margin-bottom:6px;">
+              <span class="b1"></span><span class="b2"></span><span class="b3"></span><span class="b1" style="background:rgba(110,168,254,0.35)"></span>
+            </div>
+            <span class="apex"></span>
+            <div class="row">
+              <span class="b1"></span><span class="b2"></span><span class="b3"></span>
+            </div>
+            <span class="tickers"></span>
+          </div>
+          <p>Variant B with four <strong>interactive index buttons</strong> at the top (ALL · DJIA · NASDAQ-100 · S&amp;P 100). Click any one and the Buy/Hold/Watch counts plus the proportional band-share bars re-compute live for that index subset.</p>
+          <ul>
+            <li>Per-index real numbers: DJIA 1/4/25 · NASDAQ 10/22/65 · S&amp;P 5/21/74 (Buy/Hold/Watch).</li>
+            <li>Surfaces the index-overlap math (sum of memberships 227, universe 167).</li>
+            <li>Best for: surfacing index posture differences at a glance.</li>
+          </ul>
+          <a class="open" href="./variant-c-indexed/">Open Variant C &rarr;</a>
+        </article>
       </div>
 
       <p class="footnote">
-        These are <strong>static HTML</strong> with inline data — no JS, no
-        build step. The dynamic version will reuse <code>lthcs.css</code>
-        tokens and wire into the existing <code>lthcs-tab.js</code> filter
-        store. Production files are untouched.
+        Variants A &amp; B are <strong>static HTML</strong> with inline data —
+        no JS, no build step. Variant C adds a <strong>small inline JS
+        block</strong> so the index-filter behavior is clickable in the
+        mockup. The dynamic production version will reuse
+        <code>lthcs.css</code> tokens and wire into the existing
+        <code>lthcs-tab.js</code> filter store. Production files are untouched.
       </p>
     </div>
   </body>

@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS — Variant C: Indexed Drill-Down (mockup)</title>
+    <link rel="stylesheet" href="../../lthcs.css" />
+    <style>
+      /* =========================================================================
+         Variant C — Variant B + big interactive index buttons at the top.
+         Clicking ALL / DJIA / NASDAQ-100 / S&P 100 re-filters the Buy / Hold /
+         Watch bucket counts and the ticker grid below. Lives client-side so
+         the mockup is fully self-contained.
+         ========================================================================= */
+      .vc-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 24px 80px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .vc-mockup-banner {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 14px;
+        background: rgba(110, 168, 254, 0.08);
+        border: 1px dashed rgba(110, 168, 254, 0.35);
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .vc-mockup-banner strong { color: var(--accent); }
+      .vc-mockup-banner a { margin-left: auto; }
+
+      /* =========================================================================
+         INDEX FILTER ROW — 4 big buttons at the very top
+         design rationale: per user feedback, DJIA / NASDAQ-100 / S&P 100 are
+         promoted from a chip row to first-class filter buttons. Clicking
+         one re-filters the entire downstream view (composite eyebrow text,
+         B/H/W counts, band breakdown bars, ticker grid).
+         ========================================================================= */
+      .vc-index-buttons {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(4, 1fr);
+      }
+      @media (max-width: 760px) {
+        .vc-index-buttons { grid-template-columns: 1fr 1fr; }
+      }
+
+      .vc-ix {
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 14px 16px 12px 18px;
+        cursor: pointer;
+        text-align: left;
+        font-family: inherit;
+        color: var(--text-primary);
+        transition: background 140ms ease, border-color 140ms ease, transform 80ms ease;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        overflow: hidden;
+      }
+      .vc-ix:hover { background: var(--bg-card-hover); border-color: var(--border-strong); }
+      .vc-ix:active { transform: translateY(1px); }
+      .vc-ix::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 5px;
+        background: var(--text-tertiary);
+        transition: width 140ms ease, background 140ms ease;
+      }
+      .vc-ix.is-active {
+        border-color: var(--accent);
+        background: rgba(110, 168, 254, 0.08);
+      }
+      .vc-ix.is-active::before {
+        width: 8px;
+        background: var(--accent);
+      }
+      .vc-ix-eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        font-weight: 700;
+      }
+      .vc-ix-count {
+        font-size: 32px;
+        font-weight: 800;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.5px;
+        color: var(--text-primary);
+      }
+      .vc-ix.is-active .vc-ix-count { color: var(--accent); }
+      .vc-ix-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .vc-ix-sub {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      /* small explanatory note under the buttons */
+      .vc-math-note {
+        font-size: 11.5px;
+        color: var(--text-tertiary);
+        padding: 4px 4px 0;
+        line-height: 1.45;
+      }
+      .vc-math-note code {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        background: var(--bg-chip);
+        padding: 1px 5px;
+        border-radius: 4px;
+        color: var(--text-secondary);
+      }
+
+      /* ----- light regime + movers ----- */
+      .vc-context-row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 760px) {
+        .vc-context-row { grid-template-columns: 1fr; }
+      }
+      .vc-context-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .vc-context-card .title {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        margin-bottom: 4px;
+      }
+      .vc-context-card .vals { display: flex; gap: 18px; flex-wrap: wrap; }
+      .vc-context-card .vals b { color: var(--text-primary); font-family: var(--font-mono); }
+      .vc-context-card .vals .good { color: var(--band-high-bright); }
+      .vc-context-card .vals .bad { color: var(--band-weakening-bright); }
+
+      /* ================ APEX (unchanged from Variant B) ================ */
+      .vc-apex {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-left: 6px solid var(--band-monitor-bright);
+        border-radius: var(--radius-lg);
+        padding: 18px 22px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: center;
+      }
+      @media (max-width: 760px) { .vc-apex { grid-template-columns: 1fr; padding: 14px 16px; } }
+      .vc-apex-eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        font-weight: 700;
+      }
+      .vc-apex-title { margin: 4px 0 2px; font-size: 17px; font-weight: 600; color: var(--text-primary); }
+      .vc-apex-sub { font-size: 12px; color: var(--text-secondary); max-width: 60ch; }
+      .vc-apex-score-wrap {
+        text-align: right;
+        display: flex; flex-direction: column; align-items: flex-end;
+        gap: 2px;
+      }
+      .vc-apex-score {
+        font-size: 52px; line-height: 1; font-weight: 700;
+        font-variant-numeric: tabular-nums; letter-spacing: -1px;
+        color: var(--band-monitor-bright);
+      }
+      .vc-apex-label {
+        font-size: 11px; letter-spacing: 0.08em; font-weight: 700;
+        color: var(--band-monitor-bright);
+      }
+      .vc-apex-gauge { grid-column: 1 / -1; position: relative; margin-top: 2px; }
+      .vc-apex-gauge-bar {
+        height: 6px; border-radius: 3px;
+        background: linear-gradient(
+          to right,
+          var(--band-review-bright) 0%,
+          var(--band-weakening-bright) 25%,
+          var(--band-monitor-bright) 50%,
+          var(--band-constructive-bright) 70%,
+          var(--band-high-bright) 100%
+        );
+      }
+      .vc-apex-gauge-marker {
+        position: absolute; top: -3px; left: 43.5%;
+        width: 6px; height: 12px; background: var(--text-primary);
+        border-radius: 2px;
+        box-shadow: 0 0 0 2px var(--bg-elevated);
+        transform: translateX(-50%);
+      }
+      .vc-apex-ticks {
+        display: flex; justify-content: space-between; margin-top: 4px;
+        font-size: 10px; color: var(--text-tertiary);
+      }
+      @media (max-width: 760px) {
+        .vc-apex-score-wrap { align-items: flex-start; text-align: left; }
+        .vc-apex-score { font-size: 44px; }
+      }
+
+      /* ================ TIER 1 — BUCKETS (mirrors Variant B) ================ */
+      .vc-buckets { display: grid; gap: 12px; grid-template-columns: 1fr 1fr 1fr; }
+      @media (max-width: 760px) { .vc-buckets { grid-template-columns: 1fr; } }
+      .vc-bucket {
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 16px 18px 14px 22px;
+        overflow: hidden;
+        transition: border-color 140ms ease, transform 80ms ease;
+      }
+      .vc-bucket:hover { border-color: var(--border-strong); }
+      .vc-bucket .tone-bar {
+        position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+      }
+      .vc-bucket-buy   .tone-bar { background: var(--band-high-bright); }
+      .vc-bucket-hold  .tone-bar { background: var(--band-monitor-bright); }
+      .vc-bucket-watch .tone-bar { background: var(--band-weakening-bright); }
+      .vc-bucket-head { display: flex; align-items: baseline; gap: 8px; }
+      .vc-bucket-name {
+        font-size: 16px; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .vc-bucket-buy   .vc-bucket-name { color: var(--band-high-bright); }
+      .vc-bucket-hold  .vc-bucket-name { color: var(--band-monitor-bright); }
+      .vc-bucket-watch .vc-bucket-name { color: var(--band-weakening-bright); }
+      .vc-bucket-count-row {
+        display: flex; align-items: baseline; gap: 10px; margin-top: 6px;
+      }
+      .vc-bucket-count {
+        font-size: 52px; line-height: 1; font-weight: 800;
+        font-variant-numeric: tabular-nums; letter-spacing: -1.5px;
+        color: var(--text-primary);
+      }
+      .vc-bucket-pct {
+        font-size: 12px; color: var(--text-tertiary);
+        font-variant-numeric: tabular-nums;
+      }
+      .vc-bucket-desc {
+        margin-top: 6px;
+        font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase;
+        color: var(--text-tertiary);
+      }
+      .vc-bucket-bar {
+        margin-top: 10px; height: 6px; border-radius: 3px; overflow: hidden;
+        background: var(--bg-chip);
+        display: flex;
+      }
+      .vc-bucket-bar span { display: block; height: 100%; transition: flex 240ms ease; }
+
+      /* ================ BREADCRUMB + GRID (mirrors Variant B) ================ */
+      .vc-grid-wrap { display: flex; flex-direction: column; gap: 10px; }
+      .vc-breadcrumb {
+        display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        font-size: 12px; color: var(--text-secondary);
+      }
+      .vc-crumb {
+        display: inline-flex; gap: 6px; align-items: center;
+        padding: 4px 9px;
+        background: var(--bg-chip); border: 1px solid var(--border-subtle);
+        border-radius: 999px;
+        color: var(--text-primary); font-size: 12px;
+      }
+      .vc-crumb.is-active {
+        background: rgba(var(--band-monitor-rgb), 0.18);
+        border-color: var(--band-monitor-bright);
+        color: var(--band-monitor-bright);
+      }
+      .vc-crumb .x { color: var(--text-tertiary); cursor: pointer; }
+
+      .vc-grid {
+        display: grid; gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      }
+      .vc-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 10px 12px;
+        font-size: 12.5px;
+      }
+      .vc-card .row1 {
+        display: flex; align-items: baseline; justify-content: space-between;
+      }
+      .vc-card .tk { font-family: var(--font-mono); font-weight: 700; }
+      .vc-card .sc {
+        font-variant-numeric: tabular-nums; font-weight: 800;
+        color: var(--text-primary);
+      }
+      .vc-card .meta {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-top: 6px; font-size: 10.5px; color: var(--text-tertiary);
+      }
+      .vc-card .band-tag {
+        padding: 1px 7px; border-radius: 999px;
+        background: rgba(var(--band-monitor-rgb), 0.18);
+        color: var(--band-monitor-bright);
+        font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+        font-size: 9.5px;
+      }
+      .vc-card-more {
+        display: flex; align-items: center; justify-content: center;
+        padding: 14px;
+        background: var(--bg-chip);
+        border: 1px dashed var(--border-strong);
+        border-radius: var(--radius-md);
+        font-size: 12px; color: var(--text-secondary); font-style: italic;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="vc-shell">
+      <div class="vc-mockup-banner">
+        <strong>MOCKUP</strong>
+        <span>Variant C — Variant B + interactive index filter buttons. Click DJIA / NASDAQ / S&amp;P to re-filter Buy / Hold / Watch.</span>
+        <a href="../">&larr; All variants</a>
+      </div>
+
+      <!-- ===================== INDEX FILTER ROW ===================== -->
+      <section class="vc-index-buttons" aria-label="Index filter">
+        <button class="vc-ix is-active" data-index="all">
+          <span class="vc-ix-eyebrow">Universe</span>
+          <span class="vc-ix-count" data-ix-count="all">167</span>
+          <span class="vc-ix-name">ALL</span>
+          <span class="vc-ix-sub">168 active &middot; 1 unscored (ANSS)</span>
+        </button>
+        <button class="vc-ix" data-index="djia">
+          <span class="vc-ix-eyebrow">Index</span>
+          <span class="vc-ix-count" data-ix-count="djia">30</span>
+          <span class="vc-ix-name">DJIA</span>
+          <span class="vc-ix-sub">Dow Jones Industrial Avg</span>
+        </button>
+        <button class="vc-ix" data-index="nasdaq">
+          <span class="vc-ix-eyebrow">Index</span>
+          <span class="vc-ix-count" data-ix-count="nasdaq">97</span>
+          <span class="vc-ix-name">NASDAQ-100</span>
+          <span class="vc-ix-sub">98 active &middot; 1 unscored</span>
+        </button>
+        <button class="vc-ix" data-index="sp100">
+          <span class="vc-ix-eyebrow">Index</span>
+          <span class="vc-ix-count" data-ix-count="sp100">100</span>
+          <span class="vc-ix-name">S&amp;P 100</span>
+          <span class="vc-ix-sub">100 active &middot; 100 scored</span>
+        </button>
+      </section>
+
+      <div class="vc-math-note">
+        Tickers can belong to multiple indices — AAPL is in DJIA + NASDAQ-100 + S&amp;P 100. Sum of memberships <code>30 + 97 + 100 = 227</code>; unique universe is <code>167</code> scored (<code>168</code> active, ANSS unscored today, WBA permanently inactive).
+      </div>
+
+      <div class="vc-context-row">
+        <div class="vc-context-card">
+          <div class="title">Market Regime</div>
+          <div class="vals">
+            <span>HY OAS <b class="good">2.76%</b> <small>17th %ile</small></span>
+            <span>2s10s <b>+0.50</b> <small>not inverted</small></span>
+            <span>USD <b>118.04</b> <small class="bad">−0.7% 30d</small></span>
+          </div>
+        </div>
+        <div class="vc-context-card">
+          <div class="title">Top Movers (30-day)</div>
+          <div class="vals">
+            <span>&uarr; <b class="good">DDOG +28.6</b></span>
+            <span>&uarr; <b class="good">CRWD +19.2</b></span>
+            <span>&darr; <b class="bad">ABNB −16.7</b></span>
+            <span>&darr; <b class="bad">CHTR −15.2</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== APEX ===================== -->
+      <section class="vc-apex" aria-label="LTHCS Composite Index">
+        <div>
+          <div class="vc-apex-eyebrow">LTHCS Composite Index &middot; <span data-apex-eyebrow>Universe of 167</span></div>
+          <h1 class="vc-apex-title">Market posture: <em style="font-style:normal;color:var(--band-monitor-bright)">distributing</em></h1>
+          <p class="vc-apex-sub">
+            Band lean −66.5%, fundamentals stable, sentiment supportive,
+            demand environment neutral. Directional read, not a trading signal.
+          </p>
+        </div>
+        <div class="vc-apex-score-wrap">
+          <div class="vc-apex-score">−13</div>
+          <div class="vc-apex-label">NEUTRAL &middot; MONITOR</div>
+        </div>
+        <div class="vc-apex-gauge">
+          <div class="vc-apex-gauge-bar"></div>
+          <div class="vc-apex-gauge-marker" title="−13"></div>
+          <div class="vc-apex-ticks">
+            <span>−100</span><span>−50</span><span>0</span><span>+50</span><span>+100</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TIER 1 — BUCKETS ===================== -->
+      <section class="vc-buckets" aria-label="Buy, Hold, Watch buckets">
+
+        <article class="vc-bucket vc-bucket-buy" data-bucket="buy">
+          <span class="tone-bar"></span>
+          <div class="vc-bucket-head"><span class="vc-bucket-name">Buy</span></div>
+          <div class="vc-bucket-count-row">
+            <span class="vc-bucket-count" data-bw="buy">11</span>
+            <span class="vc-bucket-pct" data-bw-pct="buy">6.6% of universe</span>
+          </div>
+          <div class="vc-bucket-desc">Elite + High Confidence + Constructive</div>
+          <div class="vc-bucket-bar" data-bar="buy">
+            <span style="flex:0 0 0%;background:var(--band-elite-bright)"></span>
+            <span style="flex:0 0 0%;background:var(--band-high-bright)"></span>
+            <span style="flex:0 0 100%;background:var(--band-constructive-bright)"></span>
+          </div>
+        </article>
+
+        <article class="vc-bucket vc-bucket-hold" data-bucket="hold">
+          <span class="tone-bar"></span>
+          <div class="vc-bucket-head"><span class="vc-bucket-name">Hold</span></div>
+          <div class="vc-bucket-count-row">
+            <span class="vc-bucket-count" data-bw="hold">34</span>
+            <span class="vc-bucket-pct" data-bw-pct="hold">20.4% of universe</span>
+          </div>
+          <div class="vc-bucket-desc">Monitor band only</div>
+          <div class="vc-bucket-bar" data-bar="hold">
+            <span style="flex:0 0 100%;background:var(--band-monitor-bright)"></span>
+          </div>
+        </article>
+
+        <article class="vc-bucket vc-bucket-watch" data-bucket="watch">
+          <span class="tone-bar"></span>
+          <div class="vc-bucket-head"><span class="vc-bucket-name">Watch</span></div>
+          <div class="vc-bucket-count-row">
+            <span class="vc-bucket-count" data-bw="watch">122</span>
+            <span class="vc-bucket-pct" data-bw-pct="watch">73.1% of universe</span>
+          </div>
+          <div class="vc-bucket-desc">Weakening + Review &middot; heavy tail</div>
+          <div class="vc-bucket-bar" data-bar="watch">
+            <span style="flex:0 0 54.9%;background:var(--band-weakening-bright)"></span>
+            <span style="flex:0 0 45.1%;background:var(--band-review-bright)"></span>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ===================== TICKER GRID (placeholder) ===================== -->
+      <section class="vc-grid-wrap" aria-label="Filtered ticker grid">
+        <div class="vc-breadcrumb">
+          <span>Filtered:</span>
+          <span class="vc-crumb is-active" data-crumb-ix>Index: ALL &middot; <span data-crumb-count>167</span> names</span>
+        </div>
+
+        <div class="vc-grid" data-grid>
+          <!-- placeholder; real impl would render filtered tickers here -->
+          <div class="vc-card"><div class="row1"><span class="tk">ADI</span><span class="sc">75.3</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-constructive-rgb),0.22);color:var(--band-constructive-bright)">Constructive</span><span>+5.8</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">NXPI</span><span class="sc">73.1</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-constructive-rgb),0.22);color:var(--band-constructive-bright)">Constructive</span><span>+17.9</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">CRWD</span><span class="sc">64.8</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-monitor-rgb),0.18);color:var(--band-monitor-bright)">Monitor</span><span>+19.2</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">DDOG</span><span class="sc">64.6</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-monitor-rgb),0.18);color:var(--band-monitor-bright)">Monitor</span><span>+28.6</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">AAPL</span><span class="sc">56.1</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-weakening-rgb),0.2);color:var(--band-weakening-bright)">Weakening</span><span>+5.8</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">ABBV</span><span class="sc">55.7</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-weakening-rgb),0.2);color:var(--band-weakening-bright)">Weakening</span><span>+3.6</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">ABNB</span><span class="sc">52.9</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-weakening-rgb),0.2);color:var(--band-weakening-bright)">Weakening</span><span>−16.7</span></div></div>
+          <div class="vc-card"><div class="row1"><span class="tk">ABT</span><span class="sc">47.5</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-review-rgb),0.22);color:var(--band-review-bright)">Review</span><span>+8.3</span></div></div>
+          <div class="vc-card-more" data-grid-more>+ 159 more in ALL filter</div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      /* Variant C interactive demo.
+         All counts computed locally from the 2026-05-18 snapshot via
+         scripts/lthcs_audit_data_quality.py — kept inline so the mockup
+         has zero runtime dependencies. Real production version would
+         fetch from data/lthcs/snapshots/<calc_date>.json. */
+      const INDEX_DATA = {
+        all:    { label: "ALL",        total: 167, buy: 11, hold: 34, watch: 122, weakening: 67, review: 55, constructive: 11, monitor: 34 },
+        djia:   { label: "DJIA",       total: 30,  buy: 1,  hold: 4,  watch: 25,  weakening: 13, review: 12, constructive: 1,  monitor: 4 },
+        nasdaq: { label: "NASDAQ-100", total: 97,  buy: 10, hold: 22, watch: 65,  weakening: 41, review: 24, constructive: 10, monitor: 22 },
+        sp100:  { label: "S&P 100",    total: 100, buy: 5,  hold: 21, watch: 74,  weakening: 36, review: 38, constructive: 5,  monitor: 21 },
+      };
+
+      const buttons = document.querySelectorAll('.vc-ix');
+      buttons.forEach(b => b.addEventListener('click', () => {
+        const key = b.dataset.index;
+        if (!INDEX_DATA[key]) return;
+        buttons.forEach(o => o.classList.toggle('is-active', o === b));
+        applyIndex(key);
+      }));
+
+      function applyIndex(key) {
+        const d = INDEX_DATA[key];
+
+        // Bucket counts + percentages
+        const total = d.total;
+        ['buy','hold','watch'].forEach(bk => {
+          const ct = document.querySelector(`[data-bw="${bk}"]`);
+          const pct = document.querySelector(`[data-bw-pct="${bk}"]`);
+          if (ct) ct.textContent = d[bk];
+          if (pct) pct.textContent = total ? `${(d[bk]/total*100).toFixed(1)}% of ${d.label}` : `0%`;
+        });
+
+        // Watch bar: weakening/review proportion
+        const watchTotal = (d.weakening || 0) + (d.review || 0);
+        if (watchTotal > 0) {
+          const wPct = d.weakening / watchTotal * 100;
+          const rPct = d.review / watchTotal * 100;
+          const bar = document.querySelector('[data-bar="watch"]');
+          if (bar) {
+            bar.children[0].style.flex = `0 0 ${wPct.toFixed(1)}%`;
+            bar.children[1].style.flex = `0 0 ${rPct.toFixed(1)}%`;
+          }
+        }
+
+        // Apex eyebrow
+        const eyebrow = document.querySelector('[data-apex-eyebrow]');
+        if (eyebrow) eyebrow.textContent =
+          key === 'all' ? `Universe of ${total}` : `${d.label} subset · ${total} names`;
+
+        // Breadcrumb + grid placeholder
+        const crumb = document.querySelector('[data-crumb-ix]');
+        const crumbCount = document.querySelector('[data-crumb-count]');
+        const gridMore = document.querySelector('[data-grid-more]');
+        if (crumb) crumb.firstChild.textContent = `Index: ${d.label} · `;
+        if (crumbCount) crumbCount.textContent = total;
+        if (gridMore) gridMore.textContent = `+ ${Math.max(0, total - 8)} more in ${d.label} filter`;
+      }
+    </script>
+  </body>
+</html>
