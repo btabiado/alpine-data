@@ -35,9 +35,88 @@ weights.json `adaptive_overrides.enabled` correctly stays `false`.
 - α Fix 3 adaptive_weights bugs + re-run CV at 4 months
 - β Recalibrate Adoption pillar (inverts at 21d)
 - γ Activate LLM sentiment to fix dead Thesis pillar
-- δ Investigate Elite-band threshold (zero observations across 90 days)
+- δ Investigate Elite-band threshold (zero observations across 90 days) — ✅ RESOLVED below
 - ε BRK.B yfinance fallback (returns "no price data" for .B suffix)
 - η Manual cron trigger to verify GitHub secrets work
+
+### δ Elite-band threshold investigation (2026-05-18 afternoon)
+
+**Question**: Why did ZERO tickers land in `elite` across all 90 backfilled
+days + the 2 current snapshots? Threshold mis-calibrated, no current ticker
+qualifies, or bug?
+
+**Investigation** (scan of all 92 snapshot files, ~15,104 row-observations):
+
+| Metric | Value |
+|---|---|
+| Theoretical max composite (all pillar subs=100, +macro tailwind, weights sum to 1.0) | **100.0** for every maturity profile |
+| All-time-high composite observed | **88.5** (FANG, 2026-04-07 and 2026-05-04) |
+| Distinct tickers ever ≥85 | **1** (FANG only) |
+| Distinct tickers ever ≥80 | ~10 (FANG, MU, ADI, NVDA, ASML, AVGO, SCHW, GOOGL, GOOG, DUK) |
+| Distinct tickers ever ≥89 | **0** |
+
+**Top 5 all-time-high composite scores**:
+1. FANG · 2026-04-07 · **88.5**
+2. FANG · 2026-05-04 · **88.5**
+3. FANG · 2026-03-30 · **88.2**
+4. FANG · 2026-04-06 · **88.0**
+5. FANG · 2026-04-30 · **87.9**
+
+**Per-pillar empirical ceiling** (across all 15,104 row-observations):
+
+| Pillar | min | median | p99 | max |
+|---|---|---|---|---|
+| adoption_momentum        | 0.0 | 50.0 | 100.0 | 100.0 |
+| institutional_confidence | -1.6 | 50.0 | 99.4 | 100.0 |
+| financial_evolution      | 4.2 | 54.9 | 99.4 | 100.0 |
+| **thesis_integrity**     | 30.0 | 50.0 | **70.0** | **81.8** |
+| **des**                  | 30.4 | 47.0 | **69.4** | **73.6** |
+
+**Diagnosis**: Threshold mis-calibrated for current pillar quality.
+
+The math allows 100, but two pillars are structurally capped low under
+current data:
+- **Thesis** is the placeholder-50 problem from line 23 above (constant
+  50 on 88/90 dates; queued γ to activate LLM sentiment)
+- **DES** appears to be ceiling-limited near 75 by the sector-adjustment
+  table; no real run ever crosses 75
+
+Composite from each pillar's empirical p99 vector at standard_compounder
+weights `[0.25, 0.20, 0.15, 0.20, 0.20]`:
+  `0.25·100 + 0.20·99.4 + 0.15·99.4 + 0.20·70 + 0.20·69.4 = 87.7`
+
+So the realistic ceiling is ~88 — exactly where FANG sits. The original
+`elite.min = 90` was set assuming Thesis would carry real signal; it
+doesn't yet.
+
+**Recommendation**: Drop `elite.min` from 90 → 85 (and `high_confidence.max`
+from 89 → 84 to maintain contiguity). Leave the lower bands unchanged.
+
+Rationale:
+1. A band that never fires conveys zero information to the UI/heatmap.
+2. 85+ is the natural break: only 1 ticker (FANG) ever reaches it, and
+   only on days when every available pillar is firing. That matches the
+   "rare top-tier" semantic Elite is meant to communicate.
+3. Bumping `elite.min` back to 90 should be a follow-up once γ (LLM
+   sentiment) and a DES recalibration ship — at that point the math
+   will support genuine 90+ composites for the best names. Re-evaluate
+   the threshold when Thesis_p99 ≥ 85.
+4. The fix is data-only (`data/lthcs/weights.json`); no source-module
+   changes. Score-band lookup goes through `assign_band` which reads
+   thresholds from JSON.
+
+**Shipped (2026-05-18 PM)**:
+- `data/lthcs/weights.json`: `elite.min` 90 → 85, `high_confidence.max` 89 → 84
+- `tests/lthcs/test_score.py`: new `TestTheoreticalMax` class (3 tests)
+  pinning theoretical max=100, +macro modifier cap, and a regression
+  guard that fails if a future config change makes Elite unreachable
+  from the empirical-top-quintile pillar vector
+- Existing `TestAssignBand.test_85_is_high_confidence` renamed/relaxed
+  to reflect the new boundary
+- Today's (2026-05-18) snapshot would now show: 1 Elite (FANG @ 85.7),
+  0 High Confidence, 16 Constructive, 36 Monitor, 55 Weakening, 59 Review.
+  All-time: 54 Elite-band observations, 127 High-Confidence (vs. 0/181
+  pre-recalibration).
 
 ---
 

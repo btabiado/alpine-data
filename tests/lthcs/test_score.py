@@ -128,8 +128,14 @@ class TestAssignBand:
     def test_92_is_elite(self, weights_config):
         assert assign_band(92.0, weights_config["score_bands"]) == "elite"
 
-    def test_85_is_high_confidence(self, weights_config):
-        assert assign_band(85.0, weights_config["score_bands"]) == "high_confidence"
+    def test_85_is_elite(self, weights_config):
+        # Post-2026-05-18 calibration: elite.min lowered from 90 to 85
+        # so the band is reachable given current pillar ceilings.
+        assert assign_band(85.0, weights_config["score_bands"]) == "elite"
+
+    def test_82_is_high_confidence(self, weights_config):
+        # High confidence band is 80..84 after the 2026-05-18 recalibration.
+        assert assign_band(82.0, weights_config["score_bands"]) == "high_confidence"
 
     def test_49_is_review(self, weights_config):
         assert assign_band(49.0, weights_config["score_bands"]) == "review"
@@ -447,6 +453,98 @@ class TestComputeLthcsScore:
         )
         assert r["modifiers"]["volatility_mod"] == -3.0
         assert r["lthcs_score"] == 47.0
+
+
+# --- Theoretical-max ceiling (band-calibration sanity) ---------------------
+
+class TestTheoreticalMax:
+    """Confirms the elite band is mathematically reachable.
+
+    Backfill validation (2026-05-18) found zero Elite-band rows across 90
+    backfilled days. Root cause: empirical pillar ceilings (Thesis stuck at
+    50.0 placeholder for 88/90 dates, DES capped near 75 by sector adj) put
+    the realistic composite ceiling at ~88 even though the math allows 100.
+    These tests pin the theoretical max so we'd catch a future change that
+    accidentally lowers it below the elite threshold.
+    """
+
+    def test_perfect_pillars_no_modifiers_hits_100(self, weights_config):
+        # With all 5 pillars at 100 and zero modifiers, every maturity
+        # profile must reach 100.0 — weights sum to 1.0 by construction.
+        subs = {name: 100.0 for name in PILLAR_ORDER}
+        for profile in weights_config["profiles"].keys():
+            r = compute_lthcs_score(
+                ticker="MAX",
+                sector="Tech",
+                maturity_stage=profile,
+                pillar_subscores=subs,
+                weights_config=weights_config,
+            )
+            assert r["lthcs_score"] == 100.0, (
+                f"theoretical max for profile {profile!r} = {r['lthcs_score']}, "
+                "expected 100.0 — pillar weights may not sum to 1.0"
+            )
+            assert r["band"] == "elite", (
+                f"profile {profile!r} composite=100.0 but band={r['band']!r}; "
+                "elite threshold may have crept above 100"
+            )
+
+    def test_perfect_pillars_with_best_case_modifiers_caps_at_100(
+        self, weights_config
+    ):
+        # Best-case modifiers: macro_adj = +2.0 (10Y plunge), vol_mod = 0.0
+        # (not in top decile), sector_adj override = 0.0. All-pillars-100
+        # would raise 100 -> 102 raw but composite must cap at 100.
+        subs = {name: 100.0 for name in PILLAR_ORDER}
+        r = compute_lthcs_score(
+            ticker="MAX",
+            sector="Tech",
+            maturity_stage="standard_compounder",
+            pillar_subscores=subs,
+            weights_config=weights_config,
+            ten_y_30d_change_bp=-50.0,  # +2.0 macro tailwind
+            ticker_volatility=1.0,
+            universe_volatilities=[10.0, 20.0, 30.0, 40.0, 50.0,
+                                   60.0, 70.0, 80.0, 90.0, 100.0],
+            sector_adjustment_override=0.0,
+        )
+        assert r["modifiers"]["macro_adj"] == 2.0
+        assert r["modifiers"]["volatility_mod"] == 0.0
+        assert r["lthcs_score"] == 100.0
+        assert r["band"] == "elite"
+
+    def test_elite_band_threshold_is_reachable(self, weights_config):
+        # Regression guard: the configured elite.min must be reachable from
+        # plausibly-achievable pillar subscores. With the current backfill
+        # showing Thesis p99=70 and DES p99=69.4, a ticker that hits
+        # adoption=100, institutional=99, financial=99, thesis=70, des=69
+        # should reach Elite under any reasonable calibration. If this
+        # test fails, the elite threshold has been raised above the
+        # empirical ceiling and Elite will be unreachable in practice.
+        empirical_top_quintile = {
+            "adoption_momentum": 100.0,
+            "institutional_confidence": 99.0,
+            "financial_evolution": 99.0,
+            "thesis_integrity": 70.0,
+            "des": 69.0,
+        }
+        r = compute_lthcs_score(
+            ticker="REAL_TOP",
+            sector="Energy",
+            maturity_stage="standard_compounder",
+            pillar_subscores=empirical_top_quintile,
+            weights_config=weights_config,
+        )
+        elite_min = float(
+            weights_config["score_bands"]["elite"]["min"]
+        )
+        assert r["lthcs_score"] >= elite_min, (
+            f"empirical top-quintile pillars yield composite "
+            f"{r['lthcs_score']} but elite.min={elite_min} — band "
+            "unreachable; either lower elite.min or unblock the "
+            "stuck pillars (Thesis/DES)."
+        )
+        assert r["band"] == "elite"
 
 
 # --- Composite renormalization for stubbed pillars -------------------------

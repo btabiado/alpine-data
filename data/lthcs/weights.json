@@ -26,8 +26,8 @@
     "sol":                       [0.30, 0.15, 0.20, 0.20, 0.15]
   },
   "score_bands": {
-    "elite":            {"min": 90, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
-    "high_confidence":  {"min": 80, "max": 89,  "color": "#4A8F5F", "label": "High Confidence Hold"},
+    "elite":            {"min": 85, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
+    "high_confidence":  {"min": 80, "max": 84,  "color": "#4A8F5F", "label": "High Confidence Hold"},
     "constructive":     {"min": 70, "max": 79,  "color": "#C9A227", "label": "Constructive Hold"},
     "monitor":          {"min": 60, "max": 69,  "color": "#D89148", "label": "Monitor Closely"},
     "weakening":        {"min": 50, "max": 59,  "color": "#B85A3E", "label": "Confidence Weakening"},
