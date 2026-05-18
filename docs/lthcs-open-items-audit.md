@@ -120,6 +120,62 @@ Rationale:
 
 ---
 
+## 2026-05-18 PM — Phase 5 + UX swarm shipped
+
+Massive ship day. Tier 1 (#1-5) and the bulk of Tier 4 (#17-22) all
+closed in two parallel agent swarms. Verification snapshot `a51e444`
+regenerated against the fully wired pipeline.
+
+**Phase 5 — Tier 1 data wires (5 of 5 shipped)**:
+- `a55aab8` **#1 P0** — Un-gated Form 4 + 13F. Institutional regression
+  fixed; `has_insider` now 165/167, `has_holdings` 167/167.
+- `fa926bf` **#2 P1** — Adoption overhaul: Google Trends + sector-relative
+  framing + QoQ revenue acceleration. `has_qoq` 0 → 159, `has_trends`
+  0 → 11. Inverts-at-21d problem (audit item β) directly targeted.
+- `4c7892b` **#3 P2** — 8-K material events + Yahoo earnings/recos
+  into Thesis. `events_refinement_sources` 0 → 135. Begins eroding
+  the constant-50 Thesis problem (audit item γ).
+- `f5e2259` **#4 P3** — Margin XBRL fallback chain (concept_fallbacks
+  + bank cohort). Margin coverage 56% → 89% (93 → 158/167 names).
+  Bank cohort 7 → 11 (addresses #15).
+- `16f7945` **#5 P4** — FRED tier-2 indicators + sector RSS into DES.
+  6 tier-2 indicators wired. Closes Tier 2 #9 (no longer deferred).
+
+**Tier 4 — UX swarm (6 of 6 shipped)**:
+- `69508ee` **#21** — About-modal data-feed lineage table.
+- `655cb4b` **#17** — Sortable Bloomberg-style table with click-to-sort
+  + 3 new columns.
+- `9f33d1c` **#18** — Movers leaderboard (top gainers / losers strip).
+- `6367616` **#19 + #20** — Detail modal Evidence accordion +
+  multi-series composite-history chart.
+- `509bdb2` + `a81d2b5` **#22** (P1) — Mobile/Safari: backdrop-filter
+  webkit prefix, body-scroll lock, `100dvh`, 44px touch targets, V2 tab
+  fix. **#22 P2 polish still open** (see follow-up below).
+
+**Verification (today's `a51e444` snapshot)**:
+- `has_insider` 165/167 ✓
+- `has_holdings` 167/167 ✓
+- `has_trends` 11 ✓ (weekly batch — broader coverage on next Monday cron)
+- `has_qoq` 159 ✓
+- `has_margin` 158/167 ✓
+- DES sub max 73.7 (+0.11pt today; see ceiling note below)
+- 1440 tests passing (was 1338 at session start this morning)
+
+**DES ceiling note**: Tier-2 FRED indicators + sector RSS are wired
+correctly. Sector RSS surfaces on Thesis `data_quality`, not DES math
+(by design — sector RSS is qualitative context, not a quantitative
+input). The DES p99 ceiling (~73) noted in the δ Elite investigation
+above is governed by `TIER2_MAX_POINTS=5.0`. Widening that constant is
+the single lever for a higher DES ceiling — defer until a re-tilt is
+actually wanted.
+
+**Still open from today**:
+- **#22 P2 polish** — `-webkit-text-size-adjust`, `touch-action:
+  manipulation`, `-webkit-tap-highlight-color: transparent`, `:active`
+  states. Small, isolated CSS pass; queued as next UX commit.
+
+---
+
 ## Audits already produced (research only — no model changes)
 
 | Doc | Scope | Status |
@@ -146,17 +202,19 @@ respective research docs.
 
 | # | Item | Doc | Effort | Predicted impact |
 |---|---|---|---|---|
-| 1 | **Finnhub news + sentiment** | news-feeds-general-apis §2.1 | M (~1 swarm) | Coverage 47/167 → ~155/167. Bullish/bearish % per ticker. Kills the AV rotation logic. |
-| 2 | **SEC 8-K material event filter** | news-feeds-earnings-events §3 | S (~½ swarm) | 100% universe coverage on event days. Items 1.01/2.02/5.02/8.01. Already have SEC EDGAR access. |
-| 3 | **yfinance earnings_dates + recommendations** | news-feeds-earnings-events §1.1, §2.1 | S (~½ swarm) | Earnings beats/misses + analyst actions for entire universe. Already pulling Yahoo for prices. |
-| 4 | **FDA Press Announcements RSS** | news-feeds-sector-specific §2.1 | M | Event-driven Thesis lift for ~15 pharma names. Highest signal-to-noise per the audit. |
-| 5 | **EIA "Today in Energy" + Fed press-release RSS** | news-feeds-sector-specific §2.2, §2.4 | S | Sector signal for ~30 energy + financials names. |
+| 1 | **Un-gate Form 4 + 13F (Institutional)** | (this audit / Phase 5 P0) | M | ✅ SHIPPED `a55aab8` (2026-05-18) — Institutional regression fixed. `has_insider` 165/167, `has_holdings` 167/167. Form 4 + 13F now active in pillar math (no longer renormed away). |
+| 2 | **Adoption overhaul: Trends + sector-rel + QoQ accel** | news-feeds + peer-group | M-L | ✅ SHIPPED `fa926bf` (2026-05-18) — `has_qoq` 0 → 159, `has_trends` 0 → 11 (weekly cron grows this). Sector-relative framing + QoQ revenue acceleration directly target the "inverts at 21d" finding (audit item β). |
+| 3 | **8-K + Yahoo earnings/recos → Thesis** | news-feeds-earnings-events §1.1, §2.1, §3 | M | ✅ SHIPPED `4c7892b` (2026-05-18) — `events_refinement_sources` 0 → 135. SEC 8-K material events + Yahoo earnings/recommendations now feed Thesis. Begins eroding constant-50 Thesis (audit item γ); LLM sentiment #28 is the next step. |
+| 4 | **Margin XBRL fallback chain + bank cohort** | (this audit / Phase 5 P3) | M | ✅ SHIPPED `f5e2259` (2026-05-18) — Margin coverage 56% → 89% (93 → 158/167). Concept-fallback chain over alternate XBRL tags. Bank cohort 7 → 11 (closes the Financial-pillar drag for regional banks; addresses #15). |
+| 5 | **FRED tier-2 + sector RSS → DES** | des-audit + news-feeds-sector-specific | M | ✅ SHIPPED `16f7945` (2026-05-18) — 6 tier-2 FRED indicators (closes Tier 2 #9, no longer deferred) + sector RSS into Thesis `data_quality`. DES sub max 73.7 today; ceiling now governed by `TIER2_MAX_POINTS=5.0` (see Phase 5 ship note for ceiling lever). |
 | 6 | **AI-news threshold polish** | (this audit) | XS | ✅ SHIPPED `36c48aa` — mention-count multiplier (3-5: 1.0×, 6-10: 1.1×, 11-20: 1.2×, 21+: 1.3×) on top of engagement tier, cap at +0.75. MSFT/META/GOOGL/TSLA/PLTR live: 0.60→0.75 (cap binds, Constructive→low High). NVDA/AMD low-engagement: 0.35→0.455. Doesn't fire today (Finnhub/SEC/Yahoo cascade pre-empts AI news) — materializes when earlier-cascade sentiment goes stale. |
 
-**If items 1+2+3 shipped together**: probably 8-12 names move from
-Constructive → High Confidence given more honest sentiment data;
-event-driven signal makes the framework feel "live" between Thesis
-rotations.
+**Items 1-5 all shipped 2026-05-18 PM** (see Phase 5 ship note above).
+Original prediction held: framework now feels "live" between Thesis
+rotations and Institutional/Adoption pillars have honest data instead
+of renormed stubs. Next wave of impact comes from #28 (LLM sentiment)
+to actually move Thesis off 50, and from #13 (full 13F implementation)
+to deepen Institutional beyond binary signal.
 
 ---
 
@@ -166,7 +224,7 @@ rotations.
 |---|---|---|---|---|
 | 7 | **Compound peer-group key** `(maturity_stage, sector_group)` | peer-group-audit §3.4 | M | ❌ DEFERRED — Naive version makes AAPL worse (13.2 vs 46.8 inside Tech-compounder bimodal cohort). Needs a curated Hardware/Software split first. |
 | 8 | **De-dup `Technology` ↔ `Information Technology`** in sector_des_weights.json | des-audit §6 | XS | ✅ SHIPPED `09147a7` — canonical "Information Technology" + `_alias_of` resolver in des.py with defensive handling (broken alias → neutral fallback). DES scores identical pre/post for AAPL/MSFT/NVDA/AVGO/ORCL. |
-| 9 | **Tier 2 macro signals**: Brent crude, gasoline cracks, ISM PMI, housing starts, consumer confidence, U-6 | des-audit | M-L | ❌ DEFERRED — Lower marginal value than the 3 we shipped today. Build only when DES re-tilts. |
+| 9 | **Tier 2 macro signals**: Brent crude, gasoline cracks, ISM PMI, housing starts, consumer confidence, U-6 | des-audit | M-L | ✅ SHIPPED `16f7945` (2026-05-18) — 6 tier-2 FRED indicators wired into DES via Phase 5 P4. DES ceiling now governed by `TIER2_MAX_POINTS=5.0`; widen constant to lift ceiling further. |
 | 10 | **`peer_groups.json`** config file (declarative per-pillar peer-group strategy) | peer-group-audit §3.5 | L | ❌ DEFERRED — Architecturally cleaner than hard-coded grouping in lthcs_daily.py but premature for V1 universe size. |
 | 11 | **Volatility modifier → `modifiers.json`** | tuning-kit §4 | S | ✅ SHIPPED `df7cfc3` — `weights.json` modifiers block now runtime-consumed via `_parse_trigger_expression` + `_load_volatility_modifier_config`. Fallback to defaults + WARNING log on malformed config. 31 new tests. |
 | 12 | **`growth_compounder` weight retune** | tuning-kit + peer-group-audit | XS | ✅ ANALYZED — current weights `[0.25, 0.20, 0.15, 0.20, 0.20]` ARE correct post-v1.1.0 reclass. Adoption-pillar mean for cohort (50.0) ≈ universe (50.5) — NOT penalized. Adoption stdev 32.2 + correlation 0.83 means the 0.25 weight is doing real work. Pre-reclass drag was a cohort-membership problem (AVGO/META in wrong profile), resolved by reclass not reweighting. High confidence; no change. |
@@ -186,14 +244,14 @@ rotations.
 
 ## TIER 4 — UX / dashboard layer
 
-| # | Item | Source | Effort |
-|---|---|---|---|
-| 17 | **Sortable Bloomberg-style table view** at `/lthcs/table/` | ux-research §4.2 | M |
-| 18 | **"Movers" leaderboard strip** (top-10 gainers + losers by drift) | ux-research §4.3 | S |
-| 19 | **Detail modal: expand narrative + variable-detail evidence** | (this audit) | S — already 90% there |
-| 20 | **Time-series chart on detail modal** showing composite history | (this audit) | M — sparkline exists; full chart is bigger |
-| 21 | **About-modal updates** with current data-feed lineage (which sources feed which pillar) | (this audit) | XS |
-| 22 | **Mobile/Safari testing pass** | ux-research | S — heatmap was tested; main tab probably needs one too |
+| # | Item | Source | Effort | Status |
+|---|---|---|---|---|
+| 17 | **Sortable Bloomberg-style table view** at `/lthcs/table/` | ux-research §4.2 | M | ✅ SHIPPED `655cb4b` (2026-05-18) — click-to-sort + 3 new columns. |
+| 18 | **"Movers" leaderboard strip** (top-10 gainers + losers by drift) | ux-research §4.3 | S | ✅ SHIPPED `9f33d1c` (2026-05-18) — top gainers/losers strip live. |
+| 19 | **Detail modal: expand narrative + variable-detail evidence** | (this audit) | S — already 90% there | ✅ SHIPPED `6367616` (2026-05-18) — Evidence accordion. |
+| 20 | **Time-series chart on detail modal** showing composite history | (this audit) | M — sparkline exists; full chart is bigger | ✅ SHIPPED `6367616` (2026-05-18) — multi-series chart on detail modal. |
+| 21 | **About-modal updates** with current data-feed lineage (which sources feed which pillar) | (this audit) | XS | ✅ SHIPPED `69508ee` (2026-05-18) — data-feed lineage table in About modal. |
+| 22 | **Mobile/Safari testing pass** | ux-research | S — heatmap was tested; main tab probably needs one too | 🟡 PARTIAL — P1 ✅ SHIPPED `509bdb2` + `a81d2b5` (2026-05-18): backdrop-filter webkit prefix, body-scroll lock, `100dvh`, 44px touch targets, V2 tabs fix. **P2 polish still open**: `-webkit-text-size-adjust`, `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`, `:active` states. |
 
 ---
 
@@ -223,13 +281,13 @@ rotations.
 
 ## Suggested next 3 commits
 
-If pushing forward, the cleanest sequencing:
+Tier 1 #1-5 all shipped 2026-05-18. New cleanest sequencing:
 
-1. **Items 1 + 8 + 12** — Wire Finnhub for real per-ticker sentiment (replaces the AI-news heuristic for the AI cohort and covers everyone else); fix the alias drift risk; retune growth_compounder weights now that cohort changed.
-2. **Items 2 + 3** — SEC 8-K event filter + yfinance earnings/recommendations. Adds event-driven signal across the universe. Cheap.
-3. **Items 4 + 5** — Sector-specific RSS (FDA + EIA + Fed). Pharma + energy + financials get event-driven signal.
+1. **#22 P2 polish** — Mobile/Safari final pass: `-webkit-text-size-adjust`, `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`, `:active` states. XS effort, closes Tier 4 entirely.
+2. **#28 Real LLM-derived sentiment (shadow run)** — Stand up a shadow Claude-sentiment call per ticker per day; log into a parallel column without touching Thesis math. Cheap with prompt caching. Once shadow data clears N days, swap into Thesis to fix the constant-50 problem (audit item γ) — gives the path to re-tighten `elite.min` back to 90.
+3. **#13 Full 13F implementation** — Aggregate 13F filings across institutions per ticker; quarterly cadence. Deepens Institutional beyond today's binary "filing exists / doesn't" signal. ~2-3 swarms.
 
-After those 3, ~70% of the universe has substantively better data than V1 ship. Items in Tier 2-5 become "what do you want to tune next" rather than "what's broken."
+After those, the natural follow-up is widening `TIER2_MAX_POINTS` to lift the DES ceiling (only meaningful once Thesis is moving — otherwise no Elite-band benefit).
 
 ---
 
@@ -241,7 +299,7 @@ The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
-Tests: 1338 passing (was 614 at session start 2026-05-17 morning)
+Tests: 1440 passing (was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; +102 today from Phase 5 + UX swarms)
 
 ---
 
