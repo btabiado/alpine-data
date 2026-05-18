@@ -18,6 +18,10 @@ from lthcs import adaptive_weights, backtest
 from lthcs.adaptive_weights import (
     DEFAULT_PRIOR,
     PILLAR_NAMES,
+    _build_ffill_mask,
+    _apply_real_mask,
+    _zscore_columns,
+    _unscale_coefs,
     _ridge_closed_form,
     _project_to_simplex,
     _recommendation,
@@ -344,6 +348,33 @@ def test_recommendation_boundary_at_overfit_gap():
     assert rec == "hold"
 
 
+def test_recommendation_small_sample_downgrades_to_hold():
+    """Bug 1 follow-up: a great-looking point IC on only a handful of
+    real cross-sections must NOT ship — the OOS estimate is too noisy
+    on small N."""
+    # Strong test IC, small overfit gap — would normally ship.
+    rec, reason = _recommendation(
+        test_ic=0.20, overfit_gap=0.01, n_test_obs=4
+    )
+    assert rec == "hold"
+    assert "cross-section" in reason or "n_test_obs" in reason
+
+
+def test_recommendation_large_sample_can_still_ship():
+    rec, _ = _recommendation(
+        test_ic=0.20, overfit_gap=0.01,
+        n_test_obs=adaptive_weights.SHIP_MIN_TEST_OBS + 1,
+    )
+    assert rec == "ship"
+
+
+def test_recommendation_backward_compat_no_n_test_obs():
+    """Callers that don't pass n_test_obs (legacy) still get the
+    classical ship/hold/reject behavior."""
+    rec, _ = _recommendation(test_ic=0.20, overfit_gap=0.01)
+    assert rec == "ship"
+
+
 # ---------------------------------------------------------------------------
 # Output schema
 # ---------------------------------------------------------------------------
@@ -524,3 +555,403 @@ def test_score_malformed_adaptive_overrides_falls_back():
     )
     # Falls back to curated → 50.
     assert out["lthcs_score"] == 50.0
+
+
+# ---------------------------------------------------------------------------
+# Bug 1: ffill rejection in test split (commit 2bcacd3 walk-forward bug)
+# ---------------------------------------------------------------------------
+
+def _make_panel_with_ffill_tail(
+    n_real_dates: int = 30,
+    n_ffill_dates: int = 20,
+    n_tickers: int = 10,
+    signal_pillar: str = "adoption_momentum",
+    signal_strength: float = 3.0,
+    seed: int = 11,
+) -> Dict[str, pd.DataFrame]:
+    """Synthetic panel where the last n_ffill_dates rows of forward_returns
+    are exact duplicates of the last real cross-section (mimicking what
+    backtest.fetch_forward_returns does when the price cache ends before
+    end_date + horizon)."""
+    n_dates = n_real_dates + n_ffill_dates
+    panel = _make_panel(
+        n_dates=n_dates,
+        n_tickers=n_tickers,
+        signal_pillar=signal_pillar,
+        signal_strength=signal_strength,
+        seed=seed,
+    )
+    fwd = panel["forward_returns"].copy()
+    # Tail rows duplicate the last real row exactly.
+    last_real_row = fwd.iloc[n_real_dates - 1]
+    for i in range(n_real_dates, n_dates):
+        fwd.iloc[i] = last_real_row.values
+    panel["forward_returns"] = fwd
+    panel["n_real_dates"] = n_real_dates
+    panel["n_ffill_dates"] = n_ffill_dates
+    return panel
+
+
+def test_build_ffill_mask_flags_duplicate_tail():
+    panel = _make_panel_with_ffill_tail(n_real_dates=30, n_ffill_dates=20)
+    mask = _build_ffill_mask(panel["forward_returns"])
+    # Mask is True for ffilled/non-real cells.
+    # Tail rows (rows 30..49) should be all-True duplicates.
+    assert mask.iloc[30:].values.all()
+    # The first n_real_dates rows are real (mostly False).
+    # Row 0 is always real (no prior to compare).
+    assert not mask.iloc[0].any()
+    # Real rows in middle should be predominantly False.
+    assert mask.iloc[5:25].sum().sum() == 0  # all distinct floats
+
+
+def test_build_ffill_mask_handles_nans():
+    df = pd.DataFrame(
+        {
+            "A": [0.01, 0.02, np.nan, 0.04],
+            "B": [0.10, 0.10, 0.10, np.nan],
+        },
+        index=pd.date_range("2025-01-01", periods=4, freq="D"),
+    )
+    mask = _build_ffill_mask(df)
+    # B row 1 and 2 are duplicates of row 0.
+    assert mask.loc[mask.index[1], "B"] == True
+    assert mask.loc[mask.index[2], "B"] == True
+    # A row 2 is NaN → flagged as not-real.
+    assert mask.loc[mask.index[2], "A"] == True
+    # B row 3 is NaN → flagged.
+    assert mask.loc[mask.index[3], "B"] == True
+
+
+def test_apply_real_mask_nullifies_and_counts():
+    df = pd.DataFrame(
+        {"A": [1.0, 1.0, 2.0], "B": [3.0, 4.0, 4.0]},
+        index=pd.date_range("2025-01-01", periods=3, freq="D"),
+    )
+    # Real mask: A row 1 is duplicate of row 0; B row 2 is dup of row 1.
+    masked, n_rejected = _apply_real_mask(df, None)
+    # 2 cells got nullified.
+    assert n_rejected == 2
+    assert pd.isna(masked.iloc[1]["A"])
+    assert pd.isna(masked.iloc[2]["B"])
+
+
+def test_walk_forward_rejects_ffilled_test_dates():
+    """Bug 1 fix: the test split must skip dates whose forward returns
+    are frozen ffilled duplicates from earlier in the panel."""
+    panel = _make_panel_with_ffill_tail(
+        n_real_dates=30, n_ffill_dates=20, n_tickers=10,
+        signal_pillar="adoption_momentum", signal_strength=3.0,
+    )
+    result = walk_forward_tune(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        train_fraction=0.6,  # split = 30 → first 30 train, 20 test
+        ridge_alpha=0.5,
+    )
+    # n_rejected_ffill must report the nullified cells.
+    assert result["n_rejected_ffill"] >= 20 * 10 - 10  # ~all ffill rows
+    # All test dates are ffilled → effective n_test_obs is 0
+    # (no cross-section survives) or very small (the boundary date might
+    # still have one real row depending on how the split lands).
+    assert result["n_test_obs"] <= 1
+
+
+def test_tune_weights_reject_ffill_can_be_disabled():
+    """If reject_ffill=False, ffilled cells flow through unchanged
+    (legacy behavior). Useful for callers who pre-masked their data."""
+    panel = _make_panel_with_ffill_tail(n_real_dates=20, n_ffill_dates=15)
+    out_with_reject = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.5,
+        reject_ffill=True,
+    )
+    out_no_reject = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.5,
+        reject_ffill=False,
+    )
+    # n_obs strictly smaller after rejection.
+    assert out_with_reject["n_obs"] < out_no_reject["n_obs"]
+    assert out_with_reject["n_rejected_ffill"] > 0
+    assert out_no_reject["n_rejected_ffill"] == 0
+
+
+def test_tune_weights_accepts_explicit_real_mask():
+    """Callers can pass a precomputed real-mask (e.g. derived from the
+    actual price-cache last-trading-day) instead of relying on the
+    duplicate-detection heuristic."""
+    panel = _make_panel(n_dates=30, n_tickers=8, signal_strength=2.0)
+    fwd = panel["forward_returns"]
+    # Build a mask that rejects the second half of dates.
+    real_mask = pd.DataFrame(True, index=fwd.index, columns=fwd.columns)
+    real_mask.iloc[15:] = False
+    out = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=fwd,
+        ridge_alpha=0.5,
+        forward_returns_real_mask=real_mask,
+    )
+    # ~15 dates × 8 tickers nullified.
+    assert out["n_rejected_ffill"] == 15 * 8
+
+
+# ---------------------------------------------------------------------------
+# Bug 2: z-scoring removes the artificial low-variance-pillar concentration
+# ---------------------------------------------------------------------------
+
+def _make_pillar_scale_imbalance_panel(
+    n_dates: int = 60,
+    n_tickers: int = 20,
+    signal_pillar: str = "adoption_momentum",
+    signal_strength: float = 2.5,
+    seed: int = 23,
+) -> Dict[str, pd.DataFrame]:
+    """Mimic the production pillar-scale imbalance: pillars have very
+    different cross-sectional standard deviations (e.g. thesis_integrity
+    σ ≈ 1.2 vs adoption σ ≈ 29). Forward returns are driven by the
+    SIGNAL pillar (NOT thesis_integrity)."""
+    rng = np.random.default_rng(seed)
+    dates = pd.date_range("2025-01-02", periods=n_dates, freq="B")
+    tickers = [f"T{i:02d}" for i in range(n_tickers)]
+
+    # Per-pillar scales: roughly matches the production stds.
+    pillar_sigmas = {
+        "adoption_momentum": 29.0,
+        "institutional_confidence": 29.0,
+        "financial_evolution": 20.0,
+        "thesis_integrity": 1.2,  # tiny — would dominate post-simplex pre-fix
+        "des": 6.5,
+    }
+    pillar_histories: Dict[str, pd.DataFrame] = {}
+    for p in PILLAR_NAMES:
+        sigma = pillar_sigmas[p]
+        arr = 50.0 + sigma * rng.standard_normal((n_dates, n_tickers))
+        pillar_histories[p] = pd.DataFrame(arr, index=dates, columns=tickers)
+
+    # Forward returns driven by SIGNAL_PILLAR (after centering).
+    sig = pillar_histories[signal_pillar].sub(
+        pillar_histories[signal_pillar].mean(axis=1), axis=0
+    )
+    noise = rng.standard_normal((n_dates, n_tickers))
+    fwd = signal_strength * sig.values * 0.0005 + 0.002 * noise
+    forward_returns = pd.DataFrame(fwd, index=dates, columns=tickers)
+
+    score_history = sum(pillar_histories[p] for p in PILLAR_NAMES) / 5.0
+    return {
+        "score_history": score_history,
+        "pillar_histories": pillar_histories,
+        "forward_returns": forward_returns,
+    }
+
+
+def test_zscore_columns_unit_variance():
+    X = np.array([[1.0, 100.0], [2.0, 200.0], [3.0, 300.0], [4.0, 400.0]])
+    Z, sigma = _zscore_columns(X)
+    # Per-column std of Z should be ~1.
+    assert abs(Z.std(axis=0)[0] - 1.0) < 1e-9
+    assert abs(Z.std(axis=0)[1] - 1.0) < 1e-9
+    # σ recovers raw stds.
+    assert abs(sigma[0] - X.std(axis=0)[0]) < 1e-9
+    assert abs(sigma[1] - X.std(axis=0)[1]) < 1e-9
+
+
+def test_zscore_columns_handles_constant_column():
+    """A pillar with zero cross-sectional variance must not blow up
+    AND its Z column must be all-zero so the ridge fit sees no signal
+    there (preventing FP-noise leakage)."""
+    X = np.array([[1.0, 5.0], [2.0, 5.0], [3.0, 5.0]])
+    Z, sigma = _zscore_columns(X)
+    # No NaN / inf in Z.
+    assert np.isfinite(Z).all()
+    # Raw sigma is reported as-is (so callers can detect degenerate
+    # columns via σ ≈ 0).
+    assert sigma[1] == 0.0
+    # The Z column for the degenerate pillar is literally zero.
+    assert (Z[:, 1] == 0.0).all()
+
+
+def test_unscale_coefs_zeroes_degenerate_pillars():
+    """If a pillar has σ ≈ 0, _unscale_coefs must return 0 for that
+    pillar regardless of what w_z claims (else dividing by σ_floor
+    re-creates the Bug 2 winner-takes-all artifact)."""
+    sigma = np.array([5.0, 0.0, 2.0])  # middle pillar degenerate
+    w_z = np.array([1.0, 0.20, 0.5])  # middle pillar holds the prior
+    w_raw = _unscale_coefs(w_z, sigma)
+    # Degenerate pillar's raw coef must be exactly 0.
+    assert w_raw[1] == 0.0
+    # Other pillars un-scaled normally.
+    assert abs(w_raw[0] - 0.2) < 1e-9
+    assert abs(w_raw[2] - 0.25) < 1e-9
+
+
+def test_unscale_coefs_inverse_of_zscore_scaling():
+    """If y = β·X and we fit on Z = X/σ, then w_z = β·σ; un-scaling
+    recovers β."""
+    sigma = np.array([5.0, 2.0, 1.0])
+    w_z = np.array([10.0, 4.0, 7.0])
+    w_raw = _unscale_coefs(w_z, sigma)
+    np.testing.assert_allclose(w_raw, np.array([2.0, 2.0, 7.0]))
+
+
+def test_zscoring_prevents_low_variance_pillar_concentration():
+    """The headline Bug 2 regression test.
+
+    Production-like pillar-scale imbalance with TRUE signal in a
+    high-variance pillar (adoption). Before the fix, the simplex
+    projection collapsed onto thesis_integrity (the LOWEST-variance
+    pillar) regardless of where the true signal lived. After the fix,
+    the recovered weight on the actual signal pillar should be > 0.5
+    AND thesis_integrity should NOT dominate."""
+    panel = _make_pillar_scale_imbalance_panel(
+        n_dates=80, n_tickers=20,
+        signal_pillar="adoption_momentum", signal_strength=2.5, seed=23,
+    )
+    out = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.001,  # weak prior — let the data speak
+        reject_ffill=False,  # synthetic returns aren't ffilled
+    )
+    weights = out["weights"]
+    # True signal pillar should recover > 0.5 of total mass.
+    assert weights["adoption_momentum"] > 0.5, (
+        "Expected recovered weight on signal pillar > 0.5, got %r" % weights
+    )
+    # thesis_integrity should NOT be the top pillar (pre-fix bug).
+    top = max(weights, key=weights.get)
+    assert top == "adoption_momentum"
+    # And specifically thesis_integrity shouldn't be > 0.5.
+    assert weights["thesis_integrity"] < 0.5
+
+
+def test_zscoring_records_pillar_sigmas_in_output():
+    panel = _make_pillar_scale_imbalance_panel(n_dates=60, n_tickers=15)
+    out = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.5,
+        reject_ffill=False,
+    )
+    sigmas = out["pillar_sigmas"]
+    # thesis_integrity should be the smallest sigma.
+    assert sigmas["thesis_integrity"] < sigmas["adoption_momentum"]
+    assert sigmas["thesis_integrity"] < sigmas["des"]
+    # All recorded.
+    assert set(sigmas.keys()) == set(PILLAR_NAMES)
+
+
+# ---------------------------------------------------------------------------
+# Bug 3: ridge_alpha actually regularizes after the n_obs rescaling
+# ---------------------------------------------------------------------------
+
+def test_ridge_alpha_zero_close_to_ols():
+    """alpha=0 → ridge_alpha_effective=0 → pure OLS on z-scored X."""
+    panel = _make_pillar_scale_imbalance_panel(
+        n_dates=80, n_tickers=20,
+        signal_pillar="adoption_momentum", signal_strength=2.5,
+    )
+    out = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.0,
+        reject_ffill=False,
+    )
+    # OLS recovers the signal strongly.
+    assert out["weights"]["adoption_momentum"] > 0.5
+    # Effective alpha is 0.
+    assert out["ridge_alpha_effective"] == 0.0
+
+
+def test_ridge_alpha_one_meaningfully_regularizes():
+    """alpha=1.0 → ridge_alpha_effective = n_obs → strong regularization,
+    weights should be pulled noticeably toward equal-weight prior."""
+    panel = _make_pillar_scale_imbalance_panel(
+        n_dates=80, n_tickers=20,
+        signal_pillar="adoption_momentum", signal_strength=2.5,
+    )
+    out_low = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.0,
+        reject_ffill=False,
+    )
+    out_high = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=1.0,  # = 1.0 × n_obs effective
+        reject_ffill=False,
+    )
+    # Higher alpha pulls signal pillar weight DOWN toward 0.20 prior.
+    assert (
+        out_high["weights"]["adoption_momentum"]
+        < out_low["weights"]["adoption_momentum"]
+    )
+
+
+def test_ridge_alpha_effective_recorded_in_output():
+    panel = _make_pillar_scale_imbalance_panel(n_dates=60, n_tickers=15)
+    out = tune_weights(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        ridge_alpha=0.5,
+        reject_ffill=False,
+    )
+    expected = 0.5 * out["n_obs"]
+    assert abs(out["ridge_alpha_effective"] - expected) < 1e-9
+
+
+# ---------------------------------------------------------------------------
+# Walk-forward CV: combined behaviour after all 3 fixes
+# ---------------------------------------------------------------------------
+
+def test_walk_forward_after_all_fixes_no_signal_yields_negligible_test_ic():
+    """When pillars are noise (no real signal) and we honestly reject
+    ffilled dates, test_ic should be ~0 and the verdict should NOT be
+    ship. This is the 'fixed math, low N → honest hold/reject' path."""
+    panel = _make_panel(
+        n_dates=60, n_tickers=12,
+        signal_pillar="adoption_momentum", signal_strength=0.0,
+        seed=999,
+    )
+    result = walk_forward_tune(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        train_fraction=0.6,
+        ridge_alpha=0.5,
+    )
+    # No signal → test IC near zero → reject.
+    assert abs(result["test_ic"]) < 0.10
+    assert result["recommendation"] in {"reject", "hold"}
+
+
+def test_walk_forward_output_schema_extended():
+    """After fixes, the result dict carries the new diagnostic keys."""
+    panel = _make_panel(n_dates=40, n_tickers=10, signal_strength=2.0)
+    result = walk_forward_tune(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        train_fraction=0.6,
+        ridge_alpha=0.5,
+    )
+    for key in (
+        "n_rejected_ffill",
+        "ridge_alpha_effective_train",
+        "pillar_sigmas_train",
+        "test_dates_after_ffill_reject",
+    ):
+        assert key in result, "missing key %r" % key

@@ -98,12 +98,20 @@ def _print_tune_summary(result: Dict[str, Any]) -> None:
         print("  %-28s  %6.4f" % (p, w))
     print("")
     print("Diagnostics:")
-    print("  ridge_alpha   : %.4f" % result["ridge_alpha"])
-    print("  horizon_days  : %d" % result["horizon_days"])
-    print("  n_obs         : %d" % result["n_obs"])
-    print("  in_sample_ic  : %+0.4f" % result["in_sample_ic"])
-    print("  fit_method    : %s" % result["fit_method"])
-    print("  trained_at    : %s" % result["trained_at"])
+    print("  ridge_alpha          : %.4f  (effective = α·n_obs = %.2f)" % (
+        result["ridge_alpha"], result.get("ridge_alpha_effective", 0.0)
+    ))
+    print("  horizon_days         : %d" % result["horizon_days"])
+    print("  n_obs                : %d" % result["n_obs"])
+    print("  n_rejected_ffill     : %d" % result.get("n_rejected_ffill", 0))
+    pillar_sigmas = result.get("pillar_sigmas") or {}
+    if pillar_sigmas:
+        print("  pillar_sigmas (Z):")
+        for p, s in pillar_sigmas.items():
+            print("    %-26s  %8.4f" % (p, s))
+    print("  in_sample_ic         : %+0.4f" % result["in_sample_ic"])
+    print("  fit_method           : %s" % result["fit_method"])
+    print("  trained_at           : %s" % result["trained_at"])
 
 
 def _print_walk_forward_summary(result: Dict[str, Any]) -> None:
@@ -112,12 +120,24 @@ def _print_walk_forward_summary(result: Dict[str, Any]) -> None:
         result["train_dates"][0], result["train_dates"][1],
         result["test_dates"][0], result["test_dates"][1],
     ))
+    real_test = result.get("test_dates_after_ffill_reject", (None, None))
+    print("  test_dates (real fwd): %s..%s" % (real_test[0], real_test[1]))
     print("  train_weights :")
     for p, w in result["train_weights"].items():
         print("    %-26s  %6.4f" % (p, w))
-    print("  train_ic      : %+0.4f  (n=%d)" % (result["train_ic"], result["n_train_obs"]))
-    print("  test_ic       : %+0.4f  (n=%d)" % (result["test_ic"], result["n_test_obs"]))
-    print("  overfit_gap   : %+0.4f" % result["overfit_gap"])
+    print("  train_ic            : %+0.4f  (n=%d)" % (result["train_ic"], result["n_train_obs"]))
+    print("  test_ic             : %+0.4f  (n=%d)" % (result["test_ic"], result["n_test_obs"]))
+    print("  overfit_gap         : %+0.4f" % result["overfit_gap"])
+    print("  n_rejected_ffill    : %d  (cells nullified across train+test)" %
+          result.get("n_rejected_ffill", 0))
+    print("  ridge_alpha (user)  : %.4f  (effective_train = %.2f)" % (
+        result["ridge_alpha"], result.get("ridge_alpha_effective_train", 0.0)
+    ))
+    pillar_sigmas = result.get("pillar_sigmas_train") or {}
+    if pillar_sigmas:
+        print("  pillar_sigmas_train :")
+        for p, s in pillar_sigmas.items():
+            print("    %-26s  %8.4f" % (p, s))
     print("")
     print("Recommendation: %s" % result["recommendation"].upper())
     print("  reason: %s" % result["recommendation_reason"])
@@ -128,7 +148,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--horizon", type=int, default=adaptive_weights.DEFAULT_HORIZON,
                         help="Forward-return horizon in trading days (default 21).")
     parser.add_argument("--ridge-alpha", type=float, default=adaptive_weights.DEFAULT_RIDGE_ALPHA,
-                        help="L2 strength toward equal-weight prior (default 0.5).")
+                        help="L2 strength toward equal-weight prior, expressed as a "
+                             "unit-free fraction in [0, ~1]. Internally multiplied by "
+                             "n_obs so the same value gives comparable regularization "
+                             "across sample sizes. Default 0.5 (~half-strength toward "
+                             "the prior). NOTE: this is a breaking change from the "
+                             "pre-2026-05-18 module where the same flag was a raw "
+                             "scalar fed to the ridge normal equation; values that "
+                             "were 'effectively zero' under the old scheme are now "
+                             "meaningfully active.")
     parser.add_argument("--universe-subset", type=str, default=None,
                         help="Maturity stage name (e.g. growth_compounder) "
                              "OR comma-separated ticker list. "
