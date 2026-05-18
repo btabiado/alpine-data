@@ -326,7 +326,90 @@ def build_payload() -> dict:
     except Exception as e:
         print(f"[insights] error: {e}", file=sys.stderr)
         payload["insights"] = []
+    # LTHCS Composite Index summary — surfaces the long-term holding
+    # conviction score for the Stocks tab and the standalone LTHCS tab.
+    # Reads the latest dated JSON written by lthcs/index_aggregate.py +
+    # the latest universe snapshot for the top-movers row. Defensive:
+    # missing files render an empty-state placeholder, never crash.
+    try:
+        payload["lthcs"] = build_lthcs_payload()
+    except Exception as e:
+        print(f"[lthcs] error: {e}", file=sys.stderr)
+        payload["lthcs"] = {}
     return payload
+
+
+def _latest_dated_json(dir_path: Path) -> Path | None:
+    """Return the lexically-greatest *.json under dir_path (date-named
+    files like 2026-05-17.json sort correctly lexically). Ignores files
+    that aren't pure date stems (e.g. snapshots/index.json which is a
+    manifest, not a daily file)."""
+    if not dir_path.exists() or not dir_path.is_dir():
+        return None
+    candidates = []
+    for p in dir_path.glob("*.json"):
+        stem = p.stem
+        # YYYY-MM-DD is 10 chars, all digits + hyphens
+        if len(stem) == 10 and stem[4] == "-" and stem[7] == "-":
+            candidates.append(p)
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: p.stem)
+
+
+def build_lthcs_payload() -> dict:
+    """Build the LTHCS payload subtree for the Stocks + LTHCS tabs.
+
+    Returns:
+        {
+          "available": bool,
+          "index": <composite-index dict from data/lthcs/index/<date>.json>,
+          "as_of": "<YYYY-MM-DD>",
+          "movers": {"gainers": [...], "decliners": [...]},
+          "universe_count": int,
+        }
+    On any error or missing data, returns {"available": False}.
+    """
+    index_dir = DATA_DIR / "lthcs" / "index"
+    snap_dir = DATA_DIR / "lthcs" / "snapshots"
+    index_file = _latest_dated_json(index_dir)
+    snap_file = _latest_dated_json(snap_dir)
+    if index_file is None and snap_file is None:
+        return {"available": False}
+    out: dict = {"available": False}
+    if index_file is not None:
+        idx = load_json(index_file)
+        if idx:
+            out["index"] = idx
+            out["as_of"] = idx.get("as_of") or index_file.stem
+            out["available"] = True
+    if snap_file is not None:
+        snap = load_json(snap_file)
+        scores = snap.get("scores") if isinstance(snap, dict) else None
+        if isinstance(scores, list) and scores:
+            # Top movers by 30d drift (the snapshot field).
+            def _drift(row): return row.get("drift_30d") or 0.0
+            def _row(row):
+                return {
+                    "ticker": row.get("ticker"),
+                    "score": row.get("lthcs_score"),
+                    "band": row.get("band"),
+                    "drift_30d": row.get("drift_30d"),
+                    "sector": row.get("sector"),
+                }
+            sorted_by_drift = sorted(
+                [r for r in scores if r.get("ticker")],
+                key=_drift,
+                reverse=True,
+            )
+            out["movers"] = {
+                "gainers": [_row(r) for r in sorted_by_drift[:5]],
+                "decliners": [_row(r) for r in sorted_by_drift[-5:][::-1]],
+            }
+            out["universe_count"] = len(scores)
+            out.setdefault("as_of", snap.get("calc_date"))
+            out["available"] = True
+    return out
 
 
 def render_html(
@@ -958,6 +1041,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
   <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
+  <div class="tab" data-tab="lthcs" role="tab" tabindex="0" aria-selected="false">LTHCS</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -1615,6 +1699,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ STOCKS TAB ============ -->
   <div id="tab-stocks" class="hidden">
     <div class="container">
+      <!-- LTHCS Composite Index — long-term holding conviction across the
+           167-ticker universe. Visual model mirrors the Whale Sentiment
+           Index card (headline + ±100 gauge + component table). Top movers
+           row + CTA to the full LTHCS dashboard follow. Rendered by
+           renderLthcsCompositePanel(host) from DATA.lthcs at build time. -->
+      <div class="chart-card" id="stocksLthcsCompositeCard" style="position:relative;margin-bottom:10px"></div>
       <!-- Traditional indices — DOW / S&P / NDX / VIX with 1d % + 90d
            sparkline. Moved here from the Crypto tab so macro equity context
            lives alongside the equity-signal grid that follows. -->
@@ -1675,6 +1765,27 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
         <div id="stocksGrid"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ LTHCS TAB ============ -->
+  <!-- Discoverability gateway for the standalone LTHCS dashboard. Renders
+       the same composite-index summary the Stocks tab carries, plus an
+       intro card and a prominent "Open full LTHCS dashboard" CTA. The
+       full dashboard lives at /btc-eth-etf-dashboard/lthcs/ (staged by
+       .github/workflows/pages.yml from the committed lthcs_tab/ dir). -->
+  <div id="tab-lthcs" class="hidden">
+    <div class="container">
+      <div class="card" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
+        <h2 style="margin:0 0 6px;font-size:15px">📊 LTHCS — Long-Term Holding Conviction Score</h2>
+        <div class="sub" style="color:var(--muted);margin-bottom:10px">
+          A 167-ticker equity universe scored 0–100 on adoption momentum, institutional confidence, financial evolution, thesis integrity, and demand-environment signals. The Composite Index below is the aggregate read across the universe. Open the standalone dashboard for per-ticker drill-downs, regime overlay, heatmap and movers.
+        </div>
+        <a class="btn" href="lthcs/" target="_blank" rel="noopener" style="display:inline-block;background:#a78bfa;color:#0b0d12;font-weight:700;padding:8px 14px;border-radius:6px;text-decoration:none">Open full LTHCS dashboard →</a>
+      </div>
+      <!-- Same composite-index panel rendered on Stocks tab. Filled
+           by renderLthcsCompositePanel(host) — see the JS for details. -->
+      <div class="chart-card" id="lthcsCompositeCard" style="position:relative;margin-bottom:10px"></div>
     </div>
   </div>
 
@@ -3725,6 +3836,124 @@ function renderWhaleSentiment(){
     <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
     <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(s.disclaimer||'')}</div>
   `;
+}
+
+// LTHCS Composite Index panel — long-term holding conviction score
+// aggregated across the 167-ticker equity universe. Rendered into the
+// host element passed by the caller (used by both the Stocks tab and the
+// dedicated LTHCS tab). Visual model: mirrors renderWhaleSentiment above.
+// Reads DATA.lthcs (built in Python build_lthcs_payload()):
+//   { available, index: {as_of, score, label, color, components, note},
+//     movers: {gainers, decliners}, universe_count }
+// Empty-state: when LTHCS data isn't on disk yet (concurrent pipeline run
+// not finished), renders a polite placeholder + dashboard link instead
+// of crashing.
+function renderLthcsCompositePanel(host){
+  if (!host) return;
+  const L = (DATA.lthcs || {});
+  const idx = L.index || null;
+  const link = '<a href="lthcs/" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none;font-weight:600">Open full LTHCS dashboard →</a>';
+  if (!L.available || !idx){
+    host.innerHTML = `
+      <div class="head" style="align-items:flex-start">
+        <div>
+          <h2 style="font-size:15px">📊 LTHCS Composite Index</h2>
+          <div class="desc">Data populates on next daily pipeline run</div>
+        </div>
+      </div>
+      <div class="sub" style="color:var(--muted);padding:8px 0">
+        LTHCS Composite Index — data not yet available. The daily pipeline writes
+        <code>data/lthcs/index/&lt;date&gt;.json</code>; this panel will fill in on the next run.
+      </div>
+      <div style="margin-top:8px">${link}</div>
+    `;
+    return;
+  }
+  const score = Number(idx.score) || 0;
+  const color = idx.color || signalColor(score);
+  const pct = ((Math.max(-100, Math.min(100, score)) + 100) / 200) * 100;
+  const label = idx.label || 'LTHCS';
+  const asOf = idx.as_of || L.as_of || '—';
+  const components = Array.isArray(idx.components) ? idx.components : [];
+  const compRows = components.map(c => {
+    const d = Number(c.delta) || 0;
+    const cls = d > 0 ? 'green' : (d < 0 ? 'red' : 'amber');
+    const sign = (d >= 0 ? '+' : '') + d;
+    return `<tr><td>${escapeHtml(c.name||'')}</td><td>${escapeHtml(String(c.value==null?'—':c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.read||'')}</td></tr>`;
+  }).join('');
+  // Top movers — read DATA.lthcs.movers.gainers / .decliners (top 5 each
+  // by drift_30d). Defensive: missing arrays render an empty mover row.
+  const moversRow = renderLthcsMoversRow(L.movers || {});
+  host.innerHTML = `
+    <div class="head" style="align-items:flex-start">
+      <div>
+        <h2 style="font-size:15px">📊 LTHCS Composite Index</h2>
+        <div class="desc">Composite of band distribution / pillar averages / macro overlay / insider + institutional breadth (9 inputs) · as of ${escapeHtml(asOf)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(label)}</div>
+        <div style="font-size:13px;color:var(--muted)">score <strong style="color:${color}">${score>=0?'+':''}${score}</strong> / ±100</div>
+      </div>
+    </div>
+    <div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">
+      <div style="position:absolute;top:-4px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+    </div>
+    <table style="margin-top:6px"><thead><tr><th>Component</th><th>Value</th><th>±</th><th>Read</th></tr></thead><tbody>${compRows}</tbody></table>
+    <div class="sub" style="margin-top:8px;font-size:11px">${escapeHtml(idx.note || 'Aggregate of LTHCS universe. Directional read, not a trading signal.')}</div>
+    ${moversRow}
+    <div style="margin-top:10px;text-align:right">${link}</div>
+  `;
+}
+
+// Side-by-side top-5 gainers / decliners mini-tables for the LTHCS
+// composite panel. Stacks below the gauge on mobile via flex-wrap.
+function renderLthcsMoversRow(movers){
+  const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
+  const decliners = Array.isArray(movers.decliners) ? movers.decliners : [];
+  if (!gainers.length && !decliners.length) return '';
+  const fmtDrift = d => {
+    const v = Number(d);
+    if (!isFinite(v)) return '—';
+    const sign = v >= 0 ? '+' : '';
+    return `${sign}${v.toFixed(1)}`;
+  };
+  const fmtScore = s => {
+    const v = Number(s);
+    if (!isFinite(v)) return '—';
+    return v.toFixed(1);
+  };
+  const driftCls = d => {
+    const v = Number(d);
+    if (!isFinite(v) || v === 0) return 'amber';
+    return v > 0 ? 'green' : 'red';
+  };
+  const row = (r) => `<tr>
+    <td style="font-weight:700">${escapeHtml(r.ticker||'')}</td>
+    <td>${fmtScore(r.score)}</td>
+    <td class="${driftCls(r.drift_30d)}">${fmtDrift(r.drift_30d)}</td>
+    <td style="color:var(--muted);font-size:11px">${escapeHtml(r.sector||'')}</td>
+  </tr>`;
+  const block = (title, rows, accent) => `
+    <div style="flex:1 1 220px;min-width:0">
+      <div style="font-size:11px;font-weight:700;color:${accent};letter-spacing:.06em;margin-bottom:4px">${title}</div>
+      <table style="width:100%">
+        <thead><tr><th style="text-align:left">Ticker</th><th>Score</th><th>30d Δ</th><th>Sector</th></tr></thead>
+        <tbody>${rows.map(row).join('')}</tbody>
+      </table>
+    </div>
+  `;
+  return `<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px">
+    ${gainers.length ? block('▲ TOP 5 GAINERS (30D)', gainers, '#22c55e') : ''}
+    ${decliners.length ? block('▼ TOP 5 DECLINERS (30D)', decliners, '#ef4444') : ''}
+  </div>`;
+}
+
+// Render the standalone LTHCS tab (intro card is static HTML; the
+// composite panel is filled by renderLthcsCompositePanel into
+// #lthcsCompositeCard). Kept as its own function so future enhancements
+// (e.g. add regime banner, recent-history sparkline) have a home.
+function renderLthcsTab(){
+  renderLthcsCompositePanel(document.getElementById('lthcsCompositeCard'));
 }
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
@@ -6232,6 +6461,10 @@ function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
   const rows = ((DATA.market||{}).stocks_signals) || [];
+  // LTHCS Composite Index panel — pinned at the very top of the Stocks tab
+  // as the canonical equity-conviction read across the universe. Same
+  // visual model as the Whale Sentiment Index. Mirrors the LTHCS tab.
+  renderLthcsCompositePanel(document.getElementById('stocksLthcsCompositeCard'));
   // Traditional indices bar (DOW / S&P / NDX / VIX) moved here from the
   // Crypto tab — macro equity context belongs alongside the equity-signal grid.
   renderOverviewIndices();
@@ -8691,6 +8924,9 @@ function renderAll(){
   if (state.tab === 'stocks'){
     renderStocksTab();
   }
+  if (state.tab === 'lthcs'){
+    renderLthcsTab();
+  }
   if (state.tab === 'ainews'){
     renderAiNewsTab();
   }
@@ -8749,6 +8985,7 @@ function selectTab(t){
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
   document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
   document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
+  document.getElementById('tab-lthcs').classList.toggle('hidden', t!=='lthcs');
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
