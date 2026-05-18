@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Pipeline Health</title>
+    <!--
+      Reuses the LTHCS design tokens (band colors, dark theme, fonts) from
+      the card-view stylesheet. In production both pages stage under /lthcs/
+      so this @import resolves at /lthcs/lthcs_tab/lthcs.css. The dev
+      server (python3 -m http.server in repo root) serves /lthcs_tab/
+      sibling to /lthcs_health/, so the ../lthcs_tab/ path works in both
+      environments without conditional logic.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-health.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Pipeline Health</h1>
+          <p class="lthcs-subtitle">Production status of the daily pipeline &middot; auto-refresh 1h</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Generated</span>
+            <span id="health-generated" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card View</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lhealth-main">
+      <!-- Top-line status banner. Color reflects worst overall signal. -->
+      <section id="health-loading" class="lthcs-section lhealth-loading">Loading pipeline health&hellip;</section>
+      <section id="health-error" class="lthcs-section lhealth-error hidden" role="alert"></section>
+
+      <div id="health-content" class="hidden">
+
+        <!-- ===== Cadence =================================================== -->
+        <section class="lthcs-section lhealth-section" aria-label="Cadence">
+          <h2 class="lhealth-h2">Cadence</h2>
+          <dl class="lhealth-kv">
+            <div class="lhealth-kv-row">
+              <dt>Last successful run</dt>
+              <dd id="cad-last-run">&hellip;</dd>
+            </div>
+            <div class="lhealth-kv-row">
+              <dt>Cron schedule</dt>
+              <dd id="cad-cron">0 23 * * * (23:00 UTC)</dd>
+            </div>
+            <div class="lhealth-kv-row">
+              <dt>Drift detection</dt>
+              <dd id="cad-drift">&hellip;</dd>
+            </div>
+            <div class="lhealth-kv-row">
+              <dt>Catch-up status</dt>
+              <dd id="cad-catchup">&hellip;</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- ===== Source coverage (today) ================================== -->
+        <section class="lthcs-section lhealth-section" aria-label="Source coverage today">
+          <h2 class="lhealth-h2">Source coverage <span class="lhealth-h2-sub">(today&rsquo;s snapshot)</span></h2>
+          <div id="src-today" class="lhealth-src-list"></div>
+        </section>
+
+        <!-- ===== Source coverage over time ================================ -->
+        <section class="lthcs-section lhealth-section" aria-label="Source coverage over time">
+          <h2 class="lhealth-h2">Source coverage <span class="lhealth-h2-sub">(last 30 days)</span></h2>
+          <p class="lhealth-note">Daily coverage % per source. Green = &ge;90, amber = 50&ndash;89, red = &lt;50. Empty cell = no data on that date.</p>
+          <div id="src-history" class="lhealth-history"></div>
+        </section>
+
+        <!-- ===== Per-pillar data-quality breakdown ======================== -->
+        <section class="lthcs-section lhealth-section" aria-label="Pillar data quality">
+          <h2 class="lhealth-h2">Per-pillar data quality <span class="lhealth-h2-sub">(today)</span></h2>
+          <div id="pillar-breakdown" class="lhealth-pillars"></div>
+        </section>
+
+        <!-- ===== Recent runs ============================================== -->
+        <section class="lthcs-section lhealth-section" aria-label="Recent runs">
+          <h2 class="lhealth-h2">Recent runs <span class="lhealth-h2-sub">(last 14)</span></h2>
+          <div class="lhealth-table-wrap">
+            <table class="lhealth-table" id="runs-table">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Tickers</th>
+                  <th scope="col">Compute</th>
+                </tr>
+              </thead>
+              <tbody id="runs-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Read-only observability.</strong> This page only consumes committed snapshot files under
+        <code>data/lthcs/</code> &mdash; it does not run the pipeline.
+        Source: the <code>lthcs-daily</code> GitHub Action &middot;
+        <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/.github/workflows/lthcs-daily.yml" target="_blank" rel="noopener" class="lthcs-footer-link">workflow on GitHub</a>.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-health.js"></script>
+  </body>
+</html>

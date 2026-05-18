@@ -1,0 +1,307 @@
+/* =========================================================================
+   LTHCS Pipeline Health
+   Layered on top of ../lthcs_tab/lthcs.css for shared design tokens.
+   Only contains styles unique to this page; everything else (header,
+   typography, dark theme) is inherited.
+   ========================================================================= */
+
+/* The card-view stylesheet hides the loading state via #lthcs-loading;
+   we use our own id so we don't pick that up. Provide the .hidden helper
+   in case the import order changes and we need to fall back. */
+.hidden {
+  display: none !important;
+}
+
+.lhealth-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lhealth-loading,
+.lhealth-error {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.lhealth-error {
+  color: var(--danger);
+  border-left: 3px solid var(--danger);
+  padding-left: 12px;
+}
+
+.lhealth-section {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card);
+}
+
+.lhealth-h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+.lhealth-h2-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+
+.lhealth-note {
+  margin: -6px 0 14px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* ----- Key/value list (cadence) ------------------------------------------ */
+.lhealth-kv {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.lhealth-kv-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: baseline;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lhealth-kv-row:last-child {
+  border-bottom: 0;
+}
+.lhealth-kv-row dt {
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lhealth-kv-row dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Status pill — reused by cadence + recent runs. */
+.lhealth-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: rgba(var(--band-high-rgb), 0.18);
+  color: var(--band-high-bright);
+}
+.lhealth-pill[data-status="warn"] {
+  background: rgba(var(--band-monitor-rgb), 0.20);
+  color: var(--band-monitor-bright);
+}
+.lhealth-pill[data-status="fail"] {
+  background: rgba(var(--band-review-rgb), 0.25);
+  color: var(--band-review-bright);
+}
+
+/* ----- Today's source coverage ------------------------------------------ */
+.lhealth-src-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.lhealth-src-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 120px;
+  align-items: center;
+  gap: 12px;
+}
+.lhealth-src-name {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.lhealth-src-bar {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+.lhealth-src-bar-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--band-high-bright);
+  width: 0%;
+  transition: width 0.4s ease;
+}
+.lhealth-src-bar-fill[data-tier="warn"] {
+  background: var(--band-monitor-bright);
+}
+.lhealth-src-bar-fill[data-tier="fail"] {
+  background: var(--band-review-bright);
+}
+.lhealth-src-stat {
+  text-align: right;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+.lhealth-src-stat strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.lhealth-src-note {
+  grid-column: 1 / -1;
+  margin-top: -2px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding-left: 212px;
+}
+
+/* ----- 30-day history grid ---------------------------------------------- */
+.lhealth-history {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+.lhealth-history-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+.lhealth-history-row-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.lhealth-history-cells {
+  display: grid;
+  /* 30 day cells laid out side-by-side. */
+  grid-template-columns: repeat(30, 1fr);
+  gap: 2px;
+  height: 18px;
+}
+.lhealth-history-cell {
+  border-radius: 2px;
+  background: var(--bg-card);
+  cursor: default;
+}
+.lhealth-history-cell[data-tier="ok"] { background: var(--band-high-bright); }
+.lhealth-history-cell[data-tier="warn"] { background: var(--band-monitor-bright); }
+.lhealth-history-cell[data-tier="fail"] { background: var(--band-review-bright); }
+.lhealth-history-cell[data-tier="missing"] {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.04) 3px,
+    rgba(255, 255, 255, 0.08) 3px,
+    rgba(255, 255, 255, 0.08) 6px
+  );
+}
+
+/* ----- Pillar breakdown ------------------------------------------------- */
+.lhealth-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.lhealth-pillar {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+}
+.lhealth-pillar-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+.lhealth-pillar-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  margin: 4px 0;
+  color: var(--text-primary);
+}
+.lhealth-pillar-stat span:last-child {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* ----- Recent runs table ----------------------------------------------- */
+.lhealth-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.lhealth-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.lhealth-table th,
+.lhealth-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lhealth-table th {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lhealth-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.lhealth-table tbody tr:hover {
+  background: var(--bg-card);
+}
+
+/* ----- Mobile ---------------------------------------------------------- */
+@media (max-width: 600px) {
+  .lhealth-kv-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .lhealth-kv-row dt {
+    font-size: 11px;
+  }
+
+  .lhealth-src-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .lhealth-src-stat {
+    text-align: left;
+  }
+  .lhealth-src-note {
+    padding-left: 0;
+  }
+
+  .lhealth-history-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .lhealth-history-cells {
+    /* On very small screens, fewer columns might be desirable, but 30
+       cells at ~10px each still fits comfortably down to 320px. Cells
+       just compress proportionally. */
+    height: 14px;
+  }
+
+  .lhealth-section {
+    padding: 14px 12px;
+  }
+}

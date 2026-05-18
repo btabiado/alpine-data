@@ -207,6 +207,26 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the LTHCS pipeline health observability page under
+          # /lthcs/health/. Source lives at lthcs_health/ and reuses
+          # ../lthcs_tab/lthcs.css for design tokens + reads its data via
+          # "../data/lthcs/..." — both resolve cleanly once we mirror
+          # lthcs_tab/ and data/lthcs/ one level above /lthcs/health/.
+          # V1 (`/`), V2 (`/v2/`), classic /lthcs/, /lthcs/table/, and
+          # /lthcs/v2/ are all untouched.
+          if [ -f lthcs_health/index.html ]; then
+            mkdir -p _site/lthcs/health
+            cp -R lthcs_health/* _site/lthcs/health/
+            # Same defensive mirroring as the V2/table branches above:
+            # idempotent re-copies of lthcs_tab and data/lthcs so the
+            # page works even if earlier branches didn't run.
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
