@@ -777,10 +777,15 @@ def test_is_bank_ticker_helper() -> None:
     assert financial.is_bank_ticker("jpm") is True
     assert financial.is_bank_ticker("  JPM  ") is True
     assert financial.is_bank_ticker("BAC") is True
-    # Not in allowlist.
-    assert financial.is_bank_ticker("BLK") is False
-    assert financial.is_bank_ticker("SCHW") is False
+    # Audit-driven expansion (May 2026): these are now in the cohort.
+    assert financial.is_bank_ticker("BK") is True
+    assert financial.is_bank_ticker("COF") is True
+    assert financial.is_bank_ticker("SCHW") is True
+    assert financial.is_bank_ticker("BLK") is True
+    # Not in allowlist (payments / conglomerate / insurance / non-financials).
     assert financial.is_bank_ticker("AAPL") is False
+    assert financial.is_bank_ticker("V") is False
+    assert financial.is_bank_ticker("MET") is False
     assert financial.is_bank_ticker("") is False
     assert financial.is_bank_ticker(None) is False
     # Sector argument is accepted but allowlist is authoritative.
@@ -1416,3 +1421,355 @@ def test_compute_financial_safety_valve_fires_when_cohort_too_thin() -> None:
         universe=syn_universe,
     )
     assert out["components"]["peer_cohort_strategy"] == "universe_fallback"
+
+
+# ---------------------------------------------------------------------------
+# Gross-margin XBRL fallback chain (P3 audit fix-up, May 2026)
+# ---------------------------------------------------------------------------
+#
+# Test that when ``GrossProfit`` is missing the Financial pillar walks the
+# fallback chain in priority order and surfaces the chosen source via
+# ``components.margin_source``.
+
+
+def _build_quarters_with_values(
+    year: int, revenue_each: float, numerator_each: List[float]
+) -> tuple:
+    """Build paired revenue + numerator quarterly rows. Returns (rev_rows, num_rows)."""
+    qdates = _quarter_dates_for_year(year)
+    rev_rows: List[Dict[str, Any]] = []
+    num_rows: List[Dict[str, Any]] = []
+    for q, n in zip(qdates, numerator_each):
+        rev_rows.append(_q_row(q["start"], q["end"], revenue_each))
+        num_rows.append(_q_row(q["start"], q["end"], n))
+    return rev_rows, num_rows
+
+
+def test_resolve_gross_margin_source_prefers_canonical_gross_profit() -> None:
+    """When GrossProfit is present and has 4 quarters, source is gross_profit."""
+    rev, gp = _build_quarters_with_margins(2025, 1000.0, [0.30, 0.32, 0.34, 0.36])
+    _, srg = _build_quarters_with_margins(2025, 900.0, [0.50, 0.50, 0.50, 0.50])
+    _, cor = _build_quarters_with_values(
+        2025, 1000.0, [600.0, 600.0, 600.0, 600.0]
+    )
+    _, op_inc = _build_quarters_with_values(
+        2025, 1000.0, [200.0, 200.0, 200.0, 200.0]
+    )
+
+    rows, source = financial.resolve_gross_margin_source(
+        rev, gp,
+        sales_revenue_gross_rows=srg,
+        cost_of_revenue_rows=cor,
+        operating_income_rows=op_inc,
+    )
+    assert source == financial.MARGIN_SOURCE_GROSS_PROFIT
+    assert rows is gp
+
+
+def test_resolve_gross_margin_source_falls_back_to_revenue_minus_cost() -> None:
+    """No GrossProfit -> compute synthetic GP from Revenue - CostOfRevenue."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    cor = [_q_row(q["start"], q["end"], 700.0) for q in qd]
+
+    rows, source = financial.resolve_gross_margin_source(
+        rev, [],
+        cost_of_revenue_rows=cor,
+    )
+    assert source == financial.MARGIN_SOURCE_REVENUE_MINUS_COST
+    assert len(rows) == 4
+    assert all(r["value"] == 300.0 for r in rows)
+    assert all(r["concept"] == "_RevenueMinusCostOfRevenue" for r in rows)
+
+
+def test_resolve_gross_margin_source_falls_back_to_sales_revenue_gross() -> None:
+    """No GrossProfit and no modern revenue, but legacy SRG + cost present."""
+    qd = _quarter_dates_for_year(2024)
+    srg = [_q_row(q["start"], q["end"], 800.0) for q in qd]
+    cor = [_q_row(q["start"], q["end"], 500.0) for q in qd]
+    rev_one = [_q_row("2024-10-01", "2024-12-31", 1500.0)]
+
+    rows, source = financial.resolve_gross_margin_source(
+        rev_one, [],
+        sales_revenue_gross_rows=srg,
+        cost_of_revenue_rows=cor,
+    )
+    assert source == financial.MARGIN_SOURCE_SALES_REVENUE_GROSS
+    assert len(rows) == 4
+    assert all(r["value"] == 300.0 for r in rows)
+
+
+def test_resolve_gross_margin_source_falls_back_to_operating_income() -> None:
+    """No GrossProfit, no CostOfRevenue, but OperatingIncomeLoss present."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    op_inc = [_q_row(q["start"], q["end"], 200.0) for q in qd]
+
+    rows, source = financial.resolve_gross_margin_source(
+        rev, [],
+        operating_income_rows=op_inc,
+    )
+    assert source == financial.MARGIN_SOURCE_OPERATING_INCOME
+    assert rows is op_inc
+
+
+def test_resolve_gross_margin_source_returns_none_when_all_missing() -> None:
+    """No data anywhere -> ([], MARGIN_SOURCE_NONE)."""
+    rows, source = financial.resolve_gross_margin_source([], [])
+    assert source == financial.MARGIN_SOURCE_NONE
+    assert rows == []
+
+
+def test_resolve_gross_margin_source_requires_min_four_quarters() -> None:
+    """A candidate with only 3 quarterly pairs cannot win -- falls through."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    gp_thin = [_q_row(q["start"], q["end"], 300.0) for q in qd[:3]]
+    op_inc = [_q_row(q["start"], q["end"], 200.0) for q in qd]
+
+    rows, source = financial.resolve_gross_margin_source(
+        rev, gp_thin,
+        operating_income_rows=op_inc,
+    )
+    assert source == financial.MARGIN_SOURCE_OPERATING_INCOME
+    assert rows is op_inc
+
+
+def test_compute_financial_surfaces_margin_source_gross_profit() -> None:
+    """Standard happy path -- canonical GrossProfit -> source tag exposed."""
+    rev, gp = _build_quarters_with_margins(
+        2025, 1000.0, [0.30, 0.32, 0.34, 0.36]
+    )
+    rev = _annual_pair(2025, 4400.0, 4000.0) + rev
+
+    out = financial.compute_financial(
+        "AAPL", rev, gp, [], peer_growths={"AAPL": 0.10, "P1": 0.05},
+    )
+    assert out["components"]["margin_source"] == financial.MARGIN_SOURCE_GROSS_PROFIT
+    assert out["components"]["margin_subscore"] > 50.0
+
+
+def test_compute_financial_uses_revenue_minus_cost_fallback() -> None:
+    """When GP is missing the Financial pillar reaches CostOfRevenue."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    rev = _annual_pair(2025, 4400.0, 4000.0) + rev
+    cor = [
+        _q_row(qd[0]["start"], qd[0]["end"], 700.0),
+        _q_row(qd[1]["start"], qd[1]["end"], 680.0),
+        _q_row(qd[2]["start"], qd[2]["end"], 660.0),
+        _q_row(qd[3]["start"], qd[3]["end"], 640.0),
+    ]
+
+    out = financial.compute_financial(
+        "FOO", rev, [], [], peer_growths={"FOO": 0.10, "P1": 0.05},
+        cost_of_revenue_rows=cor,
+    )
+    assert (
+        out["components"]["margin_source"]
+        == financial.MARGIN_SOURCE_REVENUE_MINUS_COST
+    )
+    assert out["components"]["margin_subscore"] > 50.0
+    assert out["data_quality"]["has_margin"] is True
+
+
+def test_compute_financial_falls_back_to_operating_income() -> None:
+    """When neither GP nor CostOfRevenue exist, OperatingIncomeLoss is used."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    rev = _annual_pair(2025, 4400.0, 4000.0) + rev
+    op_inc = [
+        _q_row(qd[0]["start"], qd[0]["end"], 150.0),
+        _q_row(qd[1]["start"], qd[1]["end"], 170.0),
+        _q_row(qd[2]["start"], qd[2]["end"], 190.0),
+        _q_row(qd[3]["start"], qd[3]["end"], 210.0),
+    ]
+
+    out = financial.compute_financial(
+        "SVCS", rev, [], [], peer_growths={"SVCS": 0.10, "P1": 0.05},
+        operating_income_rows=op_inc,
+    )
+    assert (
+        out["components"]["margin_source"]
+        == financial.MARGIN_SOURCE_OPERATING_INCOME
+    )
+    assert out["components"]["margin_subscore"] > 50.0
+    assert out["data_quality"]["has_margin"] is True
+
+
+def test_compute_financial_margin_source_none_keeps_neutral_score() -> None:
+    """No GP and no fallback data -> margin_source=none, subscore=50, has_margin=False."""
+    rev = _annual_pair(2025, 110.0, 100.0)
+    out = financial.compute_financial(
+        "EMPTY", rev, [], [], peer_growths={"EMPTY": 0.10, "P1": 0.05},
+    )
+    assert out["components"]["margin_source"] == financial.MARGIN_SOURCE_NONE
+    assert out["components"]["margin_subscore"] == 50.0
+    assert out["data_quality"]["has_margin"] is False
+
+
+def test_compute_financial_fallback_chain_priority_order() -> None:
+    """When *all* fallback sources are present but GP is missing, the chain
+    must pick the higher-priority candidate (Revenues - CostOfRevenue),
+    not OperatingIncome."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    rev = _annual_pair(2025, 4400.0, 4000.0) + rev
+    cor = [_q_row(q["start"], q["end"], 700.0) for q in qd]
+    op_inc = [_q_row(q["start"], q["end"], 200.0) for q in qd]
+
+    out = financial.compute_financial(
+        "FOO", rev, [], [], peer_growths={"FOO": 0.10, "P1": 0.05},
+        cost_of_revenue_rows=cor,
+        operating_income_rows=op_inc,
+    )
+    assert (
+        out["components"]["margin_source"]
+        == financial.MARGIN_SOURCE_REVENUE_MINUS_COST
+    )
+
+
+def test_compute_financial_bank_path_margin_source_is_bank() -> None:
+    """Bank path stamps ``margin_source = "bank"`` so it's never confused
+    with a missing-margin neutral on the standard path."""
+    nii = _eight_consecutive_quarters(
+        2024, [950, 990, 1020, 1040, 1150, 1190, 1220, 1240]
+    )
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths={"JPM": 0.20, "P1": 0.0},
+        sector="Financials",
+        nii_rows=nii,
+        noninterest_rows=[],
+        pcl_rows=[],
+    )
+    assert out["sector_path"] == "bank"
+    assert out["components"]["margin_source"] == "bank"
+
+
+def test_synthesize_gross_profit_drops_negative_synthetic_gp() -> None:
+    """If cost > revenue for a period, the synthetic GP would be negative.
+    Drop the period rather than feed garbage to the slope estimator."""
+    qd = _quarter_dates_for_year(2025)
+    rev = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    cor = [
+        _q_row(qd[0]["start"], qd[0]["end"], 700.0),
+        _q_row(qd[1]["start"], qd[1]["end"], 1500.0),
+        _q_row(qd[2]["start"], qd[2]["end"], 600.0),
+        _q_row(qd[3]["start"], qd[3]["end"], 500.0),
+    ]
+    out = financial._synthesize_gross_profit_rows(rev, cor)
+    assert len(out) == 3
+    end_dates = {r["end_date"] for r in out}
+    assert "2025-06-30" not in end_dates
+
+
+# ---------------------------------------------------------------------------
+# Bank cohort expansion (P3 audit fix-up, May 2026)
+# ---------------------------------------------------------------------------
+
+
+def test_bank_tickers_expanded_to_twelve() -> None:
+    """The audit-driven cohort expansion adds BK, COF, SCHW, BLK to the
+    original 8-ticker strict-bank list."""
+    assert "BK" in financial.BANK_TICKERS
+    assert "COF" in financial.BANK_TICKERS
+    assert "SCHW" in financial.BANK_TICKERS
+    assert "BLK" in financial.BANK_TICKERS
+    for sym in ("JPM", "BAC", "WFC", "C", "GS", "MS", "USB", "TFC"):
+        assert sym in financial.BANK_TICKERS
+    assert len(financial.BANK_TICKERS) == 12
+
+
+def test_bank_cohort_percentile_includes_expansion_members() -> None:
+    """A focal bank's NII percentile must be ranked against the EXPANDED
+    cohort, not just the original 7-ticker active set."""
+    jpm_nii = _eight_consecutive_quarters(
+        2024, [1000, 1020, 1040, 1060, 1200, 1230, 1260, 1290]
+    )
+    bac_nii = _eight_consecutive_quarters(
+        2024, [800, 820, 840, 860, 880, 900, 920, 940]
+    )
+    bk_nii = _eight_consecutive_quarters(
+        2024, [500, 510, 520, 530, 540, 550, 560, 570]
+    )
+    cof_nii = _eight_consecutive_quarters(
+        2024, [400, 410, 420, 430, 440, 450, 460, 470]
+    )
+    schw_nii = _eight_consecutive_quarters(
+        2024, [300, 310, 320, 330, 340, 350, 360, 370]
+    )
+
+    bank_cohort_nii = {
+        "JPM": jpm_nii,
+        "BAC": bac_nii,
+        "BK": bk_nii,
+        "COF": cof_nii,
+        "SCHW": schw_nii,
+    }
+    peer_growths = {
+        "JPM": 0.20, "BAC": 0.10, "BK": 0.05, "COF": 0.05, "SCHW": 0.05,
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm_nii,
+        noninterest_rows=[],
+        pcl_rows=[],
+        bank_cohort_nii_rows=bank_cohort_nii,
+    )
+
+    assert out["sector_path"] == "bank"
+    assert out["components"]["nii_subscore"] >= 75.0
+
+
+def test_bank_cohort_expansion_blk_skipped_when_no_nii() -> None:
+    """BLK is in the cohort but is an asset manager — when its NII rows
+    are missing, it should be silently excluded from the NII-percentile
+    cohort (and the focal still scores cleanly off the remaining banks)."""
+    jpm_nii = _eight_consecutive_quarters(
+        2024, [1000, 1020, 1040, 1060, 1100, 1130, 1160, 1190]
+    )
+    bac_nii = _eight_consecutive_quarters(
+        2024, [800, 820, 840, 860, 880, 900, 920, 940]
+    )
+    bank_cohort_nii = {
+        "JPM": jpm_nii,
+        "BAC": bac_nii,
+        "BLK": [],
+    }
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths={"JPM": 0.10, "BAC": 0.05, "BLK": 0.07},
+        sector="Financials",
+        nii_rows=jpm_nii,
+        noninterest_rows=[],
+        pcl_rows=[],
+        bank_cohort_nii_rows=bank_cohort_nii,
+    )
+    assert out["sector_path"] == "bank"
+    assert out["components"]["nii_subscore"] >= 50.0
+
+
+# ---------------------------------------------------------------------------
+# SEC EDGAR fallback fetch functions (P3 audit fix-up, May 2026)
+# ---------------------------------------------------------------------------
+
+
+def test_sec_edgar_has_fallback_concept_helpers() -> None:
+    """The three fallback fetch functions must exist on the module."""
+    from lthcs.sources import sec_edgar
+    assert callable(getattr(sec_edgar, "get_sales_revenue_gross_history", None))
+    assert callable(getattr(sec_edgar, "get_cost_of_revenue_history", None))
+    assert callable(getattr(sec_edgar, "get_operating_income_history", None))

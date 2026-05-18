@@ -80,6 +80,45 @@ _GROSS_PROFIT_CONCEPTS = (
     "GrossProfit",
 )
 
+# --- Gross-margin XBRL fallbacks --------------------------------------------
+#
+# The post-audit P3 fix-up (May 2026): the canonical ``GrossProfit`` concept
+# is only filed by ~56% of the universe. Services-heavy companies, banks,
+# utilities, and some legacy filers report margin components under a
+# different concept family. The Financial Evolution pillar walks a fallback
+# chain (GrossProfit → SalesRevenueGross → Revenues - CostOfRevenue →
+# OperatingIncomeLoss) so we can fairly rank margin quality across the
+# universe instead of dropping 74 names to neutral 50.
+
+# Legacy revenue concept (pre-ASC 606 reporters). When a company reports
+# ``SalesRevenueGross`` it usually pairs revenue with a cost line so a
+# gross-margin proxy can be computed via the cost-of-revenue concept below.
+_SALES_REVENUE_GROSS_CONCEPTS = (
+    "SalesRevenueGross",
+    "SalesRevenueNet",
+)
+
+# Cost of revenue / cost of goods sold concepts. Used to derive a
+# gross-margin proxy ``(Revenue - CostOfRevenue) / Revenue`` when
+# ``GrossProfit`` is missing. Multiple variants exist across SIC codes;
+# we accept all and let the period-merge dedup.
+_COST_OF_REVENUE_CONCEPTS = (
+    "CostOfRevenue",
+    "CostOfGoodsAndServicesSold",
+    "CostOfGoodsSold",
+    "CostOfServices",
+)
+
+# Operating income loss — a looser margin proxy. Not the same metric as
+# gross margin (it nets out OpEx) but reliably present across the
+# universe and correlated enough with margin profile to be a useful
+# last-resort fallback. The Financial pillar tags rows derived from this
+# concept with ``margin_source == "operating_income"`` so consumers can
+# discount the signal if needed.
+_OPERATING_INCOME_CONCEPTS = (
+    "OperatingIncomeLoss",
+)
+
 # Operating cash flow — two equivalent labels; SEC has used both.
 _OPERATING_CASH_FLOW_CONCEPTS = (
     "NetCashProvidedByOperatingActivities",
@@ -369,6 +408,56 @@ def get_operating_cash_flow_history(
     """Operating cash flow history. Same schema as :func:`get_revenue_history`."""
     return _extract_concept_history(
         get_company_facts(ticker), _OPERATING_CASH_FLOW_CONCEPTS, as_of=as_of
+    )
+
+
+# --- Public API: gross-margin XBRL fallbacks --------------------------------
+
+def get_sales_revenue_gross_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """``SalesRevenueGross`` / ``SalesRevenueNet`` history.
+
+    Legacy revenue concepts (pre-ASC 606). Used as a fallback revenue
+    series when neither ``Revenues`` nor
+    ``RevenueFromContractWithCustomerExcludingAssessedTax`` is filed and
+    the company reports under the older sales-revenue concepts. Same row
+    schema as :func:`get_revenue_history`.
+    """
+    return _extract_concept_history(
+        get_company_facts(ticker), _SALES_REVENUE_GROSS_CONCEPTS, as_of=as_of
+    )
+
+
+def get_cost_of_revenue_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """Cost-of-revenue history.
+
+    Merges ``CostOfRevenue`` / ``CostOfGoodsAndServicesSold`` /
+    ``CostOfGoodsSold`` / ``CostOfServices``. Used to derive a
+    gross-margin proxy ``(Revenue - CostOfRevenue) / Revenue`` when
+    ``GrossProfit`` is missing. Same row schema as
+    :func:`get_revenue_history`.
+    """
+    return _extract_concept_history(
+        get_company_facts(ticker), _COST_OF_REVENUE_CONCEPTS, as_of=as_of
+    )
+
+
+def get_operating_income_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
+    """``OperatingIncomeLoss`` history.
+
+    Loose margin proxy (operating margin, not gross margin) used as the
+    last-resort fallback in the gross-margin fallback chain. Consumers
+    that consume this for gross-margin slope should tag the source so
+    the signal can be discounted. Same row schema as
+    :func:`get_revenue_history`.
+    """
+    return _extract_concept_history(
+        get_company_facts(ticker), _OPERATING_INCOME_CONCEPTS, as_of=as_of
     )
 
 

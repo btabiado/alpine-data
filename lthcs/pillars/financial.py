@@ -94,6 +94,44 @@ _TRAILING_QUARTERS = 4
 _MARGIN_SLOPE_LOW = -0.05
 _MARGIN_SLOPE_HIGH = 0.05
 
+# --- Gross-margin fallback chain (P3 audit fix-up, May 2026) ----------------
+#
+# The Financial pillar walks a four-step fallback chain when ``GrossProfit``
+# is not filed (services-heavy / utility / some legacy filers). Each step
+# yields the same margin-history row schema as
+# :func:`compute_gross_margin_history`; consumers see which step produced
+# the slope via the ``margin_source`` tag surfaced in the pillar
+# ``components`` dict.
+#
+# Order (canonical → loose):
+#   1. ``gross_profit``       — XBRL ``GrossProfit`` (preferred).
+#   2. ``sales_revenue_gross`` — pair ``SalesRevenueGross`` with the same
+#      cost-of-revenue series; semantically equivalent to (1) for legacy
+#      filers that report under the pre-ASC 606 sales concept.
+#   3. ``revenue_minus_cost`` — compute gross profit as
+#      ``Revenues - CostOfRevenue``; semantically equivalent to (1) for
+#      filers that report the two components but not the rolled-up
+#      ``GrossProfit`` concept.
+#   4. ``operating_income``   — operating income / revenue. Different
+#      metric (nets out OpEx), but indicates margin profile; tagged as
+#      a loose fallback so consumers can discount.
+#   5. ``none``               — no fallback produced ≥ 4 matched quarters.
+#      Sub-score returns the neutral 50.0 midpoint as it does today.
+MARGIN_SOURCE_GROSS_PROFIT = "gross_profit"
+MARGIN_SOURCE_SALES_REVENUE_GROSS = "sales_revenue_gross"
+MARGIN_SOURCE_REVENUE_MINUS_COST = "revenue_minus_cost"
+MARGIN_SOURCE_OPERATING_INCOME = "operating_income"
+MARGIN_SOURCE_NONE = "none"
+
+# Tuple of every non-"none" source, in fallback-chain order. Exported so
+# tests can iterate without hard-coding strings.
+MARGIN_SOURCES_ORDER = (
+    MARGIN_SOURCE_GROSS_PROFIT,
+    MARGIN_SOURCE_SALES_REVENUE_GROSS,
+    MARGIN_SOURCE_REVENUE_MINUS_COST,
+    MARGIN_SOURCE_OPERATING_INCOME,
+)
+
 # OCF margin bounds: -10% saturates the floor, +30% saturates the
 # ceiling. These are V1 heuristics, chosen to give cash-rich software /
 # consumer-staples businesses room near 100 while still penalising
@@ -114,18 +152,35 @@ def _is_valid_growth_value(value: Any) -> bool:
 
 # --- Bank-specific constants ------------------------------------------------
 #
-# Allowlist of tickers routed through the bank code path. Restricted to
-# strict universal / commercial / investment banks where the bank
-# financial-services concept family (NII / PCL / Noninterest) is the
-# correct revenue decomposition. Adjacent financials that don't fit
-# (insurance, asset managers, payments, consumer finance, exchanges)
-# stay on the standard path so they don't get spurious neutral scores
-# from absent bank concepts.
+# Allowlist of tickers routed through the bank code path / participating
+# in the bank percentile cohort. Restricted to financials whose XBRL
+# decomposition (NII / PCL / Noninterest) makes the bank revenue model
+# meaningful; adjacent financials that don't fit (insurance, payments,
+# conglomerate) stay on the standard path so they don't get spurious
+# neutral scores from absent bank concepts.
 #
-# Notable exclusions and why:
-#   BLK   -- asset manager, fee-based; standard ``Revenues`` works.
-#   SCHW  -- brokerage / banking hybrid; partial fit. Skip in V1.
-#   COF   -- consumer-finance / cards; PCL dynamics differ.
+# May 2026 post-audit expansion (LTHCS audit 2026-05-18): the original
+# 8-ticker list (the strict universal / commercial / investment-bank set)
+# was too thin to give statistical power to the percentile rank --
+# only 7 of those were in the active S&P universe (TFC isn't), so a
+# 6-peer distribution made the credit / diversification ranks degenerate
+# at the tails. We expanded to 11 by adding three Financials sector
+# members whose business model overlaps the bank concept family enough
+# that they belong in the cohort:
+#
+#   BK    -- Bank of New York Mellon, a custody / trust bank. Files NII
+#            + Noninterest concepts.
+#   COF   -- Capital One, consumer finance with a real loan book. PCL
+#            dynamics differ from the universal banks but it's still the
+#            correct concept family. Reports NII / PCL / Noninterest.
+#   SCHW  -- Charles Schwab, brokerage / banking hybrid. Files NII +
+#            Noninterest under the bank concept family.
+#   BLK   -- BlackRock, asset manager. Doesn't file NII but is a peer
+#            in the Financials sector. Cohort math handles it gracefully:
+#            empty NII rows -> excluded from NII-growth ranking, but it
+#            still benchmarks against the cohort for revenue growth.
+#
+# Notable exclusions and why (still skipped):
 #   V/MA/AXP/PYPL -- payment networks, not banks.
 #   BRK.B -- conglomerate.
 #   PRU/MET/TRV/AIG/AFL/ALL -- insurance, different model.
@@ -138,6 +193,11 @@ BANK_TICKERS = frozenset({
     "MS",
     "USB",
     "TFC",
+    # Audit-driven cohort expansion (May 2026):
+    "BK",
+    "COF",
+    "SCHW",
+    "BLK",
 })
 
 # Bank PCL / total-revenue ratio bounds. ``invert=True`` (lower is
@@ -282,6 +342,172 @@ def compute_gross_margin_history(
 
     out.sort(key=lambda r: r["end_date"], reverse=True)
     return out
+
+
+# --- Gross-margin fallback chain helpers ------------------------------------
+
+def _synthesize_gross_profit_rows(
+    revenue_rows: List[Dict[str, Any]],
+    cost_of_revenue_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Build synthetic gross-profit rows as ``Revenue - CostOfRevenue``.
+
+    Pairs ``revenue_rows`` and ``cost_of_revenue_rows`` by
+    ``(start_date, end_date)`` and emits a row mimicking the SEC EDGAR
+    row schema with ``value = revenue - cost`` and
+    ``concept = "_RevenueMinusCostOfRevenue"``. Only matched periods
+    with numeric, non-negative resulting gross profit are kept --
+    a negative synthetic GP almost always indicates bad XBRL data
+    (cost line larger than total revenue would imply the filer reported
+    them on different definitions).
+
+    Returns rows sorted by ``end_date`` descending. Empty list if no
+    period matches.
+    """
+    rev_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for r in revenue_rows or []:
+        start = r.get("start_date")
+        end = r.get("end_date")
+        if start is None or end is None:
+            continue
+        rev_by_key[(str(start), str(end))] = r
+
+    cost_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for r in cost_of_revenue_rows or []:
+        start = r.get("start_date")
+        end = r.get("end_date")
+        if start is None or end is None:
+            continue
+        cost_by_key[(str(start), str(end))] = r
+
+    out: List[Dict[str, Any]] = []
+    for key, rev_row in rev_by_key.items():
+        cost_row = cost_by_key.get(key)
+        if cost_row is None:
+            continue
+        rev_val = _safe_float(rev_row.get("value"))
+        cost_val = _safe_float(cost_row.get("value"))
+        if rev_val is None or cost_val is None:
+            continue
+        gp_val = rev_val - cost_val
+        if gp_val < 0:
+            # Synthetic GP shouldn't go negative for a healthy filer;
+            # drop the period rather than feed garbage to the slope.
+            continue
+        out.append(
+            {
+                "start_date": key[0],
+                "end_date": key[1],
+                "value": float(gp_val),
+                "form": rev_row.get("form"),
+                "fy": rev_row.get("fy"),
+                "fp": rev_row.get("fp"),
+                "concept": "_RevenueMinusCostOfRevenue",
+            }
+        )
+
+    out.sort(key=lambda r: str(r.get("end_date", "")), reverse=True)
+    return out
+
+
+def _quarterly_margin_pairs(
+    revenue_rows: List[Dict[str, Any]],
+    margin_numerator_rows: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Return matched gross-margin rows restricted to quarterly periods.
+
+    Helper for the fallback resolver: a candidate is "acceptable" only if
+    it produces at least ``_TRAILING_QUARTERS`` matched quarterly rows.
+    """
+    history = compute_gross_margin_history(revenue_rows, margin_numerator_rows)
+    quarterly: List[Dict[str, Any]] = []
+    for h in history:
+        s = _parse_date(h.get("start_date"))
+        e = _parse_date(h.get("end_date"))
+        if s is None or e is None:
+            continue
+        days = (e - s).days
+        if _QUARTER_MIN_DAYS <= days <= _QUARTER_MAX_DAYS:
+            quarterly.append(h)
+    return quarterly
+
+
+def resolve_gross_margin_source(
+    revenue_rows: List[Dict[str, Any]],
+    gross_profit_rows: List[Dict[str, Any]],
+    sales_revenue_gross_rows: Optional[List[Dict[str, Any]]] = None,
+    cost_of_revenue_rows: Optional[List[Dict[str, Any]]] = None,
+    operating_income_rows: Optional[List[Dict[str, Any]]] = None,
+) -> Tuple[List[Dict[str, Any]], str]:
+    """Walk the gross-margin fallback chain and return ``(rows, source)``.
+
+    Each fallback is considered "acceptable" if it produces at least
+    ``_TRAILING_QUARTERS`` (4) matched quarterly margin rows -- the
+    minimum the slope computation needs. The first acceptable fallback
+    wins. When none of the four sources clears the bar, returns
+    ``([], "none")`` and the caller falls back to the neutral 50.0
+    midpoint (preserving current behavior).
+
+    The returned ``rows`` are the "gross profit"-shaped rows (or the
+    synthetic ``Revenue - CostOfRevenue`` equivalent) suitable for
+    feeding back into :func:`compute_gross_margin_history` or
+    :func:`compute_margin_trend_subscore` along with the same
+    ``revenue_rows``. The returned ``source`` is one of the
+    ``MARGIN_SOURCE_*`` constants.
+
+    Fallback order:
+        1. ``MARGIN_SOURCE_GROSS_PROFIT``        — canonical
+        2. ``MARGIN_SOURCE_SALES_REVENUE_GROSS`` — legacy revenue + cost
+        3. ``MARGIN_SOURCE_REVENUE_MINUS_COST``  — modern revenue + cost
+        4. ``MARGIN_SOURCE_OPERATING_INCOME``    — loose proxy
+        5. ``MARGIN_SOURCE_NONE``                — give up, neutral 50.
+    """
+    revenue_rows = revenue_rows or []
+    gross_profit_rows = gross_profit_rows or []
+    sales_revenue_gross_rows = sales_revenue_gross_rows or []
+    cost_of_revenue_rows = cost_of_revenue_rows or []
+    operating_income_rows = operating_income_rows or []
+
+    # 1) GrossProfit (canonical).
+    quarterly = _quarterly_margin_pairs(revenue_rows, gross_profit_rows)
+    if len(quarterly) >= _TRAILING_QUARTERS:
+        return gross_profit_rows, MARGIN_SOURCE_GROSS_PROFIT
+
+    # 2) SalesRevenueGross paired with CostOfRevenue (synthesised GP from
+    #    legacy revenue + cost; same semantics as canonical GP).
+    if sales_revenue_gross_rows and cost_of_revenue_rows:
+        synthetic_legacy = _synthesize_gross_profit_rows(
+            sales_revenue_gross_rows, cost_of_revenue_rows
+        )
+        # Restrict the matched-margin history against the LEGACY revenue
+        # series so the trend is internally consistent.
+        quarterly_legacy = _quarterly_margin_pairs(
+            sales_revenue_gross_rows, synthetic_legacy
+        )
+        if len(quarterly_legacy) >= _TRAILING_QUARTERS:
+            # NB: the rows returned here are still the synthetic GP rows;
+            # the caller must pair them with the LEGACY revenue series.
+            # We surface that via the second return value (the caller in
+            # ``compute_financial`` knows to swap in legacy revenue when
+            # source == sales_revenue_gross).
+            return synthetic_legacy, MARGIN_SOURCE_SALES_REVENUE_GROSS
+
+    # 3) Modern Revenues - CostOfRevenue.
+    if cost_of_revenue_rows:
+        synthetic_modern = _synthesize_gross_profit_rows(
+            revenue_rows, cost_of_revenue_rows
+        )
+        quarterly_modern = _quarterly_margin_pairs(revenue_rows, synthetic_modern)
+        if len(quarterly_modern) >= _TRAILING_QUARTERS:
+            return synthetic_modern, MARGIN_SOURCE_REVENUE_MINUS_COST
+
+    # 4) OperatingIncomeLoss — loose proxy (operating margin, not gross).
+    quarterly_op = _quarterly_margin_pairs(revenue_rows, operating_income_rows)
+    if len(quarterly_op) >= _TRAILING_QUARTERS:
+        return operating_income_rows, MARGIN_SOURCE_OPERATING_INCOME
+
+    # 5) Nothing acceptable — caller falls back to neutral 50.
+    return [], MARGIN_SOURCE_NONE
 
 
 # --- Public API: margin-trend sub-score -------------------------------------
@@ -851,6 +1077,11 @@ def _compute_bank_financial(
                 "noninterest_to_revenue_ratio": focal_nint_mix,
                 "ttm_ocf_margin": None,
                 "margin_trend_slope": None,
+                # Banks score off the NII/PCL/Noninterest concept family
+                # rather than the gross-margin chain. Tag the source as
+                # ``"bank"`` so consumers can route narratives correctly
+                # instead of treating it as a missing-margin neutral.
+                "margin_source": "bank",
             },
             "weights": {
                 "nii": _BANK_NII_WEIGHT,
@@ -961,6 +1192,7 @@ def _compute_bank_financial(
             # Standard explainability keys -- bank path doesn't compute these.
             "ttm_ocf_margin": None,
             "margin_trend_slope": None,
+            "margin_source": "bank",
         },
         "weights": {
             "revenue": REVENUE_WEIGHT,
@@ -997,6 +1229,9 @@ def compute_financial(
     bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
     bank_cohort_noninterest_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
     bank_cohort_pcl_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    sales_revenue_gross_rows: Optional[List[Dict[str, Any]]] = None,
+    cost_of_revenue_rows: Optional[List[Dict[str, Any]]] = None,
+    operating_income_rows: Optional[List[Dict[str, Any]]] = None,
     peer_groups_config: Optional[Dict[str, Any]] = None,
     universe: Optional[Any] = None,
 ) -> Dict[str, Any]:
@@ -1130,8 +1365,36 @@ def compute_financial(
         )
 
     # --- Margin subscore ----------------------------------------------------
-    margin_subscore = compute_margin_trend_subscore(revenue_rows, gross_profit_rows)
-    margin_slope_value = _margin_trend_slope(revenue_rows, gross_profit_rows)
+    #
+    # Walk the gross-margin fallback chain (P3 audit fix-up, May 2026).
+    # When ``GrossProfit`` is missing we successively try
+    # ``SalesRevenueGross``, ``Revenues - CostOfRevenue``, and
+    # ``OperatingIncomeLoss`` before falling back to the neutral 50.0.
+    # The chosen source is surfaced in ``components.margin_source`` so
+    # downstream consumers (variable_detail / narratives) can disclose
+    # which proxy produced the slope.
+    effective_margin_numerator_rows, margin_source = resolve_gross_margin_source(
+        revenue_rows,
+        gross_profit_rows,
+        sales_revenue_gross_rows=sales_revenue_gross_rows,
+        cost_of_revenue_rows=cost_of_revenue_rows,
+        operating_income_rows=operating_income_rows,
+    )
+    # The legacy ``SalesRevenueGross`` fallback pairs the synthetic GP
+    # rows with the LEGACY revenue series (not the modern Revenues
+    # concept) so the trend is internally consistent. All other sources
+    # pair with the standard revenue_rows.
+    if margin_source == MARGIN_SOURCE_SALES_REVENUE_GROSS:
+        margin_revenue_rows: List[Dict[str, Any]] = sales_revenue_gross_rows or []
+    else:
+        margin_revenue_rows = revenue_rows
+
+    margin_subscore = compute_margin_trend_subscore(
+        margin_revenue_rows, effective_margin_numerator_rows
+    )
+    margin_slope_value = _margin_trend_slope(
+        margin_revenue_rows, effective_margin_numerator_rows
+    )
 
     # --- OCF subscore -------------------------------------------------------
     ocf_subscore = compute_ocf_subscore(revenue_rows, ocf_rows)
@@ -1186,6 +1449,7 @@ def compute_financial(
         "ocf_subscore": float(ocf_subscore),
         "ttm_ocf_margin": ttm_ocf_margin,
         "margin_trend_slope": margin_slope_value,
+        "margin_source": margin_source,
         "peer_cohort_strategy": peer_cohort_strategy,
     }
     if peer_cohort_size is not None:

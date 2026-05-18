@@ -661,3 +661,94 @@ def test_gross_profit_and_ocf_history_accept_as_of(ua: None) -> None:
         ocf = sec_edgar.get_operating_cash_flow_history("AAPL", as_of="2024-06-30")
     assert [r["end_date"] for r in gp] == ["2023-12-31"]
     assert [r["end_date"] for r in ocf] == ["2023-12-31"]
+
+
+# --- Gross-margin XBRL fallback fetch functions (P3 audit fix-up, May 2026) --
+
+
+def test_get_sales_revenue_gross_history_extracts_legacy_concept(ua: None) -> None:
+    """``SalesRevenueGross`` is the legacy pre-ASC 606 revenue concept."""
+    facts = _facts_with_concepts({
+        "SalesRevenueGross": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 1_500,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+            {"start": "2024-04-01", "end": "2024-06-30", "val": 1_600,
+             "form": "10-Q", "fy": 2024, "fp": "Q2"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_sales_revenue_gross_history("AAPL")
+    assert len(rows) == 2
+    # Sorted desc by end_date.
+    assert rows[0]["end_date"] == "2024-06-30"
+    assert rows[0]["concept"] == "SalesRevenueGross"
+
+
+def test_get_cost_of_revenue_history_merges_variants(ua: None) -> None:
+    """All CostOfRevenue concept variants are merged into one series."""
+    facts = _facts_with_concepts({
+        "CostOfGoodsSold": [
+            {"start": "2018-01-01", "end": "2018-03-31", "val": 300,
+             "form": "10-Q", "fy": 2018, "fp": "Q1"},
+        ],
+        # Modern variant -- different period, no collision.
+        "CostOfRevenue": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 500,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_cost_of_revenue_history("AAPL")
+    assert len(rows) == 2
+    by_end = {r["end_date"]: r for r in rows}
+    assert by_end["2024-03-31"]["value"] == 500
+    assert by_end["2018-03-31"]["value"] == 300
+
+
+def test_get_operating_income_history_extracts(ua: None) -> None:
+    """``OperatingIncomeLoss`` is the operating-margin proxy fallback."""
+    facts = _facts_with_concepts({
+        "OperatingIncomeLoss": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 200,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_operating_income_history("AAPL")
+    assert len(rows) == 1
+    assert rows[0]["value"] == 200
+    assert rows[0]["concept"] == "OperatingIncomeLoss"
+
+
+def test_fallback_fetch_functions_empty_when_concept_missing(ua: None) -> None:
+    """A company that doesn't file any of the fallback concepts -> empty list."""
+    facts = _facts_with_concepts({
+        # Only the canonical GP -- none of the fallbacks present.
+        "GrossProfit": [
+            {"start": "2024-01-01", "end": "2024-03-31", "val": 400,
+             "form": "10-Q", "fy": 2024, "fp": "Q1"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        # Three sequential calls -> three pairs of (tickers, facts) responses.
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        # The first call hits both URLs; subsequent calls cache-hit on the
+        # same facts payload.
+        assert sec_edgar.get_sales_revenue_gross_history("AAPL") == []
+        assert sec_edgar.get_cost_of_revenue_history("AAPL") == []
+        assert sec_edgar.get_operating_income_history("AAPL") == []
