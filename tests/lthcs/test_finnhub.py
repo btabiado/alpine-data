@@ -597,6 +597,218 @@ def test_parse_recommendation_signal_all_strong_sell_caps_at_negative_one() -> N
 
 
 # ---------------------------------------------------------------------------
+# as_of historical filtering — get_recommendation_trends + parse signal
+# ---------------------------------------------------------------------------
+
+
+def _multi_month_payload() -> List[Dict[str, Any]]:
+    """Six months of fixture data, newest first."""
+    return [
+        {
+            "buy": 18, "hold": 4, "period": "2026-05-01",
+            "sell": 0, "strongBuy": 12, "strongSell": 0, "symbol": "AAPL",
+        },
+        {
+            "buy": 17, "hold": 5, "period": "2026-04-01",
+            "sell": 1, "strongBuy": 10, "strongSell": 0, "symbol": "AAPL",
+        },
+        {
+            "buy": 15, "hold": 6, "period": "2026-03-01",
+            "sell": 2, "strongBuy": 8, "strongSell": 0, "symbol": "AAPL",
+        },
+        {
+            "buy": 14, "hold": 7, "period": "2026-02-01",
+            "sell": 3, "strongBuy": 6, "strongSell": 0, "symbol": "AAPL",
+        },
+        {
+            "buy": 12, "hold": 8, "period": "2026-01-01",
+            "sell": 4, "strongBuy": 4, "strongSell": 1, "symbol": "AAPL",
+        },
+        {
+            "buy": 10, "hold": 9, "period": "2025-12-01",
+            "sell": 5, "strongBuy": 2, "strongSell": 2, "symbol": "AAPL",
+        },
+    ]
+
+
+def test_get_recommendation_trends_as_of_none_preserves_existing_behavior() -> None:
+    """Default ``as_of=None`` must match historical behavior exactly."""
+    payload = _recommendation_payload()
+    mock_get = MagicMock(return_value=_mock_response(payload))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        baseline = fh.get_recommendation_trends("AAPL")
+        explicit_none = fh.get_recommendation_trends("AAPL", as_of=None)
+
+    assert baseline == explicit_none
+    assert len(baseline) == 3
+    assert baseline[0]["period"] == "2026-05-01"
+
+
+def test_get_recommendation_trends_as_of_filters_to_subset() -> None:
+    """``as_of`` in the middle of history returns only on-or-before records."""
+    payload = _multi_month_payload()
+    mock_get = MagicMock(return_value=_mock_response(payload))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        rows = fh.get_recommendation_trends("AAPL", as_of="2026-03-15")
+
+    # Should keep 2026-03-01, 2026-02-01, 2026-01-01, 2025-12-01.
+    periods = [r["period"] for r in rows]
+    assert periods == ["2026-03-01", "2026-02-01", "2026-01-01", "2025-12-01"]
+
+
+def test_get_recommendation_trends_as_of_before_any_data_returns_empty() -> None:
+    """``as_of`` earlier than the oldest record returns []."""
+    payload = _multi_month_payload()
+    mock_get = MagicMock(return_value=_mock_response(payload))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        rows = fh.get_recommendation_trends("AAPL", as_of="2020-01-01")
+
+    assert rows == []
+
+
+def test_get_recommendation_trends_as_of_exact_match_is_inclusive() -> None:
+    """A record whose period == as_of MUST be included (≤, not <)."""
+    payload = _multi_month_payload()
+    mock_get = MagicMock(return_value=_mock_response(payload))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        rows = fh.get_recommendation_trends("AAPL", as_of="2026-04-01")
+
+    periods = [r["period"] for r in rows]
+    assert "2026-04-01" in periods
+    # Records after the anchor are dropped.
+    assert "2026-05-01" not in periods
+    # The exact-match record is the new "latest".
+    assert rows[0]["period"] == "2026-04-01"
+
+
+def test_get_recommendation_trends_as_of_isolates_cache_keys() -> None:
+    """Different ``as_of`` values must not share cache entries."""
+    payload = _multi_month_payload()
+    mock_get = MagicMock(return_value=_mock_response(payload))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        # Three distinct as_of views + one live view -> four HTTP calls.
+        live = fh.get_recommendation_trends("AAPL")
+        a = fh.get_recommendation_trends("AAPL", as_of="2026-04-15")
+        b = fh.get_recommendation_trends("AAPL", as_of="2026-02-15")
+        # Repeat: each historical view should now be cached.
+        a2 = fh.get_recommendation_trends("AAPL", as_of="2026-04-15")
+        b2 = fh.get_recommendation_trends("AAPL", as_of="2026-02-15")
+        live2 = fh.get_recommendation_trends("AAPL")
+
+    assert mock_get.call_count == 3, (
+        "Expected one HTTP call per unique (ticker, as_of) cache key"
+    )
+    assert a == a2
+    assert b == b2
+    assert live == live2
+    # And distinct as_of values produce distinct contents.
+    assert a != b
+    assert a != live
+
+
+def test_get_recommendation_trends_as_of_april_15_returns_april_anchor() -> None:
+    """Sanity: as_of mid-April returns 2026-04-01 as newest record."""
+    payload = _multi_month_payload()
+    mock_get = MagicMock(return_value=_mock_response(payload))
+
+    with patch("lthcs.sources.finnhub.requests.get", mock_get):
+        rows = fh.get_recommendation_trends("AAPL", as_of="2026-04-15")
+
+    assert rows
+    assert rows[0]["period"] == "2026-04-01"
+    # Every kept record must be ≤ 2026-04-15.
+    assert all(r["period"] <= "2026-04-15" for r in rows)
+
+
+def test_parse_recommendation_signal_as_of_anchors_to_historical_record() -> None:
+    """parse_recommendation_signal with as_of uses the right historical anchor."""
+    # Hand-rolled trends so we can compute the expected consensus exactly.
+    trends = [
+        # Newest (2026-05): would be anchor under as_of=None.
+        {
+            "period": "2026-05-01",
+            "strong_buy": 12, "buy": 18, "hold": 4,
+            "sell": 0, "strong_sell": 0,
+        },
+        # April (anchor under as_of="2026-04-15"):
+        # (10*1 + 17*0.5 + 5*0 + 1*-0.5 + 0*-1) / 33 = 18/33
+        {
+            "period": "2026-04-01",
+            "strong_buy": 10, "buy": 17, "hold": 5,
+            "sell": 1, "strong_sell": 0,
+        },
+        # March (prior month under as_of="2026-04-15"):
+        # (8 + 7.5 + 0 + -1 + 0) / 31 = 14.5/31
+        {
+            "period": "2026-03-01",
+            "strong_buy": 8, "buy": 15, "hold": 6,
+            "sell": 2, "strong_sell": 0,
+        },
+    ]
+
+    # No as_of: anchored on 2026-05.
+    live = fh.parse_recommendation_signal(trends)
+    assert live["latest_month"] == "2026-05-01"
+
+    # With as_of in mid-April: anchored on 2026-04-01.
+    historical = fh.parse_recommendation_signal(trends, as_of="2026-04-15")
+    assert historical["latest_month"] == "2026-04-01"
+    assert historical["buy_count"] == 27  # 10 + 17
+    assert historical["hold_count"] == 5
+    assert historical["sell_count"] == 1  # 1 + 0
+    assert historical["total_analysts"] == 33
+    assert historical["consensus_score"] == pytest.approx(18.0 / 33.0)
+    # MoM delta uses March as the prior month.
+    assert historical["change_from_prior_month"] == pytest.approx(
+        (18.0 / 33.0) - (14.5 / 31.0)
+    )
+
+
+def test_parse_recommendation_signal_as_of_before_any_data_returns_empty() -> None:
+    """as_of earlier than every record yields the empty-signal payload."""
+    trends = [
+        {
+            "period": "2026-05-01",
+            "strong_buy": 12, "buy": 18, "hold": 4,
+            "sell": 0, "strong_sell": 0,
+        },
+        {
+            "period": "2026-04-01",
+            "strong_buy": 10, "buy": 17, "hold": 5,
+            "sell": 1, "strong_sell": 0,
+        },
+    ]
+    out = fh.parse_recommendation_signal(trends, as_of="2020-01-01")
+    assert out["latest_month"] is None
+    assert out["total_analysts"] == 0
+    assert out["consensus_score"] is None
+    assert out["change_from_prior_month"] is None
+
+
+def test_parse_recommendation_signal_as_of_exact_match_is_inclusive() -> None:
+    """as_of == a record's period must INCLUDE that record (≤, not <)."""
+    trends = [
+        {
+            "period": "2026-05-01",
+            "strong_buy": 12, "buy": 18, "hold": 4,
+            "sell": 0, "strong_sell": 0,
+        },
+        {
+            "period": "2026-04-01",
+            "strong_buy": 10, "buy": 17, "hold": 5,
+            "sell": 1, "strong_sell": 0,
+        },
+    ]
+    out = fh.parse_recommendation_signal(trends, as_of="2026-04-01")
+    assert out["latest_month"] == "2026-04-01"
+
+
+# ---------------------------------------------------------------------------
 # Error handling: API key + rate limit
 # ---------------------------------------------------------------------------
 

@@ -62,8 +62,17 @@ def _api_key() -> str:
     return key
 
 
-def _cache_key(series_id: str, observation_start: Optional[str]) -> str:
-    return f"{series_id}/{observation_start or 'all'}"
+def _cache_key(
+    series_id: str,
+    observation_start: Optional[str],
+    as_of: Optional[str] = None,
+) -> str:
+    base = f"{series_id}/{observation_start or 'all'}"
+    # Including ``as_of`` in the cache key keeps historical views from
+    # colliding with the "latest" view (and with each other).  ``None``
+    # maps to ``"latest"`` so the default cache key is unchanged from the
+    # pre-``as_of`` implementation.
+    return f"{base}/{as_of or 'latest'}"
 
 
 def _parse_value(raw: Any) -> Optional[float]:
@@ -122,7 +131,9 @@ def _fetch_from_fred(
 
 
 def get_series(
-    series_id: str, observation_start: Optional[str] = None
+    series_id: str,
+    observation_start: Optional[str] = None,
+    as_of: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
     """Return all observations for ``series_id``.
 
@@ -130,9 +141,15 @@ def get_series(
     sorted by date ascending. Missing values (FRED encodes them as ``"."``)
     are converted to ``None``.
 
-    Results are cached for 24h per (series_id, observation_start).
+    When ``as_of`` (ISO ``YYYY-MM-DD``) is provided, the returned series is
+    filtered to entries whose ``date`` is on or before ``as_of`` — i.e. the
+    state of the series as it would have looked on that date.  Comparison
+    is inclusive (``<=``), so an observation that lands exactly on
+    ``as_of`` IS included.
+
+    Results are cached for 24h per (series_id, observation_start, as_of).
     """
-    key = _cache_key(series_id, observation_start)
+    key = _cache_key(series_id, observation_start, as_of)
     hit = _cache.get(key)
     if hit is not None:
         # Cache stores the parsed (normalized) observation list directly.
@@ -140,17 +157,22 @@ def get_series(
 
     payload = _fetch_from_fred(series_id, observation_start)
     rows = _parse_observations(payload)
+    if as_of is not None:
+        rows = [r for r in rows if r["date"] <= as_of]
     _cache.set(key, rows, ttl_seconds=_CACHE_TTL_SECONDS)
     return rows
 
 
-def get_latest_value(series_id: str) -> Optional[Dict[str, Any]]:
+def get_latest_value(
+    series_id: str, as_of: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
     """Return the most recent non-null observation for ``series_id``.
 
-    Returns ``None`` if there are no observations or every observation is
-    null.
+    When ``as_of`` (ISO ``YYYY-MM-DD``) is provided, returns the most
+    recent non-null observation whose ``date`` is on or before ``as_of``.
+    Returns ``None`` if there are no qualifying observations.
     """
-    series = get_series(series_id)
+    series = get_series(series_id, as_of=as_of)
     for row in reversed(series):
         if row.get("value") is not None:
             return row

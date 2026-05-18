@@ -207,11 +207,19 @@ def get_gasoline() -> List[Dict[str, Any]]:
     return _get_spec_series("gasoline")
 
 
-def get_latest_value(route_key: str) -> Optional[Dict[str, Any]]:
+def get_latest_value(
+    route_key: str, as_of: Optional[str] = None
+) -> Optional[Dict[str, Any]]:
     """Return the most recent observation for one of the V1 series.
 
     ``route_key`` must be one of ``"wti"``, ``"brent"``, ``"gasoline"``.
     Returns ``None`` if the series is empty.
+
+    When ``as_of`` (ISO ``YYYY-MM-DD``) is provided, returns the most
+    recent observation whose ``date`` is on or before ``as_of`` — i.e.
+    the latest reading as of that historical date.  Comparison is
+    inclusive (``<=``).  Returns ``None`` if no observation satisfies
+    the filter.
     """
     if route_key not in _SERIES_SPECS:
         raise EIAError(
@@ -221,4 +229,8 @@ def get_latest_value(route_key: str) -> Optional[Dict[str, Any]]:
     rows = _get_spec_series(route_key)
     if not rows:
         return None
+    if as_of is not None:
+        rows = [r for r in rows if r["date"] <= as_of]
+        if not rows:
+            return None
     return rows[-1]

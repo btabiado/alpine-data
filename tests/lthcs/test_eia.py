@@ -280,3 +280,72 @@ def test_get_latest_value_returns_none_when_empty() -> None:
 def test_get_latest_value_rejects_unknown_route_key() -> None:
     with pytest.raises(eia.EIAError):
         eia.get_latest_value("natgas")
+
+
+# ---------------------------------------------------------------------------
+# get_latest_value — as_of (historical filtering)
+# ---------------------------------------------------------------------------
+
+
+def _multi_day_body() -> Dict[str, Any]:
+    """A small WTI-shaped body covering five consecutive days."""
+    return _eia_body(
+        [
+            ("2026-05-14", 78.42),
+            ("2026-05-13", 77.10),
+            ("2026-05-12", 76.05),
+            ("2026-05-11", 75.20),
+            ("2026-05-10", 74.50),
+        ]
+    )
+
+
+def test_get_latest_value_as_of_none_returns_overall_latest() -> None:
+    # Default behaviour: as_of=None must be byte-identical to the no-arg call.
+    with patch("lthcs.sources.eia.requests.get") as mock_get:
+        mock_get.return_value = _mock_response(json_body=_multi_day_body())
+        with_arg = eia.get_latest_value("wti", as_of=None)
+        without_arg = eia.get_latest_value("wti")
+
+    assert with_arg == without_arg
+    assert with_arg == {"date": "2026-05-14", "value": 78.42}
+
+
+def test_get_latest_value_as_of_filters_to_middle_of_series() -> None:
+    with patch("lthcs.sources.eia.requests.get") as mock_get:
+        mock_get.return_value = _mock_response(json_body=_multi_day_body())
+        latest = eia.get_latest_value("wti", as_of="2026-05-12")
+
+    # 2026-05-12 is exactly on the cutoff -> included (<=).
+    assert latest == {"date": "2026-05-12", "value": 76.05}
+
+
+def test_get_latest_value_as_of_before_any_data_returns_none() -> None:
+    with patch("lthcs.sources.eia.requests.get") as mock_get:
+        mock_get.return_value = _mock_response(json_body=_multi_day_body())
+        latest = eia.get_latest_value("wti", as_of="2020-01-01")
+
+    assert latest is None
+
+
+def test_get_latest_value_as_of_after_latest_returns_overall_latest() -> None:
+    with patch("lthcs.sources.eia.requests.get") as mock_get:
+        mock_get.return_value = _mock_response(json_body=_multi_day_body())
+        latest = eia.get_latest_value("wti", as_of="2099-01-01")
+
+    assert latest == {"date": "2026-05-14", "value": 78.42}
+
+
+def test_get_latest_value_as_of_exact_match_is_included() -> None:
+    # Cutoff that lands exactly on an observation MUST include it.
+    with patch("lthcs.sources.eia.requests.get") as mock_get:
+        mock_get.return_value = _mock_response(json_body=_multi_day_body())
+        latest = eia.get_latest_value("wti", as_of="2026-05-13")
+
+    assert latest == {"date": "2026-05-13", "value": 77.10}
+
+
+def test_get_latest_value_as_of_still_rejects_unknown_route_key() -> None:
+    # as_of must NOT bypass the route-key whitelist.
+    with pytest.raises(eia.EIAError):
+        eia.get_latest_value("natgas", as_of="2026-05-12")

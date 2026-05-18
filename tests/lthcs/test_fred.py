@@ -313,3 +313,99 @@ def test_non_200_response_skips_cache_write(fred_module) -> None:
             fred_module.get_series("X")
 
     assert mock_get.call_count == 2
+
+
+# ---- as_of: historical filtering -------------------------------------------
+
+
+def test_get_series_as_of_none_returns_full_series(fred_module) -> None:
+    # as_of=None must be byte-identical to the no-arg call.
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        no_as_of = fred_module.get_series("CPIAUCSL")
+
+    # Reset cache so the as_of=None call really hits parse/cache logic again.
+    fred_module._cache.clear()
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        with_explicit_none = fred_module.get_series("CPIAUCSL", as_of=None)
+
+    assert with_explicit_none == no_as_of
+    assert len(with_explicit_none) == 4
+
+
+def test_get_series_as_of_filters_to_subset(fred_module) -> None:
+    # Sample payload runs Jan -> Apr 2026.  as_of=2026-02-15 should keep
+    # only Jan + Feb.
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        series = fred_module.get_series("CPIAUCSL", as_of="2026-02-15")
+
+    assert [r["date"] for r in series] == ["2026-01-01", "2026-02-01"]
+
+
+def test_get_series_as_of_before_any_data_returns_empty(fred_module) -> None:
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        series = fred_module.get_series("CPIAUCSL", as_of="2020-01-01")
+
+    assert series == []
+
+
+def test_get_series_as_of_after_latest_returns_full_series(fred_module) -> None:
+    # as_of past the most-recent observation should behave like "today".
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        series = fred_module.get_series("CPIAUCSL", as_of="2099-01-01")
+
+    assert len(series) == 4
+    assert series[-1]["date"] == "2026-04-01"
+
+
+def test_get_series_as_of_exact_match_is_included(fred_module) -> None:
+    # The 2026-02-01 observation lives exactly on the cutoff. ``<=`` means
+    # it's IN, not out.
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        series = fred_module.get_series("CPIAUCSL", as_of="2026-02-01")
+
+    assert [r["date"] for r in series] == ["2026-01-01", "2026-02-01"]
+
+
+def test_get_series_as_of_isolates_cache(fred_module) -> None:
+    # Different as_of values must produce independent cache entries —
+    # otherwise a "latest" call could return a trimmed historical view.
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        fred_module.get_series("CPIAUCSL")
+        fred_module.get_series("CPIAUCSL", as_of="2026-02-15")
+        fred_module.get_series("CPIAUCSL", as_of="2026-03-15")
+
+    assert mock_get.call_count == 3
+
+
+def test_get_latest_value_as_of_returns_latest_before_cutoff(fred_module) -> None:
+    # Sample has Jan/Feb/Apr non-null (Mar is "."); as_of=2026-03-15 should
+    # land on Feb because Mar is null and Apr is past the cutoff.
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        latest = fred_module.get_latest_value("CPIAUCSL", as_of="2026-03-15")
+
+    assert latest == {"date": "2026-02-01", "value": 301.10}
+
+
+def test_get_latest_value_as_of_before_any_data_returns_none(fred_module) -> None:
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        latest = fred_module.get_latest_value("CPIAUCSL", as_of="2020-01-01")
+
+    assert latest is None
+
+
+def test_get_latest_value_as_of_exact_match_is_included(fred_module) -> None:
+    with patch("lthcs.sources.fred.requests.get") as mock_get:
+        mock_get.return_value = fake_response(_sample_payload())
+        latest = fred_module.get_latest_value("CPIAUCSL", as_of="2026-04-01")
+
+    # 2026-04-01 has a real value; should be returned exactly.
+    assert latest == {"date": "2026-04-01", "value": 302.75}

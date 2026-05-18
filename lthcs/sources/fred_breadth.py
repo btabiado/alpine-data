@@ -121,6 +121,7 @@ def _percentile_in_window(
     rows: List[Dict[str, Any]],
     value: float,
     window_days: int = _PERCENTILE_WINDOW_DAYS,
+    anchor: Optional[_dt.date] = None,
 ) -> Optional[float]:
     """Where does ``value`` sit in the trailing ``window_days`` distribution?
 
@@ -128,11 +129,15 @@ def _percentile_in_window(
     if the window is empty.  Uses the ``<= value`` rank convention so the
     most recent observation always has a well-defined rank within its own
     distribution.
+
+    ``anchor`` (default: today) is the right edge of the percentile
+    window — used when computing a historical percentile to keep the
+    2y window relative to the as-of date rather than wall-clock today.
     """
     if not rows:
         return None
-    today = _dt.date.today()
-    cutoff = (today - _dt.timedelta(days=window_days)).isoformat()
+    right_edge = anchor if anchor is not None else _dt.date.today()
+    cutoff = (right_edge - _dt.timedelta(days=window_days)).isoformat()
     window = [float(r["value"]) for r in rows if str(r.get("date") or "") >= cutoff]
     if not window:
         return None
@@ -140,15 +145,21 @@ def _percentile_in_window(
     return leq / len(window)
 
 
-def _safe_fetch(series_id: str) -> List[Dict[str, Any]]:
+def _safe_fetch(
+    series_id: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """``fred.get_series`` wrapped in best-effort error handling.
 
     Returns ``[]`` on any failure and logs at WARNING.  We never re-raise
     because regime data is additive — a single failed series should not
     break the entire snapshot.
+
+    When ``as_of`` is provided it is forwarded to the underlying
+    ``fred.get_series`` so we get the series as it would have looked on
+    that date.
     """
     try:
-        return _non_null_observations(fred.get_series(series_id))
+        return _non_null_observations(fred.get_series(series_id, as_of=as_of))
     except Exception as exc:  # noqa: BLE001  (deliberate broad except)
         logger.warning("fred_breadth: failed to fetch %s: %s", series_id, exc)
         return []
@@ -159,9 +170,14 @@ def _safe_fetch(series_id: str) -> List[Dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 
-def _build_oas_block(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _build_oas_block(
+    rows: List[Dict[str, Any]], anchor: Optional[_dt.date] = None
+) -> Optional[Dict[str, Any]]:
     """OAS series share a shape: ``current`` in percent, ``Δ`` in **basis
     points**, ``percentile_2y`` over the trailing window.
+
+    ``anchor`` shifts the right edge of the 2y percentile window; when
+    ``None`` the window is anchored to wall-clock today.
     """
     if not rows:
         return None
@@ -174,7 +190,7 @@ def _build_oas_block(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         change_bp = None
     else:
         change_bp = round((latest - past) * 100.0, 2)
-    pct = _percentile_in_window(rows, latest)
+    pct = _percentile_in_window(rows, latest, anchor=anchor)
     return {
         "current": round(latest, 4),
         "change_30d_bp": change_bp,
@@ -201,9 +217,14 @@ def _build_curve_block(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     }
 
 
-def _build_dollar_block(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _build_dollar_block(
+    rows: List[Dict[str, Any]], anchor: Optional[_dt.date] = None
+) -> Optional[Dict[str, Any]]:
     """Broad dollar index: ``current`` index level, ``change_30d_pct`` as
     a decimal (0.012 == +1.2%), ``percentile_2y`` over trailing window.
+
+    ``anchor`` shifts the right edge of the 2y percentile window; when
+    ``None`` the window is anchored to wall-clock today.
     """
     if not rows:
         return None
@@ -214,7 +235,7 @@ def _build_dollar_block(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         change_pct = None
     else:
         change_pct = round((latest - past) / past, 6)
-    pct = _percentile_in_window(rows, latest)
+    pct = _percentile_in_window(rows, latest, anchor=anchor)
     return {
         "current": round(latest, 4),
         "change_30d_pct": change_pct,
@@ -267,8 +288,25 @@ def _regime_flags(
 # ---------------------------------------------------------------------------
 
 
-def fetch_breadth_snapshot(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
-    """Build today's FRED breadth / regime snapshot.
+def fetch_breadth_snapshot(
+    as_of: Optional[str] = None, cache_dir: Optional[Path] = None
+) -> Dict[str, Any]:
+    """Build a FRED breadth / regime snapshot.
+
+    When ``as_of`` (ISO ``YYYY-MM-DD``) is provided, the snapshot reflects
+    the state of the series as it would have looked on that date:
+
+      * Every underlying ``fred.get_series`` call is filtered to
+        observations on or before ``as_of``.
+      * The 30d-change "prior anchor" therefore lands on the observation
+        ~21 trading days before ``as_of`` (the nearest prior business day
+        in the trimmed series), not relative to wall-clock today.
+      * The 2y percentile window is anchored to ``as_of``, looking back
+        ``_PERCENTILE_WINDOW_DAYS`` calendar days from there.
+      * The ``as_of`` field in the returned dict echoes the input.
+
+    When ``as_of`` is ``None`` (default), behaviour is identical to the
+    pre-``as_of`` implementation — anchored to wall-clock today.
 
     ``cache_dir`` is accepted for parity with other source modules; when
     provided it overrides the module-level snapshot cache root for the
@@ -282,8 +320,10 @@ def fetch_breadth_snapshot(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
     if cache_dir is not None:
         cache = FileCache("fred_breadth", root=Path(cache_dir))
 
-    today = _today_iso()
-    cache_key = f"breadth/{today}"
+    snapshot_date = as_of if as_of is not None else _today_iso()
+    # Cache key includes ``as_of`` so historical and "live" snapshots
+    # don't collide with each other (or with snapshots for other dates).
+    cache_key = f"breadth/{snapshot_date}"
     hit = cache.get(cache_key)
     if hit is not None and isinstance(hit.value, dict):
         return dict(hit.value)
@@ -296,22 +336,32 @@ def fetch_breadth_snapshot(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
     except Exception:  # pragma: no cover  (defensive only)
         pass
 
-    hy_rows = _safe_fetch(SERIES_HY_OAS)
-    ig_rows = _safe_fetch(SERIES_IG_OAS)
-    curve_rows = _safe_fetch(SERIES_2S10S)
-    dollar_rows = _safe_fetch(SERIES_BROAD_DOLLAR)
+    hy_rows = _safe_fetch(SERIES_HY_OAS, as_of=as_of)
+    ig_rows = _safe_fetch(SERIES_IG_OAS, as_of=as_of)
+    curve_rows = _safe_fetch(SERIES_2S10S, as_of=as_of)
+    dollar_rows = _safe_fetch(SERIES_BROAD_DOLLAR, as_of=as_of)
 
-    hy_block = _build_oas_block(hy_rows)
-    ig_block = _build_oas_block(ig_rows)
+    # Percentile window's right edge: ``as_of`` when historical, else today.
+    anchor: Optional[_dt.date]
+    if as_of is not None:
+        try:
+            anchor = _dt.date.fromisoformat(as_of)
+        except ValueError:
+            anchor = None
+    else:
+        anchor = None
+
+    hy_block = _build_oas_block(hy_rows, anchor=anchor)
+    ig_block = _build_oas_block(ig_rows, anchor=anchor)
     curve_block = _build_curve_block(curve_rows)
-    dollar_block = _build_dollar_block(dollar_rows)
+    dollar_block = _build_dollar_block(dollar_rows, anchor=anchor)
 
     blocks = [hy_block, ig_block, curve_block, dollar_block]
     ok = sum(1 for b in blocks if b is not None)
     failed = len(blocks) - ok
 
     snapshot: Dict[str, Any] = {
-        "as_of": today,
+        "as_of": snapshot_date,
         "hy_oas": hy_block,
         "ig_oas": ig_block,
         "yield_curve_2s10s": curve_block,

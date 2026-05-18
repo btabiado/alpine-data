@@ -385,14 +385,22 @@ def get_news_sentiment(ticker: Optional[str]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _reco_cache_key(ticker: str) -> str:
+def _reco_cache_key(ticker: str, as_of: Optional[str] = None) -> str:
     # Weekly cache key: recommendation trends are monthly, so we tolerate
     # up to a week's staleness without re-fetching.
+    #
+    # When ``as_of`` is provided, embed it in the key so that historical
+    # views (used by the LTHCS backfill) don't collide with the live
+    # current-week view, and different historical anchors don't collide
+    # with each other.
     iso_week = _dt.date.today().isocalendar()
-    return (
+    base = (
         f"recommendation_trends/{ticker.upper()}/"
         f"{iso_week[0]}W{iso_week[1]:02d}"
     )
+    if as_of:
+        return f"{base}/as_of/{as_of}"
+    return base
 
 
 def _normalize_reco_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
@@ -406,7 +414,9 @@ def _normalize_reco_entry(entry: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def get_recommendation_trends(ticker: Optional[str]) -> List[Dict[str, Any]]:
+def get_recommendation_trends(
+    ticker: Optional[str], as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Pull Finnhub recommendation-trends history for ``ticker``.
 
     Returns a list of monthly snapshots **newest first** in the shape:
@@ -414,13 +424,22 @@ def get_recommendation_trends(ticker: Optional[str]) -> List[Dict[str, Any]]:
         [{"period": "2026-05-01", "strong_buy": int, "buy": int,
           "hold": int, "sell": int, "strong_sell": int}, ...]
 
+    Args:
+        ticker: Symbol to fetch. Falsy ticker returns ``[]``.
+        as_of: Optional ISO date (``YYYY-MM-DD``). When provided, the
+            returned list is filtered to records with
+            ``period <= as_of`` (inclusive). Used by the LTHCS backfill
+            to reproduce historical analyst snapshots. ``None`` (the
+            default) returns the full history exactly as before.
+
     Cached 7 days. Empty list on missing ticker, network error, or
-    non-200.
+    non-200. The cache key includes ``as_of`` so historical views don't
+    collide with the live view or with each other.
     """
     if not ticker:
         return []
 
-    key = _reco_cache_key(ticker)
+    key = _reco_cache_key(ticker, as_of=as_of)
     hit = _RECO_CACHE.get(key)
     if hit is not None:
         return list(hit.value or [])
@@ -443,6 +462,12 @@ def get_recommendation_trends(ticker: Optional[str]) -> List[Dict[str, Any]]:
     # newest-first, but normalizing here makes us robust to upstream
     # changes).
     rows.sort(key=lambda r: r["period"], reverse=True)
+
+    if as_of:
+        # Inclusive filter: a record whose ``period`` equals ``as_of``
+        # stays in the result. ISO ``YYYY-MM-DD`` strings compare
+        # lexicographically the same as they do chronologically.
+        rows = [r for r in rows if r.get("period") and r["period"] <= as_of]
 
     _RECO_CACHE.set(key, rows, ttl_seconds=_CACHE_TTL_RECO_SECONDS)
     return rows
@@ -591,7 +616,8 @@ def _consensus_score(snapshot: Dict[str, Any]) -> Optional[float]:
 
 
 def parse_recommendation_signal(
-    reco_trends: List[Dict[str, Any]]
+    reco_trends: List[Dict[str, Any]],
+    as_of: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Convert recommendation trends to an analyst-actions signal.
 
@@ -599,6 +625,16 @@ def parse_recommendation_signal(
 
     Input is a list of monthly snapshots (newest first), each with the
     keys produced by ``get_recommendation_trends``.
+
+    Args:
+        reco_trends: List of monthly snapshots (any order; this function
+            re-sorts defensively).
+        as_of: Optional ISO date (``YYYY-MM-DD``). When provided, the
+            anchor "latest" record is the most recent snapshot with
+            ``period <= as_of`` (inclusive). Snapshots after ``as_of``
+            are ignored for both the latest-month payload and the
+            MoM-delta prior. ``None`` (default) preserves the original
+            behaviour exactly: anchor on whatever the newest record is.
 
     Output:
 
@@ -635,6 +671,16 @@ def parse_recommendation_signal(
         key=lambda r: str(r.get("period") or ""),
         reverse=True,
     )
+
+    if as_of:
+        # Inclusive: a record with period == as_of is kept and may serve
+        # as the anchor. Records after as_of are dropped entirely so the
+        # MoM delta also uses the right historical prior.
+        rows = [
+            r for r in rows
+            if str(r.get("period") or "") and str(r.get("period")) <= as_of
+        ]
+
     if not rows:
         return empty
 

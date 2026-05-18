@@ -440,6 +440,182 @@ def test_cache_dir_override_isolates_state(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# as_of: historical snapshot computation
+# ---------------------------------------------------------------------------
+
+
+def test_as_of_none_matches_default_snapshot() -> None:
+    # Default (as_of=None) must be identical to the no-arg call.
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _flat_payload(3.42, 60),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.02, 60),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.45, 60),
+        fred_breadth.SERIES_BROAD_DOLLAR: _flat_payload(121.3, 60),
+    }
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        default_snap = fred_breadth.fetch_breadth_snapshot()
+
+    # Clear caches so both calls have to rebuild from scratch.
+    fred_breadth._cache.clear()
+    fred._cache.clear()
+
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        explicit_none = fred_breadth.fetch_breadth_snapshot(as_of=None)
+
+    assert default_snap == explicit_none
+    assert default_snap["as_of"] == _dt.date.today().isoformat()
+
+
+def test_as_of_echoes_through_to_snapshot_date() -> None:
+    # The ``as_of`` field of the returned dict reflects the passed date.
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _ramp_payload(
+            3.00, 3.50, 22, end_date="2026-04-01"
+        ),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.0, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.1, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_BROAD_DOLLAR: _flat_payload(
+            120.0, 22, end_date="2026-04-01"
+        ),
+    }
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        snap = fred_breadth.fetch_breadth_snapshot(as_of="2026-04-01")
+    assert snap["as_of"] == "2026-04-01"
+
+
+def test_as_of_anchors_30d_change_to_historical_date() -> None:
+    # Build a series whose ramp ENDS on 2026-04-01 (so the latest visible
+    # value when as_of=2026-04-01 is 3.50, and 21 obs prior is 3.00).
+    # If we run with as_of=2026-04-01, the 30d Δ should be +50bp anchored
+    # off the 2026-04-01 / ~2026-03-02 pair.  If as_of were ignored and the
+    # function reached past wall-clock today, the math would be different
+    # (or absent).
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _ramp_payload(
+            3.00, 3.50, 22, end_date="2026-04-01"
+        ),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.0, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.1, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_BROAD_DOLLAR: _flat_payload(
+            120.0, 22, end_date="2026-04-01"
+        ),
+    }
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        snap = fred_breadth.fetch_breadth_snapshot(as_of="2026-04-01")
+
+    # latest (2026-04-01) -> 3.50, lookback (~2026-03-02 / +21 calendar days
+    # earlier in this construction) -> 3.00.  Δ = +0.50% = +50bp.
+    assert snap["hy_oas"]["current"] == pytest.approx(3.50)
+    assert snap["hy_oas"]["change_30d_bp"] == pytest.approx(50.0, abs=0.5)
+
+
+def test_as_of_in_middle_of_series_trims_future_observations() -> None:
+    # Build a 60-bar ramp ending in mid-2026; query as_of partway through
+    # and confirm the snapshot's "current" matches the ramp at that point
+    # rather than the very last bar.
+    end_date = "2026-06-30"
+    bars = 60
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _ramp_payload(2.0, 5.0, bars, end_date=end_date),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.0, bars, end_date=end_date),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.1, bars, end_date=end_date),
+        fred_breadth.SERIES_BROAD_DOLLAR: _ramp_payload(
+            100.0, 130.0, bars, end_date=end_date
+        ),
+    }
+    # The ramp linearly goes 2.0 -> 5.0 across 60 days ending 2026-06-30.
+    # Pick as_of partway through and compute the expected "current" value.
+    end = _dt.date.fromisoformat(end_date)
+    as_of_date = (end - _dt.timedelta(days=30)).isoformat()
+    # Step size + index of as_of in the ramp (60 bars, indexed 0..59):
+    # index_of(as_of) = 59 - 30 = 29.  value = 2.0 + (3.0/59)*29.
+    expected_current = 2.0 + (3.0 / 59) * 29
+
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        snap = fred_breadth.fetch_breadth_snapshot(as_of=as_of_date)
+
+    assert snap["hy_oas"]["current"] == pytest.approx(expected_current, abs=1e-3)
+
+
+def test_as_of_2y_percentile_windowed_to_anchor_not_today() -> None:
+    # Build a series that has two distinct "regimes": low values in
+    # 2024 and high values in 2026.  If the percentile window is correctly
+    # anchored to ``as_of=2024-12-31``, the window will only see the low
+    # regime and the latest 2024 observation will be a high-rank value
+    # within that window.  If the window were anchored to today (2026)
+    # it would see both regimes — same input, different rank.
+
+    # Construct: 100 calendar days ending 2024-12-31 with values ramping
+    # 1.0 -> 2.0, then a long gap with no obs (so the window is just the
+    # 2024 stretch when as_of=2024-12-31).
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _ramp_payload(
+            1.0, 2.0, 100, end_date="2024-12-31"
+        ),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.0, 22, end_date="2024-12-31"),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.1, 22, end_date="2024-12-31"),
+        fred_breadth.SERIES_BROAD_DOLLAR: _ramp_payload(
+            100.0, 110.0, 100, end_date="2024-12-31"
+        ),
+    }
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        snap = fred_breadth.fetch_breadth_snapshot(as_of="2024-12-31")
+
+    # The most recent visible HY value (2.0) is the maximum in the trimmed
+    # series, so its percentile within the anchored 2y window must be 1.0.
+    assert snap["hy_oas"]["percentile_2y"] == pytest.approx(1.0)
+    # Sanity: the anchored "current" matches the ramp's end.
+    assert snap["hy_oas"]["current"] == pytest.approx(2.0)
+
+
+def test_as_of_cache_isolated_from_default_snapshot() -> None:
+    # Hitting the function twice with the same as_of must reuse the
+    # snapshot cache (no second round of fetches).  And the as_of-specific
+    # entry must not contaminate the default ("today") entry — they live
+    # under different cache keys.
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _flat_payload(3.0, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.0, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.1, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_BROAD_DOLLAR: _flat_payload(
+            120.0, 22, end_date="2026-04-01"
+        ),
+    }
+    with patch.object(
+        fred.requests, "get", side_effect=_series_router(payloads)
+    ) as mg:
+        a = fred_breadth.fetch_breadth_snapshot(as_of="2026-04-01")
+        b = fred_breadth.fetch_breadth_snapshot(as_of="2026-04-01")
+
+    assert a == b
+    # Second call short-circuits via the snapshot cache.
+    assert mg.call_count == 4
+    assert a["as_of"] == "2026-04-01"
+
+
+def test_as_of_before_any_data_returns_well_formed_empty_snapshot() -> None:
+    # as_of earlier than the first observation -> every series filtered
+    # empty -> blocks are None but the snapshot still has the right shape.
+    payloads = {
+        fred_breadth.SERIES_HY_OAS: _flat_payload(3.0, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_IG_OAS: _flat_payload(1.0, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_2S10S: _flat_payload(0.1, 22, end_date="2026-04-01"),
+        fred_breadth.SERIES_BROAD_DOLLAR: _flat_payload(
+            120.0, 22, end_date="2026-04-01"
+        ),
+    }
+    with patch.object(fred.requests, "get", side_effect=_series_router(payloads)):
+        snap = fred_breadth.fetch_breadth_snapshot(as_of="2020-01-01")
+
+    assert snap["as_of"] == "2020-01-01"
+    assert snap["hy_oas"] is None
+    assert snap["ig_oas"] is None
+    assert snap["yield_curve_2s10s"] is None
+    assert snap["broad_dollar"] is None
+    assert snap["data_quality"] == {"sources_ok": 0, "sources_failed": 4}
+
+
 def test_percentile_within_unit_interval() -> None:
     payloads = {
         fred_breadth.SERIES_HY_OAS: _ramp_payload(2.0, 5.0, 60),
