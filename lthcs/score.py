@@ -449,6 +449,20 @@ def compute_lthcs_score(
 
     documented_weights = get_maturity_weights(maturity_stage, weights_config)
 
+    # Adaptive override (Tier 5 #25): when `adaptive_overrides.enabled`
+    # is true in weights.json, swap the curated profile weights for the
+    # tuner's output. Default is False — production behavior unchanged.
+    adaptive = (weights_config or {}).get("adaptive_overrides") or {}
+    if adaptive.get("enabled") is True:
+        override_map = adaptive.get("weights") or {}
+        if isinstance(override_map, dict):
+            try:
+                documented_weights = [float(override_map[p]) for p in PILLAR_ORDER]
+            except (KeyError, TypeError, ValueError):
+                _LOG.warning(
+                    "adaptive_overrides.weights malformed; falling back to curated weights."
+                )
+
     # Renormalize away stubbed pillars driven by data_quality_flags. A ticker
     # whose Thesis sentiment hasn't been scored yet (rotation hasn't reached
     # it on the AV free-tier budget) shouldn't carry a 50.0 placeholder at

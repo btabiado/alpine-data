@@ -20,7 +20,10 @@
     "recovery_stabilization":    [0.15, 0.15, 0.35, 0.20, 0.15],
     "recovery_operational":      [0.20, 0.20, 0.30, 0.15, 0.15],
     "recovery_earnings":         [0.20, 0.25, 0.25, 0.15, 0.15],
-    "recovery_rerating":         [0.25, 0.20, 0.15, 0.20, 0.20]
+    "recovery_rerating":         [0.25, 0.20, 0.15, 0.20, 0.20],
+    "btc":                       [0.10, 0.30, 0.25, 0.15, 0.20],
+    "eth":                       [0.25, 0.20, 0.20, 0.20, 0.15],
+    "sol":                       [0.30, 0.15, 0.20, 0.20, 0.15]
   },
   "score_bands": {
     "elite":            {"min": 90, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},
@@ -42,5 +45,19 @@
       "applies_to": "all_tickers"
     },
     "sector_adjustment_table": "data/lthcs/sector_des_weights.json"
+  },
+  "adaptive_overrides": {
+    "enabled": false,
+    "as_of": "2026-05-18",
+    "weights": {
+      "adoption_momentum": 0.20,
+      "institutional_confidence": 0.20,
+      "financial_evolution": 0.20,
+      "thesis_integrity": 0.20,
+      "des": 0.20
+    },
+    "source": "scripts/lthcs_tune_weights.py walk-forward",
+    "test_ic": null,
+    "comment": "Default OFF until backfill history + walk-forward CV both qualify. Flip 'enabled' to true after a tune run returns recommendation='ship'."
   }
 }
