@@ -1,12 +1,12 @@
-"""Tests for ``scripts/lthcs_backfill_validate.py``.
+"""Tests for ``lthcs.backfill_validate``.
 
 Each test builds a tiny synthetic LTHCS data tree in ``tmp_path`` and
-calls ``run_validation`` directly. The CLI is exercised separately.
+calls ``run_validation`` directly. The CLI (``scripts/lthcs_backfill_validate.py``,
+a thin wrapper around this module) is exercised separately.
 """
 
 from __future__ import annotations
 
-import importlib.util
 import json
 import math
 from datetime import date
@@ -14,21 +14,18 @@ from pathlib import Path
 
 import pytest
 
+from lthcs import backfill_validate as _backfill_validate
+
 
 # ---------------------------------------------------------------------------
-# Import the script module (it lives under scripts/ not in a package)
+# Provide the existing ``lbv`` fixture so individual tests don't need
+# rewriting; it now just exposes the proper module import.
 # ---------------------------------------------------------------------------
-
-SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "lthcs_backfill_validate.py"
 
 
 @pytest.fixture(scope="module")
 def lbv():
-    spec = importlib.util.spec_from_file_location("lthcs_backfill_validate", SCRIPT_PATH)
-    assert spec and spec.loader
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    return _backfill_validate
 
 
 # ---------------------------------------------------------------------------

@@ -11,15 +11,4 @@
 		</shrsOrPrnAmt>
 		<investmentDiscretion>SOLE</investmentDiscretion>
 	</infoTable>
-	<infoTable>
-		<nameOfIssuer>MICROSOFT CORP</nameOfIssuer>
-		<titleOfClass>COM</titleOfClass>
-		<cusip>594918104</cusip>
-		<value>900000000</value>
-		<shrsOrPrnAmt>
-			<sshPrnamt>2100000</sshPrnamt>
-			<sshPrnamtType>SH</sshPrnamtType>
-		</shrsOrPrnAmt>
-		<investmentDiscretion>SOLE</investmentDiscretion>
-	</infoTable>
 </informationTable>
