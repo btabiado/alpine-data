@@ -4322,8 +4322,8 @@ function renderLthcsMoversRow(movers){
 // b18e180. Reads DATA.lthcs.insights (3-5 dicts built server-side by
 // compute_lthcs_insights). Each insight gets a small card with a
 // severity-colored left border (high=red, medium=amber, low=green).
-// The CTA "Open full LTHCS →" sits in the top-right corner of the row so
-// the link stays prominent without consuming a whole row.
+// The CTA "Open full LTHCS →" and an "ⓘ About" toggle sit in the
+// top-right corner so they stay prominent without consuming a row.
 function renderLthcsInsightsRow(host){
   if (!host) return;
   const L = (DATA.lthcs || {});
@@ -4333,6 +4333,59 @@ function renderLthcsInsightsRow(host){
     'color:#0b0d12;font-weight:700;padding:6px 12px;border-radius:6px;' +
     'text-decoration:none;font-size:12px;white-space:nowrap;flex:0 0 auto">' +
     'Open full LTHCS →</a>';
+  // "About LTHCS" disclosure — a <details> button next to the CTA.
+  // Opens an inline panel explaining what LTHCS is, the 5-pillar
+  // calculation, and the data-source lineage. No modal infra needed.
+  const aboutBtn = '<details class="lthcs-about-details" style="' +
+    'flex:0 0 auto;position:relative">' +
+    '<summary style="list-style:none;cursor:pointer;display:inline-flex;' +
+    'align-items:center;gap:4px;background:#0e1118;color:var(--text);' +
+    'font-weight:600;padding:6px 10px;border-radius:6px;border:1px solid var(--border);' +
+    'font-size:12px;white-space:nowrap">ⓘ About LTHCS</summary>' +
+    '<div class="lthcs-about-panel" style="position:absolute;top:calc(100% + 6px);' +
+    'right:0;width:min(560px, calc(100vw - 32px));background:#0e1118;' +
+    'border:1px solid var(--border);border-left:3px solid #a78bfa;border-radius:10px;' +
+    'padding:14px 16px;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,0.4);line-height:1.5;' +
+    'font-size:13px;color:var(--text);max-height:70vh;overflow-y:auto">' +
+    '<div style="font-size:14px;font-weight:700;margin-bottom:8px">What is LTHCS?</div>' +
+    '<p style="margin:0 0 10px 0;color:var(--text)">' +
+    'The <strong>Long-Term Holding Conviction Score</strong> is a daily 0-100 read on ' +
+    'each of 167 US-listed stocks (DJIA 30 + NASDAQ-100 + S&P 100). It measures whether ' +
+    'the underlying business and market context still justify <em>holding</em> the position ' +
+    'long-term. Not a trade signal — a conviction signal.</p>' +
+    '<div style="font-size:14px;font-weight:700;margin:12px 0 6px 0">How the score is calculated</div>' +
+    '<p style="margin:0 0 6px 0;color:var(--muted);font-size:12px">' +
+    'Each ticker is scored 0-100 across 5 pillars, weighted by its maturity stage ' +
+    '(mature compounder / growth / recovery / etc.). Modifiers then refine: HY-stress, ' +
+    'curve inversion, dollar strength, volatility percentile. Final score → band: ' +
+    'Elite (90+) · High (80-89) · Constructive (70-79) · Monitor (60-69) · Weakening (50-59) · Review (0-49).</p>' +
+    '<ul style="margin:6px 0 10px 16px;padding:0;color:var(--text);font-size:12px;line-height:1.5">' +
+    '<li><strong>Adoption Momentum</strong> — revenue growth percentile + Google Trends acceleration</li>' +
+    '<li><strong>Institutional Confidence</strong> — price momentum + SEC Form 4 insider activity + SEC 13F holdings</li>' +
+    '<li><strong>Financial Evolution</strong> — gross profit, FCF, NII (for banks), credit quality</li>' +
+    '<li><strong>Thesis Integrity</strong> — analyst consensus + earnings events + news sentiment</li>' +
+    '<li><strong>DES — Demand Environment</strong> — sector regime + macro overlay</li>' +
+    '</ul>' +
+    '<div style="font-size:14px;font-weight:700;margin:12px 0 6px 0">' +
+    'Data sources <span class="sub" style="font-weight:400;color:var(--muted);font-size:11px">' +
+    '(~17 feeds across 10 categories, all free)</span></div>' +
+    '<ol style="margin:6px 0 6px 18px;padding:0;color:var(--text);font-size:12px;line-height:1.55">' +
+    '<li><strong>Yahoo Finance</strong> — daily prices, momentum, sector ETFs (XLK/XLF/XLE…)</li>' +
+    '<li><strong>SEC EDGAR XBRL</strong> — revenue, gross profit, OCF, bank NII / PCL / non-interest income</li>' +
+    '<li><strong>SEC 8-K</strong> — material event filings (restatements, earnings, dispositions)</li>' +
+    '<li><strong>SEC Form 4</strong> — insider open-market transactions (165/168 covered today)</li>' +
+    '<li><strong>SEC 13F</strong> — institutional holdings aggregated across 21 tracked managers</li>' +
+    '<li><strong>FRED</strong> — CPI, Fed Funds, 10Y, real-10Y, VIX, M2, HY OAS, IG OAS, 2s10s, broad dollar</li>' +
+    '<li><strong>EIA</strong> — WTI oil + "Today in Energy" RSS</li>' +
+    '<li><strong>Finnhub</strong> — analyst recommendation consensus</li>' +
+    '<li><strong>Sentiment surveys</strong> — CBOE put/call ratio, AAII retail bull/bear, NAAIM manager exposure</li>' +
+    '<li><strong>Sector + AI news RSS</strong> — FDA press, Federal Reserve, HN Algolia, TechCrunch, VentureBeat</li>' +
+    '</ol>' +
+    '<p style="margin:6px 0 0 0;color:var(--muted);font-size:11px;font-style:italic">' +
+    'Plus a weekly Google Trends batch (search-interest acceleration; cached separately ' +
+    'because pytrends is rate-limited). Aggregated 0-100 directional read across the universe; ' +
+    'not a trading recommendation.</p>' +
+    '</div></details>';
   const sevColor = sev => ({
     high:   '#ef4444',
     medium: '#f59e0b',
@@ -4346,7 +4399,7 @@ function renderLthcsInsightsRow(host){
           ${insights.length ? insights.length + ' signals · as of ' + escapeHtml(L.as_of || '—') : 'none right now'}
         </span>
       </div>
-      ${cta}
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">${aboutBtn}${cta}</div>
     </div>
   `;
   if (!insights.length){
