@@ -157,45 +157,79 @@
       .vc-context-card .vals .good { color: var(--band-high-bright); }
       .vc-context-card .vals .bad { color: var(--band-weakening-bright); }
 
-      /* ================ APEX (unchanged from Variant B) ================ */
+      /* ================ APEX — centered prominent headline ================
+         design rationale: mirrors the Crypto Trading Dashboard's "STRONG
+         WHALE DUMP" treatment. Big centered phrase, color-coded by Watch%,
+         with score number and gauge below. Reacts to the selected index. */
       .vc-apex {
         background: var(--bg-elevated);
         border: 1px solid var(--border-subtle);
-        border-left: 6px solid var(--band-monitor-bright);
         border-radius: var(--radius-lg);
-        padding: 18px 22px;
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 18px;
+        padding: 22px 24px 18px;
+        display: flex;
+        flex-direction: column;
         align-items: center;
+        gap: 10px;
+        text-align: center;
+        position: relative;
       }
-      @media (max-width: 760px) { .vc-apex { grid-template-columns: 1fr; padding: 14px 16px; } }
+      /* left stripe tone matches the posture color */
+      .vc-apex::before {
+        content: "";
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 6px;
+        border-top-left-radius: var(--radius-lg);
+        border-bottom-left-radius: var(--radius-lg);
+        background: var(--apex-tone, var(--band-weakening-bright));
+        transition: background 200ms ease;
+      }
       .vc-apex-eyebrow {
         font-size: 11px;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
         color: var(--text-tertiary);
         font-weight: 700;
       }
-      .vc-apex-title { margin: 4px 0 2px; font-size: 17px; font-weight: 600; color: var(--text-primary); }
-      .vc-apex-sub { font-size: 12px; color: var(--text-secondary); max-width: 60ch; }
-      .vc-apex-score-wrap {
-        text-align: right;
-        display: flex; flex-direction: column; align-items: flex-end;
-        gap: 2px;
+      /* THE big headline — like STRONG WHALE DUMP */
+      .vc-apex-headline {
+        margin: 0;
+        font-size: 44px;
+        line-height: 1.05;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: var(--apex-tone, var(--band-weakening-bright));
+        transition: color 200ms ease;
       }
-      .vc-apex-score {
-        font-size: 52px; line-height: 1; font-weight: 700;
-        font-variant-numeric: tabular-nums; letter-spacing: -1px;
-        color: var(--band-monitor-bright);
+      @media (max-width: 760px) { .vc-apex-headline { font-size: 32px; } }
+      .vc-apex-score-line {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
       }
-      .vc-apex-label {
-        font-size: 11px; letter-spacing: 0.08em; font-weight: 700;
-        color: var(--band-monitor-bright);
+      .vc-apex-score-line .num {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--apex-tone, var(--band-weakening-bright));
+        transition: color 200ms ease;
       }
-      .vc-apex-gauge { grid-column: 1 / -1; position: relative; margin-top: 2px; }
+      .vc-apex-sub {
+        font-size: 12.5px;
+        color: var(--text-secondary);
+        max-width: 64ch;
+        margin: 0;
+        line-height: 1.45;
+      }
+      .vc-apex-gauge {
+        width: 100%;
+        max-width: 720px;
+        position: relative;
+        margin-top: 8px;
+      }
       .vc-apex-gauge-bar {
-        height: 6px; border-radius: 3px;
+        height: 8px; border-radius: 4px;
         background: linear-gradient(
           to right,
           var(--band-review-bright) 0%,
@@ -206,19 +240,18 @@
         );
       }
       .vc-apex-gauge-marker {
-        position: absolute; top: -3px; left: 43.5%;
-        width: 6px; height: 12px; background: var(--text-primary);
+        position: absolute; top: -4px;
+        left: 43.5%;
+        width: 6px; height: 16px;
+        background: var(--text-primary);
         border-radius: 2px;
         box-shadow: 0 0 0 2px var(--bg-elevated);
         transform: translateX(-50%);
+        transition: left 200ms ease;
       }
       .vc-apex-ticks {
-        display: flex; justify-content: space-between; margin-top: 4px;
+        display: flex; justify-content: space-between; margin-top: 6px;
         font-size: 10px; color: var(--text-tertiary);
-      }
-      @media (max-width: 760px) {
-        .vc-apex-score-wrap { align-items: flex-start; text-align: left; }
-        .vc-apex-score { font-size: 44px; }
       }
 
       /* ================ TIER 1 — BUCKETS (mirrors Variant B) ================ */
@@ -392,23 +425,20 @@
         </div>
       </div>
 
-      <!-- ===================== APEX ===================== -->
-      <section class="vc-apex" aria-label="LTHCS Composite Index">
-        <div>
-          <div class="vc-apex-eyebrow">LTHCS Composite Index &middot; <span data-apex-eyebrow>Universe of 167</span></div>
-          <h1 class="vc-apex-title">Market posture: <em style="font-style:normal;color:var(--band-monitor-bright)">distributing</em></h1>
-          <p class="vc-apex-sub">
-            Band lean −66.5%, fundamentals stable, sentiment supportive,
-            demand environment neutral. Directional read, not a trading signal.
-          </p>
+      <!-- ===================== APEX — centered headline ===================== -->
+      <section class="vc-apex" aria-label="LTHCS Composite Index" id="vc-apex">
+        <div class="vc-apex-eyebrow" data-apex-eyebrow>LTHCS Composite Index &middot; Universe of 167</div>
+        <h1 class="vc-apex-headline" data-apex-headline>DISTRIBUTING</h1>
+        <div class="vc-apex-score-line">
+          band lean <span class="num" data-apex-lean>−66.5%</span>
+          &middot; <span data-apex-score>watch 73% of subset</span>
         </div>
-        <div class="vc-apex-score-wrap">
-          <div class="vc-apex-score">−13</div>
-          <div class="vc-apex-label">NEUTRAL &middot; MONITOR</div>
-        </div>
+        <p class="vc-apex-sub" data-apex-sub>
+          Heavy tail in Watch; Buy thin. Directional read, not a trading signal.
+        </p>
         <div class="vc-apex-gauge">
           <div class="vc-apex-gauge-bar"></div>
-          <div class="vc-apex-gauge-marker" title="−13"></div>
+          <div class="vc-apex-gauge-marker" data-apex-marker title="band lean"></div>
           <div class="vc-apex-ticks">
             <span>−100</span><span>−50</span><span>0</span><span>+50</span><span>+100</span>
           </div>
@@ -505,6 +535,22 @@
         applyIndex(key);
       }));
 
+      // Map (Watch% of subset) → big posture headline + tone color.
+      // Mirrors the crypto dashboard's "STRONG WHALE DUMP" / "NEUTRAL" treatment.
+      function posture(d) {
+        const watchPct = d.total ? (d.watch / d.total * 100) : 0;
+        const buyPct   = d.total ? (d.buy   / d.total * 100) : 0;
+        const lean     = d.total ? ((d.buy - d.watch) / d.total * 100) : 0;
+        let phrase, toneVar;
+        if (watchPct >= 80)       { phrase = 'STRONG DISTRIBUTION'; toneVar = 'var(--band-review-bright)'; }
+        else if (watchPct >= 65)  { phrase = 'DISTRIBUTING';        toneVar = 'var(--band-weakening-bright)'; }
+        else if (watchPct >= 45)  { phrase = 'WEAK';                toneVar = 'var(--band-monitor-bright)'; }
+        else if (watchPct >= 25)  { phrase = 'BALANCED';            toneVar = 'var(--band-monitor-bright)'; }
+        else if (buyPct >= 40)    { phrase = 'STRONG ACCUMULATION'; toneVar = 'var(--band-high-bright)'; }
+        else                       { phrase = 'CONSTRUCTIVE';        toneVar = 'var(--band-constructive-bright)'; }
+        return { phrase, toneVar, watchPct, buyPct, lean };
+      }
+
       function applyIndex(key) {
         const d = INDEX_DATA[key];
 
@@ -529,10 +575,45 @@
           }
         }
 
-        // Apex eyebrow
+        // ========== APEX — big centered headline ==========
+        const p = posture(d);
+        const apex = document.getElementById('vc-apex');
+        if (apex) apex.style.setProperty('--apex-tone', p.toneVar);
+
         const eyebrow = document.querySelector('[data-apex-eyebrow]');
         if (eyebrow) eyebrow.textContent =
-          key === 'all' ? `Universe of ${total}` : `${d.label} subset · ${total} names`;
+          key === 'all'
+            ? `LTHCS Composite Index · Universe of ${total}`
+            : `LTHCS Composite Index · ${d.label} subset · ${total} names`;
+
+        const headline = document.querySelector('[data-apex-headline]');
+        if (headline) headline.textContent = `${d.label} · ${p.phrase}`;
+
+        const lean = document.querySelector('[data-apex-lean]');
+        if (lean) {
+          const sign = p.lean >= 0 ? '+' : '−';
+          lean.textContent = `${sign}${Math.abs(p.lean).toFixed(1)}%`;
+        }
+
+        const score = document.querySelector('[data-apex-score]');
+        if (score) score.textContent = `watch ${p.watchPct.toFixed(0)}% of subset`;
+
+        const sub = document.querySelector('[data-apex-sub]');
+        if (sub) {
+          if (p.watchPct >= 65)
+            sub.textContent = 'Heavy tail in Watch; Buy thin. Directional read, not a trading signal.';
+          else if (p.watchPct >= 45)
+            sub.textContent = 'Mixed posture, leaning weak. Directional read, not a trading signal.';
+          else
+            sub.textContent = 'Posture leans constructive. Directional read, not a trading signal.';
+        }
+
+        // Gauge marker: map lean (-100..+100) to 0..100% position
+        const marker = document.querySelector('[data-apex-marker]');
+        if (marker) {
+          const pos = Math.max(0, Math.min(100, (p.lean + 100) / 2));
+          marker.style.left = `${pos.toFixed(1)}%`;
+        }
 
         // Breadcrumb + grid placeholder
         const crumb = document.querySelector('[data-crumb-ix]');
@@ -542,6 +623,9 @@
         if (crumbCount) crumbCount.textContent = total;
         if (gridMore) gridMore.textContent = `+ ${Math.max(0, total - 8)} more in ${d.label} filter`;
       }
+
+      // Initial render: apply ALL on load so the apex tone is set from JS.
+      applyIndex('all');
     </script>
   </body>
 </html>
