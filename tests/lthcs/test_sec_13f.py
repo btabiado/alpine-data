@@ -649,3 +649,217 @@ def test_tracked_managers_has_twenty_entries() -> None:
     for name, cik in sec_13f.TRACKED_MANAGERS.items():
         assert len(cik) == 10
         assert cik.isdigit()
+
+
+# --- as_of historical filtering --------------------------------------------
+
+
+def _two_quarter_submissions() -> Dict[str, Any]:
+    """A manager submissions JSON with both 2026-Q1 and 2025-Q4 13F-HRs.
+
+    Q1 filed 2026-05-13 (mid-May, typical 45-day-lag cadence).
+    Q4 filed 2026-02-12 (mid-Feb, typical cadence).
+    """
+    return _make_submissions([
+        {"form": "13F-HR", "filingDate": "2026-05-13",
+         "accessionNumber": "0000000999-26-000001",
+         "primaryDocument": "xslForm13F_X02/primary_doc.xml",
+         "reportDate": "2026-03-31"},
+        {"form": "13F-HR", "filingDate": "2026-02-12",
+         "accessionNumber": "0000000999-26-000002",
+         "primaryDocument": "xslForm13F_X02/primary_doc.xml",
+         "reportDate": "2025-12-31"},
+    ])
+
+
+def _build_two_quarter_dispatcher() -> Any:
+    """Side-effect that routes the two-quarter submissions to the right docs."""
+    submissions = _two_quarter_submissions()
+    index = _index_json(["primary_doc.xml", "form13fInfoTable.xml"])
+
+    def _side(url: str, *args: Any, **kwargs: Any) -> MagicMock:
+        if "submissions/CIK0000000999" in url:
+            return _fake_response(submissions)
+        if url.endswith("/index.json"):
+            return _fake_response(index)
+        if url.endswith("/primary_doc.xml"):
+            if "000000099926000002" in url:
+                return _fake_response(
+                    _load_fixture("primary_doc_2025q4.xml"), text=True
+                )
+            return _fake_response(
+                _load_fixture("primary_doc_2026q1.xml"), text=True
+            )
+        if url.endswith("/form13fInfoTable.xml"):
+            if "000000099926000002" in url:
+                return _fake_response(
+                    _load_fixture("info_table_2025q4_aapl_only.xml"), text=True
+                )
+            return _fake_response(
+                _load_fixture("info_table_2026q1_aapl_msft.xml"), text=True
+            )
+        if "company_tickers.json" in url or url.endswith(".json"):
+            return _fake_response(TICKERS_FIXTURE)
+        raise AssertionError(f"No fixture for URL: {url}")
+
+    return _side
+
+
+def test_fetch_manager_as_of_none_preserves_behavior(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of=None`` returns the same list as the un-supplied call."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        a = sec_13f.fetch_manager_13f_holdings(
+            "0000000999", tickers=["AAPL", "MSFT"]
+        )
+        b = sec_13f.fetch_manager_13f_holdings(
+            "0000000999", tickers=["AAPL", "MSFT"], as_of=None
+        )
+    assert a == b
+    assert len(a) == 2
+    assert a[0]["quarter"] == "2026-Q1"
+
+
+def test_fetch_manager_as_of_historical_picks_correct_quarter(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of=2026-04-15`` excludes 2026-Q1 (filed mid-May) -> only Q4 visible.
+
+    This is the canonical 45-day-lag scenario: on April 15, 2026 the
+    most recent 13F a manager has filed is for 2025-Q4 (filed Feb 12),
+    not 2026-Q1 (won't be filed until May 13).
+    """
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        out = sec_13f.fetch_manager_13f_holdings(
+            "0000000999",
+            tickers=["AAPL", "MSFT"],
+            as_of=date(2026, 4, 15),
+        )
+    quarters = [e["quarter"] for e in out]
+    assert "2026-Q1" not in quarters
+    assert quarters == ["2025-Q4"]
+
+
+def test_fetch_manager_as_of_before_any_filing_returns_empty(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of`` before every filing date returns an empty list."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        out = sec_13f.fetch_manager_13f_holdings(
+            "0000000999",
+            tickers=["AAPL", "MSFT"],
+            as_of=date(2024, 1, 1),
+        )
+    assert out == []
+
+
+def test_fetch_manager_as_of_at_exact_filing_date_is_inclusive(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of`` equal to a filing's ``filingDate`` INCLUDES it (≤, not <)."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        out = sec_13f.fetch_manager_13f_holdings(
+            "0000000999",
+            tickers=["AAPL", "MSFT"],
+            as_of=date(2026, 2, 12),
+        )
+    # Q4 was filed exactly on 2026-02-12 -> included.
+    # Q1 was filed 2026-05-13 -> excluded.
+    quarters = [e["quarter"] for e in out]
+    assert quarters == ["2025-Q4"]
+
+
+def test_fetch_universe_as_of_2026_04_15_excludes_q1_filings(
+    ua: None, fixed_today: date
+) -> None:
+    """45-day-lag edge case: 2026-Q1 13Fs are filed mid-May, so on
+    as_of=2026-04-15 they are NOT yet visible. The aggregate's
+    ``latest_quarter`` must report 2025-Q4."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        out = sec_13f.fetch_universe_institutional_holdings(
+            ["AAPL", "MSFT"],
+            managers={"MgrA": "0000000999"},
+            as_of=date(2026, 4, 15),
+        )
+    aapl = out["AAPL"]
+    assert aapl["latest_quarter"] == "2025-Q4"
+    assert aapl["as_of"] == "2026-04-15"
+    # Q4 fixture has AAPL only — verify the manager count reflects that.
+    assert aapl["manager_count"] == 1
+    # MSFT not in Q4 fixture -> no holdings as of that date.
+    assert out["MSFT"]["manager_count"] == 0
+
+
+def test_fetch_universe_as_of_2026_05_17_includes_q1_filings(
+    ua: None, fixed_today: date
+) -> None:
+    """Past the 45-day deadline: 2026-Q1 13Fs ARE filed and visible.
+    ``latest_quarter`` is 2026-Q1; AAPL+MSFT are both populated."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        out = sec_13f.fetch_universe_institutional_holdings(
+            ["AAPL", "MSFT"],
+            managers={"MgrA": "0000000999"},
+            as_of=date(2026, 5, 17),
+        )
+    aapl = out["AAPL"]
+    assert aapl["latest_quarter"] == "2026-Q1"
+    assert aapl["manager_count"] == 1
+    msft = out["MSFT"]
+    assert msft["latest_quarter"] == "2026-Q1"
+    assert msft["manager_count"] == 1
+
+
+def test_fetch_universe_as_of_none_preserves_existing_behavior(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of=None`` reproduces the existing behavior path-for-path."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        a = sec_13f.fetch_universe_institutional_holdings(
+            ["AAPL"], managers={"MgrA": "0000000999"}
+        )
+        b = sec_13f.fetch_universe_institutional_holdings(
+            ["AAPL"], managers={"MgrA": "0000000999"}, as_of=None
+        )
+    # ``as_of`` field reflects ``today`` (the fixed fixture in this test).
+    assert a == b
+    assert a["AAPL"]["latest_quarter"] == "2026-Q1"
+
+
+def test_as_of_cache_key_independent_of_anchor(ua: None, fixed_today: date) -> None:
+    """Different ``as_of`` values must share the same upstream HTTP fetches
+    (submissions JSON is cached per CIK, not per as_of). No cache poisoning."""
+    side = _build_two_quarter_dispatcher()
+    with patch("lthcs.sources.sec_13f.requests.get", side_effect=side) as gm1, \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side) as gm2:
+        # First call warms the caches.
+        sec_13f.fetch_universe_institutional_holdings(
+            ["AAPL"], managers={"MgrA": "0000000999"},
+            as_of=date(2026, 5, 17),
+        )
+        warm_count = gm1.call_count + gm2.call_count
+        # Second call with a DIFFERENT as_of: submissions + per-filing
+        # cache entries are unchanged. We may see ZERO new HTTP calls
+        # (everything served from cache); we must NOT see growth that
+        # would indicate as_of leaked into a cache key incorrectly.
+        sec_13f.fetch_universe_institutional_holdings(
+            ["AAPL"], managers={"MgrA": "0000000999"},
+            as_of=date(2026, 4, 15),
+        )
+        after_count = gm1.call_count + gm2.call_count
+        # No additional HTTP calls — all served from the cache.
+        assert after_count == warm_count

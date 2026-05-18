@@ -5,9 +5,14 @@ all 75 universe tickers. No API key is needed; yfinance scrapes Yahoo's
 public endpoints, so we keep request rates conservative.
 
 Public functions:
-    * ``get_daily_prices(ticker, period="1y")``
-    * ``get_volatility(ticker, window=30)``
-    * ``get_momentum_pct(ticker, days=90)``
+    * ``get_daily_prices(ticker, period="1y", as_of=None)``
+    * ``get_volatility(ticker, window=30, as_of=None)``
+    * ``get_momentum_pct(ticker, days=90, as_of=None)``
+
+All public functions accept an optional ``as_of="YYYY-MM-DD"`` argument
+that returns results AS-OF that historical date — i.e. as if the
+function were called on ``as_of``. When ``as_of`` is ``None`` (the
+default) behaviour is unchanged: results end on today.
 
 All upstream calls go through:
     * a 24h ``FileCache("yahoo")`` for response bodies, and
@@ -20,6 +25,7 @@ without re-hitting Yahoo.
 
 from __future__ import annotations
 
+import datetime as _dt
 import math
 from typing import Any, Dict, List, Optional
 
@@ -34,13 +40,43 @@ _CACHE_TTL_SECONDS = 24 * 60 * 60
 # Trading days in a year, used to annualize realized volatility.
 _TRADING_DAYS = 252
 
+# When ``as_of`` is supplied we widen the upstream fetch window so we
+# don't accidentally request a period that has already rolled past the
+# requested historical date. 2y comfortably covers a 12m momentum
+# lookback measured from any as_of in the recent past.
+_AS_OF_FETCH_PERIOD = "2y"
+
 # Module-level singletons. One cache + one rate limiter per source.
 _cache = FileCache("yahoo")
 _bucket = TokenBucket(capacity=10, refill_rate=1.0)
 
 
-def _cache_key(ticker: str, period: str) -> str:
+def _cache_key(ticker: str, period: str, as_of: Optional[str] = None) -> str:
+    if as_of:
+        return f"{ticker}/prices/{period}/asof/{as_of}"
     return f"{ticker}/prices/{period}"
+
+
+def _validate_as_of(as_of: Optional[str]) -> Optional[str]:
+    """Normalise an ``as_of`` argument to ISO YYYY-MM-DD or ``None``.
+
+    Invalid strings are coerced to ``None`` so callers can pass whatever
+    they have without raising — a missing/garbled as_of just degrades to
+    today.
+    """
+    if as_of is None:
+        return None
+    if not isinstance(as_of, str) or not as_of.strip():
+        return None
+    try:
+        return _dt.date.fromisoformat(as_of.strip()).isoformat()
+    except ValueError:
+        return None
+
+
+def _slice_to_as_of(rows: List[Dict[str, Any]], as_of: str) -> List[Dict[str, Any]]:
+    """Return only rows whose ``date`` is <= ``as_of`` (string compare OK for ISO)."""
+    return [r for r in rows if str(r.get("date", "")) <= as_of]
 
 
 def _row_to_dict(date_str: str, row: Any) -> Dict[str, Any]:
@@ -88,21 +124,47 @@ def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
     return rows
 
 
-def get_daily_prices(ticker: str, period: str = "1y") -> List[Dict[str, Any]]:
+def get_daily_prices(
+    ticker: str,
+    period: str = "1y",
+    as_of: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """Return daily OHLCV bars for ``ticker`` over ``period``.
 
     Each bar is a dict with keys: ``date`` (YYYY-MM-DD string), ``open``,
     ``high``, ``low``, ``close``, ``adj_close`` (floats), ``volume`` (int).
 
-    Results are cached for 24h per (ticker, period) and rate-limited at
-    ~1 request/second with a burst of 10.
+    Results are cached for 24h per (ticker, period, as_of) and rate-limited
+    at ~1 request/second with a burst of 10.
+
+    When ``as_of`` is supplied (ISO ``YYYY-MM-DD``) the returned rows are
+    sliced to ``date <= as_of`` — i.e. the function returns "what you
+    would have seen on ``as_of``". To make sure the slice has enough
+    history regardless of how far back ``as_of`` is, we widen the
+    upstream yfinance fetch to ``2y`` when ``as_of`` is provided. The
+    caller's ``period`` argument is still honoured for the cache key so
+    different as-of views don't collide.
+
+    Invalid ``as_of`` strings (non-ISO, empty, etc.) are silently ignored
+    — the call behaves as if ``as_of=None`` was passed.
     """
-    key = _cache_key(ticker, period)
+    normalised_as_of = _validate_as_of(as_of)
+
+    key = _cache_key(ticker, period, normalised_as_of)
     hit = _cache.get(key)
     if hit is not None:
         return list(hit.value)
 
-    rows = _fetch_prices_from_yahoo(ticker, period)
+    # When as_of is in play we always pull a wider window from yfinance
+    # so a 12-month momentum lookback ending on any recent ``as_of``
+    # still has the data it needs. Callers asking for a short ``period``
+    # (e.g. "5d") would otherwise see only ~5 bars ending today, none of
+    # which extend back to a historical ``as_of``.
+    fetch_period = _AS_OF_FETCH_PERIOD if normalised_as_of else period
+    rows = _fetch_prices_from_yahoo(ticker, fetch_period)
+    if normalised_as_of:
+        rows = _slice_to_as_of(rows, normalised_as_of)
+
     _cache.set(key, rows, ttl_seconds=_CACHE_TTL_SECONDS)
     return rows
 
@@ -111,18 +173,25 @@ def _closes(prices: List[Dict[str, Any]]) -> List[float]:
     return [float(p["close"]) for p in prices]
 
 
-def get_volatility(ticker: str, window: int = 30) -> Optional[float]:
+def get_volatility(
+    ticker: str,
+    window: int = 30,
+    as_of: Optional[str] = None,
+) -> Optional[float]:
     """Annualized stdev of the trailing ``window`` daily returns.
 
     Returns ``None`` if fewer than ``window`` returns are available.
     Annualization uses sqrt(252).
+
+    When ``as_of`` is supplied the window ends on the last trading bar
+    at or before ``as_of`` rather than today.
     """
     if window <= 1:
         return None
 
     # We need ``window`` returns, which requires ``window + 1`` closes.
     # Pull enough history to cover that comfortably (default 1y is fine).
-    prices = get_daily_prices(ticker)
+    prices = get_daily_prices(ticker, as_of=as_of)
     closes = _closes(prices)
     if len(closes) < window + 1:
         return None
@@ -138,16 +207,23 @@ def get_volatility(ticker: str, window: int = 30) -> Optional[float]:
     return daily_std * math.sqrt(_TRADING_DAYS)
 
 
-def get_momentum_pct(ticker: str, days: int = 90) -> Optional[float]:
+def get_momentum_pct(
+    ticker: str,
+    days: int = 90,
+    as_of: Optional[str] = None,
+) -> Optional[float]:
     """Return ``(last_close / close_N_days_ago) - 1`` as a decimal.
 
     ``days`` is measured in trading-day bars, not calendar days. Returns
     ``None`` if fewer than ``days + 1`` bars are available.
+
+    When ``as_of`` is supplied the "last close" is the last trading bar
+    at or before ``as_of`` rather than today.
     """
     if days <= 0:
         return None
 
-    prices = get_daily_prices(ticker)
+    prices = get_daily_prices(ticker, as_of=as_of)
     closes = _closes(prices)
     if len(closes) < days + 1:
         return None

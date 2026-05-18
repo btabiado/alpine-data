@@ -760,3 +760,229 @@ def test_module_exports_public_api() -> None:
         "parse_form4_xml",
     }
     assert set(sec_form4.__all__) == expected
+
+
+# --- as_of historical filtering --------------------------------------------
+
+
+def _retag_dates(xml: str, tx_date: str, filing_signature_date: str) -> str:
+    """Edit the canonical buy fixture to use a different transactionDate."""
+    out = xml.replace(
+        "<value>2026-05-08</value>", f"<value>{tx_date}</value>"
+    )
+    out = out.replace(
+        "<signatureDate>2026-05-09</signatureDate>",
+        f"<signatureDate>{filing_signature_date}</signatureDate>",
+    )
+    # periodOfReport also matches the 2026-05-08 string; restore it
+    # explicitly to the tx_date for clarity (it's just a header field).
+    return out
+
+
+def test_as_of_none_preserves_existing_behavior(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of=None`` must mirror the un-supplied behavior exactly."""
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-05-09",
+         "accessionNumber": "B1", "primaryDocument": "form4.xml"},
+    ])
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={
+            "form4.xml": _fake_response(
+                _load_fixture("ceo_open_market_buy.xml"), text=True
+            ),
+        },
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        a = sec_form4.fetch_insider_transactions("EXMP", window_days=90)
+        b = sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=None
+        )
+    assert a == b
+    assert a is not None
+    assert a["buy_count"] == 1
+
+
+def test_as_of_historical_returns_window_slice(ua: None) -> None:
+    """``as_of`` window = [as_of - 90d, as_of] on transaction dates."""
+    base_xml = _load_fixture("ceo_open_market_buy.xml")
+    # Three filings with transactionDates on three different days, all
+    # filed close to their tx date.
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-05-09",
+         "accessionNumber": "F1", "primaryDocument": "f1.xml"},
+        {"form": "4", "filingDate": "2026-03-15",
+         "accessionNumber": "F2", "primaryDocument": "f2.xml"},
+        {"form": "4", "filingDate": "2025-12-15",
+         "accessionNumber": "F3", "primaryDocument": "f3.xml"},
+    ])
+    xml_f1 = _retag_dates(base_xml, "2026-05-08", "2026-05-09")
+    xml_f2 = _retag_dates(base_xml, "2026-03-14", "2026-03-15")
+    xml_f3 = _retag_dates(base_xml, "2025-12-14", "2025-12-15")
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={
+            "f1.xml": _fake_response(xml_f1, text=True),
+            "f2.xml": _fake_response(xml_f2, text=True),
+            "f3.xml": _fake_response(xml_f3, text=True),
+        },
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        result = sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=date(2026, 4, 15)
+        )
+    assert result is not None
+    # Window: 2026-01-15 .. 2026-04-15. Only F2 (tx 2026-03-14) qualifies.
+    # F1 tx 2026-05-08 is AFTER as_of -> dropped at filing-date filter too.
+    # F3 tx 2025-12-14 is BEFORE the cutoff.
+    assert result["buy_count"] == 1
+    assert result["as_of"] == "2026-04-15"
+    # raw_transactions only carries the in-window filing's data.
+    tx_dates = [r["date"] for r in result["raw_transactions"]]
+    assert tx_dates == ["2026-03-14"]
+
+
+def test_as_of_before_any_transactions_returns_none(
+    ua: None, fixed_today: date
+) -> None:
+    """``as_of`` earlier than every filing -> None (no usable filings)."""
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-05-09",
+         "accessionNumber": "F1", "primaryDocument": "f1.xml"},
+    ])
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={
+            "f1.xml": _fake_response(
+                _load_fixture("ceo_open_market_buy.xml"), text=True
+            ),
+        },
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        result = sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=date(2024, 1, 1)
+        )
+    assert result is None
+
+
+def test_as_of_right_at_transaction_date_includes_it(ua: None) -> None:
+    """``as_of`` equal to a transaction's date INCLUDES that transaction."""
+    base_xml = _load_fixture("ceo_open_market_buy.xml")
+    xml_exact = _retag_dates(base_xml, "2026-04-15", "2026-04-16")
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-04-15",
+         "accessionNumber": "EXACT", "primaryDocument": "exact.xml"},
+    ])
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={"exact.xml": _fake_response(xml_exact, text=True)},
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        result = sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=date(2026, 4, 15)
+        )
+    assert result is not None
+    assert result["buy_count"] == 1
+    assert result["raw_transactions"][0]["date"] == "2026-04-15"
+
+
+def test_as_of_drops_filings_after_anchor(ua: None) -> None:
+    """A Form 4 filed AFTER as_of must NOT be loaded (no XML fetch needed
+    in real usage). We verify the in-window filing alone makes it through."""
+    base_xml = _load_fixture("ceo_open_market_buy.xml")
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-05-09",
+         "accessionNumber": "FUT", "primaryDocument": "fut.xml"},
+        {"form": "4", "filingDate": "2026-03-10",
+         "accessionNumber": "PAST", "primaryDocument": "past.xml"},
+    ])
+    xml_fut = _retag_dates(base_xml, "2026-05-08", "2026-05-09")
+    xml_past = _retag_dates(base_xml, "2026-03-09", "2026-03-10")
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={
+            "fut.xml": _fake_response(xml_fut, text=True),
+            "past.xml": _fake_response(xml_past, text=True),
+        },
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        result = sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=date(2026, 4, 15)
+        )
+    assert result is not None
+    assert result["buy_count"] == 1
+    assert result["raw_transactions"][0]["date"] == "2026-03-09"
+
+
+def test_cache_key_independent_of_as_of(ua: None) -> None:
+    """Repeated as_of slices must share the same submissions HTTP fetch."""
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-05-09",
+         "accessionNumber": "B1", "primaryDocument": "form4.xml"},
+    ])
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={
+            "form4.xml": _fake_response(
+                _load_fixture("ceo_open_market_buy.xml"), text=True
+            ),
+        },
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side) as gm1, \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side) as gm2:
+        sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=date(2026, 5, 17)
+        )
+        before_count = gm1.call_count + gm2.call_count
+        # Different as_of, same upstream — must not increase HTTP call count
+        # past what's already cached.
+        sec_form4.fetch_insider_transactions(
+            "EXMP", window_days=90, as_of=date(2026, 4, 15)
+        )
+        # Both submissions + tickers calls should be served from cache on
+        # the second call, plus the form4.xml call already cached.
+        after_count = gm1.call_count + gm2.call_count
+        # Only the upstream "didn't change" check: no new HTTP after first call.
+        assert after_count == before_count
+
+
+def test_fetch_universe_insider_transactions_accepts_as_of(ua: None) -> None:
+    """The batch wrapper threads ``as_of`` through to each per-ticker call."""
+    base_xml = _load_fixture("ceo_open_market_buy.xml")
+    xml_in = _retag_dates(base_xml, "2026-03-14", "2026-03-15")
+    xml_out = _retag_dates(base_xml, "2025-12-14", "2025-12-15")
+    submissions = _make_submissions([
+        {"form": "4", "filingDate": "2026-03-15",
+         "accessionNumber": "IN", "primaryDocument": "in.xml"},
+        {"form": "4", "filingDate": "2025-12-15",
+         "accessionNumber": "OUT", "primaryDocument": "out.xml"},
+    ])
+    side = _build_dispatcher(
+        _fake_response(TICKERS_FIXTURE),
+        _fake_response(submissions),
+        filing_bodies={
+            "in.xml": _fake_response(xml_in, text=True),
+            "out.xml": _fake_response(xml_out, text=True),
+        },
+    )
+    with patch("lthcs.sources.sec_form4.requests.get", side_effect=side), \
+         patch("lthcs.sources.sec_edgar.requests.get", side_effect=side):
+        out = sec_form4.fetch_universe_insider_transactions(
+            ["EXMP"], window_days=90, as_of=date(2026, 4, 15)
+        )
+    assert "EXMP" in out
+    assert out["EXMP"]["as_of"] == "2026-04-15"
+    assert out["EXMP"]["buy_count"] == 1

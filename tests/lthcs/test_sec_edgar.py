@@ -502,3 +502,162 @@ def test_noninterest_income_history_empty_when_concept_missing(ua: None) -> None
         ]
         rows = sec_edgar.get_noninterest_income_history("AAPL")
     assert rows == []
+
+
+# --- as_of historical filtering ---------------------------------------------
+
+
+def _facts_with_filed(units: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Build a Revenues facts payload where every fact has a ``filed`` date."""
+    return _facts_with("Revenues", units)
+
+
+def test_revenue_history_as_of_none_preserves_existing_behavior(ua: None) -> None:
+    """``as_of=None`` must return the same rows as the un-filtered call."""
+    facts = _facts_with_filed([
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+        {"start": "2024-01-01", "end": "2024-12-31", "val": 120,
+         "form": "10-K", "fy": 2024, "fp": "FY", "filed": "2025-02-01"},
+    ])
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows_default = sec_edgar.get_revenue_history("AAPL")
+        rows_none = sec_edgar.get_revenue_history("AAPL", as_of=None)
+    assert rows_default == rows_none
+    assert [r["end_date"] for r in rows_default] == ["2024-12-31", "2023-12-31"]
+
+
+def test_revenue_history_as_of_historical_returns_slice(ua: None) -> None:
+    """``as_of`` between two filing dates yields only the older filing."""
+    facts = _facts_with_filed([
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+        {"start": "2024-01-01", "end": "2024-12-31", "val": 120,
+         "form": "10-K", "fy": 2024, "fp": "FY", "filed": "2025-02-01"},
+    ])
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_revenue_history("AAPL", as_of="2024-06-30")
+    assert len(rows) == 1
+    assert rows[0]["end_date"] == "2023-12-31"
+    assert rows[0]["value"] == 100
+
+
+def test_revenue_history_as_of_before_any_filings_returns_empty(ua: None) -> None:
+    """``as_of`` before every filing date drops everything."""
+    facts = _facts_with_filed([
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+    ])
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_revenue_history("AAPL", as_of="2020-01-01")
+    assert rows == []
+
+
+def test_revenue_history_as_of_exact_filing_date_is_inclusive(ua: None) -> None:
+    """``as_of`` equal to a filing's ``filed`` date INCLUDES that filing (≤)."""
+    facts = _facts_with_filed([
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+    ])
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_revenue_history("AAPL", as_of="2024-02-01")
+    assert len(rows) == 1
+    assert rows[0]["end_date"] == "2023-12-31"
+
+
+def test_revenue_history_as_of_drops_facts_without_filed_date(ua: None) -> None:
+    """Facts missing a ``filed`` date can't be placed in time -> drop under as_of."""
+    facts = _facts_with_filed([
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY"},  # no `filed` key
+        {"start": "2024-01-01", "end": "2024-12-31", "val": 120,
+         "form": "10-K", "fy": 2024, "fp": "FY", "filed": "2025-02-01"},
+    ])
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        # Without as_of, both come through (no filing filter).
+        rows_unfiltered = sec_edgar.get_revenue_history("AAPL")
+    assert len(rows_unfiltered) == 2
+
+    # With as_of past both filings, only the one with `filed` survives.
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        sec_edgar._cache.clear()
+        rows_asof = sec_edgar.get_revenue_history("AAPL", as_of="2030-01-01")
+    assert len(rows_asof) == 1
+    assert rows_asof[0]["end_date"] == "2024-12-31"
+
+
+def test_revenue_history_as_of_shares_upstream_cache(ua: None) -> None:
+    """``as_of`` filtering happens in-memory after the company-facts fetch, so
+    a second call with a different ``as_of`` reuses the cached HTTP payload
+    without re-issuing the request (no cache poisoning)."""
+    facts = _facts_with_filed([
+        {"start": "2023-01-01", "end": "2023-12-31", "val": 100,
+         "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+        {"start": "2024-01-01", "end": "2024-12-31", "val": 120,
+         "form": "10-K", "fy": 2024, "fp": "FY", "filed": "2025-02-01"},
+    ])
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows_a = sec_edgar.get_revenue_history("AAPL", as_of="2024-06-30")
+        rows_b = sec_edgar.get_revenue_history("AAPL", as_of="2025-06-30")
+        rows_c = sec_edgar.get_revenue_history("AAPL")  # un-filtered
+        # Exactly two HTTP calls (tickers + facts); subsequent calls are
+        # cache hits regardless of as_of.
+        assert mock_get.call_count == 2
+    assert len(rows_a) == 1
+    assert len(rows_b) == 2
+    assert len(rows_c) == 2
+
+
+def test_gross_profit_and_ocf_history_accept_as_of(ua: None) -> None:
+    """Both other public XBRL fetches must accept ``as_of`` symmetrically."""
+    facts = _facts_with_concepts({
+        "GrossProfit": [
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 50,
+             "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+            {"start": "2024-01-01", "end": "2024-12-31", "val": 60,
+             "form": "10-K", "fy": 2024, "fp": "FY", "filed": "2025-02-01"},
+        ],
+        "NetCashProvidedByOperatingActivities": [
+            {"start": "2023-01-01", "end": "2023-12-31", "val": 200,
+             "form": "10-K", "fy": 2023, "fp": "FY", "filed": "2024-02-01"},
+            {"start": "2024-01-01", "end": "2024-12-31", "val": 220,
+             "form": "10-K", "fy": 2024, "fp": "FY", "filed": "2025-02-01"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        gp = sec_edgar.get_gross_profit_history("AAPL", as_of="2024-06-30")
+        ocf = sec_edgar.get_operating_cash_flow_history("AAPL", as_of="2024-06-30")
+    assert [r["end_date"] for r in gp] == ["2023-12-31"]
+    assert [r["end_date"] for r in ocf] == ["2023-12-31"]

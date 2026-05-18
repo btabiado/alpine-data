@@ -260,7 +260,7 @@ def get_company_facts(ticker: str) -> Dict[str, Any]:
 
 
 def _extract_concept_history(
-    facts: Dict[str, Any], concepts: tuple
+    facts: Dict[str, Any], concepts: tuple, as_of: Optional[str] = None
 ) -> List[Dict[str, Any]]:
     """Walk the XBRL ``us-gaap`` block and merge the given concepts.
 
@@ -279,10 +279,16 @@ def _extract_concept_history(
     the fact, not the fact's period. A 10-K filing contains both annual
     and quarterly facts. Callers that need annual values should filter
     by period duration (end - start ≈ 365 days), not by these tags.
+
+    When ``as_of`` is provided (ISO YYYY-MM-DD), only facts whose ``filed``
+    date is ≤ ``as_of`` are included, so historical LTHCS scoring sees
+    the same data the filing universe held on that date.
     """
     gaap = (facts or {}).get("facts", {}).get("us-gaap", {})
     if not isinstance(gaap, dict):
         return []
+
+    as_of_str = str(as_of) if as_of else None
 
     by_period: Dict[tuple, Dict[str, Any]] = {}
     for concept in concepts:
@@ -308,6 +314,15 @@ def _extract_concept_history(
             val = item.get("val")
             if end is None or val is None:
                 continue
+            if as_of_str is not None:
+                filed = item.get("filed")
+                # Drop facts with no ``filed`` date when as_of filtering
+                # is requested — we can't place them in time so they
+                # can't be trusted as historical signal.
+                if filed is None:
+                    continue
+                if str(filed) > as_of_str:
+                    continue
             start = item.get("start")
             key = (str(start) if start is not None else None, str(end))
             by_period[key] = {
@@ -325,29 +340,43 @@ def _extract_concept_history(
     return rows
 
 
-def get_revenue_history(ticker: str) -> List[Dict[str, Any]]:
+def get_revenue_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Revenue history merged across legacy + post-ASC 606 concepts.
 
-    See :func:`_extract_concept_history` for the row schema.
+    See :func:`_extract_concept_history` for the row schema. When
+    ``as_of`` is provided, only facts ``filed`` on or before that ISO
+    date are returned.
     """
-    return _extract_concept_history(get_company_facts(ticker), _REVENUE_CONCEPTS)
+    return _extract_concept_history(
+        get_company_facts(ticker), _REVENUE_CONCEPTS, as_of=as_of
+    )
 
 
-def get_gross_profit_history(ticker: str) -> List[Dict[str, Any]]:
+def get_gross_profit_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Gross profit history. Same schema as :func:`get_revenue_history`."""
-    return _extract_concept_history(get_company_facts(ticker), _GROSS_PROFIT_CONCEPTS)
+    return _extract_concept_history(
+        get_company_facts(ticker), _GROSS_PROFIT_CONCEPTS, as_of=as_of
+    )
 
 
-def get_operating_cash_flow_history(ticker: str) -> List[Dict[str, Any]]:
+def get_operating_cash_flow_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Operating cash flow history. Same schema as :func:`get_revenue_history`."""
     return _extract_concept_history(
-        get_company_facts(ticker), _OPERATING_CASH_FLOW_CONCEPTS
+        get_company_facts(ticker), _OPERATING_CASH_FLOW_CONCEPTS, as_of=as_of
     )
 
 
 # --- Public API: bank-specific concepts -------------------------------------
 
-def get_net_interest_income_history(ticker: str) -> List[Dict[str, Any]]:
+def get_net_interest_income_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Net Interest Income history (bank revenue analog).
 
     Merges ``InterestIncomeOperating`` / ``InterestAndDividendIncomeOperating``
@@ -362,11 +391,13 @@ def get_net_interest_income_history(ticker: str) -> List[Dict[str, Any]]:
     series the SEC actually fills.
     """
     return _extract_concept_history(
-        get_company_facts(ticker), _BANK_NET_INTEREST_INCOME_CONCEPTS
+        get_company_facts(ticker), _BANK_NET_INTEREST_INCOME_CONCEPTS, as_of=as_of
     )
 
 
-def get_provision_for_credit_losses_history(ticker: str) -> List[Dict[str, Any]]:
+def get_provision_for_credit_losses_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Provision for Credit Losses history (bank cost-of-revenue analog).
 
     Merges the older ``ProvisionForLoanAndLeaseLosses`` /
@@ -376,11 +407,15 @@ def get_provision_for_credit_losses_history(ticker: str) -> List[Dict[str, Any]]
     :func:`get_revenue_history`.
     """
     return _extract_concept_history(
-        get_company_facts(ticker), _BANK_PROVISION_FOR_CREDIT_LOSSES_CONCEPTS
+        get_company_facts(ticker),
+        _BANK_PROVISION_FOR_CREDIT_LOSSES_CONCEPTS,
+        as_of=as_of,
     )
 
 
-def get_noninterest_income_history(ticker: str) -> List[Dict[str, Any]]:
+def get_noninterest_income_history(
+    ticker: str, as_of: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """Noninterest Income history (bank fee-revenue line).
 
     Captures fees from trading, advisory, asset management, card / payments,
@@ -388,5 +423,5 @@ def get_noninterest_income_history(ticker: str) -> List[Dict[str, Any]]:
     :func:`get_revenue_history`.
     """
     return _extract_concept_history(
-        get_company_facts(ticker), _BANK_NONINTEREST_INCOME_CONCEPTS
+        get_company_facts(ticker), _BANK_NONINTEREST_INCOME_CONCEPTS, as_of=as_of
     )

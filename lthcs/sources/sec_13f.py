@@ -865,6 +865,7 @@ def fetch_manager_13f_holdings(
     quarter: Optional[str] = None,
     *,
     tickers: Optional[List[str]] = None,
+    as_of: Optional[date] = None,
 ) -> List[Dict[str, Any]]:
     """Fetch one manager's 13F holdings extracted for the given universe.
 
@@ -878,6 +879,12 @@ def fetch_manager_13f_holdings(
     tickers:
         Universe to extract. ``None`` extracts the default
         ``TICKER_TO_CUSIP`` universe.
+    as_of:
+        When provided, only filings whose ``filingDate`` is ≤ ``as_of``
+        are returned. 13F-HRs have a ~45-day lag from quarter-end, so a
+        2026-04-15 ``as_of`` typically yields the 2025-Q4 filing as the
+        most recent available (2026-Q1 13Fs aren't usually filed until
+        mid-May).
 
     Returns a list of per-quarter result dicts (most recent first). Each
     entry is the return-shape of :func:`_fetch_one_filing_extracted`.
@@ -895,6 +902,12 @@ def fetch_manager_13f_holdings(
     if not submissions:
         return []
     rows = _iter_13f_filings(submissions)
+    # When ``as_of`` is set, drop filings filed after that date BEFORE
+    # dedup-by-quarter so an amendment filed post-as_of doesn't displace
+    # the original that DID exist on that date.
+    if as_of is not None:
+        as_of_iso = as_of.isoformat()
+        rows = [r for r in rows if (r.get("filingDate") or "") <= as_of_iso]
     rows = _dedupe_filings_by_quarter(rows)
 
     out: List[Dict[str, Any]] = []
@@ -1103,6 +1116,7 @@ def fetch_universe_institutional_holdings(
     *,
     today: Optional[date] = None,
     managers: Optional[Dict[str, str]] = None,
+    as_of: Optional[date] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Top-level: fan out across tracked managers, aggregate per ticker.
 
@@ -1119,6 +1133,12 @@ def fetch_universe_institutional_holdings(
         for symmetry with :func:`lthcs.sources.sec_form4.fetch_universe_insider_transactions`.
     managers:
         Optional override of :data:`TRACKED_MANAGERS`. Useful for tests.
+    as_of:
+        When provided, each manager's 13F-HR list is filtered to
+        ``filingDate <= as_of`` so the aggregate reflects what was
+        available on that date. 13F-HRs lag quarter-ends by up to 45
+        days, so e.g. ``as_of=2026-04-15`` typically yields 2025-Q4 as
+        ``latest_quarter`` (2026-Q1 13Fs aren't filed yet on that date).
 
     Returns ``{ticker: aggregate_dict}`` for every ticker in ``tickers``.
     Tickers with no holdings across any tracked manager still get an
@@ -1149,14 +1169,17 @@ def fetch_universe_institutional_holdings(
     per_manager: Dict[str, List[Dict[str, Any]]] = {}
     for name, cik in mgr_map.items():
         try:
-            per_manager[name] = fetch_manager_13f_holdings(cik, tickers=universe)
+            per_manager[name] = fetch_manager_13f_holdings(
+                cik, tickers=universe, as_of=as_of
+            )
         except SECEdgarError:
             raise
         except Exception:  # noqa: BLE001 — per-manager failures shouldn't break the batch
             per_manager[name] = []
 
     # 2. Aggregate per ticker.
-    as_of_iso = (today or _today()).isoformat()
+    anchor = as_of if as_of is not None else (today or _today())
+    as_of_iso = anchor.isoformat()
     for t in universe:
         out[t] = aggregate_holdings_for_ticker(t, per_manager, as_of_iso=as_of_iso)
     return out

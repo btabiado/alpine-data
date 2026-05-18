@@ -359,6 +359,7 @@ def get_recent_8k_events(
     days: int = 90,
     *,
     today: Optional[date] = None,
+    as_of: Optional[date] = None,
 ) -> List[Dict[str, Any]]:
     """Return 8-K filings for ``ticker`` in the last ``days`` days, newest-first.
 
@@ -383,12 +384,18 @@ def get_recent_8k_events(
       * The submissions endpoint returns non-200 / errors
       * The company has no 8-Ks in the window
 
+    When ``as_of`` is supplied the window is ``[as_of - days, as_of]``
+    (inclusive on both ends), so the daily pipeline can compute historical
+    LTHCS scores from an archive of submissions data. ``today`` continues
+    to mean "anchor for the default window" — ``as_of``, when provided,
+    overrides it as the right edge of the window.
+
     Raises ``SECEdgarError`` only for config bugs (missing
     ``SEC_USER_AGENT``) — those are surfaced loudly rather than buried.
 
-    Cached for 24h. The cache is keyed only by CIK (not by ``days``)
-    because the submissions response is the same regardless of window;
-    filtering happens in memory.
+    Cached for 24h. The cache is keyed only by CIK (not by ``days`` or
+    ``as_of``) because the submissions response is the same regardless of
+    window or anchor; filtering happens in memory.
     """
     if not ticker:
         return []
@@ -401,8 +408,9 @@ def get_recent_8k_events(
     if not submissions:
         return []
 
-    today_d = today if today is not None else _today()
-    cutoff = today_d - timedelta(days=int(max(days, 0)))
+    # The right edge of the window: explicit as_of beats today beats now.
+    anchor = as_of if as_of is not None else (today if today is not None else _today())
+    cutoff = anchor - timedelta(days=int(max(days, 0)))
 
     rows = _iter_recent_rows(submissions)
     events: List[Dict[str, Any]] = []
@@ -422,6 +430,10 @@ def get_recent_8k_events(
         if fd is None:
             continue
         if fd < cutoff:
+            continue
+        # When ``as_of`` is set, also drop filings AFTER the right edge —
+        # they didn't exist yet on that date.
+        if as_of is not None and fd > as_of:
             continue
 
         event = _row_to_event(row, ticker=ticker, cik=cik)
@@ -524,6 +536,7 @@ def event_signal_for_ticker(
     days: int = 90,
     *,
     today: Optional[date] = None,
+    as_of: Optional[date] = None,
 ) -> Dict[str, Any]:
     """Convenience: fetch + summarize, returning a Thesis-compatible payload.
 
@@ -552,14 +565,24 @@ def event_signal_for_ticker(
     0.5 lets downstream code weight us alongside the per-article
     relevance numbers Alpha Vantage publishes without giving us a
     runaway advantage.
+
+    When ``as_of`` is supplied the rolling window's right edge is pinned
+    to ``as_of`` (not "now"), and ``last_scored`` reflects ``as_of``.
     """
-    events = get_recent_8k_events(ticker, days=days, today=today)
+    events = get_recent_8k_events(ticker, days=days, today=today, as_of=as_of)
     summary = summarize_events_for_thesis(events)
 
     ticker_norm = (ticker or "").upper()
     article_count = int(summary.get("event_count") or 0)
     score = summary.get("weighted_sentiment_score")
     relevance: Optional[float] = 0.5 if article_count > 0 else None
+
+    if as_of is not None:
+        last_scored = as_of.isoformat()
+    elif today is not None:
+        last_scored = today.isoformat()
+    else:
+        last_scored = _today_iso()
 
     return {
         "ticker": ticker_norm,
@@ -568,7 +591,7 @@ def event_signal_for_ticker(
         "mean_relevance_score": relevance,
         "label_counts": dict(summary.get("label_counts") or {}),
         "source": "sec_8k",
-        "last_scored": _today_iso() if today is None else today.isoformat(),
+        "last_scored": last_scored,
         "high_signal_event_count": int(summary.get("high_signal_event_count") or 0),
         "most_recent_event": summary.get("most_recent_event"),
         "most_recent_date": summary.get("most_recent_date"),

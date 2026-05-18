@@ -131,6 +131,22 @@ def _today_date() -> _dt.date:
     return _dt.date.today()
 
 
+def _parse_as_of(as_of: Optional[str]) -> Optional[_dt.date]:
+    """Coerce an optional ``as_of`` string to a date.
+
+    Returns ``None`` on invalid input — callers treat that the same as
+    ``as_of=None`` (i.e. fall through to today).
+    """
+    if as_of is None:
+        return None
+    if not isinstance(as_of, str) or not as_of.strip():
+        return None
+    try:
+        return _dt.date.fromisoformat(as_of.strip())
+    except ValueError:
+        return None
+
+
 def _coerce_float(raw: Any) -> Optional[float]:
     """Best-effort float coercion. NaN / None / non-numeric -> None."""
     if raw is None:
@@ -255,10 +271,21 @@ def _action_direction(action: Optional[str]) -> float:
 # ---------------------------------------------------------------------------
 
 
-def _parse_earnings_df(df: "_pd.DataFrame", ticker: str, limit: int) -> List[Dict[str, Any]]:
+def _parse_earnings_df(
+    df: "_pd.DataFrame",
+    ticker: str,
+    limit: int,
+    as_of_date: Optional[_dt.date] = None,
+) -> List[Dict[str, Any]]:
     """Normalize a yfinance ``earnings_dates`` DataFrame into our shape.
 
     Defensive: any missing column or unparseable row is skipped.
+
+    When ``as_of_date`` is supplied:
+      * rows with ``date > as_of_date`` are filtered out entirely
+      * the ``is_future`` flag is computed against ``as_of_date`` rather
+        than today (so a date that was "future" on ``as_of_date`` but is
+        now in the past is still labelled future).
     """
     if df is None or len(df) == 0:
         return []
@@ -267,7 +294,7 @@ def _parse_earnings_df(df: "_pd.DataFrame", ticker: str, limit: int) -> List[Dic
     act_col = _column(df, ["Reported EPS", "EPS Actual", "Actual"])
     surprise_col = _column(df, ["Surprise(%)", "Surprise %", "% Surprise"])
 
-    today = _today_date()
+    today = as_of_date if as_of_date is not None else _today_date()
     rows: List[Dict[str, Any]] = []
     for idx, row in df.iterrows():
         date_iso = _coerce_iso_date(idx)
@@ -290,6 +317,11 @@ def _parse_earnings_df(df: "_pd.DataFrame", ticker: str, limit: int) -> List[Dic
             date_obj = _dt.date.fromisoformat(date_iso)
         except ValueError:
             continue
+
+        if as_of_date is not None and date_obj > as_of_date:
+            # Historical mode: drop anything after the as-of cutoff.
+            continue
+
         is_future = date_obj > today
 
         rows.append(
@@ -310,7 +342,11 @@ def _parse_earnings_df(df: "_pd.DataFrame", ticker: str, limit: int) -> List[Dic
     return rows
 
 
-def get_earnings_dates(ticker: str, limit: int = 4) -> List[Dict[str, Any]]:
+def get_earnings_dates(
+    ticker: str,
+    limit: int = 4,
+    as_of: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """Return recent + upcoming earnings dates for ``ticker``.
 
     Each entry has shape::
@@ -321,11 +357,17 @@ def get_earnings_dates(ticker: str, limit: int = 4) -> List[Dict[str, Any]]:
           "is_future" (bool),
         }
 
-    Cached 24h. Returns ``[]`` on failure or unknown ticker — never raises.
+    Cached 24h per ``(ticker, limit, as_of)``. Returns ``[]`` on failure
+    or unknown ticker — never raises.
+
+    When ``as_of`` is supplied (ISO ``YYYY-MM-DD``) only earnings dates
+    ``<= as_of`` are returned, and the last ``limit`` of those.
     """
     if not ticker or not str(ticker).strip():
         return []
-    cache_key = f"{ticker.upper()}/earnings_dates/{int(limit)}"
+    as_of_date = _parse_as_of(as_of)
+    cache_suffix = f"/asof/{as_of_date.isoformat()}" if as_of_date else ""
+    cache_key = f"{ticker.upper()}/earnings_dates/{int(limit)}{cache_suffix}"
     hit = _EARNINGS_CACHE.get(cache_key)
     if hit is not None:
         return [dict(row) for row in (hit.value or [])]
@@ -340,7 +382,7 @@ def get_earnings_dates(ticker: str, limit: int = 4) -> List[Dict[str, Any]]:
     except Exception:
         return []
 
-    rows = _parse_earnings_df(df, ticker, limit)
+    rows = _parse_earnings_df(df, ticker, limit, as_of_date=as_of_date)
     _EARNINGS_CACHE.set(cache_key, rows, ttl_seconds=_CACHE_TTL_SECONDS)
     return rows
 
@@ -351,13 +393,19 @@ def get_earnings_dates(ticker: str, limit: int = 4) -> List[Dict[str, Any]]:
 
 
 def _parse_recommendations_df(
-    df: "_pd.DataFrame", ticker: str, days: int
+    df: "_pd.DataFrame",
+    ticker: str,
+    days: int,
+    as_of_date: Optional[_dt.date] = None,
 ) -> List[Dict[str, Any]]:
     """Normalize a yfinance ``recommendations`` DataFrame.
 
     yfinance has used both an indexed date and a ``Date`` column over the
     years. We accept either: prefer the index when it looks date-shaped,
     fall back to a Date column.
+
+    When ``as_of_date`` is provided the window is ``[as_of - days, as_of]``
+    instead of ``[today - days, today]``.
     """
     if df is None or len(df) == 0:
         return []
@@ -368,7 +416,8 @@ def _parse_recommendations_df(
     to_col = _column(df, ["To Grade", "ToGrade", "To Grade"])
     date_col = _column(df, ["Date"])
 
-    cutoff = _today_date() - _dt.timedelta(days=max(int(days), 0))
+    anchor = as_of_date if as_of_date is not None else _today_date()
+    cutoff = anchor - _dt.timedelta(days=max(int(days), 0))
 
     rows: List[Dict[str, Any]] = []
     for idx, row in df.iterrows():
@@ -383,6 +432,9 @@ def _parse_recommendations_df(
         except ValueError:
             continue
         if date_obj < cutoff:
+            continue
+        if as_of_date is not None and date_obj > as_of_date:
+            # Historical mode: drop actions after the as-of cutoff.
             continue
 
         firm = _coerce_str(row[firm_col]) if firm_col is not None else None
@@ -422,7 +474,11 @@ def _parse_recommendations_df(
     return rows
 
 
-def get_analyst_actions(ticker: str, days: int = 90) -> List[Dict[str, Any]]:
+def get_analyst_actions(
+    ticker: str,
+    days: int = 90,
+    as_of: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """Return analyst upgrade/downgrade history for the last ``days`` days.
 
     Each entry::
@@ -434,11 +490,17 @@ def get_analyst_actions(ticker: str, days: int = 90) -> List[Dict[str, Any]]:
           "direction" (+1 / +0.5 / 0 / -0.5 / -1),
         }
 
-    Cached 24h per (ticker, days). Returns ``[]`` on any yfinance failure.
+    Cached 24h per (ticker, days, as_of). Returns ``[]`` on any yfinance
+    failure.
+
+    When ``as_of`` is supplied the window is ``[as_of - days, as_of]``
+    instead of ``[today - days, today]``.
     """
     if not ticker or not str(ticker).strip():
         return []
-    cache_key = f"{ticker.upper()}/analyst_actions/{int(days)}"
+    as_of_date = _parse_as_of(as_of)
+    cache_suffix = f"/asof/{as_of_date.isoformat()}" if as_of_date else ""
+    cache_key = f"{ticker.upper()}/analyst_actions/{int(days)}{cache_suffix}"
     hit = _RECO_CACHE.get(cache_key)
     if hit is not None:
         return [dict(row) for row in (hit.value or [])]
@@ -451,7 +513,7 @@ def get_analyst_actions(ticker: str, days: int = 90) -> List[Dict[str, Any]]:
     except Exception:
         return []
 
-    rows = _parse_recommendations_df(df, ticker, days)
+    rows = _parse_recommendations_df(df, ticker, days, as_of_date=as_of_date)
     _RECO_CACHE.set(cache_key, rows, ttl_seconds=_CACHE_TTL_SECONDS)
     return rows
 

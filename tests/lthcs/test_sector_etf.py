@@ -362,3 +362,157 @@ def test_get_sector_relative_strength_malformed_snapshot_returns_none() -> None:
     assert sector_etf.get_sector_relative_strength(
         "Technology", "not even a dict"  # type: ignore[arg-type]
     ) is None
+
+
+# ---------------------------------------------------------------------------
+# as_of support
+# ---------------------------------------------------------------------------
+
+
+def _ramp_full(
+    *, n: int = 130, start_date: str = "2025-11-01",
+    spy_path: Optional[List[float]] = None,
+    etf_paths: Optional[Dict[str, List[float]]] = None,
+) -> Dict[str, pd.DataFrame]:
+    """Build a wide synthetic universe for as_of tests.
+
+    n=130 business days gives plenty of room for a 63-bar lookback ending
+    on any reasonable mid-window as_of.
+    """
+    spy = spy_path if spy_path is not None else _ramp(100.0, 110.0, n)
+    if etf_paths is None:
+        etf_paths = {etf: _ramp(100.0, 100.0 + i, n)
+                     for i, etf in enumerate(sector_etf.SECTOR_ETFS.keys())}
+    dfs: Dict[str, pd.DataFrame] = {"SPY": _make_df(spy, start=start_date)}
+    for etf, path in etf_paths.items():
+        dfs[etf] = _make_df(path, start=start_date)
+    return dfs
+
+
+def test_fetch_sector_strength_as_of_none_preserves_existing_behavior() -> None:
+    dfs = _full_universe_dfs()
+    factory = _make_ticker_router(dfs)
+    with patch("yfinance.Ticker", factory):
+        baseline = sector_etf.fetch_sector_strength()
+        explicit_none = sector_etf.fetch_sector_strength(as_of=None)
+    assert baseline == explicit_none
+    # Both calls share the same snapshot cache entry -> 12 ticker constructions
+    # total (SPY + 11 ETFs on the first call), zero on the second.
+    assert factory.call_count == 12
+
+
+def test_fetch_sector_strength_as_of_field_reflects_passed_date() -> None:
+    # 130 business days starting 2025-11-01 covers an as_of of 2026-04-15.
+    dfs = _ramp_full(n=130, start_date="2025-11-01")
+    factory = _make_ticker_router(dfs)
+    with patch("yfinance.Ticker", factory):
+        snap = sector_etf.fetch_sector_strength(as_of="2026-04-15")
+    assert snap["as_of"] == "2026-04-15"
+
+
+def test_fetch_sector_strength_as_of_measures_1m_to_target_date() -> None:
+    # SPY ramps so the 21-bar return ending at as_of is exactly known.
+    # Use a SPY ramp where close = 100 + i so 21-bar return = 21 / spot_at_t-21.
+    n = 130
+    spy_path = [100.0 + i for i in range(n)]
+    # Make XLK ramp twice as fast (so its 1m return outpaces SPY's).
+    xlk_path = [100.0 + 2 * i for i in range(n)]
+    other_paths = {etf: [100.0 + 0.5 * i for i in range(n)]
+                   for etf in sector_etf.SECTOR_ETFS.keys() if etf != "XLK"}
+    other_paths["XLK"] = xlk_path
+
+    dfs = _ramp_full(n=n, start_date="2025-11-01",
+                     spy_path=spy_path, etf_paths=other_paths)
+    factory = _make_ticker_router(dfs)
+    with patch("yfinance.Ticker", factory):
+        snap = sector_etf.fetch_sector_strength(as_of="2026-04-15")
+
+    # Locate the bar at 2026-04-15 in the bdate_range.
+    idx = pd.bdate_range(start="2025-11-01", periods=n)
+    # 2026-04-15 is a business day (Wednesday).
+    target_pos = list(idx).index(pd.Timestamp("2026-04-15"))
+    spy_t = spy_path[target_pos]
+    spy_t_minus_21 = spy_path[target_pos - 21]
+    expected_spy_1m = spy_t / spy_t_minus_21 - 1.0
+
+    assert snap["benchmark_return_1m"] == pytest.approx(expected_spy_1m, rel=1e-9)
+    # XLK should also have its 1m return measured to 2026-04-15.
+    xlk_block = snap["sectors"]["XLK"]
+    xlk_t = xlk_path[target_pos]
+    xlk_t_minus_21 = xlk_path[target_pos - 21]
+    expected_xlk_1m = xlk_t / xlk_t_minus_21 - 1.0
+    assert xlk_block["return_1m"] == pytest.approx(expected_xlk_1m, rel=1e-9)
+
+
+def test_fetch_sector_strength_as_of_cache_key_isolated(tmp_path: Path) -> None:
+    dfs = _ramp_full(n=130, start_date="2025-11-01")
+    factory = _make_ticker_router(dfs)
+    isolated = tmp_path / "isolated"
+    with patch("yfinance.Ticker", factory):
+        a = sector_etf.fetch_sector_strength(
+            cache_dir=isolated, as_of="2026-04-15"
+        )
+        b = sector_etf.fetch_sector_strength(
+            cache_dir=isolated, as_of="2026-02-15"
+        )
+        c = sector_etf.fetch_sector_strength(cache_dir=isolated)  # today
+    assert a["as_of"] == "2026-04-15"
+    assert b["as_of"] == "2026-02-15"
+    # Three distinct snapshots cached separately.
+    assert a != b
+    # Three calls each needed SPY + 11 ETFs unless yahoo cache served some
+    # — yahoo cache key includes as_of, so each as_of triggers fresh fetches.
+    # We don't assert exact counts because the today-path may reuse cached
+    # rows for the as_of paths (different keys, different files).
+
+
+def test_fetch_sector_strength_as_of_before_data_has_empty_sectors() -> None:
+    # If as_of predates the dataset, all per-ETF closes slice to empty -> no
+    # benchmark return -> empty sectors map (sector_etf's graceful path).
+    dfs = _ramp_full(n=130, start_date="2025-11-01")
+    factory = _make_ticker_router(dfs)
+    with patch("yfinance.Ticker", factory):
+        snap = sector_etf.fetch_sector_strength(as_of="2020-01-01")
+    assert snap["as_of"] == "2020-01-01"
+    assert snap["benchmark_return_1m"] is None
+    assert snap["benchmark_return_3m"] is None
+    assert snap["sectors"] == {}
+
+
+def test_fetch_sector_strength_as_of_weekend_falls_back_to_prior_trading_day() -> None:
+    # 2026-04-18 is a Saturday; the snapshot's `as_of` field reflects what
+    # the caller passed (we don't rewrite it to a trading day), but the
+    # underlying yahoo slice picks the last trading bar <= 2026-04-18.
+    dfs = _ramp_full(n=130, start_date="2025-11-01")
+    factory = _make_ticker_router(dfs)
+    with patch("yfinance.Ticker", factory):
+        snap = sector_etf.fetch_sector_strength(as_of="2026-04-18")
+    assert snap["as_of"] == "2026-04-18"
+    # If there's data, sectors map should be populated.
+    assert snap["benchmark_return_1m"] is not None
+    assert len(snap["sectors"]) > 0
+
+
+def test_fetch_sector_strength_as_of_invalid_falls_back_to_today() -> None:
+    dfs = _full_universe_dfs()
+    factory = _make_ticker_router(dfs)
+    with patch("yfinance.Ticker", factory):
+        baseline = sector_etf.fetch_sector_strength()
+        garbage = sector_etf.fetch_sector_strength(as_of="not-a-date")
+    # Invalid as_of degrades to today and hits the same cache key.
+    assert baseline == garbage
+
+
+def test_fetch_sector_strength_as_of_distinct_cache_from_today(tmp_path: Path) -> None:
+    # The historical and current snapshots must NOT collide on disk.
+    dfs = _ramp_full(n=130, start_date="2025-11-01")
+    factory = _make_ticker_router(dfs)
+    isolated = tmp_path / "iso"
+    with patch("yfinance.Ticker", factory):
+        snap_hist = sector_etf.fetch_sector_strength(
+            cache_dir=isolated, as_of="2026-04-15"
+        )
+    # The snapshot cache should contain a file whose name reflects the as_of.
+    files = list((isolated / "sector_etf").glob("*.json"))
+    assert any("2026-04-15" in p.name for p in files)
+    assert snap_hist["as_of"] == "2026-04-15"

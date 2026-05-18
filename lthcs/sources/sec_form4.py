@@ -773,6 +773,7 @@ def fetch_insider_transactions(
     cache_dir: Optional[Path] = None,
     *,
     today: Optional[date] = None,
+    as_of: Optional[date] = None,
 ) -> Optional[Dict[str, Any]]:
     """Fetch + aggregate Form 4 insider transactions for ``ticker``.
 
@@ -791,6 +792,16 @@ def fetch_insider_transactions(
     ``cache_dir`` lets a caller route caching to a specific directory
     (useful for tests). When None, the module-level cache (defaulting
     to ``.cache/lthcs/sec_form4``) is used.
+
+    When ``as_of`` is supplied:
+      * The filing-list cutoff becomes ``[as_of - window_days, as_of]``
+        on ``filingDate`` (so we don't pull Form 4 XMLs from after that
+        date — they wouldn't have existed yet).
+      * Individual transactions are then filtered by ``transactionDate``
+        to the same window (the canonical event date is the trade itself,
+        not the filing).
+      * ``as_of`` becomes the reported anchor in the result's ``as_of``
+        field.
     """
     if not ticker:
         return None
@@ -803,14 +814,18 @@ def fetch_insider_transactions(
     if not submissions:
         return None
 
-    today_d = today if today is not None else _today()
-    cutoff = today_d - timedelta(days=int(max(window_days, 0)))
+    anchor = as_of if as_of is not None else (today if today is not None else _today())
+    cutoff = anchor - timedelta(days=int(max(window_days, 0)))
 
     rows = _iter_form4_rows(submissions)
     parsed_filings: List[Dict[str, Any]] = []
     for row in rows:
         fd = _parse_iso_date(row.get("filingDate"))
         if fd is None or fd < cutoff:
+            continue
+        # When ``as_of`` is set, drop filings AFTER the right edge — they
+        # didn't exist yet on that date.
+        if as_of is not None and fd > as_of:
             continue
         accession = row.get("accessionNumber")
         primary_doc = row.get("primaryDocument")
@@ -824,6 +839,27 @@ def fetch_insider_transactions(
         parsed = parse_form4_xml(xml_body)
         if parsed is None:
             continue
+
+        # Filter individual transactions by transactionDate to the window.
+        # The XML is parsed verbatim by parse_form4_xml; we trim here so
+        # the as_of slice is canonical at the transaction level (not just
+        # the filing-date approximation).
+        filtered_txs: List[Dict[str, Any]] = []
+        for tx in parsed.get("transactions", []) or []:
+            tx_date = _parse_iso_date(tx.get("date"))
+            if tx_date is None:
+                # No usable date — drop on the conservative side rather
+                # than risk mis-placing in history.
+                continue
+            if tx_date < cutoff:
+                continue
+            if as_of is not None and tx_date > as_of:
+                continue
+            filtered_txs.append(tx)
+        if not filtered_txs:
+            continue
+        parsed = dict(parsed)
+        parsed["transactions"] = filtered_txs
         parsed_filings.append(parsed)
 
     if not parsed_filings:
@@ -833,7 +869,7 @@ def fetch_insider_transactions(
     return _aggregate_filings(
         ticker,
         parsed_filings,
-        as_of_iso=today_d.isoformat(),
+        as_of_iso=anchor.isoformat(),
         window_days=window_days,
     )
 
@@ -844,11 +880,16 @@ def fetch_universe_insider_transactions(
     cache_dir: Optional[Path] = None,
     *,
     today: Optional[date] = None,
+    as_of: Optional[date] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Batch wrapper. Returns ``{ticker: result}`` for tickers with usable
     Form 4 data in the window. Tickers with no filings / errors are
     silently dropped from the output (NOT mapped to None) — the LTHCS
     pipeline downstream treats absence as "no signal" already.
+
+    When ``as_of`` is provided, the window becomes
+    ``[as_of - window_days, as_of]`` for every ticker — used by the
+    daily pipeline to compute historical LTHCS scores.
     """
     out: Dict[str, Dict[str, Any]] = {}
     seen: set = set()
@@ -861,7 +902,11 @@ def fetch_universe_insider_transactions(
         seen.add(norm)
         try:
             result = fetch_insider_transactions(
-                norm, window_days=window_days, cache_dir=cache_dir, today=today
+                norm,
+                window_days=window_days,
+                cache_dir=cache_dir,
+                today=today,
+                as_of=as_of,
             )
         except SECEdgarError:
             # Config errors propagate via the first call already, but

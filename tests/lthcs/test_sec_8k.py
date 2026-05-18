@@ -574,3 +574,119 @@ def test_item_code_weights_map_is_well_formed() -> None:
         assert 0.0 <= w <= 1.0
         assert d in (-1, 0, 1)
         assert isinstance(lbl, str) and lbl
+
+
+# --- as_of historical filtering --------------------------------------------
+
+
+def test_as_of_none_preserves_existing_behavior(ua: None, fixed_today: date) -> None:
+    """``as_of=None`` must produce the same output as omitting the kwarg."""
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-05-15",
+         "accessionNumber": "E1", "items": "2.02", "primaryDocument": "p.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side):
+        a = sec_8k.get_recent_8k_events("AAPL", days=90)
+        b = sec_8k.get_recent_8k_events("AAPL", days=90, as_of=None)
+    assert a == b
+    assert len(a) == 1
+
+
+def test_as_of_historical_returns_window_slice(ua: None) -> None:
+    """``as_of`` pins the right edge: only filings in [as_of-90d, as_of]."""
+    # Filings spread across a year.
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-05-15",
+         "accessionNumber": "FUT", "items": "2.02", "primaryDocument": "p1.htm"},
+        {"form": "8-K", "filingDate": "2026-03-15",
+         "accessionNumber": "MID", "items": "5.02", "primaryDocument": "p2.htm"},
+        {"form": "8-K", "filingDate": "2025-12-15",
+         "accessionNumber": "OLD", "items": "4.02", "primaryDocument": "p3.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side):
+        events = sec_8k.get_recent_8k_events(
+            "AAPL", days=90, as_of=date(2026, 4, 15)
+        )
+    # 2026-04-15 minus 90d = 2026-01-15. Only MID (2026-03-15) fits.
+    # FUT (2026-05-15) is AFTER as_of -> dropped.
+    # OLD (2025-12-15) is BEFORE the cutoff -> dropped.
+    assert [e["accession_number"] for e in events] == ["MID"]
+
+
+def test_as_of_before_any_filings_returns_empty(ua: None) -> None:
+    """``as_of`` before every filing -> empty list."""
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-05-15",
+         "accessionNumber": "E1", "items": "2.02", "primaryDocument": "p.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side):
+        events = sec_8k.get_recent_8k_events(
+            "AAPL", days=90, as_of=date(2024, 1, 1)
+        )
+    assert events == []
+
+
+def test_as_of_right_at_filing_date_includes_that_filing(ua: None) -> None:
+    """``as_of`` equal to a filing's date INCLUDES it (boundary is ≤, not <)."""
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-04-15",
+         "accessionNumber": "EXACT", "items": "2.02", "primaryDocument": "p.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side):
+        events = sec_8k.get_recent_8k_events(
+            "AAPL", days=90, as_of=date(2026, 4, 15)
+        )
+    assert [e["accession_number"] for e in events] == ["EXACT"]
+
+
+def test_as_of_excludes_filings_after(ua: None, fixed_today: date) -> None:
+    """An 8-K filed AFTER the as_of date must NOT appear in historical output."""
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-05-15",
+         "accessionNumber": "FUTURE", "items": "2.02", "primaryDocument": "p.htm"},
+        {"form": "8-K", "filingDate": "2026-04-10",
+         "accessionNumber": "PAST", "items": "5.02", "primaryDocument": "q.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side):
+        events = sec_8k.get_recent_8k_events(
+            "AAPL", days=90, as_of=date(2026, 4, 15)
+        )
+    assert [e["accession_number"] for e in events] == ["PAST"]
+
+
+def test_cache_key_independent_of_as_of(ua: None) -> None:
+    """The submissions cache key is per-CIK only; multiple ``as_of`` values
+    share the same HTTP fetch — no cache poisoning, no extra HTTP."""
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-05-15",
+         "accessionNumber": "A", "items": "2.02", "primaryDocument": "p.htm"},
+        {"form": "8-K", "filingDate": "2026-02-15",
+         "accessionNumber": "B", "items": "5.02", "primaryDocument": "q.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side) as get_mock:
+        sec_8k.get_recent_8k_events("AAPL", days=90, as_of=date(2026, 5, 17))
+        sec_8k.get_recent_8k_events("AAPL", days=90, as_of=date(2026, 4, 15))
+        sec_8k.get_recent_8k_events("AAPL", days=90)
+        # 1 tickers + 1 submissions = 2 total HTTP calls, all later cached.
+        assert get_mock.call_count == 2
+
+
+def test_event_signal_for_ticker_uses_as_of_as_last_scored(ua: None) -> None:
+    """When ``as_of`` is provided, ``last_scored`` reflects it (not 'today')."""
+    submissions = _make_submissions([
+        {"form": "8-K", "filingDate": "2026-04-10",
+         "accessionNumber": "A1", "items": "2.02", "primaryDocument": "p.htm"},
+    ])
+    side = _dispatch_by_url(_fake_response(TICKERS_FIXTURE), _fake_response(submissions))
+    with patch("lthcs.sources.sec_8k.requests.get", side_effect=side):
+        sig = sec_8k.event_signal_for_ticker(
+            "AAPL", days=90, as_of=date(2026, 4, 15)
+        )
+    assert sig["last_scored"] == "2026-04-15"
+    assert sig["article_count"] == 1

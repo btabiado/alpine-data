@@ -107,6 +107,21 @@ def _today_iso() -> str:
     return _dt.date.today().isoformat()
 
 
+def _normalize_as_of(as_of: Optional[str]) -> Optional[str]:
+    """Coerce an ``as_of`` argument to ISO ``YYYY-MM-DD`` or ``None``.
+
+    Invalid / empty inputs silently degrade to ``None`` (i.e. "today").
+    """
+    if as_of is None:
+        return None
+    if not isinstance(as_of, str) or not as_of.strip():
+        return None
+    try:
+        return _dt.date.fromisoformat(as_of.strip()).isoformat()
+    except ValueError:
+        return None
+
+
 def _adj_closes(prices: List[Dict[str, Any]]) -> List[float]:
     """Pull the adjusted-close series out of yahoo's row dicts.
 
@@ -143,12 +158,15 @@ def _trailing_return(closes: List[float], n: int) -> Optional[float]:
     return last / past - 1.0
 
 
-def _safe_fetch_closes(ticker: str) -> List[float]:
+def _safe_fetch_closes(ticker: str, as_of: Optional[str] = None) -> List[float]:
     """``yahoo.get_daily_prices`` -> adj-close list, with all errors logged
     and converted to an empty list.  Non-fatal for the snapshot.
+
+    Passing ``as_of`` slices the returned series to bars on or before
+    that ISO date.
     """
     try:
-        prices = yahoo.get_daily_prices(ticker, period="6mo")
+        prices = yahoo.get_daily_prices(ticker, period="6mo", as_of=as_of)
     except Exception as exc:  # noqa: BLE001
         logger.warning("sector_etf: failed to fetch %s prices: %s", ticker, exc)
         return []
@@ -160,8 +178,11 @@ def _safe_fetch_closes(ticker: str) -> List[float]:
 # ---------------------------------------------------------------------------
 
 
-def fetch_sector_strength(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
-    """Build today's sector-ETF relative-strength snapshot.
+def fetch_sector_strength(
+    cache_dir: Optional[Path] = None,
+    as_of: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Build today's (or as-of) sector-ETF relative-strength snapshot.
 
     Output shape (see module docstring + spec)::
 
@@ -183,18 +204,24 @@ def fetch_sector_strength(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
     Always returns a dict; individual ETF failures are silently dropped
     from ``sectors``.  If SPY itself is unavailable the ``sectors`` map
     is empty (relative strength has no meaning without a benchmark).
+
+    When ``as_of`` is supplied (ISO ``YYYY-MM-DD``) the 1m/3m returns end
+    on the last trading bar at or before ``as_of`` rather than today, and
+    the snapshot's ``as_of`` field reflects that date. Cache key includes
+    ``as_of`` so historical snapshots don't collide with today's.
     """
     cache = _cache
     if cache_dir is not None:
         cache = FileCache("sector_etf", root=Path(cache_dir))
 
-    today = _today_iso()
-    cache_key = f"sector_strength/{today}"
+    normalised_as_of = _normalize_as_of(as_of)
+    label = normalised_as_of if normalised_as_of else _today_iso()
+    cache_key = f"sector_strength/{label}"
     hit = cache.get(cache_key)
     if hit is not None and isinstance(hit.value, dict):
         return dict(hit.value)
 
-    spy_closes = _safe_fetch_closes(BENCHMARK_TICKER)
+    spy_closes = _safe_fetch_closes(BENCHMARK_TICKER, as_of=normalised_as_of)
     bench_1m = _trailing_return(spy_closes, _TRADING_DAYS_1M)
     bench_3m = _trailing_return(spy_closes, _TRADING_DAYS_3M)
 
@@ -205,7 +232,7 @@ def fetch_sector_strength(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
     # ``benchmark_return_*`` (both will be None in this branch).
     if bench_1m is None and bench_3m is None:
         snapshot = {
-            "as_of": today,
+            "as_of": label,
             "benchmark_return_1m": bench_1m,
             "benchmark_return_3m": bench_3m,
             "sectors": sectors_out,
@@ -221,7 +248,7 @@ def fetch_sector_strength(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
     # order — easier to diff snapshots across days.
     raw: Dict[str, Dict[str, Any]] = {}
     for etf in sorted(SECTOR_ETFS.keys()):
-        closes = _safe_fetch_closes(etf)
+        closes = _safe_fetch_closes(etf, as_of=normalised_as_of)
         r1 = _trailing_return(closes, _TRADING_DAYS_1M)
         r3 = _trailing_return(closes, _TRADING_DAYS_3M)
         # Drop the ETF entirely if both returns are unavailable — there's
@@ -256,7 +283,7 @@ def fetch_sector_strength(cache_dir: Optional[Path] = None) -> Dict[str, Any]:
         sectors_out[etf] = blk
 
     snapshot = {
-        "as_of": today,
+        "as_of": label,
         "benchmark_return_1m": bench_1m,
         "benchmark_return_3m": bench_3m,
         "sectors": sectors_out,

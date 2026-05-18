@@ -668,3 +668,316 @@ def test_summarize_analyst_actions_recency_weighting() -> None:
     out = yahoo_events.summarize_analyst_actions_for_thesis(actions)
     assert out["mean_sentiment_score"] is not None
     assert out["mean_sentiment_score"] < 0.0  # recent downgrade wins
+
+
+# ---------------------------------------------------------------------------
+# as_of support — get_earnings_dates
+# ---------------------------------------------------------------------------
+
+
+def _date(year: int, month: int, day: int) -> str:
+    return _dt.date(year, month, day).isoformat()
+
+
+def test_get_earnings_dates_as_of_none_preserves_existing_behavior() -> None:
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.50, 1.30, 1.20],
+            "Reported EPS": [1.62, 1.35, 1.18],
+            "Surprise(%)": [8.0, 3.8, -1.7],
+        },
+        index=pd.to_datetime([
+            _days_ahead(45),
+            _days_ago(30),
+            _days_ago(120),
+        ]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        baseline = yahoo_events.get_earnings_dates("AAPL", limit=4)
+        explicit_none = yahoo_events.get_earnings_dates("AAPL", limit=4, as_of=None)
+    assert baseline == explicit_none
+    # Both calls share the same cache entry -> upstream hit only once.
+    assert mock_ticker.call_count == 1
+
+
+def test_get_earnings_dates_as_of_filters_to_dates_on_or_before_cutoff() -> None:
+    # 4 historical earnings dates with explicit ISO dates.
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0, 1.1, 1.2, 1.3],
+            "Reported EPS": [1.05, 1.20, 1.15, 1.40],
+            "Surprise(%)": [5.0, 9.0, -4.0, 7.7],
+        },
+        index=pd.to_datetime([
+            "2026-01-30", "2025-10-25", "2025-07-25", "2025-04-25",
+        ]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_earnings_dates("AAPL", limit=4, as_of="2025-08-01")
+    # Only earnings on or before 2025-08-01 should remain (drops Jan 2026
+    # + Oct 2025).
+    dates = {r["date"] for r in rows}
+    assert dates == {"2025-07-25", "2025-04-25"}
+
+
+def test_get_earnings_dates_as_of_limit_respected() -> None:
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0] * 6,
+            "Reported EPS": [1.05] * 6,
+            "Surprise(%)": [5.0] * 6,
+        },
+        index=pd.to_datetime([
+            "2026-02-01", "2025-11-01", "2025-08-01",
+            "2025-05-01", "2025-02-01", "2024-11-01",
+        ]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_earnings_dates("AAPL", limit=2, as_of="2025-09-01")
+    # 4 candidates <= 2025-09-01; limit=2 -> the 2 newest.
+    assert len(rows) == 2
+    assert rows[0]["date"] == "2025-08-01"
+    assert rows[1]["date"] == "2025-05-01"
+
+
+def test_get_earnings_dates_as_of_is_future_relative_to_as_of() -> None:
+    # An earnings date that's "future" relative to as_of must be filtered out
+    # entirely (we drop date > as_of_date in historical mode).
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0, 1.1],
+            "Reported EPS": [1.05, None],
+            "Surprise(%)": [5.0, None],
+        },
+        index=pd.to_datetime(["2025-06-01", "2025-09-01"]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_earnings_dates("AAPL", as_of="2025-07-01")
+    assert len(rows) == 1
+    assert rows[0]["date"] == "2025-06-01"
+    assert rows[0]["is_future"] is False
+
+
+def test_get_earnings_dates_as_of_cache_key_isolated() -> None:
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0, 1.1],
+            "Reported EPS": [1.05, 1.15],
+            "Surprise(%)": [5.0, 4.0],
+        },
+        index=pd.to_datetime(["2025-04-01", "2025-08-01"]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        a = yahoo_events.get_earnings_dates("AAPL", as_of="2025-05-01")
+        b = yahoo_events.get_earnings_dates("AAPL", as_of="2025-09-01")
+        c = yahoo_events.get_earnings_dates("AAPL")  # today path
+    assert {r["date"] for r in a} == {"2025-04-01"}
+    assert {r["date"] for r in b} == {"2025-04-01", "2025-08-01"}
+    # 3 distinct cache keys -> 3 upstream constructions.
+    assert mock_ticker.call_count == 3
+    # And c is the unconstrained view.
+    assert len(c) == 2
+
+
+def test_get_earnings_dates_as_of_before_any_event_returns_empty() -> None:
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0],
+            "Reported EPS": [1.05],
+            "Surprise(%)": [5.0],
+        },
+        index=pd.to_datetime(["2025-08-01"]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_earnings_dates("AAPL", as_of="2020-01-01")
+    assert rows == []
+
+
+def test_get_earnings_dates_as_of_weekend_works() -> None:
+    # as_of falling on a weekend should still slice correctly.
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0, 1.1],
+            "Reported EPS": [1.05, 1.15],
+            "Surprise(%)": [5.0, 4.0],
+        },
+        index=pd.to_datetime(["2025-04-25", "2025-04-30"]),  # Fri, Wed
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    # 2025-04-26 is a Saturday.
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_earnings_dates("AAPL", as_of="2025-04-26")
+    assert {r["date"] for r in rows} == {"2025-04-25"}
+
+
+def test_get_earnings_dates_as_of_invalid_falls_back_to_today() -> None:
+    df = pd.DataFrame(
+        {
+            "EPS Estimate": [1.0],
+            "Reported EPS": [1.05],
+            "Surprise(%)": [5.0],
+        },
+        index=pd.to_datetime([_days_ago(10)]),
+    )
+    mock_ticker = _patch_with("earnings_dates", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        baseline = yahoo_events.get_earnings_dates("AAPL")
+        garbage = yahoo_events.get_earnings_dates("AAPL", as_of="not-a-date")
+    assert baseline == garbage
+    assert mock_ticker.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# as_of support — get_analyst_actions
+# ---------------------------------------------------------------------------
+
+
+def test_get_analyst_actions_as_of_none_preserves_existing_behavior() -> None:
+    df = _reco_df([
+        {
+            "_date": _days_ago(5),
+            "Firm": "GS",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+    ])
+    mock_ticker = _patch_with("recommendations", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        baseline = yahoo_events.get_analyst_actions("AAPL", days=90)
+        explicit_none = yahoo_events.get_analyst_actions(
+            "AAPL", days=90, as_of=None
+        )
+    assert baseline == explicit_none
+    assert mock_ticker.call_count == 1
+
+
+def test_get_analyst_actions_as_of_uses_window_relative_to_as_of() -> None:
+    df = _reco_df([
+        {
+            "_date": "2025-06-01",
+            "Firm": "Recent-vs-asof",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+        {
+            "_date": "2025-01-01",
+            "Firm": "Older-vs-asof",
+            "To Grade": "Sell",
+            "From Grade": "Hold",
+            "Action": "Downgrades",
+        },
+        {
+            "_date": "2025-09-01",
+            "Firm": "After-asof",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+    ])
+    mock_ticker = _patch_with("recommendations", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        # Window: [2025-03-30, 2025-06-28] -> only the 2025-06-01 action qualifies.
+        rows = yahoo_events.get_analyst_actions(
+            "AAPL", days=90, as_of="2025-06-28"
+        )
+    assert len(rows) == 1
+    assert rows[0]["firm"] == "Recent-vs-asof"
+
+
+def test_get_analyst_actions_as_of_drops_post_asof_rows() -> None:
+    # Actions after as_of must be filtered out — they're "the future"
+    # relative to the historical computation.
+    df = _reco_df([
+        {
+            "_date": "2025-06-01",
+            "Firm": "Before",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+        {
+            "_date": "2025-12-01",
+            "Firm": "After",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+    ])
+    mock_ticker = _patch_with("recommendations", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_analyst_actions(
+            "AAPL", days=180, as_of="2025-07-15"
+        )
+    assert {r["firm"] for r in rows} == {"Before"}
+
+
+def test_get_analyst_actions_as_of_cache_key_isolated() -> None:
+    df = _reco_df([
+        {
+            "_date": "2025-05-01",
+            "Firm": "X",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+    ])
+    mock_ticker = _patch_with("recommendations", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        a = yahoo_events.get_analyst_actions("AAPL", as_of="2025-05-15")
+        b = yahoo_events.get_analyst_actions("AAPL", as_of="2025-06-15")
+        c = yahoo_events.get_analyst_actions("AAPL")
+    # Three distinct cache keys.
+    assert mock_ticker.call_count == 3
+    # 2025-05-15 -> within 90d window of 2025-05-01 -> 1 row.
+    assert len(a) == 1
+    # 2025-06-15 -> 2025-05-01 is within 90d -> still 1 row.
+    assert len(b) == 1
+    # c may have 0 rows if today is far past 2025-05-01; we just assert
+    # the call happened.
+    assert isinstance(c, list)
+
+
+def test_get_analyst_actions_as_of_before_data_returns_empty() -> None:
+    df = _reco_df([
+        {
+            "_date": "2025-05-01",
+            "Firm": "X",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+    ])
+    mock_ticker = _patch_with("recommendations", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo_events.get_analyst_actions(
+            "AAPL", days=90, as_of="2020-01-01"
+        )
+    assert rows == []
+
+
+def test_get_analyst_actions_as_of_invalid_falls_back_to_today() -> None:
+    df = _reco_df([
+        {
+            "_date": _days_ago(5),
+            "Firm": "X",
+            "To Grade": "Buy",
+            "From Grade": "Hold",
+            "Action": "Upgrades",
+        },
+    ])
+    mock_ticker = _patch_with("recommendations", df)
+    with patch("yfinance.Ticker", mock_ticker):
+        baseline = yahoo_events.get_analyst_actions("AAPL", days=90)
+        garbage = yahoo_events.get_analyst_actions(
+            "AAPL", days=90, as_of="garbage"
+        )
+    assert baseline == garbage
+    assert mock_ticker.call_count == 1

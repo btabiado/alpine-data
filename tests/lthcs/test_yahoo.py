@@ -285,3 +285,132 @@ def test_momentum_and_volatility_share_cached_prices() -> None:
     assert m is not None
     # First call fetched + cached; second call hit the cache.
     assert mock_ticker.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# as_of support
+# ---------------------------------------------------------------------------
+
+
+def test_as_of_none_preserves_existing_behavior() -> None:
+    df = _make_df([100.0, 101.0, 102.0])
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        baseline = yahoo.get_daily_prices("AAPL", period="5d")
+        explicit_none = yahoo.get_daily_prices("AAPL", period="5d", as_of=None)
+    assert baseline == explicit_none
+    # Both calls should share a single cache entry.
+    assert mock_ticker.call_count == 1
+
+
+def test_as_of_slices_dataframe_to_historical_date() -> None:
+    # 10 business days starting 2026-04-13 -> spans 2026-04-13 .. 2026-04-24.
+    df = _make_df([100.0 + i for i in range(10)], start="2026-04-13")
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("AAPL", as_of="2026-04-15")
+    assert len(rows) > 0
+    # Every returned row's date must be <= the as_of cutoff.
+    for r in rows:
+        assert r["date"] <= "2026-04-15"
+    # The last entry must be the most recent trading day at-or-before as_of.
+    assert rows[-1]["date"] == "2026-04-15"
+
+
+def test_as_of_weekend_falls_back_to_prior_trading_day() -> None:
+    # 2026-04-18 is a Saturday. bdate_range starts 2026-04-13 (Mon).
+    df = _make_df([100.0 + i for i in range(10)], start="2026-04-13")
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("AAPL", as_of="2026-04-18")
+    assert len(rows) > 0
+    # Friday 2026-04-17 should be the last entry (Sat/Sun are not trading days).
+    assert rows[-1]["date"] == "2026-04-17"
+
+
+def test_as_of_before_any_data_returns_empty_list() -> None:
+    df = _make_df([100.0, 101.0, 102.0], start="2026-04-13")
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("AAPL", as_of="2020-01-01")
+    assert rows == []
+
+
+def test_as_of_cache_key_differs_from_default() -> None:
+    # The same ticker called twice — once with as_of=None, once with a
+    # historical as_of — must NOT collide in the cache.
+    df = _make_df([100.0 + i for i in range(20)], start="2026-04-01")
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows_today = yahoo.get_daily_prices("AAPL", period="5d")
+        rows_hist = yahoo.get_daily_prices("AAPL", period="5d", as_of="2026-04-15")
+    # Two distinct upstream fetches (different cache keys).
+    assert mock_ticker.call_count == 2
+    # Today path returns the whole synthetic series; historical path is sliced.
+    assert len(rows_hist) < len(rows_today)
+    assert rows_hist[-1]["date"] <= "2026-04-15"
+
+
+def test_as_of_different_values_dont_collide() -> None:
+    df = _make_df([100.0 + i for i in range(30)], start="2026-04-01")
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        a = yahoo.get_daily_prices("AAPL", as_of="2026-04-10")
+        b = yahoo.get_daily_prices("AAPL", as_of="2026-04-20")
+    assert a != b
+    assert a[-1]["date"] <= "2026-04-10"
+    assert b[-1]["date"] <= "2026-04-20"
+    # Two distinct cache entries -> two upstream fetches.
+    assert mock_ticker.call_count == 2
+
+
+def test_get_volatility_with_as_of_uses_window_ending_at_date() -> None:
+    # Construct 60 bars; calm last 5 closes ending at as_of.
+    closes = [100.0 * (1.10 if i % 2 == 0 else 0.90) for i in range(40)]
+    # Append the calm window: +1%, -1%, +1%, -1% relative to last wild close.
+    last = closes[-1]
+    for r in [0.01, -0.01, 0.01, -0.01]:
+        last *= (1.0 + r)
+        closes.append(last)
+    # Then add 20 more wild closes AFTER, so as_of must slice them out.
+    for i in range(20):
+        closes.append(closes[-1] * (1.10 if i % 2 == 0 else 0.90))
+
+    # The "calm 4 returns" window ends at index len(closes) - 21 = 43.
+    df = _make_df(closes, start="2026-01-02")
+    # Compute the date at index 43 in business days from 2026-01-02.
+    idx = pd.bdate_range(start="2026-01-02", periods=len(closes))
+    target_date = idx[43].strftime("%Y-%m-%d")
+
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        vol = yahoo.get_volatility("AAPL", window=4, as_of=target_date)
+
+    expected = math.sqrt(0.0004 / 3.0) * math.sqrt(252)
+    assert vol == pytest.approx(expected, rel=1e-9)
+
+
+def test_get_momentum_pct_with_as_of_measures_to_historical_date() -> None:
+    # Closes ramp linearly so momentum is easy to predict.
+    # 50 closes; we want momentum days=3 ending at index 10 -> closes[10]/closes[7] - 1.
+    closes = [100.0 + i * 1.0 for i in range(50)]
+    df = _make_df(closes, start="2026-01-02")
+    idx = pd.bdate_range(start="2026-01-02", periods=50)
+    target_date = idx[10].strftime("%Y-%m-%d")
+
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        m = yahoo.get_momentum_pct("AAPL", days=3, as_of=target_date)
+    # closes[10] = 110; closes[7] = 107; momentum = 110/107 - 1.
+    assert m == pytest.approx(110.0 / 107.0 - 1.0, rel=1e-12)
+
+
+def test_as_of_invalid_string_silently_falls_back_to_today() -> None:
+    df = _make_df([100.0, 101.0, 102.0])
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        baseline = yahoo.get_daily_prices("AAPL", period="5d")
+        garbage = yahoo.get_daily_prices("AAPL", period="5d", as_of="not-a-date")
+    # Garbage as_of degrades to today -> same result, same cache entry.
+    assert baseline == garbage
+    assert mock_ticker.call_count == 1
