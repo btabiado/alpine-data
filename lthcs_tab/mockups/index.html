@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS Mockups — Pyramid Layout Variants</title>
+    <!-- design rationale: pull the production tokens so mockups feel native -->
+    <link rel="stylesheet" href="../lthcs.css" />
+    <style>
+      /* Local landing page styles — kept lightweight so we don't fight lthcs.css */
+      .mockup-shell {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 28px 24px 80px;
+      }
+      .mockup-lede h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        letter-spacing: 0.2px;
+      }
+      .mockup-lede p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 13.5px;
+        max-width: 60ch;
+      }
+      .mockup-data-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 6px 12px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: 999px;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+      .mockup-data-pill strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+      .mockup-data-pill .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--band-monitor-bright);
+      }
+
+      .variant-grid {
+        margin-top: 28px;
+        display: grid;
+        gap: 18px;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 760px) {
+        .variant-grid { grid-template-columns: 1fr; }
+      }
+
+      .variant-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: border-color 120ms ease, transform 120ms ease;
+      }
+      .variant-card:hover {
+        border-color: var(--border-strong);
+        transform: translateY(-1px);
+      }
+      .variant-card h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+      .variant-card .tag {
+        display: inline-block;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--text-tertiary);
+      }
+      .variant-card p { margin: 0; color: var(--text-secondary); font-size: 13px; }
+      .variant-card ul { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: 12.5px; }
+      .variant-card li { margin: 3px 0; }
+
+      .variant-card a.open {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        padding: 8px 14px;
+        border-radius: var(--radius-md);
+        background: var(--bg-chip);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .variant-card a.open:hover { background: var(--bg-chip-active); text-decoration: none; }
+
+      .preview {
+        height: 110px;
+        border-radius: var(--radius-md);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        position: relative;
+        overflow: hidden;
+      }
+      /* tiny visual preview for variant A — proportionally-sized blocks */
+      .preview.a {
+        display: grid;
+        grid-template-columns: 11fr 34fr 122fr;
+        gap: 4px;
+        padding: 6px;
+      }
+      .preview.a span {
+        border-radius: 4px;
+        display: block;
+      }
+      .preview.a .pa-buy { background: rgba(74, 143, 95, 0.55); }
+      .preview.a .pa-hold { background: rgba(216, 145, 72, 0.55); }
+      .preview.a .pa-watch {
+        background: linear-gradient(180deg, rgba(184, 90, 62, 0.55) 0% 55%, rgba(122, 46, 31, 0.7) 55% 100%);
+      }
+      /* preview for variant B — stacked drilldown */
+      .preview.b {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        padding: 8px;
+      }
+      .preview.b .apex {
+        flex: 0 0 24px;
+        background: rgba(110, 168, 254, 0.18);
+        border-radius: 4px;
+        border-left: 3px solid var(--band-monitor-bright);
+      }
+      .preview.b .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 4px;
+        flex: 0 0 28px;
+      }
+      .preview.b .row span {
+        border-radius: 4px;
+      }
+      .preview.b .row .b1 { background: rgba(74, 143, 95, 0.45); }
+      .preview.b .row .b2 { background: rgba(216, 145, 72, 0.55); border: 1px solid var(--band-monitor-bright); }
+      .preview.b .row .b3 { background: rgba(184, 90, 62, 0.45); }
+      .preview.b .tickers {
+        flex: 1;
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(216, 145, 72, 0.28) 0 18px,
+          transparent 18px 22px
+        );
+        border-radius: 4px;
+        opacity: 0.7;
+      }
+
+      .footnote {
+        margin-top: 26px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border-subtle);
+        color: var(--text-tertiary);
+        font-size: 12px;
+      }
+      .footnote code {
+        font-family: var(--font-mono);
+        background: var(--bg-elevated);
+        padding: 1px 5px;
+        border-radius: 4px;
+        color: var(--text-secondary);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="mockup-shell">
+      <div class="mockup-lede">
+        <h1>LTHCS — Pyramid Layout Mockups</h1>
+        <p>
+          Two static design comps for the redesigned hierarchy. Pick one. The
+          goal: replace today's twelve flat header tiles with a clearer
+          drill-down — <strong>Universe &rarr; Buy/Hold/Watch &rarr; granular
+          bands &rarr; tickers</strong>. Both mockups use today's real snapshot.
+        </p>
+        <span class="mockup-data-pill">
+          <span class="dot"></span>
+          Snapshot <strong>2026-05-18</strong> &middot; Composite
+          <strong>-13 NEUTRAL</strong> &middot; Buy <strong>11</strong> /
+          Hold <strong>34</strong> / Watch <strong>122</strong>
+        </span>
+      </div>
+
+      <div class="variant-grid">
+        <!-- Variant A card -->
+        <article class="variant-card">
+          <span class="tag">Variant A</span>
+          <h2>Pyramid Treemap</h2>
+          <div class="preview a" aria-hidden="true">
+            <span class="pa-buy"></span>
+            <span class="pa-hold"></span>
+            <span class="pa-watch"></span>
+          </div>
+          <p>Area encodes count. Watch dominates the canvas; Buy is a precious sliver. The market's posture is legible in one glance.</p>
+          <ul>
+            <li>Composite Index card sits as the apex, treemap below.</li>
+            <li>Buckets sub-divide into their underlying bands.</li>
+            <li>Best for: traders who think in heatmaps.</li>
+          </ul>
+          <a class="open" href="./variant-a-pyramid/">Open Variant A &rarr;</a>
+        </article>
+
+        <!-- Variant B card -->
+        <article class="variant-card">
+          <span class="tag">Variant B</span>
+          <h2>Vertical Drill-Down</h2>
+          <div class="preview b" aria-hidden="true">
+            <span class="apex"></span>
+            <div class="row">
+              <span class="b1"></span>
+              <span class="b2"></span>
+              <span class="b3"></span>
+            </div>
+            <span class="tickers"></span>
+          </div>
+          <p>Three equal bucket cards. Click one to expand its sub-bands. Below: filtered ticker grid. Progressive disclosure, mobile-first.</p>
+          <ul>
+            <li>Equal visual weight for Buy / Hold / Watch.</li>
+            <li>Sub-bands reveal as chips on expand (mockup shows Hold open).</li>
+            <li>Best for: phone users, methodical drill-down.</li>
+          </ul>
+          <a class="open" href="./variant-b-drilldown/">Open Variant B &rarr;</a>
+        </article>
+      </div>
+
+      <p class="footnote">
+        These are <strong>static HTML</strong> with inline data — no JS, no
+        build step. The dynamic version will reuse <code>lthcs.css</code>
+        tokens and wire into the existing <code>lthcs-tab.js</code> filter
+        store. Production files are untouched.
+      </p>
+    </div>
+  </body>
+</html>

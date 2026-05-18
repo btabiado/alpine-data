@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS — Variant B: Vertical Drill-Down (mockup)</title>
+    <!-- design rationale: inherit production dark theme + band tokens -->
+    <link rel="stylesheet" href="../../lthcs.css" />
+    <style>
+      /* =========================================================================
+         Variant B — Vertical Drill-Down
+         Equal-weight buckets, progressive disclosure of sub-bands on click.
+         Mobile-first: this collapses gracefully to a single column.
+         ========================================================================= */
+      .vb-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 24px 80px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .vb-mockup-banner {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 14px;
+        background: rgba(110, 168, 254, 0.08);
+        border: 1px dashed rgba(110, 168, 254, 0.35);
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .vb-mockup-banner strong { color: var(--accent); }
+      .vb-mockup-banner a { margin-left: auto; }
+
+      /* ----- demoted index-membership chip row ----- */
+      /* design rationale: DJIA/NASDAQ/S&P are filter shortcuts, not band
+         hierarchy — chip row, not big tile. */
+      .vb-index-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .vb-index-row .label {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        margin-right: 4px;
+      }
+      .vb-index-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 11px;
+        background: var(--bg-chip);
+        border: 1px solid var(--border-subtle);
+        border-radius: 999px;
+        font-size: 12px;
+        color: var(--text-primary);
+        cursor: pointer;
+      }
+      .vb-index-chip .ct {
+        font-family: var(--font-mono);
+        color: var(--text-secondary);
+        font-size: 11px;
+      }
+
+      /* ----- light regime + movers ----- */
+      .vb-context-row {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: 1fr 1fr;
+      }
+      @media (max-width: 760px) {
+        .vb-context-row { grid-template-columns: 1fr; }
+      }
+      .vb-context-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .vb-context-card .title {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        margin-bottom: 4px;
+      }
+      .vb-context-card .vals { display: flex; gap: 18px; flex-wrap: wrap; }
+      .vb-context-card .vals b {
+        color: var(--text-primary);
+        font-family: var(--font-mono);
+      }
+      .vb-context-card .vals .good { color: var(--band-high-bright); }
+      .vb-context-card .vals .bad { color: var(--band-weakening-bright); }
+
+      /* =========================================================================
+         APEX — Composite Index headline (more compact than Variant A,
+         since the bucket cards below get equal share of attention)
+         ========================================================================= */
+      .vb-apex {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-left: 6px solid var(--band-monitor-bright);
+        border-radius: var(--radius-lg);
+        padding: 18px 22px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 18px;
+        align-items: center;
+      }
+      @media (max-width: 760px) {
+        .vb-apex { grid-template-columns: 1fr; padding: 14px 16px; }
+      }
+      .vb-apex-eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-tertiary);
+        font-weight: 700;
+      }
+      .vb-apex-title {
+        margin: 4px 0 2px;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .vb-apex-sub { font-size: 12px; color: var(--text-secondary); max-width: 60ch; }
+      .vb-apex-score-wrap {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 2px;
+      }
+      .vb-apex-score {
+        font-size: 52px;
+        line-height: 1;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -1px;
+        color: var(--band-monitor-bright);
+      }
+      .vb-apex-label {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        color: var(--band-monitor-bright);
+      }
+      .vb-apex-gauge {
+        grid-column: 1 / -1;
+        position: relative;
+        margin-top: 2px;
+      }
+      .vb-apex-gauge-bar {
+        height: 6px;
+        border-radius: 3px;
+        background: linear-gradient(
+          to right,
+          var(--band-review-bright) 0%,
+          var(--band-weakening-bright) 25%,
+          var(--band-monitor-bright) 50%,
+          var(--band-constructive-bright) 70%,
+          var(--band-high-bright) 100%
+        );
+      }
+      .vb-apex-gauge-marker {
+        position: absolute;
+        top: -3px;
+        left: 43.5%;
+        width: 6px;
+        height: 12px;
+        background: var(--text-primary);
+        border-radius: 2px;
+        box-shadow: 0 0 0 2px var(--bg-elevated);
+        transform: translateX(-50%);
+      }
+      .vb-apex-ticks {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 4px;
+        font-size: 10px;
+        color: var(--text-tertiary);
+      }
+      @media (max-width: 760px) {
+        .vb-apex-score-wrap { align-items: flex-start; text-align: left; }
+        .vb-apex-score { font-size: 44px; }
+      }
+
+      /* =========================================================================
+         TIER 1 — Three EQUAL bucket cards
+         design rationale: unlike Variant A's treemap (where width=count), here
+         all three buckets get equal visual weight. The COUNT becomes the
+         primary numeric, not the area. This works better on phones and
+         doesn't bias the user toward the dominant bucket.
+         ========================================================================= */
+      .vb-buckets {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+      @media (max-width: 760px) {
+        .vb-buckets { grid-template-columns: 1fr; }
+      }
+      .vb-bucket {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        cursor: pointer;
+        transition: border-color 120ms ease, background 120ms ease;
+        position: relative;
+      }
+      .vb-bucket:hover { border-color: var(--border-strong); }
+
+      .vb-bucket .tone-bar {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+      .vb-bucket-buy .tone-bar { background: var(--band-high-bright); }
+      .vb-bucket-hold .tone-bar { background: var(--band-monitor-bright); }
+      .vb-bucket-watch .tone-bar { background: var(--band-weakening-bright); }
+
+      .vb-bucket-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .vb-bucket-name {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-primary);
+      }
+      .vb-bucket-buy .vb-bucket-name { color: var(--band-high-bright); }
+      .vb-bucket-hold .vb-bucket-name { color: var(--band-monitor-bright); }
+      .vb-bucket-watch .vb-bucket-name { color: var(--band-weakening-bright); }
+
+      .vb-bucket-chev {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        color: var(--text-tertiary);
+        transition: transform 120ms ease;
+      }
+      .vb-bucket.is-open .vb-bucket-chev { transform: rotate(90deg); color: var(--text-primary); }
+
+      .vb-bucket-count-row {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+      .vb-bucket-count {
+        font-size: 52px;
+        line-height: 1;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -1.2px;
+        color: var(--text-primary);
+      }
+      .vb-bucket-pct {
+        font-size: 13px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+      }
+      .vb-bucket-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      /* progressive-disclosure mini bar — proportion within the bucket */
+      /* design rationale: even though buckets are equal-width, this thin bar
+         hints at the underlying band split so users get the relative shape
+         WITHOUT clicking. */
+      .vb-bucket-bar {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--bg-chip);
+        display: flex;
+        overflow: hidden;
+        gap: 1px;
+      }
+      .vb-bucket-bar span { height: 100%; display: block; }
+
+      /* sub-band chips (revealed when bucket is "open") */
+      .vb-subbands {
+        display: none;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-top: 6px;
+        border-top: 1px solid var(--border-subtle);
+        margin-top: 2px;
+      }
+      .vb-bucket.is-open .vb-subbands { display: flex; }
+
+      .vb-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--bg-chip);
+        border: 1px solid var(--border-subtle);
+        font-size: 11px;
+        color: var(--text-primary);
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .vb-chip:hover { background: var(--bg-chip-active); }
+      .vb-chip .ct { font-family: var(--font-mono); color: var(--text-secondary); font-size: 10px; }
+      .vb-chip.is-zero { opacity: 0.45; }
+      .vb-chip.is-selected {
+        background: rgba(216, 145, 72, 0.18);
+        border-color: var(--band-monitor-bright);
+        color: var(--band-monitor-bright);
+      }
+      .vb-chip-dot {
+        width: 7px; height: 7px; border-radius: 50%;
+      }
+      .vb-chip-dot.elite { background: var(--band-elite-bright); }
+      .vb-chip-dot.high { background: var(--band-high-bright); }
+      .vb-chip-dot.constructive { background: var(--band-constructive-bright); }
+      .vb-chip-dot.monitor { background: var(--band-monitor-bright); }
+      .vb-chip-dot.weakening { background: var(--band-weakening-bright); }
+      .vb-chip-dot.review { background: var(--band-review-bright); }
+
+      /* =========================================================================
+         TIER 3 — Ticker grid (mockup state: Hold > Monitor selected, 34 names)
+         ========================================================================= */
+      .vb-grid-wrap {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .vb-breadcrumb {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .vb-crumb {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: var(--bg-chip);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 11px;
+      }
+      .vb-crumb.is-active {
+        background: rgba(216, 145, 72, 0.18);
+        border-color: var(--band-monitor-bright);
+        color: var(--band-monitor-bright);
+      }
+      .vb-crumb .x {
+        margin-left: 4px;
+        font-family: var(--font-mono);
+        opacity: 0.6;
+        cursor: pointer;
+      }
+      .vb-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      }
+      .vb-card {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-left: 3px solid var(--band-monitor-bright);
+        border-radius: var(--radius-md);
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .vb-card .row1 {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .vb-card .tk {
+        font-weight: 700;
+        font-size: 14px;
+        letter-spacing: 0.4px;
+        color: var(--text-primary);
+      }
+      .vb-card .sc {
+        font-family: var(--font-mono);
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--band-monitor-bright);
+      }
+      .vb-card .meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+      .vb-card .band-tag {
+        font-size: 9.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--band-monitor-bright);
+      }
+      .vb-card-more {
+        background: transparent;
+        border: 1px dashed var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 10px 12px;
+        text-align: center;
+        font-size: 12px;
+        color: var(--text-tertiary);
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="vb-shell">
+
+      <div class="vb-mockup-banner">
+        <span>MOCKUP &middot; Variant B: <strong>Vertical Drill-Down</strong> &middot; data 2026-05-18 (static)</span>
+        <a href="../">&larr; back to picker</a>
+      </div>
+
+      <div class="vb-index-row" aria-label="Index membership shortcuts">
+        <span class="label">Filter by index</span>
+        <button class="vb-index-chip">DJIA 30 <span class="ct">30</span></button>
+        <button class="vb-index-chip">NASDAQ-100 <span class="ct">100</span></button>
+        <button class="vb-index-chip">S&amp;P 100 <span class="ct">100</span></button>
+      </div>
+
+      <div class="vb-context-row">
+        <div class="vb-context-card">
+          <div class="title">Market Regime</div>
+          <div class="vals">
+            <span>HY OAS <b class="good">3.42%</b></span>
+            <span>2s10s <b>+38 bps</b></span>
+            <span>USD <b>104.1</b></span>
+          </div>
+        </div>
+        <div class="vb-context-card">
+          <div class="title">Top Movers (7-day)</div>
+          <div class="vals">
+            <span>&uarr; <b class="good">MU +4.2</b></span>
+            <span>&uarr; <b class="good">PANW +3.1</b></span>
+            <span>&darr; <b class="bad">NKE -5.0</b></span>
+            <span>&darr; <b class="bad">WBD -3.8</b></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===================== APEX ===================== -->
+      <section class="vb-apex" aria-label="LTHCS Composite Index">
+        <div>
+          <div class="vb-apex-eyebrow">LTHCS Composite Index &middot; Universe of 167</div>
+          <h1 class="vb-apex-title">Market posture: <em style="font-style:normal;color:var(--band-monitor-bright)">distributing</em></h1>
+          <p class="vb-apex-sub">
+            Band lean -66.5%, fundamentals stable, sentiment supportive,
+            demand environment neutral. Directional read, not a trading signal.
+          </p>
+        </div>
+        <div class="vb-apex-score-wrap">
+          <div class="vb-apex-score">-13</div>
+          <div class="vb-apex-label">NEUTRAL &middot; MONITOR</div>
+        </div>
+        <div class="vb-apex-gauge">
+          <div class="vb-apex-gauge-bar"></div>
+          <div class="vb-apex-gauge-marker" title="-13"></div>
+          <div class="vb-apex-ticks">
+            <span>-100</span><span>-50</span><span>0</span><span>+50</span><span>+100</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== TIER 1 — THREE EQUAL BUCKETS ===================== -->
+      <section class="vb-buckets" aria-label="Buy, Hold, Watch buckets">
+
+        <!-- BUY -->
+        <article class="vb-bucket vb-bucket-buy" aria-expanded="false">
+          <span class="tone-bar"></span>
+          <div class="vb-bucket-head">
+            <span class="vb-bucket-name">Buy</span>
+            <span class="vb-bucket-chev" aria-hidden="true">&rsaquo;</span>
+          </div>
+          <div class="vb-bucket-count-row">
+            <span class="vb-bucket-count">11</span>
+            <span class="vb-bucket-pct">6.6% of universe</span>
+          </div>
+          <div class="vb-bucket-desc">Elite + High Confidence + Constructive</div>
+          <!-- mini band-share bar: all 11 are Constructive today -->
+          <div class="vb-bucket-bar" title="Constructive 11 of 11">
+            <span style="flex:0 0 100%;background:var(--band-constructive-bright)"></span>
+          </div>
+          <div class="vb-subbands">
+            <button class="vb-chip is-zero"><span class="vb-chip-dot elite"></span>Elite <span class="ct">0</span></button>
+            <button class="vb-chip is-zero"><span class="vb-chip-dot high"></span>High <span class="ct">0</span></button>
+            <button class="vb-chip"><span class="vb-chip-dot constructive"></span>Constructive <span class="ct">11</span></button>
+          </div>
+        </article>
+
+        <!-- HOLD — mockup state: OPENED, with Monitor chip selected -->
+        <!-- design rationale: shows the "after a click" disclosed state so
+             reviewer can see what the expanded UX looks like. -->
+        <article class="vb-bucket vb-bucket-hold is-open" aria-expanded="true">
+          <span class="tone-bar"></span>
+          <div class="vb-bucket-head">
+            <span class="vb-bucket-name">Hold</span>
+            <span class="vb-bucket-chev" aria-hidden="true">&rsaquo;</span>
+          </div>
+          <div class="vb-bucket-count-row">
+            <span class="vb-bucket-count">34</span>
+            <span class="vb-bucket-pct">20.4% of universe</span>
+          </div>
+          <div class="vb-bucket-desc">Monitor band only</div>
+          <div class="vb-bucket-bar" title="Monitor 34 of 34">
+            <span style="flex:0 0 100%;background:var(--band-monitor-bright)"></span>
+          </div>
+          <div class="vb-subbands">
+            <button class="vb-chip is-selected"><span class="vb-chip-dot monitor"></span>Monitor <span class="ct">34</span></button>
+          </div>
+        </article>
+
+        <!-- WATCH -->
+        <article class="vb-bucket vb-bucket-watch" aria-expanded="false">
+          <span class="tone-bar"></span>
+          <div class="vb-bucket-head">
+            <span class="vb-bucket-name">Watch</span>
+            <span class="vb-bucket-chev" aria-hidden="true">&rsaquo;</span>
+          </div>
+          <div class="vb-bucket-count-row">
+            <span class="vb-bucket-count">122</span>
+            <span class="vb-bucket-pct">73.1% of universe</span>
+          </div>
+          <div class="vb-bucket-desc">Weakening + Review &middot; heavy tail</div>
+          <!-- two-part bar: 67 weakening + 55 review -->
+          <div class="vb-bucket-bar" title="Weakening 67, Review 55">
+            <span style="flex:0 0 54.9%;background:var(--band-weakening-bright)"></span>
+            <span style="flex:0 0 45.1%;background:var(--band-review-bright)"></span>
+          </div>
+          <div class="vb-subbands">
+            <button class="vb-chip"><span class="vb-chip-dot weakening"></span>Weakening <span class="ct">67</span></button>
+            <button class="vb-chip"><span class="vb-chip-dot review"></span>Review <span class="ct">55</span></button>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ===================== TIER 3 — FILTERED TICKER GRID ===================== -->
+      <section class="vb-grid-wrap" aria-label="Filtered ticker grid">
+        <div class="vb-breadcrumb">
+          <span>Filtered:</span>
+          <span class="vb-crumb">Hold <span class="x">&times;</span></span>
+          <span aria-hidden="true">&rsaquo;</span>
+          <span class="vb-crumb is-active">Monitor &middot; 34 names <span class="x">&times;</span></span>
+        </div>
+
+        <!-- design rationale: real Monitor names from 2026-05-18 snapshot,
+             top 11 by score. The "+23 more" tile communicates the total
+             without bloating the mockup. -->
+        <div class="vb-grid">
+          <div class="vb-card">
+            <div class="row1"><span class="tk">MNST</span><span class="sc">69.3</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">BK</span><span class="sc">67.9</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">MA</span><span class="sc">67.9</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">SCHW</span><span class="sc">67.9</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">V</span><span class="sc">67.7</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">META</span><span class="sc">67.6</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">AMZN</span><span class="sc">66.5</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">FTNT</span><span class="sc">66.2</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">COST</span><span class="sc">65.5</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">DUK</span><span class="sc">65.5</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card">
+            <div class="row1"><span class="tk">CRWD</span><span class="sc">64.8</span></div>
+            <div class="meta"><span class="band-tag">Monitor</span><span>&rarr; stable</span></div>
+          </div>
+          <div class="vb-card-more">+ 23 more Monitor names</div>
+        </div>
+      </section>
+
+    </div>
+  </body>
+</html>
