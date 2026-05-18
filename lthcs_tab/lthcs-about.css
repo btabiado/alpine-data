@@ -29,6 +29,7 @@
   width: 100%;
   max-width: 720px;
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow: hidden;
   background: var(--panel, #171c22);
   border: 1px solid var(--border, #2a323d);
@@ -62,10 +63,15 @@
   color: var(--muted, #9ca3af);
   font-size: 22px;
   line-height: 1;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 6px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lthcs-about-close:hover,
@@ -220,7 +226,9 @@
   .lthcs-about-panel {
     max-width: none;
     max-height: 100vh;
+    max-height: 100dvh;
     height: 100vh;
+    height: 100dvh;
     border-radius: 0;
     border: none;
   }

@@ -36,6 +36,7 @@
   width: 100%;
   max-width: 760px;
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   background: var(--bg-elevated, #131820);
   border: 1px solid var(--border-strong, #3A4452);
@@ -97,8 +98,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   background: var(--bg-chip, #1B2129);
   color: var(--text-secondary, #9CA3AF);
   border: 1px solid var(--border-subtle, #2A323D);
@@ -885,6 +888,7 @@
   .lthcs-modal-root .lthcs-modal-panel {
     max-width: none;
     max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
     border-left: none;
     border-right: none;

@@ -243,6 +243,7 @@ export function openAbout() {
   const root = buildModal();
   root.classList.remove("hidden");
   root.setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
   document.addEventListener("keydown", escClose);
   document.addEventListener("keydown", trapTab);
   const closeBtn = root.querySelector(".lthcs-about-close");
@@ -254,6 +255,7 @@ export function closeAbout() {
   if (!root) return;
   root.classList.add("hidden");
   root.setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
   document.removeEventListener("keydown", escClose);
   document.removeEventListener("keydown", trapTab);
   if (lastFocus && typeof lastFocus.focus === "function") {

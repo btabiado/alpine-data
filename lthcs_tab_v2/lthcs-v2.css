@@ -123,7 +123,10 @@ header .meta {
 .tab:hover { color: var(--text); text-decoration: none; }
 .tab.active { color: var(--text); border-bottom-color: var(--purple); }
 .tab-classic {
-  margin-left: auto;
+  /* `margin-left: auto` inside `overflow-x: auto` was pushing this off-screen
+     at narrow viewports; let it sit after the other tabs and rely on
+     horizontal scroll to reveal it. */
+  margin-left: 8px;
   color: var(--muted);
   font-size: 12px;
 }
@@ -579,6 +582,7 @@ header .meta {
 .filter-search-input {
   width: 100%;
   padding: 7px 10px 7px 28px;
+  min-height: 44px;
   background: #0b0d12;
   color: var(--text);
   border: 1px solid var(--border);
@@ -788,9 +792,12 @@ footer a { color: var(--muted); }
   .filter-result-count { margin-left: 0; width: 100%; }
   .mover-row { grid-template-columns: 48px 1fr auto; gap: 6px; }
   .mover-period { display: none; }
-  /* a11y: clickable controls hit 44px on phone */
-  .btn, .tab, .chip, .band-pill { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 }
+
+/* a11y: clickable controls hit 44px at every viewport (WCAG 2.5.5).
+   Was previously gated behind @media (max-width: 860px) — generalized
+   so desktop touch users get the same hit area. */
+.btn, .tab, .chip, .band-pill { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
 
 @media (max-width: 375px) {
   .ticker-grid { grid-template-columns: 1fr; }

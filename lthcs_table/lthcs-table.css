@@ -7,6 +7,7 @@
 .lthcs-table-page {
   /* Allow the table page to push wider than the card grid for dense data. */
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .lthcs-table-main {
@@ -142,6 +143,7 @@
   /* Cap the height so the sticky header has something to stick against on
      desktops while still letting the page scroll if the user prefers. */
   max-height: calc(100vh - 220px);
+  max-height: calc(100dvh - 220px);
 }
 
 .lthcs-table {
@@ -500,6 +502,11 @@
   padding: 2px 4px;
   cursor: pointer;
   transition: color 100ms ease, transform 100ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
 }
 
 .lthcs-table-star:hover {

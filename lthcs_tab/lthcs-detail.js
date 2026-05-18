@@ -2327,6 +2327,7 @@ export function openDetail(args) {
   // Show
   root.classList.remove('hidden');
   root.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
 
   // Keyboard handlers
   if (moduleState.keyHandler) {
@@ -2408,6 +2409,7 @@ export function closeDetail() {
   if (root.classList.contains('hidden')) return;
   root.classList.add('hidden');
   root.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
   if (moduleState.keyHandler) {
     document.removeEventListener('keydown', moduleState.keyHandler, true);
     moduleState.keyHandler = null;

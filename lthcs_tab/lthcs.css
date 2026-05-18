@@ -199,6 +199,7 @@ input[type="search"] {
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
+  min-height: 44px;
   background: var(--bg-chip);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
@@ -1074,6 +1075,8 @@ input[type="search"] {
   justify-content: center;
   width: 18px;
   height: 18px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 999px;
   border: none;
   background: rgba(255, 255, 255, 0.10);
@@ -1139,6 +1142,7 @@ input[type="search"] {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
+  min-height: 44px;
   background: var(--bg-chip);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
