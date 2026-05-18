@@ -269,6 +269,85 @@ header .meta {
 .sentiment-legend .legend-pos { color: var(--green); }
 .sentiment-legend .legend-neg { color: var(--red); }
 
+/* ===== LTHCS Composite Index — red→green range gauge + component table.
+   These are injected by lthcs-v2.js inside #lthcs-v2-sentiment-card.
+   Mirrors the V1 Whale Sentiment Index pattern. ===== */
+.sentiment-gauge {
+  position: relative;
+  margin: 8px 0 4px;
+}
+.sentiment-gauge-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    to right,
+    var(--red) 0%,
+    var(--red) 18%,
+    var(--amber) 50%,
+    var(--green) 82%,
+    var(--green) 100%
+  );
+}
+.sentiment-gauge-marker {
+  position: absolute;
+  top: -3px;
+  width: 10px;
+  height: 16px;
+  background: var(--text);
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px #0b0d12;
+  left: 50%;
+  transform: translateZ(0); /* keep crisp on transition */
+}
+.sentiment-components {
+  margin-top: 4px;
+}
+.sentiment-components-summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 0;
+  user-select: none;
+}
+.sentiment-components-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.sentiment-components-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid #1f2533;
+}
+.sentiment-components-table td {
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid #1f2533;
+  color: var(--text);
+  vertical-align: top;
+}
+.sentiment-components-table td.sc-delta {
+  text-align: right;
+  width: 44px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sentiment-components-table td.sc-delta.sc-pos { color: var(--green); }
+.sentiment-components-table td.sc-delta.sc-neg { color: var(--red); }
+.sentiment-components-table td.sc-delta.sc-neu { color: var(--muted); }
+.sentiment-components-table td.sc-read {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: italic;
+}
+.sentiment-components-note {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
 /* ===== Movers list (gainers/decliners cards) ===== */
 .movers-list {
   display: flex;
@@ -716,6 +795,9 @@ footer a { color: var(--muted); }
 @media (max-width: 375px) {
   .ticker-grid { grid-template-columns: 1fr; }
   .sentiment-score { font-size: 22px; }
+  /* Narrow screens: hide the component breakdown table so the gauge +
+     score stay readable. Mirrors the classic /lthcs/ behavior. */
+  .sentiment-components { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

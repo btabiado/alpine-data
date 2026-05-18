@@ -239,6 +239,158 @@ input[type="search"] {
 }
 
 /* =========================================================================
+   LTHCS Composite Index — universe-level "where is the market?" headline.
+   Mirrors the V1 Crypto Trading Dashboard's Whale Sentiment Index card.
+   --lthcs-index-tone is set inline from the band-bright color in JS.
+   ========================================================================= */
+.lthcs-composite-index {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--lthcs-index-tone, var(--band-monitor-bright));
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lthcs-index-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.lthcs-index-titles {
+  min-width: 0;
+}
+.lthcs-index-title {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.lthcs-index-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+.lthcs-index-score-block {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.lthcs-index-score {
+  font-size: 36px;
+  line-height: 1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  color: var(--lthcs-index-tone, var(--band-monitor-bright));
+}
+.lthcs-index-label {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--lthcs-index-tone, var(--band-monitor-bright));
+}
+.lthcs-index-gauge {
+  position: relative;
+  margin: 4px 0 2px;
+}
+.lthcs-index-gauge-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: linear-gradient(
+    to right,
+    var(--band-review-bright) 0%,
+    var(--band-weakening-bright) 25%,
+    var(--band-monitor-bright) 50%,
+    var(--band-constructive-bright) 70%,
+    var(--band-high-bright) 100%
+  );
+}
+.lthcs-index-gauge-marker {
+  position: absolute;
+  top: -3px;
+  width: 10px;
+  height: 16px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--bg-elevated, #0b0d12);
+  pointer-events: none;
+}
+.lthcs-index-gauge-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 3px;
+}
+.lthcs-index-details {
+  margin-top: 4px;
+}
+.lthcs-index-summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  user-select: none;
+}
+.lthcs-index-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 6px;
+}
+.lthcs-index-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  padding: 4px 8px 4px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lthcs-index-table td {
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  vertical-align: top;
+}
+.lthcs-index-comp-name { white-space: nowrap; color: var(--text-primary); }
+.lthcs-index-comp-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.lthcs-index-comp-delta {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  width: 44px;
+}
+.lthcs-index-comp-delta.lthcs-index-pos { color: var(--band-high-bright); }
+.lthcs-index-comp-delta.lthcs-index-neg { color: var(--band-weakening-bright); }
+.lthcs-index-comp-delta.lthcs-index-neutral { color: var(--text-tertiary); }
+.lthcs-index-comp-read {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-style: italic;
+}
+.lthcs-index-note {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+@media (max-width: 600px) {
+  .lthcs-composite-index { padding: 12px 14px; }
+  .lthcs-index-score { font-size: 30px; }
+}
+@media (max-width: 375px) {
+  /* Hide component breakdown table on very narrow screens — keep just the
+     score + gauge so the headline read remains tappable. */
+  .lthcs-index-details { display: none; }
+  .lthcs-index-score { font-size: 28px; }
+}
+
+/* =========================================================================
    Market regime strip (Week 11)
    Compact horizontal row of macro chips + sector leader/laggard tiles.
    ========================================================================= */

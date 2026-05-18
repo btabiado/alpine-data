@@ -27,6 +27,10 @@ const INDEX_URL = `${SNAPSHOTS_BASE}/index.json`;
 const HISTORY_BASE = '../data/lthcs/history/by_ticker';
 const INSIDER_BASE = '../data/lthcs/insider';
 const MACRO_BASE = '../data/lthcs/macro';
+// LTHCS Composite Index (universe-level ±100 read), written by
+// lthcs_daily.py Stage 8. The v2 sentiment gauge sources its real
+// math + component breakdown from here.
+const INDEX_BASE = '../data/lthcs/index';
 
 const TREND_FLAT_THRESHOLD = 0.5;
 const TREND_FALLBACK_DAYS = [30, 14, 7, 3, 1];
@@ -76,6 +80,10 @@ const state = {
   breadth: null,
   breadthSentiment: null,
   sectors: null,
+  // LTHCS Composite Index payload, fetched from data/lthcs/index/<date>.json.
+  // When present, drives the sentiment gauge with real per-component data
+  // instead of the legacy 3-input heuristic.
+  lthcsIndex: null,
   filters: {
     band: 'all',
     drift: 'all',
@@ -412,9 +420,128 @@ function renderMeta(snapshot, enrichedCount) {
   }
 }
 
+// Map LTHCS Index label → the v2 card's tone attribute (drives border + color).
+function toneForLabel(label) {
+  if (!label) return 'neutral';
+  const L = String(label).toUpperCase();
+  if (L.includes('ELITE')) return 'bullish';
+  if (L.includes('CONSTRUCTIVE')) return 'bullish';
+  if (L.includes('WEAKENING')) return 'cautious';
+  if (L.includes('DISTRIBUTING')) return 'bearish';
+  return 'neutral';
+}
+
+// Map composite score in [-100, +100] to a 0-100% offset on the gauge.
+function gaugePctFor(score) {
+  const n = Number(score);
+  if (!Number.isFinite(n)) return 50;
+  const pct = ((n + 100) / 200) * 100;
+  if (pct < 0) return 0;
+  if (pct > 100) return 100;
+  return pct;
+}
+
+function renderSentimentFromIndex(card, payload) {
+  card.dataset.tone = toneForLabel(payload.label);
+  const score = Number(payload.score);
+  const scoreEl = $('#lthcs-v2-sentiment-score');
+  if (scoreEl) scoreEl.textContent = `${score >= 0 ? '+' : ''}${score}`;
+  const labelEl = $('#lthcs-v2-sentiment-label');
+  if (labelEl) labelEl.textContent = payload.label || 'NEUTRAL';
+  const subEl = $('#lthcs-v2-sentiment-subline');
+  if (subEl) {
+    subEl.textContent = (
+      `Composite ±100 from band lean, pillar avgs, macro regime, ` +
+      `insider & 13F breadth · ${payload.as_of || ''}`
+    );
+  }
+
+  // The legacy stacked bar (bullish/neutral/bearish %) still works as a
+  // secondary signal — derive it from the enriched bands so the user gets
+  // both the composite score and the band split. Falls back to even split.
+  const total = state.enriched.length || 1;
+  let bullishCount = 0;
+  let neutralCount = 0;
+  let bearishCount = 0;
+  for (const row of state.enriched) {
+    if (row.uiBand === 'elite' || row.uiBand === 'high') bullishCount += 1;
+    else if (row.uiBand === 'constructive' || row.uiBand === 'monitor') neutralCount += 1;
+    else bearishCount += 1;
+  }
+  const pos = $('#lthcs-v2-sentiment-bar-pos');
+  const neu = $('#lthcs-v2-sentiment-bar-neu');
+  const neg = $('#lthcs-v2-sentiment-bar-neg');
+  if (pos) pos.style.width = `${(bullishCount / total * 100).toFixed(1)}%`;
+  if (neu) neu.style.width = `${(neutralCount / total * 100).toFixed(1)}%`;
+  if (neg) neg.style.width = `${(bearishCount / total * 100).toFixed(1)}%`;
+
+  // Horizontal range gauge marker (red → green) with the composite marker
+  // pinned at the right position. Built inline so the v2 HTML stays
+  // unchanged — same pattern the v1 Whale card uses.
+  let gauge = $('#lthcs-v2-sentiment-gauge');
+  if (!gauge) {
+    gauge = document.createElement('div');
+    gauge.id = 'lthcs-v2-sentiment-gauge';
+    gauge.className = 'sentiment-gauge';
+    gauge.innerHTML = (
+      `<div class="sentiment-gauge-bar"></div>` +
+      `<div class="sentiment-gauge-marker"></div>`
+    );
+    // Insert directly after the stacked bar so the visual ordering is:
+    // header → stacked bar → range gauge → legend → components.
+    const legend = card.querySelector('.sentiment-legend');
+    if (legend) card.insertBefore(gauge, legend);
+    else card.appendChild(gauge);
+  }
+  const marker = gauge.querySelector('.sentiment-gauge-marker');
+  if (marker) {
+    const pct = gaugePctFor(score);
+    marker.style.left = `calc(${pct.toFixed(1)}% - 5px)`;
+  }
+
+  // Component breakdown table — same shape as the v1 Whale Index.
+  let host = $('#lthcs-v2-sentiment-components');
+  if (!host) {
+    host = document.createElement('details');
+    host.id = 'lthcs-v2-sentiment-components';
+    host.className = 'sentiment-components';
+    host.open = true;
+    card.appendChild(host);
+  }
+  const rows = (payload.components || []).map((c) => {
+    const cls = c.delta > 0 ? 'pos' : (c.delta < 0 ? 'neg' : 'neu');
+    const sign = c.delta >= 0 ? '+' : '';
+    return (
+      `<tr>` +
+      `<td>${escapeHtml(c.name)}</td>` +
+      `<td>${escapeHtml(c.value)}</td>` +
+      `<td class="sc-delta sc-${cls}">${sign}${c.delta}</td>` +
+      `<td class="sc-read">${escapeHtml(c.read || '')}</td>` +
+      `</tr>`
+    );
+  }).join('');
+  host.innerHTML = (
+    `<summary class="sentiment-components-summary">Component breakdown</summary>` +
+    `<table class="sentiment-components-table">` +
+    `<thead><tr><th>Component</th><th>Value</th><th>&plusmn;</th><th>Read</th></tr></thead>` +
+    `<tbody>${rows}</tbody>` +
+    `</table>` +
+    `<div class="sentiment-components-note">${escapeHtml(payload.note || '')}</div>`
+  );
+}
+
 function renderSentiment() {
   const card = $('#lthcs-v2-sentiment-card');
   if (!card) return;
+
+  // Prefer the real LTHCS Index payload (universe-level composite). If
+  // it isn't on disk yet (older snapshot dates), fall back to the legacy
+  // 3-input heuristic so the card never goes blank.
+  if (state.lthcsIndex) {
+    renderSentimentFromIndex(card, state.lthcsIndex);
+    return;
+  }
+
   const result = computeSentiment(state.enriched, state.breadth, state.breadthSentiment);
   card.dataset.tone = result.tone;
 
@@ -840,12 +967,14 @@ async function refresh() {
       fetchJSONSafe(`${MACRO_BASE}/breadth_sentiment_${calcDate}.json`),
       fetchJSONSafe(`${MACRO_BASE}/sector_strength_${calcDate}.json`),
       fetchJSONSafe(`${INSIDER_BASE}/${calcDate}.json`),
-    ]).then(([breadth, breadthSent, sectors, insider]) => {
+      fetchJSONSafe(`${INDEX_BASE}/${calcDate}.json`),
+    ]).then(([breadth, breadthSent, sectors, insider, lthcsIndex]) => {
       state.breadth = breadth || null;
       state.breadthSentiment = breadthSent || null;
       state.sectors = sectors || null;
       state.insiderByTicker = (insider && typeof insider === 'object') ? insider : {};
-      // Sentiment math depends on breadth + breadth_sentiment → re-render.
+      state.lthcsIndex = (lthcsIndex && typeof lthcsIndex === 'object') ? lthcsIndex : null;
+      // Sentiment math depends on breadth + breadth_sentiment + index → re-render.
       renderSentiment();
       renderRegime();
       renderSectors();

@@ -53,6 +53,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from lthcs import MODEL_VERSION, narratives, score
+from lthcs.index_aggregate import compute_lthcs_index
 from lthcs.persist import LthcsPersist
 from lthcs.pillars import adoption, des, financial, institutional, thesis
 from lthcs.sources import (
@@ -245,6 +246,11 @@ class PipelineState:
 
     # Stage 8
     variable_detail_rows: List[Dict[str, Any]] = field(default_factory=list)
+
+    # Stage 7.5 — LTHCS composite "where is the universe?" index. Mirrors
+    # the V1 Whale Sentiment Index pattern. Persisted in Stage 8 alongside
+    # macro snapshots.
+    lthcs_index: Optional[Dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -1283,6 +1289,33 @@ def stage_7_generate_narratives(state: PipelineState) -> bool:
     return True
 
 
+def stage_7p5_compute_index(state: PipelineState) -> bool:
+    """Compute the LTHCS Composite Index (whale-style universe aggregate).
+
+    Pure compute on already-built state; no I/O. Persisted in Stage 8.
+    Failures here must not break the daily run.
+    """
+    try:
+        state.lthcs_index = compute_lthcs_index(
+            state.snapshot_rows,
+            variable_detail_rows=state.variable_detail_rows,
+            insider_by_ticker=state.insider_by_ticker,
+            holdings_by_ticker=state.holdings_by_ticker,
+            breadth_snapshot=state.breadth_snapshot,
+            breadth_sentiment_snapshot=state.breadth_sentiment_snapshot,
+            sector_strength=state.sector_strength,
+            as_of=state.calc_date,
+        )
+        print(
+            "✓ Stage 7.5: LTHCS Composite Index = %+d (%s)"
+            % (state.lthcs_index["score"], state.lthcs_index["label"])
+        )
+    except Exception as exc:
+        print("! Stage 7.5: index compute failed: %s" % exc)
+        state.lthcs_index = None
+    return True
+
+
 def stage_8_persist(state: PipelineState) -> bool:
     # Build variable_detail rows -- one per (ticker, pillar) for V1.
     state.variable_detail_rows = []
@@ -1386,6 +1419,15 @@ def stage_8_persist(state: PipelineState) -> bool:
                 (holdings_dir / ("%s.json" % state.calc_date)).write_text(
                     json.dumps(state.holdings_by_ticker, indent=2, sort_keys=True)
                 )
+            # LTHCS Composite Index (universe-level ±100 read). Persisted
+            # under data/lthcs/index/<date>.json so the front-end can
+            # fetch it the same way as the daily snapshot.
+            if state.lthcs_index is not None:
+                index_dir = persist.data_root / "index"
+                index_dir.mkdir(parents=True, exist_ok=True)
+                (index_dir / ("%s.json" % state.calc_date)).write_text(
+                    json.dumps(state.lthcs_index, indent=2, sort_keys=True)
+                )
         except Exception as exc:
             if state.args.verbose:
                 print("  macro snapshot persist failed: %s" % exc)
@@ -1420,6 +1462,7 @@ STAGES: List[Callable[[PipelineState], bool]] = [
     stage_5_apply_modifiers,
     stage_6_compute_final_scores,
     stage_7_generate_narratives,
+    stage_7p5_compute_index,
     stage_8_persist,
 ]
 
