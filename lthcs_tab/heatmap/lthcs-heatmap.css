@@ -84,6 +84,7 @@
   text-decoration: none;
   text-align: center;
   overflow: hidden;
+  touch-action: manipulation;
   transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
   -webkit-tap-highlight-color: transparent;
 }
@@ -213,10 +214,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 .hm-modal-close:hover {
   color: var(--text-primary);
   background: var(--bg-chip-active);
+}
+.hm-modal-close:active {
+  background: var(--bg-chip-active);
+  transform: scale(0.96);
 }
 
 .hm-modal-body {

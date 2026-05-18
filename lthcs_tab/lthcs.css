@@ -96,6 +96,8 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 a {
@@ -206,6 +208,7 @@ input[type="search"] {
   border-radius: var(--radius-md);
   font-size: 13px;
   font-weight: 500;
+  touch-action: manipulation;
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
@@ -216,6 +219,7 @@ input[type="search"] {
 
 .lthcs-refresh-btn:active {
   transform: translateY(1px);
+  background: var(--bg-chip-active);
 }
 
 .lthcs-refresh-icon {
@@ -685,6 +689,7 @@ input[type="search"] {
   color: var(--text-primary);
   font-family: inherit;
   cursor: pointer;
+  touch-action: manipulation;
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
@@ -896,6 +901,7 @@ input[type="search"] {
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
 .lthcs-stat-clickable:hover {
@@ -1085,6 +1091,7 @@ input[type="search"] {
   line-height: 1;
   cursor: pointer;
   padding: 0;
+  touch-action: manipulation;
   transition: background 100ms ease, color 100ms ease;
 }
 
@@ -1150,12 +1157,18 @@ input[type="search"] {
   font-size: 12.5px;
   font-weight: 500;
   line-height: 1;
+  touch-action: manipulation;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
 .lthcs-chip:hover {
   background: var(--bg-chip-active);
   color: var(--text-primary);
+}
+
+.lthcs-chip:active {
+  background: var(--bg-chip-active);
+  transform: scale(0.98);
 }
 
 .lthcs-chip.is-active {
@@ -1229,6 +1242,7 @@ input[type="search"] {
   flex-direction: column;
   gap: 10px;
   overflow: hidden;
+  touch-action: manipulation;
   transition: transform 140ms ease, background 140ms ease, border-color 140ms ease,
     box-shadow 140ms ease;
 }
@@ -1272,6 +1286,11 @@ input[type="search"] {
   background: var(--bg-card-hover);
   border-color: var(--border-strong);
   box-shadow: var(--shadow-card-hover);
+}
+
+.lthcs-card:active {
+  transform: translateY(0) scale(0.99);
+  background: var(--bg-card-hover);
 }
 
 .lthcs-card > * {

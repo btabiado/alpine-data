@@ -110,6 +110,7 @@
   line-height: 1;
   cursor: pointer;
   flex-shrink: 0;
+  touch-action: manipulation;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
@@ -119,6 +120,11 @@
   color: var(--text-primary, #E6E9EE);
   border-color: var(--border-strong, #3A4452);
   outline: none;
+}
+
+.lthcs-modal-root .lthcs-modal-close:active {
+  background: var(--bg-chip-active, #2A323D);
+  transform: scale(0.96);
 }
 
 /* ----- Hero score row ----- */

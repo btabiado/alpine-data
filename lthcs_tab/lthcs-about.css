@@ -72,6 +72,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 
 .lthcs-about-close:hover,
@@ -79,6 +80,11 @@
   color: var(--text, #e6e9ee);
   border-color: var(--border, #2a323d);
   outline: none;
+}
+
+.lthcs-about-close:active {
+  background: rgba(255, 255, 255, 0.06);
+  transform: scale(0.96);
 }
 
 .lthcs-about-body {

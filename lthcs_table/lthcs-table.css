@@ -501,6 +501,7 @@
   line-height: 1;
   padding: 2px 4px;
   cursor: pointer;
+  touch-action: manipulation;
   transition: color 100ms ease, transform 100ms ease;
   display: inline-flex;
   align-items: center;

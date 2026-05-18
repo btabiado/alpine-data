@@ -64,6 +64,8 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* ===== Header (mirrors crypto-dashboard @ line 419) ===== */
@@ -119,8 +121,10 @@ header .meta {
   border-left: 0;
   border-right: 0;
   font-family: inherit;
+  touch-action: manipulation;
 }
 .tab:hover { color: var(--text); text-decoration: none; }
+.tab:active { color: var(--text); background: rgba(255, 255, 255, 0.04); }
 .tab.active { color: var(--text); border-bottom-color: var(--purple); }
 .tab-classic {
   /* `margin-left: auto` inside `overflow-x: auto` was pushing this off-screen
@@ -153,8 +157,10 @@ header .meta {
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
+  touch-action: manipulation;
 }
 .btn:hover { background: #222838; }
+.btn:active { background: #2a3146; transform: scale(0.98); }
 .btn:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
 
 .card {
@@ -376,6 +382,7 @@ header .meta {
   font-family: inherit;
   color: var(--text);
   text-align: left;
+  touch-action: manipulation;
   transition: background 120ms ease, border-color 120ms ease;
   width: 100%;
 }
@@ -533,9 +540,11 @@ header .meta {
   font-weight: 600;
   color: var(--text);
   font-family: inherit;
+  touch-action: manipulation;
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 .band-pill:hover { transform: translateY(-1px); }
+.band-pill:active { transform: translateY(0) scale(0.98); }
 .band-pill[data-band="elite"]      { background: var(--band-elite-bg);        border-color: var(--band-elite-border);        color: var(--band-elite-fg); }
 .band-pill[data-band="high"]       { background: var(--band-high-bg);         border-color: var(--band-high-border);         color: var(--band-high-fg); }
 .band-pill[data-band="constructive"]{ background: var(--band-constructive-bg); border-color: var(--band-constructive-border); color: var(--band-constructive-fg); }
@@ -609,9 +618,11 @@ header .meta {
   cursor: pointer;
   font-family: inherit;
   font-weight: 500;
+  touch-action: manipulation;
   transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 .chip:hover { color: var(--text); background: #222838; }
+.chip:active { color: var(--text); background: #2a3146; transform: scale(0.98); }
 .chip.is-active {
   background: var(--purple);
   color: #000;
@@ -640,6 +651,7 @@ header .meta {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  touch-action: manipulation;
   transition: transform 120ms ease, border-color 120ms ease, background 120ms ease;
 }
 .ticker-card:hover {
