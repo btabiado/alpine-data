@@ -240,6 +240,13 @@
   cursor: crosshair;
 }
 
+/* Hover indicators must not steal pointer events from the overlay rect. */
+.lthcs-modal-root .lthcs-chart-hover-dot,
+.lthcs-modal-root .lthcs-chart-guide,
+.lthcs-modal-root .lthcs-chart-pillar-layer {
+  pointer-events: none;
+}
+
 .lthcs-modal-root .lthcs-modal-chart-placeholder {
   display: flex;
   align-items: center;
@@ -310,6 +317,115 @@
   border-radius: var(--radius-sm, 6px);
   text-align: center;
   font-style: italic;
+}
+
+/* ----- Chart legend (multi-series toggle chips, #20) ----- */
+.lthcs-modal-root .lthcs-modal-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-subtle, #2A323D);
+}
+
+.lthcs-modal-root .lthcs-modal-chart-legend:empty {
+  display: none;
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 7px;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: 999px;
+  color: var(--text-tertiary, #6B7280);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip:hover,
+.lthcs-modal-root .lthcs-chart-legend-chip:focus-visible {
+  color: var(--text-primary, #E6E9EE);
+  border-color: var(--border-strong, #3A4452);
+  outline: none;
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip[data-active="true"] {
+  color: var(--text-primary, #E6E9EE);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--lthcs-chip-color, var(--border-strong, #3A4452));
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip.is-loading {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip.is-loading::after {
+  content: '…';
+  margin-left: 2px;
+  color: var(--text-tertiary, #6B7280);
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip.is-empty,
+.lthcs-modal-root .lthcs-chart-legend-chip.is-error {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lthcs-modal-root .lthcs-chart-legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.lthcs-modal-root .lthcs-chart-legend-chip[data-active="false"] .lthcs-chart-legend-swatch {
+  opacity: 0.45;
+}
+
+/* Tooltip rows (multi-series) */
+.lthcs-modal-root .lthcs-chart-tip-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border-subtle, #2A323D);
+}
+
+.lthcs-modal-root .lthcs-chart-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary, #9CA3AF);
+}
+
+.lthcs-modal-root .lthcs-chart-tip-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+}
+
+.lthcs-modal-root .lthcs-chart-tip-label {
+  flex: 1 1 auto;
+  color: var(--text-tertiary, #6B7280);
+}
+
+.lthcs-modal-root .lthcs-chart-tip-val {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #E6E9EE);
+  font-weight: 600;
 }
 
 /* ----- Pillar breakdown ----- */
@@ -415,6 +531,220 @@
   font-style: italic;
   color: var(--text-tertiary, #6B7280);
   font-size: 12.5px;
+}
+
+/* Read more / read less for long narrative paragraphs (#19).
+   Clamps to 5 visual lines when not expanded; expanded state removes the
+   clamp via the `is-expanded` class. The `is-clamped` modifier ensures we
+   only clamp when there's actually overflow content to hide. */
+.lthcs-modal-root .lthcs-narrative-para.is-clamped .lthcs-narrative-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.lthcs-modal-root .lthcs-narrative-para.is-clamped.is-expanded .lthcs-narrative-text {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+
+.lthcs-modal-root .lthcs-narrative-readmore {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  background: transparent;
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: 999px;
+  color: var(--text-secondary, #9CA3AF);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.lthcs-modal-root .lthcs-narrative-readmore:hover,
+.lthcs-modal-root .lthcs-narrative-readmore:focus-visible {
+  color: var(--text-primary, #E6E9EE);
+  border-color: var(--border-strong, #3A4452);
+  outline: none;
+}
+
+.lthcs-modal-root .lthcs-narrative-meta {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary, #6B7280);
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-subtle, #2A323D);
+}
+
+/* ----- Evidence panel (#19): per-pillar signal accordion ----- */
+.lthcs-modal-root .lthcs-modal-evidence {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lthcs-modal-root .lthcs-evidence-placeholder {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-tertiary, #6B7280);
+  padding: 10px 12px;
+  background: var(--bg-card, #171C22);
+  border: 1px dashed var(--border-subtle, #2A323D);
+  border-radius: var(--radius-md, 10px);
+}
+
+.lthcs-modal-root .lthcs-evidence-pillar {
+  background: var(--bg-card, #171C22);
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: var(--radius-md, 10px);
+}
+
+.lthcs-modal-root .lthcs-evidence-pillar[open] {
+  border-color: var(--border-strong, #3A4452);
+}
+
+.lthcs-modal-root .lthcs-evidence-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lthcs-modal-root .lthcs-evidence-summary::-webkit-details-marker {
+  display: none;
+}
+
+.lthcs-modal-root .lthcs-evidence-summary::before {
+  content: '\25B8'; /* ▸ */
+  display: inline-block;
+  width: 10px;
+  font-size: 10px;
+  color: var(--text-tertiary, #6B7280);
+  transition: transform 160ms ease;
+}
+
+.lthcs-modal-root .lthcs-evidence-pillar[open] > .lthcs-evidence-summary::before {
+  transform: rotate(90deg);
+}
+
+.lthcs-modal-root .lthcs-evidence-name {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lthcs-modal-root .lthcs-evidence-pillar-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: var(--text-primary, #E6E9EE);
+}
+
+.lthcs-modal-root .lthcs-evidence-score {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  background: var(--text-tertiary, #6B7280);
+  padding: 2px 9px;
+  border-radius: 999px;
+  min-width: 38px;
+  text-align: center;
+}
+
+.lthcs-modal-root .lthcs-evidence-body {
+  padding: 4px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px dashed var(--border-subtle, #2A323D);
+  margin-top: 0;
+}
+
+.lthcs-modal-root .lthcs-evidence-components {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lthcs-modal-root .lthcs-evidence-component {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12px;
+  padding: 4px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.04);
+}
+
+.lthcs-modal-root .lthcs-evidence-component:last-child {
+  border-bottom: none;
+}
+
+.lthcs-modal-root .lthcs-evidence-component-key {
+  color: var(--text-secondary, #9CA3AF);
+  flex: 1 1 auto;
+}
+
+.lthcs-modal-root .lthcs-evidence-component-val {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #E6E9EE);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.lthcs-modal-root .lthcs-evidence-empty {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--text-tertiary, #6B7280);
+}
+
+.lthcs-modal-root .lthcs-evidence-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.04);
+}
+
+.lthcs-modal-root .lthcs-evidence-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle, #2A323D);
+  color: var(--text-secondary, #9CA3AF);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10.5px;
+  letter-spacing: 0.3px;
+}
+
+.lthcs-modal-root .lthcs-evidence-chip-source {
+  background: rgba(110, 168, 254, 0.10);
+  color: #B6CFE8;
+  border-color: rgba(110, 168, 254, 0.30);
+}
+
+.lthcs-modal-root .lthcs-evidence-chip-stale {
+  background: rgba(216, 145, 72, 0.12);
+  color: #EFC79A;
+  border-color: rgba(216, 145, 72, 0.40);
 }
 
 /* ----- Data quality flags ----- */

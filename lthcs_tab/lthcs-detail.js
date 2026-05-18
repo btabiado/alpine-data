@@ -17,6 +17,32 @@ import { bandColorForScore } from './lthcs-sparkline.js';
 const HISTORY_BASE = '../data/lthcs/history/by_ticker';
 const VARDETAIL_BASE = '../data/lthcs/variable_detail';
 const HOLDINGS_BASE = '../data/lthcs/holdings';
+const SNAPSHOTS_BASE = '../data/lthcs/snapshots';
+
+// Maximum number of paragraph chars to show before offering a "Read more"
+// toggle on the narrative panel. Picked empirically — current narratives top
+// out around 350 chars per slot, this clamps to ~5 lines.
+const NARRATIVE_CLAMP_CHARS = 280;
+
+// Pillar palette for the multi-series chart (#20). Distinct hues that read
+// against the dark theme; composite stays band-colored so the latest score is
+// still the visual focal point.
+const PILLAR_COLORS = {
+  composite: null, // resolved at render time via bandColorForScore(latest)
+  adoption_momentum: '#6EA8FE',
+  institutional_confidence: '#9F7AEA',
+  financial_evolution: '#4FD1C5',
+  thesis_integrity: '#F6AD55',
+  des: '#F687B3',
+};
+
+const PILLAR_SHORT = {
+  adoption_momentum: 'Adoption',
+  institutional_confidence: 'Institutional',
+  financial_evolution: 'Financial',
+  thesis_integrity: 'Thesis',
+  des: 'Demand',
+};
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
@@ -90,6 +116,17 @@ const moduleState = {
   historyCache: new Map(),
   // cached holdings maps keyed by calc_date
   holdingsCache: new Map(),
+  // cached snapshot files keyed by calc_date (used by the multi-series
+  // chart to derive 91-day pillar history on demand).
+  snapshotCache: new Map(),
+  // promise that resolves to a per-ticker pillar-history index, e.g.
+  //   pillarSeriesByTicker.get('AAPL') ===
+  //     [{date, composite, adoption_momentum, institutional_confidence, ...}, ...]
+  // Lazily kicked off the first time any pillar legend item is enabled in
+  // a session. One promise covers the universe so subsequent modal opens
+  // get the data for free.
+  pillarSeriesPromise: null,
+  pillarSeriesByTicker: null,
 };
 
 // ---------------------------------------------------------------------------
@@ -210,6 +247,7 @@ function buildShell() {
       <div class="lthcs-modal-chart-wrap">
         <div class="lthcs-modal-chart" data-slot="chart"></div>
         <div class="lthcs-modal-chart-tooltip" data-slot="chart-tooltip" aria-hidden="true"></div>
+        <div class="lthcs-modal-chart-legend" data-slot="chart-legend" role="group" aria-label="Series toggles"></div>
         <div class="lthcs-modal-chart-note" data-slot="chart-note" hidden></div>
       </div>
     </div>
@@ -222,6 +260,11 @@ function buildShell() {
     <div>
       <h3 class="lthcs-modal-section-heading">AI narrative</h3>
       <div class="lthcs-modal-narrative" data-slot="narrative"></div>
+    </div>
+
+    <div>
+      <h3 class="lthcs-modal-section-heading">Evidence — signals driving each pillar</h3>
+      <div class="lthcs-modal-evidence" data-slot="evidence"></div>
     </div>
 
     <div data-slot="insider-wrap"></div>
@@ -327,6 +370,8 @@ function renderChartSkeleton(panel) {
   setChartNote(panel, '');
   const tipEl = panel.querySelector('[data-slot="chart-tooltip"]');
   if (tipEl) { tipEl.textContent = ''; tipEl.classList.remove('visible'); }
+  const legendEl = panel.querySelector('[data-slot="chart-legend"]');
+  if (legendEl) clear(legendEl);
   chartEl.appendChild(el('div', {
     className: 'lthcs-modal-chart-placeholder',
     text: 'Loading history…',
@@ -430,15 +475,303 @@ function smoothPath(points) {
   return parts.join(' ');
 }
 
+// ---------------------------------------------------------------------------
+// Multi-series time-series chart (#20)
+//
+// Plots the composite score over the available history (~91 days), plus up to
+// five pillar sub_score series. The composite is loaded from the per-ticker
+// history JSON (small, ~5KB). Pillar series are *lazy-loaded* on first toggle
+// by aggregating across all daily snapshot files for the calc_date range —
+// fetched in parallel, deduped, cached for the rest of the session so any
+// further modal opens are free.
+//
+// At rest the chart shows composite-only. Each pillar has a legend chip that
+// toggles its series on/off. The first time any pillar is enabled, we kick
+// off the snapshot aggregation in the background; subsequent pillar toggles
+// are instant.
+// ---------------------------------------------------------------------------
+
+// Module-level chart state — survives across mousemoves but not modal opens.
+// We keep this off of `moduleState` because it is chart-instance-specific and
+// would otherwise leak between renders.
+function createChartState() {
+  return {
+    svg: null,
+    overlay: null,
+    guide: null,
+    tooltipEl: null,
+    chartEl: null,
+    W: 640, H: 240,
+    M: { top: 14, right: 14, bottom: 28, left: 36 },
+    // composite + pillar series, indexed by key. value = {points:[[x,y]], data:[{date,value}]}
+    seriesByKey: new Map(),
+    visibleKeys: new Set(['composite']),
+    // Marker layers per key so we can show/hide on toggle without rebuilding.
+    layersByKey: new Map(),
+    // hover marker dots per key
+    hoverDotsByKey: new Map(),
+    // x lookup by index → date string (composite is canonical x axis)
+    dates: [],
+    // map date → index for fast pillar alignment
+    dateIndex: new Map(),
+  };
+}
+
+let activeChartState = null;
+
+function attachChartHover(state) {
+  const { svg, overlay, guide, tooltipEl, chartEl, hoverDotsByKey, seriesByKey, visibleKeys, dates, W, H, M } = state;
+
+  const hideHover = () => {
+    guide.setAttribute('visibility', 'hidden');
+    for (const dot of hoverDotsByKey.values()) dot.setAttribute('visibility', 'hidden');
+    if (tooltipEl) {
+      tooltipEl.classList.remove('visible');
+      tooltipEl.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  const showHoverAt = (clientX) => {
+    if (!tooltipEl) return;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+    const localX = (clientX - rect.left) * (W / rect.width);
+
+    // Snap to nearest x along the composite series (the canonical date axis).
+    const composite = seriesByKey.get('composite');
+    if (!composite || !composite.points.length) return;
+    let bestI = 0;
+    let bestDx = Infinity;
+    for (let i = 0; i < composite.points.length; i++) {
+      const dx = Math.abs(composite.points[i][0] - localX);
+      if (dx < bestDx) { bestDx = dx; bestI = i; }
+    }
+    const x = composite.points[bestI][0];
+    guide.setAttribute('x1', x);
+    guide.setAttribute('x2', x);
+    guide.setAttribute('visibility', 'visible');
+
+    const date = dates[bestI];
+
+    tooltipEl.textContent = '';
+    tooltipEl.appendChild(el('span', { className: 'lthcs-chart-tip-date', text: formatTickDate(date) }));
+
+    // Composite first (largest read)
+    if (visibleKeys.has('composite')) {
+      const row = composite.data[bestI];
+      const score = row ? row.value : null;
+      if (Number.isFinite(score)) {
+        const scoreEl = el('strong', { className: 'lthcs-chart-tip-score', text: score.toFixed(1) });
+        tooltipEl.appendChild(scoreEl);
+        // band readout
+        const band = row.band || (function () {
+          for (const b of BAND_BUCKETS) if (score >= b.min && score < b.max) return b.key;
+          return null;
+        })();
+        if (band) {
+          const bandEl = el('span', { className: 'lthcs-chart-tip-band', text: humanCase(band) });
+          bandEl.setAttribute('data-band', band);
+          tooltipEl.appendChild(bandEl);
+        }
+        const dot = hoverDotsByKey.get('composite');
+        if (dot) {
+          dot.setAttribute('cx', x);
+          dot.setAttribute('cy', composite.points[bestI][1]);
+          dot.setAttribute('visibility', 'visible');
+        }
+      }
+    } else {
+      const dot = hoverDotsByKey.get('composite');
+      if (dot) dot.setAttribute('visibility', 'hidden');
+    }
+
+    // Pillar rows
+    const rows = el('div', { className: 'lthcs-chart-tip-rows' });
+    let anyPillar = false;
+    for (const pillar of PILLAR_ORDER) {
+      const series = seriesByKey.get(pillar);
+      const dot = hoverDotsByKey.get(pillar);
+      if (!series || !visibleKeys.has(pillar)) {
+        if (dot) dot.setAttribute('visibility', 'hidden');
+        continue;
+      }
+      const row = series.data[bestI];
+      const val = row ? row.value : null;
+      if (!Number.isFinite(val)) {
+        if (dot) dot.setAttribute('visibility', 'hidden');
+        continue;
+      }
+      const rowEl = el('div', { className: 'lthcs-chart-tip-row' });
+      const swatch = el('span', { className: 'lthcs-chart-tip-swatch' });
+      swatch.style.background = PILLAR_COLORS[pillar] || '#888';
+      rowEl.appendChild(swatch);
+      rowEl.appendChild(el('span', { className: 'lthcs-chart-tip-label', text: PILLAR_SHORT[pillar] || pillar }));
+      rowEl.appendChild(el('span', { className: 'lthcs-chart-tip-val', text: val.toFixed(1) }));
+      rows.appendChild(rowEl);
+      anyPillar = true;
+      if (dot) {
+        dot.setAttribute('cx', x);
+        dot.setAttribute('cy', series.points[bestI][1]);
+        dot.setAttribute('visibility', 'visible');
+      }
+    }
+    if (anyPillar) tooltipEl.appendChild(rows);
+
+    // Position tooltip — clamped to chart wrap
+    const wrap = chartEl.parentElement;
+    const wrapRect = wrap ? wrap.getBoundingClientRect() : rect;
+    const pxScale = rect.width / W;
+    const py = composite.points[bestI][1];
+    let left = (x * pxScale) + (rect.left - wrapRect.left) + 10;
+    const tipW = tooltipEl.offsetWidth || 160;
+    if (left + tipW > wrapRect.width - 4) left = (x * pxScale) + (rect.left - wrapRect.left) - tipW - 10;
+    if (left < 4) left = 4;
+    let top = (py * (rect.height / H)) + (rect.top - wrapRect.top) - 12;
+    if (top < 4) top = 4;
+    tooltipEl.style.left = `${left}px`;
+    tooltipEl.style.top = `${top}px`;
+    tooltipEl.classList.add('visible');
+    tooltipEl.setAttribute('aria-hidden', 'false');
+  };
+
+  overlay.addEventListener('mousemove', (e) => showHoverAt(e.clientX));
+  overlay.addEventListener('mouseleave', hideHover);
+  overlay.addEventListener('touchstart', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) showHoverAt(t.clientX);
+  }, { passive: true });
+  overlay.addEventListener('touchmove', (e) => {
+    const t = e.touches && e.touches[0];
+    if (t) showHoverAt(t.clientX);
+  }, { passive: true });
+  overlay.addEventListener('touchend', hideHover);
+
+  state.hideHover = hideHover;
+}
+
+// Add or replace a pillar series in the active chart. If `dataByDate` is null
+// the layer is just hidden (used for "not loaded yet").
+function setPillarSeries(state, key, dataByDate) {
+  if (!state) return;
+  // Remove any existing layer for this key
+  const prior = state.layersByKey.get(key);
+  if (prior && prior.parentNode) prior.parentNode.removeChild(prior);
+  state.layersByKey.delete(key);
+  const priorDot = state.hoverDotsByKey.get(key);
+  if (priorDot && priorDot.parentNode) priorDot.parentNode.removeChild(priorDot);
+  state.hoverDotsByKey.delete(key);
+
+  if (!dataByDate) {
+    state.seriesByKey.delete(key);
+    return;
+  }
+
+  const { svg, M, W, H, dates } = state;
+  const plotW = W - M.left - M.right;
+  const plotH = H - M.top - M.bottom;
+  const xFor = (i) => dates.length <= 1 ? M.left + plotW / 2 : M.left + (i / (dates.length - 1)) * plotW;
+  const yFor = (s) => {
+    const clamped = Math.max(0, Math.min(100, s));
+    return M.top + (1 - clamped / 100) * plotH;
+  };
+
+  const data = [];
+  const points = [];
+  for (let i = 0; i < dates.length; i++) {
+    const row = dataByDate.get(dates[i]);
+    const v = row != null ? Number(row) : NaN;
+    if (Number.isFinite(v)) {
+      data.push({ date: dates[i], value: v });
+      points.push([xFor(i), yFor(v)]);
+    } else {
+      data.push({ date: dates[i], value: NaN });
+      points.push(null);
+    }
+  }
+
+  // Build sub-paths split on NaN gaps. Pillars are mostly contiguous but
+  // some tickers don't have early-history coverage for every pillar.
+  const segments = [];
+  let cur = [];
+  for (let i = 0; i < points.length; i++) {
+    if (points[i] == null) {
+      if (cur.length >= 2) segments.push(cur);
+      cur = [];
+    } else {
+      cur.push(points[i]);
+    }
+  }
+  if (cur.length >= 2) segments.push(cur);
+  if (segments.length === 0 && cur.length === 1) segments.push(cur); // single-point fallback
+
+  const color = PILLAR_COLORS[key] || '#888';
+  const group = svgEl('g', { class: 'lthcs-chart-pillar-layer', 'data-pillar': key });
+  for (const seg of segments) {
+    const d = smoothPath(seg);
+    if (!d) continue;
+    group.appendChild(svgEl('path', {
+      d,
+      fill: 'none',
+      stroke: color,
+      'stroke-width': '1.5',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      'stroke-opacity': '0.85',
+    }));
+  }
+
+  // Insert the layer below the hover dots/overlay but above the composite.
+  // Order in the SVG matters: bands, grid, axes, composite, pillars, hover.
+  // We track an anchor (the overlay) to insert before.
+  const anchor = state.overlay;
+  if (anchor && anchor.parentNode) {
+    anchor.parentNode.insertBefore(group, anchor);
+  } else {
+    svg.appendChild(group);
+  }
+  state.layersByKey.set(key, group);
+  state.seriesByKey.set(key, { points, data });
+
+  // Hover marker dot for this pillar
+  const dot = svgEl('circle', {
+    cx: 0, cy: 0, r: 3.5,
+    fill: color,
+    stroke: 'var(--bg-card, #171C22)',
+    'stroke-width': '1.5',
+    visibility: 'hidden',
+    class: 'lthcs-chart-hover-dot lthcs-chart-hover-dot-pillar',
+  });
+  svg.appendChild(dot);
+  state.hoverDotsByKey.set(key, dot);
+
+  if (!state.visibleKeys.has(key)) {
+    group.style.display = 'none';
+    dot.style.display = 'none';
+  }
+}
+
+function setSeriesVisibility(state, key, visible) {
+  if (!state) return;
+  if (visible) state.visibleKeys.add(key);
+  else state.visibleKeys.delete(key);
+  const layer = state.layersByKey.get(key);
+  if (layer) layer.style.display = visible ? '' : 'none';
+  const dot = state.hoverDotsByKey.get(key);
+  if (dot) dot.style.display = visible ? '' : 'none';
+}
+
 function renderChart(panel, history) {
   const chartEl = panel.querySelector('[data-slot="chart"]');
   const tooltipEl = panel.querySelector('[data-slot="chart-tooltip"]');
+  const legendEl = panel.querySelector('[data-slot="chart-legend"]');
   clear(chartEl);
+  if (legendEl) clear(legendEl);
   if (tooltipEl) {
     tooltipEl.textContent = '';
     tooltipEl.classList.remove('visible');
   }
   setChartNote(panel, '');
+  activeChartState = null;
 
   const raw = (history && Array.isArray(history.history)) ? history.history : [];
   const series = normalizeHistory(raw);
@@ -451,9 +784,6 @@ function renderChart(panel, history) {
   }
 
   // ---- Geometry ----
-  // viewBox uses fixed units; CSS scales width to 100%. Height aspect ratio is
-  // preserved via preserveAspectRatio=none on the wrapper rules, but for the
-  // chart we keep aspect ratio so axes stay legible.
   const W = 640;
   const H = 240;
   const M = { top: 14, right: 14, bottom: 28, left: 36 };
@@ -473,7 +803,7 @@ function renderChart(panel, history) {
   const svg = svgEl('svg', {
     viewBox: `0 0 ${W} ${H}`,
     role: 'img',
-    'aria-label': 'Composite score history chart',
+    'aria-label': 'LTHCS composite and pillar history chart',
     class: 'lthcs-chart-svg',
     preserveAspectRatio: 'xMidYMid meet',
   });
@@ -486,10 +816,8 @@ function renderChart(panel, history) {
     const h = Math.max(0, yBot - yTop);
     if (h <= 0) continue;
     bandsGroup.appendChild(svgEl('rect', {
-      x: M.left,
-      y: yTop,
-      width: plotW,
-      height: h,
+      x: M.left, y: yTop,
+      width: plotW, height: h,
       fill: b.color,
       'fill-opacity': '0.06',
     }));
@@ -550,51 +878,42 @@ function renderChart(panel, history) {
   }
   svg.appendChild(xAxisGroup);
 
-  // ---- Line path (colored by latest band) ----
-  const points = series.map((row, i) => [xFor(i), yFor(row.score)]);
+  // ---- Composite line + fill ----
+  const compositePoints = series.map((row, i) => [xFor(i), yFor(row.score)]);
   const latestScore = series[series.length - 1].score;
   const lineColor = bandColorForScore(latestScore) || '#6EA8FE';
-  const d = smoothPath(points);
+  const compositePath = smoothPath(compositePoints);
   const hasSynthetic = series.some(r => r.synthetic);
-  if (d) {
-    // Faint fill below the line for visual weight
-    const fillD = `${d} L${points[points.length-1][0].toFixed(2)},${(M.top+plotH).toFixed(2)} L${points[0][0].toFixed(2)},${(M.top+plotH).toFixed(2)} Z`;
-    svg.appendChild(svgEl('path', {
+  const compositeGroup = svgEl('g', { class: 'lthcs-chart-composite-layer' });
+  if (compositePath) {
+    const fillD = `${compositePath} L${compositePoints[compositePoints.length - 1][0].toFixed(2)},${(M.top + plotH).toFixed(2)} L${compositePoints[0][0].toFixed(2)},${(M.top + plotH).toFixed(2)} Z`;
+    compositeGroup.appendChild(svgEl('path', {
       d: fillD,
       fill: lineColor,
       'fill-opacity': '0.08',
       stroke: 'none',
     }));
-    svg.appendChild(svgEl('path', {
-      d,
+    compositeGroup.appendChild(svgEl('path', {
+      d: compositePath,
       fill: 'none',
       stroke: lineColor,
       'stroke-width': '2',
       'stroke-linecap': 'round',
       'stroke-linejoin': 'round',
     }));
-    // If the series contains any synthetic (backfilled) entries, overlay
-    // dashed segments on top of the solid line for the synthetic-adjacent
-    // span. A segment from i-1 → i is considered "backfilled" if either
-    // endpoint is synthetic. The dashed overlay sits ON TOP of the solid
-    // line so it visually replaces it without us having to redo the
-    // smoothing math for fragments. Background color matches the chart
-    // wrap so the underlying line is masked between dashes.
     if (hasSynthetic) {
-      for (let i = 1; i < points.length; i++) {
+      for (let i = 1; i < compositePoints.length; i++) {
         const isBackfilled = series[i - 1].synthetic || series[i].synthetic;
         if (!isBackfilled) continue;
-        // Mask the solid line for this segment with the card background,
-        // then draw the dashed indicator on top in lineColor.
-        const segPath = `M${points[i-1][0].toFixed(2)},${points[i-1][1].toFixed(2)} L${points[i][0].toFixed(2)},${points[i][1].toFixed(2)}`;
-        svg.appendChild(svgEl('path', {
+        const segPath = `M${compositePoints[i - 1][0].toFixed(2)},${compositePoints[i - 1][1].toFixed(2)} L${compositePoints[i][0].toFixed(2)},${compositePoints[i][1].toFixed(2)}`;
+        compositeGroup.appendChild(svgEl('path', {
           d: segPath,
           fill: 'none',
           stroke: 'var(--bg-card, #171C22)',
           'stroke-width': '2.5',
           'stroke-linecap': 'butt',
         }));
-        svg.appendChild(svgEl('path', {
+        compositeGroup.appendChild(svgEl('path', {
           d: segPath,
           fill: 'none',
           stroke: lineColor,
@@ -606,15 +925,12 @@ function renderChart(panel, history) {
       }
     }
   }
+  svg.appendChild(compositeGroup);
 
-  // ---- Dots ----
-  // Real entries get a filled marker (band-colored, card-stroked ring).
-  // Synthetic entries get a HOLLOW marker: stroked in the band color,
-  // filled with the card background, so they read as a distinct
-  // "this is backfilled, not measured" visual at a glance.
+  // ---- Composite dots ----
   const dotsGroup = svgEl('g', { class: 'lthcs-chart-dots' });
   for (let i = 0; i < series.length; i++) {
-    const [x, y] = points[i];
+    const [x, y] = compositePoints[i];
     const markerColor = bandColorForScore(series[i].score) || lineColor;
     if (series[i].synthetic) {
       dotsGroup.appendChild(svgEl('circle', {
@@ -637,7 +953,7 @@ function renderChart(panel, history) {
 
   // Last-point highlight
   {
-    const [x, y] = points[points.length - 1];
+    const [x, y] = compositePoints[compositePoints.length - 1];
     const halo = svgEl('circle', {
       cx: x, cy: y, r: 6,
       fill: lineColor,
@@ -652,8 +968,7 @@ function renderChart(panel, history) {
     }));
   }
 
-  // ---- Hover interactivity ----
-  // Vertical guide + invisible overlay that snaps to nearest point.
+  // ---- Hover plumbing ----
   const guide = svgEl('line', {
     x1: 0, x2: 0,
     y1: M.top, y2: M.top + plotH,
@@ -665,7 +980,8 @@ function renderChart(panel, history) {
   });
   svg.appendChild(guide);
 
-  const hoverDot = svgEl('circle', {
+  // Hover dot for composite (always present)
+  const compositeHoverDot = svgEl('circle', {
     cx: 0, cy: 0, r: 4.5,
     fill: lineColor,
     stroke: 'var(--bg-card, #171C22)',
@@ -673,9 +989,8 @@ function renderChart(panel, history) {
     visibility: 'hidden',
     class: 'lthcs-chart-hover-dot',
   });
-  svg.appendChild(hoverDot);
+  svg.appendChild(compositeHoverDot);
 
-  // Transparent overlay catches all pointer events across the whole plot.
   const overlay = svgEl('rect', {
     x: M.left, y: M.top,
     width: plotW, height: plotH,
@@ -684,94 +999,193 @@ function renderChart(panel, history) {
   });
   svg.appendChild(overlay);
 
-  const hideHover = () => {
-    guide.setAttribute('visibility', 'hidden');
-    hoverDot.setAttribute('visibility', 'hidden');
-    if (tooltipEl) {
-      tooltipEl.classList.remove('visible');
-      tooltipEl.setAttribute('aria-hidden', 'true');
-    }
-  };
-
-  const showHoverAt = (clientX, clientY) => {
-    if (!tooltipEl) return;
-    const rect = svg.getBoundingClientRect();
-    if (rect.width === 0 || rect.height === 0) return;
-    const localX = (clientX - rect.left) * (W / rect.width);
-    // Find nearest series index by x
-    let bestI = 0;
-    let bestDx = Infinity;
-    for (let i = 0; i < points.length; i++) {
-      const dx = Math.abs(points[i][0] - localX);
-      if (dx < bestDx) { bestDx = dx; bestI = i; }
-    }
-    const [px, py] = points[bestI];
-    guide.setAttribute('x1', px);
-    guide.setAttribute('x2', px);
-    guide.setAttribute('visibility', 'visible');
-    hoverDot.setAttribute('cx', px);
-    hoverDot.setAttribute('cy', py);
-    hoverDot.setAttribute('visibility', 'visible');
-
-    const row = series[bestI];
-    const bandLabel = row.band ? humanCase(row.band) : (function () {
-      // Derive from score if band is missing
-      for (const b of BAND_BUCKETS) if (row.score >= b.min && row.score < b.max) return humanCase(b.key);
-      return '';
-    })();
-    tooltipEl.textContent = '';
-    const dateEl = el('span', { className: 'lthcs-chart-tip-date', text: formatTickDate(row.date) });
-    const scoreEl = el('strong', { className: 'lthcs-chart-tip-score', text: row.score.toFixed(1) });
-    const bandEl = el('span', { className: 'lthcs-chart-tip-band', text: bandLabel });
-    if (bandLabel) bandEl.setAttribute('data-band', row.band || '');
-    tooltipEl.appendChild(dateEl);
-    tooltipEl.appendChild(scoreEl);
-    if (bandLabel) tooltipEl.appendChild(bandEl);
-
-    // Position tooltip — clamped to chart wrap
-    const wrap = chartEl.parentElement;
-    const wrapRect = wrap ? wrap.getBoundingClientRect() : rect;
-    // svg-local px → wrap-local px
-    const pxScale = rect.width / W;
-    let left = (px * pxScale) + (rect.left - wrapRect.left) + 8;
-    const tipW = tooltipEl.offsetWidth || 140;
-    if (left + tipW > wrapRect.width - 4) left = (px * pxScale) + (rect.left - wrapRect.left) - tipW - 8;
-    if (left < 4) left = 4;
-    let top = (py * (rect.height / H)) + (rect.top - wrapRect.top) - 12;
-    if (top < 4) top = 4;
-    tooltipEl.style.left = `${left}px`;
-    tooltipEl.style.top = `${top}px`;
-    tooltipEl.classList.add('visible');
-    tooltipEl.setAttribute('aria-hidden', 'false');
-  };
-
-  overlay.addEventListener('mousemove', (e) => showHoverAt(e.clientX, e.clientY));
-  overlay.addEventListener('mouseleave', hideHover);
-  overlay.addEventListener('touchstart', (e) => {
-    const t = e.touches && e.touches[0];
-    if (t) showHoverAt(t.clientX, t.clientY);
-  }, { passive: true });
-  overlay.addEventListener('touchmove', (e) => {
-    const t = e.touches && e.touches[0];
-    if (t) showHoverAt(t.clientX, t.clientY);
-  }, { passive: true });
-  overlay.addEventListener('touchend', hideHover);
-
   chartEl.appendChild(svg);
 
-  // Chart footnote. Composable messages, joined by " · " so both can fire.
-  // The synthetic note explains the hollow-marker / dashed-line visual
-  // when the daily cron missed a run and `--catch-up` forward-filled the
-  // gap. Persist layer marks those rows with synthetic=true; the chart
-  // is the only consumer that surfaces them visually.
-  const notes = [];
-  if (hasSynthetic) {
-    notes.push('Hollow markers = backfilled days (CI gap).');
+  // ---- Build chart state ----
+  const state = createChartState();
+  state.svg = svg;
+  state.overlay = overlay;
+  state.guide = guide;
+  state.tooltipEl = tooltipEl;
+  state.chartEl = chartEl;
+  state.W = W; state.H = H; state.M = M;
+  state.dates = series.map(r => r.date);
+  state.dateIndex = new Map(state.dates.map((d, i) => [d, i]));
+  state.visibleKeys = new Set(['composite']);
+  state.layersByKey.set('composite', compositeGroup);
+  state.hoverDotsByKey.set('composite', compositeHoverDot);
+  state.seriesByKey.set('composite', {
+    points: compositePoints,
+    data: series.map(r => ({ date: r.date, value: r.score, band: r.band })),
+  });
+
+  attachChartHover(state);
+  activeChartState = state;
+
+  // ---- Legend ----
+  if (legendEl) {
+    const compositeChip = buildLegendChip('composite', 'Composite', lineColor, true, state);
+    legendEl.appendChild(compositeChip);
+    for (const pillar of PILLAR_ORDER) {
+      const chip = buildLegendChip(pillar, PILLAR_SHORT[pillar] || pillar, PILLAR_COLORS[pillar], false, state);
+      legendEl.appendChild(chip);
+    }
   }
+
+  // Chart footnote
+  const notes = [];
+  if (hasSynthetic) notes.push('Hollow markers = backfilled days (CI gap).');
   if (series.length > 0 && series.length < 30) {
     notes.push(`Only ${series.length} day${series.length === 1 ? '' : 's'} of history; full chart available after 30+ days.`);
   }
   if (notes.length) setChartNote(panel, notes.join(' · '));
+}
+
+// Legend chip factory. Toggles its corresponding series; for pillars,
+// triggers a lazy snapshot fetch on first activation in the session.
+function buildLegendChip(key, label, color, initialActive, state) {
+  const chip = el('button', {
+    className: 'lthcs-chart-legend-chip',
+    attrs: {
+      type: 'button',
+      'data-key': key,
+      'data-active': initialActive ? 'true' : 'false',
+      'aria-pressed': initialActive ? 'true' : 'false',
+    },
+  });
+  chip.style.setProperty('--lthcs-chip-color', color || '#888');
+
+  const swatch = el('span', { className: 'lthcs-chart-legend-swatch' });
+  swatch.style.background = color || '#888';
+  chip.appendChild(swatch);
+  chip.appendChild(el('span', { className: 'lthcs-chart-legend-label', text: label }));
+
+  chip.addEventListener('click', async () => {
+    const wasActive = chip.getAttribute('data-active') === 'true';
+    const nowActive = !wasActive;
+    chip.setAttribute('data-active', nowActive ? 'true' : 'false');
+    chip.setAttribute('aria-pressed', nowActive ? 'true' : 'false');
+
+    if (key === 'composite') {
+      setSeriesVisibility(state, 'composite', nowActive);
+      return;
+    }
+
+    // Pillar
+    setSeriesVisibility(state, key, nowActive);
+    if (!nowActive) return;
+
+    // Need data: kick off pillar series load if not present
+    if (!state.seriesByKey.has(key)) {
+      chip.classList.add('is-loading');
+      try {
+        const series = await ensurePillarSeriesForTicker(moduleState.activeTicker);
+        // Bail if user moved on or chart was rebuilt
+        if (activeChartState !== state) return;
+        if (!series) {
+          chip.classList.remove('is-loading');
+          chip.classList.add('is-empty');
+          chip.title = 'No pillar history available';
+          return;
+        }
+        // Build per-date Map for this pillar
+        const dataByDate = new Map();
+        for (const row of series) {
+          const v = row[key];
+          if (Number.isFinite(Number(v))) dataByDate.set(row.date, Number(v));
+        }
+        setPillarSeries(state, key, dataByDate);
+        chip.classList.remove('is-loading');
+      } catch (err) {
+        console.warn('LTHCS detail: pillar series load failed for', key, err);
+        chip.classList.remove('is-loading');
+        chip.classList.add('is-error');
+        chip.title = 'Could not load pillar history';
+      }
+    }
+  });
+
+  return chip;
+}
+
+// Pillar-series aggregation. Fetches every daily snapshot (parallel,
+// per-date cache shared across the module), builds per-ticker arrays of
+// {date, adoption_momentum, institutional_confidence, ...}.
+//
+// Performance: 91 fetches × ~180KB = ~16MB transfer; runs in parallel so
+// wall-time is bounded by max latency rather than sum. On a local static
+// server (where this dashboard lives) this is <2s. Cached for the rest of
+// the session so subsequent pillar toggles on any ticker are free.
+async function ensurePillarSeriesIndex() {
+  if (moduleState.pillarSeriesByTicker) return moduleState.pillarSeriesByTicker;
+  if (moduleState.pillarSeriesPromise) return moduleState.pillarSeriesPromise;
+
+  moduleState.pillarSeriesPromise = (async () => {
+    // 1) get the list of dates
+    let dates = [];
+    try {
+      const res = await fetch(`${SNAPSHOTS_BASE}/index.json`, { cache: 'no-store' });
+      if (res.ok) {
+        const idx = await res.json();
+        if (Array.isArray(idx.dates)) dates = idx.dates.slice();
+      }
+    } catch (_) { /* fall through */ }
+    if (!dates.length) {
+      throw new Error('No snapshot date index available');
+    }
+
+    // 2) fetch in parallel; ignore individual failures
+    const promises = dates.map(async (d) => {
+      if (moduleState.snapshotCache.has(d)) return { date: d, snap: moduleState.snapshotCache.get(d) };
+      try {
+        const r = await fetch(`${SNAPSHOTS_BASE}/${d}.json`, { cache: 'no-store' });
+        if (!r.ok) return { date: d, snap: null };
+        const snap = await r.json();
+        moduleState.snapshotCache.set(d, snap);
+        return { date: d, snap };
+      } catch (_) {
+        return { date: d, snap: null };
+      }
+    });
+    const settled = await Promise.all(promises);
+
+    // 3) build per-ticker map: ticker → array of {date, ...subscores, composite}
+    const byTicker = new Map();
+    // Sort by ascending date (chronological) for chart-friendly iteration.
+    settled.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+    for (const { date, snap } of settled) {
+      const scores = snap && Array.isArray(snap.scores) ? snap.scores : null;
+      if (!scores) continue;
+      for (const row of scores) {
+        const t = row && row.ticker;
+        if (!t) continue;
+        const subs = row.subscores || {};
+        const entry = {
+          date,
+          composite: Number(row.lthcs_score),
+        };
+        for (const p of PILLAR_ORDER) entry[p] = Number(subs[p]);
+        let arr = byTicker.get(t);
+        if (!arr) { arr = []; byTicker.set(t, arr); }
+        arr.push(entry);
+      }
+    }
+    moduleState.pillarSeriesByTicker = byTicker;
+    return byTicker;
+  })();
+
+  try {
+    return await moduleState.pillarSeriesPromise;
+  } finally {
+    // Allow retry on failure
+    if (!moduleState.pillarSeriesByTicker) moduleState.pillarSeriesPromise = null;
+  }
+}
+
+async function ensurePillarSeriesForTicker(ticker) {
+  if (!ticker) return null;
+  const idx = await ensurePillarSeriesIndex();
+  return idx.get(ticker) || null;
 }
 
 function renderChartError(panel) {
@@ -839,6 +1253,38 @@ function renderPillars(panel, { snapshotRow }) {
   }
 }
 
+// Per-paragraph rendering for the AI-narrative panel.
+//
+// We always render the full text (no server-side truncation), but for
+// paragraphs over NARRATIVE_CLAMP_CHARS we add a one-click "Read more"
+// toggle so the modal stays compact for the common case where users want
+// the headline read, with the full text one tap away.
+function buildNarrativePara(heading, body) {
+  const para = el('div', { className: 'lthcs-narrative-para' });
+  para.appendChild(el('h4', { text: heading }));
+
+  const text = (body == null || body === '') ? '—' : String(body);
+  const p = el('p', { className: 'lthcs-narrative-text', text });
+  para.appendChild(p);
+
+  const isLong = text.length > NARRATIVE_CLAMP_CHARS;
+  if (isLong) {
+    para.classList.add('is-clamped');
+    const toggle = el('button', {
+      className: 'lthcs-narrative-readmore',
+      text: 'Read more',
+      attrs: { type: 'button', 'aria-expanded': 'false' },
+    });
+    toggle.addEventListener('click', () => {
+      const expanded = para.classList.toggle('is-expanded');
+      toggle.textContent = expanded ? 'Read less' : 'Read more';
+      toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    });
+    para.appendChild(toggle);
+  }
+  return para;
+}
+
 function renderNarrative(panel, { snapshotRow, narrative }) {
   const narrEl = panel.querySelector('[data-slot="narrative"]');
   clear(narrEl);
@@ -863,11 +1309,331 @@ function renderNarrative(panel, { snapshotRow, narrative }) {
   ];
 
   for (const [heading, body] of sections) {
-    const para = el('div', { className: 'lthcs-narrative-para' });
-    para.appendChild(el('h4', { text: heading }));
-    para.appendChild(el('p', { text: body || '—' }));
-    narrEl.appendChild(para);
+    narrEl.appendChild(buildNarrativePara(heading, body));
   }
+
+  // Footer chip with model confidence + model version when present.
+  const confidence = narrative.confidence_level
+    || (snapshotRow && snapshotRow.confidence_level)
+    || null;
+  if (confidence) {
+    const meta = el('div', { className: 'lthcs-narrative-meta' });
+    meta.appendChild(el('span', { text: `Narrative confidence: ${confidence}` }));
+    narrEl.appendChild(meta);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Evidence panel (#19) — per-pillar variable-detail summary
+//
+// For each pillar we surface:
+//   - sub_score (badge)
+//   - top 3 components by magnitude of contribution to the sub_score
+//   - data_quality boolean flags that are TRUE (chips)
+//   - data_quality.source if present (e.g. "finnhub_recommendation")
+//
+// Backed by data/lthcs/variable_detail/<calc_date>.json which is also used
+// by the legacy "Show variable detail" toggle below. We load it eagerly here
+// because the evidence panel is now a primary surface of the modal — the
+// raw-key/value variable-detail block stays as the deep-dive toggle.
+// ---------------------------------------------------------------------------
+
+// Component keys we never want to surface in the top-3 (they are metadata,
+// peer-cohort labels, or strategy choices — not "signals that fired").
+const COMPONENT_HIDE_KEYS = new Set([
+  'peer_cohort_strategy',
+  'peer_cohort_size',
+  'sector_cohort',
+  'sector_cohort_size',
+  'momentum_strategy_used',
+  'momentum_cohort_size',
+  'momentum_cohort_label',
+  'margin_source',
+  'confidence_blend',
+  'applied_overrides',
+  'tier2_inputs',
+  'label_counts',
+  'signal_tilts',
+  'signal_contributions',
+]);
+
+// Display labels for top-level component keys. We humanize anything not
+// listed via humanCase().
+const COMPONENT_LABEL = {
+  revenue_growth_yoy: 'Revenue growth YoY',
+  revenue_subscore: 'Revenue sub-score',
+  trends_subscore: 'Google Trends sub-score',
+  qoq_acceleration_pct: 'QoQ acceleration',
+  qoq_subscore: 'QoQ sub-score',
+  momentum_pct_90d: 'Price momentum (90d)',
+  momentum_subscore: 'Momentum sub-score',
+  inst_holdings_subscore: 'Institutional holdings sub-score',
+  inst_holdings_change_qoq: 'Inst. holdings QoQ',
+  base_sub_score: 'Base sub-score',
+  combined_adjustment_pts: 'Combined adjustment',
+  margin_subscore: 'Margin sub-score',
+  ocf_subscore: 'Operating cash flow sub-score',
+  ttm_ocf_margin: 'TTM OCF margin',
+  margin_trend_slope: 'Margin trend slope',
+  article_count: 'News article count',
+  mean_sentiment_score: 'Mean sentiment',
+  mean_relevance_score: 'Mean relevance',
+  sentiment_subscore_raw: 'Sentiment sub-score (raw)',
+  events_score_raw: 'Events sub-score (raw)',
+  events_weight: 'Events weight',
+  yahoo_earnings_score: 'Yahoo earnings score',
+  sec_8k_score: 'SEC 8-K score',
+  total_contribution: 'Macro contribution',
+};
+
+function componentLabel(key) {
+  return COMPONENT_LABEL[key] || humanCase(key);
+}
+
+// Given a `components` object, return a ranked list of contributing
+// signals as [{key, value, magnitude}], top N by magnitude. We use the
+// absolute distance from a neutral baseline of 50 for sub-score-style
+// numerics (those whose names end in `_subscore` or equal 50 by default),
+// or |value| otherwise. Nested objects (e.g. components.trends) get
+// "flattened" to one representative entry built from the most informative
+// child key (sub_score-style if present, else signal_score-like).
+function rankComponents(components, limit = 3) {
+  if (!components || typeof components !== 'object') return [];
+  const out = [];
+  for (const [k, v] of Object.entries(components)) {
+    if (COMPONENT_HIDE_KEYS.has(k)) continue;
+    if (v == null) continue;
+
+    if (typeof v === 'number') {
+      if (!Number.isFinite(v)) continue;
+      // Sub-score-style: ranked by distance from 50 (neutral).
+      const isSubscore = /_subscore$|^sub_score$/.test(k) || k === 'base_sub_score';
+      const magnitude = isSubscore ? Math.abs(v - 50) : Math.abs(v);
+      out.push({ key: k, value: v, magnitude });
+      continue;
+    }
+
+    if (typeof v === 'object' && !Array.isArray(v)) {
+      // Nested signal block (insider, holdings, trends). Pick the "headline"
+      // child: prefer `signal_score`/`conviction_score`/`adjustment_pts`,
+      // fall back to the first numeric value.
+      const candidates = ['signal_score', 'conviction_score', 'adjustment_pts', 'total_contribution', 'acceleration_4w_pct'];
+      let pickedKey = null;
+      let pickedVal = null;
+      for (const c of candidates) {
+        if (typeof v[c] === 'number' && Number.isFinite(v[c])) {
+          pickedKey = c; pickedVal = v[c]; break;
+        }
+      }
+      if (pickedKey == null) {
+        for (const [ck, cv] of Object.entries(v)) {
+          if (typeof cv === 'number' && Number.isFinite(cv)) {
+            pickedKey = ck; pickedVal = cv; break;
+          }
+        }
+      }
+      // Even when no numeric child exists, surface a regime/signal string
+      // as a top contributor — they're often the most readable evidence.
+      if (pickedKey == null) {
+        for (const labelKey of ['regime', 'conviction_signal', 'data_quality']) {
+          if (typeof v[labelKey] === 'string' && v[labelKey]) {
+            out.push({
+              key: `${k}.${labelKey}`,
+              value: v[labelKey],
+              magnitude: 1, // small but non-zero so it can appear
+              isCategorical: true,
+            });
+            break;
+          }
+        }
+        continue;
+      }
+      out.push({
+        key: `${k}.${pickedKey}`,
+        value: pickedVal,
+        magnitude: Math.abs(pickedVal),
+      });
+      continue;
+    }
+
+    if (typeof v === 'boolean') {
+      // Boolean flags are minor contributors; only surface true ones.
+      if (v) out.push({ key: k, value: true, magnitude: 0.1, isCategorical: true });
+      continue;
+    }
+  }
+
+  out.sort((a, b) => b.magnitude - a.magnitude);
+  return out.slice(0, limit);
+}
+
+// Pretty-print a component value for display. Numbers get smart precision;
+// objects degrade to JSON; strings + booleans pass through.
+function fmtEvidenceValue(v) {
+  if (v == null) return '—';
+  if (typeof v === 'number') {
+    if (!Number.isFinite(v)) return String(v);
+    if (Math.abs(v) >= 100 && Number.isInteger(v)) return String(v);
+    if (Math.abs(v) >= 10) return v.toFixed(1);
+    if (Math.abs(v) >= 1) return v.toFixed(2);
+    if (Math.abs(v) > 0.001) return v.toFixed(3);
+    return v.toFixed(4);
+  }
+  if (typeof v === 'boolean') return v ? 'true' : 'false';
+  if (typeof v === 'string') return humanCase(v);
+  try { return JSON.stringify(v); } catch { return String(v); }
+}
+
+// True flags from a data_quality object (booleans only). Strings like
+// `source` and numeric fields like `days_since_scored` are handled
+// separately in the renderer.
+function trueFlags(dq) {
+  if (!dq || typeof dq !== 'object') return [];
+  const out = [];
+  for (const [k, v] of Object.entries(dq)) {
+    if (v === true) out.push(k);
+  }
+  return out;
+}
+
+function renderEvidence(panel, { snapshotRow, vardetailRows, ticker }) {
+  const wrap = panel.querySelector('[data-slot="evidence"]');
+  if (!wrap) return;
+  clear(wrap);
+
+  if (!Array.isArray(vardetailRows) || vardetailRows.length === 0) {
+    wrap.appendChild(el('div', {
+      className: 'lthcs-evidence-placeholder',
+      text: 'Variable detail not available for this snapshot.',
+    }));
+    return;
+  }
+
+  const byPillar = new Map();
+  for (const row of vardetailRows) {
+    if (!row || row.ticker !== ticker) continue;
+    byPillar.set(row.pillar, row);
+  }
+
+  // Stable order, matches PILLAR_ORDER and the pillar-breakdown bars above.
+  const subscores = (snapshotRow && snapshotRow.subscores) || {};
+
+  let rendered = 0;
+  for (const pillar of PILLAR_ORDER) {
+    const row = byPillar.get(pillar);
+    const subFromSnapshot = Number(subscores[pillar]);
+    const subFromRow = row ? Number(row.sub_score) : NaN;
+    const sub = Number.isFinite(subFromRow) ? subFromRow : subFromSnapshot;
+
+    const acc = el('details', { className: 'lthcs-evidence-pillar' });
+    if (rendered === 0) acc.setAttribute('open', 'open'); // first pillar open by default
+    const sum = el('summary', { className: 'lthcs-evidence-summary' });
+
+    const nameWrap = el('span', { className: 'lthcs-evidence-name' });
+    nameWrap.appendChild(el('span', { className: 'lthcs-evidence-pillar-name', text: PILLAR_DISPLAY[pillar] || pillar }));
+    sum.appendChild(nameWrap);
+
+    const scoreBadge = el('span', { className: 'lthcs-evidence-score' });
+    scoreBadge.textContent = fmtScore(sub);
+    if (Number.isFinite(sub)) {
+      const color = bandColorForScore(sub);
+      if (color) scoreBadge.style.background = color;
+    }
+    sum.appendChild(scoreBadge);
+
+    acc.appendChild(sum);
+
+    const body = el('div', { className: 'lthcs-evidence-body' });
+
+    if (!row) {
+      body.appendChild(el('div', {
+        className: 'lthcs-evidence-empty',
+        text: 'No variable-detail row for this pillar.',
+      }));
+      acc.appendChild(body);
+      wrap.appendChild(acc);
+      rendered++;
+      continue;
+    }
+
+    // Top contributing components
+    const top = rankComponents(row.components, 3);
+    if (top.length) {
+      const list = el('ul', { className: 'lthcs-evidence-components' });
+      for (const c of top) {
+        const li = el('li', { className: 'lthcs-evidence-component' });
+        li.appendChild(el('span', { className: 'lthcs-evidence-component-key', text: componentLabel(c.key) }));
+        li.appendChild(el('span', { className: 'lthcs-evidence-component-val', text: fmtEvidenceValue(c.value) }));
+        list.appendChild(li);
+      }
+      body.appendChild(list);
+    } else {
+      body.appendChild(el('div', {
+        className: 'lthcs-evidence-empty',
+        text: 'No numeric components recorded.',
+      }));
+    }
+
+    // Data-quality flags (booleans + source)
+    const dq = row.data_quality || {};
+    const flags = trueFlags(dq);
+    const source = (typeof dq.source === 'string' && dq.source) ? dq.source : null;
+    const staleness = (typeof dq.is_stale === 'boolean') ? dq.is_stale : null;
+
+    if (flags.length || source || staleness) {
+      const chips = el('div', { className: 'lthcs-evidence-chips' });
+      if (source) {
+        chips.appendChild(el('span', {
+          className: 'lthcs-evidence-chip lthcs-evidence-chip-source',
+          text: `source: ${source}`,
+        }));
+      }
+      for (const f of flags) {
+        chips.appendChild(el('span', {
+          className: 'lthcs-evidence-chip',
+          text: f,
+        }));
+      }
+      if (staleness === true) {
+        chips.appendChild(el('span', {
+          className: 'lthcs-evidence-chip lthcs-evidence-chip-stale',
+          text: 'stale',
+        }));
+      }
+      body.appendChild(chips);
+    }
+
+    acc.appendChild(body);
+    wrap.appendChild(acc);
+    rendered++;
+  }
+
+  if (rendered === 0) {
+    wrap.appendChild(el('div', {
+      className: 'lthcs-evidence-placeholder',
+      text: 'No pillar evidence available.',
+    }));
+  }
+}
+
+function renderEvidenceLoading(panel) {
+  const wrap = panel.querySelector('[data-slot="evidence"]');
+  if (!wrap) return;
+  clear(wrap);
+  wrap.appendChild(el('div', {
+    className: 'lthcs-evidence-placeholder',
+    text: 'Loading per-pillar evidence…',
+  }));
+}
+
+function renderEvidenceError(panel) {
+  const wrap = panel.querySelector('[data-slot="evidence"]');
+  if (!wrap) return;
+  clear(wrap);
+  wrap.appendChild(el('div', {
+    className: 'lthcs-evidence-placeholder',
+    text: 'Could not load per-pillar evidence.',
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -1552,6 +2318,7 @@ export function openDetail(args) {
   renderChartSkeleton(panel);
   renderPillars(panel, { snapshotRow });
   renderNarrative(panel, { snapshotRow, narrative });
+  renderEvidenceLoading(panel);
   renderInsider(panel, { insider });
   renderHoldingsSkeleton(panel);
   renderFlags(panel, { snapshotRow });
@@ -1614,6 +2381,24 @@ export function openDetail(args) {
       });
   } else {
     renderHoldings(panel, { holdings: null });
+  }
+
+  // Async: fetch variable_detail eagerly for the per-pillar Evidence panel.
+  // The legacy raw "Show variable detail" toggle below shares this cache.
+  if (calcDate) {
+    loadVardetail(calcDate)
+      .then((data) => {
+        if (moduleState.activeTicker !== requestedTicker) return;
+        const rows = (data && Array.isArray(data.variables)) ? data.variables : [];
+        renderEvidence(panel, { snapshotRow, vardetailRows: rows, ticker: requestedTicker });
+      })
+      .catch((err) => {
+        console.warn('LTHCS detail: variable_detail load failed', err);
+        if (moduleState.activeTicker !== requestedTicker) return;
+        renderEvidenceError(panel);
+      });
+  } else {
+    renderEvidenceError(panel);
   }
 }
 
