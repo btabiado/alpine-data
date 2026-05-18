@@ -7,6 +7,40 @@ limitations — categorized by priority, effort, and status.
 
 ---
 
+## 2026-05-18 Backtest validation findings (morning)
+
+After 90-day backfill (commits `43f41a4` + `d9eddbc`), first credible IC reads:
+
+**Framework PREDICTS forward returns** (with caveats):
+- Composite IC @ 21d: +0.127 (t-stat +8.34 raw → +1.8 overlap-corrected)
+- 1d Sharpe: +2.78 (honest live-trading proxy)
+- Band ordering hypothesis HOLDS monotonically:
+  high_confidence +17.4% → review +1.1% (21d forward returns)
+
+**Per-pillar IC (21d horizon)**:
+- 🏆 Institutional Confidence: +0.204 (workhorse — Form 4 + 13F)
+- 🥈 Financial Evolution: +0.086 (most consistent across horizons)
+- ⚠️ Thesis Integrity: +0.060 BUT constant 50 on 88/90 dates → zero signal in practice
+- DES: +0.022 (marginal)
+- ❌ Adoption Momentum: +0.004 → INVERTS at 21d (Q5-Q1 = -0.014)
+
+**Adaptive weights walk-forward verdict: HOLD** (commit `2bcacd3`)
+Walk-forward CV mechanically passed but caught 3 structural bugs:
+1. Forward-return ffill inflates test_ic
+2. Pillar columns need z-scoring before ridge fit
+3. Ridge_alpha is effectively zero at these scales
+weights.json `adaptive_overrides.enabled` correctly stays `false`.
+
+**New cleanup queue** (post-validation TODOs):
+- α Fix 3 adaptive_weights bugs + re-run CV at 4 months
+- β Recalibrate Adoption pillar (inverts at 21d)
+- γ Activate LLM sentiment to fix dead Thesis pillar
+- δ Investigate Elite-band threshold (zero observations across 90 days)
+- ε BRK.B yfinance fallback (returns "no price data" for .B suffix)
+- η Manual cron trigger to verify GitHub secrets work
+
+---
+
 ## Audits already produced (research only — no model changes)
 
 | Doc | Scope | Status |
@@ -127,3 +161,5 @@ items in this audit are causing each ticker's current sub-pillar drag.
 The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
+
+Tests: 1338 passing (was 614 at session start 2026-05-17 morning)
