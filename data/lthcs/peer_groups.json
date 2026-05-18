@@ -1,0 +1,156 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-05-18",
+  "description": "Compound peer-key (maturity_stage, sector_group). Used for cohort-relative percentile computation on Adoption + Financial pillars. Curated to avoid bimodal cohorts where naive (sector, maturity) splits would produce small/noisy peer groups. See docs/peer-group-audit.md §3.4 and docs/lthcs-open-items-audit.md Tier 2 row 7 for the rationale.",
+  "min_cohort_size": 6,
+  "sector_groups": {
+    "tech_hardware": {
+      "tickers": [
+        "AAPL", "ADI", "AMAT", "AMD", "ARM", "ASML", "AVGO", "GFS",
+        "INTC", "KLAC", "LRCX", "MCHP", "MRVL", "MU", "NVDA", "NXPI",
+        "ON", "QCOM", "SMCI", "TXN"
+      ],
+      "description": "Semiconductors + hardware platforms (Apple included as hardware-anchored mega-cap)",
+      "rationale": "Revenue growth distribution centered ~5-15% (mature) or 30-65% (NVDA/MU AI cycle outliers). Margin profiles dominated by gross-margin compression in foundry / share gains in datacenter."
+    },
+    "tech_software": {
+      "tickers": [
+        "ACN", "ADBE", "ADSK", "ANSS", "CDNS", "CDW", "CRM", "CRWD",
+        "CSCO", "CTSH", "DDOG", "FTNT", "IBM", "INTU", "MDB", "MSFT",
+        "NOW", "ORCL", "PANW", "SNPS", "TEAM", "WDAY", "ZS"
+      ],
+      "description": "Enterprise software, SaaS, EDA, cybersecurity, IT services",
+      "rationale": "Revenue growth distribution centered ~10-25%. Margin profiles dominated by operating leverage + AI-feature pricing. CSCO grouped here (mature scale enterprise infra economics fit better with software cohort than semi cycle)."
+    },
+    "tech_internet": {
+      "tickers": [
+        "ABNB", "AMZN", "BKNG", "DASH", "EA", "GOOG", "GOOGL", "MELI",
+        "META", "NFLX", "PDD", "TTD", "TTWO"
+      ],
+      "description": "Consumer internet, ad-supported platforms, e-commerce, online travel/delivery, streaming, gaming",
+      "rationale": "Revenue tied to ad cycle, take-rate dynamics, consumer engagement. Distinct from B2B software."
+    },
+    "communication_telecom": {
+      "tickers": [
+        "CHTR", "CMCSA", "DIS", "T", "TMUS", "VZ", "WBD"
+      ],
+      "description": "Telecom + traditional media + cable",
+      "rationale": "Sub-driven revenue + ad-cycle dependence; mature, low-growth."
+    },
+    "consumer_staples": {
+      "tickers": [
+        "CCEP", "CL", "COST", "CVS", "KDP", "KHC", "KO", "MDLZ",
+        "MNST", "MO", "PEP", "PG", "PM", "WBA", "WMT"
+      ],
+      "description": "Defensive staples — recession-resistant demand",
+      "rationale": "Revenue growth 2-5%; volume-driven; pricing power varies."
+    },
+    "consumer_cyclical": {
+      "tickers": [
+        "F", "GM", "HD", "LCID", "LOW", "LULU", "MAR", "MCD",
+        "NKE", "ORLY", "ROST", "SBUX", "TGT", "TSLA"
+      ],
+      "description": "Discretionary spending exposure: retail, restaurants, autos, hotels, apparel",
+      "rationale": "Revenue growth tracks employment + housing + consumer discretionary cycle. Internet-native discretionary (AMZN, BKNG, MELI, etc.) lives in tech_internet."
+    },
+    "healthcare_pharma": {
+      "tickers": [
+        "ABBV", "AMGN", "AZN", "BIIB", "BMY", "GILD", "JNJ", "LLY",
+        "MRK", "PFE", "REGN", "VRTX"
+      ],
+      "description": "Large-cap pharma + biotech",
+      "rationale": "Revenue tied to drug-cycle (Humira biosimilar, GLP-1, oncology pipelines)."
+    },
+    "healthcare_devices": {
+      "tickers": [
+        "ABT", "DHR", "DXCM", "GEHC", "IDXX", "ILMN", "ISRG", "MDT",
+        "TMO", "UNH"
+      ],
+      "description": "Devices + diagnostics + life-sciences tools + payers",
+      "rationale": "Revenue + margins dominated by procedure volume + reimbursement. Managed care (UNH) included — revenue dynamics tied to healthcare utilisation rather than drug pipeline."
+    },
+    "industrials_aero": {
+      "tickers": [
+        "ADP", "BA", "CAT", "CSGP", "CTAS", "DE", "EMR", "FAST",
+        "GD", "GE", "HON", "LMT", "MMM", "ODFL", "PAYX", "PCAR",
+        "ROP", "RTX", "UNP", "UPS", "VRSK"
+      ],
+      "description": "Aerospace, defense, machinery, transports, diversified industrials, business services",
+      "rationale": "Multi-year capex cycle; backlog visibility; freight + capex demand. HR/payroll services (ADP, PAYX) + data analytics (CSGP, VRSK) classified as Industrials in the universe and fit reasonably here."
+    },
+    "energy": {
+      "tickers": [
+        "BKR", "COP", "CVX", "FANG", "XOM"
+      ],
+      "description": "Integrated + E&P energy + oilfield services",
+      "rationale": "Revenue dominated by commodity prices; sensitive to oil + gas regime. Small cohort — expect fallback to maturity-only when stage splits this further."
+    },
+    "utilities_reits": {
+      "tickers": [
+        "AEP", "AMT", "CEG", "DUK", "EXC", "NEE", "SO", "SPG", "XEL"
+      ],
+      "description": "Rate-regulated utilities + REITs",
+      "rationale": "Slow growth; dividend stability is the signal. Grouped together because both are interest-rate-sensitive yield names."
+    },
+    "banks": {
+      "tickers": [
+        "BAC", "BK", "C", "GS", "JPM", "MS", "USB", "WFC"
+      ],
+      "description": "Universal + investment banks",
+      "rationale": "Already a special-case cohort in financial.py for NII / PCL / noninterest income. Surfaced here so callers that DON'T route through the bank path still see the right peer cohort."
+    },
+    "financials_non_bank": {
+      "tickers": [
+        "AXP", "BLK", "BRK.B", "COF", "MA", "MET", "PYPL", "SCHW",
+        "TRV", "V"
+      ],
+      "description": "Payments, asset managers, insurance, brokers, diversified financials",
+      "rationale": "Revenue + economics very different from banks. Payments (V, MA, AXP, PYPL) and asset managers (BLK, SCHW) sit closer to software-like scale economics than bank NII dynamics."
+    },
+    "materials": {
+      "tickers": [
+        "LIN", "SHW"
+      ],
+      "description": "Materials — industrial gases + specialty chemicals",
+      "rationale": "Small cohort (2 tickers). Will fall back to maturity-only via safety valve."
+    },
+    "other": {
+      "tickers": [],
+      "description": "Fallback for tickers not curated into a sector_group. Currently empty — every universe ticker is curated.",
+      "rationale": "Defined for completeness so new universe additions land somewhere; safety valve fallback chain still applies."
+    }
+  },
+  "pillar_strategies": {
+    "adoption_momentum": {
+      "strategy": "compound",
+      "primary_axis": "sector_group",
+      "fallback_chain": ["sector_group_only", "maturity_only", "universe"],
+      "min_cohort_size": 6,
+      "comment": "Revenue growth varies wildly across sectors; cohort-relative is essential."
+    },
+    "institutional_confidence": {
+      "strategy": "universe",
+      "comment": "Audit (peer-group-audit §3.4) said KEEP universe-relative for momentum. Sector-relative would over-correct for sector-rotation cycles."
+    },
+    "financial_evolution": {
+      "strategy": "compound",
+      "primary_axis": "sector_group",
+      "fallback_chain": ["sector_group_only", "maturity_only", "universe"],
+      "bank_override": "bank_cohort",
+      "min_cohort_size": 6,
+      "comment": "Banks have their own cohort (commit e456582). Non-banks use compound key."
+    },
+    "thesis_integrity": {
+      "strategy": "universe",
+      "comment": "Sentiment + analyst consensus + 8-K events are absolute signals, not relative."
+    },
+    "des": {
+      "strategy": "sector_group_only",
+      "comment": "DES already maps sector -> DES weight; the sector_group provides the right cohort lens."
+    }
+  },
+  "active_overrides": {
+    "enabled": false,
+    "comment": "When true, lthcs_daily.py routes peer-cohort lookups through the declarative config. When false, current hard-coded logic in pillars runs unchanged. Default OFF so V1 production behavior is preserved."
+  }
+}

@@ -63,6 +63,10 @@ from datetime import date as _date
 from typing import Any, Dict, List, Optional, Tuple
 
 from lthcs.normalize import bounded_linear, peer_relative_percentile, slope
+from lthcs.peer_groups import (
+    STRATEGY_MATURITY_ONLY,
+    get_peer_cohort_with_strategy,
+)
 from lthcs.pillars.adoption import compute_revenue_growth_yoy
 
 
@@ -96,6 +100,17 @@ _MARGIN_SLOPE_HIGH = 0.05
 # negative-OCF names hard.
 _OCF_MARGIN_LOW = -0.10
 _OCF_MARGIN_HIGH = 0.30
+
+
+def _is_valid_growth_value(value: Any) -> bool:
+    """Numeric, non-NaN check used when filtering peer growth candidates."""
+    if value is None:
+        return False
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return False
+    return f == f  # NaN check
 
 # --- Bank-specific constants ------------------------------------------------
 #
@@ -982,6 +997,8 @@ def compute_financial(
     bank_cohort_nii_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
     bank_cohort_noninterest_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
     bank_cohort_pcl_rows: Optional[Dict[str, List[Dict[str, Any]]]] = None,
+    peer_groups_config: Optional[Dict[str, Any]] = None,
+    universe: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Compute the Financial Evolution sub-score for one ticker.
 
@@ -1051,19 +1068,59 @@ def compute_financial(
     # --- Revenue subscore ---------------------------------------------------
     growth = compute_revenue_growth_yoy(revenue_rows)
 
-    peer_values: List[float] = []
-    for sym, g in (peer_growths or {}).items():
-        if sym == ticker:
-            continue
-        if g is None:
-            continue
-        try:
-            f = float(g)
-        except (TypeError, ValueError):
-            continue
-        if f != f:  # NaN
-            continue
-        peer_values.append(f)
+    # When peer_groups_config + universe are provided, restrict the
+    # percentile distribution to the compound (maturity_stage, sector_group)
+    # cohort. Safety valve falls back to sector_group_only -> maturity_only
+    # -> universe when the strict cohort is too thin. When the kwargs are
+    # absent, preserve current behaviour (whatever cohort peer_growths
+    # already represents — typically the maturity-stage bucket built by
+    # lthcs_daily.py Stage 4).
+    valid_candidates = [
+        sym for sym, g in (peer_growths or {}).items()
+        if g is not None
+        and _is_valid_growth_value(g)
+    ]
+
+    peer_cohort_size: Optional[int] = None
+    peer_cohort_strategy: str = STRATEGY_MATURITY_ONLY
+    if peer_groups_config and universe is not None:
+        cohort, peer_cohort_strategy = get_peer_cohort_with_strategy(
+            ticker,
+            universe,
+            peer_groups_config,
+            candidate_tickers=valid_candidates,
+        )
+        cohort_set = set(cohort)
+        peer_values: List[float] = []
+        for sym, g in (peer_growths or {}).items():
+            if sym == ticker:
+                continue
+            if sym not in cohort_set:
+                continue
+            if g is None:
+                continue
+            try:
+                f = float(g)
+            except (TypeError, ValueError):
+                continue
+            if f != f:  # NaN
+                continue
+            peer_values.append(f)
+        peer_cohort_size = len(peer_values) + (1 if ticker in cohort_set else 0)
+    else:
+        peer_values = []
+        for sym, g in (peer_growths or {}).items():
+            if sym == ticker:
+                continue
+            if g is None:
+                continue
+            try:
+                f = float(g)
+            except (TypeError, ValueError):
+                continue
+            if f != f:  # NaN
+                continue
+            peer_values.append(f)
 
     if growth is None:
         revenue_subscore = 50.0
@@ -1122,17 +1179,22 @@ def compute_financial(
         }
     sub_score = round(float(sub_score), 1)
 
+    components: Dict[str, Any] = {
+        "revenue_growth_yoy": growth,
+        "revenue_subscore": float(revenue_subscore),
+        "margin_subscore": float(margin_subscore),
+        "ocf_subscore": float(ocf_subscore),
+        "ttm_ocf_margin": ttm_ocf_margin,
+        "margin_trend_slope": margin_slope_value,
+        "peer_cohort_strategy": peer_cohort_strategy,
+    }
+    if peer_cohort_size is not None:
+        components["peer_cohort_size"] = int(peer_cohort_size)
+
     return {
         "ticker": ticker,
         "sub_score": sub_score,
-        "components": {
-            "revenue_growth_yoy": growth,
-            "revenue_subscore": float(revenue_subscore),
-            "margin_subscore": float(margin_subscore),
-            "ocf_subscore": float(ocf_subscore),
-            "ttm_ocf_margin": ttm_ocf_margin,
-            "margin_trend_slope": margin_slope_value,
-        },
+        "components": components,
         "weights": {
             "revenue": REVENUE_WEIGHT,
             "margin": MARGIN_WEIGHT,

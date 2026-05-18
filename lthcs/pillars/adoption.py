@@ -32,6 +32,10 @@ from lthcs.normalize import (
     peer_relative_percentile,
     slope,
 )
+from lthcs.peer_groups import (
+    STRATEGY_MATURITY_ONLY,
+    get_peer_cohort_with_strategy,
+)
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
 
@@ -82,6 +86,17 @@ _TRENDS_BUCKET_REFILL = 0.1
 # Cache trend pulls for 24h -- daily granularity doesn't justify hitting
 # Google more often than that.
 _TRENDS_CACHE_TTL_SECONDS = 24 * 60 * 60
+
+
+def _is_valid_growth(value: Any) -> bool:
+    """Numeric, non-NaN check used when filtering peer growth candidates."""
+    if value is None:
+        return False
+    try:
+        f = float(value)
+    except (TypeError, ValueError):
+        return False
+    return f == f  # NaN check
 
 
 # --- Module state -----------------------------------------------------------
@@ -370,6 +385,8 @@ def compute_adoption(
     *,
     trends_data: Optional[Dict[str, Any]] = None,
     universe_trends_data: Optional[Dict[str, Dict[str, Any]]] = None,
+    peer_groups_config: Optional[Dict[str, Any]] = None,
+    universe: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Compute the Adoption Momentum sub-score for one ticker.
 
@@ -393,23 +410,64 @@ def compute_adoption(
     """
     growth = compute_revenue_growth_yoy(revenue_rows or [])
 
-    # Build the peer distribution: every peer's growth except this
-    # ticker's own value (we ask peer_relative_percentile to compare
-    # against "everyone else").
-    peer_values: List[float] = []
-    for sym, g in (peer_growths or {}).items():
-        if sym == ticker:
-            continue
-        if g is None:
-            continue
-        try:
-            f = float(g)
-        except (TypeError, ValueError):
-            continue
-        # NaN check.
-        if f != f:
-            continue
-        peer_values.append(f)
+    # Build the peer distribution. Two modes:
+    #
+    # * Legacy (peer_groups_config is None): every peer's growth except the
+    #   focal ticker's own value. This is the current behaviour — the
+    #   pipeline has already restricted ``peer_growths`` to the focal's
+    #   maturity-stage bucket in Stage 4.
+    # * Compound-key (peer_groups_config + universe both provided): restrict
+    #   the percentile distribution to the cohort that shares both
+    #   maturity_stage AND sector_group with the focal. Safety valve falls
+    #   back to sector_group_only -> maturity_only -> universe when the
+    #   strict cohort is too thin (see lthcs.peer_groups.get_peer_cohort).
+    valid_candidates = [
+        sym for sym, g in (peer_growths or {}).items()
+        if g is not None
+        and _is_valid_growth(g)
+    ]
+
+    peer_cohort_size: Optional[int] = None
+    peer_cohort_strategy: str = STRATEGY_MATURITY_ONLY
+    if peer_groups_config and universe is not None:
+        cohort, peer_cohort_strategy = get_peer_cohort_with_strategy(
+            ticker,
+            universe,
+            peer_groups_config,
+            candidate_tickers=valid_candidates,
+        )
+        cohort_set = set(cohort)
+        peer_values: List[float] = []
+        for sym, g in (peer_growths or {}).items():
+            if sym == ticker:
+                continue
+            if sym not in cohort_set:
+                continue
+            if g is None:
+                continue
+            try:
+                f = float(g)
+            except (TypeError, ValueError):
+                continue
+            if f != f:  # NaN
+                continue
+            peer_values.append(f)
+        peer_cohort_size = len(peer_values) + (1 if ticker in cohort_set else 0)
+    else:
+        peer_values = []
+        for sym, g in (peer_growths or {}).items():
+            if sym == ticker:
+                continue
+            if g is None:
+                continue
+            try:
+                f = float(g)
+            except (TypeError, ValueError):
+                continue
+            # NaN check.
+            if f != f:
+                continue
+            peer_values.append(f)
 
     if growth is None:
         revenue_subscore = 50.0
@@ -532,7 +590,10 @@ def compute_adoption(
         "revenue_subscore": float(revenue_subscore),
         "trends_slope": trends_slope,
         "trends_subscore": float(trends_subscore),
+        "peer_cohort_strategy": peer_cohort_strategy,
     }
+    if peer_cohort_size is not None:
+        variable_detail["peer_cohort_size"] = int(peer_cohort_size)
     if trends_component is not None:
         variable_detail["trends"] = trends_component
 
