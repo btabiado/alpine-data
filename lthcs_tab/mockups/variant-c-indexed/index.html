@@ -382,28 +382,28 @@
           <span class="vc-ix-name">ALL</span>
           <span class="vc-ix-sub">168 active &middot; 1 unscored (ANSS)</span>
         </button>
-        <button class="vc-ix" data-index="djia">
-          <span class="vc-ix-eyebrow">Index</span>
-          <span class="vc-ix-count" data-ix-count="djia">30</span>
-          <span class="vc-ix-name">DJIA</span>
-          <span class="vc-ix-sub">Dow Jones Industrial Avg</span>
-        </button>
-        <button class="vc-ix" data-index="nasdaq">
-          <span class="vc-ix-eyebrow">Index</span>
-          <span class="vc-ix-count" data-ix-count="nasdaq">97</span>
-          <span class="vc-ix-name">NASDAQ-100</span>
-          <span class="vc-ix-sub">98 active &middot; 1 unscored</span>
-        </button>
         <button class="vc-ix" data-index="sp100">
           <span class="vc-ix-eyebrow">Index</span>
           <span class="vc-ix-count" data-ix-count="sp100">100</span>
           <span class="vc-ix-name">S&amp;P 100</span>
           <span class="vc-ix-sub">100 active &middot; 100 scored</span>
         </button>
+        <button class="vc-ix" data-index="djia">
+          <span class="vc-ix-eyebrow">Index</span>
+          <span class="vc-ix-count" data-ix-count="djia">30</span>
+          <span class="vc-ix-name">DOW 30</span>
+          <span class="vc-ix-sub">Dow Jones Industrial Avg</span>
+        </button>
+        <button class="vc-ix" data-index="nasdaq">
+          <span class="vc-ix-eyebrow">Index</span>
+          <span class="vc-ix-count" data-ix-count="nasdaq">97</span>
+          <span class="vc-ix-name">NASDAQ</span>
+          <span class="vc-ix-sub">98 active &middot; 1 unscored</span>
+        </button>
       </section>
 
       <div class="vc-math-note">
-        Tickers can belong to multiple indices — AAPL is in DJIA + NASDAQ-100 + S&amp;P 100. Sum of memberships <code>30 + 97 + 100 = 227</code>; unique universe is <code>167</code> scored (<code>168</code> active, ANSS unscored today, WBA permanently inactive).
+        Tickers can belong to multiple indices — AAPL is in S&amp;P 100 + DOW 30 + NASDAQ-100. Sum of memberships <code>100 + 30 + 97 = 227</code>; unique universe is <code>167</code> scored (<code>168</code> active, ANSS unscored today, WBA permanently inactive).
       </div>
 
       <div class="vc-context-row">
@@ -523,8 +523,8 @@
          fetch from data/lthcs/snapshots/<calc_date>.json. */
       const INDEX_DATA = {
         all:    { label: "ALL",        total: 167, buy: 11, hold: 34, watch: 122, weakening: 67, review: 55, constructive: 11, monitor: 34 },
-        djia:   { label: "DJIA",       total: 30,  buy: 1,  hold: 4,  watch: 25,  weakening: 13, review: 12, constructive: 1,  monitor: 4 },
-        nasdaq: { label: "NASDAQ-100", total: 97,  buy: 10, hold: 22, watch: 65,  weakening: 41, review: 24, constructive: 10, monitor: 22 },
+        djia:   { label: "DOW 30",     total: 30,  buy: 1,  hold: 4,  watch: 25,  weakening: 13, review: 12, constructive: 1,  monitor: 4 },
+        nasdaq: { label: "NASDAQ",     total: 97,  buy: 10, hold: 22, watch: 65,  weakening: 41, review: 24, constructive: 10, monitor: 22 },
         sp100:  { label: "S&P 100",    total: 100, buy: 5,  hold: 21, watch: 74,  weakening: 36, review: 38, constructive: 5,  monitor: 21 },
       };
 
