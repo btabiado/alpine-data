@@ -357,7 +357,50 @@ class TestStage4:
                 "des",
             }
 
-    def test_thesis_neutral_when_av_skipped(self, patched_configs, patched_sources):
+    def test_thesis_uses_finnhub_when_av_skipped(
+        self, patched_configs, patched_sources, monkeypatch
+    ):
+        """With --skip-thesis (AV bypassed), Finnhub recommendation consensus
+        should still produce a real Thesis sub-score. Before the dead-pillar
+        fix (May 2026) this test asserted neutral 50 across the board; that
+        was the bug -- the cascade was fully gated by --skip-thesis even
+        though Finnhub has historical analyst data with no AV-style archive
+        limitation."""
+        # Mock Finnhub to return a bullish consensus for both tickers.
+        reco_history = [
+            {"period": "2026-05-01", "strong_buy": 10, "buy": 15,
+             "hold": 5, "sell": 0, "strong_sell": 0},
+            {"period": "2026-04-01", "strong_buy": 8, "buy": 14,
+             "hold": 7, "sell": 1, "strong_sell": 0},
+        ]
+        monkeypatch.setattr(
+            lthcs_daily.finnhub,
+            "get_recommendation_trends",
+            MagicMock(return_value=reco_history),
+        )
+        args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID", "--skip-thesis"])
+        state = lthcs_daily.PipelineState(args=args)
+        lthcs_daily.stage_1_load_config(state)
+        lthcs_daily.stage_2_fetch_data(state)
+        lthcs_daily.stage_3_quality_checks(state)
+        lthcs_daily.stage_4_compute_subscores(state)
+        for sym in state.scored_tickers:
+            th = state.pillar_results[sym]["thesis_integrity"]
+            # Bullish 25/30 buy-weighted consensus -> real signal, not 50.
+            assert th["sub_score"] > 55.0
+            assert th["data_quality"]["has_sentiment"] is True
+
+    def test_thesis_falls_back_to_neutral_when_finnhub_keyless_and_skip_thesis(
+        self, patched_configs, patched_sources, monkeypatch
+    ):
+        """No Finnhub key + --skip-thesis -> graceful neutral fallback."""
+        monkeypatch.setattr(
+            lthcs_daily.finnhub,
+            "get_recommendation_trends",
+            MagicMock(side_effect=lthcs_daily.finnhub.FinnhubAPIKeyMissing(
+                "FINNHUB_API_KEY missing in test"
+            )),
+        )
         args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID", "--skip-thesis"])
         state = lthcs_daily.PipelineState(args=args)
         lthcs_daily.stage_1_load_config(state)

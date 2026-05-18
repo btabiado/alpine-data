@@ -305,3 +305,156 @@ def compute_thesis_from_stored_sentiment(
             "last_scored": last_scored,
         },
     }
+
+
+# --- Finnhub recommendation-trends base path -------------------------------
+#
+# Analyst recommendations are the PRIMARY Thesis signal as of the dead-pillar
+# fix (May 2026). Backtest validation showed thesis_integrity was constant
+# 50 on 88 of 90 backfilled dates because the Alpha Vantage rotation has no
+# historical archive and the supplement cascade was gated by --skip-thesis
+# (always passed by the backfill orchestrator). Finnhub /stock/recommendation
+# returns ~12 months of monthly buy/hold/sell buckets with as_of support, so
+# we can produce real directional signal across the full backfill window.
+#
+# Live runs still benefit from the richer AV rotation when available:
+# lthcs_daily.py Stage 4 reads this Finnhub path first, then falls back to
+# stored AV-sourced sentiment via compute_thesis_from_stored_sentiment when
+# Finnhub has no coverage.
+
+
+# Minimum number of analysts covering a ticker before we trust the consensus.
+# Below this, a single boutique broker's call would whipsaw the score.
+_MIN_ANALYSTS_FOR_THESIS = 3
+
+
+def compute_thesis_from_finnhub_recommendation(
+    ticker: str,
+    reco_signal: Optional[Dict[str, Any]],
+    *,
+    today: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Compute Thesis Integrity sub-score from a Finnhub recommendation signal.
+
+    Consumes the dict produced by
+    :func:`lthcs.sources.finnhub.parse_recommendation_signal` -- a
+    monthly snapshot of analyst buy/hold/sell counts with a derived
+    ``consensus_score`` in ``[-1, +1]``.
+
+    Composition math mirrors the AV-rotation path so downstream scoring
+    can't tell which source produced a given sub_score::
+
+        raw = bounded_linear(consensus_score, -1.0, +1.0)         # 50 if missing
+        confidence = min(total_analysts, 3) / 3                   # in [0, 1]
+        sub_score = 50.0 + (raw - 50.0) * confidence
+        sub_score = round(sub_score, 1)
+
+    Parameters
+    ----------
+    ticker:
+        Subject ticker. Used for the output ``ticker`` field when the
+        recommendation signal doesn't carry one of its own.
+    reco_signal:
+        Parsed Finnhub recommendation signal dict. ``None`` (or an
+        empty / unsourced dict with no consensus) collapses to neutral
+        50.0 with ``has_sentiment=False``.
+    today:
+        ISO date stored in the ``data_quality.last_scored`` field for
+        downstream UI display. Defaults to real today.
+
+    Returns
+    -------
+    dict
+        Same shape as :func:`compute_thesis_from_stored_sentiment` so
+        Stage 4 can swap sources without altering the snapshot schema.
+    """
+    today_iso = _today_iso(today)
+    out_ticker = ticker.upper() if isinstance(ticker, str) else ticker
+
+    # --- Missing / empty signal --> neutral with stale flag ---------------
+    consensus = None
+    total_analysts = 0
+    buy_n = 0
+    hold_n = 0
+    sell_n = 0
+    latest_month: Optional[str] = None
+    if isinstance(reco_signal, dict):
+        consensus = reco_signal.get("consensus_score")
+        total_analysts = int(reco_signal.get("total_analysts") or 0)
+        buy_n = int(reco_signal.get("buy_count") or 0)
+        hold_n = int(reco_signal.get("hold_count") or 0)
+        sell_n = int(reco_signal.get("sell_count") or 0)
+        latest_month = reco_signal.get("latest_month")
+        if reco_signal.get("ticker"):
+            out_ticker = reco_signal["ticker"]
+
+    insufficient = (
+        consensus is None
+        or total_analysts < _MIN_ANALYSTS_FOR_THESIS
+    )
+
+    label_counts = {
+        "Bearish": int(sell_n),
+        "Somewhat-Bearish": 0,
+        "Neutral": int(hold_n),
+        "Somewhat-Bullish": 0,
+        "Bullish": int(buy_n),
+    }
+
+    if insufficient:
+        return {
+            "ticker": out_ticker,
+            "sub_score": _NEUTRAL,
+            "components": {
+                "article_count": int(total_analysts),
+                "mean_sentiment_score": (
+                    float(consensus) if consensus is not None else None
+                ),
+                "mean_relevance_score": None,
+                "label_counts": label_counts,
+                "sentiment_subscore_raw": _NEUTRAL,
+                "confidence_blend": 0.0,
+            },
+            "data_quality": {
+                "has_sentiment": False,
+                "article_count_sufficient": False,
+                "is_stale": True,
+                "days_since_scored": None,
+                "last_scored": latest_month,
+                "source": "finnhub_recommendation",
+            },
+        }
+
+    # --- Fresh signal: same math as compute_thesis ------------------------
+    raw_sentiment_sub = float(
+        bounded_linear(float(consensus), _SENTIMENT_LOW, _SENTIMENT_HIGH)
+    )
+
+    # Analyst-coverage confidence: caps at full at 3+ covering analysts.
+    capped = min(total_analysts, _MIN_ARTICLES_FOR_FULL_CONFIDENCE)
+    confidence = capped / float(_MIN_ARTICLES_FOR_FULL_CONFIDENCE)
+
+    sub_score = _NEUTRAL + (raw_sentiment_sub - _NEUTRAL) * confidence
+    sub_score = round(float(sub_score), 1)
+
+    return {
+        "ticker": out_ticker,
+        "sub_score": sub_score,
+        "components": {
+            "article_count": int(total_analysts),
+            "mean_sentiment_score": float(consensus),
+            "mean_relevance_score": 1.0,
+            "label_counts": label_counts,
+            "sentiment_subscore_raw": raw_sentiment_sub,
+            "confidence_blend": float(confidence),
+        },
+        "data_quality": {
+            "has_sentiment": True,
+            "article_count_sufficient": total_analysts
+            >= _MIN_ARTICLES_FOR_FULL_CONFIDENCE,
+            "is_stale": False,
+            "days_since_scored": 0,
+            "last_scored": today_iso,
+            "source": "finnhub_recommendation",
+        },
+    }

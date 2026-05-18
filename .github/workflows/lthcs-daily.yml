@@ -81,5 +81,22 @@ jobs:
             # rebuild on every snapshot push (it catches up on the next
             # hourly cron anyway).
             git commit -m "lthcs: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
-            git push origin HEAD:main
+            # Race-safe push: if main moved while CI ran (e.g. dev
+            # pushed other commits during the 3-5 min pipeline window),
+            # rebase onto the new tip and retry. Originally failed run
+            # 26034240346 ate today's snapshot because of this race.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
           fi

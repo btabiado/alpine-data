@@ -501,3 +501,160 @@ def test_days_between_iso_malformed_inputs():
     assert thesis.days_between_iso("not-a-date", "2026-05-16") is None
     assert thesis.days_between_iso("2026-05-16", "also-bad") is None
     assert thesis.days_between_iso("2026-13-99", "2026-05-16") is None
+
+
+# --- compute_thesis_from_finnhub_recommendation ----------------------------
+
+
+def _reco(
+    *,
+    ticker: str = "AAPL",
+    consensus_score=0.5,
+    total_analysts: int = 30,
+    buy_count: int = 20,
+    hold_count: int = 8,
+    sell_count: int = 2,
+    latest_month: str = "2026-05-01",
+):
+    """Build the dict produced by ``finnhub.parse_recommendation_signal``."""
+    return {
+        "ticker": ticker,
+        "latest_month": latest_month,
+        "buy_count": buy_count,
+        "hold_count": hold_count,
+        "sell_count": sell_count,
+        "total_analysts": total_analysts,
+        "consensus_score": consensus_score,
+        "change_from_prior_month": 0.05,
+    }
+
+
+def test_finnhub_bullish_consensus_produces_non_neutral():
+    """+0.5 consensus_score with 30 analysts -> sub_score ~75, full confidence."""
+    reco = _reco(consensus_score=0.5, total_analysts=30,
+                 buy_count=20, hold_count=8, sell_count=2)
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+
+    assert out["ticker"] == "AAPL"
+    assert out["sub_score"] == pytest.approx(75.0, abs=0.1)
+    assert out["components"]["article_count"] == 30
+    assert out["components"]["mean_sentiment_score"] == pytest.approx(0.5)
+    assert out["components"]["mean_relevance_score"] == pytest.approx(1.0)
+    assert out["components"]["confidence_blend"] == pytest.approx(1.0)
+    assert out["components"]["sentiment_subscore_raw"] == pytest.approx(75.0)
+    assert out["components"]["label_counts"] == {
+        "Bearish": 2,
+        "Somewhat-Bearish": 0,
+        "Neutral": 8,
+        "Somewhat-Bullish": 0,
+        "Bullish": 20,
+    }
+    dq = out["data_quality"]
+    assert dq["has_sentiment"] is True
+    assert dq["article_count_sufficient"] is True
+    assert dq["is_stale"] is False
+    assert dq["days_since_scored"] == 0
+    assert dq["last_scored"] == "2026-05-18"
+    assert dq["source"] == "finnhub_recommendation"
+
+
+def test_finnhub_bearish_consensus_produces_non_neutral():
+    """-0.5 consensus with 25 analysts -> sub_score ~25."""
+    reco = _reco(consensus_score=-0.5, total_analysts=25,
+                 buy_count=4, hold_count=6, sell_count=15)
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "XYZ", reco, today="2026-05-18"
+    )
+
+    assert out["sub_score"] == pytest.approx(25.0, abs=0.1)
+    assert out["data_quality"]["has_sentiment"] is True
+    assert out["data_quality"]["article_count_sufficient"] is True
+
+
+def test_finnhub_none_signal_returns_neutral_stale():
+    """None reco_signal -> neutral 50 with is_stale True."""
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", None, today="2026-05-18"
+    )
+
+    assert out["ticker"] == "AAPL"
+    assert out["sub_score"] == 50.0
+    assert out["components"]["article_count"] == 0
+    assert out["components"]["mean_sentiment_score"] is None
+    assert out["data_quality"]["has_sentiment"] is False
+    assert out["data_quality"]["is_stale"] is True
+    assert out["data_quality"]["source"] == "finnhub_recommendation"
+
+
+def test_finnhub_too_few_analysts_returns_neutral():
+    """Below 3 covering analysts -> insufficient signal, neutral 50."""
+    reco = _reco(consensus_score=0.9, total_analysts=2,
+                 buy_count=2, hold_count=0, sell_count=0)
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+
+    assert out["sub_score"] == 50.0
+    assert out["data_quality"]["has_sentiment"] is False
+    assert out["data_quality"]["article_count_sufficient"] is False
+    # The diagnostic fields preserve what we did see for the UI.
+    assert out["components"]["article_count"] == 2
+    assert out["components"]["mean_sentiment_score"] == pytest.approx(0.9)
+
+
+def test_finnhub_consensus_missing_returns_neutral():
+    """consensus_score=None even with high analyst count -> neutral."""
+    reco = _reco(consensus_score=None, total_analysts=20)
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+
+    assert out["sub_score"] == 50.0
+    assert out["data_quality"]["has_sentiment"] is False
+
+
+def test_finnhub_sub_score_rounded_to_one_decimal():
+    """sub_score is rounded to one decimal place to match the AV path."""
+    # +0.333 consensus, 30 analysts -> raw = 66.65, blend=1.0, sub_score=66.7
+    reco = _reco(consensus_score=0.333, total_analysts=30,
+                 buy_count=15, hold_count=12, sell_count=3)
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+
+    assert out["sub_score"] == round(out["sub_score"], 1)
+
+
+def test_finnhub_uses_ticker_from_signal_dict_when_present():
+    """If the parsed signal carries its own ticker, prefer it over arg."""
+    reco = _reco(ticker="MSFT", consensus_score=0.4, total_analysts=10,
+                 buy_count=6, hold_count=3, sell_count=1)
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "aapl",  # caller passed lower-case wrong ticker
+        reco,
+        today="2026-05-18",
+    )
+
+    assert out["ticker"] == "MSFT"
+
+
+def test_finnhub_return_shape_keys():
+    """Shape: top-level + nested keys including source diagnostic."""
+    reco = _reco()
+    out = thesis.compute_thesis_from_finnhub_recommendation(
+        "AAPL", reco, today="2026-05-18"
+    )
+
+    assert set(out.keys()) == {"ticker", "sub_score", "components", "data_quality"}
+    assert set(out["components"].keys()) == {
+        "article_count",
+        "mean_sentiment_score",
+        "mean_relevance_score",
+        "label_counts",
+        "sentiment_subscore_raw",
+        "confidence_blend",
+    }
+    assert "source" in out["data_quality"]
+    assert out["data_quality"]["source"] == "finnhub_recommendation"

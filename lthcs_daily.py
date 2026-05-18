@@ -256,6 +256,15 @@ class PipelineState:
     insider_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     av_response: Optional[Dict[str, Any]] = None       # legacy single-anchor path (kept for backward-compat)
     av_anchor_ticker: Optional[str] = None             # legacy single-anchor path
+    # Per-ticker Finnhub recommendation signal — the PRIMARY Thesis input
+    # since the dead-pillar fix (May 2026). Populated by Stage 2 from
+    # finnhub.get_recommendation_trends + parse_recommendation_signal
+    # regardless of --skip-thesis (the AV rotation has no historical archive
+    # so the supplement-cascade gate left Thesis dead on 88/90 backfilled
+    # dates; Finnhub has monthly history with as_of support so it gives real
+    # signal across the full window). Stage 4 reads this first, falling back
+    # to stored AV sentiment when Finnhub has no coverage.
+    recommendation_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     rotation: Optional[ThesisRotation] = None
     rotation_scored_today: List[str] = field(default_factory=list)
     rotation_failures: List[str] = field(default_factory=list)
@@ -808,21 +817,24 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         except Exception:
             return False
 
-    if not state.args.skip_thesis and state.active_tickers:
-        # --- Step 1: Finnhub analyst-recommendation consensus ---
-        # Finnhub's news_sentiment endpoint is PAID-tier-only (HTTP 403 on
-        # free), so we use recommendation_trends instead: aggregated
-        # analyst buy/hold/sell counts that yield a real directional
-        # consensus_score in [-1, +1]. This is genuine sentiment with
-        # direction — not engagement-derived — so it slots at the top of
-        # the cascade. Available free for any US-listed name covered by
-        # at least one analyst.
-        finnhub_keyless = False
+    # --- Finnhub analyst-recommendation consensus (PRIMARY Thesis input) ---
+    # Runs OUTSIDE the --skip-thesis gate so the backfill orchestrator
+    # (which always passes --skip-thesis to avoid burning the AV token on
+    # snapshots AV can't reconstruct anyway) still produces a real Thesis
+    # signal. The fetch is cache-warm-friendly: get_recommendation_trends
+    # uses a 7d FileCache so post-prewarm there's no network cost; misses
+    # gracefully degrade (FinnhubAPIKeyMissing => break; rate-limit => break;
+    # any other error => continue with next ticker).
+    #
+    # Output is parked on state.recommendation_by_ticker for Stage 4 to
+    # consume as the BASE Thesis signal. The supplement-cascade Step 1
+    # below is now a side-effect that only matters when --skip-thesis is
+    # off (live mode) and the rotation file isn't already fresh from AV.
+    finnhub_keyless = False
+    if state.active_tickers:
         for sym in state.active_tickers:
             if finnhub_keyless:
                 break
-            if _has_fresh_sentiment(sym):
-                continue
             try:
                 reco_history = finnhub.get_recommendation_trends(sym, **as_of_kw)
             except finnhub.FinnhubAPIKeyMissing:
@@ -834,17 +846,24 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                 continue
             if not reco_history:
                 continue
-            reco_signal = finnhub.parse_recommendation_signal(reco_history)
+            reco_signal = finnhub.parse_recommendation_signal(
+                reco_history, **as_of_kw
+            )
+            state.recommendation_by_ticker[sym] = reco_signal
+
+    if not state.args.skip_thesis and state.active_tickers:
+        # --- Step 1 (legacy supplement write): Finnhub -> sentiment file ---
+        # Stage 4 now reads state.recommendation_by_ticker directly, so the
+        # supplement write here is only useful when somebody re-reads the
+        # rotation cache out-of-band (browser tab, MCP). Keep it to preserve
+        # the audit trail in data/lthcs/sentiment/<TICKER>.json.
+        for sym, reco_signal in state.recommendation_by_ticker.items():
+            if _has_fresh_sentiment(sym):
+                continue
             consensus = reco_signal.get("consensus_score")
             total = reco_signal.get("total_analysts", 0)
             if consensus is None or total < 3:
                 continue
-            # Convert consensus_score in [-1, +1] to a Thesis-pillar payload.
-            # Label counts split: total_analysts spread across the 3 buckets
-            # we map (Bullish from buy_count, Neutral from hold_count,
-            # Bearish from sell_count). The intermediate "Somewhat-*"
-            # buckets stay at zero — analyst trends don't give that
-            # granularity.
             buy_n = reco_signal.get("buy_count", 0)
             hold_n = reco_signal.get("hold_count", 0)
             sell_n = reco_signal.get("sell_count", 0)
@@ -1104,9 +1123,19 @@ def stage_3_quality_checks(state: PipelineState) -> bool:
             flags.append("yahoo_unavailable")
         if not has_sec:
             flags.append("sec_unavailable")
-        # Thesis: ticker is "available" iff we have fresh stored sentiment.
+        # Thesis: ticker is "available" iff we have fresh stored sentiment
+        # OR a Finnhub analyst-recommendation signal with >=3 covering
+        # analysts. The Finnhub path runs regardless of --skip-thesis so
+        # backfills (which always pass --skip-thesis to bypass AV) still
+        # produce a real signal across the universe.
         thesis_available = False
-        if state.rotation is not None and not state.args.skip_thesis:
+        reco_signal = state.recommendation_by_ticker.get(sym)
+        if reco_signal is not None:
+            consensus = reco_signal.get("consensus_score")
+            total = int(reco_signal.get("total_analysts") or 0)
+            if consensus is not None and total >= 3:
+                thesis_available = True
+        if not thesis_available and state.rotation is not None and not state.args.skip_thesis:
             sentiment = state.rotation.read_sentiment(sym)
             if sentiment is not None and not state.rotation.is_stale(
                 sentiment, today=state.calc_date
@@ -1221,19 +1250,35 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         except Exception:
             fin = _neutral_pillar_result(sym, "financial_evolution")
 
-        # Thesis: read per-ticker stored sentiment (written by the rotation
-        # over a 3-day cycle). If the file is missing or stale, the new
-        # function returns a neutral 50 with data_quality flags set.
-        if not state.args.skip_thesis and state.rotation is not None:
-            try:
-                sentiment = state.rotation.read_sentiment(sym)
-                th = thesis.compute_thesis_from_stored_sentiment(
-                    sym, sentiment, today=state.calc_date
-                )
-            except Exception:
+        # Thesis: PRIMARY input is Finnhub analyst-recommendation consensus
+        # (populated in Stage 2 regardless of --skip-thesis). Falls back to
+        # the AV-rotation sentiment file when Finnhub has no usable signal
+        # for this ticker (no analyst coverage, missing API key, rate-limit
+        # break partway through the universe). The fallback still respects
+        # --skip-thesis so test paths can short-circuit.
+        th = None
+        reco_signal = state.recommendation_by_ticker.get(sym)
+        if reco_signal is not None:
+            consensus = reco_signal.get("consensus_score")
+            total = int(reco_signal.get("total_analysts") or 0)
+            if consensus is not None and total >= 3:
+                try:
+                    th = thesis.compute_thesis_from_finnhub_recommendation(
+                        sym, reco_signal, today=state.calc_date
+                    )
+                except Exception:
+                    th = None
+        if th is None:
+            if not state.args.skip_thesis and state.rotation is not None:
+                try:
+                    sentiment = state.rotation.read_sentiment(sym)
+                    th = thesis.compute_thesis_from_stored_sentiment(
+                        sym, sentiment, today=state.calc_date
+                    )
+                except Exception:
+                    th = _neutral_thesis(sym)
+            else:
                 th = _neutral_thesis(sym)
-        else:
-            th = _neutral_thesis(sym)
 
         try:
             de = des.compute_des(
