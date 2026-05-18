@@ -263,6 +263,10 @@ def test_compute_institutional_returns_expected_keys() -> None:
         "insider",
         "holdings",
         "combined_adjustment_pts",
+        # Tier 3 #16 tracking fields — present in every result.
+        "momentum_strategy_used",
+        "momentum_cohort_size",
+        "momentum_cohort_label",
     }
     assert set(result["weights"].keys()) == {"momentum", "inst_holdings"}
     assert set(result["effective_weights"].keys()) == {"momentum", "inst_holdings"}
@@ -888,3 +892,346 @@ def test_holdings_malformed_signal_score_treated_as_missing() -> None:
     assert result["components"]["holdings"]["adjustment_pts"] == 0.0
     assert result["components"]["holdings"]["signal_score"] is None
     assert result["sub_score"] == base_sub
+
+
+# --- Tier 3 #16: momentum_strategy opt-in -----------------------------------
+
+
+def _sector_cohort_peers() -> Dict[str, Optional[float]]:
+    """A 14-ticker universe spanning two sectors with distinct momentum profiles.
+
+    Tech sector: 7 names averaging +25% (a hot sector).
+    Utilities sector: 7 names averaging -5% (a cold sector).
+
+    Under ``"universe"`` ranking, every Tech name lands near the top regardless
+    of intra-Tech performance. Under ``"sector_relative"`` the within-sector
+    rank is what matters.
+    """
+    return {
+        # Tech (hot sector — all positive, spanning +5% to +50%)
+        "T1": 0.05,
+        "T2": 0.10,
+        "T3": 0.18,
+        "T4": 0.25,
+        "T5": 0.32,
+        "T6": 0.40,
+        "T7": 0.50,
+        # Utilities (cold sector — clustered around -10% to 0%)
+        "U1": -0.10,
+        "U2": -0.08,
+        "U3": -0.06,
+        "U4": -0.05,
+        "U5": -0.03,
+        "U6": -0.01,
+        "U7": 0.01,
+    }
+
+
+def _sector_assignments_two_sector() -> Dict[str, str]:
+    """Sector map matching :func:`_sector_cohort_peers`."""
+    return {
+        "T1": "Technology", "T2": "Technology", "T3": "Technology",
+        "T4": "Technology", "T5": "Technology", "T6": "Technology",
+        "T7": "Technology",
+        "U1": "Utilities", "U2": "Utilities", "U3": "Utilities",
+        "U4": "Utilities", "U5": "Utilities", "U6": "Utilities",
+        "U7": "Utilities",
+    }
+
+
+def _peer_groups_two_group() -> Dict[str, object]:
+    """Minimal peer_groups_config with two sector_groups for compound tests."""
+    return {
+        "min_cohort_size": 5,
+        "sector_groups": {
+            "tech_software": {
+                "tickers": ["T1", "T2", "T3", "T4", "T5", "T6", "T7"],
+                "description": "tech group for tests",
+            },
+            "utilities_reits": {
+                "tickers": ["U1", "U2", "U3", "U4", "U5", "U6", "U7"],
+                "description": "utilities group for tests",
+            },
+        },
+    }
+
+
+def test_momentum_strategy_default_is_universe() -> None:
+    """When momentum_strategy isn't passed, behavior is the historical 'universe' path."""
+    peers = _peer_momentums_universe("AAPL", 0.12)
+    default_result = institutional.compute_institutional("AAPL", 0.12, peers)
+    explicit_result = institutional.compute_institutional(
+        "AAPL", 0.12, peers, momentum_strategy="universe"
+    )
+    # Same sub_score, same momentum_subscore — strategy='universe' must
+    # be a literal no-op vs the un-passed default.
+    assert default_result["sub_score"] == explicit_result["sub_score"]
+    assert (
+        default_result["components"]["momentum_subscore"]
+        == explicit_result["components"]["momentum_subscore"]
+    )
+    assert default_result["components"]["momentum_strategy_used"] == "universe"
+    assert default_result["components"]["momentum_cohort_label"] == "universe"
+    # 9 peers in the synthetic universe (focal AAPL filtered out).
+    assert default_result["components"]["momentum_cohort_size"] == 9
+
+
+def test_momentum_strategy_sector_relative_uses_within_sector_cohort() -> None:
+    """Tech ticker with mid-pack tech momentum ranks median *within* the sector.
+
+    With universe ranking the same ticker would land near the top (Tech is hot
+    overall), so this is the key behavioral divergence.
+    """
+    peers = _sector_cohort_peers()
+    # Replace T4 (0.25) with the focal value so the cohort has it.
+    peers["TECH_FOCAL"] = 0.25
+    sec = _sector_assignments_two_sector()
+    sec["TECH_FOCAL"] = "Technology"
+
+    result_universe = institutional.compute_institutional(
+        "TECH_FOCAL", 0.25, peers, momentum_strategy="universe"
+    )
+    result_sector = institutional.compute_institutional(
+        "TECH_FOCAL", 0.25, peers,
+        momentum_strategy="sector_relative",
+        ticker_sector="Technology",
+        sector_assignments=sec,
+    )
+
+    # Universe-relative: cohort = T1..T7 + U1..U7 + TECH_FOCAL = 15. Excluding
+    # the focal -> 14 peers. Below 0.25: T1,T2,T3,U1..U7 = 10. Equal (T4): 1.
+    # half-equal -> (10 + 0.5)/14 * 100 = 75.0.
+    assert result_universe["components"]["momentum_subscore"] == pytest.approx(75.0)
+    # Sector-relative: Tech cohort = T1..T7 + TECH_FOCAL = 8 tickers. Excluding
+    # the focal -> 7 peers. Below 0.25: T1,T2,T3 = 3. Equal (T4): 1.
+    # half-equal -> (3 + 0.5)/7 * 100 = 50.0.
+    assert result_sector["components"]["momentum_subscore"] == pytest.approx(50.0)
+    assert result_sector["components"]["momentum_strategy_used"] == "sector_relative"
+    assert result_sector["components"]["momentum_cohort_label"] == "sector:Technology"
+    # Cohort: 7 peers (7 Tech tickers + TECH_FOCAL minus focal).
+    assert result_sector["components"]["momentum_cohort_size"] == 7
+
+
+def test_momentum_strategy_sector_relative_top_of_sector() -> None:
+    """A Tech name with the highest Tech momentum (+0.50) ranks 100 within sector."""
+    peers = _sector_cohort_peers()
+    peers["TECH_TOP"] = 0.50  # ties T7
+    sec = _sector_assignments_two_sector()
+    sec["TECH_TOP"] = "Technology"
+
+    result = institutional.compute_institutional(
+        "TECH_TOP", 0.50, peers,
+        momentum_strategy="sector_relative",
+        ticker_sector="Technology",
+        sector_assignments=sec,
+    )
+    # 6 Tech peers (excl focal), all <= 0.50. T7 ties at 0.50.
+    # percentile_rank treats ties via the half-credit rule by default.
+    assert result["components"]["momentum_subscore"] >= 90.0
+
+
+def test_momentum_strategy_sector_relative_missing_sector_falls_back_to_universe(
+    caplog,
+) -> None:
+    """No ticker_sector -> WARNING + fallback to 'universe' (no crash)."""
+    peers = _sector_cohort_peers()
+    peers["AAPL"] = 0.25
+    with caplog.at_level("WARNING", logger="lthcs.pillars.institutional"):
+        result = institutional.compute_institutional(
+            "AAPL", 0.25, peers,
+            momentum_strategy="sector_relative",
+            ticker_sector=None,  # missing!
+            sector_assignments=_sector_assignments_two_sector(),
+        )
+    assert result["components"]["momentum_strategy_used"] == "universe"
+    assert result["components"]["momentum_cohort_label"] == "universe"
+    assert any("falling back to universe" in r.message for r in caplog.records)
+
+
+def test_momentum_strategy_sector_relative_small_cohort_falls_back_to_universe(
+    caplog,
+) -> None:
+    """Sector with < 5 usable peers -> WARNING + fallback to universe."""
+    # Tiny sector: 3 Materials tickers.
+    peers = {
+        "M1": 0.05, "M2": 0.10, "M3": 0.15,
+        # Lots of other-sector peers.
+        "T1": 0.20, "T2": 0.25, "T3": 0.30, "T4": 0.35, "T5": 0.40,
+    }
+    sec = {
+        "M1": "Materials", "M2": "Materials", "M3": "Materials",
+        "T1": "Technology", "T2": "Technology", "T3": "Technology",
+        "T4": "Technology", "T5": "Technology",
+    }
+    with caplog.at_level("WARNING", logger="lthcs.pillars.institutional"):
+        result = institutional.compute_institutional(
+            "M1", 0.05, peers,
+            momentum_strategy="sector_relative",
+            ticker_sector="Materials",
+            sector_assignments=sec,
+        )
+    assert result["components"]["momentum_strategy_used"] == "universe"
+    assert any("too small" in r.message for r in caplog.records)
+
+
+def test_momentum_strategy_compound_uses_sector_group() -> None:
+    """compound strategy with peer_groups_config -> ranks within sector_group."""
+    peers = _sector_cohort_peers()
+    peers["T4"] = 0.25  # focal as a member of tech_software group
+    sec = _sector_assignments_two_sector()
+    cfg = _peer_groups_two_group()
+
+    result = institutional.compute_institutional(
+        "T4", 0.25, peers,
+        momentum_strategy="compound",
+        ticker_sector="Technology",
+        sector_assignments=sec,
+        peer_groups_config=cfg,
+    )
+    assert result["components"]["momentum_strategy_used"] == "compound"
+    assert (
+        result["components"]["momentum_cohort_label"] == "sector_group:tech_software"
+    )
+    # 6 peers in tech_software (excl T4).
+    assert result["components"]["momentum_cohort_size"] == 6
+    # 0.25 beats T1 (0.05), T2 (0.10), T3 (0.18) -> 3/6 = 50.
+    assert result["components"]["momentum_subscore"] == pytest.approx(50.0)
+
+
+def test_momentum_strategy_compound_no_group_falls_back_to_sector_relative(
+    caplog,
+) -> None:
+    """compound + no sector_group for ticker -> falls back to sector_relative."""
+    peers = _sector_cohort_peers()
+    peers["UNKNOWN"] = 0.25
+    sec = _sector_assignments_two_sector()
+    sec["UNKNOWN"] = "Technology"  # has a sector, just not in any group
+    cfg = _peer_groups_two_group()  # has tech_software but UNKNOWN isn't a member
+
+    with caplog.at_level("WARNING", logger="lthcs.pillars.institutional"):
+        result = institutional.compute_institutional(
+            "UNKNOWN", 0.25, peers,
+            momentum_strategy="compound",
+            ticker_sector="Technology",
+            sector_assignments=sec,
+            peer_groups_config=cfg,
+        )
+    # Should land on sector_relative (Technology has 7 tickers, all >= min 5).
+    assert result["components"]["momentum_strategy_used"] == "sector_relative"
+    assert result["components"]["momentum_cohort_label"] == "sector:Technology"
+    assert any("no sector_group" in r.message for r in caplog.records)
+
+
+def test_momentum_strategy_compound_no_config_falls_back() -> None:
+    """compound without peer_groups_config -> falls back to sector_relative path."""
+    peers = _sector_cohort_peers()
+    peers["AAPL"] = 0.25
+    sec = _sector_assignments_two_sector()
+    sec["AAPL"] = "Technology"
+    result = institutional.compute_institutional(
+        "AAPL", 0.25, peers,
+        momentum_strategy="compound",
+        ticker_sector="Technology",
+        sector_assignments=sec,
+        peer_groups_config=None,
+    )
+    # sector_relative fallback should kick in (sector has 7 names >= min 5).
+    assert result["components"]["momentum_strategy_used"] == "sector_relative"
+
+
+def test_momentum_strategy_unknown_logs_and_defaults_to_universe(caplog) -> None:
+    """Garbage strategy value -> WARNING + universe fallback (no crash)."""
+    peers = _peer_momentums_universe("AAPL", 0.12)
+    with caplog.at_level("WARNING", logger="lthcs.pillars.institutional"):
+        result = institutional.compute_institutional(
+            "AAPL", 0.12, peers, momentum_strategy="not_a_real_strategy",
+        )
+    assert result["components"]["momentum_strategy_used"] == "universe"
+    assert any("unknown momentum_strategy" in r.message for r in caplog.records)
+
+
+def test_momentum_strategy_tracking_fields_present_in_every_path() -> None:
+    """All three strategies populate the new tracking fields with sane values."""
+    peers = _sector_cohort_peers()
+    peers["T4"] = 0.25
+    sec = _sector_assignments_two_sector()
+    cfg = _peer_groups_two_group()
+
+    for strat in ("universe", "sector_relative", "compound"):
+        result = institutional.compute_institutional(
+            "T4", 0.25, peers,
+            momentum_strategy=strat,
+            ticker_sector="Technology",
+            sector_assignments=sec,
+            peer_groups_config=cfg,
+        )
+        comps = result["components"]
+        assert "momentum_strategy_used" in comps
+        assert "momentum_cohort_size" in comps
+        assert "momentum_cohort_label" in comps
+        assert comps["momentum_strategy_used"] in (
+            "universe", "sector_relative", "compound"
+        )
+        assert isinstance(comps["momentum_cohort_size"], int)
+        assert comps["momentum_cohort_size"] >= 0
+        assert isinstance(comps["momentum_cohort_label"], str)
+
+
+def test_momentum_strategy_universe_preserves_legacy_sub_score() -> None:
+    """Strategy='universe' MUST yield identical sub_score to the no-strategy call."""
+    peers = _peer_momentums_universe("AAPL", 0.07)
+    r_legacy = institutional.compute_institutional("AAPL", 0.07, peers)
+    r_explicit = institutional.compute_institutional(
+        "AAPL", 0.07, peers, momentum_strategy="universe",
+    )
+    r_with_sector_args = institutional.compute_institutional(
+        "AAPL", 0.07, peers, momentum_strategy="universe",
+        ticker_sector="Technology",          # should be IGNORED for universe
+        sector_assignments={"AAPL": "Technology"},
+        peer_groups_config={"sector_groups": {}},
+    )
+    assert r_legacy["sub_score"] == r_explicit["sub_score"]
+    assert r_legacy["sub_score"] == r_with_sector_args["sub_score"]
+    assert (
+        r_legacy["components"]["momentum_subscore"]
+        == r_explicit["components"]["momentum_subscore"]
+    )
+
+
+def test_momentum_cohort_size_correct_with_none_peers() -> None:
+    """Cohort size counts ONLY non-None peers (excluding focal)."""
+    peers = {
+        "AAPL": 0.10,
+        "MSFT": 0.15,
+        "GOOG": None,         # missing data — should NOT count
+        "META": 0.05,
+        "NVDA": 0.20,
+    }
+    sec = {
+        "AAPL": "Technology", "MSFT": "Technology", "GOOG": "Technology",
+        "META": "Technology", "NVDA": "Technology",
+    }
+    result = institutional.compute_institutional(
+        "AAPL", 0.10, peers,
+        momentum_strategy="sector_relative",
+        ticker_sector="Technology",
+        sector_assignments=sec,
+    )
+    # 4 Tech peers minus 1 (None) minus focal-already-excluded = 3.
+    # But min_cohort_size is 5 by default -> falls back to universe.
+    # Force smaller threshold via the config knob.
+    result_with_lower_min = institutional.compute_institutional(
+        "AAPL", 0.10, peers,
+        momentum_strategy="sector_relative",
+        ticker_sector="Technology",
+        sector_assignments=sec,
+        peer_groups_config={"min_cohort_size": 3},
+    )
+    # Now the cohort survives: 3 usable Tech peers.
+    assert (
+        result_with_lower_min["components"]["momentum_strategy_used"]
+        == "sector_relative"
+    )
+    assert result_with_lower_min["components"]["momentum_cohort_size"] == 3
+    # Default 5-min path fell back to universe.
+    assert result["components"]["momentum_strategy_used"] == "universe"

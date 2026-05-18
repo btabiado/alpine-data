@@ -45,12 +45,57 @@ rate-limit budget against Yahoo. The pipeline caller pre-fetches
 
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from lthcs.normalize import (
     bounded_linear,
     peer_relative_percentile,
 )
+
+
+_LOG = logging.getLogger(__name__)
+
+# Tier 3 #16 — momentum cohort strategies.
+#
+# By default, momentum is ranked against the *full* peer-momentum map
+# (the V1 behavior; the spec calls this "vs the S&P 500 universe").
+#
+# As an OPT-IN alternative, callers can rank momentum within a smaller
+# cohort to remove sector-rotation noise (so a flat name in a hot
+# sector doesn't ride the sector's wave into the top quintile).
+#
+# Strategies:
+#
+# * ``"universe"`` (default) — Rank against the full ``peer_momentums``
+#   map. Identical to the historical behavior; no other args needed.
+# * ``"sector_relative"`` — Rank against tickers in the same sector
+#   (per ``sector_assignments``). Requires ``ticker_sector`` and
+#   ``sector_assignments``.
+# * ``"compound"`` — If ``peer_groups_config`` has a curated
+#   sector_groups map (Tier 2 #7's compound peer-key config at
+#   ``data/lthcs/peer_groups.json``), rank against the focal ticker's
+#   sector_group cohort. Falls back to ``"sector_relative"`` if no
+#   sector_group is found, and to ``"universe"`` if the resulting
+#   cohort is too small.
+#
+# Across all strategies the *score formula* is unchanged: the cohort
+# is percentile-ranked, then weighted into the standard 70/30 base.
+# Only the cohort definition changes.
+_MOMENTUM_STRATEGY_UNIVERSE = "universe"
+_MOMENTUM_STRATEGY_SECTOR_RELATIVE = "sector_relative"
+_MOMENTUM_STRATEGY_COMPOUND = "compound"
+_VALID_MOMENTUM_STRATEGIES = (
+    _MOMENTUM_STRATEGY_UNIVERSE,
+    _MOMENTUM_STRATEGY_SECTOR_RELATIVE,
+    _MOMENTUM_STRATEGY_COMPOUND,
+)
+
+# Minimum cohort size for a non-universe strategy. Below this we fall
+# back to ``"universe"`` (with a WARNING log) rather than letting a
+# handful of tickers produce noisy percentiles. ``peer_groups_config``
+# may override via its top-level ``min_cohort_size`` key.
+_DEFAULT_MIN_COHORT_SIZE = 5
 
 
 # --- Constants --------------------------------------------------------------
@@ -128,6 +173,152 @@ _HOLDINGS_PTS_STRONG_DISTRIBUTING = -3.0
 # to push through without compressing the insider signal away.
 _COMBINED_ADJ_FLOOR = -7.0
 _COMBINED_ADJ_CEIL = 12.0
+
+
+# --- Tier 3 #16: cohort-selection helpers ----------------------------------
+
+def _lookup_sector_group(
+    ticker: str, peer_groups_config: Optional[Dict[str, Any]]
+) -> Optional[str]:
+    """Return the sector_group name for ``ticker`` per ``peer_groups_config``.
+
+    ``peer_groups_config`` is expected to match ``data/lthcs/peer_groups.json``:
+
+    .. code-block:: json
+
+       {
+         "sector_groups": {
+           "tech_software": {"tickers": ["MSFT", "ADBE", ...]},
+           ...
+         }
+       }
+
+    Returns ``None`` if no group contains the ticker (caller decides what to
+    do — typically fall back to ``"sector_relative"``).
+    """
+    if not peer_groups_config:
+        return None
+    groups = peer_groups_config.get("sector_groups") or {}
+    if not isinstance(groups, dict):
+        return None
+    for group_name, group_entry in groups.items():
+        if not isinstance(group_entry, dict):
+            continue
+        members = group_entry.get("tickers") or []
+        if ticker in members:
+            return group_name
+    return None
+
+
+def _resolve_momentum_cohort(
+    ticker: str,
+    peer_momentums: Dict[str, Optional[float]],
+    *,
+    momentum_strategy: str,
+    ticker_sector: Optional[str],
+    sector_assignments: Optional[Dict[str, str]],
+    peer_groups_config: Optional[Dict[str, Any]],
+) -> Tuple[Dict[str, Optional[float]], str, str]:
+    """Pick the peer cohort to rank momentum within, given the strategy.
+
+    Returns ``(cohort_momentums, strategy_used, cohort_label)`` where:
+
+    * ``cohort_momentums`` is the sliced ``peer_momentums`` dict that the
+      caller should pass into :func:`compute_momentum_subscore`.
+    * ``strategy_used`` is the strategy that *actually* ran — may differ
+      from the requested one if we had to fall back.
+    * ``cohort_label`` is a short string for ``variable_detail`` describing
+      the cohort (e.g. ``"universe"``, ``"sector:Technology"``,
+      ``"sector_group:tech_software"``).
+    """
+    if momentum_strategy == _MOMENTUM_STRATEGY_UNIVERSE:
+        return dict(peer_momentums or {}), _MOMENTUM_STRATEGY_UNIVERSE, "universe"
+
+    min_size = _DEFAULT_MIN_COHORT_SIZE
+    if peer_groups_config and isinstance(peer_groups_config.get("min_cohort_size"), int):
+        min_size = int(peer_groups_config["min_cohort_size"])
+
+    # COMPOUND: try sector_group first, then fall through to sector_relative
+    # if no group found, then to universe if cohort is too small.
+    if momentum_strategy == _MOMENTUM_STRATEGY_COMPOUND:
+        group_name = _lookup_sector_group(ticker, peer_groups_config)
+        if group_name and peer_groups_config:
+            members = (
+                (peer_groups_config.get("sector_groups") or {})
+                .get(group_name, {})
+                .get("tickers", [])
+            )
+            cohort = {
+                sym: peer_momentums.get(sym)
+                for sym in members
+                if sym in peer_momentums
+            }
+            # Include focal so compute_momentum_subscore can filter it out.
+            cohort[ticker] = peer_momentums.get(ticker)
+            usable = [m for sym, m in cohort.items() if sym != ticker and m is not None]
+            if len(usable) >= min_size:
+                return (
+                    cohort,
+                    _MOMENTUM_STRATEGY_COMPOUND,
+                    "sector_group:%s" % group_name,
+                )
+            _LOG.warning(
+                "%s compound cohort 'sector_group:%s' too small (%d usable peers, "
+                "min %d); falling back to sector_relative",
+                ticker, group_name, len(usable), min_size,
+            )
+        # else: no group found — fall through to sector_relative.
+        else:
+            _LOG.warning(
+                "%s has no sector_group in peer_groups_config; "
+                "falling back to sector_relative",
+                ticker,
+            )
+        # Try sector_relative as the next fallback.
+        return _resolve_momentum_cohort(
+            ticker,
+            peer_momentums,
+            momentum_strategy=_MOMENTUM_STRATEGY_SECTOR_RELATIVE,
+            ticker_sector=ticker_sector,
+            sector_assignments=sector_assignments,
+            peer_groups_config=peer_groups_config,
+        )
+
+    # SECTOR_RELATIVE.
+    if momentum_strategy == _MOMENTUM_STRATEGY_SECTOR_RELATIVE:
+        if not ticker_sector or not sector_assignments:
+            _LOG.warning(
+                "%s sector_relative momentum requested but ticker_sector / "
+                "sector_assignments missing; falling back to universe",
+                ticker,
+            )
+            return dict(peer_momentums or {}), _MOMENTUM_STRATEGY_UNIVERSE, "universe"
+        members = [
+            sym for sym, sec in sector_assignments.items()
+            if sec == ticker_sector and sym in peer_momentums
+        ]
+        cohort = {sym: peer_momentums.get(sym) for sym in members}
+        cohort[ticker] = peer_momentums.get(ticker)
+        usable = [m for sym, m in cohort.items() if sym != ticker and m is not None]
+        if len(usable) < min_size:
+            _LOG.warning(
+                "%s sector_relative cohort '%s' too small (%d usable peers, "
+                "min %d); falling back to universe",
+                ticker, ticker_sector, len(usable), min_size,
+            )
+            return dict(peer_momentums or {}), _MOMENTUM_STRATEGY_UNIVERSE, "universe"
+        return (
+            cohort,
+            _MOMENTUM_STRATEGY_SECTOR_RELATIVE,
+            "sector:%s" % ticker_sector,
+        )
+
+    # Unknown strategy — defensive fallback.
+    _LOG.warning(
+        "%s unknown momentum_strategy %r; falling back to universe",
+        ticker, momentum_strategy,
+    )
+    return dict(peer_momentums or {}), _MOMENTUM_STRATEGY_UNIVERSE, "universe"
 
 
 # --- Public API: momentum sub-score ----------------------------------------
@@ -402,6 +593,10 @@ def compute_institutional(
     inst_holdings_change_qoq: Optional[float] = None,
     insider_data: Optional[Dict[str, Any]] = None,
     holdings_data: Optional[Dict[str, Any]] = None,
+    momentum_strategy: str = "universe",
+    ticker_sector: Optional[str] = None,
+    sector_assignments: Optional[Dict[str, str]] = None,
+    peer_groups_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Compute the Institutional Confidence sub-score for one ticker.
 
@@ -444,14 +639,57 @@ def compute_institutional(
         adjustment on top of the insider adjustment; the COMBINED
         adjustment (insider + holdings) is capped to ``[-7, +12]``.
         Sparse data quality (manager_count < 5) zeros the adjustment.
+    momentum_strategy:
+        Cohort strategy for the momentum percentile rank (Tier 3 #16
+        opt-in). One of ``"universe"`` (default — current V1
+        behavior), ``"sector_relative"``, or ``"compound"``. See
+        :func:`_resolve_momentum_cohort` for the fallback chain.
+    ticker_sector:
+        Sector label (e.g. ``"Technology"``) for the focal ticker.
+        Required for ``momentum_strategy="sector_relative"``; ignored
+        for ``"universe"``. Missing -> falls back to universe with a
+        WARNING log.
+    sector_assignments:
+        ``{ticker -> sector_label}`` map for the full peer universe.
+        Required for ``momentum_strategy="sector_relative"``. Missing
+        -> falls back to universe with a WARNING log.
+    peer_groups_config:
+        Curated compound-key config (matches
+        ``data/lthcs/peer_groups.json``) for
+        ``momentum_strategy="compound"``. If the focal ticker isn't in
+        any sector_group, falls back to ``"sector_relative"``.
     """
     has_momentum = momentum_pct is not None
     has_inst = inst_holdings_change_qoq is not None
     has_insider = bool(insider_data)
     has_holdings = bool(holdings_data)
 
+    # Validate momentum_strategy with a defensive fallback so a typo
+    # doesn't silently mis-score everyone.
+    if momentum_strategy not in _VALID_MOMENTUM_STRATEGIES:
+        _LOG.warning(
+            "%s unknown momentum_strategy %r; defaulting to 'universe'",
+            ticker, momentum_strategy,
+        )
+        momentum_strategy = _MOMENTUM_STRATEGY_UNIVERSE
+
+    cohort_momentums, momentum_strategy_used, cohort_label = _resolve_momentum_cohort(
+        ticker,
+        peer_momentums or {},
+        momentum_strategy=momentum_strategy,
+        ticker_sector=ticker_sector,
+        sector_assignments=sector_assignments,
+        peer_groups_config=peer_groups_config,
+    )
+    # Cohort size = peers (excluding focal, excluding None).
+    momentum_cohort_size = sum(
+        1
+        for sym, m in cohort_momentums.items()
+        if sym != ticker and m is not None
+    )
+
     momentum_subscore = compute_momentum_subscore(
-        ticker, momentum_pct, peer_momentums or {}
+        ticker, momentum_pct, cohort_momentums
     )
     inst_subscore = compute_inst_holdings_subscore(inst_holdings_change_qoq)
 
@@ -502,6 +740,11 @@ def compute_institutional(
             "insider": insider_detail,
             "holdings": holdings_detail,
             "combined_adjustment_pts": float(combined_adj),
+            # Tier 3 #16 tracking — present in every result so
+            # variable_detail / A-B-test scripts always have the answer.
+            "momentum_strategy_used": momentum_strategy_used,
+            "momentum_cohort_size": int(momentum_cohort_size),
+            "momentum_cohort_label": cohort_label,
         },
         "weights": {
             "momentum": MOMENTUM_WEIGHT,

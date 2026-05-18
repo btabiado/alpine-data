@@ -1,0 +1,5351 @@
+{
+  "snapshot_date": "2026-05-17",
+  "snapshot_path": "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/data/lthcs/snapshots/2026-05-17.json",
+  "variable_detail_path": "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/data/lthcs/variable_detail/2026-05-17.json",
+  "rows": [
+    {
+      "ticker": "AAPL",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.14646986290402753,
+      "universe": {
+        "sub_score": 68.5,
+        "momentum_subscore": 71.51515151515152,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 43.3,
+        "momentum_subscore": 46.34146341463415,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 7.5,
+        "momentum_subscore": 10.526315789473683,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 25.2,
+        "universe_vs_compound": 61.0,
+        "sector_relative_vs_compound": 35.8
+      },
+      "max_delta": 61.0
+    },
+    {
+      "ticker": "ABBV",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.04504881685215267,
+      "universe": {
+        "sub_score": 38.2,
+        "momentum_subscore": 41.21212121212121,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 49.4,
+        "momentum_subscore": 52.38095238095239,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 24.3,
+        "momentum_subscore": 27.27272727272727,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -11.2,
+        "universe_vs_compound": 13.9,
+        "sector_relative_vs_compound": 25.1
+      },
+      "max_delta": 25.1
+    },
+    {
+      "ticker": "ABNB",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.03745832494497958,
+      "universe": {
+        "sub_score": 43.6,
+        "momentum_subscore": 43.63636363636363,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 57.9,
+        "momentum_subscore": 57.89473684210527,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 66.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -14.3,
+        "universe_vs_compound": -23.1,
+        "sector_relative_vs_compound": -8.8
+      },
+      "max_delta": 23.1
+    },
+    {
+      "ticker": "ABT",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.33142504901547554,
+      "universe": {
+        "sub_score": 14.9,
+        "momentum_subscore": 7.878787878787878,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 7.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 7.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 7.9,
+        "universe_vs_compound": 7.9,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 7.9
+    },
+    {
+      "ticker": "ACN",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.3829896397826279,
+      "universe": {
+        "sub_score": 4.8,
+        "momentum_subscore": 4.848484848484849,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 9.8,
+        "momentum_subscore": 9.75609756097561,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 19.0,
+        "momentum_subscore": 19.047619047619047,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -5.0,
+        "universe_vs_compound": -14.2,
+        "sector_relative_vs_compound": -9.2
+      },
+      "max_delta": 14.2
+    },
+    {
+      "ticker": "ADBE",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.2630732661684403,
+      "universe": {
+        "sub_score": 9.8,
+        "momentum_subscore": 15.757575757575756,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 18.4,
+        "momentum_subscore": 24.390243902439025,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 41.6,
+        "momentum_subscore": 47.61904761904761,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -8.6,
+        "universe_vs_compound": -31.8,
+        "sector_relative_vs_compound": -23.2
+      },
+      "max_delta": 31.8
+    },
+    {
+      "ticker": "ADI",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.4296347324762966,
+      "universe": {
+        "sub_score": 89.1,
+        "momentum_subscore": 92.12121212121212,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 67.7,
+        "momentum_subscore": 70.73170731707317,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 49.6,
+        "momentum_subscore": 52.63157894736842,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 21.4,
+        "universe_vs_compound": 39.5,
+        "sector_relative_vs_compound": 18.1
+      },
+      "max_delta": 39.5
+    },
+    {
+      "ticker": "ADP",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.17182857754938774,
+      "universe": {
+        "sub_score": 22.4,
+        "momentum_subscore": 22.424242424242426,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 15.0,
+        "momentum_subscore": 15.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 15.0,
+        "momentum_subscore": 15.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 7.4,
+        "universe_vs_compound": 7.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 7.4
+    },
+    {
+      "ticker": "ADSK",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.19289155002370773,
+      "universe": {
+        "sub_score": 21.2,
+        "momentum_subscore": 21.21212121212121,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 29.3,
+        "momentum_subscore": 29.268292682926827,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 57.1,
+        "momentum_subscore": 57.14285714285714,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -8.1,
+        "universe_vs_compound": -35.9,
+        "sector_relative_vs_compound": -27.8
+      },
+      "max_delta": 35.9
+    },
+    {
+      "ticker": "AEP",
+      "sector": "Utilities",
+      "momentum_pct_90d": 0.10444722230226922,
+      "universe": {
+        "sub_score": 67.9,
+        "momentum_subscore": 67.87878787878789,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 83.3,
+        "momentum_subscore": 83.33333333333334,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 87.5,
+        "momentum_subscore": 87.5,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -15.4,
+        "universe_vs_compound": -19.6,
+        "sector_relative_vs_compound": -4.2
+      },
+      "max_delta": 19.6
+    },
+    {
+      "ticker": "AMAT",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.4768572606516348,
+      "universe": {
+        "sub_score": 89.3,
+        "momentum_subscore": 93.33333333333333,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 69.2,
+        "momentum_subscore": 73.17073170731707,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 53.9,
+        "momentum_subscore": 57.89473684210527,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 20.1,
+        "universe_vs_compound": 35.4,
+        "sector_relative_vs_compound": 15.3
+      },
+      "max_delta": 35.4
+    },
+    {
+      "ticker": "AMD",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.9785397435384529,
+      "universe": {
+        "sub_score": 95.2,
+        "momentum_subscore": 98.18181818181819,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 89.7,
+        "momentum_subscore": 92.6829268292683,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 81.2,
+        "momentum_subscore": 84.21052631578947,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 5.5,
+        "universe_vs_compound": 14.0,
+        "sector_relative_vs_compound": 8.5
+      },
+      "max_delta": 14.0
+    },
+    {
+      "ticker": "AMGN",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.00267206650093188,
+      "universe": {
+        "sub_score": 50.3,
+        "momentum_subscore": 53.333333333333336,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 63.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 42.5,
+        "momentum_subscore": 45.45454545454545,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.4,
+        "universe_vs_compound": 7.8,
+        "sector_relative_vs_compound": 21.2
+      },
+      "max_delta": 21.2
+    },
+    {
+      "ticker": "AMT",
+      "sector": "Real Estate",
+      "momentum_pct_90d": -0.01982215093066164,
+      "universe": {
+        "sub_score": 44.3,
+        "momentum_subscore": 47.27272727272727,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 44.3,
+        "momentum_subscore": 47.27272727272727,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 9.5,
+        "momentum_subscore": 12.5,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 34.8,
+        "sector_relative_vs_compound": 34.8
+      },
+      "max_delta": 34.8
+    },
+    {
+      "ticker": "AMZN",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": 0.09633512920033116,
+      "universe": {
+        "sub_score": 66.1,
+        "momentum_subscore": 66.06060606060606,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 78.9,
+        "momentum_subscore": 78.94736842105263,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 83.3,
+        "momentum_subscore": 83.33333333333334,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -12.8,
+        "universe_vs_compound": -17.2,
+        "sector_relative_vs_compound": -4.4
+      },
+      "max_delta": 17.2
+    },
+    {
+      "ticker": "ARM",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.8104388978803583,
+      "universe": {
+        "sub_score": 94.0,
+        "momentum_subscore": 96.96969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 84.8,
+        "momentum_subscore": 87.8048780487805,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 70.7,
+        "momentum_subscore": 73.68421052631578,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 9.2,
+        "universe_vs_compound": 23.3,
+        "sector_relative_vs_compound": 14.1
+      },
+      "max_delta": 23.3
+    },
+    {
+      "ticker": "ASML",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.21324077086390592,
+      "universe": {
+        "sub_score": 82.4,
+        "momentum_subscore": 82.42424242424242,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 53.7,
+        "momentum_subscore": 53.65853658536586,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 26.3,
+        "momentum_subscore": 26.31578947368421,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 28.7,
+        "universe_vs_compound": 56.1,
+        "sector_relative_vs_compound": 27.4
+      },
+      "max_delta": 56.1
+    },
+    {
+      "ticker": "AVGO",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.23943893266435823,
+      "universe": {
+        "sub_score": 83.2,
+        "momentum_subscore": 84.24242424242424,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 55.1,
+        "momentum_subscore": 56.09756097560976,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 30.6,
+        "momentum_subscore": 31.57894736842105,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 28.1,
+        "universe_vs_compound": 52.6,
+        "sector_relative_vs_compound": 24.5
+      },
+      "max_delta": 52.6
+    },
+    {
+      "ticker": "AXP",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.18012552593467013,
+      "universe": {
+        "sub_score": 18.8,
+        "momentum_subscore": 21.818181818181817,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 15.8,
+        "momentum_subscore": 18.75,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 22.0,
+        "momentum_subscore": 25.0,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 3.0,
+        "universe_vs_compound": -3.2,
+        "sector_relative_vs_compound": -6.2
+      },
+      "max_delta": 6.2
+    },
+    {
+      "ticker": "AZN",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.03394569131014202,
+      "universe": {
+        "sub_score": 44.2,
+        "momentum_subscore": 44.24242424242424,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 57.1,
+        "momentum_subscore": 57.14285714285714,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 36.4,
+        "momentum_subscore": 36.36363636363637,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -12.9,
+        "universe_vs_compound": 7.8,
+        "sector_relative_vs_compound": 20.7
+      },
+      "max_delta": 20.7
+    },
+    {
+      "ticker": "BA",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.04068043418770784,
+      "universe": {
+        "sub_score": 39.4,
+        "momentum_subscore": 42.42424242424242,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 62.0,
+        "momentum_subscore": 65.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 62.0,
+        "momentum_subscore": 65.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -22.6,
+        "universe_vs_compound": -22.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 22.6
+    },
+    {
+      "ticker": "BAC",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.12574048238401758,
+      "universe": {
+        "sub_score": 21.5,
+        "momentum_subscore": 25.454545454545453,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 27.2,
+        "momentum_subscore": 31.25,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 10.3,
+        "momentum_subscore": 14.285714285714285,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -5.7,
+        "universe_vs_compound": 11.2,
+        "sector_relative_vs_compound": 16.9
+      },
+      "max_delta": 16.9
+    },
+    {
+      "ticker": "BIIB",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.05662338482739426,
+      "universe": {
+        "sub_score": 64.8,
+        "momentum_subscore": 61.81818181818181,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 84.0,
+        "momentum_subscore": 80.95238095238095,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 75.7,
+        "momentum_subscore": 72.72727272727273,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -19.2,
+        "universe_vs_compound": -10.9,
+        "sector_relative_vs_compound": 8.3
+      },
+      "max_delta": 19.2
+    },
+    {
+      "ticker": "BK",
+      "sector": "Financials",
+      "momentum_pct_90d": 0.12238411926608639,
+      "universe": {
+        "sub_score": 66.7,
+        "momentum_subscore": 69.6969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -30.3,
+        "universe_vs_compound": -30.3,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 30.3
+    },
+    {
+      "ticker": "BKNG",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.27790594192930784,
+      "universe": {
+        "sub_score": 12.7,
+        "momentum_subscore": 12.727272727272727,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 26.3,
+        "momentum_subscore": 26.31578947368421,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 25.0,
+        "momentum_subscore": 25.0,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.6,
+        "universe_vs_compound": -12.3,
+        "sector_relative_vs_compound": 1.3
+      },
+      "max_delta": 13.6
+    },
+    {
+      "ticker": "BKR",
+      "sector": "Energy",
+      "momentum_pct_90d": 0.30775852967402817,
+      "universe": {
+        "sub_score": 89.1,
+        "momentum_subscore": 89.0909090909091,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 89.1,
+        "momentum_subscore": 89.0909090909091,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 89.1,
+        "momentum_subscore": 89.0909090909091,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "BLK",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.02189827501477981,
+      "universe": {
+        "sub_score": 42.1,
+        "momentum_subscore": 46.06060606060606,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 58.5,
+        "momentum_subscore": 62.5,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 71.0,
+        "momentum_subscore": 75.0,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -16.4,
+        "universe_vs_compound": -28.9,
+        "sector_relative_vs_compound": -12.5
+      },
+      "max_delta": 28.9
+    },
+    {
+      "ticker": "BMY",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.05820889412831831,
+      "universe": {
+        "sub_score": 62.4,
+        "momentum_subscore": 62.42424242424243,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 85.7,
+        "momentum_subscore": 85.71428571428571,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 81.8,
+        "momentum_subscore": 81.81818181818183,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -23.3,
+        "universe_vs_compound": -19.4,
+        "sector_relative_vs_compound": 3.9
+      },
+      "max_delta": 23.3
+    },
+    {
+      "ticker": "BRK.B",
+      "sector": "Financials",
+      "momentum_pct_90d": null,
+      "universe": {
+        "sub_score": 47.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "universe",
+        "cohort_size": 166,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 47.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 17,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 47.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "C",
+      "sector": "Financials",
+      "momentum_pct_90d": 0.01755248930060338,
+      "universe": {
+        "sub_score": 48.2,
+        "momentum_subscore": 55.15151515151515,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 74.2,
+        "momentum_subscore": 81.25,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 64.4,
+        "momentum_subscore": 71.42857142857143,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -26.0,
+        "universe_vs_compound": -16.2,
+        "sector_relative_vs_compound": 9.8
+      },
+      "max_delta": 26.0
+    },
+    {
+      "ticker": "CAT",
+      "sector": "Industrials",
+      "momentum_pct_90d": 0.4317088819031858,
+      "universe": {
+        "sub_score": 88.7,
+        "momentum_subscore": 92.72727272727272,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 96.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 96.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.3,
+        "universe_vs_compound": -7.3,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 7.3
+    },
+    {
+      "ticker": "CCEP",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.05372245555621036,
+      "universe": {
+        "sub_score": 60.0,
+        "momentum_subscore": 60.0,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 15.4,
+        "momentum_subscore": 15.384615384615385,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 15.4,
+        "momentum_subscore": 15.384615384615385,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 44.6,
+        "universe_vs_compound": 44.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 44.6
+    },
+    {
+      "ticker": "CDNS",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.10361039304667918,
+      "universe": {
+        "sub_score": 72.3,
+        "momentum_subscore": 67.27272727272727,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 46.5,
+        "momentum_subscore": 41.46341463414634,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 81.2,
+        "momentum_subscore": 76.19047619047619,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 25.8,
+        "universe_vs_compound": -8.9,
+        "sector_relative_vs_compound": -34.7
+      },
+      "max_delta": 34.7
+    },
+    {
+      "ticker": "CDW",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.23637901529020633,
+      "universe": {
+        "sub_score": 18.8,
+        "momentum_subscore": 18.787878787878785,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 26.8,
+        "momentum_subscore": 26.82926829268293,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 52.4,
+        "momentum_subscore": 52.38095238095239,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -8.0,
+        "universe_vs_compound": -33.6,
+        "sector_relative_vs_compound": -25.6
+      },
+      "max_delta": 33.6
+    },
+    {
+      "ticker": "CEG",
+      "sector": "Utilities",
+      "momentum_pct_90d": -0.24425014121309296,
+      "universe": {
+        "sub_score": 18.2,
+        "momentum_subscore": 18.181818181818183,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 18.2,
+        "universe_vs_compound": 18.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 18.2
+    },
+    {
+      "ticker": "CHTR",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.33372896645935235,
+      "universe": {
+        "sub_score": 17.3,
+        "momentum_subscore": 7.2727272727272725,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 17.7,
+        "momentum_subscore": 7.6923076923076925,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 10.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -0.4,
+        "universe_vs_compound": 7.3,
+        "sector_relative_vs_compound": 7.7
+      },
+      "max_delta": 7.7
+    },
+    {
+      "ticker": "CL",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.1557087668434507,
+      "universe": {
+        "sub_score": 70.3,
+        "momentum_subscore": 73.33333333333333,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 50.8,
+        "momentum_subscore": 53.84615384615385,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 50.8,
+        "momentum_subscore": 53.84615384615385,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 19.5,
+        "universe_vs_compound": 19.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 19.5
+    },
+    {
+      "ticker": "CMCSA",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.07580081980197317,
+      "universe": {
+        "sub_score": 31.2,
+        "momentum_subscore": 35.15151515151515,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 19.1,
+        "momentum_subscore": 23.076923076923077,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 29.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 12.1,
+        "universe_vs_compound": 1.9,
+        "sector_relative_vs_compound": -10.2
+      },
+      "max_delta": 12.1
+    },
+    {
+      "ticker": "COF",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.2715896783844961,
+      "universe": {
+        "sub_score": 13.9,
+        "momentum_subscore": 13.939393939393941,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 13.9,
+        "universe_vs_compound": 13.9,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 13.9
+    },
+    {
+      "ticker": "COP",
+      "sector": "Energy",
+      "momentum_pct_90d": 0.2797796081548747,
+      "universe": {
+        "sub_score": 82.7,
+        "momentum_subscore": 86.66666666666667,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 82.7,
+        "momentum_subscore": 86.66666666666667,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 82.7,
+        "momentum_subscore": 86.66666666666667,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "COST",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.1831145977485158,
+      "universe": {
+        "sub_score": 74.0,
+        "momentum_subscore": 76.96969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 66.2,
+        "momentum_subscore": 69.23076923076923,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 66.2,
+        "momentum_subscore": 69.23076923076923,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 7.8,
+        "universe_vs_compound": 7.8,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 7.8
+    },
+    {
+      "ticker": "CRM",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.33836457018706034,
+      "universe": {
+        "sub_score": 11.7,
+        "momentum_subscore": 6.666666666666667,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 19.6,
+        "momentum_subscore": 14.634146341463413,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 33.6,
+        "momentum_subscore": 28.57142857142857,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.9,
+        "universe_vs_compound": -21.9,
+        "sector_relative_vs_compound": -14.0
+      },
+      "max_delta": 21.9
+    },
+    {
+      "ticker": "CRWD",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.29621227002116757,
+      "universe": {
+        "sub_score": 83.9,
+        "momentum_subscore": 87.87878787878788,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 59.4,
+        "momentum_subscore": 63.41463414634146,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 77.0,
+        "momentum_subscore": 80.95238095238095,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 24.5,
+        "universe_vs_compound": 6.9,
+        "sector_relative_vs_compound": -17.6
+      },
+      "max_delta": 24.5
+    },
+    {
+      "ticker": "CSCO",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.5798289741097644,
+      "universe": {
+        "sub_score": 95.2,
+        "momentum_subscore": 95.15151515151516,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 80.5,
+        "momentum_subscore": 80.48780487804879,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 14.7,
+        "universe_vs_compound": -4.8,
+        "sector_relative_vs_compound": -19.5
+      },
+      "max_delta": 19.5
+    },
+    {
+      "ticker": "CSGP",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.5136904495643638,
+      "universe": {
+        "sub_score": 10.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 10.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 10.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "CTAS",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.09725803016908297,
+      "universe": {
+        "sub_score": 29.1,
+        "momentum_subscore": 32.121212121212125,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 37.0,
+        "momentum_subscore": 40.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 37.0,
+        "momentum_subscore": 40.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.9,
+        "universe_vs_compound": -7.9,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 7.9
+    },
+    {
+      "ticker": "CTSH",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.4402053019806964,
+      "universe": {
+        "sub_score": 3.0,
+        "momentum_subscore": 3.0303030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 2.4,
+        "momentum_subscore": 2.4390243902439024,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 4.8,
+        "momentum_subscore": 4.761904761904762,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.6,
+        "universe_vs_compound": -1.8,
+        "sector_relative_vs_compound": -2.4
+      },
+      "max_delta": 2.4
+    },
+    {
+      "ticker": "CVS",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.2085194968033377,
+      "universe": {
+        "sub_score": 78.2,
+        "momentum_subscore": 81.21212121212122,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 81.6,
+        "momentum_subscore": 84.61538461538461,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 81.6,
+        "momentum_subscore": 84.61538461538461,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -3.4,
+        "universe_vs_compound": -3.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 3.4
+    },
+    {
+      "ticker": "CVX",
+      "sector": "Energy",
+      "momentum_pct_90d": 0.23271638112449078,
+      "universe": {
+        "sub_score": 83.0,
+        "momentum_subscore": 83.03030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 83.0,
+        "momentum_subscore": 83.03030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 83.0,
+        "momentum_subscore": 83.03030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "DASH",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.30595521161674244,
+      "universe": {
+        "sub_score": 5.1,
+        "momentum_subscore": 9.090909090909092,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 11.8,
+        "momentum_subscore": 15.789473684210526,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 4.3,
+        "momentum_subscore": 8.333333333333332,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -6.7,
+        "universe_vs_compound": 0.8,
+        "sector_relative_vs_compound": 7.5
+      },
+      "max_delta": 7.5
+    },
+    {
+      "ticker": "DDOG",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.5169947955400265,
+      "universe": {
+        "sub_score": 89.9,
+        "momentum_subscore": 93.93939393939394,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 71.6,
+        "momentum_subscore": 75.60975609756098,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 86.5,
+        "momentum_subscore": 90.47619047619048,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 18.3,
+        "universe_vs_compound": 3.4,
+        "sector_relative_vs_compound": -14.9
+      },
+      "max_delta": 18.3
+    },
+    {
+      "ticker": "DE",
+      "sector": "Industrials",
+      "momentum_pct_90d": 0.15945772530707614,
+      "universe": {
+        "sub_score": 74.5,
+        "momentum_subscore": 74.54545454545455,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 85.0,
+        "momentum_subscore": 85.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 85.0,
+        "momentum_subscore": 85.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -10.5,
+        "universe_vs_compound": -10.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 10.5
+    },
+    {
+      "ticker": "DHR",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.3141927437379385,
+      "universe": {
+        "sub_score": 5.5,
+        "momentum_subscore": 8.484848484848486,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 1.8,
+        "momentum_subscore": 4.761904761904762,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 8.1,
+        "momentum_subscore": 11.11111111111111,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 3.7,
+        "universe_vs_compound": -2.6,
+        "sector_relative_vs_compound": -6.3
+      },
+      "max_delta": 6.3
+    },
+    {
+      "ticker": "DIS",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.10343020429157268,
+      "universe": {
+        "sub_score": 40.3,
+        "momentum_subscore": 30.303030303030305,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 25.4,
+        "momentum_subscore": 15.384615384615385,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 26.7,
+        "momentum_subscore": 16.666666666666664,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 14.9,
+        "universe_vs_compound": 13.6,
+        "sector_relative_vs_compound": -1.3
+      },
+      "max_delta": 14.9
+    },
+    {
+      "ticker": "DUK",
+      "sector": "Utilities",
+      "momentum_pct_90d": 0.044965154552846665,
+      "universe": {
+        "sub_score": 54.2,
+        "momentum_subscore": 58.18181818181818,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 29.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 33.5,
+        "momentum_subscore": 37.5,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 24.9,
+        "universe_vs_compound": 20.7,
+        "sector_relative_vs_compound": -4.2
+      },
+      "max_delta": 24.9
+    },
+    {
+      "ticker": "DXCM",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.11818569743408258,
+      "universe": {
+        "sub_score": 26.1,
+        "momentum_subscore": 26.060606060606062,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 33.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 77.8,
+        "momentum_subscore": 77.77777777777779,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.2,
+        "universe_vs_compound": -51.7,
+        "sector_relative_vs_compound": -44.5
+      },
+      "max_delta": 51.7
+    },
+    {
+      "ticker": "EA",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.01688937131323509,
+      "universe": {
+        "sub_score": 47.9,
+        "momentum_subscore": 47.878787878787875,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 69.2,
+        "momentum_subscore": 69.23076923076923,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 75.0,
+        "momentum_subscore": 75.0,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -21.3,
+        "universe_vs_compound": -27.1,
+        "sector_relative_vs_compound": -5.8
+      },
+      "max_delta": 27.1
+    },
+    {
+      "ticker": "EMR",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.07910259139940301,
+      "universe": {
+        "sub_score": 30.5,
+        "momentum_subscore": 34.54545454545455,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 41.0,
+        "momentum_subscore": 45.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 41.0,
+        "momentum_subscore": 45.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -10.5,
+        "universe_vs_compound": -10.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 10.5
+    },
+    {
+      "ticker": "EXC",
+      "sector": "Utilities",
+      "momentum_pct_90d": -0.0020198646350189087,
+      "universe": {
+        "sub_score": 52.1,
+        "momentum_subscore": 52.121212121212125,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 16.7,
+        "momentum_subscore": 16.666666666666664,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 25.0,
+        "momentum_subscore": 25.0,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 35.4,
+        "universe_vs_compound": 27.1,
+        "sector_relative_vs_compound": -8.3
+      },
+      "max_delta": 35.4
+    },
+    {
+      "ticker": "F",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.006096861381145069,
+      "universe": {
+        "sub_score": 55.3,
+        "momentum_subscore": 50.303030303030305,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 78.7,
+        "momentum_subscore": 73.68421052631578,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 74.2,
+        "momentum_subscore": 69.23076923076923,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -23.4,
+        "universe_vs_compound": -18.9,
+        "sector_relative_vs_compound": 4.5
+      },
+      "max_delta": 23.4
+    },
+    {
+      "ticker": "FANG",
+      "sector": "Energy",
+      "momentum_pct_90d": 0.4252303384729057,
+      "universe": {
+        "sub_score": 87.5,
+        "momentum_subscore": 91.51515151515152,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 87.5,
+        "momentum_subscore": 91.51515151515152,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 87.5,
+        "momentum_subscore": 91.51515151515152,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "FAST",
+      "sector": "Industrials",
+      "momentum_pct_90d": 0.05274723295669537,
+      "universe": {
+        "sub_score": 56.4,
+        "momentum_subscore": 59.3939393939394,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 77.0,
+        "momentum_subscore": 80.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 77.0,
+        "momentum_subscore": 80.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -20.6,
+        "universe_vs_compound": -20.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 20.6
+    },
+    {
+      "ticker": "FTNT",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.5652727557092068,
+      "universe": {
+        "sub_score": 94.5,
+        "momentum_subscore": 94.54545454545455,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 78.0,
+        "momentum_subscore": 78.04878048780488,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 95.2,
+        "momentum_subscore": 95.23809523809523,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 16.5,
+        "universe_vs_compound": -0.7,
+        "sector_relative_vs_compound": -17.2
+      },
+      "max_delta": 17.2
+    },
+    {
+      "ticker": "GD",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.06454895358809598,
+      "universe": {
+        "sub_score": 33.0,
+        "momentum_subscore": 36.96969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 46.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 46.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.0,
+        "universe_vs_compound": -13.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 13.0
+    },
+    {
+      "ticker": "GE",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.13921932546120408,
+      "universe": {
+        "sub_score": 24.8,
+        "momentum_subscore": 24.848484848484848,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 25.0,
+        "momentum_subscore": 25.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 25.0,
+        "momentum_subscore": 25.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -0.2,
+        "universe_vs_compound": -0.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.2
+    },
+    {
+      "ticker": "GEHC",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.29881591891132087,
+      "universe": {
+        "sub_score": 19.7,
+        "momentum_subscore": 9.696969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 19.5,
+        "momentum_subscore": 9.523809523809524,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 32.2,
+        "momentum_subscore": 22.22222222222222,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.2,
+        "universe_vs_compound": -12.5,
+        "sector_relative_vs_compound": -12.7
+      },
+      "max_delta": 12.7
+    },
+    {
+      "ticker": "GFS",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.8023344088888933,
+      "universe": {
+        "sub_score": 93.4,
+        "momentum_subscore": 96.36363636363636,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 82.4,
+        "momentum_subscore": 85.36585365853658,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 65.4,
+        "momentum_subscore": 68.42105263157895,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 11.0,
+        "universe_vs_compound": 28.0,
+        "sector_relative_vs_compound": 17.0
+      },
+      "max_delta": 28.0
+    },
+    {
+      "ticker": "GILD",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.07379608564720441,
+      "universe": {
+        "sub_score": 64.2,
+        "momentum_subscore": 64.24242424242425,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 90.5,
+        "momentum_subscore": 90.47619047619048,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 90.9,
+        "momentum_subscore": 90.9090909090909,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -26.3,
+        "universe_vs_compound": -26.7,
+        "sector_relative_vs_compound": -0.4
+      },
+      "max_delta": 26.7
+    },
+    {
+      "ticker": "GM",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.08691591228891205,
+      "universe": {
+        "sub_score": 32.7,
+        "momentum_subscore": 32.72727272727273,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 47.4,
+        "momentum_subscore": 47.368421052631575,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 38.5,
+        "momentum_subscore": 38.46153846153847,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -14.7,
+        "universe_vs_compound": -5.8,
+        "sector_relative_vs_compound": 8.9
+      },
+      "max_delta": 14.7
+    },
+    {
+      "ticker": "GOOG",
+      "sector": "Communication Services",
+      "momentum_pct_90d": 0.2513021948330074,
+      "universe": {
+        "sub_score": 84.8,
+        "momentum_subscore": 84.84848484848484,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 92.3,
+        "momentum_subscore": 92.3076923076923,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 91.7,
+        "momentum_subscore": 91.66666666666666,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.5,
+        "universe_vs_compound": -6.9,
+        "sector_relative_vs_compound": 0.6
+      },
+      "max_delta": 7.5
+    },
+    {
+      "ticker": "GOOGL",
+      "sector": "Communication Services",
+      "momentum_pct_90d": 0.2631523979245407,
+      "universe": {
+        "sub_score": 86.1,
+        "momentum_subscore": 86.06060606060606,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.9,
+        "universe_vs_compound": -13.9,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 13.9
+    },
+    {
+      "ticker": "GS",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.002102043440004975,
+      "universe": {
+        "sub_score": 47.5,
+        "momentum_subscore": 51.515151515151516,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 71.0,
+        "momentum_subscore": 75.0,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 53.1,
+        "momentum_subscore": 57.14285714285714,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -23.5,
+        "universe_vs_compound": -5.6,
+        "sector_relative_vs_compound": 17.9
+      },
+      "max_delta": 23.5
+    },
+    {
+      "ticker": "HD",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.14254907615737267,
+      "universe": {
+        "sub_score": 20.2,
+        "momentum_subscore": 24.242424242424242,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 32.8,
+        "momentum_subscore": 36.84210526315789,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 19.1,
+        "momentum_subscore": 23.076923076923077,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -12.6,
+        "universe_vs_compound": 1.1,
+        "sector_relative_vs_compound": 13.7
+      },
+      "max_delta": 13.7
+    },
+    {
+      "ticker": "HON",
+      "sector": "Industrials",
+      "momentum_pct_90d": 0.05141221689059727,
+      "universe": {
+        "sub_score": 54.8,
+        "momentum_subscore": 58.78787878787879,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 71.0,
+        "momentum_subscore": 75.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 71.0,
+        "momentum_subscore": 75.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -16.2,
+        "universe_vs_compound": -16.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 16.2
+    },
+    {
+      "ticker": "IBM",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.2654690046471768,
+      "universe": {
+        "sub_score": 19.5,
+        "momentum_subscore": 14.545454545454545,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 27.0,
+        "momentum_subscore": 21.951219512195124,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 47.9,
+        "momentum_subscore": 42.857142857142854,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.5,
+        "universe_vs_compound": -28.4,
+        "sector_relative_vs_compound": -20.9
+      },
+      "max_delta": 28.4
+    },
+    {
+      "ticker": "IDXX",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.2518852266567928,
+      "universe": {
+        "sub_score": 13.6,
+        "momentum_subscore": 17.575757575757574,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 19.8,
+        "momentum_subscore": 23.809523809523807,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 51.6,
+        "momentum_subscore": 55.55555555555556,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -6.2,
+        "universe_vs_compound": -38.0,
+        "sector_relative_vs_compound": -31.8
+      },
+      "max_delta": 38.0
+    },
+    {
+      "ticker": "ILMN",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.03106523897259217,
+      "universe": {
+        "sub_score": 41.8,
+        "momentum_subscore": 44.84848484848485,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 58.9,
+        "momentum_subscore": 61.904761904761905,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 85.9,
+        "momentum_subscore": 88.88888888888889,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -17.1,
+        "universe_vs_compound": -44.1,
+        "sector_relative_vs_compound": -27.0
+      },
+      "max_delta": 44.1
+    },
+    {
+      "ticker": "INTC",
+      "sector": "Technology",
+      "momentum_pct_90d": 1.7165333205795674,
+      "universe": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "INTU",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.3897704646953365,
+      "universe": {
+        "sub_score": 4.2,
+        "momentum_subscore": 4.242424242424243,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 7.3,
+        "momentum_subscore": 7.317073170731707,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 14.3,
+        "momentum_subscore": 14.285714285714285,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -3.1,
+        "universe_vs_compound": -10.1,
+        "sector_relative_vs_compound": -7.0
+      },
+      "max_delta": 10.1
+    },
+    {
+      "ticker": "ISRG",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.28966852920761677,
+      "universe": {
+        "sub_score": 11.5,
+        "momentum_subscore": 11.515151515151516,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 19.0,
+        "momentum_subscore": 19.047619047619047,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 44.4,
+        "momentum_subscore": 44.44444444444444,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.5,
+        "universe_vs_compound": -32.9,
+        "sector_relative_vs_compound": -25.4
+      },
+      "max_delta": 32.9
+    },
+    {
+      "ticker": "JNJ",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.1129216863995346,
+      "universe": {
+        "sub_score": 65.1,
+        "momentum_subscore": 69.0909090909091,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 91.2,
+        "momentum_subscore": 95.23809523809523,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 96.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -26.1,
+        "universe_vs_compound": -30.9,
+        "sector_relative_vs_compound": -4.8
+      },
+      "max_delta": 30.9
+    },
+    {
+      "ticker": "JPM",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.10542383160846713,
+      "universe": {
+        "sub_score": 27.7,
+        "momentum_subscore": 29.6969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 41.8,
+        "momentum_subscore": 43.75,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 26.6,
+        "momentum_subscore": 28.57142857142857,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -14.1,
+        "universe_vs_compound": 1.1,
+        "sector_relative_vs_compound": 15.2
+      },
+      "max_delta": 15.2
+    },
+    {
+      "ticker": "KDP",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.06750272740958474,
+      "universe": {
+        "sub_score": 63.6,
+        "momentum_subscore": 63.63636363636363,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 23.1,
+        "momentum_subscore": 23.076923076923077,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 23.1,
+        "momentum_subscore": 23.076923076923077,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 40.5,
+        "universe_vs_compound": 40.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 40.5
+    },
+    {
+      "ticker": "KHC",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": -0.00873142961600093,
+      "universe": {
+        "sub_score": 56.1,
+        "momentum_subscore": 49.09090909090909,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 7.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 7.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 49.1,
+        "universe_vs_compound": 49.1,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 49.1
+    },
+    {
+      "ticker": "KLAC",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.2950999780075545,
+      "universe": {
+        "sub_score": 84.3,
+        "momentum_subscore": 87.27272727272727,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 58.0,
+        "momentum_subscore": 60.97560975609756,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 39.1,
+        "momentum_subscore": 42.10526315789473,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 26.3,
+        "universe_vs_compound": 45.2,
+        "sector_relative_vs_compound": 18.9
+      },
+      "max_delta": 45.2
+    },
+    {
+      "ticker": "KO",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.19952416438036003,
+      "universe": {
+        "sub_score": 75.4,
+        "momentum_subscore": 79.39393939393939,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 72.9,
+        "momentum_subscore": 76.92307692307693,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 72.9,
+        "momentum_subscore": 76.92307692307693,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 2.5,
+        "universe_vs_compound": 2.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 2.5
+    },
+    {
+      "ticker": "LCID",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.47931036523916426,
+      "universe": {
+        "sub_score": 0.6,
+        "momentum_subscore": 0.6060606060606061,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.6,
+        "universe_vs_compound": 0.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.6
+    },
+    {
+      "ticker": "LIN",
+      "sector": "Materials",
+      "momentum_pct_90d": 0.16161122887707302,
+      "universe": {
+        "sub_score": 72.8,
+        "momentum_subscore": 75.75757575757575,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 72.8,
+        "momentum_subscore": 75.75757575757575,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 72.8,
+        "momentum_subscore": 75.75757575757575,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "LLY",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.052357116923893665,
+      "universe": {
+        "sub_score": 35.2,
+        "momentum_subscore": 38.18181818181819,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 44.6,
+        "momentum_subscore": 47.61904761904761,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 15.2,
+        "momentum_subscore": 18.181818181818183,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -9.4,
+        "universe_vs_compound": 20.0,
+        "sector_relative_vs_compound": 29.4
+      },
+      "max_delta": 29.4
+    },
+    {
+      "ticker": "LMT",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.006341482391881814,
+      "universe": {
+        "sub_score": 46.7,
+        "momentum_subscore": 49.696969696969695,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 67.0,
+        "momentum_subscore": 70.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 67.0,
+        "momentum_subscore": 70.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -20.3,
+        "universe_vs_compound": -20.3,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 20.3
+    },
+    {
+      "ticker": "LOW",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.1056266514063583,
+      "universe": {
+        "sub_score": 26.1,
+        "momentum_subscore": 29.09090909090909,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 39.1,
+        "momentum_subscore": 42.10526315789473,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 27.8,
+        "momentum_subscore": 30.76923076923077,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.0,
+        "universe_vs_compound": -1.7,
+        "sector_relative_vs_compound": 11.3
+      },
+      "max_delta": 13.0
+    },
+    {
+      "ticker": "LRCX",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.3773730171032914,
+      "universe": {
+        "sub_score": 86.9,
+        "momentum_subscore": 90.9090909090909,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 64.3,
+        "momentum_subscore": 68.29268292682927,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 43.4,
+        "momentum_subscore": 47.368421052631575,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 22.6,
+        "universe_vs_compound": 43.5,
+        "sector_relative_vs_compound": 20.9
+      },
+      "max_delta": 43.5
+    },
+    {
+      "ticker": "LULU",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.4481193408610401,
+      "universe": {
+        "sub_score": 8.8,
+        "momentum_subscore": 1.8181818181818181,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 12.3,
+        "momentum_subscore": 5.263157894736842,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 14.7,
+        "momentum_subscore": 7.6923076923076925,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -3.5,
+        "universe_vs_compound": -5.9,
+        "sector_relative_vs_compound": -2.4
+      },
+      "max_delta": 5.9
+    },
+    {
+      "ticker": "MA",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.14568552871712181,
+      "universe": {
+        "sub_score": 23.6,
+        "momentum_subscore": 23.636363636363637,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 25.0,
+        "momentum_subscore": 25.0,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 37.5,
+        "momentum_subscore": 37.5,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -1.4,
+        "universe_vs_compound": -13.9,
+        "sector_relative_vs_compound": -12.5
+      },
+      "max_delta": 13.9
+    },
+    {
+      "ticker": "MAR",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": 0.099398463097915,
+      "universe": {
+        "sub_score": 62.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 80.2,
+        "momentum_subscore": 84.21052631578947,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 72.9,
+        "momentum_subscore": 76.92307692307693,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -17.5,
+        "universe_vs_compound": -10.2,
+        "sector_relative_vs_compound": 7.3
+      },
+      "max_delta": 17.5
+    },
+    {
+      "ticker": "MCD",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.08202925729265798,
+      "universe": {
+        "sub_score": 30.9,
+        "momentum_subscore": 33.939393939393945,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 49.6,
+        "momentum_subscore": 52.63157894736842,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 43.2,
+        "momentum_subscore": 46.15384615384615,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -18.7,
+        "universe_vs_compound": -12.3,
+        "sector_relative_vs_compound": 6.4
+      },
+      "max_delta": 18.7
+    },
+    {
+      "ticker": "MCHP",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.26088667411923727,
+      "universe": {
+        "sub_score": 82.5,
+        "momentum_subscore": 85.45454545454545,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 55.5,
+        "momentum_subscore": 58.536585365853654,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 33.8,
+        "momentum_subscore": 36.84210526315789,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 27.0,
+        "universe_vs_compound": 48.7,
+        "sector_relative_vs_compound": 21.7
+      },
+      "max_delta": 48.7
+    },
+    {
+      "ticker": "MDB",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.2838066944587201,
+      "universe": {
+        "sub_score": 12.1,
+        "momentum_subscore": 12.121212121212121,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 17.1,
+        "momentum_subscore": 17.073170731707318,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 33.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -5.0,
+        "universe_vs_compound": -21.2,
+        "sector_relative_vs_compound": -16.2
+      },
+      "max_delta": 21.2
+    },
+    {
+      "ticker": "MDLZ",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.1561405034747736,
+      "universe": {
+        "sub_score": 70.9,
+        "momentum_subscore": 73.93939393939394,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 58.5,
+        "momentum_subscore": 61.53846153846154,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 58.5,
+        "momentum_subscore": 61.53846153846154,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 12.4,
+        "universe_vs_compound": 12.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 12.4
+    },
+    {
+      "ticker": "MDT",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.2346551592725724,
+      "universe": {
+        "sub_score": 16.4,
+        "momentum_subscore": 19.393939393939394,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 25.6,
+        "momentum_subscore": 28.57142857142857,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 63.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -9.2,
+        "universe_vs_compound": -47.3,
+        "sector_relative_vs_compound": -38.1
+      },
+      "max_delta": 47.3
+    },
+    {
+      "ticker": "MELI",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.2927381159163378,
+      "universe": {
+        "sub_score": 15.9,
+        "momentum_subscore": 10.909090909090908,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 26.1,
+        "momentum_subscore": 21.052631578947366,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 21.7,
+        "momentum_subscore": 16.666666666666664,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -10.2,
+        "universe_vs_compound": -5.8,
+        "sector_relative_vs_compound": 4.4
+      },
+      "max_delta": 10.2
+    },
+    {
+      "ticker": "MET",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.0026184674587722556,
+      "universe": {
+        "sub_score": 50.9,
+        "momentum_subscore": 50.90909090909091,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 68.8,
+        "momentum_subscore": 68.75,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 87.5,
+        "momentum_subscore": 87.5,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -17.9,
+        "universe_vs_compound": -36.6,
+        "sector_relative_vs_compound": -18.7
+      },
+      "max_delta": 36.6
+    },
+    {
+      "ticker": "META",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.06942587984341897,
+      "universe": {
+        "sub_score": 31.8,
+        "momentum_subscore": 35.75757575757576,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 26.8,
+        "momentum_subscore": 30.76923076923077,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 37.7,
+        "momentum_subscore": 41.66666666666667,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 5.0,
+        "universe_vs_compound": -5.9,
+        "sector_relative_vs_compound": -10.9
+      },
+      "max_delta": 10.9
+    },
+    {
+      "ticker": "MMM",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.11632208541434585,
+      "universe": {
+        "sub_score": 30.3,
+        "momentum_subscore": 27.27272727272727,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 33.0,
+        "momentum_subscore": 30.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 33.0,
+        "momentum_subscore": 30.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -2.7,
+        "universe_vs_compound": -2.7,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 2.7
+    },
+    {
+      "ticker": "MNST",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.15015841169953315,
+      "universe": {
+        "sub_score": 68.1,
+        "momentum_subscore": 72.12121212121212,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 34.5,
+        "momentum_subscore": 38.46153846153847,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 34.5,
+        "momentum_subscore": 38.46153846153847,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 33.6,
+        "universe_vs_compound": 33.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 33.6
+    },
+    {
+      "ticker": "MO",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.3472572599790895,
+      "universe": {
+        "sub_score": 87.3,
+        "momentum_subscore": 90.30303030303031,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -9.7,
+        "universe_vs_compound": -9.7,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 9.7
+    },
+    {
+      "ticker": "MRK",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.0306324940117797,
+      "universe": {
+        "sub_score": 55.0,
+        "momentum_subscore": 56.96969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 74.2,
+        "momentum_subscore": 76.19047619047619,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 61.6,
+        "momentum_subscore": 63.63636363636363,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -19.2,
+        "universe_vs_compound": -6.6,
+        "sector_relative_vs_compound": 12.6
+      },
+      "max_delta": 19.2
+    },
+    {
+      "ticker": "MRVL",
+      "sector": "Technology",
+      "momentum_pct_90d": 1.0073204479919546,
+      "universe": {
+        "sub_score": 95.8,
+        "momentum_subscore": 98.7878787878788,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 92.1,
+        "momentum_subscore": 95.1219512195122,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 86.5,
+        "momentum_subscore": 89.47368421052632,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 3.7,
+        "universe_vs_compound": 9.3,
+        "sector_relative_vs_compound": 5.6
+      },
+      "max_delta": 9.3
+    },
+    {
+      "ticker": "MS",
+      "sector": "Financials",
+      "momentum_pct_90d": 0.03654589945903197,
+      "universe": {
+        "sub_score": 54.6,
+        "momentum_subscore": 57.57575757575758,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 84.5,
+        "momentum_subscore": 87.5,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 82.7,
+        "momentum_subscore": 85.71428571428571,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -29.9,
+        "universe_vs_compound": -28.1,
+        "sector_relative_vs_compound": 1.8
+      },
+      "max_delta": 29.9
+    },
+    {
+      "ticker": "MSFT",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.11625040454525082,
+      "universe": {
+        "sub_score": 24.9,
+        "momentum_subscore": 27.878787878787882,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 28.7,
+        "momentum_subscore": 31.70731707317073,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 58.9,
+        "momentum_subscore": 61.904761904761905,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -3.8,
+        "universe_vs_compound": -34.0,
+        "sector_relative_vs_compound": -30.2
+      },
+      "max_delta": 34.0
+    },
+    {
+      "ticker": "MU",
+      "sector": "Technology",
+      "momentum_pct_90d": 1.110952575513024,
+      "universe": {
+        "sub_score": 96.4,
+        "momentum_subscore": 99.39393939393939,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 94.6,
+        "momentum_subscore": 97.5609756097561,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 91.7,
+        "momentum_subscore": 94.73684210526315,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 1.8,
+        "universe_vs_compound": 4.7,
+        "sector_relative_vs_compound": 2.9
+      },
+      "max_delta": 4.7
+    },
+    {
+      "ticker": "NEE",
+      "sector": "Utilities",
+      "momentum_pct_90d": 0.15973573275306507,
+      "universe": {
+        "sub_score": 75.2,
+        "momentum_subscore": 75.15151515151514,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -24.8,
+        "universe_vs_compound": -24.8,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 24.8
+    },
+    {
+      "ticker": "NFLX",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.0400441789488134,
+      "universe": {
+        "sub_score": 39.0,
+        "momentum_subscore": 43.03030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 57.5,
+        "momentum_subscore": 61.53846153846154,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 54.3,
+        "momentum_subscore": 58.333333333333336,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -18.5,
+        "universe_vs_compound": -15.3,
+        "sector_relative_vs_compound": 3.2
+      },
+      "max_delta": 18.5
+    },
+    {
+      "ticker": "NKE",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.35488935578904224,
+      "universe": {
+        "sub_score": 6.1,
+        "momentum_subscore": 6.0606060606060606,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 10.5,
+        "momentum_subscore": 10.526315789473683,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 15.4,
+        "momentum_subscore": 15.384615384615385,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -4.4,
+        "universe_vs_compound": -9.3,
+        "sector_relative_vs_compound": -4.9
+      },
+      "max_delta": 9.3
+    },
+    {
+      "ticker": "NOW",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.36113163594811215,
+      "universe": {
+        "sub_score": 2.5,
+        "momentum_subscore": 5.454545454545454,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 9.2,
+        "momentum_subscore": 12.195121951219512,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 20.8,
+        "momentum_subscore": 23.809523809523807,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -6.7,
+        "universe_vs_compound": -18.3,
+        "sector_relative_vs_compound": -11.6
+      },
+      "max_delta": 18.3
+    },
+    {
+      "ticker": "NVDA",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.2034404709193265,
+      "universe": {
+        "sub_score": 77.0,
+        "momentum_subscore": 80.0,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 48.2,
+        "momentum_subscore": 51.21951219512195,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 18.1,
+        "momentum_subscore": 21.052631578947366,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 28.8,
+        "universe_vs_compound": 58.9,
+        "sector_relative_vs_compound": 30.1
+      },
+      "max_delta": 58.9
+    },
+    {
+      "ticker": "NXPI",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.191351114037976,
+      "universe": {
+        "sub_score": 78.8,
+        "momentum_subscore": 78.78787878787878,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 48.8,
+        "momentum_subscore": 48.78048780487805,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 15.8,
+        "momentum_subscore": 15.789473684210526,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 30.0,
+        "universe_vs_compound": 63.0,
+        "sector_relative_vs_compound": 33.0
+      },
+      "max_delta": 63.0
+    },
+    {
+      "ticker": "ODFL",
+      "sector": "Industrials",
+      "momentum_pct_90d": 0.20442713882242458,
+      "universe": {
+        "sub_score": 77.6,
+        "momentum_subscore": 80.60606060606061,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 92.0,
+        "momentum_subscore": 95.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 92.0,
+        "momentum_subscore": 95.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -14.4,
+        "universe_vs_compound": -14.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 14.4
+    },
+    {
+      "ticker": "ON",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.8314443601743866,
+      "universe": {
+        "sub_score": 94.6,
+        "momentum_subscore": 97.57575757575758,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 87.2,
+        "momentum_subscore": 90.2439024390244,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 75.9,
+        "momentum_subscore": 78.94736842105263,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 7.4,
+        "universe_vs_compound": 18.7,
+        "sector_relative_vs_compound": 11.3
+      },
+      "max_delta": 18.7
+    },
+    {
+      "ticker": "ORCL",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.0019908008266529276,
+      "universe": {
+        "sub_score": 52.7,
+        "momentum_subscore": 52.72727272727272,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 36.6,
+        "momentum_subscore": 36.58536585365854,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 71.4,
+        "momentum_subscore": 71.42857142857143,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 16.1,
+        "universe_vs_compound": -18.7,
+        "sector_relative_vs_compound": -34.8
+      },
+      "max_delta": 34.8
+    },
+    {
+      "ticker": "ORLY",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.021020041361970554,
+      "universe": {
+        "sub_score": 42.7,
+        "momentum_subscore": 46.666666666666664,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 64.4,
+        "momentum_subscore": 68.42105263157895,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 57.5,
+        "momentum_subscore": 61.53846153846154,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -21.7,
+        "universe_vs_compound": -14.8,
+        "sector_relative_vs_compound": 6.9
+      },
+      "max_delta": 21.7
+    },
+    {
+      "ticker": "PANW",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.30652104290120263,
+      "universe": {
+        "sub_score": 95.5,
+        "momentum_subscore": 88.48484848484848,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 72.9,
+        "momentum_subscore": 65.85365853658537,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 92.7,
+        "momentum_subscore": 85.71428571428571,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 22.6,
+        "universe_vs_compound": 2.8,
+        "sector_relative_vs_compound": -19.8
+      },
+      "max_delta": 22.6
+    },
+    {
+      "ticker": "PAYX",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.1576917233946601,
+      "universe": {
+        "sub_score": 20.0,
+        "momentum_subscore": 23.03030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 17.0,
+        "momentum_subscore": 20.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 17.0,
+        "momentum_subscore": 20.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 3.0,
+        "universe_vs_compound": 3.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 3.0
+    },
+    {
+      "ticker": "PCAR",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.052350465089957776,
+      "universe": {
+        "sub_score": 38.8,
+        "momentum_subscore": 38.78787878787879,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 55.0,
+        "momentum_subscore": 55.00000000000001,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 55.0,
+        "momentum_subscore": 55.00000000000001,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -16.2,
+        "universe_vs_compound": -16.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 16.2
+    },
+    {
+      "ticker": "PDD",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.21873472224053658,
+      "universe": {
+        "sub_score": 17.6,
+        "momentum_subscore": 20.606060606060606,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 28.6,
+        "momentum_subscore": 31.57894736842105,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 30.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -11.0,
+        "universe_vs_compound": -12.7,
+        "sector_relative_vs_compound": -1.7
+      },
+      "max_delta": 12.7
+    },
+    {
+      "ticker": "PEP",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.08270174896706739,
+      "universe": {
+        "sub_score": 60.8,
+        "momentum_subscore": 64.84848484848484,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 26.8,
+        "momentum_subscore": 30.76923076923077,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 26.8,
+        "momentum_subscore": 30.76923076923077,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 34.0,
+        "universe_vs_compound": 34.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 34.0
+    },
+    {
+      "ticker": "PFE",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.02947004081379534,
+      "universe": {
+        "sub_score": 59.4,
+        "momentum_subscore": 56.36363636363636,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 74.4,
+        "momentum_subscore": 71.42857142857143,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 57.5,
+        "momentum_subscore": 54.54545454545454,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -15.0,
+        "universe_vs_compound": 1.9,
+        "sector_relative_vs_compound": 16.9
+      },
+      "max_delta": 16.9
+    },
+    {
+      "ticker": "PG",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.026722536658457363,
+      "universe": {
+        "sub_score": 51.8,
+        "momentum_subscore": 55.757575757575765,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 3.7,
+        "momentum_subscore": 7.6923076923076925,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 3.7,
+        "momentum_subscore": 7.6923076923076925,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 48.1,
+        "universe_vs_compound": 48.1,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 48.1
+    },
+    {
+      "ticker": "PM",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.23293782516313044,
+      "universe": {
+        "sub_score": 79.6,
+        "momentum_subscore": 83.63636363636363,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 88.3,
+        "momentum_subscore": 92.3076923076923,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 88.3,
+        "momentum_subscore": 92.3076923076923,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -8.7,
+        "universe_vs_compound": -8.7,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 8.7
+    },
+    {
+      "ticker": "PYPL",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.25523394866751803,
+      "universe": {
+        "sub_score": 17.0,
+        "momentum_subscore": 16.969696969696972,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 6.2,
+        "momentum_subscore": 6.25,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 12.5,
+        "momentum_subscore": 12.5,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 10.8,
+        "universe_vs_compound": 4.5,
+        "sector_relative_vs_compound": -6.3
+      },
+      "max_delta": 10.8
+    },
+    {
+      "ticker": "QCOM",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.1114478926984741,
+      "universe": {
+        "sub_score": 68.5,
+        "momentum_subscore": 68.48484848484848,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 43.9,
+        "momentum_subscore": 43.90243902439025,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 5.3,
+        "momentum_subscore": 5.263157894736842,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 24.6,
+        "universe_vs_compound": 63.2,
+        "sector_relative_vs_compound": 38.6
+      },
+      "max_delta": 63.2
+    },
+    {
+      "ticker": "REGN",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.09973736075693618,
+      "universe": {
+        "sub_score": 30.9,
+        "momentum_subscore": 30.909090909090907,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 38.1,
+        "momentum_subscore": 38.095238095238095,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.2,
+        "universe_vs_compound": 30.9,
+        "sector_relative_vs_compound": 38.1
+      },
+      "max_delta": 38.1
+    },
+    {
+      "ticker": "ROP",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.26302735389331633,
+      "universe": {
+        "sub_score": 16.4,
+        "momentum_subscore": 16.363636363636363,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 10.0,
+        "momentum_subscore": 10.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 10.0,
+        "momentum_subscore": 10.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 6.4,
+        "universe_vs_compound": 6.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 6.4
+    },
+    {
+      "ticker": "ROST",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": 0.13689614146491547,
+      "universe": {
+        "sub_score": 66.3,
+        "momentum_subscore": 70.3030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 85.5,
+        "momentum_subscore": 89.47368421052632,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 80.6,
+        "momentum_subscore": 84.61538461538461,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -19.2,
+        "universe_vs_compound": -14.3,
+        "sector_relative_vs_compound": 4.9
+      },
+      "max_delta": 19.2
+    },
+    {
+      "ticker": "RTX",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.09795922502558141,
+      "universe": {
+        "sub_score": 27.5,
+        "momentum_subscore": 31.515151515151512,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 31.0,
+        "momentum_subscore": 35.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 31.0,
+        "momentum_subscore": 35.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -3.5,
+        "universe_vs_compound": -3.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 3.5
+    },
+    {
+      "ticker": "SBUX",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": 0.20879729119662205,
+      "universe": {
+        "sub_score": 81.8,
+        "momentum_subscore": 81.81818181818183,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 100.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -18.2,
+        "universe_vs_compound": -18.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 18.2
+    },
+    {
+      "ticker": "SCHW",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.1164034147153804,
+      "universe": {
+        "sub_score": 23.7,
+        "momentum_subscore": 26.666666666666668,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 34.5,
+        "momentum_subscore": 37.5,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 47.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -10.8,
+        "universe_vs_compound": -23.3,
+        "sector_relative_vs_compound": -12.5
+      },
+      "max_delta": 23.3
+    },
+    {
+      "ticker": "SHW",
+      "sector": "Materials",
+      "momentum_pct_90d": -0.11563533265308579,
+      "universe": {
+        "sub_score": 25.5,
+        "momentum_subscore": 28.484848484848484,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 25.5,
+        "momentum_subscore": 28.484848484848484,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 25.5,
+        "momentum_subscore": 28.484848484848484,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "SMCI",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.016371970694532223,
+      "universe": {
+        "sub_score": 54.5,
+        "momentum_subscore": 54.54545454545454,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 39.0,
+        "momentum_subscore": 39.02439024390244,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 0.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 15.5,
+        "universe_vs_compound": 54.5,
+        "sector_relative_vs_compound": 39.0
+      },
+      "max_delta": 54.5
+    },
+    {
+      "ticker": "SNPS",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.012481034107864497,
+      "universe": {
+        "sub_score": 48.5,
+        "momentum_subscore": 48.484848484848484,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 34.1,
+        "momentum_subscore": 34.146341463414636,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 66.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 14.4,
+        "universe_vs_compound": -18.2,
+        "sector_relative_vs_compound": -32.6
+      },
+      "max_delta": 32.6
+    },
+    {
+      "ticker": "SO",
+      "sector": "Utilities",
+      "momentum_pct_90d": 0.06577893882955888,
+      "universe": {
+        "sub_score": 60.0,
+        "momentum_subscore": 63.030303030303024,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 63.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 59.5,
+        "momentum_subscore": 62.5,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -3.7,
+        "universe_vs_compound": 0.5,
+        "sector_relative_vs_compound": 4.2
+      },
+      "max_delta": 4.2
+    },
+    {
+      "ticker": "SPG",
+      "sector": "Real Estate",
+      "momentum_pct_90d": 0.08603519070864674,
+      "universe": {
+        "sub_score": 73.5,
+        "momentum_subscore": 65.45454545454545,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 73.5,
+        "momentum_subscore": 65.45454545454545,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 83.0,
+        "momentum_subscore": 75.0,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": -9.5,
+        "sector_relative_vs_compound": -9.5
+      },
+      "max_delta": 9.5
+    },
+    {
+      "ticker": "T",
+      "sector": "Communication Services",
+      "momentum_pct_90d": 0.009292339253658355,
+      "universe": {
+        "sub_score": 53.9,
+        "momentum_subscore": 53.939393939393945,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 76.9,
+        "momentum_subscore": 76.92307692307693,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 83.3,
+        "momentum_subscore": 83.33333333333334,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -23.0,
+        "universe_vs_compound": -29.4,
+        "sector_relative_vs_compound": -6.4
+      },
+      "max_delta": 29.4
+    },
+    {
+      "ticker": "TEAM",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.44771407711932254,
+      "universe": {
+        "sub_score": -1.6,
+        "momentum_subscore": 2.4242424242424243,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": -4.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": -4.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 2.4,
+        "universe_vs_compound": 2.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 2.4
+    },
+    {
+      "ticker": "TGT",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": 0.1882655050815618,
+      "universe": {
+        "sub_score": 75.2,
+        "momentum_subscore": 78.18181818181819,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 91.7,
+        "momentum_subscore": 94.73684210526315,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 89.3,
+        "momentum_subscore": 92.3076923076923,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -16.5,
+        "universe_vs_compound": -14.1,
+        "sector_relative_vs_compound": 2.4
+      },
+      "max_delta": 16.5
+    },
+    {
+      "ticker": "TMO",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.293121923669604,
+      "universe": {
+        "sub_score": 10.3,
+        "momentum_subscore": 10.303030303030303,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 14.3,
+        "momentum_subscore": 14.285714285714285,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 33.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -4.0,
+        "universe_vs_compound": -23.0,
+        "sector_relative_vs_compound": -19.0
+      },
+      "max_delta": 23.0
+    },
+    {
+      "ticker": "TMUS",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.06288717368402441,
+      "universe": {
+        "sub_score": 33.6,
+        "momentum_subscore": 37.57575757575757,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 34.5,
+        "momentum_subscore": 38.46153846153847,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 46.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -0.9,
+        "universe_vs_compound": -12.4,
+        "sector_relative_vs_compound": -11.5
+      },
+      "max_delta": 12.4
+    },
+    {
+      "ticker": "TRV",
+      "sector": "Financials",
+      "momentum_pct_90d": 0.054916116621260835,
+      "universe": {
+        "sub_score": 57.2,
+        "momentum_subscore": 61.212121212121204,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 89.8,
+        "momentum_subscore": 93.75,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 96.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -32.6,
+        "universe_vs_compound": -38.8,
+        "sector_relative_vs_compound": -6.2
+      },
+      "max_delta": 38.8
+    },
+    {
+      "ticker": "TSLA",
+      "sector": "Consumer Discretionary",
+      "momentum_pct_90d": -0.024759796360572905,
+      "universe": {
+        "sub_score": 41.5,
+        "momentum_subscore": 45.45454545454545,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 59.2,
+        "momentum_subscore": 63.1578947368421,
+        "cohort_label": "sector:Consumer Discretionary",
+        "cohort_size": 19,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 49.8,
+        "momentum_subscore": 53.84615384615385,
+        "cohort_label": "sector_group:consumer_cyclical",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -17.7,
+        "universe_vs_compound": -8.3,
+        "sector_relative_vs_compound": 9.4
+      },
+      "max_delta": 17.7
+    },
+    {
+      "ticker": "TTD",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.46779067123214424,
+      "universe": {
+        "sub_score": 8.2,
+        "momentum_subscore": 1.2121212121212122,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 7.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 7.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 1.2,
+        "universe_vs_compound": 1.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 1.2
+    },
+    {
+      "ticker": "TTWO",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.04682525408417815,
+      "universe": {
+        "sub_score": 36.0,
+        "momentum_subscore": 40.0,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 49.8,
+        "momentum_subscore": 53.84615384615385,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 46.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector_group:tech_internet",
+        "cohort_size": 12,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.8,
+        "universe_vs_compound": -10.0,
+        "sector_relative_vs_compound": 3.8
+      },
+      "max_delta": 13.8
+    },
+    {
+      "ticker": "TXN",
+      "sector": "Technology",
+      "momentum_pct_90d": 0.5942438289660279,
+      "universe": {
+        "sub_score": 91.8,
+        "momentum_subscore": 95.75757575757575,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 78.9,
+        "momentum_subscore": 82.92682926829268,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 59.2,
+        "momentum_subscore": 63.1578947368421,
+        "cohort_label": "sector_group:tech_hardware",
+        "cohort_size": 19,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 12.9,
+        "universe_vs_compound": 32.6,
+        "sector_relative_vs_compound": 19.7
+      },
+      "max_delta": 32.6
+    },
+    {
+      "ticker": "UNH",
+      "sector": "Health Care",
+      "momentum_pct_90d": 0.13738121687677673,
+      "universe": {
+        "sub_score": 66.9,
+        "momentum_subscore": 70.9090909090909,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 96.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 96.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:healthcare_devices",
+        "cohort_size": 9,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -29.1,
+        "universe_vs_compound": -29.1,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 29.1
+    },
+    {
+      "ticker": "UNP",
+      "sector": "Industrials",
+      "momentum_pct_90d": 0.16417223510719148,
+      "universe": {
+        "sub_score": 72.4,
+        "momentum_subscore": 76.36363636363637,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 86.0,
+        "momentum_subscore": 90.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 86.0,
+        "momentum_subscore": 90.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -13.6,
+        "universe_vs_compound": -13.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 13.6
+    },
+    {
+      "ticker": "UPS",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.04666758125741821,
+      "universe": {
+        "sub_score": 40.6,
+        "momentum_subscore": 40.60606060606061,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 60.0,
+        "momentum_subscore": 60.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 60.0,
+        "momentum_subscore": 60.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -19.4,
+        "universe_vs_compound": -19.4,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 19.4
+    },
+    {
+      "ticker": "USB",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.04300117038318885,
+      "universe": {
+        "sub_score": 38.8,
+        "momentum_subscore": 41.81818181818181,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 53.2,
+        "momentum_subscore": 56.25,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 39.9,
+        "momentum_subscore": 42.857142857142854,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -14.4,
+        "universe_vs_compound": -1.1,
+        "sector_relative_vs_compound": 13.3
+      },
+      "max_delta": 14.4
+    },
+    {
+      "ticker": "V",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.08519289907480365,
+      "universe": {
+        "sub_score": 29.3,
+        "momentum_subscore": 33.33333333333333,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 46.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 58.5,
+        "momentum_subscore": 62.5,
+        "cohort_label": "sector_group:financials_non_bank",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -16.7,
+        "universe_vs_compound": -29.2,
+        "sector_relative_vs_compound": -12.5
+      },
+      "max_delta": 29.2
+    },
+    {
+      "ticker": "VRSK",
+      "sector": "Industrials",
+      "momentum_pct_90d": -0.2633845261529517,
+      "universe": {
+        "sub_score": 23.2,
+        "momentum_subscore": 15.151515151515152,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 13.0,
+        "momentum_subscore": 5.0,
+        "cohort_label": "sector:Industrials",
+        "cohort_size": 20,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 13.0,
+        "momentum_subscore": 5.0,
+        "cohort_label": "sector_group:industrials_aero",
+        "cohort_size": 20,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 10.2,
+        "universe_vs_compound": 10.2,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 10.2
+    },
+    {
+      "ticker": "VRTX",
+      "sector": "Health Care",
+      "momentum_pct_90d": -0.06710361746472282,
+      "universe": {
+        "sub_score": 36.4,
+        "momentum_subscore": 36.36363636363637,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 42.9,
+        "momentum_subscore": 42.857142857142854,
+        "cohort_label": "sector:Health Care",
+        "cohort_size": 21,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 9.1,
+        "momentum_subscore": 9.090909090909092,
+        "cohort_label": "sector_group:healthcare_pharma",
+        "cohort_size": 11,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -6.5,
+        "universe_vs_compound": 27.3,
+        "sector_relative_vs_compound": 33.8
+      },
+      "max_delta": 33.8
+    },
+    {
+      "ticker": "VZ",
+      "sector": "Communication Services",
+      "momentum_pct_90d": 0.18818984579828335,
+      "universe": {
+        "sub_score": 74.6,
+        "momentum_subscore": 77.57575757575758,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 81.6,
+        "momentum_subscore": 84.61538461538461,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 97.0,
+        "momentum_subscore": 100.0,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -7.0,
+        "universe_vs_compound": -22.4,
+        "sector_relative_vs_compound": -15.4
+      },
+      "max_delta": 22.4
+    },
+    {
+      "ticker": "WBD",
+      "sector": "Communication Services",
+      "momentum_pct_90d": -0.052335785284660874,
+      "universe": {
+        "sub_score": 35.4,
+        "momentum_subscore": 39.39393939393939,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 42.2,
+        "momentum_subscore": 46.15384615384615,
+        "cohort_label": "sector:Communication Services",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 62.7,
+        "momentum_subscore": 66.66666666666666,
+        "cohort_label": "sector_group:communication_telecom",
+        "cohort_size": 6,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -6.8,
+        "universe_vs_compound": -27.3,
+        "sector_relative_vs_compound": -20.5
+      },
+      "max_delta": 27.3
+    },
+    {
+      "ticker": "WDAY",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.4055634792099183,
+      "universe": {
+        "sub_score": 3.6,
+        "momentum_subscore": 3.6363636363636362,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 4.9,
+        "momentum_subscore": 4.878048780487805,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 9.5,
+        "momentum_subscore": 9.523809523809524,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -1.3,
+        "universe_vs_compound": -5.9,
+        "sector_relative_vs_compound": -4.6
+      },
+      "max_delta": 5.9
+    },
+    {
+      "ticker": "WFC",
+      "sector": "Financials",
+      "momentum_pct_90d": -0.2301830023124174,
+      "universe": {
+        "sub_score": 15.0,
+        "momentum_subscore": 20.0,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 7.5,
+        "momentum_subscore": 12.5,
+        "cohort_label": "sector:Financials",
+        "cohort_size": 16,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": -5.0,
+        "momentum_subscore": 0.0,
+        "cohort_label": "sector_group:banks",
+        "cohort_size": 7,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 7.5,
+        "universe_vs_compound": 20.0,
+        "sector_relative_vs_compound": 12.5
+      },
+      "max_delta": 20.0
+    },
+    {
+      "ticker": "WMT",
+      "sector": "Consumer Staples",
+      "momentum_pct_90d": 0.15419938209713568,
+      "universe": {
+        "sub_score": 69.7,
+        "momentum_subscore": 72.72727272727273,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 43.2,
+        "momentum_subscore": 46.15384615384615,
+        "cohort_label": "sector:Consumer Staples",
+        "cohort_size": 13,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 43.2,
+        "momentum_subscore": 46.15384615384615,
+        "cohort_label": "sector_group:consumer_staples",
+        "cohort_size": 13,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 26.5,
+        "universe_vs_compound": 26.5,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 26.5
+    },
+    {
+      "ticker": "XEL",
+      "sector": "Utilities",
+      "momentum_pct_90d": 0.05462774117887359,
+      "universe": {
+        "sub_score": 57.6,
+        "momentum_subscore": 60.60606060606061,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 47.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector:Utilities",
+        "cohort_size": 6,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 47.0,
+        "momentum_subscore": 50.0,
+        "cohort_label": "sector_group:utilities_reits",
+        "cohort_size": 8,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 10.6,
+        "universe_vs_compound": 10.6,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 10.6
+    },
+    {
+      "ticker": "XOM",
+      "sector": "Energy",
+      "momentum_pct_90d": 0.32219415514129546,
+      "universe": {
+        "sub_score": 91.7,
+        "momentum_subscore": 89.6969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 91.7,
+        "momentum_subscore": 89.6969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "compound": {
+        "sub_score": 91.7,
+        "momentum_subscore": 89.6969696969697,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": 0.0,
+        "universe_vs_compound": 0.0,
+        "sector_relative_vs_compound": 0.0
+      },
+      "max_delta": 0.0
+    },
+    {
+      "ticker": "ZS",
+      "sector": "Technology",
+      "momentum_pct_90d": -0.27464755241544925,
+      "universe": {
+        "sub_score": 9.3,
+        "momentum_subscore": 13.333333333333334,
+        "cohort_label": "universe",
+        "cohort_size": 165,
+        "strategy_used": "universe"
+      },
+      "sector_relative": {
+        "sub_score": 15.5,
+        "momentum_subscore": 19.51219512195122,
+        "cohort_label": "sector:Technology",
+        "cohort_size": 41,
+        "strategy_used": "sector_relative"
+      },
+      "compound": {
+        "sub_score": 34.1,
+        "momentum_subscore": 38.095238095238095,
+        "cohort_label": "sector_group:tech_software",
+        "cohort_size": 21,
+        "strategy_used": "compound"
+      },
+      "deltas": {
+        "universe_vs_sector_relative": -6.2,
+        "universe_vs_compound": -24.8,
+        "sector_relative_vs_compound": -18.6
+      },
+      "max_delta": 24.8
+    }
+  ]
+}
