@@ -896,6 +896,64 @@ input[type="search"] {
   letter-spacing: 0.6px;
 }
 
+/* =========================================================================
+   Summary buckets (Buy / Hold / Watch)
+   Aggregated counts above the granular bands. Informational; not
+   clickable (click the underlying band tile to filter).
+   Buy = Elite + High + Constructive
+   Hold = Monitor
+   Watch = Weakening + Review
+   ========================================================================= */
+.lthcs-stat-summary {
+  /* Slightly bolder visual weight than the granular band tiles so the
+     summary reads first. Uses brighter band tones rather than the
+     soft rgba tints. */
+  padding: 14px 14px 12px 22px;
+  border-color: var(--border-strong);
+}
+
+.lthcs-stat-summary::before {
+  width: 8px;
+}
+
+.lthcs-stat-summary[data-summary="buy"] {
+  background: rgba(var(--band-high-rgb), 0.14);
+}
+.lthcs-stat-summary[data-summary="buy"]::before {
+  background: var(--band-high-bright);
+}
+.lthcs-stat-summary[data-summary="buy"] .lthcs-stat-count {
+  color: var(--band-high-bright);
+}
+
+.lthcs-stat-summary[data-summary="hold"] {
+  background: rgba(var(--band-monitor-rgb), 0.12);
+}
+.lthcs-stat-summary[data-summary="hold"]::before {
+  background: var(--band-monitor-bright);
+}
+.lthcs-stat-summary[data-summary="hold"] .lthcs-stat-count {
+  color: var(--band-monitor-bright);
+}
+
+.lthcs-stat-summary[data-summary="watch"] {
+  background: rgba(var(--band-weakening-rgb), 0.14);
+}
+.lthcs-stat-summary[data-summary="watch"]::before {
+  background: var(--band-weakening-bright);
+}
+.lthcs-stat-summary[data-summary="watch"] .lthcs-stat-count {
+  color: var(--band-weakening-bright);
+}
+
+.lthcs-stat-sublabel {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-top: 2px;
+}
+
 /* Clickable stat tiles (index + band filter shortcuts) */
 .lthcs-stat-clickable {
   cursor: pointer;

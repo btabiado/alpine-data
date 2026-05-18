@@ -544,6 +544,20 @@ function updateStats(filtered) {
     if (el) el.textContent = String(bandCounts[band]);
   }
 
+  // Summary buckets — Buy / Hold / Watch aggregate the granular bands.
+  // Mapping: Buy = Elite + High + Constructive, Hold = Monitor, Watch
+  // = Weakening + Review. Informational; not filterable (click the
+  // underlying band tile to filter).
+  const summaryCounts = {
+    buy: (bandCounts.elite || 0) + (bandCounts.high || 0) + (bandCounts.constructive || 0),
+    hold: bandCounts.monitor || 0,
+    watch: (bandCounts.weakening || 0) + (bandCounts.review || 0),
+  };
+  for (const key of Object.keys(summaryCounts)) {
+    const el = document.querySelector(`[data-summary-count="${key}"]`);
+    if (el) el.textContent = String(summaryCounts[key]);
+  }
+
   // Index counts — always show the FULL universe count per index (not
   // narrowed by current filter), since they double as filter buttons
   // and the count should reflect "what you'd get if you click here."
