@@ -68,7 +68,10 @@ const COLUMNS = [
   { id: 'name',     label: 'Name',   sortKey: 'name',       align: 'left',  sortable: true,  cssClass: 'lthcs-col-name' },
   { id: 'score',    label: 'Score',  sortKey: 'score',      align: 'right', sortable: true,  cssClass: 'lthcs-col-score' },
   { id: 'band',     label: 'Band',   sortKey: 'bandRank',   align: 'left',  sortable: true },
-  { id: 'trend',    label: '30d Δ',  sortKey: 'trendDelta', align: 'right', sortable: true },
+  { id: 'maturity', label: 'Maturity', sortKey: 'maturityLabel', align: 'left', sortable: true, mobileHidden: true },
+  { id: 'drift1d',  label: '1d Δ',   sortKey: 'drift1d',    align: 'right', sortable: true,  mobileHidden: true },
+  { id: 'drift7d',  label: '7d Δ',   sortKey: 'drift7d',    align: 'right', sortable: true,  mobileHidden: true },
+  { id: 'trend',    label: '30d Δ',  sortKey: 'drift30d',   align: 'right', sortable: true },
   { id: 'adopt',    label: 'Adopt',  sortKey: 'subAdopt',   align: 'right', sortable: true,  mobileHidden: true },
   { id: 'inst',     label: 'Inst',   sortKey: 'subInst',    align: 'right', sortable: true,  mobileHidden: true },
   { id: 'fin',      label: 'Fin',    sortKey: 'subFin',     align: 'right', sortable: true,  mobileHidden: true },
@@ -80,14 +83,28 @@ const COLUMNS = [
 ];
 
 // Display-order rank for the band column so sort-by-band groups
-// strongest→weakest rather than alphabetical.
+// strongest→weakest rather than alphabetical. Higher rank = stronger band so
+// that the default desc direction (clicked first) surfaces elite at the top,
+// matching the severity order: elite > high_confidence > constructive >
+// monitor > weakening > review.
 const BAND_SORT_RANK = {
-  elite: 0,
-  high: 1,
-  constructive: 2,
-  monitor: 3,
-  weakening: 4,
-  review: 5,
+  elite: 5,
+  high: 4,
+  constructive: 3,
+  monitor: 2,
+  weakening: 1,
+  review: 0,
+};
+
+// Human-readable labels for maturity_stage values surfaced in the snapshot.
+// Used both for display and (alphabetically) for sorting via maturityLabel.
+const MATURITY_LABEL = {
+  pre_profit_growth: 'Pre-profit growth',
+  growth_compounder: 'Growth compounder',
+  standard_compounder: 'Standard compounder',
+  mature_compounder: 'Mature compounder',
+  recovery_rerating: 'Recovery rerating',
+  recovery_stabilization: 'Recovery stabilization',
 };
 
 const INSIDER_REGIME_LABEL = {
@@ -168,6 +185,23 @@ function fmtTrend(delta, direction) {
   if (direction === 'flat') return '0.0';
   const sign = delta > 0 ? '+' : '';
   return `${sign}${delta.toFixed(1)}`;
+}
+
+// Compact +/-N.N formatter for the 1d / 7d drift columns. Nulls render
+// as an em-dash so missing data doesn't read as "0.0".
+function fmtDrift(delta) {
+  if (delta == null || !Number.isFinite(delta)) return '—';
+  const sign = delta > 0 ? '+' : '';
+  return `${sign}${delta.toFixed(1)}`;
+}
+
+// Direction bucket for the small 1d/7d cells. Mirrors classifyDriftFromDelta
+// but emits the UI tokens used by .lthcs-table-trend[data-trend=...] CSS.
+function trendDirFromDelta(delta) {
+  if (delta == null || !Number.isFinite(delta)) return 'unknown';
+  if (delta > TREND_FLAT_THRESHOLD) return 'up';
+  if (delta < -TREND_FLAT_THRESHOLD) return 'down';
+  return 'flat';
 }
 
 function trendArrow(direction) {
@@ -326,9 +360,13 @@ function enrichRows(snapshot, universeByTicker, insiderByTicker, holdingsByTicke
       snapshotBand: row.band,
       uiBand,
       bandLabel: BAND_LABEL[uiBand] || uiBand,
-      bandRank: BAND_SORT_RANK[uiBand] != null ? BAND_SORT_RANK[uiBand] : 99,
+      bandRank: BAND_SORT_RANK[uiBand] != null ? BAND_SORT_RANK[uiBand] : -1,
+      drift1d: Number.isFinite(Number(row.drift_1d)) ? Number(row.drift_1d) : null,
+      drift7d: Number.isFinite(Number(row.drift_7d)) ? Number(row.drift_7d) : null,
       drift30d: Number(row.drift_30d) || 0,
       driftDirection: classifyDriftFromDelta(row.drift_30d),
+      maturityStage: row.maturity_stage || '',
+      maturityLabel: MATURITY_LABEL[row.maturity_stage] || row.maturity_stage || '—',
       subAdopt: Number(sub.adoption_momentum),
       subInst: Number(sub.institutional_confidence),
       subFin: Number(sub.financial_evolution),
@@ -473,6 +511,11 @@ function rowHTML(row) {
   const starPressed = row.starred ? 'true' : 'false';
   const starChar = row.starred ? '★' : '☆';
 
+  const drift1dDir = trendDirFromDelta(row.drift1d);
+  const drift7dDir = trendDirFromDelta(row.drift7d);
+  const maturityLabel = escapeHtml(row.maturityLabel || '—');
+  const maturityStage = escapeHtml(row.maturityStage || '');
+
   return (
     `<tr data-ticker="${ticker}">` +
       `<td class="lthcs-col-star" data-align="left">` +
@@ -484,6 +527,15 @@ function rowHTML(row) {
       `<td class="lthcs-col-score" data-align="right">${fmtScore(row.score)}</td>` +
       `<td data-align="left">` +
         `<span class="lthcs-table-band-pill" data-band="${band}">${bandLabel}</span>` +
+      `</td>` +
+      `<td class="is-hidden-mobile" data-align="left" title="${maturityLabel}">` +
+        `<span class="lthcs-table-maturity" data-stage="${maturityStage}">${maturityLabel}</span>` +
+      `</td>` +
+      `<td class="is-hidden-mobile" data-align="right">` +
+        `<span class="lthcs-table-trend" data-trend="${drift1dDir}">${fmtDrift(row.drift1d)}</span>` +
+      `</td>` +
+      `<td class="is-hidden-mobile" data-align="right">` +
+        `<span class="lthcs-table-trend" data-trend="${drift7dDir}">${fmtDrift(row.drift7d)}</span>` +
       `</td>` +
       `<td data-align="right">` +
         `<span class="lthcs-table-trend" data-trend="${trendDir}">` +
@@ -550,7 +602,8 @@ function csvEscape(value) {
 
 function buildCSV(rows) {
   const headers = [
-    'ticker', 'name', 'score', 'band', 'drift_30d',
+    'ticker', 'name', 'score', 'band', 'maturity_stage',
+    'drift_1d', 'drift_7d', 'drift_30d',
     'adoption_momentum', 'institutional_confidence', 'financial_evolution',
     'thesis_integrity', 'des',
     'insider_regime', 'insider_conviction',
@@ -567,6 +620,9 @@ function buildCSV(rows) {
       r.name,
       Number.isFinite(r.score) ? r.score.toFixed(2) : '',
       r.bandLabel,
+      r.maturityStage || '',
+      r.drift1d == null ? '' : r.drift1d.toFixed(2),
+      r.drift7d == null ? '' : r.drift7d.toFixed(2),
       Number.isFinite(r.drift30d) ? r.drift30d.toFixed(2) : '',
       Number.isFinite(r.subAdopt) ? r.subAdopt.toFixed(2) : '',
       Number.isFinite(r.subInst) ? r.subInst.toFixed(2) : '',
@@ -608,38 +664,33 @@ function downloadCSV() {
 function toggleSort(sortKey, additive) {
   const existing = state.sorts.find((s) => s.key === sortKey);
   if (!additive) {
-    // Single-column mode: cycle asc → desc → cleared on the active column,
-    // otherwise replace the sort entirely with a fresh desc on the new col.
+    // Single-column mode: cycle desc → asc → default-cleared on the active
+    // column. New columns always start at desc so the cycle is consistent
+    // across both numeric and text columns (per spec: desc → asc → default).
     if (existing && state.sorts.length === 1 && state.sorts[0].key === sortKey) {
       if (existing.dir === 'desc') {
         existing.dir = 'asc';
       } else {
-        // 3rd click clears → fall back to default (score desc) so the table
-        // never sits in an "unsorted" visually-random state.
+        // 3rd click clears → fall back to default (composite_score desc) so
+        // the table never sits in an "unsorted" visually-random state.
         state.sorts = [{ key: 'score', dir: 'desc' }];
       }
     } else {
-      // New primary sort. Numeric/score-y columns default to desc (high to
-      // low feels natural). Text columns default to asc.
-      const dir = isTextColumn(sortKey) ? 'asc' : 'desc';
-      state.sorts = [{ key: sortKey, dir }];
+      // New primary sort always starts at desc to make the cycle uniform.
+      state.sorts = [{ key: sortKey, dir: 'desc' }];
     }
   } else {
     // Multi-column mode (shift-click): toggle direction if already present,
-    // otherwise append as the next-rank tiebreaker.
+    // otherwise append as the next-rank tiebreaker (defaulting to desc to
+    // match the single-column start direction).
     if (existing) {
       existing.dir = existing.dir === 'desc' ? 'asc' : 'desc';
     } else {
-      const dir = isTextColumn(sortKey) ? 'asc' : 'desc';
-      state.sorts.push({ key: sortKey, dir });
+      state.sorts.push({ key: sortKey, dir: 'desc' });
     }
   }
   persistSort();
   renderAll();
-}
-
-function isTextColumn(sortKey) {
-  return sortKey === 'ticker' || sortKey === 'name' || sortKey === 'indicesLabel';
 }
 
 // ---------------------------------------------------------------------------

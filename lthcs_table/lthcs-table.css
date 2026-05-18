@@ -443,6 +443,43 @@
   border-color: var(--border-subtle);
 }
 
+/* ----- Maturity stage tag --------------------------------------------- */
+
+.lthcs-table-maturity {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: var(--bg-chip);
+  border: 1px solid var(--border-subtle);
+}
+
+.lthcs-table-maturity[data-stage="pre_profit_growth"],
+.lthcs-table-maturity[data-stage="growth_compounder"] {
+  color: var(--band-elite-bright);
+  background: rgba(var(--band-elite-rgb), 0.12);
+  border-color: rgba(var(--band-elite-rgb), 0.35);
+}
+
+.lthcs-table-maturity[data-stage="standard_compounder"],
+.lthcs-table-maturity[data-stage="mature_compounder"] {
+  color: var(--band-high-bright);
+  background: rgba(var(--band-high-rgb), 0.12);
+  border-color: rgba(var(--band-high-rgb), 0.35);
+}
+
+.lthcs-table-maturity[data-stage="recovery_rerating"],
+.lthcs-table-maturity[data-stage="recovery_stabilization"] {
+  color: var(--band-constructive-bright);
+  background: rgba(var(--band-constructive-rgb), 0.12);
+  border-color: rgba(var(--band-constructive-rgb), 0.35);
+}
+
 /* ----- Index memberships ---------------------------------------------- */
 
 .lthcs-table-indices {
