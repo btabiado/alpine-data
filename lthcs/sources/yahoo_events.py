@@ -123,6 +123,20 @@ _BUCKET = TokenBucket(capacity=5, refill_rate=0.5)
 # ---------------------------------------------------------------------------
 
 
+def _yahoo_symbol_variants(ticker: str) -> List[str]:
+    """Return Yahoo symbol variants to try, in order.
+
+    Yahoo uses ``BRK-B`` (hyphen) for class shares; many upstream
+    datasets (S&P, our universe.json) use ``BRK.B`` (dot). When a ticker
+    contains a ``.`` we yield the original first and the
+    hyphen-substituted form as a fallback. Tickers without a dot return
+    a single-element list (no fallback attempted).
+    """
+    if "." not in ticker:
+        return [ticker]
+    return [ticker, ticker.replace(".", "-")]
+
+
 def _today_iso() -> str:
     return _dt.date.today().isoformat()
 
@@ -372,15 +386,23 @@ def get_earnings_dates(
     if hit is not None:
         return [dict(row) for row in (hit.value or [])]
 
+    # Try each Yahoo symbol variant (handles BRK.B -> BRK-B fallback).
     # Rate limit — block briefly rather than skip; this path runs at most
     # once per ticker per 24h so the wait is acceptable.
-    _BUCKET.acquire()
-
-    try:
-        t = yf.Ticker(ticker)
-        df = t.earnings_dates
-    except Exception:
-        return []
+    df = None
+    for variant in _yahoo_symbol_variants(ticker):
+        _BUCKET.acquire()
+        try:
+            t = yf.Ticker(variant)
+            candidate = t.earnings_dates
+        except Exception:
+            candidate = None
+        if candidate is not None and len(candidate) > 0:
+            df = candidate
+            break
+        # Hold onto the last candidate so _parse_earnings_df still gets
+        # a sensible (possibly-empty) input on full failure.
+        df = candidate
 
     rows = _parse_earnings_df(df, ticker, limit, as_of_date=as_of_date)
     _EARNINGS_CACHE.set(cache_key, rows, ttl_seconds=_CACHE_TTL_SECONDS)
@@ -505,13 +527,18 @@ def get_analyst_actions(
     if hit is not None:
         return [dict(row) for row in (hit.value or [])]
 
-    _BUCKET.acquire()
-
-    try:
-        t = yf.Ticker(ticker)
-        df = t.recommendations
-    except Exception:
-        return []
+    df = None
+    for variant in _yahoo_symbol_variants(ticker):
+        _BUCKET.acquire()
+        try:
+            t = yf.Ticker(variant)
+            candidate = t.recommendations
+        except Exception:
+            candidate = None
+        if candidate is not None and len(candidate) > 0:
+            df = candidate
+            break
+        df = candidate
 
     rows = _parse_recommendations_df(df, ticker, days, as_of_date=as_of_date)
     _RECO_CACHE.set(cache_key, rows, ttl_seconds=_CACHE_TTL_SECONDS)
@@ -634,13 +661,18 @@ def get_recommendation_summary(ticker: str) -> Dict[str, Any]:
     if hit is not None:
         return dict(hit.value or {})
 
-    _BUCKET.acquire()
-
-    try:
-        t = yf.Ticker(ticker)
-        df = t.recommendations_summary
-    except Exception:
-        return {}
+    df = None
+    for variant in _yahoo_symbol_variants(ticker):
+        _BUCKET.acquire()
+        try:
+            t = yf.Ticker(variant)
+            candidate = t.recommendations_summary
+        except Exception:
+            candidate = None
+        if candidate is not None and len(candidate) > 0:
+            df = candidate
+            break
+        df = candidate
 
     parsed = _parse_summary_df(df, ticker)
     _RECO_CACHE.set(cache_key, parsed, ttl_seconds=_CACHE_TTL_SECONDS)

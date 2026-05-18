@@ -104,24 +104,46 @@ def _row_to_dict(date_str: str, row: Any) -> Dict[str, Any]:
     }
 
 
-def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
-    """Hit yfinance (subject to the rate limiter) and normalize the result."""
-    _bucket.acquire()
-    t = yf.Ticker(ticker)
-    df = t.history(period=period)
-    if df is None or len(df) == 0:
-        return []
+def _yahoo_symbol_variants(ticker: str) -> List[str]:
+    """Return Yahoo symbol variants to try, in order.
 
-    rows: List[Dict[str, Any]] = []
-    for ts, row in df.iterrows():
-        # ``ts`` may be a pandas Timestamp; strftime gives a stable
-        # YYYY-MM-DD regardless of timezone metadata.
-        try:
-            date_str = ts.strftime("%Y-%m-%d")
-        except AttributeError:
-            date_str = str(ts)[:10]
-        rows.append(_row_to_dict(date_str, row))
-    return rows
+    Yahoo Finance uses ``BRK-B`` (hyphen) for class-share tickers; many
+    upstream datasets (S&P, our universe.json) use ``BRK.B`` (dot). When
+    a ticker contains a ``.`` we yield the original first and the
+    hyphen-substituted form as a fallback. Tickers without a dot return a
+    single-element list (no fallback attempted).
+    """
+    if "." not in ticker:
+        return [ticker]
+    return [ticker, ticker.replace(".", "-")]
+
+
+def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
+    """Hit yfinance (subject to the rate limiter) and normalize the result.
+
+    For tickers containing a ``.`` (e.g. ``BRK.B``) we also try the
+    hyphen variant (``BRK-B``) if the primary returns no rows — Yahoo's
+    symbol convention uses hyphens for class shares.
+    """
+    for variant in _yahoo_symbol_variants(ticker):
+        _bucket.acquire()
+        t = yf.Ticker(variant)
+        df = t.history(period=period)
+        if df is None or len(df) == 0:
+            continue
+
+        rows: List[Dict[str, Any]] = []
+        for ts, row in df.iterrows():
+            # ``ts`` may be a pandas Timestamp; strftime gives a stable
+            # YYYY-MM-DD regardless of timezone metadata.
+            try:
+                date_str = ts.strftime("%Y-%m-%d")
+            except AttributeError:
+                date_str = str(ts)[:10]
+            rows.append(_row_to_dict(date_str, row))
+        if rows:
+            return rows
+    return []
 
 
 def get_daily_prices(

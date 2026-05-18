@@ -414,3 +414,80 @@ def test_as_of_invalid_string_silently_falls_back_to_today() -> None:
     # Garbage as_of degrades to today -> same result, same cache entry.
     assert baseline == garbage
     assert mock_ticker.call_count == 1
+
+
+# ---------------------------------------------------------------------------
+# Dot -> hyphen symbol fallback (e.g. BRK.B -> BRK-B)
+# ---------------------------------------------------------------------------
+
+
+def test_dot_ticker_falls_back_to_hyphen_variant() -> None:
+    """``BRK.B`` returns no data on Yahoo; ``BRK-B`` is the canonical form.
+
+    The fetcher should try the dot variant first, see an empty result,
+    then retry with the hyphen variant and return its data.
+    """
+    empty = pd.DataFrame(
+        columns=["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    )
+    hyphen_df = _make_df([100.0, 101.0, 102.0])
+
+    def _ticker_factory(symbol: str) -> MagicMock:
+        instance = MagicMock()
+        if symbol == "BRK.B":
+            instance.history.return_value = empty
+        elif symbol == "BRK-B":
+            instance.history.return_value = hyphen_df
+        else:
+            instance.history.return_value = empty
+        return instance
+
+    mock_ticker = MagicMock(side_effect=_ticker_factory)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("BRK.B", period="1mo")
+
+    # Hyphen variant supplied 3 rows.
+    assert len(rows) == 3
+    # Both variants were tried — dot first (empty), then hyphen.
+    called_symbols = [call.args[0] for call in mock_ticker.call_args_list]
+    assert called_symbols == ["BRK.B", "BRK-B"]
+
+
+def test_non_dot_ticker_does_not_attempt_fallback() -> None:
+    """A plain ticker (no ``.``) should only ever call yfinance once."""
+    df = _make_df([100.0, 101.0])
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("AAPL", period="5d")
+    assert len(rows) == 2
+    assert mock_ticker.call_count == 1
+    called_symbols = [call.args[0] for call in mock_ticker.call_args_list]
+    assert called_symbols == ["AAPL"]
+
+
+def test_dot_ticker_both_variants_empty_returns_empty_list() -> None:
+    """If neither dot nor hyphen variant has data we degrade to ``[]``."""
+    empty = pd.DataFrame(
+        columns=["Open", "High", "Low", "Close", "Adj Close", "Volume"]
+    )
+    mock_ticker = MagicMock()
+    mock_ticker.return_value.history.return_value = empty
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("BRK.B", period="1mo")
+    assert rows == []
+    # Both variants attempted before giving up.
+    called_symbols = [call.args[0] for call in mock_ticker.call_args_list]
+    assert called_symbols == ["BRK.B", "BRK-B"]
+
+
+def test_dot_ticker_primary_succeeds_no_fallback() -> None:
+    """If the dot variant returns data we should not try the hyphen variant."""
+    df = _make_df([100.0, 101.0])
+    mock_ticker = _patch_ticker(df)
+    with patch("yfinance.Ticker", mock_ticker):
+        rows = yahoo.get_daily_prices("BRK.B", period="1mo")
+    assert len(rows) == 2
+    # Only one upstream call -- the hyphen fallback never fired.
+    assert mock_ticker.call_count == 1
+    called_symbols = [call.args[0] for call in mock_ticker.call_args_list]
+    assert called_symbols == ["BRK.B"]
