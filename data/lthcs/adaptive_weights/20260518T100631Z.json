@@ -1,0 +1,66 @@
+{
+  "mode": "walk_forward",
+  "result": {
+    "train_weights": {
+      "adoption_momentum": 0.0005459312816553289,
+      "institutional_confidence": 0.005512870977553495,
+      "financial_evolution": 0.0,
+      "thesis_integrity": 0.9606044883508046,
+      "des": 0.03333670938998649
+    },
+    "train_ic": 0.242083842083842,
+    "test_ic": 0.3072039072039072,
+    "overfit_gap": -0.06512006512006521,
+    "train_dates": [
+      "2026-02-17",
+      "2026-04-11"
+    ],
+    "test_dates": [
+      "2026-04-12",
+      "2026-05-17"
+    ],
+    "n_train_obs": 756,
+    "n_test_obs": 36,
+    "recommendation": "ship",
+    "recommendation_reason": "test_ic=0.3072 > 0.040 and overfit_gap=-0.0651 < 0.040",
+    "ridge_alpha": 0.5,
+    "horizon_days": 21,
+    "train_fraction": 0.6,
+    "prior_weights": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "trained_at": "2026-05-18T10:06:31Z"
+  },
+  "config": {
+    "horizon_days": 21,
+    "ridge_alpha": 0.5,
+    "train_fraction": 0.6,
+    "universe_subset": [
+      "AMD",
+      "ARM",
+      "DASH",
+      "DDOG",
+      "KLAC",
+      "LLY",
+      "LRCX",
+      "MDB",
+      "MELI",
+      "MRVL",
+      "MU",
+      "NVDA",
+      "SMCI",
+      "ZS"
+    ],
+    "offline": true
+  },
+  "data_window": {
+    "start": "2026-02-17",
+    "end": "2026-05-17",
+    "n_dates": 90
+  },
+  "n_tickers": 168
+}

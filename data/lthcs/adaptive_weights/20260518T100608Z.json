@@ -1,0 +1,51 @@
+{
+  "mode": "walk_forward",
+  "result": {
+    "train_weights": {
+      "adoption_momentum": 0.0,
+      "institutional_confidence": 1.7639867220229606e-05,
+      "financial_evolution": 0.0001538395315169436,
+      "thesis_integrity": 0.9998285206012628,
+      "des": 0.0
+    },
+    "train_ic": 0.030195156796439714,
+    "test_ic": 0.06265080579223792,
+    "overfit_gap": -0.032455648995798204,
+    "train_dates": [
+      "2026-02-17",
+      "2026-04-11"
+    ],
+    "test_dates": [
+      "2026-04-12",
+      "2026-05-17"
+    ],
+    "n_train_obs": 8964,
+    "n_test_obs": 36,
+    "recommendation": "ship",
+    "recommendation_reason": "test_ic=0.0627 > 0.040 and overfit_gap=-0.0325 < 0.040",
+    "ridge_alpha": 0.5,
+    "horizon_days": 1,
+    "train_fraction": 0.6,
+    "prior_weights": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "trained_at": "2026-05-18T10:06:08Z"
+  },
+  "config": {
+    "horizon_days": 1,
+    "ridge_alpha": 0.5,
+    "train_fraction": 0.6,
+    "universe_subset": null,
+    "offline": true
+  },
+  "data_window": {
+    "start": "2026-02-17",
+    "end": "2026-05-17",
+    "n_dates": 90
+  },
+  "n_tickers": 168
+}

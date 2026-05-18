@@ -1,0 +1,101 @@
+{
+  "mode": "walk_forward",
+  "result": {
+    "train_weights": {
+      "adoption_momentum": 0.002052170253083659,
+      "institutional_confidence": 0.0013635799222974023,
+      "financial_evolution": 0.003531510488525421,
+      "thesis_integrity": 0.9859631312564546,
+      "des": 0.007089608079638906
+    },
+    "train_ic": 0.23095077274408582,
+    "test_ic": 0.3253024082691336,
+    "overfit_gap": -0.09435163552504777,
+    "train_dates": [
+      "2026-02-17",
+      "2026-04-11"
+    ],
+    "test_dates": [
+      "2026-04-12",
+      "2026-05-17"
+    ],
+    "n_train_obs": 2592,
+    "n_test_obs": 36,
+    "recommendation": "ship",
+    "recommendation_reason": "test_ic=0.3253 > 0.040 and overfit_gap=-0.0944 < 0.040",
+    "ridge_alpha": 0.5,
+    "horizon_days": 21,
+    "train_fraction": 0.6,
+    "prior_weights": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "trained_at": "2026-05-18T10:06:33Z"
+  },
+  "config": {
+    "horizon_days": 21,
+    "ridge_alpha": 0.5,
+    "train_fraction": 0.6,
+    "universe_subset": [
+      "AAPL",
+      "ABBV",
+      "ADBE",
+      "ADP",
+      "AMAT",
+      "AMZN",
+      "AVGO",
+      "AXP",
+      "BAC",
+      "BRK.B",
+      "C",
+      "COST",
+      "CRM",
+      "CRWD",
+      "CSCO",
+      "DIS",
+      "FTNT",
+      "GOOG",
+      "GOOGL",
+      "GS",
+      "HD",
+      "IBM",
+      "INTU",
+      "ISRG",
+      "JNJ",
+      "JPM",
+      "KO",
+      "MA",
+      "MCD",
+      "META",
+      "MMM",
+      "MRK",
+      "MS",
+      "MSFT",
+      "NOW",
+      "ORCL",
+      "PANW",
+      "PEP",
+      "PFE",
+      "PG",
+      "PYPL",
+      "QCOM",
+      "T",
+      "TRV",
+      "TXN",
+      "V",
+      "VZ",
+      "WFC",
+      "WMT"
+    ],
+    "offline": true
+  },
+  "data_window": {
+    "start": "2026-02-17",
+    "end": "2026-05-17",
+    "n_dates": 90
+  },
+  "n_tickers": 168
+}
