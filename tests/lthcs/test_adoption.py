@@ -216,8 +216,15 @@ def test_compute_adoption_both_components_present() -> None:
     result = adoption.compute_adoption("AAPL", rows, interest, peer_growths)
 
     assert result["ticker"] == "AAPL"
-    assert result["weights"] == {"revenue": 0.60, "trends": 0.40}
-    assert result["data_quality"] == {"has_revenue": True, "has_trends": True}
+    # The "weights" dict carries the documented configuration, including
+    # the QoQ slot (0.0 here since legacy interest_series path doesn't
+    # activate the three-component branch).
+    assert result["weights"] == {"revenue": 0.60, "trends": 0.40, "qoq": 0.0}
+    # has_qoq=False here because two annual rows alone give no quarterly
+    # series, so compute_revenue_growth_qoq returns None.
+    assert result["data_quality"] == {
+        "has_revenue": True, "has_trends": True, "has_qoq": False,
+    }
 
     comps = result["components"]
     assert comps["revenue_growth_yoy"] == pytest.approx(0.10, rel=1e-6)
@@ -285,7 +292,9 @@ def test_compute_adoption_both_missing_yields_50() -> None:
     """No revenue + no trends -> sub_score is exactly 50.0."""
     result = adoption.compute_adoption("AAPL", [], [], {})
     assert result["sub_score"] == 50.0
-    assert result["data_quality"] == {"has_revenue": False, "has_trends": False}
+    assert result["data_quality"] == {
+        "has_revenue": False, "has_trends": False, "has_qoq": False,
+    }
     assert result["components"]["revenue_subscore"] == 50.0
     assert result["components"]["trends_subscore"] == 50.0
 
@@ -803,3 +812,204 @@ def test_compute_adoption_peer_groups_safety_valve_falls_back() -> None:
     # Compound: 1 -> too small. sector_group_only: 1 -> too small.
     # maturity_only: 6 -> too small (floor=10). universe_fallback fires.
     assert result["components"]["peer_cohort_strategy"] == "universe_fallback"
+
+
+# --- compute_revenue_growth_qoq (audit-fix 2026-05-18) ---------------------
+
+
+def test_compute_revenue_growth_qoq_basic() -> None:
+    """Sequential QoQ from two consecutive quarterly rows."""
+    rows = [
+        _quarter("2026-03-31", 110.0, 2026, "Q1"),
+        _quarter("2025-12-31", 100.0, 2025, "Q4"),
+    ]
+    assert adoption.compute_revenue_growth_qoq(rows) == pytest.approx(0.10, rel=1e-6)
+
+
+def test_compute_revenue_growth_qoq_picks_most_recent() -> None:
+    """If many quarters are present, only the most-recent pair matters."""
+    rows = [
+        _quarter("2026-03-31", 120.0, 2026, "Q1"),
+        _quarter("2025-12-31", 100.0, 2025, "Q4"),
+        _quarter("2025-09-30", 80.0, 2025, "Q3"),
+        _quarter("2025-06-30", 70.0, 2025, "Q2"),
+    ]
+    assert adoption.compute_revenue_growth_qoq(rows) == pytest.approx(0.20, rel=1e-6)
+
+
+def test_compute_revenue_growth_qoq_single_quarter_returns_none() -> None:
+    rows = [_quarter("2025-12-31", 100.0, 2025, "Q4")]
+    assert adoption.compute_revenue_growth_qoq(rows) is None
+
+
+def test_compute_revenue_growth_qoq_outlier_rejected() -> None:
+    """A 5x quarterly jump (growth=4.0) is data noise -> None."""
+    rows = [
+        _quarter("2026-03-31", 600.0, 2026, "Q1"),
+        _quarter("2025-12-31", 100.0, 2025, "Q4"),
+    ]
+    assert adoption.compute_revenue_growth_qoq(rows) is None
+
+
+def test_compute_revenue_growth_qoq_no_quarterly_returns_none() -> None:
+    """Annual-only rows -> no QoQ signal."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    assert adoption.compute_revenue_growth_qoq(rows) is None
+
+
+def test_compute_revenue_growth_qoq_zero_prior_returns_none() -> None:
+    rows = [
+        _quarter("2026-03-31", 100.0, 2026, "Q1"),
+        _quarter("2025-12-31", 0.0, 2025, "Q4"),
+    ]
+    assert adoption.compute_revenue_growth_qoq(rows) is None
+
+
+# --- Adoption: sector-relative revenue percentile --------------------------
+
+
+def test_compute_adoption_uses_sector_cohort_when_large_enough() -> None:
+    """Non-bank with a sector of >=8 members ranks against sector peers only."""
+    # 9-member Tech sector + a Financials decoy. Focal AAPL revenue +10%
+    # ranks LOW within Tech (where peers grow 30-100%) but HIGH within the
+    # full universe.
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = {
+        "AAPL": 0.10, "T1": 0.30, "T2": 0.40, "T3": 0.50, "T4": 0.55,
+        "T5": 0.60, "T6": 0.70, "T7": 0.85, "T8": 1.00,
+        "F1": -0.10, "F2": -0.05, "F3": 0.02, "F4": 0.03,
+    }
+    peer_sectors = {
+        "AAPL": "Tech", "T1": "Tech", "T2": "Tech", "T3": "Tech",
+        "T4": "Tech", "T5": "Tech", "T6": "Tech", "T7": "Tech",
+        "T8": "Tech",
+        "F1": "Financials", "F2": "Financials",
+        "F3": "Financials", "F4": "Financials",
+    }
+    result = adoption.compute_adoption(
+        "AAPL", rows, [], peer_growths,
+        sector="Tech", peer_sectors=peer_sectors,
+    )
+    detail = result["components"]
+    assert detail["peer_cohort_strategy"] == "sector_relative"
+    assert detail["sector_cohort"] == "Tech"
+    assert detail["sector_cohort_size"] == 9
+    # AAPL (+10%) is below all 8 other Tech peers in the sector -> 0/8 = 0.
+    assert detail["revenue_subscore"] == pytest.approx(0.0)
+
+
+def test_compute_adoption_skips_sector_for_small_sector() -> None:
+    """A sector with <_MIN_SECTOR_COHORT members falls back to universe rank."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # Energy: 3 members -> below floor of 8.
+    peer_growths = {
+        "XOM": 0.10, "E1": 0.05, "E2": 0.20,
+        "T1": -0.05, "T2": 0.00, "T3": 0.02, "T4": 0.04,
+        "T5": 0.06, "T6": 0.08, "T7": 0.15, "T8": 0.25, "T9": 0.40,
+    }
+    peer_sectors = {
+        "XOM": "Energy", "E1": "Energy", "E2": "Energy",
+        "T1": "Tech", "T2": "Tech", "T3": "Tech", "T4": "Tech",
+        "T5": "Tech", "T6": "Tech", "T7": "Tech", "T8": "Tech",
+        "T9": "Tech",
+    }
+    result = adoption.compute_adoption(
+        "XOM", rows, [], peer_growths,
+        sector="Energy", peer_sectors=peer_sectors,
+    )
+    # Energy is too small -> sector_cohort not surfaced -> falls back to legacy
+    # universe path.
+    assert "sector_cohort" not in result["components"]
+    assert result["components"]["peer_cohort_strategy"] != "sector_relative"
+
+
+def test_compute_adoption_skips_sector_for_bank() -> None:
+    """Bank tickers preserve the existing maturity-only / compound cohort
+    behaviour even if peer_sectors is supplied -- the Financial pillar's
+    bank decomposition owns bank-cohort logic.
+    """
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # Big Financials cohort that would be valid for non-banks.
+    peer_growths = {
+        "JPM": 0.10, "BAC": 0.12, "WFC": 0.08, "C": 0.05, "GS": 0.15,
+        "MS": 0.20, "USB": 0.07, "TFC": 0.04, "P9": 0.30,
+    }
+    peer_sectors = {sym: "Financials" for sym in peer_growths}
+    result = adoption.compute_adoption(
+        "JPM", rows, [], peer_growths,
+        sector="Financials", peer_sectors=peer_sectors,
+    )
+    # JPM is in BANK_TICKERS -> sector_cohort path skipped.
+    assert "sector_cohort" not in result["components"]
+    assert result["components"]["peer_cohort_strategy"] != "sector_relative"
+
+
+def test_compute_adoption_qoq_component_active_when_quarters_present() -> None:
+    """When QoQ is computable, has_qoq=True and weights renorm to 0.50/0.30/0.20."""
+    # 8 quarters + 2 annuals so revenue_growth_yoy uses the annual path
+    # and QoQ uses the latest two quarters.
+    rows = [
+        _annual("2025-12-31", 440.0, 2025),
+        _annual("2024-12-31", 400.0, 2024),
+        _quarter("2026-03-31", 110.0, 2026, "Q1"),
+        _quarter("2025-12-31", 100.0, 2025, "Q4"),
+        _quarter("2025-09-30", 105.0, 2025, "Q3"),
+        _quarter("2025-06-30", 110.0, 2025, "Q2"),
+        _quarter("2025-03-31", 90.0, 2025, "Q1"),
+        _quarter("2024-12-31", 90.0, 2024, "Q4"),
+        _quarter("2024-09-30", 95.0, 2024, "Q3"),
+        _quarter("2024-06-30", 100.0, 2024, "Q2"),
+    ]
+    peer_growths = {"AAPL": 0.10, "P1": 0.05, "P2": 0.20}
+    # Trends data: present, quality good
+    trends = {
+        "data_quality": "good",
+        "acceleration_4w_pct": 12.5,
+        "acceleration_12w_pct": 8.0,
+        "signal_score": 0.30,
+        "trend_week": "2026-W20",
+        "regime": "accelerating",
+    }
+    universe_trends = {
+        "AAPL": trends,
+        "P1": {**trends, "acceleration_4w_pct": 5.0},
+        "P2": {**trends, "acceleration_4w_pct": -10.0},
+    }
+    result = adoption.compute_adoption(
+        "AAPL", rows, [], peer_growths,
+        trends_data=trends, universe_trends_data=universe_trends,
+    )
+    assert result["data_quality"]["has_qoq"] is True
+    eff = result["effective_weights"]
+    assert eff["revenue"] == pytest.approx(0.50)
+    assert eff["trends"] == pytest.approx(0.30)
+    assert eff["qoq"] == pytest.approx(0.20)
+    assert result["components"]["qoq_acceleration_pct"] == pytest.approx(0.10, rel=1e-6)
+
+
+def test_compute_adoption_qoq_no_trends_promotes_qoq_to_30pct() -> None:
+    """Trends missing + QoQ present -> revenue 0.70 / qoq 0.30."""
+    rows = [
+        _quarter("2026-03-31", 110.0, 2026, "Q1"),
+        _quarter("2025-12-31", 100.0, 2025, "Q4"),
+    ]
+    peer_growths = {"AAPL": 0.10}
+    result = adoption.compute_adoption("AAPL", rows, [], peer_growths)
+    assert result["data_quality"]["has_qoq"] is True
+    assert result["data_quality"]["has_trends"] is False
+    eff = result["effective_weights"]
+    assert eff["revenue"] == pytest.approx(0.70)
+    assert eff["trends"] == pytest.approx(0.0)
+    assert eff["qoq"] == pytest.approx(0.30)
