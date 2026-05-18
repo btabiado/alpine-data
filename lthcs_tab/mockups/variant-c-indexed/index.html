@@ -370,19 +370,13 @@
     <main class="vc-shell">
       <div class="vc-mockup-banner">
         <strong>MOCKUP</strong>
-        <span>Variant C — Variant B + interactive index filter buttons. Click DJIA / NASDAQ / S&amp;P to re-filter Buy / Hold / Watch.</span>
+        <span>Variant C — Click S&amp;P 100 / DOW 30 / NASDAQ-100 to re-filter Buy/Hold/Watch and the full ticker list below.</span>
         <a href="../">&larr; All variants</a>
       </div>
 
       <!-- ===================== INDEX FILTER ROW ===================== -->
       <section class="vc-index-buttons" aria-label="Index filter">
-        <button class="vc-ix is-active" data-index="all">
-          <span class="vc-ix-eyebrow">Universe</span>
-          <span class="vc-ix-count" data-ix-count="all">167</span>
-          <span class="vc-ix-name">ALL</span>
-          <span class="vc-ix-sub">168 active &middot; 1 unscored (ANSS)</span>
-        </button>
-        <button class="vc-ix" data-index="sp100">
+        <button class="vc-ix is-active" data-index="sp100">
           <span class="vc-ix-eyebrow">Index</span>
           <span class="vc-ix-count" data-ix-count="sp100">100</span>
           <span class="vc-ix-name">S&amp;P 100</span>
@@ -401,10 +395,6 @@
           <span class="vc-ix-sub">98 active &middot; 1 unscored</span>
         </button>
       </section>
-
-      <div class="vc-math-note">
-        Universe: <code>167</code> unique tickers (<code>168</code> active &middot; ANSS unscored today &middot; WBA permanently inactive). Stocks like AAPL appear in S&amp;P 100, DOW 30, and NASDAQ-100 simultaneously — each is counted <strong>once</strong> in the universe and <strong>once per index</strong> in the index buttons.
-      </div>
 
       <div class="vc-context-row">
         <div class="vc-context-card">
@@ -428,7 +418,7 @@
 
       <!-- ===================== APEX — centered headline ===================== -->
       <section class="vc-apex" aria-label="LTHCS Composite Index" id="vc-apex">
-        <div class="vc-apex-eyebrow" data-apex-eyebrow>LTHCS Composite Index &middot; Universe of 167</div>
+        <div class="vc-apex-eyebrow" data-apex-eyebrow>LTHCS Composite Index &middot; S&amp;P 100 &middot; 100 names</div>
         <h1 class="vc-apex-headline" data-apex-headline>DISTRIBUTING</h1>
         <div class="vc-apex-score-line">
           band lean <span class="num" data-apex-lean>−66.5%</span>
@@ -493,24 +483,14 @@
 
       </section>
 
-      <!-- ===================== TICKER GRID (placeholder) ===================== -->
+      <!-- ===================== TICKER GRID (dynamic per index) ===================== -->
       <section class="vc-grid-wrap" aria-label="Filtered ticker grid">
         <div class="vc-breadcrumb">
           <span>Filtered:</span>
-          <span class="vc-crumb is-active" data-crumb-ix>Index: ALL &middot; <span data-crumb-count>167</span> names</span>
+          <span class="vc-crumb is-active" data-crumb-ix>Index: S&amp;P 100 &middot; <span data-crumb-count>100</span> names</span>
         </div>
-
         <div class="vc-grid" data-grid>
-          <!-- placeholder; real impl would render filtered tickers here -->
-          <div class="vc-card"><div class="row1"><span class="tk">ADI</span><span class="sc">75.3</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-constructive-rgb),0.22);color:var(--band-constructive-bright)">Constructive</span><span>+5.8</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">NXPI</span><span class="sc">73.1</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-constructive-rgb),0.22);color:var(--band-constructive-bright)">Constructive</span><span>+17.9</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">CRWD</span><span class="sc">64.8</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-monitor-rgb),0.18);color:var(--band-monitor-bright)">Monitor</span><span>+19.2</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">DDOG</span><span class="sc">64.6</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-monitor-rgb),0.18);color:var(--band-monitor-bright)">Monitor</span><span>+28.6</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">AAPL</span><span class="sc">56.1</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-weakening-rgb),0.2);color:var(--band-weakening-bright)">Weakening</span><span>+5.8</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">ABBV</span><span class="sc">55.7</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-weakening-rgb),0.2);color:var(--band-weakening-bright)">Weakening</span><span>+3.6</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">ABNB</span><span class="sc">52.9</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-weakening-rgb),0.2);color:var(--band-weakening-bright)">Weakening</span><span>−16.7</span></div></div>
-          <div class="vc-card"><div class="row1"><span class="tk">ABT</span><span class="sc">47.5</span></div><div class="meta"><span class="band-tag" style="background:rgba(var(--band-review-rgb),0.22);color:var(--band-review-bright)">Review</span><span>+8.3</span></div></div>
-          <div class="vc-card-more" data-grid-more>+ 159 more in ALL filter</div>
+          <!-- rendered by JS from TICKERS_DATA, filtered by active index -->
         </div>
       </section>
     </main>
@@ -522,11 +502,207 @@
          has zero runtime dependencies. Real production version would
          fetch from data/lthcs/snapshots/<calc_date>.json. */
       const INDEX_DATA = {
-        all:    { label: "ALL",        total: 167, buy: 11, hold: 34, watch: 122, weakening: 67, review: 55, constructive: 11, monitor: 34 },
-        djia:   { label: "DOW 30",     total: 30,  buy: 1,  hold: 4,  watch: 25,  weakening: 13, review: 12, constructive: 1,  monitor: 4 },
-        nasdaq: { label: "NASDAQ-100", total: 97,  buy: 10, hold: 22, watch: 65,  weakening: 41, review: 24, constructive: 10, monitor: 22 },
-        sp100:  { label: "S&P 100",    total: 100, buy: 5,  hold: 21, watch: 74,  weakening: 36, review: 38, constructive: 5,  monitor: 21 },
+        sp100:  { label: "S&P 100",    flag: "sp", total: 100, buy: 5,  hold: 21, watch: 74,  weakening: 36, review: 38, constructive: 5,  monitor: 21 },
+        djia:   { label: "DOW 30",     flag: "dj", total: 30,  buy: 1,  hold: 4,  watch: 25,  weakening: 13, review: 12, constructive: 1,  monitor: 4 },
+        nasdaq: { label: "NASDAQ-100", flag: "nq", total: 97,  buy: 10, hold: 22, watch: 65,  weakening: 41, review: 24, constructive: 10, monitor: 22 },
       };
+
+      // Per-ticker compact data (167 rows from 2026-05-18 snapshot, score desc).
+      // t=ticker, s=lthcs_score, b=ui_band, sp/dj/nq=index membership flags.
+      const TICKERS_DATA = [
+        {t:"MU",s:79.5,b:"constructive",sp:0,dj:0,nq:1},
+        {t:"AVGO",s:79.3,b:"constructive",sp:1,dj:0,nq:1},
+        {t:"FANG",s:78.5,b:"constructive",sp:0,dj:0,nq:1},
+        {t:"NVDA",s:78.3,b:"constructive",sp:1,dj:1,nq:1},
+        {t:"ADI",s:75.3,b:"constructive",sp:0,dj:0,nq:1},
+        {t:"GOOGL",s:73.3,b:"constructive",sp:1,dj:0,nq:1},
+        {t:"GOOG",s:73.0,b:"constructive",sp:1,dj:0,nq:1},
+        {t:"PANW",s:72.1,b:"constructive",sp:0,dj:0,nq:1},
+        {t:"BLK",s:71.3,b:"constructive",sp:1,dj:0,nq:0},
+        {t:"ASML",s:71.1,b:"constructive",sp:0,dj:0,nq:1},
+        {t:"MRVL",s:70.3,b:"constructive",sp:0,dj:0,nq:1},
+        {t:"MNST",s:69.3,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"BK",s:67.9,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"MA",s:67.9,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"SCHW",s:67.9,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"V",s:67.7,b:"monitor",sp:1,dj:1,nq:0},
+        {t:"META",s:67.6,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"AMZN",s:66.5,b:"monitor",sp:1,dj:1,nq:1},
+        {t:"FTNT",s:66.2,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"COST",s:65.5,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"DUK",s:65.5,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"CDNS",s:65.0,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"UNH",s:64.7,b:"monitor",sp:1,dj:1,nq:0},
+        {t:"COP",s:64.6,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"DDOG",s:64.6,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"MET",s:64.5,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"COF",s:63.8,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"NFLX",s:63.5,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"AMD",s:62.9,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"DXCM",s:62.9,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"CVS",s:62.8,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"MS",s:62.2,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"TXN",s:62.2,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"TMUS",s:61.5,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"ADSK",s:61.4,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"GFS",s:61.3,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"MELI",s:61.3,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"ROST",s:60.7,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"SNPS",s:60.6,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"ISRG",s:60.5,b:"monitor",sp:1,dj:0,nq:1},
+        {t:"CSGP",s:60.4,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"AMT",s:60.3,b:"monitor",sp:1,dj:0,nq:0},
+        {t:"CRWD",s:60.3,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"PDD",s:60.1,b:"monitor",sp:0,dj:0,nq:1},
+        {t:"MSFT",s:60.0,b:"monitor",sp:1,dj:1,nq:1},
+        {t:"WMT",s:59.5,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"KLAC",s:59.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"SO",s:59.2,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"C",s:58.9,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"CEG",s:58.9,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"GD",s:58.8,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"AEP",s:58.7,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"AXP",s:58.6,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"LRCX",s:58.6,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"INTU",s:58.1,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"LIN",s:58.1,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"BA",s:58.0,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"ODFL",s:57.6,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"PM",s:57.6,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"VRTX",s:57.5,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"BKR",s:57.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"KDP",s:57.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"GS",s:57.0,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"ROP",s:57.0,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"GE",s:56.9,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"FAST",s:56.6,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"TEAM",s:56.6,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"AAPL",s:56.1,b:"weakening",sp:1,dj:1,nq:1},
+        {t:"CSCO",s:56.1,b:"weakening",sp:1,dj:1,nq:1},
+        {t:"LLY",s:56.1,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"ORCL",s:56.1,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"JNJ",s:55.9,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"XEL",s:55.8,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"ABBV",s:55.7,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"TRV",s:55.7,b:"weakening",sp:0,dj:1,nq:0},
+        {t:"AMAT",s:55.6,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"IDXX",s:55.6,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"CAT",s:55.4,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"QCOM",s:54.9,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"CVX",s:54.8,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"ADP",s:54.7,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"AMGN",s:54.7,b:"weakening",sp:1,dj:1,nq:1},
+        {t:"XOM",s:54.7,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"ARM",s:54.4,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"MDLZ",s:54.3,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"ORLY",s:54.3,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"MAR",s:54.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"SPG",s:53.7,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"UNP",s:53.7,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"HON",s:53.5,b:"weakening",sp:1,dj:1,nq:1},
+        {t:"MCHP",s:53.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"SBUX",s:53.2,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"TTD",s:53.1,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"BKNG",s:53.0,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"ABNB",s:52.9,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"AZN",s:52.8,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"BAC",s:52.8,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"T",s:52.8,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"NOW",s:52.7,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"RTX",s:52.7,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"SMCI",s:52.1,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"NEE",s:51.8,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"ON",s:51.5,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"CCEP",s:51.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"CL",s:51.0,b:"weakening",sp:1,dj:0,nq:0},
+        {t:"KO",s:50.7,b:"weakening",sp:1,dj:1,nq:0},
+        {t:"GILD",s:50.5,b:"weakening",sp:1,dj:0,nq:1},
+        {t:"TTWO",s:50.5,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"CTAS",s:50.4,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"VRSK",s:50.4,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"EXC",s:50.2,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"NXPI",s:50.0,b:"weakening",sp:0,dj:0,nq:1},
+        {t:"MCD",s:49.9,b:"review",sp:1,dj:1,nq:0},
+        {t:"VZ",s:49.8,b:"review",sp:1,dj:1,nq:0},
+        {t:"USB",s:49.0,b:"review",sp:1,dj:0,nq:0},
+        {t:"ADBE",s:48.6,b:"review",sp:1,dj:0,nq:1},
+        {t:"CRM",s:48.4,b:"review",sp:1,dj:1,nq:0},
+        {t:"JPM",s:48.4,b:"review",sp:1,dj:1,nq:0},
+        {t:"MO",s:48.0,b:"review",sp:1,dj:0,nq:0},
+        {t:"WDAY",s:47.8,b:"review",sp:0,dj:0,nq:1},
+        {t:"LMT",s:47.7,b:"review",sp:1,dj:0,nq:0},
+        {t:"ABT",s:47.5,b:"review",sp:1,dj:0,nq:0},
+        {t:"TGT",s:47.4,b:"review",sp:1,dj:0,nq:0},
+        {t:"BIIB",s:47.3,b:"review",sp:0,dj:0,nq:1},
+        {t:"PYPL",s:46.3,b:"review",sp:1,dj:0,nq:1},
+        {t:"BMY",s:45.9,b:"review",sp:1,dj:0,nq:0},
+        {t:"PAYX",s:45.9,b:"review",sp:0,dj:0,nq:1},
+        {t:"MRK",s:45.8,b:"review",sp:1,dj:1,nq:0},
+        {t:"EMR",s:45.5,b:"review",sp:1,dj:0,nq:0},
+        {t:"PEP",s:45.5,b:"review",sp:1,dj:0,nq:1},
+        {t:"EA",s:45.4,b:"review",sp:0,dj:0,nq:1},
+        {t:"F",s:45.4,b:"review",sp:1,dj:0,nq:0},
+        {t:"IBM",s:45.4,b:"review",sp:1,dj:1,nq:0},
+        {t:"GEHC",s:44.8,b:"review",sp:0,dj:0,nq:1},
+        {t:"TMO",s:44.8,b:"review",sp:1,dj:0,nq:0},
+        {t:"DIS",s:44.2,b:"review",sp:1,dj:1,nq:0},
+        {t:"INTC",s:44.1,b:"review",sp:1,dj:0,nq:1},
+        {t:"DE",s:43.1,b:"review",sp:1,dj:0,nq:0},
+        {t:"CMCSA",s:43.0,b:"review",sp:1,dj:0,nq:1},
+        {t:"PG",s:43.0,b:"review",sp:1,dj:1,nq:0},
+        {t:"BRK.B",s:42.9,b:"review",sp:1,dj:0,nq:0},
+        {t:"LOW",s:42.6,b:"review",sp:1,dj:0,nq:0},
+        {t:"DHR",s:42.3,b:"review",sp:1,dj:0,nq:0},
+        {t:"KHC",s:42.3,b:"review",sp:1,dj:0,nq:1},
+        {t:"LULU",s:41.4,b:"review",sp:0,dj:0,nq:1},
+        {t:"UPS",s:41.4,b:"review",sp:1,dj:0,nq:0},
+        {t:"WFC",s:40.9,b:"review",sp:1,dj:0,nq:0},
+        {t:"ACN",s:40.3,b:"review",sp:1,dj:0,nq:0},
+        {t:"MDT",s:40.3,b:"review",sp:1,dj:0,nq:0},
+        {t:"SHW",s:40.3,b:"review",sp:0,dj:1,nq:0},
+        {t:"ILMN",s:40.2,b:"review",sp:0,dj:0,nq:1},
+        {t:"REGN",s:40.2,b:"review",sp:0,dj:0,nq:1},
+        {t:"LCID",s:39.9,b:"review",sp:0,dj:0,nq:1},
+        {t:"CTSH",s:39.6,b:"review",sp:0,dj:0,nq:1},
+        {t:"PFE",s:39.3,b:"review",sp:1,dj:0,nq:0},
+        {t:"PCAR",s:38.9,b:"review",sp:0,dj:0,nq:1},
+        {t:"TSLA",s:38.8,b:"review",sp:1,dj:0,nq:1},
+        {t:"CDW",s:38.6,b:"review",sp:0,dj:0,nq:1},
+        {t:"DASH",s:38.6,b:"review",sp:0,dj:0,nq:1},
+        {t:"MMM",s:36.6,b:"review",sp:1,dj:1,nq:0},
+        {t:"MDB",s:36.3,b:"review",sp:0,dj:0,nq:1},
+        {t:"ZS",s:36.3,b:"review",sp:0,dj:0,nq:1},
+        {t:"GM",s:35.8,b:"review",sp:1,dj:0,nq:0},
+        {t:"HD",s:34.7,b:"review",sp:1,dj:1,nq:0},
+        {t:"WBD",s:32.9,b:"review",sp:0,dj:0,nq:1},
+        {t:"CHTR",s:31.3,b:"review",sp:1,dj:0,nq:1},
+        {t:"NKE",s:29.0,b:"review",sp:1,dj:1,nq:0},
+      ];
+
+      const BAND_LABEL = {
+        elite: "Elite", high: "High", constructive: "Constructive",
+        monitor: "Monitor", weakening: "Weakening", review: "Review",
+      };
+      const BAND_RGB = {
+        elite: "var(--band-elite-rgb)", high: "var(--band-high-rgb)",
+        constructive: "var(--band-constructive-rgb)", monitor: "var(--band-monitor-rgb)",
+        weakening: "var(--band-weakening-rgb)", review: "var(--band-review-rgb)",
+      };
+      const BAND_BRIGHT = {
+        elite: "var(--band-elite-bright)", high: "var(--band-high-bright)",
+        constructive: "var(--band-constructive-bright)", monitor: "var(--band-monitor-bright)",
+        weakening: "var(--band-weakening-bright)", review: "var(--band-review-bright)",
+      };
+
+      function renderGrid(indexKey) {
+        const flag = INDEX_DATA[indexKey].flag;
+        const list = TICKERS_DATA.filter(r => r[flag] === 1);
+        const grid = document.querySelector('[data-grid]');
+        if (!grid) return;
+        grid.innerHTML = list.map(r =>
+          `<div class="vc-card"><div class="row1"><span class="tk">${r.t}</span><span class="sc">${r.s.toFixed(1)}</span></div><div class="meta"><span class="band-tag" style="background:rgba(${BAND_RGB[r.b]},0.2);color:${BAND_BRIGHT[r.b]}">${BAND_LABEL[r.b]}</span></div></div>`
+        ).join('');
+      }
 
       const buttons = document.querySelectorAll('.vc-ix');
       buttons.forEach(b => b.addEventListener('click', () => {
@@ -583,9 +759,7 @@
 
         const eyebrow = document.querySelector('[data-apex-eyebrow]');
         if (eyebrow) eyebrow.textContent =
-          key === 'all'
-            ? `LTHCS Composite Index · Universe of ${total}`
-            : `LTHCS Composite Index · ${d.label} subset · ${total} names`;
+          `LTHCS Composite Index · ${d.label} · ${total} names`;
 
         const headline = document.querySelector('[data-apex-headline]');
         if (headline) headline.textContent = `${d.label} · ${p.phrase}`;
@@ -616,17 +790,18 @@
           marker.style.left = `${pos.toFixed(1)}%`;
         }
 
-        // Breadcrumb + grid placeholder
+        // Breadcrumb
         const crumb = document.querySelector('[data-crumb-ix]');
         const crumbCount = document.querySelector('[data-crumb-count]');
-        const gridMore = document.querySelector('[data-grid-more]');
         if (crumb) crumb.firstChild.textContent = `Index: ${d.label} · `;
         if (crumbCount) crumbCount.textContent = total;
-        if (gridMore) gridMore.textContent = `+ ${Math.max(0, total - 8)} more in ${d.label} filter`;
+
+        // Full ticker grid for this index
+        renderGrid(key);
       }
 
-      // Initial render: apply ALL on load so the apex tone is set from JS.
-      applyIndex('all');
+      // Initial render: S&P 100 (broadest) on load.
+      applyIndex('sp100');
     </script>
   </body>
 </html>
