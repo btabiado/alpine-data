@@ -1,0 +1,10 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-05-18",
+  "description": "Crypto-asset universe for the LTHCS crypto extension. Each asset names a weight profile from data/lthcs/weights.json (profiles block). The crypto runner (scripts/lthcs_crypto_daily.py) iterates this list to score each asset with crypto-native pillars.",
+  "assets": [
+    {"symbol": "BTC", "name": "Bitcoin",  "active": true, "weight_profile": "btc"},
+    {"symbol": "ETH", "name": "Ethereum", "active": true, "weight_profile": "eth"},
+    {"symbol": "SOL", "name": "Solana",   "active": true, "weight_profile": "sol"}
+  ]
+}

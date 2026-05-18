@@ -1567,6 +1567,17 @@ def stage_8_persist(state: PipelineState) -> bool:
             history_count,
         )
     )
+
+    # Optional crypto extension. Default OFF; flip LTHCS_CRYPTO_ENABLED=1
+    # to score BTC/ETH/SOL via the crypto pillars (Tier 5 #27). Never
+    # fails Stage 8 — the equity pipeline is the contract here.
+    if os.getenv("LTHCS_CRYPTO_ENABLED") == "1":
+        try:
+            from scripts.lthcs_crypto_daily import run as run_crypto
+            run_crypto([])
+        except Exception as exc:
+            if state.args.verbose:
+                print("  crypto pillar skipped: %s" % exc)
     return True
 
 
