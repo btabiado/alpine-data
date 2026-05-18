@@ -1,0 +1,8532 @@
+{
+  "calc_date": "2026-04-21",
+  "model_version": "v1.1.0",
+  "weights_profile_default": "standard_compounder",
+  "scores": [
+    {
+      "ticker": "AAPL",
+      "lthcs_score": 49.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 33.3,
+        "financial_evolution": 66.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.5,
+        8.325,
+        16.5,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ABBV",
+      "lthcs_score": 52.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 63.0,
+        "institutional_confidence": 30.3,
+        "financial_evolution": 69.2,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.75,
+        7.575,
+        17.3,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ABNB",
+      "lthcs_score": 69.3,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 73.7,
+        "institutional_confidence": 73.9,
+        "financial_evolution": 85.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        23.03125,
+        18.475,
+        15.937499999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "ABT",
+      "lthcs_score": 39.1,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 49.5,
+        "institutional_confidence": 8.5,
+        "financial_evolution": 53.0,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.46875,
+        2.125,
+        9.937499999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ACN",
+      "lthcs_score": 40.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 57.9,
+        "institutional_confidence": 6.7,
+        "financial_evolution": 49.3,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        18.09375,
+        1.675,
+        9.243749999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ADBE",
+      "lthcs_score": 48.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 67.4,
+        "institutional_confidence": 5.5,
+        "financial_evolution": 72.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        16.85,
+        1.375,
+        18.125,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ADI",
+      "lthcs_score": 78.6,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 87.4,
+        "institutional_confidence": 93.9,
+        "financial_evolution": 85.4,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        27.3125,
+        23.475,
+        16.0125,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ADP",
+      "lthcs_score": 41.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 54.3,
+        "institutional_confidence": 10.9,
+        "financial_evolution": 51.2,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        13.575,
+        2.725,
+        12.8,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ADSK",
+      "lthcs_score": 58.0,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 88.4,
+        "institutional_confidence": 13.3,
+        "financial_evolution": 81.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        27.625,
+        3.325,
+        15.187499999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "AEP",
+      "lthcs_score": 64.7,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 67.4,
+        "institutional_confidence": 75.8,
+        "financial_evolution": 74.6,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        21.0625,
+        18.95,
+        13.987499999999997,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "AMAT",
+      "lthcs_score": 58.1,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 32.6,
+        "institutional_confidence": 95.8,
+        "financial_evolution": 54.5,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        8.15,
+        23.95,
+        13.625,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "AMD",
+      "lthcs_score": 61.0,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 53.8,
+        "institutional_confidence": 90.3,
+        "financial_evolution": 49.4,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        16.8125,
+        22.575,
+        9.262499999999998,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "AMGN",
+      "lthcs_score": 62.0,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 71.6,
+        "institutional_confidence": 69.7,
+        "financial_evolution": 56.6,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        22.375,
+        17.425,
+        10.612499999999999,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "AMT",
+      "lthcs_score": 69.2,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 94.7,
+        "institutional_confidence": 40.6,
+        "financial_evolution": 97.0,
+        "thesis_integrity": 50.0,
+        "des": 45.1
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        29.59375,
+        10.15,
+        18.187499999999996,
+        0.0,
+        11.275
+      ],
+      "sector": "Real Estate"
+    },
+    {
+      "ticker": "AMZN",
+      "lthcs_score": 64.2,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 71.7,
+        "institutional_confidence": 67.9,
+        "financial_evolution": 69.7,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        17.925,
+        16.975,
+        17.425,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "ARM",
+      "lthcs_score": 47.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 30.8,
+        "institutional_confidence": 86.1,
+        "financial_evolution": 39.7,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        9.625,
+        21.525,
+        7.44375,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ASML",
+      "lthcs_score": 77.0,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 84.2,
+        "institutional_confidence": 92.1,
+        "financial_evolution": 84.2,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        26.3125,
+        23.025,
+        15.787499999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "AVGO",
+      "lthcs_score": 68.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 100.0,
+        "institutional_confidence": 41.2,
+        "financial_evolution": 84.8,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        25.0,
+        10.3,
+        21.2,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "AXP",
+      "lthcs_score": 51.1,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 47.8,
+        "institutional_confidence": 25.5,
+        "financial_evolution": 70.2,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        11.95,
+        6.375,
+        17.55,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "AZN",
+      "lthcs_score": 53.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "sec_unavailable",
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 69.1,
+        "financial_evolution": 50.0,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.625,
+        17.275,
+        9.374999999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BA",
+      "lthcs_score": 66.1,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 93.8,
+        "institutional_confidence": 66.7,
+        "financial_evolution": 60.5,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "recovery_stabilization",
+      "weights_used": [
+        0.15,
+        0.15,
+        0.35,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.1875,
+        0.1875,
+        0.4375,
+        0.0,
+        0.1875
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        17.5875,
+        12.506250000000001,
+        26.46875,
+        0.0,
+        9.506250000000001
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "BAC",
+      "lthcs_score": 48.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 52.2,
+        "institutional_confidence": 47.3,
+        "financial_evolution": 35.0,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        13.05,
+        11.825,
+        8.75,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BIIB",
+      "lthcs_score": 42.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 29.5,
+        "institutional_confidence": 55.8,
+        "financial_evolution": 40.4,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        9.21875,
+        13.95,
+        7.574999999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BK",
+      "lthcs_score": 67.7,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 61.1,
+        "institutional_confidence": 81.8,
+        "financial_evolution": 69.2,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        19.09375,
+        20.45,
+        12.974999999999998,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BKNG",
+      "lthcs_score": 58.7,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 81.1,
+        "institutional_confidence": 26.7,
+        "financial_evolution": 79.4,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        25.34375,
+        6.675,
+        14.8875,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "BKR",
+      "lthcs_score": 49.1,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 18.9,
+        "institutional_confidence": 87.9,
+        "financial_evolution": 38.7,
+        "thesis_integrity": 50.0,
+        "des": 55.8
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        5.90625,
+        21.975,
+        7.25625,
+        0.0,
+        13.95
+      ],
+      "sector": "Energy"
+    },
+    {
+      "ticker": "BLK",
+      "lthcs_score": 69.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 90.5,
+        "institutional_confidence": 37.6,
+        "financial_evolution": 90.5,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        28.28125,
+        9.4,
+        16.968749999999996,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "BMY",
+      "lthcs_score": 49.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 20.0,
+        "institutional_confidence": 83.0,
+        "financial_evolution": 56.5,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        6.25,
+        20.75,
+        10.593749999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "BRK.B",
+      "lthcs_score": 36.1,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "low",
+      "data_quality_flags": [
+        "yahoo_unavailable",
+        "thesis_unavailable",
+        "volatility_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 4.3,
+        "institutional_confidence": 50.0,
+        "financial_evolution": 29.3,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        1.075,
+        12.5,
+        7.325,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "C",
+      "lthcs_score": 60.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 43.5,
+        "institutional_confidence": 84.2,
+        "financial_evolution": 55.0,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        10.875,
+        21.05,
+        13.75,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "CAT",
+      "lthcs_score": 56.4,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 38.9,
+        "institutional_confidence": 93.3,
+        "financial_evolution": 44.2,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.15625,
+        23.325,
+        8.2875,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CCEP",
+      "lthcs_score": 51.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "sec_unavailable",
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 58.2,
+        "financial_evolution": 50.0,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.625,
+        14.55,
+        9.374999999999998,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CDNS",
+      "lthcs_score": 62.6,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 82.1,
+        "institutional_confidence": 35.8,
+        "financial_evolution": 86.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        25.65625,
+        8.95,
+        16.124999999999996,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "CDW",
+      "lthcs_score": 46.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 54.7,
+        "institutional_confidence": 34.5,
+        "financial_evolution": 49.2,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        17.09375,
+        8.625,
+        9.225,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "CEG",
+      "lthcs_score": 53.6,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 92.6,
+        "institutional_confidence": 9.1,
+        "financial_evolution": 62.7,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        28.9375,
+        2.275,
+        11.75625,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "CHTR",
+      "lthcs_score": 46.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 17.9,
+        "institutional_confidence": 79.4,
+        "financial_evolution": 49.0,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        5.59375,
+        19.85,
+        9.187499999999998,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "CL",
+      "lthcs_score": 43.0,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 27.4,
+        "institutional_confidence": 60.6,
+        "financial_evolution": 40.7,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        8.5625,
+        15.15,
+        7.63125,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CMCSA",
+      "lthcs_score": 48.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 22.1,
+        "institutional_confidence": 80.6,
+        "financial_evolution": 49.9,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        6.90625,
+        20.15,
+        9.356249999999998,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "COF",
+      "lthcs_score": 70.5,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 98.9,
+        "institutional_confidence": 23.0,
+        "financial_evolution": 99.4,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        30.90625,
+        5.75,
+        18.6375,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "COP",
+      "lthcs_score": 63.3,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 44.2,
+        "institutional_confidence": 90.9,
+        "financial_evolution": 68.1,
+        "thesis_integrity": 50.0,
+        "des": 55.8
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        13.8125,
+        22.725,
+        12.768749999999997,
+        0.0,
+        13.95
+      ],
+      "sector": "Energy"
+    },
+    {
+      "ticker": "COST",
+      "lthcs_score": 57.1,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 58.7,
+        "institutional_confidence": 72.7,
+        "financial_evolution": 50.4,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        14.675,
+        18.175,
+        12.6,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CRM",
+      "lthcs_score": 47.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 65.2,
+        "institutional_confidence": 6.1,
+        "financial_evolution": 70.9,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        16.3,
+        1.525,
+        17.725,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "CRWD",
+      "lthcs_score": 38.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "sec_unavailable",
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 20.0,
+        "financial_evolution": 50.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.5,
+        5.0,
+        12.5,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "CSCO",
+      "lthcs_score": 54.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 39.1,
+        "institutional_confidence": 75.2,
+        "financial_evolution": 55.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        9.775,
+        18.8,
+        13.75,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "CSGP",
+      "lthcs_score": 54.7,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 91.6,
+        "institutional_confidence": 1.2,
+        "financial_evolution": 69.7,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        28.625,
+        0.3,
+        13.068749999999998,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CTAS",
+      "lthcs_score": 50.6,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 60.0,
+        "institutional_confidence": 33.9,
+        "financial_evolution": 57.2,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        18.75,
+        8.475,
+        10.725,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "CTSH",
+      "lthcs_score": 40.7,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 55.8,
+        "institutional_confidence": 7.9,
+        "financial_evolution": 50.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        17.4375,
+        1.975,
+        9.468749999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "CVS",
+      "lthcs_score": 51.3,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 62.1,
+        "institutional_confidence": 43.0,
+        "financial_evolution": 50.6,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        19.40625,
+        10.75,
+        9.487499999999999,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "CVX",
+      "lthcs_score": 44.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 8.4,
+        "institutional_confidence": 87.3,
+        "financial_evolution": 31.1,
+        "thesis_integrity": 50.0,
+        "des": 55.8
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.625,
+        21.825,
+        5.83125,
+        0.0,
+        13.95
+      ],
+      "sector": "Energy"
+    },
+    {
+      "ticker": "DASH",
+      "lthcs_score": 38.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 46.2,
+        "institutional_confidence": 10.3,
+        "financial_evolution": 50.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        14.4375,
+        2.575,
+        9.468749999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "DDOG",
+      "lthcs_score": 36.1,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 38.5,
+        "institutional_confidence": 18.8,
+        "financial_evolution": 56.2,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.03125,
+        4.7,
+        10.5375,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "DE",
+      "lthcs_score": 39.7,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 3.2,
+        "institutional_confidence": 89.1,
+        "financial_evolution": 20.1,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        1.0,
+        22.275,
+        3.76875,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "DHR",
+      "lthcs_score": 37.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 32.6,
+        "institutional_confidence": 21.8,
+        "financial_evolution": 54.5,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        10.1875,
+        5.45,
+        10.218749999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "DIS",
+      "lthcs_score": 36.0,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 26.1,
+        "institutional_confidence": 38.8,
+        "financial_evolution": 31.3,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        6.525,
+        9.7,
+        7.825,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "DUK",
+      "lthcs_score": 76.4,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 96.8,
+        "institutional_confidence": 68.5,
+        "financial_evolution": 98.2,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        30.25,
+        17.125,
+        18.412499999999998,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "DXCM",
+      "lthcs_score": 58.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 85.3,
+        "institutional_confidence": 30.9,
+        "financial_evolution": 68.7,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        26.65625,
+        7.725,
+        12.881249999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "EA",
+      "lthcs_score": 33.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 15.8,
+        "institutional_confidence": 44.8,
+        "financial_evolution": 29.1,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        4.9375,
+        11.2,
+        5.45625,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "EMR",
+      "lthcs_score": 46.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 34.7,
+        "institutional_confidence": 60.0,
+        "financial_evolution": 44.2,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        10.84375,
+        15.0,
+        8.2875,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "EXC",
+      "lthcs_score": 50.4,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 46.3,
+        "institutional_confidence": 58.8,
+        "financial_evolution": 56.3,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        14.46875,
+        14.7,
+        10.556249999999999,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "F",
+      "lthcs_score": 35.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 26.3,
+        "institutional_confidence": 40.0,
+        "financial_evolution": 29.6,
+        "thesis_integrity": 50.0,
+        "des": 48.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        8.21875,
+        10.0,
+        5.55,
+        0.0,
+        12.125
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "FANG",
+      "lthcs_score": 84.0,
+      "band": "high_confidence",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 97.9,
+        "institutional_confidence": 83.6,
+        "financial_evolution": 98.8,
+        "thesis_integrity": 50.0,
+        "des": 55.8
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        30.59375,
+        20.9,
+        18.524999999999995,
+        0.0,
+        13.95
+      ],
+      "sector": "Energy"
+    },
+    {
+      "ticker": "FAST",
+      "lthcs_score": 64.1,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 68.4,
+        "institutional_confidence": 74.5,
+        "financial_evolution": 61.1,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        21.375,
+        18.625,
+        11.456249999999999,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "FTNT",
+      "lthcs_score": 62.3,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 78.3,
+        "institutional_confidence": 49.1,
+        "financial_evolution": 74.6,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        19.575,
+        12.275,
+        18.65,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "GD",
+      "lthcs_score": 56.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 72.6,
+        "institutional_confidence": 39.4,
+        "financial_evolution": 58.7,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        22.6875,
+        9.85,
+        11.00625,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "GE",
+      "lthcs_score": 64.7,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 81.2,
+        "institutional_confidence": 47.9,
+        "financial_evolution": 76.7,
+        "thesis_integrity": 50.0,
+        "des": 51.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "recovery_rerating",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        25.375,
+        11.975,
+        14.381249999999998,
+        0.0,
+        12.975
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "GEHC",
+      "lthcs_score": 37.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 42.1,
+        "institutional_confidence": 21.2,
+        "financial_evolution": 42.0,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        13.15625,
+        5.3,
+        7.874999999999999,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "GFS",
+      "lthcs_score": 57.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "sec_unavailable",
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 96.4,
+        "financial_evolution": 50.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.625,
+        24.1,
+        9.374999999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "GILD",
+      "lthcs_score": 49.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 30.5,
+        "institutional_confidence": 71.5,
+        "financial_evolution": 54.2,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        9.53125,
+        17.875,
+        10.1625,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "GM",
+      "lthcs_score": 32.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 13.7,
+        "institutional_confidence": 50.9,
+        "financial_evolution": 19.3,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        4.28125,
+        12.725,
+        3.6187499999999995,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "GOOG",
+      "lthcs_score": 69.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 85.9,
+        "institutional_confidence": 52.7,
+        "financial_evolution": 91.9,
+        "thesis_integrity": 50.0,
+        "des": 49.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        21.475,
+        13.175,
+        22.975,
+        0.0,
+        12.25
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "GOOGL",
+      "lthcs_score": 70.2,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 85.9,
+        "institutional_confidence": 53.9,
+        "financial_evolution": 91.9,
+        "thesis_integrity": 50.0,
+        "des": 49.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        21.475,
+        13.475,
+        22.975,
+        0.0,
+        12.25
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "GS",
+      "lthcs_score": 57.6,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "sec_unavailable",
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 57.0,
+        "financial_evolution": 62.5,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.5,
+        14.25,
+        15.625,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "HD",
+      "lthcs_score": 39.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 23.9,
+        "institutional_confidence": 45.5,
+        "financial_evolution": 40.6,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        5.975,
+        11.375,
+        10.15,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "HON",
+      "lthcs_score": 60.2,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 63.2,
+        "institutional_confidence": 78.2,
+        "financial_evolution": 43.9,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        19.75,
+        19.55,
+        8.23125,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "IBM",
+      "lthcs_score": 46.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 56.5,
+        "institutional_confidence": 15.2,
+        "financial_evolution": 65.7,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        14.125,
+        3.8,
+        16.425,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "IDXX",
+      "lthcs_score": 50.5,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 74.7,
+        "institutional_confidence": 12.7,
+        "financial_evolution": 66.3,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        23.34375,
+        3.175,
+        12.431249999999997,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ILMN",
+      "lthcs_score": 34.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 16.8,
+        "institutional_confidence": 43.6,
+        "financial_evolution": 36.8,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        5.25,
+        10.9,
+        6.899999999999999,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "INTC",
+      "lthcs_score": 47.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 13.1,
+        "institutional_confidence": 98.8,
+        "financial_evolution": 48.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "recovery_stabilization",
+      "weights_used": [
+        0.15,
+        0.15,
+        0.35,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.1875,
+        0.1875,
+        0.4375,
+        0.0,
+        0.1875
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.45625,
+        18.525,
+        21.0,
+        0.0,
+        8.868749999999999
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "INTU",
+      "lthcs_score": 52.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 89.1,
+        "institutional_confidence": 4.2,
+        "financial_evolution": 68.2,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        22.275,
+        1.05,
+        17.05,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ISRG",
+      "lthcs_score": 55.6,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 93.5,
+        "institutional_confidence": 11.5,
+        "financial_evolution": 71.1,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        23.375,
+        2.875,
+        17.775,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "JNJ",
+      "lthcs_score": 54.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 45.7,
+        "institutional_confidence": 73.3,
+        "financial_evolution": 54.0,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        11.425,
+        18.325,
+        13.5,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "JPM",
+      "lthcs_score": 48.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 21.7,
+        "institutional_confidence": 54.5,
+        "financial_evolution": 56.7,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        5.425,
+        13.625,
+        14.175,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "KDP",
+      "lthcs_score": 48.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 64.2,
+        "institutional_confidence": 29.1,
+        "financial_evolution": 52.3,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        20.0625,
+        7.275,
+        9.806249999999999,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "KHC",
+      "lthcs_score": 30.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 21.1,
+        "institutional_confidence": 28.5,
+        "financial_evolution": 26.1,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        6.59375,
+        7.125,
+        4.89375,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "KLAC",
+      "lthcs_score": 53.7,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 23.1,
+        "institutional_confidence": 95.2,
+        "financial_evolution": 54.8,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        7.21875,
+        23.8,
+        10.274999999999999,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "KO",
+      "lthcs_score": 35.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 13.0,
+        "institutional_confidence": 59.4,
+        "financial_evolution": 22.3,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        3.25,
+        14.85,
+        5.575,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "LCID",
+      "lthcs_score": 55.3,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 100.0,
+        "institutional_confidence": 0.6,
+        "financial_evolution": 57.1,
+        "thesis_integrity": 50.0,
+        "des": 53.1
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "pre_profit_growth",
+      "weights_used": [
+        0.3,
+        0.2,
+        0.15,
+        0.2,
+        0.15
+      ],
+      "effective_weights": [
+        0.37499999999999994,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.18749999999999997
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        37.49999999999999,
+        0.15,
+        10.706249999999999,
+        0.0,
+        9.956249999999999
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "LIN",
+      "lthcs_score": 56.6,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 33.7,
+        "institutional_confidence": 88.5,
+        "financial_evolution": 55.6,
+        "thesis_integrity": 50.0,
+        "des": 54.2
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        10.53125,
+        22.125,
+        10.424999999999999,
+        0.0,
+        13.55
+      ],
+      "sector": "Materials"
+    },
+    {
+      "ticker": "LLY",
+      "lthcs_score": 55.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 76.9,
+        "institutional_confidence": 27.3,
+        "financial_evolution": 67.9,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        24.03125,
+        6.825,
+        12.73125,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "LMT",
+      "lthcs_score": 57.7,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 48.4,
+        "institutional_confidence": 85.5,
+        "financial_evolution": 45.2,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.125,
+        21.375,
+        8.475,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "LOW",
+      "lthcs_score": 45.1,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 35.8,
+        "institutional_confidence": 52.1,
+        "financial_evolution": 48.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        11.1875,
+        13.025,
+        9.093749999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "LRCX",
+      "lthcs_score": 48.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 15.4,
+        "institutional_confidence": 97.6,
+        "financial_evolution": 51.9,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        4.8125,
+        24.4,
+        9.731249999999998,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "LULU",
+      "lthcs_score": 38.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 43.2,
+        "institutional_confidence": 26.1,
+        "financial_evolution": 35.8,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        13.5,
+        6.525,
+        6.712499999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MA",
+      "lthcs_score": 68.4,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 91.3,
+        "institutional_confidence": 32.1,
+        "financial_evolution": 89.4,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        22.825,
+        8.025,
+        22.35,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MAR",
+      "lthcs_score": 55.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 40.0,
+        "institutional_confidence": 92.7,
+        "financial_evolution": 44.9,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.5,
+        23.175,
+        8.41875,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MCD",
+      "lthcs_score": 42.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 28.3,
+        "institutional_confidence": 37.0,
+        "financial_evolution": 59.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        7.075,
+        9.25,
+        14.75,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MCHP",
+      "lthcs_score": 42.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 0.0,
+        "institutional_confidence": 84.8,
+        "financial_evolution": 50.1,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        21.2,
+        9.393749999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "MDB",
+      "lthcs_score": 18.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 0.0,
+        "institutional_confidence": 4.8,
+        "financial_evolution": 27.6,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        1.2,
+        5.175,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "MDLZ",
+      "lthcs_score": 50.4,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.5,
+        "institutional_confidence": 55.2,
+        "financial_evolution": 48.9,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.78125,
+        13.8,
+        9.168749999999998,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MDT",
+      "lthcs_score": 34.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 36.8,
+        "institutional_confidence": 15.8,
+        "financial_evolution": 40.4,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        11.5,
+        3.95,
+        7.574999999999998,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "MELI",
+      "lthcs_score": 48.0,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 61.5,
+        "institutional_confidence": 23.6,
+        "financial_evolution": 58.9,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        19.21875,
+        5.9,
+        11.043749999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "MET",
+      "lthcs_score": 62.6,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 66.3,
+        "institutional_confidence": 46.1,
+        "financial_evolution": 80.8,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        20.71875,
+        11.525,
+        15.149999999999997,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "META",
+      "lthcs_score": 73.5,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 97.8,
+        "institutional_confidence": 48.5,
+        "financial_evolution": 98.8,
+        "thesis_integrity": 50.0,
+        "des": 49.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        24.45,
+        12.125,
+        24.7,
+        0.0,
+        12.25
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "MMM",
+      "lthcs_score": 28.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 10.9,
+        "institutional_confidence": 24.8,
+        "financial_evolution": 27.9,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.725,
+        6.2,
+        6.975,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "MNST",
+      "lthcs_score": 60.8,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 76.8,
+        "institutional_confidence": 49.7,
+        "financial_evolution": 67.8,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        24.0,
+        12.425,
+        12.712499999999997,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MO",
+      "lthcs_score": 43.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 9.5,
+        "institutional_confidence": 77.0,
+        "financial_evolution": 50.9,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.96875,
+        19.25,
+        9.543749999999998,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "MRK",
+      "lthcs_score": 42.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 8.7,
+        "institutional_confidence": 80.0,
+        "financial_evolution": 34.9,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.175,
+        20.0,
+        8.725,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "MRVL",
+      "lthcs_score": 69.5,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 69.2,
+        "institutional_confidence": 99.4,
+        "financial_evolution": 75.8,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        21.625,
+        24.85,
+        14.212499999999997,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "MS",
+      "lthcs_score": 62.5,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 41.3,
+        "institutional_confidence": 57.6,
+        "financial_evolution": 90.0,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        10.325,
+        14.4,
+        22.5,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "MSFT",
+      "lthcs_score": 57.3,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 82.6,
+        "institutional_confidence": 19.4,
+        "financial_evolution": 77.6,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        20.65,
+        4.85,
+        19.4,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "MU",
+      "lthcs_score": 80.8,
+      "band": "high_confidence",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 92.3,
+        "institutional_confidence": 100.0,
+        "financial_evolution": 93.6,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        28.84375,
+        25.0,
+        17.549999999999997,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "NEE",
+      "lthcs_score": 40.0,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 5.3,
+        "institutional_confidence": 76.4,
+        "financial_evolution": 45.9,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        1.65625,
+        19.1,
+        8.60625,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "NFLX",
+      "lthcs_score": 61.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 86.3,
+        "institutional_confidence": 32.7,
+        "financial_evolution": 78.6,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        26.96875,
+        8.175,
+        14.737499999999997,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "NKE",
+      "lthcs_score": 16.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 4.2,
+        "institutional_confidence": 7.3,
+        "financial_evolution": 24.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        1.3125,
+        1.825,
+        4.499999999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "NOW",
+      "lthcs_score": 53.8,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 95.7,
+        "institutional_confidence": 3.0,
+        "financial_evolution": 81.2,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        23.925,
+        0.75,
+        20.3,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "NVDA",
+      "lthcs_score": 75.4,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 100.0,
+        "institutional_confidence": 63.6,
+        "financial_evolution": 84.5,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        31.25,
+        15.9,
+        15.843749999999998,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "NXPI",
+      "lthcs_score": 34.1,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 11.6,
+        "institutional_confidence": 41.8,
+        "financial_evolution": 43.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        3.625,
+        10.45,
+        8.156249999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ODFL",
+      "lthcs_score": 61.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "sec_unavailable",
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 50.0,
+        "institutional_confidence": 97.0,
+        "financial_evolution": 50.0,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.625,
+        24.25,
+        9.374999999999998,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ON",
+      "lthcs_score": 42.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 2.1,
+        "institutional_confidence": 98.2,
+        "financial_evolution": 44.3,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.65625,
+        24.55,
+        8.306249999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ORCL",
+      "lthcs_score": 45.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 60.9,
+        "institutional_confidence": 13.9,
+        "financial_evolution": 69.4,
+        "thesis_integrity": 50.0,
+        "des": 49.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        15.225,
+        3.475,
+        17.35,
+        0.0,
+        12.375
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "ORLY",
+      "lthcs_score": 49.0,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 51.6,
+        "institutional_confidence": 42.4,
+        "financial_evolution": 55.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        16.125,
+        10.6,
+        10.406249999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "PANW",
+      "lthcs_score": 57.4,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 80.4,
+        "institutional_confidence": 24.2,
+        "financial_evolution": 77.7,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        20.1,
+        6.05,
+        19.425,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "PAYX",
+      "lthcs_score": 44.7,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 47.4,
+        "institutional_confidence": 16.4,
+        "financial_evolution": 69.9,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        14.8125,
+        4.1,
+        13.10625,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PCAR",
+      "lthcs_score": 37.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 1.1,
+        "institutional_confidence": 78.8,
+        "financial_evolution": 24.0,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.34375,
+        19.7,
+        4.499999999999999,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "PDD",
+      "lthcs_score": 66.2,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 100.0,
+        "institutional_confidence": 17.6,
+        "financial_evolution": 100.0,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        31.25,
+        4.4,
+        18.749999999999996,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "PEP",
+      "lthcs_score": 37.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 15.2,
+        "institutional_confidence": 63.0,
+        "financial_evolution": 25.6,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        3.8,
+        15.75,
+        6.4,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "PFE",
+      "lthcs_score": 35.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 0.0,
+        "institutional_confidence": 67.3,
+        "financial_evolution": 29.8,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.0,
+        16.825,
+        7.45,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "PG",
+      "lthcs_score": 35.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 6.5,
+        "institutional_confidence": 50.3,
+        "financial_evolution": 37.7,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        1.625,
+        12.575,
+        9.425,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "PM",
+      "lthcs_score": 51.1,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 56.8,
+        "institutional_confidence": 51.5,
+        "financial_evolution": 47.1,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        17.75,
+        12.875,
+        8.831249999999999,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "PYPL",
+      "lthcs_score": 38.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 30.4,
+        "institutional_confidence": 17.0,
+        "financial_evolution": 46.2,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        7.6,
+        4.25,
+        11.55,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "QCOM",
+      "lthcs_score": 54.8,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 76.1,
+        "institutional_confidence": 9.7,
+        "financial_evolution": 86.3,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        19.025,
+        2.425,
+        21.575,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "REGN",
+      "lthcs_score": 45.0,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 23.2,
+        "institutional_confidence": 62.4,
+        "financial_evolution": 56.1,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        7.25,
+        15.6,
+        10.518749999999999,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "ROP",
+      "lthcs_score": 55.0,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 78.9,
+        "institutional_confidence": 14.5,
+        "financial_evolution": 74.8,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        24.65625,
+        3.625,
+        14.024999999999997,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "ROST",
+      "lthcs_score": 61.7,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 58.9,
+        "institutional_confidence": 89.7,
+        "financial_evolution": 48.3,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        18.40625,
+        22.425,
+        9.056249999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "RTX",
+      "lthcs_score": 59.2,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 70.5,
+        "institutional_confidence": 66.1,
+        "financial_evolution": 42.3,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        22.03125,
+        16.525,
+        7.931249999999999,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "SBUX",
+      "lthcs_score": 51.8,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 31.6,
+        "institutional_confidence": 82.4,
+        "financial_evolution": 50.6,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        9.875,
+        20.6,
+        9.487499999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "SCHW",
+      "lthcs_score": 73.0,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 95.8,
+        "institutional_confidence": 38.2,
+        "financial_evolution": 97.6,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        29.9375,
+        9.55,
+        18.299999999999997,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "SHW",
+      "lthcs_score": 42.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 28.4,
+        "institutional_confidence": 53.3,
+        "financial_evolution": 34.2,
+        "thesis_integrity": 50.0,
+        "des": 54.2
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        8.875,
+        13.325,
+        6.4125,
+        0.0,
+        13.55
+      ],
+      "sector": "Materials"
+    },
+    {
+      "ticker": "SMCI",
+      "lthcs_score": 47.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 84.6,
+        "institutional_confidence": 12.1,
+        "financial_evolution": 51.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        26.4375,
+        3.025,
+        9.656249999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "SNPS",
+      "lthcs_score": 60.1,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 83.2,
+        "institutional_confidence": 46.7,
+        "financial_evolution": 56.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        26.0,
+        11.675,
+        10.593749999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "SO",
+      "lthcs_score": 63.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 75.8,
+        "institutional_confidence": 64.2,
+        "financial_evolution": 72.0,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        23.6875,
+        16.05,
+        13.499999999999998,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "SPG",
+      "lthcs_score": 61.2,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 53.7,
+        "institutional_confidence": 77.6,
+        "financial_evolution": 73.5,
+        "thesis_integrity": 50.0,
+        "des": 45.1
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        16.78125,
+        19.4,
+        13.781249999999998,
+        0.0,
+        11.275
+      ],
+      "sector": "Real Estate"
+    },
+    {
+      "ticker": "T",
+      "lthcs_score": 44.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 19.6,
+        "institutional_confidence": 61.8,
+        "financial_evolution": 47.3,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        4.9,
+        15.45,
+        11.825,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "TEAM",
+      "lthcs_score": 52.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 93.7,
+        "institutional_confidence": 0.0,
+        "financial_evolution": 78.9,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        29.28125,
+        0.0,
+        14.79375,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "TGT",
+      "lthcs_score": 44.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 14.7,
+        "institutional_confidence": 94.5,
+        "financial_evolution": 25.4,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        4.59375,
+        23.625,
+        4.762499999999999,
+        0.0,
+        11.825
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TMO",
+      "lthcs_score": 39.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 37.9,
+        "institutional_confidence": 29.7,
+        "financial_evolution": 46.3,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        11.84375,
+        7.425,
+        8.681249999999999,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "TMUS",
+      "lthcs_score": 56.5,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 65.3,
+        "institutional_confidence": 36.4,
+        "financial_evolution": 80.2,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        20.40625,
+        9.1,
+        15.037499999999998,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "TRV",
+      "lthcs_score": 52.0,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 37.0,
+        "institutional_confidence": 64.8,
+        "financial_evolution": 45.2,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        9.25,
+        16.2,
+        11.3,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "TSLA",
+      "lthcs_score": 27.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 10.5,
+        "institutional_confidence": 20.6,
+        "financial_evolution": 32.3,
+        "thesis_integrity": 50.0,
+        "des": 52.5
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        3.28125,
+        5.15,
+        6.056249999999999,
+        0.0,
+        13.125
+      ],
+      "sector": "Consumer Discretionary"
+    },
+    {
+      "ticker": "TTD",
+      "lthcs_score": 55.5,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 89.5,
+        "institutional_confidence": 3.6,
+        "financial_evolution": 94.0,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        27.96875,
+        0.9,
+        17.624999999999996,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "TTWO",
+      "lthcs_score": 38.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 45.3,
+        "institutional_confidence": 22.4,
+        "financial_evolution": 36.6,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        14.15625,
+        5.6,
+        6.862499999999999,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "TXN",
+      "lthcs_score": 71.4,
+      "band": "constructive",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 73.9,
+        "institutional_confidence": 91.5,
+        "financial_evolution": 72.7,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        18.475,
+        22.875,
+        18.175,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "UNH",
+      "lthcs_score": 62.9,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 77.9,
+        "institutional_confidence": 61.2,
+        "financial_evolution": 62.2,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        24.34375,
+        15.3,
+        11.6625,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "UNP",
+      "lthcs_score": 47.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 24.2,
+        "institutional_confidence": 65.5,
+        "financial_evolution": 56.7,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        7.5625,
+        16.375,
+        10.63125,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "UPS",
+      "lthcs_score": 40.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 12.6,
+        "institutional_confidence": 70.3,
+        "financial_evolution": 33.4,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        3.9375,
+        17.575,
+        6.262499999999998,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "USB",
+      "lthcs_score": 50.5,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 41.1,
+        "institutional_confidence": 70.9,
+        "financial_evolution": 25.0,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        12.84375,
+        17.725,
+        4.687499999999999,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "V",
+      "lthcs_score": 61.1,
+      "band": "monitor",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 69.6,
+        "institutional_confidence": 31.5,
+        "financial_evolution": 82.6,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        17.4,
+        7.875,
+        20.65,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "VRSK",
+      "lthcs_score": 47.3,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 52.6,
+        "institutional_confidence": 18.2,
+        "financial_evolution": 72.9,
+        "thesis_integrity": 50.0,
+        "des": 50.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        16.4375,
+        4.55,
+        13.66875,
+        0.0,
+        12.675
+      ],
+      "sector": "Industrials"
+    },
+    {
+      "ticker": "VRTX",
+      "lthcs_score": 59.9,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 69.5,
+        "institutional_confidence": 44.2,
+        "financial_evolution": 82.6,
+        "thesis_integrity": 50.0,
+        "des": 46.4
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        21.71875,
+        11.05,
+        15.487499999999997,
+        0.0,
+        11.6
+      ],
+      "sector": "Health Care"
+    },
+    {
+      "ticker": "VZ",
+      "lthcs_score": 47.8,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 17.4,
+        "institutional_confidence": 81.2,
+        "financial_evolution": 44.4,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        4.35,
+        20.3,
+        11.1,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "WBD",
+      "lthcs_score": 25.9,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 6.3,
+        "institutional_confidence": 35.2,
+        "financial_evolution": 16.7,
+        "thesis_integrity": 50.0,
+        "des": 48.0
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        1.96875,
+        8.8,
+        3.131249999999999,
+        0.0,
+        12.0
+      ],
+      "sector": "Communication Services"
+    },
+    {
+      "ticker": "WDAY",
+      "lthcs_score": 52.0,
+      "band": "weakening",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 80.0,
+        "institutional_confidence": 2.4,
+        "financial_evolution": 77.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        25.0,
+        0.6,
+        14.531249999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    },
+    {
+      "ticker": "WFC",
+      "lthcs_score": 28.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 2.2,
+        "institutional_confidence": 27.9,
+        "financial_evolution": 23.3,
+        "thesis_integrity": 50.0,
+        "des": 60.9
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        0.55,
+        6.975,
+        5.825,
+        0.0,
+        15.225
+      ],
+      "sector": "Financials"
+    },
+    {
+      "ticker": "WMT",
+      "lthcs_score": 46.5,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 34.8,
+        "institutional_confidence": 72.1,
+        "financial_evolution": 32.2,
+        "thesis_integrity": 50.0,
+        "des": 46.7
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "mature_compounder",
+      "weights_used": [
+        0.2,
+        0.2,
+        0.2,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.25,
+        0.25,
+        0.25,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        8.7,
+        18.025,
+        8.05,
+        0.0,
+        11.675
+      ],
+      "sector": "Consumer Staples"
+    },
+    {
+      "ticker": "XEL",
+      "lthcs_score": 43.4,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 25.3,
+        "institutional_confidence": 56.4,
+        "financial_evolution": 57.3,
+        "thesis_integrity": 50.0,
+        "des": 42.6
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        7.90625,
+        14.1,
+        10.743749999999999,
+        0.0,
+        10.65
+      ],
+      "sector": "Utilities"
+    },
+    {
+      "ticker": "XOM",
+      "lthcs_score": 44.2,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 7.4,
+        "institutional_confidence": 86.7,
+        "financial_evolution": 33.4,
+        "thesis_integrity": 50.0,
+        "des": 55.8
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": 0.0
+      },
+      "maturity_stage": "standard_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.3125,
+        21.675,
+        6.262499999999998,
+        0.0,
+        13.95
+      ],
+      "sector": "Energy"
+    },
+    {
+      "ticker": "ZS",
+      "lthcs_score": 20.6,
+      "band": "review",
+      "drift_1d": 0.0,
+      "drift_7d": 0.0,
+      "drift_30d": 0.0,
+      "drift_90d": 0.0,
+      "confidence_level": "medium",
+      "data_quality_flags": [
+        "thesis_unavailable"
+      ],
+      "subscores": {
+        "adoption_momentum": 7.7,
+        "institutional_confidence": 1.8,
+        "financial_evolution": 47.5,
+        "thesis_integrity": 50.0,
+        "des": 47.3
+      },
+      "modifiers": {
+        "macro_adj": 0.0,
+        "sector_adj": 0.0,
+        "volatility_mod": -3.0
+      },
+      "maturity_stage": "growth_compounder",
+      "weights_used": [
+        0.25,
+        0.2,
+        0.15,
+        0.2,
+        0.2
+      ],
+      "effective_weights": [
+        0.3125,
+        0.25,
+        0.18749999999999997,
+        0.0,
+        0.25
+      ],
+      "dropped_pillars": [
+        "thesis_integrity"
+      ],
+      "weighted_components": [
+        2.40625,
+        0.45,
+        8.906249999999998,
+        0.0,
+        11.825
+      ],
+      "sector": "Technology"
+    }
+  ]
+}
