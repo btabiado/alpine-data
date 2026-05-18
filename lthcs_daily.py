@@ -950,14 +950,32 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                     print("  AI-news fetch failed: %s" % exc)
                 state.ai_news_by_ticker = {}
 
-            for sym, news_dict in state.ai_news_by_ticker.items():
-                if news_dict.get("total_mentions", 0) < 3:
-                    continue
-                if _has_fresh_sentiment(sym):
-                    continue
-                sig = ai_news.compute_thesis_signal_from_news(news_dict)
-                if _write_supplement(sym, sig):
-                    ai_news_supplement_count += 1
+            # Default path: engagement heuristic. Opt-in: LLM classifier.
+            if os.getenv("LTHCS_LLM_SENTIMENT_ENABLED") == "1":
+                from lthcs.sources.llm_sentiment import compute_universe_llm_sentiment
+                news_by_ticker_dict = {
+                    sym: (nd.get("sample_titles_full") or [
+                        {"title": t, "source": "ai_news"}
+                        for t in (nd.get("sample_titles") or [])
+                    ])
+                    for sym, nd in state.ai_news_by_ticker.items()
+                    if nd.get("total_mentions", 0) >= 3 and not _has_fresh_sentiment(sym)
+                }
+                llm_sentiments = compute_universe_llm_sentiment(news_by_ticker_dict)
+                for sym, sig in llm_sentiments.items():
+                    if sig.get("mean_sentiment_score") is None:
+                        continue
+                    if _write_supplement(sym, sig):
+                        ai_news_supplement_count += 1
+            else:
+                for sym, news_dict in state.ai_news_by_ticker.items():
+                    if news_dict.get("total_mentions", 0) < 3:
+                        continue
+                    if _has_fresh_sentiment(sym):
+                        continue
+                    sig = ai_news.compute_thesis_signal_from_news(news_dict)
+                    if _write_supplement(sym, sig):
+                        ai_news_supplement_count += 1
 
         # --- Analyst-rating breadth (cache-read-only over yahoo_events) ---
         # Runs AFTER the Thesis cascade so the yahoo_events recommendations
