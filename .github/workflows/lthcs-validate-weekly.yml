@@ -1,0 +1,79 @@
+name: lthcs-validate-weekly
+
+# Weekly read-only audit of the LTHCS backfill / snapshot history.
+# Runs scripts/lthcs_backfill_validate.py and surfaces failures via a
+# non-zero exit + an uploaded JSON artifact. Does NOT commit anything —
+# this is pure observability, not data mutation.
+#
+# Scheduled 1 hour after the weekly trends run so the two don't fight
+# for runner pool or git refs.
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch: {}
+
+# Read-only: no push back to main, so we explicitly request `contents: read`
+# instead of `contents: write` to minimize blast radius if the runner
+# is ever compromised.
+permissions:
+  contents: read
+
+concurrency:
+  group: lthcs-validate-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run backfill validator
+        # The validator exits:
+        #   0 = clean
+        #   1 = warnings only
+        #   2 = at least one hard failure
+        # We capture the exit code so we can both upload the artifact
+        # AND fail the workflow visibly when it's non-zero. Without
+        # `continue-on-error: true` the upload step would be skipped.
+        id: validate
+        continue-on-error: true
+        run: |
+          set +e
+          python scripts/lthcs_backfill_validate.py
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Upload validation JSON report
+        # Always upload — even on success — so the artifact history in
+        # the Actions UI shows a baseline of "what clean looks like."
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lthcs-backfill-validation-${{ github.run_id }}
+          # The validator writes data/lthcs/backfill_validation_*.json
+          # with a UTC timestamp suffix; glob picks up whichever ran.
+          path: data/lthcs/backfill_validation_*.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Fail workflow if validation reported issues
+        # Mirror the validator's exit code so the workflow status in
+        # GitHub reflects whether the audit passed. `1` = warnings,
+        # `2` = hard failures; either should turn the run red.
+        if: steps.validate.outputs.exit_code != '0'
+        run: |
+          echo "Validation exit code: ${{ steps.validate.outputs.exit_code }}"
+          exit ${{ steps.validate.outputs.exit_code }}

@@ -1,0 +1,98 @@
+name: lthcs-tune-weights-monthly
+
+# Monthly adaptive-weights walk-forward CV. On the 1st of each month
+# at 07:00 UTC (1 hour after the backtest run so they don't fight for
+# git refs), run scripts/lthcs_tune_weights.py --walk-forward and
+# commit the resulting timestamped JSON to data/lthcs/adaptive_weights/.
+#
+# IMPORTANT: this workflow does NOT flip `enabled` in
+# data/lthcs/adaptive_weights/weights.json. Promoting tuned weights to
+# live scoring is a manual decision (Bryan-approved per the LTHCS
+# governance model — auto-flipping would silently change every
+# composite score).
+on:
+  schedule:
+    - cron: "0 7 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lthcs-tune-weights-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run walk-forward CV tuner
+        id: tune
+        # Capture stdout so we can grep the verdict line for the job
+        # summary. The script writes its own timestamped JSON under
+        # data/lthcs/adaptive_weights/<UTC-ts>.json.
+        run: |
+          set -o pipefail
+          python scripts/lthcs_tune_weights.py --walk-forward 2>&1 | tee tune_output.log
+
+      - name: Extract verdict for job summary
+        # The tuner prints `Recommendation: SHIP|HOLD|REJECT` near the
+        # end. Surface it in the GitHub job summary so monthly status
+        # is visible in the Actions UI without opening the JSON.
+        if: always()
+        run: |
+          verdict=$(grep -E '^Recommendation:' tune_output.log | tail -1 | sed 's/^Recommendation:[[:space:]]*//' || echo "UNKNOWN")
+          reason=$(grep -E '^[[:space:]]+reason:' tune_output.log | tail -1 | sed 's/^[[:space:]]*reason:[[:space:]]*//' || echo "(no reason captured)")
+          {
+            echo "## LTHCS adaptive-weights walk-forward CV"
+            echo ""
+            echo "**Verdict:** \`$verdict\`"
+            echo ""
+            echo "**Reason:** $reason"
+            echo ""
+            echo "_Auto-flip is disabled by design; promoting these weights to live scoring requires a manual edit of \`data/lthcs/adaptive_weights/weights.json\`._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          # Only the JSON output, never weights.json — the enabled flag
+          # is curated by hand. `*.json` would risk staging weights.json
+          # if the tuner ever writes there accidentally, so be explicit.
+          git add 'data/lthcs/adaptive_weights/2*.json' 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No adaptive-weights data changes; skipping commit."
+          else
+            git commit -m "lthcs: monthly walk-forward CV $(date -u +%Y-%m) [skip ci]"
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi

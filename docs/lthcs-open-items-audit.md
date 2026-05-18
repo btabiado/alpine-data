@@ -242,3 +242,46 @@ so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
 Tests: 1338 passing (was 614 at session start 2026-05-17 morning)
+
+---
+
+## Automation schedule
+
+Every recurring LTHCS job is wired into `.github/workflows/`. Cron times
+are UTC and intentionally staggered so two workflows never fight for
+the same runner pool or push to `main` in the same minute.
+
+| Cadence | UTC cron | Workflow file | What it does | Commits to main? |
+|---|---|---|---|---|
+| Daily | `0 23 * * *` | `lthcs-daily.yml` | `lthcs_daily.py --force --catch-up --skip-thesis` — accumulates the daily snapshot under `data/lthcs/`. | Yes |
+| Weekly Mon | `0 4 * * 1` | `lthcs-trends-weekly.yml` | `scripts/lthcs_trends_weekly.py` — pytrends batch into `data/lthcs/trends/`. Sunday 23:00 ET gives Google's limiter overnight to cool. | Yes |
+| Weekly Mon | `0 5 * * 1` | `lthcs-validate-weekly.yml` | `scripts/lthcs_backfill_validate.py` — read-only audit; uploads the JSON report as a 90-day artifact and fails the run if exit code is non-zero. | No (read-only) |
+| Monthly 1st | `0 6 1 * *` | `lthcs-backtest-monthly.yml` | `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` into `data/lthcs/backtest/<YYYY-MM>_monthly/`. Skips silently if fewer than 30 snapshots exist. | Yes |
+| Monthly 1st | `0 7 1 * *` | `lthcs-tune-weights-monthly.yml` | `scripts/lthcs_tune_weights.py --walk-forward` — writes timestamped JSON into `data/lthcs/adaptive_weights/`. Verdict (SHIP/HOLD/REJECT) surfaced in the run's Job Summary. **Does NOT flip `enabled` — promotion is manual.** | Yes |
+
+All write-back workflows mirror the race-safe push retry loop from
+`lthcs-daily.yml` commit `e3f072d`: up to 3 attempts with
+`git fetch + git rebase --autostash origin/main` between tries.
+
+### Quarterly cache pre-warmer — intentionally skipped
+
+`scripts/lthcs_backfill_prewarm.py` populates `.cache/lthcs/` for the
+local 90-day backfill loop. It was on the original Phase-3 task list as
+`lthcs-prewarm-quarterly.yml` but is **not** implemented because:
+
+1. `.cache/` is `.gitignore`d — nothing the script writes would survive
+   the Actions runner teardown.
+2. Caches don't persist between Actions runs, so each scheduled run
+   would re-populate a cache nobody reads.
+3. The only persisted output is `data/lthcs/prewarm_status.json`, and a
+   "this was warmed in CI, not on your laptop" status row would
+   actively mislead the local backfill orchestrator.
+
+If we ever migrate caches to a shared store (e.g. `actions/cache@v4`
+with a stable key, or S3), revisit. Until then, run the pre-warmer
+locally before invoking `scripts/lthcs_backfill.py`.
+
+### Manual triggers
+
+Every workflow above accepts `workflow_dispatch: {}` so it can be
+fired ad-hoc from the Actions UI without waiting for the cron.

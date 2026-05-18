@@ -1,0 +1,77 @@
+name: lthcs-trends-weekly
+
+# Weekly Google Trends batch for the LTHCS Adoption pillar. pytrends is
+# keyless but heavily rate-limited; running on Monday 04:00 UTC
+# (= Sunday 23:00 ET) gives Google's limiter overnight to cool down
+# after weekday traffic and avoids fighting the daily 23:00 UTC cron.
+#
+# Writes weekly snapshots to data/lthcs/trends/<ISO-week>.json and
+# commits them back to main so the next daily/pages build picks them up.
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# Distinct concurrency group from lthcs-daily so a Monday cron collision
+# doesn't kill either run; cancel-in-progress: false lets a manual
+# dispatch queue behind the scheduled run instead of stomping it.
+concurrency:
+  group: lthcs-trends-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run weekly Google Trends batch
+        # pytrends is keyless. The script handles its own retries +
+        # backoff; if Google still blocks us, exit non-zero so the run
+        # is visible in the Actions UI rather than silently no-op'ing.
+        run: python scripts/lthcs_trends_weekly.py
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          git add data/lthcs/trends/
+          if git diff --staged --quiet; then
+            echo "No trends data changes; skipping commit."
+          else
+            git commit -m "lthcs: weekly trends $(date -u +%Y-%m-%d) [skip ci]"
+            # Race-safe push: mirror lthcs-daily.yml's retry loop so a
+            # main moving under us (daily cron, manual dev push) doesn't
+            # eat this week's trends batch.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi

@@ -1,0 +1,108 @@
+name: lthcs-backtest-monthly
+
+# Monthly LTHCS backtest re-run. On the 1st of each month at 06:00 UTC,
+# replay the last 90 days of snapshots through scripts/lthcs_backtest.py
+# at the standard 21-trading-day horizon. Output lives under
+# data/lthcs/backtest/<YYYY-MM>_monthly/ and is committed back to main.
+#
+# Gated on at least 30 snapshot files existing — running the backtest
+# with too little history just produces noise.
+on:
+  schedule:
+    - cron: "0 6 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: lthcs-backtest-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Check snapshot history depth
+        # Backtest needs enough snapshots to be meaningful. We require
+        # at least 30 daily snapshots (~6 trading weeks). If fewer,
+        # skip the run silently so early-life-of-LTHCS months don't
+        # produce noise commits or false-confidence numbers.
+        id: gate
+        run: |
+          set -e
+          n=$(find data/lthcs/snapshots -maxdepth 1 -name '2*.json' -type f | wc -l | tr -d ' ')
+          echo "snapshot_count=$n" >> "$GITHUB_OUTPUT"
+          if [ "$n" -lt 30 ]; then
+            echo "Only $n snapshots available (<30); skipping monthly backtest."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compute backtest window
+        if: steps.gate.outputs.skip != 'true'
+        id: window
+        # Resolve start/end in shell so the job is self-contained.
+        # End = yesterday (today's snapshot isn't guaranteed yet at
+        # 06:00 UTC if the daily 23:00 UTC run was slow). Start = 90
+        # days before that. `month_tag` becomes the run subdir, so
+        # multiple runs in the same month overwrite cleanly.
+        run: |
+          end=$(date -u -d 'yesterday' +%Y-%m-%d)
+          start=$(date -u -d "$end - 90 days" +%Y-%m-%d)
+          month_tag=$(date -u +%Y-%m)
+          echo "start=$start"            >> "$GITHUB_OUTPUT"
+          echo "end=$end"                >> "$GITHUB_OUTPUT"
+          echo "month_tag=$month_tag"    >> "$GITHUB_OUTPUT"
+
+      - name: Run monthly backtest
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          python scripts/lthcs_backtest.py \
+            --start "${{ steps.window.outputs.start }}" \
+            --end   "${{ steps.window.outputs.end }}" \
+            --horizon 21 \
+            --output-dir "data/lthcs/backtest/${{ steps.window.outputs.month_tag }}_monthly"
+
+      - name: Commit and push if data changed
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          git add data/lthcs/backtest/
+          if git diff --staged --quiet; then
+            echo "No backtest data changes; skipping commit."
+          else
+            git commit -m "lthcs: monthly backtest ${{ steps.window.outputs.month_tag }} [skip ci]"
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi
