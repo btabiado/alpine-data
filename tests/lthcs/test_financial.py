@@ -1270,3 +1270,149 @@ def test_bank_cohort_revenue_subscore_differs_from_universe_subscore() -> None:
     assert cohort_rev > 50.0
     # And universe rank should be < 50 (NVDA/MSFT push JPM down).
     assert universe_rev < 50.0
+
+
+# --- compute_financial with compound peer-key (Tier 2 #7) ------------------
+
+
+def _pg_config_two_groups() -> Dict[str, Any]:
+    return {
+        "min_cohort_size": 3,
+        "sector_groups": {
+            "group_a": {"tickers": ["FOO", "P1", "P2", "P3"]},
+            "group_b": {"tickers": ["P4", "P5", "P6", "P7", "P8", "P9"]},
+        },
+    }
+
+
+def _synthetic_universe_two_groups() -> Dict[str, Any]:
+    return {
+        "tickers": [
+            {"ticker": tk, "maturity_stage": "mature_compounder", "active": True}
+            for tk in ["FOO", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9"]
+        ]
+    }
+
+
+def test_compute_financial_peer_groups_config_none_preserves_legacy() -> None:
+    """peer_groups_config=None -> identical to legacy behaviour."""
+    revenue_rows = _annual_pair(2025, 110.0, 100.0)
+    peer_growths = {
+        "FOO": 0.10,
+        "P1": -0.10,
+        "P2": -0.05,
+        "P3": 0.00,
+        "P4": 0.05,
+        "P5": 0.08,
+        "P6": 0.12,
+        "P7": 0.18,
+        "P8": 0.25,
+        "P9": 0.30,
+    }
+    out = financial.compute_financial("FOO", revenue_rows, [], [], peer_growths)
+    # 9 peers, 5 strictly below growth=0.10, 0 equal, 4 above -> 5/9 ≈ 55.56.
+    assert out["components"]["revenue_subscore"] == pytest.approx(55.5556, abs=1e-3)
+    assert out["components"]["peer_cohort_strategy"] == "maturity_only"
+    assert "peer_cohort_size" not in out["components"]
+
+
+def test_compute_financial_peer_groups_config_restricts_cohort() -> None:
+    """When peer_groups_config + universe provided, restrict to compound cohort."""
+    revenue_rows = _annual_pair(2025, 110.0, 100.0)
+    peer_growths = {
+        "FOO": 0.10,
+        "P1": -0.10,
+        "P2": -0.05,
+        "P3": 0.00,
+        "P4": 0.05,
+        "P5": 0.08,
+        "P6": 0.12,
+        "P7": 0.18,
+        "P8": 0.25,
+        "P9": 0.30,
+    }
+    out = financial.compute_financial(
+        "FOO",
+        revenue_rows,
+        [],
+        [],
+        peer_growths,
+        peer_groups_config=_pg_config_two_groups(),
+        universe=_synthetic_universe_two_groups(),
+    )
+    # Compound cohort = group_a (4 incl FOO). Peers excl focal = [-0.10, -0.05, 0.00].
+    # growth 0.10 above all 3 -> 100.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+    assert out["components"]["peer_cohort_strategy"] == "compound"
+    assert out["components"]["peer_cohort_size"] == 4
+
+
+def test_compute_financial_compound_changes_rank_vs_universe() -> None:
+    """The compound cohort should produce a different rank than the universe.
+
+    Mirrors the AAPL spot-check in adoption: focal lives with weaker peers
+    in its sector_group, scores higher than against the broad universe."""
+    revenue_rows = _annual_pair(2025, 110.0, 100.0)  # growth 10%
+    peer_growths = {
+        "FOO": 0.10,
+        "P1": -0.10,
+        "P2": -0.05,
+        "P3": 0.00,
+        "P4": 0.05,
+        "P5": 0.08,
+        "P6": 0.12,
+        "P7": 0.18,
+        "P8": 0.25,
+        "P9": 0.30,
+    }
+    legacy = financial.compute_financial("FOO", revenue_rows, [], [], peer_growths)
+    compound = financial.compute_financial(
+        "FOO",
+        revenue_rows,
+        [],
+        [],
+        peer_growths,
+        peer_groups_config=_pg_config_two_groups(),
+        universe=_synthetic_universe_two_groups(),
+    )
+    assert (
+        compound["components"]["revenue_subscore"]
+        > legacy["components"]["revenue_subscore"]
+    )
+
+
+def test_compute_financial_safety_valve_fires_when_cohort_too_thin() -> None:
+    """Force a universe fallback by setting min_cohort_size higher than any
+    bucket can satisfy."""
+    revenue_rows = _annual_pair(2025, 110.0, 100.0)
+    peer_growths = {
+        "FOO": 0.10,
+        "P1": 0.05,
+        "P2": 0.08,
+        "P3": 0.12,
+        "P4": 0.20,
+        "P5": 0.30,
+    }
+    syn_config = {
+        "min_cohort_size": 10,
+        "sector_groups": {
+            "tiny": {"tickers": ["FOO"]},
+            "other": {"tickers": ["P1", "P2", "P3", "P4", "P5"]},
+        },
+    }
+    syn_universe = {
+        "tickers": [
+            {"ticker": tk, "maturity_stage": "mature_compounder", "active": True}
+            for tk in ["FOO", "P1", "P2", "P3", "P4", "P5"]
+        ]
+    }
+    out = financial.compute_financial(
+        "FOO",
+        revenue_rows,
+        [],
+        [],
+        peer_growths,
+        peer_groups_config=syn_config,
+        universe=syn_universe,
+    )
+    assert out["components"]["peer_cohort_strategy"] == "universe_fallback"

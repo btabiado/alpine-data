@@ -629,3 +629,177 @@ def test_fetch_google_trends_interest_skips_when_rate_limited(
 
     assert result == []
     mock_trendreq.assert_not_called()
+
+
+# --- compute_adoption with compound peer-key (Tier 2 #7) -------------------
+
+
+def _peer_groups_config_two_groups() -> Dict[str, Any]:
+    """Minimal peer_groups config with two sector_groups for cohort tests."""
+    return {
+        "min_cohort_size": 3,
+        "sector_groups": {
+            "group_a": {
+                "tickers": ["AAPL", "P1", "P2", "P3"],
+            },
+            "group_b": {
+                "tickers": ["P4", "P5", "P6", "P7", "P8", "P9"],
+            },
+        },
+    }
+
+
+def _synthetic_universe_two_groups() -> Dict[str, Any]:
+    """Universe matching the two-group config above. All mature_compounder."""
+    return {
+        "tickers": [
+            {"ticker": "AAPL", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P1", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P2", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P3", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P4", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P5", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P6", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P7", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P8", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P9", "maturity_stage": "mature_compounder", "active": True},
+        ]
+    }
+
+
+def test_compute_adoption_peer_groups_config_none_preserves_legacy() -> None:
+    """When peer_groups_config=None, behaviour is identical to legacy path."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = _peer_growths_universe("AAPL", 0.10)
+    result = adoption.compute_adoption("AAPL", rows, [], peer_growths)
+    # Legacy path: 9 peers, 6 below 0.10, 3 above -> 66.6667.
+    assert result["components"]["revenue_subscore"] == pytest.approx(66.6667, abs=1e-3)
+    assert result["components"]["peer_cohort_strategy"] == "maturity_only"
+    # No peer_cohort_size when config is None.
+    assert "peer_cohort_size" not in result["components"]
+
+
+def test_compute_adoption_peer_groups_config_restricts_to_compound_cohort() -> None:
+    """When peer_groups_config provided, percentile is computed in the compound cohort."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),  # growth 10%
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # P1..P3 are in group_a with focal AAPL; their growths are low (-10, -5, 0).
+    # P4..P9 are in group_b with high growths (5, 8, 12, 18, 25, 30).
+    peer_growths = {
+        "AAPL": 0.10,
+        "P1": -0.10,
+        "P2": -0.05,
+        "P3": 0.00,
+        "P4": 0.05,
+        "P5": 0.08,
+        "P6": 0.12,
+        "P7": 0.18,
+        "P8": 0.25,
+        "P9": 0.30,
+    }
+    result = adoption.compute_adoption(
+        "AAPL",
+        rows,
+        [],
+        peer_growths,
+        peer_groups_config=_peer_groups_config_two_groups(),
+        universe=_synthetic_universe_two_groups(),
+    )
+    # Compound cohort = group_a = {AAPL, P1, P2, P3}. AAPL excluded -> peers
+    # = [-0.10, -0.05, 0.00]. growth 0.10 ranks above all three -> 100.
+    assert result["components"]["revenue_subscore"] == pytest.approx(100.0)
+    assert result["components"]["peer_cohort_strategy"] == "compound"
+    assert result["components"]["peer_cohort_size"] == 4  # AAPL + 3 peers
+
+
+def test_compute_adoption_aapl_compound_vs_stage_only_delta() -> None:
+    """AAPL spot-check: percentile changes when going from stage-only to compound.
+
+    With AAPL in group_a (small, low-growth peers), it should score MUCH
+    higher (100) than against the broader 9-name "stage-only" cohort that
+    includes high-growth names like P7-P9 (~66).
+    """
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),  # growth 10%
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    peer_growths = {
+        "AAPL": 0.10,
+        "P1": -0.10,
+        "P2": -0.05,
+        "P3": 0.00,
+        "P4": 0.05,
+        "P5": 0.08,
+        "P6": 0.12,
+        "P7": 0.18,
+        "P8": 0.25,
+        "P9": 0.30,
+    }
+    # Stage-only (legacy) score:
+    legacy = adoption.compute_adoption("AAPL", rows, [], peer_growths)
+    # Compound score:
+    compound = adoption.compute_adoption(
+        "AAPL",
+        rows,
+        [],
+        peer_growths,
+        peer_groups_config=_peer_groups_config_two_groups(),
+        universe=_synthetic_universe_two_groups(),
+    )
+    legacy_rev = legacy["components"]["revenue_subscore"]
+    compound_rev = compound["components"]["revenue_subscore"]
+    # Compound should be strictly higher when the focal's peer group has
+    # weaker peers than the universe — that's the whole point.
+    assert compound_rev > legacy_rev
+    assert compound_rev == pytest.approx(100.0)
+
+
+def test_compute_adoption_peer_groups_safety_valve_falls_back() -> None:
+    """A focal with too-small compound cohort should fall back, surfacing
+    a non-'compound' strategy in variable_detail."""
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # Tiny cohort: AAPL alone in its sector_group with a high min floor.
+    peer_growths = {
+        "AAPL": 0.10,
+        "P1": 0.05,
+        "P2": 0.08,
+        "P3": 0.12,
+        "P4": 0.20,
+        "P5": 0.30,
+    }
+    syn_config = {
+        "min_cohort_size": 10,  # force universe fallback
+        "sector_groups": {
+            "tiny": {"tickers": ["AAPL"]},
+            "other_grp": {"tickers": ["P1", "P2", "P3", "P4", "P5"]},
+        },
+    }
+    syn_universe = {
+        "tickers": [
+            {"ticker": "AAPL", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P1", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P2", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P3", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P4", "maturity_stage": "mature_compounder", "active": True},
+            {"ticker": "P5", "maturity_stage": "mature_compounder", "active": True},
+        ]
+    }
+    result = adoption.compute_adoption(
+        "AAPL",
+        rows,
+        [],
+        peer_growths,
+        peer_groups_config=syn_config,
+        universe=syn_universe,
+    )
+    # Compound: 1 -> too small. sector_group_only: 1 -> too small.
+    # maturity_only: 6 -> too small (floor=10). universe_fallback fires.
+    assert result["components"]["peer_cohort_strategy"] == "universe_fallback"
