@@ -19,6 +19,7 @@
   inset: 0;
   background: rgba(8, 11, 16, 0.78);
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   cursor: pointer;
 }
 
