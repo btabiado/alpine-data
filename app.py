@@ -367,6 +367,7 @@ def build_lthcs_payload() -> dict:
           "as_of": "<YYYY-MM-DD>",
           "movers": {"gainers": [...], "decliners": [...]},
           "universe_count": int,
+          "insights": [ ... 3-5 insight dicts ... ],
         }
     On any error or missing data, returns {"available": False}.
     """
@@ -396,6 +397,7 @@ def build_lthcs_payload() -> dict:
                     "band": row.get("band"),
                     "drift_30d": row.get("drift_30d"),
                     "sector": row.get("sector"),
+                    "subscores": row.get("subscores") or {},
                 }
             sorted_by_drift = sorted(
                 [r for r in scores if r.get("ticker")],
@@ -409,7 +411,292 @@ def build_lthcs_payload() -> dict:
             out["universe_count"] = len(scores)
             out.setdefault("as_of", snap.get("calc_date"))
             out["available"] = True
+    # Generate dynamic insights (3-5 items) from the auxiliary LTHCS files
+    # (insider, holdings, macro breadth, sector strength, history). Best-effort:
+    # any single source missing is silently skipped; the panel falls back to
+    # the "none right now" placeholder when zero insights survive.
+    try:
+        out["insights"] = compute_lthcs_insights(
+            as_of=out.get("as_of"),
+            index_today=out.get("index") or {},
+            snap_scores=(load_json(snap_file).get("scores") if snap_file else []) or [],
+        )
+    except Exception as e:
+        print(f"[lthcs] insights error: {e}", file=sys.stderr)
+        out["insights"] = []
     return out
+
+
+def compute_lthcs_insights(
+    as_of: str | None,
+    index_today: dict,
+    snap_scores: list,
+) -> list:
+    """Generate 3-5 insight cards for the LTHCS tab.
+
+    Insights drawn from (in priority order):
+      1. Cluster-insider-buying breadth      (insider/<date>.json)
+      2. Heavy insider distribution          (insider/<date>.json)
+      3. 13F accumulators (signal_score>+0.5)(holdings/<date>.json)
+      4. 13F distributors (signal_score<-0.3)(holdings/<date>.json)
+      5. Composite Index 1d delta            (index/<date>.json deltas)
+      6. Macro regime flags                  (macro/breadth_<date>.json)
+      7. Sector leader / laggard 1m          (macro/sector_strength_<date>.json)
+      8. Band moves vs. yesterday            (history/by_ticker/<TICKER>.json)
+
+    Returns top 3-5 by severity (high > medium > low), with category
+    diversity preferred.
+    """
+    insider_dir = DATA_DIR / "lthcs" / "insider"
+    holdings_dir = DATA_DIR / "lthcs" / "holdings"
+    macro_dir = DATA_DIR / "lthcs" / "macro"
+    index_dir = DATA_DIR / "lthcs" / "index"
+    history_dir = DATA_DIR / "lthcs" / "history" / "by_ticker"
+
+    candidates: list[dict] = []
+    SEV_RANK = {"high": 0, "medium": 1, "low": 2}
+
+    # ---- (1) and (2): insider signals ----
+    insider_file = _latest_dated_json(insider_dir)
+    if insider_file is not None:
+        insider = load_json(insider_file)
+        if isinstance(insider, dict):
+            cluster = [t for t, v in insider.items()
+                       if isinstance(v, dict) and v.get("cluster_buying")]
+            if len(cluster) >= 3:
+                tail = ", ".join(sorted(cluster)[:5])
+                candidates.append({
+                    "category": "insider",
+                    "icon": "🔥",
+                    "headline": f"{len(cluster)} cluster_buying flags this week",
+                    "detail": f"{tail} — strongest single insider signal in the universe",
+                    "severity": "high",
+                })
+            heavy = [
+                (t, float(v.get("net_dollar_value") or 0.0))
+                for t, v in insider.items()
+                if isinstance(v, dict)
+                and v.get("regime") == "heavy_selling"
+                and v.get("ceo_cfo_action") == "selling"
+            ]
+            if len(heavy) >= 10:
+                top3 = sorted(heavy, key=lambda x: x[1])[:3]
+                tail = ", ".join(t for t, _ in top3)
+                candidates.append({
+                    "category": "insider",
+                    "icon": "📉",
+                    "headline": f"{len(heavy)} tickers with CEO/CFO heavy distribution",
+                    "detail": f"largest net-$ sellers: {tail}",
+                    "severity": "medium",
+                })
+
+    # ---- (3) and (4): 13F conviction ----
+    holdings_file = _latest_dated_json(holdings_dir)
+    if holdings_file is not None:
+        holdings = load_json(holdings_file)
+        if isinstance(holdings, dict):
+            accum = [
+                (t, float(v.get("signal_score") or 0.0))
+                for t, v in holdings.items()
+                if isinstance(v, dict)
+                and v.get("conviction_signal") == "accumulating"
+                and float(v.get("signal_score") or 0.0) > 0.5
+            ]
+            dist = [
+                (t, float(v.get("signal_score") or 0.0))
+                for t, v in holdings.items()
+                if isinstance(v, dict)
+                and float(v.get("signal_score") or 0.0) < -0.3
+            ]
+            if accum:
+                top3 = sorted(accum, key=lambda x: -x[1])[:3]
+                tail = ", ".join(f"{t} (+{s:.2f})" for t, s in top3)
+                candidates.append({
+                    "category": "13F",
+                    "icon": "🏦",
+                    "headline": f"{len(accum)} tickers with strong 13F accumulation",
+                    "detail": f"top conviction: {tail}",
+                    "severity": "medium" if len(accum) >= 3 else "low",
+                })
+            if dist:
+                top3 = sorted(dist, key=lambda x: x[1])[:3]
+                tail = ", ".join(f"{t} ({s:+.2f})" for t, s in top3)
+                candidates.append({
+                    "category": "13F",
+                    "icon": "💼",
+                    "headline": f"{len(dist)} tickers with 13F distribution",
+                    "detail": f"largest sellers: {tail}",
+                    "severity": "medium" if len(dist) >= 5 else "low",
+                })
+
+    # ---- (5): Composite Index 1d delta ----
+    if index_today and as_of:
+        try:
+            today = datetime.strptime(as_of, "%Y-%m-%d")
+            from datetime import timedelta as _td
+            for back in range(1, 8):
+                yest = today - _td(days=back)
+                yfile = index_dir / f"{yest.strftime('%Y-%m-%d')}.json"
+                if yfile.exists():
+                    y = load_json(yfile)
+                    if y and "score" in y and "score" in index_today:
+                        s_today = float(index_today.get("score") or 0)
+                        s_yest = float(y.get("score") or 0)
+                        delta = s_today - s_yest
+                        if abs(delta) >= 1:
+                            sev = "high" if abs(delta) >= 10 else \
+                                  "medium" if abs(delta) >= 5 else "low"
+                            arrow = "▲" if delta > 0 else "▼"
+                            icon = "📈" if delta > 0 else "📉"
+                            candidates.append({
+                                "category": "composite",
+                                "icon": icon,
+                                "headline": (
+                                    f"Composite Index moved "
+                                    f"{s_yest:+.0f} → {s_today:+.0f} "
+                                    f"({arrow}{abs(delta):.0f}) over {back}d"
+                                ),
+                                "detail": (
+                                    f"{index_today.get('label','LTHCS')} band "
+                                    f"({index_today.get('band_key','—')})"
+                                ),
+                                "severity": sev,
+                            })
+                    break
+        except Exception:
+            pass
+
+    # ---- (6): Macro regime ----
+    breadth_file = None
+    if macro_dir.exists():
+        b_candidates = list(macro_dir.glob("breadth_*.json"))
+        if b_candidates:
+            breadth_file = max(b_candidates, key=lambda p: p.stem)
+    if breadth_file is not None:
+        breadth = load_json(breadth_file)
+        flags = (breadth or {}).get("regime_flags") or {}
+        tripped = [k for k, v in flags.items() if v]
+        if tripped:
+            candidates.append({
+                "category": "regime",
+                "icon": "⚠️",
+                "headline": f"Macro regime flag tripped: {', '.join(tripped)}",
+                "detail": "headwind to long-term holding conviction",
+                "severity": "high",
+            })
+        else:
+            candidates.append({
+                "category": "regime",
+                "icon": "📈",
+                "headline": "Risk-on macro backdrop",
+                "detail": "HY OAS, yield curve, and broad dollar all clean",
+                "severity": "low",
+            })
+
+    # ---- (7): Sector leaders / laggards ----
+    sector_file = None
+    if macro_dir.exists():
+        s_candidates = list(macro_dir.glob("sector_strength_*.json"))
+        if s_candidates:
+            sector_file = max(s_candidates, key=lambda p: p.stem)
+    if sector_file is not None:
+        sec = load_json(sector_file)
+        sectors = (sec or {}).get("sectors") or {}
+        if isinstance(sectors, dict) and sectors:
+            ranked = []
+            for etf, v in sectors.items():
+                if isinstance(v, dict) and v.get("relative_1m") is not None:
+                    ranked.append((
+                        etf,
+                        v.get("sector_name") or etf,
+                        float(v.get("relative_1m") or 0.0),
+                    ))
+            if ranked:
+                ranked.sort(key=lambda x: -x[2])
+                top = ranked[0]
+                bot = ranked[-1]
+                candidates.append({
+                    "category": "sector",
+                    "icon": "📈",
+                    "headline": (
+                        f"Sector leader: {top[1]} "
+                        f"({top[2]*100:+.1f}% rel 1m) · "
+                        f"laggard: {bot[1]} ({bot[2]*100:+.1f}%)"
+                    ),
+                    "detail": "relative 1m return vs. SPY benchmark",
+                    "severity": "low",
+                })
+
+    # ---- (8): Band moves vs. yesterday ----
+    if history_dir.exists():
+        band_changes = []
+        try:
+            for hp in history_dir.glob("*.json"):
+                hd = load_json(hp)
+                if not isinstance(hd, dict):
+                    continue
+                hist = hd.get("history") or []
+                if len(hist) < 2:
+                    continue
+                # Identify newest + previous entry by date (entries may be
+                # out of order; sort by date desc).
+                by_date = sorted(
+                    [h for h in hist if h.get("date")],
+                    key=lambda h: h.get("date"),
+                    reverse=True,
+                )
+                if len(by_date) < 2:
+                    continue
+                latest, prev = by_date[0], by_date[1]
+                if latest.get("band") and prev.get("band") and \
+                        latest.get("band") != prev.get("band"):
+                    band_changes.append({
+                        "ticker": hd.get("ticker") or hp.stem,
+                        "from_band": prev.get("band"),
+                        "to_band": latest.get("band"),
+                        "score_delta": (
+                            float(latest.get("score") or 0)
+                            - float(prev.get("score") or 0)
+                        ),
+                    })
+        except Exception:
+            pass
+        if len(band_changes) >= 5:
+            band_changes.sort(key=lambda c: -abs(c["score_delta"]))
+            top3 = band_changes[:3]
+            tail = ", ".join(
+                f"{c['ticker']} {c['from_band']}→{c['to_band']} "
+                f"({c['score_delta']:+.1f})"
+                for c in top3
+            )
+            candidates.append({
+                "category": "movers",
+                "icon": "📈",
+                "headline": f"{len(band_changes)} tickers shifted band overnight",
+                "detail": tail,
+                "severity": "medium",
+            })
+
+    # ---- Prioritize: high > medium > low, with category diversity ----
+    candidates.sort(key=lambda i: SEV_RANK.get(i.get("severity"), 9))
+    picked: list[dict] = []
+    seen_cats: set = set()
+    # First pass — one per category, in severity order, until we reach 5.
+    for c in candidates:
+        if c["category"] not in seen_cats:
+            picked.append(c)
+            seen_cats.add(c["category"])
+            if len(picked) >= 5:
+                break
+    # Second pass — fill remaining slots with the next-best items even if
+    # the category repeats, but only if we have fewer than 3 insights.
+    if len(picked) < 3:
+        for c in candidates:
+            if c not in picked:
+                picked.append(c)
+                if len(picked) >= 5:
+                    break
+    return picked[:5]
 
 
 def render_html(
@@ -1699,6 +1986,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ STOCKS TAB ============ -->
   <div id="tab-stocks" class="hidden">
     <div class="container">
+      <!-- LTHCS Insights row — dynamic 3-5 insights + corner CTA. Mirrors
+           the LTHCS-tab layout so both tabs read consistently. Filled by
+           renderLthcsInsightsRow(host) from DATA.lthcs.insights. -->
+      <div class="card" id="stocksLthcsInsightsRow" style="padding:12px 14px;margin-bottom:10px;border-left:4px solid #a78bfa"></div>
       <!-- LTHCS Composite Index — long-term holding conviction across the
            167-ticker universe. Visual model mirrors the Whale Sentiment
            Index card (headline + ±100 gauge + component table). Top movers
@@ -1770,21 +2061,22 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ LTHCS TAB ============ -->
   <!-- Discoverability gateway for the standalone LTHCS dashboard. Renders
-       the same composite-index summary the Stocks tab carries, plus an
-       intro card and a prominent "Open full LTHCS dashboard" CTA. The
-       full dashboard lives at /btc-eth-etf-dashboard/lthcs/ (staged by
-       .github/workflows/pages.yml from the committed lthcs_tab/ dir). -->
+       the same composite-index summary the Stocks tab carries plus an
+       Insights row + corner CTA to the full LTHCS dashboard. The full
+       dashboard lives at /btc-eth-etf-dashboard/lthcs/ (staged by
+       .github/workflows/pages.yml from the committed lthcs_tab/ dir).
+       Layout (refined from b18e180):
+         Row 1: Insights row + corner "Open full LTHCS →" button
+         Row 2: Composite Index card (gauge + larger-font component table)
+         Row 3: Gainers / Decliners as colored ticker boxes (Crypto-card model). -->
   <div id="tab-lthcs" class="hidden">
     <div class="container">
-      <div class="card" style="padding:14px 16px;margin-bottom:10px;border-left:4px solid #a78bfa">
-        <h2 style="margin:0 0 6px;font-size:15px">📊 LTHCS — Long-Term Holding Conviction Score</h2>
-        <div class="sub" style="color:var(--muted);margin-bottom:10px">
-          A 167-ticker equity universe scored 0–100 on adoption momentum, institutional confidence, financial evolution, thesis integrity, and demand-environment signals. The Composite Index below is the aggregate read across the universe. Open the standalone dashboard for per-ticker drill-downs, regime overlay, heatmap and movers.
-        </div>
-        <a class="btn" href="lthcs/" target="_blank" rel="noopener" style="display:inline-block;background:#a78bfa;color:#0b0d12;font-weight:700;padding:8px 14px;border-radius:6px;text-decoration:none">Open full LTHCS dashboard →</a>
-      </div>
-      <!-- Same composite-index panel rendered on Stocks tab. Filled
-           by renderLthcsCompositePanel(host) — see the JS for details. -->
+      <!-- Insights row — dynamic 3-5 LTHCS insights with a corner CTA.
+           Insights filled by renderLthcsInsightsRow(host) from DATA.lthcs.insights;
+           the CTA stays in the top-right corner regardless of insight count. -->
+      <div class="card" id="lthcsInsightsRow" style="padding:12px 14px;margin-bottom:10px;border-left:4px solid #a78bfa"></div>
+      <!-- Composite-index panel — gauge + components table + movers.
+           Filled by renderLthcsCompositePanel(host) — see the JS for details. -->
       <div class="chart-card" id="lthcsCompositeCard" style="position:relative;margin-bottom:10px"></div>
     </div>
   </div>
@@ -3875,14 +4167,24 @@ function renderLthcsCompositePanel(host){
   const label = idx.label || 'LTHCS';
   const asOf = idx.as_of || L.as_of || '—';
   const components = Array.isArray(idx.components) ? idx.components : [];
+  // Component-table fonts bumped per user feedback (post b18e180 refinement):
+  // name/value/± from ~13px → 15px and Read 12px → 14px so the table reads
+  // clearly without leaning in.
   const compRows = components.map(c => {
     const d = Number(c.delta) || 0;
     const cls = d > 0 ? 'green' : (d < 0 ? 'red' : 'amber');
     const sign = (d >= 0 ? '+' : '') + d;
-    return `<tr><td>${escapeHtml(c.name||'')}</td><td>${escapeHtml(String(c.value==null?'—':c.value))}</td><td class="${cls}">${sign}</td><td style="color:var(--muted);font-size:12px">${escapeHtml(c.read||'')}</td></tr>`;
+    return `<tr>
+      <td style="font-size:15px">${escapeHtml(c.name||'')}</td>
+      <td style="font-size:15px;font-weight:600">${escapeHtml(String(c.value==null?'—':c.value))}</td>
+      <td class="${cls}" style="font-size:15px;font-weight:600">${sign}</td>
+      <td style="color:var(--muted);font-size:14px">${escapeHtml(c.read||'')}</td>
+    </tr>`;
   }).join('');
   // Top movers — read DATA.lthcs.movers.gainers / .decliners (top 5 each
   // by drift_30d). Defensive: missing arrays render an empty mover row.
+  // Rendered as ticker BOXES (Crypto-tab card model) instead of mini-tables
+  // per user feedback.
   const moversRow = renderLthcsMoversRow(L.movers || {});
   host.innerHTML = `
     <div class="head" style="align-items:flex-start">
@@ -3905,8 +4207,46 @@ function renderLthcsCompositePanel(host){
   `;
 }
 
-// Side-by-side top-5 gainers / decliners mini-tables for the LTHCS
-// composite panel. Stacks below the gauge on mobile via flex-wrap.
+// LTHCS-band → CSS color. Maps the 5 LTHCS band slugs from the daily
+// snapshot to the crypto-dashboard signal palette so the gainer/decliner
+// boxes match the existing color system (no new tokens introduced).
+function lthcsBandColor(band){
+  switch ((band || '').toLowerCase()){
+    case 'elite':         return '#16a34a';   // strong green
+    case 'constructive':  return '#22c55e';   // green
+    case 'monitor':       return '#f59e0b';   // amber
+    case 'weakening':     return '#fb923c';   // salmon/orange
+    case 'review':        return '#ef4444';   // red
+    default:              return '#94a3b8';
+  }
+}
+
+// Map LTHCS subscores → human-readable top-driver pillar label for the
+// sub-line on each gainer/decliner box. Picks the pillar with the highest
+// score (gainer) or lowest score (decliner) to surface "why".
+function lthcsTopPillar(subs, mode){
+  if (!subs || typeof subs !== 'object') return '';
+  const PILLARS = {
+    adoption_momentum: 'Adoption',
+    institutional_confidence: 'Institutional',
+    financial_evolution: 'Financial',
+    thesis_integrity: 'Thesis',
+    des: 'DES',
+  };
+  const entries = Object.entries(subs)
+    .filter(([k, v]) => typeof v === 'number' && isFinite(v));
+  if (!entries.length) return '';
+  entries.sort((a, b) => mode === 'decliner' ? a[1] - b[1] : b[1] - a[1]);
+  const [k, v] = entries[0];
+  return `${PILLARS[k] || k} ${v.toFixed(0)}`;
+}
+
+// Side-by-side top-5 gainers / decliners as colored ticker boxes for the
+// LTHCS composite panel. Visual model mirrors the Overview-tab BTC/ETH/
+// LINK/LTC ticker cards (border-left tint + big score, click → drill-in).
+// On desktop the two sections sit side-by-side with each section's 5 boxes
+// flowing into a 2-3 column grid; on mobile (≤768px) it stacks to a single
+// column via the grid-template-columns auto-fit min(140px,1fr).
 function renderLthcsMoversRow(movers){
   const gainers = Array.isArray(movers.gainers) ? movers.gainers : [];
   const decliners = Array.isArray(movers.decliners) ? movers.decliners : [];
@@ -3920,39 +4260,128 @@ function renderLthcsMoversRow(movers){
   const fmtScore = s => {
     const v = Number(s);
     if (!isFinite(v)) return '—';
-    return v.toFixed(1);
+    return v.toFixed(0);
   };
-  const driftCls = d => {
+  const driftColor = d => {
     const v = Number(d);
-    if (!isFinite(v) || v === 0) return 'amber';
-    return v > 0 ? 'green' : 'red';
+    if (!isFinite(v) || v === 0) return 'var(--muted)';
+    return v > 0 ? '#22c55e' : '#ef4444';
   };
-  const row = (r) => `<tr>
-    <td style="font-weight:700">${escapeHtml(r.ticker||'')}</td>
-    <td>${fmtScore(r.score)}</td>
-    <td class="${driftCls(r.drift_30d)}">${fmtDrift(r.drift_30d)}</td>
-    <td style="color:var(--muted);font-size:11px">${escapeHtml(r.sector||'')}</td>
-  </tr>`;
-  const block = (title, rows, accent) => `
-    <div style="flex:1 1 220px;min-width:0">
-      <div style="font-size:11px;font-weight:700;color:${accent};letter-spacing:.06em;margin-bottom:4px">${title}</div>
-      <table style="width:100%">
-        <thead><tr><th style="text-align:left">Ticker</th><th>Score</th><th>30d Δ</th><th>Sector</th></tr></thead>
-        <tbody>${rows.map(row).join('')}</tbody>
-      </table>
+  const driftArrow = d => {
+    const v = Number(d);
+    if (!isFinite(v) || v === 0) return '·';
+    return v > 0 ? '▲' : '▼';
+  };
+  // Each ticker box: ~150px wide / ~80-90px tall, colored left border + soft
+  // band-tinted background, click → /lthcs/?ticker=<TICKER>. Encoded HTML
+  // class consistent with the Crypto-tab .card pattern.
+  const box = (r, mode) => {
+    const ticker = (r.ticker || '').toUpperCase();
+    const band = (r.band || '').toLowerCase();
+    const accent = lthcsBandColor(band);
+    const drift = Number(r.drift_30d);
+    const driftStr = fmtDrift(r.drift_30d);
+    const driftCol = driftColor(r.drift_30d);
+    const arrow = driftArrow(r.drift_30d);
+    const score = fmtScore(r.score);
+    const pillar = lthcsTopPillar(r.subscores, mode);
+    const subLine = pillar
+      ? `Top: ${escapeHtml(pillar)}`
+      : `${escapeHtml(band || 'band —')}`;
+    return `<a class="card lthcs-mover-card"
+      href="lthcs/?ticker=${encodeURIComponent(ticker)}"
+      target="_blank" rel="noopener"
+      title="Open ${escapeHtml(ticker)} on LTHCS dashboard"
+      style="display:block;padding:8px 10px;border-left:4px solid ${accent};
+        background:${accent}11;text-decoration:none;color:var(--text);
+        cursor:pointer;min-height:80px">
+      <div style="font-size:16px;font-weight:700;letter-spacing:.02em">${escapeHtml(ticker)}</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-top:2px">
+        <span style="font-size:24px;font-weight:700;color:${accent};line-height:1">${score}</span>
+        <span style="font-size:12px;font-weight:600;color:${driftCol}">${arrow} ${driftStr}</span>
+      </div>
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-top:4px;
+        white-space:nowrap;text-overflow:ellipsis;overflow:hidden">${subLine}</div>
+    </a>`;
+  };
+  const block = (title, rows, accent, mode) => `
+    <div style="flex:1 1 320px;min-width:0">
+      <div style="font-size:12px;font-weight:700;color:${accent};letter-spacing:.06em;margin-bottom:6px">${title}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px">
+        ${rows.map(r => box(r, mode)).join('')}
+      </div>
     </div>
   `;
   return `<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:14px">
-    ${gainers.length ? block('▲ TOP 5 GAINERS (30D)', gainers, '#22c55e') : ''}
-    ${decliners.length ? block('▼ TOP 5 DECLINERS (30D)', decliners, '#ef4444') : ''}
+    ${gainers.length ? block('▲ TOP 5 GAINERS (30D)', gainers, '#22c55e', 'gainer') : ''}
+    ${decliners.length ? block('▼ TOP 5 DECLINERS (30D)', decliners, '#ef4444', 'decliner') : ''}
   </div>`;
 }
 
-// Render the standalone LTHCS tab (intro card is static HTML; the
-// composite panel is filled by renderLthcsCompositePanel into
-// #lthcsCompositeCard). Kept as its own function so future enhancements
-// (e.g. add regime banner, recent-history sparkline) have a home.
+// LTHCS Insights row + corner CTA — replaces the big intro card from
+// b18e180. Reads DATA.lthcs.insights (3-5 dicts built server-side by
+// compute_lthcs_insights). Each insight gets a small card with a
+// severity-colored left border (high=red, medium=amber, low=green).
+// The CTA "Open full LTHCS →" sits in the top-right corner of the row so
+// the link stays prominent without consuming a whole row.
+function renderLthcsInsightsRow(host){
+  if (!host) return;
+  const L = (DATA.lthcs || {});
+  const insights = Array.isArray(L.insights) ? L.insights : [];
+  const cta = '<a class="btn" href="lthcs/" target="_blank" rel="noopener"' +
+    ' style="display:inline-flex;align-items:center;gap:4px;background:#a78bfa;' +
+    'color:#0b0d12;font-weight:700;padding:6px 12px;border-radius:6px;' +
+    'text-decoration:none;font-size:12px;white-space:nowrap;flex:0 0 auto">' +
+    'Open full LTHCS →</a>';
+  const sevColor = sev => ({
+    high:   '#ef4444',
+    medium: '#f59e0b',
+    low:    '#22c55e',
+  })[sev] || '#a78bfa';
+  const header = `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+      <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <strong style="font-size:13px;color:var(--text)">LTHCS Insights</strong>
+        <span class="sub" style="font-size:11px;color:var(--muted)">
+          ${insights.length ? insights.length + ' signals · as of ' + escapeHtml(L.as_of || '—') : 'none right now'}
+        </span>
+      </div>
+      ${cta}
+    </div>
+  `;
+  if (!insights.length){
+    host.innerHTML = header +
+      '<div class="sub" style="color:var(--muted);font-size:12px">' +
+      'Nothing unusual right now. Insights populate when the daily pipeline ' +
+      'finishes and writes <code>data/lthcs/insider/</code>, <code>holdings/</code>, ' +
+      '<code>macro/</code>, and <code>history/</code> files.</div>';
+    return;
+  }
+  const items = insights.map(i => {
+    const c = sevColor(i.severity);
+    const ic = i.icon || '•';
+    const detail = i.detail
+      ? `<div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3">${escapeHtml(i.detail)}</div>`
+      : '';
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;
+      background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};
+      border-radius:8px;max-width:420px;flex:1 1 280px;min-height:40px">
+      <span style="font-size:13px;line-height:1.2">${escapeHtml(ic)}</span>
+      <div style="line-height:1.3;min-width:0">
+        <div style="font-size:12px;color:var(--text);font-weight:600">${escapeHtml(i.headline || '')}</div>
+        ${detail}
+      </div>
+    </div>`;
+  }).join('');
+  host.innerHTML = header +
+    `<div style="display:flex;flex-wrap:wrap;gap:8px">${items}</div>`;
+}
+
+// Render the standalone LTHCS tab — Insights row + composite panel. Both
+// hosts are filled in place; the panel host is the same as the Stocks-tab
+// composite card so the visual model stays identical.
 function renderLthcsTab(){
+  renderLthcsInsightsRow(document.getElementById('lthcsInsightsRow'));
   renderLthcsCompositePanel(document.getElementById('lthcsCompositeCard'));
 }
 
@@ -6461,9 +6890,11 @@ function renderStocksTab(){
   const grid = document.getElementById('stocksGrid');
   if (!grid) return;
   const rows = ((DATA.market||{}).stocks_signals) || [];
-  // LTHCS Composite Index panel — pinned at the very top of the Stocks tab
-  // as the canonical equity-conviction read across the universe. Same
-  // visual model as the Whale Sentiment Index. Mirrors the LTHCS tab.
+  // LTHCS Insights row + Composite Index panel — pinned at the very top
+  // of the Stocks tab as the canonical equity-conviction read across the
+  // universe. Same visual model as the Whale Sentiment Index. Mirrors the
+  // LTHCS tab. Insights row hosts the corner CTA so the intro card is gone.
+  renderLthcsInsightsRow(document.getElementById('stocksLthcsInsightsRow'));
   renderLthcsCompositePanel(document.getElementById('stocksLthcsCompositeCard'));
   // Traditional indices bar (DOW / S&P / NDX / VIX) moved here from the
   // Crypto tab — macro equity context belongs alongside the equity-signal grid.
