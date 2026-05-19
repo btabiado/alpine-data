@@ -612,6 +612,25 @@ class TestRenormalizeOnStubbedThesis:
         # Documented weights remain intact so the audit trail is preserved.
         assert r["weights_used"] == [0.25, 0.20, 0.15, 0.20, 0.20]
 
+    def test_crypto_thesis_flag_renormalizes(self, weights_config):
+        """crypto_thesis_unavailable → same thesis pillar drop as the equity flag
+        (per docs/lthcs-crypto-pillar-adapter-spec.md §9)."""
+        subs = self._subs()
+        r = compute_lthcs_score(
+            ticker="BTC", sector="Crypto",
+            maturity_stage="standard_compounder",
+            pillar_subscores=subs,
+            weights_config=weights_config,
+            data_quality_flags=["crypto_thesis_unavailable"],
+        )
+        # Same arithmetic as test_thesis_flag_renormalizes: thesis weight 0.20
+        # is redistributed proportionally across the remaining 4 pillars.
+        assert r["lthcs_score"] == pytest.approx(87.5)
+        assert r["dropped_pillars"] == ["thesis_integrity"]
+        assert r["effective_weights"][3] == 0.0
+        assert sum(r["effective_weights"]) == pytest.approx(1.0)
+        assert r["weights_used"] == [0.25, 0.20, 0.15, 0.20, 0.20]
+
     def test_other_flags_dont_trigger_renorm(self, weights_config):
         """Only flags in _FLAGS_TO_DROPPED_PILLAR drop a pillar."""
         subs = self._subs()

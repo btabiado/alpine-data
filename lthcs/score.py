@@ -57,6 +57,11 @@ _LOG = logging.getLogger(__name__)
 #   so we keep its weight.
 _FLAGS_TO_DROPPED_PILLAR = {
     "thesis_unavailable": "thesis_integrity",
+    # Crypto-only flag emitted by the crypto daily pipeline when the LLM-driven
+    # Thesis pillar is unavailable (per docs/lthcs-crypto-pillar-adapter-spec.md
+    # §9). Maps to the same thesis_integrity drop so the equity and crypto
+    # composite paths share identical renormalization semantics.
+    "crypto_thesis_unavailable": "thesis_integrity",
 }
 
 PILLAR_ORDER = (
