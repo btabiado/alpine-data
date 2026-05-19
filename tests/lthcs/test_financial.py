@@ -1773,3 +1773,216 @@ def test_sec_edgar_has_fallback_concept_helpers() -> None:
     assert callable(getattr(sec_edgar, "get_sales_revenue_gross_history", None))
     assert callable(getattr(sec_edgar, "get_cost_of_revenue_history", None))
     assert callable(getattr(sec_edgar, "get_operating_income_history", None))
+
+
+# ---------------------------------------------------------------------------
+# Bank-cohort revenue ranking on the *standard* and *legacy bank* paths
+# (Tier-2 #15 fix, May 2026): a bank ticker that falls through to the
+# standard path (no NII rows plumbed) -- or one that runs the legacy bank
+# path without cohort dicts -- must still rank revenue growth bank-relative,
+# not against the full universe (tech-megacap +60% would crush JPM +3%).
+# ---------------------------------------------------------------------------
+
+
+def test_bank_ticker_standard_path_ranks_revenue_within_bank_cohort() -> None:
+    """JPM with no NII rows still routes revenue % rank through bank cohort.
+
+    Without this fix, JPM's +3% revenue YoY would land in the bottom
+    decile of a universe whose tail is NVDA-class +65%. With the cohort
+    filter, JPM ranks against the other banks in peer_growths only.
+    """
+    revenue_rows = _annual_pair(2025, 103.0, 100.0)  # JPM +3%
+    peer_growths = {
+        "JPM": 0.03,
+        "BAC": 0.02,
+        "WFC": 0.01,
+        "C": 0.00,
+        # Universe outliers (would dominate without cohort filter).
+        "NVDA": 0.65,
+        "AMD": 0.45,
+        "META": 0.30,
+        "GOOGL": 0.18,
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=revenue_rows,
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        # No nii_rows -> standard path with bank-cohort revenue fallback.
+    )
+
+    # Should NOT route through the bank pillar (no NII).
+    assert out.get("sector_path") != "bank"
+    # JPM 0.03 vs BAC 0.02 / WFC 0.01 / C 0.00 -> ranks above all 3 bank
+    # peers -> 100. Universe-wide it'd be ~12% (1 of 8 peers below it).
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+    # Strategy tag surfaces the bank-cohort fallback.
+    assert out["components"].get("peer_cohort_strategy") == "bank_cohort"
+
+
+def test_bank_ticker_standard_path_revenue_bottom_of_bank_cohort() -> None:
+    """A bank with the *worst* growth in its cohort still scores 0 against
+    banks (not against the universe). Sanity check that the cohort filter
+    is *real*, not just clamping at 100."""
+    revenue_rows = _annual_pair(2025, 100.0, 100.0)  # JPM 0% YoY
+    peer_growths = {
+        "JPM": 0.00,
+        "BAC": 0.04,
+        "WFC": 0.03,
+        "C": 0.02,
+        # Tech outliers would dominate without cohort filter.
+        "NVDA": 0.65,
+        "AAPL": 0.10,
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=revenue_rows,
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+    )
+
+    assert out.get("sector_path") != "bank"
+    # JPM 0.00 vs BAC 0.04 / WFC 0.03 / C 0.02 -> bottom of bank cohort
+    # -> 0. Universe-wide it'd be ~33% (2 peers below or equal).
+    assert out["components"]["revenue_subscore"] == pytest.approx(0.0)
+
+
+def test_non_bank_ticker_standard_path_unchanged_by_bank_peers() -> None:
+    """Control: NVDA's revenue percentile uses the full universe (banks
+    + tech), not a bank cohort. Banks in peer_growths must NOT shift its
+    ranking."""
+    revenue_annual = _annual_pair(2025, 165.0, 100.0)  # NVDA +65%
+    qd = _quarter_dates_for_year(2025)
+    revenue_quarters = [_q_row(q["start"], q["end"], 1000.0) for q in qd]
+    revenue_rows = revenue_annual + revenue_quarters
+    gp_rows = [_q_row(q["start"], q["end"], 300.0) for q in qd]
+    ocf_rows = [_q_row(q["start"], q["end"], 200.0) for q in qd]
+
+    # Baseline: universe with mixed banks + tech.
+    peer_growths = {
+        "NVDA": 0.65,
+        "AAPL": 0.10,
+        "MSFT": 0.12,
+        "JPM": 0.03,
+        "BAC": 0.02,
+        "WFC": 0.01,
+    }
+
+    out = financial.compute_financial(
+        "NVDA",
+        revenue_rows,
+        gp_rows,
+        ocf_rows,
+        peer_growths,
+        sector="Technology",
+    )
+
+    assert out.get("sector_path") != "bank"
+    # NVDA tops the universe -> revenue_subscore = 100. Bank cohort
+    # filtering is gated on is_bank_ticker(NVDA), which is False.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+    # Cohort strategy should NOT be bank_cohort (NVDA isn't a bank).
+    assert out["components"].get("peer_cohort_strategy") != "bank_cohort"
+
+
+def test_bank_ticker_standard_path_falls_back_when_no_bank_peers() -> None:
+    """If JPM is the *only* bank in peer_growths, the cohort filter
+    yields zero peers -- fall back to the full universe rather than
+    returning a degenerate ranking."""
+    revenue_rows = _annual_pair(2025, 110.0, 100.0)  # JPM +10%
+    peer_growths = {
+        "JPM": 0.10,
+        "AAPL": 0.20,
+        "MSFT": 0.15,
+        # No other banks.
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=revenue_rows,
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+    )
+
+    assert out.get("sector_path") != "bank"
+    # No bank peers -> universe-wide rank. JPM 0.10 vs AAPL 0.20 / MSFT
+    # 0.15 -> bottom -> 0. Strategy tag should NOT claim bank_cohort
+    # since the fallback kicked in.
+    assert out["components"]["revenue_subscore"] == pytest.approx(0.0)
+    assert out["components"].get("peer_cohort_strategy") != "bank_cohort"
+
+
+def test_bank_legacy_path_no_cohort_dicts_ranks_within_bank_universe() -> None:
+    """Legacy bank path (has NII but no cohort dicts plumbed) now also
+    filters peer_growths to BANK_TICKERS for the NII-growth subscore.
+
+    Without this, an older caller that fetched NII but skipped the
+    cohort dicts would rank JPM NII growth vs universe revenue growth
+    -- the very bug Tier-2 #15 calls out."""
+    # JPM NII +5% YoY (4 prior + 4 current quarters).
+    jpm_nii = _eight_consecutive_quarters(
+        2024, [1000, 1000, 1000, 1000, 1050, 1050, 1050, 1050]
+    )
+    # peer_growths with bank peers + tech outliers.
+    peer_growths = {
+        "JPM": 0.05,
+        "BAC": 0.02,
+        "WFC": 0.01,
+        # Universe outliers.
+        "NVDA": 0.65,
+        "AAPL": 0.20,
+        "MSFT": 0.15,
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm_nii,
+        # No bank cohort dicts -> legacy path.
+    )
+
+    assert out["sector_path"] == "bank"
+    assert out["data_quality"]["is_bank_cohort"] is False
+    # JPM NII growth 0.05 ranked vs banks only (BAC 0.02, WFC 0.01).
+    # -> tops the bank cohort -> 100.
+    assert out["components"]["revenue_subscore"] == pytest.approx(100.0)
+
+
+def test_bank_legacy_path_no_cohort_dicts_falls_back_to_universe_if_no_bank_peers() -> None:
+    """Legacy bank path with NO bank peers in peer_growths must fall back
+    to the unfiltered universe rather than yielding an empty distribution."""
+    jpm_nii = _eight_consecutive_quarters(
+        2024, [1000, 1000, 1000, 1000, 1050, 1050, 1050, 1050]
+    )
+    peer_growths = {
+        "JPM": 0.05,
+        "AAPL": 0.20,
+        "MSFT": 0.15,
+    }
+
+    out = financial.compute_financial(
+        "JPM",
+        revenue_rows=[],
+        gross_profit_rows=[],
+        ocf_rows=[],
+        peer_growths=peer_growths,
+        sector="Financials",
+        nii_rows=jpm_nii,
+    )
+
+    assert out["sector_path"] == "bank"
+    # JPM 0.05 vs AAPL 0.20 / MSFT 0.15 -> 0% (bottom of universe).
+    # Fallback kicked in because no other bank peers exist.
+    assert out["components"]["revenue_subscore"] == pytest.approx(0.0)

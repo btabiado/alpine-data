@@ -1108,20 +1108,35 @@ def _compute_bank_financial(
     # --- Legacy / no-cohort path: 40/30/30 absolute thresholds -------------
     #
     # Backward-compat: callers that haven't passed cohort dicts (existing
-    # unit tests, older callers) still get the original behavior.
-    peer_values: List[float] = []
-    for sym, g in (peer_growths or {}).items():
-        if sym == ticker:
-            continue
-        if g is None:
-            continue
-        try:
-            f = float(g)
-        except (TypeError, ValueError):
-            continue
-        if f != f:  # NaN
-            continue
-        peer_values.append(f)
+    # unit tests, older callers) still get the original 40/30/30 shape,
+    # but the NII-growth percentile is now ranked against the bank cohort
+    # only (Tier-2 #15 fix). Universe-wide ranking would put a bank's
+    # +2-3% NII growth against tech-megacap +65% revenue growth and
+    # mechanically collapse its revenue subscore.
+    #
+    # Cohort-restricted peer_growths: keep only tickers that are in the
+    # BANK_TICKERS allowlist. Falls back to the unfiltered universe if
+    # zero bank peers are present (single-bank-in-universe edge case --
+    # peer_relative_percentile already handles the empty-peers default).
+    cohort_peer_values: List[float] = _filter_peer_growths_to_cohort(
+        ticker, peer_growths or {}, BANK_TICKERS
+    )
+    if cohort_peer_values:
+        peer_values = cohort_peer_values
+    else:
+        peer_values = []
+        for sym, g in (peer_growths or {}).items():
+            if sym == ticker:
+                continue
+            if g is None:
+                continue
+            try:
+                f = float(g)
+            except (TypeError, ValueError):
+                continue
+            if f != f:  # NaN
+                continue
+            peer_values.append(f)
 
     if nii_growth is None:
         revenue_subscore = 50.0
@@ -1342,6 +1357,36 @@ def compute_financial(
                 continue
             peer_values.append(f)
         peer_cohort_size = len(peer_values) + (1 if ticker in cohort_set else 0)
+    elif is_bank_ticker(ticker, sector):
+        # Bank cohort fallback (Tier-2 #15 fix). A strict-bank ticker that
+        # fell through to the standard path -- the caller didn't plumb NII
+        # rows so we can't run the bank decomposition, but we *can* still
+        # rank revenue growth bank-vs-bank instead of bank-vs-NVDA. Without
+        # this, JPM's +2-3% revenue YoY would land in the bottom percentile
+        # of a universe whose tail is tech-megacap +30-60%. If no bank
+        # peer growths are present (single-bank universe), fall back to the
+        # unfiltered universe to preserve current behavior.
+        bank_peer_values = _filter_peer_growths_to_cohort(
+            ticker, peer_growths or {}, BANK_TICKERS
+        )
+        if bank_peer_values:
+            peer_values = bank_peer_values
+            peer_cohort_strategy = "bank_cohort"
+            peer_cohort_size = len(peer_values) + 1
+        else:
+            peer_values = []
+            for sym, g in (peer_growths or {}).items():
+                if sym == ticker:
+                    continue
+                if g is None:
+                    continue
+                try:
+                    f = float(g)
+                except (TypeError, ValueError):
+                    continue
+                if f != f:  # NaN
+                    continue
+                peer_values.append(f)
     else:
         peer_values = []
         for sym, g in (peer_growths or {}).items():
