@@ -872,23 +872,29 @@ def test_compute_revenue_growth_qoq_zero_prior_returns_none() -> None:
 
 
 def test_compute_adoption_uses_sector_cohort_when_large_enough() -> None:
-    """Non-bank with a sector of >=8 members ranks against sector peers only."""
-    # 9-member Tech sector + a Financials decoy. Focal AAPL revenue +10%
+    """Non-bank with a sector of >=_MIN_SECTOR_COHORT members ranks against
+    sector peers only.
+    """
+    # 20-member Tech sector + a Financials decoy. Focal AAPL revenue +10%
     # ranks LOW within Tech (where peers grow 30-100%) but HIGH within the
     # full universe.
     rows = [
         _annual("2025-09-30", 110.0, 2025),
         _annual("2024-09-30", 100.0, 2024),
     ]
+    tech_growths = {
+        "AAPL": 0.10,
+        "T1": 0.30, "T2": 0.32, "T3": 0.34, "T4": 0.36, "T5": 0.38,
+        "T6": 0.40, "T7": 0.45, "T8": 0.50, "T9": 0.55, "T10": 0.60,
+        "T11": 0.62, "T12": 0.64, "T13": 0.66, "T14": 0.68, "T15": 0.70,
+        "T16": 0.72, "T17": 0.74, "T18": 0.76, "T19": 1.00,
+    }
     peer_growths = {
-        "AAPL": 0.10, "T1": 0.30, "T2": 0.40, "T3": 0.50, "T4": 0.55,
-        "T5": 0.60, "T6": 0.70, "T7": 0.85, "T8": 1.00,
+        **tech_growths,
         "F1": -0.10, "F2": -0.05, "F3": 0.02, "F4": 0.03,
     }
     peer_sectors = {
-        "AAPL": "Tech", "T1": "Tech", "T2": "Tech", "T3": "Tech",
-        "T4": "Tech", "T5": "Tech", "T6": "Tech", "T7": "Tech",
-        "T8": "Tech",
+        **{sym: "Tech" for sym in tech_growths},
         "F1": "Financials", "F2": "Financials",
         "F3": "Financials", "F4": "Financials",
     }
@@ -899,9 +905,11 @@ def test_compute_adoption_uses_sector_cohort_when_large_enough() -> None:
     detail = result["components"]
     assert detail["peer_cohort_strategy"] == "sector_relative"
     assert detail["sector_cohort"] == "Tech"
-    assert detail["sector_cohort_size"] == 9
-    # AAPL (+10%) is below all 8 other Tech peers in the sector -> 0/8 = 0.
-    assert detail["revenue_subscore"] == pytest.approx(0.0)
+    assert detail["sector_cohort_size"] == 20
+    # AAPL (+10%) is below all 19 other Tech peers in the sector. Raw
+    # percentile pins at 0.0; tie-softening pulls it to the floor
+    # constant (_SECTOR_RANK_FLOOR = 10.0).
+    assert detail["revenue_subscore"] == pytest.approx(adoption._SECTOR_RANK_FLOOR)
 
 
 def test_compute_adoption_skips_sector_for_small_sector() -> None:
@@ -910,7 +918,8 @@ def test_compute_adoption_skips_sector_for_small_sector() -> None:
         _annual("2025-09-30", 110.0, 2025),
         _annual("2024-09-30", 100.0, 2024),
     ]
-    # Energy: 3 members -> below floor of 8.
+    # Energy: 3 members -> below floor of 20. Universe path uses the
+    # full peer_growths distribution (excluding focal).
     peer_growths = {
         "XOM": 0.10, "E1": 0.05, "E2": 0.20,
         "T1": -0.05, "T2": 0.00, "T3": 0.02, "T4": 0.04,
@@ -954,6 +963,193 @@ def test_compute_adoption_skips_sector_for_bank() -> None:
     # JPM is in BANK_TICKERS -> sector_cohort path skipped.
     assert "sector_cohort" not in result["components"]
     assert result["components"]["peer_cohort_strategy"] != "sector_relative"
+
+
+# --- Adoption: 2026-05-19 β follow-up (sector-cohort recalibration) --------
+
+
+def test_min_sector_cohort_pinned_at_20() -> None:
+    """Lock the cohort floor at 20.
+
+    β follow-up: smaller cohorts (Consumer Staples n=14, Comm Svcs n=14)
+    produce coarse 7+pt rank steps that pin three different YoY growth
+    rates at the same 0.0 rev_subscore. Floor stays at 20 until the next
+    re-validation.
+    """
+    assert adoption._MIN_SECTOR_COHORT == 20
+
+
+def test_compute_adoption_falls_back_when_sector_below_new_floor() -> None:
+    """A 14-member cohort (Consumer Staples-style) no longer qualifies.
+
+    Mirrors the 2026-05-18 Adoption pillar inversion case: 14 staples
+    were getting sector-relative scoring with a 7.14-pt step rank — the
+    smoking gun in `docs/adoption-pillar-inversion-2026-05-19.md`.
+    Should now fall back to universe-relative.
+    """
+    rows = [
+        _annual("2025-09-30", 103.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # 14-member staples cohort (was previously >=8, so sector_relative).
+    staples = {
+        "PG": 0.003,  # focal: +0.3% YoY
+        "S1": 0.058, "S2": 0.045, "S3": 0.062, "S4": 0.070,
+        "S5": 0.030, "S6": 0.040, "S7": 0.050, "S8": 0.020,
+        "S9": -0.031, "S10": -0.001, "S11": 0.015, "S12": 0.025,
+        "S13": 0.035,
+    }
+    peer_growths = {
+        **staples,
+        # Universe filler so the universe-relative path still has mass.
+        **{f"U{i}": 0.10 + i * 0.02 for i in range(10)},
+    }
+    peer_sectors = {
+        **{sym: "Consumer Staples" for sym in staples},
+        **{f"U{i}": "Other" for i in range(10)},
+    }
+    result = adoption.compute_adoption(
+        "PG", rows, [], peer_growths,
+        sector="Consumer Staples", peer_sectors=peer_sectors,
+    )
+    detail = result["components"]
+    # 14 < 20 -> sector path skipped.
+    assert "sector_cohort" not in detail
+    assert detail["peer_cohort_strategy"] != "sector_relative"
+
+
+def test_soften_rank_extremes_helper_maps_boundaries() -> None:
+    """Direct unit test of `_soften_rank_extremes`: 0.0 -> floor, 100.0 ->
+    ceiling, interior pass-through, NaN preserved.
+    """
+    import math
+
+    assert adoption._soften_rank_extremes(0.0) == adoption._SECTOR_RANK_FLOOR
+    assert adoption._soften_rank_extremes(100.0) == adoption._SECTOR_RANK_CEILING
+    # Sub-floor / above-ceiling inputs (defensive against drift) get pulled in too.
+    assert adoption._soften_rank_extremes(-5.0) == adoption._SECTOR_RANK_FLOOR
+    assert adoption._soften_rank_extremes(105.0) == adoption._SECTOR_RANK_CEILING
+    # Interior scores untouched.
+    assert adoption._soften_rank_extremes(25.0) == pytest.approx(25.0)
+    assert adoption._soften_rank_extremes(50.0) == pytest.approx(50.0)
+    assert adoption._soften_rank_extremes(99.0) == pytest.approx(99.0)
+    # NaN preserved.
+    out = adoption._soften_rank_extremes(float("nan"))
+    assert math.isnan(out)
+
+
+def test_compute_adoption_softens_cohort_floor_pin() -> None:
+    """Focal below every sector peer no longer pins at 0.0 — it lands at
+    `_SECTOR_RANK_FLOOR`. Mirrors PG +0.3% (sector min) post-fix.
+    """
+    rows = [
+        _annual("2025-09-30", 110.0, 2025),
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # 20 Tech peers; focal AAPL at +10% is the cohort min.
+    tech_growths = {
+        "AAPL": 0.10,
+        **{f"T{i}": 0.30 + 0.02 * i for i in range(1, 20)},
+    }
+    peer_sectors = {sym: "Tech" for sym in tech_growths}
+    result = adoption.compute_adoption(
+        "AAPL", rows, [], tech_growths,
+        sector="Tech", peer_sectors=peer_sectors,
+    )
+    detail = result["components"]
+    assert detail["peer_cohort_strategy"] == "sector_relative"
+    # Pre-fix this would be 0.0; post-fix the floor pin softens to 10.0.
+    assert detail["revenue_subscore"] == pytest.approx(adoption._SECTOR_RANK_FLOOR)
+    assert detail["revenue_subscore"] > 0.0
+
+
+def test_compute_adoption_softens_cohort_ceiling_pin() -> None:
+    """Focal above every sector peer no longer pins at 100.0 — it lands at
+    `_SECTOR_RANK_CEILING`. NVDA-style cohort ceiling case.
+    """
+    rows = [
+        _annual("2025-09-30", 200.0, 2025),  # +100% YoY (cohort max).
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    tech_growths = {
+        "NVDA": 1.00,
+        **{f"T{i}": 0.10 + 0.02 * i for i in range(1, 20)},
+    }
+    peer_sectors = {sym: "Tech" for sym in tech_growths}
+    result = adoption.compute_adoption(
+        "NVDA", rows, [], tech_growths,
+        sector="Tech", peer_sectors=peer_sectors,
+    )
+    detail = result["components"]
+    assert detail["peer_cohort_strategy"] == "sector_relative"
+    # Pre-fix this would be 100.0; post-fix ceiling pin softens to 90.0.
+    assert detail["revenue_subscore"] == pytest.approx(adoption._SECTOR_RANK_CEILING)
+    assert detail["revenue_subscore"] < 100.0
+
+
+def test_compute_adoption_softening_only_applies_to_sector_path() -> None:
+    """Universe-relative / compound-cohort path keeps raw 0.0 / 100.0
+    boundary behaviour. The β analysis flagged the pin as a sector-cohort
+    artifact; the larger universe distribution doesn't need softening.
+    """
+    rows = [
+        _annual("2025-09-30", 90.0, 2025),  # -10% YoY: below all peers.
+        _annual("2024-09-30", 100.0, 2024),
+    ]
+    # No peer_sectors supplied -> sector path doesn't fire at all.
+    peer_growths = {f"P{i}": 0.05 + 0.01 * i for i in range(20)}
+    result = adoption.compute_adoption(
+        "Z", rows, [], peer_growths,
+    )
+    detail = result["components"]
+    assert detail.get("peer_cohort_strategy") != "sector_relative"
+    # Raw 0.0 (not 10.0) — universe path is left alone.
+    assert detail["revenue_subscore"] == pytest.approx(0.0)
+
+
+def test_compute_adoption_softening_breaks_intra_floor_ties() -> None:
+    """Two tickers both below the cohort min should land at the same
+    softened floor — but the *score itself* (10.0) is no longer the same
+    as a "barely positive" focal that lands strictly inside the cohort.
+    PG (+0.3%) vs MO (-3.1%) get the same softened rank only if they
+    both clear the cohort min; the doc's intent is that the *floor pin
+    magnitude* shrinks so downstream pillar averaging stops snapping the
+    tails. Confirm a focal *strictly inside* the cohort beats the floor.
+    """
+    rows_pg = [_annual("2025-09-30", 100.3, 2025), _annual("2024-09-30", 100.0, 2024)]
+    rows_mo = [_annual("2025-09-30", 96.9, 2025), _annual("2024-09-30", 100.0, 2024)]
+
+    # 20-member cohort with a long below-PG tail so PG lands strictly
+    # interior (above MO and 4 others); MO is at the cohort floor.
+    staples = {
+        "PG": 0.003, "MO": -0.031,
+        "S1": -0.030, "S2": -0.020, "S3": -0.015, "S4": -0.010,
+        "S5": 0.010, "S6": 0.020, "S7": 0.030, "S8": 0.040,
+        "S9": 0.050, "S10": 0.060, "S11": 0.070, "S12": 0.080,
+        "S13": 0.090, "S14": 0.100, "S15": 0.110, "S16": 0.120,
+        "S17": 0.130, "S18": 0.140,
+    }
+    peer_sectors = {sym: "Consumer Staples" for sym in staples}
+
+    pg_result = adoption.compute_adoption(
+        "PG", rows_pg, [], staples,
+        sector="Consumer Staples", peer_sectors=peer_sectors,
+    )
+    mo_result = adoption.compute_adoption(
+        "MO", rows_mo, [], staples,
+        sector="Consumer Staples", peer_sectors=peer_sectors,
+    )
+    pg_sub = pg_result["components"]["revenue_subscore"]
+    mo_sub = mo_result["components"]["revenue_subscore"]
+
+    # Both used sector-relative.
+    assert pg_result["components"]["peer_cohort_strategy"] == "sector_relative"
+    assert mo_result["components"]["peer_cohort_strategy"] == "sector_relative"
+
+    # MO sits at the cohort min -> softens to floor.
+    assert mo_sub == pytest.approx(adoption._SECTOR_RANK_FLOOR)
+    # PG sits strictly inside the cohort -> beats the floor.
+    assert pg_sub > adoption._SECTOR_RANK_FLOOR
 
 
 def test_compute_adoption_qoq_component_active_when_quarters_present() -> None:

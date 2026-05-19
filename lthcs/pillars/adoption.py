@@ -89,10 +89,18 @@ REVENUE_WEIGHT_WITH_QOQ_NO_TRENDS = 0.70
 QOQ_WEIGHT_WITH_QOQ_NO_TRENDS = 0.30
 
 # Minimum cohort size to use sector-relative revenue rank for a non-bank
-# ticker. Below this we fall back to the universe distribution: a
-# 3-member cohort produces degenerate percentiles (everyone lands at 0,
-# 50, or 100) that swamp the rest of the pillar.
-_MIN_SECTOR_COHORT = 8
+# ticker. Below this we fall back to the universe distribution: small
+# cohorts produce coarse rank steps (a 14-member cohort gives 7.14-pt
+# rank increments) that pin the floor / ceiling and treat "barely
+# positive" growth identically to "actually shrinking". Raised 8 -> 20
+# in the 2026-05-19 β follow-up (`docs/adoption-pillar-inversion-2026-
+# 05-19.md` Section C #1) after PG +0.3% YoY scored identically to MO
+# -3.1% YoY in the 14-member Consumer Staples cohort. With the universe
+# at ~167 tickers this keeps sector-relative for Technology / Health
+# Care / Industrials / Consumer Discretionary and falls back to the
+# universe distribution for the smaller sectors (Financials, Staples,
+# Comm Svcs, Utilities, Energy, Real Estate, Materials).
+_MIN_SECTOR_COHORT = 20
 
 # QoQ revenue acceleration is bounded against single-quarter swings —
 # real businesses don't quadruple or vanish in 90 days, so anything
@@ -107,6 +115,17 @@ _QOQ_MAX = 2.0
 # put genuine inflections (>+10%) clearly above neutral.
 _QOQ_SCORE_LOW = -0.15
 _QOQ_SCORE_HIGH = 0.15
+
+# Floor / ceiling softening for sector-relative revenue percentile ranks.
+# When the focal ties (or sits below / above) the cohort min / max the
+# raw percentile pins at 0.0 / 100.0 — three Consumer Staples names
+# (PG, KHC, MO) all landed at rev_sub=0.0 even though they ranged from
+# +0.3% to -3.1% YoY. We pull those boundary scores in to
+# _SECTOR_RANK_FLOOR / _SECTOR_RANK_CEILING so genuine inflections still
+# differentiate at the tails. β follow-up (`docs/adoption-pillar-
+# inversion-2026-05-19.md` Section C #1, 2026-05-19).
+_SECTOR_RANK_FLOOR = 10.0
+_SECTOR_RANK_CEILING = 90.0
 
 # ``pytrends`` is only needed by the live fetcher; tests patch
 # ``adoption.TrendReq`` directly, so the import is at module top so the
@@ -156,6 +175,33 @@ def _is_valid_growth(value: Any) -> bool:
     except (TypeError, ValueError):
         return False
     return f == f  # NaN check
+
+
+def _soften_rank_extremes(score: float) -> float:
+    """Pull boundary percentile ranks in from 0.0 / 100.0.
+
+    The peer_relative_percentile helper uses a "half-equal" convention,
+    which keeps interior ties spread. The edges, though, still pin at
+    0.0 / 100.0 whenever the focal sits at (or beyond) the cohort min /
+    max. In small sector cohorts that's where the mechanical Q5–Q1
+    inversion magnitude comes from: three Consumer Staples names with
+    different YoY growth all land at rev_sub=0. Map those boundary
+    scores onto :data:`_SECTOR_RANK_FLOOR` / :data:`_SECTOR_RANK_CEILING`
+    so genuine signal at the tails still survives downstream renorm.
+
+    Other (interior) scores pass through untouched.
+    """
+    try:
+        s = float(score)
+    except (TypeError, ValueError):
+        return score
+    if s != s:  # NaN
+        return s
+    if s <= 0.0:
+        return _SECTOR_RANK_FLOOR
+    if s >= 100.0:
+        return _SECTOR_RANK_CEILING
+    return s
 
 
 # --- Module state -----------------------------------------------------------
@@ -634,6 +680,15 @@ def compute_adoption(
         revenue_subscore = peer_relative_percentile(
             growth, peer_values, include_self=False
         )
+        # Sector-cohort percentile pin softening: when the focal ties (or
+        # sits below / above) the cohort min / max the raw rank pins at
+        # 0.0 / 100.0 and treats e.g. PG +0.3% YoY identically to MO
+        # -3.1% YoY. Only applied on the sector-relative path — the
+        # universe-distribution and compound-cohort paths have enough
+        # mass to avoid the artifact on their own (β follow-up,
+        # `docs/adoption-pillar-inversion-2026-05-19.md` Section C #1).
+        if sector_cohort_used:
+            revenue_subscore = _soften_rank_extremes(revenue_subscore)
 
     # QoQ revenue acceleration sub-score: bounded-linear remap of the
     # focal's QoQ pct change. Neutral 50 when missing. Capped so the
