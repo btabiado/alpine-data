@@ -129,6 +129,15 @@ class SearchInput(_StrictBase):
     )
 
 
+class DraggingPillarInput(_StrictBase):
+    ticker: str = Field(
+        ...,
+        description="Ticker symbol (e.g. 'AAPL'). Case-insensitive; will be uppercased.",
+        min_length=1,
+        max_length=10,
+    )
+
+
 # --- Tool definitions ------------------------------------------------------
 
 
@@ -312,6 +321,29 @@ async def search_tickers(params: SearchInput) -> dict:
     matches with the current score and band attached.
     """
     return ldata.search_tickers(params.query, limit=params.limit)
+
+
+@mcp.tool(
+    name="get_dragging_pillar",
+    annotations={
+        "title": "Dragging Pillar (Weakening/Review)",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def get_dragging_pillar(params: DraggingPillarInput) -> dict:
+    """For Weakening or Review tickers, return the pillar dragging the composite
+    the most (lowest sub-score; ties broken by highest weight in weights_used).
+
+    For Buy bucket (Elite/High/Constructive) and Hold (Monitor) tickers,
+    returns ``{"dragging_pillar": null, "reason": "ticker is in Buy or Hold;
+    no drag to surface"}``.
+
+    Returns: {ticker, band, dragging_pillar, sub_score, rationale}.
+    """
+    return ldata.get_dragging_pillar(params.ticker)
 
 
 # --- Entry point -----------------------------------------------------------

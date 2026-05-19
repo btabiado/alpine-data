@@ -15,3 +15,5 @@ python-dotenv>=1.0
 yfinance>=0.2.40
 # LTHCS Phase 1 (Week 3: Adoption pillar — Google Trends)
 pytrends>=4.9
+# LTHCS Phase 5 (Tier 5 #26: MCP server)
+mcp[cli]>=1.0

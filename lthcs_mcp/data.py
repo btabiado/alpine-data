@@ -41,6 +41,21 @@ _VALID_INSIDER_REGIMES = {
     "mixed",
 }
 
+# Canonical pillar order — matches lthcs_tab/lthcs-detail.js PILLAR_ORDER and
+# the order of weights_used[] in snapshots. Used by get_dragging_pillar to
+# break ties on equal sub-scores by highest weight.
+_PILLAR_ORDER = [
+    "adoption_momentum",
+    "institutional_confidence",
+    "financial_evolution",
+    "thesis_integrity",
+    "des",
+]
+
+# Bands where a "drag" is worth surfacing. Buy bucket (elite/high_confidence/
+# constructive) and Hold (monitor) tickers don't have a real drag problem.
+_DRAG_BANDS = {"weakening", "review"}
+
 
 # --- Helpers ---------------------------------------------------------------
 
@@ -595,4 +610,129 @@ def search_tickers(
         "as_of": latest_date,
         "count": min(limit, len(matches)),
         "matches": matches[:limit],
+    }
+
+
+def get_dragging_pillar(
+    ticker: str,
+    date: Optional[str] = None,
+    data_root: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Return the pillar dragging a Weakening/Review ticker's composite the most.
+
+    Mirrors the detail-modal callout shipped in 014aadc: for tickers in band
+    ``weakening`` or ``review``, surface the pillar with the LOWEST sub-score
+    across the 5 pillars (adoption_momentum, institutional_confidence,
+    financial_evolution, thesis_integrity, des). Ties broken by highest weight
+    in ``weights_used`` — i.e. the pillar dragging the composite the most.
+    For tickers in Buy bucket (elite/high_confidence/constructive) or Hold
+    (monitor), returns ``{"dragging_pillar": null, "reason": "..."}``.
+
+    Source: today's snapshot (canonical subscores + weights_used) with a
+    defensive fallback to averaging variable_detail sub_scores per pillar if
+    the snapshot lacks them.
+    """
+    if not ticker or not isinstance(ticker, str):
+        return _err("ticker is required")
+    root = _data_root(data_root)
+    resolved = _resolve_date(date, root)
+    if isinstance(resolved, dict):
+        return resolved
+    snap = _load_snapshot(resolved, root)
+    if isinstance(snap, dict) and "error" in snap:
+        return snap
+
+    sym = _normalize_ticker(ticker)
+    row = None
+    for r in snap.get("scores", []):
+        if r.get("ticker") == sym:
+            row = r
+            break
+    if row is None:
+        return _err(f"ticker '{sym}' not found in snapshot {resolved}")
+
+    band = row.get("band") or ""
+    if band not in _DRAG_BANDS:
+        return {
+            "ticker": sym,
+            "band": band,
+            "dragging_pillar": None,
+            "sub_score": None,
+            "rationale": "ticker is in Buy or Hold; no drag to surface",
+        }
+
+    # Prefer canonical subscores from the snapshot.
+    subs_raw = row.get("subscores") or {}
+    subs: Dict[str, float] = {}
+    if isinstance(subs_raw, dict):
+        for k, v in subs_raw.items():
+            try:
+                subs[k] = float(v)
+            except (TypeError, ValueError):
+                continue
+
+    # Defensive fallback: average sub_score per pillar from variable_detail.
+    if not subs:
+        vd_path = os.path.join(root, "variable_detail", f"{resolved}.json")
+        vd_payload = _read_json(vd_path)
+        if isinstance(vd_payload, dict) and "variables" in vd_payload:
+            buckets: Dict[str, List[float]] = {}
+            for vrow in vd_payload.get("variables", []):
+                if not isinstance(vrow, dict) or vrow.get("ticker") != sym:
+                    continue
+                pillar = vrow.get("pillar")
+                try:
+                    val = float(vrow.get("sub_score"))
+                except (TypeError, ValueError):
+                    continue
+                if not pillar:
+                    continue
+                buckets.setdefault(pillar, []).append(val)
+            for pillar, arr in buckets.items():
+                if arr:
+                    subs[pillar] = sum(arr) / len(arr)
+
+    if not subs:
+        return _err(f"no sub-scores available for '{sym}' on {resolved}")
+
+    weights = row.get("weights_used") if isinstance(row.get("weights_used"), list) else []
+
+    # Find pillar with lowest sub-score; tie-break by highest weight.
+    best_key: Optional[str] = None
+    best_score = float("inf")
+    best_weight = float("-inf")
+    for i, key in enumerate(_PILLAR_ORDER):
+        if key not in subs:
+            continue
+        v = subs[key]
+        try:
+            w = float(weights[i])
+        except (IndexError, TypeError, ValueError):
+            w = 0.0
+        if v < best_score - 1e-9:
+            best_score = v
+            best_weight = w
+            best_key = key
+        elif abs(v - best_score) <= 1e-9 and w > best_weight:
+            best_weight = w
+            best_key = key
+
+    if best_key is None:
+        return _err(f"no recognised pillar sub-scores for '{sym}' on {resolved}")
+
+    composite = row.get("lthcs_score")
+    try:
+        composite_str = f"{float(composite):.1f}"
+    except (TypeError, ValueError):
+        composite_str = "n/a"
+
+    return {
+        "ticker": sym,
+        "band": band,
+        "dragging_pillar": best_key,
+        "sub_score": round(best_score, 3),
+        "rationale": (
+            f"{best_key} has the lowest sub-score ({best_score:.1f}) of the 5 "
+            f"pillars; composite {composite_str}."
+        ),
     }

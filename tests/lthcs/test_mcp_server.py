@@ -519,3 +519,109 @@ def test_real_data_composite_index() -> None:
     assert "error" not in out
     assert "components" in out
     assert isinstance(out["components"], list)
+
+
+# --- get_dragging_pillar --------------------------------------------------
+
+
+def test_get_dragging_pillar_weakening(fake_root: str) -> None:
+    # AAPL is in fake_root with band='weakening'; lowest subscore is des=44.9
+    out = ldata.get_dragging_pillar("AAPL", data_root=fake_root)
+    assert out["ticker"] == "AAPL"
+    assert out["band"] == "weakening"
+    assert out["dragging_pillar"] == "des"
+    assert out["sub_score"] == 44.9
+    assert "lowest" in out["rationale"]
+
+
+def test_get_dragging_pillar_review(fake_root: str) -> None:
+    # ZZZ is in band='review' with all subscores equal at 30.0 — first pillar
+    # in _PILLAR_ORDER wins on equal scores when weights are absent (all 0).
+    out = ldata.get_dragging_pillar("ZZZ", data_root=fake_root)
+    assert out["band"] == "review"
+    assert out["dragging_pillar"] == "adoption_momentum"
+    assert out["sub_score"] == 30.0
+
+
+def test_get_dragging_pillar_skipped_for_buy_band(fake_root: str) -> None:
+    # MSFT is in band='constructive' — Buy bucket, no drag to surface.
+    out = ldata.get_dragging_pillar("MSFT", data_root=fake_root)
+    assert out["ticker"] == "MSFT"
+    assert out["band"] == "constructive"
+    assert out["dragging_pillar"] is None
+    assert out["sub_score"] is None
+    assert "Buy or Hold" in out["rationale"]
+
+
+def test_get_dragging_pillar_unknown_ticker(fake_root: str) -> None:
+    out = ldata.get_dragging_pillar("NOPE", data_root=fake_root)
+    assert "error" in out
+    assert "NOPE" in out["error"]
+
+
+def test_get_dragging_pillar_case_insensitive(fake_root: str) -> None:
+    out = ldata.get_dragging_pillar("aapl", data_root=fake_root)
+    assert out["ticker"] == "AAPL"
+    assert out["dragging_pillar"] == "des"
+
+
+def test_get_dragging_pillar_tie_break_by_weight(tmp_path) -> None:
+    # Two pillars tied at lowest sub-score; weights_used breaks the tie.
+    root = tmp_path / "lthcs"
+    (root / "snapshots").mkdir(parents=True)
+    snap = {
+        "calc_date": "2026-05-17",
+        "scores": [
+            {
+                "ticker": "TIE",
+                "lthcs_score": 40.0,
+                "band": "weakening",
+                "subscores": {
+                    "adoption_momentum": 30.0,
+                    "institutional_confidence": 60.0,
+                    "financial_evolution": 60.0,
+                    "thesis_integrity": 60.0,
+                    "des": 30.0,
+                },
+                # adoption_momentum (idx 0) weight=0.10, des (idx 4) weight=0.35
+                # — des should win the tie.
+                "weights_used": [0.10, 0.15, 0.20, 0.20, 0.35],
+            }
+        ],
+    }
+    (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
+    out = ldata.get_dragging_pillar("TIE", data_root=str(root))
+    assert out["dragging_pillar"] == "des"
+
+
+def test_get_dragging_pillar_fallback_to_variable_detail(tmp_path) -> None:
+    # Snapshot lacks subscores; fallback averages variable_detail rows.
+    root = tmp_path / "lthcs"
+    (root / "snapshots").mkdir(parents=True)
+    (root / "variable_detail").mkdir(parents=True)
+    snap = {
+        "calc_date": "2026-05-17",
+        "scores": [
+            {
+                "ticker": "FALL",
+                "lthcs_score": 40.0,
+                "band": "review",
+                # no subscores key — forces fallback
+                "weights_used": [0.2, 0.2, 0.2, 0.2, 0.2],
+            }
+        ],
+    }
+    (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
+    vd = {
+        "variables": [
+            {"ticker": "FALL", "pillar": "adoption_momentum", "sub_score": 70.0},
+            {"ticker": "FALL", "pillar": "institutional_confidence", "sub_score": 25.0},
+            {"ticker": "FALL", "pillar": "financial_evolution", "sub_score": 50.0},
+            {"ticker": "FALL", "pillar": "thesis_integrity", "sub_score": 50.0},
+            {"ticker": "FALL", "pillar": "des", "sub_score": 50.0},
+        ]
+    }
+    (root / "variable_detail" / "2026-05-17.json").write_text(json.dumps(vd))
+    out = ldata.get_dragging_pillar("FALL", data_root=str(root))
+    assert out["dragging_pillar"] == "institutional_confidence"
+    assert out["sub_score"] == 25.0
