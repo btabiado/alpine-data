@@ -285,10 +285,16 @@ def test_compute_institutional_returns_expected_keys() -> None:
         "adjustment_pts",
     }
     # The holdings component dict shape (always present, even for missing data).
+    # Tier 3 #13 Phase 1 added ``manager_universe_size``,
+    # ``tracked_aum_pct``, and ``coverage_scale`` to surface the
+    # coverage-aware scaling used by ``_apply_holdings_adjustment``.
     assert set(result["components"]["holdings"].keys()) == {
         "conviction_signal",
         "signal_score",
         "manager_count",
+        "manager_universe_size",
+        "tracked_aum_pct",
+        "coverage_scale",
         "data_quality",
         "share_change_pct",
         "net_buyers",

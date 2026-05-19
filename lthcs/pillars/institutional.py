@@ -168,6 +168,20 @@ _HOLDINGS_PTS_MILD_ACCUMULATING = 3.0
 _HOLDINGS_PTS_MILD_DISTRIBUTING = -2.0
 _HOLDINGS_PTS_STRONG_DISTRIBUTING = -3.0
 
+# Tier 3 #13 Phase 1: coverage-aware scaling.
+#
+# Post-50-manager expansion (data/lthcs/13f_institutions.json), a
+# strong signal at manager_count=12 is more reliable than the same
+# signal at manager_count=4. We multiply the raw points by
+# ``min(1.0, manager_count / _HOLDINGS_COVERAGE_FLOOR_FOR_FULL_PTS)``
+# so sparse-but-non-zero coverage still contributes proportionally
+# rather than getting clipped at zero.
+#
+# Floor of 10 is the same threshold ``sec_13f._data_quality`` uses for
+# the "good" band — below that we scale down (e.g. manager_count=7 ->
+# 0.7x points), at or above we apply the full magnitude.
+_HOLDINGS_COVERAGE_FLOOR_FOR_FULL_PTS = 10
+
 # COMBINED insider + holdings adjustment cap. The insider-alone cap was
 # [-5, +10]; we expand to [-7, +12] to allow the additive holdings signal
 # to push through without compressing the insider signal away.
@@ -520,6 +534,9 @@ def _apply_holdings_adjustment(
         "conviction_signal": None,
         "signal_score": None,
         "manager_count": None,
+        "manager_universe_size": None,
+        "tracked_aum_pct": None,
+        "coverage_scale": 1.0,
         "data_quality": None,
         "share_change_pct": None,
         "net_buyers": None,
@@ -548,12 +565,34 @@ def _apply_holdings_adjustment(
     except (TypeError, ValueError):
         manager_count = None
 
+    # Tier 3 #13 Phase 1: surface manager_universe_size + tracked_aum_pct
+    # when sec_13f emitted them (additive fields, may be None on legacy
+    # payloads). These ride the detail dict for evidence-modal UX and
+    # for the coverage-scale calc below.
+    raw_universe = holdings_data.get("manager_universe_size")
+    try:
+        manager_universe_size: Optional[int] = (
+            None if raw_universe is None else int(raw_universe)
+        )
+    except (TypeError, ValueError):
+        manager_universe_size = None
+
+    raw_aum_pct = holdings_data.get("tracked_aum_pct")
+    try:
+        tracked_aum_pct: Optional[float] = (
+            None if raw_aum_pct is None else float(raw_aum_pct)
+        )
+    except (TypeError, ValueError):
+        tracked_aum_pct = None
+
     data_quality = holdings_data.get("data_quality")
 
     qoq = holdings_data.get("quarter_over_quarter") or {}
     detail["conviction_signal"] = signal_label
     detail["signal_score"] = score
     detail["manager_count"] = manager_count
+    detail["manager_universe_size"] = manager_universe_size
+    detail["tracked_aum_pct"] = tracked_aum_pct
     detail["data_quality"] = data_quality
     detail["share_change_pct"] = qoq.get("share_change_pct")
     detail["net_buyers"] = qoq.get("net_buyers")
@@ -579,6 +618,20 @@ def _apply_holdings_adjustment(
             adj = _HOLDINGS_PTS_MILD_DISTRIBUTING
     # steady / mixed / None / other -> 0
 
+    # Tier 3 #13 Phase 1: coverage-aware scaling. Multiply raw points
+    # by ``min(1.0, manager_count / floor)`` so a partial-coverage
+    # signal contributes proportionally. We only scale when there's a
+    # real magnitude — steady/mixed (adj==0) stays zero regardless of
+    # coverage. When manager_count is unknown (legacy payload), we
+    # leave scale at 1.0 to preserve historical behavior.
+    coverage_scale = 1.0
+    if adj != 0.0 and manager_count is not None:
+        floor = float(_HOLDINGS_COVERAGE_FLOOR_FOR_FULL_PTS)
+        if floor > 0:
+            coverage_scale = min(1.0, max(0.0, manager_count / floor))
+        adj = adj * coverage_scale
+
+    detail["coverage_scale"] = round(coverage_scale, 3)
     detail["adjustment_pts"] = float(adj)
     return float(adj), detail
 

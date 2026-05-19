@@ -53,16 +53,23 @@ Why this module is separate from ``sec_form4.py``:
     (one issuer per filing). Sharing a module would muddy both signals.
     We DO reuse the request session helpers and rate-limit bucket.
 
-Phase 1 scope:
-    Top 20 institutional managers by 13F AUM, hand-curated and
-    verified via SEC full-text search (see ``TRACKED_MANAGERS``).
-    Captures the bulk of institutional ownership signal for large caps;
-    small caps will fall in the "sparse" / "partial" data-quality bucket
-    which the pillar handles gracefully.
+Phase 1 scope (post-13F-Phase-1, 2026-05-19):
+    50 institutional managers by 13F AUM, externalized to
+    ``data/lthcs/13f_institutions.json`` and loaded at import. Covers
+    ~40% of US institutional 13F AUM (the original 21 mega managers
+    plus 30 active-fund / hedge-fund / sovereign additions). The
+    ticker-to-CUSIP map (full LTHCS universe, ~168 tickers) is
+    externalized to ``data/lthcs/13f_cusip_map.json``. The
+    ``TRACKED_MANAGERS`` / ``TICKER_TO_CUSIP`` module-level constants
+    remain populated (back-compat for callers/tests) but their values
+    derive from the JSON files; if either file is missing or malformed,
+    a small hard-coded fallback list keeps the pipeline running.
 """
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 import re
 import xml.etree.ElementTree as ET
@@ -85,24 +92,34 @@ from lthcs.sources.sec_edgar import (
 
 # --- Tracked managers --------------------------------------------------------
 #
-# Top 20 institutional managers by 13F AUM, with the CIK of the entity that
-# actually files the consolidated 13F-HR for that manager group. CIKs were
-# verified against EDGAR full-text-search results filtered to recent
-# (2026-Q1) 13F-HR filings — several managers file under multiple CIKs
-# (parent + subsidiaries) and we pick the one that owns the consolidated
-# group filing. See module docstring for the verification methodology.
+# Phase 1 (Tier 3 #13): The manager list is externalized to
+# ``data/lthcs/13f_institutions.json`` so non-engineers can add new
+# managers without code changes, and so Phase 2 can layer an aum_band /
+# manager-type weighting on top without touching the source. The
+# module-level ``TRACKED_MANAGERS`` constant remains populated for
+# backward compatibility (callers / tests still reference it) but its
+# values derive from the JSON. If the JSON is missing or malformed we
+# fall back to ``_FALLBACK_TRACKED_MANAGERS`` (the original Phase-0 21
+# managers) so the pipeline keeps running.
 #
-# Discrepancies vs. the original spec:
-#   * BlackRock moved its consolidated 13F to a new CIK (2012383) circa 2024;
-#     the spec's 1364742 ("BlackRock Finance, Inc.") only has 3 stub filings.
-#   * The spec had "JPMorgan AM" pointing at 1364742 (a paste error duplicating
-#     BlackRock). The actual JPMorgan consolidated 13F filer is CIK 19617
-#     ("JPMorgan Chase & Co").
-#   * Fidelity files as "FMR LLC" under CIK 315066 (no change).
-#   * Capital Research files under two separate entities: 1422848 (Global
-#     Investors) and 1422849 (World Investors). We include both as one
-#     logical "Capital Group" entry (using the larger Global Investors CIK).
-TRACKED_MANAGERS: Dict[str, str] = {
+# CIKs were verified against EDGAR full-text-search results filtered to
+# recent (2026-Q1) 13F-HR filings — several managers file under
+# multiple CIKs (parent + subsidiaries) and we pick the one that owns
+# the consolidated group filing. See module docstring for the
+# verification methodology.
+#
+# Notable CIK quirks (preserved across the JSON):
+#   * BlackRock moved its consolidated 13F to CIK 2012383 circa 2024;
+#     the older 1364742 ("BlackRock Finance, Inc.") only has 3 stub
+#     filings.
+#   * JPMorgan files its consolidated 13F under CIK 19617 ("JPMorgan
+#     Chase & Co"), NOT under any "JPM AM" sub-entity.
+#   * Fidelity files as "FMR LLC" under CIK 315066.
+#   * Capital Research files under two separate entities: 1422848
+#     (Global Investors) and 1422849 (World Investors). We keep both
+#     as discrete entries so the QoQ delta picks up rebalances between
+#     the sleeves.
+_FALLBACK_TRACKED_MANAGERS: Dict[str, str] = {
     "BlackRock":             "0002012383",
     "Vanguard":              "0000102909",
     "State Street":          "0000093751",
@@ -125,6 +142,11 @@ TRACKED_MANAGERS: Dict[str, str] = {
     "AQR Capital":           "0001167557",
     "Millennium":            "0001273087",
 }
+
+# Default tracked-AUM-pct used when the manager list is loaded from the
+# fallback constant (no JSON to read it from). Spec §3.4 estimates 21
+# managers ≈ ~25% of US institutional 13F AUM.
+_FALLBACK_TRACKED_AUM_PCT: float = 0.25
 
 
 # --- Constants ---------------------------------------------------------------
@@ -191,21 +213,24 @@ _cache = FileCache("sec_13f", root=_cache_root())
 # single bad fetch doesn't break the entire universe rollup.
 
 
-# --- Hardcoded CUSIP map ----------------------------------------------------
+# --- CUSIP / name-alias maps ------------------------------------------------
 #
-# The most reliable way to match a 13F holding row to "this is AAPL" is by
-# CUSIP. yfinance occasionally exposes CUSIP via Ticker.info but coverage is
-# spotty. We hard-code the LTHCS universe's primary CUSIPs (and a few
-# alternate CUSIPs for tickers that have multiple classes). For tickers
-# NOT in this map, the parser falls back to issuer-name normalization,
-# which is less reliable but works for most large caps.
+# Phase 1 (Tier 3 #13): externalized to ``data/lthcs/13f_cusip_map.json``
+# so the LTHCS universe can grow without code edits, and so the issuer-
+# name fallback alias list can be tuned per-ticker. The module-level
+# ``TICKER_TO_CUSIP`` constant stays populated (back-compat for tests
+# and callers) but its values come from the JSON. If the JSON is
+# missing or malformed we fall back to ``_FALLBACK_TICKER_TO_CUSIP``
+# (the original Phase-0 ~50-mega-cap map) so the pipeline keeps running.
 #
-# CUSIP-9 format: 8-char issuer + 1-char issue-type check digit. We compare
-# only the first 6 chars (issuer-level CUSIP-6) plus the 2 issue chars
-# (excluding the check digit), because some filers report 8-char CUSIPs and
-# some report 9. The check digit is computed from the other 8 so it's
-# redundant for matching purposes.
-TICKER_TO_CUSIP: Dict[str, Tuple[str, ...]] = {
+# ``_NAME_ALIASES`` is populated alongside ``TICKER_TO_CUSIP`` from the
+# JSON's ``name_aliases`` arrays, and consumed by ``_build_name_lookup``
+# as the issuer-name fallback when CUSIP matching fails.
+#
+# CUSIP-9 format: 8-char issuer + 1-char issue-type check digit. We
+# compare only the first 8 (issuer + issue) chars because filers report
+# either 8 or 9; the check digit is redundant for matching purposes.
+_FALLBACK_TICKER_TO_CUSIP: Dict[str, Tuple[str, ...]] = {
     "AAPL":  ("037833100",),
     "MSFT":  ("594918104",),
     "NVDA":  ("67066G104",),
@@ -257,6 +282,169 @@ TICKER_TO_CUSIP: Dict[str, Tuple[str, ...]] = {
     "VZ":    ("92343V104",),
 }
 
+_FALLBACK_NAME_ALIASES: Dict[str, Tuple[str, ...]] = {
+    "AAPL":  ("apple",),
+    "MSFT":  ("microsoft",),
+    "NVDA":  ("nvidia",),
+    "AMZN":  ("amazon",),
+    "GOOGL": ("alphabet",),
+    "GOOG":  ("alphabet",),
+    "META":  ("meta platforms",),
+    "TSLA":  ("tesla",),
+    "JPM":   ("jpmorgan chase",),
+    "XOM":   ("exxon mobil",),
+}
+
+
+# --- JSON-backed loaders ---------------------------------------------------
+#
+# Resolve the JSON data files relative to the repo root (the source file
+# lives at lthcs/sources/sec_13f.py, so repo root = parents[2]). Honor
+# the ``LTHCS_13F_DATA_DIR`` env var when set so tests / CI can point at
+# a fixture directory without monkeypatching.
+
+_LOG = logging.getLogger(__name__)
+
+_DEFAULT_DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "lthcs"
+_INSTITUTIONS_FILENAME = "13f_institutions.json"
+_CUSIP_MAP_FILENAME = "13f_cusip_map.json"
+
+
+def _13f_data_dir() -> Path:
+    """Return the directory holding the externalized 13F JSON files."""
+    override = os.environ.get("LTHCS_13F_DATA_DIR")
+    if override:
+        return Path(override)
+    return _DEFAULT_DATA_DIR
+
+
+def _load_managers() -> Tuple[Dict[str, str], float]:
+    """Load the tracked-manager list + tracked-AUM-pct from JSON.
+
+    Returns ``(managers_dict, tracked_aum_pct)``. Falls back to the
+    hard-coded ``_FALLBACK_TRACKED_MANAGERS`` and
+    ``_FALLBACK_TRACKED_AUM_PCT`` if the JSON is missing, malformed, or
+    has no active entries — so a corrupt file never breaks the pipeline.
+    """
+    path = _13f_data_dir() / _INSTITUTIONS_FILENAME
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        _LOG.debug("sec_13f: institutions JSON unreadable at %s; using fallback", path)
+        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+
+    if not isinstance(data, dict):
+        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+
+    raw_managers = data.get("managers")
+    if not isinstance(raw_managers, list) or not raw_managers:
+        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+
+    out: Dict[str, str] = {}
+    for entry in raw_managers:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("active") is False:
+            continue
+        name = entry.get("name")
+        cik = entry.get("cik")
+        if not isinstance(name, str) or not isinstance(cik, str):
+            continue
+        name = name.strip()
+        cik = cik.strip()
+        if not name or not cik:
+            continue
+        # Normalize CIK to 10-digit zero-padded form.
+        try:
+            cik_padded = "{:010d}".format(int(cik))
+        except (TypeError, ValueError):
+            continue
+        out[name] = cik_padded
+
+    if not out:
+        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+
+    raw_pct = data.get("tracked_aum_pct")
+    try:
+        pct = float(raw_pct) if raw_pct is not None else _FALLBACK_TRACKED_AUM_PCT
+    except (TypeError, ValueError):
+        pct = _FALLBACK_TRACKED_AUM_PCT
+    # Clamp to a sensible [0, 1] band.
+    if pct < 0.0:
+        pct = 0.0
+    elif pct > 1.0:
+        pct = 1.0
+    return out, pct
+
+
+def _load_cusip_map() -> Tuple[Dict[str, Tuple[str, ...]], Dict[str, Tuple[str, ...]]]:
+    """Load ``{ticker: (cusips...)}`` plus ``{ticker: (name_aliases...)}``.
+
+    Falls back to ``_FALLBACK_TICKER_TO_CUSIP`` + ``_FALLBACK_NAME_ALIASES``
+    on any JSON error or empty file.
+    """
+    path = _13f_data_dir() / _CUSIP_MAP_FILENAME
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        _LOG.debug("sec_13f: cusip-map JSON unreadable at %s; using fallback", path)
+        return (
+            {k: tuple(v) for k, v in _FALLBACK_TICKER_TO_CUSIP.items()},
+            {k: tuple(v) for k, v in _FALLBACK_NAME_ALIASES.items()},
+        )
+
+    if not isinstance(data, dict):
+        return (
+            {k: tuple(v) for k, v in _FALLBACK_TICKER_TO_CUSIP.items()},
+            {k: tuple(v) for k, v in _FALLBACK_NAME_ALIASES.items()},
+        )
+
+    raw_tickers = data.get("tickers")
+    if not isinstance(raw_tickers, dict) or not raw_tickers:
+        return (
+            {k: tuple(v) for k, v in _FALLBACK_TICKER_TO_CUSIP.items()},
+            {k: tuple(v) for k, v in _FALLBACK_NAME_ALIASES.items()},
+        )
+
+    cusip_out: Dict[str, Tuple[str, ...]] = {}
+    alias_out: Dict[str, Tuple[str, ...]] = {}
+    for ticker, entry in raw_tickers.items():
+        if not isinstance(ticker, str):
+            continue
+        tk = ticker.strip().upper()
+        if not tk:
+            continue
+        if not isinstance(entry, dict):
+            continue
+        raw_cusips = entry.get("cusips") or []
+        if not isinstance(raw_cusips, list):
+            raw_cusips = []
+        cusips = tuple(c.strip() for c in raw_cusips if isinstance(c, str) and c.strip())
+        if cusips:
+            cusip_out[tk] = cusips
+        raw_aliases = entry.get("name_aliases") or []
+        if not isinstance(raw_aliases, list):
+            raw_aliases = []
+        aliases = tuple(a.strip() for a in raw_aliases if isinstance(a, str) and a.strip())
+        if aliases:
+            alias_out[tk] = aliases
+
+    if not cusip_out:
+        return (
+            {k: tuple(v) for k, v in _FALLBACK_TICKER_TO_CUSIP.items()},
+            {k: tuple(v) for k, v in _FALLBACK_NAME_ALIASES.items()},
+        )
+    return cusip_out, alias_out
+
+
+# Populate the module-level constants from JSON at import time. These
+# stay mutable (tests monkeypatch them); the loader is exposed so
+# callers can force a reload after editing the JSON.
+TRACKED_MANAGERS, TRACKED_AUM_PCT = _load_managers()
+TICKER_TO_CUSIP, _NAME_ALIASES = _load_cusip_map()
+
 
 def _normalize_cusip(c: Optional[str]) -> Optional[str]:
     """Normalize a CUSIP to its 8-char prefix (drop check digit if present).
@@ -300,30 +488,23 @@ def _build_name_lookup(tickers: Iterable[str]) -> Dict[str, str]:
     punctuation stripped — the SEC files use varied conventions like
     "APPLE INC", "Apple Inc.", "APPLE INCORPORATED". The lookup matches
     if the normalized issuer-name STARTS WITH the normalized lookup key.
+
+    Phase 1 (Tier 3 #13): the per-ticker name aliases come from the
+    externalized ``data/lthcs/13f_cusip_map.json`` (under each ticker's
+    ``name_aliases`` array). Multiple aliases per ticker are supported
+    so e.g. "MARVELL TECHNOLOGY" and "MARVELL TECHNOLOGY GROUP" both
+    resolve to MRVL.
     """
-    # Coarse company-name fallbacks. Keep these short / unambiguous so we
-    # don't match "VISA EUROPE" to "V" or similar. This map covers the
-    # large-cap tickers most likely to be needed if CUSIP matching fails.
-    NAMES: Dict[str, str] = {
-        "AAPL":  "apple",
-        "MSFT":  "microsoft",
-        "NVDA":  "nvidia",
-        "AMZN":  "amazon",
-        "GOOGL": "alphabet",
-        "GOOG":  "alphabet",
-        "META":  "meta platforms",
-        "TSLA":  "tesla",
-        "JPM":   "jpmorgan chase",
-        "XOM":   "exxon mobil",
-    }
     out: Dict[str, str] = {}
     for t in tickers:
         norm_t = (t or "").strip().upper()
         if not norm_t:
             continue
-        nm = NAMES.get(norm_t)
-        if nm:
-            out[_normalize_name(nm)] = norm_t
+        aliases = _NAME_ALIASES.get(norm_t, ())
+        for alias in aliases:
+            key = _normalize_name(alias)
+            if key:
+                out[key] = norm_t
     return out
 
 
@@ -967,6 +1148,8 @@ def aggregate_holdings_for_ticker(
     manager_data: Dict[str, List[Dict[str, Any]]],
     *,
     as_of_iso: Optional[str] = None,
+    manager_universe_size: Optional[int] = None,
+    tracked_aum_pct: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Aggregate one ticker's holdings across all tracked managers.
 
@@ -979,6 +1162,16 @@ def aggregate_holdings_for_ticker(
         manager is "most-recent quarter first" as returned by
         :func:`fetch_manager_13f_holdings`. Empty / missing managers are
         treated as "doesn't hold the ticker".
+    manager_universe_size:
+        Phase 1 additive field. Total count of managers that were
+        scanned (NOT just those holding the ticker). Lets the pillar
+        normalize ``signal_score`` by coverage breadth. Defaults to
+        ``len(manager_data)`` so callers can omit it.
+    tracked_aum_pct:
+        Phase 1 additive field. Estimated fraction of US institutional
+        13F AUM covered by the scanned manager set (Phase 1 ≈ 0.40,
+        Phase 2 ≈ 0.65). Surfaced for UX / evidence-modal use; not
+        currently consumed by the pillar math.
 
     Returns the per-ticker output shape documented in the module-level
     public API (manager_count, top_holders, quarter_over_quarter, etc.).
@@ -1086,11 +1279,34 @@ def aggregate_holdings_for_ticker(
 
     quality = _data_quality(manager_count)
 
+    # Phase 1 additive fields. ``manager_universe_size`` defaults to the
+    # caller's manager_data length so old callers that don't pass it
+    # still get a sensible value. ``tracked_aum_pct`` is omitted (set to
+    # ``None``) when not provided so consumers can distinguish
+    # "unknown" from "explicitly zero".
+    if manager_universe_size is None:
+        universe_size_out = len(manager_data)
+    else:
+        try:
+            universe_size_out = max(0, int(manager_universe_size))
+        except (TypeError, ValueError):
+            universe_size_out = len(manager_data)
+
+    if tracked_aum_pct is None:
+        aum_pct_out: Optional[float] = None
+    else:
+        try:
+            aum_pct_out = float(tracked_aum_pct)
+        except (TypeError, ValueError):
+            aum_pct_out = None
+
     return {
         "ticker": norm_t,
         "as_of": as_of,
         "latest_quarter": latest_quarter,
         "manager_count": manager_count,
+        "manager_universe_size": universe_size_out,
+        "tracked_aum_pct": aum_pct_out,
         "total_shares_held_mm": round(total_shares_latest / 1_000_000.0, 3),
         "total_value_held_bn": round(total_value_latest / 1_000_000_000.0, 3),
         "top_holders": top_holders,
@@ -1164,6 +1380,14 @@ def fetch_universe_institutional_holdings(
         return out
 
     mgr_map = managers if managers is not None else TRACKED_MANAGERS
+    # Phase 1 additive fields: ``manager_universe_size`` is the number
+    # of managers we actually fanned out to (so the pillar can normalize
+    # by coverage breadth), ``tracked_aum_pct`` is the AUM-share
+    # estimate sourced from the institutions JSON (or the fallback
+    # constant). When the caller passes an explicit ``managers``
+    # override the per-list AUM share is unknown, so we leave it None.
+    universe_size = len(mgr_map)
+    aum_pct: Optional[float] = TRACKED_AUM_PCT if managers is None else None
 
     # 1. Fetch each manager's full holdings (latest + prior quarter cached).
     per_manager: Dict[str, List[Dict[str, Any]]] = {}
@@ -1181,15 +1405,24 @@ def fetch_universe_institutional_holdings(
     anchor = as_of if as_of is not None else (today or _today())
     as_of_iso = anchor.isoformat()
     for t in universe:
-        out[t] = aggregate_holdings_for_ticker(t, per_manager, as_of_iso=as_of_iso)
+        out[t] = aggregate_holdings_for_ticker(
+            t,
+            per_manager,
+            as_of_iso=as_of_iso,
+            manager_universe_size=universe_size,
+            tracked_aum_pct=aum_pct,
+        )
     return out
 
 
 __all__ = [
     "SECEdgarError",
     "TRACKED_MANAGERS",
+    "TRACKED_AUM_PCT",
     "TICKER_TO_CUSIP",
     "fetch_manager_13f_holdings",
     "fetch_universe_institutional_holdings",
     "aggregate_holdings_for_ticker",
+    "_load_managers",
+    "_load_cusip_map",
 ]

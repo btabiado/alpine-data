@@ -630,25 +630,32 @@ def test_fetch_manager_missing_user_agent_raises(
 # --- Module surface --------------------------------------------------------
 
 def test_module_exports_public_api() -> None:
+    # Tier 3 #13 Phase 1 added the JSON-loader helpers + TRACKED_AUM_PCT
+    # to the public surface so callers can re-load the externalized data
+    # files without poking at internals.
     expected = {
         "SECEdgarError",
         "TRACKED_MANAGERS",
+        "TRACKED_AUM_PCT",
         "TICKER_TO_CUSIP",
         "fetch_manager_13f_holdings",
         "fetch_universe_institutional_holdings",
         "aggregate_holdings_for_ticker",
+        "_load_managers",
+        "_load_cusip_map",
     }
     assert set(sec_13f.__all__) == expected
 
 
-def test_tracked_managers_has_twenty_entries() -> None:
-    """Phase 1 spec calls for top 20 managers; we have 21 (Capital Group's
-    two-CIK structure adds one extra entry)."""
-    assert 20 <= len(sec_13f.TRACKED_MANAGERS) <= 22
+def test_tracked_managers_phase1_size_band() -> None:
+    """Phase 1 (Tier 3 #13) expands to ~50 managers via the externalized
+    ``data/lthcs/13f_institutions.json``. We accept a band ([40, 60]) so
+    inactive flips and one-off additions don't churn the test."""
+    assert 40 <= len(sec_13f.TRACKED_MANAGERS) <= 60
     # All CIKs are 10-digit zero-padded.
     for name, cik in sec_13f.TRACKED_MANAGERS.items():
-        assert len(cik) == 10
-        assert cik.isdigit()
+        assert len(cik) == 10, "{}: {!r}".format(name, cik)
+        assert cik.isdigit(), "{}: {!r}".format(name, cik)
 
 
 # --- as_of historical filtering --------------------------------------------
