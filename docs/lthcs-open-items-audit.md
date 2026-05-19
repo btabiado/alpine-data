@@ -7,6 +7,36 @@ limitations — categorized by priority, effort, and status.
 
 ---
 
+## 2026-05-19 — Engine + 13F + crypto end-to-end + narratives shadow + bank cohort
+
+Big shipping day. 12 commits land in parallel, knocking out Tier 2 #7 + #15,
+Tier 3 #13 Phase 1, Tier 5 #23 (shadow refactor + UI toggle), Tier 5 #24
+(backtest engine Phases 1–3), Tier 5 #27 (Phase 3 route + Phase 4 daily
+crypto pipeline with 8d backfill), plus two CI infra commits standing up
+the new daily crons. **Tier 5 #24 backtest engine** ships Phases 1–3 in
+sequence — non-overlapping P&L (`a996ad3`), per-pillar attribution
+(`eb0d5db`), and strategy variants surfacing `dollar_neutral` at +3.1
+Sharpe (`9e13452`); Phase 4 (full live A/B over 21d horizons) is
+time-gated to ~July 2026 once enough live history accumulates.
+**Tier 5 #23** lands as a shadow refactor (`e734272`) + V1↔LLM toggle in
+the detail modal (`5ebf973`); pending env-flag flip once shadow data
+clears. **Tier 5 #27** completes its build phase: new `/lthcs/crypto/`
+route + ₿ header link (`5842149`), staged into pages.yml (`259355d`),
+plus `lthcs-crypto-daily.yml` (`8af023b`) running at 22:00 UTC daily with
+an 8-day initial backfill seeded (BTC 64.5, ETH 55.0, SOL 49.4). **Tier 3
+#13** Phase 1 (`29f2140`) lifts CUSIP coverage from 50 → 169 tickers — a
+3.4× expansion of the 13F universe that meaningfully deepens the
+Institutional pillar's data layer; Phase 2-3 (deeper coverage + finer
+manager weighting) remain open. **Tier 2 #15** ships bank-cohort revenue
+ranking (`e793a6b`) — JPM's Financial Evolution sub-pillar jumps 27 → 100
+once benchmarked against the bank cohort rather than universe-wide.
+**Tier 2 #7** test-suite gap closed (`eca7560`) following yesterday's
+spec landing. **CI infra**: `lthcs-backtest-daily.yml` (`580d341`) runs
+the engine every night at 23:30 UTC; pages.yml stages the new crypto
+route on every push to main.
+
+---
+
 ## 2026-05-18 Backtest validation findings (morning)
 
 After 90-day backfill (commits `43f41a4` + `d9eddbc`), first credible IC reads:
@@ -385,7 +415,7 @@ to deepen Institutional beyond binary signal.
 
 | # | Item | Source | Effort | Status |
 |---|---|---|---|---|
-| 7 | **Compound peer-group key** `(maturity_stage, sector_group[, tech_sub_bucket])` | peer-group-audit §3.4 | S | ✅ SHIPPED — universe.json `tech_sub_bucket` field (43 Tech tickers, v2.2.0); peer_groups.json split (`tech_hardware` n=3, `tech_semiconductors` n=18, `tech_software` n=18, `tech_it_services` n=4); `lthcs/peer_groups.py` 3-tuple resolver with cascade through `STRATEGY_SECTOR_GROUP_ONLY → MATURITY_ONLY`. Pillar wiring lives in `adoption.py`/`financial.py` via `peer_groups_config` arg; `peer_cohort_strategy` surfaced in `variable_detail`. Tests: 30 cases in `tests/lthcs/test_peer_groups.py` covering schema invariants, sub-bucket dispatch, cascade fallback, distribution-tightness vs parent Tech, AAPL bimodality regression guard. |
+| 7 | **Compound peer-group key** `(maturity_stage, sector_group[, tech_sub_bucket])` | peer-group-audit §3.4 | S | ✅ SHIPPED `eca7560` (2026-05-19, tests-only follow-on closes the test-suite gap from prior implementation bundle) — universe.json `tech_sub_bucket` field (43 Tech tickers, v2.2.0); peer_groups.json split (`tech_hardware` n=3, `tech_semiconductors` n=18, `tech_software` n=18, `tech_it_services` n=4); `lthcs/peer_groups.py` 3-tuple resolver with cascade through `STRATEGY_SECTOR_GROUP_ONLY → MATURITY_ONLY`. Pillar wiring lives in `adoption.py`/`financial.py` via `peer_groups_config` arg; `peer_cohort_strategy` surfaced in `variable_detail`. Tests: 30 cases in `tests/lthcs/test_peer_groups.py` covering schema invariants, sub-bucket dispatch, cascade fallback, distribution-tightness vs parent Tech, AAPL bimodality regression guard. |
 | 8 | **De-dup `Technology` ↔ `Information Technology`** in sector_des_weights.json | des-audit §6 | XS | ✅ SHIPPED `09147a7` — canonical "Information Technology" + `_alias_of` resolver in des.py with defensive handling (broken alias → neutral fallback). DES scores identical pre/post for AAPL/MSFT/NVDA/AVGO/ORCL. |
 | 9 | **Tier 2 macro signals**: Brent crude, gasoline cracks, ISM PMI, housing starts, consumer confidence, U-6 | des-audit | M-L | ✅ SHIPPED `16f7945` (2026-05-18) — 6 tier-2 FRED indicators wired into DES via Phase 5 P4. DES ceiling now governed by `TIER2_MAX_POINTS=5.0`; widen constant to lift ceiling further. |
 | 10 | **`peer_groups.json`** config file (declarative per-pillar peer-group strategy) | peer-group-audit §3.5 | L | ❌ DEFERRED — Architecturally cleaner than hard-coded grouping in lthcs_daily.py but premature for V1 universe size. |
@@ -398,9 +428,9 @@ to deepen Institutional beyond binary signal.
 
 | # | Component | Pillar | Currently | Phase 2 plan |
 |---|---|---|---|---|
-| 13 | **13F institutional holdings** | Institutional | Stubbed (renormed). Momentum carries 100%. | Aggregate 13F filings across institutions per ticker; quarterly cadence. Genuine implementation work (~2-3 swarms). |
-| 14 | **Google Trends acceleration** | Adoption | Renorms; revenue carries 100%. | pytrends is rate-limited so daily 168-ticker pulls don't work. Phase 2: do an offline weekly batch, cache, run during pipeline. |
-| 15 | **Bank-specific revenue growth peer cohort** | Financial | Banks compete with all compounders on revenue % rank | Add `bank` peer group OR use NII growth percentile within bank cohort specifically. JPM revenue +2-3% YoY shouldn't be benchmarked against NVDA +65%. |
+| 13 | **13F institutional holdings** | Institutional | Stubbed (renormed). Momentum carries 100%. | ✅ SHIPPED Phase 1 `29f2140` (2026-05-19) — CUSIP coverage 50 → 169 tickers (3.4× expansion of the 13F universe). Phase 1 wires the foundational data layer; Phase 2 (deeper CUSIP / manager coverage) + Phase 3 (finer manager weighting heuristics) remain open. Genuine implementation work (~1-2 swarms remaining for Phases 2-3). |
+| 14 | **Google Trends acceleration** | Adoption | Renorms; revenue carries 100%. | pytrends is rate-limited so daily 168-ticker pulls don't work. Phase 1 ships weekly batch under `lthcs-trends-weekly.yml`. Phase 2 still needs API decision: pytrends (free, brittle) vs SerpAPI (paid, ToS-safe) vs headless scraping. |
+| 15 | **Bank-specific revenue growth peer cohort** | Financial | Banks compete with all compounders on revenue % rank | ✅ SHIPPED `e793a6b` (2026-05-19) — bank-cohort revenue ranking lands; JPM Financial Evolution sub-pillar 27 → 100 once benchmarked against bank cohort instead of universe-wide. Closes the regional-bank drag flagged in the original audit. |
 | 16 | **Sector-relative momentum for Institutional** | Institutional | Universe-relative | Peer-group audit argued KEEP universe-relative; flagged as not a fix. Re-evaluate if signal feels off. |
 
 ---
@@ -423,11 +453,11 @@ to deepen Institutional beyond binary signal.
 
 | # | Item | Why | Effort |
 |---|---|---|---|
-| 23 | **Replace templated narratives with LLM-generated** | V1 narratives are sentence templates; LLM would weave in actual data quality flags + cross-pillar context. | M-L |
-| 24 | **Backtest engine** | Score history → P&L attribution to validate the framework | L |
-| 25 | **Adaptive weights** (V2) | Use backtest to suggest per-ticker weight adjustments | XL (depends on 24) |
+| 23 | **Replace templated narratives with LLM-generated** | V1 narratives are sentence templates; LLM would weave in actual data quality flags + cross-pillar context. | ✅ SHIPPED `e734272` (shadow refactor, 2026-05-19) + `5ebf973` (V1↔LLM toggle in detail modal, 2026-05-19). **Pending env-flag flip** (`LTHCS_LLM_NARRATIVES_ENABLED=1`) after shadow data clears. |
+| 24 | **Backtest engine** | Score history → P&L attribution to validate the framework | ✅ SHIPPED Phases 1–3 `a996ad3` (P1: non-overlapping P&L) + `eb0d5db` (P2: per-pillar attribution) + `9e13452` (P3: strategy variants — dollar_neutral surfaces at +3.1 Sharpe), all 2026-05-19. **Phase 4** (full live A/B over 21d horizons against a real benchmark) is **time-gated to ~July 2026** once enough live history accumulates post-backfill. |
+| 25 | **Adaptive weights** (V2) | Use backtest to suggest per-ticker weight adjustments | XL (depends on 24 Phase 4) |
 | 26 | **MCP server / API exposure** | LTHCS data as Claude Connector | ✅ SHIPPED `6d26a03` (2026-05-19) — `mcp[cli]>=1.0` pinned + boot test + `get_dragging_pillar` tool. **Effectively closed.** |
-| 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | 📋 SPEC READY `da10a8b` (2026-05-19) — Phase 1 (BTC/ETH/SOL fetchers + sub-pillar math) already in tree; Phase 2 integration into composite + heatmap remains. Effort revised **M-L → S**. |
+| 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | ✅ SHIPPED Phase 3 + Phase 4 `5842149` (new `/lthcs/crypto/` route + ₿ header link) + `8af023b` (`lthcs-crypto-daily.yml` workflow at 22:00 UTC daily + 8-day initial backfill — BTC 64.5, ETH 55.0, SOL 49.4), 2026-05-19. Combined with prior Phase 1 (fetchers + sub-pillar math) and Phase 2 (composite integration), crypto pillar is now end-to-end live with daily cron. |
 | 28 | **Real LLM-derived sentiment** (replace AI-news engagement heuristic) | Engagement ≠ sentiment direction; Claude call per ticker per day could give real polarity | ✅ SHIPPED `37199d7` (2026-05-19) — Haiku 4.5 default, daily cost cap, gated `LTHCS_LLM_SENTIMENT_ENABLED` env flag (default-0), byte-identical default behavior. **Effectively closed pending flag flip** after shadow data clears. Earlier spec: `docs/lthcs-llm-sentiment-shadow-spec.md` (`7732d9e`). |
 
 ---
@@ -443,20 +473,51 @@ to deepen Institutional beyond binary signal.
 
 ---
 
+## Infrastructure (CI / workflows shipped this cycle)
+
+| Commit | What | Status |
+|---|---|---|
+| `580d341` | `.github/workflows/lthcs-backtest-daily.yml` — runs the new backtest engine every night at 23:30 UTC, commits attribution + variant results to `data/lthcs/backtest/`. Race-safe push retry. | ✅ SHIPPED (2026-05-19) |
+| `259355d` | `pages.yml` updates to stage `/lthcs/crypto/` route on every push to main (alongside `/lthcs/` and `/v2/`). | ✅ SHIPPED (2026-05-19) |
+| `8af023b` | `.github/workflows/lthcs-crypto-daily.yml` — daily 22:00 UTC crypto pillar snapshot + 8-day initial backfill seeded. Race-safe push retry. | ✅ SHIPPED (2026-05-19) |
+
+---
+
 ## Suggested next 3 commits
 
-Tier 1 #1-5 shipped 2026-05-18; Tier 4 fully closed 2026-05-19 AM;
-tonight's Tier 5 swarm closed #26 + #28, downgraded #27 + Tier 2 #7 to
-S. Previous refresh's #1 (Adoption β fix) shipped tonight `333e5dd`.
-New top-of-queue:
+Today's swarm shipped 12 commits closing Tier 2 #7 + #15, Tier 3 #13
+Phase 1, Tier 5 #23 (shadow refactor + UI toggle, pending flag flip),
+Tier 5 #24 (engine Phases 1–3), Tier 5 #27 (Phase 3 + Phase 4 — crypto
+end-to-end live with daily cron), plus two CI infra commits. Previous
+queue's items mostly shipped. New top-of-queue:
 
-1. **Backtest re-validation** — S. Re-run `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` against the freshly verified 90-day backfill (`2e1654c`, validator PASS 91/91). Produces empirical IC comparison pre / post Phase 5 — confirms Adoption stops inverting at 21d (post-β fix `333e5dd`) and re-baselines composite IC before LLM-sentiment shadow flips on. **Auto-fires from another agent tonight.**
-2. **Tier 2 #7 Hardware/Software split implementation** — S. Spec ready (`6d08632`); bimodality vanishes under proposed split, unblocking the long-deferred compound peer-group key. **Likely shipping tonight from another agent.**
-3. **Tier 3 #13 Full 13F implementation OR Tier 5 #23 LLM narratives** — both M-L; pick based on the backtest result. If Institutional IC is still the workhorse (+0.204 in the morning read), prioritize #13 to deepen the strongest pillar. If composite IC plateaus post-backfill, prioritize #23 to add a qualitative differentiator.
+1. **User flips LLM env flags + adds API key** — XS / config-only.
+   `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1`
+   in `lthcs-daily.yml`, and `ANTHROPIC_API_KEY` added to repo secrets.
+   Daily cost projected at ~$0.50/day (Haiku 4.5 + prompt caching). This
+   unlocks the Thesis-pillar real signal (kills the constant-50
+   problem) and surfaces LLM-generated narratives in the detail-modal
+   toggle. Single-action change; everything's already wired.
+2. **Tier 2 #14 Google Trends Phase 2** — M. Needs API decision:
+   pytrends (free, brittle / rate-limited), SerpAPI (paid, ToS-safe),
+   or headless scraping. Weekly batch under `lthcs-trends-weekly.yml`
+   ships partial coverage today (~11/167); Phase 2 lifts to full
+   universe. Decision is the blocker, not implementation.
+3. **Tier 3 #13 Phase 2-3** — M-L. Phase 1 (`29f2140`) lifted CUSIP
+   coverage 50 → 169 today. Phase 2 deepens coverage to additional 13F
+   filers; Phase 3 adds finer manager-weighting heuristics (e.g.,
+   long-tenured concentrated holders > passive index funds). Highest
+   ROI for the Institutional pillar — the workhorse at +0.204 IC.
 
-After those, the natural follow-ups are: flip `LTHCS_LLM_SENTIMENT_ENABLED=1` once shadow data clears (then re-tighten `elite.min` back to 90 if Thesis_p99 ≥ 85), widen `TIER2_MAX_POINTS` to lift the DES ceiling, and Tier 5 #27 Phase 2 (crypto pillar adapter into composite + heatmap, now S effort).
+After those: Tier 5 #24 Phase 4 (full live A/B over 21d horizons —
+time-gated to ~July 2026 for sufficient live history), Tier 5 #25
+adaptive weights (depends on #24 P4), and widening `TIER2_MAX_POINTS`
+to lift the DES ceiling once Thesis-LLM is live.
 
-**Time-gated**: Adoption IC re-validation window remains **2026-06-24** (revised tonight per β analysis; +~7d for stable IC + Trends weekly batch resolution).
+**Time-gated**: Adoption IC re-validation window remains **2026-06-24**
+(per β analysis; +~7d for stable IC + Trends weekly batch resolution).
+Tier 5 #24 Phase 4 time-gated to **~July 2026** (sufficient live
+history for honest 21d-horizon A/B).
 
 ---
 
@@ -468,7 +529,7 @@ The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
-Tests: **1471 passing** (LTHCS subset; full suite at 1710 incl. non-LTHCS test files). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → **1471** tonight from the Tier 5 swarm (`333e5dd` + `c035366` + `6d26a03` + `37199d7`).
+Tests: **~1624 passing** in `tests/lthcs/` (LTHCS subset). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → 1471 from the 2026-05-19 AM Tier 5 swarm; **~1624** after today's 12-commit swarm (engine + 13F P1 + crypto end-to-end + narratives shadow + bank cohort + Tier 2 #7 tests-only + CI workflows).
 
 **Tier 5 narrowing observation**: tonight's three Tier 5 surveys (`llm_sentiment`, `lthcs_mcp`, crypto pillars) all found **~85-90% already built** — the audit's Tier 5 backlog is materially smaller than it looked on paper. Of the six original Tier 5 items: #26 + #28 effectively closed, #27 reduced to S, #23 remains M-L, #24 + #25 are the genuine V2/V3 builds.
 
@@ -483,7 +544,9 @@ the same runner pool or push to `main` in the same minute.
 | Cadence | UTC cron | Workflow file | What it does | Commits to main? |
 |---|---|---|---|---|
 | Hourly | `15 * * * *` | `lthcs-news-hourly.yml` | `lthcs_daily.py --news-only` (commit `6c65fac`) — refreshes Finnhub recos + 8-K + Yahoo earnings + sector RSS for today's already-published snapshot only. **History append skipped**; daily 23:00 UTC run remains authoritative for composite math + history. Runtime 30-90s per run. Workflow `01f5f38`. | Yes |
+| Daily | `0 22 * * *` | `lthcs-crypto-daily.yml` | Crypto pillar snapshot — BTC/ETH/SOL into `data/lthcs/crypto/`. 8-day initial backfill seeded (BTC 64.5, ETH 55.0, SOL 49.4). Race-safe push retry. Workflow `8af023b`. | Yes |
 | Daily | `0 23 * * *` | `lthcs-daily.yml` | `lthcs_daily.py --force --catch-up --skip-thesis` — accumulates the daily snapshot under `data/lthcs/`. Note: `sector_rss` is no longer gated by `--skip-thesis` (see `ef1cc06`); Form 4 + 13F similarly un-gated in `a55aab8`. | Yes |
+| Daily | `30 23 * * *` | `lthcs-backtest-daily.yml` | Runs the new backtest engine (`scripts/lthcs_backtest.py`) — non-overlapping P&L + per-pillar attribution + strategy variants — into `data/lthcs/backtest/`. Race-safe push retry. Workflow `580d341`. | Yes |
 | Weekly Mon | `0 4 * * 1` | `lthcs-trends-weekly.yml` | `scripts/lthcs_trends_weekly.py` — pytrends batch into `data/lthcs/trends/`. Sunday 23:00 ET gives Google's limiter overnight to cool. | Yes |
 | Weekly Mon | `0 5 * * 1` | `lthcs-validate-weekly.yml` | `scripts/lthcs_backfill_validate.py` — read-only audit; uploads the JSON report as a 90-day artifact and fails the run if exit code is non-zero. | No (read-only) |
 | Monthly 1st | `0 6 1 * *` | `lthcs-backtest-monthly.yml` | `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` into `data/lthcs/backtest/<YYYY-MM>_monthly/`. Skips silently if fewer than 30 snapshots exist. | Yes |
