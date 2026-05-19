@@ -1,0 +1,285 @@
+/* =========================================================================
+   LTHCS Crypto route
+   Layered on top of ../lthcs_tab/lthcs.css for shared design tokens.
+   Only contains styles unique to this page; everything else (header,
+   typography, dark theme, band colors) is inherited.
+   ========================================================================= */
+
+.hidden { display: none !important; }
+
+.lcry-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lcry-loading,
+.lcry-error,
+.lcry-empty {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.lcry-error {
+  color: var(--danger, var(--band-review-bright));
+  border-left: 3px solid var(--band-review-bright);
+  padding-left: 12px;
+}
+
+.lcry-section {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg, 12px);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-card, 0 1px 0 rgba(0,0,0,0.4));
+}
+
+.lcry-h2 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+.lcry-h2-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
+.lcry-note {
+  margin: -2px 0 14px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+.lcry-note code {
+  background: var(--bg-chip);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+/* ----- Universe placeholder (empty state) ------------------------------ */
+.lcry-universe {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.lcry-universe-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-chip);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+.lcry-universe-chip strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ----- Composite score cards ------------------------------------------ */
+.lcry-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.lcry-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+.lcry-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--lcry-band, var(--text-tertiary));
+}
+.lcry-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.lcry-card-symbol {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+.lcry-card-name {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lcry-card-score {
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.lcry-card-score .lcry-na {
+  font-size: 20px;
+  color: var(--text-tertiary);
+}
+.lcry-card-band {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--lcry-band, var(--bg-chip));
+  color: #fff;
+  align-self: flex-start;
+}
+.lcry-card-drifts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.lcry-card-drift {
+  display: inline-flex;
+  gap: 4px;
+}
+.lcry-card-drift-val.pos { color: var(--drift-improving-bright); }
+.lcry-card-drift-val.neg { color: var(--drift-declining-bright); }
+.lcry-card-drift-val.flat { color: var(--drift-flat-accent); }
+
+/* ----- Pillar breakdown grid ------------------------------------------ */
+.lcry-pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lcry-pillar-asset {
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+  overflow: hidden;
+}
+.lcry-pillar-asset-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lcry-pillar-asset-symbol {
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+.lcry-pillar-asset-profile {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.lcry-pillar-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.lcry-pillar-table th,
+.lcry-pillar-table td {
+  padding: 8px 14px;
+  text-align: right;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lcry-pillar-table th:first-child,
+.lcry-pillar-table td:first-child {
+  text-align: left;
+  color: var(--text-secondary);
+}
+.lcry-pillar-table th {
+  color: var(--text-tertiary);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-elevated);
+}
+.lcry-pillar-table tr:last-child td {
+  border-bottom: none;
+}
+.lcry-pillar-table .lcry-bar-cell {
+  position: relative;
+  width: 140px;
+}
+.lcry-pillar-table .lcry-bar-track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-chip);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.lcry-pillar-table .lcry-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+.lcry-pillar-table .lcry-dropped td {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ----- Thesis call line ------------------------------------------------ */
+.lcry-thesis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.lcry-thesis-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+}
+.lcry-thesis-symbol {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lcry-thesis-call {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.lcry-thesis-call.neutral { color: var(--drift-flat-accent); }
+.lcry-thesis-call.stretched { color: var(--band-monitor-bright); }
+.lcry-thesis-call.euphoric { color: var(--band-weakening-bright); }
+.lcry-thesis-call.panicked { color: var(--band-review-bright); }
+.lcry-thesis-call.dropped { color: var(--text-tertiary); font-style: italic; }
+.lcry-thesis-detail {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* ----- Responsive ------------------------------------------------------ */
+@media (max-width: 640px) {
+  .lcry-pillar-table .lcry-bar-cell { width: 80px; }
+  .lcry-pillar-table th,
+  .lcry-pillar-table td { padding: 7px 10px; }
+}

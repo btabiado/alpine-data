@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Crypto</title>
+    <!--
+      Same import pattern as lthcs_health / lthcs_backtest: pulls dark-theme
+      + band tokens from the card-view stylesheet. In production this page
+      stages at /lthcs/crypto/index.html and resolves ../lthcs_tab/lthcs.css
+      to /lthcs/lthcs_tab/lthcs.css (mirrored by pages.yml). On the dev
+      server (python3 -m http.server in repo root) lthcs_tab/ sits sibling
+      to lthcs_crypto/ so the same relative path works.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-crypto.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Crypto</h1>
+          <p class="lthcs-subtitle">BTC / ETH / SOL daily scores &middot; five-pillar crypto extension</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Generated</span>
+            <span id="lcry-generated" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card View</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lcry-main">
+      <section id="lcry-loading" class="lthcs-section lcry-loading">Loading crypto scores&hellip;</section>
+      <section id="lcry-error" class="lthcs-section lcry-error hidden" role="alert"></section>
+      <section id="lcry-empty" class="lthcs-section lcry-empty hidden">
+        <h2 class="lcry-h2">No crypto snapshot on disk yet</h2>
+        <p class="lcry-note">
+          The crypto daily runner (<code>scripts/lthcs_crypto_daily.py</code>) writes one
+          snapshot per day under <code>data/lthcs/snapshots_crypto/&lt;date&gt;.json</code>.
+          Once Phase 2 + CI gating land, this page will populate automatically.
+          Until then, the universe roster below shows what will be scored.
+        </p>
+        <div id="lcry-universe" class="lcry-universe"></div>
+      </section>
+
+      <div id="lcry-content" class="hidden">
+        <!-- ===== Per-asset score cards =================================== -->
+        <section class="lthcs-section lcry-section" aria-label="Asset scores">
+          <h2 class="lcry-h2">Composite scores <span class="lcry-h2-sub">(0&ndash;100, equity-share thresholds)</span></h2>
+          <div id="lcry-cards" class="lcry-cards"></div>
+        </section>
+
+        <!-- ===== Pillar breakdown grid ==================================== -->
+        <section class="lthcs-section lcry-section" aria-label="Pillar breakdown">
+          <h2 class="lcry-h2">Pillar breakdown <span class="lcry-h2-sub">(sub-score &middot; weight &middot; contribution)</span></h2>
+          <p class="lcry-note">
+            Composite = &sum;(sub_score &times; effective_weight). Dropped pillars (when all components are missing)
+            show <em>n/a</em> and the remaining weights are renormalized; this is identical to the equity
+            <code>thesis_unavailable</code> flag path.
+          </p>
+          <div id="lcry-pillars" class="lcry-pillars"></div>
+        </section>
+
+        <!-- ===== Thesis call line ========================================= -->
+        <section class="lthcs-section lcry-section" aria-label="Thesis Integrity status">
+          <h2 class="lcry-h2">Thesis Integrity <span class="lcry-h2-sub">(funding-rate + L/S, Phase 2 wiring)</span></h2>
+          <p class="lcry-note">
+            Funding-rate normalcy + L/S-ratio normalcy score 100 at neutrality and 0 at the saturation
+            extremes (&plusmn;0.10% per 8h funding, log-symmetric L/S around 1.0). Phase 1 left Thesis
+            neutral at 50 across the board; Phase 2 wired per-asset funding into <code>inputs_for</code>.
+          </p>
+          <div id="lcry-thesis" class="lcry-thesis"></div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Read-only view.</strong> Consumes <code>data/lthcs/snapshots_crypto/&lt;date&gt;.json</code>
+        committed by the crypto daily runner. Scoring math lives in
+        <code>lthcs/pillars/crypto_*.py</code>; the spec is at
+        <code>docs/lthcs-crypto-pillar-adapter-spec.md</code>.
+        V1-only — does not deploy to <code>/v2/</code>.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-crypto.js"></script>
+  </body>
+</html>
