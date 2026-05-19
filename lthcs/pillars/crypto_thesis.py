@@ -20,6 +20,20 @@ structure signals plus a placeholder for narrative sentiment:
   data_quality flag. Future Phase 2 can plug AV NEWS_SENTIMENT for
   crypto tickers (CRYPTO:BTC) here.
 
+In Phase 2 the runner-side adapter
+(``lthcs/sources/crypto_data.py:CryptoDataAdapter``) now plumbs the
+latest funding rate and L/S ratio per asset from ``data/market.json``
+(written by ``fetch_market.py``'s OKX wrappers) into the pillar inputs,
+along with optional 30d means surfaced as ``variable_detail`` trend
+context.
+
+The pillar also exposes a **directional polarity** diagnostic in
+``variable_detail`` (positive = bullish lean, negative = bearish lean)
+so a future Phase 5 UI can plot the signed signal alongside the
+normalcy score. The polarity is purely diagnostic: the 0-100 sub-score
+follows the spec's symmetric-normalcy framework (see §2.4 of
+``docs/lthcs-crypto-pillar-adapter-spec.md``).
+
 When funding-rate / L-S-ratio data isn't passed in (the V1 default --
 the V1 dashboard reads funding rate per-coin but we don't yet
 persist a per-asset value the runner can read), the pillar drops those
@@ -81,6 +95,59 @@ def _funding_score(funding_rate_pct_8h: Optional[float]) -> Optional[float]:
     return float(100.0 * (1.0 - (mag - _FUNDING_HEALTHY_THRESHOLD) / span))
 
 
+def _funding_polarity(funding_rate_pct_8h: Optional[float]) -> Optional[float]:
+    """Signed -100..+100 polarity for the funding rate.
+
+    Diagnostic only -- the sub-score uses :func:`_funding_score`'s
+    symmetric normalcy mapping. Sign convention:
+
+    * Funding above ``_FUNDING_EXTREME_THRESHOLD`` (e.g. +0.10% / 8h) ->
+      -100 (euphoric / over-leveraged longs -> bearish lean).
+    * Funding below ``-_FUNDING_EXTREME_THRESHOLD`` -> +100 (capitulation
+      shorts -> bullish lean).
+    * Linear in between; |r| <= healthy threshold -> 0 (neutral).
+    """
+    if funding_rate_pct_8h is None:
+        return None
+    try:
+        r = float(funding_rate_pct_8h)
+    except (TypeError, ValueError):
+        return None
+    if r != r:  # NaN
+        return None
+    mag = abs(r)
+    if mag <= _FUNDING_HEALTHY_THRESHOLD:
+        return 0.0
+    span = _FUNDING_EXTREME_THRESHOLD - _FUNDING_HEALTHY_THRESHOLD
+    scaled = min(1.0, (mag - _FUNDING_HEALTHY_THRESHOLD) / span)
+    # Positive funding (crowded longs) -> bearish polarity (-).
+    sign = -1.0 if r > 0 else 1.0
+    return float(sign * scaled * 100.0)
+
+
+def _long_short_polarity(long_short_ratio: Optional[float]) -> Optional[float]:
+    """Signed -100..+100 polarity for the L/S ratio.
+
+    Diagnostic only. ``r > 1`` (crowded long) -> negative; ``r < 1``
+    (crowded short) -> positive. Saturates at the extreme bounds used by
+    :func:`_long_short_score`.
+    """
+    if long_short_ratio is None:
+        return None
+    try:
+        r = float(long_short_ratio)
+    except (TypeError, ValueError):
+        return None
+    if r != r or r <= 0:
+        return None
+    import math
+    log_r = math.log(r)
+    extreme_log = math.log(_LS_EXTREME_HIGH)
+    scaled = max(-1.0, min(1.0, log_r / extreme_log))
+    # log_r > 0 means crowded long -> bearish polarity.
+    return float(-scaled * 100.0)
+
+
 def _long_short_score(long_short_ratio: Optional[float]) -> Optional[float]:
     """Map a long/short ratio to a 0-100 health score (1.0 = best)."""
     if long_short_ratio is None:
@@ -125,13 +192,19 @@ def compute_crypto_thesis(
 
     Reads (optional) fields from ``inputs``:
 
-    * ``funding_rate_pct_8h``: average perpetual-swap funding rate, %
-      per 8h. Sign and magnitude both matter.
-    * ``long_short_ratio``: top-trader L/S ratio (1.0 = balanced).
+    * ``funding_rate_pct_8h``: latest perpetual-swap funding rate, %
+      per 8h. Sign and magnitude both matter (sub-score is symmetric;
+      ``variable_detail`` also exposes a signed polarity).
+    * ``funding_rate_30d_mean_pct_8h``: optional 30d mean of the
+      same series; surfaced as trend context in ``variable_detail``
+      only -- does not affect the sub-score.
+    * ``long_short_ratio``: latest top-trader L/S ratio (1.0 = balanced).
+    * ``long_short_ratio_30d_mean``: optional 30d mean; trend context
+      only.
     * ``narrative_sentiment``: free-form -1..+1 narrative sentiment
-      score. Not currently wired in V1; left as a Phase 2 hook.
+      score. Not currently wired in V1; left as a Phase 3 hook.
 
-    All three are optional -- missing values collapse to None and the
+    All inputs are optional -- missing values collapse to None and the
     pillar renormalizes around what's present. With nothing present,
     the score is the neutral 50.0 midpoint.
     """
@@ -177,11 +250,38 @@ def compute_crypto_thesis(
         )
     sub_score = round(float(sub_score), 1)
 
+    # Optional 30d-mean trend context (does not affect the sub-score).
+    funding_mean_30d = inputs.get("funding_rate_30d_mean_pct_8h")
+    ls_mean_30d = inputs.get("long_short_ratio_30d_mean")
+    try:
+        funding_mean_30d_f: Optional[float] = (
+            float(funding_mean_30d) if funding_mean_30d is not None else None
+        )
+        if funding_mean_30d_f is not None and funding_mean_30d_f != funding_mean_30d_f:
+            funding_mean_30d_f = None
+    except (TypeError, ValueError):
+        funding_mean_30d_f = None
+    try:
+        ls_mean_30d_f: Optional[float] = (
+            float(ls_mean_30d) if ls_mean_30d is not None else None
+        )
+        if ls_mean_30d_f is not None and (ls_mean_30d_f != ls_mean_30d_f or ls_mean_30d_f <= 0):
+            ls_mean_30d_f = None
+    except (TypeError, ValueError):
+        ls_mean_30d_f = None
+
+    funding_polarity = _funding_polarity(inputs.get("funding_rate_pct_8h"))
+    ls_polarity = _long_short_polarity(inputs.get("long_short_ratio"))
+
     variable_detail = {
         "funding_rate_pct_8h": inputs.get("funding_rate_pct_8h"),
+        "funding_rate_30d_mean_pct_8h": funding_mean_30d_f,
         "funding_subscore": funding_score,
+        "funding_polarity": funding_polarity,
         "long_short_ratio": inputs.get("long_short_ratio"),
+        "long_short_ratio_30d_mean": ls_mean_30d_f,
         "ls_subscore": ls_score,
+        "ls_polarity": ls_polarity,
         "narrative_sentiment": s_f,
         "sentiment_subscore": sentiment_score,
     }

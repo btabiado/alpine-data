@@ -158,9 +158,18 @@ def test_adapter_offline_inputs_have_expected_keys(tmp_path: Path) -> None:
         "market",
         "etf_flow_rows",
         "stablecoins",
+        # Phase 2: Thesis pillar wiring -- funding rate + L/S ratio from
+        # data/market.json (fetch_market.py's OKX wrappers).
+        "funding_rate_pct_8h",
+        "funding_rate_30d_mean_pct_8h",
+        "long_short_ratio",
+        "long_short_ratio_30d_mean",
     }
     assert expected_keys.issubset(inp.keys())
     assert inp["symbol"] == "BTC"
+    # No market.json under tmp_path -> perp fields are None (graceful).
+    assert inp["funding_rate_pct_8h"] is None
+    assert inp["long_short_ratio"] is None
 
 
 def test_adapter_offline_skips_http(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

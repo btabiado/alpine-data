@@ -50,10 +50,13 @@ __all__ = [
     "CryptoDataAdapter",
     "load_whale_payload",
     "load_etf_flows",
+    "load_market_payload",
     "compute_etf_flow_30d",
     "fetch_coingecko_markets",
     "fetch_stablecoin_total",
     "fetch_blockchain_chart",
+    "funding_rate_metrics",
+    "long_short_ratio_metrics",
 ]
 
 
@@ -111,6 +114,34 @@ def load_whale_payload(path: Optional[Path] = None) -> Dict[str, Any]:
         candidates: List[Path] = [Path(path)]
     else:
         candidates = _whale_candidate_paths()
+    for p in candidates:
+        try:
+            if not p.exists():
+                continue
+            with p.open("r", encoding="utf-8") as fh:
+                data = json.load(fh)
+            if isinstance(data, dict):
+                return data
+        except (OSError, json.JSONDecodeError):
+            continue
+    return {}
+
+
+def load_market_payload(path: Optional[Path] = None) -> Dict[str, Any]:
+    """Load ``data/market.json`` written by ``fetch_market.py``.
+
+    Returns the parsed JSON dict, or ``{}`` if the file is missing or
+    fails to parse. Never raises.
+
+    The payload has top-level per-asset blocks (``btc``, ``eth``,
+    ``link``, ``ltc``) with ``funding`` and ``long_short_ratio`` daily
+    series. The Thesis pillar reads these via :func:`funding_rate_metrics`
+    and :func:`long_short_ratio_metrics`.
+    """
+    if path is not None:
+        candidates: List[Path] = [Path(path)]
+    else:
+        candidates = [_repo_root() / "data" / "market.json"]
     for p in candidates:
         try:
             if not p.exists():
@@ -458,6 +489,119 @@ def mean(values: List[float]) -> Optional[float]:
     return float(sum(cleaned) / len(cleaned))
 
 
+# --- Perp (funding rate, L/S ratio) extractors ----------------------------
+
+# Per-asset key in ``data/market.json`` written by ``fetch_market.py``.
+# SOL is intentionally absent in V1 (OKX universe is BTC/ETH/LINK/LTC).
+_MARKET_ASSET_KEY = {
+    "BTC": "btc",
+    "ETH": "eth",
+}
+
+
+def _series_floats(series: Any, value_key: str) -> List[float]:
+    """Extract a list of floats from a ``[{date, <value_key>}, ...]`` series.
+
+    Tolerant of missing / malformed rows. Empty list on bad input. Never
+    raises.
+    """
+    if not isinstance(series, list):
+        return []
+    out: List[float] = []
+    for r in series:
+        if not isinstance(r, dict):
+            continue
+        f = _safe_float(r.get(value_key))
+        if f is None:
+            continue
+        out.append(f)
+    return out
+
+
+def funding_rate_metrics(
+    market_payload: Dict[str, Any],
+    symbol: str,
+) -> Dict[str, Optional[float]]:
+    """Derive funding-rate metrics for ``symbol`` from a market payload.
+
+    ``market_payload`` is the dict from :func:`load_market_payload`.
+    ``fetch_market.py:okx_funding`` returns a daily series of
+    ``{"date", "rate"}`` rows where ``rate`` is the **decimal** per-8h
+    funding rate (e.g. ``0.0001`` for 1 bp / 8h). The Thesis pillar
+    works in **percent per 8h**, so we multiply by 100 before returning.
+
+    Returns::
+
+        {
+            "latest_pct_8h":    float | None,
+            "mean_30d_pct_8h":  float | None,
+        }
+
+    Both fields are ``None`` when the underlying series is missing,
+    empty, or the asset has no perp coverage in V1 (e.g. SOL).
+    """
+    asset_key = _MARKET_ASSET_KEY.get((symbol or "").upper())
+    if not asset_key:
+        return {"latest_pct_8h": None, "mean_30d_pct_8h": None}
+    block = market_payload.get(asset_key) if isinstance(market_payload, dict) else None
+    if not isinstance(block, dict):
+        return {"latest_pct_8h": None, "mean_30d_pct_8h": None}
+    rates = _series_floats(block.get("funding"), "rate")
+    if not rates:
+        return {"latest_pct_8h": None, "mean_30d_pct_8h": None}
+    # Convert decimal -> percent.
+    pct_rates = [r * 100.0 for r in rates]
+    latest = pct_rates[-1]
+    window = pct_rates[-30:] if len(pct_rates) >= 30 else pct_rates
+    mean_30d = mean(window)
+    return {
+        "latest_pct_8h": float(latest),
+        "mean_30d_pct_8h": float(mean_30d) if mean_30d is not None else None,
+    }
+
+
+def long_short_ratio_metrics(
+    market_payload: Dict[str, Any],
+    symbol: str,
+) -> Dict[str, Optional[float]]:
+    """Derive L/S-ratio metrics for ``symbol`` from a market payload.
+
+    ``fetch_market.py:okx_long_short`` returns ``[{"date", "ratio"}]``
+    where ``ratio`` is the top-trader long/short account ratio (1.0 =
+    balanced; >1 = more crowded longs; <1 = more crowded shorts). The
+    Thesis pillar consumes the latest ratio directly; we also surface a
+    30d mean for trend / variable_detail.
+
+    Returns::
+
+        {
+            "latest":     float | None,
+            "mean_30d":   float | None,
+        }
+
+    Both fields are ``None`` when the underlying series is missing or
+    the asset has no perp coverage in V1 (e.g. SOL).
+    """
+    asset_key = _MARKET_ASSET_KEY.get((symbol or "").upper())
+    if not asset_key:
+        return {"latest": None, "mean_30d": None}
+    block = market_payload.get(asset_key) if isinstance(market_payload, dict) else None
+    if not isinstance(block, dict):
+        return {"latest": None, "mean_30d": None}
+    ratios = _series_floats(block.get("long_short_ratio"), "ratio")
+    # Strip non-positive ratios (the pillar treats them as missing anyway).
+    ratios = [r for r in ratios if r > 0]
+    if not ratios:
+        return {"latest": None, "mean_30d": None}
+    latest = ratios[-1]
+    window = ratios[-30:] if len(ratios) >= 30 else ratios
+    mean_30d = mean(window)
+    return {
+        "latest": float(latest),
+        "mean_30d": float(mean_30d) if mean_30d is not None else None,
+    }
+
+
 # --- High-level adapter ---------------------------------------------------
 
 class CryptoDataAdapter:
@@ -481,6 +625,7 @@ class CryptoDataAdapter:
         self._coingecko: Optional[Dict[str, Dict[str, Any]]] = None
         self._stablecoins: Optional[Dict[str, Any]] = None
         self._bc_charts: Dict[str, List[Dict[str, Any]]] = {}
+        self._market: Optional[Dict[str, Any]] = None
 
     # ----- lazy loaders ---------------------------------------------------
 
@@ -520,6 +665,35 @@ class CryptoDataAdapter:
             series = fetch_blockchain_chart(metric)
         self._bc_charts[metric] = series
         return series
+
+    def market_payload(self) -> Dict[str, Any]:
+        """Lazy-load ``data/market.json`` (from ``fetch_market.py``).
+
+        Cached for the adapter's lifetime. Offline-safe: the file is
+        purely a local read, so we load it regardless of ``offline``.
+        Returns ``{}`` when the file is missing or invalid.
+        """
+        if self._market is None:
+            self._market = load_market_payload(self.data_dir / "market.json")
+        return self._market
+
+    def funding_rate(self, symbol: str) -> Dict[str, Optional[float]]:
+        """Per-asset funding-rate metrics (percent per 8h).
+
+        Returns ``{"latest_pct_8h", "mean_30d_pct_8h"}``. Both fields are
+        ``None`` when the underlying series is missing or the asset has
+        no perp coverage in V1 (e.g. SOL). Never raises.
+        """
+        return funding_rate_metrics(self.market_payload(), symbol)
+
+    def long_short_ratio(self, symbol: str) -> Dict[str, Optional[float]]:
+        """Per-asset L/S-ratio metrics.
+
+        Returns ``{"latest", "mean_30d"}``. Both fields are ``None`` when
+        the underlying series is missing or the asset has no perp
+        coverage in V1 (e.g. SOL). Never raises.
+        """
+        return long_short_ratio_metrics(self.market_payload(), symbol)
 
     # ----- composite asset input -----------------------------------------
 
@@ -564,6 +738,13 @@ class CryptoDataAdapter:
         # Stablecoins (universe-wide; same value for all assets).
         stable_block = self.stablecoins()
 
+        # Perp positioning (funding rate + L/S ratio) for the Thesis pillar.
+        # Only BTC/ETH have OKX coverage in V1; SOL falls back to None and the
+        # Thesis pillar collapses to the narrative-sentiment placeholder
+        # (which itself defaults to neutral 50).
+        funding = self.funding_rate(sym)
+        ls = self.long_short_ratio(sym)
+
         return {
             "symbol": sym,
             "active_addresses_series": active_addr_series,
@@ -574,4 +755,9 @@ class CryptoDataAdapter:
             "market": market_block,
             "etf_flow_rows": etf_rows,
             "stablecoins": stable_block,
+            # Thesis pillar inputs (per spec §2.4 + §6).
+            "funding_rate_pct_8h": funding.get("latest_pct_8h"),
+            "funding_rate_30d_mean_pct_8h": funding.get("mean_30d_pct_8h"),
+            "long_short_ratio": ls.get("latest"),
+            "long_short_ratio_30d_mean": ls.get("mean_30d"),
         }
