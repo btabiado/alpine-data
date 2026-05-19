@@ -4,10 +4,10 @@
   "color": "#F0A861",
   "components": [
     {
-      "delta": -20,
+      "delta": -24,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe distributing",
-      "value": "-66.5%"
+      "value": "-80.2%"
     },
     {
       "delta": 0,
@@ -28,16 +28,16 @@
       "value": 55.8
     },
     {
-      "delta": 4,
+      "delta": 1,
       "name": "Thesis pillar avg",
-      "read": "sentiment supportive",
-      "value": 69.5
+      "read": "narrative mixed",
+      "value": 56.3
     },
     {
       "delta": -1,
       "name": "DES (demand environment) avg",
       "read": "macro neutral",
-      "value": 46.1
+      "value": 46.6
     },
     {
       "delta": 10,
@@ -49,7 +49,7 @@
       "delta": -7,
       "name": "Insider conviction breadth",
       "read": "insiders distributing",
-      "value": "108 active signals"
+      "value": "110 active signals"
     },
     {
       "delta": 0,
@@ -60,5 +60,5 @@
   ],
   "label": "LTHCS NEUTRAL",
   "note": "Aggregate of 167-ticker LTHCS universe. Directional read, not a trading signal.",
-  "score": -13
+  "score": -20
 }

@@ -1,6 +1,6 @@
 {
   "AAPL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -220,7 +220,7 @@
     "window_days": 90
   },
   "ABBV": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -440,7 +440,7 @@
     "window_days": 90
   },
   "ABNB": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -660,7 +660,7 @@
     "window_days": 90
   },
   "ABT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 2,
     "buy_dollar_value": 1127837.0,
     "ceo_cfo_action": "buying",
@@ -880,7 +880,7 @@
     "window_days": 90
   },
   "ACN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -1100,7 +1100,7 @@
     "window_days": 90
   },
   "ADBE": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -1320,13 +1320,13 @@
     "window_days": 90
   },
   "ADI": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.8979921745395137,
-    "filtered_out_count": 51,
+    "filtered_out_count": 50,
     "net_dollar_value": -1931723.8237499997,
     "net_weighted_score": -1.25,
     "raw_transactions": [
@@ -1540,13 +1540,13 @@
     "window_days": 90
   },
   "ADP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 5,
+    "filtered_out_count": 4,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -1589,16 +1589,6 @@
         "role": "Officer",
         "shares": 543.0,
         "value": 113188.34999999999
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "D'Ambrosio Christopher",
-        "planned_10b5_1": true,
-        "price": 212.43,
-        "role": "Officer",
-        "shares": 543.0,
-        "value": 115349.49
       }
     ],
     "regime": "neutral",
@@ -1610,7 +1600,7 @@
     "window_days": 90
   },
   "ADSK": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -1820,13 +1810,13 @@
     "window_days": 90
   },
   "AEP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 56,
+    "filtered_out_count": 47,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -2040,15 +2030,15 @@
     "window_days": 90
   },
   "AMAT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
-    "ceo_cfo_action": "selling",
+    "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.9502408935818908,
+    "conviction_score": -0.9182621607661451,
     "filtered_out_count": 10,
-    "net_dollar_value": -4484212.65,
-    "net_weighted_score": -3.5,
+    "net_dollar_value": -2678150.65,
+    "net_weighted_score": -2.25,
     "raw_transactions": [
       {
         "code": "F",
@@ -2189,34 +2179,24 @@
         "role": "Director",
         "shares": 1511.0,
         "value": 570991.79
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Hill Brice",
-        "planned_10b5_1": false,
-        "price": 361.2124,
-        "role": "CFO",
-        "shares": 5000.0,
-        "value": 1806062.0
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 5,
-    "sell_dollar_value": 4484212.65,
+    "sell_count": 4,
+    "sell_dollar_value": 2678150.65,
     "ticker": "AMAT",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -3.5,
+    "weighted_sell_score": -2.25,
     "window_days": 90
   },
   "AMD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -1.0,
-    "filtered_out_count": 58,
+    "filtered_out_count": 49,
     "net_dollar_value": -12368975.64,
     "net_weighted_score": -1.5,
     "raw_transactions": [
@@ -2430,7 +2410,7 @@
     "window_days": 90
   },
   "AMGN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -2650,13 +2630,13 @@
     "window_days": 90
   },
   "AMT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 494936.30000000005,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.7896172316156945,
-    "filtered_out_count": 53,
+    "filtered_out_count": 48,
     "net_dollar_value": -336759.1199999999,
     "net_weighted_score": 0.25,
     "raw_transactions": [
@@ -2870,13 +2850,13 @@
     "window_days": 90
   },
   "AMZN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 57,
+    "filtered_out_count": 53,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -3090,7 +3070,7 @@
     "window_days": 90
   },
   "ARM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -3310,7 +3290,7 @@
     "window_days": 90
   },
   "AVGO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -3530,7 +3510,7 @@
     "window_days": 90
   },
   "AXP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -3620,7 +3600,7 @@
     "window_days": 90
   },
   "AZN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -3660,15 +3640,15 @@
     "window_days": 90
   },
   "BA": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 499966.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.8771315264065919,
-    "filtered_out_count": 40,
-    "net_dollar_value": -1380131.3092500002,
-    "net_weighted_score": -0.5,
+    "conviction_score": 0.7388109330190821,
+    "filtered_out_count": 11,
+    "net_dollar_value": 148481.94175,
+    "net_weighted_score": 0.25,
     "raw_transactions": [
       {
         "code": "P",
@@ -3799,97 +3779,47 @@
         "role": "Officer",
         "shares": 500.18,
         "value": 118397.60780000001
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Gerry Brett C.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 9290.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Gerry Brett C.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 3716.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Gerry Brett C.",
-        "planned_10b5_1": false,
-        "price": 242.18,
-        "role": "Officer",
-        "shares": 4009.272,
-        "value": 970965.4929600001
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Amuluru Uma M",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 7019.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Amuluru Uma M",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 2807.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Cleary Michael J",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 3721.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "DEASY DANA S",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 5987.0,
-        "value": 0.0
       }
     ],
-    "regime": "heavy_selling",
-    "sell_count": 2,
-    "sell_dollar_value": 1880097.3092500002,
+    "regime": "strong_buying",
+    "sell_count": 1,
+    "sell_dollar_value": 351484.05825,
     "ticker": "BA",
     "weighted_buy_score": 1.0,
-    "weighted_sell_score": -1.5,
+    "weighted_sell_score": -0.75,
     "window_days": 90
   },
   "BAC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 6,
-    "buy_dollar_value": 50352.3627,
+    "buy_dollar_value": 40274.7627,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
     "filtered_out_count": 42,
-    "net_dollar_value": -31081023.8163,
+    "net_dollar_value": -31081083.5863,
     "net_weighted_score": -3.3500000000000005,
     "raw_transactions": [
+      {
+        "code": "P",
+        "date": "2026-05-15",
+        "insider": "BANK OF AMERICA CORP /DE/",
+        "planned_10b5_1": false,
+        "price": 12.2,
+        "role": "TenPercent",
+        "shares": 407.0,
+        "value": 4965.4
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "BANK OF AMERICA CORP /DE/",
+        "planned_10b5_1": false,
+        "price": 12.33,
+        "role": "TenPercent",
+        "shares": 407.0,
+        "value": 5018.31
+      },
       {
         "code": "S",
         "date": "2026-05-08",
@@ -4069,38 +3999,18 @@
         "role": "TenPercent",
         "shares": 3359.0,
         "value": 29156.12
-      },
-      {
-        "code": "S",
-        "date": "2026-04-02",
-        "insider": "BANK OF AMERICA CORP /DE/",
-        "planned_10b5_1": false,
-        "price": 8.68,
-        "role": "TenPercent",
-        "shares": 3359.0,
-        "value": 29156.12
-      },
-      {
-        "code": "J",
-        "date": "2026-03-25",
-        "insider": "BANK OF AMERICA CORP /DE/",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "TenPercent",
-        "shares": 170.0,
-        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
     "sell_count": 13,
-    "sell_dollar_value": 31131376.179,
+    "sell_dollar_value": 31121358.349,
     "ticker": "BAC",
     "weighted_buy_score": 4.8,
     "weighted_sell_score": -8.15,
     "window_days": 90
   },
   "BIIB": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -4160,7 +4070,7 @@
     "window_days": 90
   },
   "BK": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -4380,13 +4290,13 @@
     "window_days": 90
   },
   "BKNG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 96,
+    "filtered_out_count": 50,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -4600,7 +4510,7 @@
     "window_days": 90
   },
   "BKR": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -4820,7 +4730,7 @@
     "window_days": 90
   },
   "BLK": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -5040,7 +4950,7 @@
     "window_days": 90
   },
   "BMY": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -5260,16 +5170,26 @@
     "window_days": 90
   },
   "BRK.B": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 2,
     "buy_dollar_value": 250545.45,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -1.0,
-    "filtered_out_count": 1,
+    "filtered_out_count": 2,
     "net_dollar_value": -182614133.4804,
     "net_weighted_score": 2.6,
     "raw_transactions": [
+      {
+        "code": "G",
+        "date": "2026-05-14",
+        "insider": "GUYMAN CHARLOTTE",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 574.0,
+        "value": 0.0
+      },
       {
         "code": "P",
         "date": "2026-05-06",
@@ -5320,7 +5240,7 @@
     "window_days": 90
   },
   "C": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -5540,15 +5460,15 @@
     "window_days": 90
   },
   "CAT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 219210.0,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
     "filtered_out_count": 56,
-    "net_dollar_value": -91243247.92,
-    "net_weighted_score": -17.5,
+    "net_dollar_value": -89153825.56,
+    "net_weighted_score": -16.0,
     "raw_transactions": [
       {
         "code": "M",
@@ -5752,21 +5672,21 @@
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 24,
-    "sell_dollar_value": 91462457.92,
+    "sell_count": 22,
+    "sell_dollar_value": 89373035.56,
     "ticker": "CAT",
     "weighted_buy_score": 1.0,
-    "weighted_sell_score": -18.5,
+    "weighted_sell_score": -17.0,
     "window_days": 90
   },
   "CDNS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 70,
+    "filtered_out_count": 69,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -5980,7 +5900,7 @@
     "window_days": 90
   },
   "CDW": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -6200,7 +6120,7 @@
     "window_days": 90
   },
   "CEG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -6340,16 +6260,26 @@
     "window_days": 90
   },
   "CHTR": {
-    "as_of": "2026-05-18",
-    "buy_count": 4,
-    "buy_dollar_value": 2365149.4264,
+    "as_of": "2026-05-19",
+    "buy_count": 5,
+    "buy_dollar_value": 3764457.2970000003,
     "ceo_cfo_action": "buying",
     "cluster_buying": true,
-    "conviction_score": 0.9105512468652495,
+    "conviction_score": 0.9393860642219801,
     "filtered_out_count": 27,
-    "net_dollar_value": 2365149.4264,
-    "net_weighted_score": 8.0,
+    "net_dollar_value": 3764457.2970000003,
+    "net_weighted_score": 9.0,
     "raw_transactions": [
+      {
+        "code": "P",
+        "date": "2026-05-15",
+        "insider": "Ramos Mauricio",
+        "planned_10b5_1": false,
+        "price": 140.9314,
+        "role": "Director",
+        "shares": 9929.0,
+        "value": 1399307.8706
+      },
       {
         "code": "D",
         "date": "2026-05-12",
@@ -6539,37 +6469,37 @@
         "role": "Director",
         "shares": 918.0,
         "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-04-21",
-        "insider": "Nair Balan",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 489.0,
-        "value": 0.0
       }
     ],
     "regime": "strong_buying",
     "sell_count": 0,
     "sell_dollar_value": 0.0,
     "ticker": "CHTR",
-    "weighted_buy_score": 8.0,
+    "weighted_buy_score": 9.0,
     "weighted_sell_score": -0.0,
     "window_days": 90
   },
   "CL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.8394294475118843,
+    "conviction_score": -0.8542891510938067,
     "filtered_out_count": 26,
-    "net_dollar_value": -751632.5707,
-    "net_weighted_score": -0.75,
+    "net_dollar_value": -955044.5707,
+    "net_weighted_score": -1.5,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Malcolm Gregory",
+        "planned_10b5_1": false,
+        "price": 88.44,
+        "role": "Officer",
+        "shares": 2300.0,
+        "value": 203412.0
+      },
       {
         "code": "A",
         "date": "2026-05-11",
@@ -6759,28 +6689,18 @@
         "role": "Officer",
         "shares": 2260.0,
         "value": 219446.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-23",
-        "insider": "Massey Sally",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 16805.0,
-        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 1,
-    "sell_dollar_value": 751632.5707,
+    "sell_count": 2,
+    "sell_dollar_value": 955044.5707,
     "ticker": "CL",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -0.75,
+    "weighted_sell_score": -1.5,
     "window_days": 90
   },
   "CMCSA": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -7000,7 +6920,7 @@
     "window_days": 90
   },
   "COF": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -7220,7 +7140,7 @@
     "window_days": 90
   },
   "COP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -7440,7 +7360,7 @@
     "window_days": 90
   },
   "COST": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -7500,7 +7420,7 @@
     "window_days": 90
   },
   "CRM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 3,
     "buy_dollar_value": 1000444.415,
     "ceo_cfo_action": "neutral",
@@ -7720,7 +7640,7 @@
     "window_days": 90
   },
   "CRWD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -7940,7 +7860,7 @@
     "window_days": 90
   },
   "CSCO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -8160,7 +8080,7 @@
     "window_days": 90
   },
   "CSGP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 6,
     "buy_dollar_value": 5994762.5,
     "ceo_cfo_action": "buying",
@@ -8380,7 +8300,7 @@
     "window_days": 90
   },
   "CTAS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -8450,13 +8370,13 @@
     "window_days": 90
   },
   "CTSH": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 54,
+    "filtered_out_count": 53,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -8670,7 +8590,7 @@
     "window_days": 90
   },
   "CVS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -8890,7 +8810,7 @@
     "window_days": 90
   },
   "CVX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -9110,7 +9030,7 @@
     "window_days": 90
   },
   "DASH": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -9330,7 +9250,7 @@
     "window_days": 90
   },
   "DDOG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -9550,7 +9470,7 @@
     "window_days": 90
   },
   "DE": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -9670,7 +9590,7 @@
     "window_days": 90
   },
   "DHR": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -9890,7 +9810,7 @@
     "window_days": 90
   },
   "DIS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -10040,7 +9960,7 @@
     "window_days": 90
   },
   "DUK": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -10260,7 +10180,7 @@
     "window_days": 90
   },
   "DXCM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -10480,16 +10400,46 @@
     "window_days": 90
   },
   "EA": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 14,
+    "filtered_out_count": 11,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Wilson Andrew",
+        "planned_10b5_1": true,
+        "price": 200.5418,
+        "role": "CEO",
+        "shares": 5000.0,
+        "value": 1002709.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Singh Vijayanthimala",
+        "planned_10b5_1": true,
+        "price": 200.81,
+        "role": "Officer",
+        "shares": 1200.0,
+        "value": 240972.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Miele Laura",
+        "planned_10b5_1": true,
+        "price": 200.5374,
+        "role": "Officer",
+        "shares": 2500.0,
+        "value": 501343.5
+      },
       {
         "code": "M",
         "date": "2026-05-01",
@@ -10569,66 +10519,6 @@
         "role": "Officer",
         "shares": 2500.0,
         "value": 499883.49999999994
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Wilson Andrew",
-        "planned_10b5_1": true,
-        "price": 199.4829,
-        "role": "CEO",
-        "shares": 4900.0,
-        "value": 977466.21
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Wilson Andrew",
-        "planned_10b5_1": true,
-        "price": 200.18,
-        "role": "CEO",
-        "shares": 100.0,
-        "value": 20018.0
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Singh Vijayanthimala",
-        "planned_10b5_1": true,
-        "price": 200.63,
-        "role": "Officer",
-        "shares": 1200.0,
-        "value": 240756.0
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Miele Laura",
-        "planned_10b5_1": true,
-        "price": 199.5209,
-        "role": "Officer",
-        "shares": 2480.0,
-        "value": 494811.83200000005
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Miele Laura",
-        "planned_10b5_1": true,
-        "price": 200.67,
-        "role": "Officer",
-        "shares": 20.0,
-        "value": 4013.3999999999996
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Canfield Stuart",
-        "planned_10b5_1": true,
-        "price": 199.895,
-        "role": "CFO",
-        "shares": 1500.0,
-        "value": 299842.5
       }
     ],
     "regime": "neutral",
@@ -10640,7 +10530,7 @@
     "window_days": 90
   },
   "EMR": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -10700,7 +10590,7 @@
     "window_days": 90
   },
   "EXC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -10800,16 +10690,76 @@
     "window_days": 90
   },
   "F": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 1934450.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.8980796706334708,
-    "filtered_out_count": 92,
+    "filtered_out_count": 98,
     "net_dollar_value": 1934450.0,
     "net_weighted_score": 1.5,
     "raw_transactions": [
+      {
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Waldo Jennifer",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 62963.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Waldo Jennifer",
+        "planned_10b5_1": false,
+        "price": 14.48,
+        "role": "Officer",
+        "shares": 27352.0,
+        "value": 396056.96
+      },
+      {
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Waldo Jennifer",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 61111.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Waldo Jennifer",
+        "planned_10b5_1": false,
+        "price": 14.48,
+        "role": "Officer",
+        "shares": 26547.0,
+        "value": 384400.56
+      },
+      {
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Waldo Jennifer",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 61111.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Waldo Jennifer",
+        "planned_10b5_1": false,
+        "price": 14.48,
+        "role": "Officer",
+        "shares": 26547.0,
+        "value": 384400.56
+      },
       {
         "code": "M",
         "date": "2026-04-01",
@@ -10949,66 +10899,6 @@
         "role": "Officer",
         "shares": 40943.0,
         "value": 519976.1
-      },
-      {
-        "code": "M",
-        "date": "2026-03-04",
-        "insider": "House Sherry Ann",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CFO",
-        "shares": 60360.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-04",
-        "insider": "House Sherry Ann",
-        "planned_10b5_1": false,
-        "price": 12.7,
-        "role": "CFO",
-        "shares": 26317.0,
-        "value": 334225.89999999997
-      },
-      {
-        "code": "M",
-        "date": "2026-03-04",
-        "insider": "House Sherry Ann",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CFO",
-        "shares": 72368.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-04",
-        "insider": "House Sherry Ann",
-        "planned_10b5_1": false,
-        "price": 12.7,
-        "role": "CFO",
-        "shares": 31553.0,
-        "value": 400723.1
-      },
-      {
-        "code": "M",
-        "date": "2026-03-04",
-        "insider": "Galhotra Ashwani Kumar",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 55950.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-04",
-        "insider": "Galhotra Ashwani Kumar",
-        "planned_10b5_1": false,
-        "price": 12.7,
-        "role": "Officer",
-        "shares": 24395.0,
-        "value": 309816.5
       }
     ],
     "regime": "strong_buying",
@@ -11020,7 +10910,7 @@
     "window_days": 90
   },
   "FANG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -11240,7 +11130,7 @@
     "window_days": 90
   },
   "FAST": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -11290,7 +11180,7 @@
     "window_days": 90
   },
   "FTNT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -11510,7 +11400,7 @@
     "window_days": 90
   },
   "GD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -11730,7 +11620,7 @@
     "window_days": 90
   },
   "GE": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -11950,7 +11840,7 @@
     "window_days": 90
   },
   "GEHC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 7,
     "buy_dollar_value": 5781335.903500001,
     "ceo_cfo_action": "buying",
@@ -12170,16 +12060,26 @@
     "window_days": 90
   },
   "GFS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.8311081450451229,
-    "filtered_out_count": 25,
+    "filtered_out_count": 26,
     "net_dollar_value": -657289.04,
     "net_weighted_score": -0.75,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "Azar Samak L",
+        "planned_10b5_1": true,
+        "price": 74.82,
+        "role": "Officer",
+        "shares": 500.0,
+        "value": 37410.0
+      },
       {
         "code": "S",
         "date": "2026-05-13",
@@ -12369,16 +12269,6 @@
         "role": "Officer",
         "shares": 500.0,
         "value": 21480.0
-      },
-      {
-        "code": "S",
-        "date": "2026-04-01",
-        "insider": "Hogan Michael James",
-        "planned_10b5_1": true,
-        "price": 45.04,
-        "role": "Officer",
-        "shares": 1800.0,
-        "value": 81072.0
       }
     ],
     "regime": "heavy_selling",
@@ -12390,16 +12280,76 @@
     "window_days": 90
   },
   "GILD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 38,
+    "filtered_out_count": 39,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
+      {
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Mercier Johanna",
+        "planned_10b5_1": true,
+        "price": 66.64,
+        "role": "Officer",
+        "shares": 25000.0,
+        "value": 1666000.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Mercier Johanna",
+        "planned_10b5_1": true,
+        "price": 130.2915,
+        "role": "Officer",
+        "shares": 7749.0,
+        "value": 1009628.8335000001
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Mercier Johanna",
+        "planned_10b5_1": true,
+        "price": 131.1917,
+        "role": "Officer",
+        "shares": 11177.0,
+        "value": 1466329.6309
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Mercier Johanna",
+        "planned_10b5_1": true,
+        "price": 132.2324,
+        "role": "Officer",
+        "shares": 8374.0,
+        "value": 1107314.1176
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Mercier Johanna",
+        "planned_10b5_1": true,
+        "price": 132.7514,
+        "role": "Officer",
+        "shares": 700.0,
+        "value": 92925.98
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Dickinson Andrew D",
+        "planned_10b5_1": true,
+        "price": 132.27,
+        "role": "CFO",
+        "shares": 3000.0,
+        "value": 396810.00000000006
+      },
       {
         "code": "A",
         "date": "2026-04-30",
@@ -12539,66 +12489,6 @@
         "role": "Officer",
         "shares": 3000.0,
         "value": 432689.99999999994
-      },
-      {
-        "code": "S",
-        "date": "2026-03-16",
-        "insider": "Dickinson Andrew D",
-        "planned_10b5_1": true,
-        "price": 144.23,
-        "role": "CFO",
-        "shares": 3000.0,
-        "value": 432689.99999999994
-      },
-      {
-        "code": "M",
-        "date": "2026-03-10",
-        "insider": "Dickinson Andrew D",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CFO",
-        "shares": 6469.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-10",
-        "insider": "Dickinson Andrew D",
-        "planned_10b5_1": false,
-        "price": 148.56,
-        "role": "CFO",
-        "shares": 3147.0,
-        "value": 467518.32
-      },
-      {
-        "code": "M",
-        "date": "2026-03-10",
-        "insider": "Mercier Johanna",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 6617.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-10",
-        "insider": "Mercier Johanna",
-        "planned_10b5_1": false,
-        "price": 148.56,
-        "role": "Officer",
-        "shares": 3216.0,
-        "value": 477768.96
-      },
-      {
-        "code": "M",
-        "date": "2026-03-10",
-        "insider": "Cain Wettan Keeley M",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 1246.0,
-        "value": 0.0
       }
     ],
     "regime": "neutral",
@@ -12609,97 +12499,67 @@
     "weighted_sell_score": -0.0,
     "window_days": 90
   },
-  "GM": {
-    "as_of": "2026-05-18",
-    "buy_count": 0,
-    "buy_dollar_value": 0.0,
-    "ceo_cfo_action": "neutral",
-    "cluster_buying": false,
-    "conviction_score": 0.0,
-    "filtered_out_count": 6,
-    "net_dollar_value": 0.0,
-    "net_weighted_score": 0.0,
-    "raw_transactions": [
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "Reuss Mark L",
-        "planned_10b5_1": true,
-        "price": 52.16,
-        "role": "Officer",
-        "shares": 82489.0,
-        "value": 4302626.239999999
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Reuss Mark L",
-        "planned_10b5_1": true,
-        "price": 80.1,
-        "role": "Officer",
-        "shares": 82489.0,
-        "value": 6607368.899999999
-      },
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "Reuss Mark L",
-        "planned_10b5_1": true,
-        "price": 35.49,
-        "role": "Officer",
-        "shares": 147569.0,
-        "value": 5237223.8100000005
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Reuss Mark L",
-        "planned_10b5_1": true,
-        "price": 80.61,
-        "role": "Officer",
-        "shares": 147569.0,
-        "value": 11895537.09
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Reuss Mark L",
-        "planned_10b5_1": true,
-        "price": 80.61,
-        "role": "Officer",
-        "shares": 249567.0,
-        "value": 20117595.87
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Reuss Mark L",
-        "planned_10b5_1": true,
-        "price": 80.94,
-        "role": "Officer",
-        "shares": 1099.0,
-        "value": 88953.06
-      }
-    ],
-    "regime": "neutral",
-    "sell_count": 0,
-    "sell_dollar_value": 0.0,
-    "ticker": "GM",
-    "weighted_buy_score": 0.0,
-    "weighted_sell_score": -0.0,
-    "window_days": 90
-  },
   "GOOG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": 0.0,
-    "filtered_out_count": 161,
-    "net_dollar_value": 0.0,
-    "net_weighted_score": 0.0,
+    "conviction_score": -0.9341503112823707,
+    "filtered_out_count": 155,
+    "net_dollar_value": -3459808.7606,
+    "net_weighted_score": -1.2000000000000002,
     "raw_transactions": [
+      {
+        "code": "J",
+        "date": "2026-05-15",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "TenPercent",
+        "shares": 87475.0,
+        "value": 0.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 23.2691,
+        "role": "TenPercent",
+        "shares": 45410.0,
+        "value": 1056649.831
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 24.2679,
+        "role": "TenPercent",
+        "shares": 42065.0,
+        "value": 1020829.2135000001
+      },
+      {
+        "code": "J",
+        "date": "2026-05-14",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "TenPercent",
+        "shares": 60077.0,
+        "value": 0.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 23.0093,
+        "role": "TenPercent",
+        "shares": 60077.0,
+        "value": 1382329.7161
+      },
       {
         "code": "S",
         "date": "2026-04-30",
@@ -12849,77 +12709,77 @@
         "role": "CEO",
         "shares": 3700.0,
         "value": 0.0
-      },
-      {
-        "code": "C",
-        "date": "2026-04-25",
-        "insider": "Pichai Sundar",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CEO",
-        "shares": 3666.0,
-        "value": 0.0
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 330.54,
-        "role": "Director",
-        "shares": 105.0,
-        "value": 34706.700000000004
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 331.74,
-        "role": "Director",
-        "shares": 105.0,
-        "value": 34832.700000000004
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 332.91,
-        "role": "Director",
-        "shares": 75.0,
-        "value": 24968.250000000004
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 334.35,
-        "role": "Director",
-        "shares": 72.0,
-        "value": 24073.2
       }
     ],
-    "regime": "neutral",
-    "sell_count": 0,
-    "sell_dollar_value": 0.0,
+    "regime": "heavy_selling",
+    "sell_count": 3,
+    "sell_dollar_value": 3459808.7606,
     "ticker": "GOOG",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -0.0,
+    "weighted_sell_score": -1.2000000000000002,
     "window_days": 90
   },
   "GOOGL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": 0.0,
-    "filtered_out_count": 161,
-    "net_dollar_value": 0.0,
-    "net_weighted_score": 0.0,
+    "conviction_score": -0.9341503112823707,
+    "filtered_out_count": 155,
+    "net_dollar_value": -3459808.7606,
+    "net_weighted_score": -1.2000000000000002,
     "raw_transactions": [
+      {
+        "code": "J",
+        "date": "2026-05-15",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "TenPercent",
+        "shares": 87475.0,
+        "value": 0.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 23.2691,
+        "role": "TenPercent",
+        "shares": 45410.0,
+        "value": 1056649.831
+      },
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 24.2679,
+        "role": "TenPercent",
+        "shares": 42065.0,
+        "value": 1020829.2135000001
+      },
+      {
+        "code": "J",
+        "date": "2026-05-14",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "TenPercent",
+        "shares": 60077.0,
+        "value": 0.0
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "GV 2019 GP, L.L.C.",
+        "planned_10b5_1": false,
+        "price": 23.0093,
+        "role": "TenPercent",
+        "shares": 60077.0,
+        "value": 1382329.7161
+      },
       {
         "code": "S",
         "date": "2026-04-30",
@@ -13069,77 +12929,67 @@
         "role": "CEO",
         "shares": 3700.0,
         "value": 0.0
-      },
-      {
-        "code": "C",
-        "date": "2026-04-25",
-        "insider": "Pichai Sundar",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CEO",
-        "shares": 3666.0,
-        "value": 0.0
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 330.54,
-        "role": "Director",
-        "shares": 105.0,
-        "value": 34706.700000000004
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 331.74,
-        "role": "Director",
-        "shares": 105.0,
-        "value": 34832.700000000004
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 332.91,
-        "role": "Director",
-        "shares": 75.0,
-        "value": 24968.250000000004
-      },
-      {
-        "code": "S",
-        "date": "2026-04-15",
-        "insider": "Hennessy John L.",
-        "planned_10b5_1": true,
-        "price": 334.35,
-        "role": "Director",
-        "shares": 72.0,
-        "value": 24073.2
       }
     ],
-    "regime": "neutral",
-    "sell_count": 0,
-    "sell_dollar_value": 0.0,
+    "regime": "heavy_selling",
+    "sell_count": 3,
+    "sell_dollar_value": 3459808.7606,
     "ticker": "GOOGL",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -0.0,
+    "weighted_sell_score": -1.2000000000000002,
     "window_days": 90
   },
   "GS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 34,
     "buy_dollar_value": 3388098.5999999996,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
     "filtered_out_count": 12,
-    "net_dollar_value": -25543719.35,
-    "net_weighted_score": 9.900000000000013,
+    "net_dollar_value": -32219332.04,
+    "net_weighted_score": 4.900000000000016,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "COLEMAN DENIS P.",
+        "planned_10b5_1": false,
+        "price": 972.29,
+        "role": "CFO",
+        "shares": 2509.0,
+        "value": 2439475.61
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "COLEMAN DENIS P.",
+        "planned_10b5_1": false,
+        "price": 973.19,
+        "role": "CFO",
+        "shares": 1560.0,
+        "value": 1518176.4000000001
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "COLEMAN DENIS P.",
+        "planned_10b5_1": false,
+        "price": 974.53,
+        "role": "CFO",
+        "shares": 1360.0,
+        "value": 1325360.8
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "COLEMAN DENIS P.",
+        "planned_10b5_1": false,
+        "price": 975.21,
+        "role": "CFO",
+        "shares": 1428.0,
+        "value": 1392599.8800000001
+      },
       {
         "code": "S",
         "date": "2026-05-06",
@@ -13299,58 +13149,18 @@
         "role": "Officer",
         "shares": 80.0,
         "value": 74428.0
-      },
-      {
-        "code": "M",
-        "date": "2026-04-28",
-        "insider": "SOLOMON DAVID M",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CEO",
-        "shares": 34017.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-04-28",
-        "insider": "SOLOMON DAVID M",
-        "planned_10b5_1": false,
-        "price": 937.81,
-        "role": "CEO",
-        "shares": 18812.0,
-        "value": 17642081.72
-      },
-      {
-        "code": "M",
-        "date": "2026-04-28",
-        "insider": "WALDRON JOHN E.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 27446.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-04-28",
-        "insider": "WALDRON JOHN E.",
-        "planned_10b5_1": false,
-        "price": 937.81,
-        "role": "Officer",
-        "shares": 15178.0,
-        "value": 14234080.18
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 22,
-    "sell_dollar_value": 28931817.950000003,
+    "sell_count": 26,
+    "sell_dollar_value": 35607430.64,
     "ticker": "GS",
     "weighted_buy_score": 27.200000000000014,
-    "weighted_sell_score": -17.3,
+    "weighted_sell_score": -22.299999999999997,
     "window_days": 90
   },
   "HD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -13570,7 +13380,7 @@
     "window_days": 90
   },
   "HON": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -13790,7 +13600,7 @@
     "window_days": 90
   },
   "IBM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 2,
     "buy_dollar_value": 113154.99239999999,
     "ceo_cfo_action": "neutral",
@@ -14010,15 +13820,15 @@
     "window_days": 90
   },
   "IDXX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
-    "filtered_out_count": 19,
-    "net_dollar_value": -22525148.006499995,
-    "net_weighted_score": -26.5,
+    "filtered_out_count": 16,
+    "net_dollar_value": -18235188.726299994,
+    "net_weighted_score": -21.0,
     "raw_transactions": [
       {
         "code": "M",
@@ -14222,15 +14032,15 @@
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 23,
-    "sell_dollar_value": 22525148.006499995,
+    "sell_count": 15,
+    "sell_dollar_value": 18235188.726299994,
     "ticker": "IDXX",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -26.5,
+    "weighted_sell_score": -21.0,
     "window_days": 90
   },
   "ILMN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -14450,7 +14260,7 @@
     "window_days": 90
   },
   "INTC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -14670,7 +14480,7 @@
     "window_days": 90
   },
   "INTU": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -14890,7 +14700,7 @@
     "window_days": 90
   },
   "ISRG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -15110,15 +14920,15 @@
     "window_days": 90
   },
   "JNJ": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
-    "ceo_cfo_action": "selling",
+    "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -1.0,
-    "filtered_out_count": 11,
-    "net_dollar_value": -48224133.23,
-    "net_weighted_score": -11.75,
+    "conviction_score": -0.9766388815635468,
+    "filtered_out_count": 5,
+    "net_dollar_value": -6862338.709999999,
+    "net_weighted_score": -3.0,
     "raw_transactions": [
       {
         "code": "M",
@@ -15209,134 +15019,24 @@
         "role": "Officer",
         "shares": 8998.0,
         "value": 2200280.94
-      },
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "Swanson James D.",
-        "planned_10b5_1": false,
-        "price": 164.62,
-        "role": "Officer",
-        "shares": 20521.0,
-        "value": 3378167.02
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Swanson James D.",
-        "planned_10b5_1": false,
-        "price": 242.7,
-        "role": "Officer",
-        "shares": 20521.0,
-        "value": 4980446.7
-      },
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 115.67,
-        "role": "CFO",
-        "shares": 19241.0,
-        "value": 2225606.47
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 242.99,
-        "role": "CFO",
-        "shares": 19241.0,
-        "value": 4675370.59
-      },
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 129.51,
-        "role": "CFO",
-        "shares": 12066.0,
-        "value": 1562667.66
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 242.87,
-        "role": "CFO",
-        "shares": 12066.0,
-        "value": 2930469.42
-      },
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 131.94,
-        "role": "CFO",
-        "shares": 33386.0,
-        "value": 4404948.84
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 242.75,
-        "role": "CFO",
-        "shares": 33386.0,
-        "value": 8104451.5
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Wolk Joseph J",
-        "planned_10b5_1": false,
-        "price": 242.68,
-        "role": "CFO",
-        "shares": 24961.0,
-        "value": 6057535.48
-      },
-      {
-        "code": "M",
-        "date": "2026-02-17",
-        "insider": "REED JOHN C",
-        "planned_10b5_1": false,
-        "price": 157.92,
-        "role": "Officer",
-        "shares": 21721.0,
-        "value": 3430180.32
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "REED JOHN C",
-        "planned_10b5_1": false,
-        "price": 243.0,
-        "role": "Officer",
-        "shares": 21721.0,
-        "value": 5278203.0
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 13,
-    "sell_dollar_value": 48224133.23,
+    "sell_count": 4,
+    "sell_dollar_value": 6862338.709999999,
     "ticker": "JNJ",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -11.75,
+    "weighted_sell_score": -3.0,
     "window_days": 90
   },
   "JPM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 60,
+    "filtered_out_count": 54,
     "net_dollar_value": 0.0,
     "net_weighted_score": -1.2000000000000002,
     "raw_transactions": [
@@ -15550,7 +15250,7 @@
     "window_days": 90
   },
   "KDP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -15770,16 +15470,146 @@
     "window_days": 90
   },
   "KHC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 4999807.7296,
     "ceo_cfo_action": "buying",
     "cluster_buying": false,
     "conviction_score": 0.9569933355600998,
-    "filtered_out_count": 38,
+    "filtered_out_count": 51,
     "net_dollar_value": 4999807.7296,
     "net_weighted_score": 3.0,
     "raw_transactions": [
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Kelley Mary Lou",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Kelley Mary Lou",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 793.0,
+        "value": 18484.829999999998
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "PALMER ANTHONY J.",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "PALMER ANTHONY J.",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 793.0,
+        "value": 18484.829999999998
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Alfonso Humberto P",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Alfonso Humberto P",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 3218.0,
+        "value": 75011.58
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "CAHILL JOHN T",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 13085.0,
+        "value": 305011.35
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Fouche Lori Dickerson",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Gherson Diane J",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Sceti Elio Leoni",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Sceti Elio Leoni",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 3218.0,
+        "value": 75011.58
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "POPE JOHN C",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Cox L Kevin",
+        "planned_10b5_1": false,
+        "price": 23.31,
+        "role": "Director",
+        "shares": 7937.0,
+        "value": 185011.47
+      },
       {
         "code": "P",
         "date": "2026-05-12",
@@ -15849,136 +15679,6 @@
         "role": "Officer",
         "shares": 9144.0,
         "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Asher Chris",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 4954.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Asher Chris",
-        "planned_10b5_1": false,
-        "price": 24.61,
-        "role": "Officer",
-        "shares": 1982.0,
-        "value": 48777.02
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Asher Chris",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 4371.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-01",
-        "insider": "Asher Chris",
-        "planned_10b5_1": false,
-        "price": 24.61,
-        "role": "Officer",
-        "shares": 3343.0,
-        "value": 82271.23
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Torres Flavio",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 10909.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Torres Flavio",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 22082.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-01",
-        "insider": "Torres Flavio",
-        "planned_10b5_1": false,
-        "price": 24.61,
-        "role": "Officer",
-        "shares": 25026.0,
-        "value": 615889.86
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Camacho Rodolfo M.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 40940.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Camacho Rodolfo M.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 8725.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Camacho Rodolfo M.",
-        "planned_10b5_1": false,
-        "price": 24.61,
-        "role": "Officer",
-        "shares": 2618.0,
-        "value": 64428.979999999996
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Camacho Rodolfo M.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 18465.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-01",
-        "insider": "Camacho Rodolfo M.",
-        "planned_10b5_1": false,
-        "price": 24.61,
-        "role": "Officer",
-        "shares": 13255.0,
-        "value": 326205.55
-      },
-      {
-        "code": "A",
-        "date": "2026-03-01",
-        "insider": "Frost Diana",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 40361.0,
-        "value": 0.0
       }
     ],
     "regime": "strong_buying",
@@ -15990,7 +15690,7 @@
     "window_days": 90
   },
   "KLAC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -16040,7 +15740,7 @@
     "window_days": 90
   },
   "KO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -16260,7 +15960,7 @@
     "window_days": 90
   },
   "LCID": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -16360,16 +16060,36 @@
     "window_days": 90
   },
   "LIN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.9873595669202249,
-    "filtered_out_count": 71,
-    "net_dollar_value": -8156746.365,
-    "net_weighted_score": -3.0,
+    "conviction_score": -0.9709094651631149,
+    "filtered_out_count": 69,
+    "net_dollar_value": -6257001.0649999995,
+    "net_weighted_score": -3.25,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "WOOD ROBERT L",
+        "planned_10b5_1": false,
+        "price": 506.39,
+        "role": "Director",
+        "shares": 4335.0,
+        "value": 2195200.65
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "WOOD ROBERT L",
+        "planned_10b5_1": false,
+        "price": 508.76,
+        "role": "Director",
+        "shares": 880.0,
+        "value": 447708.8
+      },
       {
         "code": "S",
         "date": "2026-03-10",
@@ -16549,44 +16269,24 @@
         "role": "Officer",
         "shares": 548.0,
         "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-09",
-        "insider": "Patwari Binod",
-        "planned_10b5_1": false,
-        "price": 484.74,
-        "role": "Officer",
-        "shares": 121.0,
-        "value": 58653.54
-      },
-      {
-        "code": "M",
-        "date": "2026-03-09",
-        "insider": "Patwari Binod",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 195.0,
-        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 4,
-    "sell_dollar_value": 8156746.365,
+    "sell_count": 5,
+    "sell_dollar_value": 6257001.0649999995,
     "ticker": "LIN",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -3.0,
+    "weighted_sell_score": -3.25,
     "window_days": 90
   },
   "LLY": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -1.0,
-    "filtered_out_count": 13,
+    "filtered_out_count": 9,
     "net_dollar_value": -15754536.564,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -16699,46 +16399,6 @@
         "role": "Officer",
         "shares": 481.0,
         "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Sulzberger Gabrielle",
-        "planned_10b5_1": false,
-        "price": 1036.05,
-        "role": "Director",
-        "shares": 4.786,
-        "value": 4958.5353
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "LUCIANO JUAN R",
-        "planned_10b5_1": false,
-        "price": 1036.05,
-        "role": "Director",
-        "shares": 15.363,
-        "value": 15916.83615
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Fyrwald J Erik",
-        "planned_10b5_1": false,
-        "price": 1036.05,
-        "role": "Director",
-        "shares": 9.572,
-        "value": 9917.0706
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Alvarez Ralph",
-        "planned_10b5_1": false,
-        "price": 1036.05,
-        "role": "Director",
-        "shares": 11.985,
-        "value": 12417.059249999998
       }
     ],
     "regime": "heavy_selling",
@@ -16750,7 +16410,7 @@
     "window_days": 90
   },
   "LMT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -16970,7 +16630,7 @@
     "window_days": 90
   },
   "LOW": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -17190,7 +16850,7 @@
     "window_days": 90
   },
   "LRCX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -17410,7 +17070,7 @@
     "window_days": 90
   },
   "LULU": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 2,
     "buy_dollar_value": 1494568.5,
     "ceo_cfo_action": "buying",
@@ -17630,7 +17290,7 @@
     "window_days": 90
   },
   "MA": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -17850,15 +17510,15 @@
     "window_days": 90
   },
   "MAR": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
-    "ceo_cfo_action": "selling",
+    "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -1.0,
-    "filtered_out_count": 46,
-    "net_dollar_value": -35052104.4677,
-    "net_weighted_score": -9.5,
+    "conviction_score": -0.9953163902169051,
+    "filtered_out_count": 26,
+    "net_dollar_value": -9272881.8849,
+    "net_weighted_score": -3.75,
     "raw_transactions": [
       {
         "code": "S",
@@ -18062,15 +17722,15 @@
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 10,
-    "sell_dollar_value": 35052104.4677,
+    "sell_count": 5,
+    "sell_dollar_value": 9272881.8849,
     "ticker": "MAR",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -9.5,
+    "weighted_sell_score": -3.75,
     "window_days": 90
   },
   "MCD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -18200,7 +17860,7 @@
     "window_days": 90
   },
   "MCHP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -18340,16 +18000,186 @@
     "window_days": 90
   },
   "MDB": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 29,
+    "filtered_out_count": 45,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-18",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 309.72,
+        "role": "Director",
+        "shares": 1188.0,
+        "value": 367947.36000000004
+      },
+      {
+        "code": "S",
+        "date": "2026-05-18",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 311.36,
+        "role": "Director",
+        "shares": 773.0,
+        "value": 240681.28
+      },
+      {
+        "code": "S",
+        "date": "2026-05-18",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 311.92,
+        "role": "Director",
+        "shares": 2039.0,
+        "value": 636004.88
+      },
+      {
+        "code": "S",
+        "date": "2026-05-18",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 322.58,
+        "role": "Director",
+        "shares": 1880.0,
+        "value": 606450.4
+      },
+      {
+        "code": "S",
+        "date": "2026-05-18",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 323.29,
+        "role": "Director",
+        "shares": 114.0,
+        "value": 36855.060000000005
+      },
+      {
+        "code": "S",
+        "date": "2026-05-18",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 324.16,
+        "role": "Director",
+        "shares": 6.0,
+        "value": 1944.96
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 293.18,
+        "role": "Director",
+        "shares": 886.0,
+        "value": 259757.48
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 294.47,
+        "role": "Director",
+        "shares": 1130.0,
+        "value": 332751.10000000003
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 295.6,
+        "role": "Director",
+        "shares": 1396.0,
+        "value": 412657.60000000003
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 296.5,
+        "role": "Director",
+        "shares": 933.0,
+        "value": 276634.5
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 298.04,
+        "role": "Director",
+        "shares": 562.0,
+        "value": 167498.48
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 298.92,
+        "role": "Director",
+        "shares": 1588.0,
+        "value": 474684.96
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 299.98,
+        "role": "Director",
+        "shares": 917.0,
+        "value": 275081.66000000003
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 301.03,
+        "role": "Director",
+        "shares": 1110.0,
+        "value": 334143.3
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 302.02,
+        "role": "Director",
+        "shares": 1184.0,
+        "value": 357591.68
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 302.97,
+        "role": "Director",
+        "shares": 258.0,
+        "value": 78166.26000000001
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "MERRIMAN DWIGHT A",
+        "planned_10b5_1": true,
+        "price": 304.08,
+        "role": "Director",
+        "shares": 36.0,
+        "value": 10946.88
+      },
       {
         "code": "S",
         "date": "2026-05-07",
@@ -18379,176 +18209,6 @@
         "role": "Director",
         "shares": 360.0,
         "value": 91224.0
-      },
-      {
-        "code": "S",
-        "date": "2026-04-14",
-        "insider": "MERRIMAN DWIGHT A",
-        "planned_10b5_1": true,
-        "price": 235.42,
-        "role": "Director",
-        "shares": 660.0,
-        "value": 155377.19999999998
-      },
-      {
-        "code": "S",
-        "date": "2026-04-14",
-        "insider": "MERRIMAN DWIGHT A",
-        "planned_10b5_1": true,
-        "price": 236.68,
-        "role": "Director",
-        "shares": 5678.0,
-        "value": 1343869.04
-      },
-      {
-        "code": "S",
-        "date": "2026-04-14",
-        "insider": "MERRIMAN DWIGHT A",
-        "planned_10b5_1": true,
-        "price": 237.97,
-        "role": "Director",
-        "shares": 1256.0,
-        "value": 298890.32
-      },
-      {
-        "code": "S",
-        "date": "2026-04-14",
-        "insider": "MERRIMAN DWIGHT A",
-        "planned_10b5_1": true,
-        "price": 238.85,
-        "role": "Director",
-        "shares": 406.0,
-        "value": 96973.09999999999
-      },
-      {
-        "code": "S",
-        "date": "2026-04-01",
-        "insider": "Cochran Hope F",
-        "planned_10b5_1": true,
-        "price": 249.33,
-        "role": "Director",
-        "shares": 1566.0,
-        "value": 390450.78
-      },
-      {
-        "code": "M",
-        "date": "2026-04-01",
-        "insider": "Cochran Hope F",
-        "planned_10b5_1": true,
-        "price": 7.58,
-        "role": "Director",
-        "shares": 3917.0,
-        "value": 29690.86
-      },
-      {
-        "code": "F",
-        "date": "2026-04-01",
-        "insider": "Desai Chirantan Jitendra",
-        "planned_10b5_1": false,
-        "price": 244.77,
-        "role": "CEO",
-        "shares": 2262.0,
-        "value": 553669.74
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Ittycheria Dev",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 17218.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Ittycheria Dev",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 5653.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Ittycheria Dev",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 1249.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Ittycheria Dev",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Director",
-        "shares": 20452.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-04-01",
-        "insider": "Ittycheria Dev",
-        "planned_10b5_1": false,
-        "price": 244.77,
-        "role": "Director",
-        "shares": 26462.0,
-        "value": 6477103.74
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Pech Cedric",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 8417.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Pech Cedric",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 2660.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-04-01",
-        "insider": "Pech Cedric",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 10794.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-04-01",
-        "insider": "Pech Cedric",
-        "planned_10b5_1": false,
-        "price": 244.77,
-        "role": "Officer",
-        "shares": 2405.0,
-        "value": 588671.85
-      },
-      {
-        "code": "A",
-        "date": "2026-03-17",
-        "insider": "Desai Chirantan Jitendra",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CEO",
-        "shares": 34832.0,
-        "value": 0.0
       }
     ],
     "regime": "neutral",
@@ -18560,7 +18220,7 @@
     "window_days": 90
   },
   "MDLZ": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -18640,7 +18300,7 @@
     "window_days": 90
   },
   "MDT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -18860,7 +18520,7 @@
     "window_days": 90
   },
   "MELI": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 100078.89,
     "ceo_cfo_action": "neutral",
@@ -18890,7 +18550,7 @@
     "window_days": 90
   },
   "MET": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -19110,13 +18770,13 @@
     "window_days": 90
   },
   "META": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 99,
+    "filtered_out_count": 93,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -19330,7 +18990,7 @@
     "window_days": 90
   },
   "MMM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -19520,7 +19180,7 @@
     "window_days": 90
   },
   "MNST": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -19740,16 +19400,106 @@
     "window_days": 90
   },
   "MO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.8964967199960083,
-    "filtered_out_count": 20,
+    "filtered_out_count": 29,
     "net_dollar_value": -1885718.4428,
     "net_weighted_score": -0.75,
     "raw_transactions": [
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Strahlman Ellen R",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Stoddart Richard S",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Clarke Ian L.T.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Connelly Marjorie Mary",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "KELLY ENNIS DEBRA J",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Davis Robert Matthews",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "SHANKS VIRGINIA E",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "YZAGUIRRE MARIO MAX",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 2571.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "McQUADE KATHRYN B.",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 4656.0,
+        "value": 0.0
+      },
       {
         "code": "A",
         "date": "2026-05-13",
@@ -19859,96 +19609,6 @@
         "role": "Officer",
         "shares": 11343.0,
         "value": 790607.1
-      },
-      {
-        "code": "A",
-        "date": "2026-02-26",
-        "insider": "Whitaker Charles N.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 9711.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-26",
-        "insider": "Whitaker Charles N.",
-        "planned_10b5_1": false,
-        "price": 69.7,
-        "role": "Officer",
-        "shares": 8932.0,
-        "value": 622560.4
-      },
-      {
-        "code": "A",
-        "date": "2026-02-26",
-        "insider": "Begley Jody L",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 17166.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-26",
-        "insider": "Begley Jody L",
-        "planned_10b5_1": false,
-        "price": 69.7,
-        "role": "Officer",
-        "shares": 17439.0,
-        "value": 1215498.3
-      },
-      {
-        "code": "A",
-        "date": "2026-02-25",
-        "insider": "Patterson Katie F",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 1432.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-25",
-        "insider": "McCarter Robert A. III",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 22448.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-25",
-        "insider": "Begley Jody L",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 22448.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-25",
-        "insider": "Whitaker Charles N.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 13534.0,
-        "value": 0.0
-      },
-      {
-        "code": "A",
-        "date": "2026-02-25",
-        "insider": "Newman Heather A.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 11973.0,
-        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
@@ -19960,7 +19620,7 @@
     "window_days": 90
   },
   "MRK": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -20180,16 +19840,26 @@
     "window_days": 90
   },
   "MRVL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.9432670614979268,
-    "filtered_out_count": 52,
+    "filtered_out_count": 53,
     "net_dollar_value": -4007461.54,
     "net_weighted_score": -3.0,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Meintjes Willem A",
+        "planned_10b5_1": true,
+        "price": 175.24,
+        "role": "CFO",
+        "shares": 4000.0,
+        "value": 700960.0
+      },
       {
         "code": "S",
         "date": "2026-05-13",
@@ -20379,16 +20049,6 @@
         "role": "CEO",
         "shares": 4427.0,
         "value": 595874.2
-      },
-      {
-        "code": "M",
-        "date": "2026-04-15",
-        "insider": "MURPHY MATTHEW J",
-        "planned_10b5_1": true,
-        "price": 0.0,
-        "role": "CEO",
-        "shares": 306128.0,
-        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
@@ -20400,7 +20060,7 @@
     "window_days": 90
   },
   "MS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -20620,16 +20280,36 @@
     "window_days": 90
   },
   "MSFT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 1986750.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.926509191755445,
+    "conviction_score": -0.9362366796163626,
     "filtered_out_count": 10,
-    "net_dollar_value": -3058892.6824000003,
-    "net_weighted_score": 0.25,
+    "net_dollar_value": -3578134.625104,
+    "net_weighted_score": -0.5,
     "raw_transactions": [
+      {
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Coleman Amy",
+        "planned_10b5_1": false,
+        "price": 409.43,
+        "role": "Officer",
+        "shares": 88.645,
+        "value": 36293.92235
+      },
+      {
+        "code": "S",
+        "date": "2026-05-14",
+        "insider": "Coleman Amy",
+        "planned_10b5_1": false,
+        "price": 411.342,
+        "role": "Officer",
+        "shares": 1262.312,
+        "value": 519241.9427039999
+      },
       {
         "code": "F",
         "date": "2026-04-15",
@@ -20739,28 +20419,18 @@
         "role": "Director",
         "shares": 5000.0,
         "value": 1986750.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Coleman Amy",
-        "planned_10b5_1": false,
-        "price": 401.32,
-        "role": "Officer",
-        "shares": 85.103,
-        "value": 34153.535959999994
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 1,
-    "sell_dollar_value": 5045642.6824,
+    "sell_count": 2,
+    "sell_dollar_value": 5564884.625104,
     "ticker": "MSFT",
     "weighted_buy_score": 1.0,
-    "weighted_sell_score": -0.75,
+    "weighted_sell_score": -1.5,
     "window_days": 90
   },
   "MU": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -20980,13 +20650,13 @@
     "window_days": 90
   },
   "NEE": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 16,
+    "filtered_out_count": 15,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -21139,16 +20809,6 @@
         "role": "Officer",
         "shares": 3845.0,
         "value": 347088.14999999997
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Reagan Ronald R",
-        "planned_10b5_1": true,
-        "price": 95.0,
-        "role": "Officer",
-        "shares": 5079.0,
-        "value": 482505.0
       }
     ],
     "regime": "neutral",
@@ -21160,7 +20820,7 @@
     "window_days": 90
   },
   "NFLX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -21380,7 +21040,7 @@
     "window_days": 90
   },
   "NKE": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -21470,227 +21130,227 @@
     "window_days": 90
   },
   "NOW": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.8432884139684691,
-    "filtered_out_count": 43,
-    "net_dollar_value": -799868.127,
-    "net_weighted_score": -0.75,
+    "conviction_score": -0.9083381610187025,
+    "filtered_out_count": 63,
+    "net_dollar_value": -2282269.762,
+    "net_weighted_score": -1.25,
     "raw_transactions": [
       {
         "code": "S",
-        "date": "2026-05-08",
+        "date": "2026-05-18",
         "insider": "Fipps Paul",
         "planned_10b5_1": true,
-        "price": 90.47,
+        "price": 98.51,
         "role": "Officer",
-        "shares": 151.0,
-        "value": 13660.97
+        "shares": 1048.0,
+        "value": 103238.48000000001
       },
       {
         "code": "M",
-        "date": "2026-05-07",
-        "insider": "McDermott William R",
+        "date": "2026-05-15",
+        "insider": "Nowbar Hossein",
         "planned_10b5_1": false,
         "price": 0.0,
-        "role": "CEO",
-        "shares": 8765.0,
+        "role": "Officer",
+        "shares": 2857.0,
         "value": 0.0
       },
       {
         "code": "F",
-        "date": "2026-05-07",
-        "insider": "McDermott William R",
+        "date": "2026-05-15",
+        "insider": "Nowbar Hossein",
         "planned_10b5_1": false,
-        "price": 93.59,
-        "role": "CEO",
-        "shares": 4712.0,
-        "value": 440996.08
+        "price": 95.07,
+        "role": "Officer",
+        "shares": 1125.0,
+        "value": 106953.74999999999
       },
       {
         "code": "M",
-        "date": "2026-05-07",
-        "insider": "Mastantuono Gina",
+        "date": "2026-05-15",
+        "insider": "Nowbar Hossein",
         "planned_10b5_1": false,
         "price": 0.0,
-        "role": "CFO",
-        "shares": 3945.0,
+        "role": "Officer",
+        "shares": 2209.0,
         "value": 0.0
       },
       {
         "code": "F",
-        "date": "2026-05-07",
-        "insider": "Mastantuono Gina",
+        "date": "2026-05-15",
+        "insider": "Nowbar Hossein",
         "planned_10b5_1": false,
-        "price": 93.59,
-        "role": "CFO",
-        "shares": 2121.0,
-        "value": 198504.39
+        "price": 95.07,
+        "role": "Officer",
+        "shares": 870.0,
+        "value": 82710.9
       },
       {
         "code": "M",
-        "date": "2026-05-07",
+        "date": "2026-05-15",
         "insider": "Zavery Amit",
         "planned_10b5_1": false,
         "price": 0.0,
         "role": "Officer",
-        "shares": 9990.0,
+        "shares": 3140.0,
         "value": 0.0
       },
       {
         "code": "F",
-        "date": "2026-05-07",
+        "date": "2026-05-15",
         "insider": "Zavery Amit",
         "planned_10b5_1": false,
-        "price": 93.59,
+        "price": 95.07,
         "role": "Officer",
-        "shares": 5370.0,
-        "value": 502578.30000000005
+        "shares": 1688.0,
+        "value": 160478.15999999997
       },
       {
         "code": "M",
-        "date": "2026-05-07",
-        "insider": "Fipps Paul",
+        "date": "2026-05-15",
+        "insider": "Zavery Amit",
         "planned_10b5_1": false,
         "price": 0.0,
         "role": "Officer",
-        "shares": 320.0,
+        "shares": 7180.0,
         "value": 0.0
       },
       {
         "code": "F",
-        "date": "2026-05-07",
-        "insider": "Fipps Paul",
+        "date": "2026-05-15",
+        "insider": "Zavery Amit",
         "planned_10b5_1": false,
-        "price": 93.59,
+        "price": 95.07,
         "role": "Officer",
-        "shares": 128.0,
-        "value": 11979.52
+        "shares": 3860.0,
+        "value": 366970.19999999995
       },
       {
         "code": "M",
-        "date": "2026-05-07",
-        "insider": "Fipps Paul",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 70.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-05-07",
-        "insider": "Fipps Paul",
-        "planned_10b5_1": false,
-        "price": 93.59,
-        "role": "Officer",
-        "shares": 28.0,
-        "value": 2620.52
-      },
-      {
-        "code": "M",
-        "date": "2026-05-07",
-        "insider": "Canney Jacqueline P",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 2630.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-05-07",
-        "insider": "Canney Jacqueline P",
-        "planned_10b5_1": false,
-        "price": 93.59,
-        "role": "Officer",
-        "shares": 1455.0,
-        "value": 136173.45
-      },
-      {
-        "code": "M",
-        "date": "2026-05-07",
+        "date": "2026-05-15",
         "insider": "Fontaine Danielle",
         "planned_10b5_1": false,
         "price": 0.0,
         "role": "Officer",
-        "shares": 305.0,
+        "shares": 485.0,
         "value": 0.0
       },
       {
         "code": "F",
-        "date": "2026-05-07",
+        "date": "2026-05-15",
         "insider": "Fontaine Danielle",
         "planned_10b5_1": false,
-        "price": 93.59,
+        "price": 95.07,
         "role": "Officer",
-        "shares": 106.0,
-        "value": 9920.54
+        "shares": 168.0,
+        "value": 15971.759999999998
       },
       {
-        "code": "S",
-        "date": "2026-04-24",
-        "insider": "Canney Jacqueline P",
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Fontaine Danielle",
         "planned_10b5_1": false,
-        "price": 89.601,
+        "price": 0.0,
         "role": "Officer",
-        "shares": 8927.0,
-        "value": 799868.127
+        "shares": 235.0,
+        "value": 0.0
       },
       {
-        "code": "P",
-        "date": "2026-02-27",
-        "insider": "McDermott William R",
-        "planned_10b5_1": true,
-        "price": 104.597,
-        "role": "CEO",
-        "shares": 28677.0,
-        "value": 2999528.1689999998
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Fontaine Danielle",
+        "planned_10b5_1": false,
+        "price": 95.07,
+        "role": "Officer",
+        "shares": 82.0,
+        "value": 7795.74
       },
       {
-        "code": "P",
-        "date": "2026-02-27",
-        "insider": "McDermott William R",
-        "planned_10b5_1": true,
-        "price": 105.96,
-        "role": "CEO",
-        "shares": 5.0,
-        "value": 529.8
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Fontaine Danielle",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 739.0,
+        "value": 0.0
       },
       {
-        "code": "S",
-        "date": "2026-02-23",
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Fontaine Danielle",
+        "planned_10b5_1": false,
+        "price": 95.07,
+        "role": "Officer",
+        "shares": 256.0,
+        "value": 24337.92
+      },
+      {
+        "code": "M",
+        "date": "2026-05-15",
         "insider": "Fipps Paul",
         "planned_10b5_1": true,
-        "price": 101.77,
+        "price": 0.0,
         "role": "Officer",
-        "shares": 3696.0,
-        "value": 376141.92
+        "shares": 340.0,
+        "value": 0.0
       },
       {
-        "code": "S",
-        "date": "2026-02-18",
+        "code": "F",
+        "date": "2026-05-15",
         "insider": "Fipps Paul",
         "planned_10b5_1": true,
-        "price": 105.93,
+        "price": 95.07,
         "role": "Officer",
-        "shares": 9641.0,
-        "value": 1021271.1300000001
+        "shares": 136.0,
+        "value": 12929.519999999999
+      },
+      {
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Fipps Paul",
+        "planned_10b5_1": true,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 300.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-05-15",
+        "insider": "Fipps Paul",
+        "planned_10b5_1": true,
+        "price": 95.07,
+        "role": "Officer",
+        "shares": 120.0,
+        "value": 11408.4
+      },
+      {
+        "code": "M",
+        "date": "2026-05-15",
+        "insider": "Fipps Paul",
+        "planned_10b5_1": true,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 940.0,
+        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 1,
-    "sell_dollar_value": 799868.127,
+    "sell_count": 2,
+    "sell_dollar_value": 2282269.762,
     "ticker": "NOW",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -0.75,
+    "weighted_sell_score": -1.25,
     "window_days": 90
   },
   "NVDA": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -21910,7 +21570,7 @@
     "window_days": 90
   },
   "NXPI": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -22000,7 +21660,7 @@
     "window_days": 90
   },
   "ODFL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -22170,16 +21830,76 @@
     "window_days": 90
   },
   "ON": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
-    "conviction_score": -0.9410118491586891,
-    "filtered_out_count": 15,
-    "net_dollar_value": -3864407.111,
-    "net_weighted_score": -2.25,
+    "conviction_score": -0.7935346712656224,
+    "filtered_out_count": 21,
+    "net_dollar_value": -358708.38,
+    "net_weighted_score": -0.75,
     "raw_transactions": [
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Deitrich Thomas",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 1986.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "WATERS GREGORY L",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 1986.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "CARTER SUSAN K",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 1986.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "Yan Christine Y",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 1986.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "KIDDOO BRUCE E",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 1986.0,
+        "value": 0.0
+      },
+      {
+        "code": "A",
+        "date": "2026-05-14",
+        "insider": "MASCARENAS PAUL ANTHONY",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Director",
+        "shares": 1986.0,
+        "value": 0.0
+      },
       {
         "code": "S",
         "date": "2026-04-24",
@@ -22319,58 +22039,18 @@
         "role": "CFO",
         "shares": 4173.0,
         "value": 288396.02999999997
-      },
-      {
-        "code": "A",
-        "date": "2026-02-20",
-        "insider": "KEETON SIMON",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 26046.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-20",
-        "insider": "KEETON SIMON",
-        "planned_10b5_1": false,
-        "price": 69.11,
-        "role": "Officer",
-        "shares": 3130.0,
-        "value": 216314.3
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "KEETON SIMON",
-        "planned_10b5_1": false,
-        "price": 71.5551,
-        "role": "Officer",
-        "shares": 4597.0,
-        "value": 328938.79469999997
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "KEETON SIMON",
-        "planned_10b5_1": false,
-        "price": 71.7701,
-        "role": "Officer",
-        "shares": 44263.0,
-        "value": 3176759.9363
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 3,
-    "sell_dollar_value": 3864407.111,
+    "sell_count": 1,
+    "sell_dollar_value": 358708.38,
     "ticker": "ON",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -2.25,
+    "weighted_sell_score": -0.75,
     "window_days": 90
   },
   "ORCL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -22450,16 +22130,86 @@
     "window_days": 90
   },
   "ORLY": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -0.8914372739944486,
-    "filtered_out_count": 2,
+    "filtered_out_count": 9,
     "net_dollar_value": -1738043.76,
     "net_weighted_score": -2.75,
     "raw_transactions": [
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "JOHNSON GREGORY D",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "MURPHY JOHN RAYMOND",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "SASTRE MARIA",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "HENDRICKSON THOMAS",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "deBeers Kimberly A.",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "PERLMAN DANA",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
+      {
+        "code": "A",
+        "date": "2026-05-15",
+        "insider": "WHITFIELD FRED ALAN",
+        "planned_10b5_1": false,
+        "price": 88.49,
+        "role": "Director",
+        "shares": 2035.0,
+        "value": 180077.15
+      },
       {
         "code": "M",
         "date": "2026-05-08",
@@ -22520,7 +22270,7 @@
     "window_days": 90
   },
   "PANW": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 2,
     "buy_dollar_value": 9999976.89,
     "ceo_cfo_action": "buying",
@@ -22670,7 +22420,7 @@
     "window_days": 90
   },
   "PAYX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -22770,7 +22520,7 @@
     "window_days": 90
   },
   "PCAR": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -22990,7 +22740,7 @@
     "window_days": 90
   },
   "PDD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -23030,7 +22780,7 @@
     "window_days": 90
   },
   "PEP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -23250,7 +23000,7 @@
     "window_days": 90
   },
   "PFE": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -23470,7 +23220,7 @@
     "window_days": 90
   },
   "PG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -23600,7 +23350,7 @@
     "window_days": 90
   },
   "PM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -23820,13 +23570,13 @@
     "window_days": 90
   },
   "PYPL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 51,
+    "filtered_out_count": 50,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -24040,7 +23790,7 @@
     "window_days": 90
   },
   "QCOM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -24260,7 +24010,7 @@
     "window_days": 90
   },
   "REGN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -24480,7 +24230,7 @@
     "window_days": 90
   },
   "ROP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -24600,7 +24350,7 @@
     "window_days": 90
   },
   "ROST": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -24820,7 +24570,7 @@
     "window_days": 90
   },
   "RTX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -24980,7 +24730,7 @@
     "window_days": 90
   },
   "SBUX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -25200,7 +24950,7 @@
     "window_days": 90
   },
   "SCHW": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -25420,13 +25170,13 @@
     "window_days": 90
   },
   "SHW": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": -0.851693530364354,
-    "filtered_out_count": 34,
+    "filtered_out_count": 4,
     "net_dollar_value": -915913.1100000001,
     "net_weighted_score": -0.75,
     "raw_transactions": [
@@ -25479,156 +25229,6 @@
         "role": "Officer",
         "shares": 2513.0,
         "value": 915913.1100000001
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Young Bryan J",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 3900.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Young Bryan J",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "Officer",
-        "shares": 1387.0,
-        "value": 511234.32999999996
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Rea Todd D",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 5100.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Rea Todd D",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "Officer",
-        "shares": 1883.0,
-        "value": 694054.97
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Petz Heidi G",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CEO",
-        "shares": 16800.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Petz Heidi G",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "CEO",
-        "shares": 7494.0,
-        "value": 2762213.46
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Meisenzahl Benjamin E.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "CFO",
-        "shares": 960.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Meisenzahl Benjamin E.",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "CFO",
-        "shares": 296.0,
-        "value": 109102.64
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Lang James P.",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 714.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Lang James P.",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "Officer",
-        "shares": 230.0,
-        "value": 84775.7
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Jorgenrud Karl J",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 9600.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Jorgenrud Karl J",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "Officer",
-        "shares": 4379.0,
-        "value": 1614055.6099999999
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "Jaye James R",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 2100.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-02-17",
-        "insider": "Jaye James R",
-        "planned_10b5_1": false,
-        "price": 368.59,
-        "role": "Officer",
-        "shares": 639.0,
-        "value": 235529.00999999998
-      },
-      {
-        "code": "A",
-        "date": "2026-02-17",
-        "insider": "GARCEAU MARY L",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 9000.0,
-        "value": 0.0
       }
     ],
     "regime": "heavy_selling",
@@ -25640,13 +25240,13 @@
     "window_days": 90
   },
   "SMCI": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 38,
+    "filtered_out_count": 24,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -25860,16 +25460,36 @@
     "window_days": 90
   },
   "SNPS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 26,
+    "filtered_out_count": 28,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
+      {
+        "code": "M",
+        "date": "2026-05-16",
+        "insider": "LEE JANET",
+        "planned_10b5_1": false,
+        "price": 0.0,
+        "role": "Officer",
+        "shares": 729.0,
+        "value": 0.0
+      },
+      {
+        "code": "F",
+        "date": "2026-05-16",
+        "insider": "LEE JANET",
+        "planned_10b5_1": false,
+        "price": 502.42,
+        "role": "Officer",
+        "shares": 318.0,
+        "value": 159769.56
+      },
       {
         "code": "A",
         "date": "2026-04-16",
@@ -26049,26 +25669,6 @@
         "role": "Officer",
         "shares": 127.0,
         "value": 53888.64
-      },
-      {
-        "code": "M",
-        "date": "2026-03-01",
-        "insider": "LEE JANET",
-        "planned_10b5_1": false,
-        "price": 0.0,
-        "role": "Officer",
-        "shares": 699.0,
-        "value": 0.0
-      },
-      {
-        "code": "F",
-        "date": "2026-03-01",
-        "insider": "LEE JANET",
-        "planned_10b5_1": false,
-        "price": 414.0,
-        "role": "Officer",
-        "shares": 304.0,
-        "value": 125856.0
       }
     ],
     "regime": "neutral",
@@ -26080,7 +25680,7 @@
     "window_days": 90
   },
   "SO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -26210,7 +25810,7 @@
     "window_days": 90
   },
   "SPG": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 10,
     "buy_dollar_value": 412998.60000000003,
     "ceo_cfo_action": "neutral",
@@ -26430,7 +26030,7 @@
     "window_days": 90
   },
   "T": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -26650,15 +26250,15 @@
     "window_days": 90
   },
   "TEAM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
-    "conviction_score": -0.8951400763134588,
+    "conviction_score": -0.8642385055967797,
     "filtered_out_count": 2,
-    "net_dollar_value": -1844931.8895,
-    "net_weighted_score": -46.0,
+    "net_dollar_value": -1121164.1162,
+    "net_weighted_score": -21.5,
     "raw_transactions": [
       {
         "code": "S",
@@ -26862,15 +26462,15 @@
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 54,
-    "sell_dollar_value": 1844931.8895,
+    "sell_count": 26,
+    "sell_dollar_value": 1121164.1162,
     "ticker": "TEAM",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -46.0,
+    "weighted_sell_score": -21.5,
     "window_days": 90
   },
   "TGT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -27090,7 +26690,7 @@
     "window_days": 90
   },
   "TMO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -27310,13 +26910,13 @@
     "window_days": 90
   },
   "TMUS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 1,
     "buy_dollar_value": 1000015.7792,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
-    "filtered_out_count": 7,
+    "filtered_out_count": 6,
     "net_dollar_value": -27742301.00394,
     "net_weighted_score": -3.75,
     "raw_transactions": [
@@ -27469,16 +27069,6 @@
         "role": "Officer",
         "shares": 6274.0,
         "value": 1378335.06
-      },
-      {
-        "code": "S",
-        "date": "2026-02-17",
-        "insider": "Nelson Mark Wolfe",
-        "planned_10b5_1": true,
-        "price": 220.8,
-        "role": "Officer",
-        "shares": 10240.0,
-        "value": 2260992.0
       }
     ],
     "regime": "heavy_selling",
@@ -27490,15 +27080,15 @@
     "window_days": 90
   },
   "TRV": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
-    "filtered_out_count": 51,
-    "net_dollar_value": -27055673.4192818,
-    "net_weighted_score": -18.5,
+    "filtered_out_count": 48,
+    "net_dollar_value": -24969748.2318818,
+    "net_weighted_score": -15.5,
     "raw_transactions": [
       {
         "code": "G",
@@ -27702,15 +27292,15 @@
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 24,
-    "sell_dollar_value": 27055673.4192818,
+    "sell_count": 20,
+    "sell_dollar_value": 24969748.2318818,
     "ticker": "TRV",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -18.5,
+    "weighted_sell_score": -15.5,
     "window_days": 90
   },
   "TSLA": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -27930,7 +27520,7 @@
     "window_days": 90
   },
   "TTD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 4,
     "buy_dollar_value": 148101266.35999998,
     "ceo_cfo_action": "buying",
@@ -28150,7 +27740,7 @@
     "window_days": 90
   },
   "TTWO": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -28360,15 +27950,15 @@
     "window_days": 90
   },
   "TXN": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
     "cluster_buying": false,
     "conviction_score": -1.0,
     "filtered_out_count": 31,
-    "net_dollar_value": -87213234.2032,
-    "net_weighted_score": -25.25,
+    "net_dollar_value": -85667066.5648,
+    "net_weighted_score": -24.5,
     "raw_transactions": [
       {
         "code": "M",
@@ -28572,15 +28162,15 @@
       }
     ],
     "regime": "heavy_selling",
-    "sell_count": 31,
-    "sell_dollar_value": 87213234.2032,
+    "sell_count": 30,
+    "sell_dollar_value": 85667066.5648,
     "ticker": "TXN",
     "weighted_buy_score": 0.0,
-    "weighted_sell_score": -25.25,
+    "weighted_sell_score": -24.5,
     "window_days": 90
   },
   "UNH": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -28800,7 +28390,7 @@
     "window_days": 90
   },
   "UNP": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -29020,7 +28610,7 @@
     "window_days": 90
   },
   "UPS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -29180,7 +28770,7 @@
     "window_days": 90
   },
   "USB": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -29400,7 +28990,7 @@
     "window_days": 90
   },
   "V": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -29460,7 +29050,7 @@
     "window_days": 90
   },
   "VRSK": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 3,
     "buy_dollar_value": 449280.0,
     "ceo_cfo_action": "neutral",
@@ -29580,13 +29170,13 @@
     "window_days": 90
   },
   "VRTX": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
     "cluster_buying": false,
     "conviction_score": 0.0,
-    "filtered_out_count": 94,
+    "filtered_out_count": 68,
     "net_dollar_value": 0.0,
     "net_weighted_score": 0.0,
     "raw_transactions": [
@@ -29800,7 +29390,7 @@
     "window_days": 90
   },
   "VZ": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -30020,7 +29610,7 @@
     "window_days": 90
   },
   "WBD": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",
@@ -30240,7 +29830,7 @@
     "window_days": 90
   },
   "WDAY": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -30460,7 +30050,7 @@
     "window_days": 90
   },
   "WFC": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -30680,7 +30270,7 @@
     "window_days": 90
   },
   "WMT": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -30690,6 +30280,16 @@
     "net_dollar_value": -1269537855.2861998,
     "net_weighted_score": -8.700000000000003,
     "raw_transactions": [
+      {
+        "code": "S",
+        "date": "2026-05-15",
+        "insider": "Bartlett Daniel J",
+        "planned_10b5_1": true,
+        "price": 133.77,
+        "role": "Officer",
+        "shares": 1250.0,
+        "value": 167212.5
+      },
       {
         "code": "F",
         "date": "2026-05-05",
@@ -30879,16 +30479,6 @@
         "role": "Director",
         "shares": 231.0,
         "value": 28708.68
-      },
-      {
-        "code": "A",
-        "date": "2026-03-31",
-        "insider": "Moritz Robert Edward Jr.",
-        "planned_10b5_1": false,
-        "price": 124.28,
-        "role": "Director",
-        "shares": 231.0,
-        "value": 28708.68
       }
     ],
     "regime": "heavy_selling",
@@ -30900,7 +30490,7 @@
     "window_days": 90
   },
   "XEL": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -31120,7 +30710,7 @@
     "window_days": 90
   },
   "XOM": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "neutral",
@@ -31160,7 +30750,7 @@
     "window_days": 90
   },
   "ZS": {
-    "as_of": "2026-05-18",
+    "as_of": "2026-05-19",
     "buy_count": 0,
     "buy_dollar_value": 0.0,
     "ceo_cfo_action": "selling",

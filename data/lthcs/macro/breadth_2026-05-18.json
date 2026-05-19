@@ -1,23 +1,23 @@
 {
   "as_of": "2026-05-18",
   "broad_dollar": {
-    "change_30d_pct": -0.007238,
-    "current": 118.0392,
-    "percentile_2y": 0.04056795131845842
+    "change_30d_pct": 0.00778,
+    "current": 119.2825,
+    "percentile_2y": 0.12048192771084337
   },
   "data_quality": {
     "sources_failed": 0,
     "sources_ok": 4
   },
   "hy_oas": {
-    "change_30d_bp": -9.0,
-    "current": 2.76,
-    "percentile_2y": 0.17049808429118773
+    "change_30d_bp": -6.0,
+    "current": 2.8,
+    "percentile_2y": 0.22179732313575526
   },
   "ig_oas": {
-    "change_30d_bp": -4.0,
-    "current": 0.76,
-    "percentile_2y": 0.08829174664107485
+    "change_30d_bp": -6.0,
+    "current": 0.75,
+    "percentile_2y": 0.06130268199233716
   },
   "regime_flags": {
     "curve_inverted": false,
@@ -25,8 +25,8 @@
     "hy_stress": false
   },
   "yield_curve_2s10s": {
-    "change_30d_bp": -4.0,
-    "current": 0.5,
+    "change_30d_bp": -1.0,
+    "current": 0.54,
     "inverted": false
   }
 }
