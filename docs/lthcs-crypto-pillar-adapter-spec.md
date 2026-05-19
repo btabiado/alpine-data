@@ -64,24 +64,47 @@ All sub-components use `lthcs.normalize.bounded_linear` so the score surface mat
 
 ## 3. Universe definition
 
-- Initial roster: BTC, ETH, SOL. Lives in `data/lthcs/crypto_universe.json` (separate from `universe.json` to avoid mixing asset classes through equity loaders).
-- Each row: `symbol`, `name`, `active`, `weight_profile` (resolves to a profile in `data/lthcs/weights.json`).
-- Schema extension target: add `asset_class: "crypto" | "equity"` to both universe files when Phase 5 unifies the loader; add `asset_id` (CoinGecko id) when Phase 4 needs a stable cross-source key.
-- The `maturity_stage` concept maps to crypto-flavored profile names rather than equity stages: `btc` (digital gold), `eth` (smart-contract platform), `sol` (high-throughput L1, higher inflation).
+- **Phase 5 expansion (2026-05-19, v1.1.0):** roster grew from 3 to **10 mature large-caps**. Current: `BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE`. Lives in `data/lthcs/crypto_universe.json` (separate from `universe.json` to avoid mixing asset classes through equity loaders).
+- Each row: `symbol`, `name`, `active`, `weight_profile` (required — resolves to a profile in `data/lthcs/weights.json`).
+- Phase 5 added three optional, forward-compat documentation fields:
+  - `coingecko_id` — stable cross-source key (matches `lthcs/sources/crypto_data.py:COINGECKO_IDS`).
+  - `classification` — one of `store_of_value | smart_contract_l1 | high_throughput_l1 | layer_2 | oracle_defi | payments | meme` (see `schema.classification_enum`).
+  - `inception_date` — mainnet launch (ISO date).
+- POL routes through the legacy `matic-network` CoinGecko id — CG kept the slug after the 2024 MATIC→POL rename so historical series stay addressable.
+- The `maturity_stage` concept maps to crypto-flavored profile names rather than equity stages. As of Phase 5 the profiles are:
+  - `btc` (digital gold), `eth` (smart-contract platform), `sol` (high-throughput L1, higher inflation).
+  - `layer_1_alt` (ADA / AVAX / DOT — adoption-leaning alt-L1s).
+  - `oracle_defi` (LINK — fee-revenue + adoption blend).
+  - `layer_2` (POL — scaling solution, similar to alt-L1 shape).
+  - `payments` (XRP — institutional-flow heavy).
+  - `meme` (DOGE — adoption-dominant, low financial-fundamentals weight).
 
 ---
 
 ## 4. Weights profile
 
-`data/lthcs/weights.json:profiles` already includes three crypto profiles (lines 24–26):
+`data/lthcs/weights.json:profiles` includes eight crypto profiles (Phase 5, v1.2.0):
 
-| Profile | adoption | institutional | financial | thesis | des |
-|---|---|---|---|---|---|
-| `btc` | 0.10 | 0.30 | 0.25 | 0.15 | 0.20 |
-| `eth` | 0.25 | 0.20 | 0.20 | 0.20 | 0.15 |
-| `sol` | 0.30 | 0.15 | 0.20 | 0.20 | 0.15 |
+| Profile | adoption | institutional | financial | thesis | des | Used by |
+|---|---|---|---|---|---|---|
+| `btc` | 0.10 | 0.30 | 0.25 | 0.15 | 0.20 | BTC |
+| `eth` | 0.25 | 0.20 | 0.20 | 0.20 | 0.15 | ETH |
+| `sol` | 0.30 | 0.15 | 0.20 | 0.20 | 0.15 | SOL |
+| `layer_1_alt` | 0.30 | 0.15 | 0.20 | 0.20 | 0.15 | ADA, AVAX, DOT |
+| `oracle_defi` | 0.25 | 0.20 | 0.25 | 0.15 | 0.15 | LINK |
+| `layer_2` | 0.30 | 0.15 | 0.20 | 0.20 | 0.15 | POL |
+| `payments` | 0.20 | 0.30 | 0.20 | 0.15 | 0.15 | XRP |
+| `meme` | 0.40 | 0.10 | 0.10 | 0.25 | 0.15 | DOGE |
 
-Priors: BTC leans on institutional flow (ETFs + whales); ETH balances adoption (smart-contract activity) with institutional; SOL leans on adoption since institutional access is thin. Financial is lower for ETH/SOL than equity-mature profiles because the realized-cap proxy is weak in V1. Bands + modifiers are shared with equities — calibration revisited in §5.
+Priors:
+- BTC leans on institutional flow (ETFs + whales); ETH balances adoption (smart-contract activity) with institutional; SOL leans on adoption since institutional access is thin.
+- `layer_1_alt` mirrors SOL (alt-L1 with limited institutional access and no ETF coverage).
+- `oracle_defi` tilts toward Financial (LINK has clearer fee-revenue economics than a pure L1).
+- `layer_2` mirrors alt-L1 — POL's adoption is the main signal until L2 institutional flow develops.
+- `payments` mirrors BTC's institutional emphasis — XRP's thesis is bank-rail adoption, not on-chain DeFi.
+- `meme` tilts hardest toward Adoption + Thesis (DOGE has no fundamentals; price is narrative-driven, so funding-rate normalcy carries more signal).
+
+Financial is lower for ETH/SOL/alt-L1s than equity-mature profiles because the realized-cap proxy is weak in V1. Bands + modifiers are shared with equities — calibration revisited in §5.
 
 ---
 
@@ -128,9 +151,10 @@ Phase 5 ships Option 1; V1-only (per `lthcs_phase1` memory).
 | 2 | ETF-flow + whale-cohort polish; integration into `lthcs_daily.py` dispatch (`LTHCS_CRYPTO_ENABLED=1`); persist snapshots to `data/lthcs/snapshots_crypto/` and per-asset history | S | runner exists; needs snapshot-dir + history wiring + CI gate |
 | 3 | Thesis Integrity wiring — persist per-asset funding rate + L/S ratio from `fetch_market.py` into adapter, add `crypto_thesis_unavailable` to `_FLAGS_TO_DROPPED_PILLAR` | M | none of this is wired |
 | 4 | Financial polish — gas-fee fetchers (Etherscan / Solana RPC / DeFiLlama fees), CoinMetrics community realized-cap, supply-inflation auto-refresh | M-L | gap; needs new source modules |
-| 5 | UI surface — `/lthcs/crypto/` route, crypto-aware narratives, dashboard card | M | none |
+| 5 | UI surface — `/lthcs/crypto/` route, crypto-aware narratives, dashboard card | M | **shipped** Phase 4 (`lthcs_crypto/`, daily cron at 22:00 UTC) |
+| 5b | Universe expansion — grow from 3 (BTC/ETH/SOL) to 10 mature large-caps (+ADA/AVAX/DOT/LINK/POL/XRP/DOGE); add 5 new weight profiles; extend `COINGECKO_IDS` map and `_DEFAULT_SUPPLY_INFLATION` table | S | **shipped** 2026-05-19 (this doc, `crypto_universe.json` v1.1.0, `weights.json` v1.2.0) |
 
-Phase 1 + 2 ship the daily score; Phase 3 brings Thesis online; Phase 4 raises the Financial pillar from "proxy" to "first-class"; Phase 5 makes it visible.
+Phase 1 + 2 ship the daily score; Phase 3 brings Thesis online; Phase 4 raises the Financial pillar from "proxy" to "first-class"; Phase 5 makes it visible; Phase 5b broadens the asset roster.
 
 ---
 

@@ -248,7 +248,7 @@ The original score remains in git history for auditability — same principle as
 - Real-time intraday scoring for institutional users
 - MCP server + Anthropic Claude Connector listing (per §23 of the white paper)
 - LLM-generated narratives (Claude / GPT-4-class, grounded in stored variables)
-- Crypto pillar adapter (so LTHCS can score BTC, ETH, SOL, etc.)
+- ~~Crypto pillar adapter (so LTHCS can score BTC, ETH, SOL, etc.)~~ — **shipped in V1**: 10-asset crypto universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) scored daily by `scripts/lthcs_crypto_daily.py`, surfaced at `/lthcs/crypto/`. See `docs/lthcs-crypto-pillar-adapter-spec.md`.
 - Premium data sources (Polygon, FMP paid, Glassnode)
 - Full backtest engine (§24 methodology)
 

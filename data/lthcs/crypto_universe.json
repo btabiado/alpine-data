@@ -1,10 +1,110 @@
 {
-  "version": "1.0.0",
-  "last_updated": "2026-05-18",
-  "description": "Crypto-asset universe for the LTHCS crypto extension. Each asset names a weight profile from data/lthcs/weights.json (profiles block). The crypto runner (scripts/lthcs_crypto_daily.py) iterates this list to score each asset with crypto-native pillars.",
+  "version": "1.1.0",
+  "last_updated": "2026-05-19",
+  "description": "Crypto-asset universe for the LTHCS crypto extension. Each asset names a weight profile from data/lthcs/weights.json (profiles block). The crypto runner (scripts/lthcs_crypto_daily.py) iterates this list to score each asset with crypto-native pillars. v1.1.0 (Tier 5 #27 Phase 5) expands from BTC/ETH/SOL to 10 mature large-caps with explicit classification + CoinGecko coin_id fields. Optional fields: coingecko_id (stable cross-source key), classification (taxonomy bucket), inception_date (mainnet launch). The runner only reads symbol/active/weight_profile; the extra fields are documentation for now and feed the /lthcs/crypto/ empty-state chips.",
+  "schema": {
+    "required": ["symbol", "name", "active", "weight_profile"],
+    "optional": ["coingecko_id", "classification", "inception_date"],
+    "classification_enum": [
+      "store_of_value",
+      "smart_contract_l1",
+      "high_throughput_l1",
+      "layer_2",
+      "oracle_defi",
+      "payments",
+      "meme"
+    ]
+  },
   "assets": [
-    {"symbol": "BTC", "name": "Bitcoin",  "active": true, "weight_profile": "btc"},
-    {"symbol": "ETH", "name": "Ethereum", "active": true, "weight_profile": "eth"},
-    {"symbol": "SOL", "name": "Solana",   "active": true, "weight_profile": "sol"}
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "active": true,
+      "weight_profile": "btc",
+      "coingecko_id": "bitcoin",
+      "classification": "store_of_value",
+      "inception_date": "2009-01-03"
+    },
+    {
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "active": true,
+      "weight_profile": "eth",
+      "coingecko_id": "ethereum",
+      "classification": "smart_contract_l1",
+      "inception_date": "2015-07-30"
+    },
+    {
+      "symbol": "SOL",
+      "name": "Solana",
+      "active": true,
+      "weight_profile": "sol",
+      "coingecko_id": "solana",
+      "classification": "high_throughput_l1",
+      "inception_date": "2020-03-16"
+    },
+    {
+      "symbol": "ADA",
+      "name": "Cardano",
+      "active": true,
+      "weight_profile": "layer_1_alt",
+      "coingecko_id": "cardano",
+      "classification": "smart_contract_l1",
+      "inception_date": "2017-09-29"
+    },
+    {
+      "symbol": "AVAX",
+      "name": "Avalanche",
+      "active": true,
+      "weight_profile": "layer_1_alt",
+      "coingecko_id": "avalanche-2",
+      "classification": "smart_contract_l1",
+      "inception_date": "2020-09-21"
+    },
+    {
+      "symbol": "DOT",
+      "name": "Polkadot",
+      "active": true,
+      "weight_profile": "layer_1_alt",
+      "coingecko_id": "polkadot",
+      "classification": "smart_contract_l1",
+      "inception_date": "2020-05-26"
+    },
+    {
+      "symbol": "LINK",
+      "name": "Chainlink",
+      "active": true,
+      "weight_profile": "oracle_defi",
+      "coingecko_id": "chainlink",
+      "classification": "oracle_defi",
+      "inception_date": "2017-09-20"
+    },
+    {
+      "symbol": "POL",
+      "name": "Polygon (ex-MATIC)",
+      "active": true,
+      "weight_profile": "layer_2",
+      "coingecko_id": "matic-network",
+      "classification": "layer_2",
+      "inception_date": "2020-05-30"
+    },
+    {
+      "symbol": "XRP",
+      "name": "XRP",
+      "active": true,
+      "weight_profile": "payments",
+      "coingecko_id": "ripple",
+      "classification": "payments",
+      "inception_date": "2012-06-02"
+    },
+    {
+      "symbol": "DOGE",
+      "name": "Dogecoin",
+      "active": true,
+      "weight_profile": "meme",
+      "coingecko_id": "dogecoin",
+      "classification": "meme",
+      "inception_date": "2013-12-06"
+    }
   ]
 }

@@ -67,11 +67,24 @@ _CACHE_TTL_SECONDS = 24 * 60 * 60
 # want a stuck socket to wedge the runner.
 _HTTP_TIMEOUT = 15.0
 
-# Map crypto symbol -> CoinGecko coin id. Kept tiny; expansion is opt-in.
+# Map crypto symbol -> CoinGecko coin id. Expanded in Tier 5 #27 Phase 5
+# to cover the 10-asset mature large-cap universe. Add new entries here
+# whenever ``data/lthcs/crypto_universe.json`` grows; the runner reads
+# this map to issue a single batched CoinGecko ``/coins/markets`` call.
+# Note: POL (Polygon's renamed token) currently routes through the
+# legacy ``matic-network`` CoinGecko id — CG kept the slug after the
+# 2024 MATIC->POL migration so all historical data stays addressable.
 COINGECKO_IDS: Dict[str, str] = {
     "BTC": "bitcoin",
     "ETH": "ethereum",
     "SOL": "solana",
+    "ADA": "cardano",
+    "AVAX": "avalanche-2",
+    "DOT": "polkadot",
+    "LINK": "chainlink",
+    "POL": "matic-network",
+    "XRP": "ripple",
+    "DOGE": "dogecoin",
 }
 
 
@@ -729,7 +742,9 @@ class CryptoDataAdapter:
         distribution = whale_distribution(whale) if sym == "BTC" else []
 
         # Market snapshot from CoinGecko (single shared call across syms).
-        markets = self.coingecko(["BTC", "ETH", "SOL"])
+        # The full universe is requested in one batch on the first call;
+        # subsequent calls hit the per-instance memo.
+        markets = self.coingecko(sorted(COINGECKO_IDS.keys()))
         market_block = markets.get(sym) or {}
 
         # ETF flows. SOL returns []. The pillar will fall back to neutral.

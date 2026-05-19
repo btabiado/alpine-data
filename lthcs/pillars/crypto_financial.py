@@ -57,10 +57,21 @@ _NEUTRAL = 50.0
 # slow-moving (BTC halves every 4 years, ETH stays near zero post-merge,
 # SOL has a deterministic disinflationary schedule). Override per-asset
 # by passing ``supply_inflation_pct_yr`` in the inputs dict.
+# Tier 5 #27 Phase 5 extends this to the 10-asset universe. Numbers are
+# steady-state estimates published by each chain's tokenomics docs;
+# refreshed annually rather than fetched live (the signal is too slow
+# to justify a daily API call).
 _DEFAULT_SUPPLY_INFLATION = {
     "BTC": 0.83,   # ~0.83% / year post-2024 halving
     "ETH": 0.10,   # near zero net issuance post-merge (varies)
     "SOL": 5.5,    # ~5.5% currently, disinflating to 1.5% over time
+    "ADA": 1.5,    # tail emission ~1.5%/yr, capped at 45B
+    "AVAX": 4.5,   # ~4.5%/yr, deflationary burns offset some
+    "DOT": 7.5,    # ~7.5%/yr inflation (NPoS rewards)
+    "LINK": 0.0,   # fixed 1B max supply, no inflation
+    "POL": 2.0,    # 2%/yr by Polygon 2.0 tokenomics (1% staking + 1% community)
+    "XRP": 0.0,    # fixed 100B supply, no new issuance (escrow releases offset by burn)
+    "DOGE": 3.5,   # ~5B/yr fixed -> ~3.5%/yr at current supply (~145B)
 }
 
 

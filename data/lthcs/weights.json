@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
-  "last_updated": "2026-05-17",
-  "description": "Pillar weights by maturity stage. Order is [adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des]. Weights must sum to 1.0 within each profile. v1.1.0 splits 'standard_compounder' into 'mature_compounder' and 'growth_compounder' so peer-relative percentiles benchmark like-for-like (AAPL/PG/KO vs. each other, NVDA/MU/AVGO vs. each other). 'standard_compounder' remains as a fallback for tickers not explicitly reclassified.",
+  "version": "1.2.0",
+  "last_updated": "2026-05-19",
+  "description": "Pillar weights by maturity stage. Order is [adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des]. Weights must sum to 1.0 within each profile. v1.1.0 splits 'standard_compounder' into 'mature_compounder' and 'growth_compounder' so peer-relative percentiles benchmark like-for-like (AAPL/PG/KO vs. each other, NVDA/MU/AVGO vs. each other). 'standard_compounder' remains as a fallback for tickers not explicitly reclassified. v1.2.0 (Tier 5 #27 Phase 5) adds five crypto profiles for the expanded 10-asset universe: 'layer_1_alt' (ADA/AVAX/DOT — adoption-leaning alt-L1s), 'oracle_defi' (LINK — fee-revenue + adoption), 'layer_2' (POL — scaling solution), 'payments' (XRP — institutional-flow heavy), and 'meme' (DOGE — adoption-dominant, low financial-fundamentals weight).",
   "pillar_order": [
     "adoption_momentum",
     "institutional_confidence",
@@ -23,7 +23,12 @@
     "recovery_rerating":         [0.25, 0.20, 0.15, 0.20, 0.20],
     "btc":                       [0.10, 0.30, 0.25, 0.15, 0.20],
     "eth":                       [0.25, 0.20, 0.20, 0.20, 0.15],
-    "sol":                       [0.30, 0.15, 0.20, 0.20, 0.15]
+    "sol":                       [0.30, 0.15, 0.20, 0.20, 0.15],
+    "layer_1_alt":               [0.30, 0.15, 0.20, 0.20, 0.15],
+    "oracle_defi":               [0.25, 0.20, 0.25, 0.15, 0.15],
+    "layer_2":                   [0.30, 0.15, 0.20, 0.20, 0.15],
+    "payments":                  [0.20, 0.30, 0.20, 0.15, 0.15],
+    "meme":                      [0.40, 0.10, 0.10, 0.25, 0.15]
   },
   "score_bands": {
     "elite":            {"min": 85, "max": 100, "color": "#1F3A5F", "label": "Elite Confidence Hold"},

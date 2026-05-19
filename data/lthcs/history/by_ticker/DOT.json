@@ -1,0 +1,11 @@
+{
+  "ticker": "DOT",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-19",
+      "score": 45.5,
+      "band": "review"
+    }
+  ]
+}
