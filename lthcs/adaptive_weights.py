@@ -94,6 +94,25 @@ SHIP_MAX_OVERFIT_GAP = 0.04
 # roughly one calendar month of independent forward windows at h=21d.
 SHIP_MIN_TEST_OBS = 20
 
+# Ship-gate thresholds for the equity-curve walk-forward bridge
+# (Adaptive Weights V2, Tier 5 #24 P4 / #25). The IC-based path scores
+# a candidate weight vector by mean cross-sectional Spearman IC against
+# forward returns; the equity-curve path scores it by the annualised
+# Sharpe ratio of the resulting *daily-return* time series emitted by
+# the backtest engine. Sharpe is the apples-to-apples gate because the
+# engine output is already a P&L curve, not a cross-section.
+#
+# Threshold rationale: SHIP_MIN_TEST_SHARPE = 1.0 corresponds to
+# roughly a Sharpe ≥ 1 OOS — a low bar by hedge-fund standards but a
+# real signal in a long-only or long/short equity strategy at daily
+# rebalance. The promotion gate is intentionally Sharpe-based (not
+# total-return) so it isn't fooled by a single big-tail day. As with
+# IC, SHIP_MIN_TEST_OBS (number of trading-day OOS daily returns) is
+# the binding constraint until ~July 2026 — see
+# `data/lthcs/adaptive_weights/2026-05-18_walk_forward_after_fixes.md`.
+SHIP_MIN_TEST_SHARPE = 1.0
+SHIP_MAX_SHARPE_OVERFIT_GAP = 1.5
+
 # Floor for per-column standard deviation when z-scoring. Pillars with
 # essentially no cross-sectional variance (e.g. all tickers stuck at the
 # same thesis_integrity sub-score for the whole window) would otherwise
@@ -845,6 +864,378 @@ def walk_forward_tune(
     }
 
 
+# ---------------------------------------------------------------------------
+# Engine bridge — Adaptive Weights V2 prep (Tier 5 #24 P4 + #25)
+#
+# The IC-based walk_forward_tune above scores candidate pillar weights by
+# mean cross-sectional Spearman IC of the weighted *composite score* vs
+# forward returns. The backtest engine (`lthcs/backtest_engine.py`,
+# Phases 1-3) already emits per-day equity curves and daily returns for
+# each profile. The bridge below ingests those equity curves and scores a
+# candidate weight vector by the annualised Sharpe ratio of the OOS slice.
+#
+# This is the *plumbing* for Adaptive Weights V2. The promotion gate
+# (`SHIP_MIN_TEST_OBS = 20`) remains time-locked — until ~July 2026 the
+# engine has fewer trading days than the gate requires, so the verdict
+# will be HOLD regardless of how good the Sharpe looks. When the gate
+# fills, the same function will start emitting SHIP automatically; no
+# code change is needed at flip time, only the data accumulation.
+#
+# Design notes:
+#   * `walk_forward_tune` (IC path) is byte-identical pre/post — the
+#     bridge is a *new* function, not a refactor. Default behavior of
+#     all existing callers (CLI, monthly cron, tests) is unchanged.
+#   * The bridge accepts engine artifacts in the exact JSON shapes
+#     written under `data/lthcs/backtest/<run_id>/`:
+#       - `equity_curve.json`: {"YYYY-MM-DD": float, ...}
+#       - `daily_returns.json` (optional): same shape, daily simple
+#         returns. If not provided, the bridge derives daily returns
+#         from successive equity-curve ratios.
+#       - The portfolio_returns.json shape (with `horizon_Nd` sub-blocks)
+#         is also accepted via `equity_curve_from_returns_block()`.
+#   * Sharpe is annualised with 252 trading-day convention to match
+#     `lthcs/backtest_engine.py:portfolio["horizon_Nd"]["sharpe_annualised"]`.
+#   * The bridge does NOT re-fit weights from equity curves — the weight
+#     vector is taken as-given (e.g. from the IC-based tuner, or curated)
+#     and the equity-curve path scores its OOS P&L. Re-fitting weights
+#     against equity curves is a future iteration; today the goal is the
+#     SHIP-gate wire so the verdict flips automatically at ~July 2026.
+# ---------------------------------------------------------------------------
+
+_TRADING_DAYS_PER_YEAR = 252
+
+
+def _equity_curve_to_returns(equity_curve: Dict[str, float]) -> pd.Series:
+    """Convert an engine equity-curve dict to a daily simple-return Series.
+
+    ``equity_curve`` is the JSON shape written by the backtest engine to
+    ``data/lthcs/backtest/<run_id>/equity_curve.json`` (or any per-profile
+    subdir): ``{"YYYY-MM-DD": float_equity, ...}``. The first date's
+    return is dropped (no prior to ratio against); subsequent returns
+    are ``equity[t] / equity[t-1] - 1``.
+    """
+    if not equity_curve:
+        return pd.Series(dtype=float)
+    s = pd.Series(equity_curve, dtype=float)
+    s.index = pd.to_datetime(s.index)
+    s = s.sort_index()
+    rets = s.pct_change().dropna()
+    return rets
+
+
+def _annualised_sharpe(daily_returns: pd.Series) -> float:
+    """Annualised Sharpe at 252 trading-day convention.
+
+    Matches the formula used by ``lthcs/backtest_engine.py`` for the
+    ``portfolio["horizon_Nd"]["sharpe_annualised"]`` field — single
+    source of truth for the engine→bridge handshake. Returns 0.0 on an
+    empty or zero-variance input rather than raising, so callers can
+    treat "no signal" as a numeric 0 without try/except.
+    """
+    if daily_returns is None or daily_returns.empty:
+        return 0.0
+    arr = np.asarray(daily_returns.values, dtype=float)
+    arr = arr[np.isfinite(arr)]
+    if arr.size == 0:
+        return 0.0
+    sd = float(np.std(arr, ddof=0))
+    if sd <= 0 or not np.isfinite(sd):
+        return 0.0
+    mean = float(np.mean(arr))
+    return mean / sd * float(np.sqrt(_TRADING_DAYS_PER_YEAR))
+
+
+def _recommendation_equity(
+    test_sharpe: float,
+    overfit_gap: float,
+    n_test_obs: Optional[int] = None,
+) -> Tuple[str, str]:
+    """Apply the equity-curve ship/hold/reject thresholds.
+
+    Mirrors ``_recommendation`` but on Sharpe (engine's primary
+    portfolio statistic) instead of IC. The small-sample guard is the
+    SAME constant — ``SHIP_MIN_TEST_OBS`` — and ``n_test_obs`` here is
+    the count of **non-overlapping h-day forward blocks** in the OOS
+    slice, NOT daily return observations. This matches the IC-path's
+    intent ("20 trading-day cross-sections is roughly one calendar
+    month of independent forward windows at h=21d"); without the
+    non-overlap reduction the 64-day engine baseline would already
+    spuriously SHIP at h=21d because 25 overlapping daily returns
+    pass the daily-obs gate trivially.
+
+    Returns ``(verdict, reason)`` where verdict is one of
+    ``"ship" | "hold" | "reject" | "insufficient_data"``.
+
+    * ``"insufficient_data"`` is a strict superset of the old
+      small-sample HOLD — when *no* test returns at all exist (e.g.
+      train_fraction too high) the verdict reflects that explicitly
+      rather than getting blended into a HOLD-on-noise.
+    """
+    if n_test_obs is not None and n_test_obs <= 0:
+        return (
+            "insufficient_data",
+            "n_test_obs=%d — no out-of-sample trading-day returns to score; "
+            "engine slice too short or train_fraction too high."
+            % (int(n_test_obs),),
+        )
+    small_sample = (
+        n_test_obs is not None and 0 < n_test_obs < SHIP_MIN_TEST_OBS
+    )
+    if (
+        test_sharpe > SHIP_MIN_TEST_SHARPE
+        and overfit_gap < SHIP_MAX_SHARPE_OVERFIT_GAP
+        and not small_sample
+    ):
+        return (
+            "ship",
+            "test_sharpe=%.4f > %.3f and overfit_gap=%.4f < %.3f"
+            % (
+                test_sharpe,
+                SHIP_MIN_TEST_SHARPE,
+                overfit_gap,
+                SHIP_MAX_SHARPE_OVERFIT_GAP,
+            ),
+        )
+    if small_sample:
+        return (
+            "hold",
+            "test_sharpe=%.4f%s but only n_test_obs=%d non-overlapping "
+            "h-day forward blocks (<%d). Engine OOS slice is too short to "
+            "ship; promotion gate remains time-locked until ~July 2026."
+            % (
+                test_sharpe,
+                " passes ship threshold" if test_sharpe > SHIP_MIN_TEST_SHARPE else "",
+                int(n_test_obs),
+                SHIP_MIN_TEST_OBS,
+            ),
+        )
+    if test_sharpe > SHIP_MIN_TEST_SHARPE:
+        return (
+            "hold",
+            "test_sharpe=%.4f passes but overfit_gap=%.4f >= %.3f — signal "
+            "is real but the fit may be overfit; collect more history "
+            "before shipping."
+            % (test_sharpe, overfit_gap, SHIP_MAX_SHARPE_OVERFIT_GAP),
+        )
+    return (
+        "reject",
+        "test_sharpe=%.4f <= %.3f — out-of-sample equity-curve signal too "
+        "weak; keep curated weights."
+        % (test_sharpe, SHIP_MIN_TEST_SHARPE),
+    )
+
+
+def walk_forward_tune_equity(
+    equity_curve: Dict[str, float],
+    daily_returns: Optional[Dict[str, float]] = None,
+    train_fraction: float = DEFAULT_TRAIN_FRACTION,
+    horizon_days: int = DEFAULT_HORIZON,
+    profile: Optional[str] = None,
+    weights: Optional[Dict[str, float]] = None,
+) -> Dict[str, Any]:
+    """Equity-curve walk-forward CV — Adaptive Weights V2 bridge.
+
+    Ingest a backtest-engine equity curve (and optionally a daily-return
+    series — derived from the curve if not provided), split into
+    train/test on the engine's time index, and score the OOS slice by
+    annualised Sharpe. Returns the same verdict-shaped dict as
+    :func:`walk_forward_tune` but with equity-curve diagnostics.
+
+    The function does NOT fit pillar weights from equity curves; the
+    intended use is:
+      1. The IC-based ``tune_weights`` produces candidate weights from
+         the score panel (already wired).
+      2. The backtest engine runs those weights through the strategy
+         and writes an equity curve.
+      3. This bridge scores that curve against a SHIP gate.
+
+    For today, ``weights`` is informational metadata only — recorded
+    in the output payload for audit but not used to recompute returns.
+    Future iteration may re-fit weights against equity curves.
+
+    Output schema::
+
+        {
+          "data_source": "equity",
+          "profile": str | None,
+          "weights": {...} | None,
+          "train_dates": (start, end),
+          "test_dates":  (start, end),
+          "n_train_daily_obs": int,    # daily returns, transparency
+          "n_test_daily_obs":  int,    # daily returns, transparency
+          "n_train_obs":       int,    # non-overlapping h-day blocks (gate input)
+          "n_test_obs":        int,    # non-overlapping h-day blocks (gate input)
+          "train_sharpe": float,
+          "test_sharpe":  float,
+          "overfit_gap":  float,         # train - test (Sharpe units)
+          "train_total_return": float,
+          "test_total_return":  float,
+          "horizon_days": int,
+          "train_fraction": float,
+          "recommendation": "ship"|"hold"|"reject"|"insufficient_data",
+          "recommendation_reason": str,
+          "trained_at": iso8601,
+          "ship_min_test_obs": int,      # echoed for transparency
+          "ship_min_test_sharpe": float,
+        }
+
+    Promotion-gate contract: the verdict is "ship" iff
+    ``n_test_obs >= SHIP_MIN_TEST_OBS`` AND
+    ``test_sharpe > SHIP_MIN_TEST_SHARPE`` AND
+    ``overfit_gap < SHIP_MAX_SHARPE_OVERFIT_GAP``. Until the engine has
+    accumulated enough live trading-day history (~July 2026), the
+    first condition fails and the verdict is "hold". Operationally
+    this means: ship-by-time, not ship-by-code-flag.
+
+    NOTE on the ``n_test_obs`` unit: at horizon ``h`` (e.g. 21d), one
+    independent OOS observation is one *non-overlapping* h-day forward
+    window. ``n_test_obs = floor(n_test_daily_obs / h)`` accordingly.
+    With 64 engine days, 60/40 split, h=21d this is ~25/21 = 1 — well
+    below the gate, so the verdict is HOLD by design. When the engine
+    has rolled forward to ~250+ daily OOS observations at h=21d
+    (n_test_obs ≥ 20 non-overlapping blocks), the SAME function call
+    will start returning SHIP automatically.
+    """
+    if not 0.0 < train_fraction < 1.0:
+        raise ValueError(
+            "train_fraction must be in (0, 1), got %r" % (train_fraction,)
+        )
+
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Empty input → insufficient_data verdict, no crash.
+    if not equity_curve:
+        return {
+            "data_source": "equity",
+            "profile": profile,
+            "weights": dict(weights) if weights else None,
+            "train_dates": (None, None),
+            "test_dates": (None, None),
+            "n_train_daily_obs": 0,
+            "n_test_daily_obs": 0,
+            "n_train_obs": 0,
+            "n_test_obs": 0,
+            "train_sharpe": 0.0,
+            "test_sharpe": 0.0,
+            "overfit_gap": 0.0,
+            "train_total_return": 0.0,
+            "test_total_return": 0.0,
+            "horizon_days": int(horizon_days),
+            "train_fraction": float(train_fraction),
+            "recommendation": "insufficient_data",
+            "recommendation_reason": "empty equity_curve",
+            "trained_at": now_iso,
+            "ship_min_test_obs": int(SHIP_MIN_TEST_OBS),
+            "ship_min_test_sharpe": float(SHIP_MIN_TEST_SHARPE),
+        }
+
+    # Build daily-return series. Prefer caller-provided (matches engine
+    # exactly); else derive from equity curve.
+    if daily_returns:
+        s = pd.Series(daily_returns, dtype=float)
+        s.index = pd.to_datetime(s.index)
+        rets = s.sort_index().dropna()
+    else:
+        rets = _equity_curve_to_returns(equity_curve)
+
+    if rets.empty:
+        return {
+            "data_source": "equity",
+            "profile": profile,
+            "weights": dict(weights) if weights else None,
+            "train_dates": (None, None),
+            "test_dates": (None, None),
+            "n_train_daily_obs": 0,
+            "n_test_daily_obs": 0,
+            "n_train_obs": 0,
+            "n_test_obs": 0,
+            "train_sharpe": 0.0,
+            "test_sharpe": 0.0,
+            "overfit_gap": 0.0,
+            "train_total_return": 0.0,
+            "test_total_return": 0.0,
+            "horizon_days": int(horizon_days),
+            "train_fraction": float(train_fraction),
+            "recommendation": "insufficient_data",
+            "recommendation_reason": (
+                "no usable daily returns derived from equity_curve "
+                "(need at least 2 consecutive non-NaN equity points)"
+            ),
+            "trained_at": now_iso,
+            "ship_min_test_obs": int(SHIP_MIN_TEST_OBS),
+            "ship_min_test_sharpe": float(SHIP_MIN_TEST_SHARPE),
+        }
+
+    n_total = len(rets)
+    split = int(round(train_fraction * n_total))
+    split = max(1, min(split, n_total - 1)) if n_total >= 2 else n_total
+    train_rets = rets.iloc[:split]
+    test_rets = rets.iloc[split:]
+
+    train_sharpe = _annualised_sharpe(train_rets)
+    test_sharpe = _annualised_sharpe(test_rets)
+    overfit_gap = float(train_sharpe - test_sharpe)
+    n_train_daily = int(len(train_rets))
+    n_test_daily = int(len(test_rets))
+
+    # The gate counts NON-OVERLAPPING h-day forward blocks, not daily
+    # returns. At h=21d with 25 daily OOS obs, that's only 1 truly
+    # independent block — well below SHIP_MIN_TEST_OBS=20. This is the
+    # binding constraint until ~July 2026.
+    h = max(1, int(horizon_days))
+    n_train = n_train_daily // h
+    n_test = n_test_daily // h
+
+    def _cum(r: pd.Series) -> float:
+        if r is None or r.empty:
+            return 0.0
+        return float((1.0 + r).prod() - 1.0)
+
+    def _fmt(d) -> Optional[str]:
+        if d is None:
+            return None
+        try:
+            return d.strftime("%Y-%m-%d")
+        except AttributeError:
+            return str(d)
+
+    rec, reason = _recommendation_equity(
+        test_sharpe=test_sharpe,
+        overfit_gap=overfit_gap,
+        n_test_obs=n_test,
+    )
+
+    return {
+        "data_source": "equity",
+        "profile": profile,
+        "weights": dict(weights) if weights else None,
+        "train_dates": (
+            _fmt(train_rets.index[0]) if n_train_daily else None,
+            _fmt(train_rets.index[-1]) if n_train_daily else None,
+        ),
+        "test_dates": (
+            _fmt(test_rets.index[0]) if n_test_daily else None,
+            _fmt(test_rets.index[-1]) if n_test_daily else None,
+        ),
+        "n_train_daily_obs": n_train_daily,
+        "n_test_daily_obs": n_test_daily,
+        "n_train_obs": n_train,
+        "n_test_obs": n_test,
+        "train_sharpe": float(train_sharpe),
+        "test_sharpe": float(test_sharpe),
+        "overfit_gap": overfit_gap,
+        "train_total_return": _cum(train_rets),
+        "test_total_return": _cum(test_rets),
+        "horizon_days": int(horizon_days),
+        "train_fraction": float(train_fraction),
+        "recommendation": rec,
+        "recommendation_reason": reason,
+        "trained_at": now_iso,
+        "ship_min_test_obs": int(SHIP_MIN_TEST_OBS),
+        "ship_min_test_sharpe": float(SHIP_MIN_TEST_SHARPE),
+    }
+
+
 __all__ = [
     "PILLAR_NAMES",
     "DEFAULT_PRIOR",
@@ -854,6 +1245,9 @@ __all__ = [
     "SHIP_MIN_TEST_IC",
     "SHIP_MAX_OVERFIT_GAP",
     "SHIP_MIN_TEST_OBS",
+    "SHIP_MIN_TEST_SHARPE",
+    "SHIP_MAX_SHARPE_OVERFIT_GAP",
     "tune_weights",
     "walk_forward_tune",
+    "walk_forward_tune_equity",
 ]

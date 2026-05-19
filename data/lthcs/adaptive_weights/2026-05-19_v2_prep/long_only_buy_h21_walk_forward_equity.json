@@ -1,0 +1,41 @@
+{
+  "config": {
+    "data_source": "equity",
+    "horizon_days": 21,
+    "train_fraction": 0.6
+  },
+  "engine_run_id": "2026-05-18_validation",
+  "engine_window": {
+    "end": "2026-05-18",
+    "start": "2026-02-17"
+  },
+  "result": {
+    "data_source": "equity",
+    "horizon_days": 21,
+    "n_test_daily_obs": 25,
+    "n_test_obs": 1,
+    "n_train_daily_obs": 38,
+    "n_train_obs": 1,
+    "overfit_gap": -5.791349507614227,
+    "profile": "long_only_buy",
+    "recommendation": "hold",
+    "recommendation_reason": "test_sharpe=6.4679 passes ship threshold but only n_test_obs=1 non-overlapping h-day forward blocks (<20). Engine OOS slice is too short to ship; promotion gate remains time-locked until ~July 2026.",
+    "ship_min_test_obs": 20,
+    "ship_min_test_sharpe": 1.0,
+    "test_dates": [
+      "2026-04-14",
+      "2026-05-18"
+    ],
+    "test_sharpe": 6.467906356539319,
+    "test_total_return": 0.15128653792865587,
+    "train_dates": [
+      "2026-02-18",
+      "2026-04-13"
+    ],
+    "train_fraction": 0.6,
+    "train_sharpe": 0.6765568489250919,
+    "train_total_return": 0.0226691211617287,
+    "trained_at": "2026-05-19T19:51:49Z",
+    "weights": null
+  }
+}

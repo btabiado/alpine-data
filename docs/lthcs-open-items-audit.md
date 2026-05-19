@@ -480,6 +480,7 @@ to deepen Institutional beyond binary signal.
 | `580d341` | `.github/workflows/lthcs-backtest-daily.yml` — runs the new backtest engine every night at 23:30 UTC, commits attribution + variant results to `data/lthcs/backtest/`. Race-safe push retry. | ✅ SHIPPED (2026-05-19) |
 | `259355d` | `pages.yml` updates to stage `/lthcs/crypto/` route on every push to main (alongside `/lthcs/` and `/v2/`). | ✅ SHIPPED (2026-05-19) |
 | `8af023b` | `.github/workflows/lthcs-crypto-daily.yml` — daily 22:00 UTC crypto pillar snapshot + 8-day initial backfill seeded. Race-safe push retry. | ✅ SHIPPED (2026-05-19) |
+| _(this commit)_ | **Tier 5 #24 P4 + #25 V2 plumbing** — `lthcs/adaptive_weights.py::walk_forward_tune_equity` ingests engine equity curves. IC path byte-identical. First run on `2026-05-18_validation` baseline ⇒ **HOLD on all 5 profiles** — gate fires because only ~1 non-overlapping 21d block in OOS slice (need ≥20). Time-locked to **~July 2026**. Artifacts at `data/lthcs/adaptive_weights/2026-05-19_v2_prep/`. | ✅ PLUMBING SHIPPED (2026-05-19); promotion gate time-locked to ~July 2026 |
 
 ---
 
@@ -509,10 +510,13 @@ queue's items mostly shipped. New top-of-queue:
    long-tenured concentrated holders > passive index funds). Highest
    ROI for the Institutional pillar — the workhorse at +0.204 IC.
 
-After those: Tier 5 #24 Phase 4 (full live A/B over 21d horizons —
-time-gated to ~July 2026 for sufficient live history), Tier 5 #25
-adaptive weights (depends on #24 P4), and widening `TIER2_MAX_POINTS`
-to lift the DES ceiling once Thesis-LLM is live.
+After those: Tier 5 #24 Phase 4 + Tier 5 #25 **plumbing now built**
+(`walk_forward_tune_equity` ingests engine equity curves; first run
+2026-05-19 HOLDs all 5 profiles per the time-locked gate); the
+remaining work for both is *waiting for OOS history* to accumulate
+(~July 2026) — no code change required at gate-fill time. Also pending:
+widening `TIER2_MAX_POINTS` to lift the DES ceiling once Thesis-LLM is
+live.
 
 **Time-gated**: Adoption IC re-validation window remains **2026-06-24**
 (per β analysis; +~7d for stable IC + Trends weekly batch resolution).

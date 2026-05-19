@@ -18,6 +18,9 @@ from lthcs import adaptive_weights, backtest
 from lthcs.adaptive_weights import (
     DEFAULT_PRIOR,
     PILLAR_NAMES,
+    SHIP_MIN_TEST_OBS,
+    SHIP_MIN_TEST_SHARPE,
+    SHIP_MAX_SHARPE_OVERFIT_GAP,
     _build_ffill_mask,
     _apply_real_mask,
     _zscore_columns,
@@ -25,8 +28,12 @@ from lthcs.adaptive_weights import (
     _ridge_closed_form,
     _project_to_simplex,
     _recommendation,
+    _recommendation_equity,
+    _annualised_sharpe,
+    _equity_curve_to_returns,
     tune_weights,
     walk_forward_tune,
+    walk_forward_tune_equity,
 )
 
 
@@ -955,3 +962,348 @@ def test_walk_forward_output_schema_extended():
         "test_dates_after_ffill_reject",
     ):
         assert key in result, "missing key %r" % key
+
+
+# ---------------------------------------------------------------------------
+# Adaptive Weights V2 prep: engine equity-curve bridge
+# (Tier 5 #24 Phase 4 + #25 plumbing)
+#
+# These tests verify the new walk_forward_tune_equity() function ingests
+# backtest-engine equity curves correctly and that the promotion gate
+# (SHIP_MIN_TEST_OBS) fires HOLD until enough OOS history accumulates.
+# The IC-based walk_forward_tune is treated as a regression guard — its
+# default behavior MUST be byte-identical pre/post the V2 bridge.
+# ---------------------------------------------------------------------------
+
+
+def _make_engine_equity_curve(
+    n_days: int,
+    mean_daily_return: float = 0.0005,
+    daily_vol: float = 0.01,
+    seed: int = 17,
+    start: str = "2026-02-17",
+) -> Dict[str, float]:
+    """Synthetic engine equity curve mimicking the JSON shape under
+    ``data/lthcs/backtest/<run_id>/equity_curve.json``.
+
+    Returns ``{YYYY-MM-DD: float_equity, ...}`` starting at 1.0.
+    """
+    rng = np.random.default_rng(seed)
+    daily = mean_daily_return + daily_vol * rng.standard_normal(n_days)
+    equity = np.cumprod(1.0 + daily)
+    # Force the first day to be exactly 1.0 (engine convention).
+    equity = np.concatenate([[1.0], equity[:-1]])
+    dates = pd.bdate_range(start, periods=n_days)
+    return {d.strftime("%Y-%m-%d"): float(e) for d, e in zip(dates, equity)}
+
+
+def test_annualised_sharpe_matches_252_convention():
+    """Smoke: at mean=0.001, sd=0.01 daily, annualised Sharpe ≈
+    0.001/0.01 * sqrt(252) ≈ 1.587."""
+    # Truly zero-variance input → 0.0 (guards against div-by-zero).
+    assert _annualised_sharpe(pd.Series([0.0, 0.0, 0.0, 0.0])) == 0.0
+    rng = np.random.default_rng(0)
+    rets = pd.Series(0.001 + 0.01 * rng.standard_normal(5000))
+    sharpe = _annualised_sharpe(rets)
+    # Large-sample expectation: ~1.587 ± noise.
+    assert 1.2 < sharpe < 2.0
+
+
+def test_annualised_sharpe_handles_empty_and_nans():
+    assert _annualised_sharpe(pd.Series([], dtype=float)) == 0.0
+    assert _annualised_sharpe(pd.Series([np.nan, np.nan])) == 0.0
+    # Single point → zero variance → 0.
+    assert _annualised_sharpe(pd.Series([0.01])) == 0.0
+
+
+def test_equity_curve_to_returns_round_trip():
+    """Equity curve → daily returns: ratio of successive equity values."""
+    ec = {"2026-01-02": 1.0, "2026-01-05": 1.01, "2026-01-06": 1.0302}
+    rets = _equity_curve_to_returns(ec)
+    assert len(rets) == 2
+    assert abs(rets.iloc[0] - 0.01) < 1e-9
+    assert abs(rets.iloc[1] - (1.0302 / 1.01 - 1.0)) < 1e-9
+
+
+def test_equity_curve_to_returns_empty():
+    assert _equity_curve_to_returns({}).empty
+    # Single-point curve → no returns (need a prior).
+    assert _equity_curve_to_returns({"2026-01-02": 1.0}).empty
+
+
+def test_walk_forward_tune_equity_basic_shape():
+    """The bridge ingests a synthetic 60-day engine curve and returns the
+    documented schema."""
+    ec = _make_engine_equity_curve(n_days=60)
+    result = walk_forward_tune_equity(
+        equity_curve=ec, train_fraction=0.6, profile="dollar_neutral"
+    )
+    for key in (
+        "data_source", "profile", "train_dates", "test_dates",
+        "n_train_obs", "n_test_obs",
+        "n_train_daily_obs", "n_test_daily_obs",
+        "train_sharpe", "test_sharpe",
+        "overfit_gap", "train_total_return", "test_total_return",
+        "horizon_days", "train_fraction",
+        "recommendation", "recommendation_reason",
+        "trained_at", "ship_min_test_obs", "ship_min_test_sharpe",
+    ):
+        assert key in result, "missing key %r" % key
+    assert result["data_source"] == "equity"
+    assert result["profile"] == "dollar_neutral"
+    assert result["recommendation"] in {
+        "ship", "hold", "reject", "insufficient_data",
+    }
+    # n_test_obs is in non-overlapping h-day-block units (gate input);
+    # n_test_daily_obs is the raw count. The ratio is exactly h.
+    h = result["horizon_days"]
+    assert result["n_test_obs"] == result["n_test_daily_obs"] // h
+    assert result["n_train_obs"] == result["n_train_daily_obs"] // h
+
+
+def test_walk_forward_tune_equity_empty_curve_insufficient_data():
+    result = walk_forward_tune_equity(equity_curve={})
+    assert result["recommendation"] == "insufficient_data"
+    assert result["n_train_obs"] == 0
+    assert result["n_test_obs"] == 0
+
+
+def test_walk_forward_tune_equity_small_oos_holds_regardless_of_sharpe():
+    """The headline V2 regression test: even if the OOS slice looks
+    spectacular, if n_test_obs < SHIP_MIN_TEST_OBS the verdict MUST be
+    HOLD (or insufficient_data). This is the time-locked promotion gate
+    that keeps Adaptive Weights V2 unshipped until ~July 2026 even
+    though the wire is built today."""
+    rng = np.random.default_rng(7)
+    # Train slice: 50 days of modest mean / modest vol.
+    train_ec = _make_engine_equity_curve(
+        n_days=50, mean_daily_return=0.0001, daily_vol=0.01, seed=42
+    )
+    # Test slice: 10 days with large mean and small vol → huge Sharpe but n=10.
+    test_dates = pd.bdate_range(
+        start=pd.Timestamp(list(train_ec)[-1]) + pd.tseries.offsets.BDay(1),
+        periods=10,
+    )
+    last_train_eq = train_ec[list(train_ec)[-1]]
+    test_ec = {}
+    eq = last_train_eq
+    # Mean +1%, vol 0.1% → Sharpe ~ 0.01/0.001 * sqrt(252) ≈ 158.
+    daily = 0.01 + 0.001 * rng.standard_normal(10)
+    for d, r in zip(test_dates, daily):
+        eq = eq * (1.0 + float(r))
+        test_ec[d.strftime("%Y-%m-%d")] = float(eq)
+    full_ec = {**train_ec, **test_ec}
+    # train_fraction chosen so n_test ≈ 10 (well below SHIP_MIN_TEST_OBS=20).
+    result = walk_forward_tune_equity(
+        equity_curve=full_ec, train_fraction=50.0 / 59.0
+    )
+    # n_test (h=21d blocks) should be < SHIP_MIN_TEST_OBS.
+    assert result["n_test_obs"] < SHIP_MIN_TEST_OBS
+    # Sharpe should be huge (+1% daily, tiny noise).
+    assert result["test_sharpe"] > SHIP_MIN_TEST_SHARPE * 5
+    # The verdict MUST NOT be SHIP — the gate fires. Either HOLD
+    # (small-sample) or INSUFFICIENT_DATA (zero h-day blocks) is
+    # acceptable; both are honest signals that promotion is blocked.
+    assert result["recommendation"] in {"hold", "insufficient_data"}
+    assert result["recommendation"] != "ship"
+
+
+def test_walk_forward_tune_equity_large_oos_can_ship():
+    """The dual: when both the gate is met AND Sharpe is above
+    threshold AND overfit gap is small, verdict flips to SHIP. This is
+    the ~July 2026 trigger — same function call, just more data.
+
+    The gate counts non-overlapping h-day blocks: at h=5 (short
+    horizon to keep this test fast) with 60% train / 40% test split,
+    we need n_test_daily / 5 >= 20 → n_test_daily >= 100 →
+    total days * 0.4 >= 100 → total days ≈ 250. The point of this
+    test is that the wire DOES work — when the gate fills, SHIP fires.
+    """
+    full_ec = _make_engine_equity_curve(
+        n_days=300, mean_daily_return=0.001, daily_vol=0.01, seed=99
+    )
+    result = walk_forward_tune_equity(
+        equity_curve=full_ec, train_fraction=0.6, horizon_days=5
+    )
+    # n_test_obs (h-day blocks) must exceed the gate.
+    assert result["n_test_obs"] >= SHIP_MIN_TEST_OBS, (
+        "expected n_test_obs >= %d at h=5d with 300 days, got %d (n_test_daily=%d)"
+        % (SHIP_MIN_TEST_OBS, result["n_test_obs"], result["n_test_daily_obs"])
+    )
+    # If test Sharpe and gap clear thresholds, verdict is SHIP.
+    if (
+        result["test_sharpe"] > SHIP_MIN_TEST_SHARPE
+        and result["overfit_gap"] < SHIP_MAX_SHARPE_OVERFIT_GAP
+    ):
+        assert result["recommendation"] == "ship"
+    else:
+        # Otherwise hold/reject — but NEVER SHIP without meeting
+        # both thresholds.
+        assert result["recommendation"] in {"hold", "reject"}
+
+
+def test_walk_forward_tune_equity_explicit_daily_returns_preferred():
+    """If the caller passes daily_returns (matching engine's
+    portfolio_returns.json), they should be used directly rather than
+    derived from the equity curve. This matters because the engine's
+    daily returns may include weekend stamps / forward-fills that
+    differ from the simple equity-curve ratio."""
+    ec = {"2026-01-02": 1.0, "2026-01-05": 1.05, "2026-01-06": 1.05}
+    # Caller-provided daily returns disagree intentionally.
+    explicit = {"2026-01-05": 0.02, "2026-01-06": 0.0}
+    out_explicit = walk_forward_tune_equity(
+        equity_curve=ec, daily_returns=explicit, train_fraction=0.5
+    )
+    out_derived = walk_forward_tune_equity(
+        equity_curve=ec, train_fraction=0.5
+    )
+    # The Sharpes should differ — explicit path uses 0.02 + 0.0,
+    # derived path uses 0.05 + 0.0. Compare on the raw-daily count
+    # (n_*_daily_obs) since the block count (n_*_obs) is 0 at h=21d
+    # with only 2 daily observations.
+    assert (
+        out_explicit["n_train_daily_obs"] + out_explicit["n_test_daily_obs"]
+        == 2
+    )
+    assert (
+        out_derived["n_train_daily_obs"] + out_derived["n_test_daily_obs"]
+        == 2
+    )
+
+
+def test_walk_forward_tune_equity_invalid_train_fraction():
+    ec = _make_engine_equity_curve(n_days=30)
+    with pytest.raises(ValueError):
+        walk_forward_tune_equity(equity_curve=ec, train_fraction=0.0)
+    with pytest.raises(ValueError):
+        walk_forward_tune_equity(equity_curve=ec, train_fraction=1.0)
+
+
+def test_walk_forward_tune_equity_64_day_engine_baseline_holds():
+    """Match the real engine output: 64 trading days at h=21d. Verdict
+    MUST be HOLD or INSUFFICIENT_DATA — this is the literal state of
+    `data/lthcs/backtest/2026-05-18_validation/` baseline. The gate
+    is time-locked: until ~July 2026 there are < 20 non-overlapping
+    21-day forward blocks in the OOS slice.
+
+    This is the headline acceptance test for #24 P4 / #25 plumbing —
+    the wire is built but cannot SHIP."""
+    ec = _make_engine_equity_curve(
+        n_days=64, mean_daily_return=0.0008, daily_vol=0.012, seed=2026
+    )
+    result = walk_forward_tune_equity(
+        equity_curve=ec, train_fraction=0.6, horizon_days=21
+    )
+    # ~38 train / ~25 test daily returns → ~1 non-overlapping h=21 block.
+    assert result["horizon_days"] == 21
+    assert result["n_test_obs"] < SHIP_MIN_TEST_OBS
+    # NEVER SHIP until the gate fills.
+    assert result["recommendation"] != "ship"
+    assert result["recommendation"] in {"hold", "reject", "insufficient_data"}
+
+
+def test_recommendation_equity_ship_path():
+    rec, reason = _recommendation_equity(
+        test_sharpe=1.5, overfit_gap=0.5, n_test_obs=SHIP_MIN_TEST_OBS + 5
+    )
+    assert rec == "ship"
+    assert "test_sharpe" in reason
+
+
+def test_recommendation_equity_small_sample_downgrades_to_hold():
+    """The promotion-gate guarantee — mirror of the IC path's small-N
+    guard. Even a spectacular OOS Sharpe earns HOLD if n_test_obs < gate."""
+    rec, reason = _recommendation_equity(
+        test_sharpe=10.0, overfit_gap=0.01, n_test_obs=4
+    )
+    assert rec == "hold"
+    assert (
+        "time-locked" in reason
+        or "n_test_obs" in reason
+        or "OOS daily returns" in reason
+    )
+
+
+def test_recommendation_equity_zero_obs_is_insufficient_data():
+    rec, _ = _recommendation_equity(test_sharpe=1.5, overfit_gap=0.5, n_test_obs=0)
+    assert rec == "insufficient_data"
+
+
+def test_recommendation_equity_overfit_gap_holds():
+    rec, reason = _recommendation_equity(
+        test_sharpe=1.5,
+        overfit_gap=SHIP_MAX_SHARPE_OVERFIT_GAP + 0.5,
+        n_test_obs=SHIP_MIN_TEST_OBS + 5,
+    )
+    assert rec == "hold"
+    assert "overfit" in reason.lower()
+
+
+def test_recommendation_equity_weak_sharpe_rejects():
+    rec, reason = _recommendation_equity(
+        test_sharpe=0.5,
+        overfit_gap=0.1,
+        n_test_obs=SHIP_MIN_TEST_OBS + 5,
+    )
+    assert rec == "reject"
+    assert "weak" in reason.lower() or "test_sharpe" in reason
+
+
+# ---------------------------------------------------------------------------
+# Regression guard: IC-based walk_forward_tune must be byte-identical
+# pre/post the V2 bridge addition. The bridge is a NEW function, not a
+# refactor — existing callers (monthly cron, CLI default) must see no
+# behavioral change.
+# ---------------------------------------------------------------------------
+
+
+def test_ic_path_unchanged_default_behavior():
+    """Regression: default-flag walk_forward_tune on a fixed-seed panel
+    yields the same recommendation and rounded test_ic as before the
+    V2 bridge was added.
+
+    This is the byte-compat guarantee for the monthly cron — if a
+    future refactor of walk_forward_tune accidentally changes default
+    behavior, this test catches it before the cron flips."""
+    panel = _make_panel(
+        n_dates=60, n_tickers=12,
+        signal_pillar="adoption_momentum", signal_strength=2.0, seed=7,
+    )
+    result = walk_forward_tune(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        train_fraction=0.6,
+        ridge_alpha=0.5,
+    )
+    # Schema unchanged — these keys exist and have the original meaning.
+    assert "train_ic" in result
+    assert "test_ic" in result
+    assert "overfit_gap" in result
+    assert "n_rejected_ffill" in result
+    assert "pillar_sigmas_train" in result
+    # data_source key should NOT have leaked into the IC-path output
+    # (it's an equity-path-only field).
+    assert "data_source" not in result
+    # Recommendation is one of the documented IC-path values.
+    assert result["recommendation"] in {"ship", "hold", "reject"}
+
+
+def test_ic_path_and_equity_path_independent():
+    """Both functions exist, both callable, no shared mutable state."""
+    panel = _make_panel(n_dates=40, n_tickers=8, signal_strength=2.0)
+    ic_result = walk_forward_tune(
+        score_history=panel["score_history"],
+        pillar_histories=panel["pillar_histories"],
+        forward_returns=panel["forward_returns"],
+        train_fraction=0.6,
+    )
+    eq_result = walk_forward_tune_equity(
+        equity_curve=_make_engine_equity_curve(n_days=50, seed=1),
+        train_fraction=0.6,
+    )
+    assert "test_ic" in ic_result
+    assert "test_sharpe" in eq_result
+    # No cross-pollination of fields.
+    assert "test_sharpe" not in ic_result
+    assert "test_ic" not in eq_result

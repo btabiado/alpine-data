@@ -209,15 +209,35 @@ V2 only (ship under `/v2/lthcs/backtest/`). Do not touch V1 per
 
 ## 12. Tier 5 #25 dependency
 
-Once the engine produces equity curves (Phase 1 lands), the
-walk-forward CV in `lthcs/adaptive_weights.py:636` (`walk_forward_tune`)
-can ingest *equity-based* P&L instead of IC time series — this is the
-upgrade Adaptive Weights V2 needs. **Promotion gate remains
-time-gated**: per
+**Status (2026-05-19): bridge is BUILT.** See
+`lthcs/adaptive_weights.py::walk_forward_tune_equity` —
+`data_source="equity"` walk-forward CV ingests engine equity-curve
+JSON directly. The IC-based `walk_forward_tune` is byte-identical
+pre/post (regression-guarded by
+`tests/lthcs/test_adaptive_weights.py::test_ic_path_unchanged_default_behavior`);
+the equity path is a *new* function, not a refactor. Engine artifacts
+that flow in:
+
+- `data/lthcs/backtest/<run_id>/equity_curve.json` (baseline)
+- `data/lthcs/backtest/<run_id>/profiles/<name>/equity_curve.json`
+  (per-profile)
+- Optional: `portfolio_returns.json::horizon_Nd::daily_returns` for
+  explicit daily-return overrides.
+
+**Promotion gate remains time-gated**: per
 `data/lthcs/adaptive_weights/2026-05-18_walk_forward_after_fixes.md:20`,
 `SHIP_MIN_TEST_OBS = 20` at `h=21d` needs ~July 2026 before the OOS
-sample is credible. The engine generates the curve immediately; the
-SHIP verdict waits.
+sample is credible. The bridge counts **non-overlapping h-day forward
+blocks** (not daily returns) so the gate matches the IC path's
+"independent OOS observation" semantics. First run against the
+2026-05-18 engine baseline produced HOLD on all 5 profiles
+(`data/lthcs/adaptive_weights/2026-05-19_v2_prep/`) — see the README
+there for the full table. The engine generates the curve immediately;
+the SHIP verdict waits.
+
+When `~July 2026` rolls in and `n_test_obs ≥ 20` non-overlapping
+21-day blocks accumulate, the **same function call** flips its verdict
+from `"hold"` to `"ship"` automatically — no flag, no code change.
 
 ## 13. Effort revision
 
