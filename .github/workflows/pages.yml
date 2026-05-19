@@ -247,6 +247,24 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the LTHCS crypto extension page under /lthcs/crypto/.
+          # Source lives at lthcs_crypto/ and reuses ../lthcs_tab/lthcs.css
+          # for design tokens + reads its data via
+          # "../data/lthcs/snapshots_crypto/<date>.json" and
+          # "../data/lthcs/crypto_universe.json". Both resolve cleanly once
+          # we mirror lthcs_tab/ and data/lthcs/ one level above
+          # /lthcs/crypto/ (idempotent with the health/backtest re-copies
+          # above). V1-only — does NOT stage under /v2/.
+          if [ -f lthcs_crypto/index.html ]; then
+            mkdir -p _site/lthcs/crypto
+            cp -R lthcs_crypto/* _site/lthcs/crypto/
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
