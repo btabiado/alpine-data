@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "purpose": "Frozen pre-β-fix IC baseline. Captures the state of the Adoption pillar inversion that commit 333e5dd is intended to resolve. Used by scripts/lthcs_beta_verdict.py to score the IC verdict on a forward window.",
+    "frozen_at": "2026-05-19",
+    "anchor_commit": "333e5dd",
+    "anchor_commit_subject": "lthcs/adoption: raise _MIN_SECTOR_COHORT 8->20 + mid-rank ties (β follow-up)",
+    "source_run": "data/lthcs/backtest/2026-05-19_post_phase5/",
+    "source_run_generated_at": "2026-05-19T03:45:23.269931Z",
+    "source_run_window": {
+      "start": "2026-02-17",
+      "end": "2026-05-18"
+    },
+    "n_tickers": 167,
+    "n_observation_dates": 91,
+    "horizon_days": 21,
+    "verdict_earliest_date": "2026-06-17",
+    "verdict_thresholds": {
+      "PASS": {
+        "composite_ic_delta_min": 0.02,
+        "adoption_ic_post_min": 0.0,
+        "min_obs": 30
+      },
+      "HOLD": {
+        "description": "Composite IC moves but not by +0.02 OR adoption IC still <0 but improving OR sample <30"
+      },
+      "FAIL": {
+        "description": "Composite IC drops OR Adoption IC inversion deepens (post < baseline)"
+      }
+    }
+  },
+  "composite_ic": {
+    "horizon_21d": {
+      "ic_mean": 0.12178200301058681,
+      "ic_std": 0.14915876806502168,
+      "ic_sharpe": 12.96088315728951,
+      "n_obs": 91
+    }
+  },
+  "pillar_ic": {
+    "horizon_21d": {
+      "adoption_momentum": {
+        "ic_mean": -0.012952618131459284,
+        "ic_std": 0.08579844888832779,
+        "ic_sharpe": -2.396505310786998,
+        "n_obs": 91,
+        "inversion": true,
+        "note": "Pre-β-fix Adoption inversion: Q5-Q1 = -1.4%, t = -4.97 per docs/adoption-pillar-inversion-2026-05-19.md."
+      },
+      "institutional_confidence": {
+        "ic_mean": 0.20860654741758647,
+        "ic_std": 0.28327688371026566,
+        "ic_sharpe": 11.69006886332256,
+        "n_obs": 91
+      },
+      "thesis_integrity": {
+        "ic_mean": 0.08215082957926699,
+        "ic_std": 0.07577341755770503,
+        "ic_sharpe": 17.21057373970495,
+        "n_obs": 91
+      },
+      "financial_evolution": {
+        "ic_mean": 0.07773918513151801,
+        "ic_std": 0.10162604170779936,
+        "ic_sharpe": 12.143258609295323,
+        "n_obs": 91
+      },
+      "des": {
+        "ic_mean": 0.028469889659512904,
+        "ic_std": 0.10657798305330578,
+        "ic_sharpe": 4.240514545382972,
+        "n_obs": 91
+      }
+    }
+  }
+}
