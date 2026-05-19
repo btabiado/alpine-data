@@ -1,0 +1,179 @@
+{
+  "schema_version": "1.0.0",
+  "approach": "B",
+  "note": "Pillar attributions are NOT additive. Removing two pillars is not the sum of removing each — the renormalization step (and the resulting band transitions) interact non-linearly. Each delta_* field below is the marginal effect of zeroing that one pillar relative to the baseline (Approach B in the spec §5).",
+  "pillars": [
+    "adoption_momentum",
+    "institutional_confidence",
+    "financial_evolution",
+    "thesis_integrity",
+    "des"
+  ],
+  "baseline_summary": {
+    "total_return": 0.1773851919488283,
+    "ann_return": 0.9216499433350873,
+    "sharpe": 2.606550160291506,
+    "sortino": 2.5386405726309813,
+    "max_drawdown": -0.10577631692029965,
+    "hit_rate": 0.59375,
+    "avg_hold_days": 11.849056603773585,
+    "turnover": 0.20400883838383838,
+    "n_trades": 53,
+    "n_unique_tkr": 22,
+    "n_trading_days": 64
+  },
+  "per_pillar": {
+    "adoption_momentum": {
+      "status": "ok",
+      "pillar_index": 0,
+      "variant_summary": {
+        "total_return": 0.1329975461013202,
+        "ann_return": 0.6478431727736709,
+        "sharpe": 1.6088058145052841,
+        "sortino": 1.5115549052688166,
+        "max_drawdown": -0.13303882148052104,
+        "hit_rate": 0.5625,
+        "avg_hold_days": 19.666666666666668,
+        "turnover": 0.1343936011904762,
+        "n_trades": 18,
+        "n_unique_tkr": 9
+      },
+      "delta_sharpe": -0.9977443457862221,
+      "delta_sortino": -1.0270856673621647,
+      "delta_total_return": -0.044387645847508095,
+      "delta_ann_return": -0.27380677056141645,
+      "delta_max_drawdown": -0.02726250456022139,
+      "delta_hit_rate": -0.03125,
+      "delta_turnover": -0.06961523719336218,
+      "delta_avg_hold_days": 7.817610062893083,
+      "variant_sharpe": 1.6088058145052841,
+      "variant_total_return": 0.1329975461013202
+    },
+    "institutional_confidence": {
+      "status": "ok",
+      "pillar_index": 1,
+      "variant_summary": {
+        "total_return": 0.06496934220933914,
+        "ann_return": 0.28631822475429813,
+        "sharpe": 1.4578226459228272,
+        "sortino": 1.5205973675744842,
+        "max_drawdown": -0.08853132181129231,
+        "hit_rate": 0.5,
+        "avg_hold_days": 20.07936507936508,
+        "turnover": 0.12702834749170266,
+        "n_trades": 63,
+        "n_unique_tkr": 29
+      },
+      "delta_sharpe": -1.148727514368679,
+      "delta_sortino": -1.0180432050564971,
+      "delta_total_return": -0.11241584973948915,
+      "delta_ann_return": -0.6353317185807892,
+      "delta_max_drawdown": 0.017244995109007344,
+      "delta_hit_rate": -0.09375,
+      "delta_turnover": -0.07698049089213571,
+      "delta_avg_hold_days": 8.230308475591494,
+      "variant_sharpe": 1.4578226459228272,
+      "variant_total_return": 0.06496934220933914
+    },
+    "financial_evolution": {
+      "status": "ok",
+      "pillar_index": 2,
+      "variant_summary": {
+        "total_return": 0.09421148215017694,
+        "ann_return": 0.4335243390623933,
+        "sharpe": 1.3413631853430246,
+        "sortino": 1.3003499915602308,
+        "max_drawdown": -0.15220442675578205,
+        "hit_rate": 0.515625,
+        "avg_hold_days": 12.095238095238095,
+        "turnover": 0.23237847222222224,
+        "n_trades": 42,
+        "n_unique_tkr": 14
+      },
+      "delta_sharpe": -1.2651869749484816,
+      "delta_sortino": -1.2382905810707505,
+      "delta_total_return": -0.08317370979865135,
+      "delta_ann_return": -0.488125604272694,
+      "delta_max_drawdown": -0.0464281098354824,
+      "delta_hit_rate": -0.078125,
+      "delta_turnover": 0.028369633838383868,
+      "delta_avg_hold_days": 0.24618149146450996,
+      "variant_sharpe": 1.3413631853430246,
+      "variant_total_return": 0.09421148215017694
+    },
+    "thesis_integrity": {
+      "status": "ok",
+      "pillar_index": 3,
+      "variant_summary": {
+        "total_return": 0.17490021472788353,
+        "ann_return": 0.9054779727082776,
+        "sharpe": 2.5172360871740214,
+        "sortino": 2.48791844209031,
+        "max_drawdown": -0.11116367673304017,
+        "hit_rate": 0.578125,
+        "avg_hold_days": 13.217391304347826,
+        "turnover": 0.18369352002164502,
+        "n_trades": 46,
+        "n_unique_tkr": 22
+      },
+      "delta_sharpe": -0.08931407311748485,
+      "delta_sortino": -0.050722130540671095,
+      "delta_total_return": -0.002484977220944762,
+      "delta_ann_return": -0.01617197062680975,
+      "delta_max_drawdown": -0.005387359812740522,
+      "delta_hit_rate": -0.015625,
+      "delta_turnover": -0.020315318362193358,
+      "delta_avg_hold_days": 1.3683347005742412,
+      "variant_sharpe": 2.5172360871740214,
+      "variant_total_return": 0.17490021472788353
+    },
+    "des": {
+      "status": "ok",
+      "pillar_index": 4,
+      "variant_summary": {
+        "total_return": 0.10460002555202341,
+        "ann_return": 0.4887445880789407,
+        "sharpe": 2.155174728152706,
+        "sortino": 2.22590741727351,
+        "max_drawdown": -0.1111251287046956,
+        "hit_rate": 0.5625,
+        "avg_hold_days": 16.82857142857143,
+        "turnover": 0.15596545838116563,
+        "n_trades": 70,
+        "n_unique_tkr": 32
+      },
+      "delta_sharpe": -0.4513754321388004,
+      "delta_sortino": -0.3127331553574715,
+      "delta_total_return": -0.07278516639680488,
+      "delta_ann_return": -0.4329053552561466,
+      "delta_max_drawdown": -0.005348811784395946,
+      "delta_hit_rate": -0.03125,
+      "delta_turnover": -0.04804338000267275,
+      "delta_avg_hold_days": 4.979514824797844,
+      "variant_sharpe": 2.155174728152706,
+      "variant_total_return": 0.10460002555202341
+    }
+  },
+  "params": {
+    "bands_long": [
+      "elite",
+      "high_confidence",
+      "constructive"
+    ],
+    "cost_bps": 5.0,
+    "delay_trading_days": 1,
+    "initial_capital": 1.0,
+    "rebalance_daily": true
+  },
+  "run_meta": {
+    "engine_version": "1.0.0",
+    "attribution_version": "1.0.0",
+    "n_snapshots": 91,
+    "window": {
+      "start": "2026-02-17",
+      "end": "2026-05-18",
+      "n_trading_days": 64
+    },
+    "universe_size": 167
+  }
+}

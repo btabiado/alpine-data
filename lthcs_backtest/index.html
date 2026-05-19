@@ -95,6 +95,16 @@
           <h3 class="lbt-h3">Per-band sub-portfolio total return</h3>
           <p class="lbt-note">Each row simulates &ldquo;long-only that band&rdquo;. Higher LTHCS bands should compound faster than lower bands &mdash; this is the framework's smell test.</p>
           <div id="engine-band-chart" class="lbt-band-chart"></div>
+
+          <h3 class="lbt-h3">Per-pillar attribution <span class="lbt-h3-sub">(&Delta;Sharpe vs baseline, Approach B)</span></h3>
+          <p class="lbt-note">
+            For each pillar we re-run the engine with that pillar&rsquo;s weight set to zero and the remaining four renormalized. The bar shows
+            <strong>&Delta;Sharpe vs baseline</strong> &mdash; a <em>negative</em> bar means removing the pillar <em>hurts</em>, so the pillar was a positive contributor. Hover for variant Sharpe + &Delta;return.
+          </p>
+          <p class="lbt-caveat" id="engine-attribution-note" title="">
+            <strong>Caveat:</strong> attributions are not additive &mdash; removing two pillars is not the sum of removing each.
+          </p>
+          <div id="engine-attribution-chart" class="lbt-attrib-chart"></div>
         </section>
 
         <!-- ===== Quintile spread per pillar ================================= -->

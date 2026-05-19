@@ -256,7 +256,7 @@ V2 begins after V1 has been live for ~60 days and has accumulated enough daily s
 
 ---
 
-## Backtest engine (Tier 5 #24, Phase 1)
+## Backtest engine (Tier 5 #24, Phases 1–2)
 
 A non-overlapping event-driven P&L sits next to the IC + quintile validator. It exists because the IC validator's band-portfolio Sharpe (computed from forward-window returns) reuses ~95% of the next horizon-day window on every observation, inflating Sharpe roughly h-fold — the +18.7 Sharpe headline is not real.
 
@@ -271,6 +271,10 @@ python scripts/lthcs_backtest.py --run-id 2026-05-19_local
 # Engine only
 python scripts/lthcs_backtest.py --engine pnl --run-id 2026-05-19_engine \
   --cost-bps 5.0 --benchmark SPY
+
+# Engine + per-pillar attribution (Phase 2)
+python scripts/lthcs_backtest.py --engine pnl --attribute \
+  --run-id 2026-05-19_attrib --offline --no-report
 ```
 
 **Output (`data/lthcs/backtest/<run_id>/`):**
@@ -282,13 +286,15 @@ python scripts/lthcs_backtest.py --engine pnl --run-id 2026-05-19_engine \
 - `benchmark_curve.json` — SPY normalized to the engine window
 - `engine_summary.json` — `summary` (total/ann return, Sharpe, Sortino, max DD, hit rate, turnover) + `run_meta` (window, hashes, params)
 - `engine_report.md` — human-readable markdown
+- `pillar_attribution.json` (Phase 2, `--attribute` only) — per-pillar Δ-Sharpe / Δ-return / Δ-max-DD vs baseline. Approach B: zero pillar `p`'s weight, renormalize the other four, re-band, re-run. Caveat: attributions are not additive.
 
 **Automation:** `.github/workflows/lthcs-backtest-daily.yml` runs at 23:30 UTC (30 min after `lthcs-daily.yml` lands the snapshot). Skips silently when fewer than 30 snapshots exist. Writes into `data/lthcs/backtest/<latest-snapshot-date>_validation/` alongside the weekly IC validator. The `/lthcs/backtest/` page picks up the new artifacts on the next pages.yml deploy.
 
 **First baseline (2026-05-19, 90-day history):** trading days = 64, total return +17.7%, ann. Sharpe **+2.6** (vs the inflated +19.4 legacy headline), max DD −10.6%, hit rate 59.4%, avg hold 11.8d, 53 trades over 22 unique tickers. Per-band: high_confidence +41.5% > constructive +12.9% > weakening +3.8% > monitor +2.8% > elite 0% > review −1.0% — the framework's band ordering holds out of sample.
 
+**Phase 2 — per-pillar attribution (2026-05-19):** Δ-Sharpe vs baseline 2.61 over the 64-trading-day window — Financial Evolution −1.27, Institutional Confidence −1.15, Adoption Momentum −1.00, DES −0.45, Thesis Integrity −0.09 (Thesis is neutralized at 50 today per `memory/alpha_vantage_news_sentiment_quirk.md`). Negative Δ means removing the pillar hurt — i.e. the pillar contributed positively. Numbers live in `data/lthcs/backtest/2026-05-18_validation/pillar_attribution.json`; the V1 backtest tab renders a bar chart.
+
 **Future phases** (specced in `docs/lthcs-backtest-engine-spec.md`):
-- Phase 2 — per-pillar attribution via Approach-B re-runs
 - Phase 3 — strategy variant profiles (long/short, dollar-neutral, top-K)
 - Phase 4 — feed equity curves into walk-forward CV → unblocks Tier 5 #25 (Adaptive Weights V2)
 

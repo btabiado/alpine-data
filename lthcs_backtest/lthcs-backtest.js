@@ -98,6 +98,7 @@ async function main() {
     summary, pillarIC, quintile, portfolio, bandReturns,
     fbSummary, fbPillarIC, fbQuintile, fbPortfolio,
     engineSummary, equityCurve, bandCurves, benchmarkCurve,
+    pillarAttribution,
   ] = await Promise.all([
     tryFetch(`${base}/summary.json`),
     tryFetch(`${base}/pillar_ic.json`),
@@ -114,6 +115,8 @@ async function main() {
     tryFetch(`${base}/equity_curve.json`),
     tryFetch(`${base}/band_curves.json`),
     tryFetch(`${base}/benchmark_curve.json`),
+    // Phase 2: per-pillar attribution (Δ-Sharpe vs baseline).
+    tryFetch(`${base}/pillar_attribution.json`),
   ]);
   const wfMd = await tryFetchText(
     `${DATA_ROOT}/adaptive_weights/${VALIDATION_DATE}_walk_forward_summary.md`,
@@ -149,6 +152,7 @@ async function main() {
   renderPillarIC(pillarRows);
   renderPnL(portfolioH, summaryH);
   renderEngine(engineSummary, equityCurve, bandCurves, benchmarkCurve);
+  renderPillarAttribution(pillarAttribution);
   renderQuintile(quintileH);
   renderWalkForward(wf);
   renderCohort(wf);
@@ -658,6 +662,128 @@ function renderEngineBandChart(bandCurves) {
       text: r.total == null ? 'n/a' : fmtPct(r.total),
     }));
     container.appendChild(row);
+  }
+}
+
+/* ======================================================================
+   Per-pillar attribution (Tier 5 #24, Phase 2)
+   ----------------------------------------------------------------------
+   Reads ``pillar_attribution.json`` and renders a Δ-Sharpe bar chart,
+   one row per pillar. Δ = "engine Sharpe with this pillar's weight
+   zeroed and the other four renormalized" minus the baseline engine
+   Sharpe. A NEGATIVE Δ means removing that pillar HURT the strategy
+   (i.e. the pillar contributed). A POSITIVE Δ means removing the
+   pillar HELPED (the pillar was a drag).
+
+   IMPORTANT: per spec §5, pillar attributions are NOT additive — the
+   sum of the bars is not the total Sharpe. The tooltip on the section
+   header surfaces this caveat. Modeled on renderEngineBandChart.
+   ====================================================================== */
+function renderPillarAttribution(payload) {
+  const container = $('engine-attribution-chart');
+  const noteEl = $('engine-attribution-note');
+  if (!container) return;  // section absent (older index.html)
+  container.replaceChildren();
+  if (noteEl) noteEl.replaceChildren();
+
+  if (!payload || typeof payload !== 'object' || !payload.per_pillar) {
+    container.appendChild(makePlaceholder(
+      'Pillar attribution not yet computed. Re-run the engine with --attribute.',
+    ));
+    return;
+  }
+
+  // Order matches PILLAR_LABELS top-down so the bar chart aligns with
+  // the per-pillar IC ranking above. Drop composite (not a pillar).
+  const order = [
+    'adoption_momentum',
+    'institutional_confidence',
+    'financial_evolution',
+    'thesis_integrity',
+    'des',
+  ];
+
+  // Collect Δ-Sharpe (and absolute baseline numbers for the tooltip).
+  const baselineSharpe = payload?.baseline_summary?.sharpe;
+  const rows = order.map((p) => {
+    const entry = payload.per_pillar[p];
+    if (!entry || entry.status !== 'ok') {
+      return { pillar: p, delta: null, variantSharpe: null };
+    }
+    return {
+      pillar: p,
+      delta: typeof entry.delta_sharpe === 'number' ? entry.delta_sharpe : null,
+      variantSharpe: typeof entry.variant_sharpe === 'number'
+        ? entry.variant_sharpe
+        : entry?.variant_summary?.sharpe ?? null,
+      deltaReturn: typeof entry.delta_total_return === 'number'
+        ? entry.delta_total_return
+        : null,
+    };
+  });
+
+  const valid = rows.filter((r) => r.delta != null);
+  if (valid.length === 0) {
+    container.appendChild(makePlaceholder(
+      'Per-pillar attribution had no usable Δ-Sharpe values (variant runs all skipped).',
+    ));
+    return;
+  }
+
+  // Symmetric scale around zero, modest floor so a flat run still
+  // renders distinguishable bars.
+  const maxAbs = Math.max(...valid.map((r) => Math.abs(r.delta)), 0.05);
+
+  for (const r of rows) {
+    const row = el('div', { class: 'lbt-attrib-row' });
+    row.appendChild(el('div', {
+      class: 'lbt-attrib-name',
+      text: PILLAR_LABELS[r.pillar] || r.pillar,
+    }));
+    const bar = el('div', { class: 'lbt-attrib-bar' });
+    if (r.delta == null) {
+      bar.appendChild(el('span', { class: 'lbt-attrib-empty', text: 'n/a' }));
+    } else {
+      const sign = r.delta >= 0 ? 'pos' : 'neg';
+      const widthPct = (Math.abs(r.delta) / maxAbs) * 50;
+      const left = r.delta >= 0 ? 50 : 50 - widthPct;
+      const fill = el('div', { class: 'lbt-attrib-bar-fill' });
+      fill.dataset.sign = sign;
+      fill.style.left = `${left}%`;
+      fill.style.width = `${widthPct}%`;
+      // Tooltip: full context for the pillar (variant Sharpe, Δret).
+      let tip = `Δsharpe ${r.delta >= 0 ? '+' : ''}${r.delta.toFixed(3)}`;
+      if (r.variantSharpe != null) {
+        tip += ` (variant ${r.variantSharpe.toFixed(3)} vs baseline ${(baselineSharpe ?? 0).toFixed(3)})`;
+      }
+      if (r.deltaReturn != null) {
+        tip += ` | Δret ${r.deltaReturn >= 0 ? '+' : ''}${(r.deltaReturn * 100).toFixed(2)}%`;
+      }
+      fill.title = tip;
+      bar.appendChild(fill);
+    }
+    row.appendChild(bar);
+    const statCls = r.delta == null
+      ? 'lbt-attrib-stat noise'
+      : `lbt-attrib-stat ${r.delta >= 0 ? 'pos' : 'neg'}`;
+    row.appendChild(el('div', {
+      class: statCls,
+      text: r.delta == null
+        ? 'n/a'
+        : `${r.delta >= 0 ? '+' : ''}${r.delta.toFixed(3)}`,
+    }));
+    container.appendChild(row);
+  }
+
+  // Surface the non-additive caveat from the JSON note field (spec §5).
+  // The producer always writes a `note` string; we read it back as the
+  // tooltip body rather than hardcoding the warning here.
+  if (noteEl) {
+    const note = (payload.note || '').trim();
+    if (note) {
+      noteEl.textContent = note;
+      noteEl.title = note;
+    }
   }
 }
 

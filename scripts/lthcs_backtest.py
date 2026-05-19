@@ -62,6 +62,7 @@ import pandas as pd  # noqa: E402
 
 from lthcs import backtest  # noqa: E402
 from lthcs import backtest_engine  # noqa: E402
+from lthcs import backtest_engine_attribution  # noqa: E402
 
 
 def _parse_band_list(raw: str) -> List[str]:
@@ -171,6 +172,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         type=str,
         default="SPY",
         help="Engine benchmark ticker (default SPY). Empty string to skip.",
+    )
+    parser.add_argument(
+        "--attribute",
+        action="store_true",
+        help="Engine Phase 2: emit pillar_attribution.json. Re-runs the engine "
+             "5x (once per pillar with that pillar's weight zeroed and the "
+             "remaining four renormalized) and writes Δ-Sharpe / Δ-return / "
+             "Δ-max-DD relative to the baseline run. Requires --engine in "
+             "{pnl, both}.",
     )
     args = parser.parse_args(argv)
 
@@ -443,6 +453,54 @@ def main(argv: Optional[List[str]] = None) -> int:
                 (out_root / "engine_report.md").write_text(md, encoding="utf-8")
             except Exception as exc:  # pragma: no cover — defensive
                 print("WARN: failed to write engine_report.md: %s" % exc)
+
+        # 8b. Engine Phase 2 — per-pillar attribution (Tier 5 #24).
+        if args.attribute:
+            try:
+                root = data_root or backtest._default_data_root()
+                snapshots_by_date = backtest._load_all_snapshots(root)
+                # Load score_bands from weights.json (same file score.py uses).
+                weights_path = root / "weights.json"
+                if weights_path.exists():
+                    weights_cfg = backtest._read_json(weights_path) or {}
+                else:
+                    weights_cfg = {}
+                score_bands = weights_cfg.get("score_bands") or {}
+
+                attribution = backtest_engine_attribution.run_attribution(
+                    snapshots_by_date=snapshots_by_date,
+                    prices=prices_df,
+                    score_bands=score_bands,
+                    params=engine_params,
+                    benchmark_prices=bench_series,
+                    baseline_band_history=band,
+                )
+                backtest._atomic_write_json(
+                    out_root / "pillar_attribution.json", attribution
+                )
+
+                print("")
+                print("Pillar attribution (Phase 2, Δ vs baseline):")
+                print("  %-26s  %10s  %10s  %10s" % (
+                    "pillar", "Δsharpe", "Δret", "Δmax_dd"))
+                for p_name in backtest_engine_attribution.PILLARS:
+                    entry = attribution["per_pillar"].get(p_name, {})
+                    if entry.get("status") != "ok":
+                        print("  %-26s  %10s  %10s  %10s" % (
+                            p_name, "n/a", "n/a", "n/a"))
+                        continue
+                    ds = entry.get("delta_sharpe")
+                    dr = entry.get("delta_total_return")
+                    dd = entry.get("delta_max_drawdown")
+                    print("  %-26s  %+10.3f  %+10.4f  %+10.4f" % (
+                        p_name,
+                        ds if ds is not None else float("nan"),
+                        dr if dr is not None else float("nan"),
+                        dd if dd is not None else float("nan"),
+                    ))
+                print("  note: %s" % attribution["note"])
+            except Exception as exc:  # pragma: no cover — defensive
+                print("WARN: pillar_attribution failed: %s" % exc)
 
         es = engine_out["summary"]
         print("")

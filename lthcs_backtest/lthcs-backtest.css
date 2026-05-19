@@ -44,6 +44,12 @@
   color: var(--text-tertiary);
   margin-left: 6px;
 }
+.lbt-h3-sub {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: 6px;
+}
 .lbt-note {
   margin: -4px 0 14px;
   font-size: 12px;
@@ -556,6 +562,65 @@
 .lbt-band-stat.noise { color: var(--text-secondary); }
 .lbt-band-empty { color: var(--text-secondary); padding-left: 50%; }
 
+/* ----- Per-pillar attribution chart (Tier 5 #24, Phase 2) -------------
+   Δ-Sharpe bar chart. Reuses the band-chart layout (160 | 1fr | 80 grid)
+   so the visual aligns with the per-band sub-portfolio chart above.
+   Positive Δ (pillar removal helps) is green; negative Δ (pillar
+   contributed) is red — matches the rest of the page's sign palette.
+*/
+.lbt-attrib-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.lbt-attrib-row {
+  display: grid;
+  grid-template-columns: 200px 1fr 80px;
+  align-items: center;
+  gap: 12px;
+}
+.lbt-attrib-name {
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.lbt-attrib-bar {
+  position: relative;
+  height: 18px;
+  background: var(--bg-chip);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lbt-attrib-bar::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-strong);
+}
+.lbt-attrib-bar-fill {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 3px;
+}
+/* Positive Δ-Sharpe (pillar removal helped) — green. Negative (pillar
+   contributed positively, removing hurt) — red. Same sign palette as
+   the IC chart. */
+.lbt-attrib-bar-fill[data-sign="pos"] { background: var(--band-high, #4cd2c0); }
+.lbt-attrib-bar-fill[data-sign="neg"] { background: var(--band-review, #ff7a7a); }
+.lbt-attrib-stat {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  text-align: right;
+}
+.lbt-attrib-stat.pos { color: var(--band-elite, #4cd2c0); }
+.lbt-attrib-stat.neg { color: var(--band-review, #ff7a7a); }
+.lbt-attrib-stat.noise { color: var(--text-secondary); }
+.lbt-attrib-empty { color: var(--text-secondary); padding-left: 50%; font-size: 12px; }
+
 /* ----- Mobile ---------------------------------------------------------- */
 @media (max-width: 640px) {
   .lbt-section { padding: 14px 12px; }
@@ -581,5 +646,10 @@
     gap: 4px;
   }
   .lbt-band-stat { text-align: left; }
+  .lbt-attrib-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .lbt-attrib-stat { text-align: left; }
   .lbt-engine-window { display: block; margin: 4px 0 0; }
 }
