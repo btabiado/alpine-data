@@ -1,0 +1,109 @@
+name: lthcs-crypto-daily
+
+# Daily LTHCS crypto history accumulation. Runs scripts/lthcs_crypto_daily.py
+# once per day, commits the resulting data/lthcs/snapshots_crypto/ artifacts,
+# and pushes back to main so pages.yml picks them up on its next hourly build.
+# Distinct concurrency group from pages.yml / lthcs-daily so the workflows
+# don't block each other.
+#
+# Schedule rationale: 22:00 UTC = ~17:00 ET. One hour before the equity
+# 23:00 UTC run (lthcs-daily.yml), so any downstream consumer that reads
+# both equity and crypto on the same day sees fresh crypto data first.
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch: {}
+
+# Push back to main requires contents:write. Pages deployment lives in
+# pages.yml — we intentionally do NOT request pages:write here so the
+# workflows can't race over the gh-pages artifact.
+permissions:
+  contents: write
+
+# Per-ref group so two pushes to main don't queue forever, but
+# cancel-in-progress is false so a manually-triggered run in the middle
+# of the cron run still queues (vs. being killed mid-write).
+concurrency:
+  group: lthcs-crypto-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the push back to main has a complete refspec.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches the local dev env (.venv = 3.9.6); 3.9 is the lowest
+          # supported and lets pip pick the same wheels.
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run LTHCS crypto daily pipeline
+        env:
+          # The crypto adapter uses free public APIs by default (CoinGecko
+          # free tier, blockchain.info, defillama) — none require keys.
+          # The plumbing below is for OPTIONAL paid-tier upgrades; every
+          # source degrades gracefully when its secret is absent.
+          #   * COINGECKO_API_KEY — Demo/Pro tier raises CoinGecko rate
+          #     limits (free tier ~30 calls/min is plenty for 3 assets,
+          #     but a key removes the throttle entirely).
+          #   * CRYPTOCOMPARE_API_KEY / GLASSNODE_API_KEY — reserved for a
+          #     future on-chain upgrade path. Currently unread; included
+          #     as placeholders so the workflow doesn't need an edit when
+          #     those sources land.
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
+          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
+        # --force: re-running on a date that already has a snapshot is OK
+        # (e.g. a manually dispatched run on the same UTC date as the cron).
+        run: python scripts/lthcs_crypto_daily.py --force --verbose
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          # Stage ONLY the crypto snapshot directory and the per-ticker
+          # history files the crypto runner appends to. We do NOT
+          # `git add -A` — that would catch any incidental .cache/ or
+          # editor artifact in the runner workspace.
+          git add data/lthcs/snapshots_crypto/
+          git add data/lthcs/history/ || true
+          # Only commit if there's an actual diff — a no-op cron run
+          # shouldn't pollute git history.
+          if git diff --staged --quiet; then
+            echo "No crypto data changes; skipping commit."
+          else
+            # [skip ci] prevents pages.yml from triggering its own
+            # rebuild on every snapshot push (it catches up on the next
+            # hourly cron anyway).
+            git commit -m "lthcs/crypto: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
+            # Race-safe push: mirrors the rebase-retry pattern from
+            # lthcs-daily.yml (commit e3f072d) so a concurrent equity
+            # push to main doesn't eat the crypto snapshot.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi

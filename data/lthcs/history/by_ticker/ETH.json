@@ -1,0 +1,46 @@
+{
+  "ticker": "ETH",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-19",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-18",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-17",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-16",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-15",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-14",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-13",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-12",
+      "score": 55.0,
+      "band": "weakening"
+    }
+  ]
+}

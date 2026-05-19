@@ -1,0 +1,46 @@
+{
+  "ticker": "BTC",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-19",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-18",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-17",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-16",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-15",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-14",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-13",
+      "score": 64.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-12",
+      "score": 64.5,
+      "band": "monitor"
+    }
+  ]
+}

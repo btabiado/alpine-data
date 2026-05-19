@@ -1,0 +1,46 @@
+{
+  "ticker": "SOL",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-19",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-18",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-17",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-16",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-15",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-14",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-13",
+      "score": 49.4,
+      "band": "review"
+    },
+    {
+      "date": "2026-05-12",
+      "score": 49.4,
+      "band": "review"
+    }
+  ]
+}
