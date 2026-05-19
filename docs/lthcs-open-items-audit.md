@@ -120,6 +120,102 @@ Rationale:
 
 ---
 
+## 2026-05-18 PM → 2026-05-19 AM — Sector RSS closed + β diagnosed + Option B live
+
+Second swarm of the day. **Tier 4 closes entirely** (#22 P2 polish + a UX
+nice-to-have). Sector RSS (#5 P4) goes from incomplete-by-gating to truly
+wired. The Adoption-pillar β post-mortem identifies the real driver and
+points at a one-line XS fix. LLM sentiment (#28) is reclassified as a
+refactor, not a build. And hourly news refresh ships as a standalone
+workflow (Option B) — daily snapshot stays daily, news data goes hourly.
+
+**Tier 4 #22 P2 polish — fully SHIPPED** (`07a7dae`):
+`-webkit-text-size-adjust`, `touch-action: manipulation`,
+`-webkit-tap-highlight-color: transparent`, `:active` states. **Tier 4
+is now fully closed** (#17-#22 all green).
+
+**Tier 4 follow-up — detail-modal dragging-pillar callout** (`014aadc`):
+UX nice-to-have that closed organically. Surfaces the Phase 5
+verification finding inline per ticker for Weakening / Review tickers
+("Adoption pillar dragging composite" etc.), so users see the
+pillar-level story without leaving the modal. Worth promoting — closes
+the gap between the verification doc and the live UI.
+
+**Sector RSS (#5 P4) — actually shipped now**:
+The Phase 5 P4 commit (`16f7945`) wired the source module, but the
+daily pipeline was still running with `--skip-thesis` which gated
+`sector_rss` out alongside the heavy Thesis work. Universal
+`had_sector_rss=False` across all 167 tickers in tonight's snapshot
+exposed it. Two follow-up fixes:
+- `9cd10a7` — Fed feed UTF-8 BOM encoding fix (was failing parse on the
+  byte-order mark; added 1 test → total 1441 passing)
+- `ef1cc06` — un-gate `sector_rss` from `--skip-thesis`, mirrors the P0
+  pattern used for Form 4 / 13F in `a55aab8`
+
+Expected ~20 of 167 tickers flip to `has_sector_rss=True` on next
+pipeline run (next daily 23:00 UTC or the new hourly news-only run).
+
+**Adoption pillar β — root cause diagnosed** (`daba54e`,
+`docs/adoption-pillar-inversion-2026-05-19.md`):
+Phase 5 P1 (`fa926bf`) added sector-relative framing + QoQ accel, but
+the residual inversion-at-21d isn't from QoQ or Trends — **the real
+driver is `sector_relative_revenue` percentile-rank clamping**. 19% of
+the universe is pinned at the 0 or 100 boundary because peer cohorts
+are too small (`_MIN_SECTOR_COHORT=8`), which compresses signal into a
+bimodal distribution and inverts the IC. Recommended fix:
+`_MIN_SECTOR_COHORT 8 → 20` (XS, single-constant change). Expected
++0.02-0.03 IC at 21d, no other moving parts.
+
+**This is now the highest-ROI next item** — ahead of Tier 2 / 3 / 5
+work. It's strictly a tuning change against existing pillar
+infrastructure.
+
+**Adoption IC re-validation window**: moved from 2026-06-17 →
+**2026-06-24** per the β analysis (+~7d for stable IC + Trends weekly
+batch resolution; see `docs/adoption-pillar-inversion-2026-05-19.md`
+lines 120-122).
+
+**LLM sentiment shadow (Tier 5 #28) — spec landed; effort downgrade**
+(`7732d9e`, `docs/lthcs-llm-sentiment-shadow-spec.md`):
+Discovery during spec-writing: `lthcs/sources/llm_sentiment.py` is
+**718 lines, not a stub**. The module is ~90% built — the open work is
+shadow-run wiring + retention, not greenfield. Cost re-estimate with
+Haiku 4.5 + prompt caching: **~$0.19/day** (audit's earlier $0.85/day
+was based on a stale Sonnet assumption). Tier 5 #28 effort tag
+**M-refactor, not M-build**.
+
+**Hourly news refresh (Option B) — shipped**:
+- `6c65fac` — `lthcs_daily.py --news-only` flag: refreshes Finnhub
+  recos + 8-K + Yahoo earnings + sector RSS for today's snapshot only;
+  history append skipped; runtime 30-90s per run.
+- `01f5f38` — `.github/workflows/lthcs-news-hourly.yml`: every hour at
+  `:15` past, calls `--news-only`.
+
+This keeps the daily cron's 23:00 UTC full-pipeline run authoritative
+for composite math + history; the hourly run only swaps in fresh news
+sub-signals on the already-published day's snapshot. See updated
+Automation schedule table below.
+
+**Crypto dashboard side-quest** (app.py, not LTHCS — noted for
+completeness only):
+- `c99a9c4` — AI News tab side-by-side: AI insights left, top-5 AI news
+  right.
+- `300f05b` — tightened insight cards to match Crypto tab's "Top
+  insights" stacked style.
+- `78be9b9` — `avgFee.toFixed` JS error on ETH whale stats fixed.
+
+**Mockup variants A / B / C — planning artifact** (`lthcs_tab/mockups/`,
+commits `226d99b` → `7e70d22`):
+Three pyramid / tree layout variants exploring a redesigned LTHCS
+dashboard. **Variant C (indexed drill-down) is the user-approved
+direction**; awaiting implementation decision (not yet on the build
+queue — this is a sketch, not a commit-in-progress).
+
+**Tests**: 1338 at audit start → 1440 at first 2026-05-18 PM swarm
+→ **1441 tonight** (the Fed-encoding fix added one).
+
+---
+
 ## 2026-05-18 PM — Phase 5 + UX swarm shipped
 
 Massive ship day. Tier 1 (#1-5) and the bulk of Tier 4 (#17-22) all
@@ -206,7 +302,7 @@ respective research docs.
 | 2 | **Adoption overhaul: Trends + sector-rel + QoQ accel** | news-feeds + peer-group | M-L | ✅ SHIPPED `fa926bf` (2026-05-18) — `has_qoq` 0 → 159, `has_trends` 0 → 11 (weekly cron grows this). Sector-relative framing + QoQ revenue acceleration directly target the "inverts at 21d" finding (audit item β). |
 | 3 | **8-K + Yahoo earnings/recos → Thesis** | news-feeds-earnings-events §1.1, §2.1, §3 | M | ✅ SHIPPED `4c7892b` (2026-05-18) — `events_refinement_sources` 0 → 135. SEC 8-K material events + Yahoo earnings/recommendations now feed Thesis. Begins eroding constant-50 Thesis (audit item γ); LLM sentiment #28 is the next step. |
 | 4 | **Margin XBRL fallback chain + bank cohort** | (this audit / Phase 5 P3) | M | ✅ SHIPPED `f5e2259` (2026-05-18) — Margin coverage 56% → 89% (93 → 158/167). Concept-fallback chain over alternate XBRL tags. Bank cohort 7 → 11 (closes the Financial-pillar drag for regional banks; addresses #15). |
-| 5 | **FRED tier-2 + sector RSS → DES** | des-audit + news-feeds-sector-specific | M | ✅ SHIPPED `16f7945` (2026-05-18) — 6 tier-2 FRED indicators (closes Tier 2 #9, no longer deferred) + sector RSS into Thesis `data_quality`. DES sub max 73.7 today; ceiling now governed by `TIER2_MAX_POINTS=5.0` (see Phase 5 ship note for ceiling lever). |
+| 5 | **FRED tier-2 + sector RSS → DES** | des-audit + news-feeds-sector-specific | M | ✅ SHIPPED `16f7945` (2026-05-18) — 6 tier-2 FRED indicators (closes Tier 2 #9, no longer deferred) + sector RSS into Thesis `data_quality`. DES sub max 73.7 today; ceiling now governed by `TIER2_MAX_POINTS=5.0` (see Phase 5 ship note for ceiling lever). **Follow-up (2026-05-19 AM)**: Phase 5 P4 sector RSS was incomplete — `had_sector_rss=False` universally on every ticker because `--skip-thesis` was gating it out. Fixed by `9cd10a7` (Fed feed UTF-8 BOM encoding) + `ef1cc06` (un-gate `sector_rss` from `--skip-thesis`, mirrors P0 pattern). Expected ~20 of 167 tickers flip to `has_sector_rss=True` on next pipeline run. |
 | 6 | **AI-news threshold polish** | (this audit) | XS | ✅ SHIPPED `36c48aa` — mention-count multiplier (3-5: 1.0×, 6-10: 1.1×, 11-20: 1.2×, 21+: 1.3×) on top of engagement tier, cap at +0.75. MSFT/META/GOOGL/TSLA/PLTR live: 0.60→0.75 (cap binds, Constructive→low High). NVDA/AMD low-engagement: 0.35→0.455. Doesn't fire today (Finnhub/SEC/Yahoo cascade pre-empts AI news) — materializes when earlier-cascade sentiment goes stale. |
 
 **Items 1-5 all shipped 2026-05-18 PM** (see Phase 5 ship note above).
@@ -251,7 +347,8 @@ to deepen Institutional beyond binary signal.
 | 19 | **Detail modal: expand narrative + variable-detail evidence** | (this audit) | S — already 90% there | ✅ SHIPPED `6367616` (2026-05-18) — Evidence accordion. |
 | 20 | **Time-series chart on detail modal** showing composite history | (this audit) | M — sparkline exists; full chart is bigger | ✅ SHIPPED `6367616` (2026-05-18) — multi-series chart on detail modal. |
 | 21 | **About-modal updates** with current data-feed lineage (which sources feed which pillar) | (this audit) | XS | ✅ SHIPPED `69508ee` (2026-05-18) — data-feed lineage table in About modal. |
-| 22 | **Mobile/Safari testing pass** | ux-research | S — heatmap was tested; main tab probably needs one too | 🟡 PARTIAL — P1 ✅ SHIPPED `509bdb2` + `a81d2b5` (2026-05-18): backdrop-filter webkit prefix, body-scroll lock, `100dvh`, 44px touch targets, V2 tabs fix. **P2 polish still open**: `-webkit-text-size-adjust`, `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`, `:active` states. |
+| 22 | **Mobile/Safari testing pass** | ux-research | S — heatmap was tested; main tab probably needs one too | ✅ SHIPPED — P1 `509bdb2` + `a81d2b5` (backdrop-filter webkit prefix, body-scroll lock, `100dvh`, 44px touch targets, V2 tabs fix) + P2 `07a7dae` (`-webkit-text-size-adjust`, `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`, `:active` states). **Tier 4 fully closed.** |
+| 22b | **Detail modal — dragging-pillar callout** (follow-up nice-to-have) | (this audit) | XS | ✅ SHIPPED `014aadc` (2026-05-19) — surfaces Phase 5 verification finding inline per ticker for Weakening / Review tickers. Closed organically; not on original Tier 4 list. |
 
 ---
 
@@ -264,7 +361,7 @@ to deepen Institutional beyond binary signal.
 | 25 | **Adaptive weights** (V2) | Use backtest to suggest per-ticker weight adjustments | XL (depends on 24) |
 | 26 | **MCP server / API exposure** | LTHCS data as Claude Connector | M |
 | 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | M-L |
-| 28 | **Real LLM-derived sentiment** (replace AI-news engagement heuristic) | Engagement ≠ sentiment direction; Claude call per ticker per day could give real polarity | M; cheap with prompt caching |
+| 28 | **Real LLM-derived sentiment** (replace AI-news engagement heuristic) | Engagement ≠ sentiment direction; Claude call per ticker per day could give real polarity | **M-refactor** (not M-build) — `lthcs/sources/llm_sentiment.py` is **718 lines, ~90% built**; remaining work is shadow-run wiring + retention. Cost ~$0.19/day with Haiku 4.5 + prompt caching (prior $0.85/day estimate was stale Sonnet assumption). Spec: `docs/lthcs-llm-sentiment-shadow-spec.md` (commit `7732d9e`). |
 
 ---
 
@@ -281,13 +378,16 @@ to deepen Institutional beyond binary signal.
 
 ## Suggested next 3 commits
 
-Tier 1 #1-5 all shipped 2026-05-18. New cleanest sequencing:
+Tier 1 #1-5 shipped 2026-05-18; Tier 4 fully closed 2026-05-19 AM. New
+cleanest sequencing — top is now β-driven, not UX-driven:
 
-1. **#22 P2 polish** — Mobile/Safari final pass: `-webkit-text-size-adjust`, `touch-action: manipulation`, `-webkit-tap-highlight-color: transparent`, `:active` states. XS effort, closes Tier 4 entirely.
-2. **#28 Real LLM-derived sentiment (shadow run)** — Stand up a shadow Claude-sentiment call per ticker per day; log into a parallel column without touching Thesis math. Cheap with prompt caching. Once shadow data clears N days, swap into Thesis to fix the constant-50 problem (audit item γ) — gives the path to re-tighten `elite.min` back to 90.
-3. **#13 Full 13F implementation** — Aggregate 13F filings across institutions per ticker; quarterly cadence. Deepens Institutional beyond today's binary "filing exists / doesn't" signal. ~2-3 swarms.
+1. **Adoption β fix** — `_MIN_SECTOR_COHORT 8 → 20` (XS, single-constant). Per `docs/adoption-pillar-inversion-2026-05-19.md`, this addresses the percentile-rank clamping that pins 19% of the universe at 0/100 inside `sector_relative_revenue`. Expected **+0.02-0.03 IC at 21d**, no other moving parts. Highest-ROI item on the board.
+2. **#28 LLM sentiment shadow refactor** — M-refactor (not M-build). `lthcs/sources/llm_sentiment.py` is 718 lines and ~90% there; the work is shadow-run wiring + retention so we can log a parallel column for N days before swapping into Thesis math. Cost ~$0.19/day with Haiku 4.5 + caching. Spec landed `7732d9e`. Once shadow data clears, this is the path to retire constant-50 Thesis and re-tighten `elite.min` back to 90.
+3. **Backtest re-validation post-backfill** — S. After β fix lands, re-run `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` to confirm Adoption IC has stopped inverting at 21d and to re-baseline composite IC pre-LLM-sentiment-shadow.
 
-After those, the natural follow-up is widening `TIER2_MAX_POINTS` to lift the DES ceiling (only meaningful once Thesis is moving — otherwise no Elite-band benefit).
+After those, the natural follow-up is widening `TIER2_MAX_POINTS` to lift the DES ceiling (only meaningful once Thesis is moving — otherwise no Elite-band benefit), then #13 full 13F implementation.
+
+**Time-gated**: Adoption IC re-validation window moved 2026-06-17 → **2026-06-24** per the β analysis (+~7d for stable IC + Trends weekly batch resolution).
 
 ---
 
@@ -299,7 +399,7 @@ The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
-Tests: 1440 passing (was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; +102 today from Phase 5 + UX swarms)
+Tests: **1441 passing** (was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; +1 from the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`).
 
 ---
 
@@ -311,7 +411,8 @@ the same runner pool or push to `main` in the same minute.
 
 | Cadence | UTC cron | Workflow file | What it does | Commits to main? |
 |---|---|---|---|---|
-| Daily | `0 23 * * *` | `lthcs-daily.yml` | `lthcs_daily.py --force --catch-up --skip-thesis` — accumulates the daily snapshot under `data/lthcs/`. | Yes |
+| Hourly | `15 * * * *` | `lthcs-news-hourly.yml` | `lthcs_daily.py --news-only` (commit `6c65fac`) — refreshes Finnhub recos + 8-K + Yahoo earnings + sector RSS for today's already-published snapshot only. **History append skipped**; daily 23:00 UTC run remains authoritative for composite math + history. Runtime 30-90s per run. Workflow `01f5f38`. | Yes |
+| Daily | `0 23 * * *` | `lthcs-daily.yml` | `lthcs_daily.py --force --catch-up --skip-thesis` — accumulates the daily snapshot under `data/lthcs/`. Note: `sector_rss` is no longer gated by `--skip-thesis` (see `ef1cc06`); Form 4 + 13F similarly un-gated in `a55aab8`. | Yes |
 | Weekly Mon | `0 4 * * 1` | `lthcs-trends-weekly.yml` | `scripts/lthcs_trends_weekly.py` — pytrends batch into `data/lthcs/trends/`. Sunday 23:00 ET gives Google's limiter overnight to cool. | Yes |
 | Weekly Mon | `0 5 * * 1` | `lthcs-validate-weekly.yml` | `scripts/lthcs_backfill_validate.py` — read-only audit; uploads the JSON report as a 90-day artifact and fails the run if exit code is non-zero. | No (read-only) |
 | Monthly 1st | `0 6 1 * *` | `lthcs-backtest-monthly.yml` | `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` into `data/lthcs/backtest/<YYYY-MM>_monthly/`. Skips silently if fewer than 30 snapshots exist. | Yes |
