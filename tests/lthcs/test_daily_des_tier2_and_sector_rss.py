@@ -263,6 +263,39 @@ def patched_sources(monkeypatch):
         lthcs_daily.breadth_sentiment, "fetch_breadth_sentiment",
         MagicMock(return_value={"data_quality": {"sources_ok": 0}}),
     )
+    # Additional Tier-3+ sources stage_2 calls — stub to "no signal" so
+    # the integration test doesn't reach Finnhub / SEC 8-K / yahoo_events /
+    # ai_news / analyst_breadth / google_trends over the network. Each of
+    # those was adding ~0.5-2s/test of wall time on cache misses, dragging
+    # this file to ~13s alone.
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_recommendation_trends",
+        MagicMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.sec_8k, "event_signal_for_ticker",
+        MagicMock(return_value={"article_count": 0, "mean_sentiment_score": None}),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.yahoo_events, "get_earnings_dates",
+        MagicMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.yahoo_events, "get_analyst_actions",
+        MagicMock(return_value=[]),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.ai_news, "aggregate_ai_news",
+        MagicMock(return_value={}),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.analyst_breadth, "compute_universe_breadth",
+        MagicMock(return_value={}),
+    )
+    monkeypatch.setattr(
+        lthcs_daily.google_trends, "get_universe_trends_acceleration",
+        MagicMock(return_value={}),
+    )
 
     return {
         "tier2": tier2_mock,

@@ -161,6 +161,32 @@ def patched_sources(monkeypatch):
     yahoo_earnings_dates_mock = MagicMock(return_value=[])
     yahoo_analyst_actions_mock = MagicMock(return_value=[])
 
+    # Phase 5+ network sources added to stage_2_fetch_data without
+    # corresponding fixture mocks — without these stubs the pipeline tests
+    # would hit real Finnhub / SEC EDGAR / FRED / RSS endpoints when a per-
+    # test override (tmp_path data_root) is missing. Each gracefully
+    # degrades on raise inside stage_2, so the safe default is a stub that
+    # returns "no data".
+    finnhub_reco_mock = MagicMock(return_value=[])
+    sec_form4_mock = MagicMock(return_value={})
+    sec_13f_mock = MagicMock(return_value={})
+    sector_rss_agg_mock = MagicMock(return_value={})
+    sector_rss_parse_mock = MagicMock(return_value=None)
+    ai_news_agg_mock = MagicMock(return_value={})
+    ai_news_compute_mock = MagicMock(return_value=None)
+    fred_breadth_mock = MagicMock(
+        return_value={"data_quality": {"sources_ok": 0}}
+    )
+    fred_tier2_mock = MagicMock(
+        return_value={"data_quality": {"sources_ok": 0}}
+    )
+    breadth_sentiment_mock = MagicMock(
+        return_value={"data_quality": {"sources_ok": 0}}
+    )
+    sector_etf_mock = MagicMock(return_value={"sectors": {}})
+    analyst_breadth_mock = MagicMock(return_value={})
+    google_trends_mock = MagicMock(return_value={})
+
     monkeypatch.setattr(lthcs_daily.yahoo, "get_daily_prices", yahoo_prices_mock)
     monkeypatch.setattr(lthcs_daily.yahoo, "get_momentum_pct", yahoo_momentum_mock)
     monkeypatch.setattr(lthcs_daily.yahoo, "get_volatility", yahoo_vol_mock)
@@ -184,6 +210,54 @@ def patched_sources(monkeypatch):
     monkeypatch.setattr(
         lthcs_daily.yahoo_events, "get_analyst_actions", yahoo_analyst_actions_mock
     )
+    # New: block the Tier 2/3/5 network sources stage_2 added since the
+    # original fixture was written.
+    monkeypatch.setattr(
+        lthcs_daily.finnhub, "get_recommendation_trends", finnhub_reco_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.sec_form4,
+        "fetch_universe_insider_transactions",
+        sec_form4_mock,
+    )
+    monkeypatch.setattr(
+        lthcs_daily.sec_13f,
+        "fetch_universe_institutional_holdings",
+        sec_13f_mock,
+    )
+    monkeypatch.setattr(
+        lthcs_daily.sector_rss, "aggregate_sector_events", sector_rss_agg_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.sector_rss, "parse_thesis_signal", sector_rss_parse_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.ai_news, "aggregate_ai_news", ai_news_agg_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.ai_news, "compute_thesis_signal_from_news", ai_news_compute_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.fred_breadth, "fetch_breadth_snapshot", fred_breadth_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.fred_tier2, "fetch_tier2_macro_snapshot", fred_tier2_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.breadth_sentiment, "fetch_breadth_sentiment",
+        breadth_sentiment_mock,
+    )
+    monkeypatch.setattr(
+        lthcs_daily.sector_etf, "fetch_sector_strength", sector_etf_mock
+    )
+    monkeypatch.setattr(
+        lthcs_daily.analyst_breadth, "compute_universe_breadth",
+        analyst_breadth_mock,
+    )
+    monkeypatch.setattr(
+        lthcs_daily.google_trends, "get_universe_trends_acceleration",
+        google_trends_mock,
+    )
 
     return {
         "yahoo_prices": yahoo_prices_mock,
@@ -199,6 +273,17 @@ def patched_sources(monkeypatch):
         "sec_8k": sec_8k_mock,
         "yahoo_earnings_dates": yahoo_earnings_dates_mock,
         "yahoo_analyst_actions": yahoo_analyst_actions_mock,
+        "finnhub_reco": finnhub_reco_mock,
+        "sec_form4": sec_form4_mock,
+        "sec_13f": sec_13f_mock,
+        "sector_rss_agg": sector_rss_agg_mock,
+        "ai_news_agg": ai_news_agg_mock,
+        "fred_breadth": fred_breadth_mock,
+        "fred_tier2": fred_tier2_mock,
+        "breadth_sentiment": breadth_sentiment_mock,
+        "sector_etf": sector_etf_mock,
+        "analyst_breadth": analyst_breadth_mock,
+        "google_trends": google_trends_mock,
     }
 
 
@@ -314,12 +399,22 @@ class TestStage2:
         assert patched_sources["av"].call_count == 0
         assert state.rotation_scored_today == []
 
-    def test_source_exception_does_not_abort(self, patched_configs, patched_sources):
+    def test_source_exception_does_not_abort(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch,
+    ):
         # If yfinance momentum blows up, the stage still returns True.
+        # Isolate the rotation/persist root so we don't read/write the real
+        # data/lthcs tree (and so the rotation manager doesn't decide to
+        # touch the network for any stale-ticker selection).
+        monkeypatch.setattr(
+            "lthcs.sources.thesis_rotation.get_default_data_root",
+            lambda: tmp_path,
+        )
         patched_sources["yahoo_momentum"].side_effect = RuntimeError("yahoo down")
         args = lthcs_daily.parse_args(["--tickers", "AAPL"])
         state = lthcs_daily.PipelineState(args=args)
         lthcs_daily.stage_1_load_config(state)
+        state.persist = lthcs_daily.LthcsPersist(data_root=tmp_path)
         assert lthcs_daily.stage_2_fetch_data(state) is True
         assert state.momentum_by_ticker.get("AAPL") is None
 
