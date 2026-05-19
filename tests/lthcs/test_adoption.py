@@ -1209,3 +1209,229 @@ def test_compute_adoption_qoq_no_trends_promotes_qoq_to_30pct() -> None:
     assert eff["revenue"] == pytest.approx(0.70)
     assert eff["trends"] == pytest.approx(0.0)
     assert eff["qoq"] == pytest.approx(0.30)
+
+
+# --- Hardware/Software split: bimodality regression guard ------------------
+#
+# Spec: docs/lthcs-tech-hardware-software-split.md §7 — guards the audit fix
+# that closes the AAPL bimodality (peer-group-audit.md §3.4). The split adds
+# tech_sub_bucket to universe.json + extends the compound peer key to a
+# 3-tuple for Tech tickers only. Tests below catch:
+#   1. Schema drift in universe.json (every Tech ticker has a valid bucket;
+#      no non-Tech ticker has the field)
+#   2. Cohort-size invariants per spec §4 (Hardware/IT Services intentionally
+#      below floor; Software/Semiconductors above)
+#   3. Distribution: Software stdev < parent-Tech stdev on adoption_momentum
+#      (the deterministic case from spec §3 §7)
+#   4. The AAPL regression — cohort excludes the bimodality-driving
+#      growth-stage semis after the split
+
+
+import json
+from statistics import pstdev as _pstdev
+
+from lthcs.peer_groups import (
+    ALLOWED_TECH_SUB_BUCKETS,
+    TECH_SECTORS,
+    get_peer_cohort_with_strategy,
+    get_tech_sub_bucket,
+    load_peer_groups_config,
+)
+
+
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_UNIVERSE_PATH = _REPO_ROOT / "data" / "lthcs" / "universe.json"
+
+
+@pytest.fixture(scope="module")
+def _universe() -> Dict[str, Any]:
+    with open(_UNIVERSE_PATH, "r", encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+@pytest.fixture(scope="module")
+def _peer_groups_config() -> Dict[str, Any]:
+    return load_peer_groups_config()
+
+
+def test_tech_sub_bucket_schema_every_tech_ticker_curated(
+    _universe: Dict[str, Any],
+) -> None:
+    """Every Tech ticker in universe.json carries a valid tech_sub_bucket
+    (spec §5 — universe.json v2.2.0 schema)."""
+    missing: List[str] = []
+    bad_value: Dict[str, Any] = {}
+    for t in _universe["tickers"]:
+        if t.get("sector") not in TECH_SECTORS:
+            continue
+        if not t.get("active", True):
+            continue
+        bucket = t.get("tech_sub_bucket")
+        if bucket is None:
+            missing.append(t["ticker"])
+        elif bucket not in ALLOWED_TECH_SUB_BUCKETS:
+            bad_value[t["ticker"]] = bucket
+    assert not missing, (
+        f"Tech tickers missing tech_sub_bucket: {missing}"
+    )
+    assert not bad_value, (
+        f"Tech tickers with invalid tech_sub_bucket: {bad_value} "
+        f"(allowed: {sorted(ALLOWED_TECH_SUB_BUCKETS)})"
+    )
+
+
+def test_tech_sub_bucket_schema_non_tech_tickers_have_no_field(
+    _universe: Dict[str, Any],
+) -> None:
+    """Non-Tech tickers must NOT carry tech_sub_bucket — backwards-compat
+    invariant (spec §6). A leak here means the 2-tuple compound-key path
+    for non-Tech sectors could break."""
+    leakage = [
+        t["ticker"]
+        for t in _universe["tickers"]
+        if t.get("sector") not in TECH_SECTORS
+        and "tech_sub_bucket" in t
+    ]
+    assert not leakage, f"Non-Tech tickers carrying tech_sub_bucket: {leakage}"
+
+
+def test_tech_sub_bucket_cohort_sizes_match_spec(
+    _universe: Dict[str, Any],
+) -> None:
+    """Spec §2 — bucket counts: Hardware=3, Semiconductors=18, Software=18,
+    IT Services=4. Detects accidental reclassifications."""
+    counts: Dict[str, int] = {}
+    for t in _universe["tickers"]:
+        if t.get("sector") not in TECH_SECTORS:
+            continue
+        if not t.get("active", True):
+            continue
+        bucket = t.get("tech_sub_bucket")
+        if bucket:
+            counts[bucket] = counts.get(bucket, 0) + 1
+    assert counts == {
+        "Hardware": 3,
+        "Semiconductors": 18,
+        "Software": 18,
+        "IT Services": 4,
+    }, f"Bucket counts drifted: {counts}"
+
+
+def test_software_and_semiconductors_clear_min_cohort_size(
+    _universe: Dict[str, Any],
+) -> None:
+    """Software (n=18) and Semiconductors (n=18) must clear the n=6 floor
+    so they ride the compound path. Hardware (n=3) and IT Services (n=4)
+    intentionally fall below floor per spec §4 and cascade — that's the
+    audit-prescribed behaviour and is covered separately below."""
+    buckets: Dict[str, List[str]] = {}
+    for t in _universe["tickers"]:
+        if t.get("sector") not in TECH_SECTORS:
+            continue
+        if not t.get("active", True):
+            continue
+        bucket = t.get("tech_sub_bucket")
+        if bucket:
+            buckets.setdefault(bucket, []).append(t["ticker"])
+    assert len(buckets.get("Software", [])) >= 6
+    assert len(buckets.get("Semiconductors", [])) >= 6
+    # And the small ones are intentionally below floor.
+    assert len(buckets.get("Hardware", [])) < 6
+    assert len(buckets.get("IT Services", [])) < 6
+
+
+def test_software_distribution_tighter_than_parent_tech(
+    _universe: Dict[str, Any],
+) -> None:
+    """Spec §7 case 3 — distribution check on a synthetic stand-in for the
+    adoption_momentum sub-score. Uses the maturity_stage label as a coarse
+    growth proxy (mature=5, standard=15, growth=40, recovery=10,
+    pre_profit=60) so the test is fully deterministic without a snapshot.
+    Software's stdev (mostly mature + standard) must be < parent-Tech
+    stdev (which spans all stages including growth-stage semis)."""
+    stage_score = {
+        "mature_compounder": 5.0,
+        "standard_compounder": 15.0,
+        "growth_compounder": 40.0,
+        "recovery_stabilization": 10.0,
+        "pre_profit": 60.0,
+    }
+
+    parent_scores: List[float] = []
+    software_scores: List[float] = []
+    for t in _universe["tickers"]:
+        if t.get("sector") not in TECH_SECTORS:
+            continue
+        if not t.get("active", True):
+            continue
+        score = stage_score.get(t.get("maturity_stage"), 20.0)
+        parent_scores.append(score)
+        if t.get("tech_sub_bucket") == "Software":
+            software_scores.append(score)
+
+    assert len(software_scores) >= 6
+    assert _pstdev(software_scores) < _pstdev(parent_scores), (
+        f"Software stdev {_pstdev(software_scores):.2f} not tighter than "
+        f"parent Tech stdev {_pstdev(parent_scores):.2f}"
+    )
+
+
+def test_aapl_cohort_excludes_growth_stage_semis_post_split(
+    _universe: Dict[str, Any], _peer_groups_config: Dict[str, Any]
+) -> None:
+    """Bimodality-fix regression guard (spec §7 case 4).
+
+    Before the split: AAPL's Tech-compounder cohort contained NVDA, AMD,
+    MU, MRVL, SMCI (the +30-66% growth-stage semis) and landed AAPL at
+    percentile 13.2 — the smoking-gun symptom. After the split, AAPL's
+    tech_hardware cohort collapses to {AAPL, CSCO, SMCI} (n=3, below the
+    n=6 floor), cascades through STRATEGY_SECTOR_GROUP_ONLY (still 3,
+    fails), and lands at STRATEGY_MATURITY_ONLY — the maturity-only
+    cohort of mature_compounders, which by construction excludes any
+    growth-stage ticker.
+
+    Critical exclusions (the load-bearing bimodality offenders that drove
+    the AAPL crash): NVDA, AMD, MU, MRVL, SMCI — all growth_compounder.
+    AVGO and QCOM are mature_compounder semis and DO remain in the
+    maturity_only cohort; per spec §3 their inclusion is acceptable
+    because they're growth-stage neutral (AVGO 5%, QCOM 5-8%) and don't
+    drive bimodality.
+    """
+    cohort, strategy = get_peer_cohort_with_strategy(
+        "AAPL", _universe, _peer_groups_config
+    )
+
+    # Strategy must be maturity_only (or universe_fallback if the mature
+    # cohort is somehow thin) — never compound or sector_group_only post-
+    # split (those have 2-3 members and fail the floor).
+    assert strategy in {"maturity_only", "universe_fallback"}, (
+        f"AAPL strategy regressed to {strategy}; spec §3 expects "
+        f"maturity_only post-split (Hardware n=3 fails compound + "
+        f"sector_group_only floors)"
+    )
+
+    # The smoking-gun exclusions — the 5 growth-stage semis that drove the
+    # bimodality (peer-group-audit.md §3.4).
+    bimodality_offenders = {"NVDA", "AMD", "MU", "MRVL", "SMCI"}
+    leaked = bimodality_offenders & set(cohort)
+    assert not leaked, (
+        f"AAPL cohort still contains bimodality-driving growth-stage "
+        f"semis: {sorted(leaked)} (strategy={strategy})"
+    )
+
+    # AAPL itself is always in its own cohort (caller excludes self).
+    assert "AAPL" in cohort
+
+
+def test_get_tech_sub_bucket_helper(_universe: Dict[str, Any]) -> None:
+    """Helper-level: get_tech_sub_bucket returns the right bucket for Tech
+    and None for non-Tech."""
+    assert get_tech_sub_bucket("AAPL", _universe) == "Hardware"
+    assert get_tech_sub_bucket("NVDA", _universe) == "Semiconductors"
+    assert get_tech_sub_bucket("MSFT", _universe) == "Software"
+    assert get_tech_sub_bucket("ACN", _universe) == "IT Services"
+    # Non-Tech: no field, no bucket.
+    assert get_tech_sub_bucket("JPM", _universe) is None
+    assert get_tech_sub_bucket("XOM", _universe) is None
+    # Unknown ticker: None.
+    assert get_tech_sub_bucket("ZZZZ", _universe) is None

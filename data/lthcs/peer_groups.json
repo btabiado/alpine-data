@@ -1,26 +1,40 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "last_updated": "2026-05-18",
-  "description": "Compound peer-key (maturity_stage, sector_group). Used for cohort-relative percentile computation on Adoption + Financial pillars. Curated to avoid bimodal cohorts where naive (sector, maturity) splits would produce small/noisy peer groups. See docs/peer-group-audit.md §3.4 and docs/lthcs-open-items-audit.md Tier 2 row 7 for the rationale.",
+  "description": "Compound peer-key (maturity_stage, sector_group [, tech_sub_bucket]). Used for cohort-relative percentile computation on Adoption + Financial pillars. Curated to avoid bimodal cohorts where naive (sector, maturity) splits would produce small/noisy peer groups. v1.1.0 splits the original tech_hardware (semis + AAPL/CSCO/SMCI) into curated Hardware / Semiconductors / Software / IT Services sub-buckets to close the AAPL bimodality (docs/lthcs-tech-hardware-software-split.md). See docs/peer-group-audit.md §3.4 and docs/lthcs-open-items-audit.md Tier 2 row 7 for the rationale.",
   "min_cohort_size": 6,
   "sector_groups": {
     "tech_hardware": {
       "tickers": [
-        "AAPL", "ADI", "AMAT", "AMD", "ARM", "ASML", "AVGO", "GFS",
-        "INTC", "KLAC", "LRCX", "MCHP", "MRVL", "MU", "NVDA", "NXPI",
-        "ON", "QCOM", "SMCI", "TXN"
+        "AAPL", "CSCO", "SMCI"
       ],
-      "description": "Semiconductors + hardware platforms (Apple included as hardware-anchored mega-cap)",
-      "rationale": "Revenue growth distribution centered ~5-15% (mature) or 30-65% (NVDA/MU AI cycle outliers). Margin profiles dominated by gross-margin compression in foundry / share gains in datacenter."
+      "description": "Hardware platforms: consumer devices (AAPL), networking gear (CSCO), AI server OEM (SMCI). Curated split out of the original semi+hardware cohort.",
+      "rationale": "Revenue from hardware product cycles (iPhone, switching, AI servers). Distinct from semi silicon cycle. Cohort n=3 intentionally falls below min_cohort_size floor and cascades to maturity_only via the resolver — that is the audit-prescribed behaviour to avoid the AAPL-vs-NVDA bimodality."
+    },
+    "tech_semiconductors": {
+      "tickers": [
+        "ADI", "AMAT", "AMD", "ARM", "ASML", "AVGO", "GFS", "INTC",
+        "KLAC", "LRCX", "MCHP", "MRVL", "MU", "NVDA", "NXPI", "ON",
+        "QCOM", "TXN"
+      ],
+      "description": "Silicon manufacturers + design + foundry + wafer-fab equipment",
+      "rationale": "Revenue tied to silicon cycle: AI / datacenter / mobile / analog / memory. Margin profiles dominated by foundry gross margin + share gains. Cycle-bimodal across maturity stages (NVDA/MU at peak vs INTC recovery); the maturity_stage axis handles this via the resolver's cascade."
     },
     "tech_software": {
       "tickers": [
-        "ACN", "ADBE", "ADSK", "ANSS", "CDNS", "CDW", "CRM", "CRWD",
-        "CSCO", "CTSH", "DDOG", "FTNT", "IBM", "INTU", "MDB", "MSFT",
-        "NOW", "ORCL", "PANW", "SNPS", "TEAM", "WDAY", "ZS"
+        "ADBE", "ADSK", "ANSS", "CDNS", "CRM", "CRWD", "DDOG", "FTNT",
+        "INTU", "MDB", "MSFT", "NOW", "ORCL", "PANW", "SNPS", "TEAM",
+        "WDAY", "ZS"
       ],
-      "description": "Enterprise software, SaaS, EDA, cybersecurity, IT services",
-      "rationale": "Revenue growth distribution centered ~10-25%. Margin profiles dominated by operating leverage + AI-feature pricing. CSCO grouped here (mature scale enterprise infra economics fit better with software cohort than semi cycle)."
+      "description": "Enterprise software, SaaS, EDA, cybersecurity",
+      "rationale": "Revenue growth distribution centered ~10-25%. Subscription / SaaS revenue models. Cybersecurity (CRWD/FTNT/PANW/ZS) and EDA (CDNS/SNPS) roll in — subscription economics and growth distribution match Software."
+    },
+    "tech_it_services": {
+      "tickers": [
+        "ACN", "CDW", "CTSH", "IBM"
+      ],
+      "description": "IT consulting, integration, outsourcing, distribution / managed services",
+      "rationale": "Revenue from services / consulting / reseller economics — gross margins and growth profile distinct from product Software. Cohort n=4 intentionally falls below min_cohort_size floor and cascades to maturity_only."
     },
     "tech_internet": {
       "tickers": [

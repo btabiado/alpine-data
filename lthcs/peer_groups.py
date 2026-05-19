@@ -35,8 +35,11 @@ __all__ = [
     "DEFAULT_PEER_GROUPS_PATH",
     "DEFAULT_SECTOR_GROUP",
     "DEFAULT_MIN_COHORT_SIZE",
+    "TECH_SECTORS",
+    "ALLOWED_TECH_SUB_BUCKETS",
     "load_peer_groups_config",
     "get_sector_group",
+    "get_tech_sub_bucket",
     "get_compound_peer_key",
     "get_peer_cohort",
     "get_peer_cohort_with_strategy",
@@ -62,6 +65,17 @@ STRATEGY_COMPOUND = "compound"
 STRATEGY_SECTOR_GROUP_ONLY = "sector_group_only"
 STRATEGY_MATURITY_ONLY = "maturity_only"
 STRATEGY_UNIVERSE_FALLBACK = "universe_fallback"
+
+# Sectors that participate in the 3-tuple (stage, sector_group, tech_sub_bucket)
+# compound key. Every other sector keeps the 2-tuple behaviour. The universe
+# uses "Technology" but tolerate the GICS-style "Information Technology" alias
+# (universe alias handling lives in lthcs/pillars/des.py per Tier 2 #8).
+TECH_SECTORS = frozenset({"Technology", "Information Technology"})
+
+# Allowed tech_sub_bucket strings — matches universe.json schema (spec §5).
+ALLOWED_TECH_SUB_BUCKETS = frozenset({
+    "Hardware", "Semiconductors", "Software", "IT Services",
+})
 
 
 def load_peer_groups_config(
@@ -147,12 +161,46 @@ def _universe_as_index(
     return out
 
 
+def get_tech_sub_bucket(
+    ticker: str,
+    universe: Any,
+) -> Optional[str]:
+    """Return the ``tech_sub_bucket`` for a Tech ticker, else ``None``.
+
+    Reads the optional ``tech_sub_bucket`` field added in universe.json
+    v2.2.0 (spec: docs/lthcs-tech-hardware-software-split.md §5). Only
+    Tech tickers carry the field — non-Tech tickers return ``None`` so
+    the 2-tuple compound key path stays intact for them.
+
+    Tolerates either ``"Technology"`` or ``"Information Technology"`` as
+    the sector string (the universe uses the former; GICS uses the
+    latter — the alias is documented in spec §2).
+    """
+    by_ticker = _universe_as_index(universe)
+    entry = by_ticker.get(ticker, {}) if ticker else {}
+    if not isinstance(entry, dict):
+        return None
+    sector = entry.get("sector")
+    if sector not in TECH_SECTORS:
+        return None
+    bucket = entry.get("tech_sub_bucket")
+    if not isinstance(bucket, str) or not bucket:
+        return None
+    return bucket
+
+
 def get_compound_peer_key(
     ticker: str,
     universe: Any,
     peer_groups_config: Dict[str, Any],
-) -> Tuple[str, str]:
-    """Return the compound peer key ``(maturity_stage, sector_group)`` for a ticker.
+) -> Tuple[str, ...]:
+    """Return the compound peer key for a ticker.
+
+    For Tech tickers (sector in :data:`TECH_SECTORS`) with a curated
+    ``tech_sub_bucket`` in universe.json, returns the 3-tuple
+    ``(maturity_stage, sector_group, tech_sub_bucket)``. For every other
+    ticker — and Tech tickers missing the field — returns the legacy
+    2-tuple ``(maturity_stage, sector_group)``.
 
     ``maturity_stage`` comes from the universe entry's ``maturity_stage``
     field (default: ``"mature_compounder"`` if missing). ``sector_group``
@@ -162,6 +210,9 @@ def get_compound_peer_key(
     entry = by_ticker.get(ticker, {}) if ticker else {}
     stage = (entry.get("maturity_stage") if isinstance(entry, dict) else None) or "mature_compounder"
     grp = get_sector_group(ticker, peer_groups_config or {})
+    sub_bucket = get_tech_sub_bucket(ticker, universe)
+    if sub_bucket is not None:
+        return stage, grp, sub_bucket
     return stage, grp
 
 
@@ -208,20 +259,39 @@ def get_peer_cohort_with_strategy(
     else:
         candidates = {tk for tk in candidate_tickers if tk}
 
-    focal_stage, focal_group = get_compound_peer_key(
+    compound_key = get_compound_peer_key(
         ticker, universe, peer_groups_config or {}
     )
+    # 2-tuple for non-Tech, 3-tuple for Tech tickers with a curated bucket.
+    focal_stage = compound_key[0]
+    focal_group = compound_key[1]
+    focal_sub_bucket: Optional[str] = compound_key[2] if len(compound_key) >= 3 else None
 
-    # Level 1: compound key (stage AND sector_group).
-    compound = [
-        tk for tk in candidates
-        if (by_ticker.get(tk, {}) or {}).get("maturity_stage") == focal_stage
-        and reverse.get(tk, DEFAULT_SECTOR_GROUP) == focal_group
-    ]
+    # Level 1: compound key (stage AND sector_group AND tech_sub_bucket when
+    # the focal is a Tech ticker with a curated bucket). For non-Tech focals
+    # the sub-bucket predicate is absent, preserving the 2-tuple behaviour.
+    if focal_sub_bucket is not None:
+        compound = [
+            tk for tk in candidates
+            if (by_ticker.get(tk, {}) or {}).get("maturity_stage") == focal_stage
+            and reverse.get(tk, DEFAULT_SECTOR_GROUP) == focal_group
+            and get_tech_sub_bucket(tk, universe) == focal_sub_bucket
+        ]
+    else:
+        compound = [
+            tk for tk in candidates
+            if (by_ticker.get(tk, {}) or {}).get("maturity_stage") == focal_stage
+            and reverse.get(tk, DEFAULT_SECTOR_GROUP) == focal_group
+        ]
     if len(compound) >= min_cohort_size:
         return sorted(compound), STRATEGY_COMPOUND
 
-    # Level 2: sector_group only (any maturity stage in the same group).
+    # Level 2: sector_group only (any maturity stage in the same group). The
+    # tech_sub_bucket predicate is intentionally dropped here — when the
+    # Hardware-or-IT-Services cohort is too thin (n=3 or n=4 by design, see
+    # docs/lthcs-tech-hardware-software-split.md §4), we expand to the parent
+    # sector_group before falling back to maturity_only. For Software /
+    # Semiconductors which already pass the floor, this branch rarely fires.
     sector_only = [
         tk for tk in candidates
         if reverse.get(tk, DEFAULT_SECTOR_GROUP) == focal_group

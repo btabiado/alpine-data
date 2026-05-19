@@ -2,10 +2,12 @@
 
 Covers:
 * universe.json completeness against peer_groups.json
-* curated split (AAPL -> tech_hardware, MSFT -> tech_software, JPM -> banks)
-* compound key resolution
+* curated split (AAPL -> tech_hardware, NVDA -> tech_semiconductors,
+  MSFT -> tech_software, ACN -> tech_it_services, JPM -> banks)
+* compound key resolution (3-tuple for Tech, 2-tuple for non-Tech)
 * safety-valve fallback chain (compound -> sector_group_only -> maturity_only -> universe)
 * candidate_tickers filtering
+* Hardware/Software split regression guard (docs/lthcs-tech-hardware-software-split.md)
 """
 
 from __future__ import annotations
@@ -94,9 +96,23 @@ def test_msft_lands_in_tech_software(peer_groups_config: Dict) -> None:
     assert get_sector_group("MSFT", peer_groups_config) == "tech_software"
 
 
-def test_nvda_lands_in_tech_hardware(peer_groups_config: Dict) -> None:
-    """NVDA is a semi; goes in tech_hardware with AAPL/AVGO."""
-    assert get_sector_group("NVDA", peer_groups_config) == "tech_hardware"
+def test_nvda_lands_in_tech_semiconductors(peer_groups_config: Dict) -> None:
+    """Post v1.1.0 split: NVDA is in tech_semiconductors, peeled out of the
+    legacy tech_hardware cohort that lumped semis with AAPL. See
+    docs/lthcs-tech-hardware-software-split.md §4."""
+    assert get_sector_group("NVDA", peer_groups_config) == "tech_semiconductors"
+
+
+def test_acn_lands_in_tech_it_services(peer_groups_config: Dict) -> None:
+    """Post v1.1.0 split: ACN (and CDW, CTSH, IBM) is in the curated
+    tech_it_services cohort, peeled out of tech_software."""
+    assert get_sector_group("ACN", peer_groups_config) == "tech_it_services"
+
+
+def test_csco_lands_in_tech_hardware(peer_groups_config: Dict) -> None:
+    """Post v1.1.0: CSCO migrates from tech_software (where it lived for
+    scale-economics reasons) to tech_hardware alongside AAPL and SMCI."""
+    assert get_sector_group("CSCO", peer_groups_config) == "tech_hardware"
 
 
 def test_jpm_lands_in_banks(peer_groups_config: Dict) -> None:
@@ -121,20 +137,38 @@ def test_unknown_ticker_falls_to_other(peer_groups_config: Dict) -> None:
 
 
 def test_compound_key_aapl(universe: Dict, peer_groups_config: Dict) -> None:
-    stage, group = get_compound_peer_key("AAPL", universe, peer_groups_config)
+    """AAPL is Tech → 3-tuple ending in 'Hardware' (spec §7 case 5)."""
+    key = get_compound_peer_key("AAPL", universe, peer_groups_config)
+    assert len(key) == 3
+    stage, group, sub_bucket = key
     assert stage == "mature_compounder"
     assert group == "tech_hardware"
+    assert sub_bucket == "Hardware"
 
 
 def test_compound_key_nvda_growth(universe: Dict, peer_groups_config: Dict) -> None:
-    """NVDA is growth_compounder (post v1.1.0 reclass) + tech_hardware."""
-    stage, group = get_compound_peer_key("NVDA", universe, peer_groups_config)
+    """NVDA is Tech / growth_compounder → 3-tuple in tech_semiconductors."""
+    key = get_compound_peer_key("NVDA", universe, peer_groups_config)
+    assert len(key) == 3
+    stage, group, sub_bucket = key
     assert stage == "growth_compounder"
-    assert group == "tech_hardware"
+    assert group == "tech_semiconductors"
+    assert sub_bucket == "Semiconductors"
+
+
+def test_compound_key_jpm_is_two_tuple(universe: Dict, peer_groups_config: Dict) -> None:
+    """Non-Tech focals keep the legacy 2-tuple (spec §7 case 5)."""
+    key = get_compound_peer_key("JPM", universe, peer_groups_config)
+    assert len(key) == 2
+    stage, group = key
+    assert group == "banks"
 
 
 def test_compound_key_unknown_ticker(universe: Dict, peer_groups_config: Dict) -> None:
-    stage, group = get_compound_peer_key("ZZZZ", universe, peer_groups_config)
+    """Unknown ticker → 2-tuple (sector unknown, can't be Tech)."""
+    key = get_compound_peer_key("ZZZZ", universe, peer_groups_config)
+    assert len(key) == 2
+    stage, group = key
     # Defaults: mature_compounder + other.
     assert stage == "mature_compounder"
     assert group == DEFAULT_SECTOR_GROUP
@@ -143,36 +177,23 @@ def test_compound_key_unknown_ticker(universe: Dict, peer_groups_config: Dict) -
 # --- get_peer_cohort: real universe ----------------------------------------
 
 
-def test_aapl_compound_cohort_is_tech_hardware_mature(
+def test_aapl_cohort_cascades_through_split(
     universe: Dict, peer_groups_config: Dict
 ) -> None:
-    """AAPL should compare against other tech_hardware names that share its
-    maturity stage (a real, curated cohort) rather than the bimodal
-    stage-only bucket. Every member must satisfy BOTH axes when the strict
-    compound strategy fires."""
+    """Post v1.1.0 split: AAPL's tech_hardware cohort is n=3
+    {AAPL, CSCO, SMCI} — intentionally below the n=6 floor (spec §3-4).
+    Compound (Hardware × mature) collapses to {AAPL, CSCO} → fails. The
+    resolver cascades through STRATEGY_SECTOR_GROUP_ONLY (still 3) → lands
+    at STRATEGY_MATURITY_ONLY. This is the audit-prescribed behaviour that
+    closes the AAPL-vs-NVDA bimodality."""
     cohort, strategy = get_peer_cohort_with_strategy(
         "AAPL", universe, peer_groups_config
     )
-    by_t = {t["ticker"]: t for t in universe["tickers"]}
-    focal_stage = by_t["AAPL"]["maturity_stage"]
-    hardware_tickers = set(
-        peer_groups_config["sector_groups"]["tech_hardware"]["tickers"]
-    )
-    # When the compound strategy fires, every member shares stage AND group.
-    if strategy == STRATEGY_COMPOUND:
-        for tk in cohort:
-            assert by_t[tk]["maturity_stage"] == focal_stage, (
-                f"{tk} stage={by_t[tk]['maturity_stage']} != focal {focal_stage}"
-            )
-            assert tk in hardware_tickers, f"{tk} is not tech_hardware"
-    else:
-        # If we fell back, members must at least share the sector_group.
-        for tk in cohort:
-            assert tk in hardware_tickers, (
-                f"{tk} is not tech_hardware (strategy={strategy})"
-            )
+    # Either maturity_only or universe_fallback is acceptable depending on
+    # how many mature_compounders are in the universe — but it MUST NOT be
+    # compound or sector_group_only (those have <6 members for Hardware).
+    assert strategy in {STRATEGY_MATURITY_ONLY, STRATEGY_UNIVERSE_FALLBACK}
     assert "AAPL" in cohort
-    # Sanity: cohort isn't degenerate (≥6 by the default floor).
     assert len(cohort) >= 6
 
 
@@ -313,11 +334,14 @@ def test_safety_valve_universe_fallback() -> None:
 def test_candidate_tickers_restricts_cohort(
     universe: Dict, peer_groups_config: Dict
 ) -> None:
-    """When candidate_tickers is provided, the cohort is restricted to it."""
-    # Restrict to a tiny candidate set that still satisfies the floor.
-    cands = ["AAPL", "AVGO", "NVDA", "AMD", "INTC", "QCOM", "MU"]  # 7 hardware
+    """When candidate_tickers is provided, the cohort is restricted to it.
+
+    Post v1.1.0 split: MSFT is mature_compounder + tech_software. Pick a
+    candidate set of all mature Software tickers — compound clears the
+    n=6 floor without falling through."""
+    cands = ["MSFT", "ORCL", "ADBE", "CRM", "INTU", "NOW", "PANW", "FTNT", "CRWD"]
     cohort, strategy = get_peer_cohort_with_strategy(
-        "AAPL",
+        "MSFT",
         universe,
         peer_groups_config,
         candidate_tickers=cands,
@@ -325,12 +349,10 @@ def test_candidate_tickers_restricts_cohort(
     # Every cohort member must be in the candidate list.
     for tk in cohort:
         assert tk in cands
-    # AAPL is mature_compounder; AVGO and INTC are mature; NVDA/AMD/MU are
-    # growth_compounder. So compound cohort = {AAPL, AVGO, INTC, QCOM} which
-    # is 4 — below floor of 6. Should fall back to sector_group_only.
-    assert strategy == STRATEGY_SECTOR_GROUP_ONLY
-    assert "AAPL" in cohort
-    assert "NVDA" in cohort  # different stage but same sector_group
+    # Compound (mature_compounder × tech_software × Software) clears n=6.
+    assert strategy == STRATEGY_COMPOUND
+    assert "MSFT" in cohort
+    assert len(cohort) >= 6
 
 
 def test_get_peer_cohort_returns_just_the_list(
