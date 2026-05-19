@@ -2086,8 +2086,33 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="container">
       <div id="aiNewsEmpty" class="empty hidden">AI news not yet loaded. Run <code>python app.py --fetch-market</code> to populate.</div>
       <div id="aiNewsContent">
-        <!-- Top: AI sentiment summary card -->
-        <div class="chart-card" id="aiNewsSummaryCard">
+        <!-- Top row: AI insights (left) + Top 5 AI news headlines (right).
+             Per user request — surfaces both lead-ins above the sentiment
+             card. Full article list (Top 30) stays at the bottom unchanged. -->
+        <div id="aiNewsTopRow" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="chart-card" id="aiNewsInsightsCard">
+            <div class="head">
+              <h2>AI insights <span class="tag">filtered</span></h2>
+              <span class="desc">Signal flips, sentiment shifts and notable AI-ticker moves &middot; same source as the top bar, scoped to this tab</span>
+            </div>
+            <div id="aiNewsInsights" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div class="chart-card" id="aiNewsTop5Card">
+            <div class="head">
+              <h2>Top AI news <span class="tag">latest 5</span></h2>
+              <span class="desc">Most recent AI/ML/chips headlines &middot; click any row to open the article</span>
+            </div>
+            <div id="aiNewsTop5"></div>
+          </div>
+        </div>
+        <style>
+          @media (max-width: 860px) {
+            #aiNewsTopRow { grid-template-columns: 1fr !important; }
+          }
+        </style>
+
+        <!-- AI sentiment summary card (full width, below the top row) -->
+        <div class="chart-card" id="aiNewsSummaryCard" style="margin-top:12px">
           <div class="head">
             <h2>AI news sentiment <span class="tag">live</span></h2>
             <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
@@ -5655,7 +5680,7 @@ function renderInsights(){
     host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
     return;
   }
-  host.innerHTML = list.map(i => {
+  const cardHTML = (i) => {
     const c = severityColor(i.severity);
     const ic = severityIcon(i.severity, i.kind);
     const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:1px">${escapeHtml(i.detail)}</div>` : '';
@@ -5666,7 +5691,20 @@ function renderInsights(){
         ${detail}
       </div>
     </div>`;
-  }).join('');
+  };
+  host.innerHTML = list.map(cardHTML).join('');
+
+  // Also populate the AI News tab's inline insights card (when present).
+  // Uses the same list + renderer so the two views never drift.
+  const inlineHost = document.getElementById('aiNewsInsights');
+  if (inlineHost) {
+    const ainewsList = all.filter(i => (i.tab || 'markets') === 'ainews');
+    if (!ainewsList.length) {
+      inlineHost.innerHTML = '<div class="sub" style="color:var(--muted);font-size:12px">' + (TAB_EMPTY['ainews']) + '</div>';
+    } else {
+      inlineHost.innerHTML = ainewsList.map(cardHTML).join('');
+    }
+  }
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -7106,30 +7144,39 @@ function renderAiNewsTab(){
   }
 
   // --- Feed (top 30 most-recent) -----------------------------------------
+  // Sort once; reuse for the top-5 inline panel + the full top-30 feed.
+  const sortedItems = (ai.items||[]).slice().sort((a,b)=>{
+    const da = a && a.date ? Date.parse(a.date) : 0;
+    const db = b && b.date ? Date.parse(b.date) : 0;
+    return (db||0) - (da||0);
+  });
+  const articleRow = (n) => {
+    const sc = AI_SENT_COLOR[n.sentiment] || 'var(--muted)';
+    const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
+    return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
+        ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span>
+        <span>· ${escapeHtml(n.date||'')}</span>
+        <span style="color:${sc};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment||'').slice(0,3))}</span>
+      </div>
+      <div style="font-size:13px;line-height:1.35;margin-bottom:3px">${escapeHtml(n.title||'')}</div>
+      ${n.body ? `<div class="sub" style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(n.body)}</div>` : ''}
+    </a>`;
+  };
   const feed = document.getElementById('aiNewsFeed');
   if (feed){
-    const items = (ai.items||[]).slice().sort((a,b)=>{
-      const da = a && a.date ? Date.parse(a.date) : 0;
-      const db = b && b.date ? Date.parse(b.date) : 0;
-      return (db||0) - (da||0);
-    }).slice(0, 30);
-    if (!items.length){
-      feed.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
-    } else {
-      feed.innerHTML = items.map(n => {
-        const sc = AI_SENT_COLOR[n.sentiment] || 'var(--muted)';
-        const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
-        return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
-          <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
-            ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span>
-            <span>· ${escapeHtml(n.date||'')}</span>
-            <span style="color:${sc};font-weight:600;margin-left:auto">${escapeHtml((n.sentiment||'').slice(0,3))}</span>
-          </div>
-          <div style="font-size:13px;line-height:1.35;margin-bottom:3px">${escapeHtml(n.title||'')}</div>
-          ${n.body ? `<div class="sub" style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${escapeHtml(n.body)}</div>` : ''}
-        </a>`;
-      }).join('');
-    }
+    const items = sortedItems.slice(0, 30);
+    feed.innerHTML = items.length
+      ? items.map(articleRow).join('')
+      : '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
+  }
+  // Top-5 inline panel (next to AI insights, above the sentiment summary).
+  const top5 = document.getElementById('aiNewsTop5');
+  if (top5){
+    const items = sortedItems.slice(0, 5);
+    top5.innerHTML = items.length
+      ? items.map(articleRow).join('')
+      : '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
   }
 
   // --- AI-exposed stock signal subset ------------------------------------
@@ -9502,7 +9549,10 @@ function selectTab(t){
   document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = usesRange ? '' : 'none');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'TIMEFRAME') b.style.display = usesRange ? '' : 'none'; });
   const insightsBar = document.getElementById('insightsBar');
-  if (insightsBar) insightsBar.style.display = isOverview ? 'none' : '';
+  // Overview has its own "Top insights" card; AI News tab has its own inline
+  // insights card next to the sentiment summary — hide the global bar in
+  // both cases to avoid showing the same insights twice.
+  if (insightsBar) insightsBar.style.display = (isOverview || t === 'ainews') ? 'none' : '';
   renderAll();
 }
 
