@@ -78,6 +78,23 @@
           <div class="lbt-pnl-chart-wrap">
             <svg id="pnl-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Cumulative return curve"></svg>
           </div>
+          <p class="lbt-caveat">
+            <strong>Caveat:</strong> the curve above reuses overlapping forward windows, so Sharpe is inflated. The honest non-overlapping numbers are in the next section.
+          </p>
+        </section>
+
+        <!-- ===== Engine equity curve (non-overlapping P&L) ================== -->
+        <section class="lthcs-section lbt-section" aria-label="Engine non-overlapping P&amp;L">
+          <h2 class="lbt-h2">Engine P&amp;L <span class="lbt-h2-sub">(non-overlapping, look-ahead-guarded)</span></h2>
+          <p class="lbt-note">Replaces the legacy overlapping-window Sharpe with an event-driven simulation: buy at the next-day close after a band enters the Buy set, sell at the next-day close after it leaves. 1-trading-day execution delay. <code>5 bps</code> per side. Daily equal-weight rebalance.</p>
+          <div class="lbt-pnl-stats" id="engine-stats"></div>
+          <div class="lbt-pnl-chart-wrap">
+            <svg id="engine-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Engine equity curve"></svg>
+          </div>
+          <div class="lbt-legend" id="engine-legend"></div>
+          <h3 class="lbt-h3">Per-band sub-portfolio total return</h3>
+          <p class="lbt-note">Each row simulates &ldquo;long-only that band&rdquo;. Higher LTHCS bands should compound faster than lower bands &mdash; this is the framework's smell test.</p>
+          <div id="engine-band-chart" class="lbt-band-chart"></div>
         </section>
 
         <!-- ===== Quintile spread per pillar ================================= -->

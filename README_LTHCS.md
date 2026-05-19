@@ -256,6 +256,42 @@ V2 begins after V1 has been live for ~60 days and has accumulated enough daily s
 
 ---
 
+## Backtest engine (Tier 5 #24, Phase 1)
+
+A non-overlapping event-driven P&L sits next to the IC + quintile validator. It exists because the IC validator's band-portfolio Sharpe (computed from forward-window returns) reuses ~95% of the next horizon-day window on every observation, inflating Sharpe roughly h-fold — the +18.7 Sharpe headline is not real.
+
+**Strategy (Phase 1):** long-only Buy band (elite / high_confidence / constructive), enter at the next trading-day close after a ticker enters the Buy set, exit at the next close after it leaves. 1 trading-day execution delay (look-ahead guard). 5 bps/side cost. Equal-weight, daily rebalance to equal weight on close (intra-portfolio rebalance is cost-free).
+
+**Run locally:**
+
+```bash
+# Both IC validator and engine (default)
+python scripts/lthcs_backtest.py --run-id 2026-05-19_local
+
+# Engine only
+python scripts/lthcs_backtest.py --engine pnl --run-id 2026-05-19_engine \
+  --cost-bps 5.0 --benchmark SPY
+```
+
+**Output (`data/lthcs/backtest/<run_id>/`):**
+
+- `equity_curve.csv` / `.json` — daily portfolio equity, normalized to 1.0
+- `positions_daily.csv` — daily equal-weight portfolio composition
+- `trades.csv` — entry/exit pairs with `hold_days`, gross/net returns
+- `band_curves.json` — per-band sub-portfolio curves (smell test: higher bands should compound faster)
+- `benchmark_curve.json` — SPY normalized to the engine window
+- `engine_summary.json` — `summary` (total/ann return, Sharpe, Sortino, max DD, hit rate, turnover) + `run_meta` (window, hashes, params)
+- `engine_report.md` — human-readable markdown
+
+**Automation:** `.github/workflows/lthcs-backtest-daily.yml` runs at 23:30 UTC (30 min after `lthcs-daily.yml` lands the snapshot). Skips silently when fewer than 30 snapshots exist. Writes into `data/lthcs/backtest/<latest-snapshot-date>_validation/` alongside the weekly IC validator. The `/lthcs/backtest/` page picks up the new artifacts on the next pages.yml deploy.
+
+**First baseline (2026-05-19, 90-day history):** trading days = 64, total return +17.7%, ann. Sharpe **+2.6** (vs the inflated +19.4 legacy headline), max DD −10.6%, hit rate 59.4%, avg hold 11.8d, 53 trades over 22 unique tickers. Per-band: high_confidence +41.5% > constructive +12.9% > weakening +3.8% > monitor +2.8% > elite 0% > review −1.0% — the framework's band ordering holds out of sample.
+
+**Future phases** (specced in `docs/lthcs-backtest-engine-spec.md`):
+- Phase 2 — per-pillar attribution via Approach-B re-runs
+- Phase 3 — strategy variant profiles (long/short, dollar-neutral, top-K)
+- Phase 4 — feed equity curves into walk-forward CV → unblocks Tier 5 #25 (Adaptive Weights V2)
+
 ## Where the framework lives
 
 The methodology behind every number on the dashboard is in the LTHCS Intelligence White Paper v9.5 — section references throughout the codebase (e.g., `# Per §5.2 of white paper`) point back to the relevant section so you can always trace a line of code to its intellectual source.

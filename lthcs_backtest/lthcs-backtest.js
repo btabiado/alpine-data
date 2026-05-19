@@ -97,6 +97,7 @@ async function main() {
   const [
     summary, pillarIC, quintile, portfolio, bandReturns,
     fbSummary, fbPillarIC, fbQuintile, fbPortfolio,
+    engineSummary, equityCurve, bandCurves, benchmarkCurve,
   ] = await Promise.all([
     tryFetch(`${base}/summary.json`),
     tryFetch(`${base}/pillar_ic.json`),
@@ -107,6 +108,12 @@ async function main() {
     tryFetch(`${fallback}/pillar_ic.json`),
     tryFetch(`${fallback}/quintile_returns.json`),
     tryFetch(`${fallback}/portfolio_returns.json`),
+    // Engine artifacts (Tier 5 #24, Phase 1). Missing files render
+    // a "not yet computed" placeholder so the page still works pre-deploy.
+    tryFetch(`${base}/engine_summary.json`),
+    tryFetch(`${base}/equity_curve.json`),
+    tryFetch(`${base}/band_curves.json`),
+    tryFetch(`${base}/benchmark_curve.json`),
   ]);
   const wfMd = await tryFetchText(
     `${DATA_ROOT}/adaptive_weights/${VALIDATION_DATE}_walk_forward_summary.md`,
@@ -138,9 +145,10 @@ async function main() {
   }
 
   renderHeader(summary, summaryH);
-  renderVerdict(summary, summaryH, pillarRows, wf);
+  renderVerdict(summary, summaryH, pillarRows, wf, engineSummary);
   renderPillarIC(pillarRows);
   renderPnL(portfolioH, summaryH);
+  renderEngine(engineSummary, equityCurve, bandCurves, benchmarkCurve);
   renderQuintile(quintileH);
   renderWalkForward(wf);
   renderCohort(wf);
@@ -184,7 +192,7 @@ function renderHeader(summary, summaryH) {
 /* ======================================================================
    Headline verdict
    ====================================================================== */
-function renderVerdict(summary, summaryH, pillarRows, wf) {
+function renderVerdict(summary, summaryH, pillarRows, wf, engineSummary) {
   const composite = (pillarRows || [])
     .find((p) => p.pillar === 'composite');
   const compIC = composite?.ic_mean ?? null;
@@ -195,9 +203,16 @@ function renderVerdict(summary, summaryH, pillarRows, wf) {
     ?? summaryH?.portfolio
     ?? summaryH
     ?? null;
-  const sharpe = portfolioBlock?.sharpe_annualised
+  // Prefer the engine's non-overlapping Sharpe when available; fall back to
+  // the legacy overlapping number so the card still renders before the
+  // engine has run for the first time.
+  const engineBlock = engineSummary?.summary ?? null;
+  const sharpe = engineBlock?.sharpe
+    ?? portfolioBlock?.sharpe_annualised
     ?? portfolioBlock?.sharpe
     ?? null;
+  const sharpeIsEngine = engineBlock?.sharpe != null;
+  const totalReturn = engineBlock?.total_return ?? portfolioBlock?.cumulative_return ?? null;
   const testIC = wf?.bestTestIC ?? null;
 
   // Verdict: every gate has to clear noise/ship floor to say YES.
@@ -240,13 +255,12 @@ function renderVerdict(summary, summaryH, pillarRows, wf) {
 
   const shEl = $('verdict-sharpe');
   shEl.className = sharpe == null ? 'neutral' : (sharpe > 0 ? 'pos' : 'neg');
+  const sharpeSubtitle = sharpeIsEngine
+    ? `engine, non-overlap · total ${fmtPct(totalReturn)}`
+    : (portfolioBlock ? `cum. return ${fmtPct(portfolioBlock.cumulative_return)}` : 'portfolio pending');
   shEl.replaceChildren(
     document.createTextNode(fmtSharpe(sharpe)),
-    el('small', {
-      text: portfolioBlock
-        ? `cum. return ${fmtPct(portfolioBlock.cumulative_return)}`
-        : 'portfolio pending',
-    }),
+    el('small', { text: sharpeSubtitle }),
   );
 
   const wfEl = $('verdict-wf');
@@ -431,6 +445,220 @@ function renderPnL(portfolioH, summaryH) {
 
   svg.appendChild(svgEl('path', { d: areaPath, class: 'lbt-pnl-area' }));
   svg.appendChild(svgEl('path', { d: linePath.trim(), class: 'lbt-pnl-line' }));
+}
+
+/* ======================================================================
+   Engine equity curve (non-overlapping, look-ahead-guarded)
+   ====================================================================== */
+const ENGINE_BAND_ORDER = [
+  'elite', 'high_confidence', 'constructive', 'monitor', 'weakening', 'review',
+];
+const ENGINE_BAND_LABELS = {
+  elite: 'Elite',
+  high_confidence: 'High Confidence',
+  constructive: 'Constructive',
+  monitor: 'Monitor',
+  weakening: 'Weakening',
+  review: 'Review',
+};
+
+function renderEngine(engineSummary, equityCurve, bandCurves, benchmarkCurve) {
+  const statsEl = $('engine-stats');
+  const svg = $('engine-chart');
+  const legendEl = $('engine-legend');
+  const bandChartEl = $('engine-band-chart');
+  if (!statsEl || !svg || !legendEl || !bandChartEl) return;
+  statsEl.replaceChildren();
+  svg.replaceChildren();
+  legendEl.replaceChildren();
+  bandChartEl.replaceChildren();
+
+  const s = engineSummary?.summary ?? null;
+  if (!s || !equityCurve || Object.keys(equityCurve).length === 0) {
+    statsEl.appendChild(makePlaceholder(
+      'Engine output not yet computed for this run. Re-run with `--engine pnl` or wait for the nightly backtest cron.',
+    ));
+    return;
+  }
+
+  // ----- Stat strip -----
+  const meta = engineSummary?.run_meta ?? {};
+  const win = meta.window ?? {};
+  const params = s.params ?? {};
+  const stats = [
+    ['Sharpe (ann.)', fmtSharpe(s.sharpe)],
+    ['Sortino (ann.)', fmtSharpe(s.sortino)],
+    ['Total return', fmtPct(s.total_return)],
+    ['Ann. return', fmtPct(s.ann_return)],
+    ['Max DD', fmtPct(s.max_drawdown)],
+    ['Hit rate', s.hit_rate != null ? `${Math.round(s.hit_rate * 100)}%` : 'n/a'],
+    ['Avg hold', `${(s.avg_hold_days ?? 0).toFixed(1)}d`],
+    ['Turnover/dy', `${((s.turnover ?? 0) * 100).toFixed(1)}%`],
+    ['Trades', `${s.n_trades ?? 0}`],
+    ['Unique tkr', `${s.n_unique_tkr ?? 0}`],
+  ];
+  for (const [k, v] of stats) {
+    const wrap = el('span');
+    wrap.appendChild(document.createTextNode(`${k}:`));
+    wrap.appendChild(el('strong', { text: v }));
+    statsEl.appendChild(wrap);
+  }
+  const winSpan = el('span', { class: 'lbt-engine-window' });
+  winSpan.appendChild(document.createTextNode(
+    `${win.start ?? '?'} → ${win.end ?? '?'} · ${win.n_trading_days ?? '?'} td · ${meta.universe_size ?? '?'} tkrs · cost ${params.cost_bps ?? 5}bps/side`,
+  ));
+  statsEl.appendChild(winSpan);
+
+  // ----- Equity curve SVG -----
+  const dates = Object.keys(equityCurve).sort();
+  if (dates.length < 2) {
+    statsEl.appendChild(makePlaceholder('Equity curve too short to chart (need ≥2 trading days).'));
+    return;
+  }
+  const series = dates.map((d) => ({ d, v: equityCurve[d] }));
+  // Optional benchmark series, reindexed to engine dates with last-value-carry.
+  let benchSeries = null;
+  if (benchmarkCurve && Object.keys(benchmarkCurve).length >= 2) {
+    let last = null;
+    benchSeries = dates.map((d) => {
+      if (benchmarkCurve[d] != null) last = benchmarkCurve[d];
+      return { d, v: last };
+    }).filter((p) => p.v != null);
+  }
+
+  const VB_W = 800, VB_H = 280;
+  const ML = 60, MR = 16, MT = 14, MB = 26;
+  const W = VB_W - ML - MR;
+  const H = VB_H - MT - MB;
+
+  const allVals = series.map((p) => p.v).concat(benchSeries ? benchSeries.map((p) => p.v) : []);
+  const vMin = Math.min(...allVals);
+  const vMax = Math.max(...allVals);
+  const vSpan = (vMax - vMin) || 1;
+  const padFrac = 0.05;
+  const yMin = vMin - vSpan * padFrac;
+  const yMax = vMax + vSpan * padFrac;
+  const ySpan = yMax - yMin || 1;
+
+  const xAt = (i, total) => ML + (W * i) / Math.max(1, total - 1);
+  const yAt = (v) => MT + H - ((v - yMin) / ySpan) * H;
+
+  const gridVals = [yMin, yMin + ySpan / 4, yMin + ySpan / 2, yMin + (3 * ySpan) / 4, yMax];
+  if (yMin < 1.0 && yMax > 1.0 && !gridVals.some((g) => Math.abs(g - 1.0) < 1e-6)) gridVals.push(1.0);
+  for (const gv of gridVals) {
+    const y = yAt(gv);
+    const isUnity = Math.abs(gv - 1.0) < 1e-6;
+    svg.appendChild(svgEl('line', {
+      x1: ML, x2: VB_W - MR, y1: y, y2: y,
+      class: isUnity ? 'lbt-pnl-zero' : 'lbt-pnl-grid',
+    }));
+    const t = svgEl('text', {
+      x: ML - 6, y: y + 3,
+      class: 'lbt-pnl-yaxis',
+      'text-anchor': 'end',
+    });
+    t.textContent = `${(gv * 100 - 100).toFixed(0)}%`;
+    svg.appendChild(t);
+  }
+  // X axis labels: first, middle, last.
+  for (const i of [0, Math.floor(series.length / 2), series.length - 1]) {
+    const x = xAt(i, series.length);
+    const t = svgEl('text', {
+      x, y: VB_H - 8,
+      class: 'lbt-pnl-xaxis',
+      'text-anchor': 'middle',
+    });
+    t.textContent = series[i].d;
+    svg.appendChild(t);
+  }
+
+  // Benchmark line (drawn first so the strategy line sits on top).
+  if (benchSeries && benchSeries.length >= 2) {
+    let benchPath = '';
+    benchSeries.forEach((p, i) => {
+      const cmd = i === 0 ? 'M' : 'L';
+      benchPath += `${cmd}${xAt(i, benchSeries.length)},${yAt(p.v)} `;
+    });
+    svg.appendChild(svgEl('path', {
+      d: benchPath.trim(),
+      class: 'lbt-engine-bench',
+    }));
+  }
+  // Strategy line + area.
+  let linePath = '';
+  let areaPath = `M${xAt(0, series.length)},${yAt(1.0)} `;
+  series.forEach((p, i) => {
+    const cmd = i === 0 ? 'M' : 'L';
+    linePath += `${cmd}${xAt(i, series.length)},${yAt(p.v)} `;
+    areaPath += `L${xAt(i, series.length)},${yAt(p.v)} `;
+  });
+  areaPath += `L${xAt(series.length - 1, series.length)},${yAt(1.0)} Z`;
+  svg.appendChild(svgEl('path', { d: areaPath, class: 'lbt-engine-area' }));
+  svg.appendChild(svgEl('path', { d: linePath.trim(), class: 'lbt-engine-line' }));
+
+  // ----- Legend -----
+  legendEl.appendChild(el('span', { class: 'lbt-legend-item lbt-legend-strategy', text: 'Strategy (long elite/high/constructive)' }));
+  if (benchSeries && benchSeries.length >= 2) {
+    legendEl.appendChild(el('span', { class: 'lbt-legend-item lbt-legend-bench', text: 'Benchmark (SPY)' }));
+  }
+
+  // ----- Per-band sub-portfolio bar chart -----
+  renderEngineBandChart(bandCurves);
+}
+
+function renderEngineBandChart(bandCurves) {
+  const container = $('engine-band-chart');
+  if (!container) return;
+  container.replaceChildren();
+  if (!bandCurves || typeof bandCurves !== 'object') {
+    container.appendChild(makePlaceholder('Per-band sweep not yet computed.'));
+    return;
+  }
+  // Compute total return per band.
+  const rows = [];
+  for (const band of ENGINE_BAND_ORDER) {
+    const curve = bandCurves[band] || {};
+    const vals = Object.keys(curve).sort().map((k) => curve[k]).filter((v) => v != null);
+    if (vals.length < 2 || vals[0] <= 0) {
+      rows.push({ band, total: null });
+      continue;
+    }
+    const total = vals[vals.length - 1] / vals[0] - 1;
+    rows.push({ band, total });
+  }
+  const valid = rows.filter((r) => r.total != null);
+  if (valid.length === 0) {
+    container.appendChild(makePlaceholder('Per-band sub-portfolio curves all empty.'));
+    return;
+  }
+  const maxAbs = Math.max(...valid.map((r) => Math.abs(r.total)), 0.01);
+  for (const r of rows) {
+    const row = el('div', { class: 'lbt-band-row' });
+    row.appendChild(el('div', {
+      class: 'lbt-band-name',
+      text: ENGINE_BAND_LABELS[r.band] || r.band,
+    }));
+    const bar = el('div', { class: 'lbt-band-bar' });
+    if (r.total == null) {
+      bar.appendChild(el('span', { class: 'lbt-band-empty', text: '—' }));
+    } else {
+      const sign = r.total >= 0 ? 'pos' : 'neg';
+      const widthPct = (Math.abs(r.total) / maxAbs) * 50;
+      const left = r.total >= 0 ? 50 : 50 - widthPct;
+      const fill = el('div', { class: 'lbt-band-bar-fill' });
+      fill.dataset.sign = sign;
+      fill.dataset.band = r.band;
+      fill.style.left = `${left}%`;
+      fill.style.width = `${widthPct}%`;
+      bar.appendChild(fill);
+    }
+    row.appendChild(bar);
+    row.appendChild(el('div', {
+      class: r.total == null ? 'lbt-band-stat noise' : `lbt-band-stat ${r.total >= 0 ? 'pos' : 'neg'}`,
+      text: r.total == null ? 'n/a' : fmtPct(r.total),
+    }));
+    container.appendChild(row);
+  }
 }
 
 /* ======================================================================

@@ -3,11 +3,17 @@
 
 Joins the LTHCS daily score history to Yahoo daily closes and emits:
 
-  * portfolio_returns.json  — daily band-portfolio P&L
+  * portfolio_returns.json  — daily band-portfolio P&L (legacy validator)
   * pillar_ic.json          — Spearman IC per pillar
   * quintile_returns.json   — quintile spread per pillar
   * summary.json            — top-level Sharpe / drawdown / hit-rate
   * report.md               — human-readable markdown report
+  * equity_curve.csv/.json  — non-overlapping engine P&L (Tier 5 #24)
+  * positions_daily.csv     — daily portfolio composition (engine)
+  * trades.csv              — entry/exit pairs (engine)
+  * band_curves.json        — per-band sub-portfolio equity (engine)
+  * engine_summary.json     — engine headline stats + run_meta
+  * engine_report.md        — engine markdown report
   * stdout                  — concise summary table
 
 Usage:
@@ -17,9 +23,16 @@ Usage:
                                      [--bands-short review]
                                      [--output-dir data/lthcs/backtest/]
                                      [--run-id <id>]
+                                     [--engine {ic,pnl,both}]
+                                     [--cost-bps 5.0]
+                                     [--benchmark SPY]
                                      [--offline]
                                      [--no-report]
                                      [--from-json <run-dir>]
+
+``--engine``  ic  -> IC + quintile only (legacy validator).
+              pnl -> engine non-overlapping P&L only.
+              both (default) -> both sections written to the same dir.
 
 ``--offline`` skips Yahoo and uses the indefinite price cache only;
 useful in CI / when no network is available.
@@ -48,6 +61,7 @@ if str(REPO_ROOT) not in sys.path:
 import pandas as pd  # noqa: E402
 
 from lthcs import backtest  # noqa: E402
+from lthcs import backtest_engine  # noqa: E402
 
 
 def _parse_band_list(raw: str) -> List[str]:
@@ -64,6 +78,38 @@ def _hit_rate(daily_returns: pd.Series) -> float:
     if s.empty:
         return 0.0
     return float((s > 0).sum() / len(s))
+
+
+def _build_prices_panel(
+    tickers: List[str],
+    cache_root: Optional[Path] = None,
+    yahoo_module=None,
+    benchmark: Optional[str] = None,
+) -> tuple:
+    """Build a (date x ticker) close-price panel plus optional benchmark series.
+
+    Reuses ``lthcs.backtest._fetch_prices`` and ``_prices_to_close_series``
+    so the engine sees the same indefinite cache the IC validator uses.
+    Returns ``(prices_df, benchmark_series_or_None)``.
+    """
+    cache = cache_root if cache_root is not None else backtest._default_cache_root()
+    close_by_ticker: Dict[str, pd.Series] = {}
+    for t in tickers:
+        rows = backtest._fetch_prices(t, cache_root=cache, yahoo_module=yahoo_module)
+        close_by_ticker[t] = backtest._prices_to_close_series(rows)
+
+    bench_series: Optional[pd.Series] = None
+    if benchmark:
+        rows = backtest._fetch_prices(benchmark, cache_root=cache, yahoo_module=yahoo_module)
+        bench_series = backtest._prices_to_close_series(rows)
+        if bench_series.empty:
+            bench_series = None
+
+    prices_df = pd.DataFrame(close_by_ticker)
+    if not prices_df.empty:
+        prices_df.index = pd.to_datetime(prices_df.index)
+        prices_df.sort_index(inplace=True)
+    return prices_df, bench_series
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -105,6 +151,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--from-json", type=str, default=None,
                         help="Skip the backtest and only (re)generate "
                              "report.md from JSON artifacts in this dir.")
+    parser.add_argument(
+        "--engine",
+        type=str,
+        choices=["ic", "pnl", "both"],
+        default="both",
+        help="Which sections to compute: 'ic' (legacy IC + quintile + "
+             "band portfolio), 'pnl' (Tier 5 #24 non-overlapping engine), "
+             "or 'both' (default).",
+    )
+    parser.add_argument(
+        "--cost-bps",
+        type=float,
+        default=5.0,
+        help="Engine cost in bps per side (default 5.0 = ~10bps round-trip).",
+    )
+    parser.add_argument(
+        "--benchmark",
+        type=str,
+        default="SPY",
+        help="Engine benchmark ticker (default SPY). Empty string to skip.",
+    )
     args = parser.parse_args(argv)
 
     # --from-json: backfill report.md for a run that already has JSON.
@@ -124,6 +191,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     run_id = args.run_id or _build_run_id()
     out_root = (REPO_ROOT / args.output_dir / run_id).resolve()
     out_root.mkdir(parents=True, exist_ok=True)
+    # --engine pnl skips writing the legacy IC/quintile/portfolio files so the
+    # daily engine cron can land cleanly into the existing validation dir
+    # without overwriting the weekly IC validator's outputs.
+    write_legacy = args.engine in ("ic", "both")
+    write_engine = args.engine in ("pnl", "both")
 
     # 1. Load history.
     score = backtest.load_score_history(data_root=data_root)
@@ -187,7 +259,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         bands_to_short=bands_short,
     )
     portfolio_json = backtest.serialize_portfolio_result(portfolio)
-    backtest._atomic_write_json(out_root / "portfolio_returns.json", portfolio_json)
+    if write_legacy:
+        backtest._atomic_write_json(out_root / "portfolio_returns.json", portfolio_json)
 
     # 4. Pillar IC.
     attribution = backtest.attribute_returns(
@@ -195,10 +268,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         pillar_histories=pillar_hist,
         forward_returns=headline_fwd,
     )
-    backtest._atomic_write_json(
-        out_root / "pillar_ic.json",
-        attribution.to_dict(orient="records"),
-    )
+    if write_legacy:
+        backtest._atomic_write_json(
+            out_root / "pillar_ic.json",
+            attribution.to_dict(orient="records"),
+        )
 
     # 5. Quintile returns per pillar.
     # On-disk shape: payload[pillar][quintile_label][date] = return.
@@ -230,7 +304,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     spreads.append(float(v))
         quintile_payload[p] = per_pillar
         quintile_spread_by_pillar[p] = spreads
-    backtest._atomic_write_json(out_root / "quintile_returns.json", quintile_payload)
+    if write_legacy:
+        backtest._atomic_write_json(out_root / "quintile_returns.json", quintile_payload)
 
     # 6. Summary.
     summary = {
@@ -255,18 +330,19 @@ def main(argv: Optional[List[str]] = None) -> int:
         },
         "pillar_ic": attribution.to_dict(orient="records"),
     }
-    backtest._atomic_write_json(out_root / "summary.json", summary)
+    if write_legacy:
+        backtest._atomic_write_json(out_root / "summary.json", summary)
 
-    # 6b. Markdown report (small, fast; never fail the whole run on render error).
-    if not args.no_report:
-        try:
-            backtest.write_report(
-                out_root,
-                summary=summary,
-                quintile_payload=quintile_payload,
-            )
-        except Exception as exc:  # pragma: no cover — defensive
-            print("WARN: failed to write report.md: %s" % exc)
+        # 6b. Markdown report (small, fast; never fail the whole run on render error).
+        if not args.no_report:
+            try:
+                backtest.write_report(
+                    out_root,
+                    summary=summary,
+                    quintile_payload=quintile_payload,
+                )
+            except Exception as exc:  # pragma: no cover — defensive
+                print("WARN: failed to write report.md: %s" % exc)
 
     # 7. Stdout summary.
     print("")
@@ -298,6 +374,91 @@ def main(argv: Optional[List[str]] = None) -> int:
             print("  %-28s  %+8.4f  (n=%d)" % (p, avg, len(spreads)))
         else:
             print("  %-28s  %s  (n=0)" % (p, "n/a"))
+
+    # ----------------------------------------------------------------------
+    # 8. Engine block (Tier 5 #24, Phase 1). Runs when --engine in {pnl, both}.
+    # ----------------------------------------------------------------------
+    if write_engine:
+        engine_universe = list(band.columns) if not band.empty else list(score.columns)
+        bench_ticker = (args.benchmark or "").strip() or None
+        if bench_ticker and bench_ticker in engine_universe:
+            # If the benchmark is somehow in our LTHCS universe, fetch
+            # separately too (the engine wants it as a stand-alone series).
+            pass
+
+        prices_df, bench_series = _build_prices_panel(
+            tickers=engine_universe,
+            yahoo_module=yahoo_module,
+            benchmark=bench_ticker,
+        )
+
+        engine_params = backtest_engine.EngineParams(
+            bands_long=bands_long,
+            cost_bps=float(args.cost_bps),
+        )
+        engine_out = backtest_engine.run_backtest(
+            band_history=band,
+            prices=prices_df,
+            params=engine_params,
+            benchmark_prices=bench_series,
+            per_band_sweep=True,
+        )
+
+        backtest._atomic_write_json(
+            out_root / "equity_curve.json", engine_out["equity_curve"]
+        )
+        backtest._atomic_write_json(
+            out_root / "band_curves.json", engine_out["band_curves"]
+        )
+        backtest._atomic_write_json(
+            out_root / "benchmark_curve.json", engine_out["benchmark_curve"]
+        )
+        backtest._atomic_write_json(
+            out_root / "engine_summary.json",
+            {
+                "summary": engine_out["summary"],
+                "run_meta": engine_out["run_meta"],
+                "n_positions": engine_out["n_positions"],
+                "turnover_per_day": engine_out["turnover_per_day"],
+            },
+        )
+        backtest_engine.equity_curve_to_csv(
+            engine_out["equity_curve"], out_root / "equity_curve.csv"
+        )
+        backtest_engine.positions_daily_to_csv(
+            engine_out["positions_daily"], out_root / "positions_daily.csv"
+        )
+        backtest_engine.trades_to_csv(
+            engine_out["trades"], out_root / "trades.csv"
+        )
+
+        if not args.no_report:
+            try:
+                md = backtest_engine.build_engine_report_markdown(
+                    summary=engine_out["summary"],
+                    run_meta=engine_out["run_meta"],
+                    band_curves=engine_out["band_curves"],
+                    benchmark_curve=engine_out["benchmark_curve"],
+                )
+                (out_root / "engine_report.md").write_text(md, encoding="utf-8")
+            except Exception as exc:  # pragma: no cover — defensive
+                print("WARN: failed to write engine_report.md: %s" % exc)
+
+        es = engine_out["summary"]
+        print("")
+        print("Engine (non-overlapping P&L, long %s, cost=%.1fbps/side):" %
+              (bands_long, float(args.cost_bps)))
+        print("  trading days: %d" % int(es["n_trading_days"]))
+        print("  total return: %+.4f" % float(es["total_return"]))
+        print("  ann. return : %+.4f" % float(es["ann_return"]))
+        print("  ann. sharpe : %+.3f" % float(es["sharpe"]))
+        print("  ann. sortino: %+.3f" % float(es["sortino"]))
+        print("  max drawdown: %+.4f" % float(es["max_drawdown"]))
+        print("  hit rate    : %.3f" % float(es["hit_rate"]))
+        print("  avg hold d  : %.1f" % float(es["avg_hold_days"]))
+        print("  turnover/dy : %.4f" % float(es["turnover"]))
+        print("  n_trades    : %d" % int(es["n_trades"]))
+        print("  n_unique_tkr: %d" % int(es["n_unique_tkr"]))
 
     print("")
     print("Wrote artifacts to: %s" % out_root)
