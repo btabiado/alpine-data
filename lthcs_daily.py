@@ -1045,6 +1045,31 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         counts["sec_8k_refinement"] = len(state.sec_8k_by_ticker)
         counts["yahoo_earnings_refinement"] = len(state.yahoo_earnings_by_ticker)
 
+        # --- Sector RSS aggregate (FDA + EIA + Fed) — un-gated -------------
+        # Free RSS feeds, no auth. Used by Stage 4 to stamp ``has_sector_rss``
+        # on the Thesis pillar's data_quality block for the 36 ticker-keyword-
+        # mapped names in pharma / energy / financials.
+        #
+        # CRITICAL: hoisted out of the --skip-thesis gate below. Same P0
+        # pattern that un-gated Form 4 / 13F: before this fix, daily-cron +
+        # backfill (both pass --skip-thesis) silently produced
+        # ``has_sector_rss=False`` on every ticker even though P4 was
+        # supposed to populate it. The supplement-write loop (which writes
+        # to data/lthcs/sentiment/) stays inside the --skip-thesis gate
+        # below; only the aggregate + state assignment is hoisted.
+        try:
+            state.sector_rss_by_ticker = sector_rss.aggregate_sector_events(
+                state.active_tickers
+            )
+        except Exception as exc:
+            if state.args.verbose:
+                print("  sector-RSS aggregate failed: %s" % exc)
+            state.sector_rss_by_ticker = {}
+        counts["sector_rss_refinement"] = sum(
+            1 for ev in state.sector_rss_by_ticker.values()
+            if int((ev or {}).get("event_count") or 0) > 0
+        )
+
     # --- SEC Form 4 insider transactions (per-ticker, 90d window) ---
     # Reuses sec_edgar's session/headers + its own 24h submissions cache +
     # 30d XML cache. First-day run is slow (universe-wide backfill);
@@ -1199,25 +1224,14 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             if _write_supplement(sym, sig):
                 yahoo_event_supplement_count += 1
 
-        # --- Step 4: Sector RSS (FDA + EIA + Fed) ---
-        # Free, no auth. Fires for the 36 ticker-keyword-mapped names in
-        # pharma / energy / financials. Additive on top of earlier steps.
-        try:
-            sector_events = sector_rss.aggregate_sector_events(
-                state.active_tickers
-            )
-        except Exception as exc:
-            if state.args.verbose:
-                print("  sector-RSS fetch failed: %s" % exc)
-            sector_events = {}
-
-        # Persist the per-ticker aggregate on state so Stage 4 can stamp
-        # ``has_sector_rss`` on the Thesis pillar's data_quality block
-        # (per-ticker explainability in variable_detail).
-        state.sector_rss_by_ticker = sector_events
-
-        for sym, ev in sector_events.items():
-            if ev.get("event_count", 0) <= 0:
+        # --- Step 4: Sector RSS supplement writes -----------------------
+        # The aggregate fetch + ``state.sector_rss_by_ticker`` assignment
+        # are hoisted ABOVE the --skip-thesis gate (P0-pattern un-gating).
+        # Only the supplement write (data/lthcs/sentiment/<TICKER>.json)
+        # stays here, since those files belong to the Thesis sentiment
+        # rotation cache.
+        for sym, ev in state.sector_rss_by_ticker.items():
+            if (ev or {}).get("event_count", 0) <= 0:
                 continue
             if _has_fresh_sentiment(sym):
                 continue
