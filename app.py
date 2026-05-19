@@ -5695,14 +5695,27 @@ function renderInsights(){
   host.innerHTML = list.map(cardHTML).join('');
 
   // Also populate the AI News tab's inline insights card (when present).
-  // Uses the same list + renderer so the two views never drift.
+  // Use the TIGHT card style from renderOverviewInsights() — the global-bar
+  // cardHTML has flex:1 1 280px / max-width:360px (meant for horizontal
+  // wrapping) which made cards stretch vertically inside a column container.
   const inlineHost = document.getElementById('aiNewsInsights');
   if (inlineHost) {
     const ainewsList = all.filter(i => (i.tab || 'markets') === 'ainews');
     if (!ainewsList.length) {
-      inlineHost.innerHTML = '<div class="sub" style="color:var(--muted);font-size:12px">' + (TAB_EMPTY['ainews']) + '</div>';
+      inlineHost.innerHTML = '<div class="sub" style="color:var(--muted);font-size:12px;padding:14px">' + (TAB_EMPTY['ainews']) + '</div>';
     } else {
-      inlineHost.innerHTML = ainewsList.map(cardHTML).join('');
+      inlineHost.innerHTML = ainewsList.map(i => {
+        const c = severityColor(i.severity);
+        const ic = severityIcon(i.severity, i.kind);
+        const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
+          <span style="font-size:13px">${ic}</span>
+          <div style="flex:1;line-height:1.3">
+            <div style="font-size:12px">${escapeHtml(i.headline)}</div>
+            ${detail}
+          </div>
+        </div>`;
+      }).join('');
     }
   }
 }
