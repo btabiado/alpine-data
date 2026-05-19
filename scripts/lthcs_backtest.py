@@ -63,6 +63,7 @@ import pandas as pd  # noqa: E402
 from lthcs import backtest  # noqa: E402
 from lthcs import backtest_engine  # noqa: E402
 from lthcs import backtest_engine_attribution  # noqa: E402
+from lthcs import backtest_profiles  # noqa: E402
 
 
 def _parse_band_list(raw: str) -> List[str]:
@@ -172,6 +173,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         type=str,
         default="SPY",
         help="Engine benchmark ticker (default SPY). Empty string to skip.",
+    )
+    parser.add_argument(
+        "--profile",
+        type=str,
+        default="long_only_buy",
+        choices=backtest_profiles.available_profiles(),
+        help="Phase 3 strategy profile (Tier 5 #24). Default keeps the "
+             "Phase 1 long-only Buy-band behavior. Other profiles override "
+             "--bands-long / --bands-short / --cost-bps from the profile's "
+             "params; pass them explicitly if you want to vary them.",
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=None,
+        help="Override the top-K parameter for the 'top_k_by_composite' "
+             "profile. Ignored by other profiles.",
     )
     parser.add_argument(
         "--attribute",
@@ -402,16 +420,32 @@ def main(argv: Optional[List[str]] = None) -> int:
             benchmark=bench_ticker,
         )
 
-        engine_params = backtest_engine.EngineParams(
-            bands_long=bands_long,
-            cost_bps=float(args.cost_bps),
-        )
+        # Phase 3: load the named profile, then layer CLI overrides on top.
+        profile_name = args.profile or "long_only_buy"
+        if profile_name == "top_k_by_composite" and args.top_k is not None:
+            profile = backtest_profiles.build_top_k_by_composite(k=int(args.top_k))
+        else:
+            profile = backtest_profiles.get_profile(profile_name)
+        engine_params = profile.params
+        # CLI's --cost-bps still wins if the user explicitly set it.
+        if args.cost_bps is not None:
+            engine_params.cost_bps = float(args.cost_bps)
+        # Honor --bands-long override for the default profile only --
+        # other profiles ship with deliberate band sets.
+        if profile.name == "long_only_buy" and args.bands_long:
+            engine_params.bands_long = bands_long
+
+        score_history_panel = None
+        if profile.requires_score_history:
+            score_history_panel = backtest.load_score_history(data_root=data_root)
+
         engine_out = backtest_engine.run_backtest(
             band_history=band,
             prices=prices_df,
             params=engine_params,
             benchmark_prices=bench_series,
             per_band_sweep=True,
+            score_history=score_history_panel,
         )
 
         backtest._atomic_write_json(
@@ -504,8 +538,16 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         es = engine_out["summary"]
         print("")
-        print("Engine (non-overlapping P&L, long %s, cost=%.1fbps/side):" %
-              (bands_long, float(args.cost_bps)))
+        print("Engine [profile=%s] (non-overlapping P&L, long %s, "
+              "short %s, top_k=%d, cost=%.1fbps/side):" % (
+                  profile.name,
+                  engine_params.bands_long or "n/a (top_k)",
+                  engine_params.bands_short or (
+                      "bottom_quintile" if engine_params.short_bottom_quintile else "none"
+                  ),
+                  int(engine_params.top_k),
+                  float(engine_params.cost_bps),
+              ))
         print("  trading days: %d" % int(es["n_trading_days"]))
         print("  total return: %+.4f" % float(es["total_return"]))
         print("  ann. return : %+.4f" % float(es["ann_return"]))

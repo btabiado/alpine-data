@@ -73,6 +73,21 @@ class EngineParams:
     Defaults match Phase 1 (long-only Buy band, 5bps each side, 1d delay,
     daily equal-weight). Holding fields as a dataclass instead of a free
     dict lets ``params_hash`` be stable for the cache key.
+
+    Phase 3 extensions:
+
+    - ``bands_short``: optional set of bands that form the short leg of a
+      market-neutral portfolio. When non-empty, daily return becomes
+      ``mean(long_returns) - mean(short_returns)`` (dollar-neutral within
+      each leg). Round-trip costs are charged to both legs.
+    - ``short_bottom_quintile``: when True, the short leg is the bottom
+      composite-score quintile each day (selected by ``score_history``).
+      Used by the ``dollar_neutral`` profile.
+    - ``top_k``: when > 0, the long leg is the top ``top_k`` tickers by
+      composite score each day, ignoring band membership. Used by the
+      ``top_k_by_composite`` profile.
+    - ``profile_name``: optional tag carried in ``run_meta`` so artifacts
+      record which named profile produced them.
     """
 
     bands_long: List[str] = field(default_factory=lambda: list(DEFAULT_LONG_BANDS))
@@ -83,9 +98,25 @@ class EngineParams:
     # Phase 1 always rebalances daily so this flag exists mostly for
     # future profiles (e.g. monthly-rebalance variants in Phase 3).
     rebalance_daily: bool = True
+    # Phase 3 — strategy variants.
+    bands_short: List[str] = field(default_factory=list)
+    short_bottom_quintile: bool = False
+    top_k: int = 0
+    profile_name: Optional[str] = None
 
     def normalized_long_set(self) -> set:
         return {b.strip().lower() for b in self.bands_long if b and b.strip()}
+
+    def normalized_short_set(self) -> set:
+        return {b.strip().lower() for b in self.bands_short if b and b.strip()}
+
+    @property
+    def has_short_leg(self) -> bool:
+        return bool(self.normalized_short_set()) or bool(self.short_bottom_quintile)
+
+    @property
+    def uses_top_k(self) -> bool:
+        return int(self.top_k) > 0
 
     def to_jsonable(self) -> Dict[str, Any]:
         return {
@@ -94,6 +125,10 @@ class EngineParams:
             "delay_trading_days": int(self.delay_trading_days),
             "initial_capital": float(self.initial_capital),
             "rebalance_daily": bool(self.rebalance_daily),
+            "bands_short": list(self.bands_short),
+            "short_bottom_quintile": bool(self.short_bottom_quintile),
+            "top_k": int(self.top_k),
+            "profile_name": self.profile_name,
         }
 
 
@@ -146,6 +181,36 @@ def _align_bands_to_trading_days(
     td_idx = pd.DatetimeIndex(sorted(trading_days))
     union = bh.index.union(td_idx).sort_values()
     aligned = bh.reindex(union).ffill()
+    on_td = aligned.loc[aligned.index.isin(td_idx)]
+    on_td = on_td.reindex(td_idx)
+
+    if delay_trading_days > 0:
+        on_td = on_td.shift(delay_trading_days)
+    return on_td
+
+
+def _align_scores_to_trading_days(
+    score_history: pd.DataFrame,
+    trading_days: Sequence[pd.Timestamp],
+    delay_trading_days: int,
+) -> pd.DataFrame:
+    """Align a date-indexed composite score panel to the trading-day index.
+
+    Same delay/shift treatment as :func:`_align_bands_to_trading_days` --
+    the row at trading day ``t`` is the score signal acted on at the close
+    of ``t`` (i.e. the snapshot from ``t - delay_trading_days``). Used by
+    the top-K and bottom-quintile profiles.
+    """
+    if score_history is None or score_history.empty or not trading_days:
+        return pd.DataFrame(index=pd.DatetimeIndex(list(trading_days)))
+
+    sh = score_history.copy()
+    sh.index = pd.to_datetime(sh.index)
+    sh = sh.sort_index()
+
+    td_idx = pd.DatetimeIndex(sorted(trading_days))
+    union = sh.index.union(td_idx).sort_values()
+    aligned = sh.reindex(union).ffill()
     on_td = aligned.loc[aligned.index.isin(td_idx)]
     on_td = on_td.reindex(td_idx)
 
@@ -235,11 +300,147 @@ def _annualized_return(equity: pd.Series, trading_days_per_year: int = TRADING_D
 # Core simulation
 # ---------------------------------------------------------------------------
 
+def _select_long_targets(
+    t: pd.Timestamp,
+    valid_tickers: Sequence[str],
+    bands_row: pd.Series,
+    scores_row: Optional[pd.Series],
+    prices_row: pd.Series,
+    params: EngineParams,
+    long_set: set,
+) -> set:
+    """Pick the long-leg target set for trading day ``t``.
+
+    Selection rules:
+
+    1. If ``params.uses_top_k`` is True and a score row is available, the
+       long leg is the top-``k`` tickers by composite score (NaN-safe).
+    2. Otherwise, the long leg is the union of tickers whose band today
+       is in ``long_set``.
+
+    In both cases the candidate must have a valid (>0, non-NaN) price on
+    ``t`` so we can actually trade it.
+    """
+    if params.uses_top_k and scores_row is not None:
+        s = scores_row.dropna()
+        if s.empty:
+            return set()
+        # Keep only tickers with tradable prices.
+        tradable = [
+            tkr for tkr in s.index
+            if tkr in prices_row.index
+            and pd.notna(prices_row.get(tkr))
+            and float(prices_row[tkr]) > 0.0
+        ]
+        if not tradable:
+            return set()
+        s = s.loc[tradable]
+        k = min(int(params.top_k), len(s))
+        # Largest k by composite score. Stable: ties broken by ticker name.
+        top = s.sort_values(ascending=False, kind="mergesort").iloc[:k]
+        return set(top.index)
+
+    target: set = set()
+    for tkr in valid_tickers:
+        v = bands_row.get(tkr)
+        if not isinstance(v, str):
+            continue
+        if v.strip().lower() in long_set:
+            price_t = prices_row.get(tkr)
+            if pd.notna(price_t) and float(price_t) > 0.0:
+                target.add(tkr)
+    return target
+
+
+def _select_short_targets(
+    t: pd.Timestamp,
+    valid_tickers: Sequence[str],
+    bands_row: pd.Series,
+    scores_row: Optional[pd.Series],
+    prices_row: pd.Series,
+    params: EngineParams,
+    short_set: set,
+    excluded: set,
+) -> set:
+    """Pick the short-leg target set for trading day ``t``.
+
+    Rules:
+
+    1. If ``params.short_bottom_quintile`` is True and a score row is
+       available, the short leg is the bottom 20% of composite scores
+       (after dropping NaN and any ticker already chosen as long).
+    2. Otherwise, the short leg is the union of tickers whose band today
+       is in ``short_set``.
+
+    Empty short_set (and no quintile flag) -> empty set.
+    """
+    if params.short_bottom_quintile and scores_row is not None:
+        s = scores_row.dropna()
+        if s.empty:
+            return set()
+        # Filter to tradable, excluding long leg to avoid self-cancel.
+        tradable = [
+            tkr for tkr in s.index
+            if tkr in prices_row.index
+            and pd.notna(prices_row.get(tkr))
+            and float(prices_row[tkr]) > 0.0
+            and tkr not in excluded
+        ]
+        if not tradable:
+            return set()
+        s = s.loc[tradable]
+        n_q = max(1, int(round(len(s) / 5.0)))  # bottom quintile
+        bot = s.sort_values(ascending=True, kind="mergesort").iloc[:n_q]
+        return set(bot.index)
+
+    if not short_set:
+        return set()
+    target: set = set()
+    for tkr in valid_tickers:
+        if tkr in excluded:
+            continue
+        v = bands_row.get(tkr)
+        if not isinstance(v, str):
+            continue
+        if v.strip().lower() in short_set:
+            price_t = prices_row.get(tkr)
+            if pd.notna(price_t) and float(price_t) > 0.0:
+                target.add(tkr)
+    return target
+
+
+def _avg_close_to_close_return(
+    held: set,
+    prices: pd.DataFrame,
+    t: pd.Timestamp,
+    prev_day: pd.Timestamp,
+) -> float:
+    """Equal-weight average single-name return from ``prev_day`` close to
+    ``t`` close. Returns 0.0 if no name has a usable price pair.
+    """
+    if not held or prev_day is None:
+        return 0.0
+    acc = 0.0
+    n = 0
+    for tkr in held:
+        if tkr not in prices.columns:
+            continue
+        p_t = prices.at[t, tkr]
+        p_prev = prices.at[prev_day, tkr]
+        if pd.isna(p_t) or pd.isna(p_prev) or float(p_prev) == 0.0:
+            continue
+        acc += float(p_t) / float(p_prev) - 1.0
+        n += 1
+    return acc / n if n else 0.0
+
+
 def _simulate(
     target_bands: pd.DataFrame,
     prices: pd.DataFrame,
     params: EngineParams,
     long_set: set,
+    score_history_aligned: Optional[pd.DataFrame] = None,
+    short_set: Optional[set] = None,
 ) -> Dict[str, Any]:
     """One event-driven simulation pass.
 
@@ -250,9 +451,15 @@ def _simulate(
       - trades (list[dict])
       - turnover_per_day (pd.Series)
       - n_positions (pd.Series, int)
-    Used both by the headline strategy and per-band sub-portfolio runs.
+
+    Phase 3: if ``params.has_short_leg`` is True, the per-day return
+    becomes ``mean(long_returns) - mean(short_returns)`` and round-trip
+    costs are charged to both legs. Trades on the short leg are emitted
+    with ``side="short"`` so the trades file stays auditable.
     """
     cost_one_side = float(params.cost_bps) / 10000.0
+    short_set = short_set if short_set is not None else params.normalized_short_set()
+    has_short = params.has_short_leg
 
     trading_days = list(target_bands.index)
     if not trading_days:
@@ -274,7 +481,16 @@ def _simulate(
     bh = target_bands[valid_tickers]
     p = p[valid_tickers]
 
-    held: set = set()
+    # Score history is optional. When given (top_k / bottom-quintile
+    # profiles) restrict to columns shared with the prices panel.
+    if score_history_aligned is not None and not score_history_aligned.empty:
+        score_cols = [c for c in score_history_aligned.columns if c in p.columns]
+        sh = score_history_aligned[score_cols]
+    else:
+        sh = None
+
+    held_long: set = set()
+    held_short: set = set()
     entry_info: Dict[str, Dict[str, Any]] = {}
     trades: List[Dict[str, Any]] = []
     equity = float(params.initial_capital)
@@ -287,86 +503,110 @@ def _simulate(
     prev_day: Optional[pd.Timestamp] = None
 
     for t in trading_days:
-        # 1. Realize today's return on yesterday's held portfolio.
-        if prev_day is not None and held:
-            day_ret_accumulator = 0.0
-            n_with_price = 0
-            for tkr in held:
-                p_t = p.at[t, tkr] if tkr in p.columns else np.nan
-                p_prev = p.at[prev_day, tkr] if tkr in p.columns else np.nan
-                if pd.isna(p_t) or pd.isna(p_prev) or float(p_prev) == 0.0:
-                    continue
-                day_ret_accumulator += float(p_t) / float(p_prev) - 1.0
-                n_with_price += 1
-            daily_ret_gross = (
-                day_ret_accumulator / n_with_price if n_with_price else 0.0
-            )
+        # 1. Realize today's return on yesterday's held portfolio(s).
+        long_ret_gross = _avg_close_to_close_return(held_long, p, t, prev_day)
+        short_ret_gross = (
+            _avg_close_to_close_return(held_short, p, t, prev_day)
+            if has_short else 0.0
+        )
+        if has_short:
+            # Dollar-neutral within each leg: long minus short.
+            daily_ret_gross = long_ret_gross - short_ret_gross
         else:
-            daily_ret_gross = 0.0
+            daily_ret_gross = long_ret_gross
 
         equity *= 1.0 + daily_ret_gross
 
-        # 2. Determine target membership at close of t. NaN bands fall
-        # through to "not held".
+        # 2. Determine target membership at close of t.
         bands_today = bh.loc[t]
-        # Normalize bands to lowercase strings; non-strings (NaN) -> "".
-        target_today: set = set()
-        for tkr in valid_tickers:
-            v = bands_today.get(tkr)
-            if not isinstance(v, str):
-                continue
-            if v.strip().lower() in long_set:
-                # Only consider tickers with a valid close price today
-                # (otherwise we can't trade them).
-                price_t = p.at[t, tkr]
-                if pd.notna(price_t) and float(price_t) > 0.0:
-                    target_today.add(tkr)
+        scores_today = sh.loc[t] if sh is not None and t in sh.index else None
+        prices_today = p.loc[t]
 
-        # 3. Compute entries / exits vs currently held.
-        entries = target_today - held
-        exits = held - target_today
-
-        # 4. Apply round-trip costs proportional to traded weight.
-        # Approximation: each entry buys the average weight of the new
-        # portfolio (1 / n_target), each exit sells the average weight of
-        # the prior portfolio (1 / n_held_prev). Sum of |dw| approximated
-        # by the simpler heuristic below, which produces a daily cost
-        # drag roughly proportional to turnover.
-        n_held_prev = len(held)
-        n_target = len(target_today)
-        if entries or exits:
-            # Average weight implied by post-trade portfolio
-            avg_w_post = 1.0 / n_target if n_target else 0.0
-            avg_w_pre = 1.0 / n_held_prev if n_held_prev else 0.0
-            traded_weight = (
-                len(entries) * avg_w_post + len(exits) * avg_w_pre
+        target_long = _select_long_targets(
+            t=t,
+            valid_tickers=valid_tickers,
+            bands_row=bands_today,
+            scores_row=scores_today,
+            prices_row=prices_today,
+            params=params,
+            long_set=long_set,
+        )
+        if has_short:
+            target_short = _select_short_targets(
+                t=t,
+                valid_tickers=valid_tickers,
+                bands_row=bands_today,
+                scores_row=scores_today,
+                prices_row=prices_today,
+                params=params,
+                short_set=short_set,
+                excluded=target_long,
             )
-            cost_drag = traded_weight * cost_one_side
+        else:
+            target_short = set()
+
+        # 3. Compute entries / exits vs currently held (per leg).
+        entries_long = target_long - held_long
+        exits_long = held_long - target_long
+        entries_short = target_short - held_short
+        exits_short = held_short - target_short
+
+        # 4. Apply round-trip costs proportional to traded weight (both legs).
+        n_long_prev = len(held_long)
+        n_long_target = len(target_long)
+        n_short_prev = len(held_short)
+        n_short_target = len(target_short)
+
+        traded_weight_long = 0.0
+        if entries_long or exits_long:
+            avg_w_post = 1.0 / n_long_target if n_long_target else 0.0
+            avg_w_pre = 1.0 / n_long_prev if n_long_prev else 0.0
+            traded_weight_long = (
+                len(entries_long) * avg_w_post + len(exits_long) * avg_w_pre
+            )
+
+        traded_weight_short = 0.0
+        if entries_short or exits_short:
+            avg_w_post = 1.0 / n_short_target if n_short_target else 0.0
+            avg_w_pre = 1.0 / n_short_prev if n_short_prev else 0.0
+            traded_weight_short = (
+                len(entries_short) * avg_w_post + len(exits_short) * avg_w_pre
+            )
+
+        total_traded_weight = traded_weight_long + traded_weight_short
+        if total_traded_weight > 0.0:
+            cost_drag = total_traded_weight * cost_one_side
             equity *= 1.0 - cost_drag
             daily_ret_net = (1.0 + daily_ret_gross) * (1.0 - cost_drag) - 1.0
         else:
             daily_ret_net = daily_ret_gross
 
-        # 5. Record trades for new entries.
-        for tkr in entries:
-            entry_info[tkr] = {
+        # 5. Record trades for new entries (long + short).
+        for tkr in entries_long:
+            entry_info[("L", tkr)] = {
                 "entry_date": _to_iso_date(t),
                 "entry_price": float(p.at[t, tkr]),
-                "entry_equity": equity,
+                "side": "long",
             }
+        for tkr in entries_short:
+            entry_info[("S", tkr)] = {
+                "entry_date": _to_iso_date(t),
+                "entry_price": float(p.at[t, tkr]),
+                "side": "short",
+            }
+
         # 6. Record trades for exits.
-        for tkr in exits:
-            info = entry_info.pop(tkr, None)
+        def _close_trade(side: str, tkr: str) -> None:
+            key = (side[0].upper(), tkr)
+            info = entry_info.pop(key, None)
             if info is None:
-                continue
+                return
             exit_price = p.at[t, tkr] if tkr in p.columns else np.nan
             if pd.isna(exit_price) or float(exit_price) <= 0.0:
-                # Carry forward; we'll close at the next valid price.
-                # For simplicity, register the trade anyway with NaN
-                # return so the trades list is complete.
                 trades.append(
                     {
                         "ticker": tkr,
+                        "side": side,
                         "entry_date": info["entry_date"],
                         "exit_date": _to_iso_date(t),
                         "entry_price": info["entry_price"],
@@ -376,15 +616,16 @@ def _simulate(
                         "hold_days": _hold_days(info["entry_date"], _to_iso_date(t)),
                     }
                 )
-                continue
+                return
             entry_px = info["entry_price"]
-            gross = float(exit_price) / float(entry_px) - 1.0
-            # Net return for the trade approximates as gross minus
-            # round-trip cost on the average weight at which it traded.
+            raw = float(exit_price) / float(entry_px) - 1.0
+            # Shorts P&L is the inverse direction.
+            gross = -raw if side == "short" else raw
             net = (1.0 + gross) * (1.0 - 2.0 * cost_one_side) - 1.0
             trades.append(
                 {
                     "ticker": tkr,
+                    "side": side,
                     "entry_date": info["entry_date"],
                     "exit_date": _to_iso_date(t),
                     "entry_price": float(entry_px),
@@ -395,28 +636,52 @@ def _simulate(
                 }
             )
 
-        # 7. Update held set; record equity + diagnostics.
-        held = target_today
-        if held:
-            weight = 1.0 / len(held)
-            for tkr in held:
+        for tkr in exits_long:
+            _close_trade("long", tkr)
+        for tkr in exits_short:
+            _close_trade("short", tkr)
+
+        # 7. Update held sets; record equity + diagnostics.
+        held_long = target_long
+        held_short = target_short
+        if held_long:
+            weight = 1.0 / len(held_long)
+            for tkr in held_long:
                 positions_rows.append(
                     {
                         "date": _to_iso_date(t),
                         "ticker": tkr,
+                        "side": "long",
                         "weight": weight,
-                        "entry_date": entry_info[tkr]["entry_date"]
-                        if tkr in entry_info
-                        else _to_iso_date(t),
+                        "entry_date": entry_info.get(("L", tkr), {}).get(
+                            "entry_date", _to_iso_date(t)
+                        ),
                     }
                 )
+        if held_short:
+            weight = 1.0 / len(held_short)
+            for tkr in held_short:
+                positions_rows.append(
+                    {
+                        "date": _to_iso_date(t),
+                        "ticker": tkr,
+                        "side": "short",
+                        "weight": -weight,
+                        "entry_date": entry_info.get(("S", tkr), {}).get(
+                            "entry_date", _to_iso_date(t)
+                        ),
+                    }
+                )
+
         equity_series.append(float(equity))
         daily_returns.append(float(daily_ret_net))
-        union_size = len(held | (held ^ entries) | (held | exits))  # rough
-        denom = max(n_held_prev, n_target, 1)
-        turnover = (len(entries) + len(exits)) / float(denom)
+        denom = max(n_long_prev + n_short_prev, n_long_target + n_short_target, 1)
+        turnover = (
+            len(entries_long) + len(exits_long)
+            + len(entries_short) + len(exits_short)
+        ) / float(denom)
         turnover_series.append(float(turnover))
-        n_positions_series.append(int(len(held)))
+        n_positions_series.append(int(len(held_long) + len(held_short)))
         prev_day = t
 
     idx = pd.DatetimeIndex(trading_days)
@@ -449,6 +714,7 @@ def run_backtest(
     params: Optional[EngineParams] = None,
     benchmark_prices: Optional[pd.Series] = None,
     per_band_sweep: bool = True,
+    score_history: Optional[pd.DataFrame] = None,
 ) -> Dict[str, Any]:
     """Run the Phase-1 long-only event-driven backtest.
 
@@ -507,17 +773,41 @@ def run_backtest(
         trading_days=trading_days,
         delay_trading_days=params.delay_trading_days,
     )
+    aligned_scores = None
+    if score_history is not None and not score_history.empty:
+        aligned_scores = _align_scores_to_trading_days(
+            score_history=score_history,
+            trading_days=trading_days,
+            delay_trading_days=params.delay_trading_days,
+        )
 
     long_set = params.normalized_long_set()
-    headline = _simulate(target_bands=target_bands, prices=prices_td, params=params, long_set=long_set)
+    headline = _simulate(
+        target_bands=target_bands,
+        prices=prices_td,
+        params=params,
+        long_set=long_set,
+        score_history_aligned=aligned_scores,
+        short_set=params.normalized_short_set(),
+    )
 
     band_curves: Dict[str, Dict[str, float]] = {}
     if per_band_sweep:
+        # Per-band sweep is always long-only and ignores the headline
+        # profile's short / top-K settings — we want a clean "what would
+        # band X alone have done" view for the UI.
+        sweep_params = EngineParams(
+            bands_long=params.bands_long,
+            cost_bps=params.cost_bps,
+            delay_trading_days=params.delay_trading_days,
+            initial_capital=params.initial_capital,
+            rebalance_daily=params.rebalance_daily,
+        )
         for band in ALL_BANDS_FOR_SWEEP:
             res = _simulate(
                 target_bands=target_bands,
                 prices=prices_td,
-                params=params,
+                params=sweep_params,
                 long_set={band},
             )
             band_curves[band] = _series_to_jsonable(res["equity"])
@@ -557,6 +847,10 @@ def run_backtest(
         },
         "universe_size": int(len(target_bands.columns)),
         "long_set": sorted(list(long_set)),
+        "short_set": sorted(list(params.normalized_short_set())),
+        "profile_name": params.profile_name,
+        "top_k": int(params.top_k),
+        "short_bottom_quintile": bool(params.short_bottom_quintile),
     }
 
     return {
@@ -612,6 +906,10 @@ def _empty_result(
             "window": {"start": None, "end": None, "n_trading_days": 0},
             "universe_size": 0,
             "long_set": sorted(list(params.normalized_long_set())),
+            "short_set": sorted(list(params.normalized_short_set())),
+            "profile_name": params.profile_name,
+            "top_k": int(params.top_k),
+            "short_bottom_quintile": bool(params.short_bottom_quintile),
         },
     }
 
@@ -691,6 +989,7 @@ def trades_to_csv(trades: List[Dict[str, Any]], path: Path) -> None:
         "entry_date",
         "exit_date",
         "ticker",
+        "side",
         "entry_price",
         "exit_price",
         "gross_return",
