@@ -156,6 +156,23 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         ),
     )
     p.add_argument(
+        "--news-only",
+        dest="news_only",
+        action="store_true",
+        help=(
+            "Refresh news-derived inputs only (Finnhub recommendations, "
+            "SEC 8-K, Yahoo earnings, sector RSS). Skip FRED, EIA, Google "
+            "Trends, SEC 13F, SEC Form 4, SEC EDGAR XBRL fundamentals. "
+            "Reuses today's existing sub-scores for Adoption / Institutional / "
+            "Financial / DES, recomputes Thesis, re-blends composite, "
+            "and re-emits today's snapshot / variable_detail / narratives. "
+            "Requires today's snapshot to already exist (run the full pipeline "
+            "first). Skips the history append (today's entry is added by "
+            "the morning's first full run). Mutually exclusive with "
+            "--catch-up and --as-of."
+        ),
+    )
+    p.add_argument(
         "--as-of",
         dest="as_of",
         default=None,
@@ -190,6 +207,11 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
             )
         if args.catch_up:
             p.error("--as-of and --catch-up are mutually exclusive")
+        if args.news_only:
+            p.error("--as-of and --news-only are mutually exclusive")
+
+    if args.news_only and args.catch_up:
+        p.error("--news-only and --catch-up are mutually exclusive")
 
     return args
 
@@ -1910,6 +1932,483 @@ def stage_8_persist(state: PipelineState) -> bool:
     return True
 
 
+# ---------------------------------------------------------------------------
+# News-only refresh path (hourly cadence)
+# ---------------------------------------------------------------------------
+#
+# `--news-only` re-fetches only the news-derived inputs (Finnhub analyst
+# recommendations, SEC 8-K material events, Yahoo earnings, sector RSS) and
+# re-emits today's snapshot/variable_detail/narratives with a refreshed
+# Thesis sub-score and recomputed composite. Adoption / Institutional /
+# Financial / DES are read straight from today's existing snapshot — those
+# pillars depend on slow data (FRED, EIA, SEC EDGAR XBRL fundamentals, SEC
+# 13F, SEC Form 4, Google Trends) that doesn't move hour-to-hour.
+#
+# Runtime profile: ~30-90 sec for a 167-ticker universe (Finnhub 7d cache
+# hits dominate; 8-K + Yahoo earnings fetches are fast). Compared to the
+# 3-7 min full pipeline, this is the hourly-cron-friendly path.
+#
+# Cron interaction:
+#   * 23:00 UTC daily cron runs the FULL pipeline (this function is NOT
+#     used there). That run writes today's snapshot.
+#   * Hourly cron runs this function. If today's snapshot doesn't exist
+#     yet (e.g. 00:00 UTC, before the 23:00 daily cron has caught up to
+#     the new UTC date), the function exits with a clear error code and
+#     no partial writes.
+
+# Narratives are regenerated only when the Thesis sub-score moves by ≥
+# this many points hour-over-hour. Keeps the data/lthcs/narratives/*.json
+# diff small in normal hours (most hours see no Thesis movement worth
+# rewriting prose for) while still capturing meaningful sentiment shifts.
+_NEWS_ONLY_NARRATIVE_DELTA_THRESHOLD = 5.0
+
+
+def _build_news_only_pillar_results(
+    state: PipelineState,
+    prior_variable_detail_by_ticker: Dict[str, Dict[str, Dict[str, Any]]],
+) -> bool:
+    """Build pillar_results for the news-only path.
+
+    For each scored ticker, recompute Thesis from the freshly-fetched
+    Finnhub / 8-K / Yahoo earnings inputs, and reuse the prior
+    variable_detail block verbatim for the other four pillars. This is
+    the seam where "only Thesis changes" gets enforced.
+    """
+    state.pillar_results = {}
+    for sym in state.scored_tickers:
+        prior_pillars = prior_variable_detail_by_ticker.get(sym, {})
+        if not prior_pillars:
+            # No prior pillar data for this ticker — skip rather than
+            # synthesize neutral results (would otherwise pollute the
+            # snapshot with phantom 50s).
+            continue
+
+        # Recompute Thesis from fresh inputs.
+        reco_signal = state.recommendation_by_ticker.get(sym)
+        sec_8k_sig = state.sec_8k_by_ticker.get(sym)
+        yahoo_sig = state.yahoo_earnings_by_ticker.get(sym)
+        try:
+            th = thesis.compute_thesis_with_refinement(
+                sym,
+                reco_signal,
+                sec_8k_signal=sec_8k_sig,
+                yahoo_earnings_signal=yahoo_sig,
+                stored_sentiment=None,
+                today=state.calc_date,
+            )
+        except Exception:
+            th = _neutral_thesis(sym)
+
+        # Stamp per-ticker sector-RSS coverage onto Thesis pillar.
+        ev = state.sector_rss_by_ticker.get(sym) or {}
+        ev_count = int(ev.get("event_count") or 0)
+        if isinstance(th, dict):
+            dq = th.setdefault("data_quality", {})
+            dq["has_sector_rss"] = ev_count > 0
+            if ev_count > 0:
+                dq["sector_rss_event_count"] = ev_count
+                sectors_matched = ev.get("sectors_matched") or []
+                if sectors_matched:
+                    dq["sector_rss_sectors"] = list(sectors_matched)
+
+        pillars: Dict[str, Dict[str, Any]] = {}
+        for pillar_name in score.PILLAR_ORDER:
+            if pillar_name == "thesis_integrity":
+                pillars[pillar_name] = th
+                continue
+            prior = prior_pillars.get(pillar_name)
+            if not prior:
+                # Missing prior pillar for this ticker — fall back to
+                # neutral so compute_lthcs_score still has a value.
+                pillars[pillar_name] = _neutral_pillar_result(sym, pillar_name)
+                continue
+            pillars[pillar_name] = {
+                "ticker": sym,
+                "sub_score": float(prior.get("sub_score", 50.0)),
+                "components": dict(prior.get("components") or {}),
+                "data_quality": dict(prior.get("data_quality") or {}),
+            }
+        state.pillar_results[sym] = pillars
+    return True
+
+
+def run_news_only(args: argparse.Namespace) -> int:
+    """Hourly news-only refresh path. See module-level comment block above.
+
+    Returns the exit code (0 = success, 1 = failure, 2 = today's snapshot
+    missing). Does NOT touch history files — today's history entry is the
+    morning full-run's responsibility.
+    """
+    print("[news-only] Starting hourly news-derived refresh.")
+    state = PipelineState(args=args)
+    # Reuse Stage 1 verbatim — it just loads config + decides calc_date +
+    # builds the universe list. No network calls.
+    if not stage_1_load_config(state):
+        return 1
+
+    persist = state.persist
+    if persist is None:
+        # Stage 1 builds one, but defensive null guard for type-checker.
+        persist = LthcsPersist()
+        state.persist = persist
+
+    # --- Preflight: today's snapshot must already exist ---
+    if not persist.snapshot_exists(state.calc_date):
+        print(
+            "✗ [news-only] no snapshot exists for %s. "
+            "Run the full pipeline first (python lthcs_daily.py --force) "
+            "before requesting a news-only refresh." % state.calc_date
+        )
+        return 2
+
+    # --- Load prior snapshot + variable_detail + narratives ---
+    try:
+        prior_snapshot = persist.read_snapshot(state.calc_date)
+    except Exception as exc:
+        print("✗ [news-only] failed to read today's snapshot: %s" % exc)
+        return 1
+    try:
+        prior_variable_detail = json.loads(
+            persist.variable_detail_path(state.calc_date).read_text()
+        )
+    except Exception as exc:
+        print("✗ [news-only] failed to read today's variable_detail: %s" % exc)
+        return 1
+    try:
+        prior_narratives = json.loads(
+            persist.narratives_path(state.calc_date).read_text()
+        )
+    except Exception:
+        # Narratives are nice-to-have for the gating step; if absent,
+        # we regenerate them all. Don't fail the run.
+        prior_narratives = {"narratives": []}
+
+    prior_scores_by_ticker = {
+        row.get("ticker"): row
+        for row in prior_snapshot.get("scores", [])
+        if isinstance(row, dict) and row.get("ticker")
+    }
+    # Build {ticker -> {pillar -> variable_detail_row}}
+    prior_variable_detail_by_ticker: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for row in prior_variable_detail.get("variables", []):
+        if not isinstance(row, dict):
+            continue
+        sym = row.get("ticker")
+        pillar = row.get("pillar")
+        if not isinstance(sym, str) or not isinstance(pillar, str):
+            continue
+        prior_variable_detail_by_ticker.setdefault(sym, {})[pillar] = row
+    prior_narratives_by_ticker = {
+        n.get("ticker"): n
+        for n in prior_narratives.get("narratives", [])
+        if isinstance(n, dict) and n.get("ticker")
+    }
+
+    # Only refresh tickers that were already in today's snapshot — keeps
+    # the snapshot roster stable across the day.
+    state.scored_tickers = [
+        sym for sym in state.active_tickers if sym in prior_scores_by_ticker
+    ]
+    print(
+        "[news-only] Stage 1: %d tickers in today's snapshot will be refreshed."
+        % len(state.scored_tickers)
+    )
+
+    # --- Fetch news-derived inputs ONLY ---
+    # No FRED, no EIA, no SEC EDGAR XBRL, no 13F, no Form 4, no trends.
+    # No Alpha Vantage either (we want hourly cadence but stay under the
+    # 25/day quota; the daily pipeline owns AV rotation).
+    state.persist = persist
+    finnhub_keyless = False
+    n = len(state.scored_tickers)
+    n_finnhub = 0
+    n_sec_8k = 0
+    n_yahoo = 0
+    for sym in state.scored_tickers:
+        # Finnhub recommendations (PRIMARY Thesis input).
+        if not finnhub_keyless:
+            try:
+                reco_history = finnhub.get_recommendation_trends(sym)
+            except finnhub.FinnhubAPIKeyMissing:
+                finnhub_keyless = True
+                reco_history = None
+            except finnhub.FinnhubRateLimit:
+                # Stop hammering Finnhub for the rest of this run; reuse
+                # nothing rather than risk a per-ticker stutter.
+                finnhub_keyless = True
+                reco_history = None
+            except Exception:
+                reco_history = None
+            if reco_history:
+                try:
+                    reco_signal = finnhub.parse_recommendation_signal(reco_history)
+                    state.recommendation_by_ticker[sym] = reco_signal
+                    n_finnhub += 1
+                except Exception:
+                    pass
+        # SEC 8-K material events.
+        try:
+            sig = sec_8k.event_signal_for_ticker(sym, days=90)
+        except Exception:
+            sig = None
+        if sig and int(sig.get("article_count") or 0) > 0:
+            state.sec_8k_by_ticker[sym] = sig
+            n_sec_8k += 1
+        # Yahoo earnings.
+        try:
+            earnings = yahoo_events.get_earnings_dates(sym, limit=4)
+            ysig = yahoo_events.summarize_earnings_for_thesis(earnings)
+        except Exception:
+            ysig = None
+        if (
+            ysig
+            and ysig.get("mean_sentiment_score") is not None
+            and int(ysig.get("article_count") or 0) > 0
+        ):
+            state.yahoo_earnings_by_ticker[sym] = ysig
+            n_yahoo += 1
+
+    # Sector RSS (universe-wide; not per-ticker network calls).
+    try:
+        sector_events = sector_rss.aggregate_sector_events(state.scored_tickers)
+    except Exception as exc:
+        if args.verbose:
+            print("  [news-only] sector_rss fetch failed: %s" % exc)
+        sector_events = {}
+    state.sector_rss_by_ticker = sector_events
+    n_rss = sum(
+        1 for ev in sector_events.values()
+        if isinstance(ev, dict) and ev.get("event_count", 0) > 0
+    )
+    print(
+        "[news-only] Stage 2: news fetched — finnhub=%d/%d, sec_8k=%d, yahoo_earnings=%d, sector_rss=%d"
+        % (n_finnhub, n, n_sec_8k, n_yahoo, n_rss)
+    )
+
+    # --- Recompute Thesis + reuse other pillars ---
+    _build_news_only_pillar_results(state, prior_variable_detail_by_ticker)
+    print(
+        "[news-only] Stage 3: rebuilt pillar_results for %d tickers (Thesis recomputed, others reused)"
+        % len(state.pillar_results)
+    )
+
+    # --- Recompute composite using current weights.json ---
+    # Mirrors stage_6_compute_final_scores but pulls macro modifiers, vol
+    # modifiers, and dropped-pillar flags from the prior snapshot row so
+    # we don't refetch FRED / Yahoo prices just to recompute them.
+    #
+    # IMPORTANT: We seed with EVERY ticker from today's prior snapshot so
+    # the snapshot roster stays stable across the day. The CI workflow
+    # never passes --tickers, so in production this is moot, but the
+    # smoke-test path with --tickers AAPL,NVDA used to truncate today's
+    # snapshot down to 2 rows. Now non-scored tickers pass through
+    # untouched (no Thesis refresh, no composite re-blend, just preserved).
+    refreshed: Dict[str, Dict[str, Any]] = {}
+    thesis_delta_by_ticker: Dict[str, float] = {}
+    for sym in state.scored_tickers:
+        prior_row = prior_scores_by_ticker.get(sym)
+        if not prior_row:
+            continue
+        entry = state.by_ticker.get(sym, {})
+        pillars = state.pillar_results.get(sym) or {}
+        subs = {
+            name: float((pillars.get(name) or {}).get("sub_score", 50.0))
+            for name in score.PILLAR_ORDER
+        }
+        flags = list(prior_row.get("data_quality_flags") or [])
+
+        # Macro and vol modifiers carry over from the prior row — we
+        # intentionally don't refetch FRED 10y or Yahoo vol on the hourly
+        # path. Re-blend the composite arithmetically using the same
+        # modifiers the daily pipeline already locked in.
+        prior_macro = float((prior_row.get("modifiers") or {}).get("macro_adj", 0.0))
+        prior_sector_adj = float((prior_row.get("modifiers") or {}).get("sector_adj", 0.0))
+        prior_vol = float((prior_row.get("modifiers") or {}).get("volatility_mod", 0.0))
+
+        try:
+            row = score.compute_lthcs_score(
+                ticker=sym,
+                sector=entry.get("sector", ""),
+                maturity_stage=entry.get("maturity_stage", DEFAULT_WEIGHTS_PROFILE),
+                pillar_subscores=subs,
+                weights_config=state.weights_config,
+                ten_y_30d_change_bp=None,  # macro_adj is overridden below
+                ticker_volatility=None,    # vol modifier is overridden below
+                universe_volatilities=None,
+                sector_adjustment_override=prior_sector_adj,
+                data_quality_flags=flags,
+            )
+        except Exception as exc:
+            if args.verbose:
+                print("  [news-only] scoring failed for %s: %s" % (sym, exc))
+            continue
+
+        # Substitute the prior-row macro + vol modifiers so the final
+        # composite reflects "today's news + yesterday's macro snapshot"
+        # rather than a re-derived (and possibly stale-zeroed) version.
+        old_macro = float(row["modifiers"]["macro_adj"])
+        old_vol = float(row["modifiers"]["volatility_mod"])
+        delta = (prior_macro - old_macro) + (prior_vol - old_vol)
+        new_score = max(0.0, min(100.0, float(row["lthcs_score"]) + delta))
+        new_score = round(new_score, 1)
+        row["modifiers"]["macro_adj"] = prior_macro
+        row["modifiers"]["volatility_mod"] = prior_vol
+        row["lthcs_score"] = new_score
+        row["band"] = score.assign_band(
+            new_score, state.weights_config.get("score_bands", {})
+        )
+        # Preserve drift values from prior row — they're 1d/7d/30d/90d
+        # vs prior dates, not vs prior hour. Hourly news shouldn't smear
+        # the drift columns.
+        for k in ("drift_1d", "drift_7d", "drift_30d", "drift_90d"):
+            row[k] = prior_row.get(k, 0.0)
+
+        refreshed[sym] = row
+
+        prior_thesis = float(
+            (prior_row.get("subscores") or {}).get("thesis_integrity", 50.0)
+        )
+        new_thesis = float(subs.get("thesis_integrity", 50.0))
+        thesis_delta_by_ticker[sym] = new_thesis - prior_thesis
+
+    # Preserve roster order from the prior snapshot; substitute refreshed
+    # rows in place, pass through unchanged rows verbatim.
+    state.snapshot_rows = [
+        refreshed.get(row.get("ticker"), row)
+        for row in prior_snapshot.get("scores", [])
+        if isinstance(row, dict)
+    ]
+
+    print(
+        "[news-only] Stage 4: composite recomputed for %d of %d rows; "
+        "%d tickers moved Thesis >= %.1f pts"
+        % (
+            len(refreshed),
+            len(state.snapshot_rows),
+            sum(1 for d in thesis_delta_by_ticker.values()
+                if abs(d) >= _NEWS_ONLY_NARRATIVE_DELTA_THRESHOLD),
+            _NEWS_ONLY_NARRATIVE_DELTA_THRESHOLD,
+        )
+    )
+
+    # --- Variable detail rebuild (cheap; pure compute) ---
+    # Same roster-preservation rule as the snapshot: for tickers we did
+    # NOT refresh this run, pass through prior variable_detail rows
+    # verbatim. Only the refreshed subset gets new pillar rows.
+    refreshed_vd: Dict[str, List[Dict[str, Any]]] = {}
+    for sym, pillars in state.pillar_results.items():
+        rows: List[Dict[str, Any]] = []
+        for pillar_name, result in pillars.items():
+            rows.append(
+                {
+                    "ticker": sym,
+                    "pillar": pillar_name,
+                    "components": dict(result.get("components") or {}),
+                    "sub_score": float(result.get("sub_score", 50.0)),
+                    "data_quality": dict(result.get("data_quality") or {}),
+                }
+            )
+        refreshed_vd[sym] = rows
+
+    state.variable_detail_rows = []
+    seen_refreshed: set = set()
+    for row in prior_variable_detail.get("variables", []):
+        if not isinstance(row, dict):
+            continue
+        sym = row.get("ticker")
+        if sym in refreshed_vd:
+            if sym not in seen_refreshed:
+                state.variable_detail_rows.extend(refreshed_vd[sym])
+                seen_refreshed.add(sym)
+            # Skip the prior row — its refreshed counterpart already went in.
+            continue
+        state.variable_detail_rows.append(row)
+
+    # --- Narrative regen ONLY for tickers whose Thesis moved >= 5 pts ---
+    # Otherwise keep the prior narrative verbatim. Keeps the diff small.
+    # We walk the prior narratives order so the on-disk file's order is
+    # stable across hourly runs (avoids spurious git churn).
+    new_narratives: List[Dict[str, Any]] = []
+    refreshed_rows_by_ticker = {
+        r.get("ticker"): r for r in state.snapshot_rows if isinstance(r, dict)
+    }
+    n_regen = 0
+    for prior_n in prior_narratives.get("narratives", []):
+        if not isinstance(prior_n, dict):
+            continue
+        sym = prior_n.get("ticker")
+        row = refreshed_rows_by_ticker.get(sym)
+        delta = abs(thesis_delta_by_ticker.get(sym, 0.0))
+        # Reuse prior narrative when (a) the ticker wasn't refreshed this
+        # run, or (b) it was refreshed but Thesis barely moved.
+        if (
+            sym not in refreshed_vd
+            or delta < _NEWS_ONLY_NARRATIVE_DELTA_THRESHOLD
+        ):
+            existing = dict(prior_n)
+            if row is not None:
+                # Refresh confidence_level cheaply.
+                existing["confidence_level"] = row.get(
+                    "confidence_level", existing.get("confidence_level")
+                )
+            new_narratives.append(existing)
+            continue
+        try:
+            narr = narratives.generate_narratives(row)
+            new_narratives.append(narr)
+            n_regen += 1
+        except Exception:
+            # Defensive — fall back to prior narrative if regen fails.
+            new_narratives.append(dict(prior_n))
+    state.narrative_rows = new_narratives
+    print(
+        "[news-only] Stage 5: %d narratives total (%d regenerated, %d reused from prior)"
+        % (len(new_narratives), n_regen, len(new_narratives) - n_regen)
+    )
+
+    # --- Persist (snapshot + variable_detail + narratives only) ---
+    # Critical: do NOT call rebuild_history_for_all_tickers — the morning's
+    # full run already appended today's history entry, and we don't want
+    # 24 hourly entries per ticker. Also do not regenerate the LTHCS index
+    # (it's a daily/weekly aggregate; consumers of data/lthcs/index/<date>
+    # expect the morning composite).
+    try:
+        persist.write_snapshot(
+            state.calc_date,
+            MODEL_VERSION,
+            DEFAULT_WEIGHTS_PROFILE,
+            state.snapshot_rows,
+            overwrite=True,  # news-only always overwrites today's snapshot
+        )
+        persist.write_variable_detail(
+            state.calc_date,
+            MODEL_VERSION,
+            state.variable_detail_rows,
+            overwrite=True,
+        )
+        persist.write_narratives(
+            state.calc_date,
+            MODEL_VERSION,
+            state.narrative_rows,
+            overwrite=True,
+        )
+        persist.rebuild_index(MODEL_VERSION)
+    except Exception as exc:
+        print("✗ [news-only] persist error: %s" % exc)
+        return 1
+
+    print(
+        "✓ [news-only] Wrote snapshot (%d rows), variable_detail (%d rows), "
+        "narratives (%d rows). History append skipped (owned by daily run)."
+        % (
+            len(state.snapshot_rows),
+            len(state.variable_detail_rows),
+            len(state.narrative_rows),
+        )
+    )
+    return 0
+
+
 # Module-level stage list so tests can import + reorder + introspect.
 STAGES: List[Callable[[PipelineState], bool]] = [
     stage_1_load_config,
@@ -1926,6 +2425,8 @@ STAGES: List[Callable[[PipelineState], bool]] = [
 
 def main(argv: Optional[List[str]] = None) -> int:
     args = parse_args(argv)
+    if getattr(args, "news_only", False):
+        return run_news_only(args)
     state = PipelineState(args=args)
     for fn in STAGES:
         if not fn(state):
