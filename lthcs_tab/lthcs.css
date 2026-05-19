@@ -1692,3 +1692,236 @@ input[type="search"] {
     transition: none;
   }
 }
+
+/* =========================================================================
+   Variant C — index drill-down buttons (S&P 100 / DOW 30 / NASDAQ-100)
+   Promoted from a chip row into first-class filter buttons. Clicking one
+   re-filters the entire downstream view (apex headline, B/H/W bucket
+   counts, band tiles, ticker grid). Class names are namespaced with
+   `lthcs-ix-` to avoid colliding with the existing `lthcs-stat-` family.
+   ========================================================================= */
+.lthcs-index-buttons {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, 1fr);
+}
+@media (max-width: 760px) {
+  .lthcs-index-buttons { grid-template-columns: 1fr; }
+}
+
+.lthcs-ix {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 16px 12px;
+  cursor: pointer;
+  text-align: center;
+  font-family: inherit;
+  color: var(--text-primary);
+  transition: background 140ms ease, border-color 140ms ease, transform 80ms ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.lthcs-ix:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.lthcs-ix:active {
+  transform: translateY(1px);
+}
+
+.lthcs-ix:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.22);
+}
+
+.lthcs-ix::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: var(--text-tertiary);
+  transition: width 140ms ease, background 140ms ease;
+}
+
+.lthcs-ix.is-active {
+  border-color: var(--accent);
+  background: rgba(110, 168, 254, 0.08);
+}
+
+.lthcs-ix.is-active::before {
+  width: 8px;
+  background: var(--accent);
+}
+
+.lthcs-ix-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+.lthcs-ix-count {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.lthcs-ix.is-active .lthcs-ix-count {
+  color: var(--accent);
+}
+
+.lthcs-ix-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lthcs-ix-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+
+/* =========================================================================
+   Variant C — apex headline.
+   Centered prominent posture phrase ("S&P 100 · DISTRIBUTING") with
+   color tone driven by Watch% of the selected index subset. The
+   --lthcs-apex-tone variable is set on the section by JS.
+   This is independent of the existing `.lthcs-composite-index` block
+   above it, which renders the universe-level signed index gauge.
+   ========================================================================= */
+.lthcs-apex {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 22px 24px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  position: relative;
+}
+
+.lthcs-apex::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  border-top-left-radius: var(--radius-lg);
+  border-bottom-left-radius: var(--radius-lg);
+  background: var(--lthcs-apex-tone, var(--band-monitor-bright));
+  transition: background 200ms ease;
+}
+
+.lthcs-apex-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 700;
+}
+
+.lthcs-apex-headline {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--lthcs-apex-tone, var(--band-monitor-bright));
+  transition: color 200ms ease;
+}
+
+@media (max-width: 760px) {
+  .lthcs-apex-headline { font-size: 20px; }
+}
+
+.lthcs-apex-score-line {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.lthcs-apex-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--lthcs-apex-tone, var(--band-monitor-bright));
+  transition: color 200ms ease;
+}
+
+.lthcs-apex-sub {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  max-width: 64ch;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.lthcs-apex-gauge {
+  width: 100%;
+  max-width: 720px;
+  position: relative;
+  margin-top: 8px;
+}
+
+.lthcs-apex-gauge-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(
+    to right,
+    var(--band-review-bright) 0%,
+    var(--band-weakening-bright) 25%,
+    var(--band-monitor-bright) 50%,
+    var(--band-constructive-bright) 70%,
+    var(--band-high-bright) 100%
+  );
+}
+
+.lthcs-apex-gauge-marker {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 6px;
+  height: 16px;
+  background: var(--text-primary);
+  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--bg-elevated);
+  transform: translateX(-50%);
+  transition: left 200ms ease;
+}
+
+.lthcs-apex-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lthcs-ix,
+  .lthcs-apex::before,
+  .lthcs-apex-headline,
+  .lthcs-apex-num,
+  .lthcs-apex-gauge-marker {
+    transition: none;
+  }
+}

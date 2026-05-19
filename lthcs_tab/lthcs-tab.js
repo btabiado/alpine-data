@@ -124,12 +124,24 @@ const state = {
   insiderByTicker: {},   // Week 11: ticker -> insider record (SEC Form 4)
   trendByTicker: {},     // Task 1: ticker -> { delta, direction } (computed from history/by_ticker)
   activeFilters: {
-    index: 'all',
+    // Variant C: `index` is now the drill-down index (sp-100 / djia /
+    // nasdaq-100) selected via the big buttons at the top. Default is
+    // sp-100 (broadest, 100 names). Unlike the band/drift filters,
+    // there's no `all` mode — exactly one index is always selected.
+    index: 'sp-100',
     band: 'all',
     drift: 'all',
   },
   searchQuery: '',
   starred: [],           // Week 9 stub — persisted but not surfaced yet
+};
+
+// Variant C: human-readable display labels for the three drill-down
+// indices. Keyed by the same short keys used in INDEX_FILTERS.
+const INDEX_DISPLAY = {
+  'sp-100': 'S&P 100',
+  'djia': 'DOW 30',
+  'nasdaq-100': 'NASDAQ-100',
 };
 
 // ---------------------------------------------------------------------------
@@ -447,7 +459,10 @@ function applyFilters() {
   const q = state.searchQuery.trim().toLowerCase();
   const { index, band, drift } = state.activeFilters;
   return state.enriched.filter((row) => {
-    if (index !== 'all' && !row.indices.includes(index)) return false;
+    // Variant C: `index` always narrows to a single index (sp-100 / djia
+    // / nasdaq-100). The legacy `all` value is still tolerated so any
+    // persisted state from before this change degrades gracefully.
+    if (index && index !== 'all' && !row.indices.includes(index)) return false;
     if (band !== 'all' && row.uiBand !== band) return false;
     if (drift !== 'all' && row.driftDirection !== drift) return false;
     if (q) {
@@ -457,6 +472,71 @@ function applyFilters() {
     }
     return true;
   });
+}
+
+// Variant C: rows belonging to the currently-selected drill-down index.
+// Used to drive the apex headline + index-scoped bucket counts
+// independently of the band/drift/search filters (those narrow further
+// within the index subset, but the apex shows the subset as a whole).
+function rowsForIndex(indexKey) {
+  if (!indexKey || indexKey === 'all') return state.enriched.slice();
+  return state.enriched.filter((row) => row.indices.includes(indexKey));
+}
+
+// Variant C: count breakdown for a single index subset. Returns
+//   { total, buy, hold, watch, elite, high, constructive, monitor, weakening, review }
+// All values are integers. Used by both the apex headline and the
+// index-button sub-text.
+function countBreakdown(rows) {
+  const out = {
+    total: rows.length,
+    elite: 0, high: 0, constructive: 0,
+    monitor: 0, weakening: 0, review: 0,
+  };
+  for (const r of rows) {
+    if (out[r.uiBand] != null) out[r.uiBand] += 1;
+  }
+  out.buy = out.elite + out.high + out.constructive;
+  out.hold = out.monitor;
+  out.watch = out.weakening + out.review;
+  return out;
+}
+
+// Variant C: derive the apex posture from a count breakdown. Mirrors
+// the crypto dashboard's "STRONG WHALE DUMP" / "NEUTRAL" treatment.
+// Returns { phrase, toneVar, watchPct, buyPct, lean, sub }.
+function aposturePosture(b) {
+  const total = b.total || 0;
+  const watchPct = total ? (b.watch / total) * 100 : 0;
+  const buyPct   = total ? (b.buy   / total) * 100 : 0;
+  const lean     = total ? ((b.buy - b.watch) / total) * 100 : 0;
+  let phrase, toneVar, sub;
+  if (watchPct >= 80) {
+    phrase = 'STRONG DISTRIBUTION';
+    toneVar = 'var(--band-review-bright)';
+    sub = 'Heavy tail in Watch; Buy thin. Directional read, not a trading signal.';
+  } else if (watchPct >= 65) {
+    phrase = 'DISTRIBUTING';
+    toneVar = 'var(--band-weakening-bright)';
+    sub = 'Heavy tail in Watch; Buy thin. Directional read, not a trading signal.';
+  } else if (watchPct >= 45) {
+    phrase = 'WEAK';
+    toneVar = 'var(--band-monitor-bright)';
+    sub = 'Mixed posture, leaning weak. Directional read, not a trading signal.';
+  } else if (watchPct >= 25) {
+    phrase = 'BALANCED';
+    toneVar = 'var(--band-monitor-bright)';
+    sub = 'Mixed posture, leaning weak. Directional read, not a trading signal.';
+  } else if (buyPct >= 40) {
+    phrase = 'STRONG ACCUMULATION';
+    toneVar = 'var(--band-high-bright)';
+    sub = 'Posture leans constructive. Directional read, not a trading signal.';
+  } else {
+    phrase = 'CONSTRUCTIVE';
+    toneVar = 'var(--band-constructive-bright)';
+    sub = 'Posture leans constructive. Directional read, not a trading signal.';
+  }
+  return { phrase, toneVar, watchPct, buyPct, lean, sub };
 }
 
 // ---------------------------------------------------------------------------
@@ -558,9 +638,11 @@ function updateStats(filtered) {
     if (el) el.textContent = String(summaryCounts[key]);
   }
 
-  // Index counts — always show the FULL universe count per index (not
-  // narrowed by current filter), since they double as filter buttons
-  // and the count should reflect "what you'd get if you click here."
+  // Variant C: Index counts on the three drill-down buttons. The count
+  // is always the FULL index membership count (not narrowed by band/
+  // drift/search), so the buttons read "100 / 30 / 97" regardless of
+  // which one is currently selected. Sub-text shows the count vs.
+  // unscored split where applicable.
   const indexCounts = Object.fromEntries(INDEX_FILTERS.map((k) => [k, 0]));
   for (const row of state.enriched) {
     for (const idx of row.indices) {
@@ -570,6 +652,56 @@ function updateStats(filtered) {
   for (const idx of INDEX_FILTERS) {
     const el = document.querySelector(`[data-index-count="${idx}"]`);
     if (el) el.textContent = String(indexCounts[idx]);
+    const sub = document.querySelector(`[data-index-sub="${idx}"]`);
+    if (sub) {
+      const n = indexCounts[idx];
+      if (idx === 'djia') sub.textContent = 'Dow Jones Industrial Avg';
+      else sub.textContent = `${n} scored`;
+    }
+  }
+}
+
+// Variant C: paint the centered apex headline section. Sourced from
+// state.enriched filtered by the active drill-down index ONLY — band/
+// drift/search narrowing is intentionally NOT applied here. The apex
+// describes the posture of the whole index subset; the bucket tiles
+// below it already react to band/drift filters via updateStats().
+function updateApex() {
+  const indexKey = state.activeFilters.index || 'sp-100';
+  const rows = rowsForIndex(indexKey);
+  const breakdown = countBreakdown(rows);
+  const posture = aposturePosture(breakdown);
+  const label = INDEX_DISPLAY[indexKey] || indexKey;
+
+  const root = document.getElementById('lthcs-apex');
+  if (root) root.style.setProperty('--lthcs-apex-tone', posture.toneVar);
+
+  const eyebrow = document.querySelector('[data-apex-eyebrow]');
+  if (eyebrow) {
+    eyebrow.textContent =
+      `LTHCS Composite Index · ${label} · ${breakdown.total} names`;
+  }
+
+  const headline = document.querySelector('[data-apex-headline]');
+  if (headline) headline.textContent = `${label} · ${posture.phrase}`;
+
+  const leanEl = document.querySelector('[data-apex-lean]');
+  if (leanEl) {
+    const sign = posture.lean >= 0 ? '+' : '−';
+    leanEl.textContent = `${sign}${Math.abs(posture.lean).toFixed(1)}%`;
+  }
+
+  const scoreEl = document.querySelector('[data-apex-score]');
+  if (scoreEl) scoreEl.textContent = `watch ${posture.watchPct.toFixed(0)}% of subset`;
+
+  const subEl = document.querySelector('[data-apex-sub]');
+  if (subEl) subEl.textContent = posture.sub;
+
+  // Gauge marker: map lean (-100..+100) to 0..100% position on the bar.
+  const marker = document.querySelector('[data-apex-marker]');
+  if (marker) {
+    const pos = Math.max(0, Math.min(100, (posture.lean + 100) / 2));
+    marker.style.left = `${pos.toFixed(1)}%`;
   }
 }
 
@@ -583,6 +715,10 @@ function renderActiveFilters() {
 
   const active = [];
   for (const group of FILTER_GROUPS) {
+    // Variant C: the drill-down index is always active and managed by the
+    // big buttons at the top — don't echo it in the breadcrumb (would
+    // imply it can be cleared, which it can't).
+    if (group === 'index') continue;
     const value = state.activeFilters[group];
     if (value && value !== 'all') {
       const label = (FILTER_VALUE_LABELS[group] && FILTER_VALUE_LABELS[group][value]) || value;
@@ -642,10 +778,18 @@ function clearFilter(group) {
     const input = $('#lthcs-search');
     if (input) input.value = '';
   } else if (group === '__all__') {
-    for (const g of FILTER_GROUPS) state.activeFilters[g] = 'all';
+    for (const g of FILTER_GROUPS) {
+      // Variant C: never clear the drill-down index — it has no "all"
+      // state and must always hold one of sp-100 / djia / nasdaq-100.
+      if (g === 'index') continue;
+      state.activeFilters[g] = 'all';
+    }
     state.searchQuery = '';
     const input = $('#lthcs-search');
     if (input) input.value = '';
+  } else if (group === 'index') {
+    // Variant C: ignore clear-on-index — see comment above.
+    return;
   } else if (FILTER_GROUPS.includes(group)) {
     state.activeFilters[group] = 'all';
   } else {
@@ -660,6 +804,7 @@ function renderAll() {
   const filtered = applyFilters();
   renderCards(filtered);
   updateStats(filtered);
+  updateApex();
   renderActiveFilters();
 }
 
@@ -689,8 +834,25 @@ function setChipActive(group, value) {
 
 // Task 2: mirror chip activation onto the clickable stat tiles at the top.
 // `group` is 'index' or 'band'; 'all' clears every tile in that group.
+// Variant C: for 'index', the targets are the new `.lthcs-ix` buttons
+// (one is always active — no `all` state). Band tiles stay on the
+// `.lthcs-stat-clickable` family.
 function setStatActive(group, value) {
-  const attr = group === 'index' ? 'data-index' : 'data-band';
+  if (group === 'index') {
+    const buttons = $$('.lthcs-ix[data-index]');
+    for (const btn of buttons) {
+      const btnVal = btn.getAttribute('data-index');
+      if (btnVal === value) {
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
+      } else {
+        btn.classList.remove('is-active');
+        btn.setAttribute('aria-pressed', 'false');
+      }
+    }
+    return;
+  }
+  const attr = 'data-band';
   const tiles = $$(`.lthcs-stat-clickable[${attr}]`);
   for (const tile of tiles) {
     const tileVal = tile.getAttribute(attr);
@@ -749,6 +911,12 @@ function restoreFilterState() {
     } catch (err) {
       console.warn('LTHCS: failed to parse persisted filter state.', err);
     }
+  }
+  // Variant C: there is no "all" mode for the drill-down index — exactly
+  // one of sp-100 / djia / nasdaq-100 is always selected. Any older
+  // persisted state (`'all'`, missing, etc.) snaps back to sp-100.
+  if (!INDEX_FILTERS.includes(state.activeFilters.index)) {
+    state.activeFilters.index = 'sp-100';
   }
   // Week 9 stub: starred tickers are persisted but not yet surfaced in UI.
   const rawStarred = safeGet(STORAGE_KEYS.starred);
@@ -811,26 +979,21 @@ function wireChips() {
   }
 }
 
-// Index stat tiles are also filter buttons — click to activate that
-// index filter (and toggle off back to "all" on a second click).
+// Variant C: the three big drill-down buttons at the top. Unlike the
+// old toggle-to-all stat tiles, clicking a button always selects that
+// index — there is no "all" mode in this UI. (The button is a real
+// <button>, so Enter/Space activation comes for free.)
 function wireIndexStats() {
-  const tiles = $$('.lthcs-stat[data-index]');
-  for (const tile of tiles) {
-    const activate = () => {
-      const idx = tile.dataset.index;
+  const buttons = $$('.lthcs-ix[data-index]');
+  for (const btn of buttons) {
+    btn.addEventListener('click', () => {
+      const idx = btn.dataset.index;
       if (!INDEX_FILTERS.includes(idx)) return;
-      const next = state.activeFilters.index === idx ? 'all' : idx;
-      state.activeFilters.index = next;
+      if (state.activeFilters.index === idx) return;  // already active
+      state.activeFilters.index = idx;
       syncFilterUI('index');
       persistFilterState();
       renderAll();
-    };
-    tile.addEventListener('click', activate);
-    tile.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        activate();
-      }
     });
   }
 }
