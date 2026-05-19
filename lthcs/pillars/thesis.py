@@ -460,6 +460,156 @@ def compute_thesis_from_finnhub_recommendation(
     }
 
 
+# --- Finnhub /news-sentiment base path -------------------------------------
+#
+# Finnhub /news-sentiment is the SECONDARY base Thesis signal, used to fill
+# the analyst-coverage gap. Of our 167-name universe, ~22 tickers (May 2026
+# audit) have no Finnhub /stock/recommendation coverage (the primary base):
+# the consumer staples / utilities / industrials names that bigger sell-
+# side desks don't actively cover with monthly buy/sell calls but that
+# Reuters/Bloomberg still write headlines about. /news-sentiment covers the
+# full universe daily via the same Finnhub free tier, so it slots in
+# perfectly here.
+#
+# Cascade priority (highest -> lowest), all baked into
+# compute_thesis_with_refinement:
+#   1. Finnhub /stock/recommendation  (analyst consensus, 12mo monthly history)
+#   2. Finnhub /news-sentiment        (universal coverage, real bullish/bearish)
+#   3. Stored AV-rotation sentiment   (legacy AV NEWS_SENTIMENT rotation)
+#   4. Neutral 50.0                   (no signal anywhere)
+#
+# Composition math mirrors the AV-stored path: bullish_percent -
+# bearish_percent is already in [-1, +1] (it's the same scale the AV
+# parser produces), confidence blend caps at 3 articles, and the events
+# refinement (8-K + Yahoo earnings) is applied on top by
+# compute_thesis_with_refinement.
+
+
+def compute_thesis_from_finnhub_news_sentiment(
+    ticker: str,
+    news_sentiment_signal: Optional[Dict[str, Any]],
+    *,
+    today: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Compute the Thesis Integrity sub-score from a Finnhub /news-sentiment signal.
+
+    Consumes the dict produced by
+    :func:`lthcs.sources.finnhub.parse_thesis_signal` -- a normalised
+    snapshot of Finnhub's news-sentiment endpoint with
+    ``mean_sentiment_score`` already in ``[-1, +1]`` (bullish_percent -
+    bearish_percent) and an ``article_count`` from the buzz block.
+
+    Composition math is identical to ``compute_thesis_from_stored_sentiment``
+    so downstream scoring can't tell which source produced a given
+    sub_score::
+
+        raw = bounded_linear(mean_sentiment_score, -1.0, +1.0)   # 50 if missing
+        confidence = min(article_count, 3) / 3                   # in [0, 1]
+        sub_score = 50.0 + (raw - 50.0) * confidence
+        sub_score = round(sub_score, 1)
+
+    Parameters
+    ----------
+    ticker:
+        Subject ticker. Used for the output ``ticker`` field when the
+        signal dict doesn't carry one of its own.
+    news_sentiment_signal:
+        Output of :func:`lthcs.sources.finnhub.parse_thesis_signal`.
+        ``None`` (no Finnhub data) or an empty / zero-article dict
+        collapses to neutral 50.0 with ``has_sentiment=False``.
+    today:
+        ISO date stored in the ``data_quality.last_scored`` field for
+        downstream UI display. Defaults to real today.
+
+    Returns
+    -------
+    dict
+        Same shape as :func:`compute_thesis_from_finnhub_recommendation`
+        so Stage 4 can swap sources without altering the snapshot schema.
+        ``data_quality.source`` is stamped ``"finnhub_news_sentiment"``.
+    """
+    today_iso = _today_iso(today)
+    out_ticker = ticker.upper() if isinstance(ticker, str) else ticker
+
+    article_count = 0
+    mean_sent: Optional[float] = None
+    mean_rel: Optional[float] = None
+    label_counts: Dict[str, int] = {}
+    if isinstance(news_sentiment_signal, dict):
+        article_count = int(news_sentiment_signal.get("article_count") or 0)
+        raw_mean = news_sentiment_signal.get("mean_sentiment_score")
+        if raw_mean is not None:
+            try:
+                mean_sent = float(raw_mean)
+            except (TypeError, ValueError):
+                mean_sent = None
+        raw_rel = news_sentiment_signal.get("mean_relevance_score")
+        if raw_rel is not None:
+            try:
+                mean_rel = float(raw_rel)
+            except (TypeError, ValueError):
+                mean_rel = None
+        label_counts = news_sentiment_signal.get("label_counts") or {}
+        if news_sentiment_signal.get("ticker"):
+            out_ticker = news_sentiment_signal["ticker"]
+
+    insufficient = mean_sent is None or article_count <= 0
+
+    if insufficient:
+        return {
+            "ticker": out_ticker,
+            "sub_score": _NEUTRAL,
+            "components": {
+                "article_count": article_count,
+                "mean_sentiment_score": mean_sent,
+                "mean_relevance_score": mean_rel,
+                "label_counts": label_counts,
+                "sentiment_subscore_raw": _NEUTRAL,
+                "confidence_blend": 0.0,
+            },
+            "data_quality": {
+                "has_sentiment": False,
+                "article_count_sufficient": False,
+                "is_stale": True,
+                "days_since_scored": None,
+                "last_scored": None,
+                "source": "finnhub_news_sentiment",
+            },
+        }
+
+    raw_sentiment_sub = float(
+        bounded_linear(float(mean_sent), _SENTIMENT_LOW, _SENTIMENT_HIGH)
+    )
+
+    capped = min(article_count, _MIN_ARTICLES_FOR_FULL_CONFIDENCE)
+    confidence = capped / float(_MIN_ARTICLES_FOR_FULL_CONFIDENCE)
+
+    sub_score = _NEUTRAL + (raw_sentiment_sub - _NEUTRAL) * confidence
+    sub_score = round(float(sub_score), 1)
+
+    return {
+        "ticker": out_ticker,
+        "sub_score": sub_score,
+        "components": {
+            "article_count": article_count,
+            "mean_sentiment_score": float(mean_sent),
+            "mean_relevance_score": mean_rel,
+            "label_counts": label_counts,
+            "sentiment_subscore_raw": raw_sentiment_sub,
+            "confidence_blend": float(confidence),
+        },
+        "data_quality": {
+            "has_sentiment": True,
+            "article_count_sufficient": article_count
+            >= _MIN_ARTICLES_FOR_FULL_CONFIDENCE,
+            "is_stale": False,
+            "days_since_scored": 0,
+            "last_scored": today_iso,
+            "source": "finnhub_news_sentiment",
+        },
+    }
+
+
 # --- Event-driven refinement (8-K + Yahoo earnings) ------------------------
 #
 # The Finnhub recommendation base is the PRIMARY Thesis signal (analyst
@@ -566,22 +716,32 @@ def compute_thesis_with_refinement(
     *,
     sec_8k_signal: Optional[Dict[str, Any]] = None,
     yahoo_earnings_signal: Optional[Dict[str, Any]] = None,
+    news_sentiment_signal: Optional[Dict[str, Any]] = None,
     stored_sentiment: Optional[Dict[str, Any]] = None,
     today: Optional[str] = None,
     events_weight: float = _EVENTS_REFINEMENT_WEIGHT,
 ) -> Dict[str, Any]:
     """Compute the Thesis Integrity sub-score with event-driven refinement.
 
-    Cascade:
-      1. BASE: Finnhub recommendation consensus (via
-         ``compute_thesis_from_finnhub_recommendation``) if usable;
-         else stored sentiment fallback via
-         ``compute_thesis_from_stored_sentiment``; else neutral 50.
-      2. REFINEMENT: blend ``sec_8k_signal`` and ``yahoo_earnings_signal``
-         into a single events_score in [-1, +1], map to 0-100, and blend
-         with the base using ``events_weight``::
+    Cascade (highest priority -> lowest, first usable wins as the BASE):
+      1. Finnhub /stock/recommendation consensus
+         (``compute_thesis_from_finnhub_recommendation``) when
+         ``total_analysts >= 3`` and ``consensus_score`` is not None.
+      2. Finnhub /news-sentiment
+         (``compute_thesis_from_finnhub_news_sentiment``) when the parsed
+         signal has ``article_count > 0`` and a non-None mean score.
+         Universal coverage on the free tier -- closes the ~22-ticker
+         analyst-coverage gap.
+      3. Stored AV-rotation sentiment fallback
+         (``compute_thesis_from_stored_sentiment``) when ``stored_sentiment``
+         is not None.
+      4. Neutral 50.0.
 
-             sub_score = base * (1 - w) + events_subscore * w
+    REFINEMENT: blend ``sec_8k_signal`` and ``yahoo_earnings_signal``
+    into a single events_score in [-1, +1], map to 0-100, and blend
+    with the base using ``events_weight``::
+
+         sub_score = base * (1 - w) + events_subscore * w
 
     The refinement is intentionally a SMALL adjustment by default (w=0.25)
     so analyst consensus remains the anchor. The base path also still runs
@@ -607,8 +767,9 @@ def compute_thesis_with_refinement(
     reco_signal:
         Finnhub recommendation signal dict (see
         ``compute_thesis_from_finnhub_recommendation``). Pass ``None``
-        when Finnhub has no coverage; the function falls back through
-        ``stored_sentiment`` or to a neutral base.
+        when Finnhub has no analyst coverage; the function falls back
+        through ``news_sentiment_signal`` -> ``stored_sentiment`` ->
+        neutral.
     sec_8k_signal:
         Output of ``sec_8k.event_signal_for_ticker``. Refinement only
         fires when ``article_count > 0`` and ``mean_sentiment_score``
@@ -616,10 +777,14 @@ def compute_thesis_with_refinement(
     yahoo_earnings_signal:
         Output of ``yahoo_events.summarize_earnings_for_thesis``.
         Same gates as 8-K.
+    news_sentiment_signal:
+        Output of ``finnhub.parse_thesis_signal``. Used as the BASE only
+        when ``reco_signal`` does not meet the analyst-coverage gate.
+        Free-tier universal — closes the analyst-coverage gap.
     stored_sentiment:
         Fallback AV-rotation sentiment dict consumed by
-        ``compute_thesis_from_stored_sentiment``. Only used when
-        Finnhub doesn't produce a usable base.
+        ``compute_thesis_from_stored_sentiment``. Only used when neither
+        Finnhub source produces a usable base.
     today:
         ISO date for ``last_scored``. Defaults to today.
     events_weight:
@@ -636,31 +801,51 @@ def compute_thesis_with_refinement(
     Notes
     -----
     * The base path is preserved exactly when both refinement signals
-      are missing — this function reduces to the prior Finnhub-or-AV
-      cascade with extra ``has_sec_8k=False`` / ``has_yahoo_earnings=False``
-      markers.
+      are missing — this function reduces to the cascade with extra
+      ``has_sec_8k=False`` / ``has_yahoo_earnings=False`` markers.
     * Refinement never moves a sub_score outside [0, 100]: the
       events_subscore is itself in [0, 100], and a weighted average of
       two values in [0, 100] stays in [0, 100].
     """
-    # --- Step 1: compute the base sub_score ------------------------------
+    # --- Step 1: compute the base sub_score (cascade) --------------------
     base_result: Dict[str, Any]
-    used_finnhub_base = False
+
+    # Priority 1: Finnhub /stock/recommendation when analyst coverage is
+    # sufficient (>= 3 analysts and a real consensus score).
+    reco_usable = False
     if reco_signal is not None:
         consensus = reco_signal.get("consensus_score")
         total = int(reco_signal.get("total_analysts") or 0)
-        if consensus is not None and total >= _MIN_ANALYSTS_FOR_THESIS:
-            base_result = compute_thesis_from_finnhub_recommendation(
-                ticker, reco_signal, today=today
-            )
-            used_finnhub_base = True
-        else:
-            base_result = compute_thesis_from_finnhub_recommendation(
-                ticker, reco_signal, today=today
-            )
+        reco_usable = (
+            consensus is not None and total >= _MIN_ANALYSTS_FOR_THESIS
+        )
+
+    # Priority 2: Finnhub /news-sentiment when coverage exists.
+    news_usable = False
+    if news_sentiment_signal is not None:
+        nm = news_sentiment_signal.get("mean_sentiment_score")
+        nc = int(news_sentiment_signal.get("article_count") or 0)
+        news_usable = (nm is not None and nc > 0)
+
+    if reco_usable:
+        base_result = compute_thesis_from_finnhub_recommendation(
+            ticker, reco_signal, today=today
+        )
+    elif news_usable:
+        base_result = compute_thesis_from_finnhub_news_sentiment(
+            ticker, news_sentiment_signal, today=today
+        )
     elif stored_sentiment is not None:
         base_result = compute_thesis_from_stored_sentiment(
             ticker, stored_sentiment, today=today
+        )
+    elif reco_signal is not None:
+        # Last-resort: surface the reco_signal even when it's below the
+        # analyst-coverage gate so the data_quality block still names
+        # finnhub_recommendation as the attempted source (this preserves
+        # the pre-existing behaviour for tickers with 0-2 analysts).
+        base_result = compute_thesis_from_finnhub_recommendation(
+            ticker, reco_signal, today=today
         )
     else:
         base_result = compute_thesis_from_finnhub_recommendation(

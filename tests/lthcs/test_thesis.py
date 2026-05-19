@@ -958,3 +958,260 @@ def test_refinement_refines_off_stored_sentiment_when_no_finnhub():
     assert refined["sub_score"] == pytest.approx(56.2, abs=0.2)
     assert refined["components"]["has_sec_8k"] is True
     assert refined["components"]["base_sub_score"] == pytest.approx(75.0, abs=0.5)
+
+
+# --- compute_thesis_from_finnhub_news_sentiment + cascade priority --------
+#
+# These cover the new Finnhub /news-sentiment base path (gap-filler when
+# /stock/recommendation has <3 analysts) and the four-step cascade in
+# compute_thesis_with_refinement.
+
+
+def _news_sent_sig(
+    ticker: str = "COST",
+    article_count: int = 12,
+    mean_sentiment_score: float = 0.4,
+    mean_relevance_score: float = 0.6,
+):
+    """Build the dict produced by ``finnhub.parse_thesis_signal``.
+
+    Mirrors the shape: ticker, article_count, mean_sentiment_score in
+    [-1, +1] (bullish_percent - bearish_percent), mean_relevance_score
+    (buzz, clamped to [0, 1]), label_counts (Finnhub fills only
+    Bullish/Bearish/Neutral; somewhat-* stay zero).
+    """
+    bullish = max(0, int(round(article_count * max(0.0, mean_sentiment_score))))
+    bearish = max(0, int(round(article_count * max(0.0, -mean_sentiment_score))))
+    neutral = max(0, article_count - bullish - bearish)
+    return {
+        "ticker": ticker,
+        "article_count": article_count,
+        "mean_sentiment_score": mean_sentiment_score,
+        "mean_relevance_score": mean_relevance_score,
+        "label_counts": {
+            "Bearish": bearish,
+            "Somewhat-Bearish": 0,
+            "Neutral": neutral,
+            "Somewhat-Bullish": 0,
+            "Bullish": bullish,
+        },
+        "source": "finnhub",
+        "last_scored": "2026-05-19",
+    }
+
+
+def test_finnhub_news_sentiment_bullish_signal_produces_non_neutral():
+    """+0.4 mean sentiment, 12 articles -> sub_score ~70 with full confidence."""
+    sig = _news_sent_sig(mean_sentiment_score=0.4, article_count=12)
+    out = thesis.compute_thesis_from_finnhub_news_sentiment(
+        "COST", sig, today="2026-05-19"
+    )
+    assert out["ticker"] == "COST"
+    # bounded_linear(0.4, -1, +1) = 70.0; confidence = 1.0; sub = 70.0
+    assert out["sub_score"] == pytest.approx(70.0, abs=0.1)
+    assert out["components"]["mean_sentiment_score"] == pytest.approx(0.4)
+    assert out["components"]["article_count"] == 12
+    assert out["components"]["confidence_blend"] == pytest.approx(1.0)
+    dq = out["data_quality"]
+    assert dq["has_sentiment"] is True
+    assert dq["article_count_sufficient"] is True
+    assert dq["is_stale"] is False
+    assert dq["source"] == "finnhub_news_sentiment"
+    assert dq["last_scored"] == "2026-05-19"
+
+
+def test_finnhub_news_sentiment_bearish_signal_produces_non_neutral():
+    """-0.6 mean sentiment, 8 articles -> sub_score = 20.0."""
+    sig = _news_sent_sig(mean_sentiment_score=-0.6, article_count=8)
+    out = thesis.compute_thesis_from_finnhub_news_sentiment(
+        "WFC", sig, today="2026-05-19"
+    )
+    assert out["sub_score"] == pytest.approx(20.0, abs=0.1)
+    assert out["data_quality"]["source"] == "finnhub_news_sentiment"
+
+
+def test_finnhub_news_sentiment_none_returns_neutral_stale():
+    """None signal -> neutral 50, stale, source labelled correctly."""
+    out = thesis.compute_thesis_from_finnhub_news_sentiment(
+        "COST", None, today="2026-05-19"
+    )
+    assert out["sub_score"] == 50.0
+    assert out["data_quality"]["has_sentiment"] is False
+    assert out["data_quality"]["is_stale"] is True
+    assert out["data_quality"]["source"] == "finnhub_news_sentiment"
+
+
+def test_finnhub_news_sentiment_zero_articles_returns_neutral():
+    """article_count=0 -> insufficient signal -> neutral 50."""
+    sig = _news_sent_sig(article_count=0, mean_sentiment_score=0.0)
+    out = thesis.compute_thesis_from_finnhub_news_sentiment(
+        "COST", sig, today="2026-05-19"
+    )
+    assert out["sub_score"] == 50.0
+    assert out["data_quality"]["has_sentiment"] is False
+    assert out["data_quality"]["source"] == "finnhub_news_sentiment"
+
+
+def test_finnhub_news_sentiment_one_article_dampens_confidence():
+    """1 article + +0.6 -> confidence_blend=1/3, sub_score = 50 + (80-50)/3 = 60."""
+    sig = _news_sent_sig(mean_sentiment_score=0.6, article_count=1)
+    out = thesis.compute_thesis_from_finnhub_news_sentiment(
+        "COST", sig, today="2026-05-19"
+    )
+    assert out["sub_score"] == pytest.approx(60.0, abs=0.1)
+    assert out["components"]["confidence_blend"] == pytest.approx(1.0 / 3.0)
+    assert out["data_quality"]["article_count_sufficient"] is False
+
+
+def test_finnhub_news_sentiment_return_shape_keys():
+    """Top-level shape + the data_quality.source field exist."""
+    sig = _news_sent_sig()
+    out = thesis.compute_thesis_from_finnhub_news_sentiment(
+        "COST", sig, today="2026-05-19"
+    )
+    assert set(out.keys()) == {
+        "ticker", "sub_score", "components", "data_quality"
+    }
+    assert out["data_quality"]["source"] == "finnhub_news_sentiment"
+
+
+def test_cascade_prefers_reco_over_news_sentiment_when_both_present():
+    """Cascade priority 1: /stock/recommendation wins when >=3 analysts.
+
+    Even with a strong /news-sentiment signal pulling the opposite way,
+    the analyst-consensus base must win. Refinement is off (events=None)
+    so we read the base directly.
+    """
+    reco = _reco(consensus_score=0.6, total_analysts=15,
+                 buy_count=10, hold_count=4, sell_count=1)
+    news_sig = _news_sent_sig(mean_sentiment_score=-0.8, article_count=20)
+    refined = thesis.compute_thesis_with_refinement(
+        "AAPL", reco,
+        news_sentiment_signal=news_sig,
+        today="2026-05-19",
+    )
+    # bounded_linear(0.6, -1, +1) = 80.0
+    assert refined["sub_score"] == pytest.approx(80.0, abs=0.5)
+    assert refined["data_quality"]["source"] == "finnhub_recommendation"
+
+
+def test_cascade_falls_back_to_news_sentiment_when_reco_under_3_analysts():
+    """Cascade priority 2: /news-sentiment wins when reco has <3 analysts.
+
+    This is the COST/WFC/PG class of names: Finnhub knows about them but
+    Wall Street brokers don't actively rate them with monthly calls.
+    """
+    reco = _reco(consensus_score=0.5, total_analysts=2,  # below gate
+                 buy_count=1, hold_count=1, sell_count=0)
+    news_sig = _news_sent_sig(mean_sentiment_score=0.5, article_count=10)
+    refined = thesis.compute_thesis_with_refinement(
+        "COST", reco,
+        news_sentiment_signal=news_sig,
+        today="2026-05-19",
+    )
+    # bounded_linear(0.5, -1, +1) = 75.0 from news-sentiment
+    assert refined["sub_score"] == pytest.approx(75.0, abs=0.5)
+    assert refined["data_quality"]["source"] == "finnhub_news_sentiment"
+
+
+def test_cascade_falls_back_to_news_sentiment_when_reco_none():
+    """Cascade priority 2 (no reco_signal at all): /news-sentiment serves."""
+    news_sig = _news_sent_sig(mean_sentiment_score=-0.4, article_count=6)
+    refined = thesis.compute_thesis_with_refinement(
+        "COST", None,
+        news_sentiment_signal=news_sig,
+        today="2026-05-19",
+    )
+    # bounded_linear(-0.4, -1, +1) = 30.0
+    assert refined["sub_score"] == pytest.approx(30.0, abs=0.5)
+    assert refined["data_quality"]["source"] == "finnhub_news_sentiment"
+
+
+def test_cascade_falls_back_to_stored_av_when_neither_finnhub_usable():
+    """Cascade priority 3: stored AV sentiment when both Finnhub sources fail.
+
+    Reco has 0 analysts, news-sentiment has 0 articles. The stored
+    AV-rotation sentiment file is the last fallback before neutral.
+    """
+    reco = _reco(consensus_score=None, total_analysts=0,
+                 buy_count=0, hold_count=0, sell_count=0)
+    news_sig = _news_sent_sig(article_count=0, mean_sentiment_score=0.0)
+    stored = {
+        "ticker": "WMT",
+        "last_scored": "2026-05-19",
+        "article_count": 10,
+        "mean_sentiment_score": 0.5,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+            "Bullish": 8, "Neutral": 2, "Bearish": 0,
+            "Somewhat-Bullish": 0, "Somewhat-Bearish": 0,
+        },
+    }
+    refined = thesis.compute_thesis_with_refinement(
+        "WMT", reco,
+        news_sentiment_signal=news_sig,
+        stored_sentiment=stored,
+        today="2026-05-19",
+    )
+    # bounded_linear(0.5, -1, +1) = 75.0 from stored
+    assert refined["sub_score"] == pytest.approx(75.0, abs=0.5)
+    # The stored-sentiment path doesn't set data_quality.source, but the
+    # base must NOT be tagged finnhub_news_sentiment.
+    src = refined["data_quality"].get("source")
+    assert src != "finnhub_news_sentiment"
+    assert src != "finnhub_recommendation"
+
+
+def test_cascade_neutral_when_no_signals_anywhere():
+    """Cascade priority 4: all None -> neutral 50."""
+    refined = thesis.compute_thesis_with_refinement(
+        "FOO", None,
+        news_sentiment_signal=None,
+        stored_sentiment=None,
+        today="2026-05-19",
+    )
+    assert refined["sub_score"] == 50.0
+    assert refined["data_quality"]["has_sentiment"] is False
+
+
+def test_cascade_news_sentiment_with_8k_refinement_applies():
+    """Refinement blends onto a /news-sentiment base just like on /reco."""
+    news_sig = _news_sent_sig(mean_sentiment_score=0.4, article_count=10)
+    sec_sig = _sec_8k_sig(score=-1.0, count=2)
+    refined = thesis.compute_thesis_with_refinement(
+        "COST", None,
+        news_sentiment_signal=news_sig,
+        sec_8k_signal=sec_sig,
+        today="2026-05-19",
+    )
+    # Base = 70 (news-sentiment). Events = 0 (-1 mapped to 0-100). Refined
+    # = 70*0.75 + 0*0.25 = 52.5
+    assert refined["sub_score"] == pytest.approx(52.5, abs=0.5)
+    assert refined["components"]["base_sub_score"] == pytest.approx(70.0, abs=0.5)
+    assert refined["components"]["has_sec_8k"] is True
+    # data_quality.events_refinement_sources should record the 8-K
+    assert "sec_8k" in refined["data_quality"]["events_refinement_sources"]
+
+
+def test_cascade_news_sentiment_zero_articles_falls_through_to_stored():
+    """A news_sentiment_signal dict with 0 articles is treated as unusable."""
+    news_sig = _news_sent_sig(article_count=0, mean_sentiment_score=0.0)
+    stored = {
+        "ticker": "WMT",
+        "last_scored": "2026-05-19",
+        "article_count": 5,
+        "mean_sentiment_score": -0.5,
+        "mean_relevance_score": 0.5,
+        "label_counts": {
+            "Bullish": 0, "Neutral": 1, "Bearish": 4,
+            "Somewhat-Bullish": 0, "Somewhat-Bearish": 0,
+        },
+    }
+    refined = thesis.compute_thesis_with_refinement(
+        "WMT", None,
+        news_sentiment_signal=news_sig,
+        stored_sentiment=stored,
+        today="2026-05-19",
+    )
+    # bounded_linear(-0.5, -1, +1) = 25.0 from stored
+    assert refined["sub_score"] == pytest.approx(25.0, abs=0.5)

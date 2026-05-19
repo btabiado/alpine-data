@@ -301,6 +301,15 @@ class PipelineState:
     # signal across the full window). Stage 4 reads this first, falling back
     # to stored AV sentiment when Finnhub has no coverage.
     recommendation_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # Per-ticker Finnhub /news-sentiment signal -- the SECONDARY Thesis
+    # base, used to fill the analyst-coverage gap. Populated by Stage 2
+    # from finnhub.get_news_sentiment + parse_thesis_signal ONLY for
+    # tickers where recommendation_by_ticker has <3 analysts (saves
+    # ~85% of news-sentiment calls; primary path already covers ~145/167).
+    # Stage 4 cascades reco -> news_sentiment -> stored_av -> neutral.
+    # Skipped entirely in --as-of (backfill) mode since /news-sentiment
+    # has no historical archive.
+    news_sentiment_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     # Event-driven Thesis refinement signals — populated in Stage 2 across
     # the whole active universe (not gated on _has_fresh_sentiment) so the
     # Stage 4 refinement runs even when a Finnhub base already exists.
@@ -1022,6 +1031,56 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
             )
             state.recommendation_by_ticker[sym] = reco_signal
 
+    # --- Finnhub /news-sentiment (SECONDARY Thesis base, gap-filler) -------
+    # Covers the ~22 tickers in our 167-name universe with no Finnhub
+    # /stock/recommendation coverage (consumer staples / utilities /
+    # industrials the sell side doesn't actively rate). Free-tier
+    # universal, native bullish/bearish percentages, 24h cache.
+    #
+    # Only fetched when /stock/recommendation didn't produce a usable
+    # signal (consensus None or total < 3) — saves ~85% of calls and
+    # respects the 60 req/min free-tier budget. Skipped entirely in
+    # --as-of (backfill) mode: /news-sentiment has no historical archive
+    # so a 2026-04-15 backfill would otherwise be polluted with
+    # 2026-05-19's news.
+    if state.active_tickers and not as_of and not finnhub_keyless:
+        news_keyless = False
+        for sym in state.active_tickers:
+            if news_keyless:
+                break
+            # Skip when /stock/recommendation already produced a usable
+            # primary signal (>=3 analysts with a real consensus).
+            reco = state.recommendation_by_ticker.get(sym) or {}
+            try:
+                tot = int(reco.get("total_analysts") or 0)
+            except (TypeError, ValueError):
+                tot = 0
+            if reco.get("consensus_score") is not None and tot >= 3:
+                continue
+            try:
+                raw = finnhub.get_news_sentiment(sym)
+            except finnhub.FinnhubAPIKeyMissing:
+                news_keyless = True
+                break
+            except finnhub.FinnhubRateLimit:
+                break
+            except Exception:
+                continue
+            if not raw:
+                continue
+            sig = finnhub.parse_thesis_signal(raw)
+            # Only park signals that actually carry information so Stage 4
+            # cleanly falls through to the stored-AV fallback otherwise.
+            if (
+                sig
+                and sig.get("mean_sentiment_score") is not None
+                and int(sig.get("article_count") or 0) > 0
+            ):
+                state.news_sentiment_by_ticker[sym] = sig
+        counts["finnhub_news_sentiment_covered"] = len(
+            state.news_sentiment_by_ticker
+        )
+
     # --- Event-driven Thesis refinement collection (universe-wide) ---
     # Populates state.sec_8k_by_ticker and state.yahoo_earnings_by_ticker
     # for EVERY active ticker, regardless of whether a fresh sentiment
@@ -1436,11 +1495,14 @@ def stage_3_quality_checks(state: PipelineState) -> bool:
             flags.append("yahoo_unavailable")
         if not has_sec:
             flags.append("sec_unavailable")
-        # Thesis: ticker is "available" iff we have fresh stored sentiment
-        # OR a Finnhub analyst-recommendation signal with >=3 covering
-        # analysts. The Finnhub path runs regardless of --skip-thesis so
+        # Thesis: ticker is "available" iff we have any of:
+        #   (a) Finnhub /stock/recommendation with >=3 analysts,
+        #   (b) Finnhub /news-sentiment with article_count>0,
+        #   (c) fresh stored AV-rotation sentiment.
+        # The two Finnhub paths run regardless of --skip-thesis so
         # backfills (which always pass --skip-thesis to bypass AV) still
-        # produce a real signal across the universe.
+        # produce real signal across the universe. /news-sentiment is
+        # only populated in non-backfill mode (it has no as_of archive).
         thesis_available = False
         reco_signal = state.recommendation_by_ticker.get(sym)
         if reco_signal is not None:
@@ -1448,6 +1510,13 @@ def stage_3_quality_checks(state: PipelineState) -> bool:
             total = int(reco_signal.get("total_analysts") or 0)
             if consensus is not None and total >= 3:
                 thesis_available = True
+        if not thesis_available:
+            news_sig = state.news_sentiment_by_ticker.get(sym)
+            if news_sig is not None:
+                nm = news_sig.get("mean_sentiment_score")
+                nc = int(news_sig.get("article_count") or 0)
+                if nm is not None and nc > 0:
+                    thesis_available = True
         if not thesis_available and state.rotation is not None and not state.args.skip_thesis:
             sentiment = state.rotation.read_sentiment(sym)
             if sentiment is not None and not state.rotation.is_stale(
@@ -1599,18 +1668,25 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
         reco_signal = state.recommendation_by_ticker.get(sym)
         sec_8k_sig = state.sec_8k_by_ticker.get(sym)
         yahoo_sig = state.yahoo_earnings_by_ticker.get(sym)
+        news_sent_sig = state.news_sentiment_by_ticker.get(sym)
 
         # Optional stored-sentiment fallback for the refinement helper.
-        # Only loaded when Finnhub didn't produce a usable base — saves
-        # disk reads in the common case.
+        # Only loaded when neither Finnhub source produced a usable base
+        # — saves disk reads in the common case.
         stored_sent = None
         finnhub_usable = False
         if reco_signal is not None:
             consensus = reco_signal.get("consensus_score")
             total = int(reco_signal.get("total_analysts") or 0)
             finnhub_usable = (consensus is not None and total >= 3)
+        news_usable = False
+        if news_sent_sig is not None:
+            nm = news_sent_sig.get("mean_sentiment_score")
+            nc = int(news_sent_sig.get("article_count") or 0)
+            news_usable = (nm is not None and nc > 0)
         if (
             not finnhub_usable
+            and not news_usable
             and not state.args.skip_thesis
             and state.rotation is not None
         ):
@@ -1625,6 +1701,7 @@ def stage_4_compute_subscores(state: PipelineState) -> bool:
                 reco_signal,
                 sec_8k_signal=sec_8k_sig,
                 yahoo_earnings_signal=yahoo_sig,
+                news_sentiment_signal=news_sent_sig,
                 stored_sentiment=stored_sent,
                 today=state.calc_date,
             )
