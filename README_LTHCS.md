@@ -133,9 +133,36 @@ git commit -m "lthcs: daily snapshot $(date +%Y-%m-%d)"
 git push
 ```
 
+CLI flags (see `python lthcs_daily.py --help` for the full list):
+
+| Flag | Purpose |
+|---|---|
+| `--tickers AAPL,NVDA` | Restrict to a subset (default: all active in `universe.json`). |
+| `--force` | Overwrite today's snapshot/narratives/variable_detail if present. |
+| `--catch-up` | Forward-fill any missing dates between the last history entry and today. |
+| `--skip-thesis` | Bypass Alpha Vantage (Thesis falls back to Finnhub or neutral 50). |
+| `--news-only` | Hourly path: refresh news-derived inputs only (Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS). Re-emits today's snapshot with a refreshed Thesis sub-score and recomputed composite. Requires today's snapshot to already exist. Used by the `lthcs-news-hourly.yml` workflow. |
+| `--as-of YYYY-MM-DD` | Backfill mode: compute the pipeline as if it were the given date. |
+| `--dry-run` | Compute everything but skip persistence. |
+
 That's it. Three lines once a day. No server, no cron, no database, no cloud bill.
 
 If you skip a day, no harm done — the gap is visible in the history files and the dashboard shows the most recent snapshot regardless of date.
+
+### Automation schedule (GitHub Actions)
+
+In production, the dashboard refreshes itself without you running anything locally. These workflows live in `.github/workflows/`:
+
+| Workflow | Cadence | What it does | Sources touched |
+|---|---|---|---|
+| `lthcs-daily.yml` | Daily, 23:00 UTC | Full pipeline (`lthcs_daily.py --catch-up --skip-thesis`). Computes every pillar, writes the canonical daily snapshot, appends each ticker's history entry, refreshes the macro / breadth / index files. | All sources (Yahoo, SEC EDGAR XBRL, FRED, EIA, SEC 13F, SEC Form 4, Finnhub, sector RSS, Google Trends cache). |
+| `lthcs-news-hourly.yml` | Hourly, minute 0 | News-only refresh (`lthcs_daily.py --news-only --force`). Recomputes Thesis + composite for every ticker using fresh news inputs; reuses the morning's Adoption / Institutional / Financial / DES sub-scores untouched. Does NOT append to history (the daily run owns that). | Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS only. |
+| `lthcs-trends-weekly.yml` | Weekly | Refreshes Google Trends acceleration cache. | Google Trends. |
+| `lthcs-validate-weekly.yml` | Weekly | Schema + freshness gate over the last 7 days of snapshots. | (read-only) |
+| `lthcs-tune-weights-monthly.yml` | Monthly | Adaptive weight tuning sweep. | (read-only) |
+| `lthcs-backtest-monthly.yml` | Monthly | Backtest sweep across the rolling window. | (read-only) |
+
+The hourly news-only path keeps Thesis sub-scores and the composite band fresh on a tight cadence without burning API quotas or churning slow-moving fundamentals — Finnhub's 7-day cache means most hours are net-zero network. Concurrency is set to `cancel-in-progress: true` so a newer hour always wins.
 
 ---
 

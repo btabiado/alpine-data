@@ -1,0 +1,145 @@
+name: lthcs-news-hourly
+
+# Hourly news-only LTHCS refresh. Runs lthcs_daily.py --news-only --force
+# every hour at minute 0 and commits the refreshed snapshot /
+# variable_detail / narratives back to main. The 23:00 UTC `lthcs-daily`
+# workflow still owns the full pipeline (FRED, EIA, SEC EDGAR XBRL,
+# 13F, Form 4, Google Trends weekly batch); this workflow is intentionally
+# narrower so it can run on a tight cadence without blowing through API
+# quotas or churning slow-moving data.
+#
+# What it touches each hour:
+#   * Finnhub recommendation_trends  (PRIMARY Thesis input)
+#   * SEC 8-K material events        (real-time corporate events)
+#   * Yahoo earnings dates           (recent quarter beat/miss)
+#   * Sector RSS (FDA / EIA / Fed)   (~30 mapped pharma/energy/financials)
+#   * Thesis pillar sub-scores       (recomputed for every ticker)
+#   * LTHCS composite + band         (re-blended via current weights.json)
+#   * data/lthcs/snapshots/<today>.json
+#   * data/lthcs/variable_detail/<today>.json
+#   * data/lthcs/narratives/<today>.json (only tickers whose Thesis moved
+#                                         >=5 pts get a regenerated
+#                                         narrative; others pass through)
+#
+# What it SKIPS (preserved verbatim from the morning's full snapshot):
+#   * Adoption / Institutional / Financial / DES sub-scores
+#   * Macro modifiers (FRED 10y change), volatility modifiers
+#   * data/lthcs/history/by_ticker/*.json  (the morning's run owns the
+#                                            single daily history entry —
+#                                            no 24x entries per ticker)
+#   * data/lthcs/index/<date>.json (composite index is a daily aggregate)
+#   * Alpha Vantage NEWS_SENTIMENT rotation (25/day budget; not hourly)
+#
+# Failure modes:
+#   * If today's snapshot doesn't exist yet (e.g. 00:00 UTC, before the
+#     23:00 daily cron has caught up to the new UTC date), the script
+#     exits 2 with a clear message. The workflow's `Commit and push`
+#     step then sees no diff and exits cleanly.
+#
+# Differs from lthcs-daily.yml:
+#   * Schedule: every hour vs. once at 23:00 UTC.
+#   * Concurrency: cancel-in-progress=true (newer news wins) vs. queued.
+#   * Pipeline flag: --news-only vs. --catch-up.
+#   * Commit message includes the UTC hour so the audit trail shows when
+#     each hourly refresh ran.
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch: {}
+
+# Push back to main requires contents:write. We intentionally do NOT
+# request pages:write — pages.yml owns the deploy.
+permissions:
+  contents: write
+
+# cancel-in-progress=true: fresh news matters more than completing an
+# in-flight refresh. If hour N+1 starts while hour N is still pushing,
+# hour N gets cancelled and the newer data lands.
+concurrency:
+  group: lthcs-news-hourly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so the push back to main has a complete refspec.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          # Matches the local dev env (.venv = 3.9.6); 3.9 is the lowest
+          # supported and lets pip pick the same wheels.
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run LTHCS news-only refresh
+        env:
+          # Same secrets block as lthcs-daily.yml. Empty values degrade
+          # gracefully (Finnhub keyless = skip recommendation refresh;
+          # SEC user-agent missing = 8-K fetch fails open).
+          ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+        # --news-only: hourly path (Finnhub recs + 8-K + Yahoo earnings +
+        #              sector RSS only; reuses today's other pillars).
+        # --force:     today's snapshot already exists by definition for
+        #              this path; --force is required to overwrite.
+        # Exit code 2 (snapshot missing) is treated as success at the
+        # workflow level — no diff -> no commit -> clean run.
+        run: |
+          set +e
+          python lthcs_daily.py --news-only --force
+          rc=$?
+          if [ $rc -eq 2 ]; then
+            echo "No snapshot exists yet for today; nothing to refresh. Exiting cleanly."
+            exit 0
+          fi
+          exit $rc
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          git add data/lthcs/
+          # Only commit if there's an actual diff. Most hours will have
+          # zero or minimal Finnhub movement, so a no-op cron run shouldn't
+          # pollute git history.
+          if git diff --staged --quiet; then
+            echo "No data changes; skipping commit."
+          else
+            # [skip ci] prevents pages.yml from triggering its own
+            # rebuild on every hourly push (it catches up on the next
+            # hourly cron anyway).
+            git commit -m "lthcs: news-only refresh $(date -u +%Y-%m-%dT%H:%M) [skip ci]"
+            # Race-safe push: if main moved while CI ran (e.g. the daily
+            # 23:00 cron pushed during our window, or dev landed a
+            # commit), rebase onto the new tip and retry. Mirrors the
+            # pattern in lthcs-daily.yml; originally added there because
+            # run 26034240346 ate a snapshot due to the race.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi
