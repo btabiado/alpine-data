@@ -242,6 +242,8 @@ function buildShell() {
 
     <div class="lthcs-modal-hero" data-slot="hero"></div>
 
+    <div class="lthcs-modal-dragger-wrap" data-slot="dragger" hidden></div>
+
     <div>
       <h3 class="lthcs-modal-section-heading">Score history</h3>
       <div class="lthcs-modal-chart-wrap">
@@ -362,6 +364,113 @@ function renderHero(panel, { snapshotRow }) {
     driftRow.appendChild(stat);
   }
   heroEl.appendChild(driftRow);
+}
+
+// Surface the Phase 5 verification finding inline: for Weakening/Review tickers,
+// show a prominent "Dragging pillar" callout — the LOWEST sub-score across the
+// 5 LTHCS pillars. Ties broken by highest weight in weights_used (i.e. the one
+// dragging the composite most). Skipped for Buy bucket (elite/high/constructive)
+// and Hold (monitor) bands where there's no real "drag" problem.
+function renderDraggingPillar(panel, { snapshotRow, vardetailRows, ticker }) {
+  const wrap = panel.querySelector('[data-slot="dragger"]');
+  if (!wrap) return;
+  clear(wrap);
+  wrap.setAttribute('hidden', '');
+
+  const band = (snapshotRow && snapshotRow.band) || '';
+  if (band !== 'weakening' && band !== 'review') return;
+
+  // Prefer snapshotRow.subscores (canonical, matches what the table shows).
+  // Fall back to averaging vardetailRows[].sub_score per pillar if the snapshot
+  // schema is missing them (defensive — shouldn't happen in v1.1.0+).
+  let subs = (snapshotRow && snapshotRow.subscores) || null;
+  if (!subs || typeof subs !== 'object') {
+    subs = {};
+    const buckets = {};
+    if (Array.isArray(vardetailRows)) {
+      for (const row of vardetailRows) {
+        if (!row || (ticker && row.ticker && row.ticker !== ticker)) continue;
+        const p = row.pillar;
+        const s = Number(row.sub_score);
+        if (!p || !Number.isFinite(s)) continue;
+        if (!buckets[p]) buckets[p] = [];
+        buckets[p].push(s);
+      }
+    }
+    for (const [p, arr] of Object.entries(buckets)) {
+      if (arr.length) subs[p] = arr.reduce((a, b) => a + b, 0) / arr.length;
+    }
+  }
+
+  const weights = (snapshotRow && Array.isArray(snapshotRow.weights_used))
+    ? snapshotRow.weights_used : [];
+
+  // Find pillar with lowest sub-score; tie-break by highest weight.
+  let bestKey = null;
+  let bestScore = Infinity;
+  let bestWeight = -Infinity;
+  PILLAR_ORDER.forEach((key, i) => {
+    const v = Number(subs[key]);
+    if (!Number.isFinite(v)) return;
+    const w = Number(weights[i]);
+    const ww = Number.isFinite(w) ? w : 0;
+    if (v < bestScore - 1e-9) {
+      bestScore = v;
+      bestWeight = ww;
+      bestKey = key;
+    } else if (Math.abs(v - bestScore) <= 1e-9 && ww > bestWeight) {
+      bestWeight = ww;
+      bestKey = key;
+    }
+  });
+
+  if (!bestKey) return;
+
+  const pillarName = PILLAR_DISPLAY[bestKey] || bestKey;
+  const composite = Number(snapshotRow && snapshotRow.lthcs_score);
+
+  const card = el('div', { className: 'lthcs-modal-dragger' });
+  card.setAttribute('data-pillar', bestKey);
+  card.setAttribute('role', 'note');
+  card.setAttribute('aria-label', `Dragging pillar: ${pillarName}, sub-score ${fmtScore(bestScore)}`);
+
+  // Color rail (left edge) — tinted via PILLAR_COLORS, no new tokens.
+  const rail = el('span', { className: 'lthcs-modal-dragger-rail' });
+  const railColor = PILLAR_COLORS[bestKey];
+  if (railColor) rail.style.background = railColor;
+  card.appendChild(rail);
+
+  const body = el('div', { className: 'lthcs-modal-dragger-body' });
+
+  const eyebrow = el('span', {
+    className: 'lthcs-modal-dragger-eyebrow',
+    text: 'Dragging pillar',
+  });
+  body.appendChild(eyebrow);
+
+  const headline = el('div', { className: 'lthcs-modal-dragger-headline' });
+  const nameSpan = el('span', {
+    className: 'lthcs-modal-dragger-name',
+    text: pillarName,
+  });
+  if (railColor) nameSpan.style.color = railColor;
+  headline.appendChild(nameSpan);
+  headline.appendChild(el('span', {
+    className: 'lthcs-modal-dragger-sub',
+    text: `sub-score ${fmtScore(bestScore)}`,
+  }));
+  body.appendChild(headline);
+
+  if (Number.isFinite(composite)) {
+    body.appendChild(el('div', {
+      className: 'lthcs-modal-dragger-context',
+      text: `Composite ${fmtScore(composite)} · this pillar is the lowest of the five.`,
+    }));
+  }
+
+  card.appendChild(body);
+  wrap.appendChild(card);
+  wrap.removeAttribute('hidden');
 }
 
 function renderChartSkeleton(panel) {
@@ -2315,6 +2424,7 @@ export function openDetail(args) {
   // Populate sections (synchronous parts)
   renderHeader(panel, { ticker, universeEntry, snapshotRow });
   renderHero(panel, { snapshotRow });
+  renderDraggingPillar(panel, { snapshotRow, vardetailRows: [], ticker });
   renderChartSkeleton(panel);
   renderPillars(panel, { snapshotRow });
   renderNarrative(panel, { snapshotRow, narrative });
