@@ -59,14 +59,30 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
           SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
-          # LLM sentiment SHADOW run (Tier 5 #28, spec docs/lthcs-llm-
-          # sentiment-shadow-spec.md). Default OFF; flip to "1" after
-          # Day 0 ships and ANTHROPIC_API_KEY is set as a repo secret.
-          # When OFF the pipeline is byte-identical to the pre-change
-          # behavior. ~$0.19/day on Haiku 4.5 with prompt caching;
-          # hard cap is $1.00/day (LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY).
+          # LLM shadow runs (Tier 5 #23 narratives + #28 sentiment).
+          # Combined cost ~$0.50/day on Haiku 4.5 with prompt caching
+          # (sentiment ~$0.19/day; narratives ~$0.31/day). Hard cap on
+          # sentiment is $1.00/day (LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY).
+          #
+          # Gating: both flags default OFF in code. With them flipped to
+          # "1" here, the stages run ONLY if ANTHROPIC_API_KEY is set as
+          # a repo secret — when the secret is missing the env var
+          # resolves to "" and the shadow code path no-ops gracefully
+          # (no LLM calls, no errors, pipeline behavior identical to
+          # pre-shadow). User must add ANTHROPIC_API_KEY at:
+          #   Settings -> Secrets and variables -> Actions
+          #
+          # Shadow output (writes are append-only, never read by V1 UI):
+          #   * data/lthcs/sentiment_llm/<date>.json   (Tier 5 #28)
+          #   * data/lthcs/narratives_llm/<date>.json  (Tier 5 #23)
+          #
+          # Specs:
+          #   * docs/lthcs-llm-sentiment-shadow-spec.md
+          #   * LTHCS_NARRATIVES_LLM_ENABLED accepted as legacy synonym
+          #     for LTHCS_LLM_NARRATIVES_ENABLED (one release only).
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          LTHCS_LLM_SENTIMENT_ENABLED: "0"
+          LTHCS_LLM_SENTIMENT_ENABLED: "1"
+          LTHCS_LLM_NARRATIVES_ENABLED: "1"
         # --skip-thesis: do not burn the ~5-25/day Alpha Vantage quota in
         # CI; the rotation file is curated locally and Thesis falls back
         # to neutral 50 in CI runs (V1 daily pipeline behavior).
