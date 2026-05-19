@@ -19,16 +19,19 @@ from typing import Dict, List
 import pytest
 
 from lthcs.peer_groups import (
+    ALLOWED_TECH_SUB_BUCKETS,
     DEFAULT_PEER_GROUPS_PATH,
     DEFAULT_SECTOR_GROUP,
     STRATEGY_COMPOUND,
     STRATEGY_MATURITY_ONLY,
     STRATEGY_SECTOR_GROUP_ONLY,
     STRATEGY_UNIVERSE_FALLBACK,
+    TECH_SECTORS,
     get_compound_peer_key,
     get_peer_cohort,
     get_peer_cohort_with_strategy,
     get_sector_group,
+    get_tech_sub_bucket,
     load_peer_groups_config,
 )
 
@@ -394,3 +397,184 @@ def test_get_peer_cohort_overrides_min_cohort_size() -> None:
         "T1", syn_universe, syn_config, min_cohort_size=10
     )
     assert strat_high == STRATEGY_UNIVERSE_FALLBACK
+
+
+# --- Hardware/Software split: spec §7 coverage ------------------------------
+# docs/lthcs-tech-hardware-software-split.md §7 test plan.
+
+
+def test_schema_every_tech_ticker_has_allowed_tech_sub_bucket(
+    universe: Dict,
+) -> None:
+    """Spec §7.1 — every Tech ticker carries a curated ``tech_sub_bucket``
+    in the allowed set; no non-Tech ticker has the field.
+
+    The HW/SW split keys on this universe.json field — a missing or stray
+    value silently collapses the 3-tuple key back to the 2-tuple legacy
+    path, defeating the split. This test guards the schema invariant.
+    """
+    missing: List[str] = []
+    bad: List[str] = []
+    leaked: List[str] = []
+    for entry in universe["tickers"]:
+        ticker = entry["ticker"]
+        sector = entry.get("sector")
+        bucket = entry.get("tech_sub_bucket")
+        if sector in TECH_SECTORS:
+            if not bucket:
+                missing.append(ticker)
+            elif bucket not in ALLOWED_TECH_SUB_BUCKETS:
+                bad.append(f"{ticker}={bucket!r}")
+        else:
+            if "tech_sub_bucket" in entry:
+                leaked.append(f"{ticker}({sector})={bucket!r}")
+    assert not missing, f"Tech tickers missing tech_sub_bucket: {missing}"
+    assert not bad, (
+        f"Tech tickers with disallowed tech_sub_bucket "
+        f"(expected one of {sorted(ALLOWED_TECH_SUB_BUCKETS)}): {bad}"
+    )
+    assert not leaked, (
+        f"Non-Tech tickers carry tech_sub_bucket (should be Tech-only): {leaked}"
+    )
+
+
+def test_schema_universe_version_bumped_for_hw_sw_split(universe: Dict) -> None:
+    """Spec §5 — universe.json version must be ≥2.2.0 once the
+    tech_sub_bucket field is added. Guards against silent reverts."""
+    version = universe.get("version", "0.0.0")
+    parts = tuple(int(x) for x in version.split("."))
+    assert parts >= (2, 2, 0), (
+        f"universe.json version {version} predates the HW/SW split (need ≥2.2.0)"
+    )
+
+
+def test_get_tech_sub_bucket_for_each_split_bucket(universe: Dict) -> None:
+    """Spec §2 — representative ticker from each sub-bucket resolves."""
+    assert get_tech_sub_bucket("AAPL", universe) == "Hardware"
+    assert get_tech_sub_bucket("CSCO", universe) == "Hardware"
+    assert get_tech_sub_bucket("SMCI", universe) == "Hardware"
+    assert get_tech_sub_bucket("NVDA", universe) == "Semiconductors"
+    assert get_tech_sub_bucket("AMD", universe) == "Semiconductors"
+    assert get_tech_sub_bucket("AVGO", universe) == "Semiconductors"
+    assert get_tech_sub_bucket("MSFT", universe) == "Software"
+    assert get_tech_sub_bucket("CRWD", universe) == "Software"  # cyber → software
+    assert get_tech_sub_bucket("CDNS", universe) == "Software"  # EDA → software
+    assert get_tech_sub_bucket("ACN", universe) == "IT Services"
+    assert get_tech_sub_bucket("IBM", universe) == "IT Services"
+    # Non-Tech ticker returns None.
+    assert get_tech_sub_bucket("JPM", universe) is None
+    assert get_tech_sub_bucket("AMZN", universe) is None  # Consumer Discretionary
+    # Unknown ticker returns None (no entry → no sector → not Tech).
+    assert get_tech_sub_bucket("ZZZZ", universe) is None
+
+
+def test_cohort_size_floor_semiconductors_and_software_clear(
+    peer_groups_config: Dict,
+) -> None:
+    """Spec §7.2 — Semiconductors (18) and Software (18) clear the n=6
+    floor; Hardware (3) and IT Services (4) intentionally fall below and
+    cascade to ``STRATEGY_MATURITY_ONLY``."""
+    groups = peer_groups_config["sector_groups"]
+    floor = int(peer_groups_config.get("min_cohort_size", 6))
+    assert len(groups["tech_semiconductors"]["tickers"]) >= floor
+    assert len(groups["tech_software"]["tickers"]) >= floor
+    # Document the by-design sub-floor cases so a future reshuffling that
+    # grows these cohorts breaks loudly and forces re-thinking the cascade.
+    assert len(groups["tech_hardware"]["tickers"]) < floor, (
+        "Hardware is expected to fall below floor (n=3 per spec §3); "
+        "growing it past 6 would change the cascade behaviour — re-check."
+    )
+    assert len(groups["tech_it_services"]["tickers"]) < floor, (
+        "IT Services is expected to fall below floor (n=4 per spec §3); "
+        "growing it past 6 would change the cascade behaviour — re-check."
+    )
+
+
+def test_distribution_software_subbucket_tighter_than_parent_tech() -> None:
+    """Spec §7.3 — the Software sub-bucket's adoption_momentum stdev should
+    be tighter than the parent ALL-TECH stdev once the split lands.
+
+    We read the latest snapshot (2026-05-18 per spec) and compute the
+    deterministic stdev. Software (sd 22.8) < ALL TECH (sd 25.8) ✓ per
+    spec §3. Semiconductors (sd 29.2 ✗) is intentionally NOT asserted —
+    the cycle bimodality is handled by the maturity_stage axis cascade.
+    """
+    import statistics
+
+    snapshot_path = REPO_ROOT / "data" / "lthcs" / "snapshots" / "2026-05-18.json"
+    if not snapshot_path.exists():
+        pytest.skip(f"snapshot {snapshot_path.name} not present")
+
+    with open(snapshot_path, "r", encoding="utf-8") as fh:
+        snapshot = json.load(fh)
+    with open(UNIVERSE_PATH, "r", encoding="utf-8") as fh:
+        universe = json.load(fh)
+    by_t = {t["ticker"]: t for t in universe["tickers"]}
+
+    parent: List[float] = []
+    software: List[float] = []
+    for row in snapshot["scores"]:
+        info = by_t.get(row["ticker"], {})
+        if info.get("sector") not in TECH_SECTORS:
+            continue
+        adopt = row["subscores"].get("adoption_momentum")
+        if adopt is None:
+            continue
+        parent.append(float(adopt))
+        if info.get("tech_sub_bucket") == "Software":
+            software.append(float(adopt))
+
+    # Need enough sample to compute stdev meaningfully.
+    assert len(parent) >= 10, f"parent Tech sample too thin: {len(parent)}"
+    assert len(software) >= 6, f"Software sample too thin: {len(software)}"
+
+    parent_sd = statistics.stdev(parent)
+    software_sd = statistics.stdev(software)
+    assert software_sd < parent_sd, (
+        f"Software sub-bucket stdev {software_sd:.2f} should be tighter than "
+        f"parent Tech stdev {parent_sd:.2f} per spec §3 verdict"
+    )
+
+
+def test_aapl_cohort_excludes_peak_cycle_growth_semis(
+    universe: Dict, peer_groups_config: Dict
+) -> None:
+    """Spec §7.4 — AAPL's resolved cohort must NOT contain the peak-cycle
+    *growth_compounder* semis that drove the original bimodality
+    (NVDA, AMD, MU, MRVL, SMCI). Strategy lands at ``maturity_only``
+    after cascading through the n=2 compound cell and the n=3 Hardware
+    sector_group cell (spec §3).
+
+    Note: the maturity_only cascade legitimately includes
+    ``mature_compounder`` semis (AVGO, QCOM, INTC). The split's job is
+    not to exclude every semi from AAPL's cohort — it's to drop the
+    +40%-growth bimodal tail that was pulling AAPL's percentile to 13.2.
+    That tail is exactly the growth_compounder semis listed in spec §1.
+    """
+    cohort, strategy = get_peer_cohort_with_strategy(
+        "AAPL", universe, peer_groups_config
+    )
+    assert strategy == STRATEGY_MATURITY_ONLY, (
+        f"expected AAPL to land at maturity_only after cascade; got {strategy}"
+    )
+    # Growth-compounder peak-cycle semis must NOT pollute AAPL's cohort.
+    forbidden_growth_semis = {"NVDA", "AMD", "MU", "MRVL", "SMCI"}
+    overlap = forbidden_growth_semis & set(cohort)
+    assert not overlap, (
+        f"AAPL cohort leaks growth_compounder peak-cycle semis (bimodality "
+        f"tail that the split is supposed to remove): {overlap}"
+    )
+    assert "AAPL" in cohort
+
+
+def test_aapl_resolves_to_three_tuple_smoke(
+    universe: Dict, peer_groups_config: Dict
+) -> None:
+    """Spec §7.5 smoke — ``get_compound_peer_key("AAPL", ...)`` returns a
+    3-tuple ending in ``"Hardware"``; ``"JPM"`` returns a 2-tuple."""
+    aapl_key = get_compound_peer_key("AAPL", universe, peer_groups_config)
+    assert isinstance(aapl_key, tuple) and len(aapl_key) == 3
+    assert aapl_key[-1] == "Hardware"
+
+    jpm_key = get_compound_peer_key("JPM", universe, peer_groups_config)
+    assert isinstance(jpm_key, tuple) and len(jpm_key) == 2
