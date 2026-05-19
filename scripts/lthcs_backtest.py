@@ -551,8 +551,26 @@ def main(argv: Optional[List[str]] = None) -> int:
         print("  trading days: %d" % int(es["n_trading_days"]))
         print("  total return: %+.4f" % float(es["total_return"]))
         print("  ann. return : %+.4f" % float(es["ann_return"]))
-        print("  ann. sharpe : %+.3f" % float(es["sharpe"]))
-        print("  ann. sortino: %+.3f" % float(es["sortino"]))
+        sh_lo = es.get("sharpe_ci_lower")
+        sh_hi = es.get("sharpe_ci_upper")
+        if (
+            isinstance(sh_lo, (int, float)) and isinstance(sh_hi, (int, float))
+            and math.isfinite(float(sh_lo)) and math.isfinite(float(sh_hi))
+        ):
+            print("  ann. sharpe : %+.3f  (95%% CI: %+.2f ... %+.2f)" % (
+                float(es["sharpe"]), float(sh_lo), float(sh_hi)))
+        else:
+            print("  ann. sharpe : %+.3f" % float(es["sharpe"]))
+        so_lo = es.get("sortino_ci_lower")
+        so_hi = es.get("sortino_ci_upper")
+        if (
+            isinstance(so_lo, (int, float)) and isinstance(so_hi, (int, float))
+            and math.isfinite(float(so_lo)) and math.isfinite(float(so_hi))
+        ):
+            print("  ann. sortino: %+.3f  (95%% CI: %+.2f ... %+.2f)" % (
+                float(es["sortino"]), float(so_lo), float(so_hi)))
+        else:
+            print("  ann. sortino: %+.3f" % float(es["sortino"]))
         print("  max drawdown: %+.4f" % float(es["max_drawdown"]))
         print("  hit rate    : %.3f" % float(es["hit_rate"]))
         print("  avg hold d  : %.1f" % float(es["avg_hold_days"]))

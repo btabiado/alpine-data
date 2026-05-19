@@ -297,6 +297,151 @@ def _annualized_return(equity: pd.Series, trading_days_per_year: int = TRADING_D
 
 
 # ---------------------------------------------------------------------------
+# Block-bootstrap CI for Sharpe / Sortino
+# ---------------------------------------------------------------------------
+
+def _bootstrap_resample_indices(
+    n: int,
+    block_len: int,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Sample ``n`` integer indices using circular blocks of length
+    ``block_len``. Block starts are drawn uniformly from ``[0, n)``;
+    within a block indices wrap modulo ``n``.
+    """
+    if n <= 0:
+        return np.empty(0, dtype=np.int64)
+    block_len = max(1, int(block_len))
+    n_blocks = int(math.ceil(n / float(block_len)))
+    starts = rng.integers(low=0, high=n, size=n_blocks)
+    # Build (n_blocks, block_len) matrix of indices, wrap modulo n,
+    # flatten and truncate to n.
+    offsets = np.arange(block_len, dtype=np.int64)
+    idx = (starts[:, None] + offsets[None, :]) % n
+    return idx.reshape(-1)[:n]
+
+
+def _bootstrap_sharpe_ci(
+    daily_returns: pd.Series,
+    n_bootstrap: int = 1000,
+    ci: float = 0.95,
+    seed: int = 42,
+) -> tuple:
+    """Block-bootstrap (circular blocks) 95% CI for the annualized Sharpe.
+
+    Block length follows the Hall–Horowitz rule of thumb
+    ``L = max(1, ceil(N**(1/3)))`` to preserve serial correlation in daily
+    returns. Deterministic for a given ``seed``.
+
+    Returns ``(lower, upper)`` percentile bounds at the requested ``ci``
+    (default 95% -> [2.5%, 97.5%]). Falls back to ``(nan, nan)`` if the
+    return series is degenerate (too short or zero variance).
+    """
+    if daily_returns is None:
+        return (float("nan"), float("nan"))
+    r = daily_returns.dropna()
+    n = len(r)
+    if n < 2:
+        return (float("nan"), float("nan"))
+    arr = r.to_numpy(dtype=float, copy=False)
+    if not np.isfinite(arr).all():
+        arr = arr[np.isfinite(arr)]
+        n = len(arr)
+        if n < 2:
+            return (float("nan"), float("nan"))
+
+    block_len = max(1, int(math.ceil(n ** (1.0 / 3.0))))
+    rng = np.random.default_rng(int(seed))
+    n_bootstrap = max(1, int(n_bootstrap))
+
+    sharpes = np.empty(n_bootstrap, dtype=float)
+    for b in range(n_bootstrap):
+        idx = _bootstrap_resample_indices(n=n, block_len=block_len, rng=rng)
+        sample = arr[idx]
+        std = sample.std(ddof=1)
+        if std == 0.0 or not np.isfinite(std):
+            sharpes[b] = 0.0
+        else:
+            sharpes[b] = sample.mean() / std * math.sqrt(TRADING_DAYS_PER_YEAR)
+
+    alpha = (1.0 - float(ci)) / 2.0
+    lower = float(np.percentile(sharpes, 100.0 * alpha))
+    upper = float(np.percentile(sharpes, 100.0 * (1.0 - alpha)))
+    return (lower, upper)
+
+
+def _bootstrap_sharpe_sortino_ci(
+    daily_returns: pd.Series,
+    n_bootstrap: int = 1000,
+    ci: float = 0.95,
+    seed: int = 42,
+) -> Dict[str, float]:
+    """Joint block-bootstrap for Sharpe AND Sortino on the same resamples.
+
+    Sharing the resampled index across both stats is cheaper than two
+    independent loops and keeps the two CIs consistent under the same
+    seed. Returns a dict with keys
+    ``sharpe_ci_lower``, ``sharpe_ci_upper``,
+    ``sortino_ci_lower``, ``sortino_ci_upper``.
+
+    NaN bounds are emitted for degenerate series (n < 2 or all-finite-NaN
+    after dropna).
+    """
+    nan_out = {
+        "sharpe_ci_lower": float("nan"),
+        "sharpe_ci_upper": float("nan"),
+        "sortino_ci_lower": float("nan"),
+        "sortino_ci_upper": float("nan"),
+    }
+    if daily_returns is None:
+        return nan_out
+    r = daily_returns.dropna()
+    n = len(r)
+    if n < 2:
+        return nan_out
+    arr = r.to_numpy(dtype=float, copy=False)
+    if not np.isfinite(arr).all():
+        arr = arr[np.isfinite(arr)]
+        n = len(arr)
+        if n < 2:
+            return nan_out
+
+    block_len = max(1, int(math.ceil(n ** (1.0 / 3.0))))
+    rng = np.random.default_rng(int(seed))
+    n_bootstrap = max(1, int(n_bootstrap))
+
+    sharpes = np.empty(n_bootstrap, dtype=float)
+    sortinos = np.empty(n_bootstrap, dtype=float)
+    sqrt_ann = math.sqrt(TRADING_DAYS_PER_YEAR)
+    for b in range(n_bootstrap):
+        idx = _bootstrap_resample_indices(n=n, block_len=block_len, rng=rng)
+        sample = arr[idx]
+        mean = sample.mean()
+        std = sample.std(ddof=1)
+        if std == 0.0 or not np.isfinite(std):
+            sharpes[b] = 0.0
+        else:
+            sharpes[b] = mean / std * sqrt_ann
+        neg = sample[sample < 0.0]
+        if len(neg) < 2:
+            sortinos[b] = 0.0
+        else:
+            downside = math.sqrt(float((neg ** 2).sum()) / len(neg))
+            if downside == 0.0 or not math.isfinite(downside):
+                sortinos[b] = 0.0
+            else:
+                sortinos[b] = mean / downside * sqrt_ann
+
+    alpha = (1.0 - float(ci)) / 2.0
+    return {
+        "sharpe_ci_lower": float(np.percentile(sharpes, 100.0 * alpha)),
+        "sharpe_ci_upper": float(np.percentile(sharpes, 100.0 * (1.0 - alpha))),
+        "sortino_ci_lower": float(np.percentile(sortinos, 100.0 * alpha)),
+        "sortino_ci_upper": float(np.percentile(sortinos, 100.0 * (1.0 - alpha))),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Core simulation
 # ---------------------------------------------------------------------------
 
@@ -715,6 +860,9 @@ def run_backtest(
     benchmark_prices: Optional[pd.Series] = None,
     per_band_sweep: bool = True,
     score_history: Optional[pd.DataFrame] = None,
+    compute_ci: bool = True,
+    n_bootstrap: int = 1000,
+    ci_seed: int = 42,
 ) -> Dict[str, Any]:
     """Run the Phase-1 long-only event-driven backtest.
 
@@ -737,6 +885,19 @@ def run_backtest(
     per_band_sweep : bool
         If True, also run a sub-portfolio simulation for each band in
         ``ALL_BANDS_FOR_SWEEP`` and emit a per-band equity curve series.
+    compute_ci : bool
+        If True (default), the summary dict gains ``sharpe_ci_lower``,
+        ``sharpe_ci_upper``, ``sortino_ci_lower``, ``sortino_ci_upper``
+        fields from a circular block-bootstrap of the daily returns
+        (Hall–Horowitz block length, 1000 resamples, seed 42). If False,
+        those keys are absent — useful for downstream consumers that pin
+        the summary schema.
+    n_bootstrap : int
+        Number of bootstrap resamples used to estimate the CI when
+        ``compute_ci`` is True. Default 1000.
+    ci_seed : int
+        Seed for the bootstrap RNG (``numpy.random.default_rng``). The
+        same seed produces identical CI bounds across runs.
 
     Returns
     -------
@@ -832,6 +993,9 @@ def run_backtest(
         headline=headline,
         trading_days=trading_days,
         valid_tickers=list(target_bands.columns),
+        compute_ci=compute_ci,
+        n_bootstrap=n_bootstrap,
+        ci_seed=ci_seed,
     )
 
     run_meta = {
@@ -919,6 +1083,9 @@ def _build_summary(
     headline: Dict[str, Any],
     trading_days: Sequence[pd.Timestamp],
     valid_tickers: Sequence[str],
+    compute_ci: bool = True,
+    n_bootstrap: int = 1000,
+    ci_seed: int = 42,
 ) -> Dict[str, Any]:
     equity: pd.Series = headline["equity"]
     daily: pd.Series = headline["daily_returns"]
@@ -933,7 +1100,7 @@ def _build_summary(
     hold_days_vals = [t["hold_days"] for t in trades if t.get("hold_days") is not None]
     avg_hold = float(np.mean(hold_days_vals)) if hold_days_vals else 0.0
     unique_tkr = sorted({t["ticker"] for t in trades})
-    return {
+    summary: Dict[str, Any] = {
         "total_return": total_return,
         "ann_return": _annualized_return(equity),
         "max_drawdown": _max_drawdown(equity),
@@ -947,6 +1114,15 @@ def _build_summary(
         "n_trading_days": int(len(trading_days)),
         "params": params.to_jsonable(),
     }
+    if compute_ci:
+        ci = _bootstrap_sharpe_sortino_ci(
+            daily_returns=daily,
+            n_bootstrap=n_bootstrap,
+            ci=0.95,
+            seed=ci_seed,
+        )
+        summary.update(ci)
+    return summary
 
 
 # ---------------------------------------------------------------------------
@@ -1038,8 +1214,40 @@ def build_engine_report_markdown(
     lines.append("|:-------|------:|")
     lines.append("| Total return | %+0.4f |" % float(summary.get("total_return", 0.0)))
     lines.append("| Annualized return | %+0.4f |" % float(summary.get("ann_return", 0.0)))
-    lines.append("| Annualized Sharpe | %+0.3f |" % float(summary.get("sharpe", 0.0)))
-    lines.append("| Annualized Sortino | %+0.3f |" % float(summary.get("sortino", 0.0)))
+    sharpe_lo = summary.get("sharpe_ci_lower")
+    sharpe_hi = summary.get("sharpe_ci_upper")
+    if (
+        sharpe_lo is not None
+        and sharpe_hi is not None
+        and isinstance(sharpe_lo, (int, float))
+        and isinstance(sharpe_hi, (int, float))
+        and math.isfinite(float(sharpe_lo))
+        and math.isfinite(float(sharpe_hi))
+    ):
+        lines.append("| Annualized Sharpe | %+0.3f (95%% CI: %+0.2f ... %+0.2f) |" % (
+            float(summary.get("sharpe", 0.0)),
+            float(sharpe_lo),
+            float(sharpe_hi),
+        ))
+    else:
+        lines.append("| Annualized Sharpe | %+0.3f |" % float(summary.get("sharpe", 0.0)))
+    sortino_lo = summary.get("sortino_ci_lower")
+    sortino_hi = summary.get("sortino_ci_upper")
+    if (
+        sortino_lo is not None
+        and sortino_hi is not None
+        and isinstance(sortino_lo, (int, float))
+        and isinstance(sortino_hi, (int, float))
+        and math.isfinite(float(sortino_lo))
+        and math.isfinite(float(sortino_hi))
+    ):
+        lines.append("| Annualized Sortino | %+0.3f (95%% CI: %+0.2f ... %+0.2f) |" % (
+            float(summary.get("sortino", 0.0)),
+            float(sortino_lo),
+            float(sortino_hi),
+        ))
+    else:
+        lines.append("| Annualized Sortino | %+0.3f |" % float(summary.get("sortino", 0.0)))
     lines.append("| Max drawdown | %+0.4f |" % float(summary.get("max_drawdown", 0.0)))
     lines.append("| Hit rate (daily) | %0.3f |" % float(summary.get("hit_rate", 0.0)))
     lines.append("| Avg hold days | %.1f |" % float(summary.get("avg_hold_days", 0.0)))

@@ -393,3 +393,167 @@ def test_benchmark_curve_normalized_to_first_trading_day():
 
 # Needed by test_deterministic_ramp_zero_volatility_zero_sharpe.
 import math  # noqa: E402 — kept here to make the dependency explicit.
+
+
+# ---------------------------------------------------------------------------
+# 15. Sharpe / Sortino bootstrap CI (Tier 5 #24 P3 follow-on)
+# ---------------------------------------------------------------------------
+
+def _synthetic_returns_series(n: int, mu: float, sigma: float, seed: int) -> pd.Series:
+    rng = np.random.default_rng(seed)
+    arr = rng.normal(loc=mu, scale=sigma, size=n)
+    idx = _trading_days("2026-01-05", n)
+    return pd.Series(arr, index=idx)
+
+
+def test_bootstrap_ci_deterministic_for_same_seed():
+    """Same seed -> identical CI bounds; different seed -> different bounds."""
+    s = _synthetic_returns_series(n=64, mu=0.001, sigma=0.01, seed=11)
+    a = be._bootstrap_sharpe_ci(s, n_bootstrap=500, seed=42)
+    b = be._bootstrap_sharpe_ci(s, n_bootstrap=500, seed=42)
+    assert a == b
+    c = be._bootstrap_sharpe_ci(s, n_bootstrap=500, seed=43)
+    assert a != c
+
+
+def test_bootstrap_ci_brackets_point_estimate():
+    """The 95% CI should usually contain the point estimate on a well-
+    behaved return series. The block-bootstrap is mean-preserving in
+    expectation, so this is essentially a sanity check on plumbing."""
+    s = _synthetic_returns_series(n=90, mu=0.0008, sigma=0.012, seed=7)
+    point = be._annualized_sharpe(s)
+    lo, hi = be._bootstrap_sharpe_ci(s, n_bootstrap=1000, seed=42)
+    assert lo <= point <= hi
+
+
+def test_bootstrap_ci_wider_on_high_variance_series():
+    """A higher-variance daily return series should yield a wider CI than
+    a low-variance series at the same length and mean."""
+    low = _synthetic_returns_series(n=90, mu=0.0005, sigma=0.003, seed=21)
+    high = _synthetic_returns_series(n=90, mu=0.0005, sigma=0.03, seed=21)
+    lo_lo, lo_hi = be._bootstrap_sharpe_ci(low, n_bootstrap=1000, seed=42)
+    hi_lo, hi_hi = be._bootstrap_sharpe_ci(high, n_bootstrap=1000, seed=42)
+    # The Sharpe ratio itself is variance-normalized, but the *bootstrap
+    # distribution* of Sharpe (block-resampled returns) is sensitive to
+    # the raw scale of noise -- noisier samples imply noisier Sharpe.
+    assert (hi_hi - hi_lo) > (lo_hi - lo_lo)
+
+
+def test_bootstrap_ci_degenerate_series_returns_nan():
+    """An empty or single-point series can't be bootstrapped sensibly."""
+    lo, hi = be._bootstrap_sharpe_ci(pd.Series([], dtype=float), n_bootstrap=100)
+    assert math.isnan(lo) and math.isnan(hi)
+    lo2, hi2 = be._bootstrap_sharpe_ci(pd.Series([0.01]), n_bootstrap=100)
+    assert math.isnan(lo2) and math.isnan(hi2)
+
+
+def test_summary_includes_ci_keys_by_default():
+    prices = _make_prices(
+        "2026-01-05", 30, {"AAA": _ramp_price(100.0, 0.5, 30)}
+    )
+    bands = _make_band_history("2026-01-05", 30, {"AAA": ["elite"] * 30})
+    out = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0), per_band_sweep=False
+    )
+    s = out["summary"]
+    for k in ("sharpe_ci_lower", "sharpe_ci_upper",
+              "sortino_ci_lower", "sortino_ci_upper"):
+        assert k in s, f"missing CI key {k} in summary"
+
+
+def test_summary_ci_brackets_point_estimate_on_full_run():
+    """On a real engine run (synthetic but with noise) the CI on the
+    headline daily returns should bracket the point-estimate Sharpe."""
+    rng = np.random.default_rng(99)
+    n = 90
+    idx = _trading_days("2026-01-05", n)
+    # Drifting walk so daily returns are mildly positive with real noise.
+    rets = rng.normal(loc=0.001, scale=0.015, size=n)
+    closes = 100.0 * np.cumprod(1.0 + rets)
+    prices = pd.DataFrame({"AAA": closes}, index=idx)
+    bands = pd.DataFrame({"AAA": ["elite"] * n}, index=idx)
+    out = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0), per_band_sweep=False,
+    )
+    s = out["summary"]
+    sharpe = float(s["sharpe"])
+    lo = float(s["sharpe_ci_lower"])
+    hi = float(s["sharpe_ci_upper"])
+    assert lo <= sharpe <= hi
+    assert lo < hi  # non-degenerate width
+
+
+def test_summary_excludes_ci_keys_when_compute_ci_false():
+    prices = _make_prices(
+        "2026-01-05", 30, {"AAA": _ramp_price(100.0, 0.5, 30)}
+    )
+    bands = _make_band_history("2026-01-05", 30, {"AAA": ["elite"] * 30})
+    out = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0),
+        per_band_sweep=False, compute_ci=False,
+    )
+    s = out["summary"]
+    for k in ("sharpe_ci_lower", "sharpe_ci_upper",
+              "sortino_ci_lower", "sortino_ci_upper"):
+        assert k not in s, f"unexpected CI key {k} when compute_ci=False"
+
+
+def test_run_backtest_ci_deterministic_across_runs():
+    """Two identical run_backtest calls produce identical CI bounds."""
+    rng = np.random.default_rng(123)
+    n = 60
+    idx = _trading_days("2026-01-05", n)
+    rets = rng.normal(loc=0.0008, scale=0.012, size=n)
+    closes = 100.0 * np.cumprod(1.0 + rets)
+    prices = pd.DataFrame({"AAA": closes}, index=idx)
+    bands = pd.DataFrame({"AAA": ["elite"] * n}, index=idx)
+    out1 = be.run_backtest(bands, prices, params=be.EngineParams(cost_bps=0.0),
+                            per_band_sweep=False)
+    out2 = be.run_backtest(bands, prices, params=be.EngineParams(cost_bps=0.0),
+                            per_band_sweep=False)
+    assert out1["summary"]["sharpe_ci_lower"] == out2["summary"]["sharpe_ci_lower"]
+    assert out1["summary"]["sharpe_ci_upper"] == out2["summary"]["sharpe_ci_upper"]
+    assert out1["summary"]["sortino_ci_lower"] == out2["summary"]["sortino_ci_lower"]
+    assert out1["summary"]["sortino_ci_upper"] == out2["summary"]["sortino_ci_upper"]
+
+
+def test_report_markdown_renders_ci_when_present():
+    """When the summary has CI bounds, the report should include them."""
+    md = be.build_engine_report_markdown(
+        summary={
+            "total_return": 0.05,
+            "ann_return": 0.20,
+            "max_drawdown": -0.10,
+            "sharpe": 2.607,
+            "sortino": 3.1,
+            "sharpe_ci_lower": 1.84,
+            "sharpe_ci_upper": 3.42,
+            "sortino_ci_lower": 2.2,
+            "sortino_ci_upper": 4.1,
+            "hit_rate": 0.55,
+            "avg_hold_days": 5.0,
+            "turnover": 0.05,
+            "n_trades": 10,
+            "n_unique_tkr": 5,
+            "params": {"cost_bps": 5.0, "delay_trading_days": 1},
+        },
+        run_meta={"universe_size": 5, "long_set": ["elite"], "window": {}},
+    )
+    assert "95% CI" in md
+    assert "+1.84" in md and "+3.42" in md
+
+
+def test_report_markdown_omits_ci_when_absent():
+    """When the summary has no CI keys, the report falls back to the
+    plain Sharpe / Sortino formatting (no '95% CI' string)."""
+    md = be.build_engine_report_markdown(
+        summary={
+            "total_return": 0.0,
+            "sharpe": 1.5,
+            "sortino": 2.0,
+            "params": {"cost_bps": 5.0, "delay_trading_days": 1},
+        },
+        run_meta={"universe_size": 0, "long_set": [], "window": {}},
+    )
+    assert "95% CI" not in md
+    assert "Annualized Sharpe" in md
