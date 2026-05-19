@@ -216,6 +216,73 @@ queue — this is a sketch, not a commit-in-progress).
 
 ---
 
+## 2026-05-19 AM — Audit list swarm: Tier 5 #26/#28 closed + #27 Phase 2 ready + backfill verified
+
+Tonight's swarm chewed through five Tier 5 items in parallel and verified
+the 90-day backfill. Net effect: **Tier 5 contracts hard** (the surveys
+keep finding "~85-90% already built"), Adoption β follow-up closes, two
+Phase 2 specs (#27 crypto, Tier 2 #7 HW/SW split) land ready-to-build.
+
+**Adoption β fix — SHIPPED** (`333e5dd`):
+The previous refresh's "Suggested next 3 commits" #1 lands cleanly.
+`_MIN_SECTOR_COHORT 8 → 20` plus mid-rank ties. **62 tickers across 7
+sectors** now fall back to universe-relative ranking instead of being
+pinned at percentile 0 / 100 inside under-populated sector cohorts. The
+audit's #1 next-3-commits item is **closed**. Adoption IC re-validation
+window stays **2026-06-24** (revised tonight per the β analysis;
+unchanged here).
+
+**Test gap close** (`c035366`): added `--skip-thesis` variant of the
+sector RSS integration test. Catches the exact gating regression that
+left sector RSS dark for a day in the previous refresh.
+
+**Tier 5 #26 (MCP server) — SHIPPED** (`6d26a03`): `mcp[cli]>=1.0`
+pinned + boot test + `get_dragging_pillar` tool. The earlier `8f4e2c6`
+state survey found the module was ~90% built; tonight's commit closes
+the remaining polish. **Tier 5 #26 effectively closed.**
+
+**Tier 5 #27 (Crypto pillar adapter) — SPEC READY** (`da10a8b`):
+Survey discovered Phase 1 (BTC/ETH/SOL fetchers + sub-pillar math) is
+already in tree. Remaining work is Phase 2 integration into composite +
+heatmap. Effort tag revised **M-L → S**. Spec landed; ready to build.
+
+**Tier 5 #28 (LLM sentiment shadow) — SHIPPED** (`37199d7`): Haiku 4.5
+default, daily cost cap, `LTHCS_LLM_SENTIMENT_ENABLED` env flag
+default-0, byte-identical default behavior. **Tier 5 #28 effectively
+closed pending flag flip after shadow data clears.**
+
+**Tier 2 #7 (HW/SW peer split) — SPEC READY** (`6d08632`): Compound
+peer-group key `(maturity_stage, sector_group)` was the design blocker
+from `peer-group-audit §3.4` — naive split made AAPL worse inside a
+bimodal Tech-compounder cohort. Tonight's spec proposes a curated
+Hardware/Software split that empirically dissolves the bimodality.
+Effort revised **M → S**. Ready to implement.
+
+**Backfill verified** (`2e1654c`): 90-day `--force` rewrite completed
+cleanly. Validator: **PASS 91/91 dates**, 15,197 ticker-days, 0 NaN,
+0 out-of-range. All previously-failing band consistency + history
+continuity issues are resolved. Phase 5 effects are now in historical
+scores end-to-end (P0 Form 4 / 13F populated, P3 margin fallback chain,
+P1 Adoption sector-relative + QoQ accel, P4 FRED tier-2 + sector RSS).
+**Small known inconsistency**: the last ~6 dates include `sector_rss`
+data; the earlier ~80 don't, because `ef1cc06` (the un-gate fix) landed
+mid-backfill. **Not worth re-running** — the affected dimension is a
+sub-pillar data-quality flag, not the composite math itself.
+
+**Tier 5 narrowing observation**: tonight's three Tier 5 surveys
+(`llm_sentiment`, `lthcs_mcp`, crypto pillars) all converged on the
+same pattern — the modules are **~85-90% already built**. The audit's
+Tier 5 backlog is materially smaller than it looked on paper. Net
+result: of the six original Tier 5 items, **#26 + #28 effectively
+closed**, **#27 reduced to S**, **#23 (LLM narratives) remains M-L**,
+**#24 (backtest engine) and #25 (adaptive weights)** are still the
+genuine V2/V3 build items.
+
+**Tests**: 1452 → **1471** (LTHCS subset; full suite at 1710 incl.
+non-LTHCS test files).
+
+---
+
 ## 2026-05-18 PM — Phase 5 + UX swarm shipped
 
 Massive ship day. Tier 1 (#1-5) and the bulk of Tier 4 (#17-22) all
@@ -318,7 +385,7 @@ to deepen Institutional beyond binary signal.
 
 | # | Item | Source | Effort | Status |
 |---|---|---|---|---|
-| 7 | **Compound peer-group key** `(maturity_stage, sector_group)` | peer-group-audit §3.4 | M | ❌ DEFERRED — Naive version makes AAPL worse (13.2 vs 46.8 inside Tech-compounder bimodal cohort). Needs a curated Hardware/Software split first. |
+| 7 | **Compound peer-group key** `(maturity_stage, sector_group)` | peer-group-audit §3.4 | S | 📋 SPEC READY `6d08632` (2026-05-19) — Hardware/Software split spec landed; bimodality vanishes under proposed split. Effort revised **M → S**. Ready to implement. |
 | 8 | **De-dup `Technology` ↔ `Information Technology`** in sector_des_weights.json | des-audit §6 | XS | ✅ SHIPPED `09147a7` — canonical "Information Technology" + `_alias_of` resolver in des.py with defensive handling (broken alias → neutral fallback). DES scores identical pre/post for AAPL/MSFT/NVDA/AVGO/ORCL. |
 | 9 | **Tier 2 macro signals**: Brent crude, gasoline cracks, ISM PMI, housing starts, consumer confidence, U-6 | des-audit | M-L | ✅ SHIPPED `16f7945` (2026-05-18) — 6 tier-2 FRED indicators wired into DES via Phase 5 P4. DES ceiling now governed by `TIER2_MAX_POINTS=5.0`; widen constant to lift ceiling further. |
 | 10 | **`peer_groups.json`** config file (declarative per-pillar peer-group strategy) | peer-group-audit §3.5 | L | ❌ DEFERRED — Architecturally cleaner than hard-coded grouping in lthcs_daily.py but premature for V1 universe size. |
@@ -359,9 +426,9 @@ to deepen Institutional beyond binary signal.
 | 23 | **Replace templated narratives with LLM-generated** | V1 narratives are sentence templates; LLM would weave in actual data quality flags + cross-pillar context. | M-L |
 | 24 | **Backtest engine** | Score history → P&L attribution to validate the framework | L |
 | 25 | **Adaptive weights** (V2) | Use backtest to suggest per-ticker weight adjustments | XL (depends on 24) |
-| 26 | **MCP server / API exposure** | LTHCS data as Claude Connector | M |
-| 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | M-L |
-| 28 | **Real LLM-derived sentiment** (replace AI-news engagement heuristic) | Engagement ≠ sentiment direction; Claude call per ticker per day could give real polarity | **M-refactor** (not M-build) — `lthcs/sources/llm_sentiment.py` is **718 lines, ~90% built**; remaining work is shadow-run wiring + retention. Cost ~$0.19/day with Haiku 4.5 + prompt caching (prior $0.85/day estimate was stale Sonnet assumption). Spec: `docs/lthcs-llm-sentiment-shadow-spec.md` (commit `7732d9e`). |
+| 26 | **MCP server / API exposure** | LTHCS data as Claude Connector | ✅ SHIPPED `6d26a03` (2026-05-19) — `mcp[cli]>=1.0` pinned + boot test + `get_dragging_pillar` tool. **Effectively closed.** |
+| 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | 📋 SPEC READY `da10a8b` (2026-05-19) — Phase 1 (BTC/ETH/SOL fetchers + sub-pillar math) already in tree; Phase 2 integration into composite + heatmap remains. Effort revised **M-L → S**. |
+| 28 | **Real LLM-derived sentiment** (replace AI-news engagement heuristic) | Engagement ≠ sentiment direction; Claude call per ticker per day could give real polarity | ✅ SHIPPED `37199d7` (2026-05-19) — Haiku 4.5 default, daily cost cap, gated `LTHCS_LLM_SENTIMENT_ENABLED` env flag (default-0), byte-identical default behavior. **Effectively closed pending flag flip** after shadow data clears. Earlier spec: `docs/lthcs-llm-sentiment-shadow-spec.md` (`7732d9e`). |
 
 ---
 
@@ -378,16 +445,18 @@ to deepen Institutional beyond binary signal.
 
 ## Suggested next 3 commits
 
-Tier 1 #1-5 shipped 2026-05-18; Tier 4 fully closed 2026-05-19 AM. New
-cleanest sequencing — top is now β-driven, not UX-driven:
+Tier 1 #1-5 shipped 2026-05-18; Tier 4 fully closed 2026-05-19 AM;
+tonight's Tier 5 swarm closed #26 + #28, downgraded #27 + Tier 2 #7 to
+S. Previous refresh's #1 (Adoption β fix) shipped tonight `333e5dd`.
+New top-of-queue:
 
-1. **Adoption β fix** — `_MIN_SECTOR_COHORT 8 → 20` (XS, single-constant). Per `docs/adoption-pillar-inversion-2026-05-19.md`, this addresses the percentile-rank clamping that pins 19% of the universe at 0/100 inside `sector_relative_revenue`. Expected **+0.02-0.03 IC at 21d**, no other moving parts. Highest-ROI item on the board.
-2. **#28 LLM sentiment shadow refactor** — M-refactor (not M-build). `lthcs/sources/llm_sentiment.py` is 718 lines and ~90% there; the work is shadow-run wiring + retention so we can log a parallel column for N days before swapping into Thesis math. Cost ~$0.19/day with Haiku 4.5 + caching. Spec landed `7732d9e`. Once shadow data clears, this is the path to retire constant-50 Thesis and re-tighten `elite.min` back to 90.
-3. **Backtest re-validation post-backfill** — S. After β fix lands, re-run `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` to confirm Adoption IC has stopped inverting at 21d and to re-baseline composite IC pre-LLM-sentiment-shadow.
+1. **Backtest re-validation** — S. Re-run `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` against the freshly verified 90-day backfill (`2e1654c`, validator PASS 91/91). Produces empirical IC comparison pre / post Phase 5 — confirms Adoption stops inverting at 21d (post-β fix `333e5dd`) and re-baselines composite IC before LLM-sentiment shadow flips on. **Auto-fires from another agent tonight.**
+2. **Tier 2 #7 Hardware/Software split implementation** — S. Spec ready (`6d08632`); bimodality vanishes under proposed split, unblocking the long-deferred compound peer-group key. **Likely shipping tonight from another agent.**
+3. **Tier 3 #13 Full 13F implementation OR Tier 5 #23 LLM narratives** — both M-L; pick based on the backtest result. If Institutional IC is still the workhorse (+0.204 in the morning read), prioritize #13 to deepen the strongest pillar. If composite IC plateaus post-backfill, prioritize #23 to add a qualitative differentiator.
 
-After those, the natural follow-up is widening `TIER2_MAX_POINTS` to lift the DES ceiling (only meaningful once Thesis is moving — otherwise no Elite-band benefit), then #13 full 13F implementation.
+After those, the natural follow-ups are: flip `LTHCS_LLM_SENTIMENT_ENABLED=1` once shadow data clears (then re-tighten `elite.min` back to 90 if Thesis_p99 ≥ 85), widen `TIER2_MAX_POINTS` to lift the DES ceiling, and Tier 5 #27 Phase 2 (crypto pillar adapter into composite + heatmap, now S effort).
 
-**Time-gated**: Adoption IC re-validation window moved 2026-06-17 → **2026-06-24** per the β analysis (+~7d for stable IC + Trends weekly batch resolution).
+**Time-gated**: Adoption IC re-validation window remains **2026-06-24** (revised tonight per β analysis; +~7d for stable IC + Trends weekly batch resolution).
 
 ---
 
@@ -399,7 +468,9 @@ The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
-Tests: **1441 passing** (was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; +1 from the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`).
+Tests: **1471 passing** (LTHCS subset; full suite at 1710 incl. non-LTHCS test files). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → **1471** tonight from the Tier 5 swarm (`333e5dd` + `c035366` + `6d26a03` + `37199d7`).
+
+**Tier 5 narrowing observation**: tonight's three Tier 5 surveys (`llm_sentiment`, `lthcs_mcp`, crypto pillars) all found **~85-90% already built** — the audit's Tier 5 backlog is materially smaller than it looked on paper. Of the six original Tier 5 items: #26 + #28 effectively closed, #27 reduced to S, #23 remains M-L, #24 + #25 are the genuine V2/V3 builds.
 
 ---
 
