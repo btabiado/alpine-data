@@ -732,6 +732,198 @@ def serialize_portfolio_result(result: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+# ---------------------------------------------------------------------------
+# Markdown report emitter
+# ---------------------------------------------------------------------------
+
+def _fmt_num(v: Any, fmt: str = "%+.4f", na: str = "n/a") -> str:
+    """Format a number; tolerate None / NaN / non-finite."""
+    if v is None:
+        return na
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        return na
+    if not math.isfinite(x):
+        return na
+    return fmt % x
+
+
+def _quintile_spread_means(quintile_payload: Optional[Dict[str, Any]]) -> Dict[str, Dict[str, float]]:
+    """Reduce on-disk quintile payload to {pillar: {mean, n}} for Q5-Q1.
+
+    Tolerates the legacy ``quintile_spreads.json`` flat shape and the
+    current ``quintile_returns.json`` nested shape.
+    """
+    out: Dict[str, Dict[str, float]] = {}
+    if not quintile_payload:
+        return out
+    for pillar, per_q in quintile_payload.items():
+        if not isinstance(per_q, dict):
+            continue
+        spreads: List[float] = []
+        q51 = per_q.get("Q5-Q1")
+        if isinstance(q51, dict):
+            for v in q51.values():
+                if v is None:
+                    continue
+                try:
+                    x = float(v)
+                except (TypeError, ValueError):
+                    continue
+                if math.isfinite(x):
+                    spreads.append(x)
+        if spreads:
+            out[pillar] = {"mean": sum(spreads) / len(spreads), "n": len(spreads)}
+        else:
+            out[pillar] = {"mean": float("nan"), "n": 0}
+    return out
+
+
+def build_report_markdown(
+    summary: Dict[str, Any],
+    quintile_payload: Optional[Dict[str, Any]] = None,
+) -> str:
+    """Render a human-readable markdown report from a ``summary.json`` payload.
+
+    Inputs match what :func:`scripts/lthcs_backtest.py` writes to disk so the
+    report can be regenerated from artifacts alone (see ``--from-json``).
+    """
+    run_id = summary.get("run_id", "unknown")
+    generated_at = summary.get("generated_at", "")
+    start = summary.get("start") or summary.get("window", {}).get("start", "")
+    end = summary.get("end") or summary.get("window", {}).get("end", "")
+    horizon = summary.get("horizon_days", summary.get("horizon", ""))
+    bands_long = summary.get("bands_long", [])
+    bands_short = summary.get("bands_short", [])
+    n_tickers = summary.get("n_tickers", 0)
+    n_dates = summary.get("n_observation_dates", 0)
+    port = summary.get("portfolio", {}) or {}
+    pillar_ic = summary.get("pillar_ic", []) or []
+    spread_means = _quintile_spread_means(quintile_payload)
+
+    lines: List[str] = []
+    lines.append("# LTHCS Backtest — %s" % run_id)
+    lines.append("")
+    if generated_at:
+        lines.append("Generated: **%s**" % generated_at)
+    lines.append("- Window: **%s -> %s**" % (start, end))
+    lines.append("- Horizon: **%s trading days**" % horizon)
+    lines.append("- Universe: **%d** tickers across **%d** observation dates" %
+                 (int(n_tickers or 0), int(n_dates or 0)))
+    lines.append("- Long bands: %s" % (list(bands_long) or "n/a"))
+    lines.append("- Short bands: %s" % (list(bands_short) or "n/a"))
+    lines.append("")
+
+    lines.append("## Band-portfolio P&L")
+    lines.append("")
+    lines.append("| Metric | Value |")
+    lines.append("|:-------|------:|")
+    lines.append("| Rebalances | %s |" % port.get("n_rebalances", "n/a"))
+    lines.append("| Cumulative return | %s |" % _fmt_num(port.get("cumulative_return")))
+    lines.append("| Sharpe (annualised) | %s |" % _fmt_num(port.get("sharpe"), "%+.3f"))
+    lines.append("| Max drawdown | %s |" % _fmt_num(port.get("max_drawdown")))
+    lines.append("| Hit rate | %s |" % _fmt_num(port.get("hit_rate"), "%.3f"))
+    lines.append("| Turnover / rebalance | %s |" % _fmt_num(port.get("turnover_per_rebalance"), "%.4f"))
+    lines.append("| Avg n_long | %s |" % _fmt_num(port.get("n_long_avg"), "%.1f"))
+    lines.append("| Avg n_short | %s |" % _fmt_num(port.get("n_short_avg"), "%.1f"))
+    lines.append("")
+    lines.append("> NOTE: at horizons > 1d, forward returns are overlapping so Sharpe and")
+    lines.append("> cumulative return are inflated by serial correlation. Treat the IC")
+    lines.append("> numbers and 1-day Sharpe (if computed) as the honest readings.")
+    lines.append("")
+
+    lines.append("## Pillar Information Coefficient (Spearman vs forward return)")
+    lines.append("")
+    if pillar_ic:
+        lines.append("| Pillar | IC mean | IC std | IC Sharpe (ann.) | n_obs |")
+        lines.append("|:-------|--------:|-------:|-----------------:|------:|")
+        for row in pillar_ic:
+            lines.append("| %s | %s | %s | %s | %s |" % (
+                row.get("pillar", "?"),
+                _fmt_num(row.get("ic_mean")),
+                _fmt_num(row.get("ic_std"), "%.4f"),
+                _fmt_num(row.get("ic_sharpe"), "%+.3f"),
+                row.get("n_obs", "n/a"),
+            ))
+    else:
+        lines.append("_No pillar IC data._")
+    lines.append("")
+
+    lines.append("## Quintile Q5-Q1 spread (mean across dates)")
+    lines.append("")
+    if spread_means:
+        lines.append("| Pillar | mean spread | n |")
+        lines.append("|:-------|------------:|--:|")
+        for pillar in PILLAR_NAMES:
+            entry = spread_means.get(pillar)
+            if entry is None or entry.get("n", 0) == 0:
+                lines.append("| %s | n/a | 0 |" % pillar)
+            else:
+                lines.append("| %s | %s | %d |" % (
+                    pillar, _fmt_num(entry.get("mean")), int(entry.get("n", 0)),
+                ))
+    else:
+        lines.append("_No quintile spread data (run produced no quintile_returns.json)._")
+    lines.append("")
+
+    return "\n".join(lines) + "\n"
+
+
+def _atomic_write_text(path: Path, payload: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".tmp-", suffix=".md", dir=str(path.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(payload)
+        os.replace(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def write_report(
+    out_root: Path,
+    summary: Dict[str, Any],
+    quintile_payload: Optional[Dict[str, Any]] = None,
+) -> Path:
+    """Write a markdown report to ``<out_root>/report.md`` and return the path."""
+    out_root = Path(out_root)
+    md = build_report_markdown(summary, quintile_payload=quintile_payload)
+    target = out_root / "report.md"
+    _atomic_write_text(target, md)
+    return target
+
+
+def write_report_from_dir(out_root: Path) -> Path:
+    """Regenerate ``report.md`` from the JSON artifacts already on disk.
+
+    Useful for backfilling a run whose original report wasn't emitted; reads
+    ``summary.json`` and (if present) ``quintile_returns.json`` / legacy
+    ``quintile_spreads.json``.
+    """
+    out_root = Path(out_root)
+    summary_path = out_root / "summary.json"
+    if not summary_path.exists():
+        raise FileNotFoundError(
+            "cannot regenerate report: %s missing" % summary_path
+        )
+    summary = _read_json(summary_path)
+    quintile_payload: Optional[Dict[str, Any]] = None
+    for fname in ("quintile_returns.json", "quintile_spreads.json"):
+        p = out_root / fname
+        if p.exists():
+            try:
+                quintile_payload = _read_json(p)
+            except Exception:
+                quintile_payload = None
+            break
+    return write_report(out_root, summary, quintile_payload=quintile_payload)
+
+
 __all__ = [
     "PILLAR_NAMES",
     "DEFAULT_HORIZONS",
@@ -745,4 +937,7 @@ __all__ = [
     "pillar_quintile_returns",
     "attribute_returns",
     "serialize_portfolio_result",
+    "build_report_markdown",
+    "write_report",
+    "write_report_from_dir",
 ]

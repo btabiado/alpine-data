@@ -7,6 +7,7 @@ Joins the LTHCS daily score history to Yahoo daily closes and emits:
   * pillar_ic.json          — Spearman IC per pillar
   * quintile_returns.json   — quintile spread per pillar
   * summary.json            — top-level Sharpe / drawdown / hit-rate
+  * report.md               — human-readable markdown report
   * stdout                  — concise summary table
 
 Usage:
@@ -17,9 +18,15 @@ Usage:
                                      [--output-dir data/lthcs/backtest/]
                                      [--run-id <id>]
                                      [--offline]
+                                     [--no-report]
+                                     [--from-json <run-dir>]
 
 ``--offline`` skips Yahoo and uses the indefinite price cache only;
 useful in CI / when no network is available.
+
+``--from-json <run-dir>`` skips the full backtest and only regenerates
+``report.md`` from the JSON artifacts already in that directory. Useful
+to backfill a run whose original report.md wasn't emitted.
 """
 
 from __future__ import annotations
@@ -93,7 +100,22 @@ def main(argv: Optional[List[str]] = None) -> int:
                         help="Override data/lthcs/ root (mostly for tests).")
     parser.add_argument("--offline", action="store_true",
                         help="Use cached prices only; never call Yahoo.")
+    parser.add_argument("--no-report", action="store_true",
+                        help="Skip writing report.md (JSON artifacts only).")
+    parser.add_argument("--from-json", type=str, default=None,
+                        help="Skip the backtest and only (re)generate "
+                             "report.md from JSON artifacts in this dir.")
     args = parser.parse_args(argv)
+
+    # --from-json: backfill report.md for a run that already has JSON.
+    if args.from_json:
+        target = Path(args.from_json).resolve()
+        if not target.exists():
+            print("ERROR: --from-json path does not exist: %s" % target)
+            return 1
+        report_path = backtest.write_report_from_dir(target)
+        print("Regenerated report at: %s" % report_path)
+        return 0
 
     data_root = Path(args.data_root) if args.data_root else None
     bands_long = _parse_band_list(args.bands_long)
@@ -234,6 +256,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         "pillar_ic": attribution.to_dict(orient="records"),
     }
     backtest._atomic_write_json(out_root / "summary.json", summary)
+
+    # 6b. Markdown report (small, fast; never fail the whole run on render error).
+    if not args.no_report:
+        try:
+            backtest.write_report(
+                out_root,
+                summary=summary,
+                quintile_payload=quintile_payload,
+            )
+        except Exception as exc:  # pragma: no cover — defensive
+            print("WARN: failed to write report.md: %s" % exc)
 
     # 7. Stdout summary.
     print("")

@@ -479,8 +479,139 @@ def test_cli_runs_with_synthetic_history(tmp_path: Path) -> None:
     assert (out_run / "pillar_ic.json").exists()
     assert (out_run / "quintile_returns.json").exists()
     assert (out_run / "summary.json").exists()
+    # Regression: report.md must be emitted alongside the JSON artifacts.
+    report_path = out_run / "report.md"
+    assert report_path.exists(), "report.md was not emitted by the CLI"
+    report_text = report_path.read_text(encoding="utf-8")
+    assert "LTHCS Backtest" in report_text
+    assert "test-run" in report_text
+    assert "Pillar Information Coefficient" in report_text
 
     summary = json.loads((out_run / "summary.json").read_text())
     assert summary["run_id"] == "test-run"
     assert summary["start"] == "2026-05-16"
     assert summary["end"] == "2026-05-17"
+
+
+def test_cli_no_report_flag_skips_report(tmp_path: Path) -> None:
+    """``--no-report`` keeps JSON artifacts but skips report.md."""
+    data_root = tmp_path / "lthcs"
+    out_dir = tmp_path / "out"
+    _write_snapshot(data_root, "2026-05-16", [
+        _make_score_row("AAA", 80.0, "elite"),
+        _make_score_row("BBB", 30.0, "review"),
+        _make_score_row("CCC", 60.0, "constructive"),
+        _make_score_row("DDD", 45.0, "monitor"),
+        _make_score_row("EEE", 55.0, "constructive"),
+    ])
+    _write_snapshot(data_root, "2026-05-17", [
+        _make_score_row("AAA", 82.0, "elite"),
+        _make_score_row("BBB", 32.0, "review"),
+        _make_score_row("CCC", 62.0, "constructive"),
+        _make_score_row("DDD", 47.0, "monitor"),
+        _make_score_row("EEE", 57.0, "constructive"),
+    ])
+
+    repo_root = Path(__file__).resolve().parents[2]
+    cli = repo_root / "scripts" / "lthcs_backtest.py"
+    cmd = [
+        sys.executable, str(cli),
+        "--data-root", str(data_root),
+        "--output-dir", str(out_dir),
+        "--run-id", "no-report-run",
+        "--offline",
+        "--horizon", "1",
+        "--no-report",
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+    assert result.returncode == 0, (
+        "CLI failed: stdout=%s stderr=%s" % (result.stdout, result.stderr)
+    )
+    out_run = out_dir / "no-report-run"
+    assert (out_run / "summary.json").exists()
+    assert not (out_run / "report.md").exists()
+
+
+def test_build_report_markdown_from_summary_payload() -> None:
+    """The pure-function renderer turns a summary dict into markdown."""
+    summary = {
+        "run_id": "unit-run",
+        "generated_at": "2026-05-19T03:45:23Z",
+        "start": "2026-02-17",
+        "end": "2026-05-18",
+        "horizon_days": 21,
+        "bands_long": ["elite", "high_confidence"],
+        "bands_short": ["review"],
+        "n_tickers": 167,
+        "n_observation_dates": 91,
+        "portfolio": {
+            "cumulative_return": 2.5,
+            "sharpe": 19.44,
+            "max_drawdown": -0.13,
+            "turnover_per_rebalance": 0.067,
+            "n_rebalances": 91,
+            "hit_rate": 0.813,
+            "n_long_avg": 7.2,
+            "n_short_avg": 62.0,
+        },
+        "pillar_ic": [
+            {"pillar": "composite", "ic_mean": 0.122, "ic_std": 0.1,
+             "ic_sharpe": 14.1, "n_obs": 91},
+            {"pillar": "thesis_integrity", "ic_mean": 0.082, "ic_std": 0.12,
+             "ic_sharpe": 17.2, "n_obs": 91},
+        ],
+    }
+    quintile = {
+        "thesis_integrity": {
+            "Q5-Q1": {"2026-02-17": 0.01, "2026-02-18": 0.02, "2026-02-19": None}
+        }
+    }
+    md = backtest.build_report_markdown(summary, quintile_payload=quintile)
+    assert md.startswith("# LTHCS Backtest — unit-run")
+    assert "Window: **2026-02-17 -> 2026-05-18**" in md
+    assert "Horizon: **21 trading days**" in md
+    assert "| composite |" in md
+    assert "| thesis_integrity |" in md
+    # Q5-Q1 mean of (0.01, 0.02) -> 0.0150; None dropped.
+    assert "+0.0150" in md
+    assert md.endswith("\n")
+
+
+def test_write_report_from_dir_round_trip(tmp_path: Path) -> None:
+    """``write_report_from_dir`` reads summary+quintile JSON, writes report.md."""
+    out_dir = tmp_path / "run"
+    out_dir.mkdir()
+    summary = {
+        "run_id": "round-trip",
+        "start": "2026-05-01",
+        "end": "2026-05-10",
+        "horizon_days": 5,
+        "bands_long": ["elite"],
+        "bands_short": ["review"],
+        "n_tickers": 50,
+        "n_observation_dates": 10,
+        "portfolio": {
+            "cumulative_return": 0.1, "sharpe": 1.2, "max_drawdown": -0.05,
+            "turnover_per_rebalance": 0.05, "n_rebalances": 10, "hit_rate": 0.6,
+            "n_long_avg": 5.0, "n_short_avg": 4.0,
+        },
+        "pillar_ic": [
+            {"pillar": "composite", "ic_mean": 0.05, "ic_std": 0.1,
+             "ic_sharpe": 1.5, "n_obs": 10},
+        ],
+    }
+    (out_dir / "summary.json").write_text(json.dumps(summary))
+    (out_dir / "quintile_returns.json").write_text(json.dumps({
+        "des": {"Q5-Q1": {"2026-05-01": 0.005, "2026-05-02": 0.007}}
+    }))
+
+    result = backtest.write_report_from_dir(out_dir)
+    assert result == out_dir / "report.md"
+    text = result.read_text(encoding="utf-8")
+    assert "round-trip" in text
+    assert "des" in text
+
+
+def test_write_report_from_dir_missing_summary_raises(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError):
+        backtest.write_report_from_dir(tmp_path / "nope")
