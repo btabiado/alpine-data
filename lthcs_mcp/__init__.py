@@ -11,28 +11,38 @@ is importable and testable without the ``mcp`` SDK installed; only the
 from lthcs_mcp.data import (
     DEFAULT_DATA_ROOT,
     get_composite_index,
+    get_crypto_universe,
+    get_dragging_pillar,
     get_history,
     get_holdings,
     get_insider_signals,
     get_macro_regime,
+    get_pillar_attribution,
     get_pillar_breakdown,
+    get_recent_movers,
     get_ticker_score,
     get_top_movers,
     get_universe_distribution,
+    list_band,
     search_tickers,
 )
 
 __all__ = [
     "DEFAULT_DATA_ROOT",
     "get_composite_index",
+    "get_crypto_universe",
+    "get_dragging_pillar",
     "get_history",
     "get_holdings",
     "get_insider_signals",
     "get_macro_regime",
+    "get_pillar_attribution",
     "get_pillar_breakdown",
+    "get_recent_movers",
     "get_ticker_score",
     "get_top_movers",
     "get_universe_distribution",
+    "list_band",
     "search_tickers",
 ]
 

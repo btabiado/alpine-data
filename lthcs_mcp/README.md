@@ -65,7 +65,7 @@ Add this entry to `~/.claude/mcp.json` (Claude Code) or
 }
 ```
 
-Restart the client and the 10 tools below will appear.
+Restart the client and the 15 tools below will appear.
 
 ---
 
@@ -76,13 +76,18 @@ Restart the client and the 10 tools below will appear.
 | `get_ticker_score` | Composite score, band, drift, and 5 pillar sub-scores for a ticker. |
 | `get_universe_distribution` | Counts per band across the full universe. |
 | `get_composite_index` | LTHCS Composite Index (score, label, color, 9 components, note). |
-| `get_top_movers` | Top-N tickers by score delta over a window. |
+| `get_top_movers` | Top-N tickers by score delta over a window (history-derived). |
 | `get_insider_signals` | Form 4 insider conviction by ticker or by regime. |
 | `get_holdings` | 13F institutional holdings for a ticker. |
-| `get_pillar_breakdown` | Variable-detail rows (5 pillars + components) for a ticker. |
+| `get_pillar_breakdown` | Variable-detail rows (all 5 pillars + components) for a ticker. |
 | `get_history` | Last N days of score history for a ticker. |
 | `get_macro_regime` | FRED breadth + sector strength + breadth sentiment. |
 | `search_tickers` | Fuzzy match against symbol or name; returns current scores. |
+| `get_dragging_pillar` | For Weakening/Review tickers, the pillar dragging the composite the most. |
+| `list_band` | Tickers in a given band today (sorted by composite desc, default top 20). |
+| `get_pillar_attribution` | One pillar's sub-score + variable_detail evidence (raw signals) for a ticker. |
+| `get_recent_movers` | Top/bottom N tickers by `drift_7d` from the latest snapshot — mirrors UI leaderboard. |
+| `get_crypto_universe` | Latest BTC/ETH/SOL/etc scores from `data/lthcs/snapshots_crypto/`. |
 
 ### Example invocations
 
@@ -123,6 +128,27 @@ get_macro_regime()
 search_tickers(query="apple")
   → {query: "apple", count: 1, matches: [{ticker: "AAPL", name: "Apple Inc.",
      score: 58.7, band: "weakening", ...}]}
+
+get_dragging_pillar(ticker="AAPL")
+  → {ticker: "AAPL", band: "weakening", dragging_pillar: "des",
+     sub_score: 44.9, rationale: "des has the lowest sub-score (44.9) ..."}
+
+list_band(band="elite", limit=20)
+  → {date: "2026-05-17", band: "elite", total_in_band: 0, count: 0,
+     limit: 20, tickers: []}
+
+get_pillar_attribution(ticker="AAPL", pillar="financial_evolution")
+  → {date: "2026-05-17", ticker: "AAPL", pillar: "financial_evolution",
+     sub_score: 67.5, evidence: [{sub_score: 67.5, components: {...}, ...}]}
+
+get_recent_movers(direction="up", limit=10)
+  → {date: "2026-05-17", direction: "up", count: 10, limit: 10,
+     movers: [{ticker: "...", score: ..., drift_7d: 2.1, ...}, ...]}
+
+get_crypto_universe()
+  → {date: "2026-05-16", asset_class: "crypto", count: 10,
+     tickers: [{ticker: "BTC", score: 64.5, band: "monitor",
+                subscores: {...}, dropped_pillars: ["thesis_integrity"]}, ...]}
 ```
 
 ## Error shape

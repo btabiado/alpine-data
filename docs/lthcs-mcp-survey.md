@@ -114,3 +114,24 @@ The Tier 5 #26 row in `docs/lthcs-open-items-audit.md` line 265 should be update
 ---
 
 **Bottom line**: this is a polish job, not a build job. The hardest part (designing 10 well-shaped tools with strict input validation and consistent error envelopes) is already done.
+
+---
+
+## 8. Tier 5 #26 follow-on — expansion (2026-05-19)
+
+After the initial 11-tool ship (10 originals + `get_dragging_pillar`), the
+server was expanded by 4 more read-only query tools to give MCP clients a
+richer surface across the LTHCS data:
+
+| New tool | Purpose |
+| --- | --- |
+| `list_band(band, limit=20, date?)` | Tickers in a band on a date, sorted by composite descending. |
+| `get_pillar_attribution(ticker, pillar, date?)` | One pillar's sub-score + `variable_detail` evidence rows (raw component signals). |
+| `get_recent_movers(direction, limit=10, date?)` | Top/bottom N by `drift_7d` from the latest snapshot — mirrors the UI Movers leaderboard. |
+| `get_crypto_universe(date?)` | Latest scores from `data/lthcs/snapshots_crypto/<date>.json` (BTC/ETH/SOL/...). |
+
+Total tool count is now **15**. Test coverage expanded with **22 new unit
+tests** (60 total in `tests/lthcs/test_mcp_server.py`; 38 → 60). Boot-test
+expectation set in `tests/lthcs/test_mcp_server_boot.py` was updated to
+include the four new tool names. README tool table and example invocations
+were updated to match.

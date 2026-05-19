@@ -36,6 +36,11 @@ _EXPECTED_TOOLS = {
     "search_tickers",
     # Tier 5 #26 follow-up — dragging-pillar callout as an MCP tool:
     "get_dragging_pillar",
+    # Tier 5 #26 expansion — 4 read-only query tools:
+    "list_band",
+    "get_pillar_attribution",
+    "get_recent_movers",
+    "get_crypto_universe",
 }
 
 

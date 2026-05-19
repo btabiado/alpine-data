@@ -41,6 +41,17 @@ _VALID_INSIDER_REGIMES = {
     "mixed",
 }
 
+_VALID_BANDS = {
+    "elite",
+    "high_confidence",
+    "constructive",
+    "monitor",
+    "weakening",
+    "review",
+}
+
+_VALID_MOVER_DIRECTIONS = {"up", "down"}
+
 # Canonical pillar order — matches lthcs_tab/lthcs-detail.js PILLAR_ORDER and
 # the order of weights_used[] in snapshots. Used by get_dragging_pillar to
 # break ties on equal sub-scores by highest weight.
@@ -735,4 +746,276 @@ def get_dragging_pillar(
             f"{best_key} has the lowest sub-score ({best_score:.1f}) of the 5 "
             f"pillars; composite {composite_str}."
         ),
+    }
+
+
+# --- New tools (Tier 5 #26 follow-on) -------------------------------------
+
+
+def list_band(
+    band: str,
+    limit: int = 20,
+    date: Optional[str] = None,
+    data_root: Optional[str] = None,
+) -> Dict[str, Any]:
+    """List tickers in a given band on a given date, sorted by composite desc.
+
+    Returns the top ``limit`` tickers (default 20) in the requested band.
+    Useful for surfacing today's Elite / High-Confidence / Weakening lists
+    without pulling the full snapshot.
+    """
+    if not band or not isinstance(band, str):
+        return _err("band is required")
+    band_norm = band.strip().lower()
+    if band_norm not in _VALID_BANDS:
+        return _err(
+            f"band must be one of {sorted(_VALID_BANDS)}"
+        )
+    if not isinstance(limit, int) or limit < 1 or limit > 500:
+        return _err("limit must be an integer between 1 and 500")
+    root = _data_root(data_root)
+    resolved = _resolve_date(date, root)
+    if isinstance(resolved, dict):
+        return resolved
+    snap = _load_snapshot(resolved, root)
+    if isinstance(snap, dict) and "error" in snap:
+        return snap
+
+    rows: List[Dict[str, Any]] = []
+    for r in snap.get("scores", []):
+        if r.get("band") != band_norm:
+            continue
+        try:
+            score = float(r.get("lthcs_score"))
+        except (TypeError, ValueError):
+            continue
+        rows.append(
+            {
+                "ticker": r.get("ticker"),
+                "score": score,
+                "drift_7d": r.get("drift_7d"),
+                "drift_30d": r.get("drift_30d"),
+                "sector": r.get("sector"),
+                "confidence_level": r.get("confidence_level"),
+            }
+        )
+    rows.sort(key=lambda x: x["score"], reverse=True)
+    trimmed = rows[:limit]
+    return {
+        "date": resolved,
+        "band": band_norm,
+        "total_in_band": len(rows),
+        "count": len(trimmed),
+        "limit": limit,
+        "tickers": trimmed,
+    }
+
+
+def get_pillar_attribution(
+    ticker: str,
+    pillar: str,
+    date: Optional[str] = None,
+    data_root: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Return one pillar's sub-score and variable_detail evidence for a ticker.
+
+    Unlike ``get_pillar_breakdown`` which returns all 5 pillars, this returns
+    only the requested pillar with its raw component signals (the data that
+    fed into the sub-score) plus the canonical sub-score from the snapshot.
+    """
+    if not ticker or not isinstance(ticker, str):
+        return _err("ticker is required")
+    if not pillar or not isinstance(pillar, str):
+        return _err("pillar is required")
+    pillar_norm = pillar.strip().lower()
+    if pillar_norm not in set(_PILLAR_ORDER):
+        return _err(
+            f"pillar must be one of {_PILLAR_ORDER}"
+        )
+    root = _data_root(data_root)
+    resolved = _resolve_date(date, root)
+    if isinstance(resolved, dict):
+        return resolved
+    sym = _normalize_ticker(ticker)
+
+    # Canonical sub-score from snapshot.
+    snap = _load_snapshot(resolved, root)
+    canonical_sub_score: Optional[float] = None
+    if isinstance(snap, dict) and "scores" in snap:
+        for r in snap.get("scores", []):
+            if r.get("ticker") == sym:
+                subs = r.get("subscores") or {}
+                if isinstance(subs, dict) and pillar_norm in subs:
+                    try:
+                        canonical_sub_score = float(subs[pillar_norm])
+                    except (TypeError, ValueError):
+                        canonical_sub_score = None
+                break
+
+    # variable_detail evidence rows for this pillar.
+    vd_path = os.path.join(root, "variable_detail", f"{resolved}.json")
+    vd = _read_json(vd_path)
+    if isinstance(vd, dict) and "error" in vd:
+        return vd
+    evidence: List[Dict[str, Any]] = []
+    for v in vd.get("variables", []):
+        if not isinstance(v, dict):
+            continue
+        if v.get("ticker") != sym or v.get("pillar") != pillar_norm:
+            continue
+        evidence.append(
+            {
+                "sub_score": v.get("sub_score"),
+                "components": v.get("components", {}),
+                "data_quality": v.get("data_quality", {}),
+                "notes": v.get("notes"),
+            }
+        )
+    if canonical_sub_score is None and not evidence:
+        return _err(
+            f"no data for pillar '{pillar_norm}' on ticker '{sym}' for {resolved}"
+        )
+    return {
+        "date": resolved,
+        "ticker": sym,
+        "pillar": pillar_norm,
+        "sub_score": canonical_sub_score,
+        "evidence": evidence,
+    }
+
+
+def get_recent_movers(
+    direction: str = "up",
+    limit: int = 10,
+    data_root: Optional[str] = None,
+    date: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Top/bottom N tickers by ``drift_7d`` in the most recent snapshot.
+
+    Mirrors the Movers leaderboard from the UI: positive direction returns
+    largest 7-day drift gainers; negative returns the largest 7-day drift
+    decliners. Uses the canonical ``drift_7d`` field on each ticker — no
+    history-file walk required, so it's cheap and matches what the UI shows.
+    """
+    if direction not in _VALID_MOVER_DIRECTIONS:
+        return _err(
+            f"direction must be one of {sorted(_VALID_MOVER_DIRECTIONS)}"
+        )
+    if not isinstance(limit, int) or limit < 1 or limit > 100:
+        return _err("limit must be an integer between 1 and 100")
+    root = _data_root(data_root)
+    resolved = _resolve_date(date, root)
+    if isinstance(resolved, dict):
+        return resolved
+    snap = _load_snapshot(resolved, root)
+    if isinstance(snap, dict) and "error" in snap:
+        return snap
+
+    rows: List[Dict[str, Any]] = []
+    for r in snap.get("scores", []):
+        drift = r.get("drift_7d")
+        if drift is None:
+            continue
+        try:
+            drift_f = float(drift)
+        except (TypeError, ValueError):
+            continue
+        rows.append(
+            {
+                "ticker": r.get("ticker"),
+                "score": r.get("lthcs_score"),
+                "band": r.get("band"),
+                "drift_7d": drift_f,
+                "sector": r.get("sector"),
+            }
+        )
+    rows.sort(key=lambda x: x["drift_7d"], reverse=(direction == "up"))
+    trimmed = rows[:limit]
+    return {
+        "date": resolved,
+        "direction": direction,
+        "count": len(trimmed),
+        "limit": limit,
+        "movers": trimmed,
+    }
+
+
+def _latest_crypto_snapshot_date(data_root: str) -> Optional[str]:
+    """Most recent ``YYYY-MM-DD.json`` filename in ``snapshots_crypto/``."""
+    snap_dir = os.path.join(data_root, "snapshots_crypto")
+    if not os.path.isdir(snap_dir):
+        return None
+    candidates: List[str] = []
+    for name in os.listdir(snap_dir):
+        if not name.endswith(".json"):
+            continue
+        stem = name[:-5]
+        try:
+            datetime.strptime(stem, "%Y-%m-%d")
+        except ValueError:
+            continue
+        candidates.append(stem)
+    if not candidates:
+        return None
+    return sorted(candidates)[-1]
+
+
+def get_crypto_universe(
+    date: Optional[str] = None,
+    data_root: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Return the latest crypto LTHCS snapshot (BTC, ETH, SOL, etc.).
+
+    Reads ``data/lthcs/snapshots_crypto/<date>.json`` — the parallel scoring
+    pipeline shipped in V1 for the 10-asset crypto universe (BTC, ETH, SOL,
+    ADA, AVAX, DOT, LINK, POL, XRP, DOGE). When ``date`` is None the most
+    recent crypto snapshot is used.
+    """
+    root = _data_root(data_root)
+    parsed = _parse_date(date)
+    if isinstance(parsed, dict):
+        return parsed
+    if parsed is None:
+        latest = _latest_crypto_snapshot_date(root)
+        if latest is None:
+            return _err(
+                "no snapshots available in data/lthcs/snapshots_crypto/"
+            )
+        resolved = latest
+    else:
+        resolved = parsed.isoformat()
+
+    path = os.path.join(root, "snapshots_crypto", f"{resolved}.json")
+    payload = _read_json(path)
+    if isinstance(payload, dict) and "error" in payload:
+        return payload
+
+    rows: List[Dict[str, Any]] = []
+    for r in payload.get("scores", []):
+        if not isinstance(r, dict):
+            continue
+        rows.append(
+            {
+                "ticker": r.get("ticker"),
+                "score": r.get("lthcs_score"),
+                "band": r.get("band"),
+                "confidence_level": r.get("confidence_level"),
+                "subscores": r.get("subscores", {}),
+                "dropped_pillars": r.get("dropped_pillars", []),
+                "drift_7d": r.get("drift_7d"),
+                "drift_30d": r.get("drift_30d"),
+                "maturity_stage": r.get("maturity_stage"),
+                "data_quality_flags": r.get("data_quality_flags", []),
+            }
+        )
+    rows.sort(
+        key=lambda x: (x.get("score") if isinstance(x.get("score"), (int, float)) else -1),
+        reverse=True,
+    )
+    return {
+        "date": payload.get("calc_date", resolved),
+        "asset_class": payload.get("asset_class", "crypto"),
+        "model_version": payload.get("model_version"),
+        "count": len(rows),
+        "tickers": rows,
     }

@@ -138,6 +138,75 @@ class DraggingPillarInput(_StrictBase):
     )
 
 
+class ListBandInput(_StrictBase):
+    band: str = Field(
+        ...,
+        description=(
+            "Band name: one of 'elite', 'high_confidence', 'constructive', "
+            "'monitor', 'weakening', 'review'. Case-insensitive."
+        ),
+        min_length=1,
+        max_length=32,
+    )
+    limit: int = Field(
+        default=20,
+        description="Max tickers to return (1-500). Default 20.",
+        ge=1,
+        le=500,
+    )
+    date: Optional[str] = Field(
+        default=None,
+        description="ISO date YYYY-MM-DD. Defaults to latest snapshot.",
+    )
+
+
+class PillarAttributionInput(_StrictBase):
+    ticker: str = Field(
+        ..., description="Ticker symbol (case-insensitive).", min_length=1, max_length=10
+    )
+    pillar: str = Field(
+        ...,
+        description=(
+            "Pillar name: one of 'adoption_momentum', 'institutional_confidence', "
+            "'financial_evolution', 'thesis_integrity', 'des'."
+        ),
+        min_length=1,
+        max_length=32,
+    )
+    date: Optional[str] = Field(
+        default=None,
+        description="ISO date YYYY-MM-DD. Defaults to latest snapshot.",
+    )
+
+
+class RecentMoversInput(_StrictBase):
+    direction: str = Field(
+        default="up",
+        description="'up' for top gainers by drift_7d, 'down' for top decliners.",
+    )
+    limit: int = Field(
+        default=10, description="Max rows to return (1-100).", ge=1, le=100
+    )
+    date: Optional[str] = Field(
+        default=None,
+        description="ISO date YYYY-MM-DD. Defaults to latest snapshot.",
+    )
+
+    @field_validator("direction")
+    @classmethod
+    def _check_direction(cls, v: str) -> str:
+        if v not in ("up", "down"):
+            raise ValueError("direction must be 'up' or 'down'")
+        return v
+
+
+class CryptoUniverseInput(_StrictBase):
+    date: Optional[str] = Field(
+        default=None,
+        description="ISO date YYYY-MM-DD. Defaults to latest crypto snapshot.",
+    )
+
+
 # --- Tool definitions ------------------------------------------------------
 
 
@@ -344,6 +413,93 @@ async def get_dragging_pillar(params: DraggingPillarInput) -> dict:
     Returns: {ticker, band, dragging_pillar, sub_score, rationale}.
     """
     return ldata.get_dragging_pillar(params.ticker)
+
+
+@mcp.tool(
+    name="list_band",
+    annotations={
+        "title": "List Tickers in Band",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def list_band(params: ListBandInput) -> dict:
+    """Return tickers in a given band on a given date, sorted by composite desc.
+
+    Args:
+        params (ListBandInput): band (required), limit (default 20), date.
+
+    Returns: {date, band, total_in_band, count, limit, tickers: [{ticker,
+        score, drift_7d, drift_30d, sector, confidence_level}, ...]}.
+    """
+    return ldata.list_band(
+        band=params.band, limit=params.limit, date=params.date
+    )
+
+
+@mcp.tool(
+    name="get_pillar_attribution",
+    annotations={
+        "title": "Pillar Attribution Evidence",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def get_pillar_attribution(params: PillarAttributionInput) -> dict:
+    """Return a single pillar's sub-score and the variable_detail evidence
+    (raw signals + values) that fed into it.
+
+    Returns: {date, ticker, pillar, sub_score, evidence: [...]}.
+    """
+    return ldata.get_pillar_attribution(
+        ticker=params.ticker, pillar=params.pillar, date=params.date
+    )
+
+
+@mcp.tool(
+    name="get_recent_movers",
+    annotations={
+        "title": "Recent Movers (drift_7d)",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def get_recent_movers(params: RecentMoversInput) -> dict:
+    """Top N tickers by ``drift_7d`` (direction='up') or bottom N
+    (direction='down'). Mirrors the Movers leaderboard from the UI.
+
+    Returns: {date, direction, count, limit, movers: [{ticker, score, band,
+        drift_7d, sector}, ...]}.
+    """
+    return ldata.get_recent_movers(
+        direction=params.direction, limit=params.limit, date=params.date
+    )
+
+
+@mcp.tool(
+    name="get_crypto_universe",
+    annotations={
+        "title": "LTHCS Crypto Universe",
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    },
+)
+async def get_crypto_universe(params: CryptoUniverseInput) -> dict:
+    """Latest BTC/ETH/SOL/etc LTHCS scores from
+    ``data/lthcs/snapshots_crypto/<latest>.json``.
+
+    Returns: {date, asset_class, model_version, count, tickers: [{ticker,
+        score, band, subscores, dropped_pillars, ...}, ...]}.
+    """
+    return ldata.get_crypto_universe(date=params.date)
 
 
 # --- Entry point -----------------------------------------------------------

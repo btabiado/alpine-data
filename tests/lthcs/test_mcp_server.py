@@ -255,6 +255,55 @@ def fake_root(tmp_path) -> str:
         )
     )
 
+    # Crypto snapshot for get_crypto_universe tests.
+    (root / "snapshots_crypto").mkdir()
+    crypto_snap = {
+        "calc_date": "2026-05-16",
+        "model_version": "v1.1.0",
+        "asset_class": "crypto",
+        "scores": [
+            {
+                "ticker": "BTC",
+                "lthcs_score": 64.5,
+                "band": "monitor",
+                "drift_7d": 0.3,
+                "drift_30d": 1.2,
+                "confidence_level": "medium",
+                "subscores": {
+                    "adoption_momentum": 39.0,
+                    "institutional_confidence": 81.7,
+                    "financial_evolution": 63.2,
+                    "thesis_integrity": 50.0,
+                    "des": 52.9,
+                },
+                "dropped_pillars": ["thesis_integrity"],
+                "maturity_stage": "btc",
+                "data_quality_flags": ["thesis_unavailable"],
+            },
+            {
+                "ticker": "ETH",
+                "lthcs_score": 58.0,
+                "band": "monitor",
+                "drift_7d": -0.2,
+                "drift_30d": -1.0,
+                "confidence_level": "medium",
+                "subscores": {
+                    "adoption_momentum": 45.0,
+                    "institutional_confidence": 60.0,
+                    "financial_evolution": 70.0,
+                    "thesis_integrity": 50.0,
+                    "des": 55.0,
+                },
+                "dropped_pillars": [],
+                "maturity_stage": "eth",
+                "data_quality_flags": [],
+            },
+        ],
+    }
+    (root / "snapshots_crypto" / "2026-05-16.json").write_text(
+        json.dumps(crypto_snap)
+    )
+
     return str(root)
 
 
@@ -592,6 +641,228 @@ def test_get_dragging_pillar_tie_break_by_weight(tmp_path) -> None:
     (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
     out = ldata.get_dragging_pillar("TIE", data_root=str(root))
     assert out["dragging_pillar"] == "des"
+
+
+# --- list_band ------------------------------------------------------------
+
+
+def test_list_band_returns_tickers_in_band(fake_root: str) -> None:
+    out = ldata.list_band(band="weakening", data_root=fake_root)
+    assert out["band"] == "weakening"
+    assert out["total_in_band"] == 1
+    assert out["count"] == 1
+    assert out["tickers"][0]["ticker"] == "AAPL"
+    assert out["tickers"][0]["score"] == 58.7
+    assert out["tickers"][0]["sector"] == "Technology"
+
+
+def test_list_band_sorted_by_composite_desc(tmp_path) -> None:
+    # Build a snapshot with 3 tickers all in the same band; check sort.
+    root = tmp_path / "lthcs"
+    (root / "snapshots").mkdir(parents=True)
+    snap = {
+        "calc_date": "2026-05-17",
+        "scores": [
+            {"ticker": "A", "lthcs_score": 50.0, "band": "constructive"},
+            {"ticker": "B", "lthcs_score": 80.0, "band": "constructive"},
+            {"ticker": "C", "lthcs_score": 65.0, "band": "constructive"},
+        ],
+    }
+    (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
+    out = ldata.list_band(band="constructive", data_root=str(root))
+    assert [t["ticker"] for t in out["tickers"]] == ["B", "C", "A"]
+
+
+def test_list_band_respects_limit(tmp_path) -> None:
+    root = tmp_path / "lthcs"
+    (root / "snapshots").mkdir(parents=True)
+    snap = {
+        "calc_date": "2026-05-17",
+        "scores": [
+            {"ticker": f"T{i}", "lthcs_score": float(i), "band": "monitor"}
+            for i in range(25)
+        ],
+    }
+    (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
+    out = ldata.list_band(band="monitor", limit=5, data_root=str(root))
+    assert out["total_in_band"] == 25
+    assert out["count"] == 5
+    assert out["tickers"][0]["ticker"] == "T24"  # highest score
+
+
+def test_list_band_invalid_band(fake_root: str) -> None:
+    out = ldata.list_band(band="nonsense", data_root=fake_root)
+    assert "error" in out
+    assert "band must be" in out["error"]
+
+
+def test_list_band_case_insensitive(fake_root: str) -> None:
+    out = ldata.list_band(band="WEAKENING", data_root=fake_root)
+    assert out["band"] == "weakening"
+    assert out["count"] == 1
+
+
+def test_list_band_empty_band(fake_root: str) -> None:
+    # No 'elite' tickers in fake_root.
+    out = ldata.list_band(band="elite", data_root=fake_root)
+    assert out["total_in_band"] == 0
+    assert out["tickers"] == []
+
+
+def test_list_band_invalid_limit(fake_root: str) -> None:
+    out = ldata.list_band(band="weakening", limit=0, data_root=fake_root)
+    assert "error" in out
+
+
+# --- get_pillar_attribution -----------------------------------------------
+
+
+def test_get_pillar_attribution_returns_sub_score_and_evidence(
+    fake_root: str,
+) -> None:
+    out = ldata.get_pillar_attribution(
+        ticker="AAPL", pillar="adoption_momentum", data_root=fake_root
+    )
+    assert out["ticker"] == "AAPL"
+    assert out["pillar"] == "adoption_momentum"
+    assert out["sub_score"] == 50.0
+    assert len(out["evidence"]) == 1
+    assert out["evidence"][0]["components"] == {"revenue_subscore": 50.0}
+
+
+def test_get_pillar_attribution_invalid_pillar(fake_root: str) -> None:
+    out = ldata.get_pillar_attribution(
+        ticker="AAPL", pillar="bogus", data_root=fake_root
+    )
+    assert "error" in out
+    assert "pillar must be" in out["error"]
+
+
+def test_get_pillar_attribution_unknown_ticker(fake_root: str) -> None:
+    out = ldata.get_pillar_attribution(
+        ticker="NOPE", pillar="adoption_momentum", data_root=fake_root
+    )
+    assert "error" in out
+
+
+def test_get_pillar_attribution_case_insensitive(fake_root: str) -> None:
+    out = ldata.get_pillar_attribution(
+        ticker="aapl", pillar="ADOPTION_MOMENTUM", data_root=fake_root
+    )
+    assert out["ticker"] == "AAPL"
+    assert out["pillar"] == "adoption_momentum"
+
+
+def test_get_pillar_attribution_missing_evidence_but_canonical(tmp_path) -> None:
+    # Snapshot has subscore but variable_detail file has no row for that pillar.
+    root = tmp_path / "lthcs"
+    (root / "snapshots").mkdir(parents=True)
+    (root / "variable_detail").mkdir(parents=True)
+    snap = {
+        "calc_date": "2026-05-17",
+        "scores": [
+            {
+                "ticker": "X",
+                "lthcs_score": 50.0,
+                "band": "monitor",
+                "subscores": {"des": 42.0},
+            }
+        ],
+    }
+    (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
+    (root / "variable_detail" / "2026-05-17.json").write_text(
+        json.dumps({"variables": []})
+    )
+    out = ldata.get_pillar_attribution(
+        ticker="X", pillar="des", data_root=str(root)
+    )
+    assert out["sub_score"] == 42.0
+    assert out["evidence"] == []
+
+
+# --- get_recent_movers ----------------------------------------------------
+
+
+def test_get_recent_movers_up(fake_root: str) -> None:
+    # AAPL has drift_7d=0.2, MSFT=0.0, ZZZ=0.0 — AAPL should top the list.
+    out = ldata.get_recent_movers(direction="up", limit=5, data_root=fake_root)
+    assert out["direction"] == "up"
+    assert out["count"] == 3
+    assert out["movers"][0]["ticker"] == "AAPL"
+    assert out["movers"][0]["drift_7d"] == 0.2
+
+
+def test_get_recent_movers_down(tmp_path) -> None:
+    root = tmp_path / "lthcs"
+    (root / "snapshots").mkdir(parents=True)
+    snap = {
+        "calc_date": "2026-05-17",
+        "scores": [
+            {"ticker": "UP", "lthcs_score": 60.0, "band": "monitor", "drift_7d": 1.5},
+            {"ticker": "DOWN", "lthcs_score": 40.0, "band": "weakening", "drift_7d": -2.0},
+            {"ticker": "FLAT", "lthcs_score": 50.0, "band": "monitor", "drift_7d": 0.0},
+        ],
+    }
+    (root / "snapshots" / "2026-05-17.json").write_text(json.dumps(snap))
+    out = ldata.get_recent_movers(direction="down", limit=2, data_root=str(root))
+    assert out["movers"][0]["ticker"] == "DOWN"
+    assert out["movers"][0]["drift_7d"] == -2.0
+
+
+def test_get_recent_movers_invalid_direction(fake_root: str) -> None:
+    out = ldata.get_recent_movers(direction="sideways", data_root=fake_root)
+    assert "error" in out
+
+
+def test_get_recent_movers_respects_limit(fake_root: str) -> None:
+    out = ldata.get_recent_movers(direction="up", limit=2, data_root=fake_root)
+    assert out["count"] == 2
+    assert out["limit"] == 2
+
+
+def test_get_recent_movers_invalid_limit(fake_root: str) -> None:
+    out = ldata.get_recent_movers(direction="up", limit=0, data_root=fake_root)
+    assert "error" in out
+
+
+# --- get_crypto_universe --------------------------------------------------
+
+
+def test_get_crypto_universe_returns_scores(fake_root: str) -> None:
+    out = ldata.get_crypto_universe(data_root=fake_root)
+    assert out["asset_class"] == "crypto"
+    assert out["count"] == 2
+    tickers = [t["ticker"] for t in out["tickers"]]
+    assert "BTC" in tickers
+    assert "ETH" in tickers
+    # Sorted by score desc — BTC (64.5) before ETH (58.0)
+    assert out["tickers"][0]["ticker"] == "BTC"
+    assert out["tickers"][0]["score"] == 64.5
+    assert out["tickers"][0]["dropped_pillars"] == ["thesis_integrity"]
+
+
+def test_get_crypto_universe_no_data(tmp_path) -> None:
+    root = tmp_path / "lthcs"
+    root.mkdir()
+    out = ldata.get_crypto_universe(data_root=str(root))
+    assert "error" in out
+    assert "snapshots_crypto" in out["error"]
+
+
+def test_get_crypto_universe_explicit_date(fake_root: str) -> None:
+    out = ldata.get_crypto_universe(date="2026-05-16", data_root=fake_root)
+    assert out["date"] == "2026-05-16"
+    assert out["count"] == 2
+
+
+def test_get_crypto_universe_missing_date_file(fake_root: str) -> None:
+    out = ldata.get_crypto_universe(date="2020-01-01", data_root=fake_root)
+    assert "error" in out
+
+
+def test_get_crypto_universe_invalid_date(fake_root: str) -> None:
+    out = ldata.get_crypto_universe(date="not-a-date", data_root=fake_root)
+    assert "error" in out
 
 
 def test_get_dragging_pillar_fallback_to_variable_detail(tmp_path) -> None:
