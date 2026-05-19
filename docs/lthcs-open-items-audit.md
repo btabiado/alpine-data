@@ -7,6 +7,27 @@ limitations — categorized by priority, effort, and status.
 
 ---
 
+## 2026-05-19 — Late afternoon swarm: P4 prep + Sharpe CIs + profile-selector UI + audit refresh
+
+Seven more commits land after the midday refresh. Tier 5 #24 picks up
+two P3 follow-ons (`afab1b9` Sharpe/Sortino 95% block-bootstrap CIs on
+the engine; `a17d8a9` profile selector on the backtest UI for the four
+strategy variants) plus Phase 4 plumbing (`306176a` —
+`walk_forward_tune_equity` ingests engine equity curves; first run
+`2026-05-19_v2_prep` HOLDs all 5 profiles per the time-locked gate, P4
+verdict still time-gated to ~July 2026). Tier 5 #27 closes its Phase 4
+build with `8af023b` (daily 22:00 UTC crypto cron + 8d initial backfill)
+on top of `259355d` (pages.yml stages `/lthcs/crypto/`) and `580d341`
+(backtest daily cron at 23:30 UTC). `0f9c126` wires
+`crypto_thesis_unavailable` into the `FLAGS_TO_DROPPED_PILLAR` map so
+the crypto pillar correctly drops `thesis_integrity` when the feed is
+out (crypto Phase 2 §9 hygiene). And `c8b74c1` flips the LLM sentiment +
+narratives shadow flags on in `lthcs-daily.yml` — **user action
+required**: add `ANTHROPIC_API_KEY` to repo secrets to actually fire the
+shadows.
+
+---
+
 ## 2026-05-19 — Engine + 13F + crypto end-to-end + narratives shadow + bank cohort
 
 Big shipping day. 12 commits land in parallel, knocking out Tier 2 #7 + #15,
@@ -454,10 +475,10 @@ to deepen Institutional beyond binary signal.
 | # | Item | Why | Effort |
 |---|---|---|---|
 | 23 | **Replace templated narratives with LLM-generated** | V1 narratives are sentence templates; LLM would weave in actual data quality flags + cross-pillar context. | ✅ SHIPPED `e734272` (shadow refactor, 2026-05-19) + `5ebf973` (V1↔LLM toggle in detail modal, 2026-05-19). **Pending env-flag flip** (`LTHCS_LLM_NARRATIVES_ENABLED=1`) after shadow data clears. |
-| 24 | **Backtest engine** | Score history → P&L attribution to validate the framework | ✅ SHIPPED Phases 1–3 `a996ad3` (P1: non-overlapping P&L) + `eb0d5db` (P2: per-pillar attribution) + `9e13452` (P3: strategy variants — dollar_neutral surfaces at +3.1 Sharpe), all 2026-05-19. **Phase 4** (full live A/B over 21d horizons against a real benchmark) is **time-gated to ~July 2026** once enough live history accumulates post-backfill. |
-| 25 | **Adaptive weights** (V2) | Use backtest to suggest per-ticker weight adjustments | XL (depends on 24 Phase 4) |
+| 24 | **Backtest engine** | Score history → P&L attribution to validate the framework | ✅ SHIPPED Phases 1–3 `a996ad3` (P1: non-overlapping P&L) + `eb0d5db` (P2: per-pillar attribution) + `9e13452` (P3: strategy variants — dollar_neutral surfaces at +3.1 Sharpe), all 2026-05-19. P3 follow-ons: `afab1b9` (Sharpe/Sortino 95% CIs via block bootstrap) + `a17d8a9` (backtest UI profile selector for the 4 strategy variants). **Phase 4 plumbing SHIPPED** `306176a` (V2 engine-bridge prep; `walk_forward_tune_equity` ingests engine equity curves). Phase 4 promotion (full live A/B over 21d horizons against a real benchmark) remains **time-gated to ~July 2026** — first run HOLDs all 5 profiles because OOS slice has only ~1 non-overlapping 21d block (need ≥20). **Effectively closed** — all code paths exist; calendar gate only. |
+| 25 | **Adaptive weights** (V2) | Use backtest to suggest per-ticker weight adjustments | XL (depends on 24 Phase 4) — **V2 plumbing now built** `306176a` (2026-05-19). Engine-bridge wires equity-curve ingestion. SHIP verdict still gated by `SHIP_MIN_TEST_OBS=20` at h=21d (~July 2026 once enough live history accumulates). No code change required at gate-fill time. |
 | 26 | **MCP server / API exposure** | LTHCS data as Claude Connector | ✅ SHIPPED `6d26a03` (2026-05-19) — `mcp[cli]>=1.0` pinned + boot test + `get_dragging_pillar` tool. **Effectively closed.** |
-| 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | ✅ SHIPPED Phase 3 + Phase 4 `5842149` (new `/lthcs/crypto/` route + ₿ header link) + `8af023b` (`lthcs-crypto-daily.yml` workflow at 22:00 UTC daily + 8-day initial backfill — BTC 64.5, ETH 55.0, SOL 49.4), 2026-05-19. Combined with prior Phase 1 (fetchers + sub-pillar math) and Phase 2 (composite integration), crypto pillar is now end-to-end live with daily cron. |
+| 27 | **Crypto pillar adapter** | Score BTC/ETH/SOL in the same framework | ✅ SHIPPED Phases 1–4 — `5842149` (new `/lthcs/crypto/` route + ₿ header link, Phase 3) + `259355d` (pages.yml stages route) + `8af023b` (`lthcs-crypto-daily.yml` at 22:00 UTC daily + 8-day initial backfill: BTC 64.5, ETH 55.0, SOL 49.4 — **Phase 4 confirmed SHIPPED**, closes #27 Phase 4) + `0f9c126` (hygiene: `crypto_thesis_unavailable` flag → `thesis_integrity` pillar drop in `FLAGS_TO_DROPPED_PILLAR`, crypto Phase 2 §9). Combined with prior Phase 1 (fetchers + sub-pillar math) and Phase 2 (composite integration), crypto pillar is now end-to-end live with daily cron. **Phase 5** (universe expansion beyond BTC/ETH/SOL) in flight (sibling Q swarm). |
 | 28 | **Real LLM-derived sentiment** (replace AI-news engagement heuristic) | Engagement ≠ sentiment direction; Claude call per ticker per day could give real polarity | ✅ SHIPPED `37199d7` (2026-05-19) — Haiku 4.5 default, daily cost cap, gated `LTHCS_LLM_SENTIMENT_ENABLED` env flag (default-0), byte-identical default behavior. **Effectively closed pending flag flip** after shadow data clears. Earlier spec: `docs/lthcs-llm-sentiment-shadow-spec.md` (`7732d9e`). |
 
 ---
@@ -479,49 +500,51 @@ to deepen Institutional beyond binary signal.
 |---|---|---|
 | `580d341` | `.github/workflows/lthcs-backtest-daily.yml` — runs the new backtest engine every night at 23:30 UTC, commits attribution + variant results to `data/lthcs/backtest/`. Race-safe push retry. | ✅ SHIPPED (2026-05-19) |
 | `259355d` | `pages.yml` updates to stage `/lthcs/crypto/` route on every push to main (alongside `/lthcs/` and `/v2/`). | ✅ SHIPPED (2026-05-19) |
-| `8af023b` | `.github/workflows/lthcs-crypto-daily.yml` — daily 22:00 UTC crypto pillar snapshot + 8-day initial backfill seeded. Race-safe push retry. | ✅ SHIPPED (2026-05-19) |
-| _(this commit)_ | **Tier 5 #24 P4 + #25 V2 plumbing** — `lthcs/adaptive_weights.py::walk_forward_tune_equity` ingests engine equity curves. IC path byte-identical. First run on `2026-05-18_validation` baseline ⇒ **HOLD on all 5 profiles** — gate fires because only ~1 non-overlapping 21d block in OOS slice (need ≥20). Time-locked to **~July 2026**. Artifacts at `data/lthcs/adaptive_weights/2026-05-19_v2_prep/`. | ✅ PLUMBING SHIPPED (2026-05-19); promotion gate time-locked to ~July 2026 |
+| `8af023b` | `.github/workflows/lthcs-crypto-daily.yml` — daily 22:00 UTC crypto pillar snapshot + 8-day initial backfill seeded. Race-safe push retry. Closes Tier 5 #27 Phase 4. | ✅ SHIPPED (2026-05-19) |
+| `c8b74c1` | `lthcs-daily.yml` — flips `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` env flags ON for shadow runs (Tier 5 #23, #28). **USER ACTION REQUIRED**: add `ANTHROPIC_API_KEY` to repo secrets to actually fire the shadows; without the secret, modules log-and-skip. | ✅ SHIPPED env flags (2026-05-19); secret pending |
+| `0f9c126` | `lthcs/score.py` — `FLAGS_TO_DROPPED_PILLAR` map gains `crypto_thesis_unavailable → thesis_integrity` (crypto Phase 2 §9 hygiene). | ✅ SHIPPED (2026-05-19) |
+| `afab1b9` | `lthcs/backtest_engine.py` — Sharpe/Sortino 95% confidence intervals via block bootstrap. Tier 5 #24 P3 follow-on. | ✅ SHIPPED (2026-05-19) |
+| `a17d8a9` | Backtest UI — profile selector for the 4 strategy variants (`equal_weight`, `dollar_neutral`, `long_only_top_quintile`, `band_weighted`). Tier 5 #24 P3 follow-on. | ✅ SHIPPED (2026-05-19) |
+| `306176a` | **Tier 5 #24 P4 + #25 V2 plumbing** — `lthcs/adaptive_weights.py::walk_forward_tune_equity` ingests engine equity curves. IC path byte-identical. First run on `2026-05-18_validation` baseline ⇒ **HOLD on all 5 profiles** — gate fires because only ~1 non-overlapping 21d block in OOS slice (need ≥20). Time-locked to **~July 2026**. Artifacts at `data/lthcs/adaptive_weights/2026-05-19_v2_prep/`. | ✅ PLUMBING SHIPPED (2026-05-19); promotion gate time-locked to ~July 2026 |
 
 ---
 
 ## Suggested next 3 commits
 
-Today's swarm shipped 12 commits closing Tier 2 #7 + #15, Tier 3 #13
-Phase 1, Tier 5 #23 (shadow refactor + UI toggle, pending flag flip),
-Tier 5 #24 (engine Phases 1–3), Tier 5 #27 (Phase 3 + Phase 4 — crypto
-end-to-end live with daily cron), plus two CI infra commits. Previous
-queue's items mostly shipped. New top-of-queue:
+The afternoon swarm closed almost everything the morning queue called
+out. LLM env flags are flipped (`c8b74c1`); Sharpe CIs + profile UI +
+P4 plumbing all shipped (`afab1b9`, `a17d8a9`, `306176a`). Only one
+true config gate left (the secret), one M-effort design call, and two
+sibling swarms in flight. New top-of-queue:
 
-1. **User flips LLM env flags + adds API key** — XS / config-only.
-   `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1`
-   in `lthcs-daily.yml`, and `ANTHROPIC_API_KEY` added to repo secrets.
-   Daily cost projected at ~$0.50/day (Haiku 4.5 + prompt caching). This
-   unlocks the Thesis-pillar real signal (kills the constant-50
-   problem) and surfaces LLM-generated narratives in the detail-modal
-   toggle. Single-action change; everything's already wired.
-2. **Tier 2 #14 Google Trends Phase 2** — M. Needs API decision:
-   pytrends (free, brittle / rate-limited), SerpAPI (paid, ToS-safe),
-   or headless scraping. Weekly batch under `lthcs-trends-weekly.yml`
-   ships partial coverage today (~11/167); Phase 2 lifts to full
-   universe. Decision is the blocker, not implementation.
-3. **Tier 3 #13 Phase 2-3** — M-L. Phase 1 (`29f2140`) lifted CUSIP
-   coverage 50 → 169 today. Phase 2 deepens coverage to additional 13F
-   filers; Phase 3 adds finer manager-weighting heuristics (e.g.,
-   long-tenured concentrated holders > passive index funds). Highest
-   ROI for the Institutional pillar — the workhorse at +0.204 IC.
+1. **USER ACTION: add `ANTHROPIC_API_KEY` to repo secrets** — XS /
+   config-only, but it's the literal blocker for the Tier 5 #23 + #28
+   shadows that `c8b74c1` already wired ON. Until the secret lands,
+   `llm_sentiment.py` and `llm_narratives.py` log-and-skip and the
+   constant-50 Thesis problem persists. Daily cost projected ~$0.50/day
+   (Haiku 4.5 + prompt caching). Single action, everything's wired.
+2. **Tier 2 #14 Google Trends Phase 2** — M. Still the only Tier 2
+   item with no design path. Needs API decision: pytrends (free,
+   brittle / rate-limited), SerpAPI (paid, ToS-safe), or headless
+   scraping. Weekly batch under `lthcs-trends-weekly.yml` ships
+   partial coverage (~11/167); Phase 2 lifts to full universe.
+   Decision is the blocker, not implementation.
+3. **In flight today**: Tier 3 #13 Phase 2 (sibling swarm P) — 13F
+   coverage deepening / manager-weighting heuristics; Tier 5 #27
+   Phase 5 (sibling swarm Q) — crypto universe expansion beyond
+   BTC/ETH/SOL. Both expected to land momentarily.
 
-After those: Tier 5 #24 Phase 4 + Tier 5 #25 **plumbing now built**
-(`walk_forward_tune_equity` ingests engine equity curves; first run
-2026-05-19 HOLDs all 5 profiles per the time-locked gate); the
-remaining work for both is *waiting for OOS history* to accumulate
-(~July 2026) — no code change required at gate-fill time. Also pending:
-widening `TIER2_MAX_POINTS` to lift the DES ceiling once Thesis-LLM is
-live.
+After those: Tier 5 #24 Phase 4 + Tier 5 #25 **promotion** are pure
+calendar gates (~July 2026) — `walk_forward_tune_equity` plumbing
+already ingests engine equity curves; first run HOLDs all 5 profiles
+per `SHIP_MIN_TEST_OBS=20`. No code change required at gate-fill time.
+Also pending: widening `TIER2_MAX_POINTS` to lift the DES ceiling once
+Thesis-LLM is live (downstream of #1).
 
 **Time-gated**: Adoption IC re-validation window remains **2026-06-24**
 (per β analysis; +~7d for stable IC + Trends weekly batch resolution).
-Tier 5 #24 Phase 4 time-gated to **~July 2026** (sufficient live
-history for honest 21d-horizon A/B).
+Tier 5 #24 Phase 4 + Tier 5 #25 promotion time-gated to **~July 2026**
+(sufficient live history for honest 21d-horizon A/B).
 
 ---
 
@@ -533,7 +556,7 @@ The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
-Tests: **~1624 passing** in `tests/lthcs/` (LTHCS subset). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → 1471 from the 2026-05-19 AM Tier 5 swarm; **~1624** after today's 12-commit swarm (engine + 13F P1 + crypto end-to-end + narratives shadow + bank cohort + Tier 2 #7 tests-only + CI workflows).
+Tests: **1653 passing in 59.5s** in `tests/lthcs/` (LTHCS subset). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → 1471 from the 2026-05-19 AM Tier 5 swarm; ~1624 after the 2026-05-19 midday 12-commit swarm; **1653** after the 2026-05-19 afternoon swarm (`afab1b9` +10 Sharpe-CI tests, `306176a` +18 V2-plumbing tests, `0f9c126` +1 `FLAGS_TO_DROPPED_PILLAR` regression guard).
 
 **Tier 5 narrowing observation**: tonight's three Tier 5 surveys (`llm_sentiment`, `lthcs_mcp`, crypto pillars) all found **~85-90% already built** — the audit's Tier 5 backlog is materially smaller than it looked on paper. Of the six original Tier 5 items: #26 + #28 effectively closed, #27 reduced to S, #23 remains M-L, #24 + #25 are the genuine V2/V3 builds.
 
