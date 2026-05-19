@@ -591,6 +591,57 @@
   border-top: 1px dashed var(--border-subtle, #2A323D);
 }
 
+/* Narrative source toggle (Tier 5 #23 Phase 2 UI).
+   Row that holds the "AI narrative" heading plus the Templated|LLM chip-pair
+   on the right. Chips reuse .lthcs-chip from lthcs.css for visual parity with
+   the rest of the dashboard. The header gets a small bottom margin so the
+   chip group doesn't collide with the card below. */
+.lthcs-modal-root .lthcs-modal-narrative-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.lthcs-modal-root .lthcs-modal-narrative-header .lthcs-modal-section-heading {
+  margin: 0;
+}
+
+.lthcs-modal-root .lthcs-narrative-source-toggle {
+  gap: 4px;
+}
+
+.lthcs-modal-root .lthcs-narrative-source-chip {
+  min-height: 32px;
+  padding: 4px 12px;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* When the LLM source is active, accent the left bar of the narrative card
+   in a distinct hue so it's visually obvious which source is rendered.
+   Default keeps the original blue accent for templated. */
+.lthcs-modal-root .lthcs-modal-narrative[data-narrative-source="llm"] {
+  border-left-color: var(--accent-secondary, #9F7AEA);
+}
+
+.lthcs-modal-root .lthcs-narrative-llm-badge {
+  align-self: flex-start;
+  padding: 2px 8px;
+  background: rgba(159, 122, 234, 0.12);
+  border: 1px solid rgba(159, 122, 234, 0.4);
+  border-radius: 999px;
+  color: var(--accent-secondary, #9F7AEA);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
 /* ----- Evidence panel (#19): per-pillar signal accordion ----- */
 .lthcs-modal-root .lthcs-modal-evidence {
   display: flex;

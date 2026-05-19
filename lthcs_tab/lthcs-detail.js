@@ -18,11 +18,37 @@ const HISTORY_BASE = '../data/lthcs/history/by_ticker';
 const VARDETAIL_BASE = '../data/lthcs/variable_detail';
 const HOLDINGS_BASE = '../data/lthcs/holdings';
 const SNAPSHOTS_BASE = '../data/lthcs/snapshots';
+const NARRATIVES_LLM_BASE = '../data/lthcs/narratives_llm';
 
 // Maximum number of paragraph chars to show before offering a "Read more"
 // toggle on the narrative panel. Picked empirically — current narratives top
 // out around 350 chars per slot, this clamps to ~5 lines.
 const NARRATIVE_CLAMP_CHARS = 280;
+
+// localStorage key for the narrative-source toggle (Tier 5 #23 Phase 2 UI).
+// Values: 'templated' (default, V1 behavior) | 'llm' (shadow file).
+const NARRATIVE_SOURCE_STORAGE_KEY = 'lthcs.narrative.source';
+const NARRATIVE_SOURCE_TEMPLATED = 'templated';
+const NARRATIVE_SOURCE_LLM = 'llm';
+
+function readNarrativeSourcePref() {
+  try {
+    const v = window.localStorage.getItem(NARRATIVE_SOURCE_STORAGE_KEY);
+    return v === NARRATIVE_SOURCE_LLM ? NARRATIVE_SOURCE_LLM : NARRATIVE_SOURCE_TEMPLATED;
+  } catch (_e) {
+    return NARRATIVE_SOURCE_TEMPLATED;
+  }
+}
+
+function writeNarrativeSourcePref(value) {
+  const v = value === NARRATIVE_SOURCE_LLM ? NARRATIVE_SOURCE_LLM : NARRATIVE_SOURCE_TEMPLATED;
+  try {
+    window.localStorage.setItem(NARRATIVE_SOURCE_STORAGE_KEY, v);
+  } catch (_e) {
+    // localStorage may be disabled (private mode, quota). Toggle still works
+    // for the current session via moduleState; the choice just won't persist.
+  }
+}
 
 // Pillar palette for the multi-series chart (#20). Distinct hues that read
 // against the dark theme; composite stays band-colored so the latest score is
@@ -119,6 +145,13 @@ const moduleState = {
   // cached snapshot files keyed by calc_date (used by the multi-series
   // chart to derive 91-day pillar history on demand).
   snapshotCache: new Map(),
+  // cached LLM-narrative payloads keyed by calc_date. Stored value is either
+  //   { byTicker: Map<ticker, narrative>, meta }  on success,
+  //   { error: 'not_found'|'parse_error'|'fetch_error' }  on failure,
+  // so re-renders avoid refetching a known-empty file.
+  narrativesLlmCache: new Map(),
+  // Live promise per calc_date so concurrent fetches collapse to one request.
+  narrativesLlmPending: new Map(),
   // promise that resolves to a per-ticker pillar-history index, e.g.
   //   pillarSeriesByTicker.get('AAPL') ===
   //     [{date, composite, adoption_momentum, institutional_confidence, ...}, ...]
@@ -260,7 +293,30 @@ function buildShell() {
     </div>
 
     <div>
-      <h3 class="lthcs-modal-section-heading">AI narrative</h3>
+      <div class="lthcs-modal-narrative-header">
+        <h3 class="lthcs-modal-section-heading">AI narrative</h3>
+        <div
+          class="lthcs-narrative-source-toggle lthcs-chip-group"
+          role="radiogroup"
+          aria-label="Narrative source"
+          data-slot="narrative-source-toggle"
+        >
+          <button
+            type="button"
+            class="lthcs-chip lthcs-narrative-source-chip"
+            data-narrative-source="templated"
+            role="radio"
+            aria-checked="true"
+          >Templated</button>
+          <button
+            type="button"
+            class="lthcs-chip lthcs-narrative-source-chip"
+            data-narrative-source="llm"
+            role="radio"
+            aria-checked="false"
+          >LLM</button>
+        </div>
+      </div>
       <div class="lthcs-modal-narrative" data-slot="narrative"></div>
     </div>
 
@@ -1394,21 +1450,37 @@ function buildNarrativePara(heading, body) {
   return para;
 }
 
-function renderNarrative(panel, { snapshotRow, narrative }) {
-  const narrEl = panel.querySelector('[data-slot="narrative"]');
-  clear(narrEl);
-
-  if (!narrative) {
-    narrEl.appendChild(el('div', {
-      className: 'lthcs-narrative-placeholder',
-      text: 'Narrative not loaded for this snapshot.',
-    }));
-    return;
+// Sync the chip-pair toggle visual state to match `source`. `source` is one
+// of NARRATIVE_SOURCE_TEMPLATED or NARRATIVE_SOURCE_LLM.
+function syncNarrativeSourceToggle(panel, source) {
+  const chips = panel.querySelectorAll('.lthcs-narrative-source-chip');
+  for (const chip of chips) {
+    const isActive = chip.dataset.narrativeSource === source;
+    chip.classList.toggle('is-active', isActive);
+    chip.setAttribute('aria-checked', isActive ? 'true' : 'false');
   }
+}
+
+// Render the 4-section narrative card from a narrative object (V1 keys —
+// todays_take, why_changed, why_not_to_sell, what_would_break,
+// confidence_level). Shared by both templated and LLM paths so output shape
+// stays consistent.
+function renderNarrativeBody(narrEl, { snapshotRow, narrative, source }) {
+  clear(narrEl);
+  narrEl.setAttribute('data-narrative-source', source);
 
   const band = (snapshotRow && snapshotRow.band) || '';
   const reviewTone = BAND_TONE[band] === 'review';
   const slot3Label = reviewTone ? 'Why to review' : 'Why not to sell';
+
+  if (source === NARRATIVE_SOURCE_LLM) {
+    // Small badge so users know they're reading the shadow output.
+    narrEl.appendChild(el('div', {
+      className: 'lthcs-narrative-llm-badge',
+      text: 'LLM (shadow)',
+      attrs: { 'aria-label': 'LLM-generated narrative (shadow)' },
+    }));
+  }
 
   const sections = [
     ["Today's take", narrative.todays_take],
@@ -1421,7 +1493,6 @@ function renderNarrative(panel, { snapshotRow, narrative }) {
     narrEl.appendChild(buildNarrativePara(heading, body));
   }
 
-  // Footer chip with model confidence + model version when present.
   const confidence = narrative.confidence_level
     || (snapshotRow && snapshotRow.confidence_level)
     || null;
@@ -1430,6 +1501,174 @@ function renderNarrative(panel, { snapshotRow, narrative }) {
     meta.appendChild(el('span', { text: `Narrative confidence: ${confidence}` }));
     narrEl.appendChild(meta);
   }
+}
+
+function renderNarrativePlaceholder(narrEl, message, { source } = {}) {
+  clear(narrEl);
+  if (source) narrEl.setAttribute('data-narrative-source', source);
+  narrEl.appendChild(el('div', {
+    className: 'lthcs-narrative-placeholder',
+    text: message,
+  }));
+}
+
+function renderNarrativeLoading(narrEl, { source } = {}) {
+  clear(narrEl);
+  if (source) narrEl.setAttribute('data-narrative-source', source);
+  narrEl.appendChild(el('div', {
+    className: 'lthcs-narrative-placeholder',
+    text: 'Loading LLM narrative…',
+  }));
+}
+
+// Fetch ../data/lthcs/narratives_llm/<date>.json (one request per calc_date,
+// per session). Resolves with the parsed payload on success or a `{error}`
+// sentinel on any failure mode so callers can render a friendly placeholder
+// without crashing the modal. Never throws.
+function loadLlmNarratives(calcDate) {
+  if (!calcDate) return Promise.resolve({ error: 'no_calc_date' });
+  const cached = moduleState.narrativesLlmCache.get(calcDate);
+  if (cached) return Promise.resolve(cached);
+  const pending = moduleState.narrativesLlmPending.get(calcDate);
+  if (pending) return pending;
+
+  const url = `${NARRATIVES_LLM_BASE}/${encodeURIComponent(calcDate)}.json`;
+  const p = fetch(url, { cache: 'no-store' })
+    .then((res) => {
+      if (res.status === 404) return { error: 'not_found' };
+      if (!res.ok) return { error: 'fetch_error', status: res.status };
+      return res.json().then((data) => {
+        if (!data || !Array.isArray(data.narratives)) return { error: 'parse_error' };
+        const byTicker = new Map();
+        for (const row of data.narratives) {
+          if (row && row.ticker) byTicker.set(row.ticker, row);
+        }
+        return {
+          byTicker,
+          meta: data.meta || null,
+          model_version: data.model_version || null,
+        };
+      }, () => ({ error: 'parse_error' }));
+    })
+    .catch(() => ({ error: 'fetch_error' }))
+    .then((result) => {
+      moduleState.narrativesLlmCache.set(calcDate, result);
+      moduleState.narrativesLlmPending.delete(calcDate);
+      return result;
+    });
+
+  moduleState.narrativesLlmPending.set(calcDate, p);
+  return p;
+}
+
+// Render the narrative panel. Branches on the current localStorage source
+// preference and the chip-pair selection. Templated path renders synchronously
+// from the in-memory narrative payload. LLM path kicks off a fetch (cached
+// per calc_date) and re-renders when it resolves. On 404 / empty / parse
+// errors the panel shows a friendly placeholder explaining how to populate
+// the shadow file; it never crashes.
+function renderNarrative(panel, { snapshotRow, narrative, ticker, calcDate }) {
+  const narrEl = panel.querySelector('[data-slot="narrative"]');
+  if (!narrEl) return;
+
+  const source = readNarrativeSourcePref();
+  syncNarrativeSourceToggle(panel, source);
+
+  if (source === NARRATIVE_SOURCE_TEMPLATED) {
+    if (!narrative) {
+      renderNarrativePlaceholder(narrEl, 'Narrative not loaded for this snapshot.', {
+        source: NARRATIVE_SOURCE_TEMPLATED,
+      });
+      return;
+    }
+    renderNarrativeBody(narrEl, {
+      snapshotRow,
+      narrative,
+      source: NARRATIVE_SOURCE_TEMPLATED,
+    });
+    return;
+  }
+
+  // LLM path
+  if (!calcDate) {
+    renderNarrativePlaceholder(
+      narrEl,
+      'LLM narratives unavailable — no snapshot date for this row.',
+      { source: NARRATIVE_SOURCE_LLM },
+    );
+    return;
+  }
+
+  // Sync render from cache if present, else show a loading hint and fetch.
+  const cached = moduleState.narrativesLlmCache.get(calcDate);
+  if (cached) {
+    applyLlmRenderResult(narrEl, cached, { snapshotRow, ticker });
+    return;
+  }
+
+  renderNarrativeLoading(narrEl, { source: NARRATIVE_SOURCE_LLM });
+  const requestedTicker = ticker;
+  loadLlmNarratives(calcDate).then((result) => {
+    // Ignore stale resolves (modal closed or moved to another ticker), and
+    // ignore if the user flipped back to Templated mid-flight.
+    if (moduleState.activeTicker !== requestedTicker) return;
+    if (readNarrativeSourcePref() !== NARRATIVE_SOURCE_LLM) return;
+    applyLlmRenderResult(narrEl, result, { snapshotRow, ticker: requestedTicker });
+  });
+}
+
+function applyLlmRenderResult(narrEl, result, { snapshotRow, ticker }) {
+  if (result && result.error) {
+    let msg;
+    if (result.error === 'not_found') {
+      msg = 'LLM narratives are not enabled — flip LTHCS_LLM_NARRATIVES_ENABLED=1 to populate.';
+    } else if (result.error === 'parse_error') {
+      msg = 'LLM narratives file present but could not be parsed.';
+    } else {
+      msg = 'LLM narratives unavailable (fetch error).';
+    }
+    renderNarrativePlaceholder(narrEl, msg, { source: NARRATIVE_SOURCE_LLM });
+    return;
+  }
+  const row = result && result.byTicker && result.byTicker.get(ticker);
+  if (!row) {
+    renderNarrativePlaceholder(
+      narrEl,
+      'LLM narrative not available for this ticker in the shadow file.',
+      { source: NARRATIVE_SOURCE_LLM },
+    );
+    return;
+  }
+  renderNarrativeBody(narrEl, {
+    snapshotRow,
+    narrative: row,
+    source: NARRATIVE_SOURCE_LLM,
+  });
+}
+
+// Wire the chip-pair (Templated | LLM) above the narrative card. Click flips
+// the localStorage preference, updates the chip visual state, and re-renders
+// the narrative body. Idempotent — safe to call on every modal open.
+function wireNarrativeSourceToggle(panel, { snapshotRow, narrative, ticker, calcDate }) {
+  const group = panel.querySelector('[data-slot="narrative-source-toggle"]');
+  if (!group || group.dataset.wired === '1') return;
+  group.dataset.wired = '1';
+  group.addEventListener('click', (e) => {
+    const chip = e.target.closest('[data-narrative-source]');
+    if (!chip || !group.contains(chip)) return;
+    const next = chip.dataset.narrativeSource === NARRATIVE_SOURCE_LLM
+      ? NARRATIVE_SOURCE_LLM
+      : NARRATIVE_SOURCE_TEMPLATED;
+    if (next === readNarrativeSourcePref()) return;
+    writeNarrativeSourcePref(next);
+    // Re-render with whatever ticker / calc_date the modal currently shows.
+    renderNarrative(panel, {
+      snapshotRow,
+      narrative,
+      ticker,
+      calcDate,
+    });
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -2427,7 +2666,8 @@ export function openDetail(args) {
   renderDraggingPillar(panel, { snapshotRow, vardetailRows: [], ticker });
   renderChartSkeleton(panel);
   renderPillars(panel, { snapshotRow });
-  renderNarrative(panel, { snapshotRow, narrative });
+  renderNarrative(panel, { snapshotRow, narrative, ticker, calcDate });
+  wireNarrativeSourceToggle(panel, { snapshotRow, narrative, ticker, calcDate });
   renderEvidenceLoading(panel);
   renderInsider(panel, { insider });
   renderHoldingsSkeleton(panel);
