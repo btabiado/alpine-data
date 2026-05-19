@@ -219,6 +219,27 @@ The original score remains in git history for auditability — same principle as
 
 **The new tab doesn't show up on the live site.** GitHub Pages caches aggressively. Wait 2 minutes, hard-refresh (Cmd+Shift+R / Ctrl+Shift+R), check the deployment in the GitHub Actions tab of the repo.
 
+### Degradation matrix (optional sources)
+
+| Missing key / state | Behavior | Notes |
+|---|---|---|
+| `ALPHA_VANTAGE_API_KEY` empty | Thesis pillar drops to Finnhub + neutral 50 fallback (V1 daily CI behavior with `--skip-thesis`). | Documented in §V1 status. |
+| `FINNHUB_API_KEY` empty | Thesis base falls back to AV sentiment cache; 8-K + Yahoo refinement still run. | Cache-warm-friendly. |
+| `FRED_API_KEY` / `EIA_API_KEY` empty | Macro overlay falls back to neutral; DES pillar drops to sector-relative. | Daily DES still computes. |
+| `SEC_USER_AGENT` empty | 8-K + 13F + Form 4 fetches degrade to "no events"; pillars still score. | SEC requires a real email. |
+| `ANTHROPIC_API_KEY` missing | **LLM sentiment shadow disabled; production Thesis byte-unaffected.** Shadow files in `data/lthcs/llm_sentiment/` simply aren't written. | Shadow path only; never read by Stage 4 (Tier 5 #28, spec `docs/lthcs-llm-sentiment-shadow-spec.md`). |
+| `LTHCS_LLM_SENTIMENT_ENABLED` unset / `"0"` | Shadow run is a no-op (no API call, no files). Default. | Flip to `"1"` to enable. |
+| Cost cap hit (`LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY`, default `$1.00`) | Shadow persistence aborted cleanly; prior day's shadow file is last good record; production Thesis unaffected. | Haiku 4.5 + caching is ~$0.034/day on the AI cohort, ~$0.19/day on the full 167-ticker universe — well under the cap. |
+
+### How to enable the LLM sentiment shadow run
+
+```bash
+# 1. Add ANTHROPIC_API_KEY as a repo secret (Settings -> Secrets -> Actions).
+# 2. Flip the env block in .github/workflows/lthcs-daily.yml:
+#       LTHCS_LLM_SENTIMENT_ENABLED: "1"
+# 3. Push. Tomorrow's nightly writes data/lthcs/llm_sentiment/<date>.json.
+```
+
 ---
 
 ## What V2 adds (not in scope here)

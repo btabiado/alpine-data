@@ -332,6 +332,13 @@ class PipelineState:
     # AI news aggregation — per-ticker mention counts + engagement (free,
     # no rate limit; HN Algolia + TC/VB RSS).
     ai_news_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    # LLM sentiment SHADOW run (Tier 5 #28, spec docs/lthcs-llm-sentiment-
+    # shadow-spec.md). Populated only when LTHCS_LLM_SENTIMENT_ENABLED=1
+    # AND --as-of is unset (no historical news reconstruction). Stamped
+    # onto variable_detail.components.llm_sentiment_shadow_* in Stage 8;
+    # production Thesis sub_score is byte-untouched.
+    llm_sentiment_shadow_by_ticker: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    llm_sentiment_shadow_meta: Optional[Dict[str, Any]] = None
     fetch_counts: Dict[str, int] = field(default_factory=dict)
 
     # Stage 3
@@ -1260,32 +1267,69 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
                     print("  AI-news fetch failed: %s" % exc)
                 state.ai_news_by_ticker = {}
 
-            # Default path: engagement heuristic. Opt-in: LLM classifier.
-            if os.getenv("LTHCS_LLM_SENTIMENT_ENABLED") == "1":
-                from lthcs.sources.llm_sentiment import compute_universe_llm_sentiment
-                news_by_ticker_dict = {
-                    sym: (nd.get("sample_titles_full") or [
-                        {"title": t, "source": "ai_news"}
-                        for t in (nd.get("sample_titles") or [])
-                    ])
-                    for sym, nd in state.ai_news_by_ticker.items()
-                    if nd.get("total_mentions", 0) >= 3 and not _has_fresh_sentiment(sym)
-                }
-                llm_sentiments = compute_universe_llm_sentiment(news_by_ticker_dict)
-                for sym, sig in llm_sentiments.items():
-                    if sig.get("mean_sentiment_score") is None:
-                        continue
-                    if _write_supplement(sym, sig):
-                        ai_news_supplement_count += 1
-            else:
-                for sym, news_dict in state.ai_news_by_ticker.items():
-                    if news_dict.get("total_mentions", 0) < 3:
-                        continue
-                    if _has_fresh_sentiment(sym):
-                        continue
-                    sig = ai_news.compute_thesis_signal_from_news(news_dict)
-                    if _write_supplement(sym, sig):
-                        ai_news_supplement_count += 1
+            # Production path: engagement heuristic populates the Thesis
+            # rotation cache via _write_supplement. LLM sentiment is wired
+            # below as a SHADOW (separate dir, separate field, never read
+            # by Stage 4) per docs/lthcs-llm-sentiment-shadow-spec.md.
+            for sym, news_dict in state.ai_news_by_ticker.items():
+                if news_dict.get("total_mentions", 0) < 3:
+                    continue
+                if _has_fresh_sentiment(sym):
+                    continue
+                sig = ai_news.compute_thesis_signal_from_news(news_dict)
+                if _write_supplement(sym, sig):
+                    ai_news_supplement_count += 1
+
+        # --- Step 5.5: LLM sentiment SHADOW run (Tier 5 #28) -----------
+        # Decoupled from the Thesis rotation cache: writes to
+        # data/lthcs/llm_sentiment/ (NOT data/lthcs/sentiment/) and
+        # exposes per-ticker results on state for Stage 8 to stamp onto
+        # variable_detail.components.llm_sentiment_shadow_*. Production
+        # Thesis sub_score is byte-untouched.
+        #
+        # Skipped in --as-of (backfill) mode because HN Algolia + RSS
+        # feeds expose only "now" -- the same constraint that gates the
+        # ai_news fetch above. Also a no-op when
+        # LTHCS_LLM_SENTIMENT_ENABLED is not "1" (default).
+        if not as_of:
+            try:
+                from lthcs.sources import llm_sentiment as _llm_sent
+                if _llm_sent.is_enabled():
+                    # Merge inputs per spec §2: ai_news headlines (the
+                    # only "now"-shaped source we have without burning
+                    # Finnhub headline calls here), capped per ticker
+                    # by the module's DEFAULT_MAX_NEWS_ITEMS.
+                    shadow_news: Dict[str, List[Dict[str, Any]]] = {}
+                    for sym, nd in (state.ai_news_by_ticker or {}).items():
+                        if not isinstance(nd, dict):
+                            continue
+                        items = nd.get("sample_titles_full") or [
+                            {"title": t, "source": "ai_news"}
+                            for t in (nd.get("sample_titles") or [])
+                        ]
+                        if items:
+                            shadow_news[sym] = items
+                    if shadow_news:
+                        shadow_out = _llm_sent.score_universe(
+                            shadow_news,
+                            calc_date=str(state.calc_date),
+                        )
+                        if shadow_out:
+                            state.llm_sentiment_shadow_by_ticker = (
+                                shadow_out.get("results") or {}
+                            )
+                            state.llm_sentiment_shadow_meta = (
+                                shadow_out.get("meta") or {}
+                            )
+                            counts["llm_sentiment_shadow_covered"] = len(
+                                state.llm_sentiment_shadow_by_ticker
+                            )
+                            counts["llm_sentiment_shadow_persisted"] = int(
+                                bool(shadow_out.get("persisted"))
+                            )
+            except Exception as exc:
+                if state.args.verbose:
+                    print("  LLM sentiment shadow run failed: %s" % exc)
 
         # --- Analyst-rating breadth (cache-read-only over yahoo_events) ---
         # Runs AFTER the Thesis cascade so the yahoo_events recommendations
@@ -1790,13 +1834,33 @@ def stage_7p5_compute_index(state: PipelineState) -> bool:
 def stage_8_persist(state: PipelineState) -> bool:
     # Build variable_detail rows -- one per (ticker, pillar) for V1.
     state.variable_detail_rows = []
+    shadow_by_ticker = state.llm_sentiment_shadow_by_ticker or {}
     for sym, pillars in state.pillar_results.items():
         for pillar_name, result in pillars.items():
+            components = dict(result.get("components") or {})
+            # Stamp the LLM sentiment SHADOW signal onto the Thesis row
+            # (display only -- production sub_score is byte-untouched).
+            if pillar_name == "thesis":
+                shadow_sig = shadow_by_ticker.get(sym)
+                if isinstance(shadow_sig, dict):
+                    components["llm_sentiment_shadow_polarity"] = (
+                        shadow_sig.get("mean_sentiment_score")
+                    )
+                    components["llm_sentiment_shadow_label"] = shadow_sig.get("label")
+                    components["llm_sentiment_shadow_confidence"] = (
+                        shadow_sig.get("polarity_confidence")
+                    )
+                    components["llm_sentiment_shadow_rationale"] = (
+                        shadow_sig.get("rationale")
+                    )
+                    components["llm_sentiment_shadow_fallback"] = bool(
+                        shadow_sig.get("fallback")
+                    )
             state.variable_detail_rows.append(
                 {
                     "ticker": sym,
                     "pillar": pillar_name,
-                    "components": dict(result.get("components") or {}),
+                    "components": components,
                     "sub_score": float(result.get("sub_score", 50.0)),
                     "data_quality": dict(result.get("data_quality") or {}),
                 }

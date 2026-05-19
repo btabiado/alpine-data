@@ -511,3 +511,340 @@ def test_json_envelope_handles_leading_prose():
     )
     assert out["fallback"] is False
     assert out["mean_sentiment_score"] == 0.62
+
+
+# ---------------------------------------------------------------------------
+# Shadow-run wiring (Tier 5 #28 — spec docs/lthcs-llm-sentiment-shadow-spec.md)
+# ---------------------------------------------------------------------------
+
+
+def test_default_model_is_haiku_4_5():
+    """Spec §4: the shadow runs on Haiku 4.5 to keep cost ~$0.19/day."""
+    assert llm_sentiment.DEFAULT_MODEL == "claude-haiku-4-5"
+
+
+def test_is_enabled_defaults_off(monkeypatch):
+    monkeypatch.delenv(llm_sentiment.ENV_ENABLED, raising=False)
+    assert llm_sentiment.is_enabled() is False
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "0")
+    assert llm_sentiment.is_enabled() is False
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "1")
+    assert llm_sentiment.is_enabled() is True
+
+
+def test_score_universe_no_op_when_flag_off(monkeypatch, tmp_path):
+    """Disabled flag => returns None and writes nothing (regression guard)."""
+    monkeypatch.delenv(llm_sentiment.ENV_ENABLED, raising=False)
+    client = _FakeClient(text=_good_json())
+    out = llm_sentiment.score_universe(
+        {"NVDA": _nvda_news()},
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+    )
+    assert out is None
+    assert not (tmp_path / "llm_sentiment").exists()
+    assert not (tmp_path / "llm_sentiment_by_ticker").exists()
+    # API was never called.
+    assert client.messages.calls == []
+
+
+def test_score_universe_writes_shadow_files_not_thesis_cache(monkeypatch, tmp_path):
+    """Shadow path MUST NOT write to data/lthcs/sentiment/ (Thesis rotation
+    cache); only to data/lthcs/llm_sentiment/ + by_ticker. Spec §7 #1."""
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "1")
+    client = _FakeClient(text=_good_json(score=0.4))
+    out = llm_sentiment.score_universe(
+        {"NVDA": _nvda_news(), "AAPL": _nvda_news()},
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+    )
+    assert out is not None
+    assert out["persisted"] is True
+    # Shadow dirs exist; production sentiment cache does NOT.
+    assert (tmp_path / "llm_sentiment" / "2026-05-19.json").exists()
+    assert (tmp_path / "llm_sentiment_by_ticker" / "NVDA.json").exists()
+    assert (tmp_path / "llm_sentiment_by_ticker" / "AAPL.json").exists()
+    assert not (tmp_path / "sentiment").exists()
+    # Daily aggregate payload shape.
+    daily = json.loads((tmp_path / "llm_sentiment" / "2026-05-19.json").read_text())
+    assert daily["calc_date"] == "2026-05-19"
+    assert set(daily["results"].keys()) == {"NVDA", "AAPL"}
+    assert daily["meta"]["model"] == llm_sentiment.DEFAULT_MODEL
+    assert daily["meta"]["ticker_count"] == 2
+    # Per-ticker history is a list (mirrors data/lthcs/sentiment/<T>.json).
+    history = json.loads((tmp_path / "llm_sentiment_by_ticker" / "NVDA.json").read_text())
+    assert isinstance(history, list)
+    assert history[-1]["calc_date"] == "2026-05-19"
+
+
+def test_score_universe_history_appends_and_trims_to_60(monkeypatch, tmp_path):
+    """Per-ticker rolling history caps at SHADOW_TICKER_HISTORY_LIMIT."""
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "1")
+    # Seed 62 entries on disk so a fresh write trims to 60.
+    seed_path = tmp_path / "llm_sentiment_by_ticker" / "NVDA.json"
+    seed_path.parent.mkdir(parents=True)
+    seed = [
+        {"calc_date": f"2026-03-{i:02d}", "mean_sentiment_score": 0.1}
+        for i in range(1, 30)
+    ] + [
+        {"calc_date": f"2026-04-{i:02d}", "mean_sentiment_score": 0.1}
+        for i in range(1, 30)
+    ] + [
+        {"calc_date": "2026-04-30", "mean_sentiment_score": 0.1},
+        {"calc_date": "2026-05-01", "mean_sentiment_score": 0.1},
+        {"calc_date": "2026-05-02", "mean_sentiment_score": 0.1},
+        {"calc_date": "2026-05-03", "mean_sentiment_score": 0.1},
+    ]
+    assert len(seed) == 62
+    seed_path.write_text(json.dumps(seed))
+    client = _FakeClient(text=_good_json())
+    llm_sentiment.score_universe(
+        {"NVDA": _nvda_news()},
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+    )
+    history = json.loads(seed_path.read_text())
+    assert len(history) == llm_sentiment.SHADOW_TICKER_HISTORY_LIMIT
+    # Newest entry is today.
+    assert history[-1]["calc_date"] == "2026-05-19"
+    # Oldest entries trimmed off the front.
+    assert history[0]["calc_date"] != "2026-03-01"
+
+
+def test_score_universe_replaces_same_day_entry(monkeypatch, tmp_path):
+    """Re-running for the same calc_date replaces the tail (no double-append)."""
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "1")
+    client = _FakeClient(text=_good_json(score=0.3))
+    llm_sentiment.score_universe(
+        {"NVDA": _nvda_news()},
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+    )
+    client2 = _FakeClient(text=_good_json(score=-0.4))
+    llm_sentiment.score_universe(
+        {"NVDA": _nvda_news()},
+        calc_date="2026-05-19",
+        client=client2,
+        data_root=tmp_path,
+    )
+    history = json.loads(
+        (tmp_path / "llm_sentiment_by_ticker" / "NVDA.json").read_text()
+    )
+    assert len(history) == 1
+    assert history[-1]["mean_sentiment_score"] == -0.4
+
+
+def test_estimate_cost_usd_uses_haiku_pricing():
+    """Sanity-check the Haiku pricing math: 1M input + 1M output = $6.00."""
+    usage = [{
+        "input_tokens": 1_000_000,
+        "cached_input_tokens": 0,
+        "output_tokens": 1_000_000,
+    }]
+    cost = llm_sentiment._estimate_cost_usd(usage, "claude-haiku-4-5")
+    assert cost == 6.0  # $1.00 input + $5.00 output
+
+
+def test_estimate_cost_usd_handles_cache_reads():
+    """Cache reads priced at 10% of input (Anthropic prompt-caching)."""
+    usage = [{
+        "input_tokens": 0,
+        "cached_input_tokens": 10_000_000,
+        "output_tokens": 0,
+    }]
+    cost = llm_sentiment._estimate_cost_usd(usage, "claude-haiku-4-5")
+    # 10M cached @ $0.10/MTok = $1.00.
+    assert cost == 1.0
+
+
+def test_score_universe_cost_cap_aborts_persistence(monkeypatch, tmp_path):
+    """Cost cap hit -> persistence is skipped; no half-state on disk.
+    Spec §4 + §6.
+    """
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "1")
+    # Force a huge usage so any plausible cap trips.
+    huge_usage = _FakeUsage(
+        input_tokens=20_000_000,
+        output_tokens=20_000_000,
+        cache_read=0,
+        cache_create=0,
+    )
+    class _HugeMessages(_FakeMessages):
+        def create(self, **kwargs):
+            with self._in_flight_lock:
+                self._in_flight += 1
+            try:
+                with self.lock:
+                    self.calls.append(kwargs)
+                resp = _FakeResponse(_good_json(), usage=huge_usage)
+                return resp
+            finally:
+                with self._in_flight_lock:
+                    self._in_flight -= 1
+    class _HugeClient:
+        def __init__(self):
+            self.messages = _HugeMessages(text=_good_json())
+    client = _HugeClient()
+    out = llm_sentiment.score_universe(
+        {"NVDA": _nvda_news()},
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+        cost_cap_usd=0.01,  # explicit tiny cap
+    )
+    assert out is not None
+    assert out["meta"]["cost_cap_hit"] is True
+    assert out["persisted"] is False
+    # No files written on cap hit.
+    assert not (tmp_path / "llm_sentiment" / "2026-05-19.json").exists()
+    assert not (tmp_path / "llm_sentiment_by_ticker" / "NVDA.json").exists()
+
+
+def test_score_universe_env_cost_cap_default(monkeypatch, tmp_path):
+    """LTHCS_LLM_SENTIMENT_MAX_USD_PER_DAY env var is read."""
+    monkeypatch.setenv(llm_sentiment.ENV_ENABLED, "1")
+    monkeypatch.setenv(llm_sentiment.ENV_MAX_USD_PER_DAY, "0.00001")
+    huge_usage = _FakeUsage(
+        input_tokens=10_000_000, output_tokens=10_000_000, cache_read=0
+    )
+    class _HugeMessages(_FakeMessages):
+        def create(self, **kwargs):
+            with self._in_flight_lock:
+                self._in_flight += 1
+            try:
+                with self.lock:
+                    self.calls.append(kwargs)
+                return _FakeResponse(_good_json(), usage=huge_usage)
+            finally:
+                with self._in_flight_lock:
+                    self._in_flight -= 1
+    class _C:
+        def __init__(self):
+            self.messages = _HugeMessages(text=_good_json())
+    out = llm_sentiment.score_universe(
+        {"NVDA": _nvda_news()},
+        calc_date="2026-05-19",
+        client=_C(),
+        data_root=tmp_path,
+    )
+    assert out["meta"]["cost_cap_hit"] is True
+    assert out["meta"]["cost_cap_usd"] == 0.00001
+
+
+def test_output_dict_schema(monkeypatch):
+    """Schema guard: polarity float, confidence 0-1, rationale string."""
+    client = _FakeClient(text=_good_json(score=0.62))
+    out = llm_sentiment.compute_llm_sentiment(
+        ticker="NVDA",
+        news_items=_nvda_news(),
+        client=client,
+    )
+    assert isinstance(out["mean_sentiment_score"], float)
+    assert -1.0 <= out["mean_sentiment_score"] <= 1.0
+    assert isinstance(out["polarity_confidence"], float)
+    assert 0.0 <= out["polarity_confidence"] <= 1.0
+    assert isinstance(out["rationale"], str)
+    assert out["rationale"]  # non-empty for a normalized happy path
+    assert out["label"] in llm_sentiment.VALID_LABELS
+
+
+# ---------------------------------------------------------------------------
+# Retry-with-backoff (spec §6 / new code at llm_sentiment.py)
+# ---------------------------------------------------------------------------
+
+
+class _FlakyMessages(_FakeMessages):
+    """Raise N retryable errors, then succeed."""
+    def __init__(self, fail_count: int, exc_factory, success_text: str):
+        super().__init__(text=success_text)
+        self.fail_count = fail_count
+        self.exc_factory = exc_factory
+
+    def create(self, **kwargs):
+        with self._in_flight_lock:
+            self._in_flight += 1
+        try:
+            with self.lock:
+                self.calls.append(kwargs)
+            if len(self.calls) <= self.fail_count:
+                raise self.exc_factory()
+            return _FakeResponse(self.text)
+        finally:
+            with self._in_flight_lock:
+                self._in_flight -= 1
+
+
+class _RateLimitError(Exception):
+    """Stand-in for anthropic.RateLimitError (detected by class name)."""
+    pass
+
+
+_RateLimitError.__name__ = "RateLimitError"
+
+
+def test_retry_succeeds_after_two_429s():
+    sleeps: List[float] = []
+    client = type("C", (), {})()
+    client.messages = _FlakyMessages(
+        fail_count=2,
+        exc_factory=_RateLimitError,
+        success_text=_good_json(),
+    )
+    response = llm_sentiment._call_anthropic_with_retry(
+        client=client,
+        model="claude-haiku-4-5",
+        system_blocks=llm_sentiment.build_system_blocks(),
+        user_message="hello",
+        sleep_fn=lambda s: sleeps.append(s),
+    )
+    assert response is not None
+    assert len(client.messages.calls) == 3
+    # 2 sleeps between 3 attempts; jitter ±10% on 1s and 4s.
+    assert len(sleeps) == 2
+    assert 0.9 <= sleeps[0] <= 1.1
+    assert 3.6 <= sleeps[1] <= 4.4
+
+
+def test_retry_does_not_retry_on_non_retryable():
+    sleeps: List[float] = []
+    client = type("C", (), {})()
+    client.messages = _FlakyMessages(
+        fail_count=5,
+        exc_factory=lambda: ValueError("bad input"),
+        success_text=_good_json(),
+    )
+    with pytest.raises(ValueError):
+        llm_sentiment._call_anthropic_with_retry(
+            client=client,
+            model="claude-haiku-4-5",
+            system_blocks=llm_sentiment.build_system_blocks(),
+            user_message="hello",
+            sleep_fn=lambda s: sleeps.append(s),
+        )
+    assert len(client.messages.calls) == 1
+    assert sleeps == []
+
+
+def test_retry_gives_up_after_three_attempts():
+    sleeps: List[float] = []
+    client = type("C", (), {})()
+    client.messages = _FlakyMessages(
+        fail_count=99,
+        exc_factory=_RateLimitError,
+        success_text=_good_json(),
+    )
+    with pytest.raises(_RateLimitError):
+        llm_sentiment._call_anthropic_with_retry(
+            client=client,
+            model="claude-haiku-4-5",
+            system_blocks=llm_sentiment.build_system_blocks(),
+            user_message="hello",
+            sleep_fn=lambda s: sleeps.append(s),
+        )
+    # 3 attempts, 2 sleeps in between.
+    assert len(client.messages.calls) == 3
+    assert len(sleeps) == 2
