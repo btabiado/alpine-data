@@ -1,0 +1,2120 @@
+{
+  "schema": "lthcs_backfill_validation/v1",
+  "generated_utc": "2026-05-18T16:49:52+00:00",
+  "range": {
+    "start": "2026-02-17",
+    "end": "2026-05-18"
+  },
+  "data_root": "data/lthcs",
+  "active_universe_size": 168,
+  "sample_tickers": [
+    "MDB",
+    "MRK",
+    "AMAT",
+    "GEHC",
+    "PYPL"
+  ],
+  "dates_checked": [
+    "2026-02-17",
+    "2026-02-18",
+    "2026-02-19",
+    "2026-02-20",
+    "2026-02-21",
+    "2026-02-22",
+    "2026-02-23",
+    "2026-02-24",
+    "2026-02-25",
+    "2026-02-26",
+    "2026-02-27",
+    "2026-02-28",
+    "2026-03-01",
+    "2026-03-02",
+    "2026-03-03",
+    "2026-03-04",
+    "2026-03-05",
+    "2026-03-06",
+    "2026-03-07",
+    "2026-03-08",
+    "2026-03-09",
+    "2026-03-10",
+    "2026-03-11",
+    "2026-03-12",
+    "2026-03-13",
+    "2026-03-14",
+    "2026-03-15",
+    "2026-03-16",
+    "2026-03-17",
+    "2026-03-18",
+    "2026-03-19",
+    "2026-03-20",
+    "2026-03-21",
+    "2026-03-22",
+    "2026-03-23",
+    "2026-03-24",
+    "2026-03-25",
+    "2026-03-26",
+    "2026-03-27",
+    "2026-03-28",
+    "2026-03-29",
+    "2026-03-30",
+    "2026-03-31",
+    "2026-04-01",
+    "2026-04-02",
+    "2026-04-03",
+    "2026-04-04",
+    "2026-04-05",
+    "2026-04-06",
+    "2026-04-07",
+    "2026-04-08",
+    "2026-04-09",
+    "2026-04-10",
+    "2026-04-11",
+    "2026-04-12",
+    "2026-04-13",
+    "2026-04-14",
+    "2026-04-15",
+    "2026-04-16",
+    "2026-04-17",
+    "2026-04-18",
+    "2026-04-19",
+    "2026-04-20",
+    "2026-04-21",
+    "2026-04-22",
+    "2026-04-23",
+    "2026-04-24",
+    "2026-04-25",
+    "2026-04-26",
+    "2026-04-27",
+    "2026-04-28",
+    "2026-04-29",
+    "2026-04-30",
+    "2026-05-01",
+    "2026-05-02",
+    "2026-05-03",
+    "2026-05-04",
+    "2026-05-05",
+    "2026-05-06",
+    "2026-05-07",
+    "2026-05-08",
+    "2026-05-09",
+    "2026-05-10",
+    "2026-05-11",
+    "2026-05-12",
+    "2026-05-13",
+    "2026-05-14",
+    "2026-05-15",
+    "2026-05-16",
+    "2026-05-17",
+    "2026-05-18"
+  ],
+  "per_date_stats": [
+    {
+      "date": "2026-02-17",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-18",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-19",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-20",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-21",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-22",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-23",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-24",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-25",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-26",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-27",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-02-28",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-01",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-02",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-03",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-04",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-05",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-06",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-07",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-08",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-09",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-10",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-11",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-12",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-13",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-14",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-15",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-16",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-17",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-18",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-19",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-20",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-21",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-22",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-23",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-24",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-25",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-26",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-27",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-28",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-29",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-30",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-03-31",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-01",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-02",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-03",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-04",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-05",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-06",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-07",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-08",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-09",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-10",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-11",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-12",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-13",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-14",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-15",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-16",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-17",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-18",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-19",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-20",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-21",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-22",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-23",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-24",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-25",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-26",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-27",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-28",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-29",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-04-30",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-01",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-02",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-03",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-04",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-05",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-06",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-07",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-08",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-09",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-10",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-11",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-12",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-13",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-14",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-15",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-16",
+      "snapshot_exists": true,
+      "ticker_count": 74,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 370,
+      "narratives_exists": true,
+      "narratives_rows": 74,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-17",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 1,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    },
+    {
+      "date": "2026-05-18",
+      "snapshot_exists": true,
+      "ticker_count": 167,
+      "nan_scores": 0,
+      "out_of_range_scores": 0,
+      "band_mismatches": 0,
+      "variable_detail_exists": true,
+      "variable_detail_rows": 835,
+      "narratives_exists": true,
+      "narratives_rows": 167,
+      "is_backfilled": false,
+      "thesis_renorm_issues": 0
+    }
+  ],
+  "history_stats": {
+    "MDB": {
+      "ticker": "MDB",
+      "found": 90,
+      "expected": 91,
+      "missing": [
+        "2026-05-16"
+      ]
+    },
+    "MRK": {
+      "ticker": "MRK",
+      "found": 91,
+      "expected": 91,
+      "missing": []
+    },
+    "AMAT": {
+      "ticker": "AMAT",
+      "found": 91,
+      "expected": 91,
+      "missing": []
+    },
+    "GEHC": {
+      "ticker": "GEHC",
+      "found": 90,
+      "expected": 91,
+      "missing": [
+        "2026-05-16"
+      ]
+    },
+    "PYPL": {
+      "ticker": "PYPL",
+      "found": 91,
+      "expected": 91,
+      "missing": []
+    }
+  },
+  "findings": [
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-12 FANG: band='high_confidence' but score 85.2 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-12",
+        "ticker": "FANG",
+        "score": 85.2,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-13 FANG: band='high_confidence' but score 86.1 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-13",
+        "ticker": "FANG",
+        "score": 86.1,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-14 FANG: band='high_confidence' but score 86.1 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-14",
+        "ticker": "FANG",
+        "score": 86.1,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-15 FANG: band='high_confidence' but score 86.1 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-15",
+        "ticker": "FANG",
+        "score": 86.1,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-16 FANG: band='high_confidence' but score 85.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-16",
+        "ticker": "FANG",
+        "score": 85.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-17 FANG: band='high_confidence' but score 87.0 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-17",
+        "ticker": "FANG",
+        "score": 87.0,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-18 FANG: band='high_confidence' but score 87.4 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-18",
+        "ticker": "FANG",
+        "score": 87.4,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-19 FANG: band='high_confidence' but score 87.1 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-19",
+        "ticker": "FANG",
+        "score": 87.1,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-20 FANG: band='high_confidence' but score 85.2 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-20",
+        "ticker": "FANG",
+        "score": 85.2,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-21 FANG: band='high_confidence' but score 85.2 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-21",
+        "ticker": "FANG",
+        "score": 85.2,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-22 FANG: band='high_confidence' but score 85.2 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-22",
+        "ticker": "FANG",
+        "score": 85.2,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-26 FANG: band='high_confidence' but score 85.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-26",
+        "ticker": "FANG",
+        "score": 85.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-27 FANG: band='high_confidence' but score 85.5 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-27",
+        "ticker": "FANG",
+        "score": 85.5,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-28 FANG: band='high_confidence' but score 85.5 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-28",
+        "ticker": "FANG",
+        "score": 85.5,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-29 FANG: band='high_confidence' but score 85.5 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-29",
+        "ticker": "FANG",
+        "score": 85.5,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-30 FANG: band='high_confidence' but score 88.2 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-30",
+        "ticker": "FANG",
+        "score": 88.2,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-03-31 FANG: band='high_confidence' but score 86.9 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-03-31",
+        "ticker": "FANG",
+        "score": 86.9,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-01 FANG: band='high_confidence' but score 85.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-01",
+        "ticker": "FANG",
+        "score": 85.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-02 FANG: band='high_confidence' but score 87.6 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-02",
+        "ticker": "FANG",
+        "score": 87.6,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-03 FANG: band='high_confidence' but score 87.6 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-03",
+        "ticker": "FANG",
+        "score": 87.6,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-04 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-04",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-05 FANG: band='high_confidence' but score 87.6 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-05",
+        "ticker": "FANG",
+        "score": 87.6,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-06 FANG: band='high_confidence' but score 88.0 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-06",
+        "ticker": "FANG",
+        "score": 88.0,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-07 FANG: band='high_confidence' but score 88.5 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-07",
+        "ticker": "FANG",
+        "score": 88.5,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-08 FANG: band='high_confidence' but score 85.2 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-08",
+        "ticker": "FANG",
+        "score": 85.2,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-09 FANG: band='high_confidence' but score 85.4 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-09",
+        "ticker": "FANG",
+        "score": 85.4,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-10 FANG: band='high_confidence' but score 85.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-10",
+        "ticker": "FANG",
+        "score": 85.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-11 FANG: band='high_confidence' but score 85.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-11",
+        "ticker": "FANG",
+        "score": 85.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-12 FANG: band='high_confidence' but score 85.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-12",
+        "ticker": "FANG",
+        "score": 85.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-23 FANG: band='high_confidence' but score 85.4 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-23",
+        "ticker": "FANG",
+        "score": 85.4,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-24 FANG: band='high_confidence' but score 85.6 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-24",
+        "ticker": "FANG",
+        "score": 85.6,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-25 FANG: band='high_confidence' but score 85.6 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-25",
+        "ticker": "FANG",
+        "score": 85.6,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-26 FANG: band='high_confidence' but score 85.6 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-26",
+        "ticker": "FANG",
+        "score": 85.6,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-27 FANG: band='high_confidence' but score 85.9 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-27",
+        "ticker": "FANG",
+        "score": 85.9,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-28 FANG: band='high_confidence' but score 86.8 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-28",
+        "ticker": "FANG",
+        "score": 86.8,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-29 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-29",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-04-30 FANG: band='high_confidence' but score 87.9 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-04-30",
+        "ticker": "FANG",
+        "score": 87.9,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-01 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-01",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-02 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-02",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-03 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-03",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-04 FANG: band='high_confidence' but score 88.5 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-04",
+        "ticker": "FANG",
+        "score": 88.5,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-05 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-05",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-06 FANG: band='high_confidence' but score 86.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-06",
+        "ticker": "FANG",
+        "score": 86.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-07 FANG: band='high_confidence' but score 86.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-07",
+        "ticker": "FANG",
+        "score": 86.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-08 FANG: band='high_confidence' but score 85.9 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-08",
+        "ticker": "FANG",
+        "score": 85.9,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-09 FANG: band='high_confidence' but score 85.9 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-09",
+        "ticker": "FANG",
+        "score": 85.9,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-10 FANG: band='high_confidence' but score 85.9 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-10",
+        "ticker": "FANG",
+        "score": 85.9,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-11 FANG: band='high_confidence' but score 86.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-11",
+        "ticker": "FANG",
+        "score": 86.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-12 FANG: band='high_confidence' but score 87.0 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-12",
+        "ticker": "FANG",
+        "score": 87.0,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-13 FANG: band='high_confidence' but score 86.8 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-13",
+        "ticker": "FANG",
+        "score": 86.8,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-14 FANG: band='high_confidence' but score 87.3 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-14",
+        "ticker": "FANG",
+        "score": 87.3,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-15 FANG: band='high_confidence' but score 87.7 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-15",
+        "ticker": "FANG",
+        "score": 87.7,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "ticker_coverage",
+      "severity": "warn",
+      "message": "2026-05-16: 74 scored, 95 active-universe tickers absent",
+      "detail": {
+        "date": "2026-05-16",
+        "scored": 74,
+        "missing": [
+          "ABNB",
+          "ABT",
+          "ACN",
+          "ADI",
+          "ADSK",
+          "AEP",
+          "AMT",
+          "ANSS",
+          "ARM",
+          "ASML",
+          "AZN",
+          "BIIB",
+          "BK",
+          "BKR",
+          "BLK",
+          "BMY",
+          "C",
+          "CCEP",
+          "CDW",
+          "CEG"
+        ]
+      }
+    },
+    {
+      "check": "band_consistency",
+      "severity": "fail",
+      "message": "2026-05-17 FANG: band='high_confidence' but score 85.0 belongs to band 'elite'",
+      "detail": {
+        "date": "2026-05-17",
+        "ticker": "FANG",
+        "score": 85.0,
+        "actual_band": "high_confidence",
+        "expected_band": "elite"
+      }
+    },
+    {
+      "check": "history_continuity",
+      "severity": "fail",
+      "message": "history for MDB missing 1 of 91 dates (first: ['2026-05-16'])",
+      "detail": {
+        "ticker": "MDB",
+        "missing_count": 1,
+        "missing_sample": [
+          "2026-05-16"
+        ]
+      }
+    },
+    {
+      "check": "history_continuity",
+      "severity": "fail",
+      "message": "history for GEHC missing 1 of 91 dates (first: ['2026-05-16'])",
+      "detail": {
+        "ticker": "GEHC",
+        "missing_count": 1,
+        "missing_sample": [
+          "2026-05-16"
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "warnings": 1,
+    "failures": 55,
+    "exit_code": 2
+  }
+}

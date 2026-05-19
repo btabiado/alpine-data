@@ -1,0 +1,40 @@
+{
+  "as_of": "2026-02-19",
+  "brent_crude": {
+    "change_3m_pct": 0.165499,
+    "current": 73.17,
+    "percentile_2y": 0.4832347140039448
+  },
+  "consumer_sentiment": {
+    "change_3m_pct": 0.109804,
+    "current": 56.6,
+    "percentile_2y": 0.3333333333333333
+  },
+  "data_quality": {
+    "failed_sources": [],
+    "sources_failed": 0,
+    "sources_ok": 6
+  },
+  "gasoline_retail": {
+    "change_3m_pct": -0.045069,
+    "crack_spread_per_gal": -27.8074,
+    "current": 2.924,
+    "percentile_2y": 0.09615384615384616
+  },
+  "housing_starts": {
+    "change_3m_pct": 0.024169,
+    "current": 1356.0,
+    "percentile_2y": 0.5416666666666666
+  },
+  "ism_pmi_proxy": {
+    "change_3m_pct": 0.010556,
+    "current": 102.1009,
+    "percentile_2y": 1.0,
+    "regime": "expansion"
+  },
+  "u6_unemployment": {
+    "change_3m_bp": -80.0,
+    "current": 7.9,
+    "percentile_2y": 0.7391304347826086
+  }
+}

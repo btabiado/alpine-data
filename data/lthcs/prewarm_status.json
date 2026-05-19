@@ -7,15 +7,15 @@
       "planned": 1
     },
     "finnhub": {
-      "cached_prior": 0,
-      "failures": 11,
-      "live": 157,
+      "cached_prior": 168,
+      "failures": 0,
+      "live": 0,
       "planned": 168
     },
     "fred": {
-      "cached_prior": 1,
+      "cached_prior": 11,
       "failures": 0,
-      "live": 10,
+      "live": 0,
       "planned": 11
     },
     "sec_13f": {
@@ -25,9 +25,9 @@
       "planned": 21
     },
     "sec_8k": {
-      "cached_prior": 156,
+      "cached_prior": 167,
       "failures": 1,
-      "live": 11,
+      "live": 0,
       "planned": 168
     },
     "sec_edgar": {
@@ -43,32 +43,21 @@
       "planned": 168
     },
     "yahoo": {
-      "cached_prior": 95,
+      "cached_prior": 168,
       "failures": 0,
-      "live": 73,
+      "live": 0,
       "planned": 168
     }
   },
   "dry_run": false,
-  "duration_seconds": 238.63,
+  "duration_seconds": 9.06,
   "end_date": "2026-05-18",
   "errors": [
     "sec_edgar: ANSS: no CIK",
     "sec_8k: ANSS: no CIK",
-    "sec_form4: ANSS: no CIK",
-    "finnhub: F: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: FANG: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: FAST: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: FTNT: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: GD: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: GE: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: GEHC: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: GFS: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: GILD: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: GM: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit.",
-    "finnhub: PYPL: FinnhubRateLimit: Finnhub returned HTTP 429 for '/stock/recommendation'. Hourly/minute quota hit."
+    "sec_form4: ANSS: no CIK"
   ],
-  "last_run": "2026-05-18T04:50:36.528766Z",
+  "last_run": "2026-05-18T16:49:51.685875Z",
   "sources_skipped": [],
   "sources_warmed": [
     "yahoo",

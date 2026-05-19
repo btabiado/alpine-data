@@ -9,448 +9,453 @@
     },
     {
       "date": "2026-05-17",
-      "score": 54.5,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-15",
-      "score": 54.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-14",
-      "score": 55.1,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-13",
-      "score": 55.2,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-12",
-      "score": 57.1,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-11",
-      "score": 57.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-10",
-      "score": 59.5,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-09",
-      "score": 59.5,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-08",
-      "score": 59.5,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-07",
-      "score": 59.3,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-06",
-      "score": 59.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-05",
-      "score": 59.2,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-04",
-      "score": 58.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-03",
-      "score": 59.4,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-02",
-      "score": 59.4,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-05-01",
-      "score": 59.4,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-30",
-      "score": 58.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-29",
-      "score": 58.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-28",
-      "score": 59.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-27",
-      "score": 59.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-26",
-      "score": 60.4,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-25",
-      "score": 60.4,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-24",
-      "score": 60.4,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-23",
-      "score": 59.8,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-22",
-      "score": 61.1,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-21",
-      "score": 61.7,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-20",
-      "score": 62.3,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-19",
-      "score": 62.5,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-18",
-      "score": 62.5,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-17",
-      "score": 62.5,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-16",
-      "score": 61.4,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-15",
-      "score": 62.0,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-14",
-      "score": 61.7,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-13",
-      "score": 59.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-12",
-      "score": 60.3,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-11",
-      "score": 60.3,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-10",
-      "score": 60.3,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-09",
-      "score": 60.3,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-08",
-      "score": 60.6,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-07",
-      "score": 59.0,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-06",
-      "score": 59.0,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-05",
-      "score": 59.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-04",
-      "score": 59.8,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-03",
-      "score": 59.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-04-02",
-      "score": 60.0,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-04-01",
-      "score": 60.5,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-03-31",
-      "score": 61.6,
-      "band": "monitor"
-    },
-    {
-      "date": "2026-03-30",
-      "score": 51.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-29",
-      "score": 49.4,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-28",
-      "score": 49.4,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-27",
-      "score": 49.4,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-26",
-      "score": 49.8,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-25",
-      "score": 50.3,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-24",
-      "score": 50.1,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-23",
-      "score": 50.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-22",
-      "score": 49.9,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-21",
-      "score": 49.9,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-20",
-      "score": 49.9,
-      "band": "review"
-    },
-    {
-      "date": "2026-03-19",
-      "score": 52.8,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-18",
-      "score": 52.4,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-17",
-      "score": 52.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-16",
-      "score": 52.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-15",
-      "score": 52.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-14",
-      "score": 52.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-13",
-      "score": 52.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-12",
-      "score": 53.4,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-11",
-      "score": 53.9,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-10",
-      "score": 54.0,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-09",
-      "score": 53.4,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-08",
-      "score": 54.8,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-07",
-      "score": 54.8,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-06",
-      "score": 54.8,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-05",
       "score": 55.8,
       "band": "weakening"
     },
     {
-      "date": "2026-03-04",
-      "score": 55.6,
+      "date": "2026-05-16",
+      "score": 55.8,
       "band": "weakening"
     },
     {
-      "date": "2026-03-03",
-      "score": 53.8,
+      "date": "2026-05-15",
+      "score": 58.4,
       "band": "weakening"
     },
     {
-      "date": "2026-03-02",
-      "score": 53.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-03-01",
-      "score": 57.1,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-28",
-      "score": 57.5,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-27",
-      "score": 57.5,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-26",
-      "score": 55.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-25",
-      "score": 55.1,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-24",
-      "score": 55.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-23",
-      "score": 56.7,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-22",
-      "score": 57.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-21",
-      "score": 57.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-20",
-      "score": 57.6,
-      "band": "weakening"
-    },
-    {
-      "date": "2026-02-19",
+      "date": "2026-05-14",
       "score": 58.5,
       "band": "weakening"
     },
     {
-      "date": "2026-02-18",
+      "date": "2026-05-13",
+      "score": 58.7,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-05-12",
+      "score": 60.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-11",
+      "score": 61.1,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-10",
+      "score": 62.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-09",
+      "score": 62.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-08",
+      "score": 62.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-07",
+      "score": 62.7,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-06",
+      "score": 63.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-05",
+      "score": 62.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-04",
+      "score": 62.1,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-03",
+      "score": 62.8,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-02",
+      "score": 62.8,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-05-01",
+      "score": 63.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-30",
+      "score": 62.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-29",
+      "score": 62.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-28",
+      "score": 63.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-27",
+      "score": 63.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-26",
+      "score": 64.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-25",
+      "score": 64.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-24",
+      "score": 64.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-23",
+      "score": 63.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-22",
+      "score": 64.7,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-21",
+      "score": 65.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-20",
+      "score": 66.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-19",
+      "score": 66.1,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-18",
+      "score": 66.1,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-17",
+      "score": 66.1,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-16",
+      "score": 65.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-15",
+      "score": 65.7,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-14",
+      "score": 65.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-13",
+      "score": 63.5,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-12",
+      "score": 63.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-11",
+      "score": 63.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-10",
+      "score": 63.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-09",
+      "score": 63.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-08",
+      "score": 64.2,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-07",
+      "score": 62.7,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-06",
+      "score": 62.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-05",
+      "score": 63.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-04",
+      "score": 63.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-03",
+      "score": 63.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-02",
+      "score": 63.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-04-01",
+      "score": 64.1,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-31",
+      "score": 65.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-30",
+      "score": 57.5,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-29",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-28",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-27",
+      "score": 55.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-26",
+      "score": 55.4,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-25",
+      "score": 55.9,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-24",
+      "score": 55.8,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-23",
+      "score": 56.3,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-22",
+      "score": 55.5,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-21",
+      "score": 55.5,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-20",
+      "score": 55.5,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-19",
+      "score": 58.4,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-18",
+      "score": 58.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-17",
+      "score": 58.2,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-16",
+      "score": 58.2,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-15",
+      "score": 58.2,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-14",
+      "score": 58.2,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-13",
+      "score": 58.2,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-12",
       "score": 58.9,
       "band": "weakening"
     },
     {
-      "date": "2026-02-17",
-      "score": 58.9,
+      "date": "2026-03-11",
+      "score": 59.5,
       "band": "weakening"
+    },
+    {
+      "date": "2026-03-10",
+      "score": 59.6,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-09",
+      "score": 59.0,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-08",
+      "score": 60.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-07",
+      "score": 60.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-06",
+      "score": 60.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-05",
+      "score": 61.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-04",
+      "score": 61.3,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-03-03",
+      "score": 59.4,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-02",
+      "score": 59.4,
+      "band": "weakening"
+    },
+    {
+      "date": "2026-03-01",
+      "score": 62.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-28",
+      "score": 63.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-27",
+      "score": 63.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-26",
+      "score": 61.6,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-25",
+      "score": 60.9,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-24",
+      "score": 61.0,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-23",
+      "score": 61.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-22",
+      "score": 61.8,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-21",
+      "score": 61.8,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-20",
+      "score": 61.8,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-19",
+      "score": 62.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-18",
+      "score": 62.4,
+      "band": "monitor"
+    },
+    {
+      "date": "2026-02-17",
+      "score": 62.5,
+      "band": "monitor"
     }
   ]
 }
