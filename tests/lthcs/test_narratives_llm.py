@@ -1,19 +1,31 @@
-"""Tests for lthcs.narratives_llm.
+"""Tests for :mod:`lthcs.narratives_llm` -- LLM narratives SHADOW.
 
-These tests never make a real Anthropic API call. The SDK client is
-substituted with a small stand-in object (or monkeypatched at import).
-We test:
+Mirrors :mod:`tests.lthcs.test_llm_sentiment` (Tier 5 #28). These tests
+never make a real Anthropic API call -- the SDK client is substituted
+with a small stand-in object.
 
-* Prompt construction (system + user content, cache_control placement)
-* Fallback path when ANTHROPIC_API_KEY is absent
-* Fallback path when the SDK call raises
-* Happy path returning the LLM text + usage telemetry
-* The universe batch helper handles concurrency + per-ticker fallback
+Covers:
+
+* Prompt construction (system + user content, cache_control placement,
+  prior-day payload).
+* Four-section JSON parser, including spec-key aliasing and bad-JSON
+  fallback.
+* Fallback path when ``ANTHROPIC_API_KEY`` is absent, SDK call raises,
+  or the response is empty.
+* Happy path returning the four-section narrative + usage telemetry.
+* Retry-with-backoff fires on 429/5xx and succeeds on the retry.
+* Universe batch helper handles concurrency + per-ticker fallback.
+* Cost-cap helper math + cap-aborts-persistence behavior in
+  :func:`score_universe`.
+* Env-flag synonym handling (new + legacy).
+* Shadow persistence files land in the correct sibling directory.
 """
 
 from __future__ import annotations
 
 import json
+import warnings
+from pathlib import Path
 from typing import Any, Dict, List
 
 import pytest
@@ -32,6 +44,8 @@ def _snapshot_row(
     score: float = 58.7,
     band: str = "weakening",
     subscores=None,
+    drift_1d: float = 0.0,
+    drift_30d: float = 0.0,
 ) -> Dict[str, Any]:
     if subscores is None:
         subscores = {
@@ -45,8 +59,9 @@ def _snapshot_row(
         "ticker": ticker,
         "lthcs_score": score,
         "band": band,
-        "drift_1d": 0.0,
-        "drift_30d": 0.0,
+        "drift_1d": drift_1d,
+        "drift_7d": 0.0,
+        "drift_30d": drift_30d,
         "confidence_level": "high",
         "subscores": dict(subscores),
         "sector": "Technology",
@@ -70,6 +85,13 @@ def _variable_detail_rows(ticker: str = "AAPL") -> List[Dict[str, Any]]:
                 },
             },
             "data_quality": {"has_insider": True, "has_holdings": True},
+        },
+        {
+            "ticker": ticker,
+            "pillar": "des",
+            "sub_score": 44.9,
+            "components": {"sector_etf": -0.4},
+            "data_quality": {"has_sector_rss": False},
         },
     ]
 
@@ -137,8 +159,20 @@ def _macro() -> Dict[str, Any]:
     }
 
 
+def _good_llm_json() -> str:
+    return json.dumps(
+        {
+            "todays_take": "AAPL holds Weakening at 58.7 with Institutional Confidence (68.5) anchoring vs DES (44.9) dragging.",
+            "why_changed": "Drift_1d is flat at 0.0; today's read tracks yesterday with no material component delta.",
+            "why_not_to_sell": "The binding pillar is Demand Environment at 44.9; the next band step requires sector ETF strength below -0.5.",
+            "what_would_break": "A composite below 50 would force a Structural Review re-rate; below 60 keeps Weakening but adds review-tone language.",
+            "confidence_level": "medium",
+        }
+    )
+
+
 class _FakeUsage:
-    def __init__(self, input_tokens=1247, output_tokens=198, cache_read=1100, cache_create=0):
+    def __init__(self, input_tokens=247, output_tokens=198, cache_read=1100, cache_create=0):
         self.input_tokens = input_tokens
         self.output_tokens = output_tokens
         self.cache_read_input_tokens = cache_read
@@ -158,21 +192,35 @@ class _FakeResponse:
 
 
 class _FakeMessages:
-    def __init__(self, text: str = "Apple continues to weaken in the LTHCS framework.", raise_exc=None):
-        self.text = text
+    def __init__(self, text: str = None, raise_exc=None, raise_until_attempt: int = 0):
+        # raise_until_attempt: raise exc on the first N calls, then return
+        # success. Lets us exercise retry-with-backoff.
+        self.text = text if text is not None else _good_llm_json()
         self.calls: List[Dict[str, Any]] = []
         self.raise_exc = raise_exc
+        self.raise_until_attempt = raise_until_attempt
 
     def create(self, **kwargs):
         self.calls.append(kwargs)
-        if self.raise_exc is not None:
+        if self.raise_exc is not None and len(self.calls) <= self.raise_until_attempt:
+            raise self.raise_exc
+        if self.raise_exc is not None and self.raise_until_attempt == 0:
             raise self.raise_exc
         return _FakeResponse(self.text)
 
 
 class _FakeClient:
-    def __init__(self, text: str = "Apple continues to weaken in the LTHCS framework.", raise_exc=None):
-        self.messages = _FakeMessages(text=text, raise_exc=raise_exc)
+    def __init__(self, text: str = None, raise_exc=None, raise_until_attempt: int = 0):
+        self.messages = _FakeMessages(
+            text=text, raise_exc=raise_exc, raise_until_attempt=raise_until_attempt
+        )
+
+
+class _FakeRateLimitError(Exception):
+    """Stand-in for anthropic.RateLimitError; detected by class name."""
+
+
+_FakeRateLimitError.__name__ = "RateLimitError"  # ensures structural check matches
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +233,12 @@ def test_system_blocks_include_framework_and_macro():
     assert len(blocks) == 2
     assert "LTHCS" in blocks[0]["text"]
     assert "Adoption Momentum" in blocks[0]["text"]
-    # Both blocks carry cache_control -- the whole prefix is cached.
+    # Output format reflects the four-section JSON contract.
+    assert "todays_take" in blocks[0]["text"]
+    assert "why_changed" in blocks[0]["text"]
+    assert "why_not_to_sell" in blocks[0]["text"]
+    assert "what_would_break" in blocks[0]["text"]
+    assert "confidence_level" in blocks[0]["text"]
     for b in blocks:
         assert b.get("cache_control") == {"type": "ephemeral"}
     assert "macro overlay" in blocks[1]["text"].lower()
@@ -198,22 +251,27 @@ def test_system_blocks_skip_macro_when_absent():
     assert "LTHCS" in blocks[0]["text"]
 
 
-def test_user_message_contains_ticker_and_scores():
+def test_user_message_contains_ticker_and_scores_and_prior_day():
+    prior = _snapshot_row(score=60.0, band="monitor")
     msg = narratives_llm.build_user_message(
         ticker="AAPL",
         snapshot_row=_snapshot_row(),
         variable_detail_rows=_variable_detail_rows(),
         insider_data=_insider(),
         holdings_data=_holdings(),
+        prior_snapshot_row=prior,
     )
-    assert "AAPL" in msg
-    assert "58.7" in msg or "58.7," in msg or "\"lthcs_score\": 58.7" in msg
-    # Sub-score names are JSON-serialized as snake_case keys.
-    assert "institutional_confidence" in msg
+    payload_start = msg.find("{")
+    payload = json.loads(msg[payload_start:])
+    assert payload["ticker"] == "AAPL"
+    assert payload["lthcs_score"] == 58.7
+    assert "binding_and_supporting" in payload
+    assert payload["binding_and_supporting"]["binding_pillar"] == "Demand Environment"
+    assert "data_quality_by_pillar" in payload
+    assert payload["prior_day"]["available"] is True
+    assert payload["prior_day"]["lthcs_score"] == 60.0
     assert "LEVINSON" in msg  # top open-market transaction surfaces
     assert "BlackRock" in msg
-    # The binding+supporting pillar hint is included in payload.
-    assert "binding_and_supporting" in msg
 
 
 def test_user_message_handles_missing_insider_and_holdings():
@@ -228,11 +286,99 @@ def test_user_message_handles_missing_insider_and_holdings():
     payload = json.loads(msg[payload_start:])
     assert payload["insider"]["available"] is False
     assert payload["holdings"]["available"] is False
+    assert payload["prior_day"]["available"] is False
+
+
+def test_prompt_hash_is_deterministic_and_changes_with_input():
+    h1 = narratives_llm._prompt_hash("hello", "claude-haiku-4-5")
+    h2 = narratives_llm._prompt_hash("hello", "claude-haiku-4-5")
+    h3 = narratives_llm._prompt_hash("hello!", "claude-haiku-4-5")
+    h4 = narratives_llm._prompt_hash("hello", "claude-sonnet-4-5")
+    assert h1 == h2
+    assert h1 != h3
+    assert h1 != h4
+    assert len(h1) == 64  # sha256 hex
+
+
+# ---------------------------------------------------------------------------
+# Four-section parser
+# ---------------------------------------------------------------------------
+
+
+def test_parse_four_section_json_v1_keys():
+    out = narratives_llm._parse_four_section_json(_good_llm_json())
+    assert out is not None
+    for k in narratives_llm.NARRATIVE_SECTION_KEYS:
+        assert k in out and out[k]
+    assert out["confidence_level"] == "medium"
+
+
+def test_parse_four_section_json_spec_keys_aliased_to_v1():
+    raw = json.dumps(
+        {
+            "section_1_todays_take": "A.",
+            "section_2_why_changed": "B.",
+            "section_3_why_not_to_sell": "C.",
+            "section_4_what_would_break": "D.",
+            "confidence_level": "high",
+        }
+    )
+    out = narratives_llm._parse_four_section_json(raw)
+    assert out is not None
+    assert out["todays_take"] == "A."
+    assert out["why_changed"] == "B."
+    assert out["why_not_to_sell"] == "C."
+    assert out["what_would_break"] == "D."
+    assert out["confidence_level"] == "high"
+
+
+def test_parse_four_section_json_handles_markdown_fence():
+    raw = "```json\n" + _good_llm_json() + "\n```"
+    out = narratives_llm._parse_four_section_json(raw)
+    assert out is not None
+    assert "todays_take" in out
+
+
+def test_parse_four_section_json_missing_section_returns_none():
+    raw = json.dumps(
+        {
+            "todays_take": "A.",
+            "why_changed": "B.",
+            # why_not_to_sell missing
+            "what_would_break": "D.",
+            "confidence_level": "high",
+        }
+    )
+    assert narratives_llm._parse_four_section_json(raw) is None
+
+
+def test_parse_four_section_json_normalizes_bad_confidence():
+    raw = json.dumps(
+        {
+            "todays_take": "A.",
+            "why_changed": "B.",
+            "why_not_to_sell": "C.",
+            "what_would_break": "D.",
+            "confidence_level": "totally-bogus",
+        }
+    )
+    out = narratives_llm._parse_four_section_json(raw)
+    assert out is not None
+    assert out["confidence_level"] == "medium"
+
+
+def test_parse_four_section_json_garbage_returns_none():
+    assert narratives_llm._parse_four_section_json("not json at all") is None
+    assert narratives_llm._parse_four_section_json("") is None
 
 
 # ---------------------------------------------------------------------------
 # Fallback paths
 # ---------------------------------------------------------------------------
+
+
+def test_default_model_is_haiku():
+    assert narratives_llm.DEFAULT_MODEL == "claude-haiku-4-5"
 
 
 def test_missing_api_key_falls_back_to_template(monkeypatch):
@@ -248,8 +394,11 @@ def test_missing_api_key_falls_back_to_template(monkeypatch):
     assert out["fallback"] is True
     assert out["fallback_reason"] == "missing_api_key"
     assert out["ticker"] == "AAPL"
-    assert isinstance(out["narrative"], str)
-    assert len(out["narrative"]) > 20
+    # Four-section keys are populated from the templated fallback so the
+    # shadow file's row shape matches the templated file's exactly.
+    for k in narratives_llm.NARRATIVE_SECTION_KEYS:
+        assert isinstance(out[k], str) and out[k]
+    assert out["confidence_level"]
     assert out["input_tokens"] == 0
     assert out["output_tokens"] == 0
 
@@ -264,7 +413,7 @@ def test_api_error_falls_back_to_template():
     )
     assert out["fallback"] is True
     assert "api_error" in out["fallback_reason"]
-    assert "AAPL" in out["narrative"]
+    assert out["todays_take"]  # templated content present
 
 
 def test_empty_response_falls_back_to_template():
@@ -279,14 +428,27 @@ def test_empty_response_falls_back_to_template():
     assert out["fallback_reason"] == "empty_response"
 
 
+def test_bad_json_falls_back_to_template():
+    client = _FakeClient(text="this is not JSON whatsoever, just prose")
+    out = narratives_llm.generate_llm_narrative(
+        ticker="AAPL",
+        snapshot_row=_snapshot_row(),
+        variable_detail_rows=_variable_detail_rows(),
+        client=client,
+    )
+    assert out["fallback"] is True
+    assert out["fallback_reason"] == "json_parse_error"
+    # Per-ticker fallback uses the templated narrative.
+    assert out["todays_take"]
+
+
 # ---------------------------------------------------------------------------
 # Happy path + cache_control plumbing
 # ---------------------------------------------------------------------------
 
 
-def test_happy_path_returns_text_and_token_counts():
-    text = "Apple continues to weaken: institutional confidence (68.5) anchors, DES (44.9) drags."
-    client = _FakeClient(text=text)
+def test_happy_path_returns_four_sections_and_token_counts():
+    client = _FakeClient(text=_good_llm_json())
     out = narratives_llm.generate_llm_narrative(
         ticker="AAPL",
         snapshot_row=_snapshot_row(),
@@ -297,9 +459,11 @@ def test_happy_path_returns_text_and_token_counts():
         client=client,
     )
     assert out["fallback"] is False
-    assert out["narrative"] == text
+    for k in narratives_llm.NARRATIVE_SECTION_KEYS:
+        assert isinstance(out[k], str) and out[k]
+    assert out["confidence_level"] == "medium"
     assert out["model"] == narratives_llm.DEFAULT_MODEL
-    assert out["input_tokens"] == 1247
+    assert out["input_tokens"] == 247
     assert out["output_tokens"] == 198
     assert out["cached_input_tokens"] == 1100
     assert out["ticker"] == "AAPL"
@@ -319,10 +483,8 @@ def test_cache_control_placed_on_system_blocks():
     call = client.messages.calls[0]
     system_blocks = call["system"]
     assert isinstance(system_blocks, list)
-    # Every system block carries an ephemeral cache_control marker.
     for blk in system_blocks:
         assert blk.get("cache_control") == {"type": "ephemeral"}
-    # User message is a plain string (not cached).
     msgs = call["messages"]
     assert msgs[0]["role"] == "user"
     assert isinstance(msgs[0]["content"], str)
@@ -356,14 +518,75 @@ def test_custom_model_propagates_to_api_call():
 
 
 # ---------------------------------------------------------------------------
+# Retry with backoff
+# ---------------------------------------------------------------------------
+
+
+def test_retry_fires_on_429_then_succeeds():
+    """RateLimitError twice, then success on attempt 3 -- spec §7."""
+    sleeps: List[float] = []
+    client = _FakeClient(
+        text=_good_llm_json(),
+        raise_exc=_FakeRateLimitError("rate limited"),
+        raise_until_attempt=2,
+    )
+    response = narratives_llm._call_anthropic_with_retry(
+        client=client,
+        model="claude-haiku-4-5",
+        system_blocks=narratives_llm.build_system_blocks(),
+        user_message="hi",
+        sleep_fn=lambda s: sleeps.append(s),
+    )
+    assert len(client.messages.calls) == 3
+    assert response is not None
+    # Two backoffs invoked (between attempts 1->2 and 2->3).
+    assert len(sleeps) == 2
+    # First sleep is ~1s (with jitter), second is ~4s.
+    assert 0.5 <= sleeps[0] <= 1.5
+    assert 3.0 <= sleeps[1] <= 5.0
+
+
+def test_retry_does_not_fire_on_non_retryable_error():
+    sleeps: List[float] = []
+    client = _FakeClient(raise_exc=ValueError("bad request -- not retryable"))
+    with pytest.raises(ValueError):
+        narratives_llm._call_anthropic_with_retry(
+            client=client,
+            model="claude-haiku-4-5",
+            system_blocks=narratives_llm.build_system_blocks(),
+            user_message="hi",
+            sleep_fn=lambda s: sleeps.append(s),
+        )
+    assert len(client.messages.calls) == 1
+    assert sleeps == []
+
+
+def test_retry_exhausts_then_raises_for_persistent_429():
+    sleeps: List[float] = []
+    client = _FakeClient(raise_exc=_FakeRateLimitError("always rate limited"))
+    with pytest.raises(_FakeRateLimitError):
+        narratives_llm._call_anthropic_with_retry(
+            client=client,
+            model="claude-haiku-4-5",
+            system_blocks=narratives_llm.build_system_blocks(),
+            user_message="hi",
+            sleep_fn=lambda s: sleeps.append(s),
+            attempts=3,
+        )
+    assert len(client.messages.calls) == 3
+    # Two waits between attempts.
+    assert len(sleeps) == 2
+
+
+# ---------------------------------------------------------------------------
 # Universe batch helper
 # ---------------------------------------------------------------------------
 
 
 def test_universe_helper_returns_one_entry_per_ticker():
-    rows = [_snapshot_row(ticker="AAPL"), _snapshot_row(ticker="MSFT"), _snapshot_row(ticker="NVDA")]
+    rows = [_snapshot_row(ticker=t) for t in ("AAPL", "MSFT", "NVDA")]
     var_detail = {t: _variable_detail_rows(t) for t in ("AAPL", "MSFT", "NVDA")}
-    client = _FakeClient(text="Narrative body.")
+    client = _FakeClient(text=_good_llm_json())
     out = narratives_llm.generate_universe_narratives(
         snapshot_rows=rows,
         variable_detail_by_ticker=var_detail,
@@ -377,12 +600,12 @@ def test_universe_helper_returns_one_entry_per_ticker():
     for ticker, narr in out.items():
         assert narr["ticker"] == ticker
         assert narr["fallback"] is False
-        assert narr["narrative"] == "Narrative body."
+        assert narr["todays_take"]
 
 
 def test_universe_helper_falls_back_when_no_client(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-    rows = [_snapshot_row(ticker="AAPL"), _snapshot_row(ticker="MSFT")]
+    rows = [_snapshot_row(ticker=t) for t in ("AAPL", "MSFT")]
     var_detail = {t: _variable_detail_rows(t) for t in ("AAPL", "MSFT")}
     out = narratives_llm.generate_universe_narratives(
         snapshot_rows=rows,
@@ -408,27 +631,39 @@ def test_universe_helper_handles_empty_input():
 
 def test_classify_insider_regime_bands():
     assert (
-        narratives_llm._classify_insider_regime({"conviction_score": -1.0, "cluster_buying": False})
+        narratives_llm._classify_insider_regime(
+            {"conviction_score": -1.0, "cluster_buying": False}
+        )
         == "heavy_selling"
     )
     assert (
-        narratives_llm._classify_insider_regime({"conviction_score": -0.4, "cluster_buying": False})
+        narratives_llm._classify_insider_regime(
+            {"conviction_score": -0.4, "cluster_buying": False}
+        )
         == "net_selling"
     )
     assert (
-        narratives_llm._classify_insider_regime({"conviction_score": 0.0, "cluster_buying": False})
+        narratives_llm._classify_insider_regime(
+            {"conviction_score": 0.0, "cluster_buying": False}
+        )
         == "balanced"
     )
     assert (
-        narratives_llm._classify_insider_regime({"conviction_score": 0.4, "cluster_buying": False})
+        narratives_llm._classify_insider_regime(
+            {"conviction_score": 0.4, "cluster_buying": False}
+        )
         == "net_buying"
     )
     assert (
-        narratives_llm._classify_insider_regime({"conviction_score": 1.0, "cluster_buying": False})
+        narratives_llm._classify_insider_regime(
+            {"conviction_score": 1.0, "cluster_buying": False}
+        )
         == "heavy_buying"
     )
     assert (
-        narratives_llm._classify_insider_regime({"conviction_score": 0.0, "cluster_buying": True})
+        narratives_llm._classify_insider_regime(
+            {"conviction_score": 0.0, "cluster_buying": True}
+        )
         == "cluster_buying"
     )
 
@@ -452,7 +687,6 @@ def test_summarize_insider_filters_to_open_market_top_transactions():
     summary = narratives_llm._summarize_insider(_insider())
     assert summary["available"] is True
     txs = summary["top_open_market_transactions"]
-    # Only the Levinson (open market) transaction qualifies; Parekh is 10b5-1.
     assert len(txs) == 1
     assert txs[0]["insider"] == "LEVINSON ARTHUR D"
     assert txs[0]["planned_10b5_1"] is False
@@ -467,3 +701,260 @@ def test_summarize_holdings_keeps_top_3():
         "State Street",
         "Goldman Sachs",
     ]
+
+
+# ---------------------------------------------------------------------------
+# Cost cap helpers
+# ---------------------------------------------------------------------------
+
+
+def test_estimate_cost_zero_for_empty():
+    assert narratives_llm._estimate_cost_usd([], "claude-haiku-4-5") == 0.0
+
+
+def test_estimate_cost_haiku_math():
+    """Cost is sum_in * input_price + sum_cache * cache_price + sum_out * out_price."""
+    usage_dicts = [
+        {"input_tokens": 1000, "cached_input_tokens": 0, "output_tokens": 500},
+        {"input_tokens": 200, "cached_input_tokens": 1200, "output_tokens": 300},
+    ]
+    cost = narratives_llm._estimate_cost_usd(usage_dicts, "claude-haiku-4-5")
+    # Haiku 4.5: input $1.00, cached $0.10, output $5.00 per MTok.
+    # input = 1200 * 1.00 / 1e6 = 0.0012
+    # cached = 1200 * 0.10 / 1e6 = 0.00012
+    # output = 800 * 5.00 / 1e6 = 0.004
+    expected = 0.0012 + 0.00012 + 0.004
+    assert cost == pytest.approx(expected, abs=1e-6)
+
+
+def test_estimate_cost_unknown_model_falls_back_to_haiku_pricing():
+    usage_dicts = [{"input_tokens": 1000, "cached_input_tokens": 0, "output_tokens": 1000}]
+    cost_unknown = narratives_llm._estimate_cost_usd(usage_dicts, "claude-mythical-99")
+    cost_haiku = narratives_llm._estimate_cost_usd(usage_dicts, "claude-haiku-4-5")
+    assert cost_unknown == cost_haiku
+
+
+def test_max_usd_per_day_reads_env(monkeypatch):
+    monkeypatch.delenv("LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY", raising=False)
+    assert narratives_llm._max_usd_per_day() == narratives_llm.DEFAULT_MAX_USD_PER_DAY
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY", "5.50")
+    assert narratives_llm._max_usd_per_day() == 5.5
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY", "garbage")
+    assert narratives_llm._max_usd_per_day() == narratives_llm.DEFAULT_MAX_USD_PER_DAY
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_MAX_USD_PER_DAY", "-1.0")
+    assert narratives_llm._max_usd_per_day() == narratives_llm.DEFAULT_MAX_USD_PER_DAY
+
+
+# ---------------------------------------------------------------------------
+# Env-flag synonyms
+# ---------------------------------------------------------------------------
+
+
+def test_is_enabled_default_off(monkeypatch):
+    monkeypatch.delenv("LTHCS_LLM_NARRATIVES_ENABLED", raising=False)
+    monkeypatch.delenv("LTHCS_NARRATIVES_LLM_ENABLED", raising=False)
+    assert narratives_llm.is_enabled() is False
+
+
+def test_is_enabled_new_name(monkeypatch):
+    monkeypatch.delenv("LTHCS_NARRATIVES_LLM_ENABLED", raising=False)
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_ENABLED", "1")
+    assert narratives_llm.is_enabled() is True
+
+
+def test_is_enabled_legacy_name_warns(monkeypatch):
+    monkeypatch.delenv("LTHCS_LLM_NARRATIVES_ENABLED", raising=False)
+    monkeypatch.setenv("LTHCS_NARRATIVES_LLM_ENABLED", "1")
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        assert narratives_llm.is_enabled() is True
+    deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+    assert any("LTHCS_NARRATIVES_LLM_ENABLED" in str(w.message) for w in deprecations)
+
+
+def test_is_enabled_new_name_overrides_legacy(monkeypatch):
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_ENABLED", "0")
+    monkeypatch.setenv("LTHCS_NARRATIVES_LLM_ENABLED", "1")
+    # New name explicitly off -> off (legacy ignored).
+    assert narratives_llm.is_enabled() is False
+
+
+# ---------------------------------------------------------------------------
+# Shadow persistence + score_universe
+# ---------------------------------------------------------------------------
+
+
+def test_score_universe_returns_none_when_disabled(monkeypatch):
+    monkeypatch.delenv("LTHCS_LLM_NARRATIVES_ENABLED", raising=False)
+    monkeypatch.delenv("LTHCS_NARRATIVES_LLM_ENABLED", raising=False)
+    out = narratives_llm.score_universe(
+        snapshot_rows=[_snapshot_row()],
+        variable_detail_by_ticker={"AAPL": _variable_detail_rows("AAPL")},
+        calc_date="2026-05-19",
+    )
+    assert out is None
+
+
+def test_score_universe_persists_shadow_file(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_ENABLED", "1")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")  # not used, client= passed
+
+    rows = [_snapshot_row(ticker="AAPL"), _snapshot_row(ticker="MSFT")]
+    var_detail = {t: _variable_detail_rows(t) for t in ("AAPL", "MSFT")}
+    client = _FakeClient(text=_good_llm_json())
+    out = narratives_llm.score_universe(
+        snapshot_rows=rows,
+        variable_detail_by_ticker=var_detail,
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+        cost_cap_usd=10.0,
+    )
+    assert out is not None
+    assert out["persisted"] is True
+    assert out["meta"]["ticker_count"] == 2
+    assert out["meta"]["fallback_count"] == 0
+    # Daily file landed in the SHADOW directory, NOT data/lthcs/narratives/.
+    daily_path = tmp_path / "narratives_llm" / "2026-05-19.json"
+    assert daily_path.exists()
+    payload = json.loads(daily_path.read_text())
+    assert payload["calc_date"] == "2026-05-19"
+    assert len(payload["narratives"]) == 2
+    # Per-ticker rolling history files written.
+    for sym in ("AAPL", "MSFT"):
+        hist_path = tmp_path / "narratives_llm_by_ticker" / ("%s.json" % sym)
+        assert hist_path.exists()
+        hist = json.loads(hist_path.read_text())
+        assert isinstance(hist, list) and len(hist) == 1
+        assert hist[0]["calc_date"] == "2026-05-19"
+
+
+def test_score_universe_cost_cap_aborts_persistence(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_ENABLED", "1")
+    rows = [_snapshot_row(ticker="AAPL")]
+    var_detail = {"AAPL": _variable_detail_rows("AAPL")}
+    client = _FakeClient(text=_good_llm_json())
+    out = narratives_llm.score_universe(
+        snapshot_rows=rows,
+        variable_detail_by_ticker=var_detail,
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+        cost_cap_usd=0.0,  # any nonzero cost trips it
+    )
+    assert out is not None
+    assert out["persisted"] is False
+    assert out["meta"]["cost_cap_hit"] is True
+    daily_path = tmp_path / "narratives_llm" / "2026-05-19.json"
+    assert not daily_path.exists()
+
+
+def test_score_universe_stamps_shadow_run_id(monkeypatch, tmp_path: Path):
+    monkeypatch.setenv("LTHCS_LLM_NARRATIVES_ENABLED", "1")
+    rows = [_snapshot_row(ticker="AAPL")]
+    var_detail = {"AAPL": _variable_detail_rows("AAPL")}
+    client = _FakeClient(text=_good_llm_json())
+    out = narratives_llm.score_universe(
+        snapshot_rows=rows,
+        variable_detail_by_ticker=var_detail,
+        calc_date="2026-05-19",
+        client=client,
+        data_root=tmp_path,
+        cost_cap_usd=10.0,
+        shadow_run_id="run-test-001",
+    )
+    assert out is not None
+    assert out["meta"]["shadow_run_id"] == "run-test-001"
+    daily_payload = json.loads(
+        (tmp_path / "narratives_llm" / "2026-05-19.json").read_text()
+    )
+    assert daily_payload["meta"]["shadow_run_id"] == "run-test-001"
+    # Per-row stamp.
+    assert daily_payload["narratives"][0]["shadow_run_id"] == "run-test-001"
+
+
+def test_append_ticker_history_dedupes_same_day(tmp_path: Path):
+    rec1 = {
+        "ticker": "AAPL",
+        "calc_date": "2026-05-19",
+        "todays_take": "first",
+        "fallback": False,
+    }
+    rec2 = dict(rec1, todays_take="second")
+    narratives_llm.append_shadow_ticker_history("AAPL", rec1, data_root=tmp_path)
+    narratives_llm.append_shadow_ticker_history("AAPL", rec2, data_root=tmp_path)
+    hist = json.loads(
+        (tmp_path / "narratives_llm_by_ticker" / "AAPL.json").read_text()
+    )
+    assert len(hist) == 1
+    assert hist[0]["todays_take"] == "second"
+
+
+def test_append_ticker_history_respects_limit(tmp_path: Path):
+    """History capped at SHADOW_TICKER_HISTORY_LIMIT (newest last)."""
+    for i in range(narratives_llm.SHADOW_TICKER_HISTORY_LIMIT + 5):
+        narratives_llm.append_shadow_ticker_history(
+            "AAPL",
+            {
+                "ticker": "AAPL",
+                "calc_date": "2026-01-%02d" % (i + 1),
+                "todays_take": "day %d" % i,
+            },
+            data_root=tmp_path,
+        )
+    hist = json.loads(
+        (tmp_path / "narratives_llm_by_ticker" / "AAPL.json").read_text()
+    )
+    assert len(hist) == narratives_llm.SHADOW_TICKER_HISTORY_LIMIT
+    # Oldest 5 dropped.
+    assert hist[0]["calc_date"] == "2026-01-06"
+
+
+# ---------------------------------------------------------------------------
+# Persist layer integration
+# ---------------------------------------------------------------------------
+
+
+def test_persist_write_narratives_llm(tmp_path: Path):
+    from lthcs.persist import LthcsPersist
+
+    persist = LthcsPersist(data_root=tmp_path)
+    rows = [
+        {
+            "ticker": "AAPL",
+            "todays_take": "A",
+            "why_changed": "B",
+            "why_not_to_sell": "C",
+            "what_would_break": "D",
+            "confidence_level": "high",
+        }
+    ]
+    path = persist.write_narratives_llm(
+        "2026-05-19",
+        "claude-haiku-4-5",
+        rows,
+        meta={"total_cost_usd": 0.30, "fallback_count": 0},
+    )
+    assert path.exists()
+    payload = json.loads(path.read_text())
+    assert payload["calc_date"] == "2026-05-19"
+    assert payload["model_version"] == "claude-haiku-4-5"
+    assert payload["narratives"] == rows
+    assert payload["meta"]["total_cost_usd"] == 0.30
+    # File lives in the SHADOW directory, not next to the templated one.
+    assert path.parent.name == "narratives_llm"
+    # Templated dir is separate and was not written.
+    assert not (tmp_path / "narratives" / "2026-05-19.json").exists()
+
+
+def test_persist_write_narratives_llm_overwrite_guard(tmp_path: Path):
+    from lthcs.persist import LthcsPersist
+
+    persist = LthcsPersist(data_root=tmp_path)
+    rows = [{"ticker": "AAPL", "todays_take": "x", "why_changed": "x",
+             "why_not_to_sell": "x", "what_would_break": "x",
+             "confidence_level": "medium"}]
+    persist.write_narratives_llm("2026-05-19", "haiku", rows)
+    with pytest.raises(FileExistsError):
+        persist.write_narratives_llm("2026-05-19", "haiku", rows)
+    persist.write_narratives_llm("2026-05-19", "haiku", rows, overwrite=True)

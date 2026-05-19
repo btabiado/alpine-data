@@ -117,11 +117,15 @@ class LthcsPersist:
         self.snapshots_dir: Path = self.data_root / "snapshots"
         self.variable_detail_dir: Path = self.data_root / "variable_detail"
         self.narratives_dir: Path = self.data_root / "narratives"
+        # Shadow directory for LLM narratives (Tier 5 #23). Sibling of
+        # narratives/; populated only when LTHCS_LLM_NARRATIVES_ENABLED=1.
+        self.narratives_llm_dir: Path = self.data_root / "narratives_llm"
         self.history_dir: Path = self.data_root / "history" / "by_ticker"
         for d in (
             self.snapshots_dir,
             self.variable_detail_dir,
             self.narratives_dir,
+            self.narratives_llm_dir,
             self.history_dir,
         ):
             d.mkdir(parents=True, exist_ok=True)
@@ -233,6 +237,52 @@ class LthcsPersist:
         payload: Dict[str, Any] = {
             "calc_date": calc_date,
             "model_version": str(model_version),
+            "narratives": narratives,
+        }
+        _atomic_write_json(path, payload)
+        return path
+
+    # ------------------------------------------------------------------
+    # Narratives -- LLM shadow (Tier 5 #23)
+    # ------------------------------------------------------------------
+
+    def narratives_llm_path(self, calc_date: str) -> Path:
+        _validate_calc_date(calc_date)
+        return self.narratives_llm_dir / ("%s.json" % calc_date)
+
+    def write_narratives_llm(
+        self,
+        calc_date: str,
+        model_version: str,
+        narratives: List[Dict],
+        *,
+        meta: Optional[Dict[str, Any]] = None,
+        overwrite: bool = False,
+    ) -> Path:
+        """Write the shadow LLM narratives file.
+
+        Mirrors :meth:`write_narratives` shape so the UI can swap
+        sources with a one-line branch. ``meta`` carries run-level
+        telemetry (model, total_cost_usd, fallback_count, etc.) and is
+        stamped into the payload under ``meta`` for ops visibility.
+        ``narratives`` is a list of dicts in the four-section shape
+        (``todays_take``, ``why_changed``, ``why_not_to_sell``,
+        ``what_would_break``, ``confidence_level``) plus telemetry
+        fields. Atomic write.
+        """
+        if not isinstance(narratives, list) or not all(
+            isinstance(n, dict) for n in narratives
+        ):
+            raise TypeError("narratives must be a list of dicts")
+        path = self.narratives_llm_path(calc_date)
+        if path.exists() and not overwrite:
+            raise FileExistsError(
+                "narratives_llm for %s already exists at %s" % (calc_date, path)
+            )
+        payload: Dict[str, Any] = {
+            "calc_date": calc_date,
+            "model_version": str(model_version),
+            "meta": dict(meta or {}),
             "narratives": narratives,
         }
         _atomic_write_json(path, payload)

@@ -65,6 +65,8 @@ def test_init_creates_four_subdirectories(tmp_path: Path) -> None:
     assert (tmp_path / "variable_detail").is_dir()
     assert (tmp_path / "narratives").is_dir()
     assert (tmp_path / "history" / "by_ticker").is_dir()
+    # Tier 5 #23: shadow dir for LLM narratives also created on init.
+    assert (tmp_path / "narratives_llm").is_dir()
 
 
 def test_init_is_idempotent(tmp_path: Path) -> None:

@@ -354,6 +354,13 @@ class PipelineState:
     # Stage 7
     narrative_rows: List[Dict[str, Any]] = field(default_factory=list)
 
+    # Stage 7.5b — LLM narratives SHADOW (Tier 5 #23, spec docs/lthcs-llm-
+    # narratives-spec.md). Populated only when LTHCS_LLM_NARRATIVES_ENABLED=1
+    # AND --as-of is unset. Written to data/lthcs/narratives_llm/<date>.json;
+    # production narrative_rows (Stage 7 templated) are byte-untouched.
+    llm_narrative_shadow_rows: List[Dict[str, Any]] = field(default_factory=list)
+    llm_narrative_shadow_meta: Optional[Dict[str, Any]] = None
+
     # Stage 8
     variable_detail_rows: List[Dict[str, Any]] = field(default_factory=list)
 
@@ -1748,49 +1755,16 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
 
 
 def stage_7_generate_narratives(state: PipelineState) -> bool:
+    """Stage 7: always-templated narratives (production source).
+
+    The LLM narratives shadow runs as Stage 7.5b -- see
+    :func:`stage_7p5b_llm_narratives_shadow`. Per
+    ``docs/lthcs-llm-narratives-spec.md`` §3 the templated path is the
+    canonical production source. The LLM path writes to a sibling
+    ``data/lthcs/narratives_llm/`` directory and the UI flips between
+    them with a localStorage toggle.
+    """
     state.narrative_rows = []
-    use_llm = os.getenv("LTHCS_NARRATIVES_LLM_ENABLED") == "1"
-    if use_llm:
-        # Opt-in LLM path. Falls back per-ticker on any failure so a bad
-        # API key / network blip never breaks the daily pipeline.
-        try:
-            from lthcs.narratives_llm import generate_universe_narratives
-
-            variable_detail_by_ticker: Dict[str, List[Dict[str, Any]]] = {}
-            for sym, pillars in state.pillar_results.items():
-                variable_detail_by_ticker[sym] = [
-                    {
-                        "ticker": sym,
-                        "pillar": pillar_name,
-                        "components": dict(result.get("components") or {}),
-                        "sub_score": float(result.get("sub_score", 50.0)),
-                        "data_quality": dict(result.get("data_quality") or {}),
-                    }
-                    for pillar_name, result in pillars.items()
-                ]
-            llm_results = generate_universe_narratives(
-                snapshot_rows=state.snapshot_rows,
-                variable_detail_by_ticker=variable_detail_by_ticker,
-                insider_by_ticker=state.insider_by_ticker,
-                holdings_by_ticker=state.holdings_by_ticker,
-                macro_breadth=state.breadth_snapshot,
-                model=os.getenv("LTHCS_NARRATIVES_LLM_MODEL", "claude-sonnet-4-5"),
-            )
-            state.narrative_rows = [
-                llm_results[row["ticker"]]
-                for row in state.snapshot_rows
-                if row.get("ticker") in llm_results
-            ]
-            fallback_count = sum(1 for n in state.narrative_rows if n.get("fallback"))
-            print(
-                "✓ Stage 7: Generated %d LLM narratives (%d fell back to template)"
-                % (len(state.narrative_rows), fallback_count)
-            )
-            return True
-        except Exception as exc:
-            print("! Stage 7 LLM path failed (%s); falling back to template" % exc)
-            state.narrative_rows = []
-
     for row in state.snapshot_rows:
         try:
             narr = narratives.generate_narratives(row)
@@ -1800,6 +1774,98 @@ def stage_7_generate_narratives(state: PipelineState) -> bool:
     print(
         "✓ Stage 7: Generated %d templated narratives"
         % len(state.narrative_rows)
+    )
+    return True
+
+
+def stage_7p5b_llm_narratives_shadow(state: PipelineState) -> bool:
+    """Stage 7.5b: LLM narratives SHADOW run (Tier 5 #23).
+
+    Decoupled from Stage 7: writes to ``data/lthcs/narratives_llm/``
+    (NOT ``data/lthcs/narratives/``) and exposes per-ticker results on
+    ``state.llm_narrative_shadow_rows`` for Stage 8 to persist.
+    Production templated narratives (Stage 7) are byte-untouched.
+
+    Gated by ``LTHCS_LLM_NARRATIVES_ENABLED=1`` (legacy
+    ``LTHCS_NARRATIVES_LLM_ENABLED=1`` honored for one release). Skipped
+    in ``--as-of`` (backfill) mode -- the prior-day composite + insider
+    history isn't always available for arbitrary backfill dates.
+    Failures here never break the daily pipeline; templated narratives
+    are the user-visible default anyway.
+    """
+    state.llm_narrative_shadow_rows = []
+    state.llm_narrative_shadow_meta = None
+
+    if getattr(state.args, "as_of", None):
+        return True
+
+    try:
+        from lthcs import narratives_llm as _nllm
+    except Exception as exc:  # pragma: no cover
+        print("! Stage 7.5b: narratives_llm import failed (%s); skipping" % exc)
+        return True
+
+    if not _nllm.is_enabled():
+        return True
+
+    try:
+        variable_detail_by_ticker: Dict[str, List[Dict[str, Any]]] = {}
+        for sym, pillars in state.pillar_results.items():
+            variable_detail_by_ticker[sym] = [
+                {
+                    "ticker": sym,
+                    "pillar": pillar_name,
+                    "components": dict(result.get("components") or {}),
+                    "sub_score": float(result.get("sub_score", 50.0)),
+                    "data_quality": dict(result.get("data_quality") or {}),
+                }
+                for pillar_name, result in pillars.items()
+            ]
+        shadow_out = _nllm.score_universe(
+            snapshot_rows=state.snapshot_rows,
+            variable_detail_by_ticker=variable_detail_by_ticker,
+            calc_date=str(state.calc_date),
+            insider_by_ticker=state.insider_by_ticker,
+            holdings_by_ticker=state.holdings_by_ticker,
+            macro_breadth=state.breadth_snapshot,
+            # No persist here -- Stage 8 owns the on-disk write via
+            # LthcsPersist.write_narratives_llm. We just collect rows.
+            persist=False,
+        )
+    except Exception as exc:
+        print("! Stage 7.5b: LLM narratives shadow failed (%s); skipping" % exc)
+        return True
+
+    if not shadow_out:
+        return True
+
+    results = shadow_out.get("results") or {}
+    meta = shadow_out.get("meta") or {}
+    state.llm_narrative_shadow_meta = meta
+
+    # Order rows to match the snapshot order so the shadow file aligns
+    # with the templated one row-for-row.
+    ordered: List[Dict[str, Any]] = []
+    for row in state.snapshot_rows:
+        sym = row.get("ticker")
+        if sym in results:
+            rec = dict(results[sym])
+            rec.setdefault("calc_date", str(state.calc_date))
+            ordered.append(rec)
+    state.llm_narrative_shadow_rows = ordered
+
+    fallback_count = int(meta.get("fallback_count") or 0)
+    cost = float(meta.get("total_cost_usd") or 0.0)
+    cap_hit = bool(meta.get("cost_cap_hit"))
+    print(
+        "✓ Stage 7.5b: Generated %d LLM shadow narratives "
+        "(%d fellback, est=$%.4f%s)"
+        % (
+            len(ordered),
+            fallback_count,
+            cost,
+            " — cost cap hit" if cap_hit else "",
+        )
     )
     return True
 
@@ -1908,6 +1974,22 @@ def stage_8_persist(state: PipelineState) -> bool:
             state.narrative_rows,
             overwrite=state.args.force,
         )
+        # Tier 5 #23 — LLM narratives SHADOW. Decoupled from the templated
+        # path above so a flag-on run writes a sibling file the UI can opt
+        # into. Skipped if Stage 7.5b produced no rows (flag off, --as-of
+        # backfill, cost-cap hit, or no SDK).
+        if state.llm_narrative_shadow_rows:
+            try:
+                meta = state.llm_narrative_shadow_meta or {}
+                persist.write_narratives_llm(
+                    state.calc_date,
+                    str(meta.get("model") or MODEL_VERSION),
+                    state.llm_narrative_shadow_rows,
+                    meta=meta,
+                    overwrite=state.args.force,
+                )
+            except Exception as exc:  # pragma: no cover - filesystem edge
+                print("! Stage 8: write_narratives_llm failed (%s)" % exc)
         # Forward-fill any missed days BEFORE writing today's row so the
         # synthetic entries land between the previous real snapshot and
         # today's new one. No-op when no gap exists.
@@ -2497,6 +2579,7 @@ STAGES: List[Callable[[PipelineState], bool]] = [
     stage_6_compute_final_scores,
     stage_7_generate_narratives,
     stage_7p5_compute_index,
+    stage_7p5b_llm_narratives_shadow,
     stage_8_persist,
 ]
 
