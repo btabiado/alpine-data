@@ -4977,12 +4977,19 @@ function renderWhaleEth(){
   const statsBox = document.getElementById('ethStatsBox');
   if (statsBox){
     if (bc.blocks_24h || bc.transactions_24h){
-      const avgFee = bc.avg_tx_fee_eth_24h;
-      const mp    = bc.market_price_usd;
-      const burn  = bc.burned_eth_24h;
-      const erc20 = bc.erc20_transactions_24h;
-      const erc721= bc.erc721_transactions_24h;
-      const inflation = bc.inflation_eth_24h;
+      // Coerce: Blockchair sometimes returns numeric fields as strings.
+      // Number(null/undefined/"") → NaN, which Number.isFinite rejects.
+      const toFiniteNum = (v) => {
+        if (v == null || v === '') return null;
+        const n = Number(v);
+        return Number.isFinite(n) ? n : null;
+      };
+      const avgFee = toFiniteNum(bc.avg_tx_fee_eth_24h);
+      const mp    = toFiniteNum(bc.market_price_usd);
+      const burn  = toFiniteNum(bc.burned_eth_24h);
+      const erc20 = toFiniteNum(bc.erc20_transactions_24h);
+      const erc721= toFiniteNum(bc.erc721_transactions_24h);
+      const inflation = toFiniteNum(bc.inflation_eth_24h);
       // Deflationary if burn > inflation in the 24h window. Post-Merge this
       // flips between deflationary and mildly inflationary block-to-block.
       const netSupplyDelta = (burn != null && inflation != null) ? (inflation - burn) : null;
@@ -4991,8 +4998,8 @@ function renderWhaleEth(){
       statsBox.innerHTML = `
         <div>Blocks (24h): <strong style="color:var(--text)">${fmtNum(bc.blocks_24h||0, 0)}</strong></div>
         <div>Txs (24h): <strong style="color:var(--text)">${fmtNum(bc.transactions_24h||0, 0)}</strong></div>
-        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
-        ${burn != null ? `<div>EIP-1559 burn (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
+        ${avgFee != null ? `<div>Avg tx fee: <strong style="color:var(--text)">${avgFee.toFixed(6)} ETH</strong>${mp != null ? ` (~$${(avgFee*mp).toFixed(2)})` : ''}</div>` : ''}
+        ${burn != null ? `<div>EIP-1559 burn (24h): <strong class="${netCls}">${burn.toFixed(2)} ETH</strong>${mp != null ? ` (~${fmtUSD(burn*mp,'auto')})` : ''} <span style="color:var(--muted)">· ${netLbl}</span></div>` : ''}
         ${erc20  != null ? `<div>ERC-20 tx (24h): <strong style="color:var(--text)">${fmtNum(erc20, 0)}</strong></div>` : ''}
         ${erc721 != null ? `<div>ERC-721 tx (24h): <strong style="color:var(--text)">${fmtNum(erc721, 0)}</strong></div>` : ''}`;
     } else {
