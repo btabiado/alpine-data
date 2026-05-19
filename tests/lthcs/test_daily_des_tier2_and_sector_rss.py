@@ -542,6 +542,173 @@ class TestSectorRssStampedOnThesis:
 
 
 # ---------------------------------------------------------------------------
+# Regression guard: --skip-thesis variant
+#
+# The original sector-RSS regression (and the parallel Form 4 / 13F / 8-K /
+# Yahoo-earnings regressions) all shared the same shape — the aggregate
+# fetch was nested inside ``if not state.args.skip_thesis``. Daily cron and
+# backfill BOTH pass ``--skip-thesis`` (to avoid burning the Alpha Vantage
+# token), so the regressions silently produced ``has_sector_rss=False``
+# universe-wide on every production run, while the existing happy-path
+# tests above (which run WITHOUT ``--skip-thesis``) stayed green.
+#
+# This class pins the un-gating: every wire that was hoisted ABOVE the
+# ``--skip-thesis`` gate (sector RSS via this commit; sec_8k + yahoo
+# earnings refinement via earlier P0/P2 hoists) must STILL populate state
+# when ``--skip-thesis`` is passed.
+# ---------------------------------------------------------------------------
+
+
+class TestUngatedSourcesUnderSkipThesis:
+    """Confirm sector RSS + 8-K + Yahoo-earnings refinement run under --skip-thesis.
+
+    Mirrors the existing sector-RSS asserts but with ``--skip-thesis``
+    flipped on — which is what daily cron and backfill actually pass. If
+    any of these wires regresses back inside the ``--skip-thesis`` gate,
+    these tests flip red on the same commit.
+    """
+
+    def test_sector_rss_aggregate_called_under_skip_thesis(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        """state.sector_rss_by_ticker must populate even with --skip-thesis."""
+        state = _run_stage_1_through_4(
+            ["--skip-thesis", "--tickers", "AAPL,LCID,LLY,XOM,JPM"],
+            tmp_path, monkeypatch,
+        )
+        assert state.args.skip_thesis is True
+        assert patched_sources["sector_rss"].call_count == 1
+        # All five tickers in the mock must land on state.
+        assert set(state.sector_rss_by_ticker.keys()) >= {
+            "AAPL", "LCID", "LLY", "XOM", "JPM"
+        }
+
+    def test_has_sector_rss_true_for_mapped_ticker_under_skip_thesis(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        """has_sector_rss=True must STILL fire under --skip-thesis.
+
+        This is the direct regression guard for the 2026-05-18 fix. Before
+        the un-gating, this assertion would fail because the aggregate
+        fetch never ran when --skip-thesis was passed.
+        """
+        patched_sources["sector_rss"].return_value = {
+            "XOM": {"ticker": "XOM", "event_count": 3,
+                    "event_titles": ["EIA crude inventories report"],
+                    "first_seen": "2026-05-10", "last_seen": "2026-05-17",
+                    "sectors_matched": ["energy"]},
+            "LLY": {"ticker": "LLY", "event_count": 4,
+                    "event_titles": ["FDA grants priority review"],
+                    "first_seen": "2026-05-01", "last_seen": "2026-05-15",
+                    "sectors_matched": ["pharma"]},
+            "JPM": {"ticker": "JPM", "event_count": 2,
+                    "event_titles": ["FOMC minutes released"],
+                    "first_seen": "2026-05-05", "last_seen": "2026-05-16",
+                    "sectors_matched": ["financials"]},
+        }
+        state = _run_stage_1_through_4(
+            ["--skip-thesis", "--tickers", "XOM,LLY,JPM"],
+            tmp_path, monkeypatch,
+        )
+        assert state.args.skip_thesis is True
+
+        for sym, sector in (("XOM", "energy"),
+                             ("LLY", "pharma"),
+                             ("JPM", "financials")):
+            th = state.pillar_results[sym]["thesis_integrity"]
+            assert th["data_quality"]["has_sector_rss"] is True, (
+                f"{sym} ({sector}): expected has_sector_rss=True under "
+                "--skip-thesis (regression: aggregate fetch was gated)"
+            )
+            assert th["data_quality"]["sector_rss_event_count"] > 0
+            assert sector in th["data_quality"]["sector_rss_sectors"]
+
+    def test_sec_8k_and_yahoo_earnings_populated_under_skip_thesis(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        """Companion guard: 8-K + Yahoo-earnings refinement also un-gated.
+
+        Same P0 pattern that bit sector RSS hit ``state.sec_8k_by_ticker``
+        and ``state.yahoo_earnings_by_ticker`` in earlier commits. Pin
+        them here so any future re-gating flips this test red.
+        """
+        sec_8k_sig = {
+            "ticker": "AAPL",
+            "article_count": 2,
+            "mean_sentiment_score": 0.1,
+            "mean_relevance_score": 0.5,
+            "label_counts": {"Neutral": 2},
+            "source": "sec_8k",
+            "last_scored": "2026-05-17",
+            "high_signal_event_count": 0,
+            "most_recent_event": "Item 7.01",
+            "most_recent_date": "2026-05-10",
+            "events": [],
+        }
+        yahoo_earn_sig = {
+            "ticker": "AAPL",
+            "article_count": 1,
+            "mean_sentiment_score": 0.2,
+            "mean_relevance_score": 0.5,
+            "label_counts": {"Somewhat-Bullish": 1},
+            "source": "yahoo_earnings",
+            "last_scored": "2026-05-17",
+            "surprise_pct": 5.0,
+        }
+        monkeypatch.setattr(
+            lthcs_daily.sec_8k, "event_signal_for_ticker",
+            MagicMock(return_value=sec_8k_sig),
+        )
+        monkeypatch.setattr(
+            lthcs_daily.yahoo_events, "get_earnings_dates",
+            MagicMock(return_value=[{"date": "2026-04-30", "eps_actual": 1.5}]),
+        )
+        monkeypatch.setattr(
+            lthcs_daily.yahoo_events, "summarize_earnings_for_thesis",
+            MagicMock(return_value=yahoo_earn_sig),
+        )
+
+        state = _run_stage_1_through_4(
+            ["--skip-thesis", "--tickers", "AAPL,LCID"],
+            tmp_path, monkeypatch,
+        )
+        assert state.args.skip_thesis is True
+
+        # 8-K refinement must populate for every active ticker.
+        assert set(state.sec_8k_by_ticker.keys()) >= {"AAPL", "LCID"}
+        # Yahoo earnings refinement must populate too.
+        assert set(state.yahoo_earnings_by_ticker.keys()) >= {"AAPL", "LCID"}
+        # fetch_counts must reflect the refinement counts.
+        assert state.fetch_counts.get("sec_8k_refinement", 0) >= 2
+        assert state.fetch_counts.get("yahoo_earnings_refinement", 0) >= 2
+
+    def test_skip_thesis_drops_thesis_pillar_but_keeps_sector_rss_stamp(
+        self, patched_configs, patched_sources, tmp_path, monkeypatch
+    ):
+        """--skip-thesis path must still stamp has_sector_rss on the pillar.
+
+        Even though the AV-driven Thesis pipeline is skipped, the Thesis
+        pillar result still gets built (fallback) and the sector RSS
+        data_quality flags must land on it. This catches the case where
+        the stamping logic itself gets gated on skip_thesis.
+        """
+        patched_sources["sector_rss"].return_value = {
+            "LLY": {"ticker": "LLY", "event_count": 7,
+                    "event_titles": ["FDA approves new drug"],
+                    "first_seen": "2026-05-01", "last_seen": "2026-05-15",
+                    "sectors_matched": ["pharma"]},
+        }
+        state = _run_stage_1_through_4(
+            ["--skip-thesis", "--tickers", "LLY"],
+            tmp_path, monkeypatch,
+        )
+        th = state.pillar_results["LLY"]["thesis_integrity"]
+        assert th["data_quality"]["has_sector_rss"] is True
+        assert th["data_quality"]["sector_rss_event_count"] == 7
+        assert th["data_quality"]["sector_rss_sectors"] == ["pharma"]
+
+
+# ---------------------------------------------------------------------------
 # Tier-2 snapshot persisted to data/lthcs/macro/fred_tier2_<date>.json
 # ---------------------------------------------------------------------------
 
