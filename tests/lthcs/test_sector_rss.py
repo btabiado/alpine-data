@@ -331,6 +331,55 @@ def test_fetch_fed_press_releases_non_200_returns_empty() -> None:
         assert sr.fetch_fed_press_releases() == []
 
 
+def test_fetch_fed_press_releases_realigns_to_apparent_encoding() -> None:
+    """Fed serves UTF-8 with BOM but advertises ISO-8859-1; ``_fetch_rss``
+    must realign ``resp.encoding`` to ``apparent_encoding`` so the BOM
+    decodes correctly and ``ET.fromstring`` succeeds.
+
+    Pinning behaviour: if ``resp.encoding`` is left untouched, the BOM-laden
+    body decodes into mojibake that ET rejects with a ParseError, and
+    ``fetch_fed_press_releases`` returns ``[]``. With the fix, the realigned
+    decode yields valid XML and the item parses through.
+    """
+    body_xml = _rss_xml(
+        [
+            {
+                "title": "FOMC statement",
+                "link": "https://federalreserve.gov/press/fomc-1",
+                "description": "Policy statement",
+                "pubDate": _rfc822(1),
+            }
+        ]
+    )
+    raw_bytes = b"\xef\xbb\xbf" + body_xml.encode("utf-8")
+
+    class _BomResp:
+        status_code = 200
+        ok = True
+        # Server lies: advertises latin-1, body is actually UTF-8-with-BOM.
+        encoding = "ISO-8859-1"
+        apparent_encoding = "utf-8"
+        content = raw_bytes
+
+        @property
+        def text(self) -> str:
+            # Mirror requests.Response: decode ``content`` using current
+            # ``self.encoding``. After the fix flips encoding -> utf-8 the
+            # BOM decodes cleanly; without the fix, latin-1 turns the BOM
+            # into "﻿" mojibake (well-formed text but ET rejects the
+            # stray BOM in front of the XML declaration).
+            return self.content.decode(self.encoding or "utf-8")
+
+    resp = _BomResp()
+    with patch.object(sr.requests, "get", return_value=resp):
+        items = sr.fetch_fed_press_releases()
+
+    assert resp.encoding == "utf-8", "fix must realign encoding before .text"
+    assert len(items) == 1
+    assert items[0]["title"] == "FOMC statement"
+    assert items[0]["source"] == "Fed"
+
+
 # ---------------------------------------------------------------------------
 # Caching
 # ---------------------------------------------------------------------------

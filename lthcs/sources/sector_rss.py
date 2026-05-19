@@ -419,6 +419,16 @@ def _fetch_rss(
         return []
     if getattr(resp, "status_code", 0) != 200:
         return []
+    # Some federal feeds (notably the Fed press releases endpoint) serve a
+    # UTF-8 BOM but advertise ``ISO-8859-1`` via the Content-Type header, so
+    # ``resp.text`` decodes the BOM into mojibake that breaks ET.fromstring.
+    # Realign to the body's apparent encoding before reading ``.text``.
+    try:
+        apparent = getattr(resp, "apparent_encoding", None)
+        if apparent:
+            resp.encoding = apparent
+    except Exception:
+        pass
     text = getattr(resp, "text", "") or ""
     parsed = _parse_rss_xml(text, source=source, feed=feed)
 
