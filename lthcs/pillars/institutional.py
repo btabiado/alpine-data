@@ -533,6 +533,9 @@ def _apply_holdings_adjustment(
     detail: Dict[str, Any] = {
         "conviction_signal": None,
         "signal_score": None,
+        "weighted_signal_score": None,
+        "score_used": None,
+        "weighted_holders_share": None,
         "manager_count": None,
         "manager_universe_size": None,
         "tracked_aum_pct": None,
@@ -556,6 +559,42 @@ def _apply_holdings_adjustment(
         score = None
     if score is not None and score != score:  # NaN
         score = None
+
+    # Phase 2: prefer the AUM-weighted signal when present. Falls back
+    # to the unweighted score for legacy payloads without the new field.
+    raw_weighted = holdings_data.get("weighted_signal_score")
+    try:
+        weighted_score: Optional[float] = (
+            None if raw_weighted is None else float(raw_weighted)
+        )
+    except (TypeError, ValueError):
+        weighted_score = None
+    if weighted_score is not None and weighted_score != weighted_score:  # NaN
+        weighted_score = None
+
+    raw_holders_share = holdings_data.get("weighted_holders_share")
+    try:
+        weighted_holders_share: Optional[float] = (
+            None if raw_holders_share is None else float(raw_holders_share)
+        )
+    except (TypeError, ValueError):
+        weighted_holders_share = None
+    if (
+        weighted_holders_share is not None
+        and weighted_holders_share != weighted_holders_share
+    ):
+        weighted_holders_share = None
+
+    # ``effective_score`` is the value actually used for bracket
+    # selection. Surfaced under ``score_used`` for evidence-modal UX
+    # so it's obvious whether the weighted or legacy score drove the
+    # adjustment.
+    if weighted_score is not None:
+        effective_score = weighted_score
+        score_used_label = "weighted_signal_score"
+    else:
+        effective_score = score
+        score_used_label = "signal_score" if score is not None else None
 
     manager_count_raw = holdings_data.get("manager_count")
     try:
@@ -590,6 +629,9 @@ def _apply_holdings_adjustment(
     qoq = holdings_data.get("quarter_over_quarter") or {}
     detail["conviction_signal"] = signal_label
     detail["signal_score"] = score
+    detail["weighted_signal_score"] = weighted_score
+    detail["score_used"] = score_used_label
+    detail["weighted_holders_share"] = weighted_holders_share
     detail["manager_count"] = manager_count
     detail["manager_universe_size"] = manager_universe_size
     detail["tracked_aum_pct"] = tracked_aum_pct
@@ -602,19 +644,19 @@ def _apply_holdings_adjustment(
     if data_quality == "sparse":
         return 0.0, detail
     # No adjustment if we don't have a score at all.
-    if score is None:
+    if effective_score is None:
         return 0.0, detail
 
     adj = 0.0
     if signal_label == "accumulating":
-        if score > _HOLDINGS_STRONG_THRESHOLD:
+        if effective_score > _HOLDINGS_STRONG_THRESHOLD:
             adj = _HOLDINGS_PTS_STRONG_ACCUMULATING
-        elif score >= _HOLDINGS_MILD_THRESHOLD:
+        elif effective_score >= _HOLDINGS_MILD_THRESHOLD:
             adj = _HOLDINGS_PTS_MILD_ACCUMULATING
     elif signal_label == "distributing":
-        if score < -_HOLDINGS_STRONG_THRESHOLD:
+        if effective_score < -_HOLDINGS_STRONG_THRESHOLD:
             adj = _HOLDINGS_PTS_STRONG_DISTRIBUTING
-        elif score <= -_HOLDINGS_MILD_THRESHOLD:
+        elif effective_score <= -_HOLDINGS_MILD_THRESHOLD:
             adj = _HOLDINGS_PTS_MILD_DISTRIBUTING
     # steady / mixed / None / other -> 0
 

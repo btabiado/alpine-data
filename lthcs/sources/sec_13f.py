@@ -64,6 +64,20 @@ Phase 1 scope (post-13F-Phase-1, 2026-05-19):
     remain populated (back-compat for callers/tests) but their values
     derive from the JSON files; if either file is missing or malformed,
     a small hard-coded fallback list keeps the pipeline running.
+
+Phase 2 scope (post-13F-Phase-2, 2026-05-19):
+    Manager list expanded to ~113 by adding the next tier of large
+    active-mutual / quant / broker-dealer firms (TIAA-CREF, MFS, Dodge
+    & Cox, AllianceBernstein, Edward Jones, etc.). Per-manager
+    ``equity_aum_usd_b`` is added to each entry so the aggregation can
+    weight a Vanguard buy more heavily than a $5B hedge fund buy. The
+    new module-level ``MANAGER_AUM_WEIGHTS`` map mirrors
+    ``TRACKED_MANAGERS`` (same keys) and exposes the floor-clamped
+    weight (`max(min_floor_b, equity_aum_usd_b)`). The aggregate
+    output now carries a ``weighted_signal_score`` field alongside the
+    legacy unweighted ``signal_score`` so the pillar can switch on
+    the weighted signal without breaking older payloads. Tracked AUM
+    coverage ~65% of US institutional 13F universe (vs ~40% in Phase 1).
 """
 
 from __future__ import annotations
@@ -147,6 +161,41 @@ _FALLBACK_TRACKED_MANAGERS: Dict[str, str] = {
 # fallback constant (no JSON to read it from). Spec §3.4 estimates 21
 # managers ≈ ~25% of US institutional 13F AUM.
 _FALLBACK_TRACKED_AUM_PCT: float = 0.25
+
+# Phase 2 default weight floor used when ``equity_aum_usd_b`` is missing
+# or zero. Prevents the AUM weight from collapsing to 0 — a manager with
+# no published AUM still gets a small floor contribution (1 unit) so the
+# weighted aggregation behavior degrades gracefully toward the unweighted
+# (equal-weight) average rather than to a divide-by-zero.
+_DEFAULT_AUM_WEIGHT_FLOOR_B: float = 1.0
+
+# Fallback manager AUM weights (USD billions). Keys MUST match
+# ``_FALLBACK_TRACKED_MANAGERS``; values are approximate equity 13F AUM
+# sourced from public 13F-HR filings. Only consumed when the JSON load
+# falls back — the Phase 2 JSON carries per-manager weights directly.
+_FALLBACK_MANAGER_AUM_WEIGHTS: Dict[str, float] = {
+    "BlackRock":             5200.0,
+    "Vanguard":              5000.0,
+    "State Street":          2300.0,
+    "Fidelity (FMR LLC)":    1500.0,
+    "T. Rowe Price":          850.0,
+    "Capital Research":      1400.0,
+    "Capital World":         1200.0,
+    "Berkshire Hathaway":     350.0,
+    "JPMorgan Chase":        1200.0,
+    "Wellington":             900.0,
+    "Geode Capital":         1300.0,
+    "Bank of NY Mellon":      600.0,
+    "Morgan Stanley":        1100.0,
+    "Goldman Sachs":          700.0,
+    "Bridgewater":             20.0,
+    "Renaissance Tech":        65.0,
+    "Tiger Global":            25.0,
+    "Citadel":                550.0,
+    "Two Sigma":               75.0,
+    "AQR Capital":             50.0,
+    "Millennium":             350.0,
+}
 
 
 # --- Constants ---------------------------------------------------------------
@@ -318,30 +367,64 @@ def _13f_data_dir() -> Path:
     return _DEFAULT_DATA_DIR
 
 
-def _load_managers() -> Tuple[Dict[str, str], float]:
-    """Load the tracked-manager list + tracked-AUM-pct from JSON.
+def _load_managers_full() -> Tuple[Dict[str, str], float, Dict[str, float], float]:
+    """Load managers + tracked_aum_pct + per-manager AUM weights from JSON.
 
-    Returns ``(managers_dict, tracked_aum_pct)``. Falls back to the
-    hard-coded ``_FALLBACK_TRACKED_MANAGERS`` and
-    ``_FALLBACK_TRACKED_AUM_PCT`` if the JSON is missing, malformed, or
-    has no active entries — so a corrupt file never breaks the pipeline.
+    Phase 2 extension of :func:`_load_managers`. Returns
+    ``(managers_dict, tracked_aum_pct, aum_weights, weight_floor)`` where:
+
+    * ``managers_dict``: ``{name: padded_cik}`` for active managers.
+    * ``tracked_aum_pct``: top-level scalar from the JSON.
+    * ``aum_weights``: ``{name: max(weight_floor, equity_aum_usd_b)}``
+      mirroring ``managers_dict``. Used by the aggregation to weight
+      per-manager contributions to the conviction signal.
+    * ``weight_floor``: floor (USD billions) applied to every weight so
+      a missing/zero ``equity_aum_usd_b`` doesn't collapse to 0.
+
+    Falls back to ``_FALLBACK_TRACKED_MANAGERS``,
+    ``_FALLBACK_TRACKED_AUM_PCT``, and ``_FALLBACK_MANAGER_AUM_WEIGHTS``
+    on JSON error — corrupt file never breaks the pipeline.
     """
     path = _13f_data_dir() / _INSTITUTIONS_FILENAME
+
+    def _fallback() -> Tuple[Dict[str, str], float, Dict[str, float], float]:
+        managers = dict(_FALLBACK_TRACKED_MANAGERS)
+        weights = {
+            name: max(_DEFAULT_AUM_WEIGHT_FLOOR_B, _FALLBACK_MANAGER_AUM_WEIGHTS.get(name, 0.0))
+            for name in managers
+        }
+        return managers, _FALLBACK_TRACKED_AUM_PCT, weights, _DEFAULT_AUM_WEIGHT_FLOOR_B
+
     try:
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except (OSError, ValueError):
         _LOG.debug("sec_13f: institutions JSON unreadable at %s; using fallback", path)
-        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+        return _fallback()
 
     if not isinstance(data, dict):
-        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+        return _fallback()
 
     raw_managers = data.get("managers")
     if not isinstance(raw_managers, list) or not raw_managers:
-        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+        return _fallback()
 
-    out: Dict[str, str] = {}
+    # Optional ``aum_weighting`` block — pull min_weight_floor_b. Defaults
+    # to the module-level floor when the block is absent or malformed.
+    weight_floor = _DEFAULT_AUM_WEIGHT_FLOOR_B
+    aum_cfg = data.get("aum_weighting")
+    if isinstance(aum_cfg, dict):
+        raw_floor = aum_cfg.get("min_weight_floor_b")
+        try:
+            if raw_floor is not None:
+                weight_floor = float(raw_floor)
+                if weight_floor < 0.0:
+                    weight_floor = 0.0
+        except (TypeError, ValueError):
+            weight_floor = _DEFAULT_AUM_WEIGHT_FLOOR_B
+
+    managers_out: Dict[str, str] = {}
+    weights_out: Dict[str, float] = {}
     for entry in raw_managers:
         if not isinstance(entry, dict):
             continue
@@ -360,22 +443,46 @@ def _load_managers() -> Tuple[Dict[str, str], float]:
             cik_padded = "{:010d}".format(int(cik))
         except (TypeError, ValueError):
             continue
-        out[name] = cik_padded
+        managers_out[name] = cik_padded
 
-    if not out:
-        return dict(_FALLBACK_TRACKED_MANAGERS), _FALLBACK_TRACKED_AUM_PCT
+        # Per-manager equity AUM weight (USD billions). Apply the floor
+        # so a missing/zero value doesn't collapse to 0.
+        raw_aum = entry.get("equity_aum_usd_b")
+        try:
+            aum = float(raw_aum) if raw_aum is not None else 0.0
+        except (TypeError, ValueError):
+            aum = 0.0
+        if aum != aum:  # NaN
+            aum = 0.0
+        if aum < 0.0:
+            aum = 0.0
+        weights_out[name] = max(weight_floor, aum)
+
+    if not managers_out:
+        return _fallback()
 
     raw_pct = data.get("tracked_aum_pct")
     try:
         pct = float(raw_pct) if raw_pct is not None else _FALLBACK_TRACKED_AUM_PCT
     except (TypeError, ValueError):
         pct = _FALLBACK_TRACKED_AUM_PCT
-    # Clamp to a sensible [0, 1] band.
     if pct < 0.0:
         pct = 0.0
     elif pct > 1.0:
         pct = 1.0
-    return out, pct
+
+    return managers_out, pct, weights_out, weight_floor
+
+
+def _load_managers() -> Tuple[Dict[str, str], float]:
+    """Load the tracked-manager list + tracked-AUM-pct from JSON.
+
+    Returns ``(managers_dict, tracked_aum_pct)``. Phase-1-compatible
+    wrapper around :func:`_load_managers_full` — callers that don't
+    need the per-manager AUM weights can keep using this 2-tuple form.
+    """
+    managers, pct, _weights, _floor = _load_managers_full()
+    return managers, pct
 
 
 def _load_cusip_map() -> Tuple[Dict[str, Tuple[str, ...]], Dict[str, Tuple[str, ...]]]:
@@ -442,7 +549,15 @@ def _load_cusip_map() -> Tuple[Dict[str, Tuple[str, ...]], Dict[str, Tuple[str, 
 # Populate the module-level constants from JSON at import time. These
 # stay mutable (tests monkeypatch them); the loader is exposed so
 # callers can force a reload after editing the JSON.
-TRACKED_MANAGERS, TRACKED_AUM_PCT = _load_managers()
+#
+# Phase 2: ``MANAGER_AUM_WEIGHTS`` mirrors ``TRACKED_MANAGERS`` (same
+# keys) and provides the per-manager floor-clamped equity AUM weight
+# used by the aggregation. ``MANAGER_AUM_WEIGHT_FLOOR`` is the floor
+# value (USD billions) applied to every weight so a missing/zero
+# ``equity_aum_usd_b`` doesn't collapse to 0.
+TRACKED_MANAGERS, TRACKED_AUM_PCT, MANAGER_AUM_WEIGHTS, MANAGER_AUM_WEIGHT_FLOOR = (
+    _load_managers_full()
+)
 TICKER_TO_CUSIP, _NAME_ALIASES = _load_cusip_map()
 
 
@@ -1150,6 +1265,7 @@ def aggregate_holdings_for_ticker(
     as_of_iso: Optional[str] = None,
     manager_universe_size: Optional[int] = None,
     tracked_aum_pct: Optional[float] = None,
+    manager_aum_weights: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """Aggregate one ticker's holdings across all tracked managers.
 
@@ -1172,6 +1288,16 @@ def aggregate_holdings_for_ticker(
         13F AUM covered by the scanned manager set (Phase 1 ≈ 0.40,
         Phase 2 ≈ 0.65). Surfaced for UX / evidence-modal use; not
         currently consumed by the pillar math.
+    manager_aum_weights:
+        Phase 2 additive field. ``{manager_name: weight}`` map keyed by
+        the same display names that key ``manager_data``. Weights are
+        approximate equity 13F AUM in USD billions (floor-clamped so
+        no entry is exactly 0). When provided, drives the
+        ``weighted_signal_score`` output — a Vanguard accumulation gets
+        far more weight than a $5B hedge fund accumulation. When
+        omitted (or ``None``), the legacy unweighted ``signal_score``
+        is still emitted and ``weighted_signal_score`` falls back to
+        equal weights (i.e. equals ``signal_score``).
 
     Returns the per-ticker output shape documented in the module-level
     public API (manager_count, top_holders, quarter_over_quarter, etc.).
@@ -1199,6 +1325,10 @@ def aggregate_holdings_for_ticker(
     # 2. Walk each manager once, picking the entry for the latest_quarter
     # and prior_quarter. Sum shares + value across managers for the
     # latest quarter; compute per-manager share-change for the QoQ.
+    #
+    # Phase 2: track weighted buyer/seller counts (weighted by each
+    # manager's equity AUM) so the conviction signal reflects that a
+    # Vanguard buy counts more than a $5B hedge fund buy.
     holders_latest: List[Dict[str, Any]] = []
     net_buyers = 0
     net_sellers = 0
@@ -1208,7 +1338,21 @@ def aggregate_holdings_for_ticker(
     total_value_latest = 0.0
     total_shares_prior = 0.0
 
+    weights_map = manager_aum_weights or {}
+    weighted_net_buyers = 0.0
+    weighted_net_sellers = 0.0
+    weighted_total_signal_weight = 0.0  # Sum of weights of managers contributing a direction
+    weighted_total_universe = 0.0       # Sum of all known manager weights (denominator option B)
+
     for manager, filings in manager_data.items():
+        manager_weight = float(weights_map.get(manager, 0.0)) if weights_map else 0.0
+        # Even when a manager doesn't contribute a direction this quarter,
+        # they're still part of the tracked universe — accumulate the
+        # denominator so a "lots-of-managers-but-only-Vanguard-bought"
+        # case doesn't read as a near-100% conviction.
+        if manager_weight > 0.0:
+            weighted_total_universe += manager_weight
+
         latest_entry: Optional[Dict[str, Any]] = None
         prior_entry: Optional[Dict[str, Any]] = None
         for f in filings:
@@ -1232,6 +1376,7 @@ def aggregate_holdings_for_ticker(
                 "manager": manager,
                 "shares_mm": shares / 1_000_000.0,
                 "value_bn": value / 1_000_000_000.0,
+                "weight": manager_weight,
             })
 
         if prior_holding is not None:
@@ -1239,22 +1384,34 @@ def aggregate_holdings_for_ticker(
             manager_count_prior += 1
 
         # QoQ direction comparison — only relevant if we have BOTH quarters.
+        direction = 0  # 0 = no signal, +1 = buyer, -1 = seller
         if latest_holding is not None and prior_holding is not None:
             ls = float(latest_holding.get("shares") or 0.0)
             ps = float(prior_holding.get("shares") or 0.0)
             if ls > ps:
                 net_buyers += 1
+                direction = 1
             elif ls < ps:
                 net_sellers += 1
+                direction = -1
             else:
                 unchanged += 1
         elif latest_holding is not None and prior_entry is not None:
             # Manager had data prior quarter but did NOT hold the ticker —
             # they're a new buyer.
             net_buyers += 1
+            direction = 1
         elif latest_holding is None and prior_holding is not None:
             # Manager exited the position.
             net_sellers += 1
+            direction = -1
+
+        if direction == 1 and manager_weight > 0.0:
+            weighted_net_buyers += manager_weight
+            weighted_total_signal_weight += manager_weight
+        elif direction == -1 and manager_weight > 0.0:
+            weighted_net_sellers += manager_weight
+            weighted_total_signal_weight += manager_weight
 
     # 3. Sort + rank top holders.
     holders_latest.sort(key=lambda h: h["value_bn"], reverse=True)
@@ -1269,6 +1426,27 @@ def aggregate_holdings_for_ticker(
 
     manager_count = len(holders_latest)
     signal_score, signal_label = _conviction_signal(net_buyers, net_sellers, manager_count)
+
+    # Phase 2: weighted conviction signal in [-1, +1]. Uses
+    # ``weighted_total_signal_weight`` as the denominator (sum of
+    # weights of managers contributing a direction). Falls back to the
+    # unweighted ``signal_score`` when weights aren't provided OR no
+    # weight was assigned to any buyer/seller — that way legacy callers
+    # don't observe a behavior change.
+    if weighted_total_signal_weight > 0.0:
+        weighted_raw = (weighted_net_buyers - weighted_net_sellers) / weighted_total_signal_weight
+        weighted_signal_score = max(-1.0, min(1.0, weighted_raw))
+    else:
+        weighted_signal_score = signal_score
+
+    # Share of tracked AUM (USD-bn) held by managers reporting a position
+    # this quarter. Captures the "Vanguard alone is 14% of tracked AUM"
+    # angle for the evidence-modal narrative. Range [0, 1].
+    if weighted_total_universe > 0.0:
+        holders_weight_sum = sum(float(h.get("weight") or 0.0) for h in holders_latest)
+        weighted_holders_share = min(1.0, max(0.0, holders_weight_sum / weighted_total_universe))
+    else:
+        weighted_holders_share = 0.0
 
     # 4. QoQ share-change percent. Guard against division by zero.
     if total_shares_prior > 0:
@@ -1320,6 +1498,13 @@ def aggregate_holdings_for_ticker(
         },
         "conviction_signal": signal_label,
         "signal_score": round(signal_score, 3),
+        # Phase 2 additive fields. ``weighted_signal_score`` is the
+        # AUM-weighted conviction in [-1, +1]; the pillar prefers this
+        # over ``signal_score`` when present. ``weighted_holders_share``
+        # is the fraction of tracked AUM held by managers reporting a
+        # position this quarter (0..1) — surfaced for evidence-modal UX.
+        "weighted_signal_score": round(weighted_signal_score, 3),
+        "weighted_holders_share": round(weighted_holders_share, 4),
         "data_quality": quality,
     }
 
@@ -1380,6 +1565,11 @@ def fetch_universe_institutional_holdings(
         return out
 
     mgr_map = managers if managers is not None else TRACKED_MANAGERS
+    # Phase 2: pick AUM weights consistent with the chosen manager map.
+    # When the caller overrode ``managers``, we don't know weights for
+    # those entries — pass ``None`` and the aggregation falls back to
+    # equal-weight behavior (i.e. weighted_signal_score == signal_score).
+    weights_map = MANAGER_AUM_WEIGHTS if managers is None else None
     # Phase 1 additive fields: ``manager_universe_size`` is the number
     # of managers we actually fanned out to (so the pillar can normalize
     # by coverage breadth), ``tracked_aum_pct`` is the AUM-share
@@ -1411,6 +1601,7 @@ def fetch_universe_institutional_holdings(
             as_of_iso=as_of_iso,
             manager_universe_size=universe_size,
             tracked_aum_pct=aum_pct,
+            manager_aum_weights=weights_map,
         )
     return out
 
@@ -1419,10 +1610,13 @@ __all__ = [
     "SECEdgarError",
     "TRACKED_MANAGERS",
     "TRACKED_AUM_PCT",
+    "MANAGER_AUM_WEIGHTS",
+    "MANAGER_AUM_WEIGHT_FLOOR",
     "TICKER_TO_CUSIP",
     "fetch_manager_13f_holdings",
     "fetch_universe_institutional_holdings",
     "aggregate_holdings_for_ticker",
     "_load_managers",
+    "_load_managers_full",
     "_load_cusip_map",
 ]

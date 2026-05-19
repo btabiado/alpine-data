@@ -36,21 +36,27 @@ UNIVERSE_PATH = REPO_ROOT / "data" / "lthcs" / "universe.json"
 
 # --- JSON data file shape --------------------------------------------------
 
-def test_institutions_json_exists_and_has_50_manager_band() -> None:
-    """Phase 1 expands to ~50 managers in 13f_institutions.json."""
+def test_institutions_json_exists_and_has_phase2_manager_band() -> None:
+    """Phase 2 expands the manager list to 100+ entries.
+
+    Originally a Phase 1 ~50-manager guard; loosened in Phase 2 to a
+    floor of 100 active managers so the per-AUM weighting work has
+    enough breadth to matter.
+    """
     assert INSTITUTIONS_PATH.exists(), "13f_institutions.json missing"
     with INSTITUTIONS_PATH.open() as fh:
         data = json.load(fh)
     managers = data.get("managers", [])
     assert isinstance(managers, list)
     active = [m for m in managers if m.get("active", True)]
-    # Spec calls for 50; allow a small band so adding/inactivating one
-    # manager doesn't churn the test.
-    assert 40 <= len(active) <= 60, "expected ~50 active managers, got {}".format(len(active))
-    # tracked_aum_pct should reflect the spec's ~0.40 estimate at Phase 1.
+    # Phase 2: ≥100 active managers (was 40-60 in Phase 1).
+    assert 100 <= len(active) <= 200, (
+        "expected 100+ active managers in Phase 2, got {}".format(len(active))
+    )
+    # tracked_aum_pct lifts from ~0.40 (Phase 1) to ~0.65 (Phase 2).
     pct = data.get("tracked_aum_pct")
     assert isinstance(pct, (int, float))
-    assert 0.25 <= float(pct) <= 0.55
+    assert 0.25 <= float(pct) <= 0.80
 
 
 def test_institutions_json_entries_are_well_formed() -> None:
@@ -211,8 +217,8 @@ def test_ticker_to_cusip_constant_matches_json() -> None:
 
 
 def test_tracked_aum_pct_in_expected_band() -> None:
-    """Phase 1 ~0.40, fallback 0.25 — accept either as the module loads."""
-    assert 0.20 <= sec_13f.TRACKED_AUM_PCT <= 0.55
+    """Phase 1 ~0.40, fallback 0.25, Phase 2 ~0.65 — accept the loaded value."""
+    assert 0.20 <= sec_13f.TRACKED_AUM_PCT <= 0.80
 
 
 # --- aggregate_holdings_for_ticker additive fields -------------------------
