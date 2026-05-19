@@ -200,6 +200,20 @@
 .lbt-pillar-stat.neg { color: var(--band-review-bright); }
 .lbt-pillar-stat.noise { color: var(--text-tertiary); }
 
+/* ----- Profile selector (Tier 5 #24 P3 follow-on) --------------------- */
+/* Chip group reuses .lthcs-chip / .lthcs-chip-group from lthcs_tab/lthcs.css
+   (imported at the top of index.html); we just wrap it with a small bottom
+   margin and a caption underneath. */
+.lbt-profile-toggle {
+  margin: 0 0 8px;
+}
+.lbt-profile-caption {
+  margin: 0 0 14px;
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-tertiary);
+}
+
 /* ----- P&L curve + stat strip ------------------------------------------ */
 .lbt-pnl-stats {
   display: flex;

@@ -87,6 +87,30 @@
         <section class="lthcs-section lbt-section" aria-label="Engine non-overlapping P&amp;L">
           <h2 class="lbt-h2">Engine P&amp;L <span class="lbt-h2-sub">(non-overlapping, look-ahead-guarded)</span></h2>
           <p class="lbt-note">Replaces the legacy overlapping-window Sharpe with an event-driven simulation: buy at the next-day close after a band enters the Buy set, sell at the next-day close after it leaves. 1-trading-day execution delay. <code>5 bps</code> per side. Daily equal-weight rebalance.</p>
+          <!--
+            Profile selector (Tier 5 #24 P3 follow-on). Each chip swaps the
+            data dir used by renderEngine + renderPillarAttribution. baseline
+            reads from the parent validation dir; the other four read from
+            ./profiles/<name>/. Choice persists in localStorage under
+            `lthcs.backtest.profile` (mirrors the lthcs_tab narrative-source
+            toggle pattern).
+          -->
+          <div
+            class="lthcs-chip-group lbt-profile-toggle"
+            role="radiogroup"
+            aria-label="Backtest profile"
+            id="engine-profile-toggle"
+          >
+            <button type="button" class="lthcs-chip lbt-profile-chip is-active"
+                    data-profile="long_only_buy" role="radio" aria-checked="true">Baseline (long-only)</button>
+            <button type="button" class="lthcs-chip lbt-profile-chip"
+                    data-profile="long_buy_short_review" role="radio" aria-checked="false">Long/Short Review</button>
+            <button type="button" class="lthcs-chip lbt-profile-chip"
+                    data-profile="dollar_neutral" role="radio" aria-checked="false">Dollar Neutral</button>
+            <button type="button" class="lthcs-chip lbt-profile-chip"
+                    data-profile="top_k_by_composite" role="radio" aria-checked="false">Top-K Composite</button>
+          </div>
+          <p class="lbt-profile-caption" id="engine-profile-caption">currently showing: Baseline (long-only)</p>
           <div class="lbt-pnl-stats" id="engine-stats"></div>
           <div class="lbt-pnl-chart-wrap">
             <svg id="engine-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Engine equity curve"></svg>

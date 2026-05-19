@@ -23,6 +23,41 @@ const HORIZON_DAYS = 21;
 const NOISE_FLOOR = 0.04;             // |IC| < 0.04 is in the noise band at this sample size
 const SHIP_GATE = 0.04;               // walk-forward test IC ship threshold
 
+// ----- Profile selector (Tier 5 #24 P3 follow-on) -----------------------
+// The engine ships 4 strategy profiles + the baseline. The baseline's
+// artifacts live in the validation dir root; the other 4 live in
+// ./profiles/<name>/. localStorage mirrors lthcs_tab's narrative-source
+// toggle (Tier 5 #23 Phase 2 UI).
+const PROFILE_STORAGE_KEY = 'lthcs.backtest.profile';
+const PROFILE_BASELINE = 'long_only_buy';
+const PROFILE_LABELS = {
+  long_only_buy: 'Baseline (long-only)',
+  long_buy_short_review: 'Long/Short Review',
+  dollar_neutral: 'Dollar Neutral',
+  top_k_by_composite: 'Top-K Composite',
+};
+const PROFILE_VALID = new Set(Object.keys(PROFILE_LABELS));
+
+function readProfilePref() {
+  try {
+    const v = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (v && PROFILE_VALID.has(v)) return v;
+  } catch (_e) { /* localStorage disabled — fall through */ }
+  return PROFILE_BASELINE;
+}
+function writeProfilePref(value) {
+  const v = PROFILE_VALID.has(value) ? value : PROFILE_BASELINE;
+  try { window.localStorage.setItem(PROFILE_STORAGE_KEY, v); } catch (_e) { /* ignore */ }
+}
+// The baseline artifacts live at the dir root; other profiles live under
+// ./profiles/<name>/. The engine cron at 23:30 UTC produces the per-profile
+// files — if a dir doesn't exist on disk yet, the underlying tryFetch
+// returns null and the existing placeholder cards take over.
+function engineDirFor(profile, base) {
+  if (profile === PROFILE_BASELINE) return base;
+  return `${base}/profiles/${profile}`;
+}
+
 /* ----- DOM helpers ------------------------------------------------------ */
 function $(id) { return document.getElementById(id); }
 function el(tag, attrs = {}, children = []) {
@@ -97,8 +132,6 @@ async function main() {
   const [
     summary, pillarIC, quintile, portfolio, bandReturns,
     fbSummary, fbPillarIC, fbQuintile, fbPortfolio,
-    engineSummary, equityCurve, bandCurves, benchmarkCurve,
-    pillarAttribution,
   ] = await Promise.all([
     tryFetch(`${base}/summary.json`),
     tryFetch(`${base}/pillar_ic.json`),
@@ -109,15 +142,12 @@ async function main() {
     tryFetch(`${fallback}/pillar_ic.json`),
     tryFetch(`${fallback}/quintile_returns.json`),
     tryFetch(`${fallback}/portfolio_returns.json`),
-    // Engine artifacts (Tier 5 #24, Phase 1). Missing files render
-    // a "not yet computed" placeholder so the page still works pre-deploy.
-    tryFetch(`${base}/engine_summary.json`),
-    tryFetch(`${base}/equity_curve.json`),
-    tryFetch(`${base}/band_curves.json`),
-    tryFetch(`${base}/benchmark_curve.json`),
-    // Phase 2: per-pillar attribution (Δ-Sharpe vs baseline).
-    tryFetch(`${base}/pillar_attribution.json`),
   ]);
+  // Engine artifacts depend on the selected profile (P3 follow-on). Loaded
+  // separately so the chip handler can re-fetch without touching the rest.
+  const initialProfile = readProfilePref();
+  const engineBundle = await loadEngineBundle(initialProfile, base);
+  const { engineSummary } = engineBundle;
   const wfMd = await tryFetchText(
     `${DATA_ROOT}/adaptive_weights/${VALIDATION_DATE}_walk_forward_summary.md`,
   );
@@ -151,14 +181,101 @@ async function main() {
   renderVerdict(summary, summaryH, pillarRows, wf, engineSummary);
   renderPillarIC(pillarRows);
   renderPnL(portfolioH, summaryH);
-  renderEngine(engineSummary, equityCurve, bandCurves, benchmarkCurve);
-  renderPillarAttribution(pillarAttribution);
+  renderEngineBundle(engineBundle);
   renderQuintile(quintileH);
   renderWalkForward(wf);
   renderCohort(wf);
 
+  // Wire up the profile selector once the page is wired. The chip click
+  // re-fetches just the engine bundle and re-renders the Engine P&L section
+  // — leaves the per-pillar IC, walk-forward CV, etc. untouched (those
+  // numbers are profile-independent at the validation layer).
+  setupProfileToggle(base, initialProfile);
+
   loading.classList.add('hidden');
   content.classList.remove('hidden');
+}
+
+/* ----- Engine artifact bundle loader (profile-aware) -------------------- */
+/* Fetches the 5 engine files from the profile's dir (or the validation dir
+   root for baseline). Returns null fields when a file is missing — the
+   downstream renderers already render a placeholder card in that case. */
+async function loadEngineBundle(profile, base) {
+  const dir = engineDirFor(profile, base);
+  const [engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution] = await Promise.all([
+    tryFetch(`${dir}/engine_summary.json`),
+    tryFetch(`${dir}/equity_curve.json`),
+    tryFetch(`${dir}/band_curves.json`),
+    tryFetch(`${dir}/benchmark_curve.json`),
+    tryFetch(`${dir}/pillar_attribution.json`),
+  ]);
+  return { profile, engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution };
+}
+
+function renderEngineBundle(bundle) {
+  const { profile, engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution } = bundle;
+  // If a non-baseline profile dir doesn't exist on disk (cron hasn't run for
+  // this profile yet), every file is null. Show a profile-specific placeholder
+  // instead of the generic "not yet computed" message.
+  const statsEl = $('engine-stats');
+  if (profile !== PROFILE_BASELINE
+      && !engineSummary && !equityCurve && !bandCurves && !benchmarkCurve) {
+    if (statsEl) statsEl.replaceChildren();
+    const svg = $('engine-chart');
+    if (svg) svg.replaceChildren();
+    const legendEl = $('engine-legend');
+    if (legendEl) legendEl.replaceChildren();
+    const bandChartEl = $('engine-band-chart');
+    if (bandChartEl) bandChartEl.replaceChildren();
+    const label = PROFILE_LABELS[profile] || profile;
+    if (statsEl) statsEl.appendChild(makePlaceholder(
+      `Profile "${label}" data not yet available — the engine daily cron (23:30 UTC) produces it.`,
+    ));
+    // Clear attribution chart too (profile-specific files don't ship attribution).
+    const attribEl = $('engine-attribution-chart');
+    if (attribEl) attribEl.replaceChildren();
+    const attribNote = $('engine-attribution-note');
+    if (attribNote) attribNote.replaceChildren();
+    if (attribEl) attribEl.appendChild(makePlaceholder(
+      `Pillar attribution is only computed for the baseline profile.`,
+    ));
+    return;
+  }
+  renderEngine(engineSummary, equityCurve, bandCurves, benchmarkCurve);
+  renderPillarAttribution(pillarAttribution);
+}
+
+/* ----- Profile selector wire-up ---------------------------------------- */
+function setupProfileToggle(base, currentProfile) {
+  const toggle = $('engine-profile-toggle');
+  const caption = $('engine-profile-caption');
+  if (!toggle) return;
+
+  syncProfileChips(toggle, caption, currentProfile);
+
+  toggle.addEventListener('click', async (ev) => {
+    const target = ev.target.closest('.lbt-profile-chip');
+    if (!target) return;
+    const next = target.dataset.profile;
+    if (!next || !PROFILE_VALID.has(next)) return;
+    if (target.classList.contains('is-active')) return;  // no-op
+    syncProfileChips(toggle, caption, next);
+    writeProfilePref(next);
+    const bundle = await loadEngineBundle(next, base);
+    renderEngineBundle(bundle);
+  });
+}
+
+function syncProfileChips(toggle, caption, profile) {
+  const chips = toggle.querySelectorAll('.lbt-profile-chip');
+  for (const chip of chips) {
+    const isActive = chip.dataset.profile === profile;
+    chip.classList.toggle('is-active', isActive);
+    chip.setAttribute('aria-checked', isActive ? 'true' : 'false');
+  }
+  if (caption) {
+    caption.textContent = `currently showing: ${PROFILE_LABELS[profile] || profile}`;
+  }
 }
 
 /* Pull a horizon slice from a {horizon_Nd: ...} dict. If the data is
