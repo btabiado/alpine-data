@@ -632,26 +632,30 @@ def test_fetch_manager_missing_user_agent_raises(
 def test_module_exports_public_api() -> None:
     # Tier 3 #13 Phase 1 added the JSON-loader helpers + TRACKED_AUM_PCT
     # to the public surface so callers can re-load the externalized data
-    # files without poking at internals.
+    # files without poking at internals. Phase 2 (`a27823f`) added the
+    # AUM-weight helpers (`_load_managers_full`, `MANAGER_AUM_WEIGHTS`).
     expected = {
         "SECEdgarError",
         "TRACKED_MANAGERS",
         "TRACKED_AUM_PCT",
         "TICKER_TO_CUSIP",
+        "MANAGER_AUM_WEIGHTS",
+        "MANAGER_AUM_WEIGHT_FLOOR",
         "fetch_manager_13f_holdings",
         "fetch_universe_institutional_holdings",
         "aggregate_holdings_for_ticker",
         "_load_managers",
+        "_load_managers_full",
         "_load_cusip_map",
     }
     assert set(sec_13f.__all__) == expected
 
 
-def test_tracked_managers_phase1_size_band() -> None:
-    """Phase 1 (Tier 3 #13) expands to ~50 managers via the externalized
-    ``data/lthcs/13f_institutions.json``. We accept a band ([40, 60]) so
-    inactive flips and one-off additions don't churn the test."""
-    assert 40 <= len(sec_13f.TRACKED_MANAGERS) <= 60
+def test_tracked_managers_phase2_size_band() -> None:
+    """Phase 2 (Tier 3 #13, `a27823f`) expanded the manager list to ~113.
+    Band [100, 200] absorbs Phase-2 additions plus future tier-3 additions
+    without churning the test on every routine manager-list update."""
+    assert 100 <= len(sec_13f.TRACKED_MANAGERS) <= 200
     # All CIKs are 10-digit zero-padded.
     for name, cik in sec_13f.TRACKED_MANAGERS.items():
         assert len(cik) == 10, "{}: {!r}".format(name, cik)
