@@ -2088,13 +2088,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          Row 3: Gainers / Decliners as colored ticker boxes (Crypto-card model). -->
   <div id="tab-lthcs" class="hidden">
     <div class="container">
-      <!-- Insights row — dynamic 3-5 LTHCS insights with a corner CTA.
-           Insights filled by renderLthcsInsightsRow(host) from DATA.lthcs.insights;
-           the CTA stays in the top-right corner regardless of insight count. -->
-      <div class="card" id="lthcsInsightsRow" style="padding:12px 14px;margin-bottom:10px;border-left:4px solid #a78bfa"></div>
-      <!-- Composite-index panel — gauge + components table + movers.
-           Filled by renderLthcsCompositePanel(host) — see the JS for details. -->
+      <!-- Composite-index panel — narrative card (Step 1 verdict + Step 2
+           components grid + movers). Promoted to the top of the LTHCS tab
+           per user feedback so the daily read leads, not the insights row.
+           Filled by renderLthcsNarrativePanel(host). -->
       <div class="chart-card" id="lthcsCompositeCard" style="position:relative;margin-bottom:10px"></div>
+      <!-- Insights row — dynamic 3-5 LTHCS insights with a corner CTA.
+           Moved below the composite card per user request — the insights
+           are supporting context, not the lead-in. Filled by
+           renderLthcsInsightsRow(host) from DATA.lthcs.insights. -->
+      <div class="card" id="lthcsInsightsRow" style="padding:12px 14px;margin-bottom:10px;border-left:4px solid #a78bfa"></div>
     </div>
   </div>
 
