@@ -4247,13 +4247,15 @@ function renderLthcsNarrativePanel(host){
     const fillSide = d >= 0 ? `left:50%` : `right:50%`;
     const fillColor = d >= 0 ? '#22c55e' : '#ef4444';
 
-    // Wrap the jargon term with an inline <details> popover.
+    // Wrap the jargon term with an inline <details> popover. !important
+    // on display defends against Safari's UA default of display:block on
+    // <details>/<summary> which otherwise breaks the inline name.
     let nameHtml = escapeHtml(c.name);
     if (meta.term){
       const re = new RegExp('(' + meta.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i');
       nameHtml = escapeHtml(c.name).replace(re,
-        '<details class="lthcs-nar-term" style="display:inline;position:relative">' +
-          '<summary style="display:inline;list-style:none;cursor:help;font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--muted);border-bottom:1px dotted #a78bfa">$1</summary>' +
+        '<details class="lthcs-nar-term" style="display:inline !important;position:relative">' +
+          '<summary style="display:inline !important;list-style:none;cursor:help;font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px;font-size:11px;color:var(--muted);border-bottom:1px dotted #a78bfa">$1</summary>' +
           '<div role="note" style="position:absolute;left:0;top:1.6rem;z-index:50;width:min(280px,90vw);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;box-shadow:0 6px 18px rgba(0,0,0,0.45);font-weight:400;font-size:12px;color:var(--muted);line-height:1.45;font-style:normal;text-transform:none;letter-spacing:normal">' +
             '<strong style="color:var(--text);display:block;margin-bottom:3px">' + escapeHtml(meta.term) + '</strong>' +
             meta.def +
@@ -4261,16 +4263,21 @@ function renderLthcsNarrativePanel(host){
         '</details>');
     }
 
-    return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">
+    const valueStr = (c.value == null || c.value === '') ? '' : String(c.value);
+    const valueHtml = valueStr
+      ? `<span style="font-family:monospace;font-size:11px;font-weight:500;color:var(--muted);margin-left:6px;font-variant-numeric:tabular-nums">${escapeHtml(valueStr)}</span>`
+      : '';
+    const glossHtml = meta.gloss
+      ? `<span style="color:var(--muted);margin:0 5px">·</span><span style="color:var(--muted);font-style:italic;font-size:11px">${meta.gloss}</span>`
+      : '';
+
+    return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
-        <div style="font-size:14px;font-weight:600;color:var(--text)">${nameHtml}</div>
-        <div style="font-family:monospace;font-weight:700;font-size:13px;padding:2px 8px;border-radius:6px;background:var(--card);color:${deltaColor};font-variant-numeric:tabular-nums">${dStr}</div>
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${nameHtml}${valueHtml}</div>
+        <div style="font-family:monospace;font-weight:700;font-size:12px;padding:1px 7px;border-radius:5px;background:var(--card);color:${deltaColor};font-variant-numeric:tabular-nums">${dStr}</div>
       </div>
-      <div style="font-family:monospace;font-size:11px;color:var(--muted);margin:4px 0 6px 0">value: ${escapeHtml(String(c.value==null?'—':c.value))}</div>
-      <p style="font-size:13px;margin:0;color:var(--text);line-height:1.5">${escapeHtml(c.read || '')}
-        <span style="color:var(--muted);font-style:italic;font-size:12px;display:block;margin-top:3px">${meta.gloss}</span>
-      </p>
-      <div style="position:relative;height:6px;background:var(--card);border-radius:3px;margin-top:8px;overflow:hidden">
+      <p style="font-size:12px;margin:4px 0 0 0;color:var(--muted);line-height:1.4">${escapeHtml(c.read || '')}${glossHtml}</p>
+      <div style="position:relative;height:4px;background:var(--card);border-radius:2px;margin-top:6px;overflow:hidden">
         <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border)"></div>
         <div style="position:absolute;top:0;bottom:0;${fillSide};width:${fillPct.toFixed(1)}%;background:${fillColor}"></div>
       </div>

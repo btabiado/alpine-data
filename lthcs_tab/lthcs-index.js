@@ -247,17 +247,14 @@ function buildComponentHtml(c) {
       `</details>`);
   }
 
+  const valueStr = (c.value == null || c.value === '') ? '' : String(c.value);
   return `
     <div class="lthcs-nar-comp">
       <div class="lthcs-nar-comp-head">
-        <div class="lthcs-nar-comp-name">${nameHtml}</div>
+        <div class="lthcs-nar-comp-name">${nameHtml}${valueStr ? `<span class="lthcs-nar-comp-value-inline">${escapeHtml(valueStr)}</span>` : ''}</div>
         <div class="lthcs-nar-comp-delta ${dCls}">${escapeHtml(dStr)}</div>
       </div>
-      <div class="lthcs-nar-comp-value">value: ${escapeHtml(c.value)}</div>
-      <p class="lthcs-nar-comp-read">
-        ${escapeHtml(c.read || '')}
-        <span class="lthcs-nar-gloss">${meta.gloss}</span>
-      </p>
+      <p class="lthcs-nar-comp-read">${escapeHtml(c.read || '')}${meta.gloss ? `<span class="lthcs-nar-sep">·</span><span class="lthcs-nar-gloss">${meta.gloss}</span>` : ''}</p>
       <div class="lthcs-nar-comp-strength">
         <div class="lthcs-nar-comp-strength-spine"></div>
         <div class="lthcs-nar-comp-strength-fill ${fillSide}" style="${fillStyle}"></div>

@@ -94,9 +94,9 @@
 .lthcs-composite-index .lthcs-nar-step {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
-  border-radius: 14px;
-  padding: 1.25rem 1.4rem;
-  margin: 0 0 1rem 0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 0 0 12px 0;
   scroll-margin-top: 1rem;
 }
 .lthcs-composite-index .lthcs-nar-step-head {
@@ -258,8 +258,8 @@
 .lthcs-composite-index .lthcs-nar-comp {
   background: var(--bg-elevated);
   border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  padding: 12px 14px;
+  border-radius: 8px;
+  padding: 8px 12px;
 }
 .lthcs-composite-index .lthcs-nar-comp-head {
   display: flex;
@@ -269,49 +269,52 @@
   flex-wrap: wrap;
 }
 .lthcs-composite-index .lthcs-nar-comp-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
+}
+.lthcs-composite-index .lthcs-nar-comp-name .lthcs-nar-comp-value-inline {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
 }
 .lthcs-composite-index .lthcs-nar-comp-delta {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   font-weight: 700;
-  font-size: 13px;
-  padding: 2px 8px;
-  border-radius: 6px;
+  font-size: 12px;
+  padding: 1px 7px;
+  border-radius: 5px;
   background: var(--bg-chip, var(--bg-card));
   font-variant-numeric: tabular-nums;
 }
 .lthcs-composite-index .lthcs-nar-comp-delta.pos { color: var(--band-high-bright); }
 .lthcs-composite-index .lthcs-nar-comp-delta.neg { color: var(--band-review-bright); }
 .lthcs-composite-index .lthcs-nar-comp-delta.zero { color: var(--text-tertiary); }
-.lthcs-composite-index .lthcs-nar-comp-value {
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin: 4px 0 6px 0;
-  font-variant-numeric: tabular-nums;
-}
 .lthcs-composite-index .lthcs-nar-comp-read {
-  font-size: 13px;
-  margin: 0;
-  color: var(--text-primary);
-  line-height: 1.5;
+  font-size: 12px;
+  margin: 4px 0 0 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
 }
 .lthcs-composite-index .lthcs-nar-comp-read .lthcs-nar-gloss {
   color: var(--text-tertiary);
   font-style: italic;
-  font-size: 12px;
-  display: block;
-  margin-top: 3px;
+  font-size: 11px;
+}
+.lthcs-composite-index .lthcs-nar-comp-read .lthcs-nar-sep {
+  color: var(--text-tertiary);
+  margin: 0 5px;
 }
 
 .lthcs-composite-index .lthcs-nar-comp-strength {
   position: relative;
-  height: 6px;
+  height: 4px;
   background: var(--bg-chip, var(--bg-card));
-  border-radius: 3px;
-  margin-top: 8px;
+  border-radius: 2px;
+  margin-top: 6px;
   overflow: hidden;
 }
 .lthcs-composite-index .lthcs-nar-comp-strength-spine {
@@ -403,26 +406,33 @@
 }
 .lthcs-composite-index .lthcs-nar-how-not strong { color: var(--band-weakening-bright); }
 
-/* Glossary popover — pure <details>, no JS framework */
+/* Glossary popover — pure <details>, no JS framework.
+   !important defends against Safari's UA default of display:block which
+   wins on specificity, breaking the inline flow of the component name. */
 .lthcs-composite-index details.lthcs-nar-term {
-  display: inline;
+  display: inline !important;
   position: relative;
 }
 .lthcs-composite-index details.lthcs-nar-term summary {
-  display: inline;
+  display: inline !important;
   list-style: none;
+  list-style-type: none;
   cursor: help;
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
   background: var(--bg-chip, var(--bg-card));
   padding: 1px 6px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-secondary);
   border-bottom: 1px dotted var(--text-link, #6EA8FE);
 }
 .lthcs-composite-index details.lthcs-nar-term summary::-webkit-details-marker {
   display: none;
+}
+.lthcs-composite-index details.lthcs-nar-term summary::marker {
+  display: none;
+  content: '';
 }
 .lthcs-composite-index details.lthcs-nar-term[open] summary {
   background: var(--text-link, #6EA8FE);
