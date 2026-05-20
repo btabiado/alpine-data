@@ -4,6 +4,11 @@
    Re-uses theme tokens from lthcs.css (--band-*, --bg-*, --text-*).
    ========================================================================= */
 
+/* Score explainer tooltip (Phase 5 GAMMA) — imported here so the existing
+   single <link rel="stylesheet" href="./lthcs-detail.css"> in index.html
+   picks it up without HTML changes. */
+@import url("./lthcs-detail-explainer.css");
+
 .lthcs-modal-root {
   position: fixed;
   inset: 0;

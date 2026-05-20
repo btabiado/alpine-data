@@ -1,0 +1,365 @@
+/* lthcs-detail-explainer.css
+ * Phase 5 GAMMA — Score explainer tooltip styles.
+ * Imported by lthcs-detail.css via @import so we don't need to touch
+ * lthcs_tab/index.html (ALPHA territory).
+ *
+ * Conventions: reuse design tokens (--bg-card, --border-subtle, --text-*)
+ * from the main detail.css so light/dark theme + token overrides Just Work.
+ */
+
+/* ---------- Trigger style on each pillar sub-score ---------- */
+
+.lthcs-modal-root .lthcs-pillar-values strong.lthcs-explainer-trigger {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 0 4px;
+  transition: background 120ms ease, outline 120ms ease;
+}
+
+.lthcs-modal-root .lthcs-pillar-values strong.lthcs-explainer-trigger:hover,
+.lthcs-modal-root .lthcs-pillar-values strong.lthcs-explainer-trigger:focus-visible {
+  background: var(--bg-chip, #1B2129);
+  outline: 1px solid var(--accent, #6EA8FE);
+  outline-offset: 1px;
+}
+
+.lthcs-modal-root .lthcs-pillar-values strong.lthcs-explainer-trigger.is-explainer-open {
+  background: var(--bg-chip, #1B2129);
+  outline: 1px solid var(--accent, #6EA8FE);
+  outline-offset: 1px;
+}
+
+/* ---------- Tooltip container (desktop default) ---------- */
+
+.lthcs-explainer-tip {
+  position: fixed;
+  z-index: 1100;
+  width: 280px;
+  max-width: calc(100vw - 16px);
+  background: #0E1116;
+  color: var(--text-primary, #E6E9EE);
+  border: 1px solid var(--border-strong, #3A4350);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.35);
+  font-size: 12.5px;
+  line-height: 1.4;
+  /* Smooth fade-in */
+  opacity: 1;
+  transition: opacity 120ms ease;
+  pointer-events: auto;
+}
+
+.lthcs-explainer-tip.hidden {
+  display: none;
+  opacity: 0;
+}
+
+.lthcs-explainer-tip-content {
+  padding: 12px 14px 12px;
+}
+
+/* Arrow — sits above (placement=below) or below (placement=above) the box. */
+.lthcs-explainer-tip-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #0E1116;
+  border-left: 1px solid var(--border-strong, #3A4350);
+  border-top: 1px solid var(--border-strong, #3A4350);
+  transform: rotate(45deg);
+}
+
+.lthcs-explainer-tip[data-placement="above"] .lthcs-explainer-tip-arrow {
+  bottom: -7px;
+  transform: rotate(-135deg);
+}
+
+.lthcs-explainer-tip[data-placement="below"] .lthcs-explainer-tip-arrow {
+  top: -7px;
+  transform: rotate(45deg);
+}
+
+/* ---------- Header (pillar name + score) ---------- */
+
+.lthcs-explainer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle, #2A323D);
+}
+
+.lthcs-explainer-pillar {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #E6E9EE);
+  letter-spacing: 0.2px;
+}
+
+.lthcs-explainer-score-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.lthcs-explainer-score {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #E6E9EE);
+}
+
+.lthcs-explainer-extreme {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--bg-chip, #1B2129);
+  border: 1px solid var(--border-subtle, #2A323D);
+}
+
+.lthcs-explainer-extreme.is-floor {
+  color: #FCA5A5;
+  border-color: rgba(252, 165, 165, 0.4);
+}
+
+.lthcs-explainer-extreme.is-ceiling {
+  color: #86EFAC;
+  border-color: rgba(134, 239, 172, 0.4);
+}
+
+/* ---------- Signal list ---------- */
+
+.lthcs-explainer-leadin {
+  font-size: 11px;
+  color: var(--text-tertiary, #6B7280);
+  margin-bottom: 6px;
+}
+
+.lthcs-explainer-signals {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.lthcs-explainer-signal {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--border-subtle, #2A323D);
+}
+
+.lthcs-explainer-signal:last-child {
+  border-bottom: none;
+}
+
+.lthcs-explainer-signal.is-empty {
+  color: var(--text-tertiary, #6B7280);
+  font-style: italic;
+  grid-template-columns: 1fr;
+}
+
+.lthcs-explainer-signal-name {
+  color: var(--text-secondary, #9CA3AF);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lthcs-explainer-signal-val {
+  color: var(--text-primary, #E6E9EE);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.lthcs-explainer-signal-contrib {
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.lthcs-explainer-signal-contrib.is-pos {
+  background: rgba(74, 143, 95, 0.18);
+  color: #86EFAC;
+}
+
+.lthcs-explainer-signal-contrib.is-neg {
+  background: rgba(184, 90, 62, 0.22);
+  color: #FCA5A5;
+}
+
+/* ---------- Dropped-pillar variant ---------- */
+
+.lthcs-explainer-dropped {
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: rgba(122, 46, 31, 0.18);
+  border: 1px solid rgba(122, 46, 31, 0.5);
+  border-radius: 6px;
+}
+
+.lthcs-explainer-dropped-headline {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #FCA5A5;
+  margin-bottom: 4px;
+}
+
+.lthcs-explainer-dropped-reason {
+  font-size: 11px;
+  color: var(--text-secondary, #9CA3AF);
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.lthcs-explainer-dropped-note {
+  font-size: 10.5px;
+  color: var(--text-tertiary, #6B7280);
+  font-style: italic;
+}
+
+.lthcs-explainer-flag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  background: var(--bg-chip, #1B2129);
+  border: 1px solid var(--border-subtle, #2A323D);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: var(--text-primary, #E6E9EE);
+}
+
+/* ---------- Fallback (no vardetail) ---------- */
+
+.lthcs-explainer-fallback {
+  margin-bottom: 8px;
+}
+
+.lthcs-explainer-fallback-headline {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #9CA3AF);
+  margin-bottom: 4px;
+}
+
+.lthcs-explainer-fallback-formula {
+  font-size: 11px;
+  color: var(--text-tertiary, #9CA3AF);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ---------- Footer (link to evidence) ---------- */
+
+.lthcs-explainer-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle, #2A323D);
+}
+
+.lthcs-explainer-evidence-link {
+  background: transparent;
+  border: none;
+  color: var(--accent, #6EA8FE);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 100ms ease;
+}
+
+.lthcs-explainer-evidence-link:hover,
+.lthcs-explainer-evidence-link:focus-visible {
+  background: var(--bg-chip, #1B2129);
+  outline: none;
+  text-decoration: underline;
+}
+
+/* Briefly highlight the matching evidence accordion after "View full evidence". */
+.lthcs-modal-root .lthcs-evidence-pillar.is-flash {
+  animation: lthcs-explainer-flash 1.4s ease;
+}
+
+@keyframes lthcs-explainer-flash {
+  0%   { box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.6); }
+  60%  { box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.2); }
+  100% { box-shadow: 0 0 0 2px rgba(110, 168, 254, 0); }
+}
+
+/* ---------- Backdrop (mobile sheet only) ---------- */
+
+.lthcs-explainer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1099;
+}
+
+.lthcs-explainer-backdrop.hidden {
+  display: none;
+}
+
+/* ---------- Mobile: bottom-sheet style modal ---------- */
+
+@media (max-width: 640px) {
+  .lthcs-explainer-tip.is-mobile {
+    position: fixed;
+    left: 0 !important;
+    right: 0;
+    bottom: 0;
+    top: auto !important;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 14px 14px 0 0;
+    transform: none !important;
+    padding-bottom: env(safe-area-inset-bottom, 12px);
+    animation: lthcs-explainer-slide-up 200ms ease;
+  }
+
+  .lthcs-explainer-tip.is-mobile .lthcs-explainer-tip-arrow {
+    display: none;
+  }
+
+  .lthcs-explainer-tip.is-mobile .lthcs-explainer-tip-content {
+    padding: 16px 18px 18px;
+  }
+
+  /* Grab-handle affordance */
+  .lthcs-explainer-tip.is-mobile .lthcs-explainer-tip-content::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--border-strong, #3A4350);
+    border-radius: 2px;
+    margin: -8px auto 12px;
+  }
+}
+
+@keyframes lthcs-explainer-slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .lthcs-explainer-tip,
+  .lthcs-explainer-tip.is-mobile,
+  .lthcs-evidence-pillar.is-flash {
+    animation: none !important;
+    transition: none !important;
+  }
+}

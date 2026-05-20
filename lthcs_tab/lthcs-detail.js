@@ -9,6 +9,11 @@
 'use strict';
 
 import { bandColorForScore } from './lthcs-sparkline.js';
+import {
+  bindPillarExplainer,
+  refreshPillarExplainer,
+  hidePillarExplainer,
+} from './lthcs-detail-explainer.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1894,6 +1899,7 @@ function renderEvidence(panel, { snapshotRow, vardetailRows, ticker }) {
     const sub = Number.isFinite(subFromRow) ? subFromRow : subFromSnapshot;
 
     const acc = el('details', { className: 'lthcs-evidence-pillar' });
+    acc.dataset.pillar = pillar; // used by score-explainer to jump-to-accordion
     if (rendered === 0) acc.setAttribute('open', 'open'); // first pillar open by default
     const sum = el('summary', { className: 'lthcs-evidence-summary' });
 
@@ -2694,6 +2700,16 @@ export function openDetail(args) {
   renderFlags(panel, { snapshotRow });
   wireVardetailToggle(panel, { ticker, calcDate });
 
+  // Phase 5 GAMMA — Score explainer tooltip on each pillar sub-score chip.
+  // Bind synchronously now (signals fall back to "formula" until vardetail
+  // resolves); rebind on vardetail success below so signals appear when
+  // available.
+  const getVardetailRows = () => {
+    const cached = calcDate ? moduleState.vardetailCache.get(calcDate) : null;
+    return (cached && Array.isArray(cached.variables)) ? cached.variables : null;
+  };
+  bindPillarExplainer(panel, { snapshotRow, ticker, getVardetail: getVardetailRows });
+
   // Show
   root.classList.remove('hidden');
   root.setAttribute('aria-hidden', 'false');
@@ -2762,6 +2778,12 @@ export function openDetail(args) {
         if (moduleState.activeTicker !== requestedTicker) return;
         const rows = (data && Array.isArray(data.variables)) ? data.variables : [];
         renderEvidence(panel, { snapshotRow, vardetailRows: rows, ticker: requestedTicker });
+        // Rebind the score explainer now that real signals are available.
+        refreshPillarExplainer(panel, {
+          snapshotRow,
+          ticker: requestedTicker,
+          getVardetail: getVardetailRows,
+        });
       })
       .catch((err) => {
         console.warn('LTHCS detail: variable_detail load failed', err);
@@ -2777,6 +2799,8 @@ export function closeDetail() {
   const root = moduleState.rootEl;
   if (!root) return;
   if (root.classList.contains('hidden')) return;
+  // Make sure the explainer tooltip doesn't outlive the modal.
+  try { hidePillarExplainer(); } catch (_e) { /* ignore */ }
   root.classList.add('hidden');
   root.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
