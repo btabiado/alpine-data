@@ -1,6 +1,6 @@
 {
   "model_version": "v1.0.0",
-  "last_updated": "2026-05-18",
+  "last_updated": "2026-05-20",
   "tickers": {
     "AAPL": {
       "last_scored": "2026-05-17"
@@ -111,7 +111,7 @@
       "last_scored": "2026-05-17"
     },
     "LCID": {
-      "last_scored": "2026-05-18"
+      "last_scored": "2026-05-20"
     },
     "AZN": {
       "last_scored": "2026-05-18"
