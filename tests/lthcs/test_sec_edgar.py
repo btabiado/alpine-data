@@ -319,6 +319,272 @@ def test_revenue_history_missing_facts_key_returns_empty_list(ua: None) -> None:
         assert sec_edgar.get_revenue_history("AAPL") == []
 
 
+# --- IFRS-full namespace fallback (foreign private issuers / 20-F filers) ----
+#
+# Phase 3 post-audit hotfix (May 2026): AZN, GFS, and other 20-F filers
+# report under the ``ifrs-full`` namespace, not ``us-gaap``. The audit
+# flagged AZN as a "+2.99 stdev" outlier on thesis_integrity, but the
+# real bug was the misleading ``sec_unavailable`` flag co-occurring on
+# a row whose Finnhub-derived thesis score was actually legitimate. With
+# IFRS-full support, AZN's Financial pillar gets real data and the
+# pipeline no longer raises ``sec_unavailable`` for it.
+
+def _facts_ifrs(concept_to_series: Dict[str, List[Dict[str, Any]]],
+                units_key: str = "USD") -> Dict[str, Any]:
+    """Build a facts payload under the ``ifrs-full`` namespace.
+
+    ``units_key`` controls the currency. Defaults to USD because that's
+    what AZN, GFS, and most large foreign private issuers file in. Set
+    to "EUR" to simulate a non-USD filer (e.g. CCEP) and verify the
+    strict-USD guard.
+    """
+    ifrs: Dict[str, Any] = {}
+    for concept, series in concept_to_series.items():
+        ifrs[concept] = {"label": concept, "units": {units_key: series}}
+    return {
+        "cik": 901832,
+        "entityName": "AstraZeneca PLC",
+        "facts": {"ifrs-full": ifrs},
+    }
+
+
+def test_revenue_history_falls_back_to_ifrs_full_for_foreign_issuer(
+    ua: None,
+) -> None:
+    """20-F filers (AZN etc.) report Revenue under ``ifrs-full``, not us-gaap.
+
+    The fallback must pick up ``Revenue`` and
+    ``RevenueFromContractsWithCustomers`` so the Financial Evolution pillar
+    gets real signal instead of collapsing to neutral 50 + ``sec_unavailable``.
+    """
+    facts = _facts_ifrs({
+        "Revenue": [
+            {"start": "2024-01-01", "end": "2024-12-31",
+             "val": 54_073_000_000, "form": "20-F", "fy": 2024, "fp": "FY"},
+            {"start": "2023-01-01", "end": "2023-12-31",
+             "val": 45_811_000_000, "form": "20-F", "fy": 2023, "fp": "FY"},
+        ],
+    })
+
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response({"0": {"cik_str": 901832, "ticker": "AZN",
+                                  "title": "AstraZeneca PLC"}}),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_revenue_history("AZN")
+
+    assert len(rows) == 2
+    assert rows[0]["end_date"] == "2024-12-31"
+    assert rows[0]["value"] == 54_073_000_000
+    assert rows[0]["concept"] == "Revenue"
+    assert rows[0]["form"] == "20-F"
+
+
+def test_gross_profit_history_falls_back_to_ifrs_full(ua: None) -> None:
+    """``GrossProfit`` exists in BOTH namespaces — IFRS-full path picks it
+    up when ``us-gaap`` is empty (foreign issuers)."""
+    facts = _facts_ifrs({
+        "GrossProfit": [
+            {"start": "2024-01-01", "end": "2024-12-31",
+             "val": 44_270_000_000, "form": "20-F", "fy": 2024, "fp": "FY"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response({"0": {"cik_str": 901832, "ticker": "AZN",
+                                  "title": "AstraZeneca PLC"}}),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_gross_profit_history("AZN")
+
+    assert len(rows) == 1
+    assert rows[0]["value"] == 44_270_000_000
+    assert rows[0]["concept"] == "GrossProfit"
+
+
+def test_operating_cash_flow_history_falls_back_to_ifrs_full(ua: None) -> None:
+    """OCF under IFRS uses different concept names than us-gaap."""
+    facts = _facts_ifrs({
+        "CashFlowsFromUsedInOperatingActivities": [
+            {"start": "2024-01-01", "end": "2024-12-31",
+             "val": 11_858_000_000, "form": "20-F", "fy": 2024, "fp": "FY"},
+        ],
+    })
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response({"0": {"cik_str": 901832, "ticker": "AZN",
+                                  "title": "AstraZeneca PLC"}}),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_operating_cash_flow_history("AZN")
+
+    assert len(rows) == 1
+    assert rows[0]["value"] == 11_858_000_000
+    assert rows[0]["concept"] == "CashFlowsFromUsedInOperatingActivities"
+
+
+def test_ifrs_fallback_only_fires_when_us_gaap_empty(ua: None) -> None:
+    """Domestic 10-K filers must NEVER hit the IFRS branch.
+
+    Guard against a regression where us-gaap data is correctly present
+    but the IFRS-full namespace happens to also exist with different
+    values — the us-gaap series must win in full.
+    """
+    facts = {
+        "facts": {
+            "us-gaap": {
+                "Revenues": {"units": {"USD": [
+                    {"start": "2024-01-01", "end": "2024-12-31",
+                     "val": 100_000_000_000, "form": "10-K",
+                     "fy": 2024, "fp": "FY"},
+                ]}},
+            },
+            "ifrs-full": {
+                "Revenue": {"units": {"USD": [
+                    # Bogus IFRS value — must NOT be returned because
+                    # the us-gaap walk already succeeded.
+                    {"start": "2024-01-01", "end": "2024-12-31",
+                     "val": 999_999, "form": "20-F",
+                     "fy": 2024, "fp": "FY"},
+                ]}},
+            },
+        }
+    }
+
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response(TICKERS_FIXTURE),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_revenue_history("AAPL")
+
+    assert len(rows) == 1
+    assert rows[0]["value"] == 100_000_000_000
+    assert rows[0]["concept"] == "Revenues"
+    assert rows[0]["form"] == "10-K"
+
+
+def test_azn_data_quality_stub_regression_no_sec_unavailable(
+    ua: None,
+) -> None:
+    """Regression for Phase 3 post-audit hotfix #2 — the AZN ``+2.99 stdev``
+    outlier that was actually a misleading ``sec_unavailable`` flag.
+
+    The audit flagged AZN (z=+2.99 on thesis_integrity) as a suspected
+    unscored stub because the row carried ``sec_unavailable``. Root
+    cause: AZN files 20-F under the ``ifrs-full`` namespace and our
+    extractor only walked ``us-gaap``, so revenue came back empty and
+    ``stage_3_quality_checks`` raised the flag. The IFRS fallback path
+    fixes the underlying data flow — and so the ``has_sec`` predicate
+    that drives the ``sec_unavailable`` flag in ``lthcs_daily.py`` flips
+    to True for AZN-shaped 20-F filers.
+
+    This test pins that contract: a 20-F-style payload yields non-empty
+    revenue, which means ``has_sec = bool(state.rev_by_ticker.get(sym))``
+    in the daily pipeline evaluates True and the
+    ``flags.append("sec_unavailable")`` branch never fires for AZN.
+    """
+    # Synthetic 20-F-flavored facts modeled on AZN's real SEC payload
+    # shape (ifrs-full, USD units, "Revenue" + "GrossProfit" +
+    # "CashFlowsFromUsedInOperatingActivities"). Numbers are illustrative.
+    facts = {
+        "cik": 901832,
+        "entityName": "AstraZeneca PLC",
+        "facts": {
+            "ifrs-full": {
+                "Revenue": {"units": {"USD": [
+                    {"start": "2024-01-01", "end": "2024-12-31",
+                     "val": 54_073_000_000, "form": "20-F",
+                     "fy": 2024, "fp": "FY"},
+                    {"start": "2023-01-01", "end": "2023-12-31",
+                     "val": 45_811_000_000, "form": "20-F",
+                     "fy": 2023, "fp": "FY"},
+                ]}},
+                "GrossProfit": {"units": {"USD": [
+                    {"start": "2024-01-01", "end": "2024-12-31",
+                     "val": 44_270_000_000, "form": "20-F",
+                     "fy": 2024, "fp": "FY"},
+                ]}},
+                "CashFlowsFromUsedInOperatingActivities": {"units": {"USD": [
+                    {"start": "2024-01-01", "end": "2024-12-31",
+                     "val": 11_858_000_000, "form": "20-F",
+                     "fy": 2024, "fp": "FY"},
+                ]}},
+            }
+        },
+    }
+
+    azn_tickers = {"0": {"cik_str": 901832, "ticker": "AZN",
+                         "title": "AstraZeneca PLC"}}
+
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        # Three back-to-back calls in this scenario:
+        # 1) tickers list lookup, 2-4) the same companyfacts payload is
+        # cached after the first companyfacts fetch — but
+        # ``get_revenue_history`` and friends each go through the cache
+        # via the same key, so subsequent fetches hit the in-process
+        # FileCache and don't re-mock. To be safe we hand back the same
+        # payload up to 4 times.
+        mock_get.side_effect = [
+            _fake_response(azn_tickers),
+            _fake_response(facts),
+            _fake_response(facts),
+            _fake_response(facts),
+        ]
+
+        revenue = sec_edgar.get_revenue_history("AZN")
+        gross = sec_edgar.get_gross_profit_history("AZN")
+        ocf = sec_edgar.get_operating_cash_flow_history("AZN")
+
+    # The whole point of the fix: AZN's three Financial-pillar series
+    # are no longer empty. ``has_sec = bool(rev_by_ticker.get('AZN'))``
+    # in lthcs_daily.stage_3_quality_checks therefore evaluates True,
+    # and the ``sec_unavailable`` flag is NOT appended.
+    assert revenue, "AZN revenue must not be empty after IFRS fallback"
+    assert gross, "AZN gross profit must not be empty after IFRS fallback"
+    assert ocf, "AZN OCF must not be empty after IFRS fallback"
+
+    # Simulate the exact has_sec predicate from stage_3_quality_checks.
+    rev_by_ticker = {"AZN": revenue}
+    has_sec = bool(rev_by_ticker.get("AZN"))
+    flags: list = []
+    if not has_sec:
+        flags.append("sec_unavailable")
+    assert "sec_unavailable" not in flags, (
+        "AZN must not carry sec_unavailable once IFRS fallback returns "
+        "real revenue — this is the regression the Phase 3 audit "
+        "flagged as a +2.99-stdev outlier."
+    )
+
+
+def test_ifrs_fallback_is_strict_usd_only(ua: None) -> None:
+    """IFRS-full filers in non-USD (e.g. CCEP in EUR) must NOT be promoted.
+
+    Cross-currency growth/margin comparisons would corrupt cohort
+    z-scores, so EUR/GBP/etc. IFRS series stay invisible to the
+    fallback and the daily pipeline keeps flagging ``sec_unavailable``
+    — the conservative right answer.
+    """
+    facts = _facts_ifrs({
+        "Revenue": [
+            {"start": "2024-01-01", "end": "2024-12-31",
+             "val": 20_000_000_000, "form": "20-F", "fy": 2024, "fp": "FY"},
+        ],
+    }, units_key="EUR")
+
+    with patch("lthcs.sources.sec_edgar.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _fake_response({"0": {"cik_str": 1650107, "ticker": "CCEP",
+                                  "title": "Coca-Cola Europacific Partners"}}),
+            _fake_response(facts),
+        ]
+        rows = sec_edgar.get_revenue_history("CCEP")
+
+    # Strict-USD guard means no rows surface from EUR-only IFRS filers.
+    assert rows == []
+
+
 # --- Bank concepts: get_net_interest_income_history --------------------------
 
 

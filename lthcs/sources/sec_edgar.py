@@ -126,6 +126,47 @@ _OPERATING_CASH_FLOW_CONCEPTS = (
 )
 
 
+# --- IFRS-full namespace fallback (foreign private issuers / 20-F filers) ---
+#
+# Phase 3 post-audit hotfix (May 2026): foreign private issuers like AZN
+# (AstraZeneca, UK-domiciled), GFS (GlobalFoundries, Cayman-incorporated),
+# and CCEP (Coca-Cola Europacific Partners) file 20-F not 10-K and report
+# their facts under the ``ifrs-full`` namespace instead of ``us-gaap``. The
+# SEC ``companyfacts`` endpoint returns BOTH namespaces in the same payload
+# (``facts.us-gaap`` and ``facts.ifrs-full``), but our extractor previously
+# only walked ``us-gaap``, dropping ~3-6 tickers to neutral 50 on the
+# Financial Evolution pillar and flagging them ``sec_unavailable`` even
+# though their fundamentals were sitting right there.
+#
+# Strategy: when a concept's us-gaap walk yields nothing, fall back to the
+# IFRS-full equivalent. Strict USD-only — IFRS-full filers in EUR/GBP/etc.
+# (like CCEP, which only files in EUR) are intentionally NOT promoted to
+# real signal because cross-currency growth/margin comparisons would
+# corrupt the cohort z-scores. They keep the existing ``sec_unavailable``
+# behavior and stay at neutral, which is the conservative right answer.
+#
+# Concept name parity:
+#   us-gaap "Revenues" / "RevenueFromContract..." -> ifrs-full "Revenue" /
+#     "RevenueFromContractsWithCustomers".
+#   us-gaap "GrossProfit" -> ifrs-full "GrossProfit" (same name).
+#   us-gaap "NetCashProvidedByOperatingActivities" -> ifrs-full
+#     "CashFlowsFromUsedInOperatingActivities" / "CashFlowsFromUsedInOperations".
+
+_IFRS_REVENUE_CONCEPTS = (
+    "Revenue",
+    "RevenueFromContractsWithCustomers",
+)
+
+_IFRS_GROSS_PROFIT_CONCEPTS = (
+    "GrossProfit",
+)
+
+_IFRS_OPERATING_CASH_FLOW_CONCEPTS = (
+    "CashFlowsFromUsedInOperatingActivities",
+    "CashFlowsFromUsedInOperations",
+)
+
+
 # --- Bank-specific concepts -------------------------------------------------
 #
 # Banks (JPM, BAC, GS, WFC, C, MS, USB, TFC, etc.) don't report ``GrossProfit``
@@ -299,7 +340,10 @@ def get_company_facts(ticker: str) -> Dict[str, Any]:
 
 
 def _extract_concept_history(
-    facts: Dict[str, Any], concepts: tuple, as_of: Optional[str] = None
+    facts: Dict[str, Any],
+    concepts: tuple,
+    as_of: Optional[str] = None,
+    ifrs_concepts: Optional[tuple] = None,
 ) -> List[Dict[str, Any]]:
     """Walk the XBRL ``us-gaap`` block and merge the given concepts.
 
@@ -322,16 +366,57 @@ def _extract_concept_history(
     When ``as_of`` is provided (ISO YYYY-MM-DD), only facts whose ``filed``
     date is ≤ ``as_of`` are included, so historical LTHCS scoring sees
     the same data the filing universe held on that date.
+
+    When ``ifrs_concepts`` is provided AND the ``us-gaap`` walk yields
+    zero rows (foreign private issuer / 20-F filer like AZN), the
+    function falls back to the ``ifrs-full`` namespace using those
+    concepts. The IFRS fallback is strict-USD-only — IFRS filers in
+    non-USD units (EUR/GBP/etc., e.g. CCEP) intentionally remain empty
+    so cohort z-scores never mix currencies. Domestic filers with
+    real ``us-gaap`` data never hit this branch.
     """
-    gaap = (facts or {}).get("facts", {}).get("us-gaap", {})
-    if not isinstance(gaap, dict):
+    facts_block = (facts or {}).get("facts", {})
+    if not isinstance(facts_block, dict):
+        return []
+
+    gaap = facts_block.get("us-gaap", {})
+    rows = _walk_namespace_concepts(
+        gaap, concepts, as_of=as_of, strict_usd=False
+    )
+    if rows:
+        return rows
+
+    if ifrs_concepts:
+        ifrs = facts_block.get("ifrs-full", {})
+        rows = _walk_namespace_concepts(
+            ifrs, ifrs_concepts, as_of=as_of, strict_usd=True
+        )
+
+    return rows
+
+
+def _walk_namespace_concepts(
+    namespace_block: Any,
+    concepts: tuple,
+    as_of: Optional[str] = None,
+    strict_usd: bool = False,
+) -> List[Dict[str, Any]]:
+    """Inner helper — walk a single XBRL namespace block.
+
+    See :func:`_extract_concept_history` for the row schema. When
+    ``strict_usd`` is True, only the ``USD`` units series is consulted;
+    no other-currency fallback is applied. This guards the IFRS-full
+    fallback path from accidentally promoting EUR/GBP series into the
+    universe-wide cohort.
+    """
+    if not isinstance(namespace_block, dict):
         return []
 
     as_of_str = str(as_of) if as_of else None
 
     by_period: Dict[tuple, Dict[str, Any]] = {}
     for concept in concepts:
-        node = gaap.get(concept)
+        node = namespace_block.get(concept)
         if not isinstance(node, dict):
             continue
         units = node.get("units", {})
@@ -339,7 +424,7 @@ def _extract_concept_history(
             continue
         usd = units.get("USD")
         series = usd if isinstance(usd, list) else None
-        if series is None:
+        if series is None and not strict_usd:
             for _, candidate in units.items():
                 if isinstance(candidate, list) and candidate:
                     series = candidate
@@ -386,28 +471,49 @@ def get_revenue_history(
 
     See :func:`_extract_concept_history` for the row schema. When
     ``as_of`` is provided, only facts ``filed`` on or before that ISO
-    date are returned.
+    date are returned. Falls back to the ``ifrs-full`` namespace
+    (``Revenue`` / ``RevenueFromContractsWithCustomers``) for foreign
+    private issuers / 20-F filers like AZN, GFS — strict USD only.
     """
     return _extract_concept_history(
-        get_company_facts(ticker), _REVENUE_CONCEPTS, as_of=as_of
+        get_company_facts(ticker),
+        _REVENUE_CONCEPTS,
+        as_of=as_of,
+        ifrs_concepts=_IFRS_REVENUE_CONCEPTS,
     )
 
 
 def get_gross_profit_history(
     ticker: str, as_of: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """Gross profit history. Same schema as :func:`get_revenue_history`."""
+    """Gross profit history. Same schema as :func:`get_revenue_history`.
+
+    Falls back to the ``ifrs-full`` ``GrossProfit`` concept (same name,
+    different namespace) for foreign private issuers — strict USD only.
+    """
     return _extract_concept_history(
-        get_company_facts(ticker), _GROSS_PROFIT_CONCEPTS, as_of=as_of
+        get_company_facts(ticker),
+        _GROSS_PROFIT_CONCEPTS,
+        as_of=as_of,
+        ifrs_concepts=_IFRS_GROSS_PROFIT_CONCEPTS,
     )
 
 
 def get_operating_cash_flow_history(
     ticker: str, as_of: Optional[str] = None
 ) -> List[Dict[str, Any]]:
-    """Operating cash flow history. Same schema as :func:`get_revenue_history`."""
+    """Operating cash flow history. Same schema as :func:`get_revenue_history`.
+
+    Falls back to the ``ifrs-full`` cash-flow concepts
+    (``CashFlowsFromUsedInOperatingActivities`` /
+    ``CashFlowsFromUsedInOperations``) for foreign private issuers —
+    strict USD only.
+    """
     return _extract_concept_history(
-        get_company_facts(ticker), _OPERATING_CASH_FLOW_CONCEPTS, as_of=as_of
+        get_company_facts(ticker),
+        _OPERATING_CASH_FLOW_CONCEPTS,
+        as_of=as_of,
+        ifrs_concepts=_IFRS_OPERATING_CASH_FLOW_CONCEPTS,
     )
 
 
