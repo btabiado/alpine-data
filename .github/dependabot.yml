@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "python"]
+    groups:
+      patch-updates:
+        update-types: ["patch"]
+      minor-updates:
+        update-types: ["minor"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule: { interval: "weekly", day: "monday", time: "06:00", timezone: "America/Los_Angeles" }
+    open-pull-requests-limit: 5
+    labels: ["dependencies", "github-actions"]
