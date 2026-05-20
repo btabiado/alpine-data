@@ -2088,6 +2088,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          Row 3: Gainers / Decliners as colored ticker boxes (Crypto-card model). -->
   <div id="tab-lthcs" class="hidden">
     <div class="container">
+      <!-- Top CTA — mirrors the "Open full LTHCS dashboard →" link at the
+           bottom so users don't have to scroll to find the deep-link. -->
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
+        <a class="btn" href="lthcs/" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:4px;background:#a78bfa;color:#0b0d12;font-weight:700;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;white-space:nowrap">
+          Open full LTHCS dashboard &rarr;
+        </a>
+      </div>
       <!-- Composite-index panel — narrative card (Step 1 verdict + Step 2
            components grid + movers). Promoted to the top of the LTHCS tab
            per user feedback so the daily read leads, not the insights row.
