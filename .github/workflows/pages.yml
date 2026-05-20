@@ -282,6 +282,24 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the LTHCS public read-only data index under /lthcs/public/.
+          # Source lives at lthcs_public/ and reuses ../lthcs_tab/lthcs.css
+          # for design tokens + reads ../data/lthcs/public/manifest.json
+          # (built by scripts/lthcs_build_public_manifest.py as the final
+          # daily-pipeline stage). Both resolve once we mirror lthcs_tab/ and
+          # data/lthcs/ one level above /lthcs/public/ (idempotent with the
+          # health/backtest/crypto/position branches above). Phase 4
+          # follow-on — V1-only — does NOT stage under /v2/.
+          if [ -f lthcs_public/index.html ]; then
+            mkdir -p _site/lthcs/public
+            cp -R lthcs_public/* _site/lthcs/public/
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
