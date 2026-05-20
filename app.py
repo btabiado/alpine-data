@@ -1533,21 +1533,37 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
-    <!-- News + Insights — pulled above the sentiment composite per user
-         request: "news & insight need to go on before the Crypto market
-         Sentiment bar". The headline news + top-4 insights are the first
-         thing a returning user wants to see; sentiment is a slower-moving
-         summary that belongs underneath. -->
-    <div class="grid2">
-      <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
-        <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 4 · click for full feed</span></div>
-        <div id="overviewNews"></div>
+    <!-- Top row: LEFT column stacks Latest crypto news (cap 3) + Top
+         insights (cap 3) — the text-heavy lead-ins. RIGHT column carries
+         AI-exposed stocks — a visual ticker grid mirroring the AI News tab.
+         Restructured per user request to surface AI signals on the Crypto
+         landing page above the fold. Mobile: stacks to a single column. -->
+    <div id="overviewTopRow" style="display:grid;grid-template-columns:1fr 1.2fr;gap:12px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+        <div class="chart-card" style="cursor:pointer" data-jump="trading" title="See full news feed in Trading tab">
+          <div class="head"><h2>Latest crypto news</h2><span class="desc">Top 3 · click for full feed</span></div>
+          <div id="overviewNews"></div>
+        </div>
+        <div class="chart-card">
+          <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 3 right now</span></div>
+          <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+        </div>
       </div>
-      <div class="chart-card">
-        <div class="head"><h2>Top insights</h2><span class="desc">Most-relevant 4 right now</span></div>
-        <div id="overviewInsights" style="display:flex;flex-direction:column;gap:8px;padding:2px"></div>
+      <div style="min-width:0">
+        <div class="chart-card" id="overviewAiStocksCard">
+          <div class="head">
+            <h2>AI-exposed stocks</h2>
+            <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
+          </div>
+          <div id="overviewAiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"></div>
+        </div>
       </div>
     </div>
+    <style>
+      @media (max-width: 860px) {
+        #overviewTopRow { grid-template-columns: 1fr !important; }
+      }
+    </style>
 
     <!-- CRYPTO MARKET SENTIMENT — composite of Fear & Greed, top-50 signal
          score avg, and average perp funding rate. Rendered by
@@ -2087,35 +2103,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="container">
       <div id="aiNewsEmpty" class="empty hidden">AI news not yet loaded. Run <code>python app.py --fetch-market</code> to populate.</div>
       <div id="aiNewsContent">
-        <!-- Top section: LEFT column stacks AI insights (cap 3) + Top AI
-             news (cap 3) — the text-heavy lead-ins. RIGHT column carries
-             AI-exposed stocks — the visual ticker grid. AI news sentiment
-             goes full-width below the top row. -->
-        <div id="aiNewsTopRow" style="display:grid;grid-template-columns:1fr 1.2fr;gap:12px;align-items:start">
-          <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-            <div class="chart-card" id="aiNewsInsightsCard">
-              <div class="head">
-                <h2>AI insights <span class="tag">top 3</span></h2>
-                <span class="desc">Signal flips, sentiment shifts and notable AI-ticker moves &middot; same source as the top bar, scoped to this tab</span>
-              </div>
-              <div id="aiNewsInsights" style="display:flex;flex-direction:column;gap:6px"></div>
+        <!-- Top row: AI insights (left) + Top 5 AI news headlines (right).
+             Per user request — surfaces both lead-ins above the sentiment
+             card. Full article list (Top 30) stays at the bottom unchanged. -->
+        <div id="aiNewsTopRow" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="chart-card" id="aiNewsInsightsCard">
+            <div class="head">
+              <h2>AI insights <span class="tag">filtered</span></h2>
+              <span class="desc">Signal flips, sentiment shifts and notable AI-ticker moves &middot; same source as the top bar, scoped to this tab</span>
             </div>
-            <div class="chart-card" id="aiNewsTop5Card">
-              <div class="head">
-                <h2>Top AI news <span class="tag">latest 3</span></h2>
-                <span class="desc">Most recent AI/ML/chips headlines &middot; click any row to open the article</span>
-              </div>
-              <div id="aiNewsTop5"></div>
-            </div>
+            <div id="aiNewsInsights" style="display:flex;flex-direction:column;gap:6px"></div>
           </div>
-          <div style="min-width:0">
-            <div class="chart-card" id="aiNewsStocksCard">
-              <div class="head">
-                <h2>AI-exposed stocks</h2>
-                <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
-              </div>
-              <div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"></div>
+          <div class="chart-card" id="aiNewsTop5Card">
+            <div class="head">
+              <h2>Top AI news <span class="tag">latest 5</span></h2>
+              <span class="desc">Most recent AI/ML/chips headlines &middot; click any row to open the article</span>
             </div>
+            <div id="aiNewsTop5"></div>
           </div>
         </div>
         <style>
@@ -2205,14 +2209,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="row" id="aiWhitepaperKpis" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px"></div>
         </div>
 
-        <!-- Latest AI news feed — full-width now that AI-exposed stocks
-             moved up to the top-left slot. -->
-        <div class="chart-card" style="margin-top:12px">
-          <div class="head">
-            <h2>Latest AI news <span class="tag" id="aiNewsHeaderBadge"></span></h2>
-            <span class="desc">Top 30 most recent &middot; click any row to open the article</span>
+        <div class="grid2" style="margin-top:12px">
+          <!-- Middle: AI news feed -->
+          <div class="chart-card">
+            <div class="head">
+              <h2>Latest AI news <span class="tag" id="aiNewsHeaderBadge"></span></h2>
+              <span class="desc">Top 30 most recent &middot; click any row to open the article</span>
+            </div>
+            <div id="aiNewsFeed" style="max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
           </div>
-          <div id="aiNewsFeed" style="max-height:640px;overflow-y:auto;border:1px solid var(--border);border-radius:6px"></div>
+          <!-- Bottom right: AI-exposed stock signal cards -->
+          <div class="chart-card">
+            <div class="head">
+              <h2>AI-exposed stocks</h2>
+              <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
+            </div>
+            <div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px"></div>
+          </div>
         </div>
         <!-- Bottom left: source breakdown -->
         <div class="chart-card" style="margin-top:12px">
@@ -5900,11 +5913,9 @@ function renderInsights(){
   // Use the TIGHT card style from renderOverviewInsights() — the global-bar
   // cardHTML has flex:1 1 280px / max-width:360px (meant for horizontal
   // wrapping) which made cards stretch vertically inside a column container.
-  // Capped at 3 per user request (was unlimited) — surfaces the most-severe
-  // insights without making the top-left column scroll forever.
   const inlineHost = document.getElementById('aiNewsInsights');
   if (inlineHost) {
-    const ainewsList = all.filter(i => (i.tab || 'markets') === 'ainews').slice(0, 3);
+    const ainewsList = all.filter(i => (i.tab || 'markets') === 'ainews');
     if (!ainewsList.length) {
       inlineHost.innerHTML = '<div class="sub" style="color:var(--muted);font-size:12px;padding:14px">' + (TAB_EMPTY['ainews']) + '</div>';
     } else {
@@ -6426,8 +6437,9 @@ function renderOverview(){
   renderOverviewStrongBuys();
   renderOverviewTop15();
   renderOverviewMacro();
-  renderOverviewNews();           // top 4-item teaser + bottom 10-item feed
+  renderOverviewNews();           // top 3-item teaser + bottom 10-item feed
   renderOverviewInsights();
+  renderOverviewAiStocks();       // AI-exposed stocks card (right side of top row)
   renderGeckoTerminalPools();     // bottom — also moved from Markets
 }
 
@@ -6847,7 +6859,7 @@ function renderOverviewNews(){
     if (!news.length){
       host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
     } else {
-      host.innerHTML = news.slice(0,4).map(n =>
+      host.innerHTML = news.slice(0,3).map(n =>
         `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
             <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
@@ -6858,12 +6870,12 @@ function renderOverviewNews(){
     }
   }
   // Bottom-of-Overview "More headlines" feed. Picks up where the top
-  // 4-item teaser left off so the user doesn't read the same titles
-  // twice on a single page. If we have fewer than 14 total items we
-  // simply render whatever is past index 4.
+  // 3-item teaser left off so the user doesn't read the same titles
+  // twice on a single page. If we have fewer than 13 total items we
+  // simply render whatever is past index 3.
   const bottom = document.getElementById('overviewNewsHost');
   if (bottom){
-    const more = news.slice(4, 14);
+    const more = news.slice(3, 13);
     if (!more.length){
       bottom.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No additional headlines beyond the top 4 above.</div>';
       return;
@@ -6885,7 +6897,7 @@ function renderOverviewInsights(){
     host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No notable insights right now</div>';
     return;
   }
-  host.innerHTML = all.slice(0,4).map(i => {
+  host.innerHTML = all.slice(0,3).map(i => {
     const c = severityColor(i.severity);
     const ic = severityIcon(i.severity, i.kind);
     const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
@@ -6894,6 +6906,57 @@ function renderOverviewInsights(){
       <div style="flex:1;line-height:1.3">
         <div style="font-size:12px">${escapeHtml(i.headline)}</div>
         ${detail}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// AI-exposed stocks card for the Crypto Overview tab. Same subset + same
+// card layout as the AI News tab's #aiStocksGrid, just painted into a
+// second host element. Tickers from AI_EXPOSED_TICKERS, sorted by score.
+function renderOverviewAiStocks(){
+  const host = document.getElementById('overviewAiStocksGrid');
+  if (!host) return;
+  const allStocks = ((DATA.market||{}).stocks_signals) || [];
+  const set = new Set(AI_EXPOSED_TICKERS);
+  const subset = (Array.isArray(allStocks) ? allStocks : [])
+    .filter(s => s && s.symbol && set.has(String(s.symbol).toUpperCase()))
+    .sort((a,b) => (Number(b.score)||0) - (Number(a.score)||0));
+  if (!subset.length){
+    host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px;grid-column:1/-1">No AI-exposed tickers in current stocks_signals.</div>';
+    return;
+  }
+  host.innerHTML = subset.map(s => {
+    const score = Number(s.score) || 0;
+    const color = score >= 20 ? '#22c55e' : (score <= -20 ? '#ef4444' : '#f59e0b');
+    const chPct = Number(s.change_pct);
+    const chColor = isFinite(chPct) ? (chPct >= 0 ? '#22c55e' : '#ef4444') : 'var(--muted)';
+    const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
+    const price  = Number(s.last_price);
+    const priceTxt = isFinite(price)
+      ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}))
+      : '—';
+    const scoreTxt = (score >= 0 ? '+' : '') + (Number.isInteger(score) ? score : score.toFixed(1));
+    const clamped = Math.max(-100, Math.min(100, score));
+    const pct = ((clamped + 100) / 200) * 100;
+    const symbol = escapeHtml(String(s.symbol || ''));
+    return `<div class="chart-card" style="padding:10px 12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
+        <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
+          <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${escapeHtml(String(s.name || ''))}</div>
+        </div>
+        <div style="text-align:right;line-height:1">
+          <div style="font-size:16px;font-weight:700;color:${color}">${scoreTxt}</div>
+          <div style="font-size:9px;color:${color};font-weight:600;margin-top:1px">${escapeHtml(String(s.label || ''))}</div>
+        </div>
+      </div>
+      <div style="height:6px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:3px;position:relative;margin:4px 0 5px">
+        <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:12px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:6px">
+        <div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums">${priceTxt}</div>
+        <div style="font-size:12px;font-weight:600;color:${chColor};font-variant-numeric:tabular-nums">${chTxt}</div>
       </div>
     </div>`;
   }).join('');
@@ -7391,11 +7454,10 @@ function renderAiNewsTab(){
       ? items.map(articleRow).join('')
       : '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
   }
-  // Top-3 inline panel — capped at 3 per user request (was 5). Sits in the
-  // left column of the top section, below AI-exposed stocks and AI insights.
+  // Top-5 inline panel (next to AI insights, above the sentiment summary).
   const top5 = document.getElementById('aiNewsTop5');
   if (top5){
-    const items = sortedItems.slice(0, 3);
+    const items = sortedItems.slice(0, 5);
     top5.innerHTML = items.length
       ? items.map(articleRow).join('')
       : '<div class="sub" style="color:var(--muted);padding:14px">No articles yet.</div>';
