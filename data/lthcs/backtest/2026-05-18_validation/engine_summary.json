@@ -1,16 +1,16 @@
 {
   "summary": {
-    "total_return": 0.1773851919488283,
-    "ann_return": 0.9216499433350873,
-    "max_drawdown": -0.10577631692029965,
-    "sharpe": 2.606550160291506,
-    "sortino": 2.5386405726309813,
-    "hit_rate": 0.59375,
-    "avg_hold_days": 11.849056603773585,
-    "turnover": 0.20400883838383838,
-    "n_trades": 53,
-    "n_unique_tkr": 22,
-    "n_trading_days": 64,
+    "total_return": 0.15438851262953812,
+    "ann_return": 0.7599931840450507,
+    "max_drawdown": -0.10577631202560889,
+    "sharpe": 2.270908878602845,
+    "sortino": 2.226455774725464,
+    "hit_rate": 0.5846153846153846,
+    "avg_hold_days": 6.040816326530612,
+    "turnover": 0.19574203574203577,
+    "n_trades": 49,
+    "n_unique_tkr": 19,
+    "n_trading_days": 65,
     "params": {
       "bands_long": [
         "elite",
@@ -20,8 +20,16 @@
       "cost_bps": 5.0,
       "delay_trading_days": 1,
       "initial_capital": 1.0,
-      "rebalance_daily": true
-    }
+      "rebalance_daily": true,
+      "bands_short": [],
+      "short_bottom_quintile": false,
+      "top_k": 0,
+      "profile_name": "long_only_buy"
+    },
+    "sharpe_ci_lower": -1.4477776058493612,
+    "sharpe_ci_upper": 6.639205335681145,
+    "sortino_ci_lower": -1.302663069084442,
+    "sortino_ci_upper": 6.975950451370862
   },
   "run_meta": {
     "engine_version": "1.0.0",
@@ -34,22 +42,30 @@
       "cost_bps": 5.0,
       "delay_trading_days": 1,
       "initial_capital": 1.0,
-      "rebalance_daily": true
+      "rebalance_daily": true,
+      "bands_short": [],
+      "short_bottom_quintile": false,
+      "top_k": 0,
+      "profile_name": "long_only_buy"
     },
-    "params_hash": "e1394416ebb4992c",
+    "params_hash": "49269b2e937d327d",
     "band_hash": "0744bd7a193e52f0",
-    "price_hash": "159215b821fec6be",
+    "price_hash": "439920e2623ef29b",
     "window": {
       "start": "2026-02-17",
-      "end": "2026-05-18",
-      "n_trading_days": 64
+      "end": "2026-05-19",
+      "n_trading_days": 65
     },
     "universe_size": 167,
     "long_set": [
       "constructive",
       "elite",
       "high_confidence"
-    ]
+    ],
+    "short_set": [],
+    "profile_name": "long_only_buy",
+    "top_k": 0,
+    "short_bottom_quintile": false
   },
   "n_positions": {
     "2026-02-17": 0.0,
@@ -115,7 +131,8 @@
     "2026-05-13": 9.0,
     "2026-05-14": 10.0,
     "2026-05-15": 11.0,
-    "2026-05-18": 0.0
+    "2026-05-18": 12.0,
+    "2026-05-19": 5.0
   },
   "turnover_per_day": {
     "2026-02-17": 0.0,
@@ -181,6 +198,7 @@
     "2026-05-13": 0.1,
     "2026-05-14": 0.1,
     "2026-05-15": 0.09090909090909091,
-    "2026-05-18": 1.0
+    "2026-05-18": 0.08333333333333333,
+    "2026-05-19": 0.5833333333333334
   }
 }
