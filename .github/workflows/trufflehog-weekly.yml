@@ -16,11 +16,15 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
       - name: Trufflehog scan
         id: scan
+        # trufflesecurity/trufflehog is intentionally left at @main —
+        # the action is actively curated by the vendor and pinning a
+        # SHA freezes the scanner ruleset. We accept that risk for
+        # secret-detection freshness. Revisit if upstream is hijacked.
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified --since-commit=HEAD~200
