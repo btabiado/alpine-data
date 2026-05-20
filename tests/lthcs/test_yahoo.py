@@ -3,6 +3,15 @@
 All tests mock ``yfinance.Ticker`` so no network traffic is generated.
 The module-level cache singleton is redirected to ``tmp_path`` via
 ``monkeypatch`` so each test starts with an empty cache.
+
+Mock boundary: we patch at the call site (``lthcs.sources.yahoo.yf.Ticker``)
+rather than the upstream ``yfinance.Ticker`` attribute. Patching the
+call site is the canonical "patch where it's used, not where it's
+defined" pattern (see unittest.mock docs) and is robust across yfinance
+versions / Python versions — patching the upstream attribute relies on
+the source module reading ``yfinance.Ticker`` via attribute lookup at
+call time, which has been observed to misbehave on some CI Python
+3.11/3.12 environments (tests would leak through to the live network).
 """
 
 from __future__ import annotations
@@ -18,6 +27,17 @@ import pytest
 from lthcs.sources import yahoo
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
+
+
+# ---------------------------------------------------------------------------
+# Mock boundary
+# ---------------------------------------------------------------------------
+
+# Patching at the call-site attribute on the source module — NOT at
+# ``yfinance.Ticker`` — guarantees the mock is what yahoo.py sees when it
+# does ``yf.Ticker(symbol)``. Defined once as a constant so every test
+# uses the same target string.
+_TICKER_PATCH_TARGET = "lthcs.sources.yahoo.yf.Ticker"
 
 
 # ---------------------------------------------------------------------------
@@ -44,6 +64,26 @@ def fast_bucket(monkeypatch: pytest.MonkeyPatch) -> TokenBucket:
     return bucket
 
 
+@pytest.fixture(autouse=True)
+def no_live_yfinance(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Belt-and-suspenders: replace ``yf.Ticker`` with a noisy stub.
+
+    Each test that needs price data installs its own ``patch(...)`` for
+    the same target, which takes precedence inside the ``with`` block.
+    Any test that forgets to mock the call (or accidentally reaches
+    yfinance through a code path we didn't anticipate) will fail loudly
+    with a clear message instead of silently issuing a network request.
+    """
+
+    def _boom(*args, **kwargs):  # pragma: no cover - safety net
+        raise RuntimeError(
+            "yfinance was called without a test mock — patch "
+            f"{_TICKER_PATCH_TARGET!r} inside the test."
+        )
+
+    monkeypatch.setattr(yahoo.yf, "Ticker", _boom)
+
+
 def _make_df(closes: List[float], *, start: str = "2026-01-02") -> pd.DataFrame:
     """Build a synthetic OHLCV dataframe with the requested close series.
 
@@ -68,8 +108,27 @@ def _make_df(closes: List[float], *, start: str = "2026-01-02") -> pd.DataFrame:
     return df
 
 
+@pytest.fixture
+def canonical_ohlcv_df() -> pd.DataFrame:
+    """Three-row OHLCV DataFrame for tests that just need a small sample.
+
+    Tests that care about specific prices/dates should still build their
+    own DataFrame; this fixture is for the common case of "I just need
+    yfinance to return something deterministic so I can exercise the
+    cache or the symbol-fallback logic".
+    """
+    return _make_df([100.0, 101.0, 102.0])
+
+
 def _patch_ticker(df: pd.DataFrame) -> MagicMock:
-    """Return a configured ``patch`` context for ``yfinance.Ticker``."""
+    """Build a ``MagicMock`` configured to look like ``yfinance.Ticker``.
+
+    The returned mock is meant to be passed as the second arg to
+    ``patch(_TICKER_PATCH_TARGET, ...)``. Calling it (``Mock(symbol)``)
+    returns ``mock.return_value`` whose ``.history(period=...)`` returns
+    ``df`` — mirroring the real ``yfinance.Ticker(symbol).history(...)``
+    surface that ``yahoo._fetch_prices_from_yahoo`` consumes.
+    """
     mock_ticker = MagicMock()
     mock_ticker.return_value.history.return_value = df
     return mock_ticker
@@ -94,7 +153,7 @@ def test_get_daily_prices_shape() -> None:
     )
     df.index.name = "Date"
 
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         rows = yahoo.get_daily_prices("AAPL", period="5d")
 
     assert len(rows) == 3
@@ -119,7 +178,7 @@ def test_get_daily_prices_empty_dataframe_returns_empty_list() -> None:
     empty = pd.DataFrame(
         columns=["Open", "High", "Low", "Close", "Adj Close", "Volume"]
     )
-    with patch("yfinance.Ticker", _patch_ticker(empty)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(empty)):
         rows = yahoo.get_daily_prices("ZZZZ", period="5d")
     assert rows == []
 
@@ -137,7 +196,7 @@ def test_get_daily_prices_falls_back_when_adj_close_missing() -> None:
         index=pd.to_datetime(["2026-05-16"]),
     )
     df.index.name = "Date"
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         rows = yahoo.get_daily_prices("AAPL", period="1d")
     assert rows[0]["adj_close"] == 10.5  # mirrors close
 
@@ -147,11 +206,11 @@ def test_get_daily_prices_falls_back_when_adj_close_missing() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_cache_hit_avoids_second_yfinance_call() -> None:
-    df = _make_df([100.0, 101.0, 102.0])
-
-    mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+def test_cache_hit_avoids_second_yfinance_call(
+    canonical_ohlcv_df: pd.DataFrame,
+) -> None:
+    mock_ticker = _patch_ticker(canonical_ohlcv_df)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         first = yahoo.get_daily_prices("AAPL", period="5d")
         second = yahoo.get_daily_prices("AAPL", period="5d")
 
@@ -166,7 +225,7 @@ def test_cache_miss_after_ttl_refetches(
     df = _make_df([100.0, 101.0])
     mock_ticker = _patch_ticker(df)
 
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         yahoo.get_daily_prices("AAPL", period="5d")
         assert mock_ticker.call_count == 1
 
@@ -183,7 +242,7 @@ def test_cache_miss_after_ttl_refetches(
 def test_different_periods_cached_separately() -> None:
     df = _make_df([100.0, 101.0])
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         yahoo.get_daily_prices("AAPL", period="5d")
         yahoo.get_daily_prices("AAPL", period="1mo")
     assert mock_ticker.call_count == 2
@@ -208,7 +267,7 @@ def test_get_volatility_matches_hand_computed() -> None:
         closes.append(closes[-1] * (1.0 + r))
 
     df = _make_df(closes)
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         vol = yahoo.get_volatility("AAPL", window=4)
 
     expected_daily_std = math.sqrt(0.0004 / 3.0)
@@ -219,7 +278,7 @@ def test_get_volatility_matches_hand_computed() -> None:
 def test_get_volatility_insufficient_data_returns_none() -> None:
     # window=30 requires 31 closes; provide only 5.
     df = _make_df([100.0, 101.0, 102.0, 103.0, 104.0])
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         assert yahoo.get_volatility("AAPL", window=30) is None
 
 
@@ -237,7 +296,7 @@ def test_get_volatility_uses_only_trailing_window() -> None:
     closes = wild + last5[1:]  # 100 closes
 
     df = _make_df(closes)
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         vol = yahoo.get_volatility("AAPL", window=4)
 
     expected = math.sqrt(0.0004 / 3.0) * math.sqrt(252)
@@ -253,7 +312,7 @@ def test_get_momentum_pct_matches_hand_computed() -> None:
     # days=3 means compare last close to close 3 bars back.
     # Closes: 100, 110, 120, 130 -> momentum = 130/100 - 1 = 0.30
     df = _make_df([100.0, 110.0, 120.0, 130.0])
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         m = yahoo.get_momentum_pct("AAPL", days=3)
     assert m == pytest.approx(0.30, rel=1e-12)
 
@@ -261,7 +320,7 @@ def test_get_momentum_pct_matches_hand_computed() -> None:
 def test_get_momentum_pct_negative() -> None:
     # 100 -> 80 over 1 bar => -20%.
     df = _make_df([100.0, 80.0])
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         m = yahoo.get_momentum_pct("AAPL", days=1)
     assert m == pytest.approx(-0.20, rel=1e-12)
 
@@ -269,7 +328,7 @@ def test_get_momentum_pct_negative() -> None:
 def test_get_momentum_pct_insufficient_data_returns_none() -> None:
     # days=90 requires 91 closes; provide only 10.
     df = _make_df([100.0 + i for i in range(10)])
-    with patch("yfinance.Ticker", _patch_ticker(df)):
+    with patch(_TICKER_PATCH_TARGET, _patch_ticker(df)):
         assert yahoo.get_momentum_pct("AAPL", days=90) is None
 
 
@@ -278,7 +337,7 @@ def test_momentum_and_volatility_share_cached_prices() -> None:
     closes = [100.0 + i * 0.5 for i in range(31)]
     df = _make_df(closes)
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         v = yahoo.get_volatility("AAPL", window=30)
         m = yahoo.get_momentum_pct("AAPL", days=10)
     assert v is not None
@@ -292,10 +351,11 @@ def test_momentum_and_volatility_share_cached_prices() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_as_of_none_preserves_existing_behavior() -> None:
-    df = _make_df([100.0, 101.0, 102.0])
-    mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+def test_as_of_none_preserves_existing_behavior(
+    canonical_ohlcv_df: pd.DataFrame,
+) -> None:
+    mock_ticker = _patch_ticker(canonical_ohlcv_df)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         baseline = yahoo.get_daily_prices("AAPL", period="5d")
         explicit_none = yahoo.get_daily_prices("AAPL", period="5d", as_of=None)
     assert baseline == explicit_none
@@ -307,7 +367,7 @@ def test_as_of_slices_dataframe_to_historical_date() -> None:
     # 10 business days starting 2026-04-13 -> spans 2026-04-13 .. 2026-04-24.
     df = _make_df([100.0 + i for i in range(10)], start="2026-04-13")
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("AAPL", as_of="2026-04-15")
     assert len(rows) > 0
     # Every returned row's date must be <= the as_of cutoff.
@@ -321,7 +381,7 @@ def test_as_of_weekend_falls_back_to_prior_trading_day() -> None:
     # 2026-04-18 is a Saturday. bdate_range starts 2026-04-13 (Mon).
     df = _make_df([100.0 + i for i in range(10)], start="2026-04-13")
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("AAPL", as_of="2026-04-18")
     assert len(rows) > 0
     # Friday 2026-04-17 should be the last entry (Sat/Sun are not trading days).
@@ -331,7 +391,7 @@ def test_as_of_weekend_falls_back_to_prior_trading_day() -> None:
 def test_as_of_before_any_data_returns_empty_list() -> None:
     df = _make_df([100.0, 101.0, 102.0], start="2026-04-13")
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("AAPL", as_of="2020-01-01")
     assert rows == []
 
@@ -341,7 +401,7 @@ def test_as_of_cache_key_differs_from_default() -> None:
     # historical as_of — must NOT collide in the cache.
     df = _make_df([100.0 + i for i in range(20)], start="2026-04-01")
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows_today = yahoo.get_daily_prices("AAPL", period="5d")
         rows_hist = yahoo.get_daily_prices("AAPL", period="5d", as_of="2026-04-15")
     # Two distinct upstream fetches (different cache keys).
@@ -354,7 +414,7 @@ def test_as_of_cache_key_differs_from_default() -> None:
 def test_as_of_different_values_dont_collide() -> None:
     df = _make_df([100.0 + i for i in range(30)], start="2026-04-01")
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         a = yahoo.get_daily_prices("AAPL", as_of="2026-04-10")
         b = yahoo.get_daily_prices("AAPL", as_of="2026-04-20")
     assert a != b
@@ -383,7 +443,7 @@ def test_get_volatility_with_as_of_uses_window_ending_at_date() -> None:
     target_date = idx[43].strftime("%Y-%m-%d")
 
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         vol = yahoo.get_volatility("AAPL", window=4, as_of=target_date)
 
     expected = math.sqrt(0.0004 / 3.0) * math.sqrt(252)
@@ -399,16 +459,17 @@ def test_get_momentum_pct_with_as_of_measures_to_historical_date() -> None:
     target_date = idx[10].strftime("%Y-%m-%d")
 
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         m = yahoo.get_momentum_pct("AAPL", days=3, as_of=target_date)
     # closes[10] = 110; closes[7] = 107; momentum = 110/107 - 1.
     assert m == pytest.approx(110.0 / 107.0 - 1.0, rel=1e-12)
 
 
-def test_as_of_invalid_string_silently_falls_back_to_today() -> None:
-    df = _make_df([100.0, 101.0, 102.0])
-    mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+def test_as_of_invalid_string_silently_falls_back_to_today(
+    canonical_ohlcv_df: pd.DataFrame,
+) -> None:
+    mock_ticker = _patch_ticker(canonical_ohlcv_df)
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         baseline = yahoo.get_daily_prices("AAPL", period="5d")
         garbage = yahoo.get_daily_prices("AAPL", period="5d", as_of="not-a-date")
     # Garbage as_of degrades to today -> same result, same cache entry.
@@ -443,7 +504,7 @@ def test_dot_ticker_falls_back_to_hyphen_variant() -> None:
         return instance
 
     mock_ticker = MagicMock(side_effect=_ticker_factory)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("BRK.B", period="1mo")
 
     # Hyphen variant supplied 3 rows.
@@ -457,7 +518,7 @@ def test_non_dot_ticker_does_not_attempt_fallback() -> None:
     """A plain ticker (no ``.``) should only ever call yfinance once."""
     df = _make_df([100.0, 101.0])
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("AAPL", period="5d")
     assert len(rows) == 2
     assert mock_ticker.call_count == 1
@@ -472,7 +533,7 @@ def test_dot_ticker_both_variants_empty_returns_empty_list() -> None:
     )
     mock_ticker = MagicMock()
     mock_ticker.return_value.history.return_value = empty
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("BRK.B", period="1mo")
     assert rows == []
     # Both variants attempted before giving up.
@@ -484,7 +545,7 @@ def test_dot_ticker_primary_succeeds_no_fallback() -> None:
     """If the dot variant returns data we should not try the hyphen variant."""
     df = _make_df([100.0, 101.0])
     mock_ticker = _patch_ticker(df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo.get_daily_prices("BRK.B", period="1mo")
     assert len(rows) == 2
     # Only one upstream call -- the hyphen fallback never fired.

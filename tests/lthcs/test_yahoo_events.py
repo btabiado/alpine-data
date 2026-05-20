@@ -3,6 +3,15 @@
 All tests mock ``yfinance.Ticker`` so no network traffic is generated.
 The module-level cache + rate limiter are redirected to ``tmp_path`` /
 a generously-sized bucket via ``monkeypatch`` so each test starts fresh.
+
+Mock boundary: we patch at the call site (``lthcs.sources.yahoo_events.yf.Ticker``)
+rather than the upstream ``yfinance.Ticker`` attribute. Patching the
+call site is the canonical "patch where it's used, not where it's
+defined" pattern (see unittest.mock docs) and is robust across yfinance
+versions / Python versions — patching the upstream attribute relies on
+the source module reading ``yfinance.Ticker`` via attribute lookup at
+call time, which has been observed to misbehave on some CI Python
+3.11/3.12 environments (tests would leak through to the live network).
 """
 
 from __future__ import annotations
@@ -18,6 +27,17 @@ import pytest
 from lthcs.sources import yahoo_events
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
+
+
+# ---------------------------------------------------------------------------
+# Mock boundary
+# ---------------------------------------------------------------------------
+
+# Patching at the call-site attribute on the source module — NOT at
+# ``yfinance.Ticker`` — guarantees the mock is what yahoo_events.py sees
+# when it does ``yf.Ticker(symbol)``. Defined once as a constant so every
+# test uses the same target string.
+_TICKER_PATCH_TARGET = "lthcs.sources.yahoo_events.yf.Ticker"
 
 
 # ---------------------------------------------------------------------------
@@ -42,6 +62,26 @@ def fast_bucket(monkeypatch: pytest.MonkeyPatch) -> None:
         "_BUCKET",
         TokenBucket(capacity=1_000_000, refill_rate=1_000_000),
     )
+
+
+@pytest.fixture(autouse=True)
+def no_live_yfinance(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Belt-and-suspenders: replace ``yf.Ticker`` with a noisy stub.
+
+    Each test that needs Yahoo data installs its own ``patch(...)`` for
+    the same target, which takes precedence inside the ``with`` block.
+    Any test that forgets to mock the call (or accidentally reaches
+    yfinance through a code path we didn't anticipate) will fail loudly
+    with a clear message instead of silently issuing a network request.
+    """
+
+    def _boom(*args, **kwargs):  # pragma: no cover - safety net
+        raise RuntimeError(
+            "yfinance was called without a test mock — patch "
+            f"{_TICKER_PATCH_TARGET!r} inside the test."
+        )
+
+    monkeypatch.setattr(yahoo_events.yf, "Ticker", _boom)
 
 
 def _today_iso() -> str:
@@ -84,7 +124,7 @@ def test_get_earnings_dates_parses_dataframe() -> None:
         ]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", limit=4)
 
     assert len(rows) == 3
@@ -109,7 +149,7 @@ def test_get_earnings_dates_computes_surprise_pct_when_missing() -> None:
         index=pd.to_datetime([_days_ago(5)]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("MSFT", limit=4)
     assert len(rows) == 1
     # (2.30 - 2.00) / 2.00 * 100 = 15.0
@@ -126,7 +166,7 @@ def test_get_earnings_dates_flags_is_future() -> None:
         index=pd.to_datetime([_days_ago(60), _days_ahead(10)]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL")
     by_date = {r["date"]: r for r in rows}
     assert by_date[_days_ago(60)]["is_future"] is False
@@ -144,7 +184,7 @@ def test_get_earnings_dates_limit_is_honored() -> None:
         index=pd.to_datetime(dates),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", limit=3)
     assert len(rows) == 3
     # Newest-first ordering after limit.
@@ -153,7 +193,7 @@ def test_get_earnings_dates_limit_is_honored() -> None:
 
 def test_get_earnings_dates_yfinance_exception_returns_empty() -> None:
     mock_ticker = MagicMock(side_effect=RuntimeError("network down"))
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("BOOM")
     assert rows == []
 
@@ -163,14 +203,14 @@ def test_get_earnings_dates_empty_dataframe() -> None:
         columns=["EPS Estimate", "Reported EPS", "Surprise(%)"]
     )
     mock_ticker = _patch_with("earnings_dates", empty)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("ZZZZ")
     assert rows == []
 
 
 def test_get_earnings_dates_handles_none_attribute() -> None:
     mock_ticker = _patch_with("earnings_dates", None)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("ZZZZ")
     assert rows == []
 
@@ -185,7 +225,7 @@ def test_get_earnings_dates_cache_hit_avoids_second_call() -> None:
         index=pd.to_datetime([_days_ago(10)]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         first = yahoo_events.get_earnings_dates("AAPL", limit=4)
         second = yahoo_events.get_earnings_dates("AAPL", limit=4)
     assert first == second
@@ -229,7 +269,7 @@ def test_get_analyst_actions_parses_recommendations() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions("AAPL", days=90)
 
     assert len(rows) == 3
@@ -259,7 +299,7 @@ def test_get_analyst_actions_filters_to_window() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions("AAPL", days=90)
     assert len(rows) == 1
     assert rows[0]["firm"] == "Recent"
@@ -297,7 +337,7 @@ def test_get_analyst_actions_maps_action_text_to_direction() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions("AAPL", days=90)
     by_firm = {r["firm"]: r for r in rows}
     assert by_firm["F1"]["direction"] == pytest.approx(0.5)
@@ -309,14 +349,14 @@ def test_get_analyst_actions_maps_action_text_to_direction() -> None:
 def test_get_analyst_actions_empty_dataframe() -> None:
     empty = pd.DataFrame(columns=["Firm", "To Grade", "From Grade", "Action"])
     mock_ticker = _patch_with("recommendations", empty)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions("AAPL")
     assert rows == []
 
 
 def test_get_analyst_actions_yfinance_exception_returns_empty() -> None:
     mock_ticker = MagicMock(side_effect=Exception("yf broke"))
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions("BOOM")
     assert rows == []
 
@@ -332,7 +372,7 @@ def test_get_analyst_actions_cache_hit_avoids_second_call() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         first = yahoo_events.get_analyst_actions("AAPL", days=90)
         second = yahoo_events.get_analyst_actions("AAPL", days=90)
     assert first == second
@@ -360,7 +400,7 @@ def test_get_recommendation_summary_computes_consensus() -> None:
         ]
     )
     mock_ticker = _patch_with("recommendations_summary", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         summary = yahoo_events.get_recommendation_summary("AAPL")
     assert summary["strong_buy"] == 12
     assert summary["buy"] == 18
@@ -382,7 +422,7 @@ def test_get_recommendation_summary_picks_current_period() -> None:
         ]
     )
     mock_ticker = _patch_with("recommendations_summary", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         summary = yahoo_events.get_recommendation_summary("AAPL")
     # The "0m" row (current month) should be selected, not the older ones.
     assert summary["total_analysts"] == 20
@@ -395,7 +435,7 @@ def test_get_recommendation_summary_no_analysts_returns_none_score() -> None:
         [{"strongBuy": 0, "buy": 0, "hold": 0, "sell": 0, "strongSell": 0, "period": "0m"}]
     )
     mock_ticker = _patch_with("recommendations_summary", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         summary = yahoo_events.get_recommendation_summary("AAPL")
     assert summary["total_analysts"] == 0
     assert summary["consensus_score"] is None
@@ -403,7 +443,7 @@ def test_get_recommendation_summary_no_analysts_returns_none_score() -> None:
 
 def test_get_recommendation_summary_yfinance_exception_returns_empty() -> None:
     mock_ticker = MagicMock(side_effect=Exception("yf broke"))
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         summary = yahoo_events.get_recommendation_summary("BOOM")
     assert summary == {}
 
@@ -411,7 +451,7 @@ def test_get_recommendation_summary_yfinance_exception_returns_empty() -> None:
 def test_get_recommendation_summary_empty_dataframe() -> None:
     empty = pd.DataFrame(columns=["strongBuy", "buy", "hold", "sell", "strongSell"])
     mock_ticker = _patch_with("recommendations_summary", empty)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         summary = yahoo_events.get_recommendation_summary("AAPL")
     assert summary == {}
 
@@ -693,7 +733,7 @@ def test_get_earnings_dates_as_of_none_preserves_existing_behavior() -> None:
         ]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         baseline = yahoo_events.get_earnings_dates("AAPL", limit=4)
         explicit_none = yahoo_events.get_earnings_dates("AAPL", limit=4, as_of=None)
     assert baseline == explicit_none
@@ -714,7 +754,7 @@ def test_get_earnings_dates_as_of_filters_to_dates_on_or_before_cutoff() -> None
         ]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", limit=4, as_of="2025-08-01")
     # Only earnings on or before 2025-08-01 should remain (drops Jan 2026
     # + Oct 2025).
@@ -735,7 +775,7 @@ def test_get_earnings_dates_as_of_limit_respected() -> None:
         ]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", limit=2, as_of="2025-09-01")
     # 4 candidates <= 2025-09-01; limit=2 -> the 2 newest.
     assert len(rows) == 2
@@ -755,7 +795,7 @@ def test_get_earnings_dates_as_of_is_future_relative_to_as_of() -> None:
         index=pd.to_datetime(["2025-06-01", "2025-09-01"]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", as_of="2025-07-01")
     assert len(rows) == 1
     assert rows[0]["date"] == "2025-06-01"
@@ -772,7 +812,7 @@ def test_get_earnings_dates_as_of_cache_key_isolated() -> None:
         index=pd.to_datetime(["2025-04-01", "2025-08-01"]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         a = yahoo_events.get_earnings_dates("AAPL", as_of="2025-05-01")
         b = yahoo_events.get_earnings_dates("AAPL", as_of="2025-09-01")
         c = yahoo_events.get_earnings_dates("AAPL")  # today path
@@ -794,7 +834,7 @@ def test_get_earnings_dates_as_of_before_any_event_returns_empty() -> None:
         index=pd.to_datetime(["2025-08-01"]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", as_of="2020-01-01")
     assert rows == []
 
@@ -811,7 +851,7 @@ def test_get_earnings_dates_as_of_weekend_works() -> None:
     )
     mock_ticker = _patch_with("earnings_dates", df)
     # 2025-04-26 is a Saturday.
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_earnings_dates("AAPL", as_of="2025-04-26")
     assert {r["date"] for r in rows} == {"2025-04-25"}
 
@@ -826,7 +866,7 @@ def test_get_earnings_dates_as_of_invalid_falls_back_to_today() -> None:
         index=pd.to_datetime([_days_ago(10)]),
     )
     mock_ticker = _patch_with("earnings_dates", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         baseline = yahoo_events.get_earnings_dates("AAPL")
         garbage = yahoo_events.get_earnings_dates("AAPL", as_of="not-a-date")
     assert baseline == garbage
@@ -849,7 +889,7 @@ def test_get_analyst_actions_as_of_none_preserves_existing_behavior() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         baseline = yahoo_events.get_analyst_actions("AAPL", days=90)
         explicit_none = yahoo_events.get_analyst_actions(
             "AAPL", days=90, as_of=None
@@ -883,7 +923,7 @@ def test_get_analyst_actions_as_of_uses_window_relative_to_as_of() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         # Window: [2025-03-30, 2025-06-28] -> only the 2025-06-01 action qualifies.
         rows = yahoo_events.get_analyst_actions(
             "AAPL", days=90, as_of="2025-06-28"
@@ -912,7 +952,7 @@ def test_get_analyst_actions_as_of_drops_post_asof_rows() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions(
             "AAPL", days=180, as_of="2025-07-15"
         )
@@ -930,7 +970,7 @@ def test_get_analyst_actions_as_of_cache_key_isolated() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         a = yahoo_events.get_analyst_actions("AAPL", as_of="2025-05-15")
         b = yahoo_events.get_analyst_actions("AAPL", as_of="2025-06-15")
         c = yahoo_events.get_analyst_actions("AAPL")
@@ -956,7 +996,7 @@ def test_get_analyst_actions_as_of_before_data_returns_empty() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         rows = yahoo_events.get_analyst_actions(
             "AAPL", days=90, as_of="2020-01-01"
         )
@@ -974,7 +1014,7 @@ def test_get_analyst_actions_as_of_invalid_falls_back_to_today() -> None:
         },
     ])
     mock_ticker = _patch_with("recommendations", df)
-    with patch("yfinance.Ticker", mock_ticker):
+    with patch(_TICKER_PATCH_TARGET, mock_ticker):
         baseline = yahoo_events.get_analyst_actions("AAPL", days=90)
         garbage = yahoo_events.get_analyst_actions(
             "AAPL", days=90, as_of="garbage"
