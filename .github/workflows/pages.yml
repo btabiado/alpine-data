@@ -313,6 +313,48 @@ jobs:
             mkdir -p _site/lthcs/lthcs_tab
             cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
           fi
+          # Stage the LTHCS snapshot-diff page under /lthcs/diff/. Source
+          # at lthcs_diff/; reuses ../lthcs_tab/lthcs.css for tokens + reads
+          # ../data/lthcs/snapshots/<date>.json for the per-day deltas.
+          # Phase 5 BETA route.
+          if [ -f lthcs_diff/index.html ]; then
+            mkdir -p _site/lthcs/diff
+            cp -R lthcs_diff/* _site/lthcs/diff/
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
+          # Stage the LTHCS history search page under /lthcs/history/. Source
+          # at lthcs_history/; reuses ../lthcs_tab/lthcs.css for tokens +
+          # reads ../data/lthcs/history/by_ticker/<TKR>.json client-side.
+          # Phase 5 ZETA route.
+          if [ -f lthcs_history/index.html ]; then
+            mkdir -p _site/lthcs/history
+            cp -R lthcs_history/* _site/lthcs/history/
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
+          # Stage the LTHCS per-pillar leaderboards under /lthcs/leaderboards/.
+          # Source at lthcs_leaderboards/; reuses ../lthcs_tab/lthcs.css + the
+          # sparkline helper from ../lthcs_tab/lthcs-sparkline.js + reads
+          # ../data/lthcs/public/latest_snapshot.json. Phase 5 EPSILON route.
+          if [ -f lthcs_leaderboards/index.html ]; then
+            mkdir -p _site/lthcs/leaderboards
+            cp -R lthcs_leaderboards/* _site/lthcs/leaderboards/
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+            if [ -d data/lthcs ]; then
+              mkdir -p _site/lthcs/data
+              cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
