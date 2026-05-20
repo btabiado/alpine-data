@@ -2202,3 +2202,532 @@ input[type="search"] {
     transition: none;
   }
 }
+
+/* =========================================================================
+   Phase 4 — Custom watchlists
+   Chip row sits in the same .lthcs-controls section as Drift; modal reuses
+   the .lthcs-modal-root family (so backdrop + max-height behave consistently
+   with the detail modal).
+   ========================================================================= */
+
+.lthcs-watchlist-chip-group {
+  /* Wraps like the drift chip group, plus a slight pad-left so the row
+     visually breathes from the "Watchlists" label on mobile. */
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lthcs-watchlist-chip {
+  /* Tighter horizontal padding than drift chips because the count badge
+     adds visual weight on the right. */
+  padding: 6px 10px;
+}
+
+.lthcs-watchlist-chip-name {
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lthcs-watchlist-chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  margin-left: 4px;
+  background: var(--bg-page);
+  color: var(--text-tertiary);
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.lthcs-watchlist-chip.is-active .lthcs-watchlist-chip-count {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.lthcs-watchlist-manage {
+  /* Slightly muted vs. real watchlist chips so it reads as an action, not a filter. */
+  color: var(--text-tertiary);
+  border-style: dashed;
+  gap: 4px;
+}
+
+.lthcs-watchlist-manage:hover {
+  color: var(--text-primary);
+  border-style: solid;
+}
+
+/* Warning banner (active list all-invalid against the universe). */
+.lthcs-watchlist-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: rgba(216, 145, 72, 0.08);  /* monitor-bright bg tint */
+  border: 1px solid rgba(216, 145, 72, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.lthcs-watchlist-warning.hidden {
+  display: none;
+}
+
+.lthcs-watchlist-warning-text strong {
+  color: var(--text-primary);
+}
+
+.lthcs-watchlist-warning-undo {
+  margin-left: auto;
+  padding: 6px 12px;
+  min-height: 36px;
+  background: var(--bg-chip);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.lthcs-watchlist-warning-undo:hover {
+  background: var(--bg-chip-active);
+}
+
+/* ----- Manage modal ----- */
+/* The modal root inherits .lthcs-modal-root layout from lthcs-detail.css,
+   but lthcs-detail.css ships separately. To avoid coupling, repeat the
+   essential layout rules under the watchlist-specific class. */
+.lthcs-watchlist-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: var(--text-primary);
+}
+
+.lthcs-watchlist-modal.hidden {
+  display: none !important;
+}
+
+.lthcs-watchlist-modal .lthcs-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.lthcs-watchlist-panel {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--border-subtle);
+  padding: 20px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.lthcs-watchlist-modal .lthcs-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lthcs-watchlist-modal .lthcs-modal-title-block .lthcs-modal-ticker {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  margin: 0;
+}
+
+.lthcs-watchlist-modal .lthcs-modal-title-block .lthcs-modal-company {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 4px 0 0;
+}
+
+.lthcs-watchlist-modal .lthcs-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lthcs-watchlist-modal .lthcs-modal-close:hover,
+.lthcs-watchlist-modal .lthcs-modal-close:focus-visible {
+  background: var(--bg-chip-active);
+  color: var(--text-primary);
+}
+
+.lthcs-watchlist-body {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.lthcs-watchlist-list-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lthcs-watchlist-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  padding: 6px;
+}
+
+.lthcs-watchlist-row {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.lthcs-watchlist-row-select {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  min-height: 36px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.lthcs-watchlist-row-select:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.lthcs-watchlist-row.is-selected .lthcs-watchlist-row-select {
+  background: var(--bg-chip-active);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.lthcs-watchlist-row-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lthcs-watchlist-row-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lthcs-watchlist-row-delete {
+  flex-shrink: 0;
+  width: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-tertiary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lthcs-watchlist-row-delete:hover {
+  background: rgba(184, 90, 62, 0.15);
+  color: var(--text-primary);
+  border-color: rgba(184, 90, 62, 0.4);
+}
+
+.lthcs-watchlist-row-empty {
+  padding: 12px 8px;
+  color: var(--text-tertiary);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+.lthcs-watchlist-new {
+  display: flex;
+  gap: 6px;
+}
+
+.lthcs-watchlist-new-input {
+  flex: 1 1 auto;
+  padding: 8px 10px;
+  min-height: 36px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.lthcs-watchlist-new-input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+.lthcs-watchlist-new-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lthcs-watchlist-new-btn {
+  padding: 0 14px;
+  min-height: 36px;
+  background: var(--bg-chip);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.lthcs-watchlist-new-btn:hover:not(:disabled) {
+  background: var(--bg-chip-active);
+}
+
+.lthcs-watchlist-new-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Right pane — editor for the selected watchlist. */
+.lthcs-watchlist-edit-pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.lthcs-watchlist-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lthcs-watchlist-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lthcs-watchlist-editor-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+}
+
+.lthcs-watchlist-rename-input {
+  flex: 1 1 100%;
+  padding: 8px 10px;
+  min-height: 36px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.lthcs-watchlist-rename-input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+.lthcs-watchlist-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 13px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.lthcs-watchlist-textarea:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+
+.lthcs-watchlist-validity-row {
+  display: flex;
+  gap: 8px;
+}
+
+.lthcs-watchlist-validity {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.lthcs-watchlist-validity.is-ok {
+  background: rgba(74, 143, 95, 0.15);
+  color: #79c993;
+}
+
+.lthcs-watchlist-validity.is-warn {
+  background: rgba(216, 145, 72, 0.15);
+  color: #e0a767;
+  cursor: help;
+}
+
+.lthcs-watchlist-invalid-list {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  line-height: 1.5;
+  padding: 6px 8px;
+  background: rgba(216, 145, 72, 0.05);
+  border-left: 2px solid rgba(216, 145, 72, 0.4);
+  border-radius: 0 4px 4px 0;
+  word-break: break-word;
+}
+
+.lthcs-watchlist-editor-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 160px;
+  padding: 24px;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  text-align: center;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+/* Footer (Cancel / Save). */
+.lthcs-watchlist-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.lthcs-watchlist-cancel,
+.lthcs-watchlist-save {
+  padding: 8px 16px;
+  min-height: 40px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.lthcs-watchlist-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+}
+
+.lthcs-watchlist-cancel:hover {
+  background: var(--bg-chip);
+  color: var(--text-primary);
+}
+
+.lthcs-watchlist-save {
+  background: var(--bg-chip-active);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+}
+
+.lthcs-watchlist-save:hover:not(:disabled) {
+  background: var(--border-strong);
+}
+
+.lthcs-watchlist-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Mobile: stack list / editor vertically; chip row is already wrap-friendly. */
+@media (max-width: 640px) {
+  .lthcs-watchlist-modal {
+    padding: 12px;
+  }
+  .lthcs-watchlist-panel {
+    padding: 16px;
+    gap: 12px;
+    max-height: calc(100dvh - 24px);
+  }
+  .lthcs-watchlist-body {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .lthcs-watchlist-list {
+    max-height: 160px;
+  }
+  .lthcs-watchlist-textarea {
+    min-height: 140px;
+  }
+  .lthcs-watchlist-chip-name {
+    max-width: 10ch;
+  }
+  .lthcs-watchlist-footer {
+    flex-direction: column-reverse;
+  }
+  .lthcs-watchlist-cancel,
+  .lthcs-watchlist-save {
+    width: 100%;
+  }
+}
+

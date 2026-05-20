@@ -227,6 +227,20 @@
           </div>
         </div>
 
+        <!--
+          Phase 4: Custom watchlists. Chip row sits below the Drift row so the
+          existing index/band/drift controls keep their default visual prominence,
+          but watchlists still compose with them (intersection — see
+          applyFilters in lthcs-tab.js).
+        -->
+        <div class="lthcs-filter-row lthcs-filter-row-watchlist" role="group" aria-label="Watchlists filter">
+          <span class="lthcs-filter-label">Watchlists</span>
+          <div id="lthcs-watchlist-chips" class="lthcs-chip-group lthcs-watchlist-chip-group" aria-live="polite"></div>
+        </div>
+
+        <!-- One-line warning + undo when active watchlist's tickers are all outside the universe. -->
+        <div id="lthcs-watchlist-warning" class="lthcs-watchlist-warning hidden" role="status" aria-live="polite"></div>
+
         <div class="lthcs-results-summary" id="lthcs-results-summary" aria-live="polite"></div>
       </section>
 
@@ -268,5 +282,8 @@
 
     <!-- Week 9 (detail modal) root — populated by lthcs-detail.js -->
     <div id="lthcs-modal-root" class="lthcs-modal-root hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
+
+    <!-- Phase 4: Watchlist Manage modal root — populated by lthcs-watchlists.js -->
+    <div id="lthcs-watchlist-modal" class="lthcs-modal-root lthcs-watchlist-modal hidden" role="dialog" aria-modal="true" aria-label="Manage watchlists" aria-hidden="true"></div>
   </body>
 </html>

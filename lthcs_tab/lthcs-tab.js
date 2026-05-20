@@ -16,6 +16,15 @@ import { renderRegimeStrip } from './lthcs-regime.js';
 import { renderMoversStrip } from './lthcs-movers.js';
 // --- end Tier 4 #18 hookup ---
 
+// --- Phase 4 (custom watchlists) hookup ---
+import {
+  initWatchlists,
+  getActiveTickerSet,
+  getActiveName,
+  activeIsEmpty,
+} from './lthcs-watchlists.js';
+// --- end Phase 4 hookup ---
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -158,6 +167,10 @@ const INDEX_DISPLAY = {
   'djia': 'DOW 30',
   'nasdaq-100': 'NASDAQ-100',
 };
+
+// Phase 4: handle returned by initWatchlists() so we can re-warm the universe
+// + re-run the stale-watchlist warning after data loads. Null until init runs.
+let watchlistsCtl = null;
 
 // ---------------------------------------------------------------------------
 // DOM helpers
@@ -473,6 +486,12 @@ function enrichScores(snapshot, universeByTicker) {
 function applyFilters() {
   const q = state.searchQuery.trim().toLowerCase();
   const { index, band, drift } = state.activeFilters;
+  // Phase 4: optional watchlist filter — when a watchlist chip is active,
+  // restrict to its ticker set. Intersection with the existing band / drift
+  // / index filters (so e.g. "watchlist X ∩ Elite" works). A watchlist with
+  // zero tickers yields an empty result here, and the empty-state CTA
+  // points the user at the Manage panel.
+  const watchSet = getActiveTickerSet ? getActiveTickerSet() : null;
   const filtered = state.enriched.filter((row) => {
     // Variant C: `index` always narrows to a single index (sp-100 / djia
     // / nasdaq-100). The legacy `all` value is still tolerated so any
@@ -480,6 +499,7 @@ function applyFilters() {
     if (index && index !== 'all' && !row.indices.includes(index)) return false;
     if (band !== 'all' && row.uiBand !== band) return false;
     if (drift !== 'all' && row.driftDirection !== drift) return false;
+    if (watchSet && !watchSet.has(row.ticker)) return false;
     if (q) {
       const t = (row.ticker || '').toLowerCase();
       const n = (row.name || '').toLowerCase();
@@ -684,6 +704,12 @@ function renderCards(filtered) {
 // user can act. e.g. "Filters: S&P 100 · Elite · Search 'xyz'". Falls back
 // to a generic string if everything is at default.
 function describeEmptyState() {
+  // Phase 4: if an empty watchlist is active, the most actionable hint is
+  // "Add tickers via Manage" — surface that ahead of the filter breadcrumb.
+  const activeWatch = getActiveName ? getActiveName() : null;
+  if (activeWatch && activeIsEmpty && activeIsEmpty()) {
+    return `Add tickers to "${activeWatch}" from the Manage panel.`;
+  }
   const parts = [];
   const idx = state.activeFilters.index;
   if (idx && INDEX_DISPLAY[idx]) parts.push(INDEX_DISPLAY[idx]);
@@ -697,6 +723,7 @@ function describeEmptyState() {
     const label = (FILTER_VALUE_LABELS.drift && FILTER_VALUE_LABELS.drift[drift]) || drift;
     parts.push(label);
   }
+  if (activeWatch) parts.push(`Watchlist "${activeWatch}"`);
   const q = (state.searchQuery || '').trim();
   if (q) parts.push(`search "${q}"`);
   if (!parts.length) return 'Try a different combination of filters.';
@@ -1300,6 +1327,13 @@ async function refresh() {
     renderMeta(snapshot);
     persistSnapshotDate(snapshot && snapshot.calc_date);
     hide($('#lthcs-loading'));
+    // Phase 4: now that universe is loaded, let the watchlists module
+    // re-validate the active list against the universe and warn if all
+    // tickers fell out of scope. Safe to call repeatedly.
+    if (watchlistsCtl && typeof watchlistsCtl.onUniverseReady === 'function') {
+      try { watchlistsCtl.onUniverseReady(); }
+      catch (e) { console.warn('LTHCS: watchlists universe refresh failed', e); }
+    }
     renderAll();
 
     // Week 11: side-load insider map + regime strip. Both are best-effort
@@ -1344,6 +1378,16 @@ async function init() {
   restoreFilterState();
   syncAllChips();
   wireEvents();
+  // Phase 4: initialize the watchlists module. onChange re-runs the full
+  // render pipe so chip toggles + Save apply immediately. getUniverseTickers
+  // is read lazily so the closure sees the latest state after refresh().
+  watchlistsCtl = initWatchlists({
+    onChange: () => renderAll(),
+    getUniverseTickers: () => {
+      const tickers = (state.universe && state.universe.tickers) || [];
+      return tickers.map((row) => (row && row.ticker) ? row.ticker : '').filter(Boolean);
+    },
+  });
   try {
     await refresh();
   } catch (err) {
