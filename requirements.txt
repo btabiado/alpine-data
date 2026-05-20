@@ -16,4 +16,8 @@ yfinance>=0.2.40
 # LTHCS Phase 1 (Week 3: Adoption pillar — Google Trends)
 pytrends>=4.9
 # LTHCS Phase 5 (Tier 5 #26: MCP server)
-mcp[cli]>=1.0
+# mcp[cli]>=1.0 requires Python >=3.10 — gate it so the production cron
+# workflows on Python 3.9 don't hard-fail at install time. The MCP server
+# itself only runs locally on demand (not in any cron path); install via
+# `pip install 'mcp[cli]>=1.0'` in a Python-3.10+ venv when needed.
+mcp[cli]>=1.0; python_version >= "3.10"
