@@ -1,0 +1,35 @@
+name: trufflehog-weekly
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"   # Sunday 03:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trufflehog-weekly-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Trufflehog scan
+        id: scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified --since-commit=HEAD~200
+      - name: Summarize result
+        if: always()
+        run: |
+          if [ "${{ steps.scan.outcome }}" = "success" ]; then
+            echo "Trufflehog: no verified secrets found" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Trufflehog: verified secret(s) found - see scan step" >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
