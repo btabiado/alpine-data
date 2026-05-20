@@ -1582,13 +1582,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div class="row" id="overviewSignals" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))"></div>
 
-    <!-- Strong Buys: up to 5 STRONG BUY signals from the top-50 strip.
-         Hidden when none exist. Cards click through to the signal detail
-         modal (same one the Signals-tab strip uses). -->
+    <!-- Strong Buy / Buy signals: up to 5 STRONG BUY or BUY signals from
+         the top-50 strip, sorted by score descending so STRONG BUYs surface
+         first. Hidden when none exist. Cards click through to the signal
+         detail modal (same one the Signals-tab strip uses). -->
     <div id="overviewStrongBuysWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
       <div class="head">
-        <h2 style="margin:0;font-size:15px">🚀 Strong Buys <span class="tag">Top 50</span></h2>
-        <span class="desc">Up to 5 strongest signals from the top-50 by market cap · click any card for the full breakdown</span>
+        <h2 style="margin:0;font-size:15px">🚀 Strong Buy / Buy Signals <span class="tag">Top 50</span></h2>
+        <span class="desc">Up to 5 STRONG BUY + BUY signals from the top-50 by market cap · sorted by score · click any card for the full breakdown</span>
       </div>
       <div class="row" id="overviewStrongBuys" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))"></div>
     </div>
@@ -4322,19 +4323,14 @@ function renderLthcsNarrativePanel(host){
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:12px;font-size:10px">${legendCells}</div>
     </div>
 
-    <!-- STEP 2: What changed -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
-        <div style="width:30px;height:30px;border-radius:50%;background:${tone};color:#0b0d12;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">2</div>
-        <div>
-          <h3 style="font-size:15px;margin:0;color:var(--text)">What changed inside the number</h3>
-          <div style="font-size:11px;color:var(--muted);margin-top:1px">Which signals pushed the headline up or down today?</div>
-        </div>
+    <!-- STEP 2: What changed — grid layout so all 9 fit in 3 rows.
+         No outer step card on V1 (V1 is compact, no 4-step framing). -->
+    <div style="margin:0 0 12px 0">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <div style="font-size:13px;font-weight:700;color:var(--text);letter-spacing:.02em">WHAT CHANGED INSIDE THE NUMBER</div>
+        <div style="font-size:11px;color:var(--muted)">Green pushed up · red pushed down · hover <span style="border-bottom:1px dotted #a78bfa">underlined</span> for definition</div>
       </div>
-      <p style="margin:0 0 10px 0;color:var(--muted);font-size:12px;line-height:1.5">
-        The headline is an average of 9 underlying signals, each scaled to −30 to +30 for band lean (the heaviest weight) or ±10 for the others. Green = pushed today's number up, red = pushed it down. Hover any <span style="border-bottom:1px dotted #a78bfa">underlined term</span> for a plain-English definition.
-      </p>
-      ${compsHtml}
+      <div class="lthcs-nar-components" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">${compsHtml}</div>
     </div>
 
     <div class="sub" style="margin-top:8px;font-size:11px;color:var(--muted)">${escapeHtml(idx.note || 'Aggregate of LTHCS universe. Directional read, not a trading signal.')}</div>
@@ -6524,17 +6520,21 @@ function renderOverviewTop15(){
   );
 }
 
-// Up to 5 STRONG BUY signals pulled from the top-50 strip, surfaced
+// Up to 5 STRONG BUY + BUY signals pulled from the top-50 strip, surfaced
 // prominently on the Crypto Overview before the news row. Hides the
-// whole section when zero strong buys exist. Cards click through to
-// the same detail modal the Signals-tab strip uses (cache is shared).
+// whole section when zero qualifying signals exist. Sorted by score so
+// STRONG BUYs (>=50) appear first. Cards click through to the same
+// detail modal the Signals-tab strip uses (cache is shared).
 function renderOverviewStrongBuys(){
   const wrap = document.getElementById('overviewStrongBuysWrap');
   const host = document.getElementById('overviewStrongBuys');
   if (!wrap || !host) return;
   const isStable = s => { const u=(s||'').toUpperCase(); return /^USD/.test(u) || /USD$/.test(u) || u==='DAI'; };
+  const QUALIFYING = new Set(['STRONG BUY', 'BUY']);
   const strongs = (DATA.signals_top20 || [])
-    .filter(s => s && !isStable(s.symbol) && (s.label || '').toUpperCase() === 'STRONG BUY')
+    .filter(s => s && !isStable(s.symbol) && QUALIFYING.has((s.label || '').toUpperCase()))
+    .slice()
+    .sort((a, b) => (Number(b.score) || 0) - (Number(a.score) || 0))
     .slice(0, 5);
   if (!strongs.length){
     wrap.classList.add('hidden');

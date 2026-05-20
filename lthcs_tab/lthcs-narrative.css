@@ -132,6 +132,50 @@
   margin: 2px 0 0 0;
 }
 .lthcs-composite-index .lthcs-nar-step-body { font-size: 14px; line-height: 1.55; }
+
+/* Collapsed accordion variants for Steps 3 + 4 — closed by default, the
+   step head becomes the <summary> click target. */
+.lthcs-composite-index details.lthcs-nar-collapsed {
+  padding: 0;
+}
+.lthcs-composite-index details.lthcs-nar-collapsed > .lthcs-nar-step-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  margin: 0;
+  position: relative;
+  user-select: none;
+}
+.lthcs-composite-index details.lthcs-nar-collapsed > .lthcs-nar-step-summary::-webkit-details-marker {
+  display: none;
+}
+.lthcs-composite-index details.lthcs-nar-collapsed > .lthcs-nar-step-summary::marker {
+  display: none;
+  content: '';
+}
+.lthcs-composite-index details.lthcs-nar-collapsed[open] > .lthcs-nar-step-summary {
+  border-bottom: 1px solid var(--border-subtle);
+}
+.lthcs-composite-index details.lthcs-nar-collapsed > .lthcs-nar-step-summary > .lthcs-nar-step-chevron {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%) rotate(0deg);
+  font-size: 20px;
+  color: var(--text-tertiary);
+  transition: transform 0.15s ease;
+}
+.lthcs-composite-index details.lthcs-nar-collapsed[open] > .lthcs-nar-step-summary > .lthcs-nar-step-chevron {
+  transform: translateY(-50%) rotate(90deg);
+}
+.lthcs-composite-index details.lthcs-nar-collapsed > .lthcs-nar-step-body {
+  padding: 14px 16px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lthcs-composite-index details.lthcs-nar-collapsed > .lthcs-nar-step-summary > .lthcs-nar-step-chevron {
+    transition: none;
+  }
+}
 .lthcs-composite-index .lthcs-nar-step-next {
   margin: 14px 0 0 0;
   font-size: 12px;
@@ -248,12 +292,24 @@
   opacity: 0.85;
 }
 
-/* Step 2 — components */
+/* Step 2 — components.
+   Grid so all 9 fit in 3 rows on desktop instead of 9 rows. Drops to
+   2 columns at the section's tablet breakpoint and 1 column on mobile. */
 .lthcs-composite-index .lthcs-nar-components {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   margin-top: 8px;
+}
+@media (max-width: 900px) {
+  .lthcs-composite-index .lthcs-nar-components {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .lthcs-composite-index .lthcs-nar-components {
+    grid-template-columns: 1fr;
+  }
 }
 .lthcs-composite-index .lthcs-nar-comp {
   background: var(--bg-elevated);

@@ -286,6 +286,9 @@ function buildStep2Html(payload) {
     </section>`;
 }
 
+// Step 3 + Step 4 render as collapsed <details> accordions to keep the
+// landing page short — newcomers can click into them when they want the
+// interpretation/cheat-sheet; returning users skip past them at zero cost.
 function buildStep3Html(payload) {
   const comps = (payload.components || []).slice();
   const negs = comps.filter((c) => c.delta < 0).sort((a, b) => a.delta - b.delta);
@@ -337,14 +340,15 @@ function buildStep3Html(payload) {
   }
 
   return `
-    <section class="lthcs-nar-step" id="lthcs-nar-step-3" aria-labelledby="lthcs-nar-step-3-title">
-      <div class="lthcs-nar-step-head">
+    <details class="lthcs-nar-step lthcs-nar-collapsed" id="lthcs-nar-step-3">
+      <summary class="lthcs-nar-step-head lthcs-nar-step-summary">
         <div class="lthcs-nar-step-num" aria-hidden="true">3</div>
         <div>
-          <h2 class="lthcs-nar-step-title" id="lthcs-nar-step-3-title">Why today&rsquo;s read matters</h2>
+          <h2 class="lthcs-nar-step-title">Why today&rsquo;s read matters</h2>
           <p class="lthcs-nar-step-question">What story do these numbers tell, in plain English?</p>
         </div>
-      </div>
+        <span class="lthcs-nar-step-chevron" aria-hidden="true">&rsaquo;</span>
+      </summary>
       <div class="lthcs-nar-step-body">
         <div class="lthcs-nar-why">
           <p>${lead}</p>
@@ -354,23 +358,21 @@ function buildStep3Html(payload) {
         <p class="lthcs-nar-why-disclaimer">
           Heads-up: this paragraph is generated from today&rsquo;s component deltas, not from human commentary. It points you to the parts to dig into &mdash; it&rsquo;s not a recommendation.
         </p>
-        <p class="lthcs-nar-step-next">
-          One step left: <a href="#lthcs-nar-step-4">4. How to read this dashboard &rarr;</a>
-        </p>
       </div>
-    </section>`;
+    </details>`;
 }
 
 function buildStep4Html() {
   return `
-    <section class="lthcs-nar-step lthcs-nar-how" id="lthcs-nar-step-4" aria-labelledby="lthcs-nar-step-4-title">
-      <div class="lthcs-nar-step-head">
+    <details class="lthcs-nar-step lthcs-nar-how lthcs-nar-collapsed" id="lthcs-nar-step-4">
+      <summary class="lthcs-nar-step-head lthcs-nar-step-summary">
         <div class="lthcs-nar-step-num" aria-hidden="true">4</div>
         <div>
-          <h2 class="lthcs-nar-step-title" id="lthcs-nar-step-4-title">How to read this dashboard</h2>
+          <h2 class="lthcs-nar-step-title">How to read this dashboard</h2>
           <p class="lthcs-nar-step-question">A cheat sheet you can come back to.</p>
         </div>
-      </div>
+        <span class="lthcs-nar-step-chevron" aria-hidden="true">&rsaquo;</span>
+      </summary>
       <div class="lthcs-nar-step-body">
         <dl>
           <dt>Big swings matter</dt>
@@ -392,7 +394,7 @@ function buildStep4Html() {
           <strong>What this is NOT.</strong> Not a trading signal. Not investment advice. Not a forecast of next week&rsquo;s prices. It&rsquo;s a daily directional read on committed public data &mdash; insiders, 13F filers, fundamentals, macro. Do your own work before risking real money.
         </div>
       </div>
-    </section>`;
+    </details>`;
 }
 
 function wireUpInteractions(host) {
