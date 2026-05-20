@@ -259,6 +259,101 @@ def _annualized_sharpe(daily_returns: pd.Series) -> float:
     return float(r.mean() / std * math.sqrt(TRADING_DAYS_PER_YEAR))
 
 
+# Rolling-Sharpe windows surfaced to the UI / CLI. 5d ≈ 1 trading week,
+# 21d ≈ 1 trading month, 63d ≈ 1 trading quarter. Kept as a module-level
+# constant so consumers (CLI, UI, tests) can introspect the contract.
+ROLLING_SHARPE_WINDOWS = (5, 21, 63)
+
+
+def _rolling_sharpe_series(
+    daily_returns: pd.Series,
+    window: int,
+) -> pd.Series:
+    """Annualized rolling Sharpe over a fixed lookback ``window``.
+
+    Each row at trading day ``t`` is the annualized Sharpe computed from
+    the trailing ``window`` daily returns ending at ``t`` (inclusive).
+    Rows with fewer than ``window`` observations or zero std are emitted
+    as NaN so downstream consumers can detect the warm-up period without
+    a magic sentinel.
+
+    The series is index-aligned to ``daily_returns`` so the rolling
+    Sharpe lines up 1:1 with the equity curve in the UI.
+    """
+    if daily_returns is None or daily_returns.empty or window <= 0:
+        return pd.Series(dtype=float, index=daily_returns.index if daily_returns is not None else None)
+    r = daily_returns.astype(float)
+    sqrt_ann = math.sqrt(TRADING_DAYS_PER_YEAR)
+    mean = r.rolling(window=window, min_periods=window).mean()
+    std = r.rolling(window=window, min_periods=window).std(ddof=1)
+    # Avoid divide-by-zero: zero-std windows -> NaN so the UI can mask
+    # them rather than render a misleading 0.0.
+    sharpe = (mean / std) * sqrt_ann
+    sharpe = sharpe.where(std.notna() & (std != 0.0))
+    sharpe.name = f"sharpe_{window}d"
+    return sharpe
+
+
+def _rolling_sharpe_panel(
+    daily_returns: pd.Series,
+    windows: Sequence[int] = ROLLING_SHARPE_WINDOWS,
+) -> pd.DataFrame:
+    """Build a (date x window) panel of rolling Sharpe series.
+
+    Columns are named ``sharpe_<w>d`` so JSON serialization stays
+    self-describing.
+    """
+    cols: Dict[str, pd.Series] = {}
+    for w in windows:
+        s = _rolling_sharpe_series(daily_returns, int(w))
+        cols[f"sharpe_{int(w)}d"] = s
+    if daily_returns is None or daily_returns.empty:
+        return pd.DataFrame(cols)
+    return pd.DataFrame(cols, index=daily_returns.index)
+
+
+def _rolling_sharpe_to_records(
+    panel: pd.DataFrame,
+) -> List[Dict[str, Any]]:
+    """JSON-friendly list of ``{date, sharpe_5d, sharpe_21d, sharpe_63d}``.
+
+    NaNs are emitted as ``None`` so JSON.parse on the JS side gets a
+    null rather than a Python-side "NaN" token.
+    """
+    if panel is None or panel.empty:
+        return []
+    out: List[Dict[str, Any]] = []
+    for idx, row in panel.iterrows():
+        rec: Dict[str, Any] = {
+            "date": idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx),
+        }
+        for col in panel.columns:
+            v = row[col]
+            rec[col] = None if pd.isna(v) else float(v)
+        out.append(rec)
+    return out
+
+
+def _latest_rolling_sharpe(
+    panel: pd.DataFrame,
+    windows: Sequence[int] = ROLLING_SHARPE_WINDOWS,
+) -> Dict[str, Optional[float]]:
+    """Latest non-NaN value per window, keyed by ``"<w>d"``.
+
+    Returns ``None`` for windows that never saw enough data to compute
+    a Sharpe (e.g. 63d on a 30-day backtest).
+    """
+    out: Dict[str, Optional[float]] = {}
+    for w in windows:
+        col = f"sharpe_{int(w)}d"
+        if panel is None or panel.empty or col not in panel.columns:
+            out[f"{int(w)}d"] = None
+            continue
+        s = panel[col].dropna()
+        out[f"{int(w)}d"] = float(s.iloc[-1]) if not s.empty else None
+    return out
+
+
 def _annualized_sortino(daily_returns: pd.Series) -> float:
     if daily_returns is None or daily_returns.empty:
         return 0.0
@@ -988,6 +1083,11 @@ def run_backtest(
                     norm = bench / base * float(params.initial_capital)
                     benchmark_curve = _series_to_jsonable(norm)
 
+    # Rolling-window Sharpe (5d / 21d / 63d) for calibration trend visibility.
+    rolling_panel = _rolling_sharpe_panel(headline["daily_returns"])
+    rolling_sharpe_series = _rolling_sharpe_to_records(rolling_panel)
+    rolling_sharpe_latest = _latest_rolling_sharpe(rolling_panel)
+
     summary = _build_summary(
         params=params,
         headline=headline,
@@ -996,6 +1096,7 @@ def run_backtest(
         compute_ci=compute_ci,
         n_bootstrap=n_bootstrap,
         ci_seed=ci_seed,
+        rolling_sharpe_latest=rolling_sharpe_latest,
     )
 
     run_meta = {
@@ -1022,6 +1123,7 @@ def run_backtest(
         "daily_returns": _series_to_jsonable(headline["daily_returns"]),
         "n_positions": _series_to_jsonable(headline["n_positions"].astype(float)),
         "turnover_per_day": _series_to_jsonable(headline["turnover_per_day"]),
+        "rolling_sharpe": rolling_sharpe_series,
         "positions_daily": headline["positions"].to_dict(orient="records")
         if not headline["positions"].empty
         else [],
@@ -1043,6 +1145,7 @@ def _empty_result(
         "daily_returns": {},
         "n_positions": {},
         "turnover_per_day": {},
+        "rolling_sharpe": [],
         "positions_daily": [],
         "trades": [],
         "band_curves": {},
@@ -1060,6 +1163,9 @@ def _empty_result(
             "n_unique_tkr": 0,
             "n_trading_days": 0,
             "params": params.to_jsonable(),
+            "rolling_sharpe_latest": {
+                f"{w}d": None for w in ROLLING_SHARPE_WINDOWS
+            },
         },
         "run_meta": {
             "engine_version": "1.0.0",
@@ -1086,6 +1192,7 @@ def _build_summary(
     compute_ci: bool = True,
     n_bootstrap: int = 1000,
     ci_seed: int = 42,
+    rolling_sharpe_latest: Optional[Dict[str, Optional[float]]] = None,
 ) -> Dict[str, Any]:
     equity: pd.Series = headline["equity"]
     daily: pd.Series = headline["daily_returns"]
@@ -1122,6 +1229,14 @@ def _build_summary(
             seed=ci_seed,
         )
         summary.update(ci)
+    # Surface latest rolling-Sharpe values for cheap UI / CLI consumption
+    # without iterating the full per-day series. Schema is fixed at the
+    # ROLLING_SHARPE_WINDOWS contract — keys are ``"5d"``, ``"21d"``, ``"63d"``.
+    if rolling_sharpe_latest is None:
+        rolling_sharpe_latest = _latest_rolling_sharpe(
+            _rolling_sharpe_panel(daily)
+        )
+    summary["rolling_sharpe_latest"] = rolling_sharpe_latest
     return summary
 
 

@@ -466,6 +466,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "turnover_per_day": engine_out["turnover_per_day"],
             },
         )
+        # Rolling-window Sharpe per trading day (5d / 21d / 63d). Emitted
+        # as a separate file so the UI can lazy-load it independent of the
+        # heavier engine_summary payload.
+        backtest._atomic_write_json(
+            out_root / "rolling_sharpe.json",
+            engine_out.get("rolling_sharpe", []),
+        )
         backtest_engine.equity_curve_to_csv(
             engine_out["equity_curve"], out_root / "equity_curve.csv"
         )
@@ -572,6 +579,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         else:
             print("  ann. sortino: %+.3f" % float(es["sortino"]))
         print("  max drawdown: %+.4f" % float(es["max_drawdown"]))
+        # Rolling-window Sharpe (5d / 21d / 63d) — calibration trend.
+        rs_latest = es.get("rolling_sharpe_latest") or {}
+        def _fmt_rs(v):
+            return ("%+.3f" % float(v)) if isinstance(v, (int, float)) else "n/a"
+        print("  roll sharpe : 5d=%s  21d=%s  63d=%s" % (
+            _fmt_rs(rs_latest.get("5d")),
+            _fmt_rs(rs_latest.get("21d")),
+            _fmt_rs(rs_latest.get("63d")),
+        ))
         print("  hit rate    : %.3f" % float(es["hit_rate"]))
         print("  avg hold d  : %.1f" % float(es["avg_hold_days"]))
         print("  turnover/dy : %.4f" % float(es["turnover"]))

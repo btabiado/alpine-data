@@ -475,6 +475,72 @@
   white-space: nowrap;
   margin-left: auto;
 }
+
+/* ----- Rolling Sharpe stat tiles (Phase 5 DELTA) ----------------------- */
+.lbt-h3-rolling {
+  margin-top: 18px;
+}
+.lbt-roll-sharpe {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 8px 0 14px;
+}
+.lbt-roll-tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.lbt-roll-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.lbt-roll-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.lbt-roll-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.lbt-roll-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1.1;
+}
+.lbt-roll-pos { color: var(--accent-pos, #4cd2c0); }
+.lbt-roll-neg { color: var(--accent-neg, #ef6f6c); }
+.lbt-roll-neutral { color: var(--text-tertiary); }
+.lbt-roll-delta {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-subtle, rgba(255, 255, 255, 0.04));
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.lbt-roll-delta-up { color: var(--accent-pos, #4cd2c0); }
+.lbt-roll-delta-down { color: var(--accent-neg, #ef6f6c); }
+.lbt-roll-delta-flat { color: var(--text-tertiary); }
+
+@media (max-width: 600px) {
+  .lbt-roll-sharpe {
+    grid-template-columns: 1fr;
+  }
+}
 .lbt-engine-line {
   fill: none;
   stroke: var(--band-high, #4cd2c0);

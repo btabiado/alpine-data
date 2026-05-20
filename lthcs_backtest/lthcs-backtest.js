@@ -298,18 +298,19 @@ function setupTocNav() {
    downstream renderers already render a placeholder card in that case. */
 async function loadEngineBundle(profile, base) {
   const dir = engineDirFor(profile, base);
-  const [engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution] = await Promise.all([
+  const [engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution, rollingSharpe] = await Promise.all([
     tryFetch(`${dir}/engine_summary.json`),
     tryFetch(`${dir}/equity_curve.json`),
     tryFetch(`${dir}/band_curves.json`),
     tryFetch(`${dir}/benchmark_curve.json`),
     tryFetch(`${dir}/pillar_attribution.json`),
+    tryFetch(`${dir}/rolling_sharpe.json`),
   ]);
-  return { profile, engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution };
+  return { profile, engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution, rollingSharpe };
 }
 
 function renderEngineBundle(bundle) {
-  const { profile, engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution } = bundle;
+  const { profile, engineSummary, equityCurve, bandCurves, benchmarkCurve, pillarAttribution, rollingSharpe } = bundle;
   // If a non-baseline profile dir doesn't exist on disk (cron hasn't run for
   // this profile yet), every file is null. Show a profile-specific placeholder
   // instead of the generic "not yet computed" message.
@@ -323,6 +324,8 @@ function renderEngineBundle(bundle) {
     if (legendEl) legendEl.replaceChildren();
     const bandChartEl = $('engine-band-chart');
     if (bandChartEl) bandChartEl.replaceChildren();
+    const rollEl = $('engine-rolling-sharpe');
+    if (rollEl) rollEl.replaceChildren();
     const label = PROFILE_LABELS[profile] || profile;
     if (statsEl) statsEl.appendChild(makePlaceholder(
       `Profile "${label}" data not yet available — the engine daily cron (23:30 UTC) produces it.`,
@@ -338,6 +341,7 @@ function renderEngineBundle(bundle) {
     return;
   }
   renderEngine(engineSummary, equityCurve, bandCurves, benchmarkCurve);
+  renderRollingSharpe(engineSummary, rollingSharpe);
   renderPillarAttribution(pillarAttribution);
 }
 
@@ -875,6 +879,113 @@ function renderEngineBandChart(bandCurves) {
       text: r.total == null ? 'n/a' : fmtPct(r.total),
     }));
     container.appendChild(row);
+  }
+}
+
+/* ======================================================================
+   Rolling-window Sharpe stat tiles (Phase 5 DELTA)
+   ----------------------------------------------------------------------
+   Renders three stat tiles for the 5d / 21d / 63d trailing Sharpe.
+   Latest value is pulled from ``engineSummary.summary.rolling_sharpe_latest``
+   (fixed schema). The delta arrow compares to the value one window step
+   back in the rolling_sharpe.json series, which is the "prior week / prior
+   month / prior quarter" reading. The point is calibration-trend
+   visibility: if a Thesis tweak (e.g. MM's mature_compounder +0.05 A/B)
+   is actually working, the most-recent 21d window should be drifting up
+   relative to the prior 21d window.
+   ====================================================================== */
+const ROLLING_SHARPE_WINDOWS = [
+  { window: 5, key: '5d', label: '5d Sharpe', sub: '~1 trading week' },
+  { window: 21, key: '21d', label: '21d Sharpe', sub: '~1 trading month' },
+  { window: 63, key: '63d', label: '63d Sharpe', sub: '~1 trading quarter' },
+];
+
+function _priorRollingValue(series, col, currentIdx, windowLen) {
+  // The "prior period" reading is one full window-step back, so it
+  // doesn't overlap the current window. If we don't have that many
+  // rows yet, return null (the tile renders no arrow).
+  if (!Array.isArray(series) || currentIdx == null) return null;
+  const priorIdx = currentIdx - windowLen;
+  if (priorIdx < 0 || priorIdx >= series.length) return null;
+  const rec = series[priorIdx];
+  if (!rec || rec[col] == null || Number.isNaN(rec[col])) return null;
+  return rec[col];
+}
+
+function renderRollingSharpe(engineSummary, rollingSeries) {
+  const container = $('engine-rolling-sharpe');
+  if (!container) return;
+  container.replaceChildren();
+
+  const latest = engineSummary?.summary?.rolling_sharpe_latest ?? null;
+  if (!latest) {
+    container.appendChild(makePlaceholder(
+      'Rolling Sharpe not yet computed for this run. Re-run with `--engine pnl`.',
+    ));
+    return;
+  }
+
+  // Find the index of the last non-null row per column so the delta
+  // anchor is the most-recent finite reading, not necessarily the very
+  // last row (which might be null mid-warmup on tiny histories).
+  const lastIdxByCol = {};
+  if (Array.isArray(rollingSeries)) {
+    for (const { window } of ROLLING_SHARPE_WINDOWS) {
+      const col = `sharpe_${window}d`;
+      let lastIdx = null;
+      for (let i = rollingSeries.length - 1; i >= 0; i -= 1) {
+        const v = rollingSeries[i]?.[col];
+        if (v != null && !Number.isNaN(v)) { lastIdx = i; break; }
+      }
+      lastIdxByCol[col] = lastIdx;
+    }
+  }
+
+  for (const { window, key, label, sub } of ROLLING_SHARPE_WINDOWS) {
+    const col = `sharpe_${window}d`;
+    const val = latest[key];
+    const prior = _priorRollingValue(
+      rollingSeries, col, lastIdxByCol[col], window,
+    );
+
+    const tile = el('div', { class: 'lbt-roll-tile' });
+    tile.appendChild(el('div', { class: 'lbt-roll-label', text: label }));
+    tile.appendChild(el('div', { class: 'lbt-roll-sub', text: sub }));
+
+    const valRow = el('div', { class: 'lbt-roll-value-row' });
+    let sign = 'neutral';
+    if (typeof val === 'number' && !Number.isNaN(val)) {
+      sign = val >= 0 ? 'pos' : 'neg';
+    }
+    const valEl = el('div', { class: `lbt-roll-value lbt-roll-${sign}` });
+    valEl.textContent = (typeof val === 'number' && !Number.isNaN(val))
+      ? fmtSharpe(val) : 'n/a';
+    valRow.appendChild(valEl);
+
+    // Delta arrow vs prior non-overlapping window.
+    if (typeof val === 'number' && typeof prior === 'number'
+        && !Number.isNaN(val) && !Number.isNaN(prior)) {
+      const delta = val - prior;
+      const dir = delta > 0.001 ? 'up' : (delta < -0.001 ? 'down' : 'flat');
+      const arrow = dir === 'up' ? '▲' : (dir === 'down' ? '▼' : '▬');
+      const deltaEl = el('div', { class: `lbt-roll-delta lbt-roll-delta-${dir}` });
+      deltaEl.textContent = `${arrow} ${delta >= 0 ? '+' : ''}${delta.toFixed(2)}`;
+      deltaEl.setAttribute(
+        'title',
+        `prior ${window}d window Sharpe: ${prior >= 0 ? '+' : ''}${prior.toFixed(2)}`,
+      );
+      valRow.appendChild(deltaEl);
+    } else if (typeof val === 'number') {
+      const deltaEl = el('div', { class: 'lbt-roll-delta lbt-roll-delta-flat' });
+      deltaEl.textContent = 'no prior';
+      deltaEl.setAttribute(
+        'title',
+        `Need ${window} more trading days for a non-overlapping prior window.`,
+      );
+      valRow.appendChild(deltaEl);
+    }
+    tile.appendChild(valRow);
+    container.appendChild(tile);
   }
 }
 

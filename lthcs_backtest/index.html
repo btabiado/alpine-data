@@ -142,6 +142,17 @@
               <svg id="engine-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Engine equity curve"></svg>
             </div>
             <div class="lbt-legend" id="engine-legend"></div>
+            <!--
+              Rolling-window Sharpe (5d / 21d / 63d). Phase 5 DELTA — surfaces
+              calibration trend over the backtest window so a Thesis tweak
+              (e.g. MM's mature_compounder +0.05 A/B) is visible as a moving
+              series rather than buried in the single-headline Sharpe.
+              The tiles read summary.rolling_sharpe_latest and compare to the
+              prior window step (▲/▼ indicator).
+            -->
+            <h3 class="lbt-h3 lbt-h3-rolling">Rolling Sharpe</h3>
+            <p class="lbt-note">Annualized Sharpe over trailing 5d (week) / 21d (month) / 63d (quarter) windows. ▲/▼ compares to the previous non-overlapping window — tells you if calibration tweaks are pulling the curve up or down.</p>
+            <div class="lbt-roll-sharpe" id="engine-rolling-sharpe"></div>
             <h3 class="lbt-h3">Per-band sub-portfolio total return</h3>
             <p class="lbt-note">Each row simulates &ldquo;long-only that band&rdquo;. Higher LTHCS bands should compound faster than lower bands &mdash; this is the framework's smell test.</p>
             <div id="engine-band-chart" class="lbt-band-chart"></div>

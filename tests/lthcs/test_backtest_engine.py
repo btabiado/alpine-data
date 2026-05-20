@@ -557,3 +557,121 @@ def test_report_markdown_omits_ci_when_absent():
     )
     assert "95% CI" not in md
     assert "Annualized Sharpe" in md
+
+
+# ---------------------------------------------------------------------------
+# 16. Rolling-window Sharpe (Phase 5 DELTA — calibration trend visibility)
+# ---------------------------------------------------------------------------
+
+def test_rolling_sharpe_63d_window_on_63d_curve():
+    """On a 63-day daily-return series the 63d rolling Sharpe should be
+    a single non-NaN value at the final row (warm-up consumes 62 rows)."""
+    rng = np.random.default_rng(2026)
+    n = 63
+    idx = _trading_days("2026-01-05", n)
+    rets = rng.normal(loc=0.0012, scale=0.011, size=n)
+    closes = 100.0 * np.cumprod(1.0 + rets)
+    prices = pd.DataFrame({"AAA": closes}, index=idx)
+    bands = pd.DataFrame({"AAA": ["elite"] * n}, index=idx)
+    out = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0),
+        per_band_sweep=False,
+    )
+
+    series = out["rolling_sharpe"]
+    assert isinstance(series, list)
+    assert len(series) == n, "rolling series must align with equity-curve length"
+
+    # Each record carries one entry per window.
+    keys = {f"sharpe_{w}d" for w in be.ROLLING_SHARPE_WINDOWS}
+    for rec in series:
+        assert "date" in rec
+        assert keys.issubset(set(rec.keys()))
+
+    # 63d Sharpe: warm-up means rows [0..61] are None; row 62 is finite.
+    s63 = [r["sharpe_63d"] for r in series]
+    assert all(v is None for v in s63[:62])
+    assert s63[-1] is not None and math.isfinite(s63[-1])
+
+    # And the summary's latest dict matches the final row.
+    rs_latest = out["summary"]["rolling_sharpe_latest"]
+    assert rs_latest["63d"] == pytest.approx(s63[-1], rel=1e-9)
+
+
+def test_rolling_sharpe_5d_window_on_4d_curve_is_nan():
+    """A 4-day backtest is too short for any 5d rolling Sharpe — every
+    row in the 5d column must be None (graceful degradation, no crash)."""
+    n = 4
+    idx = _trading_days("2026-01-05", n)
+    prices = pd.DataFrame({"AAA": [100.0, 101.0, 102.0, 103.0]}, index=idx)
+    bands = pd.DataFrame({"AAA": ["elite"] * n}, index=idx)
+    out = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0),
+        per_band_sweep=False,
+    )
+    series = out["rolling_sharpe"]
+    s5 = [r["sharpe_5d"] for r in series]
+    assert len(s5) == n
+    assert all(v is None for v in s5), "5d Sharpe needs ≥5 rows; expected all None"
+    # Latest dict reports None for every window that never warmed up.
+    rs_latest = out["summary"]["rolling_sharpe_latest"]
+    assert rs_latest["5d"] is None
+    assert rs_latest["21d"] is None
+    assert rs_latest["63d"] is None
+
+
+def test_rolling_sharpe_deterministic_across_runs():
+    """Two identical runs produce identical rolling Sharpe series and
+    latest-values dict (no RNG, no time-of-day drift)."""
+    rng = np.random.default_rng(404)
+    n = 70
+    idx = _trading_days("2026-01-05", n)
+    rets = rng.normal(loc=0.001, scale=0.014, size=n)
+    closes = 100.0 * np.cumprod(1.0 + rets)
+    prices = pd.DataFrame({"AAA": closes}, index=idx)
+    bands = pd.DataFrame({"AAA": ["elite"] * n}, index=idx)
+
+    out1 = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0),
+        per_band_sweep=False,
+    )
+    out2 = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0),
+        per_band_sweep=False,
+    )
+    assert out1["rolling_sharpe"] == out2["rolling_sharpe"]
+    assert (
+        out1["summary"]["rolling_sharpe_latest"]
+        == out2["summary"]["rolling_sharpe_latest"]
+    )
+
+
+def test_rolling_sharpe_latest_has_all_three_windows():
+    """The summary's ``rolling_sharpe_latest`` dict must always carry the
+    fixed 5d / 21d / 63d schema so UI consumers can blindly read it."""
+    # Long enough that all three windows produce a real number.
+    rng = np.random.default_rng(7777)
+    n = 90
+    idx = _trading_days("2026-01-05", n)
+    rets = rng.normal(loc=0.0009, scale=0.013, size=n)
+    closes = 100.0 * np.cumprod(1.0 + rets)
+    prices = pd.DataFrame({"AAA": closes}, index=idx)
+    bands = pd.DataFrame({"AAA": ["elite"] * n}, index=idx)
+    out = be.run_backtest(
+        bands, prices, params=be.EngineParams(cost_bps=0.0),
+        per_band_sweep=False,
+    )
+    rs = out["summary"]["rolling_sharpe_latest"]
+    assert set(rs.keys()) == {"5d", "21d", "63d"}
+    for k, v in rs.items():
+        assert isinstance(v, float), f"{k} should be a finite float on a 90d run"
+        assert math.isfinite(v), f"{k} should be finite"
+
+
+def test_rolling_sharpe_empty_inputs_emits_empty_series():
+    """Empty inputs -> empty rolling-sharpe series + None for every window."""
+    out = be.run_backtest(pd.DataFrame(), pd.DataFrame())
+    assert out["rolling_sharpe"] == []
+    rs = out["summary"]["rolling_sharpe_latest"]
+    assert set(rs.keys()) == {"5d", "21d", "63d"}
+    assert all(v is None for v in rs.values())
