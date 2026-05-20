@@ -2087,20 +2087,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="container">
       <div id="aiNewsEmpty" class="empty hidden">AI news not yet loaded. Run <code>python app.py --fetch-market</code> to populate.</div>
       <div id="aiNewsContent">
-        <!-- Top section: LEFT column stacks AI-exposed stocks + AI insights
-             (cap 3) + Top AI news (cap 3). RIGHT column carries AI news
-             sentiment for visual balance. Stocks card promoted from the
-             bottom .grid2 row per user feedback — it's the lead-in to "what
-             does AI signal say today?", so it deserves the top-left slot. -->
-        <div id="aiNewsTopRow" style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px;align-items:start">
+        <!-- Top section: LEFT column stacks AI insights (cap 3) + Top AI
+             news (cap 3) — the text-heavy lead-ins. RIGHT column carries
+             AI-exposed stocks — the visual ticker grid. AI news sentiment
+             goes full-width below the top row. -->
+        <div id="aiNewsTopRow" style="display:grid;grid-template-columns:1fr 1.2fr;gap:12px;align-items:start">
           <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-            <div class="chart-card" id="aiNewsStocksCard">
-              <div class="head">
-                <h2>AI-exposed stocks</h2>
-                <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
-              </div>
-              <div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"></div>
-            </div>
             <div class="chart-card" id="aiNewsInsightsCard">
               <div class="head">
                 <h2>AI insights <span class="tag">top 3</span></h2>
@@ -2117,12 +2109,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             </div>
           </div>
           <div style="min-width:0">
-            <div class="chart-card" id="aiNewsSummaryCard">
+            <div class="chart-card" id="aiNewsStocksCard">
               <div class="head">
-                <h2>AI news sentiment <span class="tag">live</span></h2>
-                <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
+                <h2>AI-exposed stocks</h2>
+                <span class="desc">Signal score for tickers most exposed to AI/ML/chips &middot; filtered from Stocks tab</span>
               </div>
-              <div id="aiNewsSummary"></div>
+              <div id="aiStocksGrid" class="row" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px"></div>
             </div>
           </div>
         </div>
@@ -2131,6 +2123,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             #aiNewsTopRow { grid-template-columns: 1fr !important; }
           }
         </style>
+
+        <!-- AI sentiment summary card (full width, below the top row) -->
+        <div class="chart-card" id="aiNewsSummaryCard" style="margin-top:12px">
+          <div class="head">
+            <h2>AI news sentiment <span class="tag">live</span></h2>
+            <span class="desc">Aggregate sentiment across AI/ML/chips coverage &middot; auto-classified POSITIVE / NEUTRAL / NEGATIVE</span>
+          </div>
+          <div id="aiNewsSummary"></div>
+        </div>
 
         <!-- Quadrant scatter chart — pinned right under sentiment per user
              request (the big visual lead-in before the numbers). -->
