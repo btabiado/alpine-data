@@ -1,0 +1,313 @@
+/* =========================================================================
+   LTHCS Position Sizing (paper-money mode)
+   Layered on top of ../lthcs_tab/lthcs.css for shared design tokens.
+   Only contains styles unique to this page; everything else (header,
+   typography, dark theme) is inherited.
+   ========================================================================= */
+
+.hidden {
+  display: none !important;
+}
+
+.lpos-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ----- Disclaimer banner ------------------------------------------------- */
+.lpos-disclaimer {
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--band-monitor-bright);
+  padding-left: 14px;
+}
+.lpos-disclaimer strong {
+  color: var(--text-primary);
+}
+
+/* ----- Loading / error --------------------------------------------------- */
+.lpos-loading {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.lpos-error {
+  font-size: 14px;
+  color: var(--danger, #f87171);
+  border-left: 3px solid var(--danger, #f87171);
+  padding-left: 12px;
+}
+
+/* ----- Inputs panel ------------------------------------------------------ */
+.lpos-input-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.lpos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.lpos-field-wide {
+  margin-top: 12px;
+}
+.lpos-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+.lpos-input {
+  width: 100%;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.lpos-input:focus {
+  outline: 2px solid var(--band-high-bright);
+  outline-offset: 1px;
+}
+
+/* Ticker source chips (Path A / B / C selector). */
+.lpos-source-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 6px;
+}
+.lpos-source-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+.lpos-source-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lpos-source-chip {
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.lpos-source-chip[aria-pressed="true"] {
+  background: rgba(var(--band-high-rgb, 96, 165, 250), 0.18);
+  color: var(--band-high-bright);
+  border-color: var(--band-high-bright);
+}
+.lpos-source-chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.lpos-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.lpos-status {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.lpos-status[data-tone="warn"] { color: var(--band-monitor-bright); }
+.lpos-status[data-tone="error"] { color: var(--band-review-bright); }
+.lpos-status[data-tone="ok"] { color: var(--band-high-bright); }
+
+/* ----- Output summary tiles --------------------------------------------- */
+.lpos-h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+}
+
+.lpos-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.lpos-kpi {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lpos-kpi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+}
+.lpos-kpi-value {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* ----- Allocation table ------------------------------------------------- */
+.lpos-table-wrap {
+  overflow-x: auto;
+  margin: 0 -4px;
+}
+.lpos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.lpos-table th,
+.lpos-table td {
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: top;
+}
+.lpos-table th {
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lpos-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.lpos-table tbody tr:hover {
+  background: var(--bg-card);
+}
+.lpos-table tbody tr.is-skipped {
+  opacity: 0.55;
+}
+
+/* Number-aligned columns for desktop. */
+.lpos-table td.lpos-num,
+.lpos-table th.lpos-num {
+  text-align: right;
+}
+
+/* Band pill — color-coded; mirrors the card-view band chips. */
+.lpos-band-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+}
+.lpos-band-pill[data-band="elite"]        { background: rgba(var(--band-elite-rgb, 167, 139, 250), 0.18); color: var(--band-elite-bright, #c4b5fd); }
+.lpos-band-pill[data-band="high"]         { background: rgba(var(--band-high-rgb, 96, 165, 250), 0.18); color: var(--band-high-bright, #93c5fd); }
+.lpos-band-pill[data-band="constructive"] { background: rgba(var(--band-constructive-rgb, 74, 222, 128), 0.18); color: var(--band-constructive-bright, #86efac); }
+.lpos-band-pill[data-band="monitor"]      { background: rgba(var(--band-monitor-rgb, 250, 204, 21), 0.18); color: var(--band-monitor-bright, #fde68a); }
+.lpos-band-pill[data-band="weakening"]    { background: rgba(var(--band-weakening-rgb, 251, 146, 60), 0.18); color: var(--band-weakening-bright, #fdba74); }
+.lpos-band-pill[data-band="review"]       { background: rgba(var(--band-review-rgb, 248, 113, 113), 0.22); color: var(--band-review-bright, #fca5a5); }
+
+.lpos-note {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+.lpos-note[data-tone="warn"] { color: var(--band-monitor-bright); }
+.lpos-note[data-tone="error"] { color: var(--band-review-bright); }
+
+/* ----- Algorithm explainer --------------------------------------------- */
+.lpos-explain-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.lpos-explain-list strong {
+  color: var(--text-primary);
+}
+
+/* ----- Mobile fallback (<=640px) ---------------------------------------- */
+@media (max-width: 640px) {
+  .lpos-input-grid {
+    grid-template-columns: 1fr;
+  }
+  .lpos-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Collapse the table into a stack of cards. Each <tr> becomes a card;
+     each <td> becomes a labeled row inside the card. We hide <thead> and
+     re-surface the column labels with the data-label attribute set in JS. */
+  .lpos-table-wrap {
+    overflow-x: visible;
+    margin: 0;
+  }
+  .lpos-table thead {
+    /* Visually hidden but still in the accessibility tree for screen
+       readers if they navigate the source. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .lpos-table,
+  .lpos-table tbody,
+  .lpos-table tr,
+  .lpos-table td {
+    display: block;
+    width: 100%;
+  }
+  .lpos-table tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .lpos-table td {
+    border: 0;
+    padding: 4px 0;
+    text-align: left !important;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .lpos-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    flex: 0 0 40%;
+  }
+  .lpos-table td.lpos-num {
+    /* Override the desktop right-align — column-aligned content makes no
+       sense in the stacked layout. */
+    text-align: left;
+  }
+}

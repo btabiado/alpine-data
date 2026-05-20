@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Position Sizing (paper money)</title>
+    <!--
+      Reuses LTHCS design tokens (band colors, dark theme, fonts) from the
+      card-view stylesheet. In production both pages stage under /lthcs/
+      so this @import resolves at /lthcs/lthcs_tab/lthcs.css. The dev
+      server (python3 -m http.server in repo root) serves /lthcs_tab/
+      sibling to /lthcs_position/, so the ../lthcs_tab/ path works in both
+      environments without conditional logic.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-position.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Position Sizing</h1>
+          <p class="lthcs-subtitle">Paper-money allocation calculator &middot; LTHCS-band-weighted sizing</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Snapshot</span>
+            <span id="lpos-snapshot-date" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card view</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lpos-main">
+      <!-- Disclaimer: this is a sizing-suggestion calculator, not advice. -->
+      <section class="lthcs-section lpos-disclaimer" aria-label="Disclaimer">
+        <strong>Paper money only.</strong> Allocation suggestions from LTHCS composite scores + band-weighted sizing. Not investment advice, no broker integration. Bands and caps are documented inline below.
+      </section>
+
+      <!-- ===== Inputs ===================================================== -->
+      <section class="lthcs-section lpos-inputs" aria-label="Sizing inputs">
+        <div class="lpos-input-grid">
+          <div class="lpos-field">
+            <label class="lpos-label" for="lpos-total">Portfolio total ($)</label>
+            <input
+              id="lpos-total"
+              class="lpos-input"
+              type="number"
+              inputmode="decimal"
+              min="1"
+              step="100"
+              value="100000"
+              aria-label="Total portfolio value in dollars"
+            />
+          </div>
+          <div class="lpos-field">
+            <label class="lpos-label" for="lpos-risk">Risk profile</label>
+            <select id="lpos-risk" class="lpos-input" aria-label="Risk profile">
+              <option value="conservative">Conservative &mdash; 5% cap</option>
+              <option value="balanced" selected>Balanced &mdash; 8% cap</option>
+              <option value="aggressive">Aggressive &mdash; 12% cap</option>
+            </select>
+          </div>
+          <div class="lpos-field">
+            <label class="lpos-label" for="lpos-cap-override">Max position cap (% override)</label>
+            <input
+              id="lpos-cap-override"
+              class="lpos-input"
+              type="number"
+              inputmode="decimal"
+              min="1"
+              max="100"
+              step="1"
+              placeholder="auto"
+              aria-label="Optional per-position cap override (percent)"
+            />
+          </div>
+        </div>
+
+        <!-- Ticker source picker. Path A (compare set), Path B (active
+             watchlist) only show up when the relevant localStorage key is
+             populated by the card-view page. Path C is always available. -->
+        <div class="lpos-source-row" role="group" aria-label="Ticker source">
+          <span class="lpos-source-label">Tickers</span>
+          <div class="lpos-source-chips" id="lpos-source-chips"></div>
+        </div>
+
+        <!-- Manual ticker input — Path C. Comma- or space-separated. -->
+        <div class="lpos-field lpos-field-wide" id="lpos-manual-wrap">
+          <label class="lpos-label" for="lpos-manual">Tickers (comma or space separated, 2&ndash;20)</label>
+          <input
+            id="lpos-manual"
+            class="lpos-input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="e.g. NVDA AAPL MSFT JPM TSLA"
+            aria-label="Manual ticker list"
+          />
+        </div>
+
+        <div class="lpos-actions">
+          <button id="lpos-compute" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-primary">
+            <span aria-hidden="true">&#x21bb;</span>
+            <span class="lthcs-refresh-label">Compute allocation</span>
+          </button>
+          <span id="lpos-status" class="lpos-status" aria-live="polite"></span>
+        </div>
+      </section>
+
+      <!-- ===== Loading / error =========================================== -->
+      <section id="lpos-loading" class="lthcs-section lpos-loading hidden">Loading snapshot&hellip;</section>
+      <section id="lpos-error" class="lthcs-section lpos-error hidden" role="alert"></section>
+
+      <!-- ===== Output ===================================================== -->
+      <section id="lpos-output" class="lthcs-section lpos-output hidden" aria-label="Suggested allocation">
+        <h2 class="lpos-h2">Suggested allocation</h2>
+
+        <!-- Summary KPI tiles. -->
+        <div class="lpos-summary">
+          <div class="lpos-kpi">
+            <span class="lpos-kpi-label">Allocated</span>
+            <span class="lpos-kpi-value" id="lpos-kpi-allocated">&hellip;</span>
+          </div>
+          <div class="lpos-kpi">
+            <span class="lpos-kpi-label">Cash remaining</span>
+            <span class="lpos-kpi-value" id="lpos-kpi-cash">&hellip;</span>
+          </div>
+          <div class="lpos-kpi">
+            <span class="lpos-kpi-label">Tickers included</span>
+            <span class="lpos-kpi-value" id="lpos-kpi-included">&hellip;</span>
+          </div>
+          <div class="lpos-kpi">
+            <span class="lpos-kpi-label">Per-position cap</span>
+            <span class="lpos-kpi-value" id="lpos-kpi-cap">&hellip;</span>
+          </div>
+        </div>
+
+        <!-- Wide table for desktop; collapses to vertical cards on ≤640px
+             via CSS. The same <tr data-ticker=...> nodes serve both layouts
+             so there's no second render path. -->
+        <div class="lpos-table-wrap">
+          <table class="lpos-table" id="lpos-table">
+            <thead>
+              <tr>
+                <th scope="col">Ticker</th>
+                <th scope="col">Band</th>
+                <th scope="col">Composite</th>
+                <th scope="col">Band&nbsp;mult.</th>
+                <th scope="col">Raw&nbsp;%</th>
+                <th scope="col">Capped&nbsp;%</th>
+                <th scope="col">Suggested&nbsp;$</th>
+                <th scope="col">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="lpos-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== Algorithm explainer ====================================== -->
+      <section class="lthcs-section lpos-explain" aria-label="Algorithm">
+        <h2 class="lpos-h2">How sizing works</h2>
+        <ol class="lpos-explain-list">
+          <li><strong>Band multiplier</strong> &mdash; Elite&nbsp;1.5&times;, High&nbsp;Confidence&nbsp;1.2&times;, Constructive&nbsp;1.0&times;, Monitor&nbsp;0.7&times;, Weakening&nbsp;0.3&times;, Review&nbsp;0&times; (excluded).</li>
+          <li><strong>Raw weight</strong> = composite&nbsp;&times;&nbsp;band&nbsp;multiplier, normalised so eligible tickers sum to&nbsp;100%.</li>
+          <li><strong>Per-position cap</strong> &mdash; Conservative&nbsp;5%, Balanced&nbsp;8%, Aggressive&nbsp;12%. Override the cap manually if you want a tighter or looser bound.</li>
+          <li><strong>Overflow</strong> from clipped positions redistributes proportionally to remaining sub-cap positions until convergence.</li>
+          <li>Review-band tickers and zero-score rows are <strong>skipped</strong> &mdash; their bankroll stays in the cash bucket unless the rest of the universe can absorb it.</li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Not investment advice.</strong> Paper-money calculator &middot; sizing reference at
+        <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/scripts/lthcs_position_sizing.py" target="_blank" rel="noopener" class="lthcs-footer-link">scripts/lthcs_position_sizing.py</a>.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-position.js"></script>
+  </body>
+</html>
