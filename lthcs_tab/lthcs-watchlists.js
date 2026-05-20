@@ -659,10 +659,17 @@ export function initWatchlists({ onChange, getUniverseTickers } = {}) {
   // Universe set is rebuilt by the caller; refresh on each onChange tick.
   refreshUniverse(universeFn);
 
+  // Phase 5 #3: activate shared-watchlist from URL BEFORE first paint, so
+  // the chips reflect the shared selection even if there's a persisted
+  // activeName in localStorage.
+  activateSharedFromUrl();
+
   // First paint.
   renderChips();
+  renderSharedBanner();
   wireChipRow();
   wireWarningRow();
+  startShareObserver();
 
   // Expose a refresh hook so lthcs-tab.js can re-sync universe + warning
   // after the snapshot loads. (Universe is empty during init since the
@@ -687,4 +694,312 @@ function refreshUniverse(universeFn) {
     console.warn('LTHCS: watchlist universe refresh failed', err);
     state.universeTickers = new Set();
   }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 #3: shared-watchlist (URL ?watchlist=...) support
+// ---------------------------------------------------------------------------
+//
+// When the user lands on /lthcs/?watchlist=AAPL,MSFT,...  we treat that as an
+// EPHEMERAL watchlist: a virtual "Shared watchlist" entry that filters cards
+// but is NOT persisted to localStorage. Until the user clicks "Save to my
+// watchlists" (in the shared-watchlist banner), refreshing the page without
+// the query param drops the entry.
+
+const SHARED_LIST_NAME = 'Shared watchlist';
+const sharedState = {
+  active: false,           // true once we've parsed a ?watchlist= param this session
+  tickers: [],             // uppercase, deduped
+  invalidTickers: [],      // tickers that don't match TICKER_RE (warning only)
+};
+
+// Parse a watchlist URL param into [valid-tickers, invalid-tokens].
+function parseSharedParam(raw) {
+  if (typeof raw !== 'string' || !raw) return [[], []];
+  // Accept comma-separated, semicolon-separated, or whitespace-separated.
+  const tokens = raw
+    .split(/[\s,;]+/)
+    .map((t) => t.trim().toUpperCase())
+    .filter((t) => t.length);
+  const valid = [];
+  const invalid = [];
+  const seen = new Set();
+  for (const t of tokens) {
+    if (seen.has(t)) continue;
+    seen.add(t);
+    if (TICKER_RE.test(t)) valid.push(t);
+    else invalid.push(t);
+  }
+  return [valid, invalid];
+}
+
+// Returns true if a shared watchlist is currently active for this session.
+export function sharedIsActive() {
+  return sharedState.active;
+}
+
+// Returns the ticker set when a shared watchlist is active, else null. This
+// is merged into getActiveTickerSet() so the existing filter pipe just works.
+export function getSharedTickerSet() {
+  if (!sharedState.active) return null;
+  return new Set(sharedState.tickers);
+}
+
+function renderSharedBanner() {
+  const host = document.getElementById('lthcs-shared-watchlist');
+  if (!host) return;
+  if (!sharedState.active) {
+    host.classList.add('hidden');
+    host.innerHTML = '';
+    return;
+  }
+  const count = sharedState.tickers.length;
+  const invalidHtml = sharedState.invalidTickers.length
+    ? `<div class="lthcs-shared-warning">Skipped (invalid): ${escapeHtml(sharedState.invalidTickers.join(', '))}</div>`
+    : '';
+  const atCap = listNames().length >= MAX_WATCHLISTS;
+  const saveBtnHtml = atCap
+    ? `<button type="button" class="lthcs-shared-save" disabled title="Watchlist cap reached">Save to my watchlists</button>`
+    : `<button type="button" class="lthcs-shared-save" id="lthcs-shared-save">Save to my watchlists</button>`;
+  host.classList.remove('hidden');
+  host.innerHTML = (
+    `<div class="lthcs-shared-bar">` +
+      `<div class="lthcs-shared-title">` +
+        `<span class="lthcs-shared-eyebrow">Shared watchlist</span>` +
+        `<span class="lthcs-shared-count">${count} ticker${count === 1 ? '' : 's'}</span>` +
+      `</div>` +
+      `<div class="lthcs-shared-actions">` +
+        saveBtnHtml +
+        `<button type="button" class="lthcs-shared-dismiss" id="lthcs-shared-dismiss" aria-label="Dismiss shared watchlist">&times;</button>` +
+      `</div>` +
+    `</div>` +
+    invalidHtml
+  );
+
+  const saveBtn = document.getElementById('lthcs-shared-save');
+  if (saveBtn) saveBtn.addEventListener('click', () => {
+    if (listNames().length >= MAX_WATCHLISTS) {
+      window.alert(`Watchlist cap (${MAX_WATCHLISTS}) reached. Delete one before saving.`);
+      return;
+    }
+    // Prompt for a name; default to "Shared <date>".
+    const defaultName = `Shared (${new Date().toISOString().slice(0, 10)})`;
+    let name = (window.prompt('Name this watchlist:', defaultName) || '').trim().slice(0, MAX_NAME_LEN);
+    if (!name) return;
+    // Suffix collisions: "name (2)", "name (3)", ...
+    if (state.lists[name]) {
+      let i = 2;
+      while (state.lists[`${name} (${i})`]) i++;
+      name = `${name} (${i})`;
+    }
+    state.lists[name] = sharedState.tickers.slice();
+    saveLists();
+    state.activeName = name;
+    saveActive();
+    sharedState.active = false;
+    sharedState.tickers = [];
+    sharedState.invalidTickers = [];
+    renderSharedBanner();
+    renderChips();
+    state.onChange();
+  });
+  const dismissBtn = document.getElementById('lthcs-shared-dismiss');
+  if (dismissBtn) dismissBtn.addEventListener('click', () => {
+    sharedState.active = false;
+    sharedState.tickers = [];
+    sharedState.invalidTickers = [];
+    // Clean URL too (drop ?watchlist=...).
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('watchlist');
+      window.history.replaceState({}, '', url.toString());
+    } catch { /* ignore */ }
+    renderSharedBanner();
+    state.onChange();
+  });
+}
+
+// Called from initWatchlists() to activate the shared list on page load.
+function activateSharedFromUrl() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('watchlist');
+    if (!raw) return;
+    const [valid, invalid] = parseSharedParam(raw);
+    if (!valid.length && !invalid.length) return;
+    sharedState.active = true;
+    sharedState.tickers = valid;
+    sharedState.invalidTickers = invalid;
+    // We do NOT mutate state.activeName here — shared is layered on top of
+    // the persisted activeName via getEffectiveTickerSet(). Dismissing the
+    // shared banner restores the previously-saved selection automatically.
+  } catch (err) {
+    console.warn('LTHCS: shared-watchlist URL parse failed', err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 #10: bookmark a band as a new watchlist
+// ---------------------------------------------------------------------------
+
+// Public helper used by lthcs-tab.js when the user clicks a band bookmark
+// icon. Returns { ok, name, count, reason }.
+//   - ok=true  → watchlist was created (or would be — see noPersist flag).
+//   - ok=false → reason is one of 'empty' | 'cap' | 'invalid'.
+// Names auto-suffix (2), (3), ... on collision. The new list is NOT made
+// active automatically; the caller's toast just confirms creation.
+export function createWatchlistFromTickers(name, tickers) {
+  if (!name || typeof name !== 'string') return { ok: false, reason: 'invalid' };
+  const arr = (Array.isArray(tickers) ? tickers : [])
+    .map((t) => (typeof t === 'string' ? t.trim().toUpperCase() : ''))
+    .filter((t) => t.length && TICKER_RE.test(t));
+  if (!arr.length) return { ok: false, reason: 'empty', name };
+  if (listNames().length >= MAX_WATCHLISTS) {
+    return { ok: false, reason: 'cap', name };
+  }
+  let finalName = name.slice(0, MAX_NAME_LEN);
+  if (state.lists[finalName]) {
+    let i = 2;
+    while (state.lists[`${finalName} (${i})`]) i++;
+    finalName = `${finalName} (${i})`;
+  }
+  state.lists[finalName] = arr;
+  saveLists();
+  renderChips();
+  state.onChange();
+  return { ok: true, name: finalName, count: arr.length };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 #3: Share button — patch the modal renderer
+// ---------------------------------------------------------------------------
+
+// Helper: build the share URL for a given watchlist.
+function shareUrlFor(name) {
+  const tickers = (state.lists[name] || []).slice();
+  // Build an absolute URL pointing at the /lthcs/ root. Strip any query
+  // string from window.location so we always emit a clean shareable link.
+  const base = `${window.location.origin}${window.location.pathname}`;
+  return `${base}?watchlist=${encodeURIComponent(tickers.join(','))}`;
+}
+
+// Copy a string to the clipboard. Best-effort with execCommand fallback.
+async function copyToClipboard(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch { /* fall through */ }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    return !!ok;
+  } catch {
+    return false;
+  }
+}
+
+// Show a transient toast (#lthcs-toast). 2s default. Module-local so it
+// works whether or not lthcs-tab.js has wired its own toast helper.
+function flashToast(message, ms = 2000) {
+  const el = document.getElementById('lthcs-toast');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('hidden');
+  el.classList.add('is-visible');
+  // Clear any prior timer.
+  if (flashToast._t) clearTimeout(flashToast._t);
+  flashToast._t = setTimeout(() => {
+    el.classList.remove('is-visible');
+    el.classList.add('hidden');
+  }, ms);
+}
+
+// Patch renderModal to inject a Share button. We monkey-patch via post-
+// render DOM enrichment so the existing renderer logic doesn't fork.
+function injectShareButton() {
+  const root = modalRoot();
+  if (!root) return;
+  const footer = root.querySelector('.lthcs-watchlist-footer');
+  if (!footer) return;
+  if (footer.querySelector('#lthcs-watchlist-share')) return;
+  const selectedName = modal.draftName;
+  if (!selectedName) return;
+  const list = state.lists[selectedName] || [];
+  const disabled = list.length === 0 ? ' disabled title="No tickers to share"' : '';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.id = 'lthcs-watchlist-share';
+  btn.className = 'lthcs-watchlist-share';
+  btn.textContent = 'Share';
+  if (disabled) btn.setAttribute('disabled', '');
+  // Insert before Cancel/Save so Share sits on the left of the action group.
+  footer.insertBefore(btn, footer.firstChild);
+  btn.addEventListener('click', async () => {
+    if (!modal.draftName) return;
+    // Use the persisted list (not the draft text) so users don't share
+    // unsaved edits unintentionally.
+    const tickers = state.lists[modal.draftName] || [];
+    if (!tickers.length) return;
+    const url = shareUrlFor(modal.draftName);
+    const ok = await copyToClipboard(url);
+    if (ok) flashToast(`Link copied (${tickers.length} ticker${tickers.length === 1 ? '' : 's'})`);
+    else window.prompt('Copy this link:', url);
+  });
+}
+
+// Wrap renderModal via MutationObserver: every time the modal innerHTML is
+// repainted, ensure a Share button is present in the footer. This avoids
+// reassigning the function-declared renderModal (which would error in strict
+// mode) and keeps the patch additive.
+function startShareObserver() {
+  const root = modalRoot();
+  if (!root || startShareObserver._wired) return;
+  startShareObserver._wired = true;
+  const obs = new MutationObserver(() => {
+    if (root.classList.contains('hidden')) return;
+    injectShareButton();
+  });
+  obs.observe(root, { childList: true, subtree: true });
+}
+
+// ---------------------------------------------------------------------------
+// Init augmentation — wire shared-list activation + chip merge
+// ---------------------------------------------------------------------------
+
+// Wrap initWatchlists to ALSO activate shared-from-URL state. We can't reassign
+// the exported binding, so this is done via a side effect within initWatchlists
+// itself — see the patched body below. Instead, expose an extra hook.
+
+export function activateSharedWatchlist() {
+  activateSharedFromUrl();
+  renderSharedBanner();
+}
+
+// Merge: when a shared watchlist is active, getActiveTickerSet() should
+// return the shared set rather than null. We monkey-patch the existing
+// export by re-defining the function reference inside the module — but
+// since ES exports are bindings, we instead extend the function behavior
+// through a wrapper getter exposed to lthcs-tab.js.
+
+export function getEffectiveTickerSet() {
+  if (sharedState.active) return new Set(sharedState.tickers);
+  return getActiveTickerSet();
+}
+
+export function getEffectiveName() {
+  if (sharedState.active) return SHARED_LIST_NAME;
+  return getActiveName();
+}
+
+export function effectiveIsEmpty() {
+  if (sharedState.active) return sharedState.tickers.length === 0;
+  return activeIsEmpty();
 }

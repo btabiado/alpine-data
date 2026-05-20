@@ -19,11 +19,22 @@ import { renderMoversStrip } from './lthcs-movers.js';
 // --- Phase 4 (custom watchlists) hookup ---
 import {
   initWatchlists,
-  getActiveTickerSet,
-  getActiveName,
-  activeIsEmpty,
+  getEffectiveTickerSet,
+  getEffectiveName,
+  effectiveIsEmpty,
+  createWatchlistFromTickers,
 } from './lthcs-watchlists.js';
+// Back-compat shims so the existing call sites keep their names but route
+// through the Phase 5 "effective" variants (which layer the shared-URL
+// watchlist on top of the persisted active selection).
+const getActiveTickerSet = getEffectiveTickerSet;
+const getActiveName = getEffectiveName;
+const activeIsEmpty = effectiveIsEmpty;
 // --- end Phase 4 hookup ---
+
+// --- Phase 5 #2 (what's new) hookup ---
+import { initWhatsNew, updateWhatsNew } from './lthcs-whatsnew.js';
+// --- end Phase 5 #2 hookup ---
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -1161,8 +1172,16 @@ function wireBandStats() {
       persistFilterState();
       renderAll();
     };
-    tile.addEventListener('click', activate);
+    tile.addEventListener('click', (e) => {
+      // Phase 5 #10: ignore clicks that originated on the bookmark icon — the
+      // bookmark wire (capture-phase) already handled them.
+      if (e.target.closest && e.target.closest('[data-bookmark-band]')) return;
+      activate();
+    });
     tile.addEventListener('keydown', (e) => {
+      // Don't intercept Enter/Space when focus is on the inner bookmark
+      // button — the button has its own native activation.
+      if (e.target && e.target.closest && e.target.closest('[data-bookmark-band]')) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         activate();
@@ -1228,6 +1247,86 @@ function wireEvents() {
   wireCardClicks();
   wireMoverClicks();
   wireActiveFilters();
+  wireBandBookmark();
+  wireCsvButton();
+}
+
+// Phase 5 toast helper — used by the bookmark-band action. Reuses the
+// `#lthcs-toast` element, which is also the target of the watchlist module's
+// copy-link feedback. 2s default, 5s for warnings.
+function showToast(message, ms = 2000) {
+  const el = $('#lthcs-toast');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.remove('hidden');
+  el.classList.add('is-visible');
+  if (showToast._t) clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => {
+    el.classList.remove('is-visible');
+    el.classList.add('hidden');
+  }, ms);
+}
+
+// Phase 5 #10: band bookmark icons inside each band stat tile. Click → save
+// the currently-displayed tickers in that band as a new watchlist named
+// "<Band> (YYYY-MM-DD)". Use the capture phase so we intercept the click
+// BEFORE the stat-tile's own click handler runs (which would otherwise
+// toggle the band filter as a side effect).
+function wireBandBookmark() {
+  document.body.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-bookmark-band]');
+    if (!btn) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const band = btn.getAttribute('data-bookmark-band');
+    if (!UI_BANDS.includes(band)) return;
+    // Snapshot the tickers currently in this band, respecting the active
+    // INDEX filter (so a user looking at NASDAQ-100 doesn't accidentally
+    // save the S&P 100 Elite cohort). Band/drift/search/watchlist filters
+    // are NOT applied — the user is bookmarking the band, not the view.
+    const indexKey = state.activeFilters.index || 'sp-100';
+    const inBand = state.enriched.filter((row) => {
+      if (row.uiBand !== band) return false;
+      if (indexKey && indexKey !== 'all' && !row.indices.includes(indexKey)) return false;
+      return true;
+    });
+    const tickers = inBand.map((r) => r.ticker);
+    const bandLabel = (FILTER_VALUE_LABELS.band && FILTER_VALUE_LABELS.band[band]) || band;
+    const calcDate = (state.snapshot && state.snapshot.calc_date) || new Date().toISOString().slice(0, 10);
+    const name = `${bandLabel} (${calcDate})`;
+    if (!tickers.length) {
+      showToast(`No tickers in this band right now.`, 2500);
+      return;
+    }
+    const res = createWatchlistFromTickers(name, tickers);
+    if (res.ok) {
+      showToast(`Saved ${res.count} ticker${res.count === 1 ? '' : 's'} to ${res.name}`);
+    } else if (res.reason === 'cap') {
+      showToast(`Watchlist cap reached. Delete one first.`, 3000);
+    } else if (res.reason === 'empty') {
+      showToast(`No tickers in this band right now.`, 2500);
+    } else {
+      showToast(`Couldn't save watchlist.`, 2500);
+    }
+  }, true);  // <-- capture phase: run before the tile's bubble-phase handler
+}
+
+// Phase 5 #4 (bundled): CSV export button. The actual file is written by
+// sibling ETA's pipeline to /data/lthcs/public/universe.csv. Our job is just
+// to surface the link, give it a useful download filename, and gracefully
+// hide the button if the file is missing on this deploy. We probe with HEAD
+// rather than wiring a click handler — keeps the anchor's native behavior
+// (right-click → Save link as, middle-click → new tab) intact.
+function wireCsvButton() {
+  const a = document.getElementById('lthcs-csv-export');
+  if (!a) return;
+  // HEAD-probe; if missing, hide so we don't ship a 404 link. Best-effort:
+  // any network or CORS error keeps the button visible (user can try).
+  fetch(a.getAttribute('href'), { method: 'HEAD', cache: 'no-store' })
+    .then((res) => {
+      if (!res || !res.ok) a.classList.add('hidden');
+    })
+    .catch(() => { /* keep visible — let the user try */ });
 }
 
 // Tier 4 #18: clicking a mover tile opens the same detail modal the cards
@@ -1345,6 +1444,11 @@ async function refresh() {
       try { watchlistsCtl.onUniverseReady(); }
       catch (e) { console.warn('LTHCS: watchlists universe refresh failed', e); }
     }
+    // Phase 5 #2: paint the What's New panel as soon as the enrichment is
+    // ready. Diffing happens against the persisted band map from the user's
+    // previous visit. No-op on first-ever visit (no baseline).
+    try { updateWhatsNew(state.enriched, snapshot && snapshot.calc_date); }
+    catch (e) { console.warn('LTHCS: what\'s-new render failed', e); }
     renderAll();
 
     // Week 11: side-load insider map + regime strip. Both are best-effort
@@ -1389,6 +1493,9 @@ async function init() {
   restoreFilterState();
   syncAllChips();
   wireEvents();
+  // Phase 5 #2: capture the previous-visit timestamp BEFORE refresh() runs,
+  // so updateWhatsNew() can render "Since <ISO>" relative to the prior visit.
+  initWhatsNew();
   // Phase 4: initialize the watchlists module. onChange re-runs the full
   // render pipe so chip toggles + Save apply immediately. getUniverseTickers
   // is read lazily so the closure sees the latest state after refresh().

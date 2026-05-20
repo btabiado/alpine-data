@@ -32,6 +32,16 @@
             <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
             <span class="lthcs-refresh-label">Refresh</span>
           </button>
+          <!-- Phase 5 #4: bulk CSV export. Sibling ETA writes the file to
+               /data/lthcs/public/universe.csv on each pipeline run; this
+               button is a plain <a download> so the browser handles the
+               save dialog without JS. -->
+          <a id="lthcs-csv-export" href="../data/lthcs/public/universe.csv" download="lthcs-universe.csv"
+             class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="Download universe as CSV"
+             style="text-decoration:none">
+            <span aria-hidden="true">&#x2B07;</span>
+            <span class="lthcs-refresh-label">CSV</span>
+          </a>
           <!--
             Phase 2 cross-page nav: all sub-routes (Heatmap, Crypto, Table,
             Backtest, Health) get a ghost entry here so the card view is the
@@ -86,6 +96,16 @@
     </header>
 
     <main class="lthcs-main">
+      <!-- Phase 5 #2: "What's New since your last visit" panel. Painted by
+           lthcs-whatsnew.js once the snapshot enrichment runs and only when
+           band changes vs. the last-visit baseline are detected. -->
+      <section id="lthcs-whatsnew" class="lthcs-section lthcs-whatsnew hidden" aria-label="What's new since your last visit"></section>
+
+      <!-- Phase 5 #3: shared-watchlist banner. Painted by lthcs-watchlists.js
+           when ?watchlist=... is present in the URL. Stays above the regime
+           strip so the user notices it before the rest of the page. -->
+      <section id="lthcs-shared-watchlist" class="lthcs-section lthcs-shared-watchlist hidden" aria-label="Shared watchlist"></section>
+
       <!-- LTHCS Composite Index — universe-level ±100 read, mirrors
            the V1 Whale Sentiment Index. Populated by lthcs-index.js
            from data/lthcs/index/<date>.json. -->
@@ -163,26 +183,32 @@
         <div class="lthcs-stat lthcs-stat-clickable" data-band="elite" role="button" tabindex="0" aria-label="Filter to Elite band">
           <span class="lthcs-stat-count" data-band-count="elite">&mdash;</span>
           <span class="lthcs-stat-label">Elite</span>
+          <button type="button" class="lthcs-band-bookmark" data-bookmark-band="elite" aria-label="Save current Elite tickers as a watchlist" title="Save as watchlist">&#x1F516;</button>
         </div>
         <div class="lthcs-stat lthcs-stat-clickable" data-band="high" role="button" tabindex="0" aria-label="Filter to High Confidence band">
           <span class="lthcs-stat-count" data-band-count="high">&mdash;</span>
           <span class="lthcs-stat-label">High Confidence</span>
+          <button type="button" class="lthcs-band-bookmark" data-bookmark-band="high" aria-label="Save current High Confidence tickers as a watchlist" title="Save as watchlist">&#x1F516;</button>
         </div>
         <div class="lthcs-stat lthcs-stat-clickable" data-band="constructive" role="button" tabindex="0" aria-label="Filter to Constructive band">
           <span class="lthcs-stat-count" data-band-count="constructive">&mdash;</span>
           <span class="lthcs-stat-label">Constructive</span>
+          <button type="button" class="lthcs-band-bookmark" data-bookmark-band="constructive" aria-label="Save current Constructive tickers as a watchlist" title="Save as watchlist">&#x1F516;</button>
         </div>
         <div class="lthcs-stat lthcs-stat-clickable" data-band="monitor" role="button" tabindex="0" aria-label="Filter to Monitor band">
           <span class="lthcs-stat-count" data-band-count="monitor">&mdash;</span>
           <span class="lthcs-stat-label">Monitor</span>
+          <button type="button" class="lthcs-band-bookmark" data-bookmark-band="monitor" aria-label="Save current Monitor tickers as a watchlist" title="Save as watchlist">&#x1F516;</button>
         </div>
         <div class="lthcs-stat lthcs-stat-clickable" data-band="weakening" role="button" tabindex="0" aria-label="Filter to Weakening band">
           <span class="lthcs-stat-count" data-band-count="weakening">&mdash;</span>
           <span class="lthcs-stat-label">Weakening</span>
+          <button type="button" class="lthcs-band-bookmark" data-bookmark-band="weakening" aria-label="Save current Weakening tickers as a watchlist" title="Save as watchlist">&#x1F516;</button>
         </div>
         <div class="lthcs-stat lthcs-stat-clickable" data-band="review" role="button" tabindex="0" aria-label="Filter to Review band">
           <span class="lthcs-stat-count" data-band-count="review">&mdash;</span>
           <span class="lthcs-stat-label">Review</span>
+          <button type="button" class="lthcs-band-bookmark" data-bookmark-band="review" aria-label="Save current Review tickers as a watchlist" title="Save as watchlist">&#x1F516;</button>
         </div>
       </section>
 
@@ -303,5 +329,9 @@
     <div id="lthcs-compare-tray" class="lthcs-compare-tray hidden" role="region" aria-label="Compare tray" aria-live="polite"></div>
     <div id="lthcs-compare-modal-root" class="lthcs-compare-modal-root hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
     <script type="module" src="./lthcs-compare.js"></script>
+
+    <!-- Phase 5 toast region — used by the bookmark-band action and the
+         Share-watchlist link copy confirmation. Owned by lthcs-tab.js. -->
+    <div id="lthcs-toast" class="lthcs-toast hidden" role="status" aria-live="polite"></div>
   </body>
 </html>

@@ -2731,3 +2731,312 @@ input[type="search"] {
   }
 }
 
+/* =========================================================================
+   Phase 5 ALPHA additions
+   - #2 "What's New" panel
+   - #3 Shared watchlist banner + Share button
+   - #10 Bookmark band icon
+   - #4 CSV button (uses existing nav-button styles, no new CSS needed)
+   - Shared #lthcs-toast
+   ========================================================================= */
+
+/* ----- What's New panel ----- */
+.lthcs-whatsnew {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lthcs-whatsnew-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lthcs-whatsnew-summary {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  text-align: left;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.lthcs-whatsnew-summary:hover {
+  background: var(--bg-card-hover);
+}
+.lthcs-whatsnew-eyebrow {
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.lthcs-whatsnew-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.lthcs-whatsnew-up {
+  color: var(--band-high-bright);
+  font-weight: 600;
+}
+.lthcs-whatsnew-down {
+  color: var(--band-weakening-bright);
+  font-weight: 600;
+}
+.lthcs-whatsnew-sep {
+  color: var(--text-tertiary);
+}
+.lthcs-whatsnew-caret {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+.lthcs-whatsnew-meta {
+  display: inline-flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  flex-wrap: wrap;
+}
+.lthcs-whatsnew-dismiss {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+.lthcs-whatsnew-dismiss:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.lthcs-whatsnew-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-top: 1px dashed var(--border-subtle);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.lthcs-whatsnew-row {
+  display: grid;
+  grid-template-columns: minmax(60px, auto) 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.lthcs-whatsnew-row:hover {
+  background: var(--bg-card-hover);
+}
+.lthcs-whatsnew-ticker {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.lthcs-whatsnew-from,
+.lthcs-whatsnew-to {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.lthcs-whatsnew-arrow {
+  color: var(--text-tertiary);
+}
+.lthcs-whatsnew-row[data-direction="up"] .lthcs-whatsnew-arrow {
+  color: var(--band-high-bright);
+}
+.lthcs-whatsnew-row[data-direction="down"] .lthcs-whatsnew-arrow {
+  color: var(--band-weakening-bright);
+}
+
+/* ----- Shared watchlist banner ----- */
+.lthcs-shared-watchlist {
+  background: rgba(110, 168, 254, 0.08);
+  border: 1px solid rgba(110, 168, 254, 0.4);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lthcs-shared-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lthcs-shared-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.lthcs-shared-eyebrow {
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.lthcs-shared-count {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.lthcs-shared-actions {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.lthcs-shared-save {
+  appearance: none;
+  background: var(--accent);
+  color: #0E1216;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font: inherit;
+}
+.lthcs-shared-save:hover {
+  filter: brightness(1.08);
+}
+.lthcs-shared-save[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.lthcs-shared-dismiss {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+.lthcs-shared-dismiss:hover {
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+.lthcs-shared-warning {
+  font-size: 12px;
+  color: var(--band-weakening-bright);
+}
+
+/* ----- Share button (in watchlist modal footer) ----- */
+.lthcs-watchlist-share {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  font: inherit;
+  margin-right: auto;
+}
+.lthcs-watchlist-share:hover:not([disabled]) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.lthcs-watchlist-share[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----- Band bookmark icon ----- */
+.lthcs-stat-clickable {
+  position: relative;
+}
+.lthcs-band-bookmark {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  opacity: 0.55;
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.lthcs-band-bookmark:hover {
+  opacity: 1;
+  color: var(--accent);
+  background: var(--bg-card-hover);
+}
+.lthcs-band-bookmark:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  opacity: 1;
+}
+
+/* ----- Toast ----- */
+.lthcs-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 13px;
+  box-shadow: var(--shadow-card-hover);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 9999;
+  max-width: calc(100% - 32px);
+  text-align: center;
+}
+.lthcs-toast.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Mobile: shrink What's New row slightly. */
+@media (max-width: 640px) {
+  .lthcs-whatsnew-row {
+    grid-template-columns: minmax(50px, auto) 1fr auto 1fr;
+    font-size: 12px;
+  }
+  .lthcs-band-bookmark {
+    top: 2px;
+    right: 2px;
+  }
+}
+
