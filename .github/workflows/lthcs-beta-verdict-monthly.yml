@@ -1,0 +1,82 @@
+name: lthcs-beta-verdict-monthly
+
+# Adoption β-fix verdict cron. Runs on the 1st of each month at 08:00
+# UTC, computes post-β IC over the past 30 days, compares to the
+# frozen baseline, and posts the verdict markdown to the Job Summary.
+#
+# Gated to dates >= 2026-06-01 (the fix landed 2026-05-18; we need ~30
+# trading days of forward data before a verdict is meaningful — first
+# viable run is 2026-07-01, but 2026-06-01 will emit a HOLD which is
+# still useful as a "the scaffolding works" smoke test).
+#
+# This workflow does NOT commit anything to the repo; the verdict
+# report lives in the run artifacts and the Job Summary only.
+on:
+  schedule:
+    - cron: "0 8 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lthcs-beta-verdict-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Compute verdict window
+        id: window
+        run: |
+          end=$(date -u +%Y-%m-%d)
+          # Look back 30 calendar days. The script aligns to actual
+          # snapshot observation dates so this just needs to cover the
+          # post-β-fix window with margin.
+          since=$(date -u -d "$end - 30 days" +%Y-%m-%d)
+          # Cap since at the β-fix landing date — we don't want to
+          # include pre-fix observations in the post window.
+          beta_land="2026-05-18"
+          if [ "$since" \< "$beta_land" ]; then
+            since="$beta_land"
+          fi
+          echo "since=$since" >> "$GITHUB_OUTPUT"
+          echo "end=$end"     >> "$GITHUB_OUTPUT"
+
+      - name: Run β verdict
+        id: verdict
+        run: |
+          set -e
+          python scripts/lthcs_beta_verdict.py \
+            --since "${{ steps.window.outputs.since }}" \
+            --end   "${{ steps.window.outputs.end }}" \
+            --horizon 21 \
+            --output-dir "$RUNNER_TEMP/beta_verdict"
+          # Echo the markdown report into the Job Summary so the
+          # verdict is visible without clicking through artifacts.
+          report=$(ls "$RUNNER_TEMP/beta_verdict"/beta_fix_verdict_*.md | head -n1)
+          if [ -n "$report" ] && [ -f "$report" ]; then
+            cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload verdict artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-verdict-${{ steps.window.outputs.end }}
+          path: ${{ runner.temp }}/beta_verdict/
+          if-no-files-found: ignore

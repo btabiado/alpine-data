@@ -1,0 +1,110 @@
+name: lthcs-quality-audit-monthly
+
+# Monthly LTHCS quality audit. Runs the orchestrator script
+# (scripts/lthcs_quality_audit_runner.py, shipped 68b43d6) which itself
+# invokes the three Phase 3 audit scripts (pillar quality, score
+# distribution, weight + band thresholds) and emits a combined summary.
+#
+# Runs at 09:00 UTC on the 1st of each month — staggered after
+# lthcs-backtest-monthly.yml (06:00) and lthcs-tune-weights-monthly.yml
+# (07:00) so the three monthly jobs don't fight for the same runner pool.
+#
+# The runner exits non-zero if any pillar is STUB or the composite
+# distribution is critically broken — those failures bubble up as a
+# red ✗ on the Actions UI and post the verdict summary to the Job
+# Summary so red runs are surfaced without needing to dig into logs.
+on:
+  schedule:
+    - cron: "0 9 1 * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+# Distinct concurrency group so a manual dispatch queues behind the
+# scheduled run; cancel-in-progress: false avoids stomping it.
+concurrency:
+  group: lthcs-quality-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run monthly quality audit
+        id: audit
+        run: |
+          # Orchestrator runs all three audits, writes the combined
+          # summary + per-audit reports under data/lthcs/quality_audit/,
+          # exits non-zero on STUB/CRITICAL. We capture exit code +
+          # surface the summary file path so the next step can post it.
+          set +e
+          python scripts/lthcs_quality_audit_runner.py
+          ec=$?
+          set -e
+          asof=$(date -u +%Y-%m-%d)
+          summary_path="data/lthcs/quality_audit/${asof}_summary.md"
+          echo "exit_code=$ec" >> "$GITHUB_OUTPUT"
+          echo "summary_path=$summary_path" >> "$GITHUB_OUTPUT"
+          echo "asof=$asof" >> "$GITHUB_OUTPUT"
+
+      - name: Post combined summary to Job Summary
+        if: always() && hashFiles(steps.audit.outputs.summary_path) != ''
+        run: |
+          {
+            echo "# LTHCS Monthly Quality Audit — ${{ steps.audit.outputs.asof }}"
+            echo ""
+            cat "${{ steps.audit.outputs.summary_path }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit and push audit artifacts if changed
+        if: always()
+        run: |
+          git config user.name "lthcs-bot"
+          git config user.email "lthcs-bot@users.noreply.github.com"
+          git add data/lthcs/quality_audit/ docs/lthcs-*-audit-*.md || true
+          if git diff --staged --quiet; then
+            echo "No audit artifact changes; skipping commit."
+          else
+            git commit -m "lthcs: monthly quality audit ${{ steps.audit.outputs.asof }} [skip ci]"
+            # Race-safe push: mirror lthcs-daily.yml's retry loop so main
+            # moving under us (other monthly crons, manual dev push)
+            # doesn't eat this month's audit.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi
+
+      - name: Re-fail the run if the audit verdict was non-zero
+        if: always() && steps.audit.outputs.exit_code != '0'
+        run: |
+          echo "Quality audit exit code: ${{ steps.audit.outputs.exit_code }}"
+          echo "See the Job Summary for the verdict; red badge intentional."
+          exit ${{ steps.audit.outputs.exit_code }}
