@@ -635,6 +635,158 @@
 .lbt-attrib-stat.noise { color: var(--text-secondary); }
 .lbt-attrib-empty { color: var(--text-secondary); padding-left: 50%; font-size: 12px; }
 
+/* ======================================================================
+   Phase 2 UX restructure (2026-05-19): collapsible sections, TOC chips,
+   headline badge for Engine P&L, muted legacy styling for the deprecated
+   overlapping-window Band Portfolio P&L section.
+   ====================================================================== */
+
+/* ----- Collapsible section toggle -------------------------------------- */
+.lbt-collapsible > .lbt-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 0 0 12px;
+  margin: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  min-height: 40px;
+}
+.lbt-collapsible.is-collapsed > .lbt-section-toggle {
+  padding-bottom: 0;
+}
+.lbt-collapsible > .lbt-section-toggle:focus-visible {
+  outline: 2px solid var(--band-high-bright);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.lbt-section-chevron {
+  display: inline-block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 150ms ease;
+  width: 14px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+.lbt-collapsible.is-collapsed .lbt-section-chevron {
+  transform: rotate(-90deg);
+}
+.lbt-section-toggle-label {
+  flex: 0 0 auto;
+}
+.lbt-section-toggle-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-left: -4px;
+}
+.lbt-section-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(var(--band-high-rgb), 0.18);
+  color: var(--band-high-bright);
+  border: 1px solid rgba(var(--band-high-rgb), 0.35);
+}
+.lbt-section-badge-legacy {
+  background: var(--bg-card);
+  color: var(--text-tertiary);
+  border-color: var(--border-subtle);
+}
+.lbt-collapsible.is-collapsed > .lbt-section-body {
+  display: none;
+}
+
+/* Headline section — Engine P&L gets a subtle accent border so cold visitors
+   immediately know this is the "real" number. */
+.lbt-section-headline {
+  border: 1px solid rgba(var(--band-high-rgb), 0.35);
+  box-shadow: 0 0 0 1px rgba(var(--band-high-rgb), 0.10), var(--shadow-card);
+}
+
+/* Legacy section — muted background + smaller heading. Tells a cold visitor
+   "this is not the headline" at a glance. */
+.lbt-section-legacy {
+  background: var(--bg-card);
+  border: 1px dashed var(--border-strong);
+  box-shadow: none;
+  opacity: 0.92;
+}
+.lbt-section-legacy > .lbt-section-toggle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.lbt-section-legacy .lbt-pnl-line { opacity: 0.65; }
+.lbt-section-legacy .lbt-pnl-area { fill-opacity: 0.05; }
+.lbt-caveat-prominent {
+  font-style: normal;
+  background: rgba(var(--band-monitor-rgb), 0.10);
+  border-left: 3px solid var(--band-monitor-bright);
+  padding: 8px 12px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+.lbt-caveat-prominent a {
+  color: var(--band-high-bright);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.lbt-caveat-prominent a:hover {
+  color: var(--text-primary);
+}
+
+/* ----- TOC chip group -------------------------------------------------- */
+.lbt-toc {
+  display: flex;
+  align-items: center;
+  gap: 10px 14px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin: 0;
+}
+.lbt-toc-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+.lbt-toc-chips {
+  flex: 1 1 auto;
+}
+.lbt-toc-chip {
+  text-decoration: none;
+  /* min-height inherited from .lthcs-chip (44px touch target) */
+}
+.lbt-toc-chip:focus-visible {
+  outline: 2px solid var(--band-high-bright);
+  outline-offset: 2px;
+}
+.lbt-toc-chip-legacy {
+  color: var(--text-tertiary);
+  border-style: dashed;
+}
+
 /* ----- Mobile ---------------------------------------------------------- */
 @media (max-width: 640px) {
   .lbt-section { padding: 14px 12px; }
@@ -666,4 +818,18 @@
   }
   .lbt-attrib-stat { text-align: left; }
   .lbt-engine-window { display: block; margin: 4px 0 0; }
+  /* Phase 2: TOC on mobile — let chips wrap below the label cleanly. */
+  .lbt-toc {
+    padding: 10px 12px;
+    gap: 8px 10px;
+  }
+  .lbt-toc-label {
+    flex: 1 0 100%;
+  }
+  .lbt-collapsible > .lbt-section-toggle {
+    font-size: 14px;
+  }
+  .lbt-section-badge {
+    display: none;
+  }
 }

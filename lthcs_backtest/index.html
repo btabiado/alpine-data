@@ -41,140 +41,236 @@
 
       <div id="bt-content" class="hidden">
         <!-- ===== Headline verdict ============================================ -->
-        <section class="lthcs-section lbt-section" aria-label="Headline verdict">
-          <div class="lbt-verdict-card" id="verdict-card">
-            <div class="lbt-verdict-row">
-              <span class="lbt-verdict-label">FRAMEWORK PREDICTS</span>
-              <span class="lbt-verdict-tag" id="verdict-tag">&hellip;</span>
+        <!--
+          Phase 2 UX restructure (2026-05-19): default-expanded. The verdict
+          card is always the first thing a cold visitor sees. Its
+          .lbt-section-toggle wires up to the collapsible handler in
+          lthcs-backtest.js; default-expanded sections start with
+          aria-expanded="true" and no .is-collapsed class.
+        -->
+        <section class="lthcs-section lbt-section lbt-collapsible" id="section-verdict" data-section-key="verdict" aria-label="Headline verdict">
+          <button type="button" class="lbt-section-toggle" aria-expanded="true" aria-controls="section-verdict-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Verdict</span>
+          </button>
+          <div class="lbt-section-body" id="section-verdict-body">
+            <div class="lbt-verdict-card" id="verdict-card">
+              <div class="lbt-verdict-row">
+                <span class="lbt-verdict-label">FRAMEWORK PREDICTS</span>
+                <span class="lbt-verdict-tag" id="verdict-tag">&hellip;</span>
+              </div>
+              <dl class="lbt-verdict-stats">
+                <div>
+                  <dt>Composite IC (21d)</dt>
+                  <dd id="verdict-ic">&hellip;</dd>
+                </div>
+                <div>
+                  <dt>Band portfolio Sharpe</dt>
+                  <dd id="verdict-sharpe">&hellip;</dd>
+                </div>
+                <div>
+                  <dt>Walk-forward test IC</dt>
+                  <dd id="verdict-wf">&hellip;</dd>
+                </div>
+              </dl>
             </div>
-            <dl class="lbt-verdict-stats">
-              <div>
-                <dt>Composite IC (21d)</dt>
-                <dd id="verdict-ic">&hellip;</dd>
-              </div>
-              <div>
-                <dt>Band portfolio Sharpe</dt>
-                <dd id="verdict-sharpe">&hellip;</dd>
-              </div>
-              <div>
-                <dt>Walk-forward test IC</dt>
-                <dd id="verdict-wf">&hellip;</dd>
-              </div>
-            </dl>
+          </div>
+        </section>
+
+        <!-- ===== TOC (Phase 2 UX restructure) ===============================
+          Chip group of anchor links to the major sections below. Smooth-scroll
+          handled by lthcs-backtest.js; auto-expands the target section if
+          collapsed before scrolling. Pure navigation aid — not a section.
+        -->
+        <nav class="lbt-toc" aria-label="Sections on this page">
+          <span class="lbt-toc-label">Jump to:</span>
+          <div class="lthcs-chip-group lbt-toc-chips" role="group" aria-label="Section navigation">
+            <a class="lthcs-chip lbt-toc-chip" href="#section-engine" data-toc-target="section-engine">Engine P&amp;L</a>
+            <a class="lthcs-chip lbt-toc-chip" href="#section-pillar-ic" data-toc-target="section-pillar-ic">Per-pillar IC</a>
+            <a class="lthcs-chip lbt-toc-chip" href="#section-attribution" data-toc-target="section-attribution">Pillar attribution</a>
+            <a class="lthcs-chip lbt-toc-chip" href="#section-walkforward" data-toc-target="section-walkforward">Walk-forward CV</a>
+            <a class="lthcs-chip lbt-toc-chip" href="#section-quintile" data-toc-target="section-quintile">Quintile spread</a>
+            <a class="lthcs-chip lbt-toc-chip" href="#section-cohort" data-toc-target="section-cohort">Cohort</a>
+            <a class="lthcs-chip lbt-toc-chip lbt-toc-chip-legacy" href="#section-legacy-pnl" data-toc-target="section-legacy-pnl">Legacy P&amp;L</a>
+          </div>
+        </nav>
+
+        <!-- ===== Engine equity curve (non-overlapping P&L) ================== -->
+        <!--
+          Reordered to Phase 2 position #1 after verdict. This is the headline
+          number the user actually cares about (non-overlapping windows,
+          look-ahead-guarded). Profile selector + Δ-Sharpe attribution stay
+          together because attribution is computed from the same engine run.
+          Default-expanded.
+        -->
+        <section class="lthcs-section lbt-section lbt-collapsible lbt-section-headline" id="section-engine" data-section-key="engine" aria-label="Engine non-overlapping P&amp;L">
+          <button type="button" class="lbt-section-toggle" aria-expanded="true" aria-controls="section-engine-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Engine P&amp;L</span>
+            <span class="lbt-section-toggle-sub">(non-overlapping, look-ahead-guarded)</span>
+            <span class="lbt-section-badge" aria-hidden="true">headline</span>
+          </button>
+          <div class="lbt-section-body" id="section-engine-body">
+            <p class="lbt-note">Replaces the legacy overlapping-window Sharpe with an event-driven simulation: buy at the next-day close after a band enters the Buy set, sell at the next-day close after it leaves. 1-trading-day execution delay. <code>5 bps</code> per side. Daily equal-weight rebalance.</p>
+            <!--
+              Profile selector (Tier 5 #24 P3 follow-on). Each chip swaps the
+              data dir used by renderEngine + renderPillarAttribution. baseline
+              reads from the parent validation dir; the other four read from
+              ./profiles/<name>/. Choice persists in localStorage under
+              `lthcs.backtest.profile` (mirrors the lthcs_tab narrative-source
+              toggle pattern).
+            -->
+            <div
+              class="lthcs-chip-group lbt-profile-toggle"
+              role="radiogroup"
+              aria-label="Backtest profile"
+              id="engine-profile-toggle"
+            >
+              <button type="button" class="lthcs-chip lbt-profile-chip is-active"
+                      data-profile="long_only_buy" role="radio" aria-checked="true">Baseline (long-only)</button>
+              <button type="button" class="lthcs-chip lbt-profile-chip"
+                      data-profile="long_buy_short_review" role="radio" aria-checked="false">Long/Short Review</button>
+              <button type="button" class="lthcs-chip lbt-profile-chip"
+                      data-profile="dollar_neutral" role="radio" aria-checked="false">Dollar Neutral</button>
+              <button type="button" class="lthcs-chip lbt-profile-chip"
+                      data-profile="top_k_by_composite" role="radio" aria-checked="false">Top-K Composite</button>
+            </div>
+            <p class="lbt-profile-caption" id="engine-profile-caption">currently showing: Baseline (long-only)</p>
+            <div class="lbt-pnl-stats" id="engine-stats"></div>
+            <div class="lbt-pnl-chart-wrap">
+              <svg id="engine-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Engine equity curve"></svg>
+            </div>
+            <div class="lbt-legend" id="engine-legend"></div>
+            <h3 class="lbt-h3">Per-band sub-portfolio total return</h3>
+            <p class="lbt-note">Each row simulates &ldquo;long-only that band&rdquo;. Higher LTHCS bands should compound faster than lower bands &mdash; this is the framework's smell test.</p>
+            <div id="engine-band-chart" class="lbt-band-chart"></div>
           </div>
         </section>
 
         <!-- ===== Per-pillar IC ranking ====================================== -->
-        <section class="lthcs-section lbt-section" aria-label="Per-pillar IC">
-          <h2 class="lbt-h2">Per-pillar IC ranking <span class="lbt-h2-sub">(which pillars predict?)</span></h2>
-          <p class="lbt-note">Information Coefficient = rank correlation between pillar score and forward return. |IC| &gt; 0.04 needed to clear the noise floor at this sample size.</p>
-          <div id="pillar-ic-chart" class="lbt-pillar-chart"></div>
+        <section class="lthcs-section lbt-section lbt-collapsible" id="section-pillar-ic" data-section-key="pillar-ic" aria-label="Per-pillar IC">
+          <button type="button" class="lbt-section-toggle" aria-expanded="false" aria-controls="section-pillar-ic-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Per-pillar IC ranking</span>
+            <span class="lbt-section-toggle-sub">(which pillars predict?)</span>
+          </button>
+          <div class="lbt-section-body" id="section-pillar-ic-body">
+            <p class="lbt-note">Information Coefficient = rank correlation between pillar score and forward return. |IC| &gt; 0.04 needed to clear the noise floor at this sample size.</p>
+            <div id="pillar-ic-chart" class="lbt-pillar-chart"></div>
+          </div>
         </section>
 
-        <!-- ===== Band portfolio P&L curve ================================== -->
-        <section class="lthcs-section lbt-section" aria-label="Band portfolio P&amp;L">
-          <h2 class="lbt-h2">Band portfolio P&amp;L <span class="lbt-h2-sub">(long Elite/High/Constructive, short Review)</span></h2>
-          <div class="lbt-pnl-stats" id="pnl-stats"></div>
-          <div class="lbt-pnl-chart-wrap">
-            <svg id="pnl-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Cumulative return curve"></svg>
+        <!-- ===== Per-pillar attribution ===================================== -->
+        <!--
+          Split out from the Engine P&L section so the TOC can link directly
+          and so the attribution caveat doesn't compete with the headline
+          equity curve. The renderer still writes into the same DOM IDs.
+        -->
+        <section class="lthcs-section lbt-section lbt-collapsible" id="section-attribution" data-section-key="attribution" aria-label="Per-pillar attribution">
+          <button type="button" class="lbt-section-toggle" aria-expanded="false" aria-controls="section-attribution-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Per-pillar attribution</span>
+            <span class="lbt-section-toggle-sub">(&Delta;Sharpe vs baseline, Approach B)</span>
+          </button>
+          <div class="lbt-section-body" id="section-attribution-body">
+            <p class="lbt-note">
+              For each pillar we re-run the engine with that pillar&rsquo;s weight set to zero and the remaining four renormalized. The bar shows
+              <strong>&Delta;Sharpe vs baseline</strong> &mdash; a <em>negative</em> bar means removing the pillar <em>hurts</em>, so the pillar was a positive contributor. Hover for variant Sharpe + &Delta;return.
+            </p>
+            <p class="lbt-caveat" id="engine-attribution-note" title="">
+              <strong>Caveat:</strong> attributions are not additive &mdash; removing two pillars is not the sum of removing each.
+            </p>
+            <div id="engine-attribution-chart" class="lbt-attrib-chart"></div>
           </div>
-          <p class="lbt-caveat">
-            <strong>Caveat:</strong> the curve above reuses overlapping forward windows, so Sharpe is inflated. The honest non-overlapping numbers are in the next section.
-          </p>
-        </section>
-
-        <!-- ===== Engine equity curve (non-overlapping P&L) ================== -->
-        <section class="lthcs-section lbt-section" aria-label="Engine non-overlapping P&amp;L">
-          <h2 class="lbt-h2">Engine P&amp;L <span class="lbt-h2-sub">(non-overlapping, look-ahead-guarded)</span></h2>
-          <p class="lbt-note">Replaces the legacy overlapping-window Sharpe with an event-driven simulation: buy at the next-day close after a band enters the Buy set, sell at the next-day close after it leaves. 1-trading-day execution delay. <code>5 bps</code> per side. Daily equal-weight rebalance.</p>
-          <!--
-            Profile selector (Tier 5 #24 P3 follow-on). Each chip swaps the
-            data dir used by renderEngine + renderPillarAttribution. baseline
-            reads from the parent validation dir; the other four read from
-            ./profiles/<name>/. Choice persists in localStorage under
-            `lthcs.backtest.profile` (mirrors the lthcs_tab narrative-source
-            toggle pattern).
-          -->
-          <div
-            class="lthcs-chip-group lbt-profile-toggle"
-            role="radiogroup"
-            aria-label="Backtest profile"
-            id="engine-profile-toggle"
-          >
-            <button type="button" class="lthcs-chip lbt-profile-chip is-active"
-                    data-profile="long_only_buy" role="radio" aria-checked="true">Baseline (long-only)</button>
-            <button type="button" class="lthcs-chip lbt-profile-chip"
-                    data-profile="long_buy_short_review" role="radio" aria-checked="false">Long/Short Review</button>
-            <button type="button" class="lthcs-chip lbt-profile-chip"
-                    data-profile="dollar_neutral" role="radio" aria-checked="false">Dollar Neutral</button>
-            <button type="button" class="lthcs-chip lbt-profile-chip"
-                    data-profile="top_k_by_composite" role="radio" aria-checked="false">Top-K Composite</button>
-          </div>
-          <p class="lbt-profile-caption" id="engine-profile-caption">currently showing: Baseline (long-only)</p>
-          <div class="lbt-pnl-stats" id="engine-stats"></div>
-          <div class="lbt-pnl-chart-wrap">
-            <svg id="engine-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Engine equity curve"></svg>
-          </div>
-          <div class="lbt-legend" id="engine-legend"></div>
-          <h3 class="lbt-h3">Per-band sub-portfolio total return</h3>
-          <p class="lbt-note">Each row simulates &ldquo;long-only that band&rdquo;. Higher LTHCS bands should compound faster than lower bands &mdash; this is the framework's smell test.</p>
-          <div id="engine-band-chart" class="lbt-band-chart"></div>
-
-          <h3 class="lbt-h3">Per-pillar attribution <span class="lbt-h3-sub">(&Delta;Sharpe vs baseline, Approach B)</span></h3>
-          <p class="lbt-note">
-            For each pillar we re-run the engine with that pillar&rsquo;s weight set to zero and the remaining four renormalized. The bar shows
-            <strong>&Delta;Sharpe vs baseline</strong> &mdash; a <em>negative</em> bar means removing the pillar <em>hurts</em>, so the pillar was a positive contributor. Hover for variant Sharpe + &Delta;return.
-          </p>
-          <p class="lbt-caveat" id="engine-attribution-note" title="">
-            <strong>Caveat:</strong> attributions are not additive &mdash; removing two pillars is not the sum of removing each.
-          </p>
-          <div id="engine-attribution-chart" class="lbt-attrib-chart"></div>
-        </section>
-
-        <!-- ===== Quintile spread per pillar ================================= -->
-        <section class="lthcs-section lbt-section" aria-label="Quintile spread">
-          <h2 class="lbt-h2">Quintile spread <span class="lbt-h2-sub">(Q5 &minus; Q1 forward returns per pillar)</span></h2>
-          <p class="lbt-note">If a pillar predicts, top quintile (Q5) should beat bottom quintile (Q1). Spread is the average end-of-window difference.</p>
-          <div id="quintile-chart" class="lbt-quintile-chart"></div>
         </section>
 
         <!-- ===== Walk-forward adaptive weights ============================== -->
-        <section class="lthcs-section lbt-section" aria-label="Walk-forward CV">
-          <h2 class="lbt-h2">Walk-forward adaptive weights</h2>
-          <div id="wf-status" class="lbt-note">&hellip;</div>
-          <div class="lbt-table-wrap">
-            <table class="lbt-table" id="wf-table">
-              <thead>
-                <tr>
-                  <th scope="col">Ridge &alpha;</th>
-                  <th scope="col">Train IC</th>
-                  <th scope="col">Test IC</th>
-                  <th scope="col">Overfit gap</th>
-                  <th scope="col">Verdict</th>
-                </tr>
-              </thead>
-              <tbody id="wf-tbody"></tbody>
-            </table>
+        <section class="lthcs-section lbt-section lbt-collapsible" id="section-walkforward" data-section-key="walkforward" aria-label="Walk-forward CV">
+          <button type="button" class="lbt-section-toggle" aria-expanded="false" aria-controls="section-walkforward-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Walk-forward adaptive weights</span>
+          </button>
+          <div class="lbt-section-body" id="section-walkforward-body">
+            <div id="wf-status" class="lbt-note">&hellip;</div>
+            <div class="lbt-table-wrap">
+              <table class="lbt-table" id="wf-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Ridge &alpha;</th>
+                    <th scope="col">Train IC</th>
+                    <th scope="col">Test IC</th>
+                    <th scope="col">Overfit gap</th>
+                    <th scope="col">Verdict</th>
+                  </tr>
+                </thead>
+                <tbody id="wf-tbody"></tbody>
+              </table>
+            </div>
+            <div id="wf-weights" class="lbt-weights"></div>
           </div>
-          <div id="wf-weights" class="lbt-weights"></div>
+        </section>
+
+        <!-- ===== Quintile spread per pillar ================================= -->
+        <section class="lthcs-section lbt-section lbt-collapsible" id="section-quintile" data-section-key="quintile" aria-label="Quintile spread">
+          <button type="button" class="lbt-section-toggle" aria-expanded="false" aria-controls="section-quintile-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Quintile spread</span>
+            <span class="lbt-section-toggle-sub">(Q5 &minus; Q1 forward returns per pillar)</span>
+          </button>
+          <div class="lbt-section-body" id="section-quintile-body">
+            <p class="lbt-note">If a pillar predicts, top quintile (Q5) should beat bottom quintile (Q1). Spread is the average end-of-window difference.</p>
+            <div id="quintile-chart" class="lbt-quintile-chart"></div>
+          </div>
         </section>
 
         <!-- ===== Per-cohort breakdown ======================================= -->
-        <section class="lthcs-section lbt-section" aria-label="Per-cohort breakdown">
-          <h2 class="lbt-h2">Per-cohort breakdown <span class="lbt-h2-sub">(which cohort works best?)</span></h2>
-          <div id="cohort-status" class="lbt-note">&hellip;</div>
-          <div class="lbt-table-wrap">
-            <table class="lbt-table" id="cohort-table">
-              <thead>
-                <tr>
-                  <th scope="col">Cohort</th>
-                  <th scope="col">N tickers</th>
-                  <th scope="col">Composite IC</th>
-                  <th scope="col">Sharpe</th>
-                </tr>
-              </thead>
-              <tbody id="cohort-tbody"></tbody>
-            </table>
+        <section class="lthcs-section lbt-section lbt-collapsible" id="section-cohort" data-section-key="cohort" aria-label="Per-cohort breakdown">
+          <button type="button" class="lbt-section-toggle" aria-expanded="false" aria-controls="section-cohort-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Per-cohort breakdown</span>
+            <span class="lbt-section-toggle-sub">(which cohort works best?)</span>
+          </button>
+          <div class="lbt-section-body" id="section-cohort-body">
+            <div id="cohort-status" class="lbt-note">&hellip;</div>
+            <div class="lbt-table-wrap">
+              <table class="lbt-table" id="cohort-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Cohort</th>
+                    <th scope="col">N tickers</th>
+                    <th scope="col">Composite IC</th>
+                    <th scope="col">Sharpe</th>
+                  </tr>
+                </thead>
+                <tbody id="cohort-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== Legacy Band portfolio P&L curve ============================ -->
+        <!--
+          Moved to bottom + de-emphasized in Phase 2. The Sharpe in this
+          section is inflated by overlapping forward windows; the Engine
+          P&L section above is the honest number. We keep this section so
+          we can still verify the framework's IC translates to *some* kind
+          of positive curve, but it should NOT be the headline.
+        -->
+        <section class="lthcs-section lbt-section lbt-collapsible lbt-section-legacy" id="section-legacy-pnl" data-section-key="legacy-pnl" aria-label="Legacy band portfolio P&amp;L">
+          <button type="button" class="lbt-section-toggle" aria-expanded="false" aria-controls="section-legacy-pnl-body">
+            <span class="lbt-section-chevron" aria-hidden="true">&#9662;</span>
+            <span class="lbt-section-toggle-label">Legacy &middot; Band portfolio P&amp;L</span>
+            <span class="lbt-section-toggle-sub">(overlapping window &mdash; see Engine P&amp;L above)</span>
+            <span class="lbt-section-badge lbt-section-badge-legacy" aria-hidden="true">legacy</span>
+          </button>
+          <div class="lbt-section-body" id="section-legacy-pnl-body">
+            <p class="lbt-caveat lbt-caveat-prominent">
+              <strong>Caveat:</strong> the curve below reuses overlapping forward windows, so its Sharpe is inflated. The honest non-overlapping numbers are in the <a href="#section-engine" data-toc-target="section-engine">Engine P&amp;L</a> section above.
+            </p>
+            <div class="lbt-pnl-stats" id="pnl-stats"></div>
+            <div class="lbt-pnl-chart-wrap">
+              <svg id="pnl-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="Cumulative return curve"></svg>
+            </div>
           </div>
         </section>
 

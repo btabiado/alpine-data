@@ -192,8 +192,104 @@ async function main() {
   // numbers are profile-independent at the validation layer).
   setupProfileToggle(base, initialProfile);
 
+  // Phase 2 UX restructure: collapsible sections + TOC chip nav. Both run
+  // after content unhides so initial paint sees the correct collapsed state.
+  setupCollapsibleSections();
+  setupTocNav();
+
   loading.classList.add('hidden');
   content.classList.remove('hidden');
+}
+
+/* ======================================================================
+   Phase 2 UX restructure — collapsible sections + TOC navigation.
+
+   Each .lbt-collapsible section has a [data-section-key] attribute and a
+   .lbt-section-toggle button. Default-expanded sections start with
+   aria-expanded="true" in HTML; default-collapsed start with "false". On
+   wire-up we hydrate from localStorage (per-section key under
+   lthcs.backtest.collapse) and override the HTML default if a user
+   preference exists.
+
+   Storage shape:
+     localStorage["lthcs.backtest.collapse"] = JSON map of
+       { [section-key: string]: "open" | "closed" }
+   ====================================================================== */
+const COLLAPSE_STORAGE_KEY = 'lthcs.backtest.collapse';
+
+function readCollapseMap() {
+  try {
+    const raw = window.localStorage.getItem(COLLAPSE_STORAGE_KEY);
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    return (obj && typeof obj === 'object') ? obj : {};
+  } catch (_e) { return {}; }
+}
+function writeCollapseMap(map) {
+  try { window.localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(map)); } catch (_e) { /* ignore */ }
+}
+
+function applyCollapseState(section, isCollapsed) {
+  const toggle = section.querySelector(':scope > .lbt-section-toggle');
+  if (!toggle) return;
+  section.classList.toggle('is-collapsed', isCollapsed);
+  toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+}
+
+function setupCollapsibleSections() {
+  const sections = document.querySelectorAll('.lbt-collapsible');
+  const stored = readCollapseMap();
+
+  for (const section of sections) {
+    const key = section.dataset.sectionKey;
+    if (!key) continue;
+    const toggle = section.querySelector(':scope > .lbt-section-toggle');
+    if (!toggle) continue;
+
+    // Hydrate from localStorage — overrides the HTML aria-expanded default.
+    if (Object.prototype.hasOwnProperty.call(stored, key)) {
+      const wantCollapsed = stored[key] === 'closed';
+      applyCollapseState(section, wantCollapsed);
+    } else {
+      // HTML default (default-expanded sections: aria-expanded="true").
+      const expanded = toggle.getAttribute('aria-expanded') !== 'false';
+      applyCollapseState(section, !expanded);
+    }
+
+    toggle.addEventListener('click', () => {
+      const nowCollapsed = !section.classList.contains('is-collapsed');
+      applyCollapseState(section, nowCollapsed);
+      const map = readCollapseMap();
+      map[key] = nowCollapsed ? 'closed' : 'open';
+      writeCollapseMap(map);
+    });
+  }
+}
+
+function setupTocNav() {
+  // All TOC chips + any in-body deep-links (the legacy section caveat).
+  const links = document.querySelectorAll('[data-toc-target]');
+  for (const link of links) {
+    link.addEventListener('click', (ev) => {
+      const targetId = link.dataset.tocTarget;
+      if (!targetId) return;
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      ev.preventDefault();
+      // Auto-expand the destination if it's collapsed — scroll-to-a-collapsed-
+      // section is the worst UX outcome here.
+      if (target.classList.contains('is-collapsed')) {
+        applyCollapseState(target, false);
+        const map = readCollapseMap();
+        const key = target.dataset.sectionKey;
+        if (key) { map[key] = 'open'; writeCollapseMap(map); }
+      }
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Move focus to the section toggle for keyboard users.
+      const toggle = target.querySelector(':scope > .lbt-section-toggle');
+      if (toggle) toggle.focus({ preventScroll: true });
+    });
+  }
 }
 
 /* ----- Engine artifact bundle loader (profile-aware) -------------------- */
