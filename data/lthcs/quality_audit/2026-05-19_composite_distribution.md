@@ -115,20 +115,22 @@ Snapshot file: `data/lthcs/snapshots/2026-05-18.json` (latest available; today i
 | HD | 24.0 | review | mature_compounder | 6.3 | 19.5 | 40.6 | 55.0 | 37.4 | thesis_unavailable |
 | ZS | 25.2 | review | growth_compounder | 25.5 | 9.9 | 47.5 | 58.8 | 43.5 | thesis_unavailable |
 
-## Pillar-vs-cohort z-score outliers (|z| >= 2.0)
+## Pillar-vs-peer-group z-score outliers (|z| >= 2.0)
+
+Grouping: `des` is bucketed by **sector** (Phase 3 hotfix — DES is sector-driven; per-cohort grouping clustered Financials as 6/10 outliers). All other pillars remain bucketed by **maturity_stage**. Buckets of size <3 fall back to a universe-wide baseline; the `cohort` column shows which bucket was actually used (`_universe` = fallback).
 
 | ticker | cohort | pillar | value | cohort_mean | cohort_sd | z | composite | flags |
 |---|---|---|---|---|---|---|---|---|
+| GE | Industrials | des | 49.3 | 46.63 | 0.6 | 4.47 | 49.6 | thesis_unavailable |
+| LCID | Consumer Discretionary | des | 51.2 | 38.84 | 3.94 | 3.14 | 38.3 | thesis_unavailable |
+| BA | _universe | thesis_integrity | 81.0 | 56.3 | 7.99 | 3.09 | 57.3 | - |
 | AZN | standard_compounder | thesis_integrity | 78.5 | 55.12 | 7.81 | 2.99 | 51.2 | sec_unavailable |
-| BK | standard_compounder | des | 71.6 | 45.0 | 8.88 | 2.99 | 65.6 | - |
-| BLK | standard_compounder | des | 71.6 | 45.0 | 8.88 | 2.99 | 69.2 | thesis_unavailable |
-| COF | standard_compounder | des | 71.6 | 45.0 | 8.88 | 2.99 | 60.3 | thesis_unavailable |
-| MET | standard_compounder | des | 71.6 | 45.0 | 8.88 | 2.99 | 62.4 | thesis_unavailable |
-| SCHW | standard_compounder | des | 71.6 | 45.0 | 8.88 | 2.99 | 63.9 | thesis_unavailable |
-| USB | standard_compounder | des | 71.6 | 45.0 | 8.88 | 2.99 | 43.4 | thesis_unavailable |
 | AVGO | mature_compounder | thesis_integrity | 80.7 | 57.83 | 7.94 | 2.88 | 76.8 | - |
+| TSLA | Consumer Discretionary | des | 49.8 | 38.84 | 3.94 | 2.78 | 28.3 | thesis_unavailable |
 | ADSK | standard_compounder | thesis_integrity | 76.6 | 55.12 | 7.81 | 2.75 | 59.8 | - |
 | AMT | standard_compounder | thesis_integrity | 76.2 | 55.12 | 7.81 | 2.7 | 61.0 | - |
+| ADI | standard_compounder | thesis_integrity | 76.0 | 55.12 | 7.81 | 2.67 | 73.4 | - |
+| BK | standard_compounder | thesis_integrity | 76.0 | 55.12 | 7.81 | 2.67 | 65.6 | - |
 
 ## Stuck tickers (|drift_30d| < 5.0)
 

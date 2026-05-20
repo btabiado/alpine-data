@@ -296,6 +296,27 @@ def top_bottom_n(
     return rows_sorted[:n], rows_sorted[-n:][::-1]
 
 
+# Pillars whose outlier z-score should be computed per-SECTOR rather
+# than per-maturity_stage cohort. DES is sector-driven by construction
+# (sector tailwinds, regulatory environment, sector-aware sensitivities)
+# so comparing each ticker against its cohort mean lumps together
+# heterogeneous sectors and produces a cluster bias: e.g. financials
+# (BK/BLK/COF/MET/SCHW/USB) all flag as DES outliers vs the broader
+# standard_compounder cohort, when in fact they're at-or-near the median
+# for the Financials sector itself.
+#
+# Mapping: pillar_name -> grouping key in each snapshot row.
+_PILLAR_OUTLIER_GROUPING: Dict[str, str] = {
+    "des": "sector",
+}
+_DEFAULT_OUTLIER_GROUPING = "maturity_stage"
+
+
+def _group_key_for_pillar(pillar: str) -> str:
+    """Snapshot-row field used to bucket rows for ``pillar``'s z-score."""
+    return _PILLAR_OUTLIER_GROUPING.get(pillar, _DEFAULT_OUTLIER_GROUPING)
+
+
 def pillar_zscore_outliers(
     scoreset: Sequence[Dict[str, Any]],
     threshold: float = 2.0,
@@ -304,28 +325,68 @@ def pillar_zscore_outliers(
     """Find tickers whose pillar score is >``threshold`` stdev from their cohort mean
     on that pillar. Returns the ``top_n`` by absolute z-score.
 
-    Cohort = maturity_stage. Cohorts of size <3 are skipped (insufficient sample).
+    Grouping depends on the pillar:
+
+    * ``des`` is sector-driven, so it is bucketed by ``sector``.
+    * All other pillars are bucketed by ``maturity_stage`` (the original
+      cohort used in Phase 3 task 3.3).
+
+    Buckets of size <3 fall back to a universe-wide sample for that
+    pillar so a single-ticker sector still gets compared somewhere
+    rather than being silently dropped. Universe-wide fallback is also
+    skipped if there are fewer than 3 valid samples total (e.g. an
+    almost-empty pillar). The ``cohort`` field in the returned outlier
+    records the bucket name actually used (sector / maturity / or
+    ``"_universe"`` for the fallback path).
     """
-    by_cohort: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-    for r in scoreset:
-        by_cohort[r.get("maturity_stage") or "_unclassified"].append(r)
+    # Pre-compute the universe-wide sample for each pillar so the small-
+    # sector fallback is a quick lookup, not an inner-loop recompute.
+    universe_stats: Dict[str, Tuple[float, float, int]] = {}
+    for pillar in PILLAR_ORDER:
+        u_sample = [
+            float(r.get("subscores", {}).get(pillar))
+            for r in scoreset
+            if isinstance(r.get("subscores", {}).get(pillar), (int, float))
+        ]
+        if len(u_sample) >= 3:
+            u_mu = sum(u_sample) / len(u_sample)
+            u_sd = statistics.pstdev(u_sample)
+            universe_stats[pillar] = (u_mu, u_sd, len(u_sample))
 
     outliers: List[Dict[str, Any]] = []
-    for cohort, rows in by_cohort.items():
-        if len(rows) < 3:
-            continue
-        for pillar in PILLAR_ORDER:
+
+    for pillar in PILLAR_ORDER:
+        group_key = _group_key_for_pillar(pillar)
+
+        # Bucket rows by this pillar's grouping key (sector for DES,
+        # maturity_stage for everything else).
+        by_bucket: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for r in scoreset:
+            by_bucket[r.get(group_key) or "_unclassified"].append(r)
+
+        u_fallback = universe_stats.get(pillar)
+
+        for bucket_name, rows in by_bucket.items():
             sample = [
                 float(r.get("subscores", {}).get(pillar))
                 for r in rows
                 if isinstance(r.get("subscores", {}).get(pillar), (int, float))
             ]
-            if len(sample) < 3:
+            if len(sample) >= 3:
+                mu = sum(sample) / len(sample)
+                sd = statistics.pstdev(sample)
+                effective_bucket = bucket_name
+            elif u_fallback is not None:
+                # Sector / cohort too small — fall back to universe-wide
+                # baseline so a 1- or 2-ticker bucket still gets scored.
+                mu, sd, _ = u_fallback
+                effective_bucket = "_universe"
+            else:
                 continue
-            mu = sum(sample) / len(sample)
-            sd = statistics.pstdev(sample)
+
             if sd <= 1e-9:
                 continue
+
             for r in rows:
                 v = r.get("subscores", {}).get(pillar)
                 if not isinstance(v, (int, float)):
@@ -334,7 +395,7 @@ def pillar_zscore_outliers(
                 if abs(z) >= threshold:
                     outliers.append({
                         "ticker": r.get("ticker"),
-                        "cohort": cohort,
+                        "cohort": effective_bucket,
                         "pillar": pillar,
                         "value": round(float(v), 2),
                         "cohort_mean": round(mu, 2),
@@ -615,7 +676,15 @@ def render_distribution_report(
         )
     lines.append("")
 
-    lines.append("## Pillar-vs-cohort z-score outliers (|z| >= 2.0)")
+    lines.append("## Pillar-vs-peer-group z-score outliers (|z| >= 2.0)")
+    lines.append("")
+    lines.append(
+        "Grouping: `des` is bucketed by **sector** (Phase 3 hotfix — DES is "
+        "sector-driven; per-cohort grouping clustered Financials as 6/10 outliers). "
+        "All other pillars remain bucketed by **maturity_stage**. Buckets of size "
+        "<3 fall back to a universe-wide baseline; the `cohort` column shows "
+        "which bucket was actually used (`_universe` = fallback)."
+    )
     lines.append("")
     if z_outliers:
         lines.append("| ticker | cohort | pillar | value | cohort_mean | cohort_sd | z | composite | flags |")
@@ -628,7 +697,7 @@ def render_distribution_report(
                 f"{o['composite']} | {flags} |"
             )
     else:
-        lines.append("(none — every pillar within 2 sigma of its cohort mean)")
+        lines.append("(none — every pillar within 2 sigma of its peer-group mean)")
     lines.append("")
 
     lines.append("## Stuck tickers (|drift_30d| < 5.0)")

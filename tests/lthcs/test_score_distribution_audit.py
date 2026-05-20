@@ -221,8 +221,148 @@ def test_pillar_zscore_outliers_skips_small_cohorts():
         _row("A", 50, {p: 50 for p in audit.PILLAR_ORDER}, maturity="recovery_rerating"),
         _row("B", 90, {**{p: 50 for p in audit.PILLAR_ORDER}, "adoption_momentum": 100}, maturity="recovery_rerating"),
     ]
-    # Cohort size <3 → no outliers reported even though sample is wild.
+    # Cohort size <3 AND universe-wide sample is also <3 → no outliers
+    # reported even though sample is wild. (Universe-wide fallback also
+    # requires at least 3 samples to compute a stdev.)
     assert audit.pillar_zscore_outliers(rows, threshold=2.0) == []
+
+
+# ---------------------------------------------------------------------------
+# Per-sector DES outlier z-scoring (Phase 3 hotfix)
+# ---------------------------------------------------------------------------
+
+def _row_with_sector(
+    ticker: str,
+    pillars: Dict[str, float],
+    sector: str,
+    maturity: str = "mature_compounder",
+    composite: float = 50.0,
+) -> Dict[str, Any]:
+    """Build a row with a custom sector. Wraps ``_row`` and overrides ``sector``."""
+    row = _row(
+        ticker=ticker,
+        composite=composite,
+        pillars=pillars,
+        maturity=maturity,
+    )
+    row["sector"] = sector
+    return row
+
+
+def test_des_outlier_uses_sector_not_cohort_grouping():
+    # Two tickers in the SAME sector (Financials) but DIFFERENT cohorts.
+    # If grouping were per-cohort, the two financials would be split into
+    # two different buckets (each of size 1) and skipped. With per-sector
+    # grouping for DES they share a Financials bucket (size 2) — still
+    # below the 3-min so we add 1 more Financials ticker to make a real
+    # sector bucket, and plant the outlier among them.
+    rows = []
+    # 5 Technology tickers, DES = 50 (sector baseline).
+    for i in range(5):
+        rows.append(_row_with_sector(
+            f"TECH{i}",
+            {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 50.0},
+            sector="Technology",
+            maturity="mature_compounder" if i < 3 else "standard_compounder",
+        ))
+    # 5 Financials tickers, DES = 70 (sector baseline — much higher than Tech).
+    # If we grouped by maturity_stage, these 5 financials + 5 tech in
+    # standard_compounder/mature_compounder would mix, and the financials
+    # would look like outliers vs the tech-dominated cohort.
+    for i in range(4):
+        rows.append(_row_with_sector(
+            f"FIN{i}",
+            {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 70.0},
+            sector="Financials",
+            # Spread across cohorts on purpose:
+            maturity="mature_compounder" if i < 2 else "standard_compounder",
+        ))
+    # The 5th financial is a true within-sector outlier (DES = 95).
+    rows.append(_row_with_sector(
+        "FIN_WILD",
+        {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 95.0},
+        sector="Financials",
+        maturity="standard_compounder",
+    ))
+
+    outliers = audit.pillar_zscore_outliers(rows, threshold=2.0, top_n=10)
+    des_outliers = [o for o in outliers if o["pillar"] == "des"]
+
+    # The 4 "baseline" financials should NOT show up as DES outliers —
+    # they're at-the-mean within their sector (Financials). Only FIN_WILD
+    # is a true within-sector outlier.
+    baseline_fin_outliers = [o for o in des_outliers if o["ticker"].startswith("FIN") and o["ticker"] != "FIN_WILD"]
+    assert baseline_fin_outliers == [], (
+        f"baseline Financials should NOT be flagged as DES outliers "
+        f"under per-sector grouping; got: {baseline_fin_outliers}"
+    )
+    # And the planted outlier should show up with bucket = Financials.
+    fin_wild = [o for o in des_outliers if o["ticker"] == "FIN_WILD"]
+    assert len(fin_wild) == 1
+    assert fin_wild[0]["cohort"] == "Financials"
+
+
+def test_des_singleton_sector_falls_back_to_universe():
+    # Singleton-sector ticker should still be evaluated against the
+    # universe-wide DES sample, not silently dropped.
+    rows = []
+    # 9 Tech tickers, DES = 50.
+    for i in range(9):
+        rows.append(_row_with_sector(
+            f"T{i}",
+            {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 50.0},
+            sector="Technology",
+        ))
+    # 1 Real Estate ticker with DES wildly out of step.
+    rows.append(_row_with_sector(
+        "LONELY",
+        {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 100.0},
+        sector="Real Estate",
+    ))
+
+    outliers = audit.pillar_zscore_outliers(rows, threshold=2.0, top_n=10)
+    lonely = [o for o in outliers if o["ticker"] == "LONELY" and o["pillar"] == "des"]
+    assert len(lonely) == 1, "singleton-sector ticker should fall back to universe-wide"
+    # The cohort field should record the universe-wide fallback path.
+    assert lonely[0]["cohort"] == "_universe"
+
+
+def test_financials_no_longer_cluster_in_des_top10():
+    # Reproduces the failure mode FF's audit surfaced: 6+ Financials
+    # tickers all flagged as DES outliers because the standard_compounder
+    # cohort means is dragged down by non-Financials. Under per-sector
+    # grouping, financials are evaluated against other financials — so
+    # the cluster bias should disappear.
+    rows = []
+    # 50 standard_compounder tickers spread across sectors with DES=45.
+    non_fin_sectors = ["Technology", "Health Care", "Industrials", "Consumer Discretionary"]
+    for i in range(50):
+        rows.append(_row_with_sector(
+            f"NF{i}",
+            {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 45.0},
+            sector=non_fin_sectors[i % len(non_fin_sectors)],
+            maturity="standard_compounder",
+        ))
+    # 6 financials with DES=71.6 (matches the snapshot we're fixing).
+    for tk in ("BK", "BLK", "COF", "MET", "SCHW", "USB"):
+        rows.append(_row_with_sector(
+            tk,
+            {**{p: 50.0 for p in audit.PILLAR_ORDER}, "des": 71.6},
+            sector="Financials",
+            maturity="standard_compounder",
+        ))
+
+    outliers = audit.pillar_zscore_outliers(rows, threshold=2.0, top_n=10)
+    des_outliers = [o for o in outliers if o["pillar"] == "des"]
+    fin_tickers = {"BK", "BLK", "COF", "MET", "SCHW", "USB"}
+    fin_in_des_top10 = [o["ticker"] for o in des_outliers if o["ticker"] in fin_tickers]
+    # Under per-sector grouping, all 6 financials sit at the same DES=71.6
+    # which IS their sector mean — stdev=0 and no outliers flagged.
+    # (The pre-fix behaviour would have flagged all 6 as |z|=2.99 outliers.)
+    assert len(fin_in_des_top10) == 0, (
+        f"under per-sector grouping, financials at-the-sector-mean should not "
+        f"cluster as DES outliers; got: {fin_in_des_top10}"
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -346,7 +486,7 @@ def test_render_distribution_report_contains_required_sections():
     assert "## Band cohorts vs documented thresholds" in text
     assert "## Per-cohort distribution" in text
     assert "## Top 5 / bottom 5 by composite" in text
-    assert "## Pillar-vs-cohort z-score outliers" in text
+    assert "## Pillar-vs-peer-group z-score outliers" in text
     assert "## Stuck tickers" in text
 
 
