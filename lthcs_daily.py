@@ -2192,6 +2192,38 @@ def stage_8_persist(state: PipelineState) -> bool:
     return True
 
 
+def stage_9_build_public_manifest(state: PipelineState) -> bool:
+    """Refresh the public read-only data manifest (Phase 4 follow-on).
+
+    Emits ``data/lthcs/public/manifest.json`` (discoverable index of the
+    JSON files this site already serves under ``/data/lthcs/``) and
+    mirrors today's snapshot under the stable filename
+    ``public/latest_snapshot.json`` so external consumers can hard-code
+    a single URL.
+
+    Never fails the pipeline — the equity write path in Stage 8 is the
+    contract here. A bad manifest just means yesterday's stays live.
+    """
+    if state.args.dry_run:
+        print("✓ Stage 9 (dry-run): would have refreshed public manifest")
+        return True
+    try:
+        from scripts.lthcs_build_public_manifest import build_and_write
+        data_root = state.persist.data_root if state.persist is not None else None
+        manifest_path, snap_path = build_and_write(data_root=data_root)
+        print(
+            "✓ Stage 9: wrote public manifest (%s%s)"
+            % (
+                manifest_path.name,
+                ", +latest_snapshot.json" if snap_path is not None else "",
+            )
+        )
+    except Exception as exc:
+        if state.args.verbose:
+            print("  public manifest skipped: %s" % exc)
+    return True
+
+
 # ---------------------------------------------------------------------------
 # News-only refresh path (hourly cadence)
 # ---------------------------------------------------------------------------
@@ -2681,6 +2713,7 @@ STAGES: List[Callable[[PipelineState], bool]] = [
     stage_7p5_compute_index,
     stage_7p5b_llm_narratives_shadow,
     stage_8_persist,
+    stage_9_build_public_manifest,
 ]
 
 

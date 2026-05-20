@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Public Data Index</title>
+    <!--
+      Reuses LTHCS design tokens (band colors, dark theme, fonts) from the
+      card-view stylesheet. In production both pages stage under /lthcs/
+      so this @import resolves at /lthcs/lthcs_tab/lthcs.css. The dev
+      server (python3 -m http.server in repo root) serves /lthcs_tab/
+      sibling to /lthcs_public/, so the ../lthcs_tab/ path works in both
+      environments without conditional logic. Mirrors lthcs_position/.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-public.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Public Data Index</h1>
+          <p class="lthcs-subtitle">Read-only mirror of LTHCS scores &amp; supporting JSON</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Snapshot</span>
+            <span id="lpub-snapshot-date" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card view</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lpub-main">
+      <!-- Plain-English orientation for external tools / curious humans. -->
+      <section class="lthcs-section lpub-intro" aria-label="About this page">
+        <p>
+          <strong>What this is.</strong> A discoverable index of the JSON files this site already
+          publishes under <code>/data/lthcs/</code>. External tools, notebooks, and
+          downstream integrations can read these endpoints directly &mdash; no API
+          key, no rate limit, no auth. The site is a static GitHub Pages mirror;
+          every link below resolves to a plain JSON file on disk.
+        </p>
+        <p>
+          <strong>What to start with.</strong> Most consumers want
+          <a id="lpub-quick-latest" href="../data/lthcs/public/latest_snapshot.json"><code>latest_snapshot.json</code></a>
+          (stable filename, always today&rsquo;s full universe scores) or
+          <a id="lpub-quick-manifest" href="../data/lthcs/public/manifest.json"><code>manifest.json</code></a>
+          (this index, machine-readable).
+        </p>
+        <p class="lpub-meta-row">
+          <span><strong>Model version:</strong> <span id="lpub-version">&hellip;</span></span>
+          <span><strong>Universe:</strong> <span id="lpub-univ-eq">&hellip;</span> equities &middot; <span id="lpub-univ-cx">&hellip;</span> crypto</span>
+          <span><strong>Pillars:</strong> <span id="lpub-pillars">&hellip;</span></span>
+        </p>
+      </section>
+
+      <section class="lthcs-section lpub-endpoints" aria-label="Endpoints">
+        <h2 class="lpub-h2">Endpoints</h2>
+        <p class="lpub-help">
+          Templated paths use <code>&lt;DATE&gt;</code>, <code>&lt;TICKER&gt;</code>, and
+          <code>&lt;RUN_ID&gt;</code> placeholders. Replace them with concrete values
+          (e.g. <code>2026-05-20</code>, <code>AAPL</code>, an equity-curve run id from
+          <code>/data/lthcs/backtest/</code>).
+        </p>
+        <div id="lpub-loading" class="lpub-loading">Loading manifest&hellip;</div>
+        <div id="lpub-error" class="lpub-error hidden" role="alert"></div>
+        <table id="lpub-endpoints-table" class="lpub-table hidden" aria-label="Public data endpoints">
+          <thead>
+            <tr>
+              <th scope="col">Endpoint</th>
+              <th scope="col">Description</th>
+              <th scope="col">Shape</th>
+            </tr>
+          </thead>
+          <tbody id="lpub-endpoints-body"></tbody>
+        </table>
+      </section>
+
+      <section class="lthcs-section lpub-license" aria-label="License">
+        <h2 class="lpub-h2">License &amp; disclaimer</h2>
+        <p id="lpub-license-text">&hellip;</p>
+      </section>
+    </main>
+
+    <footer class="lpub-footer" role="contentinfo">
+      <p>Updated daily at 23:00 UTC. Read-only mirror.</p>
+    </footer>
+
+    <script src="./lthcs-public.js" defer></script>
+  </body>
+</html>

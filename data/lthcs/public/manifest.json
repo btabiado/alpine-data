@@ -1,0 +1,65 @@
+{
+  "bands": [
+    "elite",
+    "high_confidence",
+    "constructive",
+    "monitor",
+    "weakening",
+    "review"
+  ],
+  "crypto_universe_size": 10,
+  "data_endpoints": [
+    {
+      "description": "Full-universe LTHCS scores for the given trading day (equity universe \u2014 DJIA + NDX + S&P 100, deduped).",
+      "endpoint": "/data/lthcs/snapshots/2026-05-18.json",
+      "shape": "{ calc_date, model_version, scores: [{ ticker, lthcs_score, band, subscores, modifiers, ... }] }"
+    },
+    {
+      "description": "Crypto-universe LTHCS scores for the given day (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE).",
+      "endpoint": "/data/lthcs/snapshots_crypto/2026-05-18.json",
+      "shape": "{ calc_date, model_version, scores: [{ ticker, lthcs_score, band, subscores, ... }] }"
+    },
+    {
+      "description": "Per-ticker time series of composite scores + bands (append-only history file, one per ticker).",
+      "endpoint": "/data/lthcs/history/by_ticker/<TICKER>.json",
+      "shape": "{ ticker, rows: [{ calc_date, lthcs_score, band, ... }] }"
+    },
+    {
+      "description": "Templated per-ticker narrative blurbs for the given day (always available \u2014 no LLM required).",
+      "endpoint": "/data/lthcs/narratives/2026-05-18.json",
+      "shape": "{ calc_date, model_version, narratives: [{ ticker, text, ... }] }"
+    },
+    {
+      "description": "LLM-authored narratives for the given day. Gated \u2014 only present on days the LLM SHADOW path ran successfully.",
+      "endpoint": "/data/lthcs/narratives_llm/2026-05-18.json",
+      "shape": "{ calc_date, model_version, narratives: [{ ticker, text, ... }] }"
+    },
+    {
+      "description": "Per-(ticker, pillar) breakdown of sub-scores + raw component values for the given day.",
+      "endpoint": "/data/lthcs/variable_detail/2026-05-18.json",
+      "shape": "{ calc_date, model_version, rows: [{ ticker, pillar, sub_score, components, data_quality }] }"
+    },
+    {
+      "description": "Backtest equity curve for a given run id (LTHCS-band-weighted vs. equal-weight + SPY baselines).",
+      "endpoint": "/data/lthcs/backtest/<RUN_ID>/equity_curve.json",
+      "shape": "{ run_id, dates, strategies: { lthcs_weighted: [...], ... } }"
+    },
+    {
+      "description": "Pillar weights by maturity stage (equity + crypto profiles). Updated when the model is retuned.",
+      "endpoint": "/data/lthcs/weights.json",
+      "shape": "{ version, profiles: { <profile>: [w1, w2, w3, w4, w5] } }"
+    }
+  ],
+  "generated_at": "2026-05-20T09:52:22Z",
+  "latest_snapshot_date": "2026-05-18",
+  "license": "Read-only public mirror. Data is for informational use only \u2014 not investment advice.",
+  "pillars": [
+    "adoption_momentum",
+    "institutional_confidence",
+    "financial_evolution",
+    "thesis_integrity",
+    "des"
+  ],
+  "universe_size": 168,
+  "version": "v1.1.0"
+}

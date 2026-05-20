@@ -1,0 +1,155 @@
+/* =========================================================================
+   LTHCS Public Data Index (read-only mirror landing page).
+
+   Layered on top of ../lthcs_tab/lthcs.css for shared design tokens — only
+   contains styles unique to this page; everything else (header, typography,
+   dark theme) is inherited.
+
+   Visual cousin of lthcs_position/lthcs-position.css.
+   ========================================================================= */
+
+.hidden {
+  display: none !important;
+}
+
+.lpub-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ----- Intro section ----------------------------------------------------- */
+.lpub-intro p {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.lpub-intro p:last-child {
+  margin-bottom: 0;
+}
+.lpub-intro strong {
+  color: var(--text-primary);
+}
+.lpub-intro code {
+  background: var(--surface-subtle, rgba(255, 255, 255, 0.04));
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+.lpub-intro a {
+  color: var(--link, #60a5fa);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.lpub-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 28px;
+  font-size: 13px;
+}
+
+/* ----- Endpoints table --------------------------------------------------- */
+.lpub-h2 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+.lpub-help {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 14px 0;
+}
+.lpub-help code {
+  background: var(--surface-subtle, rgba(255, 255, 255, 0.04));
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12.5px;
+}
+
+.lpub-loading {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.lpub-error {
+  font-size: 14px;
+  color: var(--danger, #f87171);
+  border-left: 3px solid var(--danger, #f87171);
+  padding-left: 12px;
+}
+
+.lpub-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.lpub-table thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  padding: 8px 10px 8px 0;
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lpub-table tbody td {
+  padding: 10px 10px 10px 0;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.06));
+  color: var(--text-secondary);
+}
+.lpub-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.lpub-table .lpub-endpoint-cell {
+  white-space: nowrap;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+}
+.lpub-table .lpub-endpoint-cell a {
+  color: var(--link, #60a5fa);
+  text-decoration: none;
+}
+.lpub-table .lpub-endpoint-cell a:hover {
+  text-decoration: underline;
+}
+.lpub-table .lpub-shape-cell {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.55));
+  max-width: 38ch;
+}
+
+/* ----- License section --------------------------------------------------- */
+.lpub-license p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* ----- Footer ------------------------------------------------------------ */
+.lpub-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.5));
+  padding: 24px 16px 32px;
+}
+.lpub-footer p {
+  margin: 0;
+}
+
+/* ----- Narrow viewports -------------------------------------------------- */
+@media (max-width: 640px) {
+  .lpub-table .lpub-shape-cell {
+    display: none;
+  }
+  .lpub-table thead th:nth-child(3) {
+    display: none;
+  }
+  .lpub-meta-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+}
