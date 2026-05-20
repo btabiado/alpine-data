@@ -2224,6 +2224,34 @@ def stage_9_build_public_manifest(state: PipelineState) -> bool:
     return True
 
 
+def stage_10_build_universe_csv(state: PipelineState) -> bool:
+    """Refresh the public bulk-CSV export of the universe (Phase 5 ETA).
+
+    Emits ``data/lthcs/public/universe.csv`` — a flat, spreadsheet-ready
+    file with one row per ticker for today's snapshot. Power users want
+    this for offline analysis (Excel / pandas / Google Sheets / R).
+
+    Never fails the pipeline — like the public manifest in Stage 9, the
+    equity write path in Stage 8 is the contract here. A bad CSV just
+    means yesterday's stays live until the next run.
+    """
+    if state.args.dry_run:
+        print("✓ Stage 10 (dry-run): would have refreshed universe.csv")
+        return True
+    try:
+        from scripts.lthcs_export_csv import build_and_write
+        data_root = state.persist.data_root if state.persist is not None else None
+        csv_path, calc_date = build_and_write(data_root=data_root)
+        print(
+            "✓ Stage 10: wrote universe CSV (%s, calc_date=%s)"
+            % (csv_path.name, calc_date)
+        )
+    except Exception as exc:
+        if state.args.verbose:
+            print("  universe CSV skipped: %s" % exc)
+    return True
+
+
 # ---------------------------------------------------------------------------
 # News-only refresh path (hourly cadence)
 # ---------------------------------------------------------------------------
@@ -2714,6 +2742,7 @@ STAGES: List[Callable[[PipelineState], bool]] = [
     stage_7p5b_llm_narratives_shadow,
     stage_8_persist,
     stage_9_build_public_manifest,
+    stage_10_build_universe_csv,
 ]
 
 

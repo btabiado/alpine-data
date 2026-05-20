@@ -225,6 +225,22 @@ def _build_endpoints(latest_date: Optional[str]) -> List[Dict[str, str]]:
             ),
             "shape": "{ version, profiles: { <profile>: [w1, w2, w3, w4, w5] } }",
         },
+        {
+            "endpoint": "/data/lthcs/public/universe.csv",
+            "description": (
+                "Bulk CSV export of the latest universe snapshot — one row "
+                "per ticker, spreadsheet-ready (Excel / pandas / Sheets). "
+                "Multi-value fields (dropped_pillars, data_quality_flags) "
+                "are semicolon-joined."
+            ),
+            "shape": (
+                "header: ticker, calc_date, lthcs_score, band, "
+                "confidence_level, adoption_momentum, institutional_confidence, "
+                "financial_evolution, thesis_integrity, des, dropped_pillars, "
+                "data_quality_flags, drift_1d, drift_7d, drift_30d, drift_90d, "
+                "sector, maturity_stage"
+            ),
+        },
     ]
 
 
