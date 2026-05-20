@@ -8,9 +8,9 @@ This README is for Bryan to set the project up the first time and run it daily a
 
 ---
 
-## V1 status (2026-05-16)
+## V1 status (2026-05-20)
 
-All 10 weeks of the build plan shipped. The framework runs end-to-end:
+All 10 weeks of the build plan shipped. The framework runs end-to-end, and Phases 1–4 of the post-V1 build queue are live (see "Phase 1–4 ship summary" below). The framework runs end-to-end:
 
 | Week | Module | Status |
 |---|---|---|
@@ -27,11 +27,60 @@ All 10 weeks of the build plan shipped. The framework runs end-to-end:
 
 **Universe:** 75 entries / 74 active. WBA marked inactive (Walgreens taken private late 2025).
 
-**V1 limitations honestly disclosed in the About modal:**
-- Thesis pillar uses a daily rotation: each run scores ~6–25 of the 74 tickers via per-ticker Alpha Vantage news calls. Tickers without fresh sentiment fall back to neutral 50 with a data-quality flag. Full universe refreshes every ~3–14 days depending on AV's actual throttle (free tier is officially 25/day but bursts often get throttled lower). Phase 2 upgrades to AV Premium or alternate news source.
-- Google Trends acceleration (40% of Adoption) is not driven for 74 tickers — Google rate-limits aggressively.
-- 13F holdings change (30% of Institutional) is a Phase 2 stub.
-- Banks score low on Financial Evolution (don't report GrossProfit / OCF the standard XBRL way). Sector-aware financial scoring is Phase 2.
+**V1 limitations honestly disclosed in the About modal** (as of 2026-05-20):
+- Thesis pillar now sources from **Finnhub `/news-sentiment`** (commit `10daa39`) — coverage jumped from 145 → 166 tickers vs the prior Alpha Vantage `NEWS_SENTIMENT` rotation. AV's free-tier `NEWS_SENTIMENT` is retained as a degraded fallback; see `memory/alpha_vantage_news_sentiment_quirk.md` for the AND-not-OR multi-ticker quirk that drove the migration.
+- Google Trends acceleration (40% of Adoption) ships partial coverage via the weekly batch (~11/167 names); Phase 2 upgrade to a non-rate-limited source is queued (Tier 2 #14).
+- 13F holdings change (Institutional) — **Phase 1 + Phase 2 SHIPPED** (commits `29f2140`, `a27823f`). CUSIP coverage 50 → 169, then AUM-weighted across 113 managers. Phase 3 (finer manager-weighting heuristics) still open.
+- Banks: **bank-cohort revenue ranking SHIPPED** (`e793a6b`) — JPM Financial Evolution sub-pillar 27 → 100 once benchmarked against the bank cohort instead of universe-wide.
+- **Hotfixes 2026-05-19/20**: drift_30d universe-wide zero bug fixed (`58659dd`), AZN IFRS / foreign-issuer 20-F fallback (`0696853`), DES per-sector outlier z-score (`06d4af0`), HW/SW compound peer-group key (`eca7560`).
+
+---
+
+## Phase 1–4 ship summary (2026-05-19 → 2026-05-20)
+
+The framework grew substantially across two days. Headline deliverables:
+
+### Live routes (in addition to `/lthcs/`)
+
+| Route | What | Commit |
+|---|---|---|
+| `/lthcs/crypto/` | Crypto pillar dashboard — 10-asset universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) scored daily | `5842149` + `88912bb` |
+| `/lthcs/backtest/ab.html` | A/B comparison of strategy variants — GG's tweak validated at **+0.184 Sharpe** vs baseline | `5381c69` |
+| `/lthcs/position/` | Position-sizing helper (Kelly + band-aware sizing) | `3814f99` |
+| `/lthcs/health/quality.html` | Monthly quality-audit status page | `68b43d6` |
+| `/lthcs/health/pipeline.html` | Pipeline freshness + cron observability | `d1eaf0d` |
+
+### Data-layer improvements
+
+- **Thesis: Finnhub `/news-sentiment` migration** (`10daa39`) — coverage 145 → 166 tickers, replaces the AV `NEWS_SENTIMENT` rotation that suffered the AND-not-OR multi-ticker bug.
+- **Crypto universe expansion** (`88912bb`) — 3 → 10 large-cap assets, scored daily at 22:00 UTC by `scripts/lthcs_crypto_daily.py`.
+- **13F Phase 2** (`a27823f`) — 113 managers, AUM-weighted ranking; Phase 1 (`29f2140`) had already taken CUSIP coverage 50 → 169.
+- **Bank-cohort revenue ranking** (`e793a6b`) — JPM Financial Evolution sub-pillar 27 → 100.
+- **HW/SW compound peer-group key** (`eca7560`) — `(maturity_stage, sector_group, tech_sub_bucket)` resolves the bimodal Tech-compounder cohort flagged in `peer-group-audit §3.4`.
+
+### Backtest engine (Tier 5 #24, Phases 1–3 + follow-ons)
+
+- Phase 1: non-overlapping P&L (`a996ad3`)
+- Phase 2: per-pillar attribution (`eb0d5db`)
+- Phase 3: strategy variants — `dollar_neutral` surfaces at **+3.1 Sharpe** (`9e13452`)
+- Sharpe/Sortino 95% CIs via block bootstrap (`afabbb1`) — `afab1b9`
+- A/B comparison view (`5381c69`)
+- Phase 4 plumbing (`306176a`): `walk_forward_tune_equity` ingests engine equity curves; promotion gate time-locked to ~July 2026.
+
+### LLM shadows (Tier 5 #23 + #28)
+
+CI now sets `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` in `lthcs-daily.yml` (`c8b74c1`). **To actually fire the shadows, add `ANTHROPIC_API_KEY` to repo secrets.** Without the secret, both modules log-and-skip cleanly. Projected cost: **~$0.50/day combined** (sentiment + narratives) on Haiku 4.5 with prompt caching across the full universe.
+
+### UI niceties (Phase 4 polish)
+
+- Custom watchlists in card view (`d81263d`)
+- Side-by-side ticker comparison, 2–4 tickers (`173ed19`)
+- V1↔LLM narratives toggle in the detail modal (`5ebf973`)
+- Dragging-pillar callout in detail modal (`014aadc`)
+
+### P0 cron fix (2026-05-20)
+
+`requirements.txt` now gates `mcp[cli]>=1.0` to `python_version >= "3.10"` (`8d373a9`) — unblocks scheduled workflows that were failing the pip install on Python 3.9 runner images.
 
 ---
 
@@ -155,14 +204,19 @@ In production, the dashboard refreshes itself without you running anything local
 
 | Workflow | Cadence | What it does | Sources touched |
 |---|---|---|---|
-| `lthcs-daily.yml` | Daily, 23:00 UTC | Full pipeline (`lthcs_daily.py --catch-up --skip-thesis`). Computes every pillar, writes the canonical daily snapshot, appends each ticker's history entry, refreshes the macro / breadth / index files. | All sources (Yahoo, SEC EDGAR XBRL, FRED, EIA, SEC 13F, SEC Form 4, Finnhub, sector RSS, Google Trends cache). |
-| `lthcs-news-hourly.yml` | Hourly, minute 0 | News-only refresh (`lthcs_daily.py --news-only --force`). Recomputes Thesis + composite for every ticker using fresh news inputs; reuses the morning's Adoption / Institutional / Financial / DES sub-scores untouched. Does NOT append to history (the daily run owns that). | Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS only. |
-| `lthcs-trends-weekly.yml` | Weekly | Refreshes Google Trends acceleration cache. | Google Trends. |
-| `lthcs-validate-weekly.yml` | Weekly | Schema + freshness gate over the last 7 days of snapshots. | (read-only) |
-| `lthcs-tune-weights-monthly.yml` | Monthly | Adaptive weight tuning sweep. | (read-only) |
-| `lthcs-backtest-monthly.yml` | Monthly | Backtest sweep across the rolling window. | (read-only) |
+| `lthcs-daily.yml` | Daily, 23:00 UTC | Full pipeline (`lthcs_daily.py --catch-up --skip-thesis`). Computes every pillar, writes the canonical daily snapshot, appends each ticker's history entry, refreshes the macro / breadth / index files. `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` shadows run when `ANTHROPIC_API_KEY` is set (`c8b74c1`). | All sources (Yahoo, SEC EDGAR XBRL, FRED, EIA, SEC 13F, SEC Form 4, Finnhub `/news-sentiment`, sector RSS, Google Trends cache). |
+| `lthcs-news-hourly.yml` | Hourly, minute 15 | News-only refresh (`lthcs_daily.py --news-only --force`). Recomputes Thesis + composite for every ticker using fresh news inputs; reuses the morning's Adoption / Institutional / Financial / DES sub-scores untouched. Does NOT append to history (the daily run owns that). | Finnhub recommendations, SEC 8-K, Yahoo earnings, sector RSS only. |
+| `lthcs-crypto-daily.yml` | Daily, 22:00 UTC | Crypto pillar snapshot — 10-asset universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) into `data/lthcs/crypto/`. 8-day initial backfill seeded; race-safe push retry. Surfaced at `/lthcs/crypto/`. Workflow `8af023b` + `88912bb`. | Coingecko / on-chain proxies; see `docs/lthcs-crypto-pillar-adapter-spec.md`. |
+| `lthcs-backtest-daily.yml` | Daily, 23:30 UTC | Runs the backtest engine (`scripts/lthcs_backtest.py`) — non-overlapping P&L + per-pillar attribution + strategy variants + Sharpe CIs → `data/lthcs/backtest/`. Race-safe push retry. Workflow `580d341`. | (read-only over snapshots) |
+| `lthcs-trends-daily.yml` | Daily, 04:00 UTC | Refreshes Google Trends acceleration cache (daily replacement of the weekly batch — Sunday-only batch caused weekly cliff-effects on Adoption). | Google Trends. |
+| `lthcs-trends-weekly.yml` | Weekly Mon, 04:00 UTC | Legacy weekly batch — kept as failsafe behind the daily trends cron. | Google Trends. |
+| `lthcs-validate-weekly.yml` | Weekly Mon, 05:00 UTC | Schema + freshness gate over the last 7 days of snapshots. | (read-only) |
+| `lthcs-β-verdict-monthly.yml` | Monthly 1st, 08:00 UTC | Re-runs the Adoption-pillar β post-mortem against the latest 30-day window; emits SHIP/HOLD verdict + per-cohort IC. Workflow part of `fdf2384`. | (read-only) |
+| `lthcs-quality-audit-monthly.yml` | Monthly 1st, 09:00 UTC | Monthly pillar-quality audit runner; output surfaced at `/lthcs/health/quality.html`. Workflows `68b43d6` + `fdf2384`. | (read-only) |
+| `lthcs-tune-weights-monthly.yml` | Monthly 1st, 07:00 UTC | Adaptive weight tuning sweep. | (read-only) |
+| `lthcs-backtest-monthly.yml` | Monthly 1st, 06:00 UTC | Backtest sweep across the rolling window. | (read-only) |
 
-The hourly news-only path keeps Thesis sub-scores and the composite band fresh on a tight cadence without burning API quotas or churning slow-moving fundamentals — Finnhub's 7-day cache means most hours are net-zero network. Concurrency is set to `cancel-in-progress: true` so a newer hour always wins.
+The hourly news-only path keeps Thesis sub-scores and the composite band fresh on a tight cadence without burning API quotas or churning slow-moving fundamentals — Finnhub's 7-day cache means most hours are net-zero network. Concurrency is set to `cancel-in-progress: true` so a newer hour always wins. The new daily crons (`crypto`, `backtest`, `trends`) and monthly crons (`β-verdict`, `quality-audit`) are intentionally staggered so two workflows never push to `main` in the same minute.
 
 ---
 
@@ -244,15 +298,15 @@ The original score remains in git history for auditability — same principle as
 
 ## What V2 adds (not in scope here)
 
-- Adaptive weights based on backtest performance per asset
+- ~~Adaptive weights based on backtest performance per asset~~ — **plumbing shipped in V1** (`306176a`, Phase 4). Promotion to live is a pure calendar gate at ~July 2026 once enough non-overlapping 21d blocks accumulate (need ≥20).
 - Real-time intraday scoring for institutional users
-- MCP server + Anthropic Claude Connector listing (per §23 of the white paper)
-- LLM-generated narratives (Claude / GPT-4-class, grounded in stored variables)
+- ~~MCP server + Anthropic Claude Connector listing (per §23 of the white paper)~~ — **shipped in V1**: 15-tool MCP server (`6d26a03` + subsequent expansion), `mcp[cli]>=1.0` pinned (Python 3.10+ via `8d373a9`).
+- ~~LLM-generated narratives (Claude / GPT-4-class, grounded in stored variables)~~ — **shadow shipped in V1** (`e734272`, `5ebf973`, `c8b74c1`). Set `ANTHROPIC_API_KEY` repo secret to fire; toggle is in the detail modal.
 - ~~Crypto pillar adapter (so LTHCS can score BTC, ETH, SOL, etc.)~~ — **shipped in V1**: 10-asset crypto universe (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE) scored daily by `scripts/lthcs_crypto_daily.py`, surfaced at `/lthcs/crypto/`. See `docs/lthcs-crypto-pillar-adapter-spec.md`.
 - Premium data sources (Polygon, FMP paid, Glassnode)
-- Full backtest engine (§24 methodology)
+- ~~Full backtest engine (§24 methodology)~~ — **shipped in V1** (Phases 1–3 + Sharpe CIs + A/B view + Phase 4 plumbing).
 
-V2 begins after V1 has been live for ~60 days and has accumulated enough daily snapshots to be worth backtesting against.
+V2 begins after V1 has been live for ~60 days and has accumulated enough daily snapshots to be worth backtesting against. As of 2026-05-20, large chunks of the original V2 roadmap have collapsed back into V1.
 
 ---
 
@@ -294,9 +348,9 @@ python scripts/lthcs_backtest.py --engine pnl --attribute \
 
 **Phase 2 — per-pillar attribution (2026-05-19):** Δ-Sharpe vs baseline 2.61 over the 64-trading-day window — Financial Evolution −1.27, Institutional Confidence −1.15, Adoption Momentum −1.00, DES −0.45, Thesis Integrity −0.09 (Thesis is neutralized at 50 today per `memory/alpha_vantage_news_sentiment_quirk.md`). Negative Δ means removing the pillar hurt — i.e. the pillar contributed positively. Numbers live in `data/lthcs/backtest/2026-05-18_validation/pillar_attribution.json`; the V1 backtest tab renders a bar chart.
 
-**Future phases** (specced in `docs/lthcs-backtest-engine-spec.md`):
-- Phase 3 — strategy variant profiles (long/short, dollar-neutral, top-K)
-- Phase 4 — feed equity curves into walk-forward CV → unblocks Tier 5 #25 (Adaptive Weights V2)
+**Phase 3 — strategy variants (2026-05-19, `9e13452`)**: long/short, dollar-neutral, top-K, band-weighted. `dollar_neutral` surfaces at **+3.1 Sharpe**. Selectable in the backtest UI via the profile picker (`a17d8a9`). A/B view at `/lthcs/backtest/ab.html` (`5381c69`) — GG's tweak validated at **+0.184 Sharpe** vs baseline. Sharpe / Sortino now ship with 95% block-bootstrap confidence intervals (`afab1b9`).
+
+**Phase 4 plumbing (2026-05-19, `306176a`)**: `lthcs/adaptive_weights.py::walk_forward_tune_equity` ingests engine equity curves; first run on `2026-05-18_validation` HOLDs all 5 profiles per the `SHIP_MIN_TEST_OBS=20` gate (OOS slice only ~1 non-overlapping 21d block; need ≥20). Promotion to live Adaptive Weights V2 is now a pure calendar gate at ~July 2026.
 
 ## Where the framework lives
 

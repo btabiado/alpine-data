@@ -1,9 +1,49 @@
 # LTHCS Open Items — Consolidated Audit
 
-Snapshot: 2026-05-17, model `v1.1.0`, commit `b64d9f7`.
+Snapshot: 2026-05-20, model `v1.1.0`, commit `fdf2384`.
 
 Every open item across all research docs, recommendations, and known
 limitations — categorized by priority, effort, and status.
+
+---
+
+## 2026-05-20 — Phase 4 + post-audit hotfixes + P0 cron fix
+
+Tonight's wave closes the Phase 4 UI sweep, lands three Phase 3 audits
+(EE per-pillar quality, FF distribution + outlier + correlation, GG
+weight + band), then ships the post-audit hotfix queue plus a P0 cron
+fix that unblocks scheduled workflows.
+
+**Phase 4 UI features** — custom watchlists in card view (`d81263d`),
+side-by-side ticker comparison 2-4 tickers (`173ed19`), pipeline
+freshness page at `/lthcs/health/pipeline.html` (`d1eaf0d`),
+position-sizing helper at `/lthcs/position/` (`3814f99`).
+
+**Phase 3 audits landed** — EE per-pillar quality (`9d79f59`), FF
+distribution + outlier + correlation (`7c8f2ea`), GG weight + band
+(`e5c3796`). All three audit reports live under `docs/lthcs-*-audit-2026-05-19.md`.
+
+**Backtest engine** — A/B view at `/lthcs/backtest/ab.html` (`5381c69`)
+validates GG's tweak at **+0.184 Sharpe**. Monthly quality-audit runner
++ status page at `/lthcs/health/quality.html` (`68b43d6`).
+
+**Post-audit hotfixes** — drift_30d universe-wide zero bug fixed
+(`58659dd` — all 4 drift windows were broken), AZN IFRS / foreign-issuer
+20-F fallback (`0696853`), DES per-sector outlier z-score (`06d4af0`).
+
+**Thesis migration** — Finnhub `/news-sentiment` replaces AV
+`NEWS_SENTIMENT` (`10daa39`). Thesis coverage jumped **145 → 166
+tickers**. AV's multi-ticker AND-not-OR quirk (memory file
+`alpha_vantage_news_sentiment_quirk.md`) is no longer a constraint.
+
+**CI infra** (`fdf2384`) — three new workflows wired:
+`lthcs-β-verdict-monthly.yml` (1st @ 08:00 UTC),
+`lthcs-quality-audit-monthly.yml` (1st @ 09:00 UTC), plus pages.yml
+staging for `/lthcs/position/`.
+
+**P0 cron fix** — `requirements.txt` gates `mcp[cli]>=1.0` to
+`python_version >= "3.10"` (`8d373a9`). Scheduled workflows that were
+failing the pip install on Python 3.9 runner images now pass.
 
 ---
 
@@ -449,8 +489,8 @@ to deepen Institutional beyond binary signal.
 
 | # | Component | Pillar | Currently | Phase 2 plan |
 |---|---|---|---|---|
-| 13 | **13F institutional holdings** | Institutional | Stubbed (renormed). Momentum carries 100%. | ✅ SHIPPED Phase 1 `29f2140` (2026-05-19) — CUSIP coverage 50 → 169 tickers (3.4× expansion of the 13F universe). Phase 1 wires the foundational data layer; Phase 2 (deeper CUSIP / manager coverage) + Phase 3 (finer manager weighting heuristics) remain open. Genuine implementation work (~1-2 swarms remaining for Phases 2-3). |
-| 14 | **Google Trends acceleration** | Adoption | Renorms; revenue carries 100%. | pytrends is rate-limited so daily 168-ticker pulls don't work. Phase 1 ships weekly batch under `lthcs-trends-weekly.yml`. Phase 2 still needs API decision: pytrends (free, brittle) vs SerpAPI (paid, ToS-safe) vs headless scraping. |
+| 13 | **13F institutional holdings** | Institutional | Stubbed (renormed). Momentum carries 100%. | ✅ SHIPPED Phases 1 + 2 — `29f2140` (Phase 1, 2026-05-19): CUSIP coverage 50 → 169 (3.4× expansion). `a27823f` (Phase 2, 2026-05-19): 113 managers, AUM-weighted ranking. Phase 3 (finer manager-weighting heuristics) remains open. |
+| 14 | **Google Trends acceleration** | Adoption | Renorms; revenue carries 100%. | pytrends is rate-limited so daily 168-ticker pulls don't work. Phase 1 ships weekly batch; **daily trends cron now also live at 04:00 UTC** (`lthcs-trends-daily.yml`). Full-universe Phase 2 still needs API decision: pytrends (free, brittle) vs SerpAPI (paid, ToS-safe) vs headless scraping. |
 | 15 | **Bank-specific revenue growth peer cohort** | Financial | Banks compete with all compounders on revenue % rank | ✅ SHIPPED `e793a6b` (2026-05-19) — bank-cohort revenue ranking lands; JPM Financial Evolution sub-pillar 27 → 100 once benchmarked against bank cohort instead of universe-wide. Closes the regional-bank drag flagged in the original audit. |
 | 16 | **Sector-relative momentum for Institutional** | Institutional | Universe-relative | Peer-group audit argued KEEP universe-relative; flagged as not a fix. Re-evaluate if signal feels off. |
 
@@ -506,33 +546,55 @@ to deepen Institutional beyond binary signal.
 | `afab1b9` | `lthcs/backtest_engine.py` — Sharpe/Sortino 95% confidence intervals via block bootstrap. Tier 5 #24 P3 follow-on. | ✅ SHIPPED (2026-05-19) |
 | `a17d8a9` | Backtest UI — profile selector for the 4 strategy variants (`equal_weight`, `dollar_neutral`, `long_only_top_quintile`, `band_weighted`). Tier 5 #24 P3 follow-on. | ✅ SHIPPED (2026-05-19) |
 | `306176a` | **Tier 5 #24 P4 + #25 V2 plumbing** — `lthcs/adaptive_weights.py::walk_forward_tune_equity` ingests engine equity curves. IC path byte-identical. First run on `2026-05-18_validation` baseline ⇒ **HOLD on all 5 profiles** — gate fires because only ~1 non-overlapping 21d block in OOS slice (need ≥20). Time-locked to **~July 2026**. Artifacts at `data/lthcs/adaptive_weights/2026-05-19_v2_prep/`. | ✅ PLUMBING SHIPPED (2026-05-19); promotion gate time-locked to ~July 2026 |
+| `10daa39` | **Thesis migration to Finnhub `/news-sentiment`** — replaces AV `NEWS_SENTIMENT`. Thesis coverage 145 → 166 tickers. AV's multi-ticker AND-not-OR quirk no longer a constraint. AV retained as degraded fallback. | ✅ SHIPPED (2026-05-19) |
+| `a27823f` | **Institutional 13F Phase 2** — 113 managers, AUM-weighted ranking on top of Phase 1's 169-ticker CUSIP layer. | ✅ SHIPPED (2026-05-19) |
+| `88912bb` | **Crypto universe 3 → 10** — adds ADA, AVAX, DOT, LINK, POL, XRP, DOGE to BTC/ETH/SOL. | ✅ SHIPPED (2026-05-19) |
+| `5381c69` | **Backtest A/B view** at `/lthcs/backtest/ab.html` — GG's tweak validated at **+0.184 Sharpe** vs baseline. | ✅ SHIPPED (2026-05-19) |
+| `68b43d6` | **Monthly quality-audit runner + status page** at `/lthcs/health/quality.html`. | ✅ SHIPPED (2026-05-19) |
+| `06d4af0` | **DES per-sector outlier z-score** — outlier detection now within-sector instead of universe-wide. | ✅ SHIPPED (2026-05-19) |
+| `0696853` | **AZN IFRS fallback** — foreign-issuer 20-F XBRL path for IFRS reporters. Quality regression closed. | ✅ SHIPPED (2026-05-19) |
+| `58659dd` | **drift_30d universe-wide zero bug fix** — all 4 drift windows were silently zeroed; daily drift signal restored. | ✅ SHIPPED (2026-05-19) |
+| `d81263d` | **Custom watchlists in card view** — Phase 4 UI. | ✅ SHIPPED (2026-05-19) |
+| `173ed19` | **Side-by-side ticker comparison** (2-4 tickers) — Phase 4 UI. | ✅ SHIPPED (2026-05-19) |
+| `d1eaf0d` | **Pipeline freshness page** at `/lthcs/health/pipeline.html` — Phase 4 cron observability. | ✅ SHIPPED (2026-05-19) |
+| `3814f99` | **Position-sizing helper** at `/lthcs/position/` — Kelly + band-aware sizing. Phase 4 UI. | ✅ SHIPPED (2026-05-19) |
+| `fdf2384` | **3 new CI workflows** — `lthcs-β-verdict-monthly.yml` (1st @ 08:00 UTC), `lthcs-quality-audit-monthly.yml` (1st @ 09:00 UTC), pages.yml staging for `/lthcs/position/`. | ✅ SHIPPED (2026-05-20) |
+| `8d373a9` | **P0 cron fix** — `requirements.txt` gates `mcp[cli]>=1.0` to `python_version >= "3.10"`. Unblocks scheduled workflows previously failing pip install on Python 3.9 runner images. | ✅ SHIPPED (2026-05-20) |
+| (bonus) | **MCP server tool expansion 1 → 15 tools** — adds `get_dragging_pillar`, sector breakdowns, history, crypto, backtest, narrative, position-sizing, quality-audit accessors. | ✅ SHIPPED (across 2026-05-19/20) |
 
 ---
 
 ## Suggested next 3 commits
 
-The afternoon swarm closed almost everything the morning queue called
-out. LLM env flags are flipped (`c8b74c1`); Sharpe CIs + profile UI +
-P4 plumbing all shipped (`afab1b9`, `a17d8a9`, `306176a`). Only one
-true config gate left (the secret), one M-effort design call, and two
-sibling swarms in flight. New top-of-queue:
+The 2026-05-19/20 wave (~40 commits across Phases 1-4 + hotfixes + the
+P0 cron fix) cleared almost everything that was on the queue. The next
+three items are no longer "design + implement" tasks — they're
+verification, re-runs, and calendar-gated automation:
 
-1. **USER ACTION: add `ANTHROPIC_API_KEY` to repo secrets** — XS /
-   config-only, but it's the literal blocker for the Tier 5 #23 + #28
-   shadows that `c8b74c1` already wired ON. Until the secret lands,
-   `llm_sentiment.py` and `llm_narratives.py` log-and-skip and the
-   constant-50 Thesis problem persists. Daily cost projected ~$0.50/day
-   (Haiku 4.5 + prompt caching). Single action, everything's wired.
-2. **Tier 2 #14 Google Trends Phase 2** — M. Still the only Tier 2
-   item with no design path. Needs API decision: pytrends (free,
-   brittle / rate-limited), SerpAPI (paid, ToS-safe), or headless
-   scraping. Weekly batch under `lthcs-trends-weekly.yml` ships
-   partial coverage (~11/167); Phase 2 lifts to full universe.
-   Decision is the blocker, not implementation.
-3. **In flight today**: Tier 3 #13 Phase 2 (sibling swarm P) — 13F
-   coverage deepening / manager-weighting heuristics; Tier 5 #27
-   Phase 5 (sibling swarm Q) — crypto universe expansion beyond
-   BTC/ETH/SOL. Both expected to land momentarily.
+1. **USER: confirm tonight's manually-triggered crons all landed green
+   and Finnhub Thesis + LLM shadows are flowing.** The 3 new monthly
+   workflows from `fdf2384` (β-verdict, quality-audit, pages.yml
+   `/lthcs/position/` staging), the daily crypto cron's 10-asset
+   first-night, and the `lthcs-daily.yml` LLM shadow envs all want a
+   manual workflow_dispatch + visual confirmation in the Actions UI
+   before anyone leaves it on auto. Particular spot-checks: (a) Thesis
+   coverage should jump to ~166 tomorrow morning post-Finnhub; (b)
+   `data/lthcs/llm_sentiment/<date>.json` + `data/lthcs/llm_narratives/<date>.json`
+   should be non-empty if `ANTHROPIC_API_KEY` is set; (c) the new
+   `/lthcs/health/quality.html` and `/lthcs/health/pipeline.html`
+   should serve real data.
+2. **~2026-05-26 — Re-run all 3 Phase 3 audits with post-Finnhub
+   data.** The pillar-quality, score-distribution, and weight+band
+   audits all landed on 2026-05-19 with Thesis still substantially
+   pinned at 50. With Finnhub `/news-sentiment` live (`10daa39`),
+   Thesis moves off the constant-50 baseline. Re-run lets us validate
+   the new distribution against the audit's recommendations.
+3. **~2026-06-17 — β verdict fires automatically** via the new
+   `lthcs-β-verdict-monthly.yml` cron (1st of month @ 08:00 UTC). No
+   manual action needed — the workflow re-runs the Adoption-pillar β
+   analysis against the latest 30-day window and emits SHIP/HOLD. The
+   Adoption IC re-validation window (was: 2026-06-24) now lives inside
+   this automated monthly cadence.
 
 After those: Tier 5 #24 Phase 4 + Tier 5 #25 **promotion** are pure
 calendar gates (~July 2026) — `walk_forward_tune_equity` plumbing
@@ -542,9 +604,9 @@ Also pending: widening `TIER2_MAX_POINTS` to lift the DES ceiling once
 Thesis-LLM is live (downstream of #1).
 
 **Time-gated**: Adoption IC re-validation window remains **2026-06-24**
-(per β analysis; +~7d for stable IC + Trends weekly batch resolution).
-Tier 5 #24 Phase 4 + Tier 5 #25 promotion time-gated to **~July 2026**
-(sufficient live history for honest 21d-horizon A/B).
+(per β analysis) but is now fully absorbed by the monthly β-verdict
+cron. Tier 5 #24 Phase 4 + Tier 5 #25 promotion time-gated to
+**~July 2026** (sufficient live history for honest 21d-horizon A/B).
 
 ---
 
@@ -556,7 +618,7 @@ The tool labels each pillar as REAL / PARTIAL / STUB / NEUTRAL / MISSING
 so you can map a ticker's score directly to the audit items that gate
 the next composite move.
 
-Tests: **1653 passing in 59.5s** in `tests/lthcs/` (LTHCS subset). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → 1471 from the 2026-05-19 AM Tier 5 swarm; ~1624 after the 2026-05-19 midday 12-commit swarm; **1653** after the 2026-05-19 afternoon swarm (`afab1b9` +10 Sharpe-CI tests, `306176a` +18 V2-plumbing tests, `0f9c126` +1 `FLAGS_TO_DROPPED_PILLAR` regression guard).
+Tests: **~1888 passing** in `tests/lthcs/` (LTHCS subset, latest clean suite run). Was 614 at session start 2026-05-17 morning; 1338 at start of 2026-05-18; 1440 after first 2026-05-18 PM swarm; 1441 after the Fed-feed UTF-8 BOM encoding fix in `9cd10a7`; 1452 → 1471 from the 2026-05-19 AM Tier 5 swarm; ~1624 after the 2026-05-19 midday 12-commit swarm; 1653 after the 2026-05-19 afternoon swarm; **~1888** after the 2026-05-19/20 Phase 4 + hotfix wave (custom watchlists + side-by-side compare + position-sizing helper + pipeline/quality status pages + Finnhub migration + 13F Phase 2 + crypto universe expansion + drift_30d fix + AZN IFRS fallback + DES per-sector z-score + HW/SW compound peer-group key + MCP 1→15 tools + 3 new CI workflows).
 
 **Tier 5 narrowing observation**: tonight's three Tier 5 surveys (`llm_sentiment`, `lthcs_mcp`, crypto pillars) all found **~85-90% already built** — the audit's Tier 5 backlog is materially smaller than it looked on paper. Of the six original Tier 5 items: #26 + #28 effectively closed, #27 reduced to S, #23 remains M-L, #24 + #25 are the genuine V2/V3 builds.
 
@@ -571,13 +633,16 @@ the same runner pool or push to `main` in the same minute.
 | Cadence | UTC cron | Workflow file | What it does | Commits to main? |
 |---|---|---|---|---|
 | Hourly | `15 * * * *` | `lthcs-news-hourly.yml` | `lthcs_daily.py --news-only` (commit `6c65fac`) — refreshes Finnhub recos + 8-K + Yahoo earnings + sector RSS for today's already-published snapshot only. **History append skipped**; daily 23:00 UTC run remains authoritative for composite math + history. Runtime 30-90s per run. Workflow `01f5f38`. | Yes |
-| Daily | `0 22 * * *` | `lthcs-crypto-daily.yml` | Crypto pillar snapshot — BTC/ETH/SOL into `data/lthcs/crypto/`. 8-day initial backfill seeded (BTC 64.5, ETH 55.0, SOL 49.4). Race-safe push retry. Workflow `8af023b`. | Yes |
-| Daily | `0 23 * * *` | `lthcs-daily.yml` | `lthcs_daily.py --force --catch-up --skip-thesis` — accumulates the daily snapshot under `data/lthcs/`. Note: `sector_rss` is no longer gated by `--skip-thesis` (see `ef1cc06`); Form 4 + 13F similarly un-gated in `a55aab8`. | Yes |
-| Daily | `30 23 * * *` | `lthcs-backtest-daily.yml` | Runs the new backtest engine (`scripts/lthcs_backtest.py`) — non-overlapping P&L + per-pillar attribution + strategy variants — into `data/lthcs/backtest/`. Race-safe push retry. Workflow `580d341`. | Yes |
-| Weekly Mon | `0 4 * * 1` | `lthcs-trends-weekly.yml` | `scripts/lthcs_trends_weekly.py` — pytrends batch into `data/lthcs/trends/`. Sunday 23:00 ET gives Google's limiter overnight to cool. | Yes |
+| Daily | `0 4 * * *` | `lthcs-trends-daily.yml` | Daily Google Trends acceleration refresh (replaces weekly-only batch — Sunday-only batch caused weekly cliff-effects on Adoption). Weekly cron kept as failsafe. | Yes |
+| Daily | `0 22 * * *` | `lthcs-crypto-daily.yml` | Crypto pillar snapshot — **10-asset universe** (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE — expanded in `88912bb`) into `data/lthcs/crypto/`. Race-safe push retry. Workflows `8af023b` + `88912bb`. | Yes |
+| Daily | `0 23 * * *` | `lthcs-daily.yml` | `lthcs_daily.py --force --catch-up --skip-thesis` — accumulates the daily snapshot under `data/lthcs/`. `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` shadows run when `ANTHROPIC_API_KEY` set (`c8b74c1`). Thesis now sourced from Finnhub `/news-sentiment` (`10daa39`); coverage 145 → 166 tickers. | Yes |
+| Daily | `30 23 * * *` | `lthcs-backtest-daily.yml` | Runs the backtest engine (`scripts/lthcs_backtest.py`) — non-overlapping P&L + per-pillar attribution + strategy variants + Sharpe/Sortino 95% CIs — into `data/lthcs/backtest/`. Race-safe push retry. Workflow `580d341`. | Yes |
+| Weekly Mon | `0 4 * * 1` | `lthcs-trends-weekly.yml` | Legacy weekly batch — failsafe behind the daily trends cron. | Yes |
 | Weekly Mon | `0 5 * * 1` | `lthcs-validate-weekly.yml` | `scripts/lthcs_backfill_validate.py` — read-only audit; uploads the JSON report as a 90-day artifact and fails the run if exit code is non-zero. | No (read-only) |
 | Monthly 1st | `0 6 1 * *` | `lthcs-backtest-monthly.yml` | `scripts/lthcs_backtest.py --start <-90d> --end <yesterday> --horizon 21` into `data/lthcs/backtest/<YYYY-MM>_monthly/`. Skips silently if fewer than 30 snapshots exist. | Yes |
 | Monthly 1st | `0 7 1 * *` | `lthcs-tune-weights-monthly.yml` | `scripts/lthcs_tune_weights.py --walk-forward` — writes timestamped JSON into `data/lthcs/adaptive_weights/`. Verdict (SHIP/HOLD/REJECT) surfaced in the run's Job Summary. **Does NOT flip `enabled` — promotion is manual.** | Yes |
+| Monthly 1st | `0 8 1 * *` | `lthcs-β-verdict-monthly.yml` | Re-runs the Adoption-pillar β post-mortem against the latest 30-day window; emits SHIP/HOLD verdict + per-cohort IC. Workflow part of `fdf2384`. Replaces the manual 2026-06-24 Adoption IC re-validation deadline. | Yes |
+| Monthly 1st | `0 9 1 * *` | `lthcs-quality-audit-monthly.yml` | Monthly pillar-quality audit runner; output surfaced at `/lthcs/health/quality.html`. Workflows `68b43d6` + `fdf2384`. | Yes |
 
 All write-back workflows mirror the race-safe push retry loop from
 `lthcs-daily.yml` commit `e3f072d`: up to 3 attempts with
