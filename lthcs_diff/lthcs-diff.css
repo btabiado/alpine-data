@@ -1,0 +1,350 @@
+/* =========================================================================
+   LTHCS — Snapshot Diff view
+   Local stylesheet on top of ../lthcs_tab/lthcs.css design tokens.
+   ========================================================================= */
+
+.lthcs-diff-main {
+  padding-bottom: 64px;
+}
+
+/* ---------- Controls row ---------- */
+
+.lthcs-diff-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.lthcs-diff-pickers {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lthcs-diff-picker {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lthcs-diff-picker-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.lthcs-diff-select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 144px;
+}
+.lthcs-diff-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(110, 168, 254, 0.25);
+}
+
+.lthcs-diff-arrow {
+  align-self: end;
+  padding-bottom: 8px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.lthcs-diff-swap {
+  align-self: end;
+  background: var(--bg-chip);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.lthcs-diff-swap:hover {
+  background: var(--bg-chip-active);
+}
+
+.lthcs-diff-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lthcs-diff-sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ---------- KPI tiles ---------- */
+
+.lthcs-diff-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lthcs-diff-kpi[data-kpi="up"] .lthcs-stat-count {
+  color: var(--drift-improving-bright);
+}
+.lthcs-diff-kpi[data-kpi="down"] .lthcs-stat-count {
+  color: var(--drift-declining-bright);
+}
+.lthcs-diff-kpi[data-kpi="shift"] .lthcs-stat-count.is-pos {
+  color: var(--drift-improving-bright);
+}
+.lthcs-diff-kpi[data-kpi="shift"] .lthcs-stat-count.is-neg {
+  color: var(--drift-declining-bright);
+}
+
+/* ---------- Status line ---------- */
+
+.lthcs-diff-status {
+  padding: 4px 4px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+.lthcs-diff-status.is-warning {
+  color: var(--drift-declining-bright);
+}
+
+/* ---------- Diff table ---------- */
+
+.lthcs-diff-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+}
+
+.lthcs-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.lthcs-diff-table thead th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-elevated);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.lthcs-diff-th-num {
+  text-align: right;
+}
+
+.lthcs-diff-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.lthcs-diff-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lthcs-diff-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.lthcs-diff-ticker {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lthcs-diff-score {
+  text-align: right;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+.lthcs-diff-delta {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.lthcs-diff-delta.is-pos {
+  color: var(--drift-improving-bright);
+}
+.lthcs-diff-delta.is-neg {
+  color: var(--drift-declining-bright);
+}
+.lthcs-diff-delta.is-flat {
+  color: var(--text-tertiary);
+}
+.lthcs-diff-delta.is-large {
+  /* large = |Δ| > 5pts. Add a small filled pill background so it pops. */
+  background: rgba(110, 168, 254, 0.08);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.lthcs-diff-band-cell {
+  font-size: 12px;
+}
+
+.lthcs-band-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #fff;
+  white-space: nowrap;
+}
+.lthcs-band-pill[data-band="elite"]            { background: var(--band-elite); }
+.lthcs-band-pill[data-band="high_confidence"]  { background: var(--band-high); }
+.lthcs-band-pill[data-band="constructive"]     { background: var(--band-constructive); color: #1A1A1A; }
+.lthcs-band-pill[data-band="monitor"]          { background: var(--band-monitor); color: #1A1A1A; }
+.lthcs-band-pill[data-band="weakening"]        { background: var(--band-weakening); }
+.lthcs-band-pill[data-band="review"]           { background: var(--band-review); }
+.lthcs-band-pill[data-band="inactive"]         { background: var(--bg-chip-active); color: var(--text-secondary); }
+
+.lthcs-diff-band-arrow {
+  color: var(--text-tertiary);
+  margin: 0 4px;
+}
+
+.lthcs-diff-band-same {
+  color: var(--text-tertiary);
+}
+
+.lthcs-diff-pillars {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.lthcs-pillar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-chip);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.lthcs-pillar-badge.is-pos { color: var(--drift-improving-bright); }
+.lthcs-pillar-badge.is-neg { color: var(--drift-declining-bright); }
+.lthcs-pillar-badge.is-flat { opacity: 0.5; }
+
+.lthcs-pillar-key {
+  color: var(--text-tertiary);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* "inactive" row styling. */
+.lthcs-diff-row.is-inactive td {
+  color: var(--text-tertiary);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+/* ---------- Empty / placeholder ---------- */
+
+.lthcs-diff-placeholder {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+/* ---------- Mobile (≤640px): table → vertical cards ----------
+   At narrow widths the table is hard to scan; switch to a stacked
+   "card per ticker" layout with labels inline. */
+
+@media (max-width: 640px) {
+  .lthcs-diff-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lthcs-diff-sort-wrap {
+    margin-left: 0;
+  }
+  .lthcs-diff-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lthcs-diff-table,
+  .lthcs-diff-table thead,
+  .lthcs-diff-table tbody,
+  .lthcs-diff-table th,
+  .lthcs-diff-table td,
+  .lthcs-diff-table tr {
+    display: block;
+  }
+  .lthcs-diff-table thead {
+    /* Hide the table header on mobile — labels are inlined per cell. */
+    position: absolute;
+    left: -9999px;
+  }
+  .lthcs-diff-table-wrap {
+    border: none;
+    background: transparent;
+  }
+  .lthcs-diff-table tbody tr {
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .lthcs-diff-table tbody td {
+    padding: 4px 0;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .lthcs-diff-table tbody td::before {
+    content: attr(data-label);
+    color: var(--text-tertiary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  /* Ticker row gets a slightly bigger treatment as the card "header". */
+  .lthcs-diff-table tbody td.lthcs-diff-cell-ticker {
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+  }
+  .lthcs-diff-table tbody td.lthcs-diff-cell-ticker::before {
+    display: none;
+  }
+  .lthcs-diff-table tbody td.lthcs-diff-cell-ticker .lthcs-diff-ticker {
+    font-size: 16px;
+  }
+  .lthcs-diff-pillars {
+    justify-content: flex-end;
+    max-width: 70%;
+  }
+}

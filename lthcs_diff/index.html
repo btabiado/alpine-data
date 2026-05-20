@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Snapshot Diff</title>
+    <!-- Reuse the parent tab's design tokens so band colors, fonts, and
+         layout match the rest of /lthcs/. Relative path resolves on the
+         deployed mirror (where lthcs_tab/ → /lthcs/) and locally. -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-diff.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Snapshot Diff</h1>
+          <p class="lthcs-subtitle">
+            Compare composite score, band, and pillar changes between any two snapshot dates.
+          </p>
+        </div>
+        <div class="lthcs-header-meta">
+          <a href="../lthcs_tab/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" style="text-decoration:none" aria-label="Back to LTHCS overview">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">LTHCS</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lthcs-diff-main">
+      <!-- Date picker row + quick chips. -->
+      <section class="lthcs-section lthcs-diff-controls" aria-label="Date range">
+        <div class="lthcs-diff-pickers" role="group" aria-label="Snapshot dates">
+          <label class="lthcs-diff-picker">
+            <span class="lthcs-diff-picker-label">Compare</span>
+            <select id="lthcs-diff-from" class="lthcs-diff-select" aria-label="From date"></select>
+          </label>
+          <span class="lthcs-diff-arrow" aria-hidden="true">&rarr;</span>
+          <label class="lthcs-diff-picker">
+            <span class="lthcs-diff-picker-label">vs</span>
+            <select id="lthcs-diff-to" class="lthcs-diff-select" aria-label="To date"></select>
+          </label>
+          <button id="lthcs-diff-swap" type="button" class="lthcs-diff-swap" aria-label="Swap dates">
+            <span aria-hidden="true">&#x21C4;</span>
+          </button>
+        </div>
+
+        <div class="lthcs-diff-chips" role="group" aria-label="Quick comparisons">
+          <button type="button" class="lthcs-chip" data-quick="yesterday">Yesterday vs Today</button>
+          <button type="button" class="lthcs-chip" data-quick="week">Last week vs Today</button>
+          <button type="button" class="lthcs-chip" data-quick="month">Month ago vs Today</button>
+        </div>
+
+        <div class="lthcs-diff-sort-wrap" role="group" aria-label="Sort movers">
+          <label class="lthcs-sort-label" for="lthcs-diff-sort">Sort</label>
+          <select id="lthcs-diff-sort" class="lthcs-sort-select" aria-label="Sort movers">
+            <option value="absdelta-desc">Largest mover</option>
+            <option value="delta-desc">Biggest gain</option>
+            <option value="delta-asc">Biggest drop</option>
+            <option value="band-up">Biggest band-up</option>
+            <option value="band-down">Biggest band-down</option>
+            <option value="ticker-asc">Alphabetical (A&rarr;Z)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- KPI tiles. Populated by lthcs-diff.js. -->
+      <section class="lthcs-section lthcs-diff-kpis" aria-label="Diff summary">
+        <div class="lthcs-stat lthcs-stat-summary lthcs-diff-kpi" data-kpi="up">
+          <span class="lthcs-stat-count" data-kpi-count="up">&mdash;</span>
+          <span class="lthcs-stat-label">Tickers up</span>
+          <span class="lthcs-stat-sublabel">Band promotion</span>
+        </div>
+        <div class="lthcs-stat lthcs-stat-summary lthcs-diff-kpi" data-kpi="down">
+          <span class="lthcs-stat-count" data-kpi-count="down">&mdash;</span>
+          <span class="lthcs-stat-label">Tickers down</span>
+          <span class="lthcs-stat-sublabel">Band demotion</span>
+        </div>
+        <div class="lthcs-stat lthcs-stat-summary lthcs-diff-kpi" data-kpi="shift">
+          <span class="lthcs-stat-count" data-kpi-count="shift">&mdash;</span>
+          <span class="lthcs-stat-label">Avg composite shift</span>
+          <span class="lthcs-stat-sublabel">All compared tickers</span>
+        </div>
+        <div class="lthcs-stat lthcs-stat-summary lthcs-diff-kpi" data-kpi="flat">
+          <span class="lthcs-stat-count" data-kpi-count="flat">&mdash;</span>
+          <span class="lthcs-stat-label">No change</span>
+          <span class="lthcs-stat-sublabel">Same band, &lt;0.05 delta</span>
+        </div>
+      </section>
+
+      <!-- Status line (date heading or warning). -->
+      <div id="lthcs-diff-status" class="lthcs-diff-status" aria-live="polite"></div>
+
+      <!-- Loading / error / empty placeholders, matching parent tab patterns. -->
+      <section class="lthcs-section lthcs-diff-results" aria-label="Per-ticker diff">
+        <div id="lthcs-diff-loading" class="lthcs-loading">
+          <span class="lthcs-loading-spinner" aria-hidden="true"></span>
+          <span>Loading snapshots&hellip;</span>
+        </div>
+        <div id="lthcs-diff-error" class="lthcs-error hidden" role="alert"></div>
+
+        <!-- Desktop table. -->
+        <div id="lthcs-diff-table-wrap" class="lthcs-diff-table-wrap hidden">
+          <table class="lthcs-diff-table">
+            <thead>
+              <tr>
+                <th scope="col">Ticker</th>
+                <th scope="col" class="lthcs-diff-th-num">Score A</th>
+                <th scope="col" class="lthcs-diff-th-num">Score B</th>
+                <th scope="col" class="lthcs-diff-th-num">&Delta;</th>
+                <th scope="col">Band change</th>
+                <th scope="col">Pillar deltas</th>
+              </tr>
+            </thead>
+            <tbody id="lthcs-diff-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Not investment advice.</strong> Diff between two daily snapshots.
+        See the <a href="../lthcs_tab/" class="lthcs-footer-link">main LTHCS view</a> for current bands and methodology.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-diff.js"></script>
+  </body>
+</html>
