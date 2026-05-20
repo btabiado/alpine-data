@@ -12,6 +12,7 @@ Last updated: 2026-05-20
 |---|---|---|
 | **Re-run Phase 3 audits** with post-Finnhub data | ~2026-05-26 | Today's audit was on pre-Finnhub data; Thesis IC understated. ~7 days of Finnhub-driven snapshots needed for stable re-audit. |
 | **Risk & Observability tab** at `/lthcs/risk/` | ~2026-05-27 | Wait until after the Phase 3 re-audit so we know what concretely belongs in the view. Glue layer over Dependabot + CodeQL + Trufflehog + LLM-guardrail logs + data-quality deltas. Don't build a parallel scanner — aggregate existing tools. |
+| **Universe doubling** (S&P 500 expansion, ~167 → ~500 in 3 waves) | 2026-05-27 (Wave A) | Scalability prep infrastructure ships TODAY (script + scaletest + seed + plan doc) but NO production universe change until calibration window closes 2026-05-26. Then 3 waves: +50 → verify → +100 → verify → +183. Plan in `docs/lthcs-universe-expansion-plan-2026-05-27.md`. |
 | **Adoption β IC re-validation** | ~2026-06-17 | Needs ~30 days of forward data after `333e5dd`. β-verdict-monthly cron auto-fires June 1. |
 | **#24 Phase 4 verdict promotion** + **#25 Adaptive Weights V2 SHIP** | ~July 2026 | Plumbing built in `306176a`. Promotion gates when 20 OOS observations accumulate at h=21d. Verdict flips HOLD→SHIP automatically via existing cron. |
 | **Calibration tweak**: `mature_compounder` Thesis 0.20→0.25 | After 2026-05-26 re-audit | A/B run already validated direction (+0.184 Sharpe on pre-Finnhub data — should be stronger post-Finnhub). |
