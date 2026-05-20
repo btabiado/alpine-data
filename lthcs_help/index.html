@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; How to read</title>
+    <meta name="description" content="Plain-English explainer for every number, page, and flag in the LTHCS dashboard." />
+    <!--
+      Reuses LTHCS design tokens (band colors, dark theme, fonts) from the
+      card-view stylesheet. In production this page stages at
+      /lthcs/help/index.html and resolves ../lthcs_tab/lthcs.css to
+      /lthcs/lthcs_tab/lthcs.css (mirrored by pages.yml — same pattern as
+      health/backtest/crypto/position/public). On the dev server
+      (python3 -m http.server in repo root) lthcs_tab/ sits sibling to
+      lthcs_help/ so the same relative path works in both environments.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-help.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; How to read</h1>
+          <p class="lthcs-subtitle">Plain-English explainer for every number, page, and flag in the dashboard</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card view</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lhlp-main">
+      <!-- ===== Sticky table of contents (left rail) ====================== -->
+      <aside class="lhlp-toc" aria-label="Table of contents">
+        <p class="lhlp-toc-title">On this page</p>
+        <ol>
+          <li><a href="#start-here">Start here</a></li>
+          <li><a href="#composite-index">Composite Index</a></li>
+          <li><a href="#composite-components">Index components</a></li>
+          <li><a href="#pillars">The 5 pillars</a></li>
+          <li><a href="#bands">The 6 bands</a></li>
+          <li><a href="#drift">Drift values</a></li>
+          <li><a href="#movers">Movers leaderboard</a></li>
+          <li><a href="#regime">Market regime</a></li>
+          <li><a href="#page-card">Page: Card view</a></li>
+          <li><a href="#page-heatmap">Page: Heatmap</a></li>
+          <li><a href="#page-table">Page: Table</a></li>
+          <li><a href="#page-crypto">Page: Crypto</a></li>
+          <li><a href="#page-backtest">Page: Backtest</a></li>
+          <li><a href="#page-health">Page: Health</a></li>
+          <li><a href="#page-position">Page: Position sizing</a></li>
+          <li><a href="#page-public">Page: Public data</a></li>
+          <li><a href="#flags">Data-quality flags</a></li>
+          <li><a href="#about">About the framework</a></li>
+        </ol>
+      </aside>
+
+      <div class="lhlp-content">
+
+        <!-- ===== Intro ===================================================== -->
+        <section class="lhlp-intro" id="start-here" aria-label="Start here">
+          <p>
+            <strong>What you&rsquo;re looking at.</strong> LTHCS (Long-Term Hold Confidence Score)
+            ranks ~168 US equities and ~10 large-cap cryptocurrencies on a <code>&minus;100</code> to <code>+100</code>
+            scale, refreshed daily. Higher = stronger long-term ownership thesis based on five
+            independent pillars of evidence. Lower = weakening thesis worth a second look.
+          </p>
+          <p>
+            <strong>How to use this page.</strong> Jump to the section that matches the number
+            you&rsquo;re curious about &mdash; the table-of-contents on the left is sticky on desktop.
+            Each section answers three questions: <em>what does this number mean?</em>,
+            <em>when should I care?</em>, and <em>what&rsquo;s the gotcha?</em>
+          </p>
+          <p>
+            <strong>Not investment advice.</strong> Everything here is a directional read on
+            committed public data. Backtest results, sizing suggestions, and band labels are
+            educational. Do your own work before risking real money.
+          </p>
+        </section>
+
+        <!-- ===== Composite Index =========================================== -->
+        <section class="lhlp-section" id="composite-index" aria-label="Composite Index">
+          <span class="lhlp-eyebrow">Headline number</span>
+          <h2>LTHCS Composite Index <a href="#composite-index" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            The big number at the top of the card view (e.g. <code>&minus;20 LTHCS NEUTRAL</code>)
+            is the universe-level composite. It compresses 9 underlying signals into one
+            <code>&minus;100</code> to <code>+100</code> read, where <code>0</code> = balanced,
+            positive = constructive backdrop for long-term holds, negative = caution backdrop.
+          </p>
+          <h3>What the labels mean</h3>
+          <ul>
+            <li><strong>BULLISH</strong> (<code>&ge;+40</code>): broad-based strength &mdash; pillar averages, band lean, and macro all leaning the same way.</li>
+            <li><strong>CONSTRUCTIVE</strong> (<code>+10 to +40</code>): more green than red, but mixed signals.</li>
+            <li><strong>NEUTRAL</strong> (<code>&minus;10 to +10</code>): balanced or noisy &mdash; no clear directional bias.</li>
+            <li><strong>CAUTIOUS</strong> (<code>&minus;40 to &minus;10</code>): more red than green; weakening pillars or risk-off macro.</li>
+            <li><strong>BEARISH</strong> (<code>&le;&minus;40</code>): broad weakness across pillars and macro.</li>
+          </ul>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>Single number summarizing how the whole universe is leaning on the long-term thesis dimension today.</dd>
+            <dt>When to care</dt>
+            <dd>Big swings vs. the prior day &mdash; e.g. <code>+30 &rarr; &minus;5</code> is a real regime shift worth investigating in the components.</dd>
+            <dt>Gotcha</dt>
+            <dd>"As of <em>YYYY-MM-DD</em>" reflects when the snapshot was computed (23:00 UTC cron). It does not auto-update intraday; refresh after the next daily run.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Components ================================================ -->
+        <section class="lhlp-section" id="composite-components" aria-label="Composite components">
+          <span class="lhlp-eyebrow">Component breakdown</span>
+          <h2>What feeds the composite <a href="#composite-components" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Each row in the composite breakdown card is a normalized signal scaled to
+            <code>&minus;100..+100</code>. They average together (with weights from
+            <code>data/lthcs/weights.json</code>) to produce the headline number.
+          </p>
+          <h3>Row by row</h3>
+          <ul>
+            <li><strong>Band lean</strong> &mdash; % of the universe in the top three bands (Elite + High + Constructive) minus % in the bottom two (Weakening + Review). Positive = more strong names than weak ones.</li>
+            <li><strong>Adoption pillar avg</strong> &mdash; mean Adoption-pillar score across all ranked names. Positive = users/holders/network growth tilting up.</li>
+            <li><strong>Institutional pillar avg</strong> &mdash; mean Institutional score. Positive = 13F filers and insiders adding, not trimming.</li>
+            <li><strong>Financial pillar avg</strong> &mdash; mean Financial score. Positive = healthy free cash flow, balance sheet, capital returns.</li>
+            <li><strong>Thesis pillar avg</strong> &mdash; mean Thesis score. Positive = analyst revisions + price-action posture firming. Often shows <em>n/a</em> in V1 (see <a href="#flags">flags</a>).</li>
+            <li><strong>DES avg</strong> &mdash; mean Demand-vs-Earnings Strength. Captures whether the stock's run-up is supported by earnings momentum.</li>
+            <li><strong>Macro regime</strong> &mdash; risk-on vs. risk-off composite from HY OAS + 2s10s + USD. Positive = risk-on backdrop.</li>
+            <li><strong>Insider conviction breadth</strong> &mdash; % of names with net-positive insider buying over the trailing window, minus the % net-selling.</li>
+            <li><strong>13F conviction breadth</strong> &mdash; same idea, but for institutional 13F filings (qtrly).</li>
+          </ul>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>Lets you see <em>why</em> the headline moved. If Macro regime tanks while pillar averages hold, the move is macro-driven, not idiosyncratic.</dd>
+            <dt>When to care</dt>
+            <dd>When components disagree (e.g. macro <code>+30</code>, Adoption <code>&minus;25</code>) &mdash; that&rsquo;s an active divergence worth digging into.</dd>
+            <dt>Gotcha</dt>
+            <dd>13F breadth lags by a quarter (~45-day filing window). Insider conviction is fresher but bursty around earnings/lockups.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Pillars =================================================== -->
+        <section class="lhlp-section" id="pillars" aria-label="The five pillars">
+          <span class="lhlp-eyebrow">Methodology</span>
+          <h2>The 5 pillars <a href="#pillars" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Each ticker&rsquo;s composite score is the weighted average of five independent
+            pillar scores. Every pillar is itself a <code>&minus;100..+100</code> read and
+            can be missing (<code>n/a</code>) when its source data isn&rsquo;t available &mdash;
+            see <a href="#flags">data-quality flags</a>.
+          </p>
+          <div class="lhlp-pillars">
+            <div class="lhlp-pillar">
+              <div class="lhlp-pillar-name">Adoption</div>
+              <div class="lhlp-pillar-blurb">
+                Who actually uses or holds this thing &mdash; product traction, user/holder growth, network footprint.
+              </div>
+              <div class="lhlp-pillar-signals">
+                Signals: retail-app downloads, on-chain active addresses (crypto), employment growth, Wikipedia pageview trend.
+              </div>
+            </div>
+            <div class="lhlp-pillar">
+              <div class="lhlp-pillar-name">Institutional</div>
+              <div class="lhlp-pillar-blurb">
+                What sophisticated owners are doing &mdash; insiders, 13F filers, ETF positioning, options flow.
+              </div>
+              <div class="lhlp-pillar-signals">
+                Signals: Form 4 insider net buys, 13F qtr-over-qtr deltas, ETF AUM trend, put/call posture.
+              </div>
+            </div>
+            <div class="lhlp-pillar">
+              <div class="lhlp-pillar-name">Financial</div>
+              <div class="lhlp-pillar-blurb">
+                Can the business fund itself and return capital &mdash; cash flow, balance sheet, dividend &amp; buyback policy.
+              </div>
+              <div class="lhlp-pillar-signals">
+                Signals: TTM free cash flow yield, net cash, dividend coverage, buyback authorization remaining.
+              </div>
+            </div>
+            <div class="lhlp-pillar">
+              <div class="lhlp-pillar-name">Thesis</div>
+              <div class="lhlp-pillar-blurb">
+                What the market thinks of the story &mdash; analyst revisions and the price-action posture.
+              </div>
+              <div class="lhlp-pillar-signals">
+                Signals: EPS revision breadth, price-target deltas, multi-timeframe trend posture. Often <code>n/a</code> in V1 (see flags).
+              </div>
+            </div>
+            <div class="lhlp-pillar">
+              <div class="lhlp-pillar-name">DES</div>
+              <div class="lhlp-pillar-blurb">
+                Demand-vs-Earnings Strength &mdash; is the run-up supported by earnings momentum or running on multiple expansion alone?
+              </div>
+              <div class="lhlp-pillar-signals">
+                Signals: trailing return vs. trailing EPS growth, sector-relative.
+              </div>
+            </div>
+          </div>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>The composite is only as good as its non-missing pillars. A name with 5/5 pillars present is much more trustworthy than one with 3/5.</dd>
+            <dt>When to care</dt>
+            <dd>If a pillar drops out (e.g. <code>thesis_unavailable</code>), the composite gets re-weighted across the remaining pillars rather than treating it as zero.</dd>
+            <dt>Gotcha</dt>
+            <dd>Pillar weights vary by universe (equities vs. crypto have different mixes). Crypto uses on-chain proxies for Adoption and skips DES.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Bands ===================================================== -->
+        <section class="lhlp-section" id="bands" aria-label="The six bands">
+          <span class="lhlp-eyebrow">Score ranges</span>
+          <h2>The 6 bands <a href="#bands" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Each ticker&rsquo;s composite gets mapped into one of six color-coded bands. The
+            thresholds are stable across runs (defined in <code>weights.json</code>), so
+            band membership is the cleanest period-over-period comparison.
+          </p>
+          <div class="lhlp-bands">
+            <div class="lhlp-band" data-band="elite">
+              <div class="lhlp-band-name">Elite</div>
+              <div class="lhlp-band-range">&ge; +60</div>
+              <div class="lhlp-band-blurb">All five pillars firmly positive. The strongest read.</div>
+            </div>
+            <div class="lhlp-band" data-band="high">
+              <div class="lhlp-band-name">High Confidence</div>
+              <div class="lhlp-band-range">+30 to +60</div>
+              <div class="lhlp-band-blurb">Most pillars positive, maybe one mixed. Solid long-term posture.</div>
+            </div>
+            <div class="lhlp-band" data-band="constructive">
+              <div class="lhlp-band-name">Constructive</div>
+              <div class="lhlp-band-range">+10 to +30</div>
+              <div class="lhlp-band-blurb">More green than red. Watchable but not high-conviction.</div>
+            </div>
+            <div class="lhlp-band" data-band="monitor">
+              <div class="lhlp-band-name">Monitor</div>
+              <div class="lhlp-band-range">&minus;10 to +10</div>
+              <div class="lhlp-band-blurb">Mixed signals &mdash; the default neutral zone. Mostly noise.</div>
+            </div>
+            <div class="lhlp-band" data-band="weakening">
+              <div class="lhlp-band-name">Weakening</div>
+              <div class="lhlp-band-range">&minus;30 to &minus;10</div>
+              <div class="lhlp-band-blurb">Multiple pillars softening. Worth a fresh look at the thesis.</div>
+            </div>
+            <div class="lhlp-band" data-band="review">
+              <div class="lhlp-band-name">Review</div>
+              <div class="lhlp-band-range">&le; &minus;30</div>
+              <div class="lhlp-band-blurb">Broadly negative read. Re-underwrite or reduce.</div>
+            </div>
+          </div>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>Discrete buckets for easy scanning. The Card view&rsquo;s "Buy / Hold / Watch" tiles roll these up: Buy = top 3 bands, Hold = Monitor, Watch = bottom 2.</dd>
+            <dt>When to care</dt>
+            <dd>Band <em>changes</em> matter more than absolute band &mdash; "moved from Constructive to Monitor" is a real signal, "still in Monitor" is noise.</dd>
+            <dt>Gotcha</dt>
+            <dd>A ticker right at a threshold (e.g. <code>+11</code>) can hop bands day-to-day on small drift. Don&rsquo;t over-read single-day band moves.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Drift ===================================================== -->
+        <section class="lhlp-section" id="drift" aria-label="Drift values">
+          <span class="lhlp-eyebrow">Trend over time</span>
+          <h2>Drift values: 1d / 7d / 30d / 90d <a href="#drift" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Drift = today&rsquo;s composite minus the composite N days ago. Shown on every
+            ticker card and on the composite-index card itself. Positive = improving,
+            negative = declining.
+          </p>
+          <ul>
+            <li><strong>1d drift</strong> &mdash; usually noise. Single new filing or news cycle. Don&rsquo;t over-react.</li>
+            <li><strong>7d drift</strong> &mdash; smoothes out single-day flukes. First reliable trend window.</li>
+            <li><strong>30d drift</strong> &mdash; captures a real shift &mdash; e.g. a quarter&rsquo;s worth of insider activity or one earnings cycle.</li>
+            <li><strong>90d drift</strong> &mdash; structural read. If 90d drift is strongly negative you&rsquo;re looking at a multi-month deterioration.</li>
+          </ul>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>How fast the score is changing, on multiple horizons. Drift filter chips (Improving / Stable / Declining) on the card view use 30d.</dd>
+            <dt>When to care</dt>
+            <dd>When 7d and 30d agree on direction &mdash; that&rsquo;s a confirmed move, not a single-day blip.</dd>
+            <dt>Gotcha</dt>
+            <dd>If the ticker is new to the universe (<code>&lt;90d</code> of history) the longer drift windows show <em>n/a</em> until enough days accumulate.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Movers ==================================================== -->
+        <section class="lhlp-section" id="movers" aria-label="Movers leaderboard">
+          <span class="lhlp-eyebrow">Top movers strip</span>
+          <h2>Movers leaderboard <a href="#movers" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            The horizontal strip near the top of the card view ranks tickers by absolute
+            7d drift &mdash; biggest improvers on one side, biggest decliners on the other.
+            Each chip is clickable: tapping opens the ticker&rsquo;s detail modal.
+          </p>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>The fastest movers in the universe. Useful for "what changed?" attention triage.</dd>
+            <dt>When to care</dt>
+            <dd>When a holding of yours appears on the decliners side &mdash; that&rsquo;s your prompt to re-read the thesis.</dd>
+            <dt>Gotcha</dt>
+            <dd>Empty when the daily pipeline hasn&rsquo;t produced enough history yet (first 7 days after a new universe member). It can also collapse to a quieter look on low-volatility days &mdash; not a bug.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Regime panel ============================================== -->
+        <section class="lhlp-section" id="regime" aria-label="Market regime">
+          <span class="lhlp-eyebrow">Macro overlay</span>
+          <h2>Market regime panel <a href="#regime" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Three small gauges &mdash; <strong>HY OAS</strong>, <strong>2s10s</strong>, and
+            <strong>USD</strong> &mdash; that summarize the macro backdrop. They feed the
+            Macro Regime component of the composite.
+          </p>
+          <ul>
+            <li><strong>HY OAS</strong> (High-Yield Option-Adjusted Spread) &mdash; how much extra yield investors demand to hold junk bonds. <em>Tight</em> = risk-on. <em>Widening</em> = risk-off.</li>
+            <li><strong>2s10s</strong> &mdash; 10-year minus 2-year Treasury yield. Inverted (negative) historically precedes recessions. Steepening = late-cycle.</li>
+            <li><strong>USD</strong> &mdash; trade-weighted dollar index. Strong USD typically pressures non-US revenue and commodities; weak USD eases EM and exporters.</li>
+          </ul>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>Whether the backdrop is friendly or hostile to long-duration risk assets. Affects every ticker the same way.</dd>
+            <dt>When to care</dt>
+            <dd>When regime goes risk-off but pillar averages stay positive &mdash; possible idiosyncratic opportunities. When both go risk-off &mdash; broad caution warranted.</dd>
+            <dt>Gotcha</dt>
+            <dd>FRED is the primary source; if <code>FRED_API_KEY</code> isn&rsquo;t set the panel falls back to last-known values. See pipeline health for freshness.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Page: Card view =========================================== -->
+        <section class="lhlp-section" id="page-card" aria-label="Card view page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Card view (<code>/lthcs/</code>) <a href="#page-card" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            The default landing page. Shows the composite gauge, regime strip, movers strip,
+            and a filterable/sortable grid of ticker cards. Filters and watchlists compose
+            (intersection): selecting both Elite + a watchlist shows only Elite names in that
+            watchlist.
+          </p>
+          <h3>Common workflows</h3>
+          <ul>
+            <li>Click a band tile to filter to that band.</li>
+            <li>Click the Buy/Hold/Watch summary tile to filter to that rollup.</li>
+            <li>Use the index buttons (DOW / NASDAQ-100 / S&amp;P 100) to narrow the universe.</li>
+            <li>Click a card to open the ticker detail modal &mdash; sparkline, pillar bars, drift.</li>
+            <li>Use the Compare tray to side-by-side up to 4 tickers.</li>
+          </ul>
+        </section>
+
+        <!-- ===== Page: Heatmap ============================================= -->
+        <section class="lhlp-section" id="page-heatmap" aria-label="Heatmap page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Heatmap (<code>/lthcs/heatmap/</code>) <a href="#page-heatmap" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Sector-grouped heat grid. Each cell is one ticker, sized by some measure of weight
+            (e.g. universe presence) and colored by current band. Lets you spot sector-level
+            tilts at a glance &mdash; "Tech is mostly green, Energy is mostly red."
+          </p>
+          <p>
+            Hover a cell to see the ticker + score. Click to open the detail modal (same modal
+            as the card view).
+          </p>
+        </section>
+
+        <!-- ===== Page: Table =============================================== -->
+        <section class="lhlp-section" id="page-table" aria-label="Table page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Table view (<code>/lthcs/table/</code>) <a href="#page-table" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Bloomberg-style sortable table of the entire universe. Every column is sortable,
+            and the page supports keyboard nav. Use the Export CSV button to pull the current
+            (filtered + sorted) view to your local machine for further analysis.
+          </p>
+          <dl class="lhlp-qa">
+            <dt>When to use it</dt>
+            <dd>When you want to scan dozens of tickers at once on a single dimension &mdash; e.g. sort by 30d drift to surface the biggest macro-independent movers.</dd>
+            <dt>Gotcha</dt>
+            <dd>Sort applies to the visible filtered set. Clear filters before sorting if you want the universe-wide ranking.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Page: Crypto ============================================== -->
+        <section class="lhlp-section" id="page-crypto" aria-label="Crypto page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Crypto (<code>/lthcs/crypto/</code>) <a href="#page-crypto" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Same five-pillar framework applied to ~10 mature large-cap cryptocurrencies
+            (BTC, ETH, SOL, etc.). The pillar mix is adjusted &mdash; Adoption uses on-chain
+            active addresses + developer activity, DES is skipped (no earnings to compare
+            against), and Institutional uses ETF/fund flows where they exist.
+          </p>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>Crypto composite score with the same <code>&minus;100..+100</code> scale and the same six bands as equities, so you can compare across asset classes.</dd>
+            <dt>Gotcha</dt>
+            <dd>Crypto data is more permissive of stale-keep than equities (CoinGecko/CryptoCompare are rate-limited free-tier). Check <a href="#page-health">Pipeline Health</a> if a score looks frozen.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Page: Backtest ============================================ -->
+        <section class="lhlp-section" id="page-backtest" aria-label="Backtest page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Backtest validation (<code>/lthcs/backtest/</code>) <a href="#page-backtest" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Answers "does the framework actually predict forward returns?" Two distinct
+            views live on this page &mdash; don&rsquo;t confuse them.
+          </p>
+          <h3>Engine backtest</h3>
+          <p>
+            The current LTHCS scoring engine, run historically. Shows hit rates and decile
+            forward-return spreads &mdash; the academic / IC-style validation. This is the
+            real signal-quality measure.
+          </p>
+          <h3>Legacy P&amp;L</h3>
+          <p>
+            An older naive long-only P&amp;L curve preserved for continuity. It mixes
+            survivor bias with weight changes; <strong>do not</strong> use it to compare
+            against the live engine. Kept on-page only for historical comparison.
+          </p>
+          <dl class="lhlp-qa">
+            <dt>When to care</dt>
+            <dd>If the engine&rsquo;s top-decile spread degrades materially over time, that&rsquo;s a methodology issue &mdash; not a market issue.</dd>
+            <dt>Gotcha</dt>
+            <dd>Backtests don&rsquo;t include execution costs, slippage, or borrow costs. Treat them as upper bounds on tradable edge.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Page: Health ============================================== -->
+        <section class="lhlp-section" id="page-health" aria-label="Health page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Pipeline health (<code>/lthcs/health/</code>) <a href="#page-health" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Operational view. Three sub-pages tell you whether today&rsquo;s scores are trustworthy:
+          </p>
+          <ul>
+            <li><strong>Health</strong> &mdash; per-source coverage (today + last 30 days), per-pillar data-quality breakdown, last 14 runs.</li>
+            <li><strong>Pipeline</strong> &mdash; per-cron output age. Confirms each scheduled workflow is actually producing files.</li>
+            <li><strong>Quality</strong> &mdash; combined verdict from the monthly pillar / distribution / weight audits (runs the 1st of every month).</li>
+          </ul>
+          <dl class="lhlp-qa">
+            <dt>When to care</dt>
+            <dd>Before reading anything else on the dashboard, if you&rsquo;ve been away for a few days. Green = trust the numbers; amber = mixed; red = a major source is offline.</dd>
+            <dt>Gotcha</dt>
+            <dd>A red on Reddit subscriber counts is expected (OAuth-blocked). It doesn&rsquo;t affect the composite materially.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Page: Position sizing ===================================== -->
+        <section class="lhlp-section" id="page-position" aria-label="Position sizing page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Position sizing (<code>/lthcs/position/</code>) <a href="#page-position" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            Paper-money allocation calculator. Enter a portfolio size + universe filter,
+            get a suggested sizing weighted by composite band: Elite gets the biggest
+            per-name allocation, Review gets zero, Monitor gets a small token. Caps
+            (per-name and per-sector) prevent concentration.
+          </p>
+          <dl class="lhlp-qa">
+            <dt>What it means</dt>
+            <dd>A worked example of how you <em>might</em> translate LTHCS bands into position sizes. Not a trading instruction.</dd>
+            <dt>Gotcha</dt>
+            <dd>Paper money only. There&rsquo;s no broker integration, no rebalance scheduler, no tax-lot tracking. It rounds to whole shares but ignores commissions.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== Page: Public data ========================================= -->
+        <section class="lhlp-section" id="page-public" aria-label="Public data page">
+          <span class="lhlp-eyebrow">Sub-page</span>
+          <h2>Public data index (<code>/lthcs/public/</code>) <a href="#page-public" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            A discoverable index of the JSON files this site publishes under <code>/data/lthcs/</code>.
+            External tools, notebooks, and downstream integrations can read these endpoints
+            directly &mdash; no API key, no rate limit, no auth.
+          </p>
+          <p>
+            Most consumers want <code>latest_snapshot.json</code> (stable filename, always
+            today&rsquo;s full universe scores) or <code>manifest.json</code> (this index,
+            machine-readable).
+          </p>
+        </section>
+
+        <!-- ===== Flags glossary ============================================ -->
+        <section class="lhlp-section" id="flags" aria-label="Data quality flags">
+          <span class="lhlp-eyebrow">Reference</span>
+          <h2>Data-quality flags glossary <a href="#flags" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            When a pillar can&rsquo;t be computed (source down, data stale, API key absent)
+            the scoring engine emits a flag instead of silently zeroing. Flags appear in
+            the per-ticker detail modal and in the pipeline-health source breakdown.
+          </p>
+          <dl class="lhlp-glossary">
+            <dt>thesis_unavailable</dt>
+            <dd>Analyst revision / price-target data wasn&rsquo;t available. The Thesis pillar is set to <em>n/a</em> for this ticker and the composite is re-weighted across the other four pillars. Common in V1 because the free-tier news/sentiment source returns no usable analyst data.</dd>
+
+            <dt>sec_unavailable</dt>
+            <dd>SEC EDGAR fetch failed (rate limit or outage). 13F + Form 4 signals for affected tickers fall back to the last successful snapshot. If multi-day, you&rsquo;ll see it on the Health page.</dd>
+
+            <dt>crypto_thesis_unavailable</dt>
+            <dd>Crypto Thesis pillar can&rsquo;t be computed (no analyst coverage equivalent for the asset). Same re-weighting behavior as equity <code>thesis_unavailable</code>.</dd>
+
+            <dt>insider_stale</dt>
+            <dd>Insider conviction signal is older than the staleness threshold (typically &gt;5 trading days). The pillar still scores, but with a confidence haircut.</dd>
+
+            <dt>13f_lag</dt>
+            <dd>13F filing is in the normal ~45-day reporting window between quarter-end and filing deadline. Score uses the prior quarter; not an error.</dd>
+
+            <dt>macro_stalekept</dt>
+            <dd>FRED fetch failed; Macro Regime gauges show the last successful values. The composite uses the stale-but-recent macro read.</dd>
+
+            <dt>universe_new</dt>
+            <dd>Ticker joined the universe within the last 90 days. Drift windows that exceed the available history show <em>n/a</em> until enough days accumulate.</dd>
+          </dl>
+        </section>
+
+        <!-- ===== About ===================================================== -->
+        <section class="lhlp-section" id="about" aria-label="About the framework">
+          <span class="lhlp-eyebrow">Background</span>
+          <h2>About the framework <a href="#about" class="lhlp-anchor" aria-label="Anchor link">#</a></h2>
+          <p>
+            LTHCS is a free-tier, public-data scoring framework for long-term equity and
+            crypto holdings. It runs daily at 23:00 UTC via a scheduled GitHub Action,
+            commits the snapshot JSON to the repo, and renders it through this static site
+            (no backend, no auth, no rate limits for readers).
+          </p>
+          <p>
+            The full build spec, methodology, and pillar definitions live on GitHub:
+            <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/PHASE_1_BUILD_SPEC.md"
+               target="_blank" rel="noopener">PHASE_1_BUILD_SPEC.md</a>
+            and
+            <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/README_LTHCS.md"
+               target="_blank" rel="noopener">README_LTHCS.md</a>.
+          </p>
+          <p>
+            <strong>Reminder.</strong> Nothing on this site is investment advice. LTHCS is
+            an educational research project shipping in the open.
+          </p>
+        </section>
+
+      </div>
+    </main>
+
+    <footer class="lhlp-footer" role="contentinfo">
+      <p>
+        Static help page &mdash; reflects the framework as of the last commit. Found something stale or unclear?
+        <a href="https://github.com/btabiado/btc-eth-etf-dashboard/issues" target="_blank" rel="noopener">Open an issue</a>.
+      </p>
+    </footer>
+
+    <!-- "Back to top" floating button. Shows after the user scrolls past the
+         intro. Plain anchor link so it works without JS too. -->
+    <a href="#start-here" class="lhlp-back-top" id="lhlp-back-top" aria-label="Back to top">&uarr;</a>
+
+    <script>
+      // Tiny inline script — kept here (not a separate .js file) because it's
+      // purely UI affordance: show the back-to-top button after the user
+      // scrolls past ~600px. No data, no fetches, no state.
+      (function () {
+        var btn = document.getElementById('lhlp-back-top');
+        if (!btn) return;
+        var onScroll = function () {
+          if (window.scrollY > 600) {
+            btn.classList.add('is-visible');
+          } else {
+            btn.classList.remove('is-visible');
+          }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+      })();
+    </script>
+  </body>
+</html>

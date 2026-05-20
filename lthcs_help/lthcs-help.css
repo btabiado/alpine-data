@@ -1,0 +1,407 @@
+/* =========================================================================
+   LTHCS Help — "How to read" comprehensive explainer
+   Reuses tokens from ../lthcs_tab/lthcs.css (band colors, dark theme,
+   fonts, --radius-*, --shadow-*). This sheet only adds layout for the
+   two-column TOC + content view and prose styling.
+   ========================================================================= */
+
+/* ---- Layout: two-column on desktop, single column on mobile ---- */
+.lhlp-main {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 20px 96px;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 36px;
+}
+
+@media (max-width: 880px) {
+  .lhlp-main {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px 14px 64px;
+  }
+}
+
+/* ---- Table of contents (left rail) ---- */
+.lhlp-toc {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 12px;
+  font-size: 13px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.lhlp-toc::-webkit-scrollbar {
+  width: 6px;
+}
+.lhlp-toc::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+
+.lhlp-toc-title {
+  margin: 0 0 8px;
+  padding: 0 4px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.lhlp-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: toc;
+}
+
+.lhlp-toc li {
+  margin: 0;
+  counter-increment: toc;
+}
+
+.lhlp-toc a {
+  display: block;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+  line-height: 1.35;
+  transition: background-color 80ms ease, color 80ms ease;
+}
+
+.lhlp-toc a::before {
+  content: counter(toc) ". ";
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.lhlp-toc a:hover,
+.lhlp-toc a:focus-visible {
+  background: var(--bg-chip);
+  color: var(--text-primary);
+  outline: none;
+}
+
+.lhlp-toc a:focus-visible {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+@media (max-width: 880px) {
+  .lhlp-toc {
+    position: static;
+    max-height: none;
+  }
+}
+
+/* ---- Content column ---- */
+.lhlp-content {
+  min-width: 0;
+}
+
+.lhlp-intro {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin: 0 0 24px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.lhlp-intro p {
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+.lhlp-intro p:last-child {
+  margin-bottom: 0;
+}
+
+.lhlp-section {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  margin: 0 0 16px;
+  scroll-margin-top: 16px;
+}
+
+.lhlp-section h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 650;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.lhlp-section h2 .lhlp-anchor {
+  margin-left: 8px;
+  font-size: 14px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 80ms ease;
+  text-decoration: none;
+}
+
+.lhlp-section:hover h2 .lhlp-anchor,
+.lhlp-section h2 .lhlp-anchor:focus-visible {
+  opacity: 1;
+}
+
+.lhlp-section h3 {
+  margin: 18px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lhlp-eyebrow {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-chip);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.lhlp-section p {
+  margin: 0 0 10px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.lhlp-section p:last-child {
+  margin-bottom: 0;
+}
+
+.lhlp-section ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+  line-height: 1.6;
+}
+
+.lhlp-section li {
+  margin-bottom: 4px;
+}
+
+.lhlp-section code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--bg-chip);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text-primary);
+}
+
+.lhlp-section a {
+  color: var(--accent);
+}
+
+/* Tight "what / when / gotcha" answer block */
+.lhlp-qa {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 6px 14px;
+  margin: 10px 0 0;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+}
+
+.lhlp-qa dt {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  padding-top: 2px;
+}
+
+.lhlp-qa dd {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+@media (max-width: 540px) {
+  .lhlp-qa {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .lhlp-qa dd {
+    margin-bottom: 8px;
+  }
+  .lhlp-qa dd:last-child {
+    margin-bottom: 0;
+  }
+}
+
+/* Band table (Elite/High/Constructive/Monitor/Weakening/Review thresholds) */
+.lhlp-bands {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 10px 0 0;
+}
+
+.lhlp-band {
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  border-left-width: 4px;
+}
+
+.lhlp-band-name {
+  font-weight: 650;
+  font-size: 13px;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+
+.lhlp-band-range {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.lhlp-band-blurb {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.lhlp-band[data-band="elite"]       { border-left-color: var(--band-elite-bright); }
+.lhlp-band[data-band="high"]        { border-left-color: var(--band-high-bright); }
+.lhlp-band[data-band="constructive"]{ border-left-color: var(--band-constructive-bright); }
+.lhlp-band[data-band="monitor"]     { border-left-color: var(--band-monitor-bright); }
+.lhlp-band[data-band="weakening"]   { border-left-color: var(--band-weakening-bright); }
+.lhlp-band[data-band="review"]      { border-left-color: var(--band-review-bright); }
+
+/* Pillar pills */
+.lhlp-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lhlp-pillar {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.lhlp-pillar-name {
+  font-weight: 650;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.lhlp-pillar-blurb {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.lhlp-pillar-signals {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+/* Glossary list */
+.lhlp-glossary {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 6px 16px;
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.lhlp-glossary dt {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  padding-top: 2px;
+}
+
+.lhlp-glossary dd {
+  margin: 0;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lhlp-glossary {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .lhlp-glossary dd {
+    margin-bottom: 8px;
+  }
+}
+
+/* ---- "Back to top" floating button ---- */
+.lhlp-back-top {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  z-index: 30;
+  text-decoration: none;
+}
+
+.lhlp-back-top.is-visible {
+  opacity: 0.9;
+  pointer-events: auto;
+}
+
+.lhlp-back-top:hover {
+  opacity: 1;
+  border-color: var(--accent);
+}
+
+/* ---- Footer ---- */
+.lhlp-footer {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 32px;
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
