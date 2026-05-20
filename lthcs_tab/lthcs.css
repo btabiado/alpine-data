@@ -431,46 +431,102 @@ input[type="search"] {
 .lthcs-index-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 11px;
   margin-top: 6px;
 }
 .lthcs-index-table th {
   text-align: left;
   font-weight: 600;
   color: var(--text-tertiary);
-  padding: 4px 8px 4px 0;
+  padding: 3px 6px 3px 0;
   border-bottom: 1px solid var(--border-subtle);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .lthcs-index-table td {
-  padding: 5px 8px 5px 0;
+  padding: 4px 6px 4px 0;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  vertical-align: top;
+  vertical-align: middle;
 }
-.lthcs-index-comp-name { white-space: nowrap; color: var(--text-primary); }
-.lthcs-index-comp-value { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.lthcs-index-comp-name {
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-size: 11px;
+}
+.lthcs-index-value-col { width: 100px; }
+.lthcs-index-comp-value {
+  width: 100px;
+  padding-right: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.lthcs-index-value-bar {
+  position: relative;
+  width: 100%;
+  min-width: 70px;
+  height: 6px;
+}
+.lthcs-index-value-bar-track {
+  position: absolute;
+  inset: 2px 0;
+  background: var(--border-subtle);
+  border-radius: 1px;
+}
+.lthcs-index-value-bar-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 0.5px);
+  width: 1px;
+  background: var(--text-tertiary);
+  opacity: 0.5;
+}
+.lthcs-index-value-bar-marker {
+  position: absolute;
+  top: -1px;
+  width: 3px;
+  height: 8px;
+  background: var(--text-primary);
+  border-radius: 1px;
+  transform: translateX(-50%);
+}
+.lthcs-index-value-bar.lthcs-index-value-bar-pos .lthcs-index-value-bar-marker {
+  background: var(--band-high-bright);
+}
+.lthcs-index-value-bar.lthcs-index-value-bar-neg .lthcs-index-value-bar-marker {
+  background: var(--band-weakening-bright);
+}
+.lthcs-index-value-text {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
 .lthcs-index-comp-delta {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-align: right;
-  width: 44px;
+  width: 38px;
+  font-size: 11px;
 }
 .lthcs-index-comp-delta.lthcs-index-pos { color: var(--band-high-bright); }
 .lthcs-index-comp-delta.lthcs-index-neg { color: var(--band-weakening-bright); }
 .lthcs-index-comp-delta.lthcs-index-neutral { color: var(--text-tertiary); }
-.lthcs-index-strength-col { width: 110px; }
-.lthcs-index-comp-strength { width: 110px; padding-right: 12px; }
+.lthcs-index-strength-col { width: 90px; }
+.lthcs-index-comp-strength { width: 90px; padding-right: 10px; }
 .lthcs-index-strength {
   position: relative;
   width: 100%;
-  height: 8px;
-  min-width: 80px;
+  height: 6px;
+  min-width: 70px;
 }
 .lthcs-index-strength-track {
   position: absolute;
-  inset: 3px 0;
+  inset: 2px 0;
   background: var(--border-subtle);
-  border-radius: 2px;
+  border-radius: 1px;
 }
 .lthcs-index-strength-spine {
   position: absolute;
@@ -485,13 +541,13 @@ input[type="search"] {
   position: absolute;
   top: 1px;
   bottom: 1px;
-  border-radius: 2px;
+  border-radius: 1px;
 }
 .lthcs-index-strength-pos { background: var(--band-high-bright); }
 .lthcs-index-strength-neg { background: var(--band-weakening-bright); }
 .lthcs-index-comp-read {
   color: var(--text-tertiary);
-  font-size: 11px;
+  font-size: 10px;
   font-style: italic;
 }
 .lthcs-index-note {

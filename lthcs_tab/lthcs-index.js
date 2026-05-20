@@ -76,6 +76,43 @@ function capForComponent(name) {
   return 10;
 }
 
+// Render a horizontal bar visualization for a component's value (in place
+// of the raw number). Pillar averages (0-100 scale) and Band lean
+// (-100/+100 percent) get a colored marker at their position on a track;
+// categorical values (Macro "clean", Insider "63 active signals",
+// 13F "8 vs 90") fall through to plain text since they don't map to a
+// linear scale.
+function valueBarHtml(value, name) {
+  if (/pillar avg|DES \(demand/i.test(name || '')) {
+    const v = Number(value);
+    if (Number.isFinite(v)) {
+      const pct = Math.max(0, Math.min(100, v));
+      return `
+        <div class="lthcs-index-value-bar" role="img" aria-label="${escapeHtml(v.toFixed(1))} out of 100">
+          <div class="lthcs-index-value-bar-track"></div>
+          <div class="lthcs-index-value-bar-marker" style="left: ${pct.toFixed(1)}%"></div>
+        </div>`;
+    }
+  }
+  if (/^Band lean/i.test(name || '')) {
+    const m = String(value || '').match(/(-?\d+(?:\.\d+)?)/);
+    if (m) {
+      const v = parseFloat(m[1]);
+      if (Number.isFinite(v)) {
+        const pct = Math.max(0, Math.min(100, ((v + 100) / 200) * 100));
+        const sideClass = v >= 0 ? 'lthcs-index-value-bar-pos' : 'lthcs-index-value-bar-neg';
+        return `
+          <div class="lthcs-index-value-bar ${sideClass}" role="img" aria-label="${escapeHtml(v + '%')}">
+            <div class="lthcs-index-value-bar-track"></div>
+            <div class="lthcs-index-value-bar-spine"></div>
+            <div class="lthcs-index-value-bar-marker" style="left: ${pct.toFixed(1)}%"></div>
+          </div>`;
+      }
+    }
+  }
+  return `<span class="lthcs-index-value-text">${escapeHtml(value == null ? '' : String(value))}</span>`;
+}
+
 // Render a centered ±strength bar for a component. Negative fills to the
 // left (red), positive fills to the right (green); a faint center spine
 // marks the zero line.
@@ -113,10 +150,11 @@ function renderComponentsTable(components) {
     const cls = deltaClass(c.delta);
     const cap = capForComponent(c.name);
     const bar = strengthBarHtml(c.delta, cap);
+    const valBar = valueBarHtml(c.value, c.name);
     return `
       <tr>
         <td class="lthcs-index-comp-name">${escapeHtml(c.name)}</td>
-        <td class="lthcs-index-comp-value">${escapeHtml(c.value)}</td>
+        <td class="lthcs-index-comp-value">${valBar}</td>
         <td class="lthcs-index-comp-delta ${cls}">${escapeHtml(deltaStr(c.delta))}</td>
         <td class="lthcs-index-comp-strength">${bar}</td>
         <td class="lthcs-index-comp-read">${escapeHtml(c.read || '')}</td>
@@ -127,7 +165,7 @@ function renderComponentsTable(components) {
       <thead>
         <tr>
           <th scope="col">Component</th>
-          <th scope="col">Value</th>
+          <th scope="col" class="lthcs-index-value-col">Value</th>
           <th scope="col">&plusmn;</th>
           <th scope="col" class="lthcs-index-strength-col">Strength</th>
           <th scope="col">Read</th>
