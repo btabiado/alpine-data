@@ -270,6 +270,30 @@ input[type="search"] {
   }
 }
 
+/* Phase 2 cross-page nav: with 6 ghost buttons (Heatmap / Table / Crypto /
+   Backtest / Health / About) the header nav overflows on narrow phones. Let
+   it scroll horizontally instead of stacking — keeps the title row compact
+   and matches how iOS Safari handles tab strips. -webkit-overflow-scrolling
+   gives momentum-scroll, and scrollbar-width:none hides the chrome on
+   Firefox/Edge. The Safari scrollbar is already invisible by default. */
+@media (max-width: 640px) {
+  .lthcs-header-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding-bottom: 2px;
+  }
+  .lthcs-header-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .lthcs-header-nav .lthcs-refresh-btn {
+    flex: 0 0 auto;
+  }
+}
+
 /* Phase 2 UX: refresh-button loading state. The arrow spins so a fast
    browser-cached refresh still feels responsive. The label stays put. */
 .lthcs-refresh-btn.is-loading .lthcs-refresh-icon {

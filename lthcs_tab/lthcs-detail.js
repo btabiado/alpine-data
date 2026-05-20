@@ -294,7 +294,25 @@ function buildShell() {
 
     <div>
       <div class="lthcs-modal-narrative-header">
-        <h3 class="lthcs-modal-section-heading">AI narrative</h3>
+        <h3 class="lthcs-modal-section-heading">
+          AI narrative
+          <!--
+            Phase 2 follow-up to commit 5ebf973 (narrative V1<>LLM toggle).
+            The first LLM payload landed 2026-05-19 23:00 UTC; older
+            snapshots only have a Templated narrative. The "?" hover
+            tooltip explains both modes so a cold visitor doesn't have to
+            poke at the chips to figure out what they do. Pure title-attr
+            tooltip — no JS — so Safari/Mobile-Safari + keyboard focus
+            (aria-describedby) both surface the same copy.
+          -->
+          <span
+            class="lthcs-narrative-source-help"
+            tabindex="0"
+            role="img"
+            aria-label="What is Templated vs LLM?"
+            title="Templated: deterministic narrative composed from pillar scores using a fixed sentence library. Always available. LLM (shadow): freshly-written narrative from an external model, populated daily by the lthcs-daily cron (started 2026-05-19 23:00 UTC). Older snapshots may not have an LLM payload."
+          >?</span>
+        </h3>
         <div
           class="lthcs-narrative-source-toggle lthcs-chip-group"
           role="radiogroup"
@@ -307,6 +325,7 @@ function buildShell() {
             data-narrative-source="templated"
             role="radio"
             aria-checked="true"
+            title="Deterministic, always available. Composed from pillar scores."
           >Templated</button>
           <button
             type="button"
@@ -314,6 +333,7 @@ function buildShell() {
             data-narrative-source="llm"
             role="radio"
             aria-checked="false"
+            title="Freshly-written by an LLM (shadow). Populated daily; older snapshots may be missing this."
           >LLM</button>
         </div>
       </div>

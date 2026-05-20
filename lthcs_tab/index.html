@@ -30,16 +30,41 @@
             <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
             <span class="lthcs-refresh-label">Refresh</span>
           </button>
+          <!--
+            Phase 2 cross-page nav: all sub-routes (Heatmap, Crypto, Table,
+            Backtest, Health) get a ghost entry here so the card view is the
+            single hub. About stays last because it opens a modal, not a
+            navigation. Each <a href> is a relative path against /lthcs/ in
+            prod (e.g. ./table/ → /lthcs/table/). Dev-server users land at
+            /lthcs_tab/table/ which doesn't exist — same caveat as the
+            existing Heatmap/Crypto links. Symbols chosen to be terse + ASCII-
+            adjacent so they render in Safari without webfonts loading.
+          -->
           <nav class="lthcs-header-nav" aria-label="LTHCS views">
             <!-- V2 alternative view: sector heatmap -->
             <a href="./heatmap/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="View as sector heatmap" style="text-decoration:none">
               <span aria-hidden="true">&#x25A6;</span>
               <span class="lthcs-refresh-label">Heatmap</span>
             </a>
-            <!-- Tier 5 #27 Phase 3: crypto-extension scores (BTC/ETH/SOL) -->
+            <!-- Sortable Bloomberg-style universe table -->
+            <a href="./table/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="Sortable universe table" style="text-decoration:none">
+              <span aria-hidden="true">&#x2261;</span>
+              <span class="lthcs-refresh-label">Table</span>
+            </a>
+            <!-- Tier 5 #27 Phase 3: crypto-extension scores (BTC/ETH/SOL/+) -->
             <a href="./crypto/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="BTC/ETH/SOL crypto scores" style="text-decoration:none">
               <span aria-hidden="true">&#x20BF;</span>
               <span class="lthcs-refresh-label">Crypto</span>
+            </a>
+            <!-- Backtest validation: does the framework predict forward returns? -->
+            <a href="./backtest/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="Backtest validation" style="text-decoration:none">
+              <span aria-hidden="true">&#x1F4C8;</span>
+              <span class="lthcs-refresh-label">Backtest</span>
+            </a>
+            <!-- Pipeline health: did today's run land cleanly? -->
+            <a href="./health/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="Pipeline health" style="text-decoration:none">
+              <span aria-hidden="true">&#x2764;</span>
+              <span class="lthcs-refresh-label">Health</span>
             </a>
             <!-- Week 10 (about modal) trigger -->
             <button id="lthcs-about-btn" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="About LTHCS">

@@ -20,7 +20,7 @@
             <span class="lthcs-meta-label">Last updated</span>
             <span id="hm-last-updated" class="lthcs-meta-value">&hellip;</span>
           </div>
-          <a class="lthcs-refresh-btn hm-back-link" href="../" aria-label="Back to LTHCS card view">
+          <a class="lthcs-refresh-btn hm-back-link" href="../" aria-label="Back to card view">
             <span aria-hidden="true">&larr;</span>
             <span class="lthcs-refresh-label">Card view</span>
           </a>
@@ -79,7 +79,11 @@
           No tickers match current filters.
         </div>
         <div id="hm-error" class="lthcs-error hidden" role="alert">
-          <p>Could not load LTHCS data. Try refreshing.</p>
+          <p>
+            Could not load LTHCS data. Try refreshing,
+            check <a href="../health/" class="lthcs-footer-link">pipeline health</a>,
+            or <a href="../" class="lthcs-footer-link">return to the card view</a>.
+          </p>
           <button type="button" id="hm-error-refresh" class="lthcs-refresh-btn">
             <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
             <span class="lthcs-refresh-label">Refresh</span>

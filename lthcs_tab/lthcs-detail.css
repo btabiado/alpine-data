@@ -607,6 +607,37 @@
 
 .lthcs-modal-root .lthcs-modal-narrative-header .lthcs-modal-section-heading {
   margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Phase 2 cross-page polish: "?" help glyph next to the AI narrative
+   heading. The native `title` attribute renders a tooltip on hover (and
+   the focus ring works because of tabindex="0"). Sized as a 20px circle
+   so it doesn't crowd the heading but still hits the 24px keyboard-focus
+   minimum. tap-able on Mobile Safari thanks to inherited touch-action. */
+.lthcs-modal-root .lthcs-narrative-source-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--bg-chip, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border-subtle, #2A323D);
+  color: var(--text-tertiary, #94a3b8);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: help;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lthcs-modal-root .lthcs-narrative-source-help:hover,
+.lthcs-modal-root .lthcs-narrative-source-help:focus-visible {
+  color: var(--text-primary, #e5e7eb);
+  border-color: var(--border-strong, #3a424d);
+  outline: none;
 }
 
 .lthcs-modal-root .lthcs-narrative-source-toggle {

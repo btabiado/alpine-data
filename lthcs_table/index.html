@@ -24,7 +24,16 @@
           </p>
         </div>
         <div class="lthcs-header-meta">
-          <a href="../lthcs/" class="lthcs-refresh-btn" aria-label="Switch to card view" style="text-decoration:none">
+          <!--
+            Phase 2 cross-page nav: was `../lthcs/` which resolves to
+            `/lthcs/lthcs/` in prod and `/lthcs/` (non-existent) on dev —
+            broken in both. The card view lives at `/lthcs/` in prod and
+            at `/lthcs_tab/` on dev. From `/lthcs/table/` (prod) the
+            correct relative is `../`. Dev path is intentionally broken
+            (the page is served from `/lthcs_table/`); this matches the
+            other sub-routes (crypto/health/backtest all use `../`).
+          -->
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
             <span aria-hidden="true">&larr;</span>
             <span class="lthcs-refresh-label">Card view</span>
           </a>
@@ -95,10 +104,23 @@
 
       <section class="lthcs-table-results" aria-label="Universe table">
         <div id="lthcs-table-loading" class="lthcs-table-loading">Loading scores&hellip;</div>
+        <!--
+          Phase 2 empty/error polish: the empty pane shows when filters
+          eliminate all rows; the JS sets text + offers a "clear filters"
+          affordance via the controls above. The error pane defaults to a
+          friendly copy populated by showError() — the inline default
+          here is the fallback if JS fails to mount.
+        -->
         <div id="lthcs-table-empty" class="lthcs-table-empty hidden">
-          No tickers match the current filters.
+          <div class="lthcs-table-empty-title">No tickers match the current filters</div>
+          <div class="lthcs-table-empty-sub">Try widening Band or Index above, or clear the search box.</div>
         </div>
-        <div id="lthcs-table-error" class="lthcs-table-error hidden" role="alert"></div>
+        <div id="lthcs-table-error" class="lthcs-table-error hidden" role="alert">
+          Could not load today&rsquo;s snapshot. Check
+          <a href="../health/" class="lthcs-footer-link">pipeline health</a>
+          or
+          <a href="../" class="lthcs-footer-link">return to the card view</a>.
+        </div>
 
         <div id="lthcs-table-scroll" class="lthcs-table-scroll hidden">
           <table id="lthcs-table" class="lthcs-table" aria-label="LTHCS universe sortable table">

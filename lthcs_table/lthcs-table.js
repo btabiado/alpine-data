@@ -853,7 +853,17 @@ function showError(err) {
   console.error('LTHCS table:', err);
   const el = $('#lthcs-table-error');
   if (el) {
-    el.textContent = 'Could not load snapshot. Try refresh, or check that data/lthcs/snapshots/ exists.';
+    // Phase 2 polish: friendly two-line empty-state copy with a deep link
+    // into the pipeline-health page (where stale-snapshot symptoms surface
+    // first) + a card-view back-link so the user has somewhere to go.
+    // innerHTML kept tight: trusted static strings only.
+    el.innerHTML =
+      '<div class="lthcs-table-empty-title">Could not load today&rsquo;s snapshot</div>' +
+      '<div class="lthcs-table-empty-sub">' +
+        'The daily cron may not have landed yet (runs ~23:00 UTC), or the snapshot file is missing. ' +
+        'Check <a href="../health/" class="lthcs-footer-link">pipeline health</a> ' +
+        'or <a href="../" class="lthcs-footer-link">return to the card view</a>.' +
+      '</div>';
     show(el);
   }
   hide($('#lthcs-table-loading'));

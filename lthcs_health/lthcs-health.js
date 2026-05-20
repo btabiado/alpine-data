@@ -89,7 +89,15 @@ async function main() {
   if (!snapIndex || !Array.isArray(snapIndex.dates) || snapIndex.dates.length === 0) {
     loading.classList.add('hidden');
     errBox.classList.remove('hidden');
-    errBox.textContent = 'Could not load snapshots/index.json. The pipeline has not produced any snapshots yet.';
+    // Phase 2 polish: friendlier copy + back-link so a cold visitor who hits
+    // this page on a fresh deploy has somewhere to go instead of staring at
+    // a dead-end error string.
+    errBox.innerHTML =
+      '<strong>Waiting on the first pipeline run.</strong><br>' +
+      'The daily LTHCS pipeline cron has not produced any snapshots yet ' +
+      '(<code>data/lthcs/snapshots/index.json</code> is empty or missing). ' +
+      'Cron runs at 23:00 UTC. ' +
+      '<a href="../" class="lthcs-footer-link">&larr; Back to card view</a>';
     return;
   }
 
