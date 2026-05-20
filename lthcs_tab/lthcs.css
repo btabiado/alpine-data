@@ -227,6 +227,67 @@ input[type="search"] {
   line-height: 1;
 }
 
+/* Phase 2 UX: differentiate the primary Refresh action from the
+   sibling nav buttons (Heatmap / Crypto / About). Nav buttons drop
+   to a lower visual weight so the eye lands on Refresh first. */
+.lthcs-refresh-btn-primary {
+  background: var(--bg-chip-active);
+  border-color: var(--border-strong);
+}
+
+.lthcs-refresh-btn-primary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent);
+}
+
+.lthcs-refresh-btn-nav {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.lthcs-refresh-btn-nav:hover {
+  background: var(--bg-chip);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.lthcs-header-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 6px;
+  margin-left: 2px;
+  border-left: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 720px) {
+  .lthcs-header-nav {
+    border-left: none;
+    padding-left: 0;
+    margin-left: 0;
+    gap: 6px;
+  }
+}
+
+/* Phase 2 UX: refresh-button loading state. The arrow spins so a fast
+   browser-cached refresh still feels responsive. The label stays put. */
+.lthcs-refresh-btn.is-loading .lthcs-refresh-icon {
+  display: inline-block;
+  animation: lthcs-spin 0.9s linear infinite;
+}
+
+.lthcs-refresh-btn[disabled] {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lthcs-refresh-btn.is-loading .lthcs-refresh-icon {
+    animation: none;
+  }
+}
+
 /* =========================================================================
    Main layout
    ========================================================================= */
@@ -1041,10 +1102,98 @@ input[type="search"] {
   gap: 12px;
 }
 
+/* Phase 2 UX: top row of the controls section holds search + sort.
+   Sort lives on the right so it's discoverable but never competes
+   visually with the primary search affordance. */
+.lthcs-controls-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .lthcs-search-wrap {
   position: relative;
-  width: 100%;
+  flex: 1 1 280px;
+  min-width: 0;
   max-width: 480px;
+}
+
+/* Phase 2 UX: sort dropdown — paired with the search to put filter
+   shape + ordering in the same row. Native <select> for full a11y +
+   touch behaviour; styled to match the chip family. */
+.lthcs-sort-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.lthcs-sort-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.lthcs-sort-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%) calc(100% - 13px) calc(50% - 2px) / 6px 6px no-repeat,
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%) calc(100% - 7px) calc(50% - 2px) / 6px 6px no-repeat,
+    var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 30px 8px 12px;
+  min-height: 44px;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.lthcs-sort-select:hover {
+  border-color: var(--border-strong);
+}
+
+.lthcs-sort-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.18);
+}
+
+@media (max-width: 480px) {
+  .lthcs-controls-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lthcs-sort-wrap {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .lthcs-sort-select {
+    flex: 1 1 auto;
+  }
+}
+
+/* Phase 2 UX: small "Showing N of M" line lives at the bottom of the
+   controls block so the user sees, at a glance, what the current filter
+   shape produced. Empty when nothing's been filtered yet. */
+.lthcs-results-summary {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  min-height: 16px;
+  padding: 2px 0 0;
+}
+
+.lthcs-results-summary:empty {
+  display: none;
 }
 
 .lthcs-search-icon {
@@ -1272,6 +1421,96 @@ input[type="search"] {
   text-align: center;
   color: var(--text-secondary);
   background: var(--bg-card);
+}
+
+/* Phase 2 UX: loading state now shows a spinner so the user has visual
+   confirmation that work is in progress (matters most on refresh). */
+.lthcs-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.lthcs-loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: lthcs-spin 0.9s linear infinite;
+}
+
+@keyframes lthcs-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lthcs-loading-spinner {
+    animation: none;
+    border-top-color: var(--text-secondary);
+  }
+}
+
+/* Phase 2 UX: empty state is now actionable — an icon, a friendly title,
+   a sub-line describing the active filters, and a "Clear all" button so
+   the user is never stuck staring at a blank grid. */
+.lthcs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 36px 24px;
+}
+
+.lthcs-empty-icon {
+  font-size: 28px;
+  opacity: 0.45;
+  margin-bottom: 4px;
+}
+
+.lthcs-empty-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.lthcs-empty-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  max-width: 48ch;
+}
+
+.lthcs-empty-sub:empty {
+  display: none;
+}
+
+.lthcs-empty-clear {
+  margin-top: 8px;
+  padding: 8px 16px;
+  min-height: 44px;
+  background: var(--bg-chip);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.lthcs-empty-clear:hover {
+  background: var(--bg-chip-active);
+  border-color: var(--accent);
+}
+
+.lthcs-empty-clear:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(110, 168, 254, 0.22);
 }
 
 .lthcs-error {
@@ -1753,14 +1992,27 @@ input[type="search"] {
   transition: width 140ms ease, background 140ms ease;
 }
 
+/* Phase 2 UX: bolder selected state so the active drill-down index is
+   unmistakable. Stronger tint + slight glow on the count number; ring
+   makes it read as a real toggle from across the page. */
 .lthcs-ix.is-active {
   border-color: var(--accent);
-  background: rgba(110, 168, 254, 0.08);
+  background: rgba(110, 168, 254, 0.14);
+  box-shadow: 0 0 0 1px var(--accent), 0 6px 18px rgba(110, 168, 254, 0.10);
 }
 
 .lthcs-ix.is-active::before {
   width: 8px;
   background: var(--accent);
+}
+
+.lthcs-ix.is-active .lthcs-ix-eyebrow {
+  color: var(--accent);
+}
+
+.lthcs-ix.is-active .lthcs-ix-name {
+  color: var(--text-primary);
+  font-weight: 700;
 }
 
 .lthcs-ix-eyebrow {
@@ -1782,6 +2034,7 @@ input[type="search"] {
 
 .lthcs-ix.is-active .lthcs-ix-count {
   color: var(--accent);
+  text-shadow: 0 0 14px rgba(110, 168, 254, 0.40);
 }
 
 .lthcs-ix-name {

@@ -26,25 +26,27 @@
             <span class="lthcs-meta-label">Model</span>
             <span id="lthcs-model-version" class="lthcs-meta-value">v1.0.0</span>
           </div>
-          <button id="lthcs-refresh" type="button" class="lthcs-refresh-btn" aria-label="Refresh LTHCS data">
+          <button id="lthcs-refresh" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-primary" aria-label="Refresh LTHCS data">
             <span class="lthcs-refresh-icon" aria-hidden="true">&#x21bb;</span>
             <span class="lthcs-refresh-label">Refresh</span>
           </button>
-          <!-- V2 alternative view: sector heatmap -->
-          <a href="./heatmap/" class="lthcs-refresh-btn" aria-label="View as sector heatmap" style="text-decoration:none">
-            <span aria-hidden="true">&#x25A6;</span>
-            <span class="lthcs-refresh-label">Heatmap</span>
-          </a>
-          <!-- Tier 5 #27 Phase 3: crypto-extension scores (BTC/ETH/SOL) -->
-          <a href="./crypto/" class="lthcs-refresh-btn" aria-label="BTC/ETH/SOL crypto scores" style="text-decoration:none">
-            <span aria-hidden="true">&#x20BF;</span>
-            <span class="lthcs-refresh-label">Crypto</span>
-          </a>
-          <!-- Week 10 (about modal) trigger -->
-          <button id="lthcs-about-btn" type="button" class="lthcs-refresh-btn" aria-label="About LTHCS">
-            <span aria-hidden="true">&#x2139;</span>
-            <span class="lthcs-refresh-label">About</span>
-          </button>
+          <nav class="lthcs-header-nav" aria-label="LTHCS views">
+            <!-- V2 alternative view: sector heatmap -->
+            <a href="./heatmap/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="View as sector heatmap" style="text-decoration:none">
+              <span aria-hidden="true">&#x25A6;</span>
+              <span class="lthcs-refresh-label">Heatmap</span>
+            </a>
+            <!-- Tier 5 #27 Phase 3: crypto-extension scores (BTC/ETH/SOL) -->
+            <a href="./crypto/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="BTC/ETH/SOL crypto scores" style="text-decoration:none">
+              <span aria-hidden="true">&#x20BF;</span>
+              <span class="lthcs-refresh-label">Crypto</span>
+            </a>
+            <!-- Week 10 (about modal) trigger -->
+            <button id="lthcs-about-btn" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="About LTHCS">
+              <span aria-hidden="true">&#x2139;</span>
+              <span class="lthcs-refresh-label">About</span>
+            </button>
+          </nav>
         </div>
       </div>
     </header>
@@ -151,16 +153,29 @@
       </section>
 
       <section class="lthcs-section lthcs-controls" aria-label="Filter and search">
-        <div class="lthcs-search-wrap">
-          <span class="lthcs-search-icon" aria-hidden="true">&#x1F50D;</span>
-          <input
-            id="lthcs-search"
-            class="lthcs-search-input"
-            type="search"
-            placeholder="Search ticker or company&hellip;"
-            autocomplete="off"
-            spellcheck="false"
-          />
+        <div class="lthcs-controls-top">
+          <div class="lthcs-search-wrap">
+            <span class="lthcs-search-icon" aria-hidden="true">&#x1F50D;</span>
+            <input
+              id="lthcs-search"
+              class="lthcs-search-input"
+              type="search"
+              placeholder="Search ticker or company&hellip;"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="lthcs-sort-wrap" role="group" aria-label="Sort scores">
+            <label class="lthcs-sort-label" for="lthcs-sort-select">Sort</label>
+            <select id="lthcs-sort-select" class="lthcs-sort-select" aria-label="Sort scores">
+              <option value="score-desc">Score (high &rarr; low)</option>
+              <option value="score-asc">Score (low &rarr; high)</option>
+              <option value="trend-desc">Trend &Delta; (best &rarr; worst)</option>
+              <option value="trend-asc">Trend &Delta; (worst &rarr; best)</option>
+              <option value="ticker-asc">Ticker (A &rarr; Z)</option>
+              <option value="ticker-desc">Ticker (Z &rarr; A)</option>
+            </select>
+          </div>
         </div>
 
         <!--
@@ -186,11 +201,21 @@
             </button>
           </div>
         </div>
+
+        <div class="lthcs-results-summary" id="lthcs-results-summary" aria-live="polite"></div>
       </section>
 
       <section class="lthcs-section lthcs-results" aria-label="Scores">
-        <div id="lthcs-loading" class="lthcs-loading">Loading scores&hellip;</div>
-        <div id="lthcs-empty" class="lthcs-empty hidden">No tickers match current filters.</div>
+        <div id="lthcs-loading" class="lthcs-loading">
+          <span class="lthcs-loading-spinner" aria-hidden="true"></span>
+          <span>Loading scores&hellip;</span>
+        </div>
+        <div id="lthcs-empty" class="lthcs-empty hidden">
+          <div class="lthcs-empty-icon" aria-hidden="true">&#x1F50D;</div>
+          <div class="lthcs-empty-title">No tickers match current filters</div>
+          <div class="lthcs-empty-sub" id="lthcs-empty-sub"></div>
+          <button type="button" class="lthcs-empty-clear" id="lthcs-empty-clear">Clear all filters</button>
+        </div>
         <div id="lthcs-error" class="lthcs-error hidden" role="alert"></div>
         <div id="lthcs-cards" class="lthcs-card-grid" aria-live="polite"></div>
       </section>

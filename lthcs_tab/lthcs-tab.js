@@ -43,7 +43,21 @@ const STORAGE_KEYS = {
   starred: 'lthcs.starred',
   lastFilter: 'lthcs.lastFilter',
   lastSnapshotDate: 'lthcs.lastSnapshotDate',
+  sortMode: 'lthcs.sortMode',
 };
+
+// Phase 2 UX: sort modes for the card grid. Default is `score-desc` —
+// the most useful default for a confidence-score table. Persisted in
+// localStorage so a user who prefers ticker A-Z stays put across reloads.
+const SORT_MODES = [
+  'score-desc',
+  'score-asc',
+  'trend-desc',
+  'trend-asc',
+  'ticker-asc',
+  'ticker-desc',
+];
+const DEFAULT_SORT_MODE = 'score-desc';
 
 // Map the snapshot's `band` strings to the UI's chip/stat short-names.
 // The HTML uses `high` as the chip/stat key; the snapshot emits `high_confidence`.
@@ -134,6 +148,7 @@ const state = {
   },
   searchQuery: '',
   starred: [],           // Week 9 stub — persisted but not surfaced yet
+  sortMode: DEFAULT_SORT_MODE,  // Phase 2 UX: sort key for the card grid
 };
 
 // Variant C: human-readable display labels for the three drill-down
@@ -458,7 +473,7 @@ function enrichScores(snapshot, universeByTicker) {
 function applyFilters() {
   const q = state.searchQuery.trim().toLowerCase();
   const { index, band, drift } = state.activeFilters;
-  return state.enriched.filter((row) => {
+  const filtered = state.enriched.filter((row) => {
     // Variant C: `index` always narrows to a single index (sp-100 / djia
     // / nasdaq-100). The legacy `all` value is still tolerated so any
     // persisted state from before this change degrades gracefully.
@@ -472,6 +487,55 @@ function applyFilters() {
     }
     return true;
   });
+  return sortRows(filtered, state.sortMode);
+}
+
+// Phase 2 UX: sort the filtered card list. Returns a new array so the
+// pre-sort filter result stays untouched. Unknown modes fall back to
+// `score-desc`. Trend sorts treat "unknown" as the lowest (worst) value
+// for desc and the highest (best) for asc — so they always cluster at
+// the bottom of the list regardless of direction.
+function sortRows(rows, mode) {
+  const m = SORT_MODES.includes(mode) ? mode : DEFAULT_SORT_MODE;
+  const arr = rows.slice();
+  const tickerCmp = (a, b) => (a.ticker || '').localeCompare(b.ticker || '');
+  const scoreOf = (r) => Number.isFinite(Number(r.score)) ? Number(r.score) : -Infinity;
+  const trendOf = (r) => {
+    const t = state.trendByTicker[r.ticker];
+    if (!t || t.direction === 'unknown' || !Number.isFinite(Number(t.delta))) {
+      return null;
+    }
+    return Number(t.delta);
+  };
+
+  if (m === 'score-desc') {
+    arr.sort((a, b) => scoreOf(b) - scoreOf(a) || tickerCmp(a, b));
+  } else if (m === 'score-asc') {
+    arr.sort((a, b) => scoreOf(a) - scoreOf(b) || tickerCmp(a, b));
+  } else if (m === 'trend-desc') {
+    arr.sort((a, b) => {
+      const ta = trendOf(a);
+      const tb = trendOf(b);
+      if (ta == null && tb == null) return tickerCmp(a, b);
+      if (ta == null) return 1;   // unknowns sink
+      if (tb == null) return -1;
+      return tb - ta || tickerCmp(a, b);
+    });
+  } else if (m === 'trend-asc') {
+    arr.sort((a, b) => {
+      const ta = trendOf(a);
+      const tb = trendOf(b);
+      if (ta == null && tb == null) return tickerCmp(a, b);
+      if (ta == null) return 1;
+      if (tb == null) return -1;
+      return ta - tb || tickerCmp(a, b);
+    });
+  } else if (m === 'ticker-asc') {
+    arr.sort(tickerCmp);
+  } else if (m === 'ticker-desc') {
+    arr.sort((a, b) => tickerCmp(b, a));
+  }
+  return arr;
 }
 
 // Variant C: rows belonging to the currently-selected drill-down index.
@@ -605,12 +669,58 @@ function renderCards(filtered) {
   if (!filtered.length) {
     grid.innerHTML = '';
     hide(grid);
-    show($('#lthcs-empty'));
+    const emptyEl = $('#lthcs-empty');
+    const subEl = $('#lthcs-empty-sub');
+    if (subEl) subEl.textContent = describeEmptyState();
+    show(emptyEl);
     return;
   }
   hide($('#lthcs-empty'));
   show(grid);
   grid.innerHTML = filtered.map(cardHTML).join('');
+}
+
+// Phase 2 UX: build a friendly description of WHY no rows matched, so the
+// user can act. e.g. "Filters: S&P 100 · Elite · Search 'xyz'". Falls back
+// to a generic string if everything is at default.
+function describeEmptyState() {
+  const parts = [];
+  const idx = state.activeFilters.index;
+  if (idx && INDEX_DISPLAY[idx]) parts.push(INDEX_DISPLAY[idx]);
+  const band = state.activeFilters.band;
+  if (band && band !== 'all') {
+    const label = (FILTER_VALUE_LABELS.band && FILTER_VALUE_LABELS.band[band]) || band;
+    parts.push(label);
+  }
+  const drift = state.activeFilters.drift;
+  if (drift && drift !== 'all') {
+    const label = (FILTER_VALUE_LABELS.drift && FILTER_VALUE_LABELS.drift[drift]) || drift;
+    parts.push(label);
+  }
+  const q = (state.searchQuery || '').trim();
+  if (q) parts.push(`search "${q}"`);
+  if (!parts.length) return 'Try a different combination of filters.';
+  return `Active: ${parts.join(' · ')}`;
+}
+
+// Phase 2 UX: small "Showing N of M in <Index>" line below the controls.
+// Helps anchor the user when filtering — they can see at a glance whether
+// the filter is doing what they expect without scrolling.
+function updateResultsSummary(filtered) {
+  const el = $('#lthcs-results-summary');
+  if (!el) return;
+  const total = rowsForIndex(state.activeFilters.index).length;
+  const shown = filtered.length;
+  const idxLabel = INDEX_DISPLAY[state.activeFilters.index] || 'all';
+  if (!shown && !total) {
+    el.textContent = '';
+    return;
+  }
+  if (shown === total) {
+    el.textContent = `Showing all ${shown} in ${idxLabel}`;
+  } else {
+    el.textContent = `Showing ${shown} of ${total} in ${idxLabel}`;
+  }
 }
 
 function updateStats(filtered) {
@@ -806,6 +916,7 @@ function renderAll() {
   updateStats(filtered);
   updateApex();
   renderActiveFilters();
+  updateResultsSummary(filtered);
 }
 
 function renderMeta(snapshot) {
@@ -926,6 +1037,13 @@ function restoreFilterState() {
       if (Array.isArray(arr)) state.starred = arr.filter((t) => typeof t === 'string');
     } catch { /* ignore */ }
   }
+
+  // Phase 2 UX: restore the persisted sort mode. Fallback to default for
+  // unknown values so a stale localStorage entry can't break rendering.
+  const rawSort = safeGet(STORAGE_KEYS.sortMode);
+  if (rawSort && SORT_MODES.includes(rawSort)) {
+    state.sortMode = rawSort;
+  }
 }
 
 function persistFilterState() {
@@ -1030,6 +1148,32 @@ function wireRefresh() {
   });
 }
 
+// Phase 2 UX: sort dropdown wiring. The select reflects state.sortMode
+// on mount and on every change persists to localStorage. Re-renders only
+// the card grid + results-summary line (stats are sort-agnostic).
+function wireSort() {
+  const sel = $('#lthcs-sort-select');
+  if (!sel) return;
+  sel.value = state.sortMode || DEFAULT_SORT_MODE;
+  sel.addEventListener('change', (e) => {
+    const v = e.target.value;
+    if (!SORT_MODES.includes(v)) return;
+    state.sortMode = v;
+    safeSet(STORAGE_KEYS.sortMode, v);
+    const filtered = applyFilters();
+    renderCards(filtered);
+    updateResultsSummary(filtered);
+  });
+}
+
+// Phase 2 UX: empty-state "Clear all filters" button. Clears everything
+// except the drill-down index (which has no "all" state per Variant C).
+function wireEmptyClear() {
+  const btn = $('#lthcs-empty-clear');
+  if (!btn) return;
+  btn.addEventListener('click', () => clearFilter('__all__'));
+}
+
 // Delegated click handler for the active-filters breadcrumb.
 // Each clear button carries data-clear-group=<group|'search'|'__all__'>.
 function wireActiveFilters() {
@@ -1048,6 +1192,8 @@ function wireEvents() {
   wireIndexStats();
   wireBandStats();
   wireRefresh();
+  wireSort();
+  wireEmptyClear();
   wireCardClicks();
   wireMoverClicks();
   wireActiveFilters();
@@ -1137,7 +1283,14 @@ function clearError() {
 async function refresh() {
   clearError();
   const btn = $('#lthcs-refresh');
-  if (btn) btn.disabled = true;
+  // Phase 2 UX: show a clear refreshing state so the click is acknowledged
+  // even when the fetch is fast (cached browser). The `is-loading` class
+  // animates the icon; aria-busy keeps screen readers in the loop.
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    btn.setAttribute('aria-busy', 'true');
+  }
   try {
     const [{ snapshot }, universe] = await Promise.all([fetchSnapshot(), fetchUniverse()]);
     state.snapshot = snapshot;
@@ -1166,7 +1319,11 @@ async function refresh() {
       .then((map) => {
         state.trendByTicker = map || {};
         // Re-render only the cards — stats/chips are unaffected by trend.
-        renderCards(applyFilters());
+        // Phase 2 UX: applyFilters re-runs the sort, so trend-sort modes
+        // re-order naturally once the trend map resolves.
+        const filtered = applyFilters();
+        renderCards(filtered);
+        updateResultsSummary(filtered);
         // Tier 4 #18: paint the movers strip once trends are known. The
         // strip reads state.trendByTicker directly, so we wait until it's
         // populated before showing anything (the section starts hidden).
@@ -1175,7 +1332,11 @@ async function refresh() {
       })
       .catch((err) => console.warn('LTHCS: trend map load failed', err));
   } finally {
-    if (btn) btn.disabled = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+      btn.removeAttribute('aria-busy');
+    }
   }
 }
 
