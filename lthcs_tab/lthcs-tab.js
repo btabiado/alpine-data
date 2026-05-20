@@ -679,6 +679,10 @@ function cardHTML(row) {
       `</div>` +
       `<button type="button" class="lthcs-card-band" data-band-filter="${band}" aria-label="${bandFilterAria}">${bandLabel}</button>` +
       `<div class="lthcs-card-driver">${driverLine}</div>` +
+      // Phase 4: Add-to-compare button. Tiny + bubble at the top-right of the
+      // card. Click-handler is owned by lthcs-compare.js via a delegated body
+      // listener (data-compare-add) so we don't have to wire each card.
+      `<button type="button" class="lthcs-card-compare-add" data-compare-add="${ticker}" aria-label="Add ${ticker} to compare" title="Add to compare">+</button>` +
     `</div>`
   );
 }
@@ -1256,6 +1260,13 @@ function wireCardClicks() {
   const container = $('#lthcs-cards');
   if (!container) return;
   container.addEventListener('click', (e) => {
+    // Phase 4: +Compare button. The compare module owns the click handler
+    // via its own document-level listener; we just need to NOT also open
+    // the detail modal when the button is clicked.
+    if (e.target.closest('[data-compare-add]')) {
+      e.stopPropagation();
+      return;
+    }
     // Band badge: clicking it filters to that band instead of opening
     // the detail modal. Toggle behaviour matches the band tiles above —
     // a second click on the active band clears the filter.

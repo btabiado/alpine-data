@@ -1,0 +1,580 @@
+/* lthcs-compare.css
+ * Phase 4 — Side-by-side ticker comparison (2-4 tickers).
+ *
+ * Three pieces:
+ *   1. .lthcs-card-compare-add — small "+" button placed on each card
+ *   2. .lthcs-compare-tray — fixed bottom strip listing selected tickers
+ *   3. .lthcs-compare-modal-* — wider modal with N columns
+ *
+ * Mirrors the visual language of lthcs-detail.css (--surface-*, --text-*,
+ * band colors via var()) so the compare view feels like a sibling of the
+ * detail modal rather than a separate UI.
+ */
+
+/* ---------- 1) +Compare button on the ticker card ---------- */
+
+.lthcs-card {
+  position: relative;
+}
+
+.lthcs-card-compare-add {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.15));
+  background: var(--surface-muted, rgba(255, 255, 255, 0.06));
+  color: var(--text-secondary, #B8C0CC);
+  font-size: 16px;
+  line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
+  z-index: 1;
+}
+
+.lthcs-card-compare-add:hover,
+.lthcs-card-compare-add:focus-visible {
+  background: var(--accent-bright, #4A8F5F);
+  color: #0a0a0a;
+  outline: none;
+  transform: scale(1.08);
+}
+
+.lthcs-card-compare-add:active {
+  transform: scale(0.96);
+}
+
+/* ---------- 2) Compare tray (fixed bottom strip) ---------- */
+
+.lthcs-compare-tray {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 95; /* below detail modal (which is 100+) */
+  background: var(--surface-elevated, rgba(20, 22, 26, 0.96));
+  border-top: 1px solid var(--border-soft, rgba(255, 255, 255, 0.1));
+  box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 10px 16px;
+  transition: padding 160ms ease, opacity 160ms ease;
+}
+
+.lthcs-compare-tray.hidden { display: none; }
+
+.lthcs-compare-tray-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1400px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.lthcs-compare-tray-label {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #B8C0CC);
+  font-weight: 600;
+}
+
+.lthcs-compare-tray-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.lthcs-compare-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 12px;
+  background: var(--surface-muted, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.12));
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #E8EAED);
+}
+
+.lthcs-compare-chip-ticker {
+  letter-spacing: 0.04em;
+}
+
+.lthcs-compare-chip-remove {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary, #6B7280);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lthcs-compare-chip-remove:hover,
+.lthcs-compare-chip-remove:focus-visible {
+  background: var(--surface-elevated, rgba(255, 255, 255, 0.08));
+  color: #ECB1A0;
+  outline: none;
+}
+
+/* Duplicate-add flash — chip pulses red briefly. */
+@keyframes lthcs-compare-chip-flash-kf {
+  0%   { box-shadow: 0 0 0 0 rgba(226, 109, 92, 0.55); background-color: rgba(226, 109, 92, 0.18); }
+  60%  { box-shadow: 0 0 0 8px rgba(226, 109, 92, 0); background-color: rgba(226, 109, 92, 0.10); }
+  100% { box-shadow: 0 0 0 0 rgba(226, 109, 92, 0); background-color: var(--surface-muted, rgba(255, 255, 255, 0.08)); }
+}
+.lthcs-compare-chip-flash {
+  animation: lthcs-compare-chip-flash-kf 600ms ease-out 1;
+  border-color: #E26D5C;
+}
+
+/* Tray-full flash */
+@keyframes lthcs-compare-tray-flash-kf {
+  0%   { box-shadow: 0 -4px 18px rgba(226, 109, 92, 0.55); }
+  100% { box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.35); }
+}
+.lthcs-compare-tray-flash {
+  animation: lthcs-compare-tray-flash-kf 600ms ease-out 1;
+}
+
+.lthcs-compare-tray-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.lthcs-compare-tray-btn {
+  border-radius: 6px;
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.18));
+  background: var(--surface-muted, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary, #E8EAED);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+.lthcs-compare-tray-btn:hover,
+.lthcs-compare-tray-btn:focus-visible {
+  background: var(--surface-elevated, rgba(255, 255, 255, 0.1));
+  outline: none;
+}
+.lthcs-compare-tray-btn[disabled],
+.lthcs-compare-tray-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.lthcs-compare-tray-btn-primary {
+  background: var(--band-high, #4A8F5F);
+  border-color: var(--band-high, #4A8F5F);
+  color: #0a0a0a;
+}
+.lthcs-compare-tray-btn-primary:hover,
+.lthcs-compare-tray-btn-primary:focus-visible {
+  background: var(--band-high-bright, #6CB37F);
+  color: #0a0a0a;
+}
+.lthcs-compare-tray-btn-primary:disabled,
+.lthcs-compare-tray-btn-primary[disabled] {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.05));
+  color: var(--text-tertiary, #6B7280);
+  border-color: var(--border-soft, rgba(255, 255, 255, 0.18));
+}
+
+.lthcs-compare-tray-btn-collapse {
+  width: 32px;
+  padding: 4px 0;
+}
+
+/* Collapsed tray: hide the chips row, keep the label + actions one-line. */
+.lthcs-compare-tray.is-collapsed .lthcs-compare-tray-chips {
+  display: none;
+}
+.lthcs-compare-tray.is-collapsed {
+  padding: 6px 16px;
+}
+.lthcs-compare-tray.is-collapsed::before {
+  /* Re-surface the count when chips are hidden. */
+  content: attr(data-count);
+}
+
+/* ---------- 3) Compare modal ---------- */
+
+.lthcs-compare-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 110; /* above tray (95), above detail (100) so opening from a card
+                   that's behind the detail modal still works cleanly */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lthcs-compare-modal-root.hidden { display: none; }
+
+.lthcs-compare-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.lthcs-compare-modal-panel {
+  position: relative;
+  background: var(--surface-elevated, #14171c);
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  width: min(96vw, 1280px);
+  max-height: 92vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  padding: 20px 22px 24px;
+  outline: none;
+}
+
+.lthcs-compare-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.lthcs-compare-modal-title {
+  font-size: 18px;
+  margin: 0 0 4px;
+  color: var(--text-primary, #E8EAED);
+  letter-spacing: 0.02em;
+}
+
+.lthcs-compare-modal-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary, #B8C0CC);
+}
+
+.lthcs-compare-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.18));
+  background: transparent;
+  color: var(--text-secondary, #B8C0CC);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.lthcs-compare-modal-close:hover,
+.lthcs-compare-modal-close:focus-visible {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #E8EAED);
+  outline: none;
+}
+
+/* Column grid — N columns at >900px; on phones cap at 2.
+ * data-cols ranges 2..4. Use auto-fit + minmax for clean responsive behaviour
+ * AND an explicit data-cols-driven template at desktop widths. */
+.lthcs-compare-modal-body {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.lthcs-compare-modal-body[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.lthcs-compare-modal-body[data-cols="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.lthcs-compare-modal-body[data-cols="4"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 720px) {
+  /* Mobile cap: 2 columns max regardless of how many are selected.
+   * 3-4 selected → rows wrap to 2-up grid (1-2 visible at once, scroll down
+   * for the rest). Matches the brief's "Cap at 2 columns mobile". */
+  .lthcs-compare-modal-body,
+  .lthcs-compare-modal-body[data-cols="2"],
+  .lthcs-compare-modal-body[data-cols="3"],
+  .lthcs-compare-modal-body[data-cols="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .lthcs-compare-modal-panel { padding: 14px; }
+}
+
+.lthcs-compare-col {
+  background: var(--surface-muted, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.lthcs-compare-col-loading,
+.lthcs-compare-col-missing {
+  padding: 16px 8px;
+  font-size: 12px;
+  color: var(--text-tertiary, #6B7280);
+  text-align: center;
+}
+
+.lthcs-compare-error {
+  grid-column: 1 / -1;
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #ECB1A0;
+}
+
+/* --- Column header --- */
+.lthcs-compare-col-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+.lthcs-compare-col-name-wrap {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.lthcs-compare-col-ticker {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-primary, #E8EAED);
+}
+.lthcs-compare-col-company {
+  font-size: 11px;
+  color: var(--text-secondary, #B8C0CC);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.lthcs-compare-col-ctrls {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.lthcs-compare-col-ctrl {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--border-soft, rgba(255, 255, 255, 0.12));
+  background: transparent;
+  color: var(--text-secondary, #B8C0CC);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lthcs-compare-col-ctrl:hover,
+.lthcs-compare-col-ctrl:focus-visible {
+  background: var(--surface-elevated, rgba(255, 255, 255, 0.08));
+  color: var(--text-primary, #E8EAED);
+  outline: none;
+}
+.lthcs-compare-col-ctrl:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.lthcs-compare-col-ctrl-remove:hover,
+.lthcs-compare-col-ctrl-remove:focus-visible {
+  background: rgba(226, 109, 92, 0.18);
+  color: #ECB1A0;
+  border-color: #E26D5C;
+}
+
+/* --- Score + band hero --- */
+.lthcs-compare-col-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.lthcs-compare-col-score {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.lthcs-compare-col-band {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #fff;
+  font-weight: 700;
+}
+.lthcs-compare-col-band[data-band="elite"]        { background: var(--band-elite, #1F3A5F); }
+.lthcs-compare-col-band[data-band="high"],
+.lthcs-compare-col-band[data-band="high_confidence"] { background: var(--band-high, #4A8F5F); }
+.lthcs-compare-col-band[data-band="constructive"] { background: var(--band-constructive, #C9A227); }
+.lthcs-compare-col-band[data-band="monitor"]      { background: var(--band-monitor, #D89148); }
+.lthcs-compare-col-band[data-band="weakening"]    { background: var(--band-weakening, #B85A3E); }
+.lthcs-compare-col-band[data-band="review"]       { background: var(--band-review, #7A2E1F); }
+
+/* --- Sparkline --- */
+.lthcs-compare-col-spark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60px;
+  padding: 2px 0;
+  color: var(--text-tertiary, #6B7280);
+}
+.lthcs-compare-col-spark svg {
+  width: 100%;
+  height: 60px;
+  display: block;
+}
+.lthcs-compare-spark-loading,
+.lthcs-compare-spark-empty {
+  font-size: 11px;
+  color: var(--text-tertiary, #6B7280);
+}
+
+/* --- Pillar bars --- */
+.lthcs-compare-col-pillars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-soft, rgba(255, 255, 255, 0.06));
+}
+.lthcs-compare-pillar-row {
+  display: grid;
+  grid-template-columns: 70px 1fr 36px;
+  gap: 6px;
+  align-items: center;
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.lthcs-compare-pillar-label {
+  color: var(--text-secondary, #B8C0CC);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lthcs-compare-pillar-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-elevated, rgba(255, 255, 255, 0.06));
+  overflow: hidden;
+}
+.lthcs-compare-pillar-fill {
+  height: 100%;
+  background: var(--text-secondary, #B8C0CC);
+  transition: width 200ms ease;
+}
+.lthcs-compare-pillar-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #E8EAED);
+  font-weight: 600;
+}
+
+/* Diff accent — pillar bar whose value differs by >10pts from any other
+ * ticker in the compare set. Subtle stripe + brighter row background. */
+.lthcs-compare-pillar-row.is-accent {
+  background: rgba(246, 173, 85, 0.12);
+  box-shadow: inset 2px 0 0 0 #F6AD55;
+}
+.lthcs-compare-pillar-row.is-accent .lthcs-compare-pillar-label {
+  color: #F6AD55;
+}
+
+/* --- Drift table --- */
+.lthcs-compare-col-drift {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-soft, rgba(255, 255, 255, 0.06));
+}
+.lthcs-compare-drift-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 0;
+}
+.lthcs-compare-drift-label {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, #6B7280);
+}
+.lthcs-compare-drift-val {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary, #E8EAED);
+}
+.lthcs-compare-drift-val[data-direction="improving"] { color: var(--drift-improving, #4A8F5F); }
+.lthcs-compare-drift-val[data-direction="declining"] { color: var(--drift-declining, #E26D5C); }
+
+/* --- Thesis call line --- */
+.lthcs-compare-col-thesis {
+  font-size: 11px;
+  color: var(--text-secondary, #B8C0CC);
+  line-height: 1.4;
+  padding: 6px 4px 2px;
+  border-top: 1px solid var(--border-soft, rgba(255, 255, 255, 0.06));
+}
+
+/* --- Per-column data-quality flags --- */
+.lthcs-compare-col-flags {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-soft, rgba(255, 255, 255, 0.06));
+}
+.lthcs-compare-col-flags-label {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, #6B7280);
+}
+.lthcs-compare-col-flag-chip {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background: rgba(226, 109, 92, 0.16);
+  color: #ECB1A0;
+  border: 1px solid rgba(226, 109, 92, 0.35);
+}
+
+/* Reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .lthcs-compare-chip-flash,
+  .lthcs-compare-tray-flash {
+    animation: none;
+  }
+  .lthcs-compare-pillar-fill {
+    transition: none;
+  }
+}

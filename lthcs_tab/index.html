@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="./lthcs-detail.css" />
     <!-- Week 10 (about modal) stylesheet -->
     <link rel="stylesheet" href="./lthcs-about.css" />
+    <!-- Phase 4 (side-by-side ticker comparison) stylesheet -->
+    <link rel="stylesheet" href="./lthcs-compare.css" />
   </head>
   <body>
     <header class="lthcs-header" role="banner">
@@ -285,5 +287,14 @@
 
     <!-- Phase 4: Watchlist Manage modal root — populated by lthcs-watchlists.js -->
     <div id="lthcs-watchlist-modal" class="lthcs-modal-root lthcs-watchlist-modal hidden" role="dialog" aria-modal="true" aria-label="Manage watchlists" aria-hidden="true"></div>
+
+    <!-- Phase 4: side-by-side ticker comparison.
+         The tray sits fixed at the bottom of the page once the user adds 1+
+         tickers. The modal root is populated by lthcs-compare.js when the
+         user clicks "Compare". Lives outside the detail modal so the two
+         can coexist (e.g. open detail from inside compare). -->
+    <div id="lthcs-compare-tray" class="lthcs-compare-tray hidden" role="region" aria-label="Compare tray" aria-live="polite"></div>
+    <div id="lthcs-compare-modal-root" class="lthcs-compare-modal-root hidden" role="dialog" aria-modal="true" aria-hidden="true"></div>
+    <script type="module" src="./lthcs-compare.js"></script>
   </body>
 </html>
