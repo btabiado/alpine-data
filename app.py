@@ -2088,18 +2088,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          Row 3: Gainers / Decliners as colored ticker boxes (Crypto-card model). -->
   <div id="tab-lthcs" class="hidden">
     <div class="container">
-      <!-- Top CTA — mirrors the "Open full LTHCS dashboard →" link at the
-           bottom so users don't have to scroll to find the deep-link. -->
-      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-        <a class="btn" href="lthcs/" target="_blank" rel="noopener"
-           style="display:inline-flex;align-items:center;gap:4px;background:#a78bfa;color:#0b0d12;font-weight:700;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;white-space:nowrap">
-          Open full LTHCS dashboard &rarr;
-        </a>
-      </div>
       <!-- Composite-index panel — narrative card (Step 1 verdict + Step 2
            components grid + movers). Promoted to the top of the LTHCS tab
            per user feedback so the daily read leads, not the insights row.
-           Filled by renderLthcsNarrativePanel(host). -->
+           Filled by renderLthcsNarrativePanel(host); the "Open full LTHCS
+           dashboard →" CTA is tucked into the card head's top-right corner
+           rather than living in a standalone row above (saves vertical
+           space). -->
       <div class="chart-card" id="lthcsCompositeCard" style="position:relative;margin-bottom:10px"></div>
       <!-- Insights row — dynamic 3-5 LTHCS insights with a corner CTA.
            Moved below the composite card per user request — the insights
@@ -4318,12 +4313,22 @@ function renderLthcsNarrativePanel(host){
   // ---- Existing V1 features preserved: movers row + dashboard CTA
   const moversRow = renderLthcsMoversRow(L.movers || {});
 
+  // Small top-right CTA chip — mirrors the bottom dashboard link so users
+  // can deep-link from the head without scrolling. Smaller than a standalone
+  // button row above the card (which ate ~40px of vertical space).
+  const headerCta = '<a href="lthcs/" target="_blank" rel="noopener" ' +
+    'style="display:inline-flex;align-items:center;gap:3px;color:#a78bfa;' +
+    'text-decoration:none;font-weight:600;font-size:11px;white-space:nowrap;' +
+    'padding:3px 8px;border:1px solid #a78bfa;border-radius:999px;' +
+    'background:rgba(167,139,250,0.08)">Open full LTHCS &rarr;</a>';
+
   host.innerHTML = `
-    <div class="head" style="align-items:flex-start">
+    <div class="head" style="align-items:flex-start;justify-content:space-between">
       <div>
         <h2 style="font-size:15px">📊 LTHCS Composite Index</h2>
         <div class="desc">Where is the long-term-hold market? · as of ${escapeHtml(asOf)}</div>
       </div>
+      <div style="flex-shrink:0">${headerCta}</div>
     </div>
 
     <!-- STEP 1: The big picture -->
