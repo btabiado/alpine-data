@@ -269,7 +269,195 @@
   background: var(--bg-card);
 }
 
+/* ----- Cross-page header nav ------------------------------------------- */
+/* Sits in the header meta column alongside the "Card view" back-link so users
+   can hop between index.html (pipeline health), pipeline.html (cron freshness)
+   and quality.html (monthly audit). */
+.lhealth-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.lhealth-nav-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.lhealth-nav-link:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-card-hover);
+}
+.lhealth-nav-link[aria-current="page"] {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  background: var(--bg-chip-active);
+}
+
+/* ----- Pipeline freshness (pipeline.html) ----------------------------- */
+/* Each cron is one row: name + last-output date + age + status + action link.
+   The freshness rows have to read well on a phone, so we collapse the 5-col
+   grid to a vertical stack at <600px (see media query below). */
+.lhealth-cron-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+.lhealth-cron-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.4fr) minmax(120px, 1fr) minmax(100px, 0.8fr) 80px auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.lhealth-cron-row[data-status="ok"] { border-left: 3px solid var(--band-high-bright); }
+.lhealth-cron-row[data-status="warn"] { border-left: 3px solid var(--band-monitor-bright); }
+.lhealth-cron-row[data-status="fail"] { border-left: 3px solid var(--band-review-bright); }
+.lhealth-cron-row[data-status="muted"] { border-left: 3px solid var(--border-subtle); }
+
+.lhealth-cron-name {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lhealth-cron-sched {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.lhealth-cron-last {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.lhealth-cron-age {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.lhealth-cron-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: rgba(var(--band-high-rgb), 0.18);
+  color: var(--band-high-bright);
+}
+.lhealth-cron-badge[data-status="warn"] {
+  background: rgba(var(--band-monitor-rgb), 0.20);
+  color: var(--band-monitor-bright);
+}
+.lhealth-cron-badge[data-status="fail"] {
+  background: rgba(var(--band-review-rgb), 0.25);
+  color: var(--band-review-bright);
+}
+.lhealth-cron-badge[data-status="muted"] {
+  background: var(--bg-chip);
+  color: var(--text-tertiary);
+}
+.lhealth-cron-link {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.lhealth-cron-link:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+/* Per-cron thresholds key */
+.lhealth-cron-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 10px;
+}
+.lhealth-cron-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+.lhealth-cron-legend-dot[data-status="ok"] { background: var(--band-high-bright); }
+.lhealth-cron-legend-dot[data-status="warn"] { background: var(--band-monitor-bright); }
+.lhealth-cron-legend-dot[data-status="fail"] { background: var(--band-review-bright); }
+
+/* Summary tiles (count of healthy/warning/failing crons). */
+.lhealth-cron-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.lhealth-cron-tile {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+.lhealth-cron-tile-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lhealth-cron-tile-value {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.lhealth-cron-tile[data-status="ok"] .lhealth-cron-tile-value { color: var(--band-high-bright); }
+.lhealth-cron-tile[data-status="warn"] .lhealth-cron-tile-value { color: var(--band-monitor-bright); }
+.lhealth-cron-tile[data-status="fail"] .lhealth-cron-tile-value { color: var(--band-review-bright); }
+
 /* ----- Mobile ---------------------------------------------------------- */
+@media (max-width: 600px) {
+  .lhealth-nav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 4px;
+  }
+  .lhealth-cron-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "name badge"
+      "last last"
+      "age age"
+      "link link";
+    row-gap: 4px;
+  }
+  .lhealth-cron-name { grid-area: name; }
+  .lhealth-cron-badge { grid-area: badge; justify-self: end; }
+  .lhealth-cron-last { grid-area: last; }
+  .lhealth-cron-age { grid-area: age; }
+  .lhealth-cron-link { grid-area: link; }
+}
+
 @media (max-width: 600px) {
   .lhealth-kv-row {
     grid-template-columns: 1fr;

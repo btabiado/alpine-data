@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Pipeline Freshness</title>
+    <!--
+      Cron-by-cron observability for the LTHCS pipeline. Each row shows
+      "is this scheduled workflow actually producing output recently?"
+      Driven entirely by static JSON under ../data/lthcs/ (no GitHub API
+      calls), so the page stays fast and CORS-free on GitHub Pages.
+
+      Reuses the same design tokens as index.html (pipeline health) and
+      quality.html (monthly audit) — see ../lthcs_tab/lthcs.css.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-health.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Pipeline Freshness</h1>
+          <p class="lthcs-subtitle">Per-cron output age &middot; "is the scheduled workflow actually running?" &middot; auto-refresh 1h</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Checked at</span>
+            <span id="freshness-asof" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <nav class="lhealth-nav" aria-label="Health pages">
+            <a href="./" class="lhealth-nav-link" aria-label="Pipeline health overview">Health</a>
+            <a href="./pipeline.html" class="lhealth-nav-link" aria-current="page" aria-label="Pipeline freshness (current page)">Pipeline</a>
+            <a href="./quality.html" class="lhealth-nav-link" aria-label="Monthly quality audit">Quality</a>
+            <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+              <span aria-hidden="true">&larr;</span>
+              <span class="lthcs-refresh-label">Card view</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lhealth-main">
+      <section id="freshness-loading" class="lthcs-section lhealth-loading">Loading cron freshness&hellip;</section>
+      <section id="freshness-error" class="lthcs-section lhealth-error hidden" role="alert"></section>
+
+      <div id="freshness-content" class="hidden">
+
+        <!-- ===== Top-line summary tiles ================================= -->
+        <section class="lthcs-section lhealth-section" aria-label="Cron summary">
+          <h2 class="lhealth-h2">Summary <span class="lhealth-h2-sub">(across all scheduled workflows)</span></h2>
+          <div id="cron-summary" class="lhealth-cron-summary"></div>
+        </section>
+
+        <!-- ===== Per-cron freshness rows ================================ -->
+        <section class="lthcs-section lhealth-section" aria-label="Cron freshness rows">
+          <h2 class="lhealth-h2">Per-cron freshness</h2>
+          <p class="lhealth-note">
+            Each row's status is computed against the cron's own cadence
+            (daily = green &lt;24h, yellow 24&ndash;48h, red &gt;48h; weekly = green &lt;8d,
+            yellow 8&ndash;15d, red &gt;15d; monthly = green &lt;35d, yellow 35&ndash;50d,
+            red &gt;50d; hourly = green &lt;2h, yellow 2&ndash;6h, red &gt;6h). Links
+            go to the GitHub Actions workflow file on <code>main</code>.
+          </p>
+          <div id="cron-list" class="lhealth-cron-list"></div>
+          <div class="lhealth-cron-legend" aria-label="Status legend">
+            <span><span class="lhealth-cron-legend-dot" data-status="ok"></span>Fresh</span>
+            <span><span class="lhealth-cron-legend-dot" data-status="warn"></span>Late</span>
+            <span><span class="lhealth-cron-legend-dot" data-status="fail"></span>Stale &mdash; investigate</span>
+          </div>
+        </section>
+
+        <!-- ===== Deploy / commit context ================================ -->
+        <section class="lthcs-section lhealth-section" aria-label="Deploy context">
+          <h2 class="lhealth-h2">Deploy &amp; commit context</h2>
+          <dl class="lhealth-kv">
+            <div class="lhealth-kv-row">
+              <dt>pages.yml redeploy</dt>
+              <dd id="deploy-pages">Not directly observable from static page &mdash; <a href="https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/pages.yml" target="_blank" rel="noopener" class="lthcs-footer-link">see Actions</a>.</dd>
+            </div>
+            <div class="lhealth-kv-row">
+              <dt>Snapshot index head</dt>
+              <dd id="deploy-snap-head">&hellip;</dd>
+            </div>
+            <div class="lhealth-kv-row">
+              <dt>Snapshot calendar range</dt>
+              <dd id="deploy-snap-range">&hellip;</dd>
+            </div>
+          </dl>
+        </section>
+
+      </div>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Read-only observability.</strong> This page consumes mtime/date
+        markers from snapshot files under <code>data/lthcs/</code> &mdash; no
+        GitHub API calls. Each row's "last successful output" is the newest
+        file the cron is expected to write; if a cron silently fails its
+        row will go red even though the workflow doesn't (yet) self-report
+        to this dashboard.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-pipeline.js"></script>
+  </body>
+</html>
