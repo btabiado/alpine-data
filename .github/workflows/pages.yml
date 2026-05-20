@@ -300,6 +300,19 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the LTHCS "how to read" help page under /lthcs/help/.
+          # Source lives at lthcs_help/ and reuses ../lthcs_tab/lthcs.css
+          # for design tokens. It has no data dependency — it's a pure
+          # static explainer — but we still mirror lthcs_tab/ one level
+          # above /lthcs/help/ so the ../lthcs_tab/lthcs.css reference
+          # resolves (idempotent with the health/backtest/crypto/position/
+          # public branches above). V1-only — does NOT stage under /v2/.
+          if [ -f lthcs_help/index.html ]; then
+            mkdir -p _site/lthcs/help
+            cp -R lthcs_help/* _site/lthcs/help/
+            mkdir -p _site/lthcs/lthcs_tab
+            cp -R lthcs_tab/* _site/lthcs/lthcs_tab/ 2>/dev/null || true
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
