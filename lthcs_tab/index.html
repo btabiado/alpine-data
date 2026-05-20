@@ -110,6 +110,18 @@
     </header>
 
     <main class="lthcs-main">
+      <!-- Quick-jump CTA — skip past the aggregate (composite index, regime,
+           movers, apex, summary tiles) and land on the per-ticker scores
+           grid. Added per user feedback: "I would rather jump to see the
+           stocks." Uses smooth scroll to #lthcs-stocks. -->
+      <div class="lthcs-jump-row" style="display:flex;justify-content:flex-end;margin:0 0 8px 0">
+        <a href="#lthcs-stocks" class="lthcs-jump-to-stocks"
+           onclick="event.preventDefault();var t=document.getElementById('lthcs-stocks');if(t){t.scrollIntoView({behavior:'smooth',block:'start'});}"
+           style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:var(--band-elite-bright,#4D7AB5);color:#fff;border-radius:999px;font-size:13px;font-weight:700;text-decoration:none">
+          <span>Jump to stocks</span><span aria-hidden="true">&darr;</span>
+        </a>
+      </div>
+
       <!-- Phase 5 #2: "What's New since your last visit" panel. Painted by
            lthcs-whatsnew.js once the snapshot enrichment runs and only when
            band changes vs. the last-visit baseline are detected. -->
@@ -293,7 +305,7 @@
         <div class="lthcs-results-summary" id="lthcs-results-summary" aria-live="polite"></div>
       </section>
 
-      <section class="lthcs-section lthcs-results" aria-label="Scores">
+      <section id="lthcs-stocks" class="lthcs-section lthcs-results" aria-label="Scores" style="scroll-margin-top:16px">
         <div id="lthcs-loading" class="lthcs-loading">
           <span class="lthcs-loading-spinner" aria-hidden="true"></span>
           <span>Loading scores&hellip;</span>
