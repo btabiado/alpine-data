@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LTHCS — The Verdict (Revamp A mockup)</title>
+  <!--
+    Revamp A — "Inverted Pyramid / Verdict-first".
+    Self-contained mockup (no external CSS). Tokens mirrored inline from
+    lthcs_tab/lthcs.css so this file can be opened standalone.
+    All numbers below are real, hardcoded from
+    data/lthcs/index/2026-05-20.json and data/lthcs/snapshots/2026-05-20.json
+    plus the prior-period index files (2026-05-18, 2026-05-13, 2026-04-20).
+  -->
+  <style>
+    /* ---- Tokens (copied from lthcs_tab/lthcs.css) ------------------------ */
+    :root {
+      --band-elite-bright: #4D7AB5;
+      --band-high-bright: #6FD18C;
+      --band-constructive-bright: #E9C04A;
+      --band-monitor-bright: #F0A861;
+      --band-weakening-bright: #E27A5C;
+      --band-review-bright: #C25640;
+
+      --bg-page: #0E1216;
+      --bg-elevated: #131820;
+      --bg-card: #171C22;
+      --bg-rule: #232932;
+
+      --text-primary: #E6E9EE;
+      --text-secondary: #9CA3AF;
+      --text-tertiary: #6B7280;
+
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-serif: "Charter", "Iowan Old Style", "Source Serif Pro", "Apple Garamond", Georgia, "Times New Roman", serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+      /* Today's headline tone. Score is -26 → "monitor" band. */
+      --tone: var(--band-monitor-bright);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; }
+
+    /* ---- Page shell ----------------------------------------------------- */
+    .page {
+      max-width: 760px;             /* a column, like a newspaper */
+      margin: 0 auto;
+      padding: 28px 24px 96px;
+    }
+
+    /* Dateline / masthead. Quiet, NYT-style. */
+    .masthead {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--bg-rule);
+      margin-bottom: 28px;
+    }
+    .masthead .brand {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.02em;
+    }
+    .masthead .brand .dot {
+      display: inline-block;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--tone);
+      margin-right: 8px;
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 2px rgba(240, 168, 97, 0.18);
+    }
+    .masthead .dateline {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    /* Eyebrow above the headline — "the lede" label */
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--tone);
+      margin-bottom: 14px;
+    }
+
+    /* THE LEDE — the one sentence everyone reads. */
+    h1.lede {
+      font-family: var(--font-serif);
+      font-weight: 700;
+      font-size: 40px;
+      line-height: 1.12;
+      letter-spacing: -0.012em;
+      margin: 0 0 24px;
+      color: var(--text-primary);
+    }
+    h1.lede .verdict {
+      color: var(--tone);
+    }
+
+    /* Standfirst — the supporting paragraph beneath the lede. */
+    .standfirst {
+      font-family: var(--font-serif);
+      font-size: 19px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      margin: 0 0 28px;
+      max-width: 640px;
+    }
+    .standfirst .num {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+    .standfirst .num-pos { color: var(--band-high-bright); }
+    .standfirst .num-neg { color: var(--band-weakening-bright); }
+
+    /* The "easy button" — single clear action under the lede. */
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 0 0 36px;
+    }
+    .cta {
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--bg-rule);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 120ms, border-color 120ms;
+    }
+    .cta:hover { background: #1c232c; border-color: #2e3640; }
+    .cta-primary {
+      background: var(--tone);
+      color: #1A130A;
+      border-color: var(--tone);
+    }
+    .cta-primary:hover {
+      background: #f6b779;
+      border-color: #f6b779;
+    }
+    .cta .arrow {
+      display: inline-block;
+      margin-left: 6px;
+      transform: translateY(-1px);
+    }
+
+    /* Section heading: serif small caps, like a newspaper subhead. */
+    h2.subhead {
+      font-family: var(--font-serif);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--bg-rule);
+      padding-top: 22px;
+      margin: 48px 0 14px;
+    }
+
+    /* "What the number means" — the second paragraph, plainer. */
+    p.body {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      line-height: 1.65;
+      color: var(--text-primary);
+      margin: 0 0 18px;
+      max-width: 640px;
+    }
+    p.body em {
+      color: var(--text-secondary);
+      font-style: italic;
+    }
+
+    /* The trajectory line. Tiny inline timeline, no chart library. */
+    .trajectory {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 0;
+      margin: 22px 0 28px;
+      border-top: 1px solid var(--bg-rule);
+      border-bottom: 1px solid var(--bg-rule);
+    }
+    .trajectory .cell {
+      padding: 14px 4px 14px 0;
+      border-right: 1px solid var(--bg-rule);
+    }
+    .trajectory .cell:last-child { border-right: 0; }
+    .trajectory .when {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+    }
+    .trajectory .val {
+      font-family: var(--font-mono);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      color: var(--text-primary);
+    }
+    .trajectory .val.today { color: var(--tone); }
+    .trajectory .label {
+      font-family: var(--font-serif);
+      font-style: italic;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* "Why" table — components, journalism-style ranked list. */
+    .why-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      border-top: 1px solid var(--bg-rule);
+    }
+    .why-list li {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      align-items: baseline;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--bg-rule);
+    }
+    .why-list .rank {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+    .why-list .name {
+      font-family: var(--font-serif);
+      font-size: 17px;
+      line-height: 1.45;
+      color: var(--text-primary);
+    }
+    .why-list .name small {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 3px;
+      font-style: normal;
+    }
+    .why-list .delta {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      text-align: right;
+      white-space: nowrap;
+    }
+    .why-list .delta.neg { color: var(--band-weakening-bright); }
+    .why-list .delta.pos { color: var(--band-high-bright); }
+    .why-list .delta.flat { color: var(--text-tertiary); }
+    .why-list .delta small {
+      display: block;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--text-tertiary);
+      margin-top: 2px;
+    }
+
+    /* Pull-quote: the leader/laggard callout. */
+    .pull {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 22px;
+      margin: 24px 0 8px;
+    }
+    .pull .col {
+      border-top: 2px solid var(--bg-rule);
+      padding-top: 14px;
+    }
+    .pull .col.leaders { border-top-color: var(--band-high-bright); }
+    .pull .col.laggards { border-top-color: var(--band-weakening-bright); }
+    .pull .col h3 {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      margin: 0 0 10px;
+    }
+    .pull .col p {
+      font-family: var(--font-serif);
+      font-size: 15.5px;
+      line-height: 1.55;
+      margin: 0;
+      color: var(--text-primary);
+    }
+    .pull .tk {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .pull .tk.up { color: var(--band-high-bright); }
+    .pull .tk.dn { color: var(--band-weakening-bright); }
+
+    /* Methodology kicker — quiet box at the bottom. */
+    .kicker {
+      margin-top: 40px;
+      padding: 18px 0 0;
+      border-top: 1px solid var(--bg-rule);
+      font-family: var(--font-serif);
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      max-width: 640px;
+    }
+    .kicker strong {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    .kicker a {
+      color: var(--text-primary);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-color: rgba(230, 233, 238, 0.3);
+    }
+    .kicker a:hover { text-decoration-color: var(--tone); }
+
+    /* The disclaimer line — last thing on the page. */
+    .disclaimer {
+      margin-top: 18px;
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      letter-spacing: 0.04em;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+    }
+
+    /* Anchor for "skip to detail" — used by the easy button. */
+    #the-detail { scroll-margin-top: 24px; }
+
+    /* ---- Mobile --------------------------------------------------------- */
+    @media (max-width: 600px) {
+      .page { padding: 20px 18px 64px; }
+      h1.lede { font-size: 30px; line-height: 1.15; }
+      .standfirst { font-size: 17px; }
+      .trajectory { grid-template-columns: 1fr 1fr; }
+      .trajectory .cell { border-bottom: 1px solid var(--bg-rule); }
+      .trajectory .cell:nth-child(2) { border-right: 0; }
+      .trajectory .cell:nth-child(3),
+      .trajectory .cell:nth-child(4) { padding-top: 14px; }
+      .trajectory .cell:nth-child(3),
+      .trajectory .cell:nth-child(4) { border-bottom: 0; }
+      .why-list li {
+        grid-template-columns: 1fr auto;
+        gap: 8px 14px;
+      }
+      .why-list .rank { display: none; }
+      .pull { grid-template-columns: 1fr; gap: 18px; }
+      h2.subhead { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <article class="page" id="top">
+
+    <!-- ============ MASTHEAD (dateline, quiet) ============================ -->
+    <div class="masthead">
+      <div class="brand"><span class="dot" aria-hidden="true"></span>LTHCS &middot; The Verdict</div>
+      <div class="dateline" id="dateline">Wed, May 20, 2026 &middot; v1.1.0</div>
+    </div>
+
+    <!-- ============ THE LEDE ============================================== -->
+    <!--
+      One-sentence answer for a brand-new reader. Score is -26 (NEUTRAL band)
+      so the headline acknowledges the slide without overstating bearishness.
+    -->
+    <div class="eyebrow">Today&rsquo;s read &middot; 167 names &middot; daily</div>
+
+    <h1 class="lede">
+      The long-term-hold tape is
+      <span class="verdict">cooling, not breaking</span>
+      &mdash; but the slide is real.
+    </h1>
+
+    <p class="standfirst">
+      The LTHCS Composite Index closed at
+      <span class="num num-neg">&minus;26</span>
+      today, the fifth straight session in negative territory and down from
+      <span class="num">&minus;8</span> a month ago. Just
+      <span class="num">6 of 167</span> names sit in a Buy band; the rest are
+      split between Watch (135) and Hold (26). Macro is still the only thing
+      doing any lifting.
+    </p>
+
+    <!-- ============ THE EASY BUTTON ======================================= -->
+    <!--
+      Single primary action: "show me which names are in trouble" — the
+      thing most users actually want after reading the lede. Secondary
+      actions are quieter, deferred.
+    -->
+    <div class="cta-row" role="group" aria-label="What to do next">
+      <a class="cta cta-primary" href="../../../#watch">
+        See the 135 Watch names<span class="arrow">&rarr;</span>
+      </a>
+      <a class="cta" href="#the-detail">Read why<span class="arrow">&darr;</span></a>
+      <a class="cta" href="../../../help/">New here? Start here</a>
+    </div>
+
+    <!-- ============ THE TRAJECTORY ======================================== -->
+    <!--
+      Four numbers tell the "story shape" without a chart. Real values
+      from the index/*.json files in /data/lthcs/index/. Today is tinted.
+    -->
+    <div class="trajectory" aria-label="Composite index over time">
+      <div class="cell">
+        <div class="when">One month ago</div>
+        <div class="val">&minus;8</div>
+        <div class="label">neutral, mildly soft</div>
+      </div>
+      <div class="cell">
+        <div class="when">One week ago</div>
+        <div class="val">&minus;9</div>
+        <div class="label">still neutral</div>
+      </div>
+      <div class="cell">
+        <div class="when">Two days ago</div>
+        <div class="val">&minus;20</div>
+        <div class="label">break lower</div>
+      </div>
+      <div class="cell">
+        <div class="when">Today</div>
+        <div class="val today">&minus;26</div>
+        <div class="label">cooling further</div>
+      </div>
+    </div>
+
+    <!-- ============ THE SECOND PARAGRAPH (context) ======================== -->
+    <h2 class="subhead">What the number means</h2>
+    <p class="body">
+      LTHCS is a single <span class="num" style="font-family:var(--font-mono)">&minus;100 to +100</span>
+      reading of how the 167-ticker universe is leaning today on the
+      <em>long-term-hold</em> dimension &mdash; not a trading signal, and not a
+      price call. It is built from nine independent components: the spread
+      between strong and weak bands, the five pillar averages, the macro
+      regime, plus insider and 13F conviction.
+      <strong>At &minus;26 it sits in the NEUTRAL band</strong>, but only barely.
+      Another <span class="num" style="font-family:var(--font-mono)">&minus;4</span>
+      and it drops into CAUTIOUS.
+    </p>
+
+    <!-- ============ THE WHY ============================================== -->
+    <h2 class="subhead" id="the-detail">Why &mdash; what&rsquo;s moving the number</h2>
+    <p class="body">
+      Ranked by absolute contribution to today&rsquo;s &minus;26 read. Each
+      component is capped: band lean at <em>&plusmn;30</em>, everything else
+      at <em>&plusmn;10</em>.
+    </p>
+
+    <ol class="why-list" aria-label="Components ranked by absolute contribution">
+      <!-- 1: band lean — biggest drag. -->
+      <li>
+        <div class="rank">No. 1</div>
+        <div class="name">
+          Band lean is the story.
+          <small>The universe is heavily distributed: 135 of 167 names are in a Watch band, only 6 in Buy.</small>
+        </div>
+        <div class="delta neg">&minus;23 <small>of &plusmn;30</small></div>
+      </li>
+
+      <!-- 2: macro — the offset. -->
+      <li>
+        <div class="rank">No. 2</div>
+        <div class="name">
+          Macro is the lone bid.
+          <small>HY OAS, 2s10s and the dollar still read risk-on &mdash; this is the only positive component today.</small>
+        </div>
+        <div class="delta pos">+10 <small>of &plusmn;10</small></div>
+      </li>
+
+      <!-- 3: 13F. -->
+      <li>
+        <div class="rank">No. 3</div>
+        <div class="name">
+          Institutions are net selling.
+          <small>13F breadth: 8 names with net-positive accumulation vs. 90 net-distribution.</small>
+        </div>
+        <div class="delta neg">&minus;8</div>
+      </li>
+
+      <!-- 4: insiders. -->
+      <li>
+        <div class="rank">No. 4</div>
+        <div class="name">
+          Insiders are joining them.
+          <small>63 active Form-4 signals tilt net-distribution, not net-accumulation.</small>
+        </div>
+        <div class="delta neg">&minus;7</div>
+      </li>
+
+      <!-- 5-9: pillars, smaller. -->
+      <li>
+        <div class="rank">No. 5</div>
+        <div class="name">
+          Thesis pillar still constructive.
+          <small>Narrative mixed but holding above 50 (avg 59.2).</small>
+        </div>
+        <div class="delta pos">+2</div>
+      </li>
+      <li>
+        <div class="rank">No. 6</div>
+        <div class="name">
+          Financials stable.
+          <small>FCF and capital-return signals firm; pillar avg 55.8.</small>
+        </div>
+        <div class="delta pos">+1</div>
+      </li>
+      <li>
+        <div class="rank">No. 7</div>
+        <div class="name">
+          Adoption and Institutional pillars are a wash.
+          <small>Averages 50.8 and 48.6 &mdash; both sit on the zero line.</small>
+        </div>
+        <div class="delta flat">&plusmn;0</div>
+      </li>
+      <li>
+        <div class="rank">No. 8</div>
+        <div class="name">
+          Demand environment soft.
+          <small>DES avg 46.8 &mdash; below 50 but inside noise.</small>
+        </div>
+        <div class="delta neg">&minus;1</div>
+      </li>
+    </ol>
+
+    <!-- ============ THE PULL-QUOTE / LEADERS & LAGGARDS =================== -->
+    <h2 class="subhead">Who&rsquo;s carrying it &middot; who&rsquo;s sinking it</h2>
+    <div class="pull">
+      <div class="col leaders">
+        <h3>Top of the universe</h3>
+        <p>
+          <span class="tk up">FANG</span> 78.6,
+          <span class="tk up">MU</span> 78.4,
+          <span class="tk up">AVGO</span> 74.8,
+          <span class="tk up">ADI</span> 74.1,
+          <span class="tk up">NVDA</span> 74.1.
+          Semiconductors and energy infrastructure &mdash; the names
+          institutional buyers haven&rsquo;t left.
+        </p>
+      </div>
+      <div class="col laggards">
+        <h3>Bottom of the universe</h3>
+        <p>
+          <span class="tk dn">NKE</span> 19.2,
+          <span class="tk dn">GM</span> 21.2,
+          <span class="tk dn">HD</span> 25.9,
+          <span class="tk dn">ZS</span> 26.5,
+          <span class="tk dn">WBD</span> 27.0.
+          Consumer discretionary and a thinning software cohort &mdash;
+          where insiders and 13F filers are walking.
+        </p>
+      </div>
+    </div>
+
+    <!-- ============ METHODOLOGY KICKER ==================================== -->
+    <p class="kicker">
+      <strong>How this is built.</strong> Nine components average together &mdash;
+      band lean (&plusmn;30), each of five pillar means centered on 50 and
+      scaled to &plusmn;10, plus macro regime, insider breadth and 13F
+      breadth at &plusmn;10 each. Labels are NEUTRAL between &minus;30 and
+      +30, CAUTIOUS to &minus;60, BEARISH below that &mdash; and the same
+      mirrored on the upside.
+      <a href="../../../help/#composite-index">Full methodology &rarr;</a>
+    </p>
+
+    <p class="disclaimer">
+      Not investment advice &middot; Directional read, not a trading signal &middot;
+      Snapshot computed 23:00 UTC
+    </p>
+
+  </article>
+
+  <script>
+    // The lede needs to be true today, not stale. If we can fetch today's
+    // index file we re-paint the score / band-lean / counts so the page
+    // doesn't drift from prod. If the fetch fails (file:// open, offline
+    // demo) the hardcoded fallback above stands.
+    (async function repaintFromLiveData() {
+      const url = '../../../data/lthcs/index/2026-05-20.json';
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok) return;
+        const d = await res.json();
+        // Only patch the numbers that appear in the lede — keep the prose.
+        const score = d.score;
+        const fmt = (n) => (n >= 0 ? '+' : '−') + Math.abs(n);
+        const nums = document.querySelectorAll('.standfirst .num');
+        if (nums[0]) nums[0].textContent = fmt(score);
+        // Update masthead dateline if the as_of differs.
+        const dl = document.getElementById('dateline');
+        if (dl && d.as_of) {
+          const parts = d.as_of.split('-');
+          const dt = new Date(Date.UTC(+parts[0], +parts[1]-1, +parts[2]));
+          const weekday = dt.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' });
+          const mon = dt.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' });
+          dl.textContent = `${weekday}, ${mon} ${dt.getUTCDate()}, ${dt.getUTCFullYear()} · v1.1.0`;
+        }
+      } catch (_) { /* offline demo — fallback content stands */ }
+    })();
+  </script>
+</body>
+</html>

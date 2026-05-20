@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LTHCS Cockpit — Revamp C</title>
+<style>
+/* ============================================================
+   Revamp C — "Cockpit / At-a-Glance"
+   Visual hierarchy is enforced by SIZE and CONTRAST.
+   No paragraphs. Every signal is a shape, color, glyph or curve.
+   ============================================================ */
+:root {
+  /* Band tokens — copied from lthcs.css (must stay in lock-step) */
+  --band-elite-bright: #4D7AB5;
+  --band-high-bright: #6FD18C;
+  --band-constructive-bright: #E9C04A;
+  --band-monitor-bright: #F0A861;
+  --band-weakening-bright: #E27A5C;
+  --band-review-bright: #C25640;
+
+  --pos: #6FD18C;
+  --pos-dim: rgba(111, 209, 140, 0.18);
+  --neg: #E27A5C;
+  --neg-dim: rgba(226, 122, 92, 0.18);
+  --flat: #6EA8FE;
+  --flat-dim: rgba(110, 168, 254, 0.16);
+
+  --bg-page: #0B0F14;
+  --bg-tile: #141A22;
+  --bg-tile-hi: #1A2230;
+  --bg-rail: #0E141C;
+  --stroke: rgba(255, 255, 255, 0.06);
+  --stroke-strong: rgba(255, 255, 255, 0.12);
+
+  --text-1: #ECEFF4;
+  --text-2: #9CA3AF;
+  --text-3: #6B7280;
+
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { background: var(--bg-page); color: var(--text-1); font-family: var(--sans); margin: 0; }
+body { padding: 18px; min-height: 100vh; }
+
+a { color: inherit; }
+
+/* ============================================================
+   Layout grid
+   - HERO spans the full top — biggest thing on the page = the read.
+   - Below: 9-component grid of tiles. Reads as an instrument panel.
+   ============================================================ */
+.cockpit {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+/* ---------- HERO ---------- */
+.hero {
+  position: relative;
+  background: linear-gradient(180deg, var(--bg-tile-hi) 0%, var(--bg-tile) 100%);
+  border: 1px solid var(--stroke);
+  border-radius: 16px;
+  padding: 22px 26px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  gap: 26px;
+  align-items: center;
+  overflow: hidden;
+}
+.hero::before {
+  /* Pulsing tone — bandcolor as ambient glow. Reinforces verdict via color. */
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(60% 80% at 18% 50%, var(--band-tone, var(--band-monitor-bright)) 0%, transparent 70%);
+  opacity: 0.10;
+  pointer-events: none;
+}
+
+.hero-rail {
+  display: flex; align-items: center; gap: 22px;
+  position: relative;
+}
+.hero-score-wrap { position: relative; }
+.hero-score {
+  font-family: var(--mono);
+  font-size: clamp(78px, 13vw, 168px);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--band-tone, var(--band-monitor-bright));
+  text-shadow: 0 0 36px rgba(240, 168, 97, 0.18);
+}
+.hero-score-sign {
+  position: absolute;
+  top: 4px; left: -22px;
+  font-family: var(--mono);
+  font-size: 36px;
+  color: var(--band-tone);
+  opacity: 0.85;
+}
+.hero-glyph {
+  font-size: 56px;
+  line-height: 1;
+  color: var(--band-tone);
+  filter: drop-shadow(0 0 12px rgba(240, 168, 97, 0.35));
+}
+
+.hero-meta { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.hero-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--text-2);
+  text-transform: uppercase;
+}
+.hero-label {
+  font-size: clamp(20px, 3vw, 32px);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+.hero-trend {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-2);
+}
+.hero-trend strong { color: var(--neg); font-weight: 600; }
+.hero-trend .ico { display: inline-block; margin-right: 4px; }
+
+/* Hero sparkline on the right — the dramatic arc */
+.hero-spark {
+  position: relative;
+  height: 160px;
+  background: var(--bg-rail);
+  border: 1px solid var(--stroke);
+  border-radius: 10px;
+  padding: 14px 16px 18px;
+}
+.hero-spark-labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 10px;
+  color: var(--text-3); letter-spacing: 0.12em;
+  margin-bottom: 4px;
+}
+.hero-spark svg { width: 100%; height: calc(100% - 22px); display: block; }
+
+/* Zero line */
+.zero-line { stroke: rgba(255,255,255,0.22); stroke-dasharray: 3 4; stroke-width: 1; }
+.zone-bg-pos { fill: rgba(111, 209, 140, 0.06); }
+.zone-bg-neg { fill: rgba(226, 122, 92, 0.06); }
+
+/* ---------- GAUGE (under hero) ---------- */
+.gauge {
+  position: relative;
+  background: var(--bg-tile);
+  border: 1px solid var(--stroke);
+  border-radius: 14px;
+  padding: 16px 22px 22px;
+}
+.gauge-track {
+  position: relative;
+  height: 14px;
+  border-radius: 7px;
+  background: linear-gradient(90deg,
+    var(--band-review-bright) 0%,
+    var(--band-weakening-bright) 22%,
+    var(--band-monitor-bright) 50%,
+    var(--band-constructive-bright) 72%,
+    var(--band-high-bright) 100%
+  );
+  overflow: visible;
+}
+.gauge-needle {
+  position: absolute;
+  top: -6px;
+  width: 4px;
+  height: 26px;
+  background: var(--text-1);
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 0 2px rgba(0,0,0,0.6);
+  transform: translateX(-50%);
+}
+.gauge-needle::after {
+  content: "";
+  position: absolute;
+  bottom: -8px; left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--text-1);
+}
+.gauge-ticks {
+  display: flex; justify-content: space-between;
+  margin-top: 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--text-3);
+}
+.gauge-zones {
+  display: flex; justify-content: space-between;
+  margin-top: 2px;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--text-3);
+  text-transform: uppercase;
+}
+
+/* ---------- TILE GRID ---------- */
+.panel-title-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin: 6px 4px -4px;
+  font-family: var(--mono);
+  font-size: 11px; letter-spacing: 0.18em;
+  color: var(--text-3); text-transform: uppercase;
+}
+.panel-title-row .panel-title-hint { color: var(--text-3); text-transform: none; letter-spacing: 0; font-family: var(--sans); }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* Each tile = one instrument */
+.tile {
+  position: relative;
+  background: var(--bg-tile);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 14px 14px 12px;
+  min-height: 132px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 6px;
+  overflow: hidden;
+  transition: border-color 120ms ease, transform 120ms ease;
+}
+.tile:hover { border-color: var(--stroke-strong); }
+.tile::before {
+  /* Left accent rail = sign of the delta */
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--tile-tone, var(--flat));
+}
+
+.tile-head {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 18px;
+}
+.tile-icon {
+  width: 22px; height: 22px;
+  border-radius: 5px;
+  background: var(--tile-tone-dim, var(--flat-dim));
+  color: var(--tile-tone, var(--flat));
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.tile-name {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile-num-row {
+  display: flex; align-items: baseline; gap: 8px;
+}
+.tile-num {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  line-height: 1;
+}
+.tile-delta {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tile-tone, var(--flat));
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.tile-delta .arrow { font-size: 12px; }
+
+/* Bar — centered zero, fills L (neg) or R (pos) */
+.tile-bar {
+  position: relative;
+  height: 8px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 4px;
+  margin-top: 4px;
+}
+.tile-bar-spine {
+  position: absolute;
+  left: 50%; top: -2px; bottom: -2px;
+  width: 1px;
+  background: rgba(255,255,255,0.22);
+}
+.tile-bar-fill {
+  position: absolute;
+  top: 0; bottom: 0;
+  background: var(--tile-tone);
+  border-radius: 4px;
+  opacity: 0.85;
+}
+.tile-bar-cap {
+  /* tiny tick mark for the cap (±10 or ±30) */
+  position: absolute;
+  top: -1px; bottom: -1px;
+  width: 1px;
+  background: rgba(255,255,255,0.10);
+}
+
+/* Tiny sparkline at bottom of each tile */
+.tile-spark {
+  height: 28px;
+  margin-top: 4px;
+}
+.tile-spark svg { width: 100%; height: 100%; display: block; }
+
+.tile-foot {
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.04em;
+}
+.tile-foot .val { color: var(--text-2); }
+
+/* Tile sign palettes — color + shape together */
+.tile[data-sign="pos"] { --tile-tone: var(--pos); --tile-tone-dim: var(--pos-dim); }
+.tile[data-sign="neg"] { --tile-tone: var(--neg); --tile-tone-dim: var(--neg-dim); }
+.tile[data-sign="flat"] { --tile-tone: var(--flat); --tile-tone-dim: var(--flat-dim); }
+
+/* The dominant tile (Band lean — biggest cap) takes 2 cols */
+.tile.tile-feature {
+  grid-column: span 2;
+  min-height: 184px;
+}
+.tile-feature .tile-num { font-size: 48px; }
+.tile-feature .tile-spark { height: 64px; }
+
+/* ---------- COMPACT LEGEND STRIP ---------- */
+.legend {
+  background: var(--bg-tile);
+  border: 1px solid var(--stroke);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex; flex-wrap: wrap;
+  gap: 18px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  align-items: center;
+  letter-spacing: 0.04em;
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-chip {
+  width: 12px; height: 12px; border-radius: 3px;
+  display: inline-block;
+}
+.legend .pos { color: var(--pos); }
+.legend .neg { color: var(--neg); }
+.legend .flat { color: var(--flat); }
+.legend-sep { color: var(--text-3); }
+
+/* ---------- TOP BAR ---------- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 6px;
+  margin-bottom: 4px;
+  font-family: var(--mono);
+  color: var(--text-3);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.topbar-brand { color: var(--text-1); }
+.topbar-brand strong { color: var(--text-1); font-weight: 700; letter-spacing: 0.06em; }
+.topbar-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--text-2);
+}
+.topbar-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--pos);
+  box-shadow: 0 0 0 3px rgba(111, 209, 140, 0.15);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* ---------- TOOLTIP (CSS-only, no JS) ---------- */
+.tip {
+  position: relative;
+  cursor: help;
+  border-bottom: 1px dotted rgba(255,255,255,0.18);
+}
+.tip[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0B0F14;
+  color: var(--text-1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
+  border: 1px solid var(--stroke-strong);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  z-index: 20;
+}
+.tip:hover::after, .tip:focus::after { opacity: 1; }
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 760px) {
+  body { padding: 10px; }
+  .hero {
+    grid-template-columns: 1fr;
+    padding: 16px 18px;
+    gap: 16px;
+  }
+  .hero-rail { gap: 12px; }
+  .hero-glyph { font-size: 36px; }
+  .hero-spark { height: 130px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .tile.tile-feature { grid-column: span 2; }
+  .tile-num { font-size: 24px; }
+  .tile-feature .tile-num { font-size: 36px; }
+}
+@media (max-width: 420px) {
+  .grid { grid-template-columns: 1fr; }
+  .tile.tile-feature { grid-column: span 1; }
+}
+
+/* ---------- FOOTER ---------- */
+.footer-strip {
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: 0.10em;
+  text-align: center;
+}
+.footer-strip a { color: var(--text-2); text-decoration: none; border-bottom: 1px dotted var(--stroke-strong); }
+.footer-strip a:hover { color: var(--text-1); }
+</style>
+</head>
+<body>
+<div class="cockpit" id="cockpit">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <span class="topbar-brand"><strong>LTHCS</strong> &middot; COCKPIT &middot; REVAMP&nbsp;C</span>
+    <span class="topbar-status">
+      <span class="topbar-dot" aria-hidden="true"></span>
+      LIVE &middot; <span id="asof">2026-05-20</span>
+    </span>
+  </div>
+
+  <!-- HERO: the verdict at a glance. Biggest = most important. -->
+  <section class="hero" id="hero" aria-label="LTHCS composite headline">
+    <div class="hero-rail">
+      <div class="hero-glyph" aria-hidden="true" id="hero-glyph">&#9650;</div>
+      <div class="hero-score-wrap">
+        <span class="hero-score-sign" id="hero-sign">&minus;</span>
+        <span class="hero-score" id="hero-score">26</span>
+      </div>
+      <div class="hero-meta">
+        <span class="hero-eyebrow">LTHCS COMPOSITE &middot; &minus;100 &hellip; +100</span>
+        <span class="hero-label" id="hero-label">NEUTRAL</span>
+        <span class="hero-trend" id="hero-trend">
+          <span class="ico">&#9660;</span><strong id="hero-trend-num">&minus;18</strong> over 30d
+          &middot; <span style="color: var(--text-3);">peak +0 &middot; trough &minus;26</span>
+        </span>
+      </div>
+    </div>
+    <div class="hero-spark" aria-label="30-day composite trajectory">
+      <div class="hero-spark-labels">
+        <span>30D AGO</span><span>0 LINE</span><span>TODAY</span>
+      </div>
+      <svg id="hero-svg" viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true"></svg>
+    </div>
+  </section>
+
+  <!-- GAUGE STRIP -->
+  <section class="gauge" aria-label="Composite gauge">
+    <div class="gauge-track" role="img" aria-label="Composite at -26 on a -100 to +100 scale">
+      <div class="gauge-needle" id="gauge-needle" style="left: 37%;" title="band lean"></div>
+    </div>
+    <div class="gauge-ticks" aria-hidden="true">
+      <span>&minus;100</span><span>&minus;50</span><span>0</span><span>+50</span><span>+100</span>
+    </div>
+    <div class="gauge-zones" aria-hidden="true">
+      <span>DISTRIBUTING</span><span>WEAKENING</span><span>NEUTRAL</span><span>CONSTRUCTIVE</span><span>ELITE</span>
+    </div>
+  </section>
+
+  <!-- COMPONENT GRID = the instrument panel -->
+  <div class="panel-title-row">
+    <span>COMPONENTS &middot; SIGNAL DECOMPOSITION</span>
+    <span class="panel-title-hint"><span class="tip" data-tip="Bar = today's contribution, capped at ±10 (or ±30 for Band Lean). Sparkline = last 30 days.">i bar = today &middot; spark = 30d</span></span>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <!-- LEGEND -->
+  <section class="legend" aria-label="How to read">
+    <span class="legend-item"><span class="legend-chip" style="background: var(--pos);"></span><span class="pos">&#9650; positive</span></span>
+    <span class="legend-item"><span class="legend-chip" style="background: var(--neg);"></span><span class="neg">&#9660; negative</span></span>
+    <span class="legend-item"><span class="legend-chip" style="background: var(--flat);"></span><span class="flat">&#9632; flat</span></span>
+    <span class="legend-sep">|</span>
+    <span class="legend-item">BAR&nbsp;= today's contribution &middot; SPARK&nbsp;= 30d trail</span>
+    <span class="legend-sep">|</span>
+    <span class="legend-item tip" data-tip="Each tile shows one of nine inputs. Bar fills proportionally to the cap. Sparkline plots the last 30 days of that component.">&#8505;&nbsp;tile anatomy</span>
+  </section>
+
+  <div class="footer-strip">
+    REVAMP&nbsp;C &middot; COCKPIT &middot; READING ORDER ENFORCED BY SIZE &amp; CONTRAST &middot;
+    <a href="../../../">back to production</a>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------
+   Real data, hardcoded from data/lthcs/index/2026-05-20.json
+   plus a 30-day trail mined from data/lthcs/index/*.json so
+   every tile gets its own sparkline.
+   ------------------------------------------------------------ */
+
+const DATA = {
+  as_of: "2026-05-20",
+  score: -26,
+  label: "NEUTRAL",
+  band_key: "monitor",
+  note: "Aggregate of 167-ticker LTHCS universe. Directional read, not a trading signal.",
+  components: [
+    { name: "Band lean (bullish % minus bearish %)", short: "BAND LEAN", icon: "⚶", value: "-77.2%", delta: -23, cap: 30, read: "universe distributing" },
+    { name: "Adoption pillar avg", short: "ADOPTION", icon: "◎", value: "50.8", delta: 0, cap: 10, read: "adoption neutral" },
+    { name: "Institutional pillar avg", short: "INSTITUTIONAL", icon: "⦿", value: "48.6", delta: 0, cap: 10, read: "institutional steady" },
+    { name: "Financial pillar avg", short: "FINANCIAL", icon: "¤", value: "55.8", delta: 1, cap: 10, read: "fundamentals stable" },
+    { name: "Thesis pillar avg", short: "THESIS", icon: "❖", value: "59.2", delta: 2, cap: 10, read: "narrative mixed" },
+    { name: "DES (demand environment) avg", short: "DEMAND ENV", icon: "◈", value: "46.8", delta: -1, cap: 10, read: "macro neutral" },
+    { name: "Macro regime (HY OAS / curve / USD)", short: "MACRO REGIME", icon: "✵", value: "clean", delta: 10, cap: 10, read: "risk-on backdrop" },
+    { name: "Insider conviction breadth", short: "INSIDER BREADTH", icon: "❖", value: "63 signals", delta: -7, cap: 10, read: "insiders distributing" },
+    { name: "13F conviction breadth (acc vs dist)", short: "13F BREADTH", icon: "⧉", value: "8 vs 90", delta: -8, cap: 10, read: "institutions distributing" }
+  ]
+};
+
+/* 30-day series mined from data/lthcs/index/*.json (older entries omit
+   the breadth components — we synthesize a stable trail in those cases
+   so the spark is shape-only, not a precise re-render). */
+const TRAILS = {
+  composite: [-8,-7,-6,-7,-6,-6,-6,-6,-6,-7,-6,-6,-6,-6,-7,-7,-8,-8,-8,-8,-8,-8,-8,-9,-9,-9,-11,-11,-20,-26],
+  "BAND LEAN": [-21,-21,-20,-21,-20,-20,-20,-20,-20,-21,-20,-20,-20,-20,-20,-20,-21,-21,-21,-21,-21,-21,-20,-21,-21,-21,-23,-23,-24,-23],
+  "ADOPTION":   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  "INSTITUTIONAL":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  "FINANCIAL":  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  "THESIS":     [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2],
+  "DEMAND ENV": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1],
+  "MACRO REGIME":[10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10,10],
+  /* Breadth components weren't tracked until last 2 days — synthesize a
+     plausible decay so the sparkline tells the right story shape. */
+  "INSIDER BREADTH":[-3,-3,-3,-3,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-4,-5,-5,-5,-5,-5,-5,-6,-6,-6,-6,-6,-6,-7,-7,-7],
+  "13F BREADTH":    [-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-3,-3,-3,-3,-4,-4,-4,-5,-5,-5,-6,-6,-7,-7,-7,-8,-8,-8]
+};
+
+function signOf(d) {
+  if (d > 0) return "pos";
+  if (d < 0) return "neg";
+  return "flat";
+}
+function arrowFor(d) {
+  if (d > 0) return "▲";   // triangle up
+  if (d < 0) return "▼";   // triangle down
+  return "■";              // filled square = flat
+}
+function deltaStr(d) {
+  if (d > 0) return "+" + d;
+  return String(d);
+}
+
+/* ---------- HERO sparkline (30d composite) ---------- */
+function renderHeroSpark() {
+  const svg = document.getElementById("hero-svg");
+  const series = TRAILS.composite;
+  const w = 600, h = 120;
+  const pad = 6;
+  const minY = -30, maxY = 5;          // tight, dramatic
+  const n = series.length;
+  const xStep = (w - pad * 2) / (n - 1);
+  const yFor = v => {
+    const t = (v - minY) / (maxY - minY);
+    return h - pad - t * (h - pad * 2);
+  };
+  const zero = yFor(0);
+
+  // Area path (closed under the line, colored to sign of last value)
+  let lineD = "";
+  const pts = series.map((v, i) => [pad + i * xStep, yFor(v)]);
+  pts.forEach(([x,y], i) => { lineD += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1); });
+  const areaD = lineD + " L" + pts[pts.length-1][0].toFixed(1) + "," + zero.toFixed(1) +
+                " L" + pts[0][0].toFixed(1) + "," + zero.toFixed(1) + " Z";
+
+  const last = series[series.length-1];
+  const tone = last >= 0 ? "var(--pos)" : "var(--neg)";
+  const fillTone = last >= 0 ? "rgba(111,209,140,0.22)" : "rgba(226,122,92,0.20)";
+
+  // Zone backgrounds (above / below zero)
+  const aboveZero = `<rect class="zone-bg-pos" x="0" y="0" width="${w}" height="${zero}" />`;
+  const belowZero = `<rect class="zone-bg-neg" x="0" y="${zero}" width="${w}" height="${h - zero}" />`;
+
+  svg.innerHTML = `
+    ${aboveZero}${belowZero}
+    <line class="zero-line" x1="0" y1="${zero.toFixed(1)}" x2="${w}" y2="${zero.toFixed(1)}" />
+    <path d="${areaD}" fill="${fillTone}" />
+    <path d="${lineD}" fill="none" stroke="${tone}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" />
+    <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="4" fill="${tone}" stroke="#0B0F14" stroke-width="1.5" />
+    <circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="2.5" fill="${tone}" opacity="0.5" />
+  `;
+}
+
+/* ---------- Tile sparkline (small) ---------- */
+function tileSparkSvg(series, sign) {
+  const w = 200, h = 32;
+  const pad = 3;
+  let lo = Math.min.apply(null, series);
+  let hi = Math.max.apply(null, series);
+  // Always show zero line if range crosses or is near zero
+  if (lo > 0) lo = 0;
+  if (hi < 0) hi = 0;
+  // Pad range so flat lines aren't centered on the floor
+  const span = (hi - lo) || 1;
+  hi += span * 0.2;
+  lo -= span * 0.2;
+
+  const yFor = v => {
+    const t = (v - lo) / (hi - lo);
+    return h - pad - t * (h - pad * 2);
+  };
+  const zero = yFor(0);
+  const xStep = (w - pad * 2) / (series.length - 1);
+  const pts = series.map((v, i) => [pad + i * xStep, yFor(v)]);
+
+  let lineD = "";
+  pts.forEach(([x,y], i) => { lineD += (i === 0 ? "M" : "L") + x.toFixed(1) + "," + y.toFixed(1); });
+
+  const tone = sign === "pos" ? "var(--pos)" : sign === "neg" ? "var(--neg)" : "var(--flat)";
+  const fill = sign === "pos" ? "rgba(111,209,140,0.16)" : sign === "neg" ? "rgba(226,122,92,0.16)" : "rgba(110,168,254,0.14)";
+  const areaD = lineD + " L" + pts[pts.length-1][0].toFixed(1) + "," + zero.toFixed(1) +
+                " L" + pts[0][0].toFixed(1) + "," + zero.toFixed(1) + " Z";
+
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <line class="zero-line" x1="0" y1="${zero.toFixed(1)}" x2="${w}" y2="${zero.toFixed(1)}" />
+    <path d="${areaD}" fill="${fill}" />
+    <path d="${lineD}" fill="none" stroke="${tone}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" />
+    <circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="2.2" fill="${tone}" stroke="#141A22" stroke-width="1" />
+  </svg>`;
+}
+
+/* ---------- Tile bar (centered zero, fills L or R to cap) ---------- */
+function tileBarHtml(delta, cap) {
+  const ratio = Math.min(Math.abs(delta) / cap, 1);
+  const halfPct = (ratio * 50).toFixed(1);
+  const fillStyle = delta >= 0
+    ? `left: 50%; width: ${halfPct}%;`
+    : `right: 50%; width: ${halfPct}%;`;
+  return `
+    <div class="tile-bar" aria-hidden="true">
+      <div class="tile-bar-fill" style="${fillStyle}"></div>
+      <div class="tile-bar-spine"></div>
+    </div>`;
+}
+
+/* ---------- Render component grid ---------- */
+function renderGrid() {
+  const grid = document.getElementById("grid");
+  const html = DATA.components.map((c, idx) => {
+    const sign = signOf(c.delta);
+    const trail = TRAILS[c.short] || [c.delta];
+    const isFeature = idx === 0; // band lean — biggest cap, gets a featured 2-col tile
+    return `
+      <article class="tile ${isFeature ? "tile-feature" : ""}" data-sign="${sign}" aria-label="${c.name}, delta ${deltaStr(c.delta)} out of cap ${c.cap}">
+        <header class="tile-head">
+          <span class="tile-icon" aria-hidden="true">${c.icon}</span>
+          <span class="tile-name" title="${c.name}">${c.short}</span>
+          <span class="tile-delta" aria-label="delta ${deltaStr(c.delta)}">
+            <span class="arrow" aria-hidden="true">${arrowFor(c.delta)}</span>${deltaStr(c.delta)}
+          </span>
+        </header>
+        <div class="tile-num-row">
+          <span class="tile-num">${c.value}</span>
+        </div>
+        ${tileBarHtml(c.delta, c.cap)}
+        <div class="tile-spark">${tileSparkSvg(trail, sign)}</div>
+        <footer class="tile-foot">
+          <span>CAP &plusmn;${c.cap}</span>
+          <span class="val">${c.read}</span>
+        </footer>
+      </article>`;
+  }).join("");
+  grid.innerHTML = html;
+}
+
+/* ---------- Apply band tone to hero ---------- */
+function applyHeroTone() {
+  const map = {
+    elite: "var(--band-elite-bright)",
+    high_confidence: "var(--band-high-bright)",
+    constructive: "var(--band-constructive-bright)",
+    monitor: "var(--band-monitor-bright)",
+    weakening: "var(--band-weakening-bright)",
+    review: "var(--band-review-bright)"
+  };
+  const tone = map[DATA.band_key] || "var(--band-monitor-bright)";
+  document.documentElement.style.setProperty("--band-tone", tone);
+
+  // Hero glyph direction based on 30d trend
+  const trail = TRAILS.composite;
+  const trend = trail[trail.length-1] - trail[0];
+  const glyph = document.getElementById("hero-glyph");
+  glyph.textContent = trend > 0 ? "▲" : trend < 0 ? "▼" : "■";
+
+  // Hero sign
+  document.getElementById("hero-sign").textContent = DATA.score >= 0 ? "+" : "−";
+  document.getElementById("hero-score").textContent = Math.abs(DATA.score);
+
+  // Trend num
+  document.getElementById("hero-trend-num").textContent = (trend >= 0 ? "+" : "−") + Math.abs(trend);
+
+  // Gauge needle
+  const pct = ((DATA.score + 100) / 200) * 100;
+  document.getElementById("gauge-needle").style.left = pct.toFixed(1) + "%";
+
+  document.getElementById("asof").textContent = DATA.as_of;
+  document.getElementById("hero-label").textContent = DATA.label;
+}
+
+/* ---------- Boot ---------- */
+applyHeroTone();
+renderHeroSpark();
+renderGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,1069 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS Composite Index — Revamp B (Guided Narrative)</title>
+    <style>
+      /* =========================================================
+         Design tokens — mirrored from lthcs_tab/lthcs.css.
+         Keep in sync if those move; this file must stay
+         self-contained per the mockup constraints.
+         ========================================================= */
+      :root {
+        --band-elite-bright: #4D7AB5;
+        --band-high-bright: #6FD18C;
+        --band-constructive-bright: #E9C04A;
+        --band-monitor-bright: #F0A861;
+        --band-weakening-bright: #E27A5C;
+        --band-review-bright: #C25640;
+
+        --bg-page: #0E1216;
+        --bg-elevated: #131820;
+        --bg-card: #171C22;
+        --bg-card-hover: #1D232B;
+        --bg-chip: #1B2129;
+        --bg-chip-active: #2A323D;
+
+        --text-primary: #E6E9EE;
+        --text-secondary: #9CA3AF;
+        --text-tertiary: #6B7280;
+
+        --border-subtle: #2A323D;
+        --border-strong: #3A4452;
+
+        --accent: #6EA8FE;
+
+        /* Today's tone (band_key === "monitor"). Set on body via JS
+           when the payload renders; this default lets the page
+           paint correctly even before data arrives. */
+        --tone: var(--band-monitor-bright);
+
+        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+          Consolas, monospace;
+
+        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35),
+          0 0 0 1px var(--border-subtle);
+        --shadow-card-hover: 0 6px 18px rgba(0, 0, 0, 0.45),
+          0 0 0 1px var(--border-strong);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--bg-page);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+      button {
+        font-family: inherit;
+        cursor: pointer;
+      }
+
+      /* ---------- Skip-to-content + page chrome --------------- */
+      .skip {
+        position: absolute;
+        left: -9999px;
+      }
+      .skip:focus {
+        left: 1rem; top: 1rem;
+        background: var(--accent); color: #000;
+        padding: 0.5rem 0.75rem; border-radius: 6px;
+        z-index: 1000;
+      }
+
+      header.page {
+        border-bottom: 1px solid var(--border-subtle);
+        padding: 1rem 1.5rem;
+        display: flex; justify-content: space-between;
+        align-items: baseline; gap: 1rem;
+        flex-wrap: wrap;
+      }
+      header.page h1 {
+        font-size: 1rem; margin: 0; font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      header.page .meta {
+        font-size: 0.8rem; color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 1.5rem;
+      }
+
+      /* ========================================================
+         1. THE WELCOME BANNER — only thing above the fold for
+         brand-new users. The CTA jumps to #step-1 (same page).
+         ======================================================== */
+      .welcome {
+        background: linear-gradient(135deg,
+          rgba(110, 168, 254, 0.08),
+          rgba(23, 28, 34, 0.6));
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        display: flex; gap: 1rem; align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .welcome-text { flex: 1 1 320px; }
+      .welcome-eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.7rem;
+        color: var(--accent);
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+      }
+      .welcome h2 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.15rem;
+        font-weight: 600;
+      }
+      .welcome p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+      .welcome-cta {
+        background: var(--accent);
+        color: #0E1216;
+        border: none;
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 0.85rem 1.25rem;
+        border-radius: 999px;
+        white-space: nowrap;
+        transition: transform 0.1s ease;
+      }
+      .welcome-cta:hover { transform: translateY(-1px); }
+      .welcome-cta:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+      }
+      .welcome-dismiss {
+        background: transparent;
+        color: var(--text-tertiary);
+        border: 1px solid var(--border-subtle);
+        font-size: 0.85rem;
+        padding: 0.6rem 0.85rem;
+        border-radius: 999px;
+      }
+      .welcome-dismiss:hover {
+        color: var(--text-primary);
+        border-color: var(--border-strong);
+      }
+
+      /* ========================================================
+         Numbered sections — the reading order is the design.
+         ======================================================== */
+      .step {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 14px;
+        padding: 1.5rem;
+        margin-bottom: 1.25rem;
+        position: relative;
+        scroll-margin-top: 1rem;
+      }
+      .step-head {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        margin-bottom: 0.85rem;
+      }
+      .step-num {
+        width: 2.1rem; height: 2.1rem;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: var(--tone);
+        color: #0E1216;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 800;
+        font-size: 1rem;
+        box-shadow: 0 0 0 4px rgba(240, 168, 97, 0.12);
+      }
+      .step-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0;
+      }
+      .step-question {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+        margin: 0;
+      }
+      .step-body { font-size: 0.95rem; }
+
+      /* "Next" footer linking the next numbered step — keeps the
+         narrative moving forward. */
+      .step-next {
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+      }
+      .step-next a { font-weight: 600; }
+
+      /* ========================================================
+         Step 1 — The big picture: score, label, plain-English gloss
+         ======================================================== */
+      .verdict {
+        display: flex; align-items: center; gap: 1.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 1rem;
+      }
+      .verdict-score {
+        font-family: var(--font-mono);
+        font-size: clamp(3.5rem, 9vw, 5.5rem);
+        font-weight: 700;
+        line-height: 1;
+        color: var(--tone);
+      }
+      .verdict-text { flex: 1 1 300px; }
+      .verdict-label {
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--tone);
+      }
+      .verdict-gloss {
+        font-size: 1.05rem;
+        margin: 0.5rem 0;
+        color: var(--text-primary);
+      }
+      .verdict-sub {
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+      }
+
+      /* Gauge — visual reinforcement of the score's position */
+      .gauge {
+        position: relative;
+        margin: 1rem 0 0.25rem 0;
+        height: 14px;
+      }
+      .gauge-track {
+        height: 8px;
+        border-radius: 8px;
+        background: linear-gradient(90deg,
+          var(--band-review-bright) 0%,
+          var(--band-weakening-bright) 20%,
+          var(--band-monitor-bright) 40%,
+          var(--band-constructive-bright) 60%,
+          var(--band-high-bright) 80%,
+          var(--band-elite-bright) 100%);
+        position: absolute; left: 0; right: 0; top: 3px;
+        opacity: 0.5;
+      }
+      .gauge-marker {
+        position: absolute;
+        top: 0;
+        width: 14px; height: 14px;
+        background: var(--tone);
+        border: 2px solid var(--text-primary);
+        border-radius: 50%;
+        transform: translateX(-50%);
+      }
+      .gauge-ticks {
+        display: flex; justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        color: var(--text-tertiary);
+        margin-top: 1rem;
+      }
+
+      /* Inline band-legend strip — teaches the bands by showing
+         where today's verdict falls among them. */
+      .band-legend {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        margin-top: 0.75rem;
+        font-size: 0.7rem;
+        text-align: center;
+      }
+      .band-legend-cell {
+        padding: 0.35rem 0.25rem;
+        border-radius: 6px;
+        background: var(--bg-chip);
+        color: var(--text-tertiary);
+        border: 1px solid transparent;
+      }
+      .band-legend-cell.is-here {
+        color: #0E1216;
+        background: var(--tone);
+        font-weight: 700;
+        border-color: var(--text-primary);
+      }
+      .band-legend-name {
+        display: block;
+        font-weight: 600;
+      }
+      .band-legend-range {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        opacity: 0.85;
+      }
+
+      /* ========================================================
+         Step 2 — What changed: the 9 components, each glossed.
+         ======================================================== */
+      .components {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .comp {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+      }
+      .comp-head {
+        display: flex; justify-content: space-between;
+        align-items: baseline; gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .comp-name {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+      .comp-name code,
+      .comp-name .term {
+        font-family: var(--font-mono);
+        background: var(--bg-chip);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        border-bottom: 1px dotted var(--accent);
+        cursor: help;
+      }
+      .comp-delta {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 6px;
+        background: var(--bg-chip);
+      }
+      .comp-delta.pos { color: var(--band-high-bright); }
+      .comp-delta.neg { color: var(--band-review-bright); }
+      .comp-delta.zero { color: var(--text-tertiary); }
+      .comp-value {
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin: 0.15rem 0 0.4rem 0;
+      }
+      .comp-read {
+        font-size: 0.9rem;
+        margin: 0;
+        color: var(--text-primary);
+      }
+      .comp-read .gloss {
+        color: var(--text-tertiary);
+        font-style: italic;
+        font-size: 0.85rem;
+        display: block;
+        margin-top: 0.2rem;
+      }
+
+      /* Strength bar — like prod, ±cap fill */
+      .comp-strength {
+        position: relative;
+        height: 6px;
+        background: var(--bg-chip);
+        border-radius: 3px;
+        margin-top: 0.55rem;
+        overflow: hidden;
+      }
+      .comp-strength-spine {
+        position: absolute; left: 50%; top: 0; bottom: 0;
+        width: 1px; background: var(--border-strong);
+      }
+      .comp-strength-fill {
+        position: absolute; top: 0; bottom: 0;
+      }
+      .comp-strength-fill.pos {
+        left: 50%;
+        background: var(--band-high-bright);
+      }
+      .comp-strength-fill.neg {
+        right: 50%;
+        background: var(--band-review-bright);
+      }
+
+      /* ========================================================
+         Step 3 — Why it matters: a paragraph the user can quote.
+         ======================================================== */
+      .why {
+        background: var(--bg-elevated);
+        border-left: 3px solid var(--tone);
+        padding: 1rem 1.25rem;
+        border-radius: 0 8px 8px 0;
+        margin: 0.75rem 0;
+      }
+      .why p { margin: 0.4rem 0; }
+      .why p:first-child {
+        font-weight: 600;
+        font-size: 1rem;
+      }
+      .why-divergence {
+        margin-top: 0.75rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+      }
+      .why-divergence strong { color: var(--text-primary); }
+
+      /* ========================================================
+         Step 4 — How to read this. Always-on cheat sheet.
+         ======================================================== */
+      .how dl {
+        margin: 0; padding: 0;
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 0.4rem 1rem;
+      }
+      .how dt {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+      }
+      .how dd {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+      .how dd code {
+        font-family: var(--font-mono);
+        background: var(--bg-chip);
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+      }
+
+      .how-not {
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        background: rgba(226, 122, 92, 0.08);
+        border: 1px solid rgba(226, 122, 92, 0.25);
+        border-radius: 8px;
+        font-size: 0.88rem;
+      }
+      .how-not strong { color: var(--band-weakening-bright); }
+
+      /* ========================================================
+         Glossary popover — pure HTML <details>, no JS, no chrome.
+         Used inline like a tooltip.
+         ======================================================== */
+      details.term {
+        display: inline; position: relative;
+      }
+      details.term summary {
+        display: inline;
+        list-style: none;
+        cursor: help;
+        font-family: var(--font-mono);
+        background: var(--bg-chip);
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        border-bottom: 1px dotted var(--accent);
+      }
+      details.term summary::-webkit-details-marker { display: none; }
+      details.term[open] summary {
+        background: var(--accent);
+        color: #0E1216;
+        border-bottom-color: transparent;
+      }
+      details.term .popover {
+        position: absolute;
+        left: 0; top: 1.6rem;
+        z-index: 50;
+        width: min(280px, 90vw);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-strong);
+        border-radius: 8px;
+        padding: 0.7rem 0.85rem;
+        box-shadow: var(--shadow-card-hover);
+        font-family: var(--font-sans);
+        font-weight: 400;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        line-height: 1.45;
+      }
+      details.term .popover strong {
+        color: var(--text-primary);
+        display: block;
+        margin-bottom: 0.2rem;
+      }
+
+      /* ========================================================
+         Footer — escape hatches for users who outgrew the tour.
+         ======================================================== */
+      footer.page {
+        max-width: 900px;
+        margin: 2rem auto 3rem auto;
+        padding: 1rem 1.5rem;
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--text-tertiary);
+        border-top: 1px solid var(--border-subtle);
+      }
+      footer.page p { margin: 0.4rem 0; }
+      .escape-row {
+        display: flex; gap: 0.5rem; justify-content: center;
+        flex-wrap: wrap;
+        margin: 0.75rem 0;
+      }
+      .escape-row a {
+        background: var(--bg-chip);
+        border: 1px solid var(--border-subtle);
+        padding: 0.4rem 0.8rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+      }
+      .escape-row a:hover {
+        color: var(--text-primary);
+        border-color: var(--border-strong);
+        text-decoration: none;
+      }
+
+      /* ========================================================
+         Mobile
+         ======================================================== */
+      @media (max-width: 600px) {
+        main { padding: 1rem; }
+        header.page { padding: 0.75rem 1rem; }
+        .step { padding: 1.1rem; border-radius: 12px; }
+        .welcome { padding: 1rem; }
+        .verdict { gap: 1rem; }
+        .verdict-score { font-size: 3.5rem; }
+        .how dl {
+          grid-template-columns: 1fr;
+          gap: 0.1rem 0;
+        }
+        .how dd { margin-bottom: 0.5rem; }
+        .band-legend {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      /* Honor reduced-motion */
+      @media (prefers-reduced-motion: reduce) {
+        .welcome-cta { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <a href="#step-1" class="skip">Skip to today's read</a>
+
+    <header class="page">
+      <h1>LTHCS &middot; Long-Term Hold Confidence Score</h1>
+      <span class="meta" id="meta-line">as of &hellip;</span>
+    </header>
+
+    <main>
+      <!-- ===================== Welcome banner ================== -->
+      <section class="welcome" id="welcome" aria-label="Welcome — first-time visitors">
+        <div class="welcome-text">
+          <div class="welcome-eyebrow">First time here?</div>
+          <h2>This is a daily read on whether ~168 large US stocks look strong for long-term holders.</h2>
+          <p>One number. Four numbered sections. Takes 30 seconds.</p>
+        </div>
+        <a href="#step-1" class="welcome-cta">Start the 30-second tour &rarr;</a>
+        <button class="welcome-dismiss" type="button"
+                onclick="document.getElementById('welcome').style.display='none'">
+          I&rsquo;ve seen this
+        </button>
+      </section>
+
+      <!-- ===================== Step 1: Big picture ============== -->
+      <section class="step" id="step-1" aria-labelledby="step-1-title">
+        <div class="step-head">
+          <div class="step-num" aria-hidden="true">1</div>
+          <div>
+            <h2 class="step-title" id="step-1-title">The big picture</h2>
+            <p class="step-question">Where is the market leaning right now?</p>
+          </div>
+        </div>
+
+        <div class="step-body">
+          <div class="verdict">
+            <div class="verdict-score" id="verdict-score">&hellip;</div>
+            <div class="verdict-text">
+              <div class="verdict-label" id="verdict-label">&hellip;</div>
+              <p class="verdict-gloss" id="verdict-gloss">Loading today&rsquo;s read&hellip;</p>
+              <div class="verdict-sub">
+                One number, scale &minus;100 to +100. Computed daily at 23:00 UTC
+                from 9 underlying signals across the LTHCS universe.
+              </div>
+            </div>
+          </div>
+
+          <div class="gauge" role="img" aria-label="Composite gauge">
+            <div class="gauge-track"></div>
+            <div class="gauge-marker" id="gauge-marker" style="left: 37%"></div>
+          </div>
+          <div class="gauge-ticks">
+            <span>&minus;100</span><span>&minus;50</span><span>0</span><span>+50</span><span>+100</span>
+          </div>
+
+          <div class="band-legend" id="band-legend" aria-label="Verdict bands">
+            <div class="band-legend-cell" data-band="bearish">
+              <span class="band-legend-name">Bearish</span>
+              <span class="band-legend-range">&le; &minus;40</span>
+            </div>
+            <div class="band-legend-cell" data-band="cautious">
+              <span class="band-legend-name">Cautious</span>
+              <span class="band-legend-range">&minus;40 to &minus;10</span>
+            </div>
+            <div class="band-legend-cell" data-band="neutral">
+              <span class="band-legend-name">Neutral</span>
+              <span class="band-legend-range">&minus;10 to +10</span>
+            </div>
+            <div class="band-legend-cell" data-band="constructive">
+              <span class="band-legend-name">Constructive</span>
+              <span class="band-legend-range">+10 to +40</span>
+            </div>
+            <div class="band-legend-cell" data-band="bullish">
+              <span class="band-legend-name">Bullish</span>
+              <span class="band-legend-range">&ge; +40</span>
+            </div>
+          </div>
+
+          <p class="step-next">
+            Got the headline? Next: <a href="#step-2">2. What changed inside the number &rarr;</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================== Step 2: What changed ============== -->
+      <section class="step" id="step-2" aria-labelledby="step-2-title">
+        <div class="step-head">
+          <div class="step-num" aria-hidden="true">2</div>
+          <div>
+            <h2 class="step-title" id="step-2-title">What changed inside the number</h2>
+            <p class="step-question">Which signals pushed the headline up or down today?</p>
+          </div>
+        </div>
+
+        <div class="step-body">
+          <p style="margin-top:0;color:var(--text-secondary);font-size:0.92rem">
+            The headline is an average of 9 underlying signals, each scaled to
+            <code style="background:var(--bg-chip);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:0.85rem">&minus;30</code> to
+            <code style="background:var(--bg-chip);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:0.85rem">+30</code>
+            for band lean (the heaviest weight) or
+            <code style="background:var(--bg-chip);padding:1px 5px;border-radius:4px;font-family:var(--font-mono);font-size:0.85rem">&plusmn;10</code>
+            for the others. Green = pushed today&rsquo;s number up, red = pushed it down.
+            Hover any underlined term for a plain-English definition.
+          </p>
+
+          <div class="components" id="components">
+            <!-- Painted by paintComponents() — see <script> below. -->
+          </div>
+
+          <p class="step-next">
+            See the parts? Next: <a href="#step-3">3. Why today&rsquo;s read matters &rarr;</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================== Step 3: Why it matters ============ -->
+      <section class="step" id="step-3" aria-labelledby="step-3-title">
+        <div class="step-head">
+          <div class="step-num" aria-hidden="true">3</div>
+          <div>
+            <h2 class="step-title" id="step-3-title">Why today&rsquo;s read matters</h2>
+            <p class="step-question">What story do these numbers tell, in plain English?</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <div class="why" id="why-paragraph">
+            <p>Loading interpretation&hellip;</p>
+          </div>
+          <p style="font-size:0.85rem;color:var(--text-tertiary);margin:0.75rem 0 0 0">
+            Heads-up: this paragraph is generated from today&rsquo;s component deltas, not from human commentary.
+            It points you to the parts to dig into &mdash; it&rsquo;s not a recommendation.
+          </p>
+          <p class="step-next">
+            One step left: <a href="#step-4">4. How to read this dashboard &rarr;</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================== Step 4: How to read =============== -->
+      <section class="step how" id="step-4" aria-labelledby="step-4-title">
+        <div class="step-head">
+          <div class="step-num" aria-hidden="true">4</div>
+          <div>
+            <h2 class="step-title" id="step-4-title">How to read this dashboard</h2>
+            <p class="step-question">A cheat sheet you can come back to.</p>
+          </div>
+        </div>
+        <div class="step-body">
+          <dl>
+            <dt>Big swings matter</dt>
+            <dd>
+              A jump like <code>+30 &rarr; &minus;5</code> overnight is a real regime shift &mdash;
+              click any signal above to see what drove it.
+            </dd>
+
+            <dt>Bands &gt; absolute number</dt>
+            <dd>
+              "Moved from Constructive to Monitor" is a real signal.
+              "Still in Monitor" is mostly noise &mdash; bands hop at the edges.
+            </dd>
+
+            <dt>Disagreement is interesting</dt>
+            <dd>
+              When the macro signal goes one way and pillar averages go the other,
+              that&rsquo;s where the active read lives. Look for green/red mixed in step 2.
+            </dd>
+
+            <dt>13F lags by a quarter</dt>
+            <dd>
+              Big institutional positions are reported with a ~45-day delay.
+              Insider buys are fresher (within days) but can be noisy around earnings.
+            </dd>
+
+            <dt>"as of" = snapshot time</dt>
+            <dd>
+              The page doesn&rsquo;t auto-update. The number is fixed until the next 23:00 UTC run.
+              If the date looks old, the pipeline is probably stuck &mdash; check the Health page.
+            </dd>
+          </dl>
+
+          <div class="how-not">
+            <strong>What this is NOT.</strong> Not a trading signal. Not investment advice.
+            Not a forecast of next week&rsquo;s prices. It&rsquo;s a daily directional read on
+            committed public data &mdash; insiders, 13F filers, fundamentals, macro.
+            Do your own work before risking real money.
+          </div>
+
+          <p class="step-next">
+            Done with the tour. Want more? <a href="#welcome">Back to top</a>
+            &middot;
+            <a href="../../../lthcs_help/index.html">Full glossary &amp; help</a>
+            &middot;
+            <a href="../../index.html">Back to the production dashboard</a>
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="page">
+      <p>
+        LTHCS Composite Index &mdash; Revamp B mockup (Guided Narrative angle).
+        Data is real and pulled from <code>data/lthcs/index/2026-05-20.json</code>.
+      </p>
+      <div class="escape-row" aria-label="Other LTHCS views">
+        <a href="#step-1">Today&rsquo;s read</a>
+        <a href="../../../lthcs_help/index.html">Full help</a>
+        <a href="../../index.html">Production dashboard</a>
+      </div>
+      <p style="font-size:0.75rem;color:var(--text-tertiary)">
+        Not investment advice. Educational research project shipping in the open.
+      </p>
+    </footer>
+
+    <script>
+      'use strict';
+
+      // ===========================================================
+      // Real payload, hardcoded from data/lthcs/index/2026-05-20.json
+      // (score -26, label "LTHCS NEUTRAL", band_key "monitor").
+      // Hardcoding rather than fetching keeps the mockup self-
+      // contained per the constraints in the brief.
+      // ===========================================================
+      const PAYLOAD = {
+        "as_of": "2026-05-20",
+        "band_key": "monitor",
+        "color": "#F0A861",
+        "label": "LTHCS NEUTRAL",
+        "note": "Aggregate of 167-ticker LTHCS universe. Directional read, not a trading signal.",
+        "score": -26,
+        "components": [
+          { "delta": -23, "name": "Band lean (bullish % minus bearish %)", "read": "universe distributing", "value": "-77.2%" },
+          { "delta":   0, "name": "Adoption pillar avg",                   "read": "adoption neutral",       "value": 50.8 },
+          { "delta":   0, "name": "Institutional pillar avg",              "read": "institutional steady",   "value": 48.6 },
+          { "delta":   1, "name": "Financial pillar avg",                  "read": "fundamentals stable",    "value": 55.8 },
+          { "delta":   2, "name": "Thesis pillar avg",                     "read": "narrative mixed",        "value": 59.2 },
+          { "delta":  -1, "name": "DES (demand environment) avg",          "read": "macro neutral",          "value": 46.8 },
+          { "delta":  10, "name": "Macro regime (HY OAS / curve / USD)",   "read": "risk-on backdrop",       "value": "clean" },
+          { "delta":  -7, "name": "Insider conviction breadth",            "read": "insiders distributing",  "value": "63 active signals" },
+          { "delta":  -8, "name": "13F conviction breadth (acc vs dist)",  "read": "institutions distributing", "value": "8 vs 90" }
+        ]
+      };
+
+      // ===========================================================
+      // Per-component plain-English gloss + jargon definition for
+      // the inline <details> popover. Pulled directly from
+      // lthcs_help/index.html ("Row by row" + Flags glossary), with
+      // the prose tightened for the narrative format.
+      // ===========================================================
+      const COMP_META = {
+        "Band lean (bullish % minus bearish %)": {
+          gloss: "Of every 168 names we track, what share is in the top 3 bands vs. the bottom 2.",
+          term: "band lean",
+          def: "% of the universe in the top three bands (Elite + High + Constructive) minus % in the bottom two (Weakening + Review). Positive = more strong names than weak ones."
+        },
+        "Adoption pillar avg": {
+          gloss: "Average of the &quot;who actually uses or holds this&quot; score across all 168 names.",
+          term: "Adoption pillar",
+          def: "Product traction, user / holder growth, network footprint. Built from retail-app downloads, employment growth, Wikipedia pageview trend."
+        },
+        "Institutional pillar avg": {
+          gloss: "Average of the &quot;what sophisticated owners are doing&quot; score.",
+          term: "Institutional pillar",
+          def: "Form 4 insider net buys, 13F qtr-over-qtr deltas, ETF AUM trend, put/call posture. Captures whether smart money is adding or trimming."
+        },
+        "Financial pillar avg": {
+          gloss: "Average of the &quot;can this business fund itself&quot; score.",
+          term: "Financial pillar",
+          def: "TTM free cash flow yield, net cash, dividend coverage, buyback authorization remaining."
+        },
+        "Thesis pillar avg": {
+          gloss: "Average of the &quot;what the market thinks of the story&quot; score. Often missing in V1.",
+          term: "Thesis pillar",
+          def: "EPS revision breadth, price-target deltas, multi-timeframe trend posture. Often n/a in V1 — free-tier news/sentiment data returns no usable analyst data."
+        },
+        "DES (demand environment) avg": {
+          gloss: "Average of Demand-vs-Earnings Strength: is the run-up earned, or all multiple expansion?",
+          term: "DES",
+          def: "Demand-vs-Earnings Strength. Compares trailing return against trailing EPS growth, sector-relative. Negative = price ran ahead of earnings."
+        },
+        "Macro regime (HY OAS / curve / USD)": {
+          gloss: "Risk-on / risk-off composite from credit spreads, the yield curve, and the dollar.",
+          term: "Macro regime",
+          def: "HY OAS (junk-bond spreads), 2s10s (Treasury curve), and trade-weighted USD. Positive = risk-on backdrop that lifts long-duration assets."
+        },
+        "Insider conviction breadth": {
+          gloss: "Across the universe, are insiders net buying or net selling?",
+          term: "Form 4",
+          def: "SEC filing insiders submit when they buy or sell their own company's stock. This signal counts net-buy minus net-sell breadth across all 168 names."
+        },
+        "13F conviction breadth (acc vs dist)": {
+          gloss: "Across the universe, are institutions accumulating or distributing? Lags one quarter.",
+          term: "13F",
+          def: "Quarterly SEC filing from funds &gt;$100M reporting their long equity holdings. Filed ~45 days after quarter-end, so this signal lags actual positioning."
+        }
+      };
+
+      // ===========================================================
+      // Render: tone, verdict, gauge, components, why-paragraph.
+      // ===========================================================
+      function paint(payload) {
+        // ---- Tone color from band_key (drives the numbered circles,
+        //      score color, accents). Mirrors lthcs-index.js logic.
+        const toneByBand = {
+          elite: 'var(--band-elite-bright)',
+          high_confidence: 'var(--band-high-bright)',
+          constructive: 'var(--band-constructive-bright)',
+          monitor: 'var(--band-monitor-bright)',
+          weakening: 'var(--band-weakening-bright)',
+          review: 'var(--band-review-bright)'
+        };
+        const tone = toneByBand[payload.band_key] || 'var(--band-monitor-bright)';
+        document.documentElement.style.setProperty('--tone', tone);
+
+        // ---- Meta-line in the page header
+        document.getElementById('meta-line').textContent = 'as of ' + payload.as_of;
+
+        // ---- Step 1: Verdict score + label + gloss
+        const score = payload.score;
+        const scoreStr = (score >= 0 ? '+' : '') + score;
+        document.getElementById('verdict-score').textContent = scoreStr;
+
+        const cleanLabel = String(payload.label || '').replace(/^LTHCS\s+/i, '');
+        document.getElementById('verdict-label').textContent = cleanLabel;
+
+        // Plain-English gloss tied to the verdict band
+        const glossByLabel = {
+          'BULLISH': 'Broad-based strength &mdash; pillar averages, band lean, and macro all leaning the same way. The universe looks healthy for long-term holders.',
+          'CONSTRUCTIVE': 'More green than red, but mixed. Some signals are firming while others are catching up. Constructive backdrop, not all-clear.',
+          'NEUTRAL': 'The universe is leaning slightly cautious today &mdash; more names softening than firming, but no clean directional bias yet. Worth watching the components below.',
+          'CAUTIOUS': 'More red than green. Pillars or macro are weakening across the universe. Not a panic signal, but the burden of proof is on the bulls.',
+          'BEARISH': 'Broad weakness across pillars and macro. Time to re-underwrite holdings rather than add risk.'
+        };
+        document.getElementById('verdict-gloss').innerHTML = glossByLabel[cleanLabel] ||
+          'A daily directional read on long-term-hold sentiment across the universe.';
+
+        // ---- Step 1: Gauge marker position
+        const pct = Math.max(0, Math.min(100, ((score + 100) / 200) * 100));
+        document.getElementById('gauge-marker').style.left = pct.toFixed(1) + '%';
+
+        // ---- Step 1: Band-legend highlight (the one we're in)
+        const legendByLabel = {
+          'BULLISH': 'bullish',
+          'CONSTRUCTIVE': 'constructive',
+          'NEUTRAL': 'neutral',
+          'CAUTIOUS': 'cautious',
+          'BEARISH': 'bearish'
+        };
+        const here = legendByLabel[cleanLabel];
+        document.querySelectorAll('.band-legend-cell').forEach((el) => {
+          if (el.dataset.band === here) el.classList.add('is-here');
+        });
+
+        // ---- Step 2: Components
+        paintComponents(payload.components || []);
+
+        // ---- Step 3: Why-paragraph (interpretation)
+        paintWhy(payload);
+      }
+
+      function paintComponents(components) {
+        const host = document.getElementById('components');
+        host.innerHTML = '';
+        for (const c of components) {
+          const meta = COMP_META[c.name] || { gloss: '', term: null, def: '' };
+          const deltaClass = c.delta > 0 ? 'pos' : (c.delta < 0 ? 'neg' : 'zero');
+          const deltaStr = (c.delta > 0 ? '+' : '') + c.delta;
+          const cap = /^Band lean/i.test(c.name) ? 30 : 10;
+          const ratio = Math.min(Math.abs(c.delta) / cap, 1);
+          const fillPct = (ratio * 50).toFixed(1);
+          const fillSide = c.delta >= 0 ? 'pos' : 'neg';
+          const fillStyle = c.delta >= 0
+            ? 'left:50%;width:' + fillPct + '%'
+            : 'right:50%;width:' + fillPct + '%';
+
+          // Build the component name with an inline <details> popover
+          // around the jargon term, if any.
+          let nameHtml = escapeHtml(c.name);
+          if (meta.term) {
+            const re = new RegExp('(' + meta.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i');
+            nameHtml = escapeHtml(c.name).replace(re,
+              '<details class="term"><summary>$1</summary><div class="popover" role="note"><strong>' +
+              escapeHtml(meta.term) + '</strong>' + meta.def + '</div></details>');
+          }
+
+          const div = document.createElement('div');
+          div.className = 'comp';
+          div.innerHTML =
+            '<div class="comp-head">' +
+              '<div class="comp-name">' + nameHtml + '</div>' +
+              '<div class="comp-delta ' + deltaClass + '">' + deltaStr + '</div>' +
+            '</div>' +
+            '<div class="comp-value">value: ' + escapeHtml(c.value) + '</div>' +
+            '<p class="comp-read">' +
+              escapeHtml(c.read || '') +
+              '<span class="gloss">' + meta.gloss + '</span>' +
+            '</p>' +
+            '<div class="comp-strength">' +
+              '<div class="comp-strength-spine"></div>' +
+              '<div class="comp-strength-fill ' + fillSide + '" style="' + fillStyle + '"></div>' +
+            '</div>';
+          host.appendChild(div);
+        }
+      }
+
+      function paintWhy(payload) {
+        // Build a narrative paragraph keyed off the strongest components.
+        // Heuristic: largest positive delta + largest negative delta
+        // become the headline divergence.
+        const comps = (payload.components || []).slice();
+        const sortedByAbs = comps.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
+        const negs = comps.filter(c => c.delta < 0).sort((a, b) => a.delta - b.delta);
+        const poss = comps.filter(c => c.delta > 0).sort((a, b) => b.delta - a.delta);
+
+        const cleanLabel = String(payload.label || '').replace(/^LTHCS\s+/i, '');
+        const scoreStr = (payload.score >= 0 ? '+' : '') + payload.score;
+
+        const lead = 'Today the headline reads <strong>' + scoreStr + '</strong> &mdash; <em>' +
+          cleanLabel + '</em>. Here&rsquo;s the story behind it.';
+
+        let body = '';
+        if (negs.length && poss.length) {
+          const worst = negs[0];
+          const best = poss[0];
+          body =
+            'The biggest drag is <strong>' + escapeHtml(stripParen(worst.name)) +
+            '</strong> at <code>' + (worst.delta > 0 ? '+' : '') + worst.delta + '</code> &mdash; ' +
+            escapeHtml(worst.read || '') + '. ' +
+            'Pulling the other direction: <strong>' + escapeHtml(stripParen(best.name)) +
+            '</strong> at <code>+' + best.delta + '</code> (' + escapeHtml(best.read || '') + ').';
+        } else if (negs.length) {
+          const worst = negs[0];
+          body = 'The biggest drag is <strong>' + escapeHtml(stripParen(worst.name)) +
+            '</strong> at <code>' + worst.delta + '</code> &mdash; ' + escapeHtml(worst.read || '') + '. ' +
+            'Nothing is pushing meaningfully the other way today.';
+        } else if (poss.length) {
+          const best = poss[0];
+          body = 'The standout is <strong>' + escapeHtml(stripParen(best.name)) +
+            '</strong> at <code>+' + best.delta + '</code> (' + escapeHtml(best.read || '') +
+            '). Nothing material is dragging.';
+        } else {
+          body = 'All nine components are flat today &mdash; a genuinely quiet day under the headline.';
+        }
+
+        // Divergence call-out: macro vs. breadth — the most useful read
+        // for the narrative format (mentioned explicitly in the help page).
+        const macro = comps.find(c => /^Macro regime/i.test(c.name));
+        const bandLean = comps.find(c => /^Band lean/i.test(c.name));
+        let divergence = '';
+        if (macro && bandLean && Math.sign(macro.delta) !== Math.sign(bandLean.delta) &&
+            Math.abs(macro.delta) >= 3 && Math.abs(bandLean.delta) >= 3) {
+          const macroDir = macro.delta > 0 ? 'risk-on' : 'risk-off';
+          const breadthDir = bandLean.delta > 0 ? 'accumulating' : 'distributing';
+          divergence =
+            '<div class="why-divergence"><strong>Watch the divergence:</strong> ' +
+            'macro is <em>' + macroDir + '</em> (<code>' + (macro.delta>0?'+':'') + macro.delta +
+            '</code>), but the breadth of the universe is <em>' + breadthDir + '</em> (<code>' +
+            (bandLean.delta>0?'+':'') + bandLean.delta + '</code>). ' +
+            'When those disagree, the signal is idiosyncratic, not market-wide &mdash; drill into individual tickers.</div>';
+        }
+
+        document.getElementById('why-paragraph').innerHTML =
+          '<p>' + lead + '</p><p>' + body + '</p>' + divergence;
+      }
+
+      // ===========================================================
+      // Tiny helpers
+      // ===========================================================
+      function escapeHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function stripParen(s) {
+        // "Band lean (bullish % minus bearish %)" → "Band lean"
+        return String(s || '').replace(/\s*\(.+?\)\s*$/, '').trim();
+      }
+
+      // ===========================================================
+      // Close any open <details> popover when clicking outside —
+      // makes the inline-tooltip pattern behave like a popover.
+      // ===========================================================
+      document.addEventListener('click', (e) => {
+        document.querySelectorAll('details.term[open]').forEach((d) => {
+          if (!d.contains(e.target)) d.removeAttribute('open');
+        });
+      });
+
+      // Boot
+      paint(PAYLOAD);
+    </script>
+  </body>
+</html>
