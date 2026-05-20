@@ -59,6 +59,45 @@ function deltaStr(delta) {
   return (delta >= 0 ? '+' : '') + delta;
 }
 
+// Strip the legacy "LTHCS " prefix from verdict labels written by older
+// snapshots — index_aggregate.py emits e.g. "LTHCS NEUTRAL"; we display
+// just "NEUTRAL" since the surrounding card already says LTHCS.
+function cleanLabel(label) {
+  if (!label) return '';
+  return String(label).replace(/^LTHCS\s+/i, '');
+}
+
+// Per-component cap on the index contribution (mirrors index_aggregate.py:
+// _BAND_LEAN_CAP=30, all other components capped at ±10). Used to draw
+// the strength bar — width = |delta| / cap.
+function capForComponent(name) {
+  if (!name) return 10;
+  if (/^Band lean/i.test(name)) return 30;
+  return 10;
+}
+
+// Render a centered ±strength bar for a component. Negative fills to the
+// left (red), positive fills to the right (green); a faint center spine
+// marks the zero line.
+function strengthBarHtml(delta, cap) {
+  const d = Number(delta);
+  if (!Number.isFinite(d) || cap <= 0) {
+    return '<div class="lthcs-index-strength" aria-hidden="true"><div class="lthcs-index-strength-track"></div></div>';
+  }
+  const ratio = Math.min(Math.abs(d) / cap, 1);
+  const pct = (ratio * 50).toFixed(1); // half-width: 50% of full bar
+  const side = d >= 0 ? 'pos' : 'neg';
+  const fillStyle = d >= 0
+    ? `left: 50%; width: ${pct}%;`
+    : `right: 50%; width: ${pct}%;`;
+  return `
+    <div class="lthcs-index-strength" aria-hidden="true">
+      <div class="lthcs-index-strength-track"></div>
+      <div class="lthcs-index-strength-fill lthcs-index-strength-${side}" style="${fillStyle}"></div>
+      <div class="lthcs-index-strength-spine"></div>
+    </div>`;
+}
+
 // Map composite score in [-100, +100] to a 0-100% offset on the gauge.
 function gaugePctFor(score) {
   if (typeof score !== 'number' || !Number.isFinite(score)) return 50;
@@ -72,11 +111,14 @@ function renderComponentsTable(components) {
   if (!components || !components.length) return '';
   const rows = components.map((c) => {
     const cls = deltaClass(c.delta);
+    const cap = capForComponent(c.name);
+    const bar = strengthBarHtml(c.delta, cap);
     return `
       <tr>
         <td class="lthcs-index-comp-name">${escapeHtml(c.name)}</td>
         <td class="lthcs-index-comp-value">${escapeHtml(c.value)}</td>
         <td class="lthcs-index-comp-delta ${cls}">${escapeHtml(deltaStr(c.delta))}</td>
+        <td class="lthcs-index-comp-strength">${bar}</td>
         <td class="lthcs-index-comp-read">${escapeHtml(c.read || '')}</td>
       </tr>`;
   }).join('');
@@ -87,6 +129,7 @@ function renderComponentsTable(components) {
           <th scope="col">Component</th>
           <th scope="col">Value</th>
           <th scope="col">&plusmn;</th>
+          <th scope="col" class="lthcs-index-strength-col">Strength</th>
           <th scope="col">Read</th>
         </tr>
       </thead>
@@ -106,7 +149,7 @@ function renderIndexInto(host, payload) {
   const bandKey = payload.band_key || 'monitor';
   const color = BAND_BRIGHT[bandKey] || 'var(--band-monitor-bright)';
   const pct = gaugePctFor(score);
-  const label = payload.label || 'LTHCS NEUTRAL';
+  const label = cleanLabel(payload.label) || 'NEUTRAL';
   const note = payload.note || '';
   const asOf = payload.as_of || '';
   const componentsHtml = renderComponentsTable(payload.components || []);

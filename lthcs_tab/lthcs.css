@@ -458,6 +458,37 @@ input[type="search"] {
 .lthcs-index-comp-delta.lthcs-index-pos { color: var(--band-high-bright); }
 .lthcs-index-comp-delta.lthcs-index-neg { color: var(--band-weakening-bright); }
 .lthcs-index-comp-delta.lthcs-index-neutral { color: var(--text-tertiary); }
+.lthcs-index-strength-col { width: 110px; }
+.lthcs-index-comp-strength { width: 110px; padding-right: 12px; }
+.lthcs-index-strength {
+  position: relative;
+  width: 100%;
+  height: 8px;
+  min-width: 80px;
+}
+.lthcs-index-strength-track {
+  position: absolute;
+  inset: 3px 0;
+  background: var(--border-subtle);
+  border-radius: 2px;
+}
+.lthcs-index-strength-spine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 0.5px);
+  width: 1px;
+  background: var(--text-tertiary);
+  opacity: 0.5;
+}
+.lthcs-index-strength-fill {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  border-radius: 2px;
+}
+.lthcs-index-strength-pos { background: var(--band-high-bright); }
+.lthcs-index-strength-neg { background: var(--band-weakening-bright); }
 .lthcs-index-comp-read {
   color: var(--text-tertiary);
   font-size: 11px;
