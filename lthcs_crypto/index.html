@@ -27,7 +27,11 @@
             <span class="lthcs-meta-label">Generated</span>
             <span id="lcry-generated" class="lthcs-meta-value">&hellip;</span>
           </div>
-          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+          <div class="lthcs-meta-line lcry-meta-fresh hidden" id="lcry-freshness">
+            <span class="lthcs-meta-label">Updated</span>
+            <span id="lcry-freshness-value" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn lcry-backlink" aria-label="Back to card view" style="text-decoration:none">
             <span aria-hidden="true">&larr;</span>
             <span class="lthcs-refresh-label">Card View</span>
           </a>
@@ -39,32 +43,32 @@
       <section id="lcry-loading" class="lthcs-section lcry-loading">Loading crypto scores&hellip;</section>
       <section id="lcry-error" class="lthcs-section lcry-error hidden" role="alert"></section>
       <section id="lcry-empty" class="lthcs-section lcry-empty hidden">
-        <h2 class="lcry-h2">No crypto snapshot on disk yet</h2>
+        <h2 class="lcry-h2">Waiting on today&rsquo;s crypto snapshot</h2>
         <p class="lcry-note">
-          The crypto daily runner (<code>scripts/lthcs_crypto_daily.py</code>) writes one
-          snapshot per day under <code>data/lthcs/snapshots_crypto/&lt;date&gt;.json</code>.
-          Once Phase 2 + CI gating land, this page will populate automatically.
-          Until then, the universe roster below shows what will be scored.
+          The crypto daily runner publishes one snapshot per UTC day to
+          <code>data/lthcs/snapshots_crypto/&lt;date&gt;.json</code>. If you&rsquo;re seeing
+          this, the most-recent {{PROBE_DAYS}}-day window came back empty &mdash; the cron
+          may not have landed yet today (it runs ~04:00 UTC) or this is a fresh deploy.
+          The universe roster below is what gets scored once the snapshot lands.
+        </p>
+        <p class="lcry-note">
+          <a class="lcry-inline-link" href="../">&larr; Back to LTHCS card view</a>
         </p>
         <div id="lcry-universe" class="lcry-universe"></div>
       </section>
 
       <div id="lcry-content" class="hidden">
-        <!-- ===== Per-asset score cards =================================== -->
-        <section class="lthcs-section lcry-section" aria-label="Asset scores">
-          <h2 class="lcry-h2">Composite scores <span class="lcry-h2-sub">(0&ndash;100, equity-share thresholds)</span></h2>
-          <div id="lcry-cards" class="lcry-cards"></div>
+        <!-- ===== Universe stat strip ===================================== -->
+        <section class="lthcs-section lcry-section lcry-strip-section" aria-label="Universe stats">
+          <div id="lcry-strip" class="lcry-strip"></div>
         </section>
 
-        <!-- ===== Pillar breakdown grid ==================================== -->
-        <section class="lthcs-section lcry-section" aria-label="Pillar breakdown">
-          <h2 class="lcry-h2">Pillar breakdown <span class="lcry-h2-sub">(sub-score &middot; weight &middot; contribution)</span></h2>
-          <p class="lcry-note">
-            Composite = &sum;(sub_score &times; effective_weight). Dropped pillars (when all components are missing)
-            show <em>n/a</em> and the remaining weights are renormalized; this is identical to the equity
-            <code>thesis_unavailable</code> flag path.
-          </p>
-          <div id="lcry-pillars" class="lcry-pillars"></div>
+        <!-- ===== Per-asset score cards =================================== -->
+        <section class="lthcs-section lcry-section" aria-label="Asset scores">
+          <h2 class="lcry-h2">Composite scores
+            <span class="lcry-h2-sub">(0&ndash;100, equity-share thresholds &middot; click a card for detail)</span>
+          </h2>
+          <div id="lcry-cards" class="lcry-cards"></div>
         </section>
 
         <!-- ===== Thesis call line ========================================= -->
@@ -72,12 +76,26 @@
           <h2 class="lcry-h2">Thesis Integrity <span class="lcry-h2-sub">(funding-rate + L/S, Phase 2 wiring)</span></h2>
           <p class="lcry-note">
             Funding-rate normalcy + L/S-ratio normalcy score 100 at neutrality and 0 at the saturation
-            extremes (&plusmn;0.10% per 8h funding, log-symmetric L/S around 1.0). Phase 1 left Thesis
-            neutral at 50 across the board; Phase 2 wired per-asset funding into <code>inputs_for</code>.
+            extremes (&plusmn;0.10% per 8h funding, log-symmetric L/S around 1.0). When all inputs are
+            missing the pillar is dropped and remaining weights renormalize &mdash; identical to the
+            equity <code>thesis_unavailable</code> flag path.
           </p>
           <div id="lcry-thesis" class="lcry-thesis"></div>
         </section>
+
+        <!-- ===== Pillar breakdown grid ==================================== -->
+        <section class="lthcs-section lcry-section" aria-label="Pillar breakdown">
+          <h2 class="lcry-h2">Pillar breakdown <span class="lcry-h2-sub">(sub-score &middot; weight &middot; contribution)</span></h2>
+          <p class="lcry-note">
+            Composite = &sum;(sub_score &times; effective_weight). Dropped pillars show <em>n/a</em>
+            and their weight is renormalized across the remaining four.
+          </p>
+          <div id="lcry-pillars" class="lcry-pillars"></div>
+        </section>
       </div>
+
+      <!-- ===== Detail modal root ===================================== -->
+      <div id="lcry-modal-root" class="lcry-modal-root hidden" role="dialog" aria-modal="true" aria-labelledby="lcry-modal-title"></div>
     </main>
 
     <footer class="lthcs-footer">
@@ -86,7 +104,7 @@
         committed by the crypto daily runner. Scoring math lives in
         <code>lthcs/pillars/crypto_*.py</code>; the spec is at
         <code>docs/lthcs-crypto-pillar-adapter-spec.md</code>.
-        V1-only — does not deploy to <code>/v2/</code>.
+        V1-only &mdash; does not deploy to <code>/v2/</code>.
       </p>
     </footer>
 

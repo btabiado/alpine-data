@@ -24,6 +24,11 @@
   border-left: 3px solid var(--band-review-bright);
   padding-left: 12px;
 }
+.lcry-inline-link {
+  color: var(--accent, var(--band-high-bright));
+  text-decoration: none;
+}
+.lcry-inline-link:hover { text-decoration: underline; }
 
 .lcry-section {
   background: var(--bg-elevated);
@@ -31,6 +36,7 @@
   padding: 18px 20px;
   box-shadow: var(--shadow-card, 0 1px 0 rgba(0,0,0,0.4));
 }
+.lcry-strip-section { padding: 14px 16px; }
 
 .lcry-h2 {
   margin: 0 0 12px;
@@ -58,6 +64,18 @@
   font-size: 11px;
 }
 
+/* ----- Back-link prominence ------------------------------------------- */
+.lcry-backlink {
+  /* Outdo the default refresh-btn tint so the path back is unmistakable. */
+  border-color: var(--accent, var(--band-high-bright)) !important;
+}
+
+/* ----- Header freshness indicator ------------------------------------ */
+.lcry-meta-fresh .lcry-freshness-fresh { color: var(--band-high-bright, #58c47a); }
+.lcry-meta-fresh .lcry-freshness-recent { color: var(--band-constructive-bright, #e0c054); }
+.lcry-meta-fresh .lcry-freshness-stale { color: var(--band-monitor-bright, #f3a25b); }
+.lcry-meta-fresh .lcry-freshness-old { color: var(--band-review-bright, #e35a3d); }
+
 /* ----- Universe placeholder (empty state) ------------------------------ */
 .lcry-universe {
   display: flex;
@@ -81,6 +99,38 @@
   font-weight: 600;
 }
 
+/* ----- Universe stat strip -------------------------------------------- */
+.lcry-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+.lcry-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+}
+.lcry-tile-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+.lcry-tile-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+.lcry-tile-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
 /* ----- Composite score cards ------------------------------------------ */
 .lcry-cards {
   display: grid;
@@ -97,6 +147,21 @@
   gap: 10px;
   position: relative;
   overflow: hidden;
+  /* Force button-baseline reset so this looks like a card, not a button. */
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+.lcry-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--lcry-band, var(--accent));
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+.lcry-card:focus-visible {
+  outline: 2px solid var(--accent, var(--band-high-bright));
+  outline-offset: 2px;
 }
 .lcry-card::before {
   content: '';
@@ -125,6 +190,12 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+.lcry-card-score-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
 .lcry-card-score {
   font-size: 34px;
   font-weight: 700;
@@ -135,6 +206,18 @@
   font-size: 20px;
   color: var(--text-tertiary);
 }
+.lcry-card-vsavg {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-chip);
+  white-space: nowrap;
+}
+.lcry-card-vsavg.pos { color: var(--drift-improving-bright); }
+.lcry-card-vsavg.neg { color: var(--drift-declining-bright); }
+.lcry-card-vsavg.flat { color: var(--drift-flat-accent); }
+
 .lcry-card-band {
   display: inline-block;
   padding: 4px 10px;
@@ -147,6 +230,14 @@
   color: #fff;
   align-self: flex-start;
 }
+
+.lcry-card-spark {
+  display: block;
+  width: 100%;
+  height: 32px;
+  color: var(--text-tertiary);
+}
+
 .lcry-card-drifts {
   display: flex;
   flex-wrap: wrap;
@@ -158,9 +249,26 @@
   display: inline-flex;
   gap: 4px;
 }
+.lcry-card-drift-key { color: var(--text-tertiary); }
 .lcry-card-drift-val.pos { color: var(--drift-improving-bright); }
 .lcry-card-drift-val.neg { color: var(--drift-declining-bright); }
 .lcry-card-drift-val.flat { color: var(--drift-flat-accent); }
+
+.lcry-card-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.lcry-card-flag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(180, 130, 60, 0.18);
+  color: var(--band-monitor-bright, #f3a25b);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  cursor: help;
+}
 
 /* ----- Pillar breakdown grid ------------------------------------------ */
 .lcry-pillars {
@@ -277,7 +385,194 @@
   color: var(--text-tertiary);
 }
 
+/* ----- Detail modal --------------------------------------------------- */
+.lcry-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+}
+.lcry-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+}
+body.lcry-modal-open { overflow: hidden; }
+
+.lcry-modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--lcry-band, var(--text-tertiary));
+  border-radius: var(--radius-lg, 12px);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+.lcry-modal-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.lcry-modal-titles { display: flex; flex-direction: column; gap: 8px; }
+.lcry-modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+.lcry-modal-subtitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+}
+.lcry-modal-band {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.lcry-modal-score {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+.lcry-modal-conf { color: var(--text-tertiary); }
+.lcry-modal-close {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.lcry-modal-close:hover { color: var(--text-primary); border-color: var(--accent); }
+.lcry-modal-close:focus-visible {
+  outline: 2px solid var(--accent, var(--band-high-bright));
+  outline-offset: 2px;
+}
+
+.lcry-modal-section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+.lcry-modal-spark {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+  padding: 12px 14px;
+  color: var(--text-tertiary);
+}
+.lcry-modal-spark-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+}
+.lcry-modal-spark-svg { min-height: 200px; }
+
+.lcry-modal-pillars { display: flex; flex-direction: column; gap: 10px; }
+.lcry-modal-pillar { display: flex; flex-direction: column; gap: 4px; }
+.lcry-modal-pillar.dropped { opacity: 0.55; }
+.lcry-modal-pillar-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.lcry-modal-pillar-name { font-weight: 500; color: var(--text-primary); }
+.lcry-modal-pillar-meta { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.lcry-modal-pillar-track {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-chip);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lcry-modal-pillar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 200ms ease;
+}
+
+.lcry-modal-thesis,
+.lcry-modal-drift,
+.lcry-modal-flags {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md, 10px);
+}
+.lcry-modal-drift-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.lcry-modal-drift-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.lcry-modal-drift-key {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+}
+.lcry-modal-flag {
+  font-size: 12px;
+  color: var(--band-monitor-bright, #f3a25b);
+}
+
 /* ----- Responsive ------------------------------------------------------ */
+@media (max-width: 720px) {
+  .lcry-cards {
+    /* On phones, stack vertically: 10 cards is too many side-by-side. */
+    grid-template-columns: 1fr;
+  }
+  .lcry-thesis {
+    grid-template-columns: 1fr;
+  }
+  .lcry-card-score { font-size: 28px; }
+  .lcry-modal-card { padding: 16px; }
+  .lcry-modal-drift-grid { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 640px) {
   .lcry-pillar-table .lcry-bar-cell { width: 80px; }
   .lcry-pillar-table th,
