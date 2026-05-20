@@ -313,6 +313,109 @@ def test_rebuild_history_skips_malformed_rows(store: LthcsPersist) -> None:
 
 
 # ---------------------------------------------------------------------------
+# read_prior_scores -- drift_30d=0 universe-wide bug regression (Phase 3 hotfix)
+# ---------------------------------------------------------------------------
+
+def _seed_synthetic_history(
+    store: LthcsPersist,
+    ticker: str,
+    anchor_date: str,
+    days: int,
+    *,
+    score_fn=None,
+) -> None:
+    """Write `days` calendar days of history ending the day BEFORE anchor_date.
+
+    Each entry's score is ``score_fn(offset)`` where ``offset`` is the
+    integer number of days before anchor_date (1..days). Default
+    ``score_fn`` is a simple linear ramp ``50.0 + offset * 0.1`` so the
+    arithmetic checks below are exact.
+    """
+    from datetime import date as _date, timedelta as _td
+    if score_fn is None:
+        score_fn = lambda off: round(50.0 + off * 0.1, 2)
+    anchor = _date.fromisoformat(anchor_date)
+    for off in range(1, days + 1):
+        d = (anchor - _td(days=off)).isoformat()
+        store.append_history_entry(
+            ticker, d, score_fn(off), "monitor", MODEL_VERSION,
+        )
+
+
+def test_read_prior_scores_returns_none_when_no_history(store: LthcsPersist) -> None:
+    out = store.read_prior_scores("AAPL", "2026-05-19")
+    assert out == {"1d": None, "7d": None, "30d": None, "90d": None}
+
+
+def test_read_prior_scores_exact_offset_match(store: LthcsPersist) -> None:
+    """When history has an entry exactly N days back, pick that score."""
+    _seed_synthetic_history(store, "AAPL", "2026-05-19", days=91)
+    out = store.read_prior_scores("AAPL", "2026-05-19")
+    # score_fn(off) = 50.0 + off * 0.1
+    assert out["1d"] == pytest.approx(50.1)
+    assert out["7d"] == pytest.approx(50.7)
+    assert out["30d"] == pytest.approx(53.0)
+    assert out["90d"] == pytest.approx(59.0)
+
+
+def test_read_prior_scores_excludes_calc_date_itself(store: LthcsPersist) -> None:
+    """The bug we're fixing: --force re-runs must not return today's score.
+
+    If calc_date itself is in history, drift_1d should look back to
+    yesterday, not today.
+    """
+    # Yesterday: 60.0; today's row also exists in history at 80.0.
+    store.append_history_entry("AAPL", "2026-05-18", 60.0, "monitor", MODEL_VERSION)
+    store.append_history_entry("AAPL", "2026-05-19", 80.0, "elite", MODEL_VERSION)
+    out = store.read_prior_scores("AAPL", "2026-05-19")
+    # 1d back is 60.0 (yesterday) -- NOT 80.0 (today).
+    assert out["1d"] == pytest.approx(60.0)
+
+
+def test_read_prior_scores_nearest_prior_when_gap(store: LthcsPersist) -> None:
+    """Weekend / gap-day case: target = calc_date - 7d falls on a missing
+    date, so the nearest-prior entry should be picked.
+    """
+    # Seed entries only on M, W, F. calc_date = a Monday 2026-05-18.
+    # Target dates for windows:
+    #   1d  -> 2026-05-17 (Sun)  -> nearest prior is Fri 2026-05-15
+    #   7d  -> 2026-05-11 (Mon)  -> exact entry exists
+    #   30d -> 2026-04-18        -> nearest prior is whatever's earliest seeded
+    store.append_history_entry("AAPL", "2026-05-15", 70.0, "monitor", MODEL_VERSION)  # Fri
+    store.append_history_entry("AAPL", "2026-05-13", 65.0, "monitor", MODEL_VERSION)  # Wed
+    store.append_history_entry("AAPL", "2026-05-11", 60.0, "monitor", MODEL_VERSION)  # Mon
+    out = store.read_prior_scores("AAPL", "2026-05-18")
+    assert out["1d"] == pytest.approx(70.0)  # latest <= 2026-05-17 is Fri 70.0
+    assert out["7d"] == pytest.approx(60.0)  # exact match on 2026-05-11
+    # 30d / 90d back: no entry that old -> None
+    assert out["30d"] is None
+    assert out["90d"] is None
+
+
+def test_read_prior_scores_drives_nonzero_drift(store: LthcsPersist) -> None:
+    """End-to-end seam: read_prior_scores -> compute_drift produces
+    non-zero drift for ALL four windows when ≥91 days of history exist.
+
+    Regression for the Phase 3 audit finding: drift_30d (and all drift
+    windows) were universally 0.0 across the 167-ticker universe
+    because the daily pipeline never wired prior_scores into
+    compute_lthcs_score.
+    """
+    from lthcs.score import compute_drift
+
+    _seed_synthetic_history(store, "AAPL", "2026-05-19", days=91)
+    priors = store.read_prior_scores("AAPL", "2026-05-19")
+    today_score = 80.0
+    drift = compute_drift(today_score, priors)
+    # Every window has a prior -> every drift must be non-zero and
+    # match the analytic delta (today - prior) within rounding.
+    for win in ("1d", "7d", "30d", "90d"):
+        assert priors[win] is not None
+        assert drift["drift_" + win] != 0.0
+        assert drift["drift_" + win] == pytest.approx(today_score - priors[win], abs=0.05)
+
+
+# ---------------------------------------------------------------------------
 # Index
 # ---------------------------------------------------------------------------
 

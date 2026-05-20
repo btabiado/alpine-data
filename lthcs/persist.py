@@ -295,6 +295,91 @@ class LthcsPersist:
     def history_path(self, ticker: str) -> Path:
         return self.history_dir / ("%s.json" % _safe_ticker(ticker))
 
+    def read_prior_scores(
+        self,
+        ticker: str,
+        calc_date: str,
+        *,
+        windows: tuple = ("1d", "7d", "30d", "90d"),
+    ) -> Dict[str, Optional[float]]:
+        """Return prior LTHCS scores for drift computation.
+
+        For each window in ``windows`` (a tuple of strings like ``"30d"``),
+        looks up the per-ticker history entry whose date is closest to
+        ``calc_date - N days`` while still being strictly before
+        ``calc_date``. "Closest" means: prefer an exact match on the target
+        date; otherwise fall back to the latest entry with
+        ``date <= target_date and date < calc_date``. This nearest-prior
+        semantics gracefully handles weekends, holidays, and gap-filled
+        synthetic entries.
+
+        Returns a dict mapped to float scores, or None when no qualifying
+        history entry exists (e.g., a ticker with <30 days of history will
+        get ``drift_30d``'s prior as None). This shape is exactly what
+        :func:`lthcs.score.compute_drift` expects.
+
+        ``calc_date`` itself is intentionally EXCLUDED from the lookup so a
+        ``--force`` re-run that has already appended today's entry doesn't
+        return today's score as the "1 day ago" value (which would zero
+        out drift_1d every time).
+        """
+        _validate_calc_date(calc_date)
+        try:
+            calc_dt = _date_cls.fromisoformat(calc_date)
+        except ValueError as exc:
+            raise ValueError("calc_date must parse as ISO date: %s" % exc) from exc
+
+        out: Dict[str, Optional[float]] = {win: None for win in windows}
+
+        payload = self.read_history(ticker)
+        history: List[Dict[str, Any]] = list(payload.get("history") or [])
+        if not history:
+            return out
+
+        # Build a sorted-ascending list of (date, score) pairs with valid
+        # ISO dates strictly before calc_date. Scores that fail to parse as
+        # float are skipped — they can't participate in drift arithmetic.
+        usable: List[tuple] = []
+        for row in history:
+            d_str = row.get("date")
+            if not isinstance(d_str, str):
+                continue
+            try:
+                d_dt = _date_cls.fromisoformat(d_str)
+            except ValueError:
+                continue
+            if d_dt >= calc_dt:
+                continue
+            s_raw = row.get("score")
+            if s_raw is None:
+                continue
+            try:
+                s_val = float(s_raw)
+            except (TypeError, ValueError):
+                continue
+            if s_val != s_val:  # NaN guard
+                continue
+            usable.append((d_dt, s_val))
+        if not usable:
+            return out
+        usable.sort(key=lambda t: t[0])
+
+        for win in windows:
+            try:
+                n_days = int(str(win).rstrip("d"))
+            except (TypeError, ValueError):
+                continue
+            target_dt = calc_dt - timedelta(days=n_days)
+            # Nearest-prior lookup: latest entry with date <= target_dt.
+            # Since `usable` is ascending, walk back from the end.
+            picked: Optional[float] = None
+            for d_dt, s_val in reversed(usable):
+                if d_dt <= target_dt:
+                    picked = s_val
+                    break
+            out[win] = picked
+        return out
+
     def read_history(self, ticker: str) -> Dict:
         """Return the parsed history JSON, or a fresh empty shell.
 

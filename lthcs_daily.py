@@ -1793,6 +1793,13 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
     ]
     state.snapshot_rows = []
 
+    # Look up prior scores from each ticker's history file BEFORE Stage 8
+    # rewrites it with today's entry. Drives drift_{1d,7d,30d,90d} via
+    # compute_lthcs_score -> compute_drift. Without this, every drift
+    # window was 0.0 universe-wide (Phase 3 hotfix).
+    persist = state.persist
+    drift_lookups = 0
+
     for sym in state.scored_tickers:
         entry = state.by_ticker.get(sym, {})
         pillars = state.pillar_results.get(sym) or {}
@@ -1801,6 +1808,16 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
             for name in score.PILLAR_ORDER
         }
         flags = list(state.data_quality_flags.get(sym, []))
+
+        prior_scores: Optional[Dict[str, Optional[float]]] = None
+        if persist is not None:
+            try:
+                prior_scores = persist.read_prior_scores(sym, state.calc_date)
+            except Exception:
+                prior_scores = None
+            if prior_scores and any(v is not None for v in prior_scores.values()):
+                drift_lookups += 1
+
         try:
             row = score.compute_lthcs_score(
                 ticker=sym,
@@ -1811,6 +1828,7 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
                 ten_y_30d_change_bp=state.macro_inputs.get("ten_y_30d_change_bp"),
                 ticker_volatility=state.volatility_by_ticker.get(sym),
                 universe_volatilities=peer_vols,
+                prior_scores=prior_scores,
                 data_quality_flags=flags,
             )
         except Exception as exc:
@@ -1828,6 +1846,11 @@ def stage_6_compute_final_scores(state: PipelineState) -> bool:
         "%s %d" % (label, counts[key]) for key, label in _BAND_ORDER_DISPLAY
     )
     print("✓ Stage 6: Band distribution: %s" % distribution)
+    if state.args.verbose:
+        print(
+            "  drift priors loaded for %d/%d tickers"
+            % (drift_lookups, len(state.scored_tickers))
+        )
     return True
 
 

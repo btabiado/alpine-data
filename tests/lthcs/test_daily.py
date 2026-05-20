@@ -110,6 +110,12 @@ def fake_persist():
     persist.write_narratives.return_value = Path("/tmp/narr.json")
     persist.rebuild_history_for_all_tickers.return_value = 0
     persist.rebuild_index.return_value = Path("/tmp/index.json")
+    # Default: pretend no history exists yet for any ticker (returns the
+    # all-None shape compute_drift accepts). Individual tests override
+    # this to exercise the populated-history path.
+    persist.read_prior_scores.return_value = {
+        "1d": None, "7d": None, "30d": None, "90d": None,
+    }
     return persist
 
 
@@ -543,6 +549,42 @@ class TestStage6:
                 "monitor", "weakening", "review",
             }
             assert "drift_1d" in row
+
+    def test_stage_6_wires_prior_scores_into_drift(
+        self, patched_configs, patched_persist_class, patched_sources,
+    ):
+        """Regression: Phase 3 audit found drift_30d=0.0 universe-wide
+        because Stage 6 never looked up prior scores. Verify the daily
+        pipeline now calls persist.read_prior_scores for each scored
+        ticker AND the returned priors actually drive non-zero drift_*
+        values in the emitted snapshot row.
+        """
+        # Make the fake persist return a populated priors dict so drift
+        # arithmetic produces non-zero values for every window.
+        patched_persist_class.read_prior_scores.return_value = {
+            "1d": 50.0, "7d": 48.0, "30d": 45.0, "90d": 40.0,
+        }
+
+        args = lthcs_daily.parse_args(["--tickers", "AAPL,LCID"])
+        state = lthcs_daily.PipelineState(args=args)
+        lthcs_daily.stage_1_load_config(state)
+        lthcs_daily.stage_2_fetch_data(state)
+        lthcs_daily.stage_3_quality_checks(state)
+        lthcs_daily.stage_4_compute_subscores(state)
+        lthcs_daily.stage_5_apply_modifiers(state)
+        assert lthcs_daily.stage_6_compute_final_scores(state) is True
+
+        # persist.read_prior_scores must be called per scored ticker.
+        assert patched_persist_class.read_prior_scores.call_count >= len(
+            state.scored_tickers
+        )
+        # And at least one row must show non-zero drift in every window —
+        # if Stage 6 silently dropped prior_scores, every window would
+        # collapse back to 0.0 (the bug).
+        assert any(row.get("drift_1d") != 0.0 for row in state.snapshot_rows)
+        assert any(row.get("drift_7d") != 0.0 for row in state.snapshot_rows)
+        assert any(row.get("drift_30d") != 0.0 for row in state.snapshot_rows)
+        assert any(row.get("drift_90d") != 0.0 for row in state.snapshot_rows)
 
 
 # ---------------------------------------------------------------------------
