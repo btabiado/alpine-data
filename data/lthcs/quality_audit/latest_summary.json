@@ -1,0 +1,114 @@
+{
+  "asof": "2026-05-19",
+  "snapshot_date": "2026-05-18",
+  "generated_at_utc": "2026-05-20T03:39:45+00:00",
+  "overall_verdict": "CRITICAL",
+  "pillars": {
+    "adoption_momentum": {
+      "coverage_pct": 96.4,
+      "mean": 51.64,
+      "stdev": 25.39,
+      "verdict": "HEALTHY",
+      "n": 167
+    },
+    "institutional_confidence": {
+      "coverage_pct": 100.0,
+      "mean": 48.74,
+      "stdev": 28.15,
+      "verdict": "HEALTHY",
+      "n": 167
+    },
+    "financial_evolution": {
+      "coverage_pct": 97.0,
+      "mean": 55.79,
+      "stdev": 17.72,
+      "verdict": "HEALTHY",
+      "n": 167
+    },
+    "thesis_integrity": {
+      "coverage_pct": 86.8,
+      "mean": 56.3,
+      "stdev": 7.99,
+      "verdict": "HEALTHY",
+      "n": 167
+    },
+    "des": {
+      "coverage_pct": 100.0,
+      "mean": 46.58,
+      "stdev": 9.94,
+      "verdict": "HEALTHY",
+      "n": 167
+    }
+  },
+  "distribution": {
+    "n": 167,
+    "mean": 48.69,
+    "stdev": 12.05,
+    "elite_count": 0,
+    "high_conf_count": 0,
+    "review_count": 86,
+    "review_pct": 51.5,
+    "critical": true
+  },
+  "weights": {
+    "verdict": "MISALIGNED",
+    "n_cohorts": 3,
+    "misaligned_cohorts": [
+      {
+        "cohort": "standard_compounder",
+        "worst_gap": 0.427,
+        "worst_pillar": "institutional_confidence"
+      },
+      {
+        "cohort": "mature_compounder",
+        "worst_gap": 0.384,
+        "worst_pillar": "thesis_integrity"
+      },
+      {
+        "cohort": "growth_compounder",
+        "worst_gap": 0.174,
+        "worst_pillar": "des"
+      }
+    ]
+  },
+  "bands": {
+    "verdict": "MISALIGNED",
+    "counts": {
+      "elite": 0,
+      "high_confidence": 0,
+      "constructive": 5,
+      "monitor": 23,
+      "weakening": 53,
+      "review": 86
+    },
+    "starved": [
+      "elite",
+      "high_confidence"
+    ],
+    "review_pct": 51.5
+  },
+  "alerts": [
+    "drift_30d regression: only 0/167 tickers have nonzero 30d drift \u2014 HH's fix may have regressed"
+  ],
+  "sub_audits": {
+    "pillar_quality": {
+      "ok": true,
+      "path": "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.claude/worktrees/swarm-monthly-audit/data/lthcs/quality_audit/2026-05-19_pillar_quality.md",
+      "snapshot_date": "2026-05-18"
+    },
+    "score_distribution": {
+      "ok": true,
+      "paths": [
+        "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.claude/worktrees/swarm-monthly-audit/data/lthcs/quality_audit/2026-05-19_composite_distribution.md",
+        "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.claude/worktrees/swarm-monthly-audit/data/lthcs/quality_audit/2026-05-19_pillar_correlation.md"
+      ]
+    },
+    "weights_thresholds": {
+      "ok": true,
+      "paths": [
+        "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.claude/worktrees/swarm-monthly-audit/data/lthcs/quality_audit/2026-05-19_weights_vs_ic.md",
+        "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.claude/worktrees/swarm-monthly-audit/data/lthcs/quality_audit/2026-05-19_band_distribution.md"
+      ]
+    }
+  }
+}
