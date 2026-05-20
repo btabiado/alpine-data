@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Per-pillar Leaderboards</title>
+    <!--
+      Reuses LTHCS design tokens (band colors, dark theme, fonts) from the
+      card-view stylesheet. In production both pages stage under /lthcs/
+      so this @import resolves at /lthcs/lthcs_tab/lthcs.css. The dev
+      server (python3 -m http.server in repo root) serves /lthcs_tab/
+      sibling to /lthcs_leaderboards/, so the ../lthcs_tab/ path works in
+      both environments without conditional logic. Same pattern as
+      lthcs_public/, lthcs_position/.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-leaderboards.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Per-pillar Leaderboards</h1>
+          <p class="lthcs-subtitle">Top 10 by composite + each of the 5 pillars, plus the Review watch-list.</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Snapshot</span>
+            <span id="lb-snapshot-date" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="../" class="lthcs-refresh-btn" aria-label="Back to card view" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Card view</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lb-main">
+      <!--
+        Universe scope chips. Persistent across reloads via localStorage
+        (`lthcs.leaderboards.scope`). Watchlist scopes (one per saved list +
+        the synthetic "Active") are appended dynamically by JS based on
+        `lthcs.watchlists` + `lthcs.activeWatchlist`.
+      -->
+      <section class="lthcs-section lb-scope" aria-label="Universe scope">
+        <span class="lb-scope-label">Universe</span>
+        <div id="lb-scope-chips" class="lthcs-chip-group lb-scope-chips" role="group" aria-label="Universe scope chips">
+          <button type="button" class="lthcs-chip is-active" data-scope="all" aria-pressed="true">All</button>
+          <button type="button" class="lthcs-chip" data-scope="djia" aria-pressed="false">DJIA&nbsp;30</button>
+          <button type="button" class="lthcs-chip" data-scope="sp-100" aria-pressed="false">S&amp;P&nbsp;100</button>
+          <button type="button" class="lthcs-chip" data-scope="nasdaq-100" aria-pressed="false">NASDAQ-100</button>
+          <!-- Watchlist chips injected here at runtime when localStorage has saved lists. -->
+        </div>
+        <div class="lb-scope-meta">
+          <span id="lb-scope-count">&hellip;</span>
+        </div>
+      </section>
+
+      <div id="lb-loading" class="lb-loading">
+        <span class="lthcs-loading-spinner" aria-hidden="true"></span>
+        <span>Loading scores&hellip;</span>
+      </div>
+      <div id="lb-error" class="lb-error hidden" role="alert"></div>
+
+      <section id="lb-grid" class="lb-grid hidden" aria-label="Leaderboards">
+        <!-- Cards injected by lthcs-leaderboards.js. Template:
+             <article class="lb-card" data-board="composite_top">
+               <header class="lb-card-header">
+                 <h2 class="lb-card-title">Top 10 by Composite</h2>
+                 <p class="lb-card-sub">Headline LTHCS score, 0-100.</p>
+               </header>
+               <ol class="lb-rows"></ol>
+             </article>
+        -->
+      </section>
+    </main>
+
+    <footer class="lb-footer" role="contentinfo">
+      <p>
+        Computed from the latest snapshot in <code>/data/lthcs/snapshots/</code>.
+        See the <a href="../">main card view</a> or the
+        <a href="../public/">public data index</a> for the underlying JSON.
+        <strong>Not investment advice.</strong>
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-leaderboards.js"></script>
+  </body>
+</html>

@@ -1,0 +1,231 @@
+/* =========================================================================
+   LTHCS Per-pillar Leaderboards.
+
+   Layered on top of ../lthcs_tab/lthcs.css for shared design tokens (band
+   colors, dark theme, fonts). Only contains styles unique to this page.
+
+   Visual cousin of lthcs_public/lthcs-public.css.
+   ========================================================================= */
+
+.hidden {
+  display: none !important;
+}
+
+.lb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ----- Universe scope chip row ------------------------------------------ */
+.lb-scope {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+.lb-scope-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.lb-scope-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.lb-scope-meta {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.55));
+}
+
+/* ----- Loading + error states ------------------------------------------- */
+.lb-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 16px 0;
+}
+.lb-error {
+  font-size: 14px;
+  color: var(--danger, #f87171);
+  border-left: 3px solid var(--danger, #f87171);
+  padding: 8px 12px;
+  background: rgba(248, 113, 113, 0.07);
+  border-radius: 4px;
+}
+
+/* ----- Leaderboard grid -------------------------------------------------- */
+.lb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.lb-card {
+  background: var(--surface, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 14px 14px 8px 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 360px;
+}
+.lb-card[data-board="composite_bottom"] {
+  /* Visual cue that this is the "trouble" list — softens otherwise-uniform
+     grid into composite vs. bottom-bin without a separate heading. */
+  border-color: rgba(184, 90, 62, 0.4);
+}
+.lb-card[data-board="composite_top"] {
+  border-color: rgba(74, 143, 95, 0.35);
+}
+
+.lb-card-header {
+  margin-bottom: 8px;
+}
+.lb-card-title {
+  font-size: 14px;
+  margin: 0 0 2px 0;
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.lb-card-sub {
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.55));
+  margin: 0;
+}
+
+.lb-rows {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lb-row {
+  display: grid;
+  grid-template-columns: 22px 64px 1fr 60px 50px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  font-size: 13px;
+  min-height: 28px;
+}
+.lb-row:last-child {
+  border-bottom: none;
+}
+
+.lb-row-rank {
+  font-size: 11px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.5));
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.lb-row-ticker {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.lb-row-spark {
+  /* The SVG itself controls width/height; this cell just keeps layout tidy. */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.6));
+  min-height: 18px;
+}
+.lb-row-spark svg {
+  display: block;
+}
+.lb-row-spark-empty {
+  font-size: 10px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.3));
+  font-style: italic;
+}
+.lb-row-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  text-align: right;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.lb-row-band {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #fff;
+  white-space: nowrap;
+  background: var(--band-weakening, #b85a3e);
+}
+
+.lb-empty {
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.45));
+  padding: 16px 4px;
+  text-align: center;
+  font-style: italic;
+}
+
+/* ----- Footer ----------------------------------------------------------- */
+.lb-footer {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary, rgba(255, 255, 255, 0.5));
+  padding: 24px 16px 32px;
+  line-height: 1.55;
+}
+.lb-footer p {
+  margin: 0;
+}
+.lb-footer a {
+  color: var(--link, #60a5fa);
+  text-decoration: none;
+}
+.lb-footer a:hover {
+  text-decoration: underline;
+}
+.lb-footer code {
+  background: var(--surface-subtle, rgba(255, 255, 255, 0.04));
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11.5px;
+}
+
+/* ----- Mobile: collapse 7-card grid to single column -------------------- */
+@media (max-width: 640px) {
+  .lb-grid {
+    grid-template-columns: 1fr;
+  }
+  .lb-card {
+    min-height: 0;
+  }
+  /* Drop the sparkline column on narrow screens — the band chip + score
+     still carry the signal. Mirrors lthcs-public's narrow-viewport rule. */
+  .lb-row {
+    grid-template-columns: 22px 64px 1fr 50px;
+  }
+  .lb-row-spark {
+    display: none;
+  }
+  .lb-scope-meta {
+    margin-left: 0;
+    width: 100%;
+  }
+}
