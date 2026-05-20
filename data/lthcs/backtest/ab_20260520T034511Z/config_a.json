@@ -1,0 +1,212 @@
+{
+  "version": "1.2.0",
+  "last_updated": "2026-05-19",
+  "description": "Pillar weights by maturity stage. Order is [adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des]. Weights must sum to 1.0 within each profile. v1.1.0 splits 'standard_compounder' into 'mature_compounder' and 'growth_compounder' so peer-relative percentiles benchmark like-for-like (AAPL/PG/KO vs. each other, NVDA/MU/AVGO vs. each other). 'standard_compounder' remains as a fallback for tickers not explicitly reclassified. v1.2.0 (Tier 5 #27 Phase 5) adds five crypto profiles for the expanded 10-asset universe: 'layer_1_alt' (ADA/AVAX/DOT — adoption-leaning alt-L1s), 'oracle_defi' (LINK — fee-revenue + adoption), 'layer_2' (POL — scaling solution), 'payments' (XRP — institutional-flow heavy), and 'meme' (DOGE — adoption-dominant, low financial-fundamentals weight).",
+  "pillar_order": [
+    "adoption_momentum",
+    "institutional_confidence",
+    "financial_evolution",
+    "thesis_integrity",
+    "des"
+  ],
+  "profiles": {
+    "standard_compounder": [
+      0.25,
+      0.2,
+      0.15,
+      0.2,
+      0.2
+    ],
+    "mature_compounder": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "growth_compounder": [
+      0.25,
+      0.2,
+      0.15,
+      0.2,
+      0.2
+    ],
+    "pre_revenue": [
+      0.35,
+      0.2,
+      0.05,
+      0.2,
+      0.2
+    ],
+    "pre_profit_growth": [
+      0.3,
+      0.2,
+      0.15,
+      0.2,
+      0.15
+    ],
+    "path_to_profitability": [
+      0.25,
+      0.2,
+      0.2,
+      0.2,
+      0.15
+    ],
+    "profitability_inflection": [
+      0.25,
+      0.2,
+      0.2,
+      0.2,
+      0.15
+    ],
+    "recovery_stabilization": [
+      0.15,
+      0.15,
+      0.35,
+      0.2,
+      0.15
+    ],
+    "recovery_operational": [
+      0.2,
+      0.2,
+      0.3,
+      0.15,
+      0.15
+    ],
+    "recovery_earnings": [
+      0.2,
+      0.25,
+      0.25,
+      0.15,
+      0.15
+    ],
+    "recovery_rerating": [
+      0.25,
+      0.2,
+      0.15,
+      0.2,
+      0.2
+    ],
+    "btc": [
+      0.1,
+      0.3,
+      0.25,
+      0.15,
+      0.2
+    ],
+    "eth": [
+      0.25,
+      0.2,
+      0.2,
+      0.2,
+      0.15
+    ],
+    "sol": [
+      0.3,
+      0.15,
+      0.2,
+      0.2,
+      0.15
+    ],
+    "layer_1_alt": [
+      0.3,
+      0.15,
+      0.2,
+      0.2,
+      0.15
+    ],
+    "oracle_defi": [
+      0.25,
+      0.2,
+      0.25,
+      0.15,
+      0.15
+    ],
+    "layer_2": [
+      0.3,
+      0.15,
+      0.2,
+      0.2,
+      0.15
+    ],
+    "payments": [
+      0.2,
+      0.3,
+      0.2,
+      0.15,
+      0.15
+    ],
+    "meme": [
+      0.4,
+      0.1,
+      0.1,
+      0.25,
+      0.15
+    ]
+  },
+  "score_bands": {
+    "elite": {
+      "min": 85,
+      "max": 100,
+      "color": "#1F3A5F",
+      "label": "Elite Confidence Hold"
+    },
+    "high_confidence": {
+      "min": 80,
+      "max": 84,
+      "color": "#4A8F5F",
+      "label": "High Confidence Hold"
+    },
+    "constructive": {
+      "min": 70,
+      "max": 79,
+      "color": "#C9A227",
+      "label": "Constructive Hold"
+    },
+    "monitor": {
+      "min": 60,
+      "max": 69,
+      "color": "#D89148",
+      "label": "Monitor Closely"
+    },
+    "weakening": {
+      "min": 50,
+      "max": 59,
+      "color": "#B85A3E",
+      "label": "Confidence Weakening"
+    },
+    "review": {
+      "min": 0,
+      "max": 49,
+      "color": "#7A2E1F",
+      "label": "Structural Review Required"
+    }
+  },
+  "modifiers": {
+    "macro_adjustment": {
+      "trigger": "10y_yield_30d_change_abs_bp > 25",
+      "magnitude": 2.0,
+      "applies_to": "all_tickers"
+    },
+    "volatility_modifier": {
+      "trigger": "trailing_30d_volatility_percentile > 90",
+      "magnitude": -3.0,
+      "applies_to": "all_tickers"
+    },
+    "sector_adjustment_table": "data/lthcs/sector_des_weights.json"
+  },
+  "adaptive_overrides": {
+    "enabled": false,
+    "as_of": "2026-05-18",
+    "weights": {
+      "adoption_momentum": 0.2,
+      "institutional_confidence": 0.2,
+      "financial_evolution": 0.2,
+      "thesis_integrity": 0.2,
+      "des": 0.2
+    },
+    "source": "scripts/lthcs_tune_weights.py walk-forward",
+    "test_ic": null,
+    "comment": "Default OFF until backfill history + walk-forward CV both qualify. Flip 'enabled' to true after a tune run returns recommendation='ship'."
+  }
+}

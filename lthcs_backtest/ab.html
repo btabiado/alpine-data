@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS &middot; Backtest A/B</title>
+    <!--
+      Same import pattern as the main backtest page: pulls dark-theme + band
+      tokens from the card-view stylesheet, then layers the backtest page's
+      base CSS, then this page's overrides. In production this stages at
+      /lthcs/backtest/ab.html and resolves ../lthcs_tab/lthcs.css to
+      /lthcs/lthcs_tab/lthcs.css.
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-backtest.css" />
+    <link rel="stylesheet" href="./lthcs-backtest-ab.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Backtest A/B</h1>
+          <p class="lthcs-subtitle" id="ab-subtitle">Stress-test a calibration tweak before it ships to <code>weights.json</code>.</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <div class="lthcs-meta-line">
+            <span class="lthcs-meta-label">Run</span>
+            <span id="ab-generated" class="lthcs-meta-value">&hellip;</span>
+          </div>
+          <a href="./" class="lthcs-refresh-btn" aria-label="Back to backtest validation" style="text-decoration:none">
+            <span aria-hidden="true">&larr;</span>
+            <span class="lthcs-refresh-label">Backtest</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main lbt-main">
+      <section id="ab-loading" class="lthcs-section lbt-loading">Loading A/B comparison&hellip;</section>
+      <section id="ab-error" class="lthcs-section lbt-error hidden" role="alert"></section>
+
+      <div id="ab-content" class="hidden">
+        <!-- ===== Verdict card ============================================== -->
+        <!--
+          Headline: which side wins, and how many metrics tipped that way.
+          Side A is rendered in the baseline accent (var(--band-high-bright));
+          Side B in the candidate accent (var(--accent)).
+        -->
+        <section class="lthcs-section lbt-section lab-verdict-section" aria-label="A/B verdict">
+          <div class="lab-verdict-card" id="ab-verdict-card">
+            <div class="lab-verdict-row">
+              <span class="lab-verdict-label">CALIBRATION VERDICT</span>
+              <span class="lab-verdict-tag" id="ab-verdict-tag">&hellip;</span>
+            </div>
+            <p class="lab-verdict-prose" id="ab-verdict-prose">&hellip;</p>
+            <dl class="lab-verdict-stats">
+              <div>
+                <dt>Sharpe (A)</dt>
+                <dd id="ab-verdict-sharpe-a">&hellip;</dd>
+              </div>
+              <div>
+                <dt>Sharpe (B)</dt>
+                <dd id="ab-verdict-sharpe-b">&hellip;</dd>
+              </div>
+              <div>
+                <dt>&Delta;Sharpe (B&minus;A)</dt>
+                <dd id="ab-verdict-dsharpe">&hellip;</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <!-- ===== Equity curve overlay ===================================== -->
+        <section class="lthcs-section lbt-section" aria-label="Equity curve overlay">
+          <h2 class="lbt-h2">Equity curves &mdash; A vs B</h2>
+          <p class="lbt-note">
+            Both runs share the same snapshot history; only the pillar weights differ. We rebuild <code>band_history</code> per snapshot under each config, recompose the composite from each row&rsquo;s subscores, re-band via <code>score.assign_band</code>, then feed both panels into the same engine with identical execution params.
+          </p>
+          <div class="lbt-pnl-chart-wrap">
+            <svg id="ab-chart" class="lbt-pnl-chart" viewBox="0 0 800 280" preserveAspectRatio="none" role="img" aria-label="A/B equity curve overlay"></svg>
+          </div>
+          <div class="lbt-legend lab-legend" id="ab-legend"></div>
+        </section>
+
+        <!-- ===== Side-by-side stats ======================================= -->
+        <section class="lthcs-section lbt-section" aria-label="Side-by-side stats">
+          <h2 class="lbt-h2">Stats side by side</h2>
+          <p class="lbt-note">
+            Δ is <code>B &minus; A</code>; Δ% is normalized by |A|. <strong>Winner</strong> honors metric direction (lower turnover is better; less-negative drawdown is better).
+          </p>
+          <div class="lbt-table-wrap">
+            <table class="lbt-table lab-stats-table">
+              <thead>
+                <tr>
+                  <th scope="col">Metric</th>
+                  <th scope="col" class="lab-col-a">A &mdash; <span id="ab-th-a">A</span></th>
+                  <th scope="col" class="lab-col-b">B &mdash; <span id="ab-th-b">B</span></th>
+                  <th scope="col">&Delta; (B&minus;A)</th>
+                  <th scope="col">&Delta;%</th>
+                  <th scope="col">Winner</th>
+                </tr>
+              </thead>
+              <tbody id="ab-stats-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ===== Pillar attribution (per-pillar variant summary diffs) ==== -->
+        <!--
+          The A/B engine outputs the per-side summary; both sides' pillar
+          attribution is computed in-process when the run-script was invoked
+          with --attribute. If not present, this section gracefully degrades
+          to the placeholder card.
+        -->
+        <section class="lthcs-section lbt-section" aria-label="Per-pillar weight diff" id="ab-pillar-section">
+          <h2 class="lbt-h2">Pillar weights &mdash; A vs B</h2>
+          <p class="lbt-note">
+            Per-profile pillar weights from each config. Cells with a different value are highlighted; the right column shows the delta (B &minus; A). Profiles that match exactly between A and B are folded into the &ldquo;identical&rdquo; group at the bottom.
+          </p>
+          <div id="ab-pillar-chart"></div>
+        </section>
+
+        <!-- ===== Config metadata footer =================================== -->
+        <section class="lthcs-section lbt-section lab-footer-section" aria-label="Config metadata">
+          <h2 class="lbt-h2">Run metadata</h2>
+          <dl class="lab-meta-grid">
+            <div>
+              <dt>Config A hash</dt>
+              <dd><code id="ab-hash-a">&hellip;</code></dd>
+            </div>
+            <div>
+              <dt>Config B hash</dt>
+              <dd><code id="ab-hash-b">&hellip;</code></dd>
+            </div>
+            <div>
+              <dt>Window</dt>
+              <dd id="ab-window">&hellip;</dd>
+            </div>
+            <div>
+              <dt>Universe</dt>
+              <dd id="ab-universe">&hellip;</dd>
+            </div>
+            <div>
+              <dt>Profile</dt>
+              <dd id="ab-profile">&hellip;</dd>
+            </div>
+            <div>
+              <dt>Cost (bps/side)</dt>
+              <dd id="ab-cost">&hellip;</dd>
+            </div>
+          </dl>
+          <p class="lbt-note">
+            Run the comparison locally with:
+            <code>python scripts/lthcs_backtest_ab.py --baseline data/lthcs/weights.json --candidate diff.json --offline</code>
+          </p>
+        </section>
+      </div>
+    </main>
+
+    <script src="./lthcs-backtest-ab.js"></script>
+  </body>
+</html>

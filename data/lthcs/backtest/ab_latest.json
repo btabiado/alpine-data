@@ -1,0 +1,15 @@
+{
+  "run_id": "ab_20260520T034511Z",
+  "path": "data/lthcs/backtest/ab_20260520T034511Z",
+  "generated_at": "2026-05-20T03:45:11.408194Z",
+  "verdict": {
+    "winner": "b",
+    "score_a": 0,
+    "score_b": 6,
+    "metrics_counted": 6
+  },
+  "label_a": "Baseline",
+  "label_b": "MC-Thesis +0.05",
+  "config_a_hash": "57bafed5d7eb6416",
+  "config_b_hash": "227560e19247d7ab"
+}

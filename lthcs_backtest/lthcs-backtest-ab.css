@@ -1,0 +1,243 @@
+/* ==========================================================================
+   LTHCS Backtest A/B — page-specific styling.
+
+   Reuses the dark-theme tokens + lbt-* base styling from
+   ../lthcs_tab/lthcs.css and ./lthcs-backtest.css. This file adds:
+     - A vs B color identity (A = band-high-bright, B = accent)
+     - Verdict-card layout
+     - Side-by-side stats table cell highlighting
+     - Pillar-weight diff table styling
+   ========================================================================== */
+
+/* ----- Verdict card ----------------------------------------------------- */
+.lab-verdict-section {
+  margin-bottom: 16px;
+}
+.lab-verdict-card {
+  background: var(--bg-card);
+  border-radius: 10px;
+  padding: 18px 22px;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.lab-verdict-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.lab-verdict-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text-tertiary);
+}
+.lab-verdict-tag {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: rgba(110, 168, 254, 0.08);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+}
+.lab-verdict-tag.is-a {
+  color: var(--band-high-bright);
+  border-color: rgba(111, 209, 140, 0.4);
+  background: rgba(111, 209, 140, 0.08);
+}
+.lab-verdict-tag.is-b {
+  color: var(--accent);
+  border-color: rgba(110, 168, 254, 0.4);
+  background: rgba(110, 168, 254, 0.10);
+}
+.lab-verdict-tag.is-tie {
+  color: var(--text-secondary);
+}
+.lab-verdict-prose {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+.lab-verdict-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 18px;
+  margin: 0;
+}
+.lab-verdict-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lab-verdict-stats dt {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.lab-verdict-stats dd {
+  margin: 0;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.lab-verdict-stats dd.pos { color: var(--band-high-bright); }
+.lab-verdict-stats dd.neg { color: var(--band-review-bright); }
+
+/* ----- Equity overlay legend ------------------------------------------- */
+.lab-legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.lab-legend-a, .lab-legend-b {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.lab-legend-a::before,
+.lab-legend-b::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+}
+.lab-legend-a::before { background: var(--band-high-bright); }
+.lab-legend-b::before { background: var(--accent); }
+
+/* ----- Equity overlay lines -------------------------------------------- */
+.lab-line-a {
+  fill: none;
+  stroke: var(--band-high-bright);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.lab-line-b {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* ----- Stats table ----------------------------------------------------- */
+.lab-stats-table th, .lab-stats-table td {
+  font-variant-numeric: tabular-nums;
+}
+.lab-stats-table .lab-col-a,
+.lab-stats-table .lab-cell-a {
+  color: var(--band-high-bright);
+}
+.lab-stats-table .lab-col-b,
+.lab-stats-table .lab-cell-b {
+  color: var(--accent);
+}
+.lab-stats-table .lab-cell-a.is-winner,
+.lab-stats-table .lab-cell-b.is-winner {
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+}
+.lab-winner {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.lab-winner-a { color: var(--band-high-bright); }
+.lab-winner-b { color: var(--accent); }
+.lab-winner-tie { color: var(--text-tertiary); }
+.lab-winner-unknown { color: var(--text-tertiary); }
+
+/* ----- Pillar diff table ----------------------------------------------- */
+.lab-pillar-table th, .lab-pillar-table td {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.lab-pillar-row-a td { color: var(--band-high-bright); }
+.lab-pillar-row-b td { color: var(--accent); }
+.lab-pillar-row-delta td { color: var(--text-secondary); font-family: var(--font-mono); }
+.lab-pillar-row-a td.is-diff,
+.lab-pillar-row-b td.is-diff {
+  background: rgba(255, 255, 255, 0.04);
+  font-weight: 600;
+}
+.lab-pillar-row-delta td.pos { color: var(--band-high-bright); }
+.lab-pillar-row-delta td.neg { color: var(--band-review-bright); }
+.lab-pillar-side {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.lab-pillar-identical {
+  margin-top: 12px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+.lab-pillar-identical summary {
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+/* ----- Metadata footer ------------------------------------------------- */
+.lab-footer-section {
+  background: transparent;
+  border-color: var(--border-subtle);
+}
+.lab-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin: 0 0 12px;
+}
+.lab-meta-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.lab-meta-grid dt {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+.lab-meta-grid dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.lab-meta-grid code {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ----- Empty state ----------------------------------------------------- */
+.lab-empty {
+  text-align: center;
+  padding: 32px;
+}
+
+/* ----- Responsive ------------------------------------------------------ */
+@media (max-width: 640px) {
+  .lab-verdict-stats {
+    grid-template-columns: 1fr;
+  }
+  .lab-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
