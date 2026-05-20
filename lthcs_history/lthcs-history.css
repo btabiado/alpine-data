@@ -1,0 +1,227 @@
+/* =========================================================================
+   LTHCS — Score History Search (/lthcs/history/)
+   Phase 5 ZETA. Layered on top of ../lthcs_tab/lthcs.css; this file only
+   adds layout pieces that don't already exist there (form grid, chart SVG,
+   event table, streak board).
+   ========================================================================= */
+
+.lthcs-history-intro {
+  padding: 14px 16px;
+  color: var(--text-secondary);
+}
+.lthcs-history-intro-text {
+  margin: 0;
+  max-width: 80ch;
+}
+.lthcs-history-intro-text strong {
+  color: var(--text-primary);
+}
+
+/* Mode tabs ---------------------------------------------------------------- */
+.lthcs-history-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px 0;
+}
+.lthcs-history-mode {
+  appearance: none;
+  background: var(--bg-chip);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+.lthcs-history-mode:hover { background: var(--bg-chip-active); }
+.lthcs-history-mode.is-active {
+  background: var(--bg-chip-active);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Forms -------------------------------------------------------------------- */
+.lthcs-history-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+  padding: 14px 16px;
+}
+.lthcs-history-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.lthcs-history-field-action { justify-content: end; }
+.lthcs-history-field-wide { grid-column: 1 / -2; }
+.lthcs-history-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.lthcs-history-input {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font: inherit;
+  min-width: 0;
+}
+.lthcs-history-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+.lthcs-history-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Mobile: single column at <= 640px (spec requirement). */
+@media (max-width: 640px) {
+  .lthcs-history-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lthcs-history-field-wide { grid-column: auto; }
+}
+
+/* Status / loading / error ------------------------------------------------- */
+.lthcs-history-status {
+  padding: 10px 16px;
+  color: var(--text-secondary);
+}
+.lthcs-history-status.is-error { color: var(--danger); }
+.lthcs-history-status.is-warn  { color: var(--band-constructive-bright); }
+
+/* Results ------------------------------------------------------------------ */
+.lthcs-history-results {
+  padding: 4px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.lthcs-history-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 14px 16px;
+}
+.lthcs-history-card-title {
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+.lthcs-history-card-sub {
+  margin: 0 0 12px 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Ticker chart ------------------------------------------------------------- */
+.lthcs-history-chart {
+  width: 100%;
+  height: 240px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+.lthcs-history-chart .axis text {
+  fill: var(--text-tertiary);
+  font: 10px var(--font-mono);
+}
+.lthcs-history-chart .grid line {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+.lthcs-history-chart .line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+.lthcs-history-chart .point { fill: var(--accent); }
+.lthcs-history-chart .band-shade { opacity: 0.18; }
+.lthcs-history-chart .band-divider {
+  stroke: var(--border-strong);
+  stroke-dasharray: 2 3;
+  stroke-width: 1;
+}
+
+/* Tables ------------------------------------------------------------------- */
+.lthcs-history-table-wrap { width: 100%; overflow-x: auto; }
+.lthcs-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.lthcs-history-table th,
+.lthcs-history-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+.lthcs-history-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.lthcs-history-table td.num,
+.lthcs-history-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.lthcs-history-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.lthcs-history-pill[data-band="elite"]          { background: var(--band-elite); }
+.lthcs-history-pill[data-band="high_confidence"]{ background: var(--band-high); }
+.lthcs-history-pill[data-band="constructive"]   { background: var(--band-constructive); color: #1A1A1A; }
+.lthcs-history-pill[data-band="monitor"]        { background: var(--band-monitor); color: #1A1A1A; }
+.lthcs-history-pill[data-band="weakening"]      { background: var(--band-weakening); }
+.lthcs-history-pill[data-band="review"]         { background: var(--band-review); }
+.lthcs-history-pill[data-band="unknown"]        { background: var(--bg-chip-active); color: var(--text-secondary); }
+
+/* Streak board ------------------------------------------------------------- */
+.lthcs-history-streak-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+.lthcs-history-streak-col {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+.lthcs-history-streak-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.lthcs-history-streak-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Empty state -------------------------------------------------------------- */
+.lthcs-history-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-secondary);
+}

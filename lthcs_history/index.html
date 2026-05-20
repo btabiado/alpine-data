@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LTHCS — Score History Search</title>
+    <!--
+      Phase 5 ZETA: power-user history search at /lthcs/history/.
+      Reuses the parent tab's design tokens from ../lthcs_tab/lthcs.css; the
+      local stylesheet only adds layout for the search form, charts, and
+      tables. Data source: data/lthcs/history/by_ticker/<TKR>.json (per-ticker
+      time series, ~91 snapshots, 178 tickers as of 2026-05-18).
+    -->
+    <link rel="stylesheet" href="../lthcs_tab/lthcs.css" />
+    <link rel="stylesheet" href="./lthcs-history.css" />
+  </head>
+  <body>
+    <header class="lthcs-header" role="banner">
+      <div class="lthcs-header-inner">
+        <div class="lthcs-header-titles">
+          <h1 class="lthcs-title">LTHCS &middot; Score History Search</h1>
+          <p class="lthcs-subtitle">Query every band-change event across the LTHCS universe (Phase 5 power-user view)</p>
+        </div>
+        <div class="lthcs-header-meta">
+          <nav class="lthcs-header-nav" aria-label="LTHCS views">
+            <a href="../lthcs_tab/" class="lthcs-refresh-btn lthcs-refresh-btn-nav" aria-label="Back to LTHCS hub" style="text-decoration:none">
+              <span aria-hidden="true">&larr;</span>
+              <span class="lthcs-refresh-label">Back to LTHCS</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <main class="lthcs-main">
+      <section class="lthcs-section lthcs-history-intro" aria-label="About this page">
+        <p class="lthcs-history-intro-text">
+          Three modes: <strong>By ticker</strong> shows a full composite-score trajectory + every band-change event for one symbol.
+          <strong>By band</strong> lists tickers that occupied a band at any point in a window.
+          <strong>By streak</strong> ranks the longest consecutive runs in each band across the universe.
+        </p>
+      </section>
+
+      <!-- Mode tabs ------------------------------------------------------- -->
+      <section class="lthcs-section lthcs-history-modes" role="tablist" aria-label="Search mode">
+        <button type="button" class="lthcs-history-mode is-active" data-mode="ticker" role="tab" aria-selected="true">By ticker</button>
+        <button type="button" class="lthcs-history-mode" data-mode="band" role="tab" aria-selected="false">By band</button>
+        <button type="button" class="lthcs-history-mode" data-mode="streak" role="tab" aria-selected="false">By streak</button>
+      </section>
+
+      <!-- Form: by ticker ------------------------------------------------- -->
+      <section
+        id="lthcs-history-form-ticker"
+        class="lthcs-section lthcs-history-form"
+        aria-label="Search by ticker"
+      >
+        <div class="lthcs-history-field">
+          <label class="lthcs-history-label" for="lthcs-history-ticker">Ticker</label>
+          <input
+            id="lthcs-history-ticker"
+            class="lthcs-history-input"
+            type="search"
+            list="lthcs-history-ticker-list"
+            placeholder="e.g. AAPL"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <datalist id="lthcs-history-ticker-list"></datalist>
+        </div>
+        <div class="lthcs-history-field lthcs-history-field-action">
+          <button id="lthcs-history-ticker-go" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-primary">Show history</button>
+        </div>
+      </section>
+
+      <!-- Form: by band --------------------------------------------------- -->
+      <section
+        id="lthcs-history-form-band"
+        class="lthcs-section lthcs-history-form hidden"
+        aria-label="Search by band"
+      >
+        <div class="lthcs-history-field">
+          <label class="lthcs-history-label" for="lthcs-history-band">Band</label>
+          <select id="lthcs-history-band" class="lthcs-history-input">
+            <option value="elite">Elite</option>
+            <option value="high_confidence">High Confidence</option>
+            <option value="constructive">Constructive</option>
+            <option value="monitor">Monitor</option>
+            <option value="weakening">Weakening</option>
+            <option value="review">Review</option>
+          </select>
+        </div>
+        <div class="lthcs-history-field">
+          <label class="lthcs-history-label" for="lthcs-history-window">Window</label>
+          <select id="lthcs-history-window" class="lthcs-history-input">
+            <option value="7">Last 7 days</option>
+            <option value="30" selected>Last 30 days</option>
+            <option value="90">Last 90 days</option>
+            <option value="all">All-time</option>
+          </select>
+        </div>
+        <div class="lthcs-history-field lthcs-history-field-action">
+          <button id="lthcs-history-band-go" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-primary">Find tickers</button>
+        </div>
+      </section>
+
+      <!-- Form: by streak ------------------------------------------------- -->
+      <section
+        id="lthcs-history-form-streak"
+        class="lthcs-section lthcs-history-form hidden"
+        aria-label="Search by streak"
+      >
+        <div class="lthcs-history-field lthcs-history-field-wide">
+          <p class="lthcs-history-hint">
+            Computes the top 10 longest consecutive same-band runs across every
+            ticker's full history, grouped by band. Loads all 178 history files
+            (lazy, in parallel; 5&nbsp;s cutoff &mdash; whatever is in by then is
+            ranked).
+          </p>
+        </div>
+        <div class="lthcs-history-field lthcs-history-field-action">
+          <button id="lthcs-history-streak-go" type="button" class="lthcs-refresh-btn lthcs-refresh-btn-primary">Compute top streaks</button>
+        </div>
+      </section>
+
+      <!-- Status banner + results container ------------------------------- -->
+      <section class="lthcs-section lthcs-history-status hidden" id="lthcs-history-status" aria-live="polite"></section>
+      <section class="lthcs-section lthcs-history-results" id="lthcs-history-results" aria-live="polite"></section>
+    </main>
+
+    <footer class="lthcs-footer">
+      <p>
+        <strong>Not investment advice.</strong> LTHCS V1 score history reader.
+        Data: <code>data/lthcs/history/by_ticker/&lt;TKR&gt;.json</code>.
+        <a href="../lthcs_tab/" class="lthcs-footer-link">Back to LTHCS hub</a>.
+      </p>
+    </footer>
+
+    <script type="module" src="./lthcs-history.js"></script>
+  </body>
+</html>
