@@ -55,6 +55,7 @@ import requests
 
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
+from lthcs.sources import _api_counter
 
 # Best-effort .env load. python-dotenv is in the project's requirements,
 # but if it isn't available at runtime we just fall back to os.environ.
@@ -188,16 +189,19 @@ def _http_get(path: str, params: Dict[str, str]) -> Optional[Any]:
     try:
         resp = requests.get(url, params=full, timeout=_HTTP_TIMEOUT)
     except Exception as exc:  # network / DNS / TLS
+        _api_counter.bump("finnhub", "error")
         _logger.warning("Finnhub network error for %s: %s", path, exc)
         return None
 
     status = getattr(resp, "status_code", 0)
     if status == 429:
         # Surface rate-limit so the caller can stop scheduling more work.
+        _api_counter.bump("finnhub", "rate_limit")
         raise FinnhubRateLimit(
             f"Finnhub returned HTTP 429 for {path!r}. Hourly/minute quota hit."
         )
     if status != 200:
+        _api_counter.bump("finnhub", "error")
         body = ""
         try:
             body = (resp.text or "")[:200]
@@ -209,12 +213,15 @@ def _http_get(path: str, params: Dict[str, str]) -> Optional[Any]:
         return None
 
     try:
-        return resp.json()
+        body_json = resp.json()
     except (ValueError, json.JSONDecodeError) as exc:
+        _api_counter.bump("finnhub", "error")
         _logger.warning(
             "Finnhub returned non-JSON body for %s: %s", path, exc
         )
         return None
+    _api_counter.bump("finnhub", "ok")
+    return body_json
 
 
 def _today_iso() -> str:

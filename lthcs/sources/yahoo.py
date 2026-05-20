@@ -33,6 +33,7 @@ import yfinance as yf
 
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
+from lthcs.sources import _api_counter
 
 # 24 hours.
 _CACHE_TTL_SECONDS = 24 * 60 * 60
@@ -128,9 +129,15 @@ def _fetch_prices_from_yahoo(ticker: str, period: str) -> List[Dict[str, Any]]:
     for variant in _yahoo_symbol_variants(ticker):
         _bucket.acquire()
         t = yf.Ticker(variant)
-        df = t.history(period=period)
+        try:
+            df = t.history(period=period)
+        except Exception:
+            _api_counter.bump("yahoo", "error")
+            raise
         if df is None or len(df) == 0:
+            _api_counter.bump("yahoo", "error")
             continue
+        _api_counter.bump("yahoo", "ok")
 
         rows: List[Dict[str, Any]] = []
         for ts, row in df.iterrows():

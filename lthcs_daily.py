@@ -186,6 +186,20 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         ),
     )
     p.add_argument(
+        "--candidate-universe",
+        dest="candidate_universe",
+        default=None,
+        help=(
+            "Path to a candidate universe JSON file (same schema as "
+            "data/lthcs/universe.json). When set, the pipeline reads "
+            "this file INSTEAD of the production universe, writes all "
+            "outputs under data/lthcs/candidate_run/<calc_date>/, and "
+            "force-skips the persist/history stage. Used by "
+            "scripts/lthcs_universe_scaletest.py to validate an "
+            "expanded universe without touching production snapshots."
+        ),
+    )
+    p.add_argument(
         "--verbose",
         action="store_true",
         help="Emit extra per-stage diagnostics.",
@@ -212,6 +226,22 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 
     if args.news_only and args.catch_up:
         p.error("--news-only and --catch-up are mutually exclusive")
+
+    # --- Validate --candidate-universe ---
+    if args.candidate_universe is not None:
+        candidate_path = Path(args.candidate_universe)
+        if not candidate_path.is_file():
+            p.error(
+                "--candidate-universe path does not exist: %s"
+                % args.candidate_universe
+            )
+        if args.news_only:
+            p.error("--candidate-universe and --news-only are mutually exclusive")
+        if args.catch_up:
+            p.error("--candidate-universe and --catch-up are mutually exclusive")
+        # Force-skip persistence: candidate runs are dry-runs by design.
+        # We don't error if --dry-run wasn't passed; we just promote it.
+        args.dry_run = True
 
     return args
 
@@ -570,13 +600,21 @@ def _load_recent_dated_json(
 # ---------------------------------------------------------------------------
 
 def stage_1_load_config(state: PipelineState) -> bool:
+    candidate_path = getattr(state.args, "candidate_universe", None)
+    universe_source = Path(candidate_path) if candidate_path else UNIVERSE_PATH
     try:
-        state.universe = json.loads(UNIVERSE_PATH.read_text())
+        state.universe = json.loads(universe_source.read_text())
         state.weights_config = json.loads(WEIGHTS_PATH.read_text())
         state.sector_weights = json.loads(SECTOR_WEIGHTS_PATH.read_text())
     except (OSError, json.JSONDecodeError) as exc:
         print("✗ Stage 1: config load failed: %s" % exc)
         return False
+
+    if candidate_path:
+        print(
+            "  candidate-universe mode: reading %s (production universe untouched)"
+            % universe_source
+        )
 
     by_ticker: Dict[str, Dict[str, Any]] = {}
     active = []
@@ -616,7 +654,23 @@ def stage_1_load_config(state: PipelineState) -> bool:
     else:
         state.calc_date = date.today().isoformat()
     if state.persist is None:
-        state.persist = LthcsPersist()
+        # In candidate-universe mode redirect ALL persist writes to a
+        # sandbox dir so production snapshots / history / variable_detail
+        # are never touched. The pipeline still wraps everything in a
+        # dry-run guard (set by parse_args), but the redirected data_root
+        # is belt-and-braces: even a future stage that forgets to honor
+        # dry_run cannot pollute production.
+        candidate_root = None
+        if getattr(state.args, "candidate_universe", None):
+            candidate_root = (
+                REPO_ROOT
+                / "data"
+                / "lthcs"
+                / "candidate_run"
+                / state.calc_date
+            )
+            candidate_root.mkdir(parents=True, exist_ok=True)
+        state.persist = LthcsPersist(data_root=candidate_root)
 
     profiles = (state.weights_config or {}).get("profiles") or {}
     print(

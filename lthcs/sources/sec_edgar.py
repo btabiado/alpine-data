@@ -40,6 +40,7 @@ import requests
 
 from lthcs.sources._cache import FileCache
 from lthcs.sources._ratelimit import TokenBucket
+from lthcs.sources import _api_counter
 
 # python-dotenv is optional -- if it's installed we read .env at import
 # time so SEC_USER_AGENT picks up the dev's local config automatically.
@@ -252,6 +253,7 @@ def _get_json(url: str, cache_key: str) -> Any:
     """Fetch a URL, honoring cache + rate limit. Returns parsed JSON."""
     hit = _cache.get(cache_key)
     if hit is not None:
+        _api_counter.bump("sec_edgar", "cache_hit")
         return hit.value
 
     # Build headers (and validate SEC_USER_AGENT) *before* taking a token
@@ -261,6 +263,10 @@ def _get_json(url: str, cache_key: str) -> Any:
 
     resp = requests.get(url, headers=headers, timeout=30)
     status = getattr(resp, "status_code", 0)
+    if status == 429:
+        _api_counter.bump("sec_edgar", "rate_limit")
+    elif status != 200:
+        _api_counter.bump("sec_edgar", "error")
     if status != 200:
         body = ""
         try:
@@ -274,6 +280,7 @@ def _get_json(url: str, cache_key: str) -> Any:
         )
 
     data = resp.json()
+    _api_counter.bump("sec_edgar", "ok")
     _cache.set(cache_key, data, ttl_seconds=CACHE_TTL_SECONDS)
     return data
 
