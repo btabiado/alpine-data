@@ -4155,6 +4155,198 @@ function renderWhaleSentiment(){
   `;
 }
 
+// LTHCS Composite Index panel — GUIDED NARRATIVE variant. Promoted from
+// /lthcs/ on 2026-05-20 (mockups/revamp-B-narrative). Renders Step 1
+// (verdict + gauge + band legend) + Step 2 (9 components with plain-
+// English glosses + inline <details> popovers for jargon). V1's existing
+// "About LTHCS" disclosure already covers Step 4 (how to read this), and
+// the Insights row above covers Step 3 (why it matters) — so this
+// in-V1 surface stays compact.
+//
+// Mounted at #lthcsCompositeCard (Overview tab) and #stocksLthcsCompositeCard
+// (Stocks tab). The original wide-table renderer `renderLthcsCompositePanel`
+// is kept directly below this one as a one-flip rollback.
+function renderLthcsNarrativePanel(host){
+  if (!host) return;
+  const L = (DATA.lthcs || {});
+  const idx = L.index || null;
+  const link = '<a href="lthcs/" target="_blank" rel="noopener" style="color:#a78bfa;text-decoration:none;font-weight:600">Open full LTHCS dashboard →</a>';
+  if (!L.available || !idx){
+    host.innerHTML = `
+      <div class="head" style="align-items:flex-start">
+        <div>
+          <h2 style="font-size:15px">📊 LTHCS Composite Index</h2>
+          <div class="desc">Data populates on next daily pipeline run</div>
+        </div>
+      </div>
+      <div class="sub" style="color:var(--muted);padding:8px 0">
+        LTHCS Composite Index — data not yet available. The daily pipeline writes
+        <code>data/lthcs/index/&lt;date&gt;.json</code>; this panel will fill in on the next run.
+      </div>
+      <div style="margin-top:8px">${link}</div>
+    `;
+    return;
+  }
+
+  // ---- Inputs
+  const score = Number(idx.score) || 0;
+  const tone = lthcsBandColor(idx.band_key) || idx.color || signalColor(score);
+  const pct = ((Math.max(-100, Math.min(100, score)) + 100) / 200) * 100;
+  const rawLabel = idx.label || 'NEUTRAL';
+  const label = String(rawLabel).replace(/^LTHCS\s+/i, '').toUpperCase();
+  const asOf = idx.as_of || L.as_of || '—';
+  const components = Array.isArray(idx.components) ? idx.components : [];
+
+  // ---- Plain-English gloss tied to verdict band
+  const glossByLabel = {
+    'ELITE':       'Broad-based strength — pillar averages, band lean, and macro all leaning the same way. The universe looks healthy for long-term holders.',
+    'CONSTRUCTIVE':'More green than red, but mixed. Some signals are firming while others are catching up. Constructive backdrop, not all-clear.',
+    'NEUTRAL':     'The universe is leaning slightly cautious today — more names softening than firming, but no clean directional bias yet. Worth watching the components below.',
+    'WEAKENING':   'More red than green. Pillars or macro are weakening across the universe. Not a panic signal, but the burden of proof is on the bulls.',
+    'DISTRIBUTING':'Broad weakness across pillars and macro. Time to re-underwrite holdings rather than add risk.'
+  };
+  const verdictGloss = glossByLabel[label] || 'A daily directional read on long-term-hold sentiment across the universe.';
+
+  // ---- Per-component gloss + jargon popover meta (source: lthcs_help)
+  const COMP_META = {
+    'Band lean (bullish % minus bearish %)': { gloss: 'Of every 168 names we track, what share is in the top 3 bands vs. the bottom 2.', term: 'band lean', def: '% of the universe in the top three bands (Elite + High + Constructive) minus % in the bottom two (Weakening + Review). Positive = more strong names than weak ones.' },
+    'Adoption pillar avg':                    { gloss: 'Average of the "who actually uses or holds this" score across all names.', term: 'Adoption pillar', def: 'Product traction, user/holder growth, network footprint. Built from retail-app downloads, employment growth, Wikipedia pageview trend.' },
+    'Institutional pillar avg':               { gloss: 'Average of the "what sophisticated owners are doing" score.', term: 'Institutional pillar', def: 'Form 4 insider net buys, 13F qtr-over-qtr deltas, ETF AUM trend, put/call posture. Captures whether smart money is adding or trimming.' },
+    'Financial pillar avg':                   { gloss: 'Average of the "can this business fund itself" score.', term: 'Financial pillar', def: 'TTM free cash flow yield, net cash, dividend coverage, buyback authorization remaining.' },
+    'Thesis pillar avg':                      { gloss: 'Average of the "what the market thinks of the story" score. Often neutral in V1.', term: 'Thesis pillar', def: 'EPS revision breadth, price-target deltas, multi-timeframe trend posture. Falls back to neutral 50 when free-tier sentiment data is missing.' },
+    'DES (demand environment) avg':           { gloss: 'Average of Demand-vs-Earnings Strength: is the run-up earned, or all multiple expansion?', term: 'DES', def: 'Demand-vs-Earnings Strength. Compares trailing return against trailing EPS growth, sector-relative. Negative = price ran ahead of earnings.' },
+    'Macro regime (HY OAS / curve / USD)':    { gloss: 'Risk-on / risk-off composite from credit spreads, the yield curve, and the dollar.', term: 'Macro regime', def: 'HY OAS (junk-bond spreads), 2s10s (Treasury curve), and trade-weighted USD. Positive = risk-on backdrop that lifts long-duration assets.' },
+    'Insider conviction breadth':             { gloss: 'Across the universe, are insiders net buying or net selling?', term: 'Form 4', def: 'SEC filing insiders submit when they buy or sell their own company\'s stock. This signal counts net-buy minus net-sell breadth across all names.' },
+    '13F conviction breadth (acc vs dist)':   { gloss: 'Across the universe, are institutions accumulating or distributing? Lags one quarter.', term: '13F', def: 'Quarterly SEC filing from funds >$100M reporting their long equity holdings. Filed ~45 days after quarter-end, so this signal lags actual positioning.' }
+  };
+
+  // ---- Band legend (Step 1 footer): 5 cells, highlight the one we're in
+  const legendActive = { 'ELITE':'elite','CONSTRUCTIVE':'constructive','NEUTRAL':'neutral','WEAKENING':'weakening','DISTRIBUTING':'distributing' }[label] || 'neutral';
+  const legendCells = [
+    { key: 'distributing', name: 'Distributing', range: '≤ −60' },
+    { key: 'weakening',    name: 'Weakening',    range: '−60 to −30' },
+    { key: 'neutral',      name: 'Neutral',      range: '−30 to +30' },
+    { key: 'constructive', name: 'Constructive', range: '+30 to +60' },
+    { key: 'elite',        name: 'Elite',        range: '≥ +60' }
+  ].map(cell => {
+    const on = cell.key === legendActive;
+    return `<div style="padding:6px 4px;border-radius:6px;background:${on?tone:'var(--card)'};color:${on?'#0b0d12':'var(--muted)'};border:1px solid ${on?'var(--text)':'transparent'};text-align:center">
+      <div style="font-weight:600;font-size:10px">${cell.name}</div>
+      <div style="font-family:monospace;font-size:10px;opacity:0.85">${cell.range}</div>
+    </div>`;
+  }).join('');
+
+  // ---- Step 2: components rendered as B-style cards (not a table)
+  const compsHtml = components.map(c => {
+    const meta = COMP_META[c.name] || { gloss: '', term: null, def: '' };
+    const d = Number(c.delta) || 0;
+    const deltaColor = d > 0 ? '#22c55e' : (d < 0 ? '#ef4444' : 'var(--muted)');
+    const dStr = (d >= 0 ? '+' : '') + d;
+    const cap = /^Band lean/i.test(c.name) ? 30 : 10;
+    const fillPct = Math.min(Math.abs(d)/cap, 1) * 50;
+    const fillSide = d >= 0 ? `left:50%` : `right:50%`;
+    const fillColor = d >= 0 ? '#22c55e' : '#ef4444';
+
+    // Wrap the jargon term with an inline <details> popover.
+    let nameHtml = escapeHtml(c.name);
+    if (meta.term){
+      const re = new RegExp('(' + meta.term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'i');
+      nameHtml = escapeHtml(c.name).replace(re,
+        '<details class="lthcs-nar-term" style="display:inline;position:relative">' +
+          '<summary style="display:inline;list-style:none;cursor:help;font-family:monospace;background:var(--bg);padding:1px 6px;border-radius:4px;font-size:12px;color:var(--muted);border-bottom:1px dotted #a78bfa">$1</summary>' +
+          '<div role="note" style="position:absolute;left:0;top:1.6rem;z-index:50;width:min(280px,90vw);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;box-shadow:0 6px 18px rgba(0,0,0,0.45);font-weight:400;font-size:12px;color:var(--muted);line-height:1.45;font-style:normal;text-transform:none;letter-spacing:normal">' +
+            '<strong style="color:var(--text);display:block;margin-bottom:3px">' + escapeHtml(meta.term) + '</strong>' +
+            meta.def +
+          '</div>' +
+        '</details>');
+    }
+
+    return `<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap">
+        <div style="font-size:14px;font-weight:600;color:var(--text)">${nameHtml}</div>
+        <div style="font-family:monospace;font-weight:700;font-size:13px;padding:2px 8px;border-radius:6px;background:var(--card);color:${deltaColor};font-variant-numeric:tabular-nums">${dStr}</div>
+      </div>
+      <div style="font-family:monospace;font-size:11px;color:var(--muted);margin:4px 0 6px 0">value: ${escapeHtml(String(c.value==null?'—':c.value))}</div>
+      <p style="font-size:13px;margin:0;color:var(--text);line-height:1.5">${escapeHtml(c.read || '')}
+        <span style="color:var(--muted);font-style:italic;font-size:12px;display:block;margin-top:3px">${meta.gloss}</span>
+      </p>
+      <div style="position:relative;height:6px;background:var(--card);border-radius:3px;margin-top:8px;overflow:hidden">
+        <div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--border)"></div>
+        <div style="position:absolute;top:0;bottom:0;${fillSide};width:${fillPct.toFixed(1)}%;background:${fillColor}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ---- Existing V1 features preserved: movers row + dashboard CTA
+  const moversRow = renderLthcsMoversRow(L.movers || {});
+
+  host.innerHTML = `
+    <div class="head" style="align-items:flex-start">
+      <div>
+        <h2 style="font-size:15px">📊 LTHCS Composite Index</h2>
+        <div class="desc">Where is the long-term-hold market? · as of ${escapeHtml(asOf)}</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: The big picture -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:10px 0 12px 0">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${tone};color:#0b0d12;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">1</div>
+        <div>
+          <h3 style="font-size:15px;margin:0;color:var(--text)">The big picture</h3>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">Where is the market leaning right now?</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-family:monospace;font-size:clamp(48px,8vw,72px);font-weight:700;line-height:1;color:${tone};font-variant-numeric:tabular-nums">${score>=0?'+':''}${score}</div>
+        <div style="flex:1 1 280px">
+          <div style="text-transform:uppercase;letter-spacing:0.1em;font-size:13px;font-weight:700;color:${tone}">${escapeHtml(label)}</div>
+          <p style="font-size:14px;margin:6px 0;color:var(--text);line-height:1.5">${verdictGloss}</p>
+          <div style="font-size:11px;color:var(--muted)">One number, scale −100 to +100. Computed daily at 23:00 UTC from 9 underlying signals.</div>
+        </div>
+      </div>
+      <div style="position:relative;margin:12px 0 4px 0;height:14px">
+        <div style="height:8px;border-radius:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);position:absolute;left:0;right:0;top:3px;opacity:0.55"></div>
+        <div style="position:absolute;top:0;left:${pct.toFixed(1)}%;transform:translateX(-50%);width:14px;height:14px;background:${tone};border:2px solid var(--text);border-radius:50%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-family:monospace;font-size:10px;color:var(--muted);margin-top:8px">
+        <span>−100</span><span>−50</span><span>0</span><span>+50</span><span>+100</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:12px;font-size:10px">${legendCells}</div>
+    </div>
+
+    <!-- STEP 2: What changed -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${tone};color:#0b0d12;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0">2</div>
+        <div>
+          <h3 style="font-size:15px;margin:0;color:var(--text)">What changed inside the number</h3>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px">Which signals pushed the headline up or down today?</div>
+        </div>
+      </div>
+      <p style="margin:0 0 10px 0;color:var(--muted);font-size:12px;line-height:1.5">
+        The headline is an average of 9 underlying signals, each scaled to −30 to +30 for band lean (the heaviest weight) or ±10 for the others. Green = pushed today's number up, red = pushed it down. Hover any <span style="border-bottom:1px dotted #a78bfa">underlined term</span> for a plain-English definition.
+      </p>
+      ${compsHtml}
+    </div>
+
+    <div class="sub" style="margin-top:8px;font-size:11px;color:var(--muted)">${escapeHtml(idx.note || 'Aggregate of LTHCS universe. Directional read, not a trading signal.')}</div>
+    ${moversRow}
+    <div style="margin-top:10px;text-align:right">${link}</div>
+  `;
+
+  // One-time wiring: click-outside closes any open popover. Guarded with a
+  // host-attached flag so re-renders don't stack listeners.
+  if (!host._lthcsNarPopoverWired){
+    host._lthcsNarPopoverWired = true;
+    document.addEventListener('click', (e) => {
+      host.querySelectorAll('details.lthcs-nar-term[open]').forEach(d => {
+        if (!d.contains(e.target)) d.removeAttribute('open');
+      });
+    });
+  }
+}
+
 // LTHCS Composite Index panel — long-term holding conviction score
 // aggregated across the 167-ticker equity universe. Rendered into the
 // host element passed by the caller (used by both the Stocks tab and the
@@ -4165,6 +4357,10 @@ function renderWhaleSentiment(){
 // Empty-state: when LTHCS data isn't on disk yet (concurrent pipeline run
 // not finished), renders a polite placeholder + dashboard link instead
 // of crashing.
+//
+// 2026-05-20: superseded by renderLthcsNarrativePanel above. Kept in place
+// as a one-flip rollback — change the two call sites back if the narrative
+// version causes problems.
 function renderLthcsCompositePanel(host){
   if (!host) return;
   const L = (DATA.lthcs || {});
@@ -4460,7 +4656,7 @@ function renderLthcsInsightsRow(host){
 // composite card so the visual model stays identical.
 function renderLthcsTab(){
   renderLthcsInsightsRow(document.getElementById('lthcsInsightsRow'));
-  renderLthcsCompositePanel(document.getElementById('lthcsCompositeCard'));
+  renderLthcsNarrativePanel(document.getElementById('lthcsCompositeCard'));
 }
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
@@ -7006,7 +7202,7 @@ function renderStocksTab(){
   // universe. Same visual model as the Whale Sentiment Index. Mirrors the
   // LTHCS tab. Insights row hosts the corner CTA so the intro card is gone.
   renderLthcsInsightsRow(document.getElementById('stocksLthcsInsightsRow'));
-  renderLthcsCompositePanel(document.getElementById('stocksLthcsCompositeCard'));
+  renderLthcsNarrativePanel(document.getElementById('stocksLthcsCompositeCard'));
   // Traditional indices bar (DOW / S&P / NDX / VIX) moved here from the
   // Crypto tab — macro equity context belongs alongside the equity-signal grid.
   renderOverviewIndices();
