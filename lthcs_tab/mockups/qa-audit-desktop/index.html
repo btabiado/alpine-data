@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=1440" />
+    <title>LTHCS · QA &amp; Audit (desktop mockup)</title>
+    <style>
+      /* =============================================================
+         Mirrored design tokens from lthcs_tab/lthcs.css. Kept inline
+         so this mockup is portable (no cross-folder @import).
+         ============================================================= */
+      :root {
+        --band-elite: #1F3A5F;
+        --band-high: #4A8F5F;
+        --band-constructive: #C9A227;
+        --band-monitor: #D89148;
+        --band-weakening: #B85A3E;
+        --band-review: #7A2E1F;
+
+        --band-elite-bright: #4D7AB5;
+        --band-high-bright: #6FD18C;
+        --band-constructive-bright: #E9C04A;
+        --band-monitor-bright: #F0A861;
+        --band-weakening-bright: #E27A5C;
+        --band-review-bright: #C25640;
+
+        --drift-improving: #4A8F5F;
+        --drift-stable: #9CA3AF;
+        --drift-declining: #E26D5C;
+        --drift-improving-bright: #6FD18C;
+        --drift-declining-bright: #FF8775;
+        --drift-flat-accent: #6EA8FE;
+
+        --bg-page: #0E1216;
+        --bg-elevated: #131820;
+        --bg-card: #171C22;
+        --bg-card-hover: #1D232B;
+        --bg-chip: #1B2129;
+        --bg-chip-active: #2A323D;
+        --bg-input: #11161C;
+
+        --text-primary: #E6E9EE;
+        --text-secondary: #9CA3AF;
+        --text-tertiary: #6B7280;
+
+        --border-subtle: #2A323D;
+        --border-strong: #3A4452;
+
+        --accent: #6EA8FE;
+        --danger: #E26D5C;
+        --warn: #E9C04A;
+        --ok: #6FD18C;
+
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+
+        --font-sans: system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo,
+          Consolas, monospace;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: var(--bg-page);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      .mono { font-family: var(--font-mono); }
+
+      /* ---------- Page chrome ---------- */
+      .page {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 20px 24px 48px;
+      }
+
+      .hdr {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        padding-bottom: 14px;
+        border-bottom: 1px solid var(--border-subtle);
+        margin-bottom: 18px;
+      }
+      .hdr-title {
+        margin: 0;
+        font-size: 19px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .hdr-title span {
+        color: var(--text-tertiary);
+        font-weight: 400;
+        margin-left: 8px;
+        font-size: 13px;
+      }
+      .hdr-meta {
+        display: flex;
+        gap: 18px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .hdr-meta b { color: var(--text-primary); font-weight: 600; }
+      .hdr-nav {
+        display: flex;
+        gap: 6px;
+        margin-left: 18px;
+      }
+      .hdr-nav a {
+        padding: 4px 9px;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .hdr-nav a:hover {
+        color: var(--text-primary);
+        border-color: var(--border-strong);
+        background: var(--bg-chip);
+        text-decoration: none;
+      }
+
+      /* ---------- Banner (verdict strip) ---------- */
+      .banner {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 18px;
+        align-items: stretch;
+        background: linear-gradient(180deg, rgba(74, 143, 95, 0.10), rgba(74, 143, 95, 0.02));
+        border: 1px solid rgba(111, 209, 140, 0.35);
+        border-radius: var(--radius-lg);
+        padding: 14px 18px;
+        margin-bottom: 18px;
+      }
+      .banner.warn {
+        background: linear-gradient(180deg, rgba(233, 192, 74, 0.10), rgba(233, 192, 74, 0.02));
+        border-color: rgba(233, 192, 74, 0.45);
+      }
+      .banner-verdict {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        border-right: 1px solid var(--border-subtle);
+        padding-right: 16px;
+      }
+      .banner-verdict .vstate {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .banner-verdict .vstate.warn { color: var(--warn); }
+      .banner-verdict .vstate.ok { color: var(--ok); }
+      .banner-verdict .vsub {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .banner-meta {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 14px;
+      }
+      .bm {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .bm-label {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+      }
+      .bm-val {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .bm-val.ok { color: var(--ok); }
+      .bm-val.warn { color: var(--warn); }
+      .bm-val.bad { color: var(--danger); }
+      .bm-val .sub {
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--text-secondary);
+        margin-left: 4px;
+      }
+
+      /* ---------- Grid layout ---------- */
+      .row {
+        display: grid;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .row-2-col-7-5  { grid-template-columns: 7fr 5fr; }
+      .row-2-col-6-6  { grid-template-columns: 1fr 1fr; }
+      .row-2-col-5-7  { grid-template-columns: 5fr 7fr; }
+
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 14px 16px 16px;
+        display: flex;
+        flex-direction: column;
+      }
+      .card-h {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+      .card-h h2 {
+        margin: 0;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-primary);
+      }
+      .card-h .sub {
+        font-size: 11.5px;
+        color: var(--text-tertiary);
+      }
+      .card-h .pill {
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: var(--bg-chip);
+        color: var(--text-secondary);
+        border: 1px solid var(--border-subtle);
+      }
+      .pill.ok { background: rgba(111, 209, 140, 0.12); border-color: rgba(111, 209, 140, 0.30); color: var(--ok); }
+      .pill.warn { background: rgba(233, 192, 74, 0.10); border-color: rgba(233, 192, 74, 0.32); color: var(--warn); }
+      .pill.bad { background: rgba(226, 109, 92, 0.10); border-color: rgba(226, 109, 92, 0.32); color: var(--danger); }
+
+      /* ---------- Tables ---------- */
+      table.dense {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      table.dense th, table.dense td {
+        text-align: left;
+        padding: 5px 8px;
+        border-bottom: 1px solid var(--border-subtle);
+        vertical-align: middle;
+      }
+      table.dense th {
+        font-weight: 500;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 10.5px;
+        background: var(--bg-elevated);
+        position: sticky;
+        top: 0;
+      }
+      table.dense tr:last-child td { border-bottom: 0; }
+      table.dense tr:hover td { background: var(--bg-card-hover); }
+      table.dense td.num,
+      table.dense th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+      table.dense td.mono { font-family: var(--font-mono); }
+
+      /* dot indicators */
+      .dot {
+        display: inline-block;
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        margin-right: 6px;
+        vertical-align: middle;
+      }
+      .dot.ok { background: var(--ok); box-shadow: 0 0 6px rgba(111, 209, 140, 0.4); }
+      .dot.warn { background: var(--warn); }
+      .dot.bad { background: var(--danger); }
+      .dot.muted { background: var(--text-tertiary); }
+
+      /* delta arrows */
+      .delta-up { color: var(--drift-improving-bright); }
+      .delta-dn { color: var(--drift-declining-bright); }
+      .delta-flat { color: var(--text-tertiary); }
+
+      /* ---------- Coverage matrix (pillar table) ---------- */
+      .pillar-matrix td.bar-cell {
+        position: relative;
+        padding-right: 14px;
+      }
+      .bar {
+        position: relative;
+        height: 4px;
+        width: 100%;
+        background: var(--bg-input);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 3px;
+      }
+      .bar > i {
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        background: var(--band-high-bright);
+      }
+      .bar.warn > i { background: var(--band-monitor-bright); }
+      .bar.bad > i { background: var(--band-review-bright); }
+
+      /* ---------- Sparkline (composite drift) ---------- */
+      .spark-wrap {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .spark-svg {
+        width: 100%;
+        height: 110px;
+        display: block;
+      }
+      .spark-axis {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10.5px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+      .spark-events {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 11px;
+        margin-top: 4px;
+      }
+      .ev {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 7px;
+        background: var(--bg-chip);
+        border: 1px solid var(--border-subtle);
+        border-radius: 4px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 11px;
+      }
+      .ev b { color: var(--text-primary); font-weight: 600; }
+
+      /* ---------- Run timeline strip ---------- */
+      .runs-strip {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .run-cell {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        position: relative;
+      }
+      .run-cell.ok { border-color: rgba(111, 209, 140, 0.35); }
+      .run-cell.warn { border-color: rgba(233, 192, 74, 0.35); }
+      .run-cell.skip { opacity: 0.55; }
+      .run-cell .rd {
+        font-family: var(--font-mono);
+        font-size: 10.5px;
+        color: var(--text-tertiary);
+        letter-spacing: 0.02em;
+      }
+      .run-cell .rs {
+        font-size: 11px;
+        color: var(--text-primary);
+      }
+      .run-cell .rt {
+        font-size: 10.5px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+      }
+
+      /* ---------- Security panel ---------- */
+      .sec-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .sec-tile {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .sec-tile .lbl {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+      }
+      .sec-tile .val {
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .sec-tile .sub {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-family: var(--font-mono);
+      }
+      .sec-commits {
+        font-size: 11.5px;
+        font-family: var(--font-mono);
+      }
+      .sec-commits .row {
+        display: grid;
+        grid-template-columns: 70px 80px 1fr 70px;
+        gap: 10px;
+        padding: 4px 0;
+        border-bottom: 1px dashed var(--border-subtle);
+        align-items: baseline;
+        margin: 0;
+      }
+      .sec-commits .row:last-child { border-bottom: 0; }
+      .sec-commits .sha { color: var(--accent); }
+      .sec-commits .path { color: var(--text-secondary); }
+      .sec-commits .msg { color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .sec-commits .when { color: var(--text-tertiary); text-align: right; }
+
+      /* ---------- Universe / sector grid ---------- */
+      .sector-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 6px;
+      }
+      .sec-cell {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        padding: 6px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .sec-cell .name {
+        font-size: 10.5px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sec-cell .n {
+        font-size: 15px;
+        font-weight: 600;
+        font-family: var(--font-mono);
+      }
+      .sec-cell .delta {
+        font-size: 10.5px;
+        color: var(--text-tertiary);
+        font-family: var(--font-mono);
+      }
+
+      /* universe diff list */
+      .univ-diff {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .univ-diff .panel {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        padding: 8px 10px;
+      }
+      .univ-diff h4 {
+        margin: 0 0 6px;
+        font-size: 10.5px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-tertiary);
+        font-weight: 500;
+      }
+      .univ-diff ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--text-primary);
+      }
+      .univ-diff li {
+        display: grid;
+        grid-template-columns: 60px 1fr;
+        gap: 8px;
+        padding: 2px 0;
+      }
+      .univ-diff li span.tag {
+        color: var(--text-tertiary);
+        font-size: 10.5px;
+      }
+
+      /* ---------- Movers table ---------- */
+      .movers .tick { font-weight: 600; }
+      .movers .from-to { color: var(--text-secondary); font-family: var(--font-mono); }
+      .movers .reason { color: var(--text-secondary); font-size: 11.5px; }
+      .movers .reason b { color: var(--text-primary); font-weight: 600; }
+      .band-chip {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        font-family: var(--font-sans);
+      }
+      .band-chip.review     { background: rgba(122, 46, 31, 0.40); color: #F1B7AB; }
+      .band-chip.weakening  { background: rgba(184, 90, 62, 0.30); color: #F3B7A4; }
+      .band-chip.monitor    { background: rgba(216, 145, 72, 0.25); color: #F4C99C; }
+      .band-chip.constructive { background: rgba(201, 162, 39, 0.25); color: #F1D87B; }
+
+      /* ---------- footer ---------- */
+      .foot {
+        margin-top: 22px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-subtle);
+        font-size: 11.5px;
+        color: var(--text-tertiary);
+        display: flex;
+        justify-content: space-between;
+        gap: 18px;
+      }
+      .foot code {
+        font-family: var(--font-mono);
+        background: var(--bg-chip);
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+
+      /* tiny stuff */
+      .hr-soft {
+        border: 0;
+        border-top: 1px dashed var(--border-subtle);
+        margin: 8px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+
+      <!-- ============================================================
+           HEADER
+           ============================================================ -->
+      <header class="hdr">
+        <h1 class="hdr-title">LTHCS &middot; QA &amp; Audit
+          <span>desktop · 1440 × 900</span>
+        </h1>
+        <div class="hdr-meta">
+          <span>generated <b class="mono">2026-05-20 14:32:18 UTC</b></span>
+          <span>snapshot <b class="mono">2026-05-20</b></span>
+          <span>model <b class="mono">v1.1.0</b></span>
+          <nav class="hdr-nav">
+            <a href="../../../lthcs_health/index.html">Health</a>
+            <a href="../../../lthcs_health/pipeline.html">Pipeline</a>
+            <a href="../../../lthcs_health/quality.html">Quality</a>
+            <a href="../../">Card view</a>
+          </nav>
+        </div>
+      </header>
+
+      <!-- ============================================================
+           VERDICT BANNER — the 5-second answer
+           ============================================================ -->
+      <section class="banner warn" aria-label="Overall verdict">
+        <div class="banner-verdict">
+          <span class="vstate warn">1 ISSUE</span>
+          <span class="vsub">pipeline clean &middot; quality CRITICAL band distribution &middot; security clean</span>
+        </div>
+        <div class="banner-meta">
+          <div class="bm">
+            <span class="bm-label">Last run</span>
+            <span class="bm-val ok">23:00 UTC <span class="sub">+02:47</span></span>
+          </div>
+          <div class="bm">
+            <span class="bm-label">Tickers scored</span>
+            <span class="bm-val">167<span class="sub">/168 active</span></span>
+          </div>
+          <div class="bm">
+            <span class="bm-label">Pillar coverage</span>
+            <span class="bm-val ok">96.9%<span class="sub">avg</span></span>
+          </div>
+          <div class="bm">
+            <span class="bm-label">Band churn 30d</span>
+            <span class="bm-val">5.1%<span class="sub">acceptable</span></span>
+          </div>
+          <div class="bm">
+            <span class="bm-label">Security</span>
+            <span class="bm-val ok">0 alerts<span class="sub">CodeQL/DEP/TH</span></span>
+          </div>
+          <div class="bm">
+            <span class="bm-label">Pushed by</span>
+            <span class="bm-val">lthcs-bot<span class="sub">unsigned · workflow</span></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           ROW 1 — Pipeline runs  +  Composite drift sparkline
+           ============================================================ -->
+      <section class="row row-2-col-7-5">
+
+        <!-- PIPELINE RUNS — last 7 -->
+        <article class="card">
+          <header class="card-h">
+            <h2>Pipeline runs <span class="sub">— last 7 daily cron firings (23:00 UTC)</span></h2>
+            <span class="pill ok"><span class="dot ok"></span>7/7 success</span>
+          </header>
+
+          <div class="runs-strip">
+            <div class="run-cell skip">
+              <span class="rd">2026-05-13</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">03:42</span>
+            </div>
+            <div class="run-cell skip">
+              <span class="rd">2026-05-14</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">02:51</span>
+            </div>
+            <div class="run-cell skip">
+              <span class="rd">2026-05-15</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">03:08</span>
+            </div>
+            <div class="run-cell skip">
+              <span class="rd">2026-05-16</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">02:39</span>
+            </div>
+            <div class="run-cell ok">
+              <span class="rd">2026-05-17</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">02:55</span>
+            </div>
+            <div class="run-cell ok">
+              <span class="rd">2026-05-18</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">03:11</span>
+            </div>
+            <div class="run-cell ok" title="Today">
+              <span class="rd">2026-05-20</span>
+              <span class="rs"><span class="dot ok"></span> ok</span>
+              <span class="rt">02:47</span>
+            </div>
+          </div>
+
+          <!-- Note: 2026-05-19 was caught-up by 2026-05-20 run (`--catch-up`) -->
+          <p style="font-size:11px;color:var(--text-tertiary);margin:0 0 10px;font-family:var(--font-mono);">
+            note · 2026-05-19 missing snapshot was forward-filled by today's <code>--catch-up</code> pass
+            (commit <a href="#">fe6436d</a>, 09:57 ET).
+          </p>
+
+          <table class="dense">
+            <thead>
+              <tr>
+                <th>Run</th>
+                <th>Trigger</th>
+                <th>Pushed by</th>
+                <th class="num">Snapshot bytes</th>
+                <th class="num">+/- vs prev</th>
+                <th>Skipped</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">2026-05-20 23:00</td>
+                <td>cron</td>
+                <td class="mono">lthcs-bot</td>
+                <td class="num">238 KB</td>
+                <td class="num delta-flat">+0.4 KB</td>
+                <td class="mono">thesis (AV quota)</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-05-18 23:00</td>
+                <td>cron</td>
+                <td class="mono">lthcs-bot</td>
+                <td class="num">237 KB</td>
+                <td class="num delta-flat">+0.1 KB</td>
+                <td class="mono">thesis</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-05-17 23:00</td>
+                <td>cron</td>
+                <td class="mono">lthcs-bot</td>
+                <td class="num">237 KB</td>
+                <td class="num delta-flat">-0.0 KB</td>
+                <td class="mono">thesis</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-05-16 23:00</td>
+                <td>cron</td>
+                <td class="mono">lthcs-bot</td>
+                <td class="num">237 KB</td>
+                <td class="num delta-flat">+0.2 KB</td>
+                <td class="mono">thesis</td>
+              </tr>
+              <tr>
+                <td class="mono">2026-05-15 23:00</td>
+                <td>cron</td>
+                <td class="mono">lthcs-bot</td>
+                <td class="num">237 KB</td>
+                <td class="num delta-flat">+0.1 KB</td>
+                <td class="mono">thesis</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+
+        <!-- COMPOSITE DRIFT -->
+        <article class="card">
+          <header class="card-h">
+            <h2>Composite drift <span class="sub">— 30 days, universe-aggregate score</span></h2>
+            <span class="pill warn"><span class="dot warn"></span>declining</span>
+          </header>
+
+          <div class="spark-wrap">
+            <!-- 30 daily index values 2026-04-20 → 2026-05-20 -->
+            <!-- y range -28..-4; mapped to height 100..10 (svg viewBox 300x110) -->
+            <svg class="spark-svg" viewBox="0 0 300 110" preserveAspectRatio="none" aria-label="Composite score, 30 days">
+              <!-- horizontal guides -->
+              <line x1="0" y1="55" x2="300" y2="55" stroke="#2A323D" stroke-width="0.5" stroke-dasharray="2,3" />
+              <line x1="0" y1="20" x2="300" y2="20" stroke="#2A323D" stroke-width="0.5" stroke-dasharray="2,3" />
+              <line x1="0" y1="90" x2="300" y2="90" stroke="#2A323D" stroke-width="0.5" stroke-dasharray="2,3" />
+
+              <!-- band shading bottom (review zone, score < -20 in this view) -->
+              <rect x="0" y="78" width="300" height="32" fill="rgba(226,109,92,0.05)" />
+
+              <!-- area + line path -->
+              <!-- values: -8,-7,-6,-7,-6,-6,-6,-6,-6,-7,-6,-6,-6,-6,-7,-7,-8,-8,-8,-8,-8,-8,-8,-9,-9,-9,-11,-11,-20,-26 -->
+              <!-- scaled: y = (val - (-4)) / (-28 - (-4)) * 100  + 5 inverse -->
+              <path d="M0,32 L10.3,29 L20.7,25 L31.0,29 L41.4,25 L51.7,25 L62.1,25 L72.4,25 L82.8,25 L93.1,29 L103.4,25 L113.8,25 L124.1,25 L134.5,25 L144.8,29 L155.2,29 L165.5,32 L175.9,32 L186.2,32 L196.6,32 L206.9,32 L217.2,32 L227.6,32 L237.9,36 L248.3,36 L258.6,36 L269.0,44 L279.3,44 L289.7,80 L300,104"
+                    fill="none"
+                    stroke="#FF8775"
+                    stroke-width="1.6"
+                    vector-effect="non-scaling-stroke" />
+
+              <!-- area fill -->
+              <path d="M0,32 L10.3,29 L20.7,25 L31.0,29 L41.4,25 L51.7,25 L62.1,25 L72.4,25 L82.8,25 L93.1,29 L103.4,25 L113.8,25 L124.1,25 L134.5,25 L144.8,29 L155.2,29 L165.5,32 L175.9,32 L186.2,32 L196.6,32 L206.9,32 L217.2,32 L227.6,32 L237.9,36 L248.3,36 L258.6,36 L269.0,44 L279.3,44 L289.7,80 L300,104 L300,110 L0,110 Z"
+                    fill="rgba(255,135,117,0.08)"
+                    stroke="none" />
+
+              <!-- last 2 marker dots -->
+              <circle cx="289.7" cy="80" r="2.4" fill="#FF8775" />
+              <circle cx="300" cy="104" r="2.6" fill="#FF8775" stroke="#0E1216" stroke-width="1" />
+
+              <!-- band labels along right edge -->
+              <text x="2" y="18" font-family="ui-monospace,monospace" font-size="8" fill="#6B7280">-4</text>
+              <text x="2" y="53" font-family="ui-monospace,monospace" font-size="8" fill="#6B7280">-15</text>
+              <text x="2" y="88" font-family="ui-monospace,monospace" font-size="8" fill="#6B7280">-26</text>
+            </svg>
+
+            <div class="spark-axis">
+              <span>2026-04-20</span>
+              <span>05-05</span>
+              <span>05-20 &middot; <b style="color:#FF8775">-26</b></span>
+            </div>
+
+            <hr class="hr-soft" />
+
+            <p style="margin:2px 0 6px;font-size:11.5px;color:var(--text-secondary);">
+              Composite stepped from <span class="mono">-11</span> on 05-17 to <span class="mono">-26</span> today
+              (<span class="delta-dn mono">Δ-15</span> over 3 trading days). Driven by 13F-conviction breadth
+              flipping to <span class="mono">8 vs 90</span> (acc vs dist).
+            </p>
+
+            <div class="spark-events">
+              <span class="ev"><span class="dot warn"></span>05-18 <b>band-lean</b> -77.2%</span>
+              <span class="ev"><span class="dot warn"></span>05-18 <b>insider</b> distributing</span>
+              <span class="ev"><span class="dot bad"></span>05-20 <b>13F</b> 8 vs 90</span>
+              <span class="ev"><span class="dot ok"></span>0 band churn alerts</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================
+           ROW 2 — Pillar coverage matrix  +  Security audit
+           ============================================================ -->
+      <section class="row row-2-col-7-5">
+
+        <!-- PER-PILLAR COVERAGE / QUALITY MATRIX -->
+        <article class="card">
+          <header class="card-h">
+            <h2>Per-pillar quality <span class="sub">— 5 pillars × 167 tickers · audit window 30d</span></h2>
+            <span class="pill warn"><span class="dot warn"></span>overall CRITICAL · 5/5 pillars HEALTHY · band distribution misaligned</span>
+          </header>
+
+          <table class="dense pillar-matrix">
+            <thead>
+              <tr>
+                <th>Pillar</th>
+                <th>Verdict</th>
+                <th class="num">Coverage</th>
+                <th class="num">Mean</th>
+                <th class="num">Stdev</th>
+                <th class="num">Floor/Ceil</th>
+                <th class="num">30d σ med</th>
+                <th class="num">Dropped</th>
+                <th>Top &amp; bottom outliers</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>adoption_momentum</td>
+                <td><span class="dot ok"></span>healthy</td>
+                <td class="num bar-cell">
+                  97.6%
+                  <div class="bar"><i style="width:97.6%"></i></div>
+                </td>
+                <td class="num">50.8</td>
+                <td class="num">23.97</td>
+                <td class="num mono">0 / 0</td>
+                <td class="num">1.71</td>
+                <td class="num mono">0</td>
+                <td class="mono">CEG 95.7 &middot; META 93.4 &middot; NVDA 93.0 / DE 4.7 &middot; TSLA 5.4</td>
+              </tr>
+              <tr>
+                <td>institutional_confidence</td>
+                <td><span class="dot ok"></span>healthy</td>
+                <td class="num bar-cell">
+                  99.4%
+                  <div class="bar"><i style="width:99.4%"></i></div>
+                </td>
+                <td class="num">48.6</td>
+                <td class="num">28.68</td>
+                <td class="num mono">1 / 1</td>
+                <td class="num">4.79</td>
+                <td class="num mono">0</td>
+                <td class="mono">INTC 100 &middot; MU 99.4 &middot; AMD 98.2 / DASH -0.1 &middot; LCID 0.0</td>
+              </tr>
+              <tr>
+                <td>financial_evolution</td>
+                <td><span class="dot ok"></span>healthy</td>
+                <td class="num bar-cell">
+                  98.2%
+                  <div class="bar"><i style="width:98.2%"></i></div>
+                </td>
+                <td class="num">55.8</td>
+                <td class="num">17.65</td>
+                <td class="num mono">0 / 0</td>
+                <td class="num">0.37</td>
+                <td class="num mono">0</td>
+                <td class="mono">MU 93.6 &middot; TMUS 86.0 &middot; ADI 85.9 / USB 15.8 &middot; WBD 16.8</td>
+              </tr>
+              <tr>
+                <td>thesis_integrity</td>
+                <td><span class="dot warn"></span>healthy*</td>
+                <td class="num bar-cell">
+                  89.2%
+                  <div class="bar warn"><i style="width:89.2%"></i></div>
+                </td>
+                <td class="num">59.2</td>
+                <td class="num">10.50</td>
+                <td class="num mono">0 / 0</td>
+                <td class="num">1.72</td>
+                <td class="num mono"><b style="color:var(--warn)">108</b></td>
+                <td class="mono">DXCM 82.1 &middot; DDOG 81.6 &middot; BA 81.0 / BRK.B 40.0 &middot; MDLZ 41.2</td>
+              </tr>
+              <tr>
+                <td>des</td>
+                <td><span class="dot ok"></span>healthy</td>
+                <td class="num bar-cell">
+                  100.0%
+                  <div class="bar"><i style="width:100%"></i></div>
+                </td>
+                <td class="num">46.8</td>
+                <td class="num">9.55</td>
+                <td class="num mono">0 / 0</td>
+                <td class="num">1.41</td>
+                <td class="num mono">0</td>
+                <td class="mono">WFC/V/USB/TRV/SCHW 70.7 / AMT 34.3 &middot; SPG 34.3</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p style="margin:10px 0 0;font-size:11px;color:var(--text-tertiary);">
+            * thesis pillar is <code class="mono" style="font-size:10.5px;color:var(--text-secondary);">--skip-thesis</code> in CI
+            (Alpha Vantage quota); falls back to neutral 50 for 108/167 tickers. Local pipeline runs the full path.
+            <a href="../../../docs/lthcs-parking-lot.md">parking-lot →</a>
+          </p>
+        </article>
+
+        <!-- SECURITY AUDIT -->
+        <article class="card">
+          <header class="card-h">
+            <h2>Security audit <span class="sub">— supply-chain &amp; sensitive paths</span></h2>
+            <span class="pill ok"><span class="dot ok"></span>all clean</span>
+          </header>
+
+          <div class="sec-grid">
+            <div class="sec-tile">
+              <span class="lbl">Dependabot</span>
+              <span class="val" style="color:var(--ok);">0 open</span>
+              <span class="sub">2 closed 2026-05-20 (P0 dotenv/requests bumps)</span>
+            </div>
+            <div class="sec-tile">
+              <span class="lbl">CodeQL · last scan</span>
+              <span class="val">2026-05-20 09:12 UTC</span>
+              <span class="sub">0 findings · weekly + push</span>
+            </div>
+            <div class="sec-tile">
+              <span class="lbl">Trufflehog · last scan</span>
+              <span class="val">2026-05-19 04:00 UTC</span>
+              <span class="sub">0 secrets · weekly</span>
+            </div>
+            <div class="sec-tile">
+              <span class="lbl">Public-manifest audit</span>
+              <span class="val" style="color:var(--ok);">CLEAN</span>
+              <span class="sub">runs on push · 2026-05-20</span>
+            </div>
+            <div class="sec-tile">
+              <span class="lbl">Actions SHA-pinned</span>
+              <span class="val" style="color:var(--ok);">15/15</span>
+              <span class="sub">P4 #25 landed f8ced7a</span>
+            </div>
+            <div class="sec-tile">
+              <span class="lbl">Commits unsigned</span>
+              <span class="val" style="color:var(--warn);">bot 7d</span>
+              <span class="sub">lthcs-bot · workflow-scoped, OK</span>
+            </div>
+          </div>
+
+          <h3 style="margin:4px 0 6px;font-size:10.5px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-tertiary);font-weight:500;">
+            Recent commits to sensitive paths · 7d
+          </h3>
+          <div class="sec-commits">
+            <div class="row">
+              <span class="sha mono">f8ced7a</span>
+              <span class="path">.github/wf/*</span>
+              <span class="msg">ci: pin all GitHub Actions to commit SHAs (P4 #25)</span>
+              <span class="when">05-20 09:05</span>
+            </div>
+            <div class="row">
+              <span class="sha mono">0a219fe</span>
+              <span class="path">.github/wf/*</span>
+              <span class="msg">ci: weekly trufflehog scan + CodeQL static analysis</span>
+              <span class="when">05-20 06:40</span>
+            </div>
+            <div class="row">
+              <span class="sha mono">3e8d026</span>
+              <span class="path">requirements.txt</span>
+              <span class="msg">sec: bump python-dotenv 1.2.1→1.2.2 + requests 2.32→2.33 (P0)</span>
+              <span class="when">05-20 06:52</span>
+            </div>
+            <div class="row">
+              <span class="sha mono">62312ae</span>
+              <span class="path">lthcs/llm/*</span>
+              <span class="msg">lthcs/llm: prompt-injection hardening (P1 #5)</span>
+              <span class="when">05-20 06:53</span>
+            </div>
+            <div class="row">
+              <span class="sha mono">fc27fc4</span>
+              <span class="path">app.py · v2/</span>
+              <span class="msg">sec: add CSP + secondary security meta-headers (P2 #9)</span>
+              <span class="when">05-20 08:41</span>
+            </div>
+            <div class="row">
+              <span class="sha mono">0f9c126</span>
+              <span class="path">lthcs/score.py</span>
+              <span class="msg">map crypto_thesis_unavailable → thesis_integrity drop</span>
+              <span class="when">05-18 18:30</span>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- ============================================================
+           ROW 3 — Universe state  +  Top movers
+           ============================================================ -->
+      <section class="row row-2-col-5-7">
+
+        <!-- UNIVERSE -->
+        <article class="card">
+          <header class="card-h">
+            <h2>Universe state <span class="sub">— 167 scored / 168 active / 169 declared</span></h2>
+            <span class="pill warn"><span class="dot warn"></span>1 ticker missing CIK</span>
+          </header>
+
+          <div class="sector-grid">
+            <div class="sec-cell"><span class="name">Technology</span>     <span class="n">42</span><span class="delta">25.1%</span></div>
+            <div class="sec-cell"><span class="name">Health Care</span>    <span class="n">22</span><span class="delta">13.2%</span></div>
+            <div class="sec-cell"><span class="name">Industrials</span>    <span class="n">21</span><span class="delta">12.6%</span></div>
+            <div class="sec-cell"><span class="name">Cons. Disc.</span>    <span class="n">20</span><span class="delta">12.0%</span></div>
+            <div class="sec-cell"><span class="name">Financials</span>     <span class="n">18</span><span class="delta">10.8%</span></div>
+            <div class="sec-cell"><span class="name">Cons. Staples</span>  <span class="n">14</span><span class="delta">8.4%</span></div>
+            <div class="sec-cell"><span class="name">Comm. Svcs.</span>    <span class="n">14</span><span class="delta">8.4%</span></div>
+            <div class="sec-cell"><span class="name">Utilities</span>      <span class="n">7</span><span class="delta">4.2%</span></div>
+            <div class="sec-cell"><span class="name">Energy</span>         <span class="n">5</span><span class="delta">3.0%</span></div>
+            <div class="sec-cell"><span class="name">Real Estate</span>    <span class="n">2</span><span class="delta">1.2%</span></div>
+            <div class="sec-cell"><span class="name">Materials</span>      <span class="n">2</span><span class="delta">1.2%</span></div>
+            <div class="sec-cell" style="opacity:.55;">
+              <span class="name">Unclassified</span><span class="n">0</span><span class="delta">—</span>
+            </div>
+          </div>
+
+          <div class="univ-diff">
+            <div class="panel">
+              <h4>Missing from snapshot (active in universe.json)</h4>
+              <ul>
+                <li><span class="tag">no-cik</span><span><b>ANSS</b> · Technology · sec_edgar lookup failed × 3</span></li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h4>Marked inactive (deprecated)</h4>
+              <ul>
+                <li><span class="tag">retired</span><span><b>WBA</b> · Cons. Staples · removed 2026-05-18</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="univ-diff">
+            <div class="panel">
+              <h4>Data-quality flags · today</h4>
+              <ul>
+                <li><span class="tag">sec_unav</span><span><b>3</b> · CRWD · GS · ODFL <span style="color:var(--text-tertiary);">(IFRS fallback → fin = 50)</span></span></li>
+                <li><span class="tag">thesis</span><span><b>108</b> · CI skip-thesis (AV quota, neutral 50)</span></li>
+                <li><span class="tag">conf=med</span><span><b>109</b> · conf=high <b>58</b></span></li>
+              </ul>
+            </div>
+            <div class="panel">
+              <h4>Pre-warm cache · last cron</h4>
+              <ul>
+                <li><span class="tag">yahoo</span><span>168 / 168 cached · 0 failures</span></li>
+                <li><span class="tag">finnhub</span><span>168 / 168 cached · 0 failures</span></li>
+                <li><span class="tag">sec_*</span><span>167 / 168 cached · 1 failure (ANSS)</span></li>
+                <li><span class="tag">fred</span><span>11 / 11 · eia 1 / 1 · 13f 21 / 21</span></li>
+              </ul>
+            </div>
+          </div>
+        </article>
+
+        <!-- MOVERS -->
+        <article class="card movers">
+          <header class="card-h">
+            <h2>Score audit <span class="sub">— top moves vs prior snapshot (05-18 → 05-20)</span></h2>
+            <span class="pill warn"><span class="dot warn"></span>20 band changes &middot; 0 churn alerts</span>
+          </header>
+
+          <table class="dense">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Sector</th>
+                <th class="num">Score</th>
+                <th class="num">Δ</th>
+                <th>Band</th>
+                <th>Why it moved (largest pillar Δ)</th>
+                <th class="num">Conf.</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="tick">DASH</td>
+                <td>Cons. Disc.</td>
+                <td class="num from-to">27.8 → <b style="color:var(--text-primary)">38.4</b></td>
+                <td class="num delta-up">+10.6</td>
+                <td><span class="band-chip review">review</span></td>
+                <td class="reason"><b>thesis_integrity</b> +19.8 (narratives_llm refresh · stayed below review threshold)</td>
+                <td class="num">med</td>
+              </tr>
+              <tr>
+                <td class="tick">AZN</td>
+                <td>Health Care</td>
+                <td class="num from-to">51.2 → <b style="color:var(--text-primary)">61.1</b></td>
+                <td class="num delta-up">+9.9</td>
+                <td><span class="band-chip monitor">monitor</span> <span style="color:var(--text-tertiary);font-size:10.5px;">← weak</span></td>
+                <td class="reason"><b>financial_evolution</b> +23.6 (FY revisions; SEC 8-K filed 05-19)</td>
+                <td class="num">high</td>
+              </tr>
+              <tr>
+                <td class="tick">CDW</td>
+                <td>Technology</td>
+                <td class="num from-to">30.1 → <b style="color:var(--text-primary)">38.7</b></td>
+                <td class="num delta-up">+8.6</td>
+                <td><span class="band-chip review">review</span></td>
+                <td class="reason"><b>thesis_integrity</b> +20.6 (narratives_llm + neutral 50 to live read)</td>
+                <td class="num">med</td>
+              </tr>
+              <tr>
+                <td class="tick">DHR</td>
+                <td>Health Care</td>
+                <td class="num from-to">32.0 → <b style="color:var(--text-primary)">40.0</b></td>
+                <td class="num delta-up">+8.0</td>
+                <td><span class="band-chip review">review</span></td>
+                <td class="reason"><b>thesis_integrity</b> +22.7 (narratives_llm · adoption -1.9 partial offset)</td>
+                <td class="num">med</td>
+              </tr>
+              <tr>
+                <td class="tick">WMT</td>
+                <td>Cons. Staples</td>
+                <td class="num from-to">53.1 → <b style="color:var(--text-primary)">46.9</b></td>
+                <td class="num delta-dn">−6.2</td>
+                <td><span class="band-chip review">review</span> <span style="color:var(--text-tertiary);font-size:10.5px;">← weak</span></td>
+                <td class="reason"><b>adoption_momentum</b> -28.1 (search-trend collapse · trends/2026-05-20 anomaly)</td>
+                <td class="num">high</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p style="margin:10px 0 0;font-size:11px;color:var(--text-tertiary);">
+            Band changes (20 total): 14 upgrades · 6 downgrades. Hover any row in production for the
+            full pillar-delta breakdown. Churn rate 5.1% / day-pair — within hysteresis-free threshold.
+          </p>
+        </article>
+      </section>
+
+      <!-- ============================================================
+           FOOTER — provenance & jump-links
+           ============================================================ -->
+      <footer class="foot">
+        <div>
+          Sources ·
+          <code>data/lthcs/snapshots/2026-05-20.json</code> ·
+          <code>data/lthcs/index/2026-05-20.json</code> ·
+          <code>data/lthcs/quality_audit/2026-05-20_*.md</code> ·
+          <code>data/lthcs/prewarm_status.json</code>
+        </div>
+        <div>
+          Read-only mockup ·
+          <a href="../../../docs/lthcs-threat-model-2026-05-20.md">threat-model</a> ·
+          <a href="../../../docs/lthcs-parking-lot.md">parking-lot</a> ·
+          <a href="../../../.github/workflows/lthcs-daily.yml">lthcs-daily.yml</a>
+        </div>
+      </footer>
+
+    </div>
+  </body>
+</html>

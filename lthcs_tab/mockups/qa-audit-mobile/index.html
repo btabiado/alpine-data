@@ -1,0 +1,1049 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0E1216" />
+    <title>LTHCS · QA &amp; Audit (mobile)</title>
+    <!--
+      Mockup: mobile QA & Audit consolidation page.
+      Self-contained — design tokens mirrored inline from lthcs_tab/lthcs.css.
+      Real values hardcoded from data/lthcs/index/2026-05-20.json,
+      data/lthcs/snapshots/2026-05-20.json,
+      data/lthcs/quality_audit/latest_summary.json.
+    -->
+    <style>
+      /* ===== Tokens (mirrored from lthcs_tab/lthcs.css) ===== */
+      :root {
+        --band-elite: #1F3A5F;
+        --band-high: #4A8F5F;
+        --band-constructive: #C9A227;
+        --band-monitor: #D89148;
+        --band-weakening: #B85A3E;
+        --band-review: #7A2E1F;
+
+        --band-monitor-bright: #F0A861;
+        --band-high-bright: #6FD18C;
+        --band-review-bright: #C25640;
+        --band-constructive-bright: #E9C04A;
+
+        --drift-improving: #4A8F5F;
+        --drift-improving-bright: #6FD18C;
+        --drift-declining: #E26D5C;
+        --drift-declining-bright: #FF8775;
+        --drift-stable: #9CA3AF;
+
+        --bg-page: #0E1216;
+        --bg-elevated: #131820;
+        --bg-card: #171C22;
+        --bg-card-hover: #1D232B;
+        --bg-chip: #1B2129;
+        --bg-chip-active: #2A323D;
+
+        --text-primary: #E6E9EE;
+        --text-secondary: #9CA3AF;
+        --text-tertiary: #6B7280;
+
+        --border-subtle: #2A323D;
+        --border-strong: #3A4452;
+
+        --accent: #6EA8FE;
+        --danger: #E26D5C;
+        --warn: #F0A861;
+        --ok: #6FD18C;
+
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --radius-xl: 20px;
+
+        --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+        /* Mobile tap target */
+        --tap: 44px;
+      }
+
+      *, *::before, *::after { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0a0d10;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        font-size: 15px;
+        line-height: 1.45;
+        -webkit-font-smoothing: antialiased;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* ===== Desktop preview frame (375×812 iPhone 13/14 portrait) ===== */
+      .preview-shell {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 24px 12px 60px;
+        background:
+          radial-gradient(circle at 50% 0%, #1a2230 0%, #0a0d10 60%);
+      }
+      .preview-caption {
+        color: var(--text-secondary);
+        font-size: 12px;
+        margin-bottom: 14px;
+        font-family: var(--font-mono);
+      }
+      .phone-frame {
+        width: 375px;
+        height: 812px;
+        background: var(--bg-page);
+        border-radius: 44px;
+        box-shadow:
+          0 0 0 8px #1a1d22,
+          0 0 0 9px #2a2f36,
+          0 30px 80px rgba(0, 0, 0, 0.7);
+        position: relative;
+        overflow: hidden;
+      }
+      .phone-notch {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 130px;
+        height: 28px;
+        background: #0a0d10;
+        border-radius: 0 0 18px 18px;
+        z-index: 100;
+      }
+      .phone-scroll {
+        position: absolute;
+        inset: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        padding: 44px 0 80px; /* notch top + bottom tab bar */
+      }
+
+      /* ===== Page chrome ===== */
+      .page-header {
+        padding: 6px 16px 14px;
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .page-title {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin: 0;
+      }
+      .page-asof {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+
+      /* ===== Hero traffic light ===== */
+      .hero {
+        margin: 4px 14px 18px;
+        padding: 22px 18px 20px;
+        border-radius: var(--radius-xl);
+        background:
+          radial-gradient(circle at 20% 0%, rgba(240, 168, 97, 0.20) 0%, transparent 60%),
+          linear-gradient(180deg, #1a1f27 0%, #131820 100%);
+        border: 1px solid var(--border-strong);
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        min-height: 156px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .hero[data-status="warn"] { border-color: var(--band-monitor); }
+      .hero[data-status="warn"]::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--band-monitor-bright);
+      }
+      .hero-top {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .hero-dot {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 35% 30%, var(--band-monitor-bright), var(--band-monitor) 70%);
+        box-shadow:
+          0 0 0 3px rgba(240, 168, 97, 0.18),
+          0 0 24px rgba(240, 168, 97, 0.45);
+        flex-shrink: 0;
+        animation: pulse 2.6s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(240, 168, 97, 0.18), 0 0 24px rgba(240, 168, 97, 0.45); }
+        50%      { box-shadow: 0 0 0 6px rgba(240, 168, 97, 0.10), 0 0 32px rgba(240, 168, 97, 0.65); }
+      }
+      .hero-status {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.05;
+      }
+      .hero-substatus {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+      }
+      .hero-detail {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border-subtle);
+      }
+      .hero-detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+      }
+      .hero-detail-row .lbl {
+        color: var(--text-secondary);
+      }
+      .hero-detail-row .val {
+        font-family: var(--font-mono);
+        color: var(--text-primary);
+      }
+      .hero-detail-row .val.warn { color: var(--band-monitor-bright); }
+      .hero-detail-row .val.ok   { color: var(--ok); }
+      .hero-cta {
+        position: absolute;
+        right: 16px;
+        bottom: 16px;
+        font-size: 11px;
+        color: var(--text-tertiary);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      /* ===== 2-up status cards (only multi-col grid allowed) ===== */
+      .grid-2 {
+        margin: 0 14px 14px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        padding: 12px 12px 10px;
+        min-height: var(--tap);
+      }
+      .stat-card .stat-label {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-tertiary);
+      }
+      .stat-card .stat-value {
+        font-family: var(--font-mono);
+        font-size: 22px;
+        font-weight: 600;
+        line-height: 1.1;
+        margin-top: 4px;
+      }
+      .stat-card .stat-sub {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 2px;
+      }
+      .stat-card.ok .stat-value    { color: var(--ok); }
+      .stat-card.warn .stat-value  { color: var(--band-monitor-bright); }
+      .stat-card.fail .stat-value  { color: var(--danger); }
+
+      /* ===== Section accordions ===== */
+      details.accordion {
+        margin: 0 14px 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+      }
+      details.accordion[open] { border-color: var(--border-strong); }
+      details.accordion > summary {
+        list-style: none;
+        cursor: pointer;
+        min-height: var(--tap);
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 15px;
+        font-weight: 500;
+        user-select: none;
+      }
+      details.accordion > summary::-webkit-details-marker { display: none; }
+      details.accordion > summary .chev {
+        margin-left: auto;
+        color: var(--text-tertiary);
+        transition: transform 0.2s ease;
+        font-size: 13px;
+      }
+      details.accordion[open] > summary .chev { transform: rotate(90deg); }
+      .sec-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .sec-dot.ok   { background: var(--ok);   box-shadow: 0 0 0 2px rgba(111, 209, 140, 0.18); }
+      .sec-dot.warn { background: var(--band-monitor-bright); box-shadow: 0 0 0 2px rgba(240, 168, 97, 0.18); }
+      .sec-dot.fail { background: var(--danger); box-shadow: 0 0 0 2px rgba(226, 109, 92, 0.18); }
+      .sec-tag {
+        margin-left: auto;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-tertiary);
+        padding: 3px 7px;
+        border-radius: 999px;
+        background: var(--bg-chip);
+      }
+      .sec-tag + .chev { margin-left: 8px; }
+      .accordion-body {
+        padding: 4px 14px 14px;
+        border-top: 1px solid var(--border-subtle);
+      }
+
+      /* ===== Pipeline run bars ===== */
+      .runs-row {
+        display: flex;
+        align-items: stretch;
+        gap: 4px;
+        margin: 14px 0 8px;
+      }
+      .run-bar {
+        flex: 1 1 0;
+        height: 56px;
+        border-radius: 4px;
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        font-family: var(--font-mono);
+        font-size: 9px;
+        color: rgba(255,255,255,0.65);
+        padding-bottom: 4px;
+        min-height: var(--tap);
+      }
+      .run-bar.ok     { background: linear-gradient(180deg, rgba(111,209,140,0.18), rgba(111,209,140,0.32)); border: 1px solid rgba(111,209,140,0.4); }
+      .run-bar.warn   { background: linear-gradient(180deg, rgba(240,168,97,0.18), rgba(240,168,97,0.32)); border: 1px solid rgba(240,168,97,0.45); }
+      .run-bar.fail   { background: linear-gradient(180deg, rgba(226,109,92,0.18), rgba(226,109,92,0.32)); border: 1px solid rgba(226,109,92,0.4); }
+      .run-bar.skip   { background: rgba(255,255,255,0.04); border: 1px dashed var(--border-subtle); color: var(--text-tertiary); }
+      .runs-legend {
+        display: flex;
+        justify-content: space-between;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-tertiary);
+        margin-top: 6px;
+      }
+
+      /* ===== Pillar rows ===== */
+      .pillar-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-subtle);
+        min-height: var(--tap);
+      }
+      .pillar-row:last-child { border-bottom: none; }
+      .pillar-name {
+        flex: 0 0 110px;
+        font-size: 13px;
+      }
+      .pillar-bar {
+        flex: 1 1 auto;
+        height: 8px;
+        background: var(--bg-chip);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+      }
+      .pillar-bar > span {
+        display: block;
+        height: 100%;
+        border-radius: 4px;
+        background: linear-gradient(90deg, var(--band-high), var(--band-high-bright));
+      }
+      .pillar-bar.low > span { background: linear-gradient(90deg, var(--band-monitor), var(--band-monitor-bright)); }
+      .pillar-pct {
+        flex: 0 0 50px;
+        text-align: right;
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--text-primary);
+      }
+
+      /* ===== Drift sparkline + score scale ===== */
+      .drift-wrap {
+        margin: 8px 0 4px;
+        padding: 12px;
+        background: var(--bg-elevated);
+        border-radius: var(--radius-sm);
+      }
+      .drift-head {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+      .drift-now {
+        font-family: var(--font-mono);
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--band-monitor-bright);
+      }
+      .drift-spark {
+        width: 100%;
+        height: 60px;
+      }
+      .drift-spark path.area {
+        fill: rgba(240, 168, 97, 0.18);
+        stroke: none;
+      }
+      .drift-spark path.line {
+        fill: none;
+        stroke: var(--band-monitor-bright);
+        stroke-width: 2;
+      }
+      .drift-spark circle {
+        fill: var(--band-monitor-bright);
+      }
+      .drift-spark text {
+        font-family: var(--font-mono);
+        font-size: 9px;
+        fill: var(--text-tertiary);
+      }
+      .drift-foot {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        margin-top: 4px;
+        font-family: var(--font-mono);
+      }
+
+      /* ===== Mover list ===== */
+      .mover {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-subtle);
+        min-height: var(--tap);
+      }
+      .mover:last-child { border-bottom: none; }
+      .mover .tk {
+        flex: 0 0 56px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 13px;
+      }
+      .mover .delta {
+        flex: 0 0 60px;
+        text-align: right;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .mover .delta.up   { color: var(--drift-improving-bright); }
+      .mover .delta.down { color: var(--drift-declining-bright); }
+      .mover .reason {
+        flex: 1 1 auto;
+        font-size: 12px;
+        color: var(--text-secondary);
+        line-height: 1.3;
+      }
+
+      /* ===== Universe + Security rows ===== */
+      .kv-list { margin: 4px 0; }
+      .kv-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-subtle);
+        min-height: var(--tap);
+        gap: 12px;
+      }
+      .kv-row:last-child { border-bottom: none; }
+      .kv-row .k {
+        font-size: 13px;
+        color: var(--text-secondary);
+      }
+      .kv-row .v {
+        font-family: var(--font-mono);
+        font-size: 13px;
+        color: var(--text-primary);
+        text-align: right;
+      }
+      .kv-row .v.ok   { color: var(--ok); }
+      .kv-row .v.warn { color: var(--band-monitor-bright); }
+      .kv-row .v.fail { color: var(--danger); }
+      .kv-row.tap-link {
+        cursor: pointer;
+      }
+      .chip {
+        display: inline-block;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-family: var(--font-mono);
+        border-radius: 999px;
+        background: var(--bg-chip);
+        color: var(--text-secondary);
+      }
+      .chip.ok   { background: rgba(111,209,140,0.14); color: var(--ok); }
+      .chip.warn { background: rgba(240,168,97,0.14); color: var(--band-monitor-bright); }
+      .chip.fail { background: rgba(226,109,92,0.14); color: var(--danger); }
+
+      .commit-row {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-subtle);
+        min-height: var(--tap);
+      }
+      .commit-row:last-child { border-bottom: none; }
+      .commit-row .commit-line {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .commit-row .sha {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--accent);
+      }
+      .commit-row .msg {
+        font-size: 13px;
+        color: var(--text-primary);
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .commit-row .when {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+
+      /* ===== Sticky bottom tab bar ===== */
+      .tabbar {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 72px;
+        background: rgba(14, 18, 22, 0.92);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-top: 1px solid var(--border-subtle);
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        padding-bottom: 12px;
+        z-index: 50;
+      }
+      .tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        min-height: var(--tap);
+        color: var(--text-tertiary);
+        font-size: 10px;
+        background: none;
+        border: none;
+        padding: 0;
+      }
+      .tab.active { color: var(--accent); }
+      .tab .icon {
+        font-size: 18px;
+        line-height: 1;
+      }
+      .tab.warn .icon::after {
+        content: "";
+        position: absolute;
+        margin-left: 12px;
+        margin-top: -14px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--band-monitor-bright);
+        box-shadow: 0 0 0 2px var(--bg-page);
+      }
+
+      /* ===== Footer note ===== */
+      .footnote {
+        margin: 12px 18px 22px;
+        font-size: 11px;
+        color: var(--text-tertiary);
+        line-height: 1.5;
+        text-align: center;
+      }
+      .footnote code {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        background: var(--bg-chip);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+
+      /* ===== Utility ===== */
+      .mono { font-family: var(--font-mono); }
+      .row { display: flex; align-items: center; gap: 8px; }
+      .grow { flex: 1; }
+
+      @media (max-width: 420px) {
+        .preview-shell { padding: 0; }
+        .preview-caption { display: none; }
+        .phone-frame {
+          width: 100vw;
+          height: 100vh;
+          border-radius: 0;
+          box-shadow: none;
+        }
+        .phone-notch { display: none; }
+        .phone-scroll { padding-top: 12px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preview-shell">
+      <div class="preview-caption">LTHCS · QA &amp; Audit (mobile mockup — 375×812)</div>
+
+      <div class="phone-frame">
+        <div class="phone-notch" aria-hidden="true"></div>
+
+        <div class="phone-scroll">
+          <!-- ===== Header ===== -->
+          <header class="page-header">
+            <h1 class="page-title">QA &amp; Audit</h1>
+            <span class="page-asof">2026-05-20 · 03:14 UTC</span>
+          </header>
+
+          <!-- ===== Hero traffic-light ===== -->
+          <button class="hero" data-status="warn" aria-label="System status: 1 warning. Tap for details." onclick="document.getElementById('sec-pipeline').open=true;document.getElementById('sec-pipeline').scrollIntoView({behavior:'smooth'});">
+            <div class="hero-top">
+              <div class="hero-dot" aria-hidden="true"></div>
+              <div>
+                <div class="hero-status">1 WARN</div>
+                <div class="hero-substatus">Quality audit: <strong style="color:var(--band-monitor-bright)">CRITICAL</strong> (band-starve)</div>
+              </div>
+            </div>
+            <div class="hero-detail">
+              <div class="hero-detail-row">
+                <span class="lbl">Last daily run</span>
+                <span class="val ok">23:00 UTC · 4h 14m ago</span>
+              </div>
+              <div class="hero-detail-row">
+                <span class="lbl">Last 7 daily runs</span>
+                <span class="val ok">7 / 7 fresh</span>
+              </div>
+              <div class="hero-detail-row">
+                <span class="lbl">Composite drift 7d</span>
+                <span class="val warn">−17 (declining)</span>
+              </div>
+            </div>
+            <div class="hero-cta">Tap to drill in →</div>
+          </button>
+
+          <!-- ===== 2-up status tiles ===== -->
+          <div class="grid-2">
+            <div class="stat-card ok">
+              <div class="stat-label">Universe</div>
+              <div class="stat-value">167</div>
+              <div class="stat-sub">tickers · v2.2.0</div>
+            </div>
+            <div class="stat-card warn">
+              <div class="stat-label">DQ flags</div>
+              <div class="stat-value">111</div>
+              <div class="stat-sub">108 thesis · 3 sec</div>
+            </div>
+          </div>
+
+          <!-- ===== Pipeline accordion ===== -->
+          <details class="accordion" id="sec-pipeline">
+            <summary>
+              <span class="sec-dot ok" aria-hidden="true"></span>
+              <span>Pipeline</span>
+              <span class="sec-tag">7/7 OK</span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="accordion-body">
+              <div style="font-size:12px;color:var(--text-secondary);margin-top:6px">
+                Last 7 daily snapshots — <code class="mono" style="background:var(--bg-chip);padding:1px 5px;border-radius:4px">lthcs-daily.yml</code> · cron 23:00 UTC
+              </div>
+              <div class="runs-row" role="list" aria-label="Last 7 daily runs">
+                <div class="run-bar ok"   role="listitem" aria-label="May 14 OK">14</div>
+                <div class="run-bar ok"   role="listitem" aria-label="May 15 OK">15</div>
+                <div class="run-bar ok"   role="listitem" aria-label="May 16 OK">16</div>
+                <div class="run-bar ok"   role="listitem" aria-label="May 17 OK">17</div>
+                <div class="run-bar ok"   role="listitem" aria-label="May 18 OK">18</div>
+                <div class="run-bar skip" role="listitem" aria-label="May 19 skipped — no diff">19</div>
+                <div class="run-bar ok"   role="listitem" aria-label="May 20 OK">20</div>
+              </div>
+              <div class="runs-legend">
+                <span>May 14</span>
+                <span>today</span>
+              </div>
+              <div class="kv-list" style="margin-top:8px">
+                <div class="kv-row">
+                  <span class="k">Median runtime</span>
+                  <span class="v ok">3m 22s</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Last failure</span>
+                  <span class="v">never (30d)</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Catch-up status</span>
+                  <span class="v ok">no gaps</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">14 crons total</span>
+                  <span class="chip ok">all fresh</span>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== Data Quality accordion ===== -->
+          <details class="accordion" open id="sec-quality">
+            <summary>
+              <span class="sec-dot warn" aria-hidden="true"></span>
+              <span>Data quality</span>
+              <span class="sec-tag">CRITICAL</span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="accordion-body">
+              <div style="font-size:12px;color:var(--text-secondary);margin:6px 0 4px">
+                Per-pillar coverage · 167 tickers · monthly audit verdict
+              </div>
+              <div class="pillar-row">
+                <span class="pillar-name">Adoption</span>
+                <span class="pillar-bar"><span style="width:97.6%"></span></span>
+                <span class="pillar-pct">97.6%</span>
+              </div>
+              <div class="pillar-row">
+                <span class="pillar-name">Institutional</span>
+                <span class="pillar-bar"><span style="width:99.4%"></span></span>
+                <span class="pillar-pct">99.4%</span>
+              </div>
+              <div class="pillar-row">
+                <span class="pillar-name">Financial</span>
+                <span class="pillar-bar"><span style="width:98.2%"></span></span>
+                <span class="pillar-pct">98.2%</span>
+              </div>
+              <div class="pillar-row">
+                <span class="pillar-name">Thesis</span>
+                <span class="pillar-bar low"><span style="width:89.2%"></span></span>
+                <span class="pillar-pct">89.2%</span>
+              </div>
+              <div class="pillar-row">
+                <span class="pillar-name">DES</span>
+                <span class="pillar-bar"><span style="width:100%"></span></span>
+                <span class="pillar-pct">100%</span>
+              </div>
+              <div class="kv-row" style="margin-top:8px">
+                <span class="k">Bands</span>
+                <span class="chip warn">starved (0 elite, 0 high)</span>
+              </div>
+              <div class="kv-row">
+                <span class="k">Review band</span>
+                <span class="v warn">83 / 167 (49.7%)</span>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== Verdict drift accordion ===== -->
+          <details class="accordion" id="sec-drift">
+            <summary>
+              <span class="sec-dot warn" aria-hidden="true"></span>
+              <span>Verdict drift</span>
+              <span class="sec-tag">−17 / 7d</span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="accordion-body">
+              <div class="drift-wrap">
+                <div class="drift-head">
+                  <span>Composite score · 7d</span>
+                  <span class="drift-now">−26</span>
+                </div>
+                <svg class="drift-spark" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true">
+                  <!--
+                    7-day series: -9, -9, -11, -11, -20, (-23 interp), -26
+                    Normalized to viewport: y = 50 - (score+30) * 1.5
+                    Mapping (score → y, with score range −30..0):
+                      −9 → 18.5    −11 → 21.5    −20 → 35    −23 → 39.5    −26 → 44
+                  -->
+                  <path class="area"
+                        d="M 5,18.5 L 55,18.5 L 105,21.5 L 155,21.5 L 205,35 L 250,39.5 L 295,44 L 295,60 L 5,60 Z" />
+                  <path class="line"
+                        d="M 5,18.5 L 55,18.5 L 105,21.5 L 155,21.5 L 205,35 L 250,39.5 L 295,44" />
+                  <circle cx="5"   cy="18.5" r="2.5" />
+                  <circle cx="55"  cy="18.5" r="2.5" />
+                  <circle cx="105" cy="21.5" r="2.5" />
+                  <circle cx="155" cy="21.5" r="2.5" />
+                  <circle cx="205" cy="35"   r="2.5" />
+                  <circle cx="250" cy="39.5" r="2.5" />
+                  <circle cx="295" cy="44"   r="3.5" />
+                  <text x="5"   y="58">14</text>
+                  <text x="105" y="58">16</text>
+                  <text x="205" y="58">18</text>
+                  <text x="287" y="58">20</text>
+                </svg>
+                <div class="drift-foot">−9 → −9 → −11 → −11 → −20 → (–) → −26</div>
+              </div>
+              <div class="kv-row">
+                <span class="k">Band</span>
+                <span class="chip warn">monitor</span>
+              </div>
+              <div class="kv-row">
+                <span class="k">Label</span>
+                <span class="v">LTHCS NEUTRAL</span>
+              </div>
+              <div class="kv-row">
+                <span class="k">Top driver</span>
+                <span class="v warn">band lean −23</span>
+              </div>
+              <div class="kv-row">
+                <span class="k">Macro regime</span>
+                <span class="v ok">risk-on clean</span>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== Score audit accordion ===== -->
+          <details class="accordion" id="sec-movers">
+            <summary>
+              <span class="sec-dot ok" aria-hidden="true"></span>
+              <span>Score audit · 24h movers</span>
+              <span class="sec-tag">8 moves</span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="accordion-body">
+              <div style="font-size:12px;color:var(--text-secondary);margin:6px 0 2px">
+                Biggest |Δ1d| across 167 tickers
+              </div>
+              <div class="mover">
+                <span class="tk">DASH</span>
+                <span class="reason">Adoption pillar tick · review → review</span>
+                <span class="delta up">+10.6</span>
+              </div>
+              <div class="mover">
+                <span class="tk">AZN</span>
+                <span class="reason">Financial pillar refresh · monitor</span>
+                <span class="delta up">+9.9</span>
+              </div>
+              <div class="mover">
+                <span class="tk">CDW</span>
+                <span class="reason">Institutional flip · review</span>
+                <span class="delta up">+8.6</span>
+              </div>
+              <div class="mover">
+                <span class="tk">DHR</span>
+                <span class="reason">Financial pillar refresh · review</span>
+                <span class="delta up">+8.0</span>
+              </div>
+              <div class="mover">
+                <span class="tk">BMY</span>
+                <span class="reason">Adoption pillar tick · review</span>
+                <span class="delta up">+7.2</span>
+              </div>
+              <div class="mover">
+                <span class="tk">CTSH</span>
+                <span class="reason">Institutional flip · review</span>
+                <span class="delta up">+7.1</span>
+              </div>
+              <div class="mover">
+                <span class="tk">CRM</span>
+                <span class="reason">Macro adj · review</span>
+                <span class="delta up">+6.5</span>
+              </div>
+              <div class="mover">
+                <span class="tk">WMT</span>
+                <span class="reason">Adoption pillar drop · review</span>
+                <span class="delta down">−6.2</span>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== Universe accordion ===== -->
+          <details class="accordion" id="sec-universe">
+            <summary>
+              <span class="sec-dot ok" aria-hidden="true"></span>
+              <span>Universe state</span>
+              <span class="sec-tag">v2.2.0</span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="accordion-body">
+              <div class="kv-list">
+                <div class="kv-row">
+                  <span class="k">Tickers</span>
+                  <span class="v">167 active</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Last universe update</span>
+                  <span class="v">2026-05-18</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Added (7d)</span>
+                  <span class="v ok">0</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Dropped (7d)</span>
+                  <span class="v ok">0</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Thesis fallback</span>
+                  <span class="v warn">108 (neutral 50)</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">SEC unavailable</span>
+                  <span class="v warn">3 (CRWD +2)</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">IFRS / dropped pillars</span>
+                  <span class="v">108 (thesis)</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Expansion wave A</span>
+                  <span class="chip">parked · 2026-05-27</span>
+                </div>
+              </div>
+            </div>
+          </details>
+
+          <!-- ===== Security audit accordion ===== -->
+          <details class="accordion" id="sec-security">
+            <summary>
+              <span class="sec-dot ok" aria-hidden="true"></span>
+              <span>Security</span>
+              <span class="sec-tag">clean 7d</span>
+              <span class="chev" aria-hidden="true">›</span>
+            </summary>
+            <div class="accordion-body">
+              <div class="kv-list">
+                <div class="kv-row">
+                  <span class="k">Dependabot alerts</span>
+                  <span class="v ok">0 open</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">CodeQL (last scan)</span>
+                  <span class="v ok">no findings · 12h ago</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Trufflehog (weekly)</span>
+                  <span class="v ok">clean · 4d ago</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">SHA-pinned actions</span>
+                  <span class="v ok">15/15</span>
+                </div>
+                <div class="kv-row">
+                  <span class="k">Public manifest</span>
+                  <span class="v ok">CLEAN</span>
+                </div>
+              </div>
+              <div style="font-size:12px;color:var(--text-secondary);margin:14px 0 6px">
+                Recent commits touching sensitive paths
+              </div>
+              <div class="commit-row">
+                <div class="commit-line">
+                  <span class="sha">f8ced7a</span>
+                  <span class="when">3d</span>
+                </div>
+                <div class="msg">ci: pin all GitHub Actions to commit SHAs (P4 #25)</div>
+              </div>
+              <div class="commit-row">
+                <div class="commit-line">
+                  <span class="sha">3e8d026</span>
+                  <span class="when">4d</span>
+                </div>
+                <div class="msg">sec: bump python-dotenv 1.2.1→1.2.2 + requests 2.33.0</div>
+              </div>
+              <div class="commit-row">
+                <div class="commit-line">
+                  <span class="sha">0a219fe</span>
+                  <span class="when">5d</span>
+                </div>
+                <div class="msg">ci: weekly trufflehog + CodeQL (P1 #7)</div>
+              </div>
+            </div>
+          </details>
+
+          <p class="footnote">
+            Read-only observability — consumes <code>data/lthcs/</code> snapshots only.
+            <br />Pipeline: <code>lthcs-daily.yml</code> · 23:00 UTC.
+          </p>
+        </div>
+
+        <!-- ===== Sticky bottom tab bar ===== -->
+        <nav class="tabbar" aria-label="Primary">
+          <button class="tab" aria-label="Cards">
+            <span class="icon" aria-hidden="true">▦</span>
+            <span>Cards</span>
+          </button>
+          <button class="tab" aria-label="Verdict">
+            <span class="icon" aria-hidden="true">◎</span>
+            <span>Verdict</span>
+          </button>
+          <button class="tab" aria-label="History">
+            <span class="icon" aria-hidden="true">⌖</span>
+            <span>History</span>
+          </button>
+          <button class="tab active warn" aria-label="QA &amp; Audit (current)" aria-current="page">
+            <span class="icon" aria-hidden="true">✓</span>
+            <span>QA</span>
+          </button>
+          <button class="tab" aria-label="Help">
+            <span class="icon" aria-hidden="true">?</span>
+            <span>Help</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+
+    <script>
+      // Light interaction: ensure the hero CTA also expands a sane default
+      // (Pipeline) and that any accordion's summary keypress (Enter/Space)
+      // toggles it. The <details> element handles most of this natively;
+      // these are belt-and-suspenders for accessibility on iOS Safari.
+      document.querySelectorAll('details.accordion > summary').forEach(function (s) {
+        s.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            var d = s.parentElement;
+            d.open = !d.open;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
