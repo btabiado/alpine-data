@@ -1,0 +1,32 @@
+{
+  "checks": {
+    "cik": "resolved",
+    "cusip": "missing",
+    "finnhub": {
+      "detail": "skipped (FINNHUB_API_KEY not set)",
+      "ok": false
+    },
+    "yahoo": {
+      "detail": "yfinance ok (5 rows)",
+      "ok": true
+    }
+  },
+  "errors": [],
+  "generated_at": "2026-05-21T11:39:04Z",
+  "passed": true,
+  "record": {
+    "active": true,
+    "cik": "0001585689",
+    "index_membership": [
+      "S&P 500"
+    ],
+    "maturity_stage": "standard_compounder",
+    "name": "Hilton Worldwide Holdings Inc.",
+    "sector": "Consumer Discretionary",
+    "sector_group": "Consumer Services",
+    "source": "universe_expand",
+    "ticker": "HLT"
+  },
+  "ticker": "HLT",
+  "warnings": []
+}

@@ -1,0 +1,209 @@
+{
+  "failed": [],
+  "failed_count": 0,
+  "generated_at": "2026-05-21T11:39:04Z",
+  "passed": [
+    {
+      "ticker": "GEV",
+      "warnings": []
+    },
+    {
+      "ticker": "ANET",
+      "warnings": []
+    },
+    {
+      "ticker": "TJX",
+      "warnings": []
+    },
+    {
+      "ticker": "STX",
+      "warnings": []
+    },
+    {
+      "ticker": "WDC",
+      "warnings": []
+    },
+    {
+      "ticker": "GLW",
+      "warnings": []
+    },
+    {
+      "ticker": "WELL",
+      "warnings": []
+    },
+    {
+      "ticker": "UBER",
+      "warnings": []
+    },
+    {
+      "ticker": "APH",
+      "warnings": []
+    },
+    {
+      "ticker": "ETN",
+      "warnings": []
+    },
+    {
+      "ticker": "BX",
+      "warnings": []
+    },
+    {
+      "ticker": "PLD",
+      "warnings": []
+    },
+    {
+      "ticker": "CB",
+      "warnings": []
+    },
+    {
+      "ticker": "SYK",
+      "warnings": []
+    },
+    {
+      "ticker": "PGR",
+      "warnings": []
+    },
+    {
+      "ticker": "NEM",
+      "warnings": []
+    },
+    {
+      "ticker": "PH",
+      "warnings": []
+    },
+    {
+      "ticker": "PWR",
+      "warnings": []
+    },
+    {
+      "ticker": "CME",
+      "warnings": []
+    },
+    {
+      "ticker": "EQIX",
+      "warnings": []
+    },
+    {
+      "ticker": "HWM",
+      "warnings": []
+    },
+    {
+      "ticker": "TT",
+      "warnings": []
+    },
+    {
+      "ticker": "WMB",
+      "warnings": []
+    },
+    {
+      "ticker": "CMI",
+      "warnings": []
+    },
+    {
+      "ticker": "FDX",
+      "warnings": []
+    },
+    {
+      "ticker": "MCK",
+      "warnings": []
+    },
+    {
+      "ticker": "WM",
+      "warnings": []
+    },
+    {
+      "ticker": "HCA",
+      "warnings": []
+    },
+    {
+      "ticker": "FCX",
+      "warnings": []
+    },
+    {
+      "ticker": "PNC",
+      "warnings": []
+    },
+    {
+      "ticker": "ELV",
+      "warnings": []
+    },
+    {
+      "ticker": "ICE",
+      "warnings": []
+    },
+    {
+      "ticker": "SLB",
+      "warnings": []
+    },
+    {
+      "ticker": "CSX",
+      "warnings": []
+    },
+    {
+      "ticker": "KKR",
+      "warnings": []
+    },
+    {
+      "ticker": "BSX",
+      "warnings": []
+    },
+    {
+      "ticker": "JCI",
+      "warnings": []
+    },
+    {
+      "ticker": "NOC",
+      "warnings": []
+    },
+    {
+      "ticker": "MCO",
+      "warnings": []
+    },
+    {
+      "ticker": "MPWR",
+      "warnings": []
+    },
+    {
+      "ticker": "EOG",
+      "warnings": []
+    },
+    {
+      "ticker": "MPC",
+      "warnings": []
+    },
+    {
+      "ticker": "VLO",
+      "warnings": []
+    },
+    {
+      "ticker": "CI",
+      "warnings": []
+    },
+    {
+      "ticker": "KMI",
+      "warnings": []
+    },
+    {
+      "ticker": "HLT",
+      "warnings": []
+    },
+    {
+      "ticker": "ITW",
+      "warnings": []
+    },
+    {
+      "ticker": "PSX",
+      "warnings": []
+    },
+    {
+      "ticker": "NSC",
+      "warnings": []
+    },
+    {
+      "ticker": "ECL",
+      "warnings": []
+    }
+  ],
+  "passed_count": 50,
+  "total": 50
+}

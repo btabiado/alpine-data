@@ -1,0 +1,51 @@
+ticker,name,sector,sector_group,maturity_stage,index_membership
+GEV,GE Vernova Inc.,Industrials,Capital Goods,growth_compounder,S&P 500
+ANET,"Arista Networks, Inc.",Technology,Technology Hardware & Equipment,growth_compounder,S&P 500
+TJX,"The TJX Companies, Inc.",Consumer Discretionary,Retailing,mature_compounder,S&P 500
+STX,Seagate Technology Holdings plc,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500
+WDC,Western Digital Corporation,Technology,Technology Hardware & Equipment,recovery_stabilization,S&P 500
+GLW,Corning Incorporated,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500
+WELL,Welltower Inc.,Real Estate,Real Estate,standard_compounder,S&P 500
+UBER,"Uber Technologies, Inc.",Industrials,Transportation,growth_compounder,S&P 500
+APH,Amphenol Corporation,Technology,Technology Hardware & Equipment,standard_compounder,S&P 500
+ETN,Eaton Corporation plc,Industrials,Capital Goods,standard_compounder,S&P 500
+BX,Blackstone Inc.,Financials,Diversified Financials,financial,S&P 500
+PLD,"Prologis, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500
+CB,Chubb Limited,Financials,Insurance,financial,S&P 500
+SYK,Stryker Corporation,Health Care,Health Care Equipment & Services,mature_compounder,S&P 500
+PGR,The Progressive Corporation,Financials,Insurance,financial,S&P 500
+NEM,Newmont Corporation,Materials,Materials,standard_compounder,S&P 500
+PH,Parker-Hannifin Corporation,Industrials,Capital Goods,mature_compounder,S&P 500
+PWR,"Quanta Services, Inc.",Industrials,Commercial & Professional Services,growth_compounder,S&P 500
+CME,CME Group Inc.,Financials,Diversified Financials,financial,S&P 500
+EQIX,"Equinix, Inc.",Real Estate,Real Estate,standard_compounder,S&P 500
+HWM,Howmet Aerospace Inc.,Industrials,Capital Goods,growth_compounder,S&P 500
+TT,Trane Technologies plc,Industrials,Capital Goods,standard_compounder,S&P 500
+WMB,"The Williams Companies, Inc.",Energy,Energy,standard_compounder,S&P 500
+CMI,Cummins Inc.,Industrials,Capital Goods,standard_compounder,S&P 500
+FDX,FedEx Corporation,Industrials,Transportation,mature_compounder,S&P 500
+MCK,McKesson Corporation,Health Care,Health Care Equipment & Services,mature_compounder,S&P 500
+WM,"Waste Management, Inc.",Industrials,Commercial & Professional Services,mature_compounder,S&P 500
+HCA,"HCA Healthcare, Inc.",Health Care,Health Care Equipment & Services,mature_compounder,S&P 500
+FCX,Freeport-McMoRan Inc.,Materials,Materials,standard_compounder,S&P 500
+PNC,"The PNC Financial Services Group, Inc.",Financials,Banks,financial,S&P 500
+ELV,"Elevance Health, Inc.",Health Care,Health Care Equipment & Services,mature_compounder,S&P 500
+ICE,"Intercontinental Exchange, Inc.",Financials,Diversified Financials,financial,S&P 500
+SLB,SLB,Energy,Energy,standard_compounder,S&P 500
+CSX,CSX Corporation,Industrials,Transportation,mature_compounder,S&P 500
+KKR,KKR & Co. Inc.,Financials,Diversified Financials,financial,S&P 500
+BSX,Boston Scientific Corporation,Health Care,Health Care Equipment & Services,standard_compounder,S&P 500
+JCI,Johnson Controls International plc,Industrials,Capital Goods,standard_compounder,S&P 500
+NOC,Northrop Grumman Corporation,Industrials,Capital Goods,mature_compounder,S&P 500
+MCO,Moody's Corporation,Financials,Diversified Financials,financial,S&P 500
+MPWR,"Monolithic Power Systems, Inc.",Technology,Semiconductors & Semiconductor Equipment,growth_compounder,S&P 500
+EOG,"EOG Resources, Inc.",Energy,Energy,standard_compounder,S&P 500
+MPC,Marathon Petroleum Corporation,Energy,Energy,standard_compounder,S&P 500
+VLO,Valero Energy Corporation,Energy,Energy,standard_compounder,S&P 500
+CI,The Cigna Group,Health Care,Health Care Equipment & Services,mature_compounder,S&P 500
+KMI,"Kinder Morgan, Inc.",Energy,Energy,standard_compounder,S&P 500
+HLT,Hilton Worldwide Holdings Inc.,Consumer Discretionary,Consumer Services,standard_compounder,S&P 500
+ITW,Illinois Tool Works Inc.,Industrials,Capital Goods,mature_compounder,S&P 500
+PSX,Phillips 66,Energy,Energy,standard_compounder,S&P 500
+NSC,Norfolk Southern Corporation,Industrials,Transportation,mature_compounder,S&P 500
+ECL,Ecolab Inc.,Materials,Materials,mature_compounder,S&P 500
