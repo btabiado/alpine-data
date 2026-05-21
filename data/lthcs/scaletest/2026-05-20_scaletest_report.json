@@ -1,0 +1,51 @@
+{
+  "api_counts": {
+    "finnhub": {
+      "error": 271,
+      "ok": 60,
+      "rate_limit": 1
+    },
+    "sec_edgar": {
+      "cache_hit": 6669,
+      "ok": 317
+    },
+    "yahoo": {
+      "error": 13,
+      "ok": 500
+    }
+  },
+  "cohort_population": {
+    "financial": 51,
+    "growth_compounder": 41,
+    "mature_compounder": 73,
+    "pre_profit_growth": 1,
+    "recovery_rerating": 5,
+    "recovery_stabilization": 30,
+    "standard_compounder": 299
+  },
+  "peak_rss_mb": 886.578125,
+  "pillar_coverage": {
+    "adoption_momentum": 0.9713114754098361,
+    "des": 1.0,
+    "financial_evolution": 0.9754098360655737,
+    "institutional_confidence": 1.0,
+    "thesis_integrity": 0.8954918032786885
+  },
+  "pipeline_error": null,
+  "pipeline_ok": true,
+  "reasons": [
+    "wall clock 5555s exceeds 1800s limit",
+    "finnhub hit 1 rate-limit response(s)"
+  ],
+  "run_date": "2026-05-21T01:17:28Z",
+  "universe_path": "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/data/lthcs/universe_candidate_full.json",
+  "universe_stats": {
+    "added_from_seed": 331,
+    "candidate_seed_count": 333,
+    "final_count": 500,
+    "merged_count": 502,
+    "production_count": 169
+  },
+  "verdict": "NO-GO",
+  "wall_clock_s": 5555.266963375
+}

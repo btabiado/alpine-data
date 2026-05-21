@@ -199,6 +199,15 @@ def run_pipeline(universe_path: Path) -> Tuple[bool, Optional[Any], Optional[str
         str(universe_path),
         "--dry-run",
         # No --tickers => use the full candidate universe.
+        # --skip-thesis mirrors the production daily cron (lthcs-daily.yml
+        # passes the same flag). Without it the thesis stage hammers
+        # Finnhub /news-sentiment which currently 403s for free-tier
+        # accounts — 270+ retries blow the wall-clock budget and one
+        # eventually trips the rate-limit gate, both forcing a
+        # false-positive NO-GO. Production never runs the thesis stage
+        # during the cron, so testing it here measures a path that
+        # doesn't exist in prod.
+        "--skip-thesis",
     ]
     try:
         args = lthcs_daily.parse_args(argv)
