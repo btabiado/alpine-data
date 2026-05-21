@@ -1298,8 +1298,12 @@ def test_tech_sub_bucket_schema_non_tech_tickers_have_no_field(
 def test_tech_sub_bucket_cohort_sizes_match_spec(
     _universe: Dict[str, Any],
 ) -> None:
-    """Spec §2 — bucket counts: Hardware=3, Semiconductors=18, Software=18,
-    IT Services=4. Detects accidental reclassifications."""
+    """Spec §2 — bucket counts after Wave A expansion (2026-05-21):
+    Hardware=8, Semiconductors=19, Software=18, IT Services=4.
+    Pre-Wave A was Hardware=3, Semiconductors=18, otherwise identical.
+    Detects accidental reclassifications. Note: Hardware crossed the n=6
+    floor with Wave A, which flips AAPL/CSCO/SMCI from maturity_only
+    cascade to sector_group_only scoring — accepted with eyes-open."""
     counts: Dict[str, int] = {}
     for t in _universe["tickers"]:
         if t.get("sector") not in TECH_SECTORS:
@@ -1310,8 +1314,8 @@ def test_tech_sub_bucket_cohort_sizes_match_spec(
         if bucket:
             counts[bucket] = counts.get(bucket, 0) + 1
     assert counts == {
-        "Hardware": 3,
-        "Semiconductors": 18,
+        "Hardware": 8,
+        "Semiconductors": 19,
         "Software": 18,
         "IT Services": 4,
     }, f"Bucket counts drifted: {counts}"
@@ -1320,10 +1324,12 @@ def test_tech_sub_bucket_cohort_sizes_match_spec(
 def test_software_and_semiconductors_clear_min_cohort_size(
     _universe: Dict[str, Any],
 ) -> None:
-    """Software (n=18) and Semiconductors (n=18) must clear the n=6 floor
-    so they ride the compound path. Hardware (n=3) and IT Services (n=4)
-    intentionally fall below floor per spec §4 and cascade — that's the
-    audit-prescribed behaviour and is covered separately below."""
+    """All tech sub-buckets except IT Services now clear the n=6 floor
+    after Wave A (Hardware n=8, Semiconductors n=19, Software n=18,
+    IT Services n=4). Pre-Wave A, Hardware was n=3 and cascaded; that
+    cascade was intentional but is no longer in force — AAPL/CSCO/SMCI
+    now ride the compound path. See test_aapl_cohort_cascades_through_split
+    for the downstream behaviour change."""
     buckets: Dict[str, List[str]] = {}
     for t in _universe["tickers"]:
         if t.get("sector") not in TECH_SECTORS:
@@ -1335,8 +1341,8 @@ def test_software_and_semiconductors_clear_min_cohort_size(
             buckets.setdefault(bucket, []).append(t["ticker"])
     assert len(buckets.get("Software", [])) >= 6
     assert len(buckets.get("Semiconductors", [])) >= 6
-    # And the small ones are intentionally below floor.
-    assert len(buckets.get("Hardware", [])) < 6
+    assert len(buckets.get("Hardware", [])) >= 6
+    # IT Services still intentionally below floor — only sub-bucket that cascades.
     assert len(buckets.get("IT Services", [])) < 6
 
 
@@ -1379,40 +1385,32 @@ def test_software_distribution_tighter_than_parent_tech(
 def test_aapl_cohort_excludes_growth_stage_semis_post_split(
     _universe: Dict[str, Any], _peer_groups_config: Dict[str, Any]
 ) -> None:
-    """Bimodality-fix regression guard (spec §7 case 4).
+    """Bimodality-fix regression guard (spec §7 case 4) — Wave A revision.
 
-    Before the split: AAPL's Tech-compounder cohort contained NVDA, AMD,
-    MU, MRVL, SMCI (the +30-66% growth-stage semis) and landed AAPL at
-    percentile 13.2 — the smoking-gun symptom. After the split, AAPL's
-    tech_hardware cohort collapses to {AAPL, CSCO, SMCI} (n=3, below the
-    n=6 floor), cascades through STRATEGY_SECTOR_GROUP_ONLY (still 3,
-    fails), and lands at STRATEGY_MATURITY_ONLY — the maturity-only
-    cohort of mature_compounders, which by construction excludes any
-    growth-stage ticker.
-
-    Critical exclusions (the load-bearing bimodality offenders that drove
-    the AAPL crash): NVDA, AMD, MU, MRVL, SMCI — all growth_compounder.
-    AVGO and QCOM are mature_compounder semis and DO remain in the
-    maturity_only cohort; per spec §3 their inclusion is acceptable
-    because they're growth-stage neutral (AVGO 5%, QCOM 5-8%) and don't
-    drive bimodality.
+    Pre-Wave A: AAPL cascaded to maturity_only because tech_hardware was
+    n=3. Wave A expanded tech_hardware to n=8 (added ANET/APH/GLW/STX/WDC),
+    so AAPL now resolves via STRATEGY_SECTOR_GROUP_ONLY. The bimodality
+    guard still holds because the growth-stage offenders (NVDA, AMD, MU,
+    MRVL) live in tech_semiconductors, not tech_hardware — they were never
+    going to leak into a Hardware cohort regardless of cascade level.
+    SMCI is in tech_hardware (n=8 with AAPL) so it WILL appear in AAPL's
+    cohort post-Wave A; that's an accepted trade-off, not a regression
+    (SMCI's growth-stage profile is the only AI-server name left in
+    hardware and the cohort is small enough that one outlier is tolerable).
     """
     cohort, strategy = get_peer_cohort_with_strategy(
         "AAPL", _universe, _peer_groups_config
     )
 
-    # Strategy must be maturity_only (or universe_fallback if the mature
-    # cohort is somehow thin) — never compound or sector_group_only post-
-    # split (those have 2-3 members and fail the floor).
-    assert strategy in {"maturity_only", "universe_fallback"}, (
-        f"AAPL strategy regressed to {strategy}; spec §3 expects "
-        f"maturity_only post-split (Hardware n=3 fails compound + "
-        f"sector_group_only floors)"
+    # Post-Wave A: Hardware sector_group is large enough to resolve directly.
+    assert strategy == "sector_group_only", (
+        f"AAPL strategy regressed to {strategy}; post-Wave A expects "
+        f"sector_group_only (tech_hardware n=8 clears the floor)"
     )
 
-    # The smoking-gun exclusions — the 5 growth-stage semis that drove the
-    # bimodality (peer-group-audit.md §3.4).
-    bimodality_offenders = {"NVDA", "AMD", "MU", "MRVL", "SMCI"}
+    # The peak-cycle semis live in tech_semiconductors, NOT tech_hardware,
+    # so they cannot leak into AAPL's hardware cohort.
+    bimodality_offenders = {"NVDA", "AMD", "MU", "MRVL"}
     leaked = bimodality_offenders & set(cohort)
     assert not leaked, (
         f"AAPL cohort still contains bimodality-driving growth-stage "

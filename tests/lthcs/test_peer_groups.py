@@ -183,19 +183,20 @@ def test_compound_key_unknown_ticker(universe: Dict, peer_groups_config: Dict) -
 def test_aapl_cohort_cascades_through_split(
     universe: Dict, peer_groups_config: Dict
 ) -> None:
-    """Post v1.1.0 split: AAPL's tech_hardware cohort is n=3
-    {AAPL, CSCO, SMCI} — intentionally below the n=6 floor (spec §3-4).
-    Compound (Hardware × mature) collapses to {AAPL, CSCO} → fails. The
-    resolver cascades through STRATEGY_SECTOR_GROUP_ONLY (still 3) → lands
-    at STRATEGY_MATURITY_ONLY. This is the audit-prescribed behaviour that
-    closes the AAPL-vs-NVDA bimodality."""
+    """Post Wave A (2026-05-21): tech_hardware now has n=8 (added ANET,
+    APH, GLW, STX, WDC). Hardware clears the n=6 floor, so AAPL resolves
+    via STRATEGY_SECTOR_GROUP_ONLY instead of cascading to maturity_only.
+
+    Pre-Wave A behaviour (kept here for record): cohort was n=3
+    {AAPL, CSCO, SMCI} so compound collapsed and cascade landed at
+    maturity_only — that was the audit-prescribed AAPL-vs-NVDA bimodality
+    fix. Wave A overrode that with eyes-open; see Wave A commit message
+    and docs/lthcs-tech-hardware-software-split.md for context."""
     cohort, strategy = get_peer_cohort_with_strategy(
         "AAPL", universe, peer_groups_config
     )
-    # Either maturity_only or universe_fallback is acceptable depending on
-    # how many mature_compounders are in the universe — but it MUST NOT be
-    # compound or sector_group_only (those have <6 members for Hardware).
-    assert strategy in {STRATEGY_MATURITY_ONLY, STRATEGY_UNIVERSE_FALLBACK}
+    # Post-Wave A: Hardware sector_group is large enough to resolve directly.
+    assert strategy == STRATEGY_SECTOR_GROUP_ONLY
     assert "AAPL" in cohort
     assert len(cohort) >= 6
 
@@ -471,19 +472,18 @@ def test_get_tech_sub_bucket_for_each_split_bucket(universe: Dict) -> None:
 def test_cohort_size_floor_semiconductors_and_software_clear(
     peer_groups_config: Dict,
 ) -> None:
-    """Spec §7.2 — Semiconductors (18) and Software (18) clear the n=6
-    floor; Hardware (3) and IT Services (4) intentionally fall below and
-    cascade to ``STRATEGY_MATURITY_ONLY``."""
+    """Post Wave A (2026-05-21) — Semiconductors (19), Software (18), and
+    Hardware (8) all clear the n=6 floor. IT Services (4) is the only
+    tech sub-bucket still cascading to STRATEGY_MATURITY_ONLY.
+
+    Pre-Wave A, Hardware was intentionally pinned at n=3 to force the
+    AAPL cohort cascade; Wave A added ANET/APH/GLW/STX/WDC and the
+    cascade is no longer in force — accepted with eyes-open."""
     groups = peer_groups_config["sector_groups"]
     floor = int(peer_groups_config.get("min_cohort_size", 6))
     assert len(groups["tech_semiconductors"]["tickers"]) >= floor
     assert len(groups["tech_software"]["tickers"]) >= floor
-    # Document the by-design sub-floor cases so a future reshuffling that
-    # grows these cohorts breaks loudly and forces re-thinking the cascade.
-    assert len(groups["tech_hardware"]["tickers"]) < floor, (
-        "Hardware is expected to fall below floor (n=3 per spec §3); "
-        "growing it past 6 would change the cascade behaviour — re-check."
-    )
+    assert len(groups["tech_hardware"]["tickers"]) >= floor
     assert len(groups["tech_it_services"]["tickers"]) < floor, (
         "IT Services is expected to fall below floor (n=4 per spec §3); "
         "growing it past 6 would change the cascade behaviour — re-check."
@@ -554,11 +554,14 @@ def test_aapl_cohort_excludes_peak_cycle_growth_semis(
     cohort, strategy = get_peer_cohort_with_strategy(
         "AAPL", universe, peer_groups_config
     )
-    assert strategy == STRATEGY_MATURITY_ONLY, (
-        f"expected AAPL to land at maturity_only after cascade; got {strategy}"
+    # Post-Wave A: tech_hardware n=8 resolves directly via sector_group.
+    assert strategy == STRATEGY_SECTOR_GROUP_ONLY, (
+        f"expected AAPL to land at sector_group_only post-Wave A; got {strategy}"
     )
-    # Growth-compounder peak-cycle semis must NOT pollute AAPL's cohort.
-    forbidden_growth_semis = {"NVDA", "AMD", "MU", "MRVL", "SMCI"}
+    # The peak-cycle growth semis are in tech_semiconductors, not tech_hardware,
+    # so they still don't pollute AAPL's cohort — the bimodality guard
+    # survives the cascade change.
+    forbidden_growth_semis = {"NVDA", "AMD", "MU", "MRVL"}
     overlap = forbidden_growth_semis & set(cohort)
     assert not overlap, (
         f"AAPL cohort leaks growth_compounder peak-cycle semis (bimodality "

@@ -2371,7 +2371,8 @@
       "sector": "Technology",
       "sector_group": "Technology Hardware & Equipment",
       "source": "universe_expand",
-      "ticker": "ANET"
+      "ticker": "ANET",
+      "tech_sub_bucket": "Hardware"
     },
     {
       "active": true,
@@ -2384,7 +2385,8 @@
       "sector": "Technology",
       "sector_group": "Technology Hardware & Equipment",
       "source": "universe_expand",
-      "ticker": "APH"
+      "ticker": "APH",
+      "tech_sub_bucket": "Hardware"
     },
     {
       "active": true,
@@ -2592,7 +2594,8 @@
       "sector": "Technology",
       "sector_group": "Technology Hardware & Equipment",
       "source": "universe_expand",
-      "ticker": "GLW"
+      "ticker": "GLW",
+      "tech_sub_bucket": "Hardware"
     },
     {
       "active": true,
@@ -2748,7 +2751,8 @@
       "sector": "Technology",
       "sector_group": "Semiconductors & Semiconductor Equipment",
       "source": "universe_expand",
-      "ticker": "MPWR"
+      "ticker": "MPWR",
+      "tech_sub_bucket": "Semiconductors"
     },
     {
       "active": true,
@@ -2891,7 +2895,8 @@
       "sector": "Technology",
       "sector_group": "Technology Hardware & Equipment",
       "source": "universe_expand",
-      "ticker": "STX"
+      "ticker": "STX",
+      "tech_sub_bucket": "Hardware"
     },
     {
       "active": true,
@@ -2969,7 +2974,8 @@
       "sector": "Technology",
       "sector_group": "Technology Hardware & Equipment",
       "source": "universe_expand",
-      "ticker": "WDC"
+      "ticker": "WDC",
+      "tech_sub_bucket": "Hardware"
     },
     {
       "active": true,
