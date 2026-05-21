@@ -13,31 +13,31 @@
       "delta": 0,
       "name": "Adoption pillar avg",
       "read": "adoption neutral",
-      "value": 50.8
+      "value": 50.5
     },
     {
       "delta": 0,
       "name": "Institutional pillar avg",
       "read": "institutional steady",
-      "value": 48.6
+      "value": 48.3
     },
     {
       "delta": 1,
       "name": "Financial pillar avg",
       "read": "fundamentals stable",
-      "value": 55.8
+      "value": 55.9
     },
     {
       "delta": 2,
       "name": "Thesis pillar avg",
       "read": "narrative mixed",
-      "value": 59.2
+      "value": 59.3
     },
     {
       "delta": -1,
       "name": "DES (demand environment) avg",
       "read": "macro neutral",
-      "value": 46.8
+      "value": 46.0
     },
     {
       "delta": 10,
@@ -49,16 +49,16 @@
       "delta": -7,
       "name": "Insider conviction breadth",
       "read": "insiders distributing",
-      "value": "63 active signals"
+      "value": "109 active signals"
     },
     {
-      "delta": -8,
+      "delta": -9,
       "name": "13F conviction breadth (acc vs dist)",
       "read": "institutions distributing",
-      "value": "8 vs 90"
+      "value": "2 vs 47"
     }
   ],
   "label": "LTHCS NEUTRAL",
   "note": "Aggregate of 167-ticker LTHCS universe. Directional read, not a trading signal.",
-  "score": -26
+  "score": -27
 }

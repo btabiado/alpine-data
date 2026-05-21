@@ -1,9 +1,9 @@
 {
-  "as_of": "2026-05-20",
+  "as_of": "2026-05-21",
   "brent_crude": {
-    "change_3m_pct": 0.494297,
-    "current": 106.11,
-    "percentile_2y": 0.94
+    "change_3m_pct": 0.673069,
+    "current": 116.73,
+    "percentile_2y": 0.9662698412698413
   },
   "consumer_sentiment": {
     "change_3m_pct": 0.007561,
@@ -17,9 +17,9 @@
   },
   "gasoline_retail": {
     "change_3m_pct": 0.535568,
-    "crack_spread_per_gal": -40.0762,
+    "crack_spread_per_gal": -44.5366,
     "current": 4.49,
-    "percentile_2y": 0.9904761904761905
+    "percentile_2y": 0.9903846153846154
   },
   "housing_starts": {
     "change_3m_pct": 0.093955,
