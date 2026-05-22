@@ -1,32 +1,21 @@
 # Minimum supported Python: 3.10
-# (Bumped from 3.9 so we can take Dependabot-patched requests/pytest.)
 anthropic==0.101.0
 numpy==2.0.2
 pandas==2.3.3
-pytest>=8,<9
+pytest==8.4.2
 python-dateutil==2.9.0.post0
-# requests==2.33.0 requires Python >=3.10 — gate it so cron workflows on
-# Python 3.9 (e.g. lthcs-news-hourly) can install. The 2.32.5 fallback is the
-# highest version compatible with 3.9; 2.33.0 still ships on 3.10+ runners
-# and preserves the GHSA-gc5v-m9x4-r6x2 security bump (commit 3e8d026).
-requests==2.33.0; python_version >= "3.10"
-requests==2.32.5; python_version < "3.10"
+# requests 2.33.0 preserves the GHSA-gc5v-m9x4-r6x2 security bump (commit 3e8d026).
+requests==2.33.0
 Flask==3.1.3
 
 # LTHCS Phase 1 (Week 1: schemas + validate)
 pydantic==2.13.4
-# python-dotenv==1.2.2 requires Python >=3.10 — gate it so Python 3.9 cron
-# runners fall back to 1.2.1 (highest 3.9-compatible). The set_key symlink
-# code path (GHSA-mf9w-mj56-hr94) is UNUSED in this repo (read-only).
-python-dotenv==1.2.2; python_version >= "3.10"
-python-dotenv==1.2.1; python_version < "3.10"
+# python-dotenv 1.2.2: the set_key symlink code path (GHSA-mf9w-mj56-hr94) is
+# UNUSED in this repo (read-only).
+python-dotenv==1.2.2
 # LTHCS Phase 1 (Week 2: data sources)
 yfinance==1.2.0
 # LTHCS Phase 1 (Week 3: Adoption pillar — Google Trends)
 pytrends==4.9.2
 # LTHCS Phase 5 (Tier 5 #26: MCP server)
-# mcp[cli]>=1.0 requires Python >=3.10 — gate it so the production cron
-# workflows on Python 3.9 don't hard-fail at install time. The MCP server
-# itself only runs locally on demand (not in any cron path); install via
-# `pip install 'mcp[cli]>=1.0'` in a Python-3.10+ venv when needed.
-mcp[cli]>=1.0; python_version >= "3.10"
+mcp[cli]==1.27.1

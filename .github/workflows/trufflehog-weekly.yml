@@ -21,11 +21,9 @@ jobs:
           fetch-depth: 0
       - name: Trufflehog scan
         id: scan
-        # trufflesecurity/trufflehog is intentionally left at @main —
-        # the action is actively curated by the vendor and pinning a
-        # SHA freezes the scanner ruleset. We accept that risk for
-        # secret-detection freshness. Revisit if upstream is hijacked.
-        uses: trufflesecurity/trufflehog@main
+        # SHA-pinned for supply-chain safety. The action wrapper embeds the
+        # scanner binary version, so this freezes both. Refresh quarterly.
+        uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab # v3.95.3
         with:
           extra_args: --only-verified --since-commit=HEAD~200
       - name: Summarize result
