@@ -2,7 +2,9 @@
 anthropic==0.101.0
 numpy==2.0.2
 pandas==2.3.3
-pytest==8.4.2
+# pytest 9.0.3 patches GHSA-6w46-j5rx-g56g (local-privesc via predictable
+# /tmp/pytest-of-{user} tmpdir on UNIX). All earlier 8.x/9.x affected.
+pytest==9.0.3
 python-dateutil==2.9.0.post0
 # requests 2.33.0 preserves the GHSA-gc5v-m9x4-r6x2 security bump (commit 3e8d026).
 requests==2.33.0
