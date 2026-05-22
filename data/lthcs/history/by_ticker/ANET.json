@@ -1,0 +1,11 @@
+{
+  "ticker": "ANET",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-21",
+      "score": 60.6,
+      "band": "monitor"
+    }
+  ]
+}

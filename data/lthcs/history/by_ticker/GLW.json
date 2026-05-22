@@ -1,0 +1,11 @@
+{
+  "ticker": "GLW",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-21",
+      "score": 63.9,
+      "band": "monitor"
+    }
+  ]
+}

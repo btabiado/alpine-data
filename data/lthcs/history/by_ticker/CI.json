@@ -1,0 +1,11 @@
+{
+  "ticker": "CI",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-05-21",
+      "score": 47.4,
+      "band": "review"
+    }
+  ]
+}
