@@ -2116,12 +2116,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="chart-card" id="realEstateCard">
         <div class="head">
           <h2>US Real Estate Markets <span class="tag">Zillow &middot; Redfin &middot; FRED</span></h2>
-          <span class="desc">All 894 US metros &middot; 10 housing-market KPIs &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
+          <span class="desc">National housing heat index &middot; hot &amp; cooling markets &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
         </div>
-        <div id="realEstateSummary" style="padding:12px 14px">
-          <div class="empty">Loading real-estate snapshot&hellip;</div>
+        <div id="realEstateSummary">
+          <div class="empty" style="padding:12px 14px">Loading real-estate snapshot&hellip;</div>
         </div>
-        <div style="padding:0 14px 14px 14px">
+        <div style="padding:4px 14px 14px 14px">
           <a href="real-estate/" class="btn" style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600">Open Full Dashboard &rarr;</a>
         </div>
       </div>
@@ -4738,41 +4738,217 @@ function renderRealEstateTab(){
 }
 function _drawRealEstate(host, d){
   const metros = (d && d.metros) || [];
-  if (!metros.length) { host.innerHTML = '<div class="empty">No metro data in snapshot.</div>'; return; }
+  if (!metros.length) { host.innerHTML = '<div class="empty" style="padding:12px 14px">No metro data in snapshot.</div>'; return; }
   const fmtUsd = n => n == null ? '—' : (n >= 1e6 ? '$' + (n/1e6).toFixed(2) + 'M' : '$' + Math.round(n/1000) + 'K');
   const fmtPct = n => n == null ? '—' : (n > 0 ? '+' : '') + n.toFixed(1) + '%';
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // Minimum-sales sanity gate so headline metros / heat index aren't
+  // dominated by tiny markets that hit single-metric extremes on low
+  // volume (matters now that the snapshot covers all ~894 MSAs).
+  const MIN_SALES = 100;
+  const qualifies = m => (m.kpis?.homes_sold?.value ?? 0) >= MIN_SALES;
+  const qualifiedMetros = metros.filter(qualifies);
+
+  // ---- Heat index ------------------------------------------------------
+  // Normalize each signal to 0-100 then average. Endpoints documented in
+  // the redesign spec — higher = hotter for all 4 final scores.
+  // pct_above_list: 0.00 -> 0, 0.50 -> 100
+  // days_on_market: 100d -> 0, 20d  -> 100
+  // pct_price_cut:  0.40 -> 0, 0.05 -> 100
+  // zhvi.yoy_pct:   -10  -> 0, 20   -> 100
+  const norm = {
+    above: v => clamp(((v - 0.00) / (0.50 - 0.00)) * 100, 0, 100),
+    dom:   v => clamp(((100 - v) / (100 - 20))    * 100, 0, 100),
+    cut:   v => clamp(((0.40 - v) / (0.40 - 0.05)) * 100, 0, 100),
+    yoy:   v => clamp(((v - (-10)) / (20 - (-10))) * 100, 0, 100),
+  };
+  // pick value at sparkline index for a given KPI path, falling back to
+  // value when spark is missing or out of range.
+  const sparkAt = (m, kpi, idx) => {
+    const sp = m.kpis?.[kpi]?.spark;
+    if (Array.isArray(sp) && sp.length) {
+      const i = idx < 0 ? sp.length + idx : idx;
+      if (i >= 0 && i < sp.length && sp[i] != null) return sp[i];
+    }
+    return null;
+  };
+  // Compute the heat index for a particular point in time. sliceFn maps a
+  // metro to its (above, dom, cut, yoy) values for that snapshot. Any
+  // missing signal is dropped from that signal's mean; if every signal is
+  // empty, returns null.
+  const heatFor = sliceFn => {
+    const sums = {above:[], dom:[], cut:[], yoy:[]};
+    qualifiedMetros.forEach(m => {
+      const s = sliceFn(m);
+      if (s.above != null) sums.above.push(s.above);
+      if (s.dom   != null) sums.dom.push(s.dom);
+      if (s.cut   != null) sums.cut.push(s.cut);
+      if (s.yoy   != null) sums.yoy.push(s.yoy);
+    });
+    const meanOf = arr => arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : null;
+    const parts = [
+      sums.above.length ? norm.above(meanOf(sums.above)) : null,
+      sums.dom.length   ? norm.dom(meanOf(sums.dom))     : null,
+      sums.cut.length   ? norm.cut(meanOf(sums.cut))     : null,
+      sums.yoy.length   ? norm.yoy(meanOf(sums.yoy))     : null,
+    ].filter(v => v != null);
+    if (!parts.length) return null;
+    return parts.reduce((a,b)=>a+b,0) / parts.length;
+  };
+  const currentSlice = m => ({
+    above: m.kpis?.pct_above_list?.value,
+    dom:   m.kpis?.days_on_market?.value,
+    cut:   m.kpis?.pct_price_cut?.value,
+    yoy:   m.kpis?.zhvi?.yoy_pct,
+  });
+  // Sparkline arrays have ~12 monthly points. idx -2 ≈ 30d ago; idx 0 ≈ 1y ago.
+  // ZHVI yoy doesn't have a YoY-of-YoY easily, so 30d uses current, 1y uses
+  // five_year_pct / 5 as a rough proxy.
+  const pastSlice = (idx, yoyMode) => m => ({
+    above: sparkAt(m, 'pct_above_list', idx),
+    dom:   sparkAt(m, 'days_on_market', idx),
+    cut:   sparkAt(m, 'pct_price_cut', idx),
+    yoy:   yoyMode === 'current' ? m.kpis?.zhvi?.yoy_pct
+         : yoyMode === '5y_proxy' ? (m.kpis?.zhvi?.five_year_pct != null ? m.kpis.zhvi.five_year_pct / 5 : null)
+         : null,
+  });
+  const heatNow  = heatFor(currentSlice);
+  const heat30d  = heatFor(pastSlice(-2, 'current'));
+  const heat1y   = heatFor(pastSlice(0,  '5y_proxy'));
+  const heatIdx  = heatNow == null ? null : Math.round(heatNow);
+  const delta30  = (heatNow != null && heat30d != null) ? Math.round(heatNow - heat30d) : null;
+  const delta1y  = (heatNow != null && heat1y  != null) ? Math.round(heatNow - heat1y)  : null;
+  const heatLabel = v => v == null ? '—'
+    : v <= 25 ? {t:'Cold',      c:'#4a90e2'}
+    : v <= 45 ? {t:'Cool',      c:'#5fb3a8'}
+    : v <= 65 ? {t:'Warm',      c:'#e8b04a'}
+    : v <= 85 ? {t:'Hot',       c:'#e8744a'}
+    :           {t:'Scorching', c:'#d04545'};
+  const hLbl = heatLabel(heatIdx);
+
+  // ---- Sparkline SVG helper -------------------------------------------
+  // Compact inline polyline, no fill, single colour. Returns '' on bad input.
+  const spark = (arr, color, w, h) => {
+    const pts = (arr || []).filter(v => v != null && isFinite(v));
+    if (pts.length < 2) return '';
+    const mn = Math.min(...pts), mx = Math.max(...pts);
+    const rng = (mx - mn) || 1;
+    const step = w / (pts.length - 1);
+    const coords = pts.map((v, i) => i * step + ',' + (h - ((v - mn) / rng) * h).toFixed(1)).join(' ');
+    return '<svg viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" preserveAspectRatio="none" style="display:block">' +
+      '<polyline points="' + coords + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  };
+
+  // ---- Market lists ---------------------------------------------------
+  const hotList = qualifiedMetros
+    .filter(m => m.kpis?.pct_above_list?.value != null)
+    .slice()
+    .sort((a, b) => (b.kpis.pct_above_list.value || 0) - (a.kpis.pct_above_list.value || 0))
+    .slice(0, 10);
+  const coolList = qualifiedMetros
+    .filter(m => m.kpis?.pct_price_cut?.value != null)
+    .slice()
+    .sort((a, b) => (b.kpis.pct_price_cut.value || 0) - (a.kpis.pct_price_cut.value || 0))
+    .slice(0, 10);
+
+  // ---- KPI row data ---------------------------------------------------
   const zhviValues = metros.map(m => m.kpis?.zhvi?.value).filter(v => v != null).sort((a,b)=>a-b);
   const medianZhvi = zhviValues.length ? zhviValues[Math.floor(zhviValues.length/2)] : null;
   const positiveYoy = metros.filter(m => (m.kpis?.zhvi?.yoy_pct ?? 0) > 0).length;
   const domValues = metros.map(m => m.kpis?.days_on_market?.value).filter(v => v != null);
   const avgDom = domValues.length ? Math.round(domValues.reduce((a,b)=>a+b,0) / domValues.length) : null;
-  // Minimum-sales sanity gate so headline metros aren't dominated by tiny
-  // markets that hit single-metric extremes on low volume (matters now that
-  // the snapshot covers all ~894 MSAs, not just the top 50).
-  const MIN_SALES = 100;
-  const hottest = metros.reduce((best, m) => {
-    const v = m.kpis?.pct_above_list?.value;
-    const s = m.kpis?.homes_sold?.value;
-    if (v == null || s == null || s < MIN_SALES) return best;
-    return (best == null || v > best.v) ? {name: m.short_name, v} : best;
-  }, null);
-  const coldest = metros.reduce((worst, m) => {
-    const v = m.kpis?.pct_price_cut?.value;
-    const s = m.kpis?.homes_sold?.value;
-    if (v == null || s == null || s < MIN_SALES) return worst;
-    return (worst == null || v > worst.v) ? {name: m.short_name, v} : worst;
-  }, null);
+
   const generated = d.generated_at ? new Date(d.generated_at).toISOString().slice(0,10) : '—';
-  const card = (label, value, sub) => '<div style="padding:10px 14px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:8px;min-width:140px;flex:1"><div style="font-size:11px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:0.05em">'+label+'</div><div style="font-size:20px;font-weight:600;margin-top:4px">'+value+'</div>'+(sub ? '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-top:2px">'+sub+'</div>' : '')+'</div>';
-  host.innerHTML =
-    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-      card('Median ZHVI', fmtUsd(medianZhvi), 'across ' + metros.length + ' US metros') +
-      card('Metros with +YoY', positiveYoy + ' / ' + metros.length, 'ZHVI year-over-year') +
-      card('Avg Days on Market', avgDom == null ? '—' : avgDom + 'd', 'median across metros') +
-      card('Hottest market', hottest ? hottest.name : '—', hottest ? Math.round(hottest.v*100) + '% sold above list' : '') +
-      card('Most price cuts', coldest ? coldest.name : '—', coldest ? Math.round(coldest.v*100) + '% of listings' : '') +
-    '</div>' +
-    '<div style="margin-top:10px;font-size:11px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
+
+  // ---- HTML build -----------------------------------------------------
+  // Hero: heat index card
+  const needlePct = heatIdx == null ? 50 : heatIdx;
+  const gradient = 'linear-gradient(90deg,#4a90e2 0%,#5fb3a8 25%,#e8b04a 50%,#e8744a 75%,#d04545 100%)';
+  const chip = (label, sign) => {
+    const color = sign > 0 ? '#3fb950' : sign < 0 ? '#f85149' : 'var(--muted,#9aa3b2)';
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:rgba(255,255,255,0.04);border:1px solid var(--border,#2a3142);font-size:11px;color:' + color + '">' + label + '</span>';
+  };
+  const delta30Chip = delta30 == null
+    ? chip('— 30d', 0)
+    : chip((delta30 > 0 ? '↑ +' : delta30 < 0 ? '↓ ' : '') + delta30 + ' pts 30d', delta30);
+  const delta1yChip = delta1y == null
+    ? chip('— 1y', 0)
+    : chip((delta1y > 0 ? '↑ +' : delta1y < 0 ? '↓ ' : '') + delta1y + ' pts 1y', delta1y);
+
+  const heroHtml =
+    '<div style="padding:14px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:10px;margin:0 14px 12px 14px">' +
+      '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">' +
+        '<div style="font-size:11px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:0.05em">National Housing Heat Index</div>' +
+      '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:14px;margin-top:6px;flex-wrap:wrap">' +
+        '<div style="font-size:44px;font-weight:700;line-height:1;color:' + (hLbl.c || '#fff') + '">' + (heatIdx == null ? '—' : heatIdx) + '</div>' +
+        '<div style="font-size:18px;font-weight:600;color:' + (hLbl.c || 'var(--muted,#9aa3b2)') + '">' + (hLbl.t || '—') + '</div>' +
+        '<div style="font-size:11px;color:var(--muted,#9aa3b2)">/ 100</div>' +
+      '</div>' +
+      '<div style="position:relative;margin-top:12px;height:10px;border-radius:6px;background:' + gradient + ';border:1px solid var(--border,#2a3142)">' +
+        (heatIdx == null ? '' :
+          '<div style="position:absolute;top:-3px;bottom:-3px;left:calc(' + needlePct + '% - 2px);width:4px;background:#fff;border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,0.55)"></div>') +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted,#9aa3b2);margin-top:4px">' +
+        '<span>Cold</span><span>Cool</span><span>Warm</span><span>Hot</span><span>Scorching</span>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' + delta30Chip + delta1yChip + '</div>' +
+      '<div style="margin-top:8px;font-size:11px;color:var(--muted,#9aa3b2);line-height:1.45">Composite of % above list, days-on-market, price cuts, and YoY ZHVI across ' + qualifiedMetros.length + ' qualifying metros.</div>' +
+    '</div>';
+
+  // Market card builder for carousels
+  const marketCard = (m, mode) => {
+    const accent = mode === 'hot' ? '#e8744a' : '#4a90e2';
+    const kpi = mode === 'hot' ? 'pct_above_list' : 'pct_price_cut';
+    const big = m.kpis?.[kpi]?.value;
+    const bigPct = big == null ? '—' : Math.round(big * 100) + '%';
+    const sub = mode === 'hot' ? 'above list' : 'price cuts';
+    const yoy = m.kpis?.zhvi?.yoy_pct;
+    const yoyColor = yoy == null ? 'var(--muted,#9aa3b2)' : (yoy > 0 ? '#3fb950' : yoy < 0 ? '#f85149' : 'var(--muted,#9aa3b2)');
+    const sp = spark(m.kpis?.[kpi]?.spark, accent, 110, 24);
+    return '<div style="scroll-snap-align:start;flex-shrink:0;width:150px;height:150px;display:flex;flex-direction:column;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-top:3px solid ' + accent + ';border-radius:8px;padding:10px;box-sizing:border-box">' +
+      '<div style="font-size:12px;font-weight:600;line-height:1.2;color:#e6e9ee;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(m.short_name || m.name || '—') + '</div>' +
+      '<div style="font-size:10px;color:var(--muted,#9aa3b2);margin-top:1px">' + esc(m.state || '') + '</div>' +
+      '<div style="font-size:22px;font-weight:700;color:' + accent + ';margin-top:6px;line-height:1">' + bigPct + '</div>' +
+      '<div style="font-size:10px;color:var(--muted,#9aa3b2);margin-top:1px">' + sub + '</div>' +
+      '<div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:6px">' +
+        '<div style="flex:1;min-width:0">' + sp + '</div>' +
+        '<div style="font-size:10px;font-weight:600;color:' + yoyColor + ';white-space:nowrap">' + (yoy == null ? '—' : (yoy > 0 ? '+' : '') + yoy.toFixed(1) + '%') + '</div>' +
+      '</div>' +
+    '</div>';
+  };
+
+  const carousel = (title, list, mode) => {
+    if (!list.length) return '';
+    const cards = list.map(m => marketCard(m, mode)).join('');
+    return '<div style="font-size:13px;font-weight:600;color:#e6e9ee;padding:0 14px;margin-top:4px;margin-bottom:6px">' + title + '</div>' +
+      '<div style="display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:4px 14px 12px 14px;margin:0">' +
+        cards +
+      '</div>';
+  };
+
+  const hotCarousel  = carousel('🔥 Hot Markets',     hotList,  'hot');
+  const coolCarousel = carousel('❄️ Cooling Markets', coolList, 'cool');
+
+  // Compressed KPI row
+  const smallCard = (label, value, sub) =>
+    '<div style="padding:8px 10px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:8px;flex:1;min-width:0">' +
+      '<div style="font-size:10px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + label + '</div>' +
+      '<div style="font-size:14px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + value + '</div>' +
+      (sub ? '<div style="font-size:10px;color:var(--muted,#9aa3b2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div>' : '') +
+    '</div>';
+  const kpiRowHtml =
+    '<div style="display:flex;gap:8px;padding:0 14px;margin-top:6px">' +
+      smallCard('Median ZHVI', fmtUsd(medianZhvi), 'across ' + metros.length + ' metros') +
+      smallCard('+YoY metros',  positiveYoy + ' / ' + metros.length, 'positive ZHVI YoY') +
+      smallCard('Avg DOM',     avgDom == null ? '—' : avgDom + 'd', 'days on market') +
+    '</div>';
+
+  const snapshotHtml =
+    '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
+
+  host.innerHTML = heroHtml + hotCarousel + coolCarousel + kpiRowHtml + snapshotHtml;
 }
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
