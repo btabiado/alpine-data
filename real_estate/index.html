@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>US Real Estate Markets · BTC/ETH ETF</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --bg-elev: #141923;
+      --bg-elev-2: #1c2230;
+      --border: #2a3142;
+      --text: #e6e8ee;
+      --text-dim: #9aa3b2;
+      --text-faint: #6b7280;
+      --good: #10b981;
+      --bad: #ef4444;
+      --neutral: #60a5fa;
+      --warn: #f59e0b;
+      --accent: #60a5fa;
+      --cat-price: #10b981;
+      --cat-supply: #60a5fa;
+      --cat-demand: #a78bfa;
+      --cat-pace: #f59e0b;
+      --cat-permits: #ec4899;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 32px 24px 64px; }
+
+    header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
+    h1 { font-size: 22px; margin: 0; font-weight: 600; }
+    .breadcrumb { color: var(--text-dim); font-size: 13px; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .generated { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+    .sources { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
+    .sources a { color: var(--accent); text-decoration: none; }
+    .sources a:hover { text-decoration: underline; }
+
+    .controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 24px 0 20px; padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; }
+    .controls label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-right: 8px; font-weight: 600; }
+    select {
+      background: var(--bg-elev-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 12px; font-family: var(--sans); font-size: 14px; min-width: 280px; cursor: pointer;
+    }
+    select:hover, select:focus { border-color: var(--accent); outline: none; }
+    .controls .src-line { font-size: 11px; color: var(--text-faint); font-family: var(--mono); }
+
+    h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 28px 0 12px; font-weight: 600; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    @media (max-width: 1024px) { .kpi-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 640px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .kpi-card {
+      background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 16px; border-left-width: 4px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .kpi-card.cat-price { border-left-color: var(--cat-price); }
+    .kpi-card.cat-supply { border-left-color: var(--cat-supply); }
+    .kpi-card.cat-demand { border-left-color: var(--cat-demand); }
+    .kpi-card.cat-pace { border-left-color: var(--cat-pace); }
+    .kpi-card.cat-permits { border-left-color: var(--cat-permits); }
+
+    .kpi-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); font-weight: 600; }
+    .kpi-value { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+    .kpi-delta { font-size: 12px; font-variant-numeric: tabular-nums; font-family: var(--mono); display: flex; align-items: center; gap: 4px; }
+    .kpi-delta .arrow { font-size: 11px; }
+    .kpi-secondary { font-size: 11px; color: var(--text-faint); font-family: var(--mono); }
+    .delta-good { color: var(--good); }
+    .delta-bad  { color: var(--bad); }
+    .delta-neutral { color: var(--neutral); }
+    .delta-missing { color: var(--text-faint); }
+    .kpi-spark { margin-top: 4px; height: 24px; }
+    .kpi-spark svg { display: block; }
+
+    .bonus-row {
+      margin-top: 16px; padding: 12px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+      display: flex; align-items: center; gap: 24px; flex-wrap: wrap; font-size: 13px;
+    }
+    .bonus-row .bonus-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); font-weight: 600; }
+    .bonus-row .bonus-val { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+    .chart-card {
+      background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+      padding: 16px; margin-top: 12px;
+    }
+    .chart-toggles { display: flex; gap: 8px; margin-bottom: 12px; }
+    .toggle-btn {
+      background: var(--bg-elev-2); color: var(--text-dim); border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 12px; font-size: 12px; font-family: var(--sans); cursor: pointer; user-select: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .toggle-btn:hover { color: var(--text); border-color: var(--accent); }
+    .toggle-btn.active { background: rgba(96, 165, 250, 0.12); color: var(--text); border-color: var(--accent); }
+    .toggle-btn .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .chart-canvas-wrap { position: relative; height: 360px; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 12px; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg-elev-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
+    th:hover { color: var(--text); }
+    th .sort-ind { color: var(--accent); margin-left: 4px; font-size: 10px; }
+    tr:last-child td { border-bottom: none; }
+    tbody tr { cursor: pointer; }
+    tbody tr:hover { background: var(--bg-elev-2); }
+    td.mono { font-family: var(--mono); font-size: 12px; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+    td.metro-cell { font-weight: 600; }
+    td.metro-cell .state { color: var(--text-faint); font-weight: 400; margin-left: 4px; font-size: 11px; }
+
+    .error { color: var(--bad); padding: 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid var(--bad); border-radius: 8px; margin-top: 16px; }
+    .empty { color: var(--text-faint); font-style: italic; padding: 16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="breadcrumb"><a href="../">← Dashboard</a></div>
+        <h1>US Real Estate Markets</h1>
+        <div class="sources">
+          Sources:
+          <a href="https://www.zillow.com/research/data/" target="_blank" rel="noopener">Zillow</a> ·
+          <a href="https://www.redfin.com/news/data-center/" target="_blank" rel="noopener">Redfin</a> ·
+          <a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>
+        </div>
+      </div>
+      <div class="generated" id="generated">loading…</div>
+    </header>
+
+    <div id="error-mount"></div>
+
+    <div class="controls">
+      <div>
+        <label for="metro-select">Metro</label>
+        <select id="metro-select"></select>
+      </div>
+      <div class="src-line" id="src-line"></div>
+    </div>
+
+    <h2>Top-Line KPIs</h2>
+    <div class="kpi-grid" id="kpi-row-1"></div>
+    <div class="kpi-grid" id="kpi-row-2" style="margin-top:12px;"></div>
+
+    <div class="bonus-row" id="bonus-row" style="display:none;"></div>
+
+    <h2>5-Year Price History</h2>
+    <div class="chart-card">
+      <div class="chart-toggles">
+        <button class="toggle-btn active" data-series="zhvi" type="button"><span class="dot" style="background:#10b981"></span>ZHVI</button>
+        <button class="toggle-btn" data-series="median_sale" type="button"><span class="dot" style="background:#60a5fa"></span>Median Sale</button>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="price-chart"></canvas></div>
+    </div>
+
+    <h2>All 50 Metros <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— click any column to sort, click a row to inspect</span></h2>
+    <div id="table-mount"></div>
+  </div>
+
+  <script>
+    const KPI_DEFS = [
+      { key: 'zhvi',            label: 'ZHVI',            cat: 'price',   fmt: 'dollar', delta: 'yoy_pct', deltaType: 'pct', polarity: 'good', secondary: '5y' },
+      { key: 'median_sale',     label: 'Median Sale',     cat: 'price',   fmt: 'dollar', delta: 'yoy_pct', deltaType: 'pct', polarity: 'good' },
+      { key: 'homes_sold',      label: 'Homes Sold',      cat: 'demand',  fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'good' },
+      { key: 'active_listings', label: 'Active Listings', cat: 'supply',  fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'neutral' },
+      { key: 'new_listings',    label: 'New Listings',    cat: 'supply',  fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'neutral' },
+      { key: 'days_on_market',  label: 'Days on Market',  cat: 'pace',    fmt: 'days',   delta: 'yoy_delta', deltaType: 'days', polarity: 'bad' },
+      { key: 'sale_to_list',    label: 'Sale / List',     cat: 'pace',    fmt: 'pct1',   delta: 'yoy_pp',  deltaType: 'pp', polarity: 'good' },
+      { key: 'pct_above_list',  label: '% Above List',    cat: 'demand',  fmt: 'pct0',   delta: 'yoy_pp',  deltaType: 'pp', polarity: 'good' },
+      { key: 'pct_price_cut',   label: '% Price Cuts',    cat: 'demand',  fmt: 'pct0',   delta: 'yoy_pp',  deltaType: 'pp', polarity: 'bad' },
+      { key: 'permits',         label: 'Permits (FRED)',  cat: 'permits', fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'good' }
+    ];
+
+    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' } };
+
+    function escapeHtml(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function fmtDollar(v) {
+      if (v == null || !isFinite(v)) return '—';
+      if (Math.abs(v) >= 1_000_000) return '$' + (v / 1_000_000).toFixed(2) + 'M';
+      if (Math.abs(v) >= 1000) return '$' + Math.round(v / 1000) + 'K';
+      return '$' + Math.round(v).toLocaleString('en-US');
+    }
+    function fmtDollarFull(v) {
+      if (v == null || !isFinite(v)) return '—';
+      return '$' + Math.round(v).toLocaleString('en-US');
+    }
+    function fmtInt(v) {
+      if (v == null || !isFinite(v)) return '—';
+      return Math.round(v).toLocaleString('en-US');
+    }
+    function fmtPct1(v) {
+      if (v == null || !isFinite(v)) return '—';
+      return (v * 100).toFixed(1) + '%';
+    }
+    function fmtPct0(v) {
+      if (v == null || !isFinite(v)) return '—';
+      return Math.round(v * 100) + '%';
+    }
+    function fmtDays(v) {
+      if (v == null || !isFinite(v)) return '—';
+      return Math.round(v) + 'd';
+    }
+    function fmtValue(v, fmt) {
+      if (fmt === 'dollar') return fmtDollar(v);
+      if (fmt === 'int')    return fmtInt(v);
+      if (fmt === 'pct1')   return fmtPct1(v);
+      if (fmt === 'pct0')   return fmtPct0(v);
+      if (fmt === 'days')   return fmtDays(v);
+      return v == null ? '—' : String(v);
+    }
+
+    function deltaText(val, type) {
+      if (val == null || !isFinite(val)) return { txt: '—', cls: 'delta-missing', sign: 0 };
+      const sign = val > 0 ? 1 : val < 0 ? -1 : 0;
+      const arrow = val > 0 ? '▲' : val < 0 ? '▼' : '■';
+      let body;
+      if (type === 'pct')  body = (val > 0 ? '+' : '') + val.toFixed(1) + '%';
+      else if (type === 'pp')   body = (val > 0 ? '+' : '') + val.toFixed(1) + 'pp';
+      else if (type === 'days') body = (val > 0 ? '+' : '') + Math.round(val) + 'd';
+      else body = String(val);
+      return { txt: arrow + ' ' + body, cls: '', sign, arrow, body };
+    }
+
+    function deltaClass(sign, polarity) {
+      if (sign === 0) return 'delta-neutral';
+      if (polarity === 'neutral') return 'delta-neutral';
+      if (polarity === 'good') return sign > 0 ? 'delta-good' : 'delta-bad';
+      if (polarity === 'bad')  return sign > 0 ? 'delta-bad'  : 'delta-good';
+      return 'delta-neutral';
+    }
+
+    function sparkSVG(values, color) {
+      const arr = (values || []).filter(v => v != null && isFinite(v));
+      if (arr.length < 2) {
+        return `<svg width="80" height="24" viewBox="0 0 80 24"></svg>`;
+      }
+      const full = values || [];
+      const min = Math.min(...arr);
+      const max = Math.max(...arr);
+      const range = max - min || 1;
+      const w = 80, h = 24, pad = 2;
+      const step = (w - pad * 2) / Math.max(1, full.length - 1);
+      const pts = [];
+      for (let i = 0; i < full.length; i++) {
+        const v = full[i];
+        if (v == null || !isFinite(v)) continue;
+        const x = pad + i * step;
+        const y = h - pad - ((v - min) / range) * (h - pad * 2);
+        pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+      }
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>`;
+    }
+
+    function catColor(cat) {
+      return {
+        price: '#10b981', supply: '#60a5fa', demand: '#a78bfa', pace: '#f59e0b', permits: '#ec4899'
+      }[cat] || '#60a5fa';
+    }
+
+    function renderKpiCards() {
+      const m = STATE.metro;
+      if (!m) return;
+      const k = m.kpis || {};
+      const rows = [
+        document.getElementById('kpi-row-1'),
+        document.getElementById('kpi-row-2')
+      ];
+      rows.forEach(r => r.innerHTML = '');
+
+      KPI_DEFS.forEach((def, idx) => {
+        const target = rows[idx < 5 ? 0 : 1];
+        const data = k[def.key] || {};
+        const value = data.value;
+        const deltaRaw = data[def.delta];
+        const d = deltaText(deltaRaw, def.deltaType);
+        const dCls = deltaClass(d.sign, def.polarity);
+
+        let secondary = '';
+        if (def.secondary === '5y' && data.five_year_pct != null && isFinite(data.five_year_pct)) {
+          const fyv = data.five_year_pct;
+          const fyArrow = fyv > 0 ? '▲' : fyv < 0 ? '▼' : '■';
+          const fySign = fyv > 0 ? '+' : '';
+          secondary = `<div class="kpi-secondary">5Y ${fyArrow} ${fySign}${fyv.toFixed(1)}%</div>`;
+        }
+
+        const spark = sparkSVG(data.spark, catColor(def.cat));
+
+        target.insertAdjacentHTML('beforeend', `
+          <div class="kpi-card cat-${def.cat}">
+            <div class="kpi-label">${escapeHtml(def.label)}</div>
+            <div class="kpi-value">${escapeHtml(fmtValue(value, def.fmt))}</div>
+            <div class="kpi-delta ${dCls}">${escapeHtml(d.txt)}</div>
+            ${secondary}
+            <div class="kpi-spark">${spark}</div>
+          </div>
+        `);
+      });
+    }
+
+    function renderBonus() {
+      const m = STATE.metro;
+      const el = document.getElementById('bonus-row');
+      const bonus = (m && m.bonus) || null;
+      if (!bonus || (bonus.zori_rent == null && bonus.rent_to_price == null)) {
+        el.style.display = 'none';
+        return;
+      }
+      const zori = bonus.zori_rent || {};
+      const parts = [];
+      parts.push(`<span class="bonus-label">Bonus</span>`);
+      if (zori.value != null) {
+        parts.push(`<span><span class="bonus-label">ZORI Median Rent</span> <span class="bonus-val">${escapeHtml(fmtDollarFull(zori.value))}</span></span>`);
+      }
+      if (zori.yoy_pct != null && isFinite(zori.yoy_pct)) {
+        const d = deltaText(zori.yoy_pct, 'pct');
+        const cls = deltaClass(d.sign, 'good');
+        parts.push(`<span class="bonus-val ${cls}">${escapeHtml(d.txt)}</span>`);
+      }
+      if (bonus.rent_to_price != null && isFinite(bonus.rent_to_price)) {
+        parts.push(`<span><span class="bonus-label">Rent / Price</span> <span class="bonus-val">${escapeHtml(fmtPct1(bonus.rent_to_price))}</span></span>`);
+      }
+      el.innerHTML = parts.join('');
+      el.style.display = 'flex';
+    }
+
+    function renderChart() {
+      const m = STATE.metro;
+      if (!m) return;
+      const hist = m.history_5y_monthly || { labels: [], zhvi: [], median_sale: [] };
+      const labels = hist.labels || [];
+
+      const datasets = [];
+      if (STATE.visibleSeries.zhvi) {
+        datasets.push({
+          label: 'ZHVI', data: hist.zhvi || [], borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.08)',
+          tension: 0.2, fill: false, pointRadius: 0, borderWidth: 2, spanGaps: true
+        });
+      }
+      if (STATE.visibleSeries.median_sale) {
+        datasets.push({
+          label: 'Median Sale', data: hist.median_sale || [], borderColor: '#60a5fa', backgroundColor: 'rgba(96,165,250,0.08)',
+          tension: 0.2, fill: false, pointRadius: 0, borderWidth: 2, spanGaps: true
+        });
+      }
+
+      const cfg = {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#1c2230', borderColor: '#2a3142', borderWidth: 1,
+              titleColor: '#e6e8ee', bodyColor: '#e6e8ee', padding: 10,
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${fmtDollarFull(ctx.parsed.y)}`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#9aa3b2', font: { family: 'ui-monospace, SF Mono, Menlo, monospace', size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 },
+              grid: { color: 'rgba(42,49,66,0.5)', drawBorder: false }
+            },
+            y: {
+              ticks: { color: '#9aa3b2', font: { family: 'ui-monospace, SF Mono, Menlo, monospace', size: 10 }, callback: v => fmtDollar(v) },
+              grid: { color: 'rgba(42,49,66,0.5)', drawBorder: false }
+            }
+          }
+        }
+      };
+
+      if (STATE.chart) {
+        STATE.chart.data = cfg.data;
+        STATE.chart.options = cfg.options;
+        STATE.chart.update();
+      } else {
+        const ctx = document.getElementById('price-chart').getContext('2d');
+        STATE.chart = new Chart(ctx, cfg);
+      }
+    }
+
+    function bindChartToggles() {
+      document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const s = btn.dataset.series;
+          STATE.visibleSeries[s] = !STATE.visibleSeries[s];
+          if (!STATE.visibleSeries.zhvi && !STATE.visibleSeries.median_sale) {
+            STATE.visibleSeries[s] = true;
+            return;
+          }
+          btn.classList.toggle('active', STATE.visibleSeries[s]);
+          renderChart();
+        });
+      });
+    }
+
+    const TABLE_COLS = [
+      { key: 'rank',          label: '#',          align: 'right', polarity: null,    fmt: v => v == null ? '—' : String(v) },
+      { key: 'metro',         label: 'Metro',      align: 'left',  polarity: null,    fmt: null },
+      { key: 'zhvi',          label: 'ZHVI',       align: 'right', polarity: null,    fmt: v => fmtDollar(v) },
+      { key: 'zhvi_yoy',      label: 'ZHVI YoY',   align: 'right', polarity: 'good',  fmt: v => v == null ? '—' : (v>0?'+':'') + v.toFixed(1) + '%' },
+      { key: 'median_sale',   label: 'Med Sale',   align: 'right', polarity: null,    fmt: v => fmtDollar(v) },
+      { key: 'dom',           label: 'DoM',        align: 'right', polarity: null,    fmt: v => fmtDays(v) },
+      { key: 'pct_above',     label: '>List',      align: 'right', polarity: null,    fmt: v => fmtPct0(v) },
+      { key: 'pct_cut',       label: 'Cuts',       align: 'right', polarity: null,    fmt: v => fmtPct0(v) },
+      { key: 'permits_yoy',   label: 'Permits YoY',align: 'right', polarity: 'good',  fmt: v => v == null ? '—' : (v>0?'+':'') + v.toFixed(1) + '%' }
+    ];
+
+    function tableRowForMetro(m) {
+      const k = m.kpis || {};
+      return {
+        rank: m.rank,
+        metro_short: m.short_name || m.name || '',
+        state: m.state || '',
+        metro: (m.short_name || m.name || '').toLowerCase(),
+        zhvi: (k.zhvi || {}).value,
+        zhvi_yoy: (k.zhvi || {}).yoy_pct,
+        median_sale: (k.median_sale || {}).value,
+        dom: (k.days_on_market || {}).value,
+        pct_above: (k.pct_above_list || {}).value,
+        pct_cut: (k.pct_price_cut || {}).value,
+        permits_yoy: (k.permits || {}).yoy_pct,
+        _id: m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name)
+      };
+    }
+
+    function renderTable() {
+      const mount = document.getElementById('table-mount');
+      const rows = (STATE.data.metros || []).map(tableRowForMetro);
+      const { key, dir } = STATE.sort;
+      rows.sort((a, b) => {
+        const av = a[key], bv = b[key];
+        const aN = av == null || (typeof av === 'number' && !isFinite(av));
+        const bN = bv == null || (typeof bv === 'number' && !isFinite(bv));
+        if (aN && bN) return 0;
+        if (aN) return 1;
+        if (bN) return -1;
+        if (typeof av === 'number' && typeof bv === 'number') return dir === 'asc' ? av - bv : bv - av;
+        const as = String(av), bs = String(bv);
+        return dir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as);
+      });
+
+      const headHtml = TABLE_COLS.map(c => {
+        const ind = STATE.sort.key === c.key ? `<span class="sort-ind">${STATE.sort.dir === 'asc' ? '↑' : '↓'}</span>` : '';
+        const align = c.align === 'right' ? ' style="text-align:right"' : '';
+        return `<th data-col="${c.key}"${align}>${escapeHtml(c.label)}${ind}</th>`;
+      }).join('');
+
+      const bodyHtml = rows.map(r => {
+        const tds = TABLE_COLS.map(c => {
+          if (c.key === 'metro') {
+            return `<td class="metro-cell">${escapeHtml(r.metro_short)}<span class="state">${escapeHtml(r.state)}</span></td>`;
+          }
+          const raw = r[c.key];
+          let txt = c.fmt ? c.fmt(raw) : (raw == null ? '—' : String(raw));
+          let cls = 'num';
+          if (c.polarity && typeof raw === 'number' && isFinite(raw)) {
+            const sign = raw > 0 ? 1 : raw < 0 ? -1 : 0;
+            cls += ' ' + deltaClass(sign, c.polarity);
+          }
+          return `<td class="${cls}">${escapeHtml(txt)}</td>`;
+        }).join('');
+        return `<tr data-id="${escapeHtml(r._id)}">${tds}</tr>`;
+      }).join('');
+
+      mount.innerHTML = `<table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
+
+      mount.querySelectorAll('th').forEach(th => {
+        th.addEventListener('click', () => {
+          const col = th.dataset.col;
+          if (STATE.sort.key === col) {
+            STATE.sort.dir = STATE.sort.dir === 'asc' ? 'desc' : 'asc';
+          } else {
+            STATE.sort.key = col;
+            STATE.sort.dir = (col === 'rank' || col === 'metro') ? 'asc' : 'desc';
+          }
+          renderTable();
+        });
+      });
+      mount.querySelectorAll('tbody tr').forEach(tr => {
+        tr.addEventListener('click', () => {
+          const id = tr.dataset.id;
+          const sel = document.getElementById('metro-select');
+          sel.value = id;
+          sel.dispatchEvent(new Event('change'));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+
+    function buildMetroSelect() {
+      const sel = document.getElementById('metro-select');
+      const metros = (STATE.data.metros || []).slice().sort((a, b) => (a.rank || 0) - (b.rank || 0));
+      sel.innerHTML = metros.map(m => {
+        const id = m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name);
+        const label = `${m.short_name || m.name} (${m.state || '?'})`;
+        return `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`;
+      }).join('');
+
+      const saved = localStorage.getItem('re_metro');
+      const ids = metros.map(m => m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name));
+      const initial = (saved && ids.includes(saved)) ? saved : ids[0];
+      sel.value = initial;
+      setMetro(initial);
+
+      sel.addEventListener('change', () => {
+        const v = sel.value;
+        localStorage.setItem('re_metro', v);
+        setMetro(v);
+      });
+    }
+
+    function setMetro(id) {
+      const m = (STATE.data.metros || []).find(x => {
+        const xid = x.zillow_region_id != null ? String(x.zillow_region_id) : (x.short_name || x.name);
+        return xid === id;
+      });
+      if (!m) return;
+      STATE.metro = m;
+      renderKpiCards();
+      renderBonus();
+      renderChart();
+    }
+
+    function formatGenerated(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      const pad = n => String(n).padStart(2, '0');
+      return `updated ${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} UTC`;
+    }
+
+    function renderSrcLine() {
+      const s = STATE.data.sources || {};
+      const parts = [];
+      if (s.zillow && s.zillow.rows != null) parts.push(`Zillow: ${s.zillow.rows} rows`);
+      if (s.redfin && s.redfin.rows != null) parts.push(`Redfin: ${s.redfin.rows} rows`);
+      if (s.fred && s.fred.national_permits_yoy_pct != null) {
+        const v = s.fred.national_permits_yoy_pct;
+        parts.push(`FRED national permits YoY: ${v > 0 ? '+' : ''}${v.toFixed(1)}%`);
+      }
+      document.getElementById('src-line').textContent = parts.join(' · ');
+    }
+
+    async function load() {
+      try {
+        const r = await fetch('../data/real_estate.json', { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        STATE.data = await r.json();
+        document.getElementById('generated').textContent = formatGenerated(STATE.data.generated_at);
+        renderSrcLine();
+        buildMetroSelect();
+        bindChartToggles();
+        renderTable();
+      } catch (e) {
+        document.getElementById('error-mount').innerHTML =
+          `<div class="error">Failed to load real_estate.json: ${escapeHtml(e.message)}</div>`;
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

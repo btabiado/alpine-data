@@ -1,0 +1,82 @@
+name: real-estate-daily
+
+# Daily refresh for the Real Estate data tab. The fetcher
+# (scripts/fetch_real_estate.py) writes data/real_estate.json, which the
+# dashboard reads at deploy time. Upstream sources (Redfin / Zillow /
+# FRED housing series) publish on a monthly cadence, but the exact
+# publish day of the month varies — a daily cron catches every refresh
+# within ~24h without hammering the sources.
+#
+# Runs at 06:00 UTC = 23:00 PT prev day / 02:00 ET — well after
+# Redfin/Zillow's typical update windows, so we capture any
+# late-evening US-Pacific publishes the same calendar day.
+#
+# Commit message carries [skip ci] so the push doesn't retrigger
+# pages.yml's push-driven build. pages.yml's own scheduled hourly cron
+# picks up the new data file naturally on its next tick.
+on:
+  schedule:
+    # 06:00 UTC = 23:00 PT prev day / 02:00 ET — runs after Redfin/Zillow's typical update windows
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Solo concurrency group — there's no sibling workflow on this data
+# file, but keep manual dispatch from overlapping a scheduled run.
+concurrency:
+  group: real-estate-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch real estate data
+        # Pure-stdlib fetcher — no pip install needed. Fetcher handles
+        # missing FRED_API_KEY internally; we still pass it so the
+        # FRED-backed series populate when the secret is configured.
+        # Non-zero exit fails the workflow on purpose: a dead fetcher
+        # should be visible in the Actions UI, not silently swallowed.
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python scripts/fetch_real_estate.py
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "real-estate-bot"
+          git config user.email "real-estate-bot@users.noreply.github.com"
+          git add data/real_estate.json
+          if git diff --staged --quiet; then
+            echo "No real estate data changes; skipping commit."
+          else
+            git commit -m "real-estate: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
+            # Race-safe push: mirror lthcs-*'s retry loop so main moving
+            # under us (concurrent cron, manual dev push) doesn't eat
+            # tonight's refresh.
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                echo "Push succeeded on attempt $attempt."
+                exit 0
+              fi
+              echo "Push attempt $attempt rejected — fetching + rebasing..."
+              git fetch origin main
+              git rebase --autostash origin/main || {
+                echo "Rebase conflict on attempt $attempt; aborting."
+                git rebase --abort
+                exit 1
+              }
+            done
+            echo "All 3 push attempts failed; giving up." && exit 1
+          fi

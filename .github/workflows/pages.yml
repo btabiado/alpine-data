@@ -364,6 +364,21 @@ jobs:
               cp -R data/lthcs _site/lthcs/data/
             fi
           fi
+          # Stage the US Real Estate Markets page under /real-estate/. Source
+          # at real_estate/index.html (self-contained — inline CSS/JS, Chart.js
+          # via CDN with SRI). Reads data from /data/real_estate.json built by
+          # the daily real-estate-daily.yml workflow and committed back to the
+          # repo. V1 (`/`), V2 (`/v2/`), /health/, and all /lthcs/* paths are
+          # untouched. Missing real_estate/index.html or the data JSON makes
+          # this branch a no-op; the rest of the site is unaffected.
+          if [ -f real_estate/index.html ]; then
+            mkdir -p _site/real-estate
+            cp -R real_estate/* _site/real-estate/
+            if [ -f data/real_estate.json ]; then
+              mkdir -p _site/data
+              cp data/real_estate.json _site/data/real_estate.json
+            fi
+          fi
           # Stage the central dashboard health observability page under /health/.
           # Source lives at health/index.html (self-contained — no external CSS
           # or JS) and reads its data from /data/health/status.json. Both are

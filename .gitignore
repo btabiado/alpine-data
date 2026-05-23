@@ -38,6 +38,9 @@ data/health/
 
 # Keep schema templates if you want to re-add them later (manually)
 !data/.gitkeep
+# US real-estate snapshot — committed back by real-estate-daily.yml and read
+# by the /real-estate/ page. Updates daily; tracked so the public page works.
+!data/real_estate.json
 
 # LTHCS — local API response cache (raw vendor data, may have redistribution terms)
 .cache/
