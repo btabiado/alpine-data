@@ -63,114 +63,121 @@ FRED_PERMIT_URL = (
     "&observation_start=2021-01-01"
 )
 
-# (rank, full RegionName as Zillow publishes it, short display name, primary state)
-METROS: list[tuple[int, str, str, str]] = [
-    (1,  "New York, NY",                  "New York",         "NY"),
-    (2,  "Los Angeles, CA",               "Los Angeles",      "CA"),
-    (3,  "Chicago, IL",                   "Chicago",          "IL"),
-    (4,  "Dallas, TX",                    "Dallas",           "TX"),
-    (5,  "Houston, TX",                   "Houston",          "TX"),
-    (6,  "Atlanta, GA",                   "Atlanta",          "GA"),
-    (7,  "Washington, DC",                "Washington",       "DC"),
-    (8,  "Philadelphia, PA",              "Philadelphia",     "PA"),
-    (9,  "Miami, FL",                     "Miami",            "FL"),
-    (10, "Phoenix, AZ",                   "Phoenix",          "AZ"),
-    (11, "Boston, MA",                    "Boston",           "MA"),
-    (12, "Riverside, CA",                 "Riverside",        "CA"),
-    (13, "San Francisco, CA",             "San Francisco",    "CA"),
-    (14, "Detroit, MI",                   "Detroit",          "MI"),
-    (15, "Seattle, WA",                   "Seattle",          "WA"),
-    (16, "Minneapolis, MN",               "Minneapolis",      "MN"),
-    (17, "San Diego, CA",                 "San Diego",        "CA"),
-    (18, "Tampa, FL",                     "Tampa",            "FL"),
-    (19, "Denver, CO",                    "Denver",           "CO"),
-    (20, "Baltimore, MD",                 "Baltimore",        "MD"),
-    (21, "St. Louis, MO",                 "St. Louis",        "MO"),
-    (22, "Charlotte, NC",                 "Charlotte",        "NC"),
-    (23, "Orlando, FL",                   "Orlando",          "FL"),
-    (24, "San Antonio, TX",               "San Antonio",      "TX"),
-    (25, "Portland, OR",                  "Portland",         "OR"),
-    (26, "Sacramento, CA",                "Sacramento",       "CA"),
-    (27, "Pittsburgh, PA",                "Pittsburgh",       "PA"),
-    (28, "Las Vegas, NV",                 "Las Vegas",        "NV"),
-    (29, "Cincinnati, OH",                "Cincinnati",       "OH"),
-    (30, "Austin, TX",                    "Austin",           "TX"),
-    (31, "Kansas City, MO",               "Kansas City",      "MO"),
-    (32, "Columbus, OH",                  "Columbus",         "OH"),
-    (33, "Cleveland, OH",                 "Cleveland",        "OH"),
-    (34, "Indianapolis, IN",              "Indianapolis",     "IN"),
-    (35, "San Jose, CA",                  "San Jose",         "CA"),
-    (36, "Nashville, TN",                 "Nashville",        "TN"),
-    (37, "Virginia Beach, VA",            "Virginia Beach",   "VA"),
-    (38, "Providence, RI",                "Providence",       "RI"),
-    (39, "Jacksonville, FL",              "Jacksonville",     "FL"),
-    (40, "Milwaukee, WI",                 "Milwaukee",        "WI"),
-    (41, "Oklahoma City, OK",             "Oklahoma City",    "OK"),
-    (42, "Raleigh, NC",                   "Raleigh",          "NC"),
-    (43, "Memphis, TN",                   "Memphis",          "TN"),
-    (44, "Richmond, VA",                  "Richmond",         "VA"),
-    (45, "Louisville, KY",                "Louisville",       "KY"),
-    (46, "New Orleans, LA",               "New Orleans",      "LA"),
-    (47, "Salt Lake City, UT",            "Salt Lake City",   "UT"),
-    (48, "Hartford, CT",                  "Hartford",         "CT"),
-    (49, "Buffalo, NY",                   "Buffalo",          "NY"),
-    (50, "Birmingham, AL",                "Birmingham",       "AL"),
-]
-
-# Long-form MSA names as the user spec gave them — emitted as `name` in output
-# so the page can show the canonical Census MSA label.
-METRO_LONG_NAME: dict[int, str] = {
-    1:  "New York-Newark-Jersey City, NY-NJ-PA",
-    2:  "Los Angeles-Long Beach-Anaheim, CA",
-    3:  "Chicago-Naperville-Elgin, IL-IN-WI",
-    4:  "Dallas-Fort Worth-Arlington, TX",
-    5:  "Houston-The Woodlands-Sugar Land, TX",
-    6:  "Atlanta-Sandy Springs-Alpharetta, GA",
-    7:  "Washington-Arlington-Alexandria, DC-VA-MD-WV",
-    8:  "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",
-    9:  "Miami-Fort Lauderdale-Pompano Beach, FL",
-    10: "Phoenix-Mesa-Chandler, AZ",
-    11: "Boston-Cambridge-Newton, MA-NH",
-    12: "Riverside-San Bernardino-Ontario, CA",
-    13: "San Francisco-Oakland-Berkeley, CA",
-    14: "Detroit-Warren-Dearborn, MI",
-    15: "Seattle-Tacoma-Bellevue, WA",
-    16: "Minneapolis-St. Paul-Bloomington, MN-WI",
-    17: "San Diego-Chula Vista-Carlsbad, CA",
-    18: "Tampa-St. Petersburg-Clearwater, FL",
-    19: "Denver-Aurora-Lakewood, CO",
-    20: "Baltimore-Columbia-Towson, MD",
-    21: "St. Louis, MO-IL",
-    22: "Charlotte-Concord-Gastonia, NC-SC",
-    23: "Orlando-Kissimmee-Sanford, FL",
-    24: "San Antonio-New Braunfels, TX",
-    25: "Portland-Vancouver-Hillsboro, OR-WA",
-    26: "Sacramento-Roseville-Folsom, CA",
-    27: "Pittsburgh, PA",
-    28: "Las Vegas-Henderson-Paradise, NV",
-    29: "Cincinnati, OH-KY-IN",
-    30: "Austin-Round Rock-Georgetown, TX",
-    31: "Kansas City, MO-KS",
-    32: "Columbus, OH",
-    33: "Cleveland-Elyria, OH",
-    34: "Indianapolis-Carmel-Anderson, IN",
-    35: "San Jose-Sunnyvale-Santa Clara, CA",
-    36: "Nashville-Davidson--Murfreesboro--Franklin, TN",
-    37: "Virginia Beach-Norfolk-Newport News, VA-NC",
-    38: "Providence-Warwick, RI-MA",
-    39: "Jacksonville, FL",
-    40: "Milwaukee-Waukesha, WI",
-    41: "Oklahoma City, OK",
-    42: "Raleigh-Cary, NC",
-    43: "Memphis, TN-MS-AR",
-    44: "Richmond, VA",
-    45: "Louisville/Jefferson County, KY-IN",
-    46: "New Orleans-Metairie, LA",
-    47: "Salt Lake City, UT",
-    48: "Hartford-East Hartford-Middletown, CT",
-    49: "Buffalo-Cheektowaga, NY",
-    50: "Birmingham-Hoover, AL",
+# Canonical Census long-form names keyed by Zillow's "City, ST" RegionName.
+# Used as the `name` field in output when a match exists; metros without
+# overrides fall back to Zillow's short-form RegionName (e.g. "Rochester, NY").
+# Keyed by RegionName rather than rank so the override is stable across
+# Zillow SizeRank reorderings.
+METRO_LONG_NAME_OVERRIDES: dict[str, str] = {
+    "New York, NY":        "New York-Newark-Jersey City, NY-NJ-PA",
+    "Los Angeles, CA":     "Los Angeles-Long Beach-Anaheim, CA",
+    "Chicago, IL":         "Chicago-Naperville-Elgin, IL-IN-WI",
+    "Dallas, TX":          "Dallas-Fort Worth-Arlington, TX",
+    "Houston, TX":         "Houston-The Woodlands-Sugar Land, TX",
+    "Washington, DC":      "Washington-Arlington-Alexandria, DC-VA-MD-WV",
+    "Philadelphia, PA":    "Philadelphia-Camden-Wilmington, PA-NJ-DE-MD",
+    "Miami, FL":           "Miami-Fort Lauderdale-Pompano Beach, FL",
+    "Atlanta, GA":         "Atlanta-Sandy Springs-Alpharetta, GA",
+    "Boston, MA":          "Boston-Cambridge-Newton, MA-NH",
+    "Phoenix, AZ":         "Phoenix-Mesa-Chandler, AZ",
+    "San Francisco, CA":   "San Francisco-Oakland-Berkeley, CA",
+    "Riverside, CA":       "Riverside-San Bernardino-Ontario, CA",
+    "Detroit, MI":         "Detroit-Warren-Dearborn, MI",
+    "Seattle, WA":         "Seattle-Tacoma-Bellevue, WA",
+    "Minneapolis, MN":     "Minneapolis-St. Paul-Bloomington, MN-WI",
+    "San Diego, CA":       "San Diego-Chula Vista-Carlsbad, CA",
+    "Tampa, FL":           "Tampa-St. Petersburg-Clearwater, FL",
+    "Denver, CO":          "Denver-Aurora-Lakewood, CO",
+    "Baltimore, MD":       "Baltimore-Columbia-Towson, MD",
+    "St. Louis, MO":       "St. Louis, MO-IL",
+    "Charlotte, NC":       "Charlotte-Concord-Gastonia, NC-SC",
+    "Orlando, FL":         "Orlando-Kissimmee-Sanford, FL",
+    "San Antonio, TX":     "San Antonio-New Braunfels, TX",
+    "Portland, OR":        "Portland-Vancouver-Hillsboro, OR-WA",
+    "Sacramento, CA":      "Sacramento-Roseville-Folsom, CA",
+    "Pittsburgh, PA":      "Pittsburgh, PA",
+    "Las Vegas, NV":       "Las Vegas-Henderson-Paradise, NV",
+    "Cincinnati, OH":      "Cincinnati, OH-KY-IN",
+    "Austin, TX":          "Austin-Round Rock-Georgetown, TX",
+    "Kansas City, MO":     "Kansas City, MO-KS",
+    "Columbus, OH":        "Columbus, OH",
+    "Cleveland, OH":       "Cleveland-Elyria, OH",
+    "Indianapolis, IN":    "Indianapolis-Carmel-Anderson, IN",
+    "San Jose, CA":        "San Jose-Sunnyvale-Santa Clara, CA",
+    "Nashville, TN":       "Nashville-Davidson--Murfreesboro--Franklin, TN",
+    "Virginia Beach, VA":  "Virginia Beach-Norfolk-Newport News, VA-NC",
+    "Providence, RI":      "Providence-Warwick, RI-MA",
+    "Jacksonville, FL":    "Jacksonville, FL",
+    "Milwaukee, WI":       "Milwaukee-Waukesha, WI",
+    "Oklahoma City, OK":   "Oklahoma City, OK",
+    "Raleigh, NC":         "Raleigh-Cary, NC",
+    "Memphis, TN":         "Memphis, TN-MS-AR",
+    "Richmond, VA":        "Richmond, VA",
+    "Louisville, KY":      "Louisville/Jefferson County, KY-IN",
+    "New Orleans, LA":     "New Orleans-Metairie, LA",
+    "Salt Lake City, UT":  "Salt Lake City, UT",
+    "Hartford, CT":        "Hartford-East Hartford-Middletown, CT",
+    "Buffalo, NY":         "Buffalo-Cheektowaga, NY",
+    "Birmingham, AL":      "Birmingham-Hoover, AL",
 }
+
+
+# Populated by load_metros_from_zillow() at startup. Each entry is a dict:
+# {rank: int, full: str, short: str, state: str}. Sorted by rank ascending.
+# Replaces the previous hardcoded METROS list — now data-driven off Zillow's
+# SizeRank column so coverage matches the source instead of a maintained list.
+METROS: list[dict[str, object]] = []
+
+
+def load_metros_from_zillow(max_metros: int | None, no_cache: bool) -> list[dict[str, object]]:
+    """Read Zillow ZHVI CSV, return the metro list ordered by SizeRank.
+
+    Returns one dict per US MSA with rank, full (Zillow RegionName),
+    short (city portion), state (2-letter code). If max_metros is set,
+    truncates after the top N by SizeRank. Excludes Puerto Rico (StateName
+    == "Puerto Rico") to keep the focus on US continental + AK/HI markets.
+    """
+    cache_path = CACHE_DIR / "zillow_zhvi.csv"
+    body, _ = http_get(ZILLOW_BASE + ZILLOW_URLS["zhvi"], cache_path, no_cache)
+    text = body.decode("utf-8", errors="replace")
+    reader = csv.DictReader(io.StringIO(text))
+    rows: list[dict[str, str]] = []
+    for row in reader:
+        if (row.get("RegionType") or "").lower() != "msa":
+            continue
+        if (row.get("StateName") or "").strip() == "Puerto Rico":
+            continue
+        rows.append(row)
+
+    # Sort by SizeRank (ascending = most populous first).
+    def _rank(r: dict[str, str]) -> int:
+        try:
+            return int(r.get("SizeRank") or 99999)
+        except ValueError:
+            return 99999
+    rows.sort(key=_rank)
+
+    if max_metros and max_metros > 0:
+        rows = rows[:max_metros]
+
+    out: list[dict[str, object]] = []
+    for i, row in enumerate(rows, start=1):
+        region_name = (row.get("RegionName") or "").strip()
+        # Zillow format is "City, ST" — split on the last comma to get state.
+        if "," in region_name:
+            short, _, state = region_name.rpartition(",")
+            short = short.strip()
+            state = state.strip()
+        else:
+            short = region_name
+            state = ""
+        out.append({
+            "rank": i,
+            "full": region_name,
+            "short": short,
+            "state": state,
+        })
+    return out
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -370,13 +377,13 @@ def load_zillow(no_cache: bool) -> dict:
             warn(f"zillow {metric} parse failed: {e}")
             continue
         rows_by_rank: dict[int, dict[str, str]] = {}
-        for rank, _full, short, state in METROS:
-            row = match_zillow_row(rows, short, state)
+        for m in METROS:
+            row = match_zillow_row(rows, str(m["short"]), str(m["state"]))
             if row:
-                rows_by_rank[rank] = row
+                rows_by_rank[int(m["rank"])] = row
         out[metric] = {"date_cols": date_cols, "rows": rows_by_rank}
         rows_count = max(rows_count, len(rows_by_rank))
-        info(f"zillow {metric}: {len(rows_by_rank)}/50 metros matched, {len(date_cols)} months")
+        info(f"zillow {metric}: {len(rows_by_rank)}/{len(METROS)} metros matched, {len(date_cols)} months")
     out["_meta"] = {"last_modified": last_modified_any, "rows": rows_count}
     return out
 
@@ -415,9 +422,9 @@ def load_redfin(no_cache: bool) -> dict:
 
     # Build a quick metro-name index using the leading short name.
     metro_index: dict[str, int] = {}
-    for rank, _full, short, state in METROS:
-        key = _norm(f"{short}, {state}")
-        metro_index[key] = rank
+    for m in METROS:
+        key = _norm(f"{m['short']}, {m['state']}")
+        metro_index[key] = int(m["rank"])
 
     by_rank: dict[int, dict[str, dict[str, float | None]]] = {}
     all_dates: set[str] = set()
@@ -459,7 +466,7 @@ def load_redfin(no_cache: bool) -> dict:
             rec[col] = _redfin_float(row.get(col, ""))
 
     dates = sorted(all_dates)
-    info(f"redfin: {len(by_rank)}/50 metros matched, {len(dates)} period_end dates")
+    info(f"redfin: {len(by_rank)}/{len(METROS)} metros matched, {len(dates)} period_end dates")
     return {"by_rank": by_rank, "last_modified": last_mod, "dates": dates}
 
 
@@ -554,10 +561,14 @@ def _kpi_with_yoy(spark: list[float | None], cols_present: int) -> dict:
     }
 
 
-def build_metro(rank: int, zillow: dict, redfin: dict) -> dict:
-    full_name = METRO_LONG_NAME[rank]
-    short = next(s for r, _f, s, _st in METROS if r == rank)
-    state = next(st for r, _f, _s, st in METROS if r == rank)
+def build_metro(metro_def: dict[str, object], zillow: dict, redfin: dict) -> dict:
+    rank = int(metro_def["rank"])
+    short = str(metro_def["short"])
+    state = str(metro_def["state"])
+    # Use the canonical Census long name when we have an override (keyed by
+    # Zillow's "City, ST" RegionName); fall back to Zillow's short-form
+    # RegionName ("Rochester, NY") otherwise.
+    full_name = METRO_LONG_NAME_OVERRIDES.get(str(metro_def["full"]), str(metro_def["full"]))
 
     def z_get(metric: str) -> tuple[dict[str, str] | None, list[str]]:
         m = zillow.get(metric)
@@ -735,10 +746,20 @@ def populated_kpi_count(metro: dict) -> int:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--no-cache", action="store_true", help="Bypass HTTP cache")
+    parser.add_argument("--max-metros", type=int, default=0,
+                        help="Cap number of metros (default 0 = all US MSAs from Zillow). "
+                             "Useful for fast local iteration with e.g. --max-metros 20.")
     args = parser.parse_args()
 
     started = time.time()
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Bootstrap the metro list off Zillow's SizeRank column. Mutates the
+    # module-level METROS so downstream loaders pick up the same set.
+    global METROS
+    METROS = load_metros_from_zillow(args.max_metros or None, args.no_cache)
+    info(f"metros: loaded {len(METROS)} from Zillow"
+         + (f" (capped to top {args.max_metros})" if args.max_metros else " (all US MSAs)"))
 
     zillow = load_zillow(args.no_cache)
     redfin = load_redfin(args.no_cache)
@@ -750,16 +771,17 @@ def main() -> int:
         return 1
 
     metros: list[dict] = []
-    for rank, _full, _short, _state in METROS:
+    for m in METROS:
+        rank = int(m["rank"])
         try:
-            metros.append(build_metro(rank, zillow, redfin))
+            metros.append(build_metro(m, zillow, redfin))
         except Exception as e:
             warn(f"build_metro rank={rank} failed: {e}")
             metros.append({
                 "rank": rank,
-                "name": METRO_LONG_NAME[rank],
-                "short_name": next(s for r, _f, s, _ in METROS if r == rank),
-                "state": next(st for r, _f, _s, st in METROS if r == rank),
+                "name": METRO_LONG_NAME_OVERRIDES.get(str(m["full"]), str(m["full"])),
+                "short_name": str(m["short"]),
+                "state": str(m["state"]),
                 "zillow_region_id": None,
                 "kpis": {k: {"value": None, "spark": []} for k in KPI_KEYS},
                 "history_5y_monthly": {"labels": [], "zhvi": [], "median_sale": []},
@@ -790,7 +812,10 @@ def main() -> int:
     }
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(payload, indent=2))
+    # Compact JSON — at 894 metros, indent=2 inflates the file by ~3x with
+    # no readability benefit (no human's reading 7 MB by hand). gh-pages
+    # auto-gzips text/* responses so over-the-wire size is ~25% of disk.
+    OUT_PATH.write_text(json.dumps(payload, separators=(",", ":")))
 
     avg_pop = sum(populated_kpi_count(m) for m in metros) / max(len(metros), 1)
     elapsed = time.time() - started

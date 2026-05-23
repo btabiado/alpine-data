@@ -2116,7 +2116,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="chart-card" id="realEstateCard">
         <div class="head">
           <h2>US Real Estate Markets <span class="tag">Zillow &middot; Redfin &middot; FRED</span></h2>
-          <span class="desc">Top 50 US metros &middot; 10 housing-market KPIs &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
+          <span class="desc">All 894 US metros &middot; 10 housing-market KPIs &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
         </div>
         <div id="realEstateSummary" style="padding:12px 14px">
           <div class="empty">Loading real-estate snapshot&hellip;</div>
@@ -4746,19 +4746,27 @@ function _drawRealEstate(host, d){
   const positiveYoy = metros.filter(m => (m.kpis?.zhvi?.yoy_pct ?? 0) > 0).length;
   const domValues = metros.map(m => m.kpis?.days_on_market?.value).filter(v => v != null);
   const avgDom = domValues.length ? Math.round(domValues.reduce((a,b)=>a+b,0) / domValues.length) : null;
+  // Minimum-sales sanity gate so headline metros aren't dominated by tiny
+  // markets that hit single-metric extremes on low volume (matters now that
+  // the snapshot covers all ~894 MSAs, not just the top 50).
+  const MIN_SALES = 100;
   const hottest = metros.reduce((best, m) => {
     const v = m.kpis?.pct_above_list?.value;
-    return (v != null && (best == null || v > best.v)) ? {name: m.short_name, v} : best;
+    const s = m.kpis?.homes_sold?.value;
+    if (v == null || s == null || s < MIN_SALES) return best;
+    return (best == null || v > best.v) ? {name: m.short_name, v} : best;
   }, null);
   const coldest = metros.reduce((worst, m) => {
     const v = m.kpis?.pct_price_cut?.value;
-    return (v != null && (worst == null || v > worst.v)) ? {name: m.short_name, v} : worst;
+    const s = m.kpis?.homes_sold?.value;
+    if (v == null || s == null || s < MIN_SALES) return worst;
+    return (worst == null || v > worst.v) ? {name: m.short_name, v} : worst;
   }, null);
   const generated = d.generated_at ? new Date(d.generated_at).toISOString().slice(0,10) : '—';
   const card = (label, value, sub) => '<div style="padding:10px 14px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:8px;min-width:140px;flex:1"><div style="font-size:11px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:0.05em">'+label+'</div><div style="font-size:20px;font-weight:600;margin-top:4px">'+value+'</div>'+(sub ? '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-top:2px">'+sub+'</div>' : '')+'</div>';
   host.innerHTML =
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
-      card('Median ZHVI', fmtUsd(medianZhvi), 'across ' + metros.length + ' metros') +
+      card('Median ZHVI', fmtUsd(medianZhvi), 'across ' + metros.length + ' US metros') +
       card('Metros with +YoY', positiveYoy + ' / ' + metros.length, 'ZHVI year-over-year') +
       card('Avg Days on Market', avgDom == null ? '—' : avgDom + 'd', 'median across metros') +
       card('Hottest market', hottest ? hottest.name : '—', hottest ? Math.round(hottest.v*100) + '% sold above list' : '') +

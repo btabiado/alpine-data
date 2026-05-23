@@ -50,11 +50,13 @@
 
     .controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 24px 0 20px; padding: 14px 16px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; }
     .controls label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-right: 8px; font-weight: 600; }
-    select {
+    select, input[type="search"] {
       background: var(--bg-elev-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
-      padding: 8px 12px; font-family: var(--sans); font-size: 14px; min-width: 280px; cursor: pointer;
+      padding: 8px 12px; font-family: var(--sans); font-size: 14px; min-width: 280px;
     }
-    select:hover, select:focus { border-color: var(--accent); outline: none; }
+    select { cursor: pointer; }
+    select:hover, select:focus, input[type="search"]:focus { border-color: var(--accent); outline: none; }
+    input[type="search"]::-webkit-search-cancel-button { cursor: pointer; }
     .controls .src-line { font-size: 11px; color: var(--text-faint); font-family: var(--mono); }
 
     h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 28px 0 12px; font-weight: 600; }
@@ -147,6 +149,10 @@
         <label for="metro-select">Metro</label>
         <select id="metro-select"></select>
       </div>
+      <div>
+        <label for="metro-search">Search</label>
+        <input id="metro-search" type="search" placeholder="Type to filter (e.g. Austin, NY, FL)" autocomplete="off" />
+      </div>
       <div class="src-line" id="src-line"></div>
     </div>
 
@@ -183,7 +189,18 @@
       { key: 'permits',         label: 'Permits (FRED)',  cat: 'permits', fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'good' }
     ];
 
-    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' } };
+    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' }, search: '' };
+
+    // Substring match on short_name + state, case-insensitive. Drives both the
+    // dropdown and the comparison table — same predicate keeps them in sync.
+    function metroMatchesSearch(m, term) {
+      if (!term) return true;
+      const hay = ((m.short_name || '') + ' ' + (m.state || '') + ' ' + (m.name || '')).toLowerCase();
+      return hay.indexOf(term.toLowerCase()) !== -1;
+    }
+    function visibleMetros() {
+      return (STATE.data?.metros || []).filter(m => metroMatchesSearch(m, STATE.search));
+    }
 
     function escapeHtml(s) {
       return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -444,7 +461,7 @@
 
     function renderTable() {
       const mount = document.getElementById('table-mount');
-      const rows = (STATE.data.metros || []).map(tableRowForMetro);
+      const rows = visibleMetros().map(tableRowForMetro);
       const { key, dir } = STATE.sort;
       rows.sort((a, b) => {
         const av = a[key], bv = b[key];
@@ -506,26 +523,56 @@
       });
     }
 
-    function buildMetroSelect() {
+    function metroId(m) {
+      return m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name);
+    }
+
+    // Rebuild the dropdown to reflect the current search filter. If the
+    // currently-selected metro is no longer visible, auto-select the first
+    // visible one (or fall back to the full list when nothing matches).
+    function rebuildMetroOptions(preserveSelection = true) {
       const sel = document.getElementById('metro-select');
-      const metros = (STATE.data.metros || []).slice().sort((a, b) => (a.rank || 0) - (b.rank || 0));
-      sel.innerHTML = metros.map(m => {
-        const id = m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name);
+      const filtered = visibleMetros().slice().sort((a, b) => (a.rank || 0) - (b.rank || 0));
+      const pool = filtered.length ? filtered : (STATE.data.metros || []);
+      sel.innerHTML = pool.map(m => {
+        const id = metroId(m);
         const label = `${m.short_name || m.name} (${m.state || '?'})`;
         return `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`;
       }).join('');
+      const ids = pool.map(metroId);
+      let target = sel.value;
+      if (!preserveSelection || !ids.includes(target)) target = ids[0];
+      sel.value = target;
+      return target;
+    }
 
+    function buildMetroSelect() {
+      const sel = document.getElementById('metro-select');
       const saved = localStorage.getItem('re_metro');
-      const ids = metros.map(m => m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name));
-      const initial = (saved && ids.includes(saved)) ? saved : ids[0];
-      sel.value = initial;
-      setMetro(initial);
+      const allIds = (STATE.data.metros || []).map(metroId);
+      const seed = (saved && allIds.includes(saved)) ? saved : (allIds[0] || '');
+      sel.value = seed;
+      const initial = rebuildMetroOptions(true) || seed;
+      if (initial) {
+        sel.value = initial;
+        setMetro(initial);
+      }
 
       sel.addEventListener('change', () => {
         const v = sel.value;
         localStorage.setItem('re_metro', v);
         setMetro(v);
       });
+
+      const search = document.getElementById('metro-search');
+      if (search) {
+        search.addEventListener('input', () => {
+          STATE.search = search.value || '';
+          const id = rebuildMetroOptions(true);
+          if (id) setMetro(id);
+          renderTable();
+        });
+      }
     }
 
     function setMetro(id) {
