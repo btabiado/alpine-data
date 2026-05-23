@@ -1329,6 +1329,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
   <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="lthcs" role="tab" tabindex="0" aria-selected="false">LTHCS</div>
+  <div class="tab" data-tab="real_estate" role="tab" tabindex="0" aria-selected="false">Real Estate</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -2101,6 +2102,29 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            are supporting context, not the lead-in. Filled by
            renderLthcsInsightsRow(host) from DATA.lthcs.insights. -->
       <div class="card" id="lthcsInsightsRow" style="padding:12px 14px;margin-bottom:10px;border-left:4px solid #a78bfa"></div>
+    </div>
+  </div>
+
+  <!-- ============ REAL ESTATE TAB ============ -->
+  <!-- Gateway for the standalone US Real Estate Markets dashboard. Shows
+       headline freshness + a small stat strip computed at tab-activate time
+       from /data/real_estate.json (committed daily by real-estate-daily.yml).
+       Big CTA opens the full /real-estate/ page with all 10 KPIs, 5Y chart,
+       and sortable 50-metro table. -->
+  <div id="tab-real_estate" class="hidden">
+    <div class="container">
+      <div class="chart-card" id="realEstateCard">
+        <div class="head">
+          <h2>US Real Estate Markets <span class="tag">Zillow &middot; Redfin &middot; FRED</span></h2>
+          <span class="desc">Top 50 US metros &middot; 10 housing-market KPIs &middot; refreshed daily &middot; full view at <a href="real-estate/" style="color:var(--accent)">/real-estate/</a></span>
+        </div>
+        <div id="realEstateSummary" style="padding:12px 14px">
+          <div class="empty">Loading real-estate snapshot&hellip;</div>
+        </div>
+        <div style="padding:0 14px 14px 14px">
+          <a href="real-estate/" class="btn" style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600">Open Full Dashboard &rarr;</a>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4695,6 +4719,52 @@ function renderLthcsInsightsRow(host){
 function renderLthcsTab(){
   renderLthcsInsightsRow(document.getElementById('lthcsInsightsRow'));
   renderLthcsNarrativePanel(document.getElementById('lthcsCompositeCard'));
+}
+
+// Real Estate tab — gateway summary. Fetches /data/real_estate.json once
+// per session, computes a 5-stat headline (median ZHVI, # metros with
+// positive YoY, average days on market, hottest market, coldest market),
+// and shows it next to the CTA. Failure is graceful — if the JSON is
+// missing the empty-state message stays in place.
+let _reCache = null;
+function renderRealEstateTab(){
+  const host = document.getElementById('realEstateSummary');
+  if (!host) return;
+  if (_reCache) { _drawRealEstate(host, _reCache); return; }
+  fetch('data/real_estate.json', {cache: 'no-store'})
+    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+    .then(d => { _reCache = d; _drawRealEstate(host, d); })
+    .catch(e => { host.innerHTML = '<div class="empty">Real-estate snapshot not yet loaded ('+ String(e.message || e) +'). Daily refresh runs at 06:00 UTC.</div>'; });
+}
+function _drawRealEstate(host, d){
+  const metros = (d && d.metros) || [];
+  if (!metros.length) { host.innerHTML = '<div class="empty">No metro data in snapshot.</div>'; return; }
+  const fmtUsd = n => n == null ? '—' : (n >= 1e6 ? '$' + (n/1e6).toFixed(2) + 'M' : '$' + Math.round(n/1000) + 'K');
+  const fmtPct = n => n == null ? '—' : (n > 0 ? '+' : '') + n.toFixed(1) + '%';
+  const zhviValues = metros.map(m => m.kpis?.zhvi?.value).filter(v => v != null).sort((a,b)=>a-b);
+  const medianZhvi = zhviValues.length ? zhviValues[Math.floor(zhviValues.length/2)] : null;
+  const positiveYoy = metros.filter(m => (m.kpis?.zhvi?.yoy_pct ?? 0) > 0).length;
+  const domValues = metros.map(m => m.kpis?.days_on_market?.value).filter(v => v != null);
+  const avgDom = domValues.length ? Math.round(domValues.reduce((a,b)=>a+b,0) / domValues.length) : null;
+  const hottest = metros.reduce((best, m) => {
+    const v = m.kpis?.pct_above_list?.value;
+    return (v != null && (best == null || v > best.v)) ? {name: m.short_name, v} : best;
+  }, null);
+  const coldest = metros.reduce((worst, m) => {
+    const v = m.kpis?.pct_price_cut?.value;
+    return (v != null && (worst == null || v > worst.v)) ? {name: m.short_name, v} : worst;
+  }, null);
+  const generated = d.generated_at ? new Date(d.generated_at).toISOString().slice(0,10) : '—';
+  const card = (label, value, sub) => '<div style="padding:10px 14px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:8px;min-width:140px;flex:1"><div style="font-size:11px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:0.05em">'+label+'</div><div style="font-size:20px;font-weight:600;margin-top:4px">'+value+'</div>'+(sub ? '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-top:2px">'+sub+'</div>' : '')+'</div>';
+  host.innerHTML =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+      card('Median ZHVI', fmtUsd(medianZhvi), 'across ' + metros.length + ' metros') +
+      card('Metros with +YoY', positiveYoy + ' / ' + metros.length, 'ZHVI year-over-year') +
+      card('Avg Days on Market', avgDom == null ? '—' : avgDom + 'd', 'median across metros') +
+      card('Hottest market', hottest ? hottest.name : '—', hottest ? Math.round(hottest.v*100) + '% sold above list' : '') +
+      card('Most price cuts', coldest ? coldest.name : '—', coldest ? Math.round(coldest.v*100) + '% of listings' : '') +
+    '</div>' +
+    '<div style="margin-top:10px;font-size:11px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
 }
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
@@ -9769,6 +9839,9 @@ function renderAll(){
   if (state.tab === 'lthcs'){
     renderLthcsTab();
   }
+  if (state.tab === 'real_estate'){
+    renderRealEstateTab();
+  }
   if (state.tab === 'ainews'){
     renderAiNewsTab();
   }
@@ -9828,6 +9901,7 @@ function selectTab(t){
   document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
   document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
   document.getElementById('tab-lthcs').classList.toggle('hidden', t!=='lthcs');
+  document.getElementById('tab-real_estate').classList.toggle('hidden', t!=='real_estate');
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
