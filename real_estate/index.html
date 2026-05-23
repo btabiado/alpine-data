@@ -135,7 +135,7 @@
     .map-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
     .map-controls label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; }
     .map-controls select { min-width: 220px; }
-    #heat-map { height: 480px; width: 100%; border-radius: 6px; background: var(--bg-elev-2); position: relative; overflow: hidden; }
+    #heat-map { height: 460px; width: 100%; border-radius: 6px; background: var(--bg-elev-2); position: relative; overflow: hidden; }
     /* Leaflet tile attribution + controls in dark theme */
     .leaflet-container { background: #0b0e14; font-family: var(--sans); font-size: 12px; }
     .leaflet-control-attribution {
@@ -260,15 +260,6 @@
 
     <div class="bonus-row" id="bonus-row" style="display:none;"></div>
 
-    <h2>5-Year Price History</h2>
-    <div class="chart-card">
-      <div class="chart-toggles">
-        <button class="toggle-btn active" data-series="zhvi" type="button"><span class="dot" style="background:#10b981"></span>ZHVI</button>
-        <button class="toggle-btn" data-series="median_sale" type="button"><span class="dot" style="background:#60a5fa"></span>Median Sale</button>
-      </div>
-      <div class="chart-canvas-wrap"><canvas id="price-chart"></canvas></div>
-    </div>
-
     <h2>US Heat Map <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— bubble size = metro rank, color = selected KPI, click any marker</span></h2>
     <div class="chart-card">
       <div class="map-controls">
@@ -277,6 +268,15 @@
       </div>
       <div id="heat-map"></div>
       <div class="map-tip">Hover for value · click a bubble to load that metro above · honors the search filter above</div>
+    </div>
+
+    <h2>5-Year Price History</h2>
+    <div class="chart-card">
+      <div class="chart-toggles">
+        <button class="toggle-btn active" data-series="zhvi" type="button"><span class="dot" style="background:#10b981"></span>ZHVI</button>
+        <button class="toggle-btn" data-series="median_sale" type="button"><span class="dot" style="background:#60a5fa"></span>Median Sale</button>
+      </div>
+      <div class="chart-canvas-wrap"><canvas id="price-chart"></canvas></div>
     </div>
 
     <h2 id="favorites-heading" style="display:none">My Markets <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— pinned metros, side by side</span></h2>
@@ -957,11 +957,23 @@
         renderMapMarkers();
       });
 
-      STATE.map = L.map(host, { zoomControl: true, preferCanvas: true })
-        .setView([39.8, -98.6], 4);
+      // Continental US fitted on load. maxBounds keeps panning inside North
+      // America (allows scrolling to AK/HI) so the map never wanders to
+      // Europe/Asia. fitBounds with padding gives a tight CONUS view that
+      // matches the screen ratio of the map container.
+      const conusBounds = L.latLngBounds([[24.5, -125], [49.5, -66.5]]);
+      const panBounds   = L.latLngBounds([[15, -170], [72, -60]]);
+      STATE.map = L.map(host, {
+        zoomControl: true,
+        preferCanvas: true,
+        worldCopyJump: false,
+        maxBounds: panBounds,
+        maxBoundsViscosity: 1.0,
+      });
+      STATE.map.fitBounds(conusBounds, { padding: [10, 10] });
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd', maxZoom: 19, minZoom: 3
+        subdomains: 'abcd', maxZoom: 19, minZoom: 4, noWrap: true
       }).addTo(STATE.map);
 
       STATE.markers = L.layerGroup().addTo(STATE.map);
