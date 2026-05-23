@@ -174,6 +174,54 @@
       max-width: 80%; z-index: 500;
     }
     .map-tip { color: var(--text-faint); font-size: 11px; margin-top: 8px; }
+
+    /* Region chips + table toolbar */
+    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; margin: 28px 0 8px; }
+    .chip {
+      background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border);
+      border-radius: 999px; padding: 6px 12px; font-size: 12px; font-family: var(--sans);
+      cursor: pointer; user-select: none; transition: border-color 0.1s, color 0.1s, background 0.1s;
+    }
+    .chip:hover { color: var(--text); border-color: var(--accent); }
+    .chip.active { background: rgba(96, 165, 250, 0.12); color: var(--text); border-color: var(--accent); }
+    .chip .count { color: var(--text-faint); margin-left: 6px; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 11px; }
+    .chip.active .count { color: var(--accent); }
+    .table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 28px 0 12px; }
+    .table-toolbar h2 { margin: 0; }
+    .ghost-btn {
+      background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 14px; font-size: 12px; font-family: var(--sans); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .ghost-btn:hover { color: var(--text); border-color: var(--accent); background: var(--bg-elev-2); }
+
+    /* Favorite star column + button */
+    .fav-btn {
+      background: transparent; border: none; color: var(--text-faint); cursor: pointer;
+      font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+    }
+    .fav-btn:hover { color: var(--warn); background: rgba(245, 158, 11, 0.08); }
+    .fav-btn.is-fav { color: var(--warn); }
+    td.fav-cell, th.fav-cell { width: 32px; text-align: center; padding-left: 8px; padding-right: 4px; }
+    tr.pinned td { background: rgba(245, 158, 11, 0.04); }
+
+    /* Comparison (My Markets) section */
+    #favorites-mount { margin-top: 12px; }
+    .compare-card {
+      background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px;
+      padding: 14px 16px; overflow-x: auto;
+    }
+    .compare-table { width: 100%; border-collapse: collapse; min-width: 480px; }
+    .compare-table th, .compare-table td { padding: 8px 12px; text-align: right; border-bottom: 1px solid var(--border); font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+    .compare-table th:first-child, .compare-table td:first-child { text-align: left; font-family: var(--sans); color: var(--text-dim); font-weight: 600; }
+    .compare-table thead th { background: var(--bg-elev-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+    .compare-table thead th .remove-btn {
+      background: transparent; border: none; color: var(--text-faint); cursor: pointer;
+      margin-left: 6px; padding: 0 4px; font-size: 14px; border-radius: 4px;
+    }
+    .compare-table thead th .remove-btn:hover { color: var(--bad); background: rgba(239,68,68,0.08); }
+    .compare-table thead th .state { color: var(--text-faint); font-weight: 400; margin-left: 4px; font-size: 11px; }
+    .compare-table tbody tr:last-child td { border-bottom: none; }
   </style>
 </head>
 <body>
@@ -231,7 +279,15 @@
       <div class="map-tip">Hover for value · click a bubble to load that metro above · honors the search filter above</div>
     </div>
 
-    <h2>All Metros <span id="table-count" style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— click any column to sort, click a row to inspect</span></h2>
+    <h2 id="favorites-heading" style="display:none">My Markets <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— pinned metros, side by side</span></h2>
+    <div id="favorites-mount"></div>
+
+    <div class="filter-bar" id="region-chips" role="tablist" aria-label="Filter by Census region"></div>
+
+    <div class="table-toolbar">
+      <h2 style="margin:0">All Metros <span id="table-count" style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— click any column to sort, click a row to inspect</span></h2>
+      <button id="csv-export" class="ghost-btn" type="button" title="Download visible rows as CSV">Export CSV</button>
+    </div>
     <div id="table-mount"></div>
   </div>
 
@@ -249,17 +305,66 @@
       { key: 'permits',         label: 'Permits (FRED)',  cat: 'permits', fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'good' }
     ];
 
-    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' }, search: '', coords: null, map: null, markers: null, legend: null, mapColorBy: null };
+    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' }, search: '', coords: null, map: null, markers: null, legend: null, mapColorBy: null, region: 'all', favorites: new Set() };
 
-    // Substring match on short_name + state, case-insensitive. Drives both the
-    // dropdown and the comparison table — same predicate keeps them in sync.
+    // Census 4-region mapping. DC + territories grouped with their geographic neighbors.
+    const CENSUS_REGIONS = {
+      northeast: new Set(['CT','ME','MA','NH','NJ','NY','PA','RI','VT']),
+      midwest:   new Set(['IL','IN','IA','KS','MI','MN','MO','NE','ND','OH','SD','WI']),
+      south:     new Set(['AL','AR','DE','FL','GA','KY','LA','MD','MS','NC','OK','SC','TN','TX','VA','WV','DC']),
+      west:      new Set(['AK','AZ','CA','CO','HI','ID','MT','NV','NM','OR','UT','WA','WY']),
+    };
+    function metroRegion(m) {
+      const st = (m.state || '').toUpperCase();
+      for (const [name, set] of Object.entries(CENSUS_REGIONS)) {
+        if (set.has(st)) return name;
+      }
+      return null;
+    }
+
+    // Substring match on short_name + state + name (case-insensitive), then
+    // region filter on top. Both drive the dropdown, the table, and the map.
     function metroMatchesSearch(m, term) {
       if (!term) return true;
       const hay = ((m.short_name || '') + ' ' + (m.state || '') + ' ' + (m.name || '')).toLowerCase();
       return hay.indexOf(term.toLowerCase()) !== -1;
     }
+    function metroMatchesRegion(m) {
+      if (!STATE.region || STATE.region === 'all') return true;
+      return metroRegion(m) === STATE.region;
+    }
     function visibleMetros() {
-      return (STATE.data?.metros || []).filter(m => metroMatchesSearch(m, STATE.search));
+      return (STATE.data?.metros || []).filter(m => metroMatchesSearch(m, STATE.search) && metroMatchesRegion(m));
+    }
+
+    // ---- Favorites (watchlist) ----
+    function loadFavorites() {
+      try {
+        const raw = localStorage.getItem('re_favorites');
+        if (!raw) return new Set();
+        const arr = JSON.parse(raw);
+        return new Set(Array.isArray(arr) ? arr.map(String) : []);
+      } catch { return new Set(); }
+    }
+    function saveFavorites() {
+      try { localStorage.setItem('re_favorites', JSON.stringify([...STATE.favorites])); } catch {}
+    }
+    function metroIdOf(m) {
+      return m.zillow_region_id != null ? String(m.zillow_region_id) : (m.short_name || m.name || '');
+    }
+    function isFavorite(m) {
+      return STATE.favorites.has(metroIdOf(m));
+    }
+    function toggleFavorite(m) {
+      const id = metroIdOf(m);
+      if (STATE.favorites.has(id)) STATE.favorites.delete(id);
+      else STATE.favorites.add(id);
+      saveFavorites();
+    }
+    function favoritedMetros() {
+      const all = STATE.data?.metros || [];
+      const ids = new Set([...STATE.favorites]);
+      return all.filter(m => ids.has(metroIdOf(m)));
     }
 
     function escapeHtml(s) {
@@ -521,16 +626,22 @@
 
     function renderTable() {
       const mount = document.getElementById('table-mount');
-      const rows = visibleMetros().map(tableRowForMetro);
+      const visible = visibleMetros();
+      const visibleIds = new Set(visible.map(metroIdOf));
+      const rows = visible.map(tableRowForMetro);
       const countEl = document.getElementById('table-count');
       if (countEl) {
         const total = (STATE.data?.metros || []).length;
-        countEl.textContent = STATE.search
-          ? `— ${rows.length} of ${total} match "${STATE.search}" · click any column to sort, click a row to inspect`
+        const bits = [];
+        if (STATE.search) bits.push(`"${STATE.search}"`);
+        if (STATE.region && STATE.region !== 'all') bits.push(STATE.region[0].toUpperCase() + STATE.region.slice(1));
+        const filterTxt = bits.length ? ` match ${bits.join(' + ')}` : '';
+        countEl.textContent = bits.length
+          ? `— ${rows.length} of ${total}${filterTxt} · click any column to sort, click a row to inspect`
           : `— ${total} metros · click any column to sort, click a row to inspect`;
       }
       const { key, dir } = STATE.sort;
-      rows.sort((a, b) => {
+      const sortFn = (a, b) => {
         const av = a[key], bv = b[key];
         const aN = av == null || (typeof av === 'number' && !isFinite(av));
         const bN = bv == null || (typeof bv === 'number' && !isFinite(bv));
@@ -540,15 +651,21 @@
         if (typeof av === 'number' && typeof bv === 'number') return dir === 'asc' ? av - bv : bv - av;
         const as = String(av), bs = String(bv);
         return dir === 'asc' ? as.localeCompare(bs) : bs.localeCompare(as);
-      });
+      };
+      // Pin favorites to the top (in their own sorted block), then non-favorites.
+      const favRows  = rows.filter(r => STATE.favorites.has(r._id)).sort(sortFn);
+      const restRows = rows.filter(r => !STATE.favorites.has(r._id)).sort(sortFn);
+      const orderedRows = [...favRows, ...restRows];
 
-      const headHtml = TABLE_COLS.map(c => {
+      const headHtml = '<th class="fav-cell" title="Pin (favorite)">★</th>' + TABLE_COLS.map(c => {
         const ind = STATE.sort.key === c.key ? `<span class="sort-ind">${STATE.sort.dir === 'asc' ? '↑' : '↓'}</span>` : '';
         const align = c.align === 'right' ? ' style="text-align:right"' : '';
         return `<th data-col="${c.key}"${align}>${escapeHtml(c.label)}${ind}</th>`;
       }).join('');
 
-      const bodyHtml = rows.map(r => {
+      const bodyHtml = orderedRows.map(r => {
+        const pinned = STATE.favorites.has(r._id);
+        const starHtml = `<td class="fav-cell"><button class="fav-btn${pinned ? ' is-fav' : ''}" data-fav="${escapeHtml(r._id)}" title="${pinned ? 'Unpin' : 'Pin to My Markets'}" aria-pressed="${pinned}">${pinned ? '★' : '☆'}</button></td>`;
         const tds = TABLE_COLS.map(c => {
           if (c.key === 'metro') {
             return `<td class="metro-cell">${escapeHtml(r.metro_short)}<span class="state">${escapeHtml(r.state)}</span></td>`;
@@ -562,12 +679,12 @@
           }
           return `<td class="${cls}">${escapeHtml(txt)}</td>`;
         }).join('');
-        return `<tr data-id="${escapeHtml(r._id)}">${tds}</tr>`;
+        return `<tr data-id="${escapeHtml(r._id)}"${pinned ? ' class="pinned"' : ''}>${starHtml}${tds}</tr>`;
       }).join('');
 
       mount.innerHTML = `<table><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table>`;
 
-      mount.querySelectorAll('th').forEach(th => {
+      mount.querySelectorAll('th[data-col]').forEach(th => {
         th.addEventListener('click', () => {
           const col = th.dataset.col;
           if (STATE.sort.key === col) {
@@ -577,6 +694,19 @@
             STATE.sort.dir = (col === 'rank' || col === 'metro') ? 'asc' : 'desc';
           }
           renderTable();
+        });
+      });
+      mount.querySelectorAll('.fav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.fav;
+          const m = (STATE.data?.metros || []).find(x => metroIdOf(x) === id);
+          if (m) {
+            toggleFavorite(m);
+            renderTable();
+            renderFavorites();
+            renderRegionChips();
+          }
         });
       });
       mount.querySelectorAll('tbody tr').forEach(tr => {
@@ -637,6 +767,7 @@
           STATE.search = search.value || '';
           const id = rebuildMetroOptions(true);
           if (id) setMetro(id);
+          renderRegionChips();
           renderTable();
           renderMapMarkers();
         });
@@ -920,8 +1051,149 @@
       }
     }
 
+    // ---- Region chips ----
+    const REGION_CHIPS = [
+      { id: 'all',       label: 'All' },
+      { id: 'northeast', label: 'Northeast' },
+      { id: 'midwest',   label: 'Midwest' },
+      { id: 'south',     label: 'South' },
+      { id: 'west',      label: 'West' },
+    ];
+    function renderRegionChips() {
+      const host = document.getElementById('region-chips');
+      if (!host) return;
+      const all = STATE.data?.metros || [];
+      // Pre-count per region honoring the text search, but ignoring the region filter itself.
+      const searched = all.filter(m => metroMatchesSearch(m, STATE.search));
+      const counts = { all: searched.length, northeast: 0, midwest: 0, south: 0, west: 0 };
+      for (const m of searched) {
+        const r = metroRegion(m);
+        if (r && counts[r] != null) counts[r] += 1;
+      }
+      host.innerHTML = REGION_CHIPS.map(c => {
+        const active = STATE.region === c.id;
+        return `<button class="chip${active ? ' active' : ''}" data-region="${c.id}" role="tab" aria-selected="${active}" type="button">${escapeHtml(c.label)}<span class="count">${counts[c.id]}</span></button>`;
+      }).join('');
+      host.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          STATE.region = btn.dataset.region;
+          try { localStorage.setItem('re_region', STATE.region); } catch {}
+          renderRegionChips();
+          renderTable();
+          rebuildMetroOptions(true);
+          renderMapMarkers();
+        });
+      });
+    }
+
+    // ---- My Markets (side-by-side comparison) ----
+    const COMPARE_ROWS = [
+      { label: 'ZHVI',            path: ['zhvi','value'],            fmt: v => fmtDollar(v) },
+      { label: 'ZHVI YoY',        path: ['zhvi','yoy_pct'],          fmt: v => v == null ? '—' : (v>0?'+':'') + v.toFixed(1) + '%' },
+      { label: 'Median Sale',     path: ['median_sale','value'],     fmt: v => fmtDollar(v) },
+      { label: 'Homes Sold',      path: ['homes_sold','value'],      fmt: v => v == null ? '—' : Math.round(v).toLocaleString() },
+      { label: 'Active Listings', path: ['active_listings','value'], fmt: v => v == null ? '—' : Math.round(v).toLocaleString() },
+      { label: 'New Listings',    path: ['new_listings','value'],    fmt: v => v == null ? '—' : Math.round(v).toLocaleString() },
+      { label: 'Days on Market',  path: ['days_on_market','value'],  fmt: v => v == null ? '—' : Math.round(v) + 'd' },
+      { label: 'Sale / List',     path: ['sale_to_list','value'],    fmt: v => v == null ? '—' : (v*100).toFixed(1) + '%' },
+      { label: '% Above List',    path: ['pct_above_list','value'],  fmt: v => v == null ? '—' : Math.round(v*100) + '%' },
+      { label: '% Price Cuts',    path: ['pct_price_cut','value'],   fmt: v => v == null ? '—' : Math.round(v*100) + '%' },
+    ];
+    function renderFavorites() {
+      const heading = document.getElementById('favorites-heading');
+      const mount   = document.getElementById('favorites-mount');
+      if (!mount) return;
+      const favs = favoritedMetros();
+      if (!favs.length) {
+        if (heading) heading.style.display = 'none';
+        mount.innerHTML = '';
+        return;
+      }
+      if (heading) heading.style.display = '';
+      const headHtml = '<th>Metric</th>' + favs.map(m => `<th><button class="remove-btn" data-remove="${escapeHtml(metroIdOf(m))}" title="Remove from My Markets">×</button>${escapeHtml(m.short_name || m.name || '')}<span class="state">${escapeHtml(m.state || '')}</span></th>`).join('');
+      const bodyHtml = COMPARE_ROWS.map(row => {
+        const cells = favs.map(m => {
+          let v = m.kpis;
+          for (const k of row.path) { if (v == null) break; v = v[k]; }
+          if (typeof v !== 'number' || !isFinite(v)) v = null;
+          return `<td>${escapeHtml(row.fmt(v))}</td>`;
+        }).join('');
+        return `<tr><td>${escapeHtml(row.label)}</td>${cells}</tr>`;
+      }).join('');
+      mount.innerHTML = `<div class="compare-card"><table class="compare-table"><thead><tr>${headHtml}</tr></thead><tbody>${bodyHtml}</tbody></table></div>`;
+      mount.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          STATE.favorites.delete(btn.dataset.remove);
+          saveFavorites();
+          renderTable();
+          renderFavorites();
+        });
+      });
+    }
+
+    // ---- CSV export ----
+    function csvCell(v) {
+      if (v == null) return '';
+      const s = String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+    function exportCsv() {
+      const rows = visibleMetros();
+      const header = [
+        'rank','metro','state','name',
+        'zhvi','zhvi_yoy_pct','zhvi_5y_pct',
+        'median_sale','median_sale_yoy_pct',
+        'homes_sold','homes_sold_yoy_pct',
+        'active_listings','active_listings_yoy_pct',
+        'new_listings','new_listings_yoy_pct',
+        'days_on_market','dom_yoy_delta',
+        'sale_to_list','sale_to_list_yoy_pp',
+        'pct_above_list','pct_above_list_yoy_pp',
+        'pct_price_cut','pct_price_cut_yoy_pp',
+        'permits','permits_yoy_pct',
+      ];
+      const lines = [header.join(',')];
+      for (const m of rows) {
+        const k = m.kpis || {};
+        const g = (key, sub='value') => (k[key] || {})[sub];
+        const out = [
+          m.rank, m.short_name || '', m.state || '', m.name || '',
+          g('zhvi'), g('zhvi','yoy_pct'), g('zhvi','five_year_pct'),
+          g('median_sale'), g('median_sale','yoy_pct'),
+          g('homes_sold'), g('homes_sold','yoy_pct'),
+          g('active_listings'), g('active_listings','yoy_pct'),
+          g('new_listings'), g('new_listings','yoy_pct'),
+          g('days_on_market'), g('days_on_market','yoy_delta'),
+          g('sale_to_list'), g('sale_to_list','yoy_pp'),
+          g('pct_above_list'), g('pct_above_list','yoy_pp'),
+          g('pct_price_cut'), g('pct_price_cut','yoy_pp'),
+          g('permits'), g('permits','yoy_pct'),
+        ];
+        lines.push(out.map(csvCell).join(','));
+      }
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const today = new Date().toISOString().slice(0, 10);
+      const tag = STATE.region && STATE.region !== 'all' ? '_' + STATE.region : '';
+      const searchTag = STATE.search ? '_' + STATE.search.replace(/[^a-z0-9]+/gi, '-').toLowerCase() : '';
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `real_estate${tag}${searchTag}_${today}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
+
     async function load() {
       try {
+        STATE.favorites = loadFavorites();
+        try {
+          const savedRegion = localStorage.getItem('re_region');
+          if (savedRegion && ['all','northeast','midwest','south','west'].includes(savedRegion)) {
+            STATE.region = savedRegion;
+          }
+        } catch {}
         const [r] = await Promise.all([
           fetch('../data/real_estate.json', { cache: 'no-store' }),
           loadCoords(),
@@ -932,8 +1204,12 @@
         renderSrcLine();
         buildMetroSelect();
         bindChartToggles();
+        renderRegionChips();
+        renderFavorites();
         renderTable();
         initMap();
+        const csvBtn = document.getElementById('csv-export');
+        if (csvBtn) csvBtn.addEventListener('click', exportCsv);
       } catch (e) {
         document.getElementById('error-mount').innerHTML =
           `<div class="error">Failed to load real_estate.json: ${escapeHtml(e.message)}</div>`;
