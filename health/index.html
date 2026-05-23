@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard Health · BTC/ETH ETF</title>
+  <style>
+    :root {
+      --bg: #0b0e14;
+      --bg-elev: #141923;
+      --bg-elev-2: #1c2230;
+      --border: #2a3142;
+      --text: #e6e8ee;
+      --text-dim: #9aa3b2;
+      --text-faint: #6b7280;
+      --fresh: #10b981;
+      --stale: #f59e0b;
+      --critical: #ef4444;
+      --missing: #6b7280;
+      --accent: #60a5fa;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 32px 24px 64px; }
+    header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
+    h1 { font-size: 22px; margin: 0; font-weight: 600; }
+    .breadcrumb { color: var(--text-dim); font-size: 13px; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .generated { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+
+    .summary { display: flex; gap: 12px; margin: 24px 0 32px; flex-wrap: wrap; }
+    .chip { padding: 10px 16px; border-radius: 8px; background: var(--bg-elev); border: 1px solid var(--border); }
+    .chip .num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .chip .lbl { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 8px; }
+    .chip.fresh { border-color: var(--fresh); }
+    .chip.fresh .num { color: var(--fresh); }
+    .chip.stale { border-color: var(--stale); }
+    .chip.stale .num { color: var(--stale); }
+    .chip.critical { border-color: var(--critical); }
+    .chip.critical .num { color: var(--critical); }
+
+    h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 32px 0 12px; font-weight: 600; }
+
+    .tab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .tab-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; border-left-width: 4px; }
+    .tab-card.fresh { border-left-color: var(--fresh); }
+    .tab-card.stale { border-left-color: var(--stale); }
+    .tab-card.critical { border-left-color: var(--critical); }
+    .tab-card.missing { border-left-color: var(--missing); }
+    .tab-card .tab-name { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+    .tab-card .input { font-family: var(--mono); font-size: 11px; color: var(--text-dim); display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+    .tab-card .input .age { color: var(--text); }
+    .tab-card .input.fresh .age { color: var(--fresh); }
+    .tab-card .input.stale .age { color: var(--stale); }
+    .tab-card .input.critical .age { color: var(--critical); }
+    .tab-card .input.missing .age { color: var(--missing); }
+
+    table { width: 100%; border-collapse: collapse; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: var(--bg-elev-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); font-weight: 600; }
+    tr:last-child td { border-bottom: none; }
+    td.mono { font-family: var(--mono); font-size: 12px; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+    .status-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .status-pill.fresh { background: rgba(16, 185, 129, 0.15); color: var(--fresh); }
+    .status-pill.stale { background: rgba(245, 158, 11, 0.15); color: var(--stale); }
+    .status-pill.critical { background: rgba(239, 68, 68, 0.15); color: var(--critical); }
+    .status-pill.missing { background: rgba(107, 114, 128, 0.15); color: var(--missing); }
+
+    details { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 0; margin-top: 12px; }
+    details > summary { padding: 12px 16px; cursor: pointer; font-weight: 600; user-select: none; }
+    details > summary:hover { color: var(--accent); }
+    details[open] > summary { border-bottom: 1px solid var(--border); }
+    details > table { border: none; border-radius: 0; }
+
+    .empty { color: var(--text-faint); font-style: italic; padding: 16px; }
+    .error { color: var(--critical); padding: 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid var(--critical); border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="breadcrumb"><a href="../">← Dashboard</a></div>
+        <h1>Dashboard Health</h1>
+      </div>
+      <div class="generated" id="generated">loading…</div>
+    </header>
+
+    <div class="summary" id="summary"></div>
+
+    <h2>Per-Tab Status</h2>
+    <div class="tab-grid" id="tabs"></div>
+
+    <h2>Rendered Data Files <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">(baked into dashboard.html each build)</span></h2>
+    <div id="rendered"></div>
+
+    <h2>LTHCS Pipeline Files</h2>
+    <div id="lthcs"></div>
+
+    <details>
+      <summary>Upstream Source Caches <span style="color:var(--text-faint);font-weight:400" id="upstream-count"></span></summary>
+      <div id="upstream"></div>
+    </details>
+  </div>
+
+  <script>
+    const STATUS = ['fresh', 'stale', 'critical', 'missing'];
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function renderSummary(s) {
+      const el = document.getElementById('summary');
+      el.innerHTML = `
+        <div class="chip fresh"><span class="num">${s.fresh}</span><span class="lbl">Fresh</span></div>
+        <div class="chip stale"><span class="num">${s.stale}</span><span class="lbl">Stale</span></div>
+        <div class="chip critical"><span class="num">${s.critical}</span><span class="lbl">Critical</span></div>
+        <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total Files</span></div>
+      `;
+    }
+
+    function renderTabs(tabs) {
+      const el = document.getElementById('tabs');
+      el.innerHTML = tabs.map(t => `
+        <div class="tab-card ${t.status}">
+          <div class="tab-name">${escapeHtml(t.tab)}</div>
+          ${t.inputs.map(i => `
+            <div class="input ${i.status || 'missing'}">
+              <span>${escapeHtml(i.name)}</span>
+              <span class="age">${escapeHtml(i.age_human || '—')}</span>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    function renderTable(rows, mountId) {
+      const el = document.getElementById(mountId);
+      if (!rows.length) {
+        el.innerHTML = '<div class="empty">No files found.</div>';
+        return;
+      }
+      el.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Status</th>
+              <th style="text-align:right">Age</th>
+              <th style="text-align:right">Size</th>
+              <th>Last Fetched</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td class="mono">${escapeHtml(r.name)}</td>
+                <td><span class="status-pill ${r.status}">${r.status}</span></td>
+                <td class="num">${escapeHtml(r.age_human || '—')}</td>
+                <td class="num">${formatBytes(r.size_bytes)}</td>
+                <td class="mono" title="${escapeHtml(r.mtime_iso || '')}">${formatTime(r.mtime_iso)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function formatBytes(n) {
+      if (!n && n !== 0) return '—';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      return (n / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      // YYYY-MM-DD HH:MM UTC
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}Z`;
+    }
+
+    async function load() {
+      try {
+        const r = await fetch('../data/health/status.json', { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const data = await r.json();
+        document.getElementById('generated').textContent = `generated ${formatTime(data.generated_at)}`;
+        renderSummary(data.summary);
+        renderTabs(data.tabs);
+        renderTable(data.rendered, 'rendered');
+        renderTable(data.lthcs, 'lthcs');
+        renderTable(data.upstream, 'upstream');
+        document.getElementById('upstream-count').textContent = ` (${data.upstream.length})`;
+      } catch (e) {
+        document.querySelector('.wrap').insertAdjacentHTML('beforeend',
+          `<div class="error">Failed to load status.json: ${escapeHtml(e.message)}</div>`);
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

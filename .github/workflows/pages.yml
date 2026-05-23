@@ -104,6 +104,15 @@ jobs:
         if: hashFiles('dashboard.html') == ''
         run: python app.py --no-open
 
+      - name: Build dashboard health status JSON
+        # Scans data/ + data/.stale/ mtimes to emit data/health/status.json,
+        # consumed by /health/ to show per-tab freshness. Pure-stdlib script,
+        # no API calls — runs after fetch-market so mtimes reflect this run.
+        # Failure must NOT break the deploy: production at `/` is the source
+        # of truth; /health/ is observability-only.
+        run: python scripts/build_health_status.py || echo "[health] generator failed; continuing"
+        continue-on-error: true
+
       - name: Generate V2 dashboard (parallel build, reads same data/)
         # V2 is a UX-cleanup spin of the same payload — reuses the cached
         # market.json / whale.json / ETF CSVs already fetched above so no
@@ -353,6 +362,22 @@ jobs:
             if [ -d data/lthcs ]; then
               mkdir -p _site/lthcs/data
               cp -R data/lthcs _site/lthcs/data/
+            fi
+          fi
+          # Stage the central dashboard health observability page under /health/.
+          # Source lives at health/index.html (self-contained — no external CSS
+          # or JS) and reads its data from /data/health/status.json. Both are
+          # produced by the "Build dashboard health status JSON" step above.
+          # V1 (`/`), V2 (`/v2/`), and all /lthcs/* paths are untouched —
+          # /health/ is a sibling route. Missing health/index.html or the
+          # status JSON makes this branch a no-op; the rest of the site is
+          # unaffected.
+          if [ -f health/index.html ]; then
+            mkdir -p _site/health
+            cp -R health/* _site/health/
+            if [ -f data/health/status.json ]; then
+              mkdir -p _site/data/health
+              cp data/health/status.json _site/data/health/status.json
             fi
           fi
           # Include a tiny "about" so the page works even if dashboard.html breaks

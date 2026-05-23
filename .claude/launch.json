@@ -6,6 +6,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8801"],
       "port": 8801
+    },
+    {
+      "name": "health",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8802", "--directory", "/Users/bryantabiadon/btc-eth-etf-dashboard"],
+      "port": 8802
     }
   ]
 }
