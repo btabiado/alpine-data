@@ -1,19 +1,19 @@
 {
-  "generated_at": "2026-05-23T04:57:54Z",
+  "generated_at": "2026-05-23T08:09:48Z",
   "sources": {
     "zillow": {
-      "fetched_at": "2026-05-23T04:57:54Z",
+      "fetched_at": "2026-05-23T08:09:48Z",
       "last_modified": "Sat, 16 May 2026 02:05:33 GMT",
       "rows": 50
     },
     "redfin": {
-      "fetched_at": "2026-05-23T04:57:54Z",
+      "fetched_at": "2026-05-23T08:09:48Z",
       "last_modified": "Tue, 14 Apr 2026 16:33:51 GMT",
       "rows": 50
     },
     "fred": {
-      "fetched_at": null,
-      "national_permits_yoy_pct": null
+      "fetched_at": "2026-05-23T08:09:48Z",
+      "national_permits_yoy_pct": -0.21
     }
   },
   "metros": [
