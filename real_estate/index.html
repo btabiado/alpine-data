@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>US Real Estate Markets · BTC/ETH ETF</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="anonymous" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+          crossorigin="anonymous"></script>
   <style>
     :root {
       --bg: #0b0e14;
@@ -124,6 +130,50 @@
 
     .error { color: var(--bad); padding: 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid var(--bad); border-radius: 8px; margin-top: 16px; }
     .empty { color: var(--text-faint); font-style: italic; padding: 16px; }
+
+    /* Heat map */
+    .map-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .map-controls label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); font-weight: 600; }
+    .map-controls select { min-width: 220px; }
+    #heat-map { height: 480px; width: 100%; border-radius: 6px; background: var(--bg-elev-2); position: relative; overflow: hidden; }
+    /* Leaflet tile attribution + controls in dark theme */
+    .leaflet-container { background: #0b0e14; font-family: var(--sans); font-size: 12px; }
+    .leaflet-control-attribution {
+      background: rgba(20, 25, 35, 0.85) !important; color: var(--text-faint) !important;
+      font-size: 10px !important; padding: 2px 6px !important;
+    }
+    .leaflet-control-attribution a { color: var(--accent) !important; }
+    .leaflet-control-zoom a {
+      background: var(--bg-elev) !important; color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    .leaflet-control-zoom a:hover { background: var(--bg-elev-2) !important; }
+    .leaflet-tooltip {
+      background: var(--bg-elev) !important; color: var(--text) !important;
+      border: 1px solid var(--border) !important; border-radius: 6px !important;
+      padding: 6px 10px !important; font-family: var(--sans) !important; font-size: 12px !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5) !important;
+    }
+    .leaflet-tooltip:before { display: none !important; }
+    .leaflet-tooltip .map-tt-metro { font-weight: 600; }
+    .leaflet-tooltip .map-tt-state { color: var(--text-faint); margin-left: 4px; font-size: 11px; font-weight: 400; }
+    .leaflet-tooltip .map-tt-kpi { font-family: var(--mono); margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .map-legend {
+      background: rgba(20, 25, 35, 0.92); border: 1px solid var(--border); border-radius: 6px;
+      padding: 8px 10px; color: var(--text); font-size: 11px; font-family: var(--mono);
+      line-height: 1.2; min-width: 140px;
+    }
+    .map-legend .legend-title { color: var(--text-dim); text-transform: uppercase; font-size: 10px; letter-spacing: 0.06em; margin-bottom: 6px; font-family: var(--sans); font-weight: 600; }
+    .map-legend .legend-bar { display: flex; height: 10px; border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+    .map-legend .legend-bar > div { flex: 1; }
+    .map-legend .legend-ticks { display: flex; justify-content: space-between; color: var(--text-faint); font-size: 10px; }
+    .map-notice {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      color: var(--text-faint); font-size: 13px; text-align: center; padding: 16px 24px;
+      background: rgba(20, 25, 35, 0.9); border: 1px solid var(--border); border-radius: 6px;
+      max-width: 80%; z-index: 500;
+    }
+    .map-tip { color: var(--text-faint); font-size: 11px; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -171,7 +221,17 @@
       <div class="chart-canvas-wrap"><canvas id="price-chart"></canvas></div>
     </div>
 
-    <h2>All 50 Metros <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— click any column to sort, click a row to inspect</span></h2>
+    <h2>US Heat Map <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— bubble size = metro rank, color = selected KPI, click any marker</span></h2>
+    <div class="chart-card">
+      <div class="map-controls">
+        <label for="map-color-by">Color by</label>
+        <select id="map-color-by"></select>
+      </div>
+      <div id="heat-map"></div>
+      <div class="map-tip">Hover for value · click a bubble to load that metro above · honors the search filter above</div>
+    </div>
+
+    <h2>All Metros <span id="table-count" style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">— click any column to sort, click a row to inspect</span></h2>
     <div id="table-mount"></div>
   </div>
 
@@ -189,7 +249,7 @@
       { key: 'permits',         label: 'Permits (FRED)',  cat: 'permits', fmt: 'int',    delta: 'yoy_pct', deltaType: 'pct', polarity: 'good' }
     ];
 
-    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' }, search: '' };
+    const STATE = { data: null, metro: null, visibleSeries: { zhvi: true, median_sale: false }, chart: null, sort: { key: 'rank', dir: 'asc' }, search: '', coords: null, map: null, markers: null, legend: null, mapColorBy: null };
 
     // Substring match on short_name + state, case-insensitive. Drives both the
     // dropdown and the comparison table — same predicate keeps them in sync.
@@ -462,6 +522,13 @@
     function renderTable() {
       const mount = document.getElementById('table-mount');
       const rows = visibleMetros().map(tableRowForMetro);
+      const countEl = document.getElementById('table-count');
+      if (countEl) {
+        const total = (STATE.data?.metros || []).length;
+        countEl.textContent = STATE.search
+          ? `— ${rows.length} of ${total} match "${STATE.search}" · click any column to sort, click a row to inspect`
+          : `— ${total} metros · click any column to sort, click a row to inspect`;
+      }
       const { key, dir } = STATE.sort;
       rows.sort((a, b) => {
         const av = a[key], bv = b[key];
@@ -571,6 +638,7 @@
           const id = rebuildMetroOptions(true);
           if (id) setMetro(id);
           renderTable();
+          renderMapMarkers();
         });
       }
     }
@@ -607,9 +675,257 @@
       document.getElementById('src-line').textContent = parts.join(' · ');
     }
 
+    // ---- Heat map module ----
+    // KPI options exposed in the "Color by" selector. `path` is dot notation
+    // into a metro's kpis tree. `polarity` drives the color scale:
+    //   - "good": green positive / red negative (or low->high gradient for absolutes where higher = good)
+    //   - "bad": flip (higher = bad)
+    //   - "neutral": single hue from light to dark, no judgment
+    // `domain` is "diverging" (anchored at 0) or "sequential" (min to max).
+    const MAP_COLOR_OPTIONS = [
+      { id: 'zhvi.yoy_pct',          label: 'ZHVI YoY %',          path: ['zhvi','yoy_pct'],          polarity: 'good',    domain: 'diverging', fmt: v => (v>0?'+':'') + v.toFixed(1) + '%' },
+      { id: 'zhvi.five_year_pct',    label: 'ZHVI 5Y %',           path: ['zhvi','five_year_pct'],    polarity: 'good',    domain: 'diverging', fmt: v => (v>0?'+':'') + v.toFixed(1) + '%' },
+      { id: 'median_sale.yoy_pct',   label: 'Median Sale YoY %',   path: ['median_sale','yoy_pct'],   polarity: 'good',    domain: 'diverging', fmt: v => (v>0?'+':'') + v.toFixed(1) + '%' },
+      { id: 'homes_sold.yoy_pct',    label: 'Homes Sold YoY %',    path: ['homes_sold','yoy_pct'],    polarity: 'good',    domain: 'diverging', fmt: v => (v>0?'+':'') + v.toFixed(1) + '%' },
+      { id: 'days_on_market.value',  label: 'Days on Market',      path: ['days_on_market','value'],  polarity: 'bad',     domain: 'sequential', fmt: v => Math.round(v) + 'd' },
+      { id: 'sale_to_list.value',    label: 'Sale-to-List Ratio',  path: ['sale_to_list','value'],    polarity: 'good',    domain: 'sequential', fmt: v => (v*100).toFixed(1) + '%' },
+      { id: 'pct_above_list.value',  label: '% Sold Above List',   path: ['pct_above_list','value'],  polarity: 'good',    domain: 'sequential', fmt: v => Math.round(v*100) + '%' },
+      { id: 'pct_price_cut.value',   label: '% Price Cuts',        path: ['pct_price_cut','value'],   polarity: 'bad',     domain: 'sequential', fmt: v => Math.round(v*100) + '%' },
+      { id: 'zhvi.value',            label: 'ZHVI ($)',            path: ['zhvi','value'],            polarity: 'neutral', domain: 'sequential', fmt: v => v >= 1e6 ? '$' + (v/1e6).toFixed(2) + 'M' : '$' + Math.round(v/1000) + 'K' },
+    ];
+
+    function mapValueOf(metro, path) {
+      let v = metro && metro.kpis;
+      for (const k of path) { if (v == null) return null; v = v[k]; }
+      return (typeof v === 'number' && isFinite(v)) ? v : null;
+    }
+
+    function metrosWithCoords() {
+      const coords = (STATE.coords && STATE.coords.coords) || {};
+      return visibleMetros().filter(m => {
+        const key = `${m.short_name}, ${m.state}`;
+        return coords[key] != null;
+      });
+    }
+
+    function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+    function lerpColor(c1, c2, t) {
+      const a = parseInt(c1.slice(1), 16), b = parseInt(c2.slice(1), 16);
+      const r = Math.round(((a>>16)&255) + (((b>>16)&255) - ((a>>16)&255)) * t);
+      const g = Math.round(((a>>8)&255)  + (((b>>8)&255)  - ((a>>8)&255))  * t);
+      const bl= Math.round((a&255)       + ((b&255)       - (a&255))       * t);
+      return '#' + ((r<<16)|(g<<8)|bl).toString(16).padStart(6,'0');
+    }
+
+    function rampColor(stops, t) {
+      // stops: array of {at: 0..1, color}. Linear ramp.
+      if (t <= stops[0].at) return stops[0].color;
+      if (t >= stops[stops.length-1].at) return stops[stops.length-1].color;
+      for (let i = 1; i < stops.length; i++) {
+        if (t <= stops[i].at) {
+          const a = stops[i-1], b = stops[i];
+          const k = (t - a.at) / (b.at - a.at);
+          return lerpColor(a.color, b.color, k);
+        }
+      }
+      return stops[stops.length-1].color;
+    }
+
+    // Color stops by polarity + domain type.
+    const MAP_RAMPS = {
+      // Diverging red-grey-green for "higher = good" YoY metrics.
+      good_diverging: [
+        { at: 0,   color: '#ef4444' },
+        { at: 0.5, color: '#6b7280' },
+        { at: 1,   color: '#10b981' },
+      ],
+      // Diverging green-grey-red for "higher = bad" YoY metrics (we don't use this yet but kept for symmetry).
+      bad_diverging: [
+        { at: 0,   color: '#10b981' },
+        { at: 0.5, color: '#6b7280' },
+        { at: 1,   color: '#ef4444' },
+      ],
+      // Sequential blue -> green for "higher = good" absolute metrics.
+      good_sequential: [
+        { at: 0,    color: '#1e3a8a' },
+        { at: 0.5,  color: '#3b82f6' },
+        { at: 1,    color: '#10b981' },
+      ],
+      // Sequential green -> red for "higher = bad" absolute metrics (DoM, price cuts).
+      bad_sequential: [
+        { at: 0,    color: '#10b981' },
+        { at: 0.5,  color: '#f59e0b' },
+        { at: 1,    color: '#ef4444' },
+      ],
+      // Neutral light -> dark blue for value-only metrics (ZHVI absolute).
+      neutral_sequential: [
+        { at: 0,    color: '#1e293b' },
+        { at: 0.5,  color: '#475569' },
+        { at: 1,    color: '#60a5fa' },
+      ],
+    };
+
+    function computeDomain(metros, opt) {
+      const vals = metros.map(m => mapValueOf(m, opt.path)).filter(v => v != null).sort((a,b)=>a-b);
+      if (!vals.length) return null;
+      // Clamp to 5th-95th percentile to keep outliers from stretching the scale.
+      const p = (q) => vals[Math.max(0, Math.min(vals.length-1, Math.floor(q * (vals.length-1))))];
+      const lo = p(0.05), hi = p(0.95);
+      if (opt.domain === 'diverging') {
+        const m = Math.max(Math.abs(lo), Math.abs(hi), 1);
+        return { lo: -m, hi: m, kind: 'diverging' };
+      }
+      return { lo, hi: Math.max(hi, lo + 1e-9), kind: 'sequential' };
+    }
+
+    function rampKeyFor(opt) {
+      if (opt.domain === 'diverging') return opt.polarity === 'bad' ? 'bad_diverging' : 'good_diverging';
+      if (opt.polarity === 'bad') return 'bad_sequential';
+      if (opt.polarity === 'neutral') return 'neutral_sequential';
+      return 'good_sequential';
+    }
+
+    function colorFor(value, domain, opt) {
+      if (value == null || !domain) return '#6b7280';
+      const t = clamp((value - domain.lo) / (domain.hi - domain.lo), 0, 1);
+      return rampColor(MAP_RAMPS[rampKeyFor(opt)], t);
+    }
+
+    function markerRadius(rank) {
+      // rank 1 ~ 14px, rank 50 ~ 8.6px, rank 500 ~ 5px, rank 894 ~ 4.5px.
+      return Math.max(4, 14 - Math.log2(Math.max(1, rank)));
+    }
+
+    function currentColorOpt() {
+      const id = STATE.mapColorBy || 'zhvi.yoy_pct';
+      return MAP_COLOR_OPTIONS.find(o => o.id === id) || MAP_COLOR_OPTIONS[0];
+    }
+
+    function initMap() {
+      const host = document.getElementById('heat-map');
+      if (!host) return;
+      if (typeof L === 'undefined') {
+        host.innerHTML = '<div class="map-notice">Map library failed to load — table and KPI cards still work.</div>';
+        return;
+      }
+      if (!STATE.coords) {
+        host.innerHTML = '<div class="map-notice">Coordinates not loaded — map unavailable. Table and KPI cards still work.</div>';
+        return;
+      }
+
+      // Populate the color-by dropdown.
+      const sel = document.getElementById('map-color-by');
+      sel.innerHTML = MAP_COLOR_OPTIONS.map(o => `<option value="${o.id}">${escapeHtml(o.label)}</option>`).join('');
+      const saved = localStorage.getItem('re_map_color_by');
+      STATE.mapColorBy = (saved && MAP_COLOR_OPTIONS.some(o => o.id === saved)) ? saved : 'zhvi.yoy_pct';
+      sel.value = STATE.mapColorBy;
+      sel.addEventListener('change', () => {
+        STATE.mapColorBy = sel.value;
+        localStorage.setItem('re_map_color_by', sel.value);
+        renderMapMarkers();
+      });
+
+      STATE.map = L.map(host, { zoomControl: true, preferCanvas: true })
+        .setView([39.8, -98.6], 4);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd', maxZoom: 19, minZoom: 3
+      }).addTo(STATE.map);
+
+      STATE.markers = L.layerGroup().addTo(STATE.map);
+
+      // Legend control in bottom-right.
+      STATE.legend = L.control({ position: 'bottomright' });
+      STATE.legend.onAdd = () => {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = '';
+        return div;
+      };
+      STATE.legend.addTo(STATE.map);
+
+      // Layout fix: container dims may not be known at init under flex layouts.
+      setTimeout(() => STATE.map && STATE.map.invalidateSize(), 300);
+
+      renderMapMarkers();
+    }
+
+    function updateLegend(opt, domain) {
+      if (!STATE.legend) return;
+      const div = STATE.legend.getContainer();
+      if (!div) return;
+      if (!domain) { div.innerHTML = `<div class="legend-title">${escapeHtml(opt.label)}</div><div style="color:var(--text-faint)">No data in view</div>`; return; }
+      const stops = MAP_RAMPS[rampKeyFor(opt)];
+      const swatches = stops.map(s => `<div style="background:${s.color}"></div>`).join('');
+      const lo = opt.fmt(domain.lo), hi = opt.fmt(domain.hi);
+      const mid = opt.fmt((domain.lo + domain.hi) / 2);
+      div.innerHTML = `
+        <div class="legend-title">${escapeHtml(opt.label)}</div>
+        <div class="legend-bar">${swatches}</div>
+        <div class="legend-ticks"><span>${escapeHtml(lo)}</span><span>${escapeHtml(mid)}</span><span>${escapeHtml(hi)}</span></div>
+      `;
+    }
+
+    function renderMapMarkers() {
+      if (!STATE.map || !STATE.markers) return;
+      STATE.markers.clearLayers();
+      const opt = currentColorOpt();
+      const metros = metrosWithCoords();
+      const domain = computeDomain(metros, opt);
+      const coords = (STATE.coords && STATE.coords.coords) || {};
+      for (const m of metros) {
+        const key = `${m.short_name}, ${m.state}`;
+        const c = coords[key];
+        if (!c) continue;
+        const v = mapValueOf(m, opt.path);
+        const color = colorFor(v, domain, opt);
+        const marker = L.circleMarker([c.lat, c.lon], {
+          radius: markerRadius(m.rank || 999),
+          color: color, fillColor: color, fillOpacity: 0.75, weight: 1,
+        });
+        const valStr = (v == null) ? '—' : opt.fmt(v);
+        marker.bindTooltip(
+          `<div class="map-tt-metro">${escapeHtml(m.short_name || '')}<span class="map-tt-state">${escapeHtml(m.state || '')}</span></div>`
+          + `<div class="map-tt-kpi">${escapeHtml(opt.label)}: ${escapeHtml(valStr)}</div>`,
+          { direction: 'top', offset: [0, -2], sticky: false }
+        );
+        marker.on('click', () => {
+          const id = (m.zillow_region_id != null) ? String(m.zillow_region_id) : (m.short_name || m.name);
+          const sel = document.getElementById('metro-select');
+          if (sel) {
+            // Make sure the option exists; if the search filter hid it, clear search.
+            if (![...sel.options].some(o => o.value === id)) {
+              const search = document.getElementById('metro-search');
+              if (search) { search.value = ''; STATE.search = ''; rebuildMetroOptions(true); renderTable(); renderMapMarkers(); }
+            }
+            sel.value = id;
+            sel.dispatchEvent(new Event('change'));
+          } else {
+            setMetro(id);
+          }
+        });
+        STATE.markers.addLayer(marker);
+      }
+      updateLegend(opt, domain);
+    }
+
+    async function loadCoords() {
+      try {
+        const r = await fetch('../data/metro_coords.json', { cache: 'no-store' });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        STATE.coords = await r.json();
+      } catch (e) {
+        STATE.coords = null;
+        console.warn('metro_coords.json fetch failed:', e.message || e);
+      }
+    }
+
     async function load() {
       try {
-        const r = await fetch('../data/real_estate.json', { cache: 'no-store' });
+        const [r] = await Promise.all([
+          fetch('../data/real_estate.json', { cache: 'no-store' }),
+          loadCoords(),
+        ]);
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         STATE.data = await r.json();
         document.getElementById('generated').textContent = formatGenerated(STATE.data.generated_at);
@@ -617,6 +933,7 @@
         buildMetroSelect();
         bindChartToggles();
         renderTable();
+        initMap();
       } catch (e) {
         document.getElementById('error-mount').innerHTML =
           `<div class="error">Failed to load real_estate.json: ${escapeHtml(e.message)}</div>`;

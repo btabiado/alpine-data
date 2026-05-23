@@ -41,6 +41,10 @@ data/health/
 # US real-estate snapshot — committed back by real-estate-daily.yml and read
 # by the /real-estate/ page. Updates daily; tracked so the public page works.
 !data/real_estate.json
+# Metro centroid coords from Census CBSA gazetteer — built by
+# scripts/fetch_metro_coords.py, read by the /real-estate/ heat map.
+# Rarely changes (annual Census release); tracked so the page works.
+!data/metro_coords.json
 
 # LTHCS — local API response cache (raw vendor data, may have redistribution terms)
 .cache/
