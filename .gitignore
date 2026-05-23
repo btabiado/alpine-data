@@ -59,3 +59,7 @@ MagicMock/
 .env
 .env.local
 *.local
+
+# Claude Code worktrees — transient parallel-agent scratch space, never
+# committed (the agent's branch is the deliverable, not the worktree dir).
+.claude/worktrees/
