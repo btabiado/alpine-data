@@ -11,6 +11,8 @@ Sources (all free, no auth required):
                   https://api.imf.org/external/sdmx/2.1/data/IMF.STA,IRFCL/...
   USGS / ScienceBase  MCS Silver Data Release (DOI 10.5066/P13XCP3R)
                   Annual world silver mine production by country (metric tons).
+  USGS / ScienceBase  MCS Gold Data Release (item 65b7d7b2d34e36a39045b4c8)
+                  Annual world gold mine production by country (metric tons).
 
 Output: v2/data-metals.json (sidecar consumed by the V2 dashboard's
 Metals tab via the existing SIDECARS lazy-load mechanism).
@@ -26,6 +28,9 @@ Schema:
                             "holdings": [{"country":..., "tonnes":...}, ...top 20],
                             "source": "IMF IRFCL (IRFCLDT1_IRFCL56_FTO)"},
       "silver_mine_production": {"unit": "metric tons", "year": YYYY,
+                                  "by_country": [{"country":..., "tonnes":...}, ...],
+                                  "source": "USGS MCS <year>"},
+      "gold_mine_production":   {"unit": "metric tons", "year": YYYY,
                                   "by_country": [{"country":..., "tonnes":...}, ...],
                                   "source": "USGS MCS <year>"}
     }
@@ -363,6 +368,17 @@ _USGS_SILVER_RELEASES = [
     ("65b7d88dd34e36a39045b51d", "world", ["Prod_t_est_2023", "Prod_t_2022"]),
 ]
 
+# ScienceBase item IDs for the world gold data release per MCS edition.
+# MCS 2025 (item 6797fdc7d34ea8c18376e1a0) ships only salient + meta —
+# no world-by-country CSV — so the only usable release for production
+# data is currently MCS 2024 (item 65b7d7b2d34e36a39045b4c8), which has
+# Prod_t_2022 + Prod_t_est_2023 columns. Listed in priority order so that
+# whenever USGS reposts the world CSV in a later MCS we just prepend it.
+_USGS_GOLD_RELEASES = [
+    # (sciencebase_item_id, file_label_match, year_columns_in_priority_order)
+    ("65b7d7b2d34e36a39045b4c8", "world", ["Prod_t_est_2023", "Prod_t_2022"]),
+]
+
 
 def fetch_silver_mine_production() -> dict | None:
     """World silver mine production by country (metric tons), latest annual.
@@ -370,7 +386,28 @@ def fetch_silver_mine_production() -> dict | None:
     USGS Mineral Commodity Summaries — Silver chapter, world production
     table, published annually. Public domain.
     """
-    for item_id, file_label, year_cols in _USGS_SILVER_RELEASES:
+    return _fetch_usgs_mcs_production(_USGS_SILVER_RELEASES, metal_label="Silver")
+
+
+def _fetch_usgs_gold_production() -> dict | None:
+    """World gold mine production by country (metric tons), latest annual.
+
+    USGS Mineral Commodity Summaries — Gold chapter, world production
+    table, published annually. Public domain. Mirrors the silver fetcher's
+    structure; the underlying CSV schema is identical.
+    """
+    return _fetch_usgs_mcs_production(_USGS_GOLD_RELEASES, metal_label="Gold")
+
+
+def _fetch_usgs_mcs_production(releases: list[tuple[str, str, list[str]]],
+                               metal_label: str = "") -> dict | None:
+    """Shared ScienceBase walker for USGS MCS world-production CSVs.
+
+    Iterates `releases` in priority order, fetches the catalog metadata,
+    finds the world CSV by filename fragment, and feeds it to the shared
+    MCS parser. Returns the first successful result, or None.
+    """
+    for item_id, file_label, year_cols in releases:
         meta = _get_json(
             f"https://www.sciencebase.gov/catalog/item/{item_id}",
             {"format": "json"}, timeout=30,
@@ -389,7 +426,13 @@ def fetch_silver_mine_production() -> dict | None:
         csv_text = _get_text(url, timeout=30)
         if not csv_text:
             continue
-        result = _parse_usgs_silver_csv(csv_text, year_cols)
+        # Silver has a back-compat wrapper that re-stamps the source string
+        # with the DOI suffix; gold uses the plain shared parser.
+        if metal_label == "Silver":
+            result = _parse_usgs_silver_csv(csv_text, year_cols)
+        else:
+            result = _parse_usgs_mcs_csv(csv_text, year_cols,
+                                         metal_label=metal_label)
         if result:
             return result
     return None
@@ -397,10 +440,29 @@ def fetch_silver_mine_production() -> dict | None:
 
 def _parse_usgs_silver_csv(csv_text: str, year_cols: list[str]
                            ) -> dict | None:
+    """Silver convenience wrapper around the shared USGS MCS CSV parser.
+
+    Preserves the original ``USGS MCS Silver <year> (DOI 10.5066/P13XCP3R)``
+    source label for back-compat with anything that grepped the prior string.
+    """
+    res = _parse_usgs_mcs_csv(csv_text, year_cols, metal_label="Silver")
+    if res:
+        res["source"] = (
+            f"USGS MCS Silver {res.get('year', '')} (DOI 10.5066/P13XCP3R)"
+        )
+    return res
+
+
+def _parse_usgs_mcs_csv(csv_text: str, year_cols: list[str],
+                        metal_label: str = "") -> dict | None:
     """Pick the freshest year column with data, return top-by-tonnes rows.
 
     CSV has columns: Source, Country, Type, Prod_t_2022, Prod_t_est_2023, ...
-    Skip 'World total (rounded)' and 'Other countries' aggregates.
+    Skip 'World total (rounded)' and 'Other countries' aggregates. The
+    USGS MCS world-production CSVs for gold and silver share the same
+    schema, so a single parser handles both.
+
+    `metal_label` is only used to compose the human-readable `source` string.
     """
     # Strip UTF-8 BOM if present.
     if csv_text.startswith("﻿"):
@@ -428,7 +490,9 @@ def _parse_usgs_silver_csv(csv_text: str, year_cols: list[str]
         country = (r.get("Country") or "").strip()
         if not country:
             continue
-        # Skip aggregates — they roll up by-country totals.
+        # Skip aggregates — they roll up by-country totals. USGS MCS gold
+        # additionally lumps non-disclosed producers into "Other countries",
+        # which we also exclude (matches the silver fetcher's behaviour).
         if "world total" in country.lower() or country.lower().startswith("other"):
             continue
         val = _safe_float(r.get(chosen_col))
@@ -439,11 +503,12 @@ def _parse_usgs_silver_csv(csv_text: str, year_cols: list[str]
     by_country.sort(key=lambda x: x["tonnes"], reverse=True)
     if not by_country:
         return None
+    label = (metal_label + " ") if metal_label else ""
     return {
         "unit": "metric tons",
         "year": chosen_year,
         "by_country": by_country,
-        "source": f"USGS MCS Silver {chosen_year} (DOI 10.5066/P13XCP3R)",
+        "source": f"USGS MCS {label}{chosen_year}".strip(),
     }
 
 
@@ -465,10 +530,11 @@ def build_payload(prior: dict | None = None) -> dict:
     out: dict[str, Any] = {"generated_at": now}
 
     for key, fn, label in [
-        ("gold_price",             fetch_gold_price,             "gold price"),
-        ("silver_price",           fetch_silver_price,           "silver price"),
-        ("central_bank_gold",      fetch_central_bank_gold,      "central-bank gold"),
-        ("silver_mine_production", fetch_silver_mine_production, "silver mine production"),
+        ("gold_price",             fetch_gold_price,              "gold price"),
+        ("silver_price",           fetch_silver_price,            "silver price"),
+        ("central_bank_gold",      fetch_central_bank_gold,       "central-bank gold"),
+        ("silver_mine_production", fetch_silver_mine_production,  "silver mine production"),
+        ("gold_mine_production",   _fetch_usgs_gold_production,   "gold mine production"),
     ]:
         try:
             v = fn()
@@ -502,6 +568,23 @@ _SAMPLE_USGS_CSV = (
     '25600,26000,,610000,\n'
 )
 
+# Real-shape gold sample (USGS lumps non-disclosed producers into
+# "Other countries", same as silver — that row must be filtered out).
+_SAMPLE_USGS_GOLD_CSV = (
+    '﻿Source,Country,Type,Prod_t_2022,Prod_t_est_2023,Prod_notes,'
+    'Reserves_t,Reserves_notes\n'
+    'MCS2024,China,"Gold - contained content, mine production, metric tons",'
+    '372,370,,3000,\n'
+    'MCS2024,Australia,"Gold - contained content, mine production, metric tons",'
+    '314,310,,12000,\n'
+    'MCS2024,Russia,"Gold - contained content, mine production, metric tons",'
+    '310,310,,11100,\n'
+    'MCS2024,Other countries,"Gold - contained content, mine production, metric tons",'
+    '726,700,,9200,\n'
+    'MCS2024,World total (rounded),"Gold - contained content, mine production, metric tons",'
+    '3060,3000,,59000,\n'
+)
+
 
 _SAMPLE_IMF_XML = '''<?xml version="1.0"?>
 <message:StructureSpecificData xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:ns1="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=IMF.STA:IRFCL(11.0.0):ObsLevelDim:TIME_PERIOD">
@@ -523,7 +606,7 @@ _SAMPLE_IMF_XML = '''<?xml version="1.0"?>
 def _self_test() -> int:
     failed: list[str] = []
 
-    # USGS CSV parser
+    # USGS CSV parser (silver wrapper)
     res = _parse_usgs_silver_csv(_SAMPLE_USGS_CSV, ["Prod_t_est_2023", "Prod_t_2022"])
     if not res:
         failed.append("USGS parser returned None on sample CSV")
@@ -535,6 +618,35 @@ def _self_test() -> int:
             failed.append("aggregate row leaked into by_country")
         if countries and countries[0] != "Mexico":
             failed.append(f"expected Mexico first, got {countries[0]}")
+        if "Silver" not in (res.get("source") or "") or "DOI" not in (res.get("source") or ""):
+            failed.append(f"silver source label lost DOI suffix: {res.get('source')}")
+
+    # USGS CSV parser (gold path — same schema, shared parser)
+    gres = _parse_usgs_mcs_csv(_SAMPLE_USGS_GOLD_CSV,
+                               ["Prod_t_est_2023", "Prod_t_2022"],
+                               metal_label="Gold")
+    if not gres:
+        failed.append("USGS gold parser returned None on sample CSV")
+    else:
+        if gres.get("year") != 2023:
+            failed.append(f"gold: expected year=2023, got {gres.get('year')}")
+        if gres.get("unit") != "metric tons":
+            failed.append(f"gold: expected unit='metric tons', got {gres.get('unit')}")
+        gcountries = [r["country"] for r in gres["by_country"]]
+        if "Other countries" in gcountries or any("World total" in c for c in gcountries):
+            failed.append("gold: aggregate row leaked into by_country")
+        if gcountries and gcountries[0] != "China":
+            failed.append(f"gold: expected China first, got {gcountries[0]}")
+        # Shape: each row has the two expected keys, tonnes is a number.
+        for r in gres["by_country"]:
+            if set(r.keys()) != {"country", "tonnes"}:
+                failed.append(f"gold: row has unexpected keys: {r.keys()}")
+                break
+            if not isinstance(r["tonnes"], (int, float)):
+                failed.append(f"gold: tonnes not numeric: {r}")
+                break
+        if "Gold" not in (gres.get("source") or ""):
+            failed.append(f"gold source label missing 'Gold': {gres.get('source')}")
 
     # IMF parser (periods are normalized to ISO YYYY-MM-DD on parse)
     parsed = _parse_imf_irfcl(_SAMPLE_IMF_XML)
@@ -613,7 +725,8 @@ def main(argv: list[str] | None = None) -> int:
     # Sanity gate: refuse to overwrite the seed if EVERY source failed AND we
     # have no prior file at all. Returning non-zero lets the caller log it.
     have_any = any(k in payload for k in (
-        "gold_price", "silver_price", "central_bank_gold", "silver_mine_production"))
+        "gold_price", "silver_price", "central_bank_gold",
+        "silver_mine_production", "gold_mine_production"))
     if not have_any:
         print(f"  [metals] every source failed and no prior to fall back on", file=sys.stderr)
         return 1
@@ -625,10 +738,12 @@ def main(argv: list[str] | None = None) -> int:
         "silver_price":           len((payload.get("silver_price") or {}).get("observations") or []),
         "central_bank_gold":      len((payload.get("central_bank_gold") or {}).get("holdings") or []),
         "silver_mine_production": len((payload.get("silver_mine_production") or {}).get("by_country") or []),
+        "gold_mine_production":   len((payload.get("gold_mine_production") or {}).get("by_country") or []),
     }
     print(f"  Wrote {out_path} (gold:{sizes['gold_price']}d "
           f"silver:{sizes['silver_price']}d CB:{sizes['central_bank_gold']} "
-          f"prod:{sizes['silver_mine_production']})")
+          f"Ag_prod:{sizes['silver_mine_production']} "
+          f"Au_prod:{sizes['gold_mine_production']})")
     return 0
 
 

@@ -428,7 +428,7 @@ def main() -> int:
         print(f"[fetch-supplies] failed: {e}", file=sys.stderr)
     # Metals sidecar — refreshes v2/data-metals.json with gold/silver spot
     # prices (FRED + Yahoo), top-20 central-bank gold holdings (IMF IRFCL),
-    # and world silver mine production by country (USGS MCS). Isolated like
+    # and world gold + silver mine production by country (USGS MCS). Isolated like
     # the advisories block: per-source failures are absorbed inside
     # fetch_metals (it preserves prior values per-key) so the V2 build never
     # dies on a transient upstream issue.
@@ -3198,9 +3198,14 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ METALS TAB ============ -->
   <!-- Gold/silver spot prices (5y daily lines from FRED + Yahoo), top-20
        central-bank gold holdings (IMF IRFCL, fine troy ounces -> tonnes),
-       and world silver mine production by country (USGS MCS). All sidecar-
-       loaded from /data-metals.json via the same lazy-fetch mechanism as
-       the DeFi / Whale / Travel tabs. -->
+       and world gold + silver mine production by country (USGS MCS).
+       All sidecar-loaded from /data-metals.json via the same lazy-fetch
+       mechanism as the DeFi / Whale / Travel tabs.
+
+       Layout: .grid2 (auto-fit minmax 420px) with 5 cards. On wide screens
+       this reflows as 2+2+1 — the price pair on row 1, the production
+       pair on row 2 (gold next to silver for direct visual comparison),
+       and central-bank gold alone on row 3 since it's the tallest card. -->
   <div id="tab-metals" class="hidden">
     <div id="aiTake-metals" class="aiTake-slot"></div>
     <div id="metalsLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading gold &amp; silver data…</div>
@@ -3217,8 +3222,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card__body" id="metalsStrengthBody"></div>
       </div>
       <div class="grid2" id="metalsGrid" style="gap:14px">
-        <!-- 4 cards populated by renderMetals(): gold price, silver price,
-             central-bank gold holdings, silver mine production. -->
+        <!-- 5 cards populated by renderMetals(): gold price, silver price,
+             gold mine production, silver mine production, central-bank gold. -->
         <div class="v2-card" id="metalsGoldPriceCard">
           <div class="v2-card__head">
             <div><h2 class="v2-card__title">Gold spot price</h2><div class="v2-card__subtitle" id="metalsGoldSub">USD per troy ounce · 5y daily</div></div>
@@ -3233,12 +3238,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           </div>
           <div class="v2-card__body" id="metalsSilverBody"></div>
         </div>
-        <div class="v2-card" id="metalsCBGoldCard">
+        <div class="v2-card" id="metalsGoldProdCard">
           <div class="v2-card__head">
-            <div><h2 class="v2-card__title">Central-bank gold holdings (top 20)</h2><div class="v2-card__subtitle" id="metalsCBGoldSub">Tonnes, latest IMF IRFCL report</div></div>
-            <div><span class="v2-chip v2-chip--info" id="metalsCBGoldAsOf">● —</span></div>
+            <div><h2 class="v2-card__title">Gold mine production by country</h2><div class="v2-card__subtitle" id="metalsGoldProdSub">Metric tons · USGS MCS</div></div>
+            <div><span class="v2-chip v2-chip--info" id="metalsGoldProdAsOf">● —</span></div>
           </div>
-          <div class="v2-card__body" id="metalsCBGoldBody"></div>
+          <div class="v2-card__body" id="metalsGoldProdBody"></div>
         </div>
         <div class="v2-card" id="metalsSilverProdCard">
           <div class="v2-card__head">
@@ -3246,6 +3251,13 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <div><span class="v2-chip v2-chip--info" id="metalsSilverProdAsOf">● —</span></div>
           </div>
           <div class="v2-card__body" id="metalsSilverProdBody"></div>
+        </div>
+        <div class="v2-card" id="metalsCBGoldCard">
+          <div class="v2-card__head">
+            <div><h2 class="v2-card__title">Central-bank gold holdings (top 20)</h2><div class="v2-card__subtitle" id="metalsCBGoldSub">Tonnes, latest IMF IRFCL report</div></div>
+            <div><span class="v2-chip v2-chip--info" id="metalsCBGoldAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body" id="metalsCBGoldBody"></div>
         </div>
       </div>
     </div><!-- /metalsContent -->
@@ -8403,11 +8415,12 @@ function renderTravelList(advisories, sub, counts){
 }
 
 // ─── METALS TAB renderer ─────────────────────────────────────────────────
-// Paints the 4 cards in #metalsGrid (gold price, silver price, central-bank
-// gold holdings, silver mine production by country). All charts are inline
-// SVG — no chart library, no extra HTTP. Data comes from DATA.metals (the
-// /data-metals.json sidecar, lazy-loaded the first time the user opens the
-// tab). renderMetals() is a no-op if the sidecar hasn't landed yet.
+// Paints the 5 cards in #metalsGrid (gold price, silver price, gold mine
+// production, silver mine production, central-bank gold holdings). All
+// charts are inline SVG — no chart library, no extra HTTP. Data comes
+// from DATA.metals (the /data-metals.json sidecar, lazy-loaded the first
+// time the user opens the tab). renderMetals() is a no-op if the sidecar
+// hasn't landed yet.
 function renderMetals(){
   const m = DATA.metals;
   if (!m || typeof m !== 'object') return;
@@ -8416,8 +8429,9 @@ function renderMetals(){
                         'metalsGoldAsOf',   'metalsGoldSub',   'var(--v2-warn)');
   metalsRenderPriceCard('silver', m.silver_price, 'metalsSilverBody',
                         'metalsSilverAsOf', 'metalsSilverSub', '#cbd5e1');
-  metalsRenderCBGold(m.central_bank_gold);
+  metalsRenderGoldProd(m.gold_mine_production);
   metalsRenderSilverProd(m.silver_mine_production);
+  metalsRenderCBGold(m.central_bank_gold);
 }
 
 // Strength KPI band at the top of the Metals tab. Three columns derived from
@@ -8785,13 +8799,38 @@ function metalsRenderCBGold(payload){
 }
 
 function metalsRenderSilverProd(payload){
-  const body  = document.getElementById('metalsSilverProdBody');
-  const asOf  = document.getElementById('metalsSilverProdAsOf');
-  const sub   = document.getElementById('metalsSilverProdSub');
+  metalsRenderProdCard(payload, {
+    bodyId: 'metalsSilverProdBody',
+    asOfId: 'metalsSilverProdAsOf',
+    subId:  'metalsSilverProdSub',
+    emptyTitle: 'No silver production data',
+    color:  '#cbd5e1',
+  });
+}
+
+function metalsRenderGoldProd(payload){
+  // Gold mine production by country. Mirrors silver — same shape, same
+  // USGS MCS source, same horizontal-bar chart. Bar fill matches the gold
+  // spot-price chart's --v2-warn accent so the eye groups gold cards.
+  metalsRenderProdCard(payload, {
+    bodyId: 'metalsGoldProdBody',
+    asOfId: 'metalsGoldProdAsOf',
+    subId:  'metalsGoldProdSub',
+    emptyTitle: 'No gold production data',
+    color:  'var(--v2-warn)',
+  });
+}
+
+function metalsRenderProdCard(payload, opts){
+  // Shared renderer for the two USGS MCS production cards. Keeps the
+  // empty-state, top-10 slice, footer string, and chip wiring in one place.
+  const body  = document.getElementById(opts.bodyId);
+  const asOf  = document.getElementById(opts.asOfId);
+  const sub   = document.getElementById(opts.subId);
   if (!body) return;
   const all = (payload && Array.isArray(payload.by_country)) ? payload.by_country : [];
   if (!all.length) {
-    body.innerHTML = V2.empty({icon:'⛔', title:'No silver production data',
+    body.innerHTML = V2.empty({icon:'⛔', title: opts.emptyTitle,
       sub:'USGS MCS fetch returned nothing; retry on next dashboard refresh.', warm:false});
     if (asOf) asOf.textContent = '● unavailable';
     return;
@@ -8799,7 +8838,7 @@ function metalsRenderSilverProd(payload){
   const top = all.slice(0, 10);
   const bars = top.map(r => ({label: r.country, value: r.tonnes}));
   body.innerHTML =
-    metalsRenderBarChart(bars, '#cbd5e1') +
+    metalsRenderBarChart(bars, opts.color) +
     '<div class="v2-card__footer" style="margin-top:8px">Unit: ' +
       escapeHtml(payload.unit || 'metric tons') + ' · Year: ' +
       (payload.year || '—') + ' · Source: ' +
@@ -12650,7 +12689,7 @@ function renderAll(){
         metalsLoading.innerHTML = V2.empty({
           icon: '🥇',
           title: 'Loading metals data…',
-          sub: 'Gold/silver prices + central-bank gold + silver mine production.',
+          sub: 'Gold/silver prices + central-bank gold + gold/silver mine production.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
       }
