@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0">
+  <channel>
+    <title>travel.state.gov: Travel Advisories</title>
+    <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories.html</link>
+    <description>Fixture subset for offline parser self-test.</description>
+    <pubDate>Mon, 25 May 2026 17:32:05 GMT</pubDate>
+    <dc:date>2026-05-25T17:32:05Z</dc:date>
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Bahrain - Level 3: Reconsider Travel</title>
+      <link>https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.bhr.html</link>
+      <pubDate>Mon, 02 Mar 2026</pubDate>
+      <description>Reconsider travel&lt;p&gt;to &lt;b&gt;Bahrain &lt;/b&gt;due to &lt;b&gt;terrorism &lt;/b&gt;and &lt;b&gt;armed conflict&lt;/b&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;span class='body-regular'&gt;On March 2, 2026, the Department of State ordered non-emergency U.S. government employees and family members of U.S. government employees to leave Bahrain due to safety risks.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class='header-paragraph'&gt;Armed Conflict&lt;br /&gt;
+&lt;/span&gt;&lt;span class='body-regular'&gt;Following the onset of hostilities between the United States and Iran on February 28, there has been an ongoing threat of drone and missile attacks from Iran and significant disruptions to commercial flights.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class='header-paragraph'&gt;Terrorism&lt;/span&gt;&lt;span class='body-regular'&gt;&lt;br /&gt;
+There is a risk of terrorist violence, including terrorist attacks and other activity in Bahrain. Visit the U.S. Department of State’s &lt;a href='https://www.state.gov/country-reports-on-terrorism/' target='_blank'&gt;country reports on terrorism&lt;/a&gt; to learn more.  &lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class='body-regular'&gt;Terrorist groups continue plotting possible attacks in Bahrain. Terrorists may attack with little or no warning. Targets may include tourist sites, transportation hubs, markets, shopping malls, and religious sites as well as government and military facilities.&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class='header-paragraph'&gt;Aviation Safety&lt;/span&gt;&lt;span class='body-regular'&gt;&lt;br /&gt;
+The Federal Aviation Administration (FAA) issued an ongoing Special Federal Aviation Regulation and Notice to Airmen (NOTAM). This is due to risks to civil aviation operating within or nearby Bahrain. For more information Americans should consult the &lt;a href='https://www.faa.gov/air_traffic/publications/us_restrictions' target='_blank'&gt;&lt;span class='links_external'&gt;Federal Aviation Administration’s Prohibitions, Restrictions and Notices&lt;/span&gt;&lt;/a&gt;.&lt;/span&gt;&lt;/p&gt;</description>
+      <category domain="Threat-Level">Level 3: Reconsider Travel</category>
+      <category domain="Country-Tag">BH</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.bhr.html</guid>
+      <dc:identifier>BH,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>United Arab Emirates - Level 3: Reconsider Travel</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/united-arab-emirates-travel-advisory.html</link>
+      <pubDate>Tue, 03 Mar 2026</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;Updated to&amp;nbsp;reflect the ordered departure of non-emergency U.S. government personnel and family members of government personnel on March&amp;nbsp;2.&amp;nbsp;Advisory summary was updated&lt;/b&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Reconsider travel &lt;/b&gt;to the United Arab Emirates due to&lt;b&gt;&amp;nbsp;&lt;/b&gt;the threat of &lt;b&gt;armed conflict &lt;/b&gt;and &lt;b&gt;terrorism.&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Advisory Summary&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;On March 2, 2026, the Department of State ordered non-emergency U.S. government employees and U.S. government family members to leave the United Arab Emirates due to the threat of armed conflict.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Armed Conflict&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Following the onset of hostilities between the United States and Iran on February 28, there has been an ongoing threat of drone and missile attacks from Iran and significant disruptions to commercial flights. The Iranian regime has publicly stated its intention to target locations in the UAE associated with the United States.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Terrorism&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;There is a risk of terrorist violence, including terrorist attacks and other activity in the United Arab Emirates. Visit the U.S. Department of State&amp;#8217;s &lt;a href="https://www.state.gov/country-reports-on-terrorism/"&gt;country reports on terrorism&lt;/a&gt; to learn more. &amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Terrorists may attack with little or no warning and may target tourist locations, transportation hubs, shopping areas, government facilities, places of worship, and in particular locations associated with the Jewish and Israeli communities.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Aviation Safety&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;The Federal Aviation Administration (FAA) has issued an advisory Notice to Air Missions (NOTAM) recommending caution for U.S. air carriers and commercial operators operating in the Middle East, including the UAE. For more information, Americans who plan to travel to the region should check the&amp;nbsp;&lt;a href="https://www.faa.gov/air_traffic/publications/us_restrictions" adhocenable="false"&gt;FAA&amp;#8217;s Prohibitions, Restrictions and Notices&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Local laws&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Residents and visitors should be aware the UAE has strict rules on social behavior, drug possession, traffic violations, and financial crimes. Breaking these rules can lead to arrest and/or an exit ban. Americans should review the Department of State&amp;#8217;s &lt;a href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/UnitedArabEmirates.html"&gt;Destination Information Page&lt;/a&gt; for the UAE to learn about local laws, special circumstances, and additional information about travel to the United Arab Emirates.&lt;/p&gt;
+&lt;p&gt;For U.S. citizens in the United Arab Emirates:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Monitor local media for breaking events and be prepared to adjust your plans.&lt;/li&gt;
+&lt;li&gt;Enroll in the &lt;a href="https://mytravel.state.gov/s/step"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt; to get important updates and alerts from the U.S. embassy or consulate. Enrolling helps the U.S. embassy or consulate contact you or your emergency contact in an emergency.&lt;/li&gt;
+&lt;li&gt;Have a plan to depart in an emergency that does not depend on U.S. government help. &amp;nbsp;Review our information on&amp;nbsp;&lt;a href="https://travel.state.gov/en/international-travel/help-abroad/crisis-response.html"&gt;Crisis and Evacuations&amp;nbsp;&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Follow the U.S. Mission to the UAE on&amp;nbsp;&lt;a href="https://www.facebook.com/USAinUAE/"&gt;Facebook&lt;/a&gt;,&amp;nbsp;&lt;a href="https://www.instagram.com/usainuae/"&gt;Instagram&lt;/a&gt;, and&amp;nbsp;&lt;a href="https://x.com/USAinUAE"&gt;X&lt;/a&gt;, and visit the&amp;nbsp;&lt;a href="https://ae.usembassy.gov/"&gt;Mission website&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Review the&amp;nbsp;&lt;a href="https://www.osac.gov/Content/Browse/Report?subContentTypes=Country%20Security%20Report"&gt;Country Security Report&lt;/a&gt;&amp;nbsp;for the United Arab Emirates.&lt;/li&gt;
+&lt;li&gt;Visit the Centers for Disease Control and Prevention (CDC) website for the latest&amp;nbsp;&lt;a href="https://wwwnc.cdc.gov/travel/destinations/list"&gt;Travel Health Information&lt;/a&gt;&amp;nbsp;for United Arab Emirates.&lt;/li&gt;
+&lt;li&gt;Have a plan to leave in an emergency that does not depend on U.S. government help. Review our information on &lt;a href="https://travel.state.gov/en/international-travel/help-abroad/crisis-response.html"&gt;Crisis and Evacuations&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;We highly recommend that you buy travel insurance before you travel. Check with your &lt;a href="https://travel.state.gov/en/international-travel/planning/guidance/insurance.html"&gt;travel insurance provider&lt;/a&gt; about evacuation assistance, medical insurance, and trip cancelation coverage.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 3: Reconsider Travel</category>
+      <category domain="Country-Tag">AE</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/united-arab-emirates-travel-advisory.html</guid>
+      <dc:identifier>AE,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Mozambique - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mozambique-travel-advisory.html</link>
+      <pubDate>Mon, 16 Jun 2025</pubDate>
+      <description>&lt;p&gt;Updated to reflect change in overall travel advisory level from 3 to 2 due to decrease of election related protests, and addition of Niassa Special Reserve to Do Not Travel section.&lt;/p&gt;
+&lt;p&gt;Exercise increased caution when traveling to Mozambique due to&amp;nbsp;&lt;b&gt;health issues&lt;/b&gt;,&amp;nbsp;&lt;b&gt;crime, civil unrest,&lt;/b&gt;&amp;nbsp;and&amp;nbsp;&lt;b&gt;terrorism&lt;/b&gt;. Some areas have&amp;nbsp;greater&amp;nbsp;risk. Read the entire Travel Advisory.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Do Not Travel To:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Cabo Delgado Province, the Niassa Special Reserve inside Niassa Province, and certain districts in the north of Nampula Province due to&amp;nbsp;&lt;b&gt;terrorism&lt;/b&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;Country Summary:&amp;nbsp;&lt;/b&gt;Unplanned protests remain possible throughout the country and can quickly become violent. Protests may temporarily block major roads, including toll booths and border crossings.&lt;/p&gt;
+&lt;p&gt;Violent crime, such as mugging, is common.&lt;/p&gt;
+&lt;p&gt;Mozambique&amp;#8217;s health infrastructure is weak, medicine availability is variable and often in short supply. Local medical facilities may lack basic resources and supplies, and may require cash payment up front. There is risk of terrorist violence, including terrorist attacks and other activity in Mozambique. Visit the U.S. Department of State's &lt;a href="https://www.state.gov/country-reports-on-terrorism/"&gt;country reports on terrorism&lt;/a&gt; to learn more.&lt;/p&gt;
+&lt;p&gt;Terrorist groups in northern Mozambique continue to be active. Attackers may strike public areas and tourist destinations with little or no warning, sometimes taking hostages. Upscale lodges in remote areas which cater to international big-game hunters have been targeted. Security and police forces may be slow to respond.&lt;/p&gt;
+&lt;p&gt;Read the&amp;nbsp;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Mozambique.html"&gt;country information page&lt;/a&gt;&amp;nbsp;for additional information on travel to Mozambique.&lt;/p&gt;
+&lt;p&gt;If you decide to travel to Mozambique:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Avoid all but emergency travel between sunset and sunrise.&lt;/li&gt;
+&lt;li&gt;Avoid demonstrations and crowds.&lt;/li&gt;
+&lt;li&gt;Enroll in the &lt;a href="https://step.state.gov"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt; to receive messages and Alerts from the U.S. Embassy and make it easier to locate you in an emergency.&lt;/li&gt;
+&lt;li&gt;Review the &lt;a href="https://www.osac.gov/Country/Mozambique/Content/Detail/Report/b888084b-2aad-4333-9d29-1d746b4f34eb"&gt;Country Security Report&lt;/a&gt;&lt;a name="_Hlt200625927" id="_Hlt200625927"&gt;&lt;/a&gt;&lt;a name="_Hlt200625926" id="_Hlt200625926"&gt;&lt;/a&gt; for Mozambique.&lt;/li&gt;
+&lt;li&gt;Prepare a plan for emergency situations. Review the &lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/travelers-checklist.html#_blank"&gt;Traveler&amp;#8217;s Checklist&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Visit the CDC page for the &lt;a href="https://wwwnc.cdc.gov/travel/destinations/list"&gt;latest&amp;nbsp;Travel Health Information&lt;/a&gt;&lt;a name="_Hlt200369282" id="_Hlt200369282"&gt;&lt;/a&gt;&lt;a name="_Hlt200369281" id="_Hlt200369281"&gt;&lt;/a&gt;&amp;nbsp;related to your travel and return to the United States.&lt;/li&gt;
+&lt;li&gt;We highly recommend you buy insurance before you travel. Check with your &lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/your-health-abroad/Insurance_Coverage_Overseas.html"&gt;travel insurance provider&lt;/a&gt; about evacuation assistance, medical insurance, and trip cancellation coverage.&lt;/li&gt;
+&lt;li&gt;Have evacuation plans that do not rely on U.S. government assistance.&lt;/li&gt;
+&lt;li&gt;Have travel documents up to date and easily accessible.&lt;/li&gt;
+&lt;li&gt;Keep a low profile.&lt;/li&gt;
+&lt;li&gt;Be aware of your surroundings.&lt;/li&gt;
+&lt;li&gt;Monitor local media for breaking events and be prepared to adjust your plans.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;Cabo Delgado Province, the Niassa Special Reserve within Niassa Province, and certain northern districts in Nampula Province &amp;#8211; Level 4: Do Not Travel&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Terrorists continue to conduct and plot attacks on government forces, villages, and key supply routes in Cabo Delgado Province and the bordering districts of Memba and Erati in Nampula Province. Cabo Delgado&amp;#8217;s capitol city of Pemba is vulnerable to attack due to the proximity of violent extremist forces and their increasing sophistication. Upscale hunting lodges in and around the Niassa Special Reserve have been specifically targeted by terrorists with hostages taken.&lt;/p&gt;
+&lt;p&gt;Although prior terrorist attacks centered around securing resources from government forces, travelers should be aware of their surroundings, especially in large public places.&lt;/p&gt;
+&lt;p&gt;Be aware of increased government security checkpoints in Cabo Delgado Province.&lt;/p&gt;
+&lt;p&gt;If you must travel to the affected areas of Cabo Delgado, Niassa, and Nampula Provinces, consider hiring a security firm.&lt;/p&gt;
+&lt;p&gt;Visit our website for&amp;nbsp;&lt;a href="https://travel.state.gov/content/passports/en/go/TraveltoHighRiskAreas.html"&gt;Travel to High-Risk Areas&lt;/a&gt;.&lt;/p&gt;</description>
+      <category domain="Threat-Level">Level 2: Exercise Increased Caution</category>
+      <category domain="Country-Tag">MZ</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mozambique-travel-advisory.html</guid>
+      <dc:identifier>MZ,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Greenland - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/greenland-travel-advisory.html</link>
+      <pubDate>Tue, 29 Oct 2024</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;&lt;i&gt;Updated to reflect a new separate travel advisory from the Kingdom of Denmark.&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Exercise increased caution in Greenland due to&amp;nbsp;&lt;b&gt;environmental hazards posed by extreme weather conditions&amp;nbsp;&lt;/b&gt;and&lt;b&gt;&amp;nbsp;limited emergency services.&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Country Summary:&amp;nbsp;&lt;/b&gt;The U.S. government&amp;#8217;s ability to provide consular services to U.S. citizens in Greenland is extremely limited.&lt;/p&gt;
+&lt;p&gt;Greenland&amp;#8217;s landscape includes vast stretches of territory remote from cities and settlements. The weather can be harsh, and resources to provide emergency services in areas distant from cities and large settlements, including search and rescue, are scarce. In some areas, search and rescue efforts could take several days to reach the site of an incident.&lt;/p&gt;
+&lt;p&gt;Read the&amp;#8239;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Greenland.html"&gt;country information page&lt;/a&gt;&amp;#8239;for additional information on travel to Greenland.&lt;/p&gt;
+&lt;p&gt;If you decide to travel&amp;nbsp;to Greenland:&amp;nbsp; &amp;nbsp;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Obtain comprehensive travel, medical, and evacuation insurance; see our webpage for more&amp;#8239;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/your-health-abroad/Insurance_Coverage_Overseas.html"&gt;information on insurance coverage abroad&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Travel with a professional guide or organization, such as those that are a member of the&amp;nbsp;&lt;a href="https://aeco.no/"&gt;Association of Arctic Expedition Cruise Operators&lt;/a&gt;, or, if organizing a private expedition, be self-sufficient.&lt;/li&gt;
+&lt;li&gt;Enroll in the&amp;nbsp;&lt;a href="https://step.state.gov/step/"&gt;Smart Traveler Enrollment Program&lt;/a&gt;&amp;nbsp;(&lt;a href="https://step.state.gov/step/"&gt;STEP&lt;/a&gt;) to receive security messages and make it easier to locate you in an emergency.&lt;/li&gt;
+&lt;li&gt;Prepare a contingency plan for emergency situations. Review the&amp;nbsp;&lt;a href="https://travel.state.gov/content/passports/en/go/checklist.html"&gt;Traveler&amp;#8217;s Checklist&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Understand Greenland is a self-governing part of the Kingdom of Denmark. Greenland has assumed responsibility for the administration of health, education, taxation, and family and social matters (among other competencies), meaning these matters are handled differently than in Denmark.&lt;/li&gt;
+&lt;li&gt;Follow the Department of State on&amp;nbsp;&lt;a href="https://www.facebook.com/travelgov"&gt;Facebook&lt;/a&gt;&amp;nbsp;and&amp;nbsp;&lt;a href="https://x.com/travelgov"&gt;X/Twitter&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Visit the CDC page for the latest&amp;nbsp;&lt;a href="https://wwwnc.cdc.gov/travel/destinations/traveler/none/greenland"&gt;Travel Health Information&lt;/a&gt;&amp;nbsp;related to your travel.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 2: Exercise Increased Caution</category>
+      <category domain="Country-Tag">GL</category>
+      <category domain="Keyword">GL</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/greenland-travel-advisory.html</guid>
+      <dc:identifier>GL,GL</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Ghana - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/ghana-travel-advisory.html</link>
+      <pubDate>Tue, 08 Apr 2025</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;&lt;i&gt;Updated to reflect threats against women travelers and increased risks in specific regions. &lt;/i&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Exercise increased caution in Ghana due to&amp;nbsp;&lt;b&gt;crime&lt;/b&gt;&amp;nbsp;and&amp;nbsp;&lt;b&gt;violence against women travelers and lesbian, gay, and bisexual travelers&lt;/b&gt;.&amp;nbsp; Some areas of Ghana have increased risk. Read the entire Travel Advisory.&lt;/p&gt;
+&lt;p&gt;Reconsider Travel to:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The Upper East Region, North East Region, Upper West Region, and the western portion of the Savannah Region (all areas west of the N12 Highway) that shares a border with Burkina Faso and C&amp;#7897;te d&amp;#8217;Ivoire due to&amp;nbsp;&lt;b&gt;civil unrest &lt;/b&gt;and &lt;b&gt;crime.&lt;/b&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;Country Summary:&amp;nbsp;&lt;/b&gt;Violent crimes, such as carjacking, street mugging, assaults, and rape do occur.&amp;nbsp; These crimes often happen at night and in isolated locations.&amp;nbsp; Sexual assault, such as rape, is significantly underreported and remains a serious problem.&amp;nbsp; While domestic violence is criminal under Ghanian law, police rarely respond to reports of domestic violence.&amp;nbsp;&amp;nbsp;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;In urban areas and crowded markets&lt;/li&gt;
+&lt;li&gt;When traveling by private or public transportation after dark as criminal elements may use blockades to slow down and restrict movement of vehicles&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Ghanaian law contains prohibitions on &amp;#8220;unnatural carnal knowledge&amp;#8221; &amp;#8211; generally interpreted as any kind of sexual intimacy &amp;#8211; between persons of the same sex, though in practice, the law is largely used to target men.&amp;nbsp; Punishments can include fines and/or incarceration of up to three years.&amp;nbsp; Rhetoric and violence targeting individuals on the basis of sexual orientation have increased in recent years.&amp;nbsp; Individuals have reported safety incidents that include targeted assault, rape, mob attacks, and harassment due to their sexual orientation. &lt;/p&gt;
+&lt;p&gt;Read the &lt;a href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Ghana.html"&gt;country information page&lt;/a&gt; for additional information on travel to Ghana.&lt;/p&gt;
+&lt;p&gt;If you decide to travel to Ghana:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Review our page for health and security risks for &lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/travelers-with-special-considerations/women-travelers.html"&gt;Women Travelers&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;See our&amp;nbsp;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/travelers-with-special-considerations/lgb.html"&gt;Lesbian, Gay, and Bisexual Travelers Information page&lt;/a&gt;&amp;nbsp;and&amp;nbsp; our&amp;nbsp;&lt;a href="https://www.state.gov/reports/2023-country-reports-on-human-rights-practices/ghana/"&gt;Human Rights Report&lt;/a&gt;&amp;nbsp;for further details.&lt;/li&gt;
+&lt;li&gt;Enroll in the&amp;nbsp;&lt;a href="https://step.state.gov/step/"&gt;Smart Traveler Enrollment Program&lt;/a&gt;&amp;nbsp;(&lt;a href="https://step.state.gov/step/"&gt;STEP&lt;/a&gt;) to receive alerts and make it easier to locate you in an emergency.&lt;/li&gt;
+&lt;li&gt;Review the&amp;nbsp;&lt;a href="https://www.osac.gov/Content/Report/59b606e3-59bc-48e5-ab3b-1ca4b5396238"&gt;Country Security Report&lt;/a&gt;&amp;nbsp;for Ghana.&lt;/li&gt;
+&lt;li&gt;Prepare a plan for emergency situations.&amp;nbsp; Review the&amp;nbsp;&lt;a href="https://travel.state.gov/content/passports/en/go/checklist.html"&gt;Traveler&amp;#8217;s Checklist&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Visit the CDC page for the latest&amp;nbsp;&lt;a href="https://wwwnc.cdc.gov/travel/destinations/traveler/none/ghana?s_cid=ncezid-dgmq-travel-single-001"&gt;Travel Health Information&lt;/a&gt; related to your travel.&lt;/li&gt;
+&lt;li&gt;We highly recommend that you buy insurance before you travel.&amp;nbsp; Check with your &lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/your-health-abroad/Insurance_Coverage_Overseas.html"&gt;travel insurance provider&lt;/a&gt; about evacuation assistance, medical insurance, and trip cancellation coverage. &lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;Areas Near the Northern Border in the Upper East Region, Upper West Region, and western area of the Savannah Region &amp;#8211; Level 3:&amp;nbsp; Reconsider Travel&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;U.S. citizens in Ghana should reconsider travel to the northern border areas near Burkina Faso and C&amp;#244;te d&amp;#8217;Ivoire due to&amp;nbsp;&lt;b&gt;civil unrest and crime&lt;/b&gt;.&amp;nbsp; Due to the risks, U.S. government employees working in Ghana must obtain special authorization to travel to the Upper West Region, the Upper East Region, the North East Region, and the western area of the Savannah Region.&amp;nbsp; The U.S. government has limited ability to provide emergency services to U.S. citizens in these areas.&amp;nbsp; Be sure to read&amp;nbsp;the Burkina Faso Travel Advisory &lt;a href="https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/burkina-faso-travel-advisory.html"&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Local police may lack the resources to respond effectively to more serious crimes.&lt;/p&gt;
+&lt;p&gt;Visit our website for &lt;a href="https://travel.state.gov/content/passports/en/go/TraveltoHighRiskAreas.html"&gt;Travel to High-Risk Areas&lt;/a&gt;.&lt;/p&gt;</description>
+      <category domain="Threat-Level">Level 2: Exercise Increased Caution</category>
+      <category domain="Country-Tag">GH</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/ghana-travel-advisory.html</guid>
+      <dc:identifier>GH,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Cyprus - Level 3: Reconsider Travel</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/cyprus-travel-advisory.html</link>
+      <pubDate>Tue, 03 Mar 2026</pubDate>
+      <description>&lt;p&gt;The advisory level was increased to 3. There were no changes to the risk indicators. Advisory summary was updated to reflect changes to U.S. embassy operations.&lt;/p&gt;
+&lt;p&gt;Reconsider travel&amp;#8239;to Cyprus due to the threat of&lt;b&gt;&amp;#8239;armed conflic&lt;/b&gt;t&amp;nbsp;and&amp;nbsp;&lt;b&gt;limited U.S. embassy&amp;nbsp;assistance&amp;nbsp;for Americans in the Turkish Cypriot Administered area&lt;/b&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Advisory Summary&amp;#8239;&amp;#8239;&amp;#8239;&amp;#8239;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;On March&amp;#8239;3, 2026, the Department of State&amp;#8239;authorized&amp;#8239;non-emergency U.S. government&amp;nbsp;employees&amp;nbsp;and&amp;nbsp;U.S. government employee&amp;nbsp;family members to leave Cyprus due to&amp;#8239;the&amp;#8239;safety risks.&amp;#8239;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Armed Conflict&amp;#8239;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Following the onset of hostilities between the United States and Iran on February 28,&amp;nbsp;there&amp;nbsp;have been significant disruptions to commercial flights.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;p&gt;A&amp;nbsp;drone struck a building&amp;nbsp;on&amp;nbsp;the British&amp;nbsp;Sovereign&amp;nbsp;Base Area&amp;nbsp;on Cyprus&amp;nbsp;on March 2.&lt;/p&gt;
+&lt;p&gt;Turkish Cypriot-Administered Area&amp;nbsp;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;The U.S. Embassy in Nicosia has limited ability to help U.S. citizens in this area.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Human rights reports show that central prison and police detention facilities do not meet international standards.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Since 1974, the southern part of Cyprus has been under the control of the internationally recognized Government of the Republic of Cyprus. However, the northern part of Cyprus is administered by Turkish Cypriots. It proclaimed itself the &amp;#8220;Turkish Republic of Northern Cyprus&amp;#8221; (&amp;#8220;TRNC&amp;#8221;) in 1983.&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;The United States does not recognize the &amp;#8220;TRNC,&amp;#8221; nor does any country other than T&amp;#252;rkiye. A buffer zone, patrolled by the UN Peacekeeping Force in Cyprus, separates the 2 sides.&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;For U.S. citizen travelers:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Enter and exit the island of Cyprus only&amp;#8239;at Larnaca and Paphos airports or at the seaports of Limassol, Larnaca, and Paphos. The Republic of Cyprus&amp;#8239;does not consider&amp;#8239;entry or exit via Ercan Airport or by a seaport in the north to be legal. U.S. citizens who leave the island from Ercan could face challenges returning to the Republic of Cyprus in the future.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;You&amp;#8239;cannot receive a residency permit&amp;#8239;from&amp;nbsp;the Republic of Cyprus to live in the area administered by Turkish Cypriots.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;The Republic of Cyprus&amp;#8239;does not recognize&amp;#8239;residence permits issued by Turkish Cypriots. If you arrive to the island at a north seaport or Ercan airport or stay in the Turkish Cypriot-administered area for over 90 days, you may be denied entry into the Republic of Cyprus.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;The U.S. Embassy has limited ability to help U.S. citizens in the area administered by Turkish Cypriots. The Government of the Republic of Cyprus does not control the area. Travelers should consider this when planning their activities.&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;&amp;#8239;&amp;#8239;If you&amp;nbsp;decide to&amp;nbsp;travel to Cyprus:&lt;/b&gt;&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Visit our website for information on&amp;#8239;&lt;a href="https://travel.state.gov/en/international-travel/travel-advisories/high-risk-areas.html"&gt;Travel to High-Risk Areas&lt;/a&gt;.&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Have a plan to leave in an emergency that does not depend on U.S. government help. Review our information on&amp;nbsp;&lt;a href="https://travel.state.gov/en/international-travel/help-abroad/crisis-response.html"&gt;Crisis Response and Evacuations&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Enroll in the&amp;nbsp;&lt;a href="https://mytravel.state.gov/s/step"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt;&amp;nbsp;to get important updates and alerts from the U.S. embassy or consulate. Enrolling helps the U.S. embassy or consulate contact you or your emergency contact in an emergency.&amp;nbsp;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Monitor local media for breaking events and be prepared to adjust your plans.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Develop a communication&amp;#8239;plan with family, your employer, or host organization. Plan together how and when&amp;#8239;you'll&amp;#8239;confirm you are safe (text or call).&amp;#8239;&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Keep travel documents up to date and easy to access.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Make back-up plans to leave the country.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Be aware of your surroundings.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Stay alert especially in places visited by large groups of people and travelers or tourists.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;Visit the Centers for Disease Control and Prevention (CDC) website for&amp;nbsp;the latest&amp;#8239;&lt;a href="https://wwwnc.cdc.gov/travel/destinations/traveler/none/kuwait"&gt;Travel Health Information&lt;/a&gt;&amp;#8239;before you travel.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;You should make a safety plan for emergencies. Read the&amp;#8239;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/travelers-checklist.html"&gt;Traveler&amp;#8217;s Checklist&lt;/a&gt;.&amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;We highly recommend that you buy insurance before you travel. Check with&amp;#8239;your&amp;#8239;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/before-you-go/your-health-abroad/Insurance_Coverage_Overseas.html"&gt;travel insurance provider&lt;/a&gt;&amp;#8239;about evacuation&amp;#8239;assistance, medical insurance, and trip cancelation coverage. &amp;#8239;&amp;#8239;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 3: Reconsider Travel</category>
+      <category domain="Country-Tag">CY</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/cyprus-travel-advisory.html</guid>
+      <dc:identifier>CY,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Vanuatu - Level 1: Exercise Normal Precautions</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/vanuatu-travel-advisory.html</link>
+      <pubDate>Thu, 22 May 2025</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;&lt;i&gt;Updated to reflect lowering the Travel Advisory Level from Level 3 to Level 1 due to ongoing recovery efforts and removal of the Natural Disaster (N) indicator.&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Exercise normal precautions in Vanuatu.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Country Summary:&lt;/b&gt; Infrastructure and roads in Port Vila and the surrounding area were damaged during the December 2024 earthquake, with repairs in progress.&lt;/p&gt;
+&lt;p&gt;Read the &lt;a href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Vanuatu.html"&gt;country information page&lt;/a&gt; for additional information on travel to Vanuatu.&lt;/p&gt;
+&lt;p&gt;If you decide to travel to Vanuatu:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Monitor local reports and updates from the Vanuatu government and follow all instructions from local authorities.&lt;/li&gt;
+&lt;li&gt;Be aware that some areas may still be undergoing repairs, and access could be restricted.&amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Keep travel documents up to date and easily accessible.&lt;/li&gt;
+&lt;li&gt;Enroll in the &lt;a href="https://step.state.gov/step/"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt; to receive Alerts and make it easier to locate you in an emergency.&amp;nbsp; &amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Review the &lt;a href="https://www.osac.gov/Content/Report/4f26caa5-c08c-4544-a4de-1ccf97621610"&gt;Country Security Report&lt;/a&gt; for Vanuatu.&amp;nbsp; &amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Visit the CDC page for the latest &lt;a href="https://wwwnc.cdc.gov/travel/destinations/list"&gt;Travel Health Information&lt;/a&gt; related to your travel.&amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Prepare a contingency plan for emergency situations. Review the &lt;a href="https://travel.state.gov/content/passports/en/go/checklist.html"&gt;Traveler&amp;#8217;s Checklist&lt;/a&gt;.&amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp;&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 1: Exercise Normal Precautions</category>
+      <category domain="Country-Tag">NH</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/vanuatu-travel-advisory.html</guid>
+      <dc:identifier>NH,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>British Virgin Islands - Level 1: Exercise Normal Precautions</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/british-virgin-islands-travel-advisory.html</link>
+      <pubDate>Fri, 22 May 2026</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;&lt;i&gt;There are no changes to the advisory level or risk indicators. Advisory summary was updated.&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Exercise normal precautions&lt;/b&gt; in the &lt;b&gt;British Virgin Islands&lt;/b&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Advisory summary&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;British Virgin Islands is generally a safe destination for travelers.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;British Virgin Islands regularly experiences hurricanes. Review our information on &lt;a adhocenable="false" href="https://travel.state.gov/en/international-travel/help-abroad/crisis-response.html#assistance-item-a98d3b76f2" title="Weather and Natural Disasters in British Virgin Islands"&gt;W&lt;u&gt;eather and Natural Disasters&lt;/u&gt;&lt;/a&gt; in British Virgin Islands.&lt;/li&gt;
+&lt;li&gt;Review our &lt;u&gt;&lt;a adhocenable="false" href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/BritishVirginIslands.html" title="Travel Guidance for British Virgin Islands"&gt;Travel Guidance for British Virgin Islands&lt;/a&gt;&lt;/u&gt; to learn how to prepare for a safe trip.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;If you decide to travel to&lt;/b&gt; &lt;b&gt;British Virgin Islands:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Enroll in the &lt;a href="https://mytravel.state.gov/s/step" title="Smart Traveler Enrollment Program (STEP)" adhocenable="false"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt; to get important updates and alerts from the U.S. embassy or consulate. Enrolling helps the U.S. embassy or consulate contact you or your emergency contact in an emergency.&lt;/li&gt;
+&lt;li&gt;Review the &lt;a href="https://www.osac.gov/Content/Report/c6978ae5-3608-45ca-9900-1c4b57c0cfd6" target="_blank" title="Country Security Report" adhocenable="false"&gt;Country Security Report&lt;/a&gt; for the Eastern Caribbean.&lt;/li&gt;
+&lt;li&gt;Before you leave the United States for British Virgin Islands, carefully check your luggage for any loose ammunition or weapons you may have forgotten. Review our information on &lt;u&gt;&lt;a adhocenable="false" href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/BritishVirginIslands.html" title="Local Laws and Customs"&gt;Local Laws and Customs&lt;/a&gt;&lt;/u&gt;&amp;nbsp;in British Virgin Islands.&lt;/li&gt;
+&lt;li&gt;Visit the Centers for Disease Control and Prevention (CDC) website for the &lt;a href="https://wwwnc.cdc.gov/travel/destinations/traveler/none/british-virgin-islands" target="_blank" title="CDC latest Travel Health Information" adhocenable="false"&gt;latest&amp;nbsp;Travel Health Information&amp;nbsp;&lt;/a&gt;for British Virgin Islands.&lt;/li&gt;
+&lt;li&gt;Whether you&amp;#8217;re a first time or frequent traveler, use the &lt;a href="https://travel.state.gov/en/international-travel/planning/checklist.html" title="International Travel Checklist" adhocenable="false"&gt;International Travel Checklist&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;We highly recommend that you buy travel insurance before you travel.&amp;nbsp;Check with your&amp;nbsp;&lt;a href="https://travel.state.gov/en/international-travel/planning/guidance/insurance.html" title="Travel Insurance" adhocenable="false"&gt;travel insurance provider&lt;/a&gt;&amp;nbsp;about evacuation assistance, medical insurance, and trip cancelation coverage.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 1: Exercise Normal Precautions</category>
+      <category domain="Country-Tag">VI</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/british-virgin-islands-travel-advisory.html</guid>
+      <dc:identifier>VI,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Mongolia - Level 1: Exercise Normal Precautions</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mongolia-travel-advisory.html</link>
+      <pubDate>Wed, 22 Jan 2025</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;&lt;i&gt;Reissued after periodic review without changes.&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Exercise normal precautions in Mongolia.&lt;/p&gt;
+&lt;p&gt;Read the&amp;nbsp;&lt;a href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Mongolia.html"&gt;country information page&lt;/a&gt;&amp;nbsp;for additional information on travel to Mongolia.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;If you travel to Mongolia, you should:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Enroll in the&amp;nbsp;&lt;a href="https://step.state.gov/"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt;&amp;nbsp;to receive Alerts and make it easier to locate you in an emergency.&lt;/li&gt;
+&lt;li&gt;Monitor local media for breaking events and adjust your plans based on new information.&lt;/li&gt;
+&lt;li&gt;Follow the Department of State on&amp;nbsp;&lt;a href="https://www.facebook.com/statedept/" adhocenable="false"&gt;Facebook&lt;/a&gt;&amp;nbsp;and&amp;nbsp;&lt;a href="https://x.com/StateDept?ref_src=twsrc%5Egoogle%7Ctwcamp%5Eserp%7Ctwgr%5Eauthor-Travel-Country-Information-Pages/Mongolia.html" adhocenable="false"&gt;X&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Review the&amp;nbsp;&lt;a href="https://www.osac.gov/Content/Report/aaa0209c-29b1-4551-b1af-1cc8f102d10c" adhocenable="false"&gt;Country Security Report&lt;/a&gt;&amp;nbsp;for Mongolia.&lt;/li&gt;
+&lt;li&gt;Visit the CDC page for the latest&amp;nbsp;&lt;a href="https://wwwnc.cdc.gov/travel" adhocenable="false"&gt;Travel Health Information&lt;/a&gt;&amp;nbsp;related to your travel.&lt;/li&gt;
+&lt;li&gt;Prepare a contingency plan for emergency situations. Review the&amp;nbsp;&lt;a href="https://travel.state.gov/content/passports/en/go/checklist.html" adhocenable="false"&gt;Traveler&amp;#8217;s Checklist&lt;/a&gt;.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 1: Exercise Normal Precautions</category>
+      <category domain="Country-Tag">MG</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mongolia-travel-advisory.html</guid>
+      <dc:identifier>MG,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Armenia - Level 2: Exercise Increased Caution</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/armenia-travel-advisory.html</link>
+      <pubDate>Fri, 05 Sep 2025</pubDate>
+      <description>&lt;p&gt;Reissued after periodic review with minor edits.&lt;/p&gt;
+&lt;p&gt;Exercise increased caution in Armenia due to areas of potential armed conflict. Some areas have increased risk. Read the entire Travel Advisory.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Do Not Travel To These Areas for Any Reason:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The border region with Azerbaijan.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;U.S. Embassy employees and their families cannot travel to these areas for non-essential reasons:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Gegharkunik region east of Vardenis&lt;/li&gt;
+&lt;li&gt;Syunik region east of Goris&lt;/li&gt;
+&lt;li&gt;Syunik region south of Kapan&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Travel through Yeraskh village in Ararat region is allowed, stopping is not.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Country Summary:&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;U.S. citizens should exercise increased caution in Armenia. Further military activity could occur in the region.&amp;nbsp;&amp;nbsp;&lt;/p&gt;
+&lt;p&gt;Read the &lt;a title="Armenia Country Information Page" adhocenable="false" href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Armenia.html"&gt;country information&lt;/a&gt; page for additional information on travel to Armenia.&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;If you decide to travel to Armenia:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Enroll in the &lt;a title="Step.state.gov" adhocenable="false" href="https://mytravel.state.gov/s/step"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt; to get important updates and alerts from the U.S. embassy or consulate.&amp;nbsp; Enrolling helps the U.S. embassy or consulate contact you or your emergency contact in an emergency.&amp;nbsp; &amp;nbsp; &amp;nbsp;&lt;/li&gt;
+&lt;li&gt;Review the &lt;a title="Country Security Report" adhocenable="false" href="https://www.osac.gov/Content/Browse/Report?subContentTypes=Country%20Security%20Report"&gt;Country Security Repor&lt;/a&gt;t for Armenia.&lt;/li&gt;
+&lt;li&gt;Prepare a plan for emergency situations. Review the &lt;a adhocenable="false" href="https://travel.state.gov/en/international-travel/planning/checklist.html"&gt;Traveler&amp;#8217;s Checklist.&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Visit the CDC page for the latest &lt;a title="cdc.gov" adhocenable="false" href="https://wwwnc.cdc.gov/travel/destinations/list"&gt;Travel Health Information&lt;/a&gt; related to your travel and return to the United States.&lt;/li&gt;
+&lt;li&gt;We highly recommend that you buy insurance before you travel. Check with your &lt;a adhocenable="false" href="https://travel.state.gov/en/international-travel/planning/guidance/insurance.html"&gt;travel insurance provider&lt;/a&gt; about evacuation assistance, medical insurance, and trip cancelation coverage.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p style="text-align: justify;"&gt;&lt;b&gt;Border with Azerbaijan &amp;#8211; Level 4: Do Not Travel&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Past military action has occurred near the Armenia-Azerbaijan border and there is potential for armed conflict in the area. U.S. citizens should avoid the area. Exercise caution on roads near Armenia&amp;#8217;s border with Azerbaijan. Some parts of the road may cross international borders without warning. Checkpoints may control roads or authorities may close them to travelers without notice.&amp;nbsp; The U.S. embassy does not allow embassy employees and their families to travel for non-essential reasons to the border region, as well as other areas of Armenia listed in this Travel Advisory.&lt;/p&gt;
+&lt;p&gt;Visit our website for &lt;a adhocenable="false" href="https://travel.state.gov/en/international-travel/travel-advisories/high-risk-areas.html"&gt;Travel to High-Risk Areas.&lt;/a&gt;&lt;/p&gt;</description>
+      <category domain="Threat-Level">Level 2: Exercise Increased Caution</category>
+      <category domain="Country-Tag">AM</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/armenia-travel-advisory.html</guid>
+      <dc:identifier>AM,advisory</dc:identifier>
+    </item>
+    
+<item xmlns:dc="http://purl.org/dc/elements/1.1/">
+      <title>Anguilla - Level 1: Exercise Normal Precautions</title>
+      <link>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/anguilla-travel-advisory.html</link>
+      <pubDate>Fri, 22 May 2026</pubDate>
+      <description>&lt;p&gt;&lt;b&gt;&lt;i&gt;There are no changes to the advisory level or risk indicators. Advisory summary was updated.&lt;/i&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Exercise normal precautions&lt;/b&gt; in &lt;b&gt;Anguilla&lt;/b&gt;.&lt;b&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;&lt;b&gt;Advisory summary&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt;Anguilla is generally a safe destination for travelers.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Anguilla regularly experiences hurricanes. Review our information on &lt;a adhocenable="false" href="https://travel.state.gov/en/international-travel/help-abroad/crisis-response.html#assistance-item-a98d3b76f2" title="Weather and Natural Disasters in Anguilla"&gt;Weather and Natural Disasters&lt;/a&gt; in Anguilla.&lt;/li&gt;
+&lt;li&gt;Review our &lt;a title="Anguilla International Travel Information" adhocenable="false" href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Anguilla.html"&gt;Travel Guidance for Anguilla&lt;/a&gt; to learn how to prepare for a safe trip.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;b&gt;If you decide to travel to&lt;/b&gt; &lt;b&gt;Anguilla:&lt;/b&gt;&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Enroll in the &lt;a href="https://mytravel.state.gov/s/step" title="Smart Traveler Enrollment Program (STEP)" adhocenable="false"&gt;Smart Traveler Enrollment Program (STEP)&lt;/a&gt; to get important updates and alerts from the U.S. embassy or consulate. Enrolling helps the U.S. embassy or consulate contact you or your emergency contact in an emergency.&lt;/li&gt;
+&lt;li&gt;Review the &lt;a href="https://www.osac.gov/Content/Report/c6978ae5-3608-45ca-9900-1c4b57c0cfd6" target="_blank" title="Country Security Report" adhocenable="false"&gt;Country Security Report&lt;/a&gt; for the Eastern Caribbean.&lt;/li&gt;
+&lt;li&gt;Before you leave the United States for Anguilla, carefully check your luggage for any loose ammunition or weapons you may have forgotten. Review our information on &lt;a adhocenable="false" href="https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Anguilla.html" title="Local Laws and Customs in Anguilla"&gt;Local Laws and Customs&lt;/a&gt;&amp;nbsp;in Anguilla.&lt;/li&gt;
+&lt;li&gt;Visit the Centers for Disease Control and Prevention (CDC) website for the &lt;a href="https://wwwnc.cdc.gov/travel/destinations/traveler/none/anguilla" target="_blank" title="CDC latest Travel Health Information" adhocenable="false"&gt;latest&amp;nbsp;Travel Health Information&amp;nbsp;&lt;/a&gt;for Anguilla.&lt;/li&gt;
+&lt;li&gt;Whether you&amp;#8217;re a first time or frequent traveler, use the &lt;a href="https://travel.state.gov/en/international-travel/planning/checklist.html" title="International Travel Checklist" adhocenable="false"&gt;International Travel Checklist&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;We highly recommend that you buy travel insurance before you travel.&amp;nbsp;Check with your&amp;nbsp;&lt;a href="https://travel.state.gov/en/international-travel/planning/guidance/insurance.html" title="Travel Insurance" adhocenable="false"&gt;travel insurance provider&lt;/a&gt;&amp;nbsp;about evacuation assistance, medical insurance, and trip cancelation coverage.&lt;/li&gt;
+&lt;/ul&gt;</description>
+      <category domain="Threat-Level">Level 1: Exercise Normal Precautions</category>
+      <category domain="Country-Tag">AV</category>
+      <category domain="Keyword">advisory</category>
+      <guid>https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/anguilla-travel-advisory.html</guid>
+      <dc:identifier>AV,advisory</dc:identifier>
+    </item>
+    
+  </channel>
+</rss>

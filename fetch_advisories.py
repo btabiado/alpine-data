@@ -360,8 +360,100 @@ def _tag_from_title(title: str) -> str:
     return " ".join(t.split()[:3])[:60]
 
 
+# ----- bulletin filter -------------------------------------------------------
+#
+# The State Dept "TAsTWs.xml" feed publishes ~215 items: one per country
+# advisory. The vast majority of these are routine periodic-review reissues
+# ("Reissued after periodic review with minor edits", "There are no changes
+# to the advisory level...") that should NOT flood the dashboard's "Latest
+# Bulletins" panel — those are scheduled republishes, not news.
+#
+# A real bulletin is one of:
+#   (a) Explicit advisory-level change ("The advisory level was increased
+#       to 3", "shift to Level 2", "change in overall travel advisory level").
+#   (b) Ordered or authorized departure of U.S. government personnel — a
+#       very strong "things are bad enough that we're pulling our people"
+#       signal.
+#   (c) Substantive content rewrite ("Updated to reflect ...") — these
+#       always describe a specific change (embassy ops, new threat, etc.).
+#
+# Plus a level filter: Level 1 ("Exercise Normal Precautions") items are
+# dropped UNLESS the change was a meaningful level decrease (e.g. Vanuatu
+# from L3 -> L1, which is genuinely newsworthy).
+#
+# We only look at the first 400 chars of plaintext description — the State
+# Dept convention is to put the change-summary header in the lead bold/italic
+# paragraph, so we don't need to scan the full body (which would false-match
+# on routine boilerplate like "If you decide to travel ... avoid demonstrations").
+#
+# Empirical: this drops ~215 raw items to ~20-25 genuine bulletins on the
+# live feed (May 2026).
+
+_LEVEL_CHANGE_RE = re.compile(
+    r"(advisory level (was|has been) (decreased|increased|raised|lowered)"
+    r"|advisory level (increased|decreased) from level"
+    r"|reissued after periodic review with changes to overall"
+    r"|change in overall travel advisory level"
+    r"|shift to level"
+    r"|lowering the travel advisory level"
+    r"|raising the travel advisory level"
+    r"|raised the travel advisory level"
+    r"|lowered the travel advisory level)",
+    re.IGNORECASE,
+)
+# Ordered/authorized departure can be phrased as either:
+#   "the [...] ordered departure of [...]"
+#   "the [...] ordered non-emergency US government employees [...] to leave"
+# We accept both shapes — the latter is canonical State Dept language for
+# a fresh departure declaration in the alert body.
+_DEPARTURE_RE = re.compile(
+    r"((ordered|authorized) departure"
+    r"|ordered (non-emergency )?u\.?s\.? government (employees|personnel)"
+    r"|ordered (?:non-emergency )?(?:family members|eligible family))",
+    re.IGNORECASE,
+)
+# "Updated to reflect" may have NBSP / whitespace between the words in the
+# State Dept feed; tolerate both.
+_UPDATED_REFLECT_RE = re.compile(r"updated to(\s|\xa0)+reflect", re.IGNORECASE)
+# Words that signal a Level-DECREASE specifically (used to gate L1 items —
+# only L1 advisories whose body explicitly says "lowered from L3" / similar
+# are kept; we don't surface routine L1 risk-indicator tweaks).
+_LEVEL_DECREASE_RE = re.compile(r"(lower|decreas)", re.IGNORECASE)
+_TITLE_LEVEL_RE = re.compile(r"Level\s+(\d)")
+
+
+def _is_bulletin(title: str, body: str) -> bool:
+    """Return True if an RSS item is genuine bulletin-worthy news.
+
+    Filters out the ~200 routine per-country periodic-review reissues that
+    pollute the State Dept RSS feed. Pure function — easily unit-testable.
+    """
+    head = (body or "")[:400]
+    has_level_change = bool(_LEVEL_CHANGE_RE.search(head))
+    has_departure = bool(_DEPARTURE_RE.search(head))
+    has_updated_reflect = bool(_UPDATED_REFLECT_RE.search(head))
+    if not (has_level_change or has_departure or has_updated_reflect):
+        return False
+    m = _TITLE_LEVEL_RE.search(title or "")
+    level = int(m.group(1)) if m else 0
+    if level == 1:
+        # Only keep L1 items if they represent a genuine level-DECREASE
+        # (e.g. country recovered from a higher advisory). Other L1 churn
+        # — risk indicator tweaks, summary refreshes — is too low-signal
+        # for a security-focused bulletins panel.
+        return bool(_LEVEL_DECREASE_RE.search(head)) and (
+            has_level_change or has_updated_reflect
+        )
+    return True
+
+
 def parse_advisory_rss(xml_str: str) -> list[dict]:
     """Pure function: parse the State Dept advisory RSS into bulletin rows.
+
+    The State Dept feed mixes ~5-25 genuine alerts (level changes, ordered
+    departures, substantive rewrites) with ~190 routine periodic-review
+    reissues. This parser filters down to the genuine alerts via
+    `_is_bulletin`; see that helper for the rule definition.
 
     Returns items sorted newest first. RSS 2.0 only (the State Dept feed is
     RSS 2.0); if the feed flips to Atom we'd need a sibling parser like
@@ -376,6 +468,7 @@ def parse_advisory_rss(xml_str: str) -> list[dict]:
         print(f"  [parse_advisory_rss] xml parse: {e}", file=sys.stderr)
         return []
     out: list[dict] = []
+    seen_titles: set[str] = set()
     for it in root.findall(".//item"):
         title = (it.findtext("title") or "").strip()
         link = (it.findtext("link") or "").strip()
@@ -383,6 +476,17 @@ def parse_advisory_rss(xml_str: str) -> list[dict]:
         desc = (it.findtext("description") or "").strip()
         # Strip HTML from description for the body field.
         body = re.sub(r"<[^>]+>", "", desc).strip()[:600]
+        if not title and not link:
+            continue
+        # Filter to bulletin-worthy items only.
+        if not _is_bulletin(title, body):
+            continue
+        # Defensive dedupe — feed has been observed to publish the same
+        # title twice (e.g. Mainland China appeared as two consecutive
+        # items in the May 2026 snapshot).
+        if title in seen_titles:
+            continue
+        seen_titles.add(title)
         # Parse pubDate -> YYYY-MM-DD.
         date_iso = ""
         ts = 0
@@ -394,8 +498,6 @@ def parse_advisory_rss(xml_str: str) -> list[dict]:
                     date_iso = dt.strftime("%Y-%m-%d")
             except Exception:
                 pass
-        if not title and not link:
-            continue
         out.append({
             "tag": _tag_from_title(title),
             "severity": _severity_from_text(title, body),
@@ -462,12 +564,26 @@ def fetch_live() -> dict | None:
 # <table id="htmlTable">...</table> block down to a handful of rows.
 _FIXTURE_PATH = ROOT / "tests" / "fixtures" / "advisories_sample.html"
 
+# Trimmed snapshot of the live State Dept TAsTWs RSS feed (11 hand-picked items
+# — 6 bulletin-worthy, 5 routine reissues). Lets the parser bulletin filter
+# be exercised offline. Refresh with:
+#   curl -A "<UA>" "<ADVISORY_RSS_URL>" > /tmp/full.xml
+# then pluck a representative subset.
+_RSS_FIXTURE_PATH = ROOT / "tests" / "fixtures" / "advisories_rss_sample.xml"
+
 
 def _self_test() -> int:
     """Offline parser sanity check. Returns 0 on pass, 1 on failure."""
     sample_html = _FIXTURE_PATH.read_text()
     rows = parse_advisory_table(sample_html)
     by_name = {r["name"]: r for r in rows}
+
+    # RSS bulletin-filter fixture round-trip.
+    sample_rss = _RSS_FIXTURE_PATH.read_text()
+    bulletins = parse_advisory_rss(sample_rss)
+    bulletin_titles = [b["title"] for b in bulletins]
+    bulletin_country_tags = {t.split(" - ")[0] for t in bulletin_titles}
+
     assertions = [
         (len(rows) == 6, f"expected 6 rows, got {len(rows)}"),
         ("Afghanistan" in by_name, "Afghanistan row missing"),
@@ -507,13 +623,55 @@ def _self_test() -> int:
          "demonstrations cue should be amber"),
         (_severity_from_text("Routine update", "informational") == "green",
          "no keyword cue should be green"),
+
+        # --- RSS bulletin filter ---
+        # Fixture has 11 items; filter should keep ~6 (within the documented
+        # 5-20 ballpark).
+        (1 <= len(bulletins) <= 20,
+         f"bulletins count {len(bulletins)} outside 1..20 ballpark"),
+        # Known-good bulletins (level change / ordered departure / Updated
+        # to reflect substantive content) must survive.
+        ("Bahrain" in bulletin_country_tags,
+         f"expected Bahrain (ordered departure) in bulletins, got "
+         f"{sorted(bulletin_country_tags)}"),
+        ("United Arab Emirates" in bulletin_country_tags,
+         "expected UAE (ordered departure) in bulletins"),
+        ("Mozambique" in bulletin_country_tags,
+         "expected Mozambique (level 3->2 change) in bulletins"),
+        ("Cyprus" in bulletin_country_tags,
+         "expected Cyprus (level increased to 3) in bulletins"),
+        ("Greenland" in bulletin_country_tags,
+         "expected Greenland (Updated to reflect new advisory) in bulletins"),
+        ("Vanuatu" in bulletin_country_tags,
+         "expected Vanuatu (L3 -> L1 decrease) in bulletins"),
+        # Routine periodic-review reissues with no real news content must
+        # be filtered OUT.
+        ("British Virgin Islands" not in bulletin_country_tags,
+         "BVI (no-change reissue) should be filtered out"),
+        ("Anguilla" not in bulletin_country_tags,
+         "Anguilla (no-change reissue) should be filtered out"),
+        ("Mongolia" not in bulletin_country_tags,
+         "Mongolia (reissued-without-changes) should be filtered out"),
+        ("Armenia" not in bulletin_country_tags,
+         "Armenia (reissued-with-minor-edits) should be filtered out"),
+        # _is_bulletin unit checks.
+        (_is_bulletin("X - Level 3", "Updated to reflect ordered departure of personnel."),
+         "_is_bulletin should accept ordered-departure"),
+        (_is_bulletin("X - Level 2", "The advisory level was increased to 2. ..."),
+         "_is_bulletin should accept explicit level change"),
+        (not _is_bulletin("X - Level 1", "Reissued after periodic review with minor edits."),
+         "_is_bulletin should reject minor-edits reissue"),
+        (not _is_bulletin("X - Level 2", "There are no changes to the advisory level or risk indicators."),
+         "_is_bulletin should reject no-changes notice"),
     ]
     failed = [msg for ok, msg in assertions if not ok]
     if failed:
         for f in failed:
             print(f"  [self-test FAIL] {f}", file=sys.stderr)
         return 1
-    print(f"  [self-test OK] {len(rows)} rows parsed; all assertions passed.")
+    print(f"  [self-test OK] {len(rows)} table rows, "
+          f"{len(bulletins)} bulletins (of 11 RSS items) parsed; "
+          f"all assertions passed.")
     return 0
 
 
