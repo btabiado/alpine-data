@@ -3379,6 +3379,21 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
     </div>
+
+    <!-- Section D: Sightings by classification (shape) over time.
+         Stacked area chart of shape-by-year + per-shape totals legend.
+         Driven from data-mufon.json's shape_totals / shape_by_year keys
+         (see fetch_mufon.py for aggregation rules). -->
+    <div class="v2-card" id="mufonShapesCard" style="margin-top:14px">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">Sightings by classification</h2>
+          <div class="v2-card__subtitle" id="mufonShapesSub">NUFORC-reported shapes since recording began (1906)</div>
+        </div>
+        <div><span class="v2-chip v2-chip--info" id="mufonShapesAsOf">● —</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonShapesBody" style="padding:14px"></div>
+    </div>
   </div>
 </div>
 
@@ -9051,6 +9066,7 @@ function renderMufon(){
   // loaded, the loading placeholders elsewhere handle the empty state.
   renderMufonTrend();
   renderMufonMap();
+  renderMufonShapes();
 }
 
 function renderMufonUpdates(){
@@ -9578,6 +9594,228 @@ function renderMufonMap(){
       }
     });
   }
+}
+
+// Sightings-by-classification card. Stacked area chart (1906 → 2014) of
+// shape-by-year + a per-shape "all-time totals" legend on the right.
+// Pure inline SVG; colors come from existing semantic tokens so we don't
+// invent new ones. Honest footnote surfaces the 2014 data cutoff.
+//
+// Color palette: 8 distinct hues drawn from --v2-* semantic tokens plus a
+// few hand-picked darker variants for the rest. Anything beyond the top 8
+// uses a muted gray. The data already collapses tail shapes into "other"
+// upstream (see fetch_mufon.py), so this palette caps out at ~10.
+const MUFON_SHAPE_COLORS = [
+  'var(--v2-info, #06b6d4)',     // 0: top shape (light)
+  'var(--v2-warn, #f59e0b)',     // 1
+  'var(--v2-good, #22c55e)',     // 2
+  'var(--v2-bad, #ef4444)',      // 3
+  'var(--v2-ai, #a78bfa)',       // 4
+  'var(--v2-orange, #cc7a2b)',   // 5
+  '#0ea5e9',                     // 6 (sky — derived from info)
+  '#84cc16',                     // 7 (lime — derived from good)
+];
+const MUFON_SHAPE_COLOR_FALLBACK = 'rgba(148,163,184,0.55)'; // slate
+
+function mufonShapeColor(rankIdx){
+  if (rankIdx < MUFON_SHAPE_COLORS.length) return MUFON_SHAPE_COLORS[rankIdx];
+  return MUFON_SHAPE_COLOR_FALLBACK;
+}
+
+function renderMufonShapes(){
+  const m = DATA.mufon;
+  const body = document.getElementById('mufonShapesBody');
+  const asOf = document.getElementById('mufonShapesAsOf');
+  if (!body) return;
+  if (!m) return; // sidecar pending; the parent loading state already shows.
+
+  const totals = (m.shape_totals || []).slice();
+  const byYear = m.shape_by_year || {};
+  const yearKeys = Object.keys(byYear).sort();
+
+  if (!totals.length || !yearKeys.length) {
+    if (asOf) asOf.textContent = '● unavailable';
+    body.innerHTML = V2.empty({
+      icon: '🛸',
+      title: 'No classification data',
+      sub: 'Upstream CSV did not include a usable shape column.',
+      warm: false,
+    });
+    return;
+  }
+
+  if (asOf) {
+    const dr = m.date_range || [null, null];
+    const asOfTxt = (dr[0] && dr[1]) ? (dr[0] + ' → ' + dr[1]) : '—';
+    asOf.textContent = '● ' + asOfTxt + (m._stale ? ' (stale)' : '');
+  }
+
+  // Rank shapes by all-time total so colors stay consistent between the
+  // stacked area and the legend list. "unknown" and "other" are real
+  // buckets — they live in the same rank order as named shapes.
+  const ranked = totals.slice().sort((a,b) => b.count - a.count);
+  const shapeOrder = ranked.map(s => s.shape);
+  const colorFor = {};
+  shapeOrder.forEach((sh, i) => { colorFor[sh] = mufonShapeColor(i); });
+
+  // Stacked area: for each year, accumulate counts in shapeOrder order so
+  // visually the largest shape sits at the bottom of the stack. Compute the
+  // per-year band [y0, y1] for each shape, then convert to SVG polygon
+  // points by walking the lower edge forward and the upper edge backward.
+  const W = 720, H = 280;
+  const padL = 44, padR = 12, padT = 14, padB = 28;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const years = yearKeys.map(y => parseInt(y, 10)).sort((a,b) => a-b);
+  const yMin = years[0];
+  const yMax = years[years.length - 1];
+  const yearSpan = Math.max(1, yMax - yMin);
+
+  // Per-year total — used to set the y-axis max. Recomputed from byYear so
+  // we don't depend on totals_by_year being in sync (it should be, but the
+  // chart should still render if it ever drifts).
+  let maxTotal = 0;
+  const totalsByYear = {};
+  yearKeys.forEach(y => {
+    let t = 0;
+    const b = byYear[y] || {};
+    for (const sh in b) t += b[sh];
+    totalsByYear[y] = t;
+    if (t > maxTotal) maxTotal = t;
+  });
+  if (!maxTotal) maxTotal = 1;
+
+  function xFor(year){ return padL + ((year - yMin) / yearSpan) * plotW; }
+  function yFor(v){ return padT + plotH - (v / maxTotal) * plotH; }
+
+  // Build a band per shape. For each shape in shapeOrder we accumulate the
+  // running bottom edge across years and emit polygon points: lower edge
+  // L→R then upper edge R→L. Skip shapes that have zero presence to keep
+  // the SVG compact.
+  const runningBottom = {}; // yearKey -> current cumulative bottom (in units)
+  yearKeys.forEach(y => { runningBottom[y] = 0; });
+
+  const polygons = [];
+  shapeOrder.forEach((sh, i) => {
+    let anyVal = false;
+    const lowerPts = [];
+    const upperPts = [];
+    yearKeys.forEach(y => {
+      const yearN = parseInt(y, 10);
+      const v = (byYear[y] || {})[sh] || 0;
+      const lower = runningBottom[y];
+      const upper = lower + v;
+      if (v > 0) anyVal = true;
+      lowerPts.push(xFor(yearN) + ',' + yFor(lower));
+      upperPts.push(xFor(yearN) + ',' + yFor(upper));
+      runningBottom[y] = upper;
+    });
+    if (!anyVal) return;
+    // polygon: lower L→R, then upper R→L
+    const pts = lowerPts.concat(upperPts.slice().reverse()).join(' ');
+    const color = colorFor[sh];
+    polygons.push(
+      '<polygon points="' + pts + '" fill="' + color + '" '
+      + 'fill-opacity="0.82" stroke="none">'
+      +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+      + '</polygon>'
+    );
+  });
+
+  // X-axis ticks: roughly every 15 years, plus the endpoints.
+  const xTicks = [];
+  const tickStep = 15;
+  let t0 = Math.ceil(yMin / tickStep) * tickStep;
+  for (let yy = t0; yy <= yMax; yy += tickStep) xTicks.push(yy);
+  if (xTicks[0] !== yMin) xTicks.unshift(yMin);
+  if (xTicks[xTicks.length - 1] !== yMax) xTicks.push(yMax);
+
+  const xAxisMarks = xTicks.map(yy => {
+    const xp = xFor(yy);
+    return ''
+      + '<line x1="' + xp + '" y1="' + (padT + plotH) + '" '
+      +     'x2="' + xp + '" y2="' + (padT + plotH + 4) + '" '
+      +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+      + '<text x="' + xp + '" y="' + (padT + plotH + 16) + '" '
+      +     'text-anchor="middle" font-size="10" '
+      +     'fill="var(--muted)">' + yy + '</text>';
+  }).join('');
+
+  // Y-axis ticks: 4 evenly-spaced bands.
+  const yTickVals = [0, Math.round(maxTotal * 0.25), Math.round(maxTotal * 0.5),
+                     Math.round(maxTotal * 0.75), maxTotal];
+  const yAxisMarks = yTickVals.map(v => {
+    const yp = yFor(v);
+    return ''
+      + '<line x1="' + padL + '" y1="' + yp + '" '
+      +     'x2="' + (padL + plotW) + '" y2="' + yp + '" '
+      +     'stroke="rgba(255,255,255,0.06)" stroke-width="1" />'
+      + '<text x="' + (padL - 6) + '" y="' + (yp + 3) + '" '
+      +     'text-anchor="end" font-size="10" '
+      +     'fill="var(--muted)" font-variant-numeric="tabular-nums">' + v.toLocaleString() + '</text>';
+  }).join('');
+
+  // Frame
+  const frame = ''
+    + '<line x1="' + padL + '" y1="' + padT + '" '
+    +     'x2="' + padL + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+    + '<line x1="' + padL + '" y1="' + (padT + plotH) + '" '
+    +     'x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />';
+
+  const chartSvg = ''
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
+    +    'preserveAspectRatio="xMidYMid meet" '
+    +    'style="font-family:inherit;display:block;max-height:340px" '
+    +    'role="img" aria-label="Stacked area chart of UAP sightings by shape, ' + yMin + ' to ' + yMax + '">'
+    +   yAxisMarks
+    +   polygons.join('')
+    +   xAxisMarks
+    +   frame
+    + '</svg>';
+
+  // Legend / totals list — one row per shape, color swatch + count + share.
+  const grandTotal = ranked.reduce((s, r) => s + r.count, 0) || 1;
+  const legendRows = ranked.map((r, i) => {
+    const pct = (r.count / grandTotal) * 100;
+    const color = mufonShapeColor(i);
+    return ''
+      + '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
+      +   '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color + '"></span>'
+      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + r.shape + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums">' + r.count.toLocaleString() + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>'
+      + '</li>';
+  }).join('');
+
+  const legendBlock = ''
+    + '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);'
+    +    'border-radius:8px;padding:10px 12px">'
+    +   '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;'
+    +     'letter-spacing:.5px;margin-bottom:6px">All-time totals</div>'
+    +   '<ul style="list-style:none;margin:0;padding:0">' + legendRows + '</ul>'
+    + '</div>';
+
+  // Honest footnote — mirrors the rest of the UAP tab's tone about the
+  // planetsig 2014 stall.
+  const dr = m.date_range || [null, null];
+  const footnote = ''
+    + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
+    +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
+    +   'Top 15 shapes shown; rarer ones collapse into "other". '
+    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ' — '
+    +   'the planetsig mirror has not refreshed since 2014, so post-2014 activity is '
+    +   '<strong>not</strong> reflected. Treat as a historical pattern, not current state.'
+    + '</div>';
+
+  body.innerHTML = ''
+    + '<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(220px, 1fr);gap:14px;align-items:start">'
+    +   '<div style="min-width:0">' + chartSvg + '</div>'
+    +   legendBlock
+    + '</div>'
+    + footnote;
 }
 
 // ─── GLOBAL SUPPLIES TAB ──────────────────────────────────────────────────
@@ -13140,7 +13378,7 @@ function renderAll(){
     // flight to avoid flashing an "empty" state before data lands.
     if (mufonTrendLoading) mufonTrendLoading.classList.toggle('hidden', !mufonLoadingActive);
     if (mufonTrendContent) mufonTrendContent.classList.toggle('hidden', mufonLoadingActive);
-    if (!mufonLoadingActive) { renderMufonTrend(); renderMufonMap(); }
+    if (!mufonLoadingActive) { renderMufonTrend(); renderMufonMap(); renderMufonShapes(); }
   }
   renderCoverage();
 }

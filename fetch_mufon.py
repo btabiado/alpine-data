@@ -52,13 +52,43 @@ Output schema (sidecar v2/data-mufon.json) ::
         "CA": {"30d": 0, "60d": 0, "90d": 0, "365d": 11},
         ...
       },
-      "totals_by_year": {"2014": 1234, "2013": 2345, ...}
+      "totals_by_year": {"2014": 1234, "2013": 2345, ...},
+      "shape_totals": [
+        {"shape": "light", "count": 23456},
+        {"shape": "triangle", "count": 8201},
+        ...sorted desc; top ~15 + "other" + "unknown"...
+      ],
+      "shape_by_year": {
+        "1906": {"unknown": 2, "light": 0, ...},
+        ...
+        "2014": {"light": 412, "triangle": 187, ...}
+      }
     }
 
 The ``recent_buckets`` field is computed from the CSV's own most-recent
 datestamp, NOT from "today" — for a mirror that's stale at 2014, "30d"
 means "30 days before the last entry in the dataset." The renderer
 displays this honestly.
+
+Shape aggregations
+------------------
+Two additional top-level keys carry NUFORC shape classifications
+(Light, Triangle, Disk, Sphere, Fireball, …). Shape strings are
+lowercased and stripped; blanks map to "unknown". To keep the JSON
+compact, only the top ~15 shapes are kept as named entries — everything
+else collapses into "other". The "unknown" bucket is always preserved
+so per-year shape totals sum to ``total_records``::
+
+    "shape_totals": [
+      {"shape": "light", "count": 23456},
+      {"shape": "triangle", "count": 8201},
+      ...sorted desc by count...
+    ],
+    "shape_by_year": {
+      "1906": {"unknown": 2, "light": 0, ...},
+      ...
+      "2014": {"light": 412, "triangle": 187, ...}
+    }
 
 CLI ::
 
@@ -218,10 +248,27 @@ KNOWN_HEADER_MAPS: list[tuple[set[str], dict[str, str]]] = [
 ]
 
 
+def _norm_shape(raw: str) -> str:
+    """Lowercase + strip a NUFORC shape string. Blank/missing becomes
+    "unknown" so it has a named bucket in the aggregation (rather than
+    silently dropping the row from the shape view)."""
+    if not raw:
+        return "unknown"
+    s = raw.strip().lower()
+    if not s:
+        return "unknown"
+    # NUFORC uses a handful of tokens that look like noise. Map them to
+    # "unknown" so the front-end legend stays meaningful.
+    if s in {"n/a", "na", "none", "-", "?"}:
+        return "unknown"
+    return s
+
+
 def _row_iter(text: str) -> "tuple[list[dict], dict]":
     """Parse a NUFORC CSV (headered or not) into a list of dicts with keys
-    {datetime: datetime|None, city: str, state: str|None}. Also returns a
-    meta dict with raw_row_count and skipped_count for diagnostics.
+    {datetime: datetime|None, city: str, state: str|None, shape: str}.
+    Also returns a meta dict with raw_row_count and skipped_count for
+    diagnostics.
     """
     rows: list[dict] = []
     skipped = 0
@@ -243,19 +290,21 @@ def _row_iter(text: str) -> "tuple[list[dict], dict]":
         dt_idx = col.get("occurred") or col.get("datetime") or col.get("date_time") or 0
         city_idx = col.get("city", 1)
         state_idx = col.get("state", 2)
+        shape_idx = col.get("shape", -1)
     else:
         # planetsig layout: datetime, city, state, country, shape, ...
-        dt_idx, city_idx, state_idx = 0, 1, 2
+        dt_idx, city_idx, state_idx, shape_idx = 0, 1, 2, 4
         # Treat the "first" row we already pulled as data.
         raw_count += 1
-        rows.append(_extract_row(first, dt_idx, city_idx, state_idx))
-        if rows[-1] is None:
-            rows.pop()
+        out = _extract_row(first, dt_idx, city_idx, state_idx, shape_idx)
+        if out is None:
             skipped += 1
+        else:
+            rows.append(out)
 
     for r in reader:
         raw_count += 1
-        out = _extract_row(r, dt_idx, city_idx, state_idx)
+        out = _extract_row(r, dt_idx, city_idx, state_idx, shape_idx)
         if out is None:
             skipped += 1
             continue
@@ -266,9 +315,10 @@ def _row_iter(text: str) -> "tuple[list[dict], dict]":
 
 
 def _extract_row(r: list[str], dt_idx: int, city_idx: int,
-                 state_idx: int) -> dict | None:
-    """Pull (datetime, city, state) from a CSV row using the supplied
-    column indexes. Returns a dict or None if the row is unusable."""
+                 state_idx: int, shape_idx: int = -1) -> dict | None:
+    """Pull (datetime, city, state, shape) from a CSV row using the supplied
+    column indexes. ``shape_idx < 0`` (or out-of-range) yields "unknown".
+    Returns a dict or None if the row is unusable."""
     needed = max(dt_idx, city_idx, state_idx)
     if len(r) <= needed:
         return None
@@ -279,7 +329,11 @@ def _extract_row(r: list[str], dt_idx: int, city_idx: int,
     # Rows without a US state are kept (they count toward total_records and
     # date_range) but bypass the per-state aggregation.
     city = _norm_city(r[city_idx])
-    return {"dt": dt, "city": city, "state": state}
+    if shape_idx >= 0 and shape_idx < len(r):
+        shape = _norm_shape(r[shape_idx])
+    else:
+        shape = "unknown"
+    return {"dt": dt, "city": city, "state": state, "shape": shape}
 
 
 def aggregate(rows: list[dict]) -> dict:
@@ -288,6 +342,11 @@ def aggregate(rows: list[dict]) -> dict:
     by_state_year: dict[str, dict[str, int]] = {}
     city_counts: dict[str, dict[str, int]] = {}
     totals_by_year: dict[str, int] = {}
+    # Shape aggregations — used by the "sightings by classification" chart
+    # at the bottom of the UAP tab. Per-row shape comes from _norm_shape
+    # (blanks already mapped to "unknown").
+    shape_totals_raw: dict[str, int] = {}
+    shape_by_year_raw: dict[str, dict[str, int]] = {}
     min_dt: datetime | None = None
     max_dt: datetime | None = None
 
@@ -295,8 +354,12 @@ def aggregate(rows: list[dict]) -> dict:
         dt: datetime = r["dt"]
         state: str | None = r["state"]
         city: str = r["city"]
+        shape: str = r.get("shape", "unknown")
         year = str(dt.year)
         totals_by_year[year] = totals_by_year.get(year, 0) + 1
+        shape_totals_raw[shape] = shape_totals_raw.get(shape, 0) + 1
+        ybucket = shape_by_year_raw.setdefault(year, {})
+        ybucket[shape] = ybucket.get(shape, 0) + 1
         if min_dt is None or dt < min_dt:
             min_dt = dt
         if max_dt is None or dt > max_dt:
@@ -336,6 +399,48 @@ def aggregate(rows: list[dict]) -> dict:
                 if dt >= thr:
                     slot[k] += 1
 
+    # Compact the shape view to keep the sidecar small. Keep the top ~15
+    # named shapes; everything outside that set rolls into "other". Both
+    # "unknown" (blanks) and "other" (NUFORC's literal classification) are
+    # ALWAYS preserved as named buckets — and the collapsed tail merges
+    # INTO the existing "other" bucket rather than duplicating it. That
+    # preserves the invariant: per-year shape sums == totals_by_year[year].
+    SHAPE_TOP_N = 15
+    ranked = sorted(shape_totals_raw.items(), key=lambda kv: kv[1], reverse=True)
+    kept = {name for name, _ in ranked[:SHAPE_TOP_N]}
+    kept.add("unknown")
+    kept.add("other")
+
+    # Roll the collapsed tail into "other" by mutating the raw totals — that
+    # way the final list/dict construction below has a single source of truth.
+    tail_total = sum(c for n, c in shape_totals_raw.items() if n not in kept)
+    if tail_total:
+        shape_totals_raw["other"] = shape_totals_raw.get("other", 0) + tail_total
+
+    shape_totals_list = sorted(
+        ({"shape": n, "count": c} for n, c in shape_totals_raw.items()
+         if n in kept and c > 0),
+        key=lambda d: d["count"],
+        reverse=True,
+    )
+
+    # Year buckets — same collapse rule (tail merges into "other"). Drop
+    # zero-valued shape entries so the JSON stays compact (renderer treats
+    # missing as 0 anyway).
+    shape_by_year: dict[str, dict[str, int]] = {}
+    for year, buckets in shape_by_year_raw.items():
+        out: dict[str, int] = {}
+        tail = 0
+        for name, count in buckets.items():
+            if name in kept:
+                out[name] = out.get(name, 0) + count
+            else:
+                tail += count
+        if tail:
+            out["other"] = out.get("other", 0) + tail
+        if out:
+            shape_by_year[year] = out
+
     payload: dict[str, Any] = {
         "total_records": len(rows),
         "date_range": [
@@ -346,6 +451,8 @@ def aggregate(rows: list[dict]) -> dict:
         "top_cities_by_state": top_cities_by_state,
         "recent_buckets": recent_buckets,
         "totals_by_year": totals_by_year,
+        "shape_totals": shape_totals_list,
+        "shape_by_year": shape_by_year,
     }
     return payload
 
@@ -432,6 +539,38 @@ def _self_test() -> int:
              for cs in payload["top_cities_by_state"].values()
              for c in cs),
          "Chester (non-US) leaked into top_cities_by_state"),
+        # Shape aggregations — 10 rows: light×4, circle×2, cylinder, disk,
+        # fireball, triangle. All 6 shapes fit comfortably inside the top-15
+        # cap so nothing rolls into "other"; "unknown" never gets a count
+        # because every sample row carries a shape.
+        (any(s["shape"] == "light" and s["count"] == 4
+             for s in payload["shape_totals"]),
+         f"shape_totals light=4 missing: {payload['shape_totals']}"),
+        (any(s["shape"] == "circle" and s["count"] == 2
+             for s in payload["shape_totals"]),
+         f"shape_totals circle=2 missing: {payload['shape_totals']}"),
+        (sum(s["count"] for s in payload["shape_totals"]) == 10,
+         f"shape_totals sum should equal total_records, "
+         f"got {sum(s['count'] for s in payload['shape_totals'])}"),
+        (all(s not in {"other"} for s in
+             (d["shape"] for d in payload["shape_totals"])),
+         "unexpected 'other' bucket in shape_totals"),
+        (payload["shape_by_year"].get("2014", {}).get("light") == 3,
+         f"shape_by_year 2014 light=3: "
+         f"{payload['shape_by_year'].get('2014')}"),
+        (payload["shape_by_year"].get("1949", {}).get("light") == 1,
+         f"shape_by_year 1949 light=1: "
+         f"{payload['shape_by_year'].get('1949')}"),
+        # Per-year shape sums must equal totals_by_year for that year (this
+        # is the invariant the UI footnote relies on).
+        (all(sum(payload["shape_by_year"].get(y, {}).values())
+             == payload["totals_by_year"][y]
+             for y in payload["totals_by_year"]),
+         "shape_by_year per-year sum != totals_by_year"),
+        (_norm_shape("LIGHT") == "light", "_norm_shape lowercases"),
+        (_norm_shape("  Triangle  ") == "triangle", "_norm_shape strips"),
+        (_norm_shape("") == "unknown", "_norm_shape blank → unknown"),
+        (_norm_shape("?") == "unknown", "_norm_shape ? → unknown"),
         # _norm_city dropped the parenthetical and title-cased.
         (_norm_city("san marcos") == "San Marcos", "_norm_city basic"),
         (_norm_city("lackland AFB") == "Lackland AFB",
@@ -505,6 +644,8 @@ def main(argv: list[str] | None = None) -> int:
             "top_cities_by_state": {},
             "recent_buckets": {},
             "totals_by_year": {},
+            "shape_totals": [],
+            "shape_by_year": {},
             "_error": "all CSV probes failed",
         }
         out_path.parent.mkdir(parents=True, exist_ok=True)
