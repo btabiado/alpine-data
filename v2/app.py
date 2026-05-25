@@ -3324,7 +3324,27 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="v2-card__body" id="mufonDocsBody" style="padding:14px"></div>
     </div>
 
-    <!-- Section C: US Sightings Map -->
+    <!-- Section C: Sightings trend signal (derived client-side from the
+         data-mufon.json sidecar; no extra fetch). Mirrors the crypto signal
+         card layout — score + chip + sparkline + component breakdown — so
+         the user reads it as "is UAP activity trending up or down" at a
+         glance. Honest: the sidecar ends 2014-05-08, so the trend describes
+         the historical pattern through 2014, not 2026 activity. -->
+    <div id="mufonTrendLoading" class="hidden" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Loading sightings trend…</div>
+    <div id="mufonTrendContent">
+      <div class="v2-card" id="mufonTrendCard" style="margin-bottom:14px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Sightings trend</h2>
+            <div class="v2-card__subtitle">Long-term direction of NUFORC report volume</div>
+          </div>
+          <div><span class="v2-chip v2-chip--info" id="mufonTrendAsOf">● —</span></div>
+        </div>
+        <div class="v2-card__body" id="mufonTrendBody" style="padding:14px"></div>
+      </div>
+    </div>
+
+    <!-- Section D: US Sightings Map -->
     <div id="mufonMapLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading NUFORC sightings…</div>
     <div id="mufonMapContent">
       <div class="v2-card" id="mufonMapCard">
@@ -9027,8 +9047,9 @@ const MUFON_STATE_NAMES = {
 function renderMufon(){
   renderMufonUpdates();
   renderMufonDocs();
-  // Map is gated on the sidecar — if not yet loaded, the loading
-  // placeholder elsewhere handles the empty state.
+  // Trend + Map are both gated on the data-mufon.json sidecar — if not yet
+  // loaded, the loading placeholders elsewhere handle the empty state.
+  renderMufonTrend();
   renderMufonMap();
 }
 
@@ -9068,6 +9089,296 @@ function renderMufonDocs(){
     +   '<div style="font-size:10px;color:var(--muted);font-family:monospace;word-break:break-all;opacity:.7">'+d.url.replace(/^https?:\/\//,'')+'</div>'
     + '</a>').join('');
   el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:10px">' + cards + '</div>';
+}
+
+// ─── UAP SIGHTINGS TREND SIGNAL ───────────────────────────────────────────
+// Derives a direction-of-travel signal from m.totals_by_year + m.recent_buckets
+// (no extra fetch — all metrics computed client-side). Mirrors the crypto
+// signal card layout: headline chip + score (-100..+100) + sparkline + a
+// component breakdown table. Honest: the NUFORC mirror is frozen at
+// 2014-05-08, so this card describes the historical pattern through 2014,
+// not 2026 activity. The disclaimer line at the bottom is load-bearing.
+
+// Drop the most-recent year if it looks partial (fewer than ~85% of the
+// rolling 3y mean of full years). The NUFORC sidecar ends mid-May 2014, so
+// 2014 itself is a partial year and would torpedo any trend if included
+// raw. Returns the (years, counts) arrays with the partial year stripped
+// AND a separate handle on the partial year for transparency.
+function mufonSplitPartialYear(totalsByYear){
+  const years = Object.keys(totalsByYear).map(Number).filter(y => isFinite(y)).sort((a,b)=>a-b);
+  if (years.length < 4) return { full: years, partial: null, totals: totalsByYear };
+  const last = years[years.length - 1];
+  const prev3 = years.slice(-4, -1);  // 3 years before the last
+  const prev3Mean = prev3.reduce((s,y) => s + (totalsByYear[String(y)] || 0), 0) / prev3.length;
+  const lastVal = totalsByYear[String(last)] || 0;
+  // Threshold: if the last year is <85% of the prev-3 mean it's almost
+  // certainly a partial year (or a real cliff — either way you don't want
+  // to count it in a 5y CAGR).
+  if (prev3Mean > 0 && lastVal < prev3Mean * 0.85) {
+    return { full: years.slice(0, -1), partial: last, totals: totalsByYear };
+  }
+  return { full: years, partial: null, totals: totalsByYear };
+}
+
+// Map a 5y CAGR to a -100..+100 score with diminishing returns near the
+// extremes (atan-based, like the crypto components). A flat 0% maps to 0;
+// +20%/yr -> ~+60; -20%/yr -> ~-60; runaway growth/decline saturates.
+function mufonCagrToScore(cagr){
+  if (!isFinite(cagr)) return 0;
+  // Scale: 10% CAGR ~ score 40. Curve flattens out by ±40% CAGR.
+  const k = 0.04; // sensitivity
+  const s = Math.atan(cagr / k) * (200 / Math.PI);
+  return Math.max(-100, Math.min(100, Math.round(s)));
+}
+
+// Linear regression slope of {y_i = totals[year_i]} on year. Returns the
+// slope in sightings-per-year. Pure stdlib (no library).
+function mufonLinearSlope(years, totals){
+  const n = years.length;
+  if (n < 2) return null;
+  const ys = years.map(String).map(s => Number(totals[s]) || 0);
+  const mx = years.reduce((a,b) => a + b, 0) / n;
+  const my = ys.reduce((a,b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++){
+    num += (years[i] - mx) * (ys[i] - my);
+    den += (years[i] - mx) * (years[i] - mx);
+  }
+  if (den === 0) return null;
+  return num / den;
+}
+
+// Inline sparkline for the full totals_by_year series. Distinct from
+// signalScoreSparkline because we need year labels at start/end/peak and a
+// trend-direction stroke color. Hand-rolled SVG, no library.
+function mufonTrendSparkline(years, totals, peakYear){
+  const n = years.length;
+  if (n < 2) return '';
+  const ys = years.map(String).map(s => Number(totals[s]) || 0);
+  const lo = Math.min(...ys), hi = Math.max(...ys);
+  const range = (hi - lo) || 1;
+  const w = 600, h = 90, padL = 4, padR = 4, padTop = 14, padBot = 18;
+  const innerW = w - padL - padR;
+  const innerH = h - padTop - padBot;
+  const xMin = years[0], xMax = years[n - 1];
+  const xSpan = (xMax - xMin) || 1;
+  const xFor = y => padL + ((y - xMin) / xSpan) * innerW;
+  const yFor = v => padTop + (1 - (v - lo) / range) * innerH;
+  const pts = years.map((yr, i) => xFor(yr) + ',' + yFor(ys[i]).toFixed(1)).join(' ');
+  // Color: green if last > first, red if smaller, amber if ~flat.
+  const first = ys[0], last = ys[n - 1];
+  const flatTol = Math.max(Math.abs(first) * 0.10, 10);
+  const stroke = Math.abs(last - first) <= flatTol
+    ? 'var(--v2-warn, #fbbf24)'
+    : (last >= first ? 'var(--v2-good, #4ade80)' : 'var(--v2-bad, #f87171)');
+  // Peak marker
+  const pi = peakYear != null ? years.indexOf(Number(peakYear)) : -1;
+  const peakMarker = (pi >= 0) ? (
+    '<circle cx="' + xFor(years[pi]).toFixed(1) + '" cy="' + yFor(ys[pi]).toFixed(1) + '" r="2.5" '
+    + 'fill="#fff" stroke="' + stroke + '" stroke-width="1.5"/>'
+    + '<text x="' + xFor(years[pi]).toFixed(1) + '" y="' + Math.max(8, yFor(ys[pi]) - 5).toFixed(1) + '" '
+    + 'text-anchor="middle" font-size="9" fill="var(--muted)">peak ' + years[pi] + '</text>'
+  ) : '';
+  // Start + end labels in the gutter below
+  const startLabel = '<text x="' + xFor(years[0]).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="start" font-size="9" fill="var(--muted)">' + years[0] + '</text>';
+  const endLabel = '<text x="' + xFor(years[n - 1]).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="end" font-size="9" fill="var(--muted)">' + years[n - 1] + ' · ' + last.toLocaleString() + '</text>';
+  return ''
+    + '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" '
+    +   'style="width:100%;height:90px;display:block;background:#0b0d12;border-radius:6px" '
+    +   'role="img" aria-label="Annual UAP sighting reports">'
+    +   '<polyline points="' + pts + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" '
+    +     'vector-effect="non-scaling-stroke"/>'
+    +   peakMarker
+    +   startLabel
+    +   endLabel
+    + '</svg>';
+}
+
+function renderMufonTrend(){
+  const m = DATA.mufon;
+  const body = document.getElementById('mufonTrendBody');
+  const asOf = document.getElementById('mufonTrendAsOf');
+  if (!body) return;
+  if (!m) return; // sidecar pending; selectTab() shows the loading placeholder
+
+  // Empty-state — fetcher wrote an _error placeholder.
+  if (!m.total_records || !m.totals_by_year) {
+    if (asOf) asOf.textContent = '● unavailable';
+    body.innerHTML = V2.empty({icon:'🛸', title:'No trend data',
+      sub: m._error || 'Annual totals unavailable; retry on next dashboard refresh.',
+      warm:false});
+    return;
+  }
+
+  if (asOf) {
+    const d = (m.date_range && m.date_range[1]) || '—';
+    asOf.textContent = '● to ' + d + (m._stale ? ' (stale)' : '');
+  }
+
+  const totals = m.totals_by_year || {};
+  const split = mufonSplitPartialYear(totals);
+  const fullYears = split.full;          // years to actually fit a trend on
+  const partialYear = split.partial;     // 2014 typically — flagged, not used for math
+  const peakYear = fullYears.reduce((best, y) =>
+    (totals[String(y)] > (totals[String(best)] || 0) ? y : best),
+    fullYears[0] || null);
+
+  // 5y CAGR on the last 5 *full* years -> drives the headline score+chip.
+  let cagr = null, score = 0;
+  if (fullYears.length >= 5) {
+    const yEnd = fullYears[fullYears.length - 1];
+    const yStart = fullYears[fullYears.length - 5];
+    const vEnd = Number(totals[String(yEnd)]) || 0;
+    const vStart = Number(totals[String(yStart)]) || 0;
+    const span = yEnd - yStart;
+    if (vStart > 0 && span > 0) {
+      cagr = Math.pow(vEnd / vStart, 1 / span) - 1;
+      score = mufonCagrToScore(cagr);
+    }
+  }
+
+  // 5y momentum: mean(last 5 full years) vs mean(prior 5 full years).
+  let mom = null, momPrev = null, momCur = null;
+  if (fullYears.length >= 10) {
+    const tail5 = fullYears.slice(-5);
+    const prev5 = fullYears.slice(-10, -5);
+    momCur = tail5.reduce((s,y) => s + (Number(totals[String(y)]) || 0), 0) / 5;
+    momPrev = prev5.reduce((s,y) => s + (Number(totals[String(y)]) || 0), 0) / 5;
+    if (momPrev > 0) mom = momCur / momPrev - 1;
+  }
+
+  // 10y linear slope (sightings per year) on the last 10 *full* years.
+  let slope10 = null;
+  if (fullYears.length >= 10) {
+    slope10 = mufonLinearSlope(fullYears.slice(-10), totals);
+  }
+
+  // Recent buckets — sum across states. These are anchored to the dataset's
+  // most-recent entry (date_range[1]), not today; the disclaimer makes that
+  // honest.
+  const rb = m.recent_buckets || {};
+  const recent = { '30d':0, '60d':0, '90d':0, '365d':0 };
+  for (const s in rb) {
+    for (const k in recent) recent[k] += Number((rb[s] || {})[k]) || 0;
+  }
+
+  // Headline label — based on score band + momentum sign for the "accel /
+  // decel" nuance the spec asked for.
+  let chipText = 'STABLE', chipCls = 'v2-chip--warn';
+  if (score >= 60)       { chipText = 'ACCELERATING';  chipCls = 'v2-chip--good'; }
+  else if (score >= 25)  { chipText = 'TRENDING UP';   chipCls = 'v2-chip--good'; }
+  else if (score >= 10)  { chipText = 'GRADUAL RISE';  chipCls = 'v2-chip--good'; }
+  else if (score <= -60) { chipText = 'COLLAPSING';    chipCls = 'v2-chip--bad';  }
+  else if (score <= -25) { chipText = 'DECLINING';     chipCls = 'v2-chip--bad';  }
+  else if (score <= -10) { chipText = 'DECELERATING';  chipCls = 'v2-chip--bad';  }
+  // else: stays STABLE / warn
+
+  const scoreColor = score >= 25 ? 'var(--v2-good)' :
+                     score <= -25 ? 'var(--v2-bad)'  : 'var(--v2-warn)';
+  const scoreTxt = (score >= 0 ? '+' : '') + score;
+  const clamped = Math.max(-100, Math.min(100, score));
+  const markerPct = ((clamped + 100) / 200) * 100;
+
+  // Sparkline — full series, color matches direction.
+  const spark = mufonTrendSparkline(fullYears, totals, peakYear);
+
+  // Component table — value column carries the raw metric (so a sceptical
+  // reader can sanity-check), Δ column shows a directional badge.
+  function rowHtml(name, valueTxt, delta){
+    const col = delta == null ? 'var(--muted)'
+      : (delta > 0 ? 'var(--v2-good)' : (delta < 0 ? 'var(--v2-bad)' : 'var(--muted)'));
+    const arrow = delta == null ? '·'
+      : (delta > 0 ? '▲' : (delta < 0 ? '▼' : '·'));
+    return '<tr>'
+      + '<td style="padding:5px 6px;font-weight:500">' + escapeHtml(name) + '</td>'
+      + '<td style="padding:5px 6px;color:var(--muted);font-variant-numeric:tabular-nums">' + valueTxt + '</td>'
+      + '<td style="padding:5px 6px;color:' + col + ';text-align:right;font-weight:600">' + arrow + '</td>'
+      + '</tr>';
+  }
+
+  // 5y momentum row
+  const momTxt = (mom == null)
+    ? '—'
+    : ((mom >= 0 ? '+' : '') + (mom * 100).toFixed(1) + '% '
+       + '(' + Math.round(momPrev).toLocaleString() + ' → ' + Math.round(momCur).toLocaleString() + '/yr)');
+  // 10y slope row
+  const slopeTxt = (slope10 == null)
+    ? '—'
+    : ((slope10 >= 0 ? '+' : '') + Math.round(slope10).toLocaleString() + ' sightings/year (last 10y)');
+  // Peak year row
+  const peakTxt = (peakYear == null)
+    ? '—'
+    : (peakYear + ' — ' + (Number(totals[String(peakYear)]) || 0).toLocaleString() + ' sightings');
+  // Most recent full year
+  const lastFull = fullYears.length ? fullYears[fullYears.length - 1] : null;
+  const lastFullTxt = (lastFull == null)
+    ? '—'
+    : (lastFull + ' — ' + (Number(totals[String(lastFull)]) || 0).toLocaleString() + ' sightings');
+  // Partial year (e.g. 2014)
+  const partialTxt = (partialYear == null)
+    ? null
+    : (partialYear + ' — ' + (Number(totals[String(partialYear)]) || 0).toLocaleString()
+       + ' sightings <em style="color:var(--muted);font-style:normal">(partial year)</em>');
+  // 5y CAGR row
+  const cagrTxt = (cagr == null)
+    ? '—'
+    : ((cagr >= 0 ? '+' : '') + (cagr * 100).toFixed(1) + '%/yr CAGR');
+
+  const recentAnchor = (m.date_range && m.date_range[1]) || '—';
+  const recentTxt = '30d ' + recent['30d'].toLocaleString()
+    + ' · 60d ' + recent['60d'].toLocaleString()
+    + ' · 90d ' + recent['90d'].toLocaleString()
+    + ' · 365d ' + recent['365d'].toLocaleString();
+
+  const rows = [
+    rowHtml('5y CAGR', cagrTxt, cagr),
+    rowHtml('5y momentum', momTxt, mom),
+    rowHtml('10y trend slope', slopeTxt, slope10),
+    rowHtml('Peak year', peakTxt, null),
+    rowHtml('Most recent full year', lastFullTxt, null),
+    partialTxt ? rowHtml('Most recent partial year', partialTxt, null) : '',
+    rowHtml('Recent windows (anchored to ' + recentAnchor + ')', recentTxt, null),
+  ].join('');
+
+  body.innerHTML = ''
+    // Headline strip — chip + big score, mirrors the crypto signal card.
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">'
+    +   '<div style="min-width:0">'
+    +     '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Signal direction</div>'
+    +     '<span class="v2-chip ' + chipCls + '" style="font-size:14px;padding:6px 12px;font-weight:700">' + chipText + '</span>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-top:6px">5y CAGR-driven · last ' + fullYears.length + ' full years of data</div>'
+    +   '</div>'
+    +   '<div style="text-align:right">'
+    +     '<div style="font-size:11px;color:var(--muted)">Score</div>'
+    +     '<div style="font-size:34px;font-weight:700;color:' + scoreColor + ';line-height:1">' + scoreTxt + '</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-top:2px">of &plusmn;100</div>'
+    +   '</div>'
+    + '</div>'
+    // Score gauge bar (same gradient as the crypto modal).
+    + '<div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin-bottom:14px">'
+    +   '<div style="position:absolute;top:-3px;left:calc(' + markerPct.toFixed(1) + '% - 3px);width:6px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>'
+    + '</div>'
+    // Sparkline.
+    + '<div style="margin-bottom:14px">'
+    +   '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Annual reports · ' + fullYears[0] + '–' + (lastFull || '—') + (partialYear ? ' (' + partialYear + ' partial, excluded)' : '') + '</div>'
+    +   spark
+    + '</div>'
+    // Component table.
+    + '<div style="margin-bottom:10px">'
+    +   '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Component breakdown</div>'
+    +   '<table style="font-size:12px;width:100%;border-collapse:collapse">'
+    +     '<tbody>' + rows + '</tbody>'
+    +   '</table>'
+    + '</div>'
+    // Honest disclaimer.
+    + '<div style="margin-top:12px;padding:10px 12px;background:var(--bg2,#0f1419);border-left:3px solid var(--v2-warn,#fbbf24);border-radius:4px;font-size:11px;color:var(--muted);line-height:1.5">'
+    +   '<strong style="color:var(--v2-warn,#fbbf24)">Note:</strong> '
+    +   'Anchored to dataset cutoff <strong>' + recentAnchor + '</strong> (community NUFORC mirror; live MUFON feed is paywalled). '
+    +   'Trend describes the historical pattern through ' + (lastFull || '—') + ', not current activity. '
+    +   'The "recent windows" row reads back from that cutoff date — it is not the last 30/60/90/365 days from today.'
+    + '</div>';
 }
 
 // Compute per-state count for the active time range. For 'all' we sum
@@ -12810,6 +13121,8 @@ function renderAll(){
     renderMufonDocs();
     const mufonLoading = document.getElementById('mufonMapLoading');
     const mufonContent = document.getElementById('mufonMapContent');
+    const mufonTrendLoading = document.getElementById('mufonTrendLoading');
+    const mufonTrendContent = document.getElementById('mufonTrendContent');
     const mufonLoadingActive = !DATA.mufon && SIDECAR_STATE.mufon === 'loading';
     if (mufonLoading) {
       mufonLoading.classList.toggle('hidden', !mufonLoadingActive);
@@ -12823,7 +13136,11 @@ function renderAll(){
       }
     }
     if (mufonContent) mufonContent.classList.toggle('hidden', mufonLoadingActive);
-    if (!mufonLoadingActive) renderMufonMap();
+    // Trend card shares the same sidecar — hide it while the fetch is in
+    // flight to avoid flashing an "empty" state before data lands.
+    if (mufonTrendLoading) mufonTrendLoading.classList.toggle('hidden', !mufonLoadingActive);
+    if (mufonTrendContent) mufonTrendContent.classList.toggle('hidden', mufonLoadingActive);
+    if (!mufonLoadingActive) { renderMufonTrend(); renderMufonMap(); }
   }
   renderCoverage();
 }
