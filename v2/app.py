@@ -3586,7 +3586,15 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   // from the sidecar (which is anchored to the dataset's own most-recent
   // entry, NOT today's date — see fetch_mufon.py for rationale).
   mufonTimeRange: 'all',
-  mufonSelectedState: null };
+  mufonSelectedState: null,
+  // UAP sightings trend card — visible window for the annual-reports
+  // sparkline. Defaults to '5y' so the chart isn't dominated by the long
+  // 1906-1990 tail of near-zero reports. Toggling this re-slices the
+  // sparkline only — the signal direction chip, score, and component
+  // breakdown table all describe long-term trend math and stay constant.
+  // Window anchors to the dataset cutoff (most recent full year, currently
+  // 2013), NOT today. Valid values: '5y' | '10y' | '20y' | '30y' | 'all'.
+  mufonTrendRange: '5y' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -9324,8 +9332,21 @@ function renderMufonTrend(){
   const clamped = Math.max(-100, Math.min(100, score));
   const markerPct = ((clamped + 100) / 200) * 100;
 
-  // Sparkline — full series, color matches direction.
-  const spark = mufonTrendSparkline(fullYears, totals, peakYear);
+  // Sparkline — slice fullYears to the active range so the chart isn't
+  // dominated by the 1906-1990 near-zero tail. Anchored to the dataset's
+  // most-recent full year (e.g. 2013), NOT today's date. Long-term math
+  // (score / chip / component table) still uses the full fullYears array
+  // above, so toggling this only changes the visual.
+  const trendRange = state.mufonTrendRange || '5y';
+  const rangeWindow = { '5y':5, '10y':10, '20y':20, '30y':30 }[trendRange] || fullYears.length;
+  const visibleYears = (rangeWindow >= fullYears.length)
+    ? fullYears
+    : fullYears.slice(-rangeWindow);
+  // Only show the peak marker when the peak year falls inside the window;
+  // otherwise it'd render off-canvas or be misleading.
+  const peakInWindow = (peakYear != null && visibleYears.indexOf(Number(peakYear)) >= 0)
+    ? peakYear : null;
+  const spark = mufonTrendSparkline(visibleYears, totals, peakInWindow);
 
   // Component table — value column carries the raw metric (so a sceptical
   // reader can sanity-check), Δ column shows a directional badge.
@@ -9403,9 +9424,23 @@ function renderMufonTrend(){
     + '<div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin-bottom:14px">'
     +   '<div style="position:absolute;top:-3px;left:calc(' + markerPct.toFixed(1) + '% - 3px);width:6px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>'
     + '</div>'
-    // Sparkline.
+    // Sparkline + range toggle. Toggle sits directly above the chart so
+    // the cause-and-effect is obvious; only the sparkline + caption update
+    // when clicked (signal / score / component table all stay put). The
+    // .active button reflects state.mufonTrendRange so initial paint after
+    // the sidecar lands matches whatever the user last picked.
     + '<div style="margin-bottom:14px">'
-    +   '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Annual reports · ' + fullYears[0] + '–' + (lastFull || '—') + (partialYear ? ' (' + partialYear + ' partial, excluded)' : '') + '</div>'
+    +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px">'
+    +     '<div style="font-size:11px;color:var(--muted)">Annual reports · ' + visibleYears[0] + '–' + (lastFull || '—') + (partialYear && trendRange === 'all' ? ' (' + partialYear + ' partial, excluded)' : '') + '</div>'
+    +     '<div class="mufon-trend-range" style="display:flex;gap:4px;flex-wrap:wrap">'
+    +       ['5y','10y','20y','30y','all'].map(r => (
+    +         '<button class="btn btn--small' + (r === trendRange ? ' active' : '') + '" '
+    +           + 'data-mufontrendrange="' + r + '" type="button">'
+    +           + (r === 'all' ? 'All-time' : r)
+    +         + '</button>'
+    +       )).join('')
+    +     '</div>'
+    +   '</div>'
     +   spark
     + '</div>'
     // Component table.
@@ -9423,6 +9458,25 @@ function renderMufonTrend(){
     +   'The "recent windows" row reads back from that cutoff date — it is not the last 30/60/90/365 days from today.'
     + '</div>';
 }
+
+// UAP trend sparkline range-toggle wiring. Delegated on the trend card so
+// it survives every re-render (renderMufonTrend rebuilds body.innerHTML
+// wholesale, so per-button listeners would leak otherwise). Mirrors the
+// CPI tab's data-cpirange click handler. Re-renders the trend card only —
+// the map and shapes cards don't touch state.mufonTrendRange.
+(function(){
+  const card = document.getElementById('mufonTrendCard');
+  if (!card) return;
+  card.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-mufontrendrange]');
+    if (!b) return;
+    const v = b.getAttribute('data-mufontrendrange');
+    if (v && v !== state.mufonTrendRange) {
+      state.mufonTrendRange = v;
+      renderMufonTrend();
+    }
+  });
+})();
 
 // Compute per-state count for the active time range. For 'all' we sum
 // across all years in by_state_year; for 30d/60d/90d/365d we read from the
