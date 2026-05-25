@@ -3078,19 +3078,23 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="aiTake-cpi" class="aiTake-slot"></div>
     <div id="cpiLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading CPI data…</div>
     <div id="cpiContent">
-      <!-- Empty state shown when FRED_API_KEY is unset (fred_available=false).
-           Replaced by the controls + chart grid once a real payload lands. -->
-      <div id="cpiEmpty" class="v2-card v2-card--info hidden" style="margin-bottom:12px">
+      <!-- Empty state shown when FRED_API_KEY is unset (fred_available=false)
+           OR when the sidecar lands with no series (series: []). Replaced by
+           the controls + chart grid once a real payload with series arrives.
+           Default-visible (no `hidden` class) so even if renderCpi() never
+           runs — e.g., a JS error elsewhere short-circuits renderAll — the
+           user still sees an explanation instead of a blank tab. -->
+      <div id="cpiEmpty" class="v2-card v2-card--info" style="margin-bottom:12px">
         <div class="v2-card__body">
           <div class="v2-empty v2-empty--warm">
             <div class="v2-empty__icon">&#128202;</div>
             <div class="v2-empty__title">CPI data unavailable</div>
-            <div class="v2-empty__sub" id="cpiEmptySub">FRED API key not configured.</div>
+            <div class="v2-empty__sub" id="cpiEmptySub">FRED_API_KEY is not set on the server.</div>
             <div class="v2-empty__sub" style="margin-top:8px">
-              Add <code>FRED_API_KEY=...</code> to <code>.env</code> and re-run the build.
-              Free key:
+              Add <code>FRED_API_KEY=&lt;your_key&gt;</code> to <code>.env</code> and trigger a new deploy.
+              Get a free key at
               <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" rel="noreferrer"
-                 style="color:var(--v2-info)">fred.stlouisfed.org/docs/api/api_key.html &#8599;</a>
+                 style="color:var(--v2-info)">fred.stlouisfed.org/docs/api/api_key.html &#8599;</a>.
             </div>
           </div>
         </div>
@@ -11969,20 +11973,38 @@ function renderCpi(){
   const sub     = document.getElementById('cpiEmptySub');
   if (!emptyEl || !bodyEl) return;
 
-  // No payload at all yet (sidecar still warming up or absent from manifest).
-  // renderAll's loading branch above usually handles this; fall through to
-  // empty state as a defensive default.
-  if (!cpi){
-    emptyEl.classList.remove('hidden');
-    bodyEl.classList.add('hidden');
-    if (sub) sub.textContent = 'CPI sidecar not yet loaded.';
-    return;
-  }
+  // Empty-state gate. Three flavors collapse to the same visible card:
+  //   1. No payload yet (sidecar in-flight / missing from manifest).
+  //   2. Builder ran without FRED_API_KEY -> fred_available=false, series=[].
+  //   3. Payload landed but has no series (malformed / partial fetch).
+  // We treat (2) and (3) as the same surface because a series:[] payload
+  // with fred_available either unset or true means there is nothing to
+  // chart — previously this case fell through to the "real body" path and
+  // rendered an empty grid container, which read as a blank tab to users
+  // even though renderCpi itself completed without error.
+  const noPayload     = !cpi;
+  const noFredKey     = !!cpi && cpi.fred_available === false;
+  const noSeries      = !!cpi && (!Array.isArray(cpi.series) || cpi.series.length === 0);
+  const showEmpty     = noPayload || noFredKey || noSeries;
 
-  if (cpi.fred_available === false){
+  if (showEmpty){
     emptyEl.classList.remove('hidden');
     bodyEl.classList.add('hidden');
-    if (sub) sub.textContent = cpi.note || 'FRED_API_KEY not configured on the builder.';
+    if (sub){
+      // Prefer the server-side note when present (it explains exactly why,
+      // e.g. "FRED_API_KEY not set — add to .env and re-run"). Otherwise
+      // fall back to a generic but accurate message per branch.
+      const note = (cpi && typeof cpi.note === 'string' && cpi.note.trim()) ? cpi.note.trim() : '';
+      if (note){
+        sub.textContent = note;
+      } else if (noPayload){
+        sub.textContent = 'CPI sidecar not yet loaded.';
+      } else if (noFredKey){
+        sub.textContent = 'FRED_API_KEY is not set on the server.';
+      } else {
+        sub.textContent = 'No CPI series available in the latest payload.';
+      }
+    }
     return;
   }
 
