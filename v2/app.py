@@ -3082,6 +3082,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div id="cpiGrid" class="grid2"></div>
       </div>
     </div><!-- /cpiContent -->
+  </div><!-- /tab-cpi -->
+
   <!-- ============ GLOBAL SUPPLIES TAB ============ -->
   <!-- Macro / logistics indicators that aren't crypto-specific but matter for
        the broader risk regime: container throughput at the two biggest U.S.
@@ -3136,6 +3138,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
     </div><!-- /suppliesContent -->
+  </div><!-- /tab-supplies -->
+
   <!-- ============ METALS TAB ============ -->
   <!-- Gold/silver spot prices (5y daily lines from FRED + Yahoo), top-20
        central-bank gold holdings (IMF IRFCL, fine troy ounces -> tonnes),
