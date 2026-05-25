@@ -3355,8 +3355,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          data-mufon.json sidecar; no extra fetch). Mirrors the crypto signal
          card layout — score + chip + sparkline + component breakdown — so
          the user reads it as "is UAP activity trending up or down" at a
-         glance. Honest: the sidecar ends 2014-05-08, so the trend describes
-         the historical pattern through 2014, not 2026 activity. -->
+         glance. The sidecar now combines the planetsig historical mirror
+         (1906-2014) with a direct scrape of NUFORC's monthly subndx pages
+         (2014+), so recent windows reflect real recent activity. -->
     <div id="mufonTrendLoading" class="hidden" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Loading sightings trend…</div>
     <div id="mufonTrendContent">
       <div class="v2-card" id="mufonTrendCard" style="margin-bottom:14px">
@@ -9152,14 +9153,17 @@ function renderMufonDocs(){
 // Derives a direction-of-travel signal from m.totals_by_year + m.recent_buckets
 // (no extra fetch — all metrics computed client-side). Mirrors the crypto
 // signal card layout: headline chip + score (-100..+100) + sparkline + a
-// component breakdown table. Honest: the NUFORC mirror is frozen at
-// 2014-05-08, so this card describes the historical pattern through 2014,
-// not 2026 activity. The disclaimer line at the bottom is load-bearing.
+// component breakdown table. The sidecar now combines the historical
+// planetsig mirror (1906-2014) with a direct NUFORC subndx scrape (2014+),
+// so the trend reflects current activity through the latest scraped month.
+// The disclaimer line at the bottom stays — it just describes the merge
+// instead of apologising for a frozen mirror.
 
 // Drop the most-recent year if it looks partial (fewer than ~85% of the
-// rolling 3y mean of full years). The NUFORC sidecar ends mid-May 2014, so
-// 2014 itself is a partial year and would torpedo any trend if included
-// raw. Returns the (years, counts) arrays with the partial year stripped
+// rolling 3y mean of full years). With the live NUFORC scrape feeding the
+// sidecar, the current calendar year is almost always partial; without it
+// the 5y CAGR would compare a half-year to full years and torpedo the
+// trend. Returns the (years, counts) arrays with the partial year stripped
 // AND a separate handle on the partial year for transparency.
 function mufonSplitPartialYear(totalsByYear){
   const years = Object.keys(totalsByYear).map(Number).filter(y => isFinite(y)).sort((a,b)=>a-b);
@@ -9454,9 +9458,9 @@ function renderMufonTrend(){
     // Honest disclaimer.
     + '<div style="margin-top:12px;padding:10px 12px;background:var(--bg2,#0f1419);border-left:3px solid var(--v2-warn,#fbbf24);border-radius:4px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   '<strong style="color:var(--v2-warn,#fbbf24)">Note:</strong> '
-    +   'Anchored to dataset cutoff <strong>' + recentAnchor + '</strong> (community NUFORC mirror; live MUFON feed is paywalled). '
-    +   'Trend describes the historical pattern through ' + (lastFull || '—') + ', not current activity. '
-    +   'The "recent windows" row reads back from that cutoff date — it is not the last 30/60/90/365 days from today.'
+    +   'Combines the planetsig community mirror (1906-2014) with a direct scrape of NUFORC\'s monthly subndx pages (2014+). '
+    +   'Recent-window counts run through <strong>' + recentAnchor + '</strong> and reflect actual recent activity — they ARE the last 30/60/90/365 days from now. '
+    +   'The "most recent partial year" row flags ' + (partialYear || 'the current year') + ' so the 5y CAGR doesn\'t compare a half-year to full ones.'
     + '</div>';
 }
 
@@ -9532,14 +9536,18 @@ function renderMufonMap(){
   const range = state.mufonTimeRange || 'all';
   const counts = mufonCountsForRange(m, range);
 
-  // Range-specific honesty note about the anchor.
+  // Range-specific honesty note about the anchor. When _stale is set, the
+  // live NUFORC scrape didn't contribute this run and buckets fell back to
+  // being anchored to the historical dataset's last entry — flag that.
   if (note) {
     if (range === 'all') {
       const dr = m.date_range || [null,null];
       note.textContent = (dr[0] && dr[1]) ? ('All records ' + dr[0] + ' to ' + dr[1] + '.') : '';
-    } else {
+    } else if (m._stale) {
       const anchor = (m.date_range && m.date_range[1]) || '—';
-      note.textContent = 'Window anchored to the dataset’s most-recent entry (' + anchor + '), not today.';
+      note.textContent = 'Live scrape unavailable — window anchored to historical mirror cutoff (' + anchor + '), not today.';
+    } else {
+      note.textContent = 'Window anchored to today (UTC).';
     }
   }
 
@@ -9955,17 +9963,17 @@ function renderMufonShapes(){
     +   '<ul style="list-style:none;margin:0;padding:0">' + legendRows + '</ul>'
     + '</div>';
 
-  // Honest footnote — mirrors the rest of the UAP tab's tone about the
-  // planetsig 2014 stall.
+  // Honest footnote — mirrors the rest of the UAP tab's tone, now reflecting
+  // the merged historical+live NUFORC dataset.
   const dr = m.date_range || [null, null];
   const footnote = ''
     + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
     +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
     +   'Top 15 shapes shown; rarer ones collapse into "other". '
-    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ' — '
-    +   'the planetsig mirror has not refreshed since 2014, so post-2014 activity is '
-    +   '<strong>not</strong> reflected. Treat as a historical pattern, not current state. '
-    +   'Range toggle re-slices the stacked area only; the legend totals stay all-time.'
+    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ', '
+    +   'combining the planetsig historical mirror with a direct NUFORC subndx scrape'
+    +   (m._stale ? ' <strong>(live scrape unavailable this run — historical only)</strong>' : '')
+    +   '. Range toggle re-slices the stacked area only; the legend totals stay all-time.'
     + '</div>';
 
   body.innerHTML = ''

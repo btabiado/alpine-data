@@ -10,35 +10,45 @@ This module only powers section 3 (the state heat-map). Sections 1 and 2 do
 not change often enough to warrant a fetcher; the operator updates them by
 editing v2/app.py directly.
 
-Data source — NUFORC community archive
---------------------------------------
-The canonical Renner mirror (``timothyrenner/nuforc_sightings_data``) keeps
-its CSVs in a private DVC remote — the GitHub data/ tree is empty by design.
-We fall back to other public mirrors of NUFORC's eyewitness reports. The
-``planetsig/ufo-reports`` mirror is well-known, MIT-licensed, headerless,
-and ships an ~80k-row CSV with columns::
+Data sources — historical mirror PLUS live NUFORC scrape
+--------------------------------------------------------
+**Historical (1906–2014):** the ``planetsig/ufo-reports`` GitHub mirror is
+well-known, MIT-licensed, headerless, and ships an ~80k-row CSV with columns::
 
     datetime, city, state, country, shape,
     duration_seconds, duration_text, comments,
     posted, latitude, longitude
 
-Caveat: that mirror was last refreshed in 2014, so anything after 2014 is
-absent. We surface ``date_range`` in the payload so the dashboard can be
-honest about it.
+That mirror was last refreshed in 2014, so it does not cover 2014-05 onward.
 
-If any probed URL changes shape, the fetcher's row parser silently drops
-bad rows; if EVERY probe fails, we preserve the prior on-disk JSON and
-return rc=1 (the V2 build wraps the call in try/except so a fetch failure
-never aborts the build).
+**Live (2014-05–today):** we scrape NUFORC's own monthly subndx pages
+(``https://nuforc.org/subndx/?id=eYYYYMM``). Each page renders a wpDataTables
+table whose backing AJAX endpoint accepts a ``YearMonth=YYYYMM`` placeholder
+and returns JSON with columns ``[link, occurred, city, state, country, shape,
+summary, reported, media, explanation]``. The scrape is polite:
+
+  * one User-Agent string identifying the dashboard + link to the public site,
+  * single-threaded,
+  * 2-second minimum delay between month requests,
+  * monthly responses cached on disk (``data/.stale/nuforc_subndx_YYYYMM.json``)
+    so subsequent runs only re-fetch the current and prior month (which can
+    still get new entries),
+  * a 5-minute hard wall-clock cap — if the scrape doesn't finish in time we
+    ship whatever we got and merge with the historical mirror,
+  * stops early if 3 consecutive months 404 (i.e. we've scrolled past the
+    earliest archive).
+
+Where the two sources overlap (2014-05–2014-09 in the wild), the NUFORC live
+scrape WINS (more accurate; it IS the upstream).
 
 Output schema (sidecar v2/data-mufon.json) ::
 
     {
       "generated_at": "2026-05-25T19:30:00Z",
-      "source": "planetsig/ufo-reports mirror of NUFORC (MIT)",
-      "source_url": "https://raw.githubusercontent.com/.../...csv",
-      "total_records": 80332,
-      "date_range": ["1949-10-10", "2014-05-08"],
+      "source": "planetsig/ufo-reports (1906-2014) + nuforc.org direct (2014+)",
+      "source_url": "https://nuforc.org/subndx/",
+      "total_records": 160000,
+      "date_range": ["1906-11-11", "2026-05-23"],
       "by_state_year": {
         "CA": {"2014": 432, "2013": 511, ...},
         "TX": {...},
@@ -49,10 +59,10 @@ Output schema (sidecar v2/data-mufon.json) ::
         ...
       },
       "recent_buckets": {
-        "CA": {"30d": 0, "60d": 0, "90d": 0, "365d": 11},
+        "CA": {"30d": 7, "60d": 12, "90d": 18, "365d": 215},
         ...
       },
-      "totals_by_year": {"2014": 1234, "2013": 2345, ...},
+      "totals_by_year": {"2026": 1066, "2025": 4500, ...},
       "shape_totals": [
         {"shape": "light", "count": 23456},
         {"shape": "triangle", "count": 8201},
@@ -61,63 +71,70 @@ Output schema (sidecar v2/data-mufon.json) ::
       "shape_by_year": {
         "1906": {"unknown": 2, "light": 0, ...},
         ...
-        "2014": {"light": 412, "triangle": 187, ...}
+        "2026": {"light": 412, "triangle": 187, ...}
       }
     }
 
-The ``recent_buckets`` field is computed from the CSV's own most-recent
-datestamp, NOT from "today" — for a mirror that's stale at 2014, "30d"
-means "30 days before the last entry in the dataset." The renderer
-displays this honestly.
+The ``recent_buckets`` field is anchored to **today** (UTC) once the live
+scrape contributes data — so "30d" really means the last 30 days. If the
+live scrape produces zero rows AND we fall back to pure planetsig, we set
+``_stale: True`` and the buckets reset to be anchored to the dataset's last
+entry (2014-05-08) so the dashboard renders an honest "no recent data".
 
 Shape aggregations
 ------------------
-Two additional top-level keys carry NUFORC shape classifications
-(Light, Triangle, Disk, Sphere, Fireball, …). Shape strings are
-lowercased and stripped; blanks map to "unknown". To keep the JSON
-compact, only the top ~15 shapes are kept as named entries — everything
-else collapses into "other". The "unknown" bucket is always preserved
-so per-year shape totals sum to ``total_records``::
-
-    "shape_totals": [
-      {"shape": "light", "count": 23456},
-      {"shape": "triangle", "count": 8201},
-      ...sorted desc by count...
-    ],
-    "shape_by_year": {
-      "1906": {"unknown": 2, "light": 0, ...},
-      ...
-      "2014": {"light": 412, "triangle": 187, ...}
-    }
+Two top-level keys carry NUFORC shape classifications (Light, Triangle,
+Disk, Sphere, Fireball, …). Shape strings are lowercased and stripped;
+blanks map to "unknown". To keep the JSON compact, only the top ~15
+shapes are kept as named entries — everything else collapses into "other".
 
 CLI ::
 
-    python fetch_mufon.py                   # default --out v2/data-mufon.json
+    python fetch_mufon.py                       # default --out v2/data-mufon.json
     python fetch_mufon.py --out PATH
-    python fetch_mufon.py --no-network      # offline parser self-test
+    python fetch_mufon.py --no-network          # offline parser self-test
+    python fetch_mufon.py --months-back N       # how many months of NUFORC to pull (default 144)
+    python fetch_mufon.py --no-live             # skip live scrape, planetsig only
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import html
 import io
 import json
+import re
 import sys
-import urllib.request
+import time
 import urllib.error
-from datetime import datetime, timezone, timedelta
+import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 
-UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
+UA = ("Mozilla/5.0 (compatible; btc-eth-etf-dashboard/1.0 "
+      "+https://btabiado.github.io/btc-eth-etf-dashboard/)")
 ROOT = Path(__file__).parent
 DEFAULT_OUT = ROOT / "v2" / "data-mufon.json"
 
-# Probed in order. First one that yields >1000 sane rows wins. Adding
-# new candidates here is a one-line change; the parser auto-detects the
-# shape (header vs no-header) per file.
+# NUFORC scrape configuration. The wdtNonce lives in a hidden input on any
+# /subndx/?id=e<YYYYMM> page (the /ndx/?id=event index renders the
+# month-list table BUT not the same wpDataTables instance, so no nonce is
+# emitted there). We bootstrap by loading the current-month subndx page.
+NUFORC_BASE = "https://nuforc.org"
+NUFORC_MONTH_PAGE = f"{NUFORC_BASE}/subndx/?id=e"  # + YYYYMM
+NUFORC_AJAX_URL = f"{NUFORC_BASE}/wp-admin/admin-ajax.php"
+NUFORC_REQUEST_DELAY_SEC = 2.0      # polite floor between requests
+NUFORC_WALL_CLOCK_CAP_SEC = 300     # 5 minutes total
+NUFORC_404_STREAK_CAP = 3           # stop after this many consecutive misses
+NUFORC_CACHE_DIR = ROOT / "data" / ".stale"
+
+# Probed in order. First one that yields >1000 sane rows wins. The historical
+# planetsig mirror is the load-bearing fallback; the Renner candidates are
+# kept first so a future re-publish would automatically win.
 CSV_CANDIDATES: list[dict[str, str]] = [
     {
         # Canonical (DVC-backed, usually 404 — keep first so a future enable wins).
@@ -176,8 +193,10 @@ def _http_get_text(url: str, timeout: int = 60) -> str | None:
 
 
 def _parse_datetime(s: str) -> datetime | None:
-    """Accept the two formats we see in NUFORC mirrors:
-      - "M/D/YYYY HH:MM"      (planetsig)
+    """Accept the formats we see in NUFORC mirrors AND the live subndx feed:
+      - "M/D/YYYY HH:MM"      (planetsig + live)
+      - "MM/DD/YYYY HH:MM"    (live, zero-padded)
+      - "MM/DD/YYYY"          (live, no time)
       - "YYYY-MM-DDTHH:MM:SS" (Renner processed)
     Returns a naive UTC-equivalent datetime, or None.
     """
@@ -192,7 +211,7 @@ def _parse_datetime(s: str) -> datetime | None:
         return datetime.fromisoformat(s.replace("Z", "+00:00")).replace(tzinfo=None)
     except ValueError:
         pass
-    # M/D/YYYY HH:MM (or M/D/YYYY)
+    # M/D/YYYY HH:MM (or M/D/YYYY). Same parser handles 1- and 2-digit M/D.
     for fmt in ("%m/%d/%Y %H:%M", "%m/%d/%Y"):
         try:
             return datetime.strptime(s, fmt)
@@ -235,17 +254,6 @@ def _norm_city(raw: str) -> str:
 
 
 # ----- core aggregation -----------------------------------------------------
-
-# Column layouts we know about. Keys are tuples of normalised header names
-# (lowercased) when a header IS present; the value is a mapping from logical
-# slot -> column index.
-KNOWN_HEADER_MAPS: list[tuple[set[str], dict[str, str]]] = [
-    # Renner processed shape (header present, columns vary slightly by version).
-    (
-        {"city", "state", "occurred"},
-        {"datetime": "occurred", "city": "city", "state": "state"},
-    ),
-]
 
 
 def _norm_shape(raw: str) -> str:
@@ -336,9 +344,17 @@ def _extract_row(r: list[str], dt_idx: int, city_idx: int,
     return {"dt": dt, "city": city, "state": state, "shape": shape}
 
 
-def aggregate(rows: list[dict]) -> dict:
+def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
     """Roll rows into the dashboard sidecar payload. ``rows`` must be the
-    list returned by ``_row_iter``."""
+    list returned by ``_row_iter``.
+
+    ``anchor_dt`` controls the reference date for the ``recent_buckets``
+    windows. When None (the legacy planetsig-only path) we anchor to the
+    dataset's own most-recent entry — honest for a frozen mirror but
+    misleading for a live feed. The orchestrator passes ``datetime.utcnow()``
+    once the live scrape has contributed any data so the buckets describe
+    "the last 30/60/90/365 days from today."
+    """
     by_state_year: dict[str, dict[str, int]] = {}
     city_counts: dict[str, dict[str, int]] = {}
     totals_by_year: dict[str, int] = {}
@@ -380,13 +396,15 @@ def aggregate(rows: list[dict]) -> dict:
             {"city": c, "count": n} for c, n in ranked
         ]
 
-    # Recent buckets — anchored to the dataset's own latest entry so a stale
-    # mirror produces honest "0 in last 30d (since 2014)" answers instead of
-    # silently looking like "0 in the last 30 days from today."
+    # Recent buckets — pick an anchor. ``anchor_dt`` wins when supplied
+    # (live-scrape merged path); otherwise we use the dataset's own most-
+    # recent entry so a frozen mirror produces honest "0 in last 30d (since
+    # 2014)" answers instead of misleadingly looking like "0 last 30 days."
     recent_buckets: dict[str, dict[str, int]] = {}
-    if max_dt is not None:
+    bucket_anchor: datetime | None = anchor_dt if anchor_dt is not None else max_dt
+    if bucket_anchor is not None:
         windows = {"30d": 30, "60d": 60, "90d": 90, "365d": 365}
-        thresholds = {k: max_dt - timedelta(days=d) for k, d in windows.items()}
+        thresholds = {k: bucket_anchor - timedelta(days=d) for k, d in windows.items()}
         for state in by_state_year:
             recent_buckets[state] = {k: 0 for k in windows}
         for r in rows:
@@ -457,12 +475,253 @@ def aggregate(rows: list[dict]) -> dict:
     return payload
 
 
+# ----- live NUFORC scrape ---------------------------------------------------
+
+# Regex that pulls every <tr>...</tr> from the AJAX JSON's `data` array. The
+# JSON itself is structured, so we DO use json.loads — these helpers operate
+# on the post-parsed cell strings.
+_HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _strip_html(s: str) -> str:
+    """NUFORC cell values sometimes contain anchor tags ('<a ...>City</a>')
+    or `<br>`. Strip every tag, decode HTML entities, collapse whitespace."""
+    if not s:
+        return ""
+    cleaned = _HTML_TAG_RE.sub(" ", s)
+    cleaned = html.unescape(cleaned)
+    return " ".join(cleaned.split()).strip()
+
+
+def _nuforc_extract_nonce(html_text: str) -> str | None:
+    """Pull the wpDataTables CSRF nonce from a /ndx/ or /subndx/ page. The
+    field is named ``wdtNonceFrontendServerSide_1`` and ships as a hidden
+    input. Returns the 10-character hex token or None on miss."""
+    m = re.search(
+        r'wdtNonceFrontendServerSide_1"\s+value="([a-f0-9]+)"',
+        html_text)
+    return m.group(1) if m else None
+
+
+def _nuforc_fetch_month(yyyymm: str, nonce: str,
+                        timeout: int = 60) -> dict | None:
+    """POST the AJAX request that returns one month's sightings. Returns the
+    raw JSON dict (with keys recordsTotal, recordsFiltered, data:[...rows...])
+    or None if the HTTP layer fails. A successful 200 with ``data == []`` IS
+    returned as the dict — the caller decides whether that means 404 or
+    "month exists but empty".
+    """
+    body = urllib.parse.urlencode({
+        "draw": "1",
+        "start": "0",
+        # NUFORC's busiest month ever was ~9k reports (late 2012). Cap well
+        # over that so we never have to paginate. Server caps internally.
+        "length": "20000",
+        "wdtNonce": nonce,
+    }).encode()
+    qs = urllib.parse.urlencode({
+        "action": "get_wdtable",
+        "table_id": "1",
+        "wdt_var1": "YearMonth",
+        "wdt_var2": yyyymm,
+    })
+    url = f"{NUFORC_AJAX_URL}?{qs}"
+    headers = {
+        "User-Agent": UA,
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "X-Requested-With": "XMLHttpRequest",
+        "Referer": f"{NUFORC_MONTH_PAGE}{yyyymm}",
+        "Accept": "application/json, text/javascript, */*; q=0.01",
+    }
+    req = urllib.request.Request(url, data=body, method="POST", headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            raw = resp.read()
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, OSError):
+        return None
+    try:
+        return json.loads(raw.decode("utf-8", errors="replace"))
+    except (json.JSONDecodeError, ValueError):
+        return None
+
+
+def _nuforc_parse_data_rows(data: list) -> list[dict]:
+    """Turn the AJAX `data` array (list of 10-cell row lists) into our
+    normalized dict shape: {dt, city, state, shape}. Skips bad rows quietly.
+
+    Column layout (NUFORC subndx, verified May 2026):
+      0=link, 1=occurred ("MM/DD/YYYY HH:MM"), 2=city, 3=state, 4=country,
+      5=shape, 6=summary, 7=reported, 8=media, 9=explanation
+    """
+    rows: list[dict] = []
+    for r in data:
+        if not isinstance(r, list) or len(r) < 6:
+            continue
+        dt = _parse_datetime(_strip_html(str(r[1] or "")))
+        if dt is None:
+            continue
+        state = _norm_state(_strip_html(str(r[3] or "")))
+        city = _norm_city(_strip_html(str(r[2] or "")))
+        shape = _norm_shape(_strip_html(str(r[5] or "")))
+        rows.append({"dt": dt, "city": city, "state": state, "shape": shape})
+    return rows
+
+
+def _months_back_iter(n: int) -> list[str]:
+    """Return the last ``n`` YYYYMM strings, newest first. Anchored to UTC."""
+    today = datetime.now(timezone.utc).date().replace(day=1)
+    out: list[str] = []
+    for i in range(n):
+        # Subtract i months by going to day=1 then back-stepping.
+        y = today.year
+        m = today.month - i
+        while m <= 0:
+            m += 12
+            y -= 1
+        out.append(f"{y:04d}{m:02d}")
+    return out
+
+
+def _fetch_nuforc_live(months_back: int = 144,
+                       wall_clock_cap_sec: float = NUFORC_WALL_CLOCK_CAP_SEC,
+                       cache_dir: Path = NUFORC_CACHE_DIR) -> dict:
+    """Scrape the last ``months_back`` months of NUFORC's subndx index.
+
+    Returns a dict ``{"rows": [...], "meta": {...}}``. ``rows`` is the
+    normalized per-row list (same shape as ``_row_iter`` output). ``meta``
+    carries diagnostics: ``months_pulled``, ``months_404``, ``months_cached``,
+    ``wall_clock_sec``, ``stopped_reason``.
+
+    Cache policy: every successfully-fetched month is written to
+    ``cache_dir / nuforc_subndx_YYYYMM.json`` and re-loaded on subsequent
+    runs WITHOUT a network call — *except* the current and prior month,
+    which are always re-fetched (they accumulate new entries).
+    """
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    today_ym = datetime.now(timezone.utc).strftime("%Y%m")
+    # Compute the "prior" month string by going to day=1 then minus one.
+    today_d = datetime.now(timezone.utc).date().replace(day=1)
+    prior_d = (today_d - timedelta(days=1)).replace(day=1)
+    prior_ym = prior_d.strftime("%Y%m")
+    always_refresh = {today_ym, prior_ym}
+
+    start = time.monotonic()
+    rows: list[dict] = []
+    months_pulled = 0
+    months_404 = 0
+    months_cached = 0
+    consecutive_misses = 0
+    stopped_reason: str | None = None
+
+    nonce: str | None = None  # lazy-fetch on first network request
+
+    for ym in _months_back_iter(months_back):
+        elapsed = time.monotonic() - start
+        if elapsed > wall_clock_cap_sec:
+            stopped_reason = f"wall_clock_cap ({wall_clock_cap_sec}s)"
+            break
+
+        cache_path = cache_dir / f"nuforc_subndx_{ym}.json"
+
+        # Cache hit (and not in the always-refresh window)?
+        if cache_path.exists() and ym not in always_refresh:
+            try:
+                cached = json.loads(cache_path.read_text())
+                month_rows = _nuforc_parse_data_rows(cached.get("data", []))
+                rows.extend(month_rows)
+                months_cached += 1
+                # A cached month resets the consecutive-miss counter because
+                # we have evidence the era is populated.
+                consecutive_misses = 0
+                continue
+            except (OSError, json.JSONDecodeError, ValueError):
+                # Corrupt cache — fall through to refetch.
+                pass
+
+        # First network call — bootstrap the wdtNonce. The nonce only
+        # appears on /subndx/ pages where the wpDataTables instance is
+        # rendered (NOT on /ndx/?id=event), so we use the very same page
+        # we're about to scrape: the current month.
+        if nonce is None:
+            try:
+                bootstrap_html = _http_get_text(f"{NUFORC_MONTH_PAGE}{ym}")
+            except Exception:
+                bootstrap_html = None
+            if not bootstrap_html:
+                stopped_reason = "could_not_load_bootstrap_page"
+                break
+            nonce = _nuforc_extract_nonce(bootstrap_html)
+            if not nonce:
+                stopped_reason = "could_not_extract_nonce"
+                break
+
+        # Polite delay between actual network requests. Skip on the very
+        # first network call so we don't pay it for nothing.
+        if months_pulled + months_404 > 0:
+            time.sleep(NUFORC_REQUEST_DELAY_SEC)
+
+        try:
+            payload = _nuforc_fetch_month(ym, nonce)
+        except Exception:
+            payload = None
+        if payload is None:
+            months_404 += 1
+            consecutive_misses += 1
+            print(f"  NUFORC: {ym} request failed (will continue)",
+                  file=sys.stderr)
+            if consecutive_misses >= NUFORC_404_STREAK_CAP:
+                stopped_reason = (f"hit {NUFORC_404_STREAK_CAP} consecutive "
+                                  f"failures (likely past earliest archive)")
+                break
+            continue
+
+        data = payload.get("data", []) or []
+        # A "no rows" response IS a valid response (NUFORC has zero reports
+        # for that month in some 1700s/1800s archives). Distinguish it from a
+        # real failure by treating it as zero-but-cached.
+        try:
+            cache_path.write_text(json.dumps(payload))
+        except OSError:
+            pass  # cache write failure isn't fatal
+
+        month_rows = _nuforc_parse_data_rows(data)
+        if month_rows:
+            rows.extend(month_rows)
+            months_pulled += 1
+            consecutive_misses = 0
+            print(f"  NUFORC: {ym} -> {len(month_rows)} rows",
+                  file=sys.stderr)
+        else:
+            # Empty month — likely beyond the archive's depth. Count toward
+            # the 404 streak so the cap kicks in eventually.
+            months_pulled += 1  # we DID get a response, just empty
+            consecutive_misses += 1
+            print(f"  NUFORC: {ym} -> 0 rows (empty month)",
+                  file=sys.stderr)
+            if consecutive_misses >= NUFORC_404_STREAK_CAP:
+                stopped_reason = (f"hit {NUFORC_404_STREAK_CAP} consecutive "
+                                  f"empty months (likely past earliest archive)")
+                break
+
+    wall_clock_sec = time.monotonic() - start
+    if stopped_reason is None:
+        stopped_reason = "all_months_processed"
+    meta = {
+        "months_pulled": months_pulled,
+        "months_404": months_404,
+        "months_cached": months_cached,
+        "wall_clock_sec": round(wall_clock_sec, 1),
+        "stopped_reason": stopped_reason,
+    }
+    return {"rows": rows, "meta": meta}
+
+
 # ----- top-level orchestration ----------------------------------------------
 
-def fetch_all() -> dict | None:
-    """Try each candidate URL in order, return the first usable payload (or
-    None if every probe failed/returned garbage). Caller wraps in try/except
-    + prior-file fallback."""
+def _fetch_planetsig_rows() -> tuple[list[dict], str | None, str | None]:
+    """Try each historical-mirror candidate in order. Returns
+    (rows, label, url) on success, ([], None, None) on total failure.
+    """
     for cand in CSV_CANDIDATES:
         url = cand["url"]
         label = cand["label"]
@@ -485,12 +744,86 @@ def fetch_all() -> dict | None:
         print(f"    -> {len(rows)} rows (raw {meta['raw_row_count']}, "
               f"skipped {meta['skipped']}, header={meta['had_header']})",
               file=sys.stderr)
-        payload = aggregate(rows)
-        payload["source"] = label
-        payload["source_url"] = url
-        payload["generated_at"] = _now_iso()
-        return payload
-    return None
+        return rows, label, url
+    return [], None, None
+
+
+def fetch_all(months_back: int = 144,
+              live_scrape: bool = True) -> dict | None:
+    """Orchestrate the two-source merge: planetsig (1906-2014) + NUFORC live
+    (2014+). The live scrape is the load-bearing improvement; planetsig
+    remains the historical backbone.
+
+    Returns the aggregated dashboard payload (with ``source`` / ``source_url``
+    / ``generated_at`` populated) or None if BOTH sources failed.
+    """
+    historical_rows, hist_label, hist_url = _fetch_planetsig_rows()
+
+    live_rows: list[dict] = []
+    live_meta: dict = {"months_pulled": 0, "months_404": 0,
+                       "months_cached": 0, "wall_clock_sec": 0.0,
+                       "stopped_reason": "skipped"}
+    if live_scrape:
+        try:
+            live = _fetch_nuforc_live(months_back=months_back)
+            live_rows = live["rows"]
+            live_meta = live["meta"]
+        except Exception as e:
+            print(f"  NUFORC: live scrape crashed: {e}", file=sys.stderr)
+            live_rows = []
+
+    if not historical_rows and not live_rows:
+        return None
+
+    # Build a deduplication key for the overlap region (2014 onward). The
+    # planetsig mirror has the same NUFORC entries we'd be scraping live, so
+    # if we naively concat we'd double-count May 2014. Live scrape wins:
+    # build a set of (yyyymmdd) anchors that the live scrape covers and drop
+    # planetsig rows that fall inside that window.
+    live_cover_min: datetime | None = None
+    if live_rows:
+        live_cover_min = min(r["dt"] for r in live_rows)
+
+    merged_rows: list[dict]
+    if live_rows and historical_rows and live_cover_min is not None:
+        # Drop planetsig rows >= live_cover_min — live wins for any month
+        # the live scrape touched.
+        merged_rows = [r for r in historical_rows if r["dt"] < live_cover_min]
+        merged_rows.extend(live_rows)
+    elif live_rows:
+        merged_rows = list(live_rows)
+    else:
+        merged_rows = list(historical_rows)
+
+    # Anchor recent_buckets to "now" when the live scrape contributed data —
+    # otherwise we keep the legacy max-dt anchor so a frozen dataset stays
+    # honest.
+    anchor_dt: datetime | None = None
+    if live_rows:
+        anchor_dt = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    payload = aggregate(merged_rows, anchor_dt=anchor_dt)
+
+    # Source attribution. Three modes:
+    #   1. live + planetsig both worked     -> combined string
+    #   2. only planetsig worked            -> legacy string + _stale=True
+    #   3. only live worked (no historical) -> nuforc.org direct only
+    if historical_rows and live_rows:
+        payload["source"] = (
+            f"{hist_label} (1906-2014) + nuforc.org direct (2014+)"
+        )
+        payload["source_url"] = NUFORC_BASE + "/subndx/"
+    elif historical_rows:
+        payload["source"] = hist_label or "planetsig/ufo-reports mirror of NUFORC (MIT)"
+        payload["source_url"] = hist_url
+        payload["_stale"] = True  # no live data this run
+    else:
+        payload["source"] = "nuforc.org direct (subndx scrape)"
+        payload["source_url"] = NUFORC_BASE + "/subndx/"
+
+    payload["generated_at"] = _now_iso()
+    payload["_nuforc_live_meta"] = live_meta
+    return payload
 
 
 # ----- self-test -------------------------------------------------------------
@@ -511,6 +844,22 @@ _SAMPLE_CSV = """10/10/1949 20:30,san marcos,tx,us,cylinder,2700,45 minutes,"",4
 def _self_test() -> int:
     rows, meta = _row_iter(_SAMPLE_CSV)
     payload = aggregate(rows)
+
+    # Synthetic NUFORC-style AJAX data array — exercise the live-feed parser.
+    sample_ajax = [
+        ["<a href='/sighting/?id=1'>Open</a>", "05/15/2026 21:30",
+         "Brooklyn", "NY", "USA", "Light", "Bright orb seen", "05/15/2026",
+         "Y", ""],
+        ["<a href='/sighting/?id=2'>Open</a>", "05/16/2026 22:00",
+         "Phoenix", "AZ", "USA", "Triangle", "Three lights in V", "05/16/2026",
+         None, ""],
+        # Bad row (no date)
+        ["<a>Open</a>", "", "Nowhere", "ZZ", "??", "circle", "", "", "", ""],
+        # Non-US — kept for total, dropped from state-aggregation
+        ["<a>Open</a>", "05/17/2026 03:00", "London", "GLA", "UK",
+         "Disk", "Hover over Thames", "05/17/2026", "", ""],
+    ]
+    live_rows = _nuforc_parse_data_rows(sample_ajax)
 
     checks = [
         (len(rows) == 10, f"expected 10 parsed rows, got {len(rows)}"),
@@ -581,11 +930,32 @@ def _self_test() -> int:
          "_parse_datetime planetsig format"),
         (_parse_datetime("2014-01-15T12:00:00") is not None,
          "_parse_datetime ISO format"),
+        (_parse_datetime("05/15/2026 21:30") is not None,
+         "_parse_datetime NUFORC live format"),
         (_parse_datetime("bogus") is None, "_parse_datetime rejects garbage"),
         (_norm_state("CA") == "CA", "_norm_state passthrough"),
         (_norm_state("ca") == "CA", "_norm_state lowercases"),
         (_norm_state("XX") is None, "_norm_state rejects unknown"),
         (_norm_state("") is None, "_norm_state rejects empty"),
+        # NUFORC live parser tests
+        (len(live_rows) == 3,
+         f"live parser should keep 3 of 4 rows, got {len(live_rows)}"),
+        (live_rows[0]["state"] == "NY" and live_rows[0]["city"] == "Brooklyn",
+         f"live row 0: {live_rows[0]}"),
+        (live_rows[0]["shape"] == "light",
+         f"live row 0 shape: {live_rows[0]['shape']}"),
+        (live_rows[2]["state"] is None,
+         f"London row should have state=None, got {live_rows[2]}"),
+        # HTML stripping
+        (_strip_html("<a href='x'>City</a>") == "City",
+         f"_strip_html anchor: {_strip_html('<a>City</a>')!r}"),
+        (_strip_html("a&amp;b") == "a&b",
+         "_strip_html decodes entities"),
+        # Months-back iterator: should produce strictly decreasing YYYYMM
+        (_months_back_iter(3) == sorted(_months_back_iter(3), reverse=True),
+         "_months_back_iter not descending"),
+        (len(_months_back_iter(12)) == 12,
+         "_months_back_iter wrong length"),
     ]
     failed = [m for ok, m in checks if not ok]
     if failed:
@@ -605,6 +975,12 @@ def main(argv: list[str] | None = None) -> int:
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
+    ap.add_argument("--months-back", type=int, default=144,
+                    help="How many months of NUFORC data to scrape "
+                         "(default 144 = 12 years). Set lower if the first "
+                         "run is too slow.")
+    ap.add_argument("--no-live", action="store_true",
+                    help="Skip the NUFORC live scrape (planetsig only).")
     args = ap.parse_args(argv)
 
     if args.no_network:
@@ -619,7 +995,8 @@ def main(argv: list[str] | None = None) -> int:
             prior = None
 
     try:
-        payload = fetch_all()
+        payload = fetch_all(months_back=args.months_back,
+                            live_scrape=not args.no_live)
     except Exception as e:
         print(f"  [mufon] unexpected fetch error: {e}", file=sys.stderr)
         payload = None
@@ -657,6 +1034,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  Wrote {out_path} ({out_path.stat().st_size:,} bytes, "
           f"{payload['total_records']:,} records, "
           f"range {payload['date_range'][0]}..{payload['date_range'][1]})")
+    if "_nuforc_live_meta" in payload:
+        m = payload["_nuforc_live_meta"]
+        print(f"  NUFORC live: {m['months_pulled']} months fetched, "
+              f"{m['months_cached']} cached, {m['months_404']} failed, "
+              f"{m['wall_clock_sec']}s ({m['stopped_reason']})")
     return 0
 
 
