@@ -411,6 +411,21 @@ def main() -> int:
                   f"prior data-cpi.json preserved.", file=sys.stderr)
     except Exception as e:
         print(f"[fetch-cpi] failed: {e}", file=sys.stderr)
+    # Global Supplies sidecar — refreshes v2/data-supplies.json from a mix of
+    # Socrata (port TEU), FRED (inventory-to-sales ratio, when key is set), and
+    # NY Fed (GSCPI CSV) before the HTML render. Same isolation pattern as
+    # advisories: any source failure inside the fetcher preserves that source's
+    # prior value; a total fetcher failure (or no prior file) means the tab
+    # ships its baked-in seed file instead. The V2 build must NEVER abort
+    # because the supplies fetch fell over.
+    try:
+        import fetch_supplies
+        rc = fetch_supplies.main(["--out", str(ROOT / "data-supplies.json")])
+        if rc != 0:
+            print(f"[fetch-supplies] non-zero exit ({rc}); "
+                  f"prior data-supplies.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-supplies] failed: {e}", file=sys.stderr)
 
     print("Building payload...")
     payload = build_payload()
@@ -448,6 +463,12 @@ def main() -> int:
     cpi_path = ROOT / "data-cpi.json"
     if cpi_path.exists():
         manifest["cpi"] = "data-cpi.json"
+    # Same registration for the Supplies sidecar — written above by
+    # fetch_supplies. Only added to the manifest when the file is on disk so
+    # the lazy loader doesn't 404 on a missing seed.
+    supplies_path = ROOT / "data-supplies.json"
+    if supplies_path.exists():
+        manifest["supplies"] = "data-supplies.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -1329,6 +1350,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
   <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
+  <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -3038,6 +3060,60 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div id="cpiGrid" class="grid2"></div>
       </div>
     </div><!-- /cpiContent -->
+  <!-- ============ GLOBAL SUPPLIES TAB ============ -->
+  <!-- Macro / logistics indicators that aren't crypto-specific but matter for
+       the broader risk regime: container throughput at the two biggest U.S.
+       ports, the total-business inventory-to-sales ratio, and the NY Fed
+       Global Supply Chain Pressure Index. Data is lazy-loaded from
+       /data-supplies.json via the SIDECARS mechanism — same pattern as
+       Travel / DeFi / Whale. -->
+  <div id="tab-supplies" class="hidden">
+    <div id="aiTake-supplies" class="aiTake-slot"></div>
+    <div id="suppliesLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading global supplies…</div>
+    <div id="suppliesContent">
+      <div class="row" id="suppliesSnapshot" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
+      <div class="grid2">
+        <div class="v2-card" id="suppliesCardPorts">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">U.S. port container throughput</h2>
+              <div class="v2-card__subtitle">Monthly TEU — Port of Los Angeles vs Port of NY/NJ</div>
+            </div>
+            <div><span class="v2-chip v2-chip--info" id="suppliesPortsAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body">
+            <div id="suppliesPortsChart"></div>
+            <div class="v2-card__footer" id="suppliesPortsFoot"></div>
+          </div>
+        </div>
+        <div class="v2-card" id="suppliesCardInv">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Inventory-to-sales ratio</h2>
+              <div class="v2-card__subtitle">Total business · FRED series ISRATIO · last 10y</div>
+            </div>
+            <div><span class="v2-chip v2-chip--info" id="suppliesInvAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body">
+            <div id="suppliesInvChart"></div>
+            <div class="v2-card__footer" id="suppliesInvFoot"></div>
+          </div>
+        </div>
+      </div>
+      <div class="v2-card" id="suppliesCardGscpi" style="margin-top:12px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">NY Fed Global Supply Chain Pressure Index</h2>
+            <div class="v2-card__subtitle">Standard deviations from historical mean · positive = pressure above average · last 10y</div>
+          </div>
+          <div><span class="v2-chip v2-chip--info" id="suppliesGscpiAsOf">● —</span></div>
+        </div>
+        <div class="v2-card__body">
+          <div id="suppliesGscpiChart"></div>
+          <div class="v2-card__footer" id="suppliesGscpiFoot"></div>
+        </div>
+      </div>
+    </div><!-- /suppliesContent -->
   </div>
 </div>
 
@@ -3128,6 +3204,7 @@ async function loadSidecar(name){
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
 const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', supplies: 'supplies' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -8165,6 +8242,381 @@ function renderTravelList(advisories, sub, counts){
   }
 })();
 
+// ─── GLOBAL SUPPLIES TAB ──────────────────────────────────────────────────
+// Renders the four cards on the Supplies tab: snapshot strip + 3 SVG charts
+// (port TEU dual line, inventory ratio, GSCPI). All visuals are hand-rolled
+// inline SVG — no chart library — so the tab stays loadable behind the same
+// lazy-sidecar pattern as Travel and adds zero new asset weight.
+function renderSupplies(){
+  const sup = DATA.supplies;
+  if (!sup) return; // sidecar pending
+  renderSuppliesSnapshot(sup);
+  renderSuppliesPorts(sup);
+  renderSuppliesInventory(sup);
+  renderSuppliesGscpi(sup);
+}
+
+// Compact snapshot row at the top of the tab: 4 mini-metrics covering the
+// latest reading of each indicator + change vs prior period. Renders as
+// clickable-feeling cards (no nav target right now — purely informational).
+function renderSuppliesSnapshot(sup){
+  const host = document.getElementById('suppliesSnapshot');
+  if (!host) return;
+  const cards = [];
+  const la = ((sup.port_teu||{}).los_angeles) || null;
+  const nynj = ((sup.port_teu||{}).ny_nj) || null;
+  const inv = sup.inventory_ratio || null;
+  const gscpi = sup.gscpi || null;
+
+  function pctDelta(obs, key){
+    if (!Array.isArray(obs) || obs.length < 2) return null;
+    const a = obs[obs.length-2][key];
+    const b = obs[obs.length-1][key];
+    if (a == null || b == null || a === 0) return null;
+    return ((b - a) / a) * 100;
+  }
+  function fmtPct(p){
+    if (p == null || !isFinite(p)) return '—';
+    const sign = p > 0 ? '+' : '';
+    return sign + p.toFixed(1) + '%';
+  }
+  function fmtAbs(v){
+    if (v == null || !isFinite(v)) return '—';
+    if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(2) + 'M';
+    if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(0) + 'k';
+    return String(v);
+  }
+  function sevFromDelta(p, invert){
+    if (p == null) return 'info';
+    if (invert) p = -p;
+    if (p > 1.5) return 'good';
+    if (p < -1.5) return 'bad';
+    return 'warn';
+  }
+
+  if (la && Array.isArray(la.observations) && la.observations.length){
+    const last = la.observations[la.observations.length-1];
+    const delta = pctDelta(la.observations, 'total');
+    const sev = sevFromDelta(delta);
+    cards.push(V2.card({
+      title: 'Port of L.A.',
+      subtitle: 'Monthly TEU · ' + (la.as_of || ''),
+      severity: sev,
+      head_right: V2.chip(fmtPct(delta) + ' MoM', sev),
+      body: '<div class="v2-value v2-value--lg">' + fmtAbs(last.total) + '</div>',
+    }));
+  }
+  if (nynj && Array.isArray(nynj.observations) && nynj.observations.length){
+    const last = nynj.observations[nynj.observations.length-1];
+    const delta = pctDelta(nynj.observations, 'total');
+    const sev = sevFromDelta(delta);
+    cards.push(V2.card({
+      title: 'Port of NY/NJ',
+      subtitle: 'Loaded imports+exports · ' + (nynj.as_of || ''),
+      severity: sev,
+      head_right: V2.chip(fmtPct(delta) + ' MoM', sev),
+      body: '<div class="v2-value v2-value--lg">' + fmtAbs(last.total) + '</div>',
+    }));
+  }
+  if (inv && Array.isArray(inv.observations) && inv.observations.length){
+    const last = inv.observations[inv.observations.length-1];
+    const prev = inv.observations[inv.observations.length-2];
+    const delta = (prev && prev.value) ? ((last.value - prev.value) / prev.value) * 100 : null;
+    // Higher ratio = sluggish demand / overhang = mildly bad.
+    const sev = sevFromDelta(delta, true);
+    cards.push(V2.card({
+      title: 'Inventory/Sales',
+      subtitle: 'ISRATIO · ' + (inv.as_of || ''),
+      severity: sev,
+      head_right: V2.chip(fmtPct(delta) + ' MoM', sev),
+      body: '<div class="v2-value v2-value--lg">' + last.value.toFixed(2) + '</div>',
+    }));
+  } else if (inv && inv.available === false){
+    cards.push(V2.card({
+      title: 'Inventory/Sales',
+      subtitle: 'FRED ISRATIO',
+      body: V2.empty({
+        icon: '🔑',
+        title: 'FRED_API_KEY not set',
+        sub: 'Free key at fredaccount.stlouisfed.org enables this card.',
+      }),
+    }));
+  }
+  if (gscpi && Array.isArray(gscpi.observations) && gscpi.observations.length){
+    const last = gscpi.observations[gscpi.observations.length-1];
+    const prev = gscpi.observations[gscpi.observations.length-2];
+    const delta = prev ? (last.value - prev.value) : null;
+    // For GSCPI raw values: positive = above-average pressure. We color by
+    // level, not delta: 0 = neutral, > 1 = stressed, < -1 = relaxed.
+    let sev = 'info';
+    if (last.value > 1) sev = 'bad';
+    else if (last.value < -1) sev = 'good';
+    else if (Math.abs(last.value) > 0.5) sev = 'warn';
+    const deltaStr = (delta == null || !isFinite(delta)) ? '—'
+      : (delta > 0 ? '+' : '') + delta.toFixed(2) + ' MoM';
+    cards.push(V2.card({
+      title: 'GSCPI',
+      subtitle: 'NY Fed · ' + (gscpi.as_of || ''),
+      severity: sev,
+      head_right: V2.chip(deltaStr, sev),
+      body: '<div class="v2-value v2-value--lg">' + last.value.toFixed(2) + 'σ</div>',
+    }));
+  }
+
+  host.innerHTML = cards.length ? cards.join('')
+    : V2.empty({icon:'🚢', title:'No supply data yet', sub:'Sources may be temporarily unavailable.'});
+}
+
+// Generic inline-SVG line chart used by all three Supplies cards. Keeps the
+// V2 design tokens in play (--v2-good / --v2-bad / --v2-info / --v2-ai) and
+// avoids pulling Chart.js for what amounts to a sparkline-grade visualization.
+//   series:   [{ values: [{x:number, y:number}], color: 'good'|'bad'|'info'|...,
+//                label: 'Series', dashed?: boolean }]
+//   opts:     { width, height, yMin, yMax, zeroLine, padX, padY, yFmt }
+function svgLineChart(series, opts){
+  const o = Object.assign({
+    width: 560, height: 220, padX: 38, padY: 14,
+    zeroLine: false, yFmt: (v) => v.toFixed(2),
+  }, opts || {});
+  const W = o.width, H = o.height, PX = o.padX, PY = o.padY;
+  // Gather all x/y values across series for shared scales.
+  const allPts = [];
+  for (const s of series){ for (const p of (s.values||[])){ allPts.push(p); } }
+  if (!allPts.length){
+    return '<div class="v2-empty"><div class="v2-empty__icon">📈</div>'
+      + '<div class="v2-empty__title">No data</div></div>';
+  }
+  let xMin = Infinity, xMax = -Infinity;
+  let yMin = (o.yMin != null) ? o.yMin : Infinity;
+  let yMax = (o.yMax != null) ? o.yMax : -Infinity;
+  for (const p of allPts){
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    if (o.yMin == null && p.y < yMin) yMin = p.y;
+    if (o.yMax == null && p.y > yMax) yMax = p.y;
+  }
+  if (yMin === yMax){ yMin -= 1; yMax += 1; }
+  // Add 8% headroom for breathing space.
+  const yPad = (yMax - yMin) * 0.08;
+  if (o.yMin == null) yMin -= yPad;
+  if (o.yMax == null) yMax += yPad;
+  const xScale = (x) => PX + ((x - xMin) / Math.max(1, (xMax - xMin))) * (W - PX*2);
+  const yScale = (y) => H - PY - ((y - yMin) / Math.max(1e-9, (yMax - yMin))) * (H - PY*2);
+
+  // Color resolver — semantic name -> CSS var.
+  function color(name){
+    const map = { good:'var(--v2-good)', bad:'var(--v2-bad)', warn:'var(--v2-warn)',
+      info:'var(--v2-info)', ai:'var(--v2-ai)', orange:'var(--v2-orange)' };
+    return map[name] || 'var(--v2-info)';
+  }
+
+  // Y-axis ticks: 4 evenly spaced gridlines.
+  const ticks = [];
+  for (let i=0; i<=3; i++){
+    const v = yMin + ((yMax - yMin) * i / 3);
+    ticks.push({ v: v, y: yScale(v) });
+  }
+
+  // Build SVG.
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
+    + 'preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%">';
+  // Gridlines + y labels
+  for (const t of ticks){
+    svg += '<line x1="' + PX + '" x2="' + (W-PX) + '" y1="' + t.y + '" y2="' + t.y
+      + '" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>';
+    svg += '<text x="' + (PX-6) + '" y="' + (t.y+4) + '" font-size="10" '
+      + 'fill="var(--muted)" text-anchor="end">' + o.yFmt(t.v) + '</text>';
+  }
+  // Zero baseline (highlighted)
+  if (o.zeroLine && yMin < 0 && yMax > 0){
+    const y0 = yScale(0);
+    svg += '<line x1="' + PX + '" x2="' + (W-PX) + '" y1="' + y0 + '" y2="' + y0
+      + '" stroke="var(--muted)" stroke-width="1.5"/>';
+  }
+  // Each series — polyline + endpoint dot.
+  for (const s of series){
+    if (!s.values || !s.values.length) continue;
+    const pts = s.values.map(p => xScale(p.x) + ',' + yScale(p.y)).join(' ');
+    const dash = s.dashed ? ' stroke-dasharray="4 3"' : '';
+    svg += '<polyline points="' + pts + '" fill="none" stroke="' + color(s.color)
+      + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"' + dash + '/>';
+    const last = s.values[s.values.length-1];
+    svg += '<circle cx="' + xScale(last.x) + '" cy="' + yScale(last.y) + '" r="3" '
+      + 'fill="' + color(s.color) + '"/>';
+  }
+  // X-axis: first / last labels only (renderers pass pre-formatted labels via series).
+  if (series[0] && series[0].xLabels){
+    const xl = series[0].xLabels;
+    svg += '<text x="' + PX + '" y="' + (H-2) + '" font-size="10" '
+      + 'fill="var(--muted)" text-anchor="start">' + escapeHtml(xl.first || '') + '</text>';
+    svg += '<text x="' + (W-PX) + '" y="' + (H-2) + '" font-size="10" '
+      + 'fill="var(--muted)" text-anchor="end">' + escapeHtml(xl.last || '') + '</text>';
+  }
+  svg += '</svg>';
+
+  // Legend.
+  const legend = series.map(s => '<span style="display:inline-flex;align-items:center;gap:6px;'
+    + 'margin-right:14px;font-size:11px;color:var(--muted)">'
+    + '<span style="width:10px;height:2px;background:' + color(s.color) + ';display:inline-block"></span>'
+    + escapeHtml(s.label || '') + '</span>').join('');
+  return svg + '<div style="margin-top:6px">' + legend + '</div>';
+}
+
+// Trim observations array to the last N months (or the last N years' worth).
+// Returns a fresh array sorted oldest-first.
+function trimByMonths(obs, monthsBack){
+  if (!Array.isArray(obs) || obs.length === 0) return [];
+  const n = Math.min(obs.length, monthsBack);
+  return obs.slice(obs.length - n);
+}
+
+// Convert 'YYYY-MM' or 'YYYY-MM-DD' to a sortable numeric x (months since
+// 1970-01). Stable across both port (YYYY-MM) and gscpi (YYYY-MM-DD).
+function ymToX(s){
+  if (!s) return 0;
+  const p = String(s).split('-');
+  const y = parseInt(p[0], 10);
+  const m = parseInt(p[1], 10);
+  if (isNaN(y) || isNaN(m)) return 0;
+  return y * 12 + (m - 1);
+}
+
+function fmtYearMonth(s){
+  if (!s) return '';
+  const p = String(s).split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mi = parseInt(p[1], 10) - 1;
+  if (mi < 0 || mi > 11) return s;
+  return months[mi] + ' ' + p[0];
+}
+
+function renderSuppliesPorts(sup){
+  const host = document.getElementById('suppliesPortsChart');
+  const foot = document.getElementById('suppliesPortsFoot');
+  const asOf = document.getElementById('suppliesPortsAsOf');
+  if (!host) return;
+  const la = ((sup.port_teu||{}).los_angeles) || null;
+  const nynj = ((sup.port_teu||{}).ny_nj) || null;
+  if (!la && !nynj){
+    host.innerHTML = V2.empty({icon:'🚢', title:'No port data',
+      sub:'Socrata endpoints returned nothing on the last build.'});
+    if (foot) foot.textContent = '';
+    if (asOf) asOf.textContent = '● —';
+    return;
+  }
+
+  // Trim to last 5 years (60 months) for readability.
+  const series = [];
+  if (la){
+    const trimmed = trimByMonths(la.observations || [], 60);
+    series.push({
+      label: 'L.A. monthly total TEU',
+      color: 'orange',
+      values: trimmed.map(o => ({ x: ymToX(o.month), y: o.total })),
+      xLabels: { first: fmtYearMonth(trimmed[0] && trimmed[0].month),
+                 last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month) },
+    });
+  }
+  if (nynj){
+    const trimmed = trimByMonths(nynj.observations || [], 60);
+    series.push({
+      label: 'NY/NJ loaded imports+exports',
+      color: 'info',
+      values: trimmed.map(o => ({ x: ymToX(o.month), y: o.total })),
+      xLabels: { first: fmtYearMonth(trimmed[0] && trimmed[0].month),
+                 last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month) },
+    });
+  }
+  host.innerHTML = svgLineChart(series, {
+    yFmt: (v) => (v >= 1e6 ? (v/1e6).toFixed(1) + 'M' : (v/1e3).toFixed(0) + 'k'),
+  });
+
+  const sources = [];
+  if (la) sources.push('LA: ' + la.source + (la.as_of ? ' · ' + la.as_of : ''));
+  if (nynj) sources.push('NY/NJ: ' + nynj.source + (nynj.as_of ? ' · ' + nynj.as_of : ''));
+  if (foot) foot.textContent = sources.join(' · ');
+
+  // "Updated" chip = freshest of the two as_of strings.
+  const latest = [la && la.as_of, nynj && nynj.as_of].filter(Boolean).sort().pop();
+  if (asOf) asOf.textContent = '● ' + (latest || '—');
+}
+
+function renderSuppliesInventory(sup){
+  const host = document.getElementById('suppliesInvChart');
+  const foot = document.getElementById('suppliesInvFoot');
+  const asOf = document.getElementById('suppliesInvAsOf');
+  if (!host) return;
+  const inv = sup.inventory_ratio;
+  if (!inv || inv.available === false){
+    host.innerHTML = V2.empty({
+      icon: '🔑',
+      title: 'FRED_API_KEY required',
+      sub: 'Set FRED_API_KEY in the build environment to enable this chart. '
+        + 'Free key at fredaccount.stlouisfed.org.',
+    });
+    if (foot) foot.textContent = 'Series: FRED ISRATIO · Total business inventory-to-sales ratio';
+    if (asOf) asOf.textContent = '● not configured';
+    return;
+  }
+  if (!Array.isArray(inv.observations) || !inv.observations.length){
+    host.innerHTML = V2.empty({icon:'📊', title:'No observations',
+      sub:'FRED returned an empty series.'});
+    if (foot) foot.textContent = '';
+    if (asOf) asOf.textContent = '● —';
+    return;
+  }
+  // Last 10 years (~120 monthly observations).
+  const trimmed = trimByMonths(inv.observations, 120);
+  const series = [{
+    label: 'Inventory/Sales ratio',
+    color: 'ai',
+    values: trimmed.map(o => ({ x: ymToX(o.date), y: o.value })),
+    xLabels: { first: fmtYearMonth(trimmed[0] && trimmed[0].date),
+               last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].date) },
+  }];
+  host.innerHTML = svgLineChart(series, {
+    yFmt: (v) => v.toFixed(2),
+  });
+  if (foot) foot.textContent = 'Source: ' + (inv.source || 'FRED')
+    + ' · ' + (inv.label || 'ISRATIO');
+  if (asOf) asOf.textContent = '● ' + (inv.as_of || '—');
+}
+
+function renderSuppliesGscpi(sup){
+  const host = document.getElementById('suppliesGscpiChart');
+  const foot = document.getElementById('suppliesGscpiFoot');
+  const asOf = document.getElementById('suppliesGscpiAsOf');
+  if (!host) return;
+  const g = sup.gscpi;
+  if (!g || !Array.isArray(g.observations) || !g.observations.length){
+    host.innerHTML = V2.empty({icon:'📡', title:'GSCPI unavailable',
+      sub:'NY Fed CSV did not return rows on the last build.'});
+    if (foot) foot.textContent = '';
+    if (asOf) asOf.textContent = '● —';
+    return;
+  }
+  // Last 10 years.
+  const trimmed = trimByMonths(g.observations, 120);
+  // Color by direction of latest value: above mean = orange (pressure),
+  // below mean = good. We render as one series but use a dynamic color.
+  const last = trimmed[trimmed.length-1];
+  const color = (last && last.value > 0) ? 'orange' : 'good';
+  const series = [{
+    label: 'GSCPI (σ from mean)',
+    color: color,
+    values: trimmed.map(o => ({ x: ymToX(o.date), y: o.value })),
+    xLabels: { first: fmtYearMonth(trimmed[0] && trimmed[0].date),
+               last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].date) },
+  }];
+  host.innerHTML = svgLineChart(series, {
+    zeroLine: true,
+    yFmt: (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + 'σ',
+  });
+  if (foot) foot.textContent = 'Source: ' + (g.source || 'NY Fed')
+    + ' · published monthly · zero = historical average';
+  if (asOf) asOf.textContent = '● ' + (g.as_of || '—');
+}
+
 function renderAiNewsTab(){
   const ai = ((DATA.market||{}).ai_news) || null;
   const empty = document.getElementById('aiNewsEmpty');
@@ -11043,12 +11495,29 @@ function renderAll(){
           icon: '📊',
           title: 'Loading CPI data…',
           sub: 'Fetching FRED Consumer Price Index series.',
+  if (state.tab === 'supplies'){
+    // Mirror the travel lazy-load pattern: while the sidecar is in flight we
+    // show a placeholder; renderSupplies is a no-op until DATA.supplies lands
+    // (the renderer guards on missing subtrees with optional chaining-style
+    // checks). Once loaded, replace the placeholder and render charts.
+    const suppliesLoading = document.getElementById('suppliesLoading');
+    const suppliesContent = document.getElementById('suppliesContent');
+    const suppliesLoadingActive = !DATA.supplies && SIDECAR_STATE.supplies === 'loading';
+    if (suppliesLoading) {
+      suppliesLoading.classList.toggle('hidden', !suppliesLoadingActive);
+      if (suppliesLoadingActive) {
+        suppliesLoading.innerHTML = V2.empty({
+          icon: '🚢',
+          title: 'Loading global supplies…',
+          sub: 'Fetching port TEU, inventory ratio, and NY Fed GSCPI.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
       }
     }
     if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive);
     if (!cpiLoadingActive) renderCpi();
+    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive);
+    if (!suppliesLoadingActive) renderSupplies();
   }
   renderCoverage();
 }
@@ -11118,6 +11587,7 @@ function selectTab(t){
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
   document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
   document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
+  document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
