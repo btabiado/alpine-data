@@ -688,6 +688,11 @@ HTML_TEMPLATE = r"""<!doctype html>
   .v2-ai-take{padding:10px 12px}
   .v2-ai-take__bullet{font-size:12px}
 }
+/* Metals strength KPI band — three columns desktop, stack on narrow viewports
+   so the period-returns mini-grid stays readable on phones. */
+@media (max-width:760px){
+  .metals-strength-grid{grid-template-columns:1fr !important}
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
 header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -3200,6 +3205,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div id="aiTake-metals" class="aiTake-slot"></div>
     <div id="metalsLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading gold &amp; silver data…</div>
     <div id="metalsContent">
+      <!-- Strength KPI band — derived from gold_price/silver_price observation
+           arrays already in data-metals.json. No new data sources. Sits ABOVE
+           the existing 4-card grid so the user sees a same-time snapshot
+           before drilling into the price charts. -->
+      <div class="v2-card" id="metalsStrength" style="margin-bottom:14px">
+        <div class="v2-card__head">
+          <div><h2 class="v2-card__title">Gold &amp; silver — strength snapshot</h2><div class="v2-card__subtitle" id="metalsStrengthSub">Derived from the daily-close series below</div></div>
+          <div><span class="v2-chip v2-chip--info" id="metalsStrengthAsOf">● —</span></div>
+        </div>
+        <div class="v2-card__body" id="metalsStrengthBody"></div>
+      </div>
       <div class="grid2" id="metalsGrid" style="gap:14px">
         <!-- 4 cards populated by renderMetals(): gold price, silver price,
              central-bank gold holdings, silver mine production. -->
@@ -8395,12 +8411,203 @@ function renderTravelList(advisories, sub, counts){
 function renderMetals(){
   const m = DATA.metals;
   if (!m || typeof m !== 'object') return;
+  metalsRenderStrength(m);
   metalsRenderPriceCard('gold',   m.gold_price,   'metalsGoldBody',
                         'metalsGoldAsOf',   'metalsGoldSub',   'var(--v2-warn)');
   metalsRenderPriceCard('silver', m.silver_price, 'metalsSilverBody',
                         'metalsSilverAsOf', 'metalsSilverSub', '#cbd5e1');
   metalsRenderCBGold(m.central_bank_gold);
   metalsRenderSilverProd(m.silver_mine_production);
+}
+
+// Strength KPI band at the top of the Metals tab. Three columns derived from
+// the existing daily-close price observation arrays (no new data sources):
+//   1. Gold/silver ratio — current value, 90d sparkline, regime tint.
+//   2. Period returns grid — 1M/3M/6M/1Y/5Y for each metal.
+//   3. 52-week position — high/low/current + horizontal range bar.
+// All math is client-side; payload is just m.gold_price and m.silver_price.
+function metalsRenderStrength(m){
+  const body = document.getElementById('metalsStrengthBody');
+  const asOf = document.getElementById('metalsStrengthAsOf');
+  const sub  = document.getElementById('metalsStrengthSub');
+  if (!body) return;
+  const gold = (m && m.gold_price && Array.isArray(m.gold_price.observations))
+    ? m.gold_price.observations : [];
+  const silver = (m && m.silver_price && Array.isArray(m.silver_price.observations))
+    ? m.silver_price.observations : [];
+  if (gold.length < 30 || silver.length < 30) {
+    body.innerHTML = V2.empty({icon:'⛔', title:'Insufficient price history',
+      sub:'Need at least 30 daily closes for gold and silver to compute strength KPIs.',
+      warm:false});
+    if (asOf) asOf.textContent = '● unavailable';
+    return;
+  }
+
+  // ── Column 1: Gold/Silver ratio ───────────────────────────────────────
+  // Pair-match by index from the tail (observation arrays are aligned to the
+  // same daily schedule by fetch_metals; defensive trim still keeps them in
+  // step if one ever runs short).
+  const pairLen = Math.min(gold.length, silver.length);
+  const gTail = gold.slice(-pairLen);
+  const sTail = silver.slice(-pairLen);
+  const ratioObs = [];
+  for (let i = 0; i < pairLen; i++) {
+    const gv = gTail[i].value, sv = sTail[i].value;
+    if (gv != null && sv != null && sv !== 0) {
+      ratioObs.push({date: gTail[i].date || sTail[i].date, value: gv / sv});
+    }
+  }
+  const ratioNow = ratioObs.length ? ratioObs[ratioObs.length - 1].value : null;
+  let ratioSev = 'info';
+  if (ratioNow != null) {
+    if (ratioNow < 50)      ratioSev = 'good';   // silver outperforming
+    else if (ratioNow > 70) ratioSev = 'warn';   // gold-strong / silver cheap
+    else                    ratioSev = 'info';   // neutral band
+  }
+  const ratioSparkPts = ratioObs.slice(-90);
+  const ratioSpark = metalsStrengthSparkline(ratioSparkPts,
+    ratioSev === 'good' ? 'var(--v2-good)'
+      : (ratioSev === 'warn' ? 'var(--v2-warn)' : 'var(--v2-info)'));
+  const ratioChipCls = 'v2-chip--' + ratioSev;
+  const ratioLabel = ratioNow == null ? '—'
+    : (ratioNow < 50 ? 'Silver-strong'
+       : (ratioNow > 70 ? 'Gold-strong' : 'Neutral band'));
+
+  const col1 =
+    '<div style="display:flex;flex-direction:column;gap:var(--v2-s2);min-width:0">' +
+      '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Gold / silver ratio</div>' +
+      '<div style="display:flex;align-items:baseline;gap:var(--v2-s2);flex-wrap:wrap">' +
+        '<div style="font-size:28px;font-weight:700;color:var(--text)">' +
+          (ratioNow == null ? '—' : ratioNow.toFixed(1)) + '</div>' +
+        '<span class="v2-chip ' + ratioChipCls + '">' + ratioLabel + '</span>' +
+      '</div>' +
+      ratioSpark +
+      '<div style="font-size:11px;color:var(--muted);line-height:1.4">' +
+        'Gold / Silver — historical mean ~60. Above = silver undervalued vs gold; ' +
+        'below = silver outperforming.' +
+      '</div>' +
+    '</div>';
+
+  // ── Column 2: Period returns grid ─────────────────────────────────────
+  // Trading-day approximations: 1M=21, 3M=63, 6M=126, 1Y=252, 5Y=1260.
+  const windows = [
+    {label:'1M', days:21},
+    {label:'3M', days:63},
+    {label:'6M', days:126},
+    {label:'1Y', days:252},
+    {label:'5Y', days:1260},
+  ];
+  function returnsRow(name, obs){
+    const last = obs[obs.length - 1];
+    const cells = windows.map(w => {
+      // Skip windows we don't have history for so we don't show a fake
+      // "since-inception" return as a 5Y number.
+      if (obs.length <= w.days) {
+        return '<div style="text-align:center;flex:1;min-width:0">' +
+          '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">' + w.label + '</div>' +
+          '<div style="margin-top:2px"><span class="v2-chip">n/a</span></div>' +
+          '</div>';
+      }
+      const ref = obs[obs.length - 1 - w.days];
+      const pct = (ref && ref.value) ? ((last.value - ref.value) / ref.value) * 100 : null;
+      return '<div style="text-align:center;flex:1;min-width:0">' +
+        '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">' + w.label + '</div>' +
+        '<div style="margin-top:2px">' + metalsPctChip(pct) + '</div>' +
+        '</div>';
+    }).join('');
+    return '<div style="display:flex;align-items:center;gap:var(--v2-s2);min-width:0">' +
+      '<div style="width:48px;font-size:11px;color:var(--text);font-weight:600">' + name + '</div>' +
+      '<div style="display:flex;flex:1;gap:var(--v2-s1);min-width:0">' + cells + '</div>' +
+      '</div>';
+  }
+  const col2 =
+    '<div style="display:flex;flex-direction:column;gap:var(--v2-s2);min-width:0">' +
+      '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Period returns</div>' +
+      returnsRow('Gold', gold) +
+      returnsRow('Silver', silver) +
+      '<div style="font-size:11px;color:var(--muted);line-height:1.4;margin-top:auto">' +
+        'Trading-day lookbacks vs latest close. Green = up over period; red = down.' +
+      '</div>' +
+    '</div>';
+
+  // ── Column 3: 52-week position ────────────────────────────────────────
+  // Use the trailing 252 trading days as the "52-week" window. Position is
+  // (current - low) / (high - low) — clamped to [0, 100] for display.
+  function fiftyTwo(name, obs){
+    const window = obs.slice(-252);
+    let lo = Infinity, hi = -Infinity;
+    for (const p of window) {
+      if (p.value < lo) lo = p.value;
+      if (p.value > hi) hi = p.value;
+    }
+    const cur = obs[obs.length - 1].value;
+    const range = hi - lo;
+    const pos = range > 0 ? Math.max(0, Math.min(1, (cur - lo) / range)) : 0.5;
+    const posPct = Math.round(pos * 100);
+    // Dot color follows the same regime ramp as the chip: top = warm, bot = green.
+    const dotColor = posPct >= 70 ? 'var(--v2-warn)'
+      : (posPct <= 30 ? 'var(--v2-good)' : 'var(--v2-info)');
+    const bar =
+      '<div style="position:relative;height:8px;background:#0b0d12;border-radius:4px;margin:4px 0">' +
+        '<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(148,163,184,0.25)"></div>' +
+        '<div style="position:absolute;left:' + posPct + '%;top:-2px;width:4px;height:12px;background:' + dotColor + ';border-radius:2px;transform:translateX(-2px)"></div>' +
+      '</div>';
+    return '<div style="display:flex;flex-direction:column;gap:2px;min-width:0">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--v2-s2)">' +
+        '<div style="font-size:11px;color:var(--text);font-weight:600">' + name + '</div>' +
+        '<div style="font-size:11px;color:var(--muted)">$' + metalsFmtNum(cur, 2) + ' · <span style="color:var(--text)">' + posPct + '%</span> of 52w</div>' +
+      '</div>' +
+      bar +
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">' +
+        '<span>low $' + metalsFmtNum(lo, 2) + '</span>' +
+        '<span>high $' + metalsFmtNum(hi, 2) + '</span>' +
+      '</div>' +
+      '</div>';
+  }
+  const col3 =
+    '<div style="display:flex;flex-direction:column;gap:var(--v2-s3);min-width:0">' +
+      '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">52-week position</div>' +
+      fiftyTwo('Gold', gold) +
+      fiftyTwo('Silver', silver) +
+    '</div>';
+
+  body.innerHTML =
+    '<div class="metals-strength-grid" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--v2-s4)">' +
+      col1 + col2 + col3 +
+    '</div>';
+
+  const lastDate = gold[gold.length - 1].date || silver[silver.length - 1].date || '—';
+  if (asOf) {
+    asOf.textContent = '● As of ' + lastDate;
+    asOf.className = 'v2-chip v2-chip--info';
+  }
+  if (sub) sub.textContent = 'Derived from ' + Math.min(gold.length, silver.length) +
+    ' daily closes · ratio, returns, 52w range';
+}
+
+// Mini sparkline for the gold/silver ratio. Same conventions as
+// signalScoreSparkline() (stroke + faint baseline) but accepts the
+// metals-style {date,value} points directly.
+function metalsStrengthSparkline(points, color){
+  if (!Array.isArray(points) || points.length < 2) return '';
+  const W = 240, H = 36, padT = 3, padB = 3;
+  let lo = Infinity, hi = -Infinity;
+  for (const p of points) {
+    if (p.value < lo) lo = p.value;
+    if (p.value > hi) hi = p.value;
+  }
+  if (!isFinite(lo) || !isFinite(hi) || hi === lo) hi = lo + 1;
+  const n = points.length;
+  const pts = points.map((p, i) => {
+    const x = (i / (n - 1)) * W;
+    const y = padT + (1 - (p.value - lo) / (hi - lo)) * (H - padT - padB);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" ' +
+    'style="width:100%;height:36px;display:block;border-radius:4px;background:#0b0d12">' +
+    '<polyline points="' + pts + '" fill="none" stroke="' + color +
+      '" stroke-width="1.4" vector-effect="non-scaling-stroke"/>' +
+    '</svg>';
 }
 
 function metalsFmtNum(n, digits){
