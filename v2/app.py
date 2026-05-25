@@ -9433,7 +9433,7 @@ function renderMufonTrend(){
     +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px">'
     +     '<div style="font-size:11px;color:var(--muted)">Annual reports · ' + visibleYears[0] + '–' + (lastFull || '—') + (partialYear && trendRange === 'all' ? ' (' + partialYear + ' partial, excluded)' : '') + '</div>'
     +     '<div class="mufon-trend-range" style="display:flex;gap:4px;flex-wrap:wrap">'
-    +       ['5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === trendRange ? ' active' : '') + '" data-mufontrendrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : r) + '</button>'; }).join('')
+    +       ['1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === trendRange ? ' active' : '') + '" data-mufontrendrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : r) + '</button>'; }).join('')
     +     '</div>'
     +   '</div>'
     +   spark
