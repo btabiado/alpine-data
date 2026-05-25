@@ -164,107 +164,110 @@ class _AdvisoryTableParser(HTMLParser):
     """Stateful HTMLParser that pulls the advisory rows out of the State Dept
     advisory-list page.
 
-    The page layout (as of May 2026) is a single <table> where each <tr> has:
-        <td> Destination name (with optional risk-indicator <span> children) </td>
-        <td> "Level N: <description>" </td>
-        <td> "Month Day, Year" </td>
+    Page layout (as of May 2026) — a single ``<table id="htmlTable">``
+    whose ``<tbody>`` rows look like:
 
-    Risk indicators appear as text inside the destination cell, typically
-    space-separated single letters (T C U H K N D O E). We capture all text
-    inside the first cell, then separately extract bare uppercase letters
-    that look like risk codes.
+        <tr>
+          <th scope="row"><a ...>Country Name</a></th>
+          <td><p><span class="level-badge level-badge-N"></span>Level N: ...</p></td>
+          <td>
+            <div class="tsg-utility-risk-pill-container">
+              <span class="tsg-utility-risk-pill">UNREST (U)</span>
+              <span class="tsg-utility-risk-pill">CRIME (C)</span>
+              ...
+            </div>
+          </td>
+          <td><p>MM/DD/YYYY</p></td>
+        </tr>
 
-    This parser is intentionally permissive — the State Dept rebuilds this
-    page periodically and the exact markup drifts. Anything we can't parse
-    is logged to stderr and skipped, never raised.
+    We lock onto the table by ``id="htmlTable"`` so peripheral tables (the
+    megamenu, sidebars, etc.) can't pollute parser state, and we skip the
+    ``<thead>`` row so its column labels never reach ``_flush_row``.
+
+    Anything we can't parse is silently skipped — the State Dept rebuilds
+    this page periodically and the exact markup drifts.
     """
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.rows: list[dict] = []
-        self._in_table = False
+        self._in_target_table = False
+        self._in_thead = False
         self._in_tr = False
-        self._in_td = False
-        self._td_idx = 0
+        self._in_cell = False
         self._cells: list[str] = []
         self._cur_text: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag == "table":
-            self._in_table = True
-        elif tag == "tr" and self._in_table:
+            if dict(attrs).get("id") == "htmlTable":
+                self._in_target_table = True
+        elif not self._in_target_table:
+            return
+        elif tag == "thead":
+            self._in_thead = True
+        elif tag == "tr" and not self._in_thead:
             self._in_tr = True
-            self._td_idx = 0
             self._cells = []
         elif tag in ("td", "th") and self._in_tr:
-            self._in_td = True
+            self._in_cell = True
             self._cur_text = []
 
     def handle_endtag(self, tag: str) -> None:
-        if tag == "table":
-            self._in_table = False
+        if tag == "table" and self._in_target_table:
+            self._in_target_table = False
+        elif not self._in_target_table:
+            return
+        elif tag == "thead":
+            self._in_thead = False
         elif tag == "tr" and self._in_tr:
             self._in_tr = False
             self._flush_row()
-        elif tag in ("td", "th") and self._in_td:
-            self._in_td = False
+        elif tag in ("td", "th") and self._in_cell:
+            self._in_cell = False
             self._cells.append(" ".join("".join(self._cur_text).split()))
-            self._td_idx += 1
 
     def handle_data(self, data: str) -> None:
-        if self._in_td:
+        if self._in_cell:
             self._cur_text.append(data)
 
     def _flush_row(self) -> None:
+        # Real data rows have 4 cells (name, level, risks, date). Tolerate 3
+        # so a future redesign that collapses the risk-pills column still
+        # ships dates and levels.
         if len(self._cells) < 3:
             return
-        # First cell = destination + risk codes; last 2 = level + date.
-        # Some pages prepend a leading "skip" cell, so look from the right
-        # for the date and treat the cell two-before-it as the level.
-        name_cell = self._cells[0].strip()
-        level_cell = self._cells[-2].strip()
-        date_cell = self._cells[-1].strip()
-        if not name_cell or not level_cell:
-            return
+        name = self._cells[0].strip()
+        level_cell = self._cells[1].strip()
+        if len(self._cells) >= 4:
+            risks_cell = self._cells[2].strip()
+            date_cell = self._cells[3].strip()
+        else:
+            risks_cell = ""
+            date_cell = self._cells[-1].strip()
 
-        # Extract bare risk-code letters (T C U H ...) from the destination cell.
-        # Strip the country name first by removing every multi-char token; then
-        # what remains should be the single-letter codes.
-        risk_chars: list[str] = []
-        for tok in re.split(r"\s+", name_cell):
-            if len(tok) == 1 and tok in VALID_RISK_CODES:
-                risk_chars.append(tok)
-        # Country name = the longest run of non-risk-code tokens at the start.
-        name_tokens: list[str] = []
-        for tok in re.split(r"\s+", name_cell):
-            if len(tok) == 1 and tok in VALID_RISK_CODES:
-                break
-            name_tokens.append(tok)
-        name = " ".join(name_tokens).strip()
         if not name:
             return
 
-        # Level: parse the first digit out of "Level 4:..." style strings.
-        m_level = re.search(r"Level\s+(\d)", level_cell, re.IGNORECASE)
-        if not m_level:
-            # Fall back to any standalone 1-4 digit in the cell.
-            m_level = re.search(r"\b([1-4])\b", level_cell)
+        m_level = re.search(r"Level\s+([1-4])", level_cell, re.IGNORECASE)
         if not m_level:
             return
-        try:
-            level = int(m_level.group(1))
-        except ValueError:
-            return
-        if level < 1 or level > 4:
-            return
+        level = int(m_level.group(1))
 
-        date_iso = _normalize_date(date_cell)
+        # Each pill ends with "(X)" where X is a single uppercase letter.
+        # Preserve scan order, dedupe defensively, drop anything outside the
+        # known code set.
+        risks: list[str] = []
+        for m in re.finditer(r"\(([A-Z])\)", risks_cell):
+            ch = m.group(1)
+            if ch in VALID_RISK_CODES and ch not in risks:
+                risks.append(ch)
 
         self.rows.append({
             "name": name,
             "level": level,
-            "risks": risk_chars,
-            "date": date_iso,
+            "risks": risks,
+            "date": _normalize_date(date_cell),
         })
 
 
@@ -453,60 +456,44 @@ def fetch_live() -> dict | None:
 
 # ----- offline self-test fixture --------------------------------------------
 
-# Small representative HTML snippet for the parser self-test. Mirrors the
-# layout of the live page closely enough that any regression in
-# parse_advisory_table() will show up here too. NOT a fixture file on disk —
-# inlining keeps the unit test runnable from a fresh checkout with zero
-# extra files. (If we ever want to share this fixture with a pytest test
-# we'll promote it to tests/fixtures/advisories_sample.html then.)
-_SAMPLE_HTML = """
-<table>
-  <thead>
-    <tr><th>Destination</th><th>Advisory Level</th><th>Date Updated</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Afghanistan U C H K T D N</td>
-      <td>Level 4: Do Not Travel</td>
-      <td>February 20, 2026</td>
-    </tr>
-    <tr>
-      <td>France U T</td>
-      <td>Level 2: Exercise Increased Caution</td>
-      <td>May 28, 2025</td>
-    </tr>
-    <tr>
-      <td>Japan</td>
-      <td>Level 1: Exercise Normal Precautions</td>
-      <td>May 15, 2025</td>
-    </tr>
-    <tr>
-      <td>Burma (Myanmar) U C H O</td>
-      <td>Level 4: Do Not Travel</td>
-      <td>May 8, 2026</td>
-    </tr>
-  </tbody>
-</table>
-"""
+# Snippet of the real travel.state.gov advisory table, saved on disk so it
+# doubles as an artifact teams can inspect when the page redesigns again.
+# Refresh with: curl <ADVISORY_LIST_URL> > /tmp/page.html, then snip the
+# <table id="htmlTable">...</table> block down to a handful of rows.
+_FIXTURE_PATH = ROOT / "tests" / "fixtures" / "advisories_sample.html"
 
 
 def _self_test() -> int:
     """Offline parser sanity check. Returns 0 on pass, 1 on failure."""
-    rows = parse_advisory_table(_SAMPLE_HTML)
+    sample_html = _FIXTURE_PATH.read_text()
+    rows = parse_advisory_table(sample_html)
+    by_name = {r["name"]: r for r in rows}
     assertions = [
-        (len(rows) == 4, f"expected 4 rows, got {len(rows)}"),
-        (rows[0]["name"] == "Afghanistan", f"row[0].name={rows[0].get('name')!r}"),
-        (rows[0]["level"] == 4, f"row[0].level={rows[0].get('level')!r}"),
-        (set(rows[0]["risks"]) == set("UCHKTDN"),
-         f"row[0].risks={rows[0].get('risks')!r}"),
-        (rows[0]["date"] == "2026-02-20", f"row[0].date={rows[0].get('date')!r}"),
-        (rows[1]["name"] == "France", f"row[1].name={rows[1].get('name')!r}"),
-        (rows[1]["level"] == 2, f"row[1].level={rows[1].get('level')!r}"),
-        (rows[2]["risks"] == [], f"row[2].risks={rows[2].get('risks')!r}"),
-        (rows[3]["name"] == "Burma (Myanmar)",
-         f"row[3].name={rows[3].get('name')!r}"),
-        (rows[3]["url"].endswith("/burma-myanmar.html"),
-         f"row[3].url={rows[3].get('url')!r}"),
+        (len(rows) == 6, f"expected 6 rows, got {len(rows)}"),
+        ("Afghanistan" in by_name, "Afghanistan row missing"),
+        (by_name["Afghanistan"]["level"] == 4,
+         f"Afghanistan.level={by_name['Afghanistan'].get('level')!r}"),
+        (set(by_name["Afghanistan"]["risks"]) == set("UCHKTDN"),
+         f"Afghanistan.risks={by_name['Afghanistan'].get('risks')!r}"),
+        (by_name["Afghanistan"]["date"] == "2026-02-20",
+         f"Afghanistan.date={by_name['Afghanistan'].get('date')!r}"),
+        (by_name["Albania"]["level"] == 2,
+         f"Albania.level={by_name['Albania'].get('level')!r}"),
+        (by_name["Albania"]["risks"] == ["C"],
+         f"Albania.risks={by_name['Albania'].get('risks')!r}"),
+        # Empty risk-pill container -> no risks.
+        (by_name["Andorra"]["risks"] == [],
+         f"Andorra.risks={by_name['Andorra'].get('risks')!r}"),
+        (by_name["Andorra"]["level"] == 1,
+         f"Andorra.level={by_name['Andorra'].get('level')!r}"),
+        (by_name["Andorra"]["date"] == "2026-05-21",
+         f"Andorra.date={by_name['Andorra'].get('date')!r}"),
+        # Algeria has K then T in scan order; verify ordering is preserved.
+        (by_name["Algeria"]["risks"] == ["K", "T"],
+         f"Algeria.risks={by_name['Algeria'].get('risks')!r}"),
+        # url field added by parse_advisory_table.
+        (by_name["Afghanistan"]["url"].endswith("/afghanistan.html"),
+         f"Afghanistan.url={by_name['Afghanistan'].get('url')!r}"),
         # slugify_country sanity
         (slugify_country("Côte d'Ivoire (Ivory Coast)") == "cote-divoire-ivory-coast",
          "Côte d'Ivoire slug override failed"),
