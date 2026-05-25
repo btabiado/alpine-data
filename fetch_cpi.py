@@ -25,13 +25,13 @@ Sources (all free, requires self-service FRED API key):
   Cars:
     CUSR0000SETA01   New vehicles (index)
     CUSR0000SETA02   Used cars and trucks (index)
-    CUSR0000SETE01   Motor vehicle insurance (index)
+    (motor vehicle insurance dropped — no public FRED series at city avg)
   Healthcare:
     CPIMEDSL         Medical care (index)
-    CUSR0000SEMF01   Prescription drugs (index)
+    CUUR0000SAM1     Medical care commodities (parent incl. Rx drugs, NSA)
   Other:
-    CUSR0000SEEB01   College tuition and fees (index)
-    CUSR0000SEED03   Cellular phone services (index, starts ~1997)
+    CUUR0000SEEB     Tuition, other school fees, and childcare (NSA)
+    CUUR0000SEED     Telephone services (parent incl. cellular, NSA)
 
 Output: v2/data-cpi.json (sidecar for the V2 dashboard's Consumer Price Index tab).
 
@@ -226,13 +226,9 @@ SERIES_CATALOG: list[dict[str, str]] = [
         "unit": "Index",
         "kind": "index",
     },
-    {
-        "id": "CUSR0000SETE01",
-        "label": "Motor vehicle insurance",
-        "category": "cars",
-        "unit": "Index",
-        "kind": "index",
-    },
+    # Motor vehicle insurance: no public FRED series for the BLS city-average
+    # CPI sub-index (SETE01 and its CUUR/CUSR variants all 404). Deferred to
+    # manual BLS scrape if/when needed.
     # --- Healthcare ----------------------------------------------------------
     {
         "id": "CPIMEDSL",
@@ -242,25 +238,31 @@ SERIES_CATALOG: list[dict[str, str]] = [
         "kind": "index",
     },
     {
-        "id": "CUSR0000SEMF01",
-        "label": "Prescription drugs",
+        # Parent of prescription drugs (SEMF01 / SEMF / CUSR variants all 404
+        # on FRED). SAM1 = Medical Care Commodities, NSA — closest available.
+        "id": "CUUR0000SAM1",
+        "label": "Medical care commodities (incl. Rx drugs)",
         "category": "healthcare",
-        "unit": "Index",
+        "unit": "Index (NSA)",
         "kind": "index",
     },
     # --- Other ---------------------------------------------------------------
     {
-        "id": "CUSR0000SEEB01",
-        "label": "College tuition and fees",
+        # Parent of college tuition (SEEB01 / CUSR variants 404). SEEB =
+        # Tuition, Other School Fees, and Childcare, NSA.
+        "id": "CUUR0000SEEB",
+        "label": "Tuition, school fees, and childcare",
         "category": "other",
-        "unit": "Index",
+        "unit": "Index (NSA)",
         "kind": "index",
     },
     {
-        "id": "CUSR0000SEED03",
-        "label": "Cellular phone services",
+        # Parent of cellular phone services (SEED03 / CUSR variants 404).
+        # SEED = Telephone Services, NSA — includes cellular + landline.
+        "id": "CUUR0000SEED",
+        "label": "Telephone services (incl. cellular)",
         "category": "other",
-        "unit": "Index",
+        "unit": "Index (NSA)",
         "kind": "index",
     },
 ]
