@@ -2,10 +2,36 @@
 FRED Consumer Price Index fetcher.
 
 Sources (all free, requires self-service FRED API key):
-  CPIAUCSL         CPI-U All Items (headline, 1982-84=100, monthly, since 1947)
-  APU000074714     Retail gasoline ($/gallon, monthly, since 1976)
-  APU0000708111    Retail eggs Grade A large ($/dozen, monthly, since 1980)
-  CUSR0000SAF11    CPI Food at Home subindex (monthly, since 1952)
+  Headlines:
+    CPIAUCSL         CPI-U All Items (1982-84=100, monthly, since 1947)
+    CPILFESL         Core CPI (ex food + energy)
+    PCEPI            PCE price index (Fed's preferred inflation gauge)
+  Food (CPI subindexes + retail APU $/unit):
+    CUSR0000SAF11    Food at home
+    CUSR0000SAF12    Food away from home (restaurants)
+    APU0000709112    Whole milk, fortified, $/gallon
+    APU0000703112    Ground beef, $/lb
+    APU0000706111    Chicken, fresh whole, $/lb
+    APU0000702111    Bread, white pan, $/lb
+    APU0000708111    Eggs, Grade A large, $/dozen
+  Energy:
+    APU000074714     Gasoline, regular, retail $/gallon
+    CUSR0000SEHF01   Electricity (index)
+    CUSR0000SEHF02   Natural gas (index)
+  Housing:
+    CUSR0000SAH1     Shelter (index)
+    CUSR0000SEHA     Rent of primary residence (index)
+    CUSR0000SEHC     Owner's equivalent rent (index)
+  Cars:
+    CUSR0000SETA01   New vehicles (index)
+    CUSR0000SETA02   Used cars and trucks (index)
+    CUSR0000SETE01   Motor vehicle insurance (index)
+  Healthcare:
+    CPIMEDSL         Medical care (index)
+    CUSR0000SEMF01   Prescription drugs (index)
+  Other:
+    CUSR0000SEEB01   College tuition and fees (index)
+    CUSR0000SEED03   Cellular phone services (index, starts ~1997)
 
 Output: v2/data-cpi.json (sidecar for the V2 dashboard's Consumer Price Index tab).
 
@@ -16,6 +42,7 @@ Schema (matches what the front-end consumes):
       "series": [
         {"id": "CPIAUCSL",
          "label": "CPI-U All Items",
+         "category": "headlines",
          "unit": "Index 1982-84=100",
          "kind": "index",
          "observations": [{"date": "1947-01-01", "value": 21.48}, ...]},
@@ -65,28 +92,174 @@ FRED_OBS_URL = "https://api.stlouisfed.org/fred/series/observations"
 # Series catalog. `kind` drives front-end formatting:
 #   - "index"  -> plain number (e.g. 318.4)
 #   - "dollar" -> "$3.79" formatting
+# `category` groups cards into sections in the V2 UI.
+# Category render order is enforced front-end via CATEGORY_ORDER (must match).
 SERIES_CATALOG: list[dict[str, str]] = [
+    # --- Headlines -----------------------------------------------------------
     {
         "id": "CPIAUCSL",
         "label": "CPI-U All Items",
+        "category": "headlines",
         "unit": "Index 1982-84=100",
         "kind": "index",
     },
     {
-        "id": "APU000074714",
-        "label": "Gasoline (regular, retail)",
+        "id": "CPILFESL",
+        "label": "Core CPI (ex food + energy)",
+        "category": "headlines",
+        "unit": "Index 1982-84=100",
+        "kind": "index",
+    },
+    {
+        "id": "PCEPI",
+        "label": "PCE Price Index",
+        "category": "headlines",
+        "unit": "Index 2017=100",
+        "kind": "index",
+    },
+    # --- Food ----------------------------------------------------------------
+    {
+        "id": "CUSR0000SAF11",
+        "label": "Food at home",
+        "category": "food",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SAF12",
+        "label": "Food away from home (restaurants)",
+        "category": "food",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "APU0000709112",
+        "label": "Milk (whole, fortified)",
+        "category": "food",
         "unit": "$/gallon",
+        "kind": "dollar",
+    },
+    {
+        "id": "APU0000703112",
+        "label": "Ground beef (100% beef)",
+        "category": "food",
+        "unit": "$/lb",
+        "kind": "dollar",
+    },
+    {
+        "id": "APU0000706111",
+        "label": "Chicken (fresh, whole)",
+        "category": "food",
+        "unit": "$/lb",
+        "kind": "dollar",
+    },
+    {
+        "id": "APU0000702111",
+        "label": "Bread (white pan)",
+        "category": "food",
+        "unit": "$/lb",
         "kind": "dollar",
     },
     {
         "id": "APU0000708111",
         "label": "Eggs (Grade A large)",
+        "category": "food",
         "unit": "$/dozen",
         "kind": "dollar",
     },
+    # --- Energy --------------------------------------------------------------
     {
-        "id": "CUSR0000SAF11",
-        "label": "Food at Home",
+        "id": "APU000074714",
+        "label": "Gasoline (regular, retail)",
+        "category": "energy",
+        "unit": "$/gallon",
+        "kind": "dollar",
+    },
+    {
+        "id": "CUSR0000SEHF01",
+        "label": "Electricity",
+        "category": "energy",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SEHF02",
+        "label": "Natural gas (piped utility)",
+        "category": "energy",
+        "unit": "Index",
+        "kind": "index",
+    },
+    # --- Housing -------------------------------------------------------------
+    {
+        "id": "CUSR0000SAH1",
+        "label": "Shelter",
+        "category": "housing",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SEHA",
+        "label": "Rent of primary residence",
+        "category": "housing",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SEHC",
+        "label": "Owner's equivalent rent",
+        "category": "housing",
+        "unit": "Index",
+        "kind": "index",
+    },
+    # --- Cars ----------------------------------------------------------------
+    {
+        "id": "CUSR0000SETA01",
+        "label": "New vehicles",
+        "category": "cars",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SETA02",
+        "label": "Used cars and trucks",
+        "category": "cars",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SETE01",
+        "label": "Motor vehicle insurance",
+        "category": "cars",
+        "unit": "Index",
+        "kind": "index",
+    },
+    # --- Healthcare ----------------------------------------------------------
+    {
+        "id": "CPIMEDSL",
+        "label": "Medical care",
+        "category": "healthcare",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SEMF01",
+        "label": "Prescription drugs",
+        "category": "healthcare",
+        "unit": "Index",
+        "kind": "index",
+    },
+    # --- Other ---------------------------------------------------------------
+    {
+        "id": "CUSR0000SEEB01",
+        "label": "College tuition and fees",
+        "category": "other",
+        "unit": "Index",
+        "kind": "index",
+    },
+    {
+        "id": "CUSR0000SEED03",
+        "label": "Cellular phone services",
+        "category": "other",
         "unit": "Index",
         "kind": "index",
     },
@@ -137,26 +310,59 @@ def _parse_observations(j: dict | None) -> list[dict]:
 def fetch_one(meta: dict, api_key: str) -> dict:
     """Fetch a single series. Returns the series dict whether it succeeded or
     failed — on failure adds an "error" field and leaves observations empty.
-    Never raises."""
+    Never raises. 404s are logged explicitly so the operator can see which
+    BLS IDs FRED no longer recognizes and swap them."""
     out: dict[str, Any] = {
         "id": meta["id"],
         "label": meta["label"],
+        "category": meta.get("category", "other"),
         "unit": meta["unit"],
         "kind": meta["kind"],
         "observations": [],
     }
     try:
-        j = _get_json(
-            FRED_OBS_URL,
-            {
-                "series_id": meta["id"],
-                "api_key": api_key,
-                "file_type": "json",
-                "observation_start": OBSERVATION_START,
-            },
-        )
-        if j is None:
-            out["error"] = "fetch failed (see stderr)"
+        # Use a manual GET so we can distinguish 404 (bad ID — log loudly)
+        # from generic 4xx/5xx (transient — bubble up "fetch failed").
+        try:
+            r = requests.get(
+                FRED_OBS_URL,
+                params={
+                    "series_id": meta["id"],
+                    "api_key": api_key,
+                    "file_type": "json",
+                    "observation_start": OBSERVATION_START,
+                },
+                headers=H,
+                timeout=25,
+            )
+        except Exception as e:
+            out["error"] = f"request error: {e}"
+            print(f"  [skip] {meta['id']} request error: {e}", file=sys.stderr)
+            return out
+        if r.status_code == 404 or (
+            # FRED returns 400 with JSON `{"error_code": 400, ...}` when an ID
+            # is unrecognized — treat that the same as a 404 for logging.
+            r.status_code == 400
+            and "series does not exist" in (r.text or "").lower()
+        ):
+            out["error"] = "FRED 404 (series ID not recognized)"
+            print(
+                f"  [SKIP-404] {meta['id']} ({meta['label']}): FRED says no "
+                f"such series — swap the ID and re-run.",
+                file=sys.stderr,
+            )
+            return out
+        if r.status_code != 200:
+            out["error"] = f"HTTP {r.status_code}"
+            print(
+                f"  [skip] {meta['id']} -> HTTP {r.status_code}",
+                file=sys.stderr,
+            )
+            return out
+        try:
+            j = r.json()
+        except Exception as e:
+            out["error"] = f"non-JSON response: {e}"
             return out
         rows = _parse_observations(j)
         out["observations"] = rows
@@ -168,7 +374,8 @@ def fetch_one(meta: dict, api_key: str) -> dict:
 
 
 def fetch_live(api_key: str) -> dict:
-    """Drive all 4 series fetches; assemble the output payload."""
+    """Drive all series fetches; assemble the output payload. Per-series
+    try/except inside fetch_one() means a bad ID never aborts the batch."""
     series: list[dict] = []
     for meta in SERIES_CATALOG:
         print(f"  CPI: fetching {meta['id']} ({meta['label']})...")
@@ -234,11 +441,23 @@ _SAMPLE_FIXTURE = {
 }
 
 
+# Categories that must be present in the catalog. The V2 front-end pins the
+# render order; if either side drifts the front-end falls back to "other".
+EXPECTED_CATEGORIES = {
+    "headlines", "food", "energy", "housing",
+    "cars", "healthcare", "other",
+}
+
+
 def _self_test() -> int:
     """Offline parser sanity + payload shape check. Returns 0 on pass."""
     rows = _parse_observations(_SAMPLE_FIXTURE)
     # No-key payload shape.
     no_key = _payload_unavailable()
+
+    catalog_categories = {s.get("category") for s in SERIES_CATALOG}
+    catalog_kinds = {s["kind"] for s in SERIES_CATALOG}
+    catalog_ids = [s["id"] for s in SERIES_CATALOG]
 
     assertions = [
         (len(rows) == 4, f"expected 4 rows after filtering '.', got {len(rows)}"),
@@ -261,12 +480,24 @@ def _self_test() -> int:
                 {"id": "B", "observations": [{"date": "2026-01-01", "value": 1.0}]},
             ]}) is False,
          "_all_series_failed should return False when any series has rows"),
-        # Catalog sanity.
-        (len(SERIES_CATALOG) == 4,
-         f"expected 4 series, got {len(SERIES_CATALOG)}"),
-        (set(s["id"] for s in SERIES_CATALOG) ==
-         {"CPIAUCSL", "APU000074714", "APU0000708111", "CUSR0000SAF11"},
-         "series IDs don't match the spec"),
+        # Catalog sanity — expanded to 20-ish series across 7 categories.
+        (len(SERIES_CATALOG) >= 18,
+         f"expected at least 18 series, got {len(SERIES_CATALOG)}"),
+        (len(catalog_ids) == len(set(catalog_ids)),
+         "duplicate series IDs in SERIES_CATALOG"),
+        (catalog_categories == EXPECTED_CATEGORIES,
+         f"category set drift: got {catalog_categories}, "
+         f"expected {EXPECTED_CATEGORIES}"),
+        (catalog_kinds <= {"index", "dollar"},
+         f"unexpected kind(s): {catalog_kinds - {'index', 'dollar'}}"),
+        # Spot-check a few must-have IDs to catch accidental deletions.
+        ({"CPIAUCSL", "CPILFESL", "APU000074714", "CUSR0000SAH1"}
+         <= set(catalog_ids),
+         "catalog missing a load-bearing series ID"),
+        # Every entry has the full schema we promise the front-end.
+        (all({"id", "label", "category", "unit", "kind"} <= set(s.keys())
+             for s in SERIES_CATALOG),
+         "every catalog entry must have id/label/category/unit/kind"),
     ]
     failed = [msg for ok, msg in assertions if not ok]
     if failed:
@@ -274,7 +505,8 @@ def _self_test() -> int:
             print(f"  [self-test FAIL] {f}", file=sys.stderr)
         return 1
     print(f"  [self-test OK] {len(rows)} observations parsed; "
-          f"{len(SERIES_CATALOG)} series in catalog; all assertions passed.")
+          f"{len(SERIES_CATALOG)} series across {len(catalog_categories)} "
+          f"categories in catalog; all assertions passed.")
     return 0
 
 

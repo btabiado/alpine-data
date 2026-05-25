@@ -833,6 +833,27 @@ header .meta{color:var(--muted);font-size:12px}
 .chart-wrap.tall{height:380px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:18px}
 .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+/* CPI dense grid — 4 columns on wide desktops (≥1280px), 3 on standard
+   laptops, 2 on tablet, 1 on mobile. Tuned so ~16-20 mini-cards fit on a
+   1440px screen with minimal scroll. Card padding tightened via .cpi-mini
+   so the chart dominates instead of the chrome. */
+.cpi-cat{margin-top:14px}
+.cpi-cat:first-child{margin-top:0}
+.cpi-cat__head{display:flex;align-items:baseline;justify-content:space-between;
+  gap:8px;margin:0 2px 8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.cpi-cat__title{margin:0;font-size:12px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--text)}
+.cpi-cat__count{font-size:11px;color:var(--muted)}
+.cpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+@media (min-width:1280px){.cpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:1024px){.cpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.cpi-grid{grid-template-columns:1fr}}
+.cpi-mini{padding:12px;gap:6px}
+.cpi-mini .v2-card__title{font-size:12px;line-height:1.2}
+.cpi-mini .v2-card__subtitle{font-size:10px}
+.cpi-mini .v2-card__body{padding-top:2px}
+.cpi-mini__val{font-size:16px;font-weight:700;line-height:1}
+.cpi-mini__chip{font-size:10px;padding:1px 6px;margin-top:3px}
 /* Symbol detail modal body: pair Signal + POC cards side-by-side. Uses a
    tighter min-column than .grid2 because the modal width caps at ~940px so
    the 420px default would force a single column most of the time. Stacks
@@ -3099,13 +3120,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 
   <!-- ============ CONSUMER PRICE INDEX TAB ============ -->
-  <!-- FRED Consumer Price Index series: CPI-U headline + retail gasoline +
-       eggs + Food-at-Home subindex. Data is lazy-loaded from /data-cpi.json
-       via the SIDECARS mechanism. When FRED_API_KEY is not set on the
-       builder, the sidecar payload arrives with fred_available=false and we
-       render a friendly setup-instructions card instead of empty charts.
-       Range (5y/10y/20y/30y/all) and view mode (index100/dollar/pctchange)
-       live in state.cpiTimeRange / state.cpiViewMode. -->
+  <!-- FRED Consumer Price Index series — comprehensive: ~20 series across 7
+       categories (headlines, food, energy, housing, cars, healthcare,
+       other). Data is lazy-loaded from /data-cpi.json via the SIDECARS
+       mechanism. When FRED_API_KEY is not set on the builder, the sidecar
+       payload arrives with fred_available=false and we render a friendly
+       setup-instructions card instead of empty charts. Range (5y/10y/20y/
+       30y/all) and view mode (index100/absolute/pctchange) live in
+       state.cpiTimeRange / state.cpiViewMode and apply to every card. -->
+
   <div id="tab-cpi" class="hidden">
     <div id="aiTake-cpi" class="aiTake-slot"></div>
     <div id="cpiLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading CPI data…</div>
@@ -3132,13 +3155,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
 
-      <!-- Real CPI body — controls + 4 chart cards. Hidden while empty/loading. -->
+      <!-- Real CPI body — controls + category sections. Hidden while
+           empty/loading. The toggle bar applies to every card; each
+           category section below is rendered by renderCpi(). -->
       <div id="cpiBody" class="hidden">
         <div class="v2-card" style="margin-bottom:12px">
           <div class="v2-card__head">
             <div>
               <h2 class="v2-card__title">Consumer Price Index</h2>
-              <div class="v2-card__subtitle" id="cpiAsOf">Source: FRED · 4 series</div>
+              <div class="v2-card__subtitle" id="cpiAsOf">Source: FRED</div>
             </div>
             <div><span class="v2-chip v2-chip--info" id="cpiChip">FRED</span></div>
           </div>
@@ -3161,7 +3186,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             </div>
           </div>
         </div>
-        <div id="cpiGrid" class="grid2"></div>
+        <!-- Category sections injected by renderCpi(). Each section is a
+             .cpi-cat with a header + a .cpi-grid of mini chart cards. -->
+        <div id="cpiCategories"></div>
       </div>
     </div><!-- /cpiContent -->
   </div><!-- /tab-cpi -->
@@ -12870,14 +12897,30 @@ function renderSocial(){
 }
 
 // ---------- Consumer Price Index ----------
+// Category render order — must match fetch_cpi.py SERIES_CATALOG categories.
+// Anything in the payload with an unknown category (or no category at all)
+// falls through into 'other' so the UI never silently drops a series.
+const CPI_CATEGORY_ORDER = [
+  'headlines', 'food', 'energy', 'housing', 'cars', 'healthcare', 'other',
+];
+const CPI_CATEGORY_LABELS = {
+  headlines:  'Headlines',
+  food:       'Food',
+  energy:     'Energy',
+  housing:    'Housing',
+  cars:       'Cars',
+  healthcare: 'Healthcare',
+  other:      'Other',
+};
+
 // Tab renderer for the CPI tab. Reads DATA.cpi (lazy-loaded sidecar). Two
 // paths: empty state when fred_available=false (FRED_API_KEY missing on the
-// builder), and the real grid with 4 charts otherwise.
+// builder), and the real category grid with ~20 mini charts otherwise.
 function renderCpi(){
   const cpi = DATA.cpi || null;
   const emptyEl = document.getElementById('cpiEmpty');
   const bodyEl  = document.getElementById('cpiBody');
-  const grid    = document.getElementById('cpiGrid');
+  const catsEl  = document.getElementById('cpiCategories');
   const asOf    = document.getElementById('cpiAsOf');
   const chip    = document.getElementById('cpiChip');
   const sub     = document.getElementById('cpiEmptySub');
@@ -12943,11 +12986,11 @@ function renderCpi(){
     b.classList.toggle('active', b.dataset.cpiview === (state.cpiViewMode || 'index100'));
   });
 
-  // Render the 4 series cards.
-  if (!grid) return;
+  // Render category sections.
+  if (!catsEl) return;
   const series = cpi.series || [];
   if (!series.length){
-    grid.innerHTML = V2.empty({
+    catsEl.innerHTML = V2.empty({
       icon: '📊',
       title: 'No series available',
       sub: 'The CPI sidecar has no series payload. Re-run fetch_cpi.py.',
@@ -12955,31 +12998,62 @@ function renderCpi(){
     });
     return;
   }
-  grid.innerHTML = series.map(renderCpiCard).join('');
+
+  // Group by category. Unknown / missing -> 'other' so we never drop a row.
+  const known = new Set(CPI_CATEGORY_ORDER);
+  const groups = {};
+  CPI_CATEGORY_ORDER.forEach(k => { groups[k] = []; });
+  series.forEach(s => {
+    const cat = (s && known.has(s.category)) ? s.category : 'other';
+    groups[cat].push(s);
+  });
+
+  // Render each non-empty category section in pinned order. A section with
+  // a single series still renders the header (per spec).
+  catsEl.innerHTML = CPI_CATEGORY_ORDER.map(cat => {
+    const items = groups[cat];
+    if (!items.length) return '';
+    const okCount = items.filter(s => (s.observations || []).length).length;
+    const cards = items.map(renderCpiCard).join('');
+    return '' +
+      '<section class="cpi-cat" data-cpi-cat="' + escapeHtml(cat) + '">' +
+        '<div class="cpi-cat__head">' +
+          '<h3 class="cpi-cat__title">' + escapeHtml(CPI_CATEGORY_LABELS[cat] || cat) + '</h3>' +
+          '<span class="cpi-cat__count">' + okCount + ' / ' + items.length + '</span>' +
+        '</div>' +
+        '<div class="cpi-grid">' + cards + '</div>' +
+      '</section>';
+  }).join('');
 }
 
-// Build a single series card with a header (label, current value badge) +
-// an inline SVG line chart. Empty/errored series render as a small notice.
+// Build a single mini chart card with a compact header (label + latest
+// value + YoY chip) and an inline SVG sparkline. Inline HTML rather than
+// V2.card so we can give it the tighter .cpi-mini chrome without
+// extending the shared helper. Errored / empty series render an inline
+// notice with the upstream error message.
 function renderCpiCard(s){
-  const id = (s.id || 'unknown').replace(/[^A-Za-z0-9_-]/g, '');
   const label = escapeHtml(s.label || s.id || 'series');
   const unit  = escapeHtml(s.unit || '');
   const obs   = s.observations || [];
+  const idAttr = escapeHtml(s.id || '');
 
   if (!obs.length){
     const err = escapeHtml(s.error || 'no observations');
-    return V2.card({
-      title: label,
-      subtitle: unit,
-      severity: 'warn',
-      head_right: '<span class="v2-chip v2-chip--warn">' + err + '</span>',
-      body: V2.empty({
-        icon: '⚠️',
-        title: 'Series unavailable',
-        sub: err,
-        warm: true,
-      }),
-    });
+    return '' +
+      '<div class="v2-card v2-card--warn cpi-mini" data-cpi-series="' + idAttr + '">' +
+        '<div class="v2-card__head">' +
+          '<div style="min-width:0">' +
+            '<h2 class="v2-card__title">' + label + '</h2>' +
+            '<div class="v2-card__subtitle">' + unit + '</div>' +
+          '</div>' +
+          '<span class="v2-chip v2-chip--warn cpi-mini__chip">unavailable</span>' +
+        '</div>' +
+        '<div class="v2-card__body">' +
+          '<div class="v2-empty v2-empty--warm" style="padding:8px 0">' +
+            '<div class="v2-empty__sub" style="font-size:11px">' + err + '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
   }
 
   // Clip to the selected time range.
@@ -13015,36 +13089,69 @@ function renderCpiCard(s){
   const last  = pts[pts.length - 1];
   const startVal = clipped[0].value;
   const endVal   = clipped[clipped.length - 1].value;
-  const pctChange = startVal ? ((endVal - startVal) / startVal) * 100 : 0;
+  const pctRange = startVal ? ((endVal - startVal) / startVal) * 100 : 0;
   const isDollar = (s.kind === 'dollar');
-  const fmtValue = v => isDollar ? '$' + Number(v).toFixed(2) : Number(v).toFixed(2);
-  const sev = pctChange >= 0 ? 'bad' : 'good';   // CPI rises = bad for consumers
-  const arrow = pctChange >= 0 ? '▲' : '▼';
-  const chipText = arrow + ' ' + Math.abs(pctChange).toFixed(1) + '% since ' + first.date.slice(0,4);
-  const chipHtml = '<span class="v2-chip v2-chip--' + sev + '">' + escapeHtml(chipText) + '</span>';
+  const fmtValue = v => isDollar ? '$' + Number(v).toFixed(2)
+                                 : Number(v).toFixed(Math.abs(v) >= 100 ? 1 : 2);
 
-  const headRight =
-    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
-      '<div style="font-size:20px;font-weight:700">' + fmtValue(endVal) + '</div>' +
-      chipHtml +
+  // YoY chip — last value vs the closest observation ~365d earlier inside
+  // the *raw* series (so the chip is meaningful even when the user picks
+  // a "5y" range that doesn't span a year before the last point).
+  const lastRaw = obs[obs.length - 1];
+  let yoyPct = null;
+  if (lastRaw && lastRaw.date){
+    const lastDate = new Date(lastRaw.date);
+    const targetDate = new Date(lastDate);
+    targetDate.setFullYear(targetDate.getFullYear() - 1);
+    const targetStr = targetDate.toISOString().slice(0,10);
+    // Find the most recent obs <= targetStr.
+    let prior = null;
+    for (let i = obs.length - 1; i >= 0; i--){
+      if (obs[i].date <= targetStr){ prior = obs[i]; break; }
+    }
+    if (prior && prior.value){
+      yoyPct = ((lastRaw.value - prior.value) / prior.value) * 100;
+    }
+  }
+
+  // CPI rising = bad for consumers; falling = good. Color the chip
+  // accordingly. Chip prefers YoY (most readable), falls back to range %.
+  const chipPct = (yoyPct !== null) ? yoyPct : pctRange;
+  const chipLbl = (yoyPct !== null) ? 'YoY' : ('since ' + first.date.slice(0,4));
+  const sev = chipPct >= 0 ? 'bad' : 'good';
+  const arrow = chipPct >= 0 ? '▲' : '▼';
+  const chipText = arrow + ' ' + Math.abs(chipPct).toFixed(1) + '% ' + chipLbl;
+
+  return '' +
+    '<div class="v2-card cpi-mini" data-cpi-series="' + idAttr + '">' +
+      '<div class="v2-card__head">' +
+        '<div style="min-width:0">' +
+          '<h2 class="v2-card__title" title="' + escapeHtml(s.label || '') + '">' + label + '</h2>' +
+          '<div class="v2-card__subtitle">' + unit + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">' +
+          '<div class="cpi-mini__val">' + fmtValue(endVal) + '</div>' +
+          '<span class="v2-chip v2-chip--' + sev + ' cpi-mini__chip">' + escapeHtml(chipText) + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="v2-card__body">' +
+        cpiSparkSvg(pts, { isDollar, mode, yLabel, compact: true }) +
+      '</div>' +
     '</div>';
-
-  return V2.card({
-    title: label,
-    subtitle: unit + ' · ' + clipped.length.toLocaleString() + ' obs · ' + first.date + ' → ' + last.date,
-    head_right: headRight,
-    body:
-      '<div class="cpi-chart-wrap" data-cpi-series="' + escapeHtml(s.id) + '">' +
-        cpiSparkSvg(pts, { isDollar, mode, yLabel }) +
-      '</div>',
-  });
 }
 
 // Build an inline SVG line chart for a CPI series. No chart library — the
 // dataset is small (couple thousand monthly points max) and a polyline with
 // hover tooltip is plenty here. viewBox-based so it scales with the card.
+// `compact: true` shrinks the chart for mini grid cards.
 function cpiSparkSvg(pts, opts){
-  const W = 560, H = 180, PADL = 44, PADR = 8, PADT = 12, PADB = 22;
+  const compact = !!(opts && opts.compact);
+  const W   = compact ? 320 : 560;
+  const H   = compact ? 100 : 180;
+  const PADL = compact ? 32 : 44;
+  const PADR = compact ? 4  : 8;
+  const PADT = compact ? 6  : 12;
+  const PADB = compact ? 16 : 22;
   if (!pts || pts.length < 2){
     return '<div class="v2-empty"><div class="v2-empty__sub">Not enough points to chart.</div></div>';
   }
@@ -13063,11 +13170,15 @@ function cpiSparkSvg(pts, opts){
   const area = path + ' L' + sx(pts.length - 1).toFixed(1) + ' ' + (H - PADB).toFixed(1) +
                ' L' + sx(0).toFixed(1) + ' ' + (H - PADB).toFixed(1) + ' Z';
 
-  // Y-axis labels (3 ticks: min, mid, max).
+  // Y-axis labels — 2 ticks in compact mode (min/max), 3 in full
+  // (min/mid/max) so the dense mini-card layout doesn't get crowded.
   const fmtY = v => (opts && opts.isDollar && opts.mode === 'absolute') ? '$' + v.toFixed(2)
               : (opts && opts.mode === 'pctchange') ? v.toFixed(0) + '%'
               : v.toFixed(1);
-  const yticks = [ymin, (ymin+ymax)/2, ymax].map(v => ({ v, y: sy(v) }));
+  const yticks = (compact
+    ? [ymin, ymax]
+    : [ymin, (ymin+ymax)/2, ymax]
+  ).map(v => ({ v, y: sy(v) }));
   const yAxis = yticks.map(t =>
     '<line x1="' + PADL + '" y1="' + t.y.toFixed(1) + '" x2="' + (W - PADR) + '" y2="' + t.y.toFixed(1) +
       '" stroke="#252b3a" stroke-width="1" stroke-dasharray="2 3"/>' +
