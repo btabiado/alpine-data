@@ -12512,6 +12512,7 @@ function selectTab(t){
   document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
   document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
   document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
+  document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
