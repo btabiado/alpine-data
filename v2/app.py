@@ -455,6 +455,26 @@ def main() -> int:
                   f"prior data-mufon.json preserved.", file=sys.stderr)
     except Exception as e:
         print(f"[fetch-mufon] failed: {e}", file=sys.stderr)
+    # Stock per-ticker hourly price sidecar — refreshes
+    # v2/data-stock-prices.json with 7d/1h Yahoo Finance closes for the
+    # top-50 most-active US stocks (drawn from data/market.json's
+    # stocks_signals[].symbol so the list auto-tracks fetch_market.py).
+    # Feeds the price sparkline at the top of the per-ticker modal
+    # (openTickerModal). Same isolation pattern as the other sidecar
+    # fetchers: per-ticker try/except + total-fail stale fallback so the
+    # V2 build never dies on a transient Yahoo outage. ~200ms inter-call
+    # delay (50 tickers => ~10s) keeps us well below Yahoo's rate limits.
+    try:
+        import fetch_stock_prices
+        rc = fetch_stock_prices.main([
+            "--out", str(ROOT / "data-stock-prices.json"),
+            "--market-json", str(DATA_DIR / "market.json"),
+        ])
+        if rc != 0:
+            print(f"[fetch-stock-prices] non-zero exit ({rc}); "
+                  f"prior data-stock-prices.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-stock-prices] failed: {e}", file=sys.stderr)
 
     print("Building payload...")
     payload = build_payload()
@@ -512,6 +532,13 @@ def main() -> int:
     mufon_path = ROOT / "data-mufon.json"
     if mufon_path.exists():
         manifest["mufon"] = "data-mufon.json"
+    # Stock per-ticker hourly prices sidecar — written above by
+    # fetch_stock_prices. Powers the price sparkline at the top of the
+    # per-ticker modal (openTickerModal) on the Stocks tab. Same gating
+    # as the other tabs so a missing seed doesn't 404 the client loader.
+    stock_prices_path = ROOT / "data-stock-prices.json"
+    if stock_prices_path.exists():
+        manifest["stockprices"] = "data-stock-prices.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -3421,7 +3448,7 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi', supplies: 'supplies', metals: 'metals', mufon: 'mufon' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi', supplies: 'supplies', metals: 'metals', mufon: 'mufon', stocks: 'stockprices' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -10206,13 +10233,55 @@ function closeStockDetail(){
   });
 })();
 
+// Inline SVG price sparkline for the per-ticker stock modal. Visual is
+// matched to renderSignalSparkline (the crypto modal's chart) so the
+// two tabs feel like they share a chart component. Input shape is the
+// per-symbol blob from data-stock-prices.json: {points: [{t, p}, ...],
+// pct_change: number}. Returns an empty string if the series is too
+// short to be meaningful.
+function renderStockPriceSparkline(blob){
+  const pts = (blob && Array.isArray(blob.points)) ? blob.points : [];
+  if (pts.length < 2) return '';
+  const W = 640, H = 120, pad = 6;
+  const values = pts.map(p => Number(p.p)).filter(v => isFinite(v));
+  if (values.length < 2) return '';
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min || 1;
+  const step = (W - pad*2) / (values.length - 1);
+  const yFor = v => pad + (H - pad*2) * (1 - (v - min) / range);
+  const polyPts = values.map((v, i) => `${pad + i*step},${yFor(v).toFixed(1)}`).join(' ');
+  const first = values[0], last = values[values.length-1];
+  const up = last >= first;
+  const color = up ? '#22c55e' : '#ef4444';
+  const fillColor = up ? '#22c55e22' : '#ef444422';
+  const area = `${pad},${H-pad} ${polyPts} ${pad + (values.length-1)*step},${H-pad}`;
+  // Prefer the pct_change baked into the payload (matches the build-time
+  // computation) and fall back to derived if absent.
+  const pct = isFinite(Number(blob.pct_change))
+    ? Number(blob.pct_change)
+    : (first ? ((last - first) / first * 100) : 0);
+  const pctTxt = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+  return `
+    <div style="background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:6px 10px;margin-bottom:0">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:11px">
+        <span class="sub" style="color:var(--muted)">Price · 7d hourly sparkline</span>
+        <span style="color:${color};font-weight:600">${pctTxt} over window</span>
+      </div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:120px;display:block;margin-top:4px">
+        <polygon points="${area}" fill="${fillColor}"/>
+        <polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="1.5"/>
+      </svg>
+    </div>`;
+}
+
 // ============ LIGHTWEIGHT TICKER MODAL ============
 // Distinct from #stockDetailModal (the full-breakdown modal opened by clicking
 // a whole stock-card). This one is triggered by clicking just the ticker TEXT
 // anywhere it appears outside the main grid (spotlight row, AI News subset
-// cards, etc.) and shows a compact summary: price + day Δ, 7-day signal-score
-// sparkline, top signal components, and a news section (empty-state today —
-// per-ticker stock news isn't in the current data payload).
+// cards, etc.) and shows a compact summary: price + day Δ, 7d hourly price
+// sparkline (from data-stock-prices.json sidecar), top signal components,
+// and a smaller signal-score history sparkline.
 function openTickerModal(symbol){
   const sym = String(symbol || '').toUpperCase();
   const modal = document.getElementById('tickerDetailModal');
@@ -10246,9 +10315,42 @@ function openTickerModal(symbol){
     ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}))
     : '—';
 
-  // Sparkline — stocks only carry signal-score history (not per-day price),
-  // so we reuse signalScoreSparkline and label it as such. Better than no
-  // chart at all and matches what the data actually means.
+  // Primary chart at the top of the modal: 7d hourly price sparkline
+  // sourced from the data-stock-prices.json sidecar (lazy-loaded; see
+  // SIDECAR_FOR_TAB.stocks = 'stockprices'). If the sidecar hasn't
+  // landed yet for this click (sidecar fetch in-flight, or user clicked
+  // a ticker before opening the Stocks tab), fall back to a loading
+  // pill + kick off the sidecar load and reopen the modal when it
+  // resolves. Tickers not in by_symbol (e.g. AI News symbols outside
+  // the top-50 stocks_signals scoring window) get a graceful
+  // "Price history unavailable" empty state instead of an error.
+  const stockPrices = (DATA.stockprices || {});
+  const priceBlob = (stockPrices.by_symbol || {})[sym];
+  let priceChartHtml = '';
+  if (priceBlob && Array.isArray(priceBlob.points) && priceBlob.points.length >= 2) {
+    priceChartHtml = renderStockPriceSparkline(priceBlob);
+  } else if (SIDECARS && SIDECARS.stockprices && !SIDECAR_STATE.stockprices) {
+    // Sidecar exists but hasn't been requested yet — kick it off and
+    // re-open the modal once it lands. The loadSidecar promise resolves
+    // with the parsed JSON on success or null on error.
+    priceChartHtml = `<div style="background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:10px;text-align:center;color:var(--muted);font-size:11px">Loading 7d price chart…</div>`;
+    loadSidecar('stockprices').then(() => {
+      // Only re-render if the modal is still open and showing this same
+      // ticker — user may have closed it or clicked a different ticker.
+      const stillOpen = !document.getElementById('tickerDetailModal').classList.contains('hidden');
+      const stillSame = (document.getElementById('tickerDetailSymbol')||{}).textContent === sym;
+      if (stillOpen && stillSame) openTickerModal(sym);
+    });
+  } else if (SIDECAR_STATE.stockprices === 'loaded' || SIDECAR_STATE.stockprices === 'error') {
+    // Sidecar has resolved but this ticker isn't in by_symbol — likely
+    // an AI News ticker outside the top-50 stocks_signals window, or
+    // a Yahoo symbol that didn't return data this build.
+    priceChartHtml = `<div style="background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:10px;margin-bottom:10px;text-align:center;color:var(--muted);font-size:11px">Price history unavailable for ${escapeHtml(sym)}.</div>`;
+  }
+
+  // Secondary chart further down: keep the signal-score history sparkline
+  // (smaller, lower-priority slot) so the per-component context isn't
+  // lost when the price chart takes over the primary slot.
   const spark = signalScoreSparkline(s.history || []);
 
   // AI signal explanation = the top components from the score breakdown,
@@ -10285,6 +10387,7 @@ function openTickerModal(symbol){
         <div style="font-size:11px;font-weight:700;color:${scoreColor};margin-top:2px;letter-spacing:.04em">${escapeHtml(String(s.label||''))}</div>
       </div>
     </div>
+    ${priceChartHtml ? `<div style="margin-top:8px">${priceChartHtml}</div>` : ''}
     ${spark ? `<div style="margin-top:4px">
       <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:2px">Signal score · 7-day trend</div>
       ${spark}
