@@ -426,6 +426,20 @@ def main() -> int:
                   f"prior data-supplies.json preserved.", file=sys.stderr)
     except Exception as e:
         print(f"[fetch-supplies] failed: {e}", file=sys.stderr)
+    # Metals sidecar — refreshes v2/data-metals.json with gold/silver spot
+    # prices (FRED + Yahoo), top-20 central-bank gold holdings (IMF IRFCL),
+    # and world silver mine production by country (USGS MCS). Isolated like
+    # the advisories block: per-source failures are absorbed inside
+    # fetch_metals (it preserves prior values per-key) so the V2 build never
+    # dies on a transient upstream issue.
+    try:
+        import fetch_metals
+        rc = fetch_metals.main(["--out", str(ROOT / "data-metals.json")])
+        if rc != 0:
+            print(f"[fetch-metals] non-zero exit ({rc}); "
+                  f"prior data-metals.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-metals] failed: {e}", file=sys.stderr)
 
     print("Building payload...")
     payload = build_payload()
@@ -469,6 +483,13 @@ def main() -> int:
     supplies_path = ROOT / "data-supplies.json"
     if supplies_path.exists():
         manifest["supplies"] = "data-supplies.json"
+    # Metals sidecar (gold/silver prices + central-bank gold + silver mine
+    # production). Written by fetch_metals above (independent of the inline
+    # payload split). Only register when the seed/refresh actually landed on
+    # disk so the front-end loader doesn't 404 on a missing file.
+    metals_path = ROOT / "data-metals.json"
+    if metals_path.exists():
+        manifest["metals"] = "data-metals.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -1351,6 +1372,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
   <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
   <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
+  <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -3114,6 +3136,49 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
       </div>
     </div><!-- /suppliesContent -->
+  <!-- ============ METALS TAB ============ -->
+  <!-- Gold/silver spot prices (5y daily lines from FRED + Yahoo), top-20
+       central-bank gold holdings (IMF IRFCL, fine troy ounces -> tonnes),
+       and world silver mine production by country (USGS MCS). All sidecar-
+       loaded from /data-metals.json via the same lazy-fetch mechanism as
+       the DeFi / Whale / Travel tabs. -->
+  <div id="tab-metals" class="hidden">
+    <div id="aiTake-metals" class="aiTake-slot"></div>
+    <div id="metalsLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading gold &amp; silver data…</div>
+    <div id="metalsContent">
+      <div class="grid2" id="metalsGrid" style="gap:14px">
+        <!-- 4 cards populated by renderMetals(): gold price, silver price,
+             central-bank gold holdings, silver mine production. -->
+        <div class="v2-card" id="metalsGoldPriceCard">
+          <div class="v2-card__head">
+            <div><h2 class="v2-card__title">Gold spot price</h2><div class="v2-card__subtitle" id="metalsGoldSub">USD per troy ounce · 5y daily</div></div>
+            <div><span class="v2-chip v2-chip--good" id="metalsGoldAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body" id="metalsGoldBody"></div>
+        </div>
+        <div class="v2-card" id="metalsSilverPriceCard">
+          <div class="v2-card__head">
+            <div><h2 class="v2-card__title">Silver spot price</h2><div class="v2-card__subtitle" id="metalsSilverSub">USD per troy ounce · 5y daily</div></div>
+            <div><span class="v2-chip v2-chip--good" id="metalsSilverAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body" id="metalsSilverBody"></div>
+        </div>
+        <div class="v2-card" id="metalsCBGoldCard">
+          <div class="v2-card__head">
+            <div><h2 class="v2-card__title">Central-bank gold holdings (top 20)</h2><div class="v2-card__subtitle" id="metalsCBGoldSub">Tonnes, latest IMF IRFCL report</div></div>
+            <div><span class="v2-chip v2-chip--info" id="metalsCBGoldAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body" id="metalsCBGoldBody"></div>
+        </div>
+        <div class="v2-card" id="metalsSilverProdCard">
+          <div class="v2-card__head">
+            <div><h2 class="v2-card__title">Silver mine production by country</h2><div class="v2-card__subtitle" id="metalsSilverProdSub">Metric tons · USGS MCS</div></div>
+            <div><span class="v2-chip v2-chip--info" id="metalsSilverProdAsOf">● —</span></div>
+          </div>
+          <div class="v2-card__body" id="metalsSilverProdBody"></div>
+        </div>
+      </div>
+    </div><!-- /metalsContent -->
   </div>
 </div>
 
@@ -3205,6 +3270,7 @@ async function loadSidecar(name){
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
 const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi' };
 const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', supplies: 'supplies' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', metals: 'metals' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -8169,6 +8235,224 @@ function renderTravelList(advisories, sub, counts){
   }).join('');
 }
 
+// ─── METALS TAB renderer ─────────────────────────────────────────────────
+// Paints the 4 cards in #metalsGrid (gold price, silver price, central-bank
+// gold holdings, silver mine production by country). All charts are inline
+// SVG — no chart library, no extra HTTP. Data comes from DATA.metals (the
+// /data-metals.json sidecar, lazy-loaded the first time the user opens the
+// tab). renderMetals() is a no-op if the sidecar hasn't landed yet.
+function renderMetals(){
+  const m = DATA.metals;
+  if (!m || typeof m !== 'object') return;
+  metalsRenderPriceCard('gold',   m.gold_price,   'metalsGoldBody',
+                        'metalsGoldAsOf',   'metalsGoldSub',   'var(--v2-warn)');
+  metalsRenderPriceCard('silver', m.silver_price, 'metalsSilverBody',
+                        'metalsSilverAsOf', 'metalsSilverSub', '#cbd5e1');
+  metalsRenderCBGold(m.central_bank_gold);
+  metalsRenderSilverProd(m.silver_mine_production);
+}
+
+function metalsFmtNum(n, digits){
+  if (n == null || isNaN(n)) return '—';
+  if (digits == null) digits = 2;
+  return Number(n).toLocaleString('en-US', {
+    minimumFractionDigits: digits, maximumFractionDigits: digits,
+  });
+}
+function metalsFmtInt(n){
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-US', {maximumFractionDigits: 0});
+}
+function metalsPctChip(pct){
+  if (pct == null || !isFinite(pct)) return '<span class="v2-chip">—</span>';
+  const cls = pct >= 0 ? 'v2-chip--good' : 'v2-chip--bad';
+  const sign = pct >= 0 ? '+' : '';
+  return '<span class="v2-chip ' + cls + '">' + sign +
+         pct.toFixed(2) + '%</span>';
+}
+function metalsLookback(obs, days){
+  // Return the observation closest to (and not after) `days` ago. obs is
+  // ascending by date. Use index arithmetic since the series is daily.
+  if (!Array.isArray(obs) || obs.length < 2) return null;
+  const lastIdx = obs.length - 1;
+  // Treat each entry as one trading day. days=1 -> previous bar, days=5 ->
+  // ~1 week, days=21 -> ~1 month, days=252 -> ~1 year.
+  const idx = Math.max(0, lastIdx - days);
+  return obs[idx];
+}
+
+function metalsRenderPriceCard(metal, payload, bodyId, asOfId, subId, color){
+  const body  = document.getElementById(bodyId);
+  const asOf  = document.getElementById(asOfId);
+  const sub   = document.getElementById(subId);
+  if (!body) return;
+  const obs = (payload && Array.isArray(payload.observations)) ? payload.observations : [];
+  if (!obs.length) {
+    body.innerHTML = V2.empty({icon:'⛔', title:'No '+metal+' price data',
+      sub:'Upstream fetch returned nothing; retry on next dashboard refresh.', warm:false});
+    if (asOf) asOf.textContent = '● unavailable';
+    return;
+  }
+  const last = obs[obs.length - 1];
+  const lastVal = last.value;
+  const refs = [
+    {label:'1d',  obs: metalsLookback(obs, 1)},
+    {label:'1w',  obs: metalsLookback(obs, 5)},
+    {label:'1m',  obs: metalsLookback(obs, 21)},
+    {label:'1y',  obs: metalsLookback(obs, 252)},
+  ];
+  const deltas = refs.map(r => {
+    if (!r.obs) return {label:r.label, pct:null};
+    const pct = (lastVal - r.obs.value) / r.obs.value * 100;
+    return {label:r.label, pct: pct};
+  });
+
+  // SVG line chart of the full series
+  const W = 600, Hc = 160, padL = 8, padR = 8, padT = 6, padB = 18;
+  const innerW = W - padL - padR, innerH = Hc - padT - padB;
+  let lo = Infinity, hi = -Infinity;
+  for (const p of obs) { if (p.value < lo) lo = p.value; if (p.value > hi) hi = p.value; }
+  if (!isFinite(lo) || !isFinite(hi) || hi === lo) { hi = lo + 1; }
+  const xStep = innerW / Math.max(1, obs.length - 1);
+  const pts = obs.map((p, i) => {
+    const x = padL + i * xStep;
+    const y = padT + innerH - ((p.value - lo) / (hi - lo)) * innerH;
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  // Build a baseline fill so the line reads as a shape, not just a stroke.
+  const areaPts = pts + ' ' + (padL + (obs.length - 1) * xStep).toFixed(1) + ',' +
+                 (padT + innerH).toFixed(1) + ' ' + padL.toFixed(1) + ',' +
+                 (padT + innerH).toFixed(1);
+  const fillId = 'metalsFill_' + metal;
+  // Year ticks on the X axis
+  let lastYearTick = '';
+  const yearTicks = obs.map((p, i) => {
+    const y = (p.date || '').slice(0, 4);
+    if (y && y !== lastYearTick && i % Math.ceil(obs.length/6) === 0) {
+      lastYearTick = y;
+      const x = padL + i * xStep;
+      return '<text x="' + x.toFixed(0) + '" y="' + (Hc - 4) +
+             '" text-anchor="middle" font-size="9" fill="var(--muted)">' + y + '</text>';
+    }
+    return '';
+  }).join('');
+
+  const chartSvg =
+    '<svg viewBox="0 0 ' + W + ' ' + Hc + '" preserveAspectRatio="none" ' +
+      'style="width:100%;height:auto;max-height:200px;display:block;border-radius:6px;background:#0b0d12">' +
+      '<defs><linearGradient id="' + fillId + '" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.35"/>' +
+        '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>' +
+      '</linearGradient></defs>' +
+      '<polygon points="' + areaPts + '" fill="url(#' + fillId + ')"/>' +
+      '<polyline points="' + pts + '" fill="none" stroke="' + color +
+        '" stroke-width="1.4" vector-effect="non-scaling-stroke"/>' +
+      yearTicks +
+    '</svg>';
+
+  // Current price + delta row
+  const deltaCells = deltas.map(d =>
+    '<div style="text-align:center;flex:1">' +
+      '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">' + d.label + '</div>' +
+      '<div style="margin-top:2px">' + metalsPctChip(d.pct) + '</div>' +
+    '</div>').join('');
+
+  body.innerHTML =
+    '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px">' +
+      '<div style="font-size:26px;font-weight:700;color:var(--text)">$' + metalsFmtNum(lastVal, 2) + '</div>' +
+      '<div style="font-size:11px;color:var(--muted)">/troy oz</div>' +
+    '</div>' +
+    chartSvg +
+    '<div style="display:flex;justify-content:space-between;margin-top:10px;gap:6px">' + deltaCells + '</div>' +
+    '<div class="v2-card__footer" style="margin-top:8px">Source: ' +
+      escapeHtml(payload.source || '—') + '</div>';
+
+  if (asOf) {
+    asOf.textContent = '● As of ' + (last.date || '—');
+    asOf.className = 'v2-chip v2-chip--good';
+  }
+  if (sub) sub.textContent = 'USD per troy ounce · ' + obs.length + ' daily closes';
+}
+
+function metalsRenderBarChart(rows, color){
+  // Horizontal bars. rows: [{label, value}], pre-sorted descending.
+  if (!rows.length) return '';
+  const W = 600, rowH = 22, padTop = 4;
+  const Hc = padTop + rows.length * rowH + 4;
+  const max = rows[0].value || 1;
+  const labelW = 150, valueW = 70;
+  const barX = labelW + 6;
+  const barW = W - barX - valueW - 4;
+  const parts = rows.map((r, i) => {
+    const y = padTop + i * rowH;
+    const w = Math.max(2, (r.value / max) * barW);
+    const lbl = escapeHtml(r.label);
+    const val = metalsFmtInt(r.value);
+    return (
+      '<text x="' + (labelW - 4) + '" y="' + (y + 14) + '" text-anchor="end" ' +
+        'font-size="11" fill="var(--text)">' + lbl + '</text>' +
+      '<rect x="' + barX + '" y="' + (y + 4) + '" width="' + w.toFixed(1) +
+        '" height="14" rx="2" fill="' + color + '" opacity="0.85"/>' +
+      '<text x="' + (barX + w + 4) + '" y="' + (y + 14) + '" font-size="11" ' +
+        'fill="var(--muted)">' + val + '</text>'
+    );
+  }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + Hc + '" preserveAspectRatio="xMinYMin meet" ' +
+    'style="width:100%;height:auto;display:block;background:transparent">' + parts + '</svg>';
+}
+
+function metalsRenderCBGold(payload){
+  const body  = document.getElementById('metalsCBGoldBody');
+  const asOf  = document.getElementById('metalsCBGoldAsOf');
+  const sub   = document.getElementById('metalsCBGoldSub');
+  if (!body) return;
+  const rows = (payload && Array.isArray(payload.holdings)) ? payload.holdings : [];
+  if (!rows.length) {
+    body.innerHTML = V2.empty({icon:'⛔', title:'No central-bank gold data',
+      sub:'IMF IRFCL fetch returned nothing; retry on next dashboard refresh.', warm:false});
+    if (asOf) asOf.textContent = '● unavailable';
+    return;
+  }
+  const bars = rows.map(r => ({label: r.country, value: r.tonnes}));
+  body.innerHTML =
+    metalsRenderBarChart(bars, 'var(--v2-warn)') +
+    '<div class="v2-card__footer" style="margin-top:8px">Unit: ' +
+      escapeHtml(payload.unit || 'tonnes') + ' · Source: ' +
+      escapeHtml(payload.source || '—') + '</div>';
+  if (asOf) {
+    asOf.textContent = '● As of ' + (payload.as_of || '—');
+    asOf.className = 'v2-chip v2-chip--info';
+  }
+  if (sub) sub.textContent = 'Tonnes · top 20 holders · IMF IRFCL';
+}
+
+function metalsRenderSilverProd(payload){
+  const body  = document.getElementById('metalsSilverProdBody');
+  const asOf  = document.getElementById('metalsSilverProdAsOf');
+  const sub   = document.getElementById('metalsSilverProdSub');
+  if (!body) return;
+  const all = (payload && Array.isArray(payload.by_country)) ? payload.by_country : [];
+  if (!all.length) {
+    body.innerHTML = V2.empty({icon:'⛔', title:'No silver production data',
+      sub:'USGS MCS fetch returned nothing; retry on next dashboard refresh.', warm:false});
+    if (asOf) asOf.textContent = '● unavailable';
+    return;
+  }
+  const top = all.slice(0, 10);
+  const bars = top.map(r => ({label: r.country, value: r.tonnes}));
+  body.innerHTML =
+    metalsRenderBarChart(bars, '#cbd5e1') +
+    '<div class="v2-card__footer" style="margin-top:8px">Unit: ' +
+      escapeHtml(payload.unit || 'metric tons') + ' · Year: ' +
+      (payload.year || '—') + ' · Source: ' +
+      escapeHtml(payload.source || '—') + '</div>';
+  if (asOf) {
+    asOf.textContent = '● ' + (payload.year || '—');
+    asOf.className = 'v2-chip v2-chip--info';
+  }
+  if (sub) sub.textContent = 'Metric tons · top 10 producers · USGS MCS ' + (payload.year || '');
+}
+
 // ─── TRAVEL ADVISORIES — control wiring (sub-tabs, stat cards, filters) ──
 // Delegated handlers so the markup only carries data-attributes, not inline
 // onclick. Anchored to #tab-travel so events from other tabs (e.g. share
@@ -11510,6 +11794,20 @@ function renderAll(){
           icon: '🚢',
           title: 'Loading global supplies…',
           sub: 'Fetching port TEU, inventory ratio, and NY Fed GSCPI.',
+  if (state.tab === 'metals'){
+    // Same lazy-load pattern as travel/defi/whale: show a placeholder while
+    // the metals sidecar is in flight; once it lands, renderMetals() paints
+    // the 4 cards. renderMetals() is a no-op if DATA.metals is missing.
+    const metalsLoading = document.getElementById('metalsLoading');
+    const metalsContent = document.getElementById('metalsContent');
+    const metalsLoadingActive = !DATA.metals && SIDECAR_STATE.metals === 'loading';
+    if (metalsLoading) {
+      metalsLoading.classList.toggle('hidden', !metalsLoadingActive);
+      if (metalsLoadingActive) {
+        metalsLoading.innerHTML = V2.empty({
+          icon: '🥇',
+          title: 'Loading metals data…',
+          sub: 'Gold/silver prices + central-bank gold + silver mine production.',
           warm: true,
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
       }
@@ -11518,6 +11816,8 @@ function renderAll(){
     if (!cpiLoadingActive) renderCpi();
     if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive);
     if (!suppliesLoadingActive) renderSupplies();
+    if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive);
+    if (!metalsLoadingActive) renderMetals();
   }
   renderCoverage();
 }
@@ -11588,6 +11888,7 @@ function selectTab(t){
   document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
   document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
   document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
+  document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
