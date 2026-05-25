@@ -1204,6 +1204,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 }
 .hidden{display:none !important}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:24px}
+/* Inline ticker text that's wired to open the lightweight #tickerDetailModal.
+   Subtle dotted underline so the click affordance reads without overwhelming
+   the surrounding metric/card layout. Hover bumps to the AI accent color. */
+.v2-ticker{cursor:pointer;border-bottom:1px dotted rgba(140,160,200,.45);transition:color .12s,border-color .12s}
+.v2-ticker:hover,.v2-ticker:focus{color:var(--v2-ai);border-bottom-color:var(--v2-ai);outline:none}
 .note{font-size:11px;color:var(--muted);background:#10151f;border:1px solid var(--border);padding:8px 12px;border-radius:8px}
 /* Collapsible explainer (Futures tab). Closed-by-default native <details>
    so the long perpetuals paragraph doesn't dominate above-the-fold on
@@ -1432,6 +1437,24 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="stockDetailClose" aria-label="Close stock detail">×</button>
     </div>
     <div id="stockDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ TICKER DETAIL MODAL (lightweight; any ticker text → quick view) ============
+     Triggered by any element carrying data-ticker="SYM" (spotlight row, AI News
+     subset cards, etc.). Distinct from #stockDetailModal which is the bigger
+     full breakdown opened by clicking a full stock-card in the Stocks grid.
+     Single shared modal — reuse for any ticker. -->
+<div id="tickerDetailModal" class="modal-bg hidden">
+  <div class="modal-card" style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(520px,100%);max-height:90vh;display:flex;flex-direction:column;gap:12px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="min-width:0">
+        <div id="tickerDetailSymbol" style="font-size:22px;font-weight:700;letter-spacing:.4px;line-height:1">—</div>
+        <div id="tickerDetailName" class="sub" style="font-size:12px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:360px">—</div>
+      </div>
+      <button class="btn" id="tickerDetailClose" aria-label="Close ticker detail">×</button>
+    </div>
+    <div id="tickerDetailBody"></div>
   </div>
 </div>
 
@@ -7898,9 +7921,15 @@ function renderStocksSpotlight(){
     const v = Number(s && s.change_pct);
     return isFinite(v) ? ((v >= 0 ? '+' : '') + v.toFixed(2) + '%') : '—';
   };
-  const buyVal  = topBuy  ? `${escapeHtml(String(topBuy.symbol||''))} ${fmtScore(topBuy)}`   : '—';
-  const sellVal = topSell ? `${escapeHtml(String(topSell.symbol||''))} ${fmtScore(topSell)}` : '—';
-  const volVal  = topVol  ? `${escapeHtml(String(topVol.symbol||''))} ${fmtChange(topVol)}`  : '—';
+  // Wrap each ticker symbol in a span[data-ticker] so the delegated listener
+  // opens the lightweight ticker modal on click. tabindex+role for keyboard a11y.
+  const tickSpan = (sym) => {
+    const safe = escapeHtml(String(sym||''));
+    return `<span class="v2-ticker" data-ticker="${safe}" role="button" tabindex="0" aria-label="Open ${safe} ticker detail" title="Click for ${safe} detail">${safe}</span>`;
+  };
+  const buyVal  = topBuy  ? `${tickSpan(topBuy.symbol)} ${fmtScore(topBuy)}`   : '—';
+  const sellVal = topSell ? `${tickSpan(topSell.symbol)} ${fmtScore(topSell)}` : '—';
+  const volVal  = topVol  ? `${tickSpan(topVol.symbol)} ${fmtChange(topVol)}`  : '—';
   const body = '<div class="v2-card__metric-row">'
     + V2.metric({label:'Strongest BUY', html:buyVal,  severity:'good', large:true,
                  tip:'Highest signal score in the top-50 most-active US equities right now.'})
@@ -7964,10 +7993,10 @@ function renderStocksTab(){
     const pct = ((clamped + 100) / 200) * 100;
     const bucket = stockLabelBucket(s.label);
     const symbol = escapeHtml(String(s.symbol || ''));
-    return `<div class="v2-card stock-card" data-stock-symbol="${symbol}" data-stock-bucket="${bucket}" role="button" tabindex="0" aria-label="Open full ${symbol} signal detail" title="Click for full breakdown" style="padding:10px 12px;cursor:pointer">
+    return `<div class="v2-card stock-card" data-stock-symbol="${symbol}" data-stock-bucket="${bucket}" role="button" tabindex="0" aria-label="Open full ${symbol} signal detail" title="Click card for full breakdown · click ticker for quick view" style="padding:10px 12px;cursor:pointer">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
         <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
-          <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
+          <div class="v2-ticker" data-ticker="${symbol}" role="button" tabindex="0" aria-label="Open ${symbol} quick view" title="Click for ${symbol} quick view" style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
           <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${escapeHtml(String(s.name || ''))}</div>
         </div>
         <div style="text-align:right;line-height:1">
@@ -8076,7 +8105,10 @@ function renderAiNewsSpotlight(){
   if (topTicker){
     const sc = Number(topTicker.score) || 0;
     const scTxt = (sc >= 0 ? '+' : '') + (Number.isInteger(sc) ? sc : sc.toFixed(1));
-    tickerVal = `${escapeHtml(String(topTicker.symbol||''))} ${scTxt}`;
+    const safe = escapeHtml(String(topTicker.symbol||''));
+    // Wrap ticker text in a [data-ticker] span — delegated listener opens
+    // the lightweight ticker modal on click.
+    tickerVal = `<span class="v2-ticker" data-ticker="${safe}" role="button" tabindex="0" aria-label="Open ${safe} ticker detail" title="Click for ${safe} detail">${safe}</span> ${scTxt}`;
     tickerSev = sc >= 20 ? 'good' : (sc <= -20 ? 'bad' : 'warn');
   }
   const body = '<div class="v2-card__metric-row">'
@@ -9437,7 +9469,7 @@ function renderAiNewsTab(){
         return `<div class="v2-card" style="padding:10px 12px">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">
             <div style="min-width:0;display:flex;align-items:baseline;gap:6px">
-              <div style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
+              <div class="v2-ticker" data-ticker="${symbol}" role="button" tabindex="0" aria-label="Open ${symbol} ticker detail" title="Click for ${symbol} detail" style="font-size:13px;font-weight:700;letter-spacing:0.3px">${symbol}</div>
               <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${escapeHtml(String(s.name || ''))}</div>
             </div>
             <div style="text-align:right;line-height:1">
@@ -9908,6 +9940,140 @@ function closeStockDetail(){
     if (card && (e.key === 'Enter' || e.key === ' ')){
       e.preventDefault();
       openStockDetail(card.getAttribute('data-stock-symbol'));
+    }
+  });
+})();
+
+// ============ LIGHTWEIGHT TICKER MODAL ============
+// Distinct from #stockDetailModal (the full-breakdown modal opened by clicking
+// a whole stock-card). This one is triggered by clicking just the ticker TEXT
+// anywhere it appears outside the main grid (spotlight row, AI News subset
+// cards, etc.) and shows a compact summary: price + day Δ, 7-day signal-score
+// sparkline, top signal components, and a news section (empty-state today —
+// per-ticker stock news isn't in the current data payload).
+function openTickerModal(symbol){
+  const sym = String(symbol || '').toUpperCase();
+  const modal = document.getElementById('tickerDetailModal');
+  if (!modal || !sym) return;
+  const rows = ((DATA.market||{}).stocks_signals) || [];
+  const s = (Array.isArray(rows) ? rows : []).find(r => r && String(r.symbol||'').toUpperCase() === sym);
+  const symEl  = document.getElementById('tickerDetailSymbol');
+  const nameEl = document.getElementById('tickerDetailName');
+  const body   = document.getElementById('tickerDetailBody');
+  if (symEl)  symEl.textContent  = sym;
+  if (nameEl) nameEl.textContent = s && s.name ? String(s.name) : '';
+  if (!body){ modal.classList.remove('hidden'); return; }
+
+  if (!s){
+    // Ticker not in current stocks_signals — likely an index symbol or a
+    // ticker that scrolled off the top-50. Surface a graceful fallback so
+    // the click never feels broken.
+    body.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px 4px;font-size:12px">No signal data available for this ticker in the current snapshot. The top-50 most-active US equities are scored by fetch_market.py — refresh in a moment or try a different symbol.</div>';
+    modal.classList.remove('hidden');
+    return;
+  }
+
+  const score = Number(s.score) || 0;
+  const scoreColor = score >= 20 ? 'var(--v2-good)' : (score <= -20 ? 'var(--v2-bad)' : 'var(--v2-warn)');
+  const scoreTxt = (score >= 0 ? '+' : '') + (Number.isInteger(score) ? score : score.toFixed(1));
+  const chPct = Number(s.change_pct);
+  const chColor = isFinite(chPct) ? (chPct >= 0 ? 'var(--v2-good)' : 'var(--v2-bad)') : 'var(--muted)';
+  const chTxt  = isFinite(chPct) ? ((chPct >= 0 ? '+' : '') + chPct.toFixed(2) + '%') : '—';
+  const price  = Number(s.last_price);
+  const priceTxt = isFinite(price)
+    ? ('$' + price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}))
+    : '—';
+
+  // Sparkline — stocks only carry signal-score history (not per-day price),
+  // so we reuse signalScoreSparkline and label it as such. Better than no
+  // chart at all and matches what the data actually means.
+  const spark = signalScoreSparkline(s.history || []);
+
+  // AI signal explanation = the top components from the score breakdown,
+  // ranked by absolute impact. Show up to 5 so the modal stays compact.
+  const comps = Array.isArray(s.components) ? s.components.slice() : [];
+  comps.sort((a,b) => Math.abs(Number(b.score)||0) - Math.abs(Number(a.score)||0));
+  const compRows = comps.slice(0, 5).map(c => {
+    const cs = Number(c.score) || 0;
+    const csColor = cs > 0 ? 'var(--v2-good)' : (cs < 0 ? 'var(--v2-bad)' : 'var(--muted)');
+    const csTxt = (cs >= 0 ? '+' : '') + (Number.isInteger(cs) ? cs : cs.toFixed(1));
+    return `<tr>
+      <td style="padding:3px 6px;color:var(--text)">${escapeHtml(String(c.name || ''))}</td>
+      <td style="padding:3px 6px;color:var(--muted)">${escapeHtml(String(c.value == null ? '' : c.value))}</td>
+      <td style="padding:3px 6px;text-align:right;font-weight:600;color:${csColor}">${csTxt}</td>
+    </tr>`;
+  }).join('');
+
+  // News: per-ticker stock news isn't in the current data payload. AV
+  // NEWS_SENTIMENT multi-ticker filtering is AND-not-OR (a known quirk)
+  // and Finnhub /news-sentiment is deprecated for thesis use. Ship a
+  // clean empty state with the same TODO until EODHD lands in Phase 2.
+  const newsHtml = '<div class="sub" style="color:var(--muted);padding:10px 6px;font-size:12px;background:#10151f;border:1px solid var(--border);border-radius:6px">No per-ticker headlines in the current data snapshot. (TODO: wire in once a per-symbol news source ships.)</div>';
+
+  body.innerHTML = `
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:var(--muted)">Last price</div>
+        <div style="font-size:22px;font-weight:700;line-height:1.1">${priceTxt}</div>
+        <div style="font-size:13px;font-weight:600;color:${chColor};margin-top:2px">${chTxt} today</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--muted)">Signal score</div>
+        <div style="font-size:22px;font-weight:700;line-height:1.1;color:${scoreColor}">${scoreTxt}</div>
+        <div style="font-size:11px;font-weight:700;color:${scoreColor};margin-top:2px;letter-spacing:.04em">${escapeHtml(String(s.label||''))}</div>
+      </div>
+    </div>
+    ${spark ? `<div style="margin-top:4px">
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:2px">Signal score · 7-day trend</div>
+      ${spark}
+    </div>` : ''}
+    <div style="margin-top:4px">
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">AI signal — top drivers</div>
+      ${compRows ? `<table style="font-size:12px;width:100%;border-collapse:collapse">
+        <thead><tr style="color:var(--muted);text-align:left;font-size:10px;letter-spacing:.04em">
+          <th style="padding:3px 6px">Component</th>
+          <th style="padding:3px 6px">Value</th>
+          <th style="padding:3px 6px;text-align:right">&plusmn;</th>
+        </tr></thead>
+        <tbody>${compRows}</tbody>
+      </table>` : '<div class="sub" style="color:var(--muted);font-size:12px">No component breakdown available for this ticker.</div>'}
+    </div>
+    <div style="margin-top:4px">
+      <div class="sub" style="font-size:11px;color:var(--muted);margin-bottom:4px">Latest headlines</div>
+      ${newsHtml}
+    </div>
+  `;
+  modal.classList.remove('hidden');
+}
+
+function closeTickerModal(){
+  const m = document.getElementById('tickerDetailModal');
+  if (m) m.classList.add('hidden');
+}
+
+// Single delegated listener — runs once. Catches any [data-ticker] click in
+// the document so re-renders of the Stocks tab (filter/sort) don't lose the
+// wiring. Stops propagation so a click on a ticker chip inside a stock-card
+// doesn't also bubble up to the existing stock-card click handler that opens
+// the bigger #stockDetailModal — the user clicked the ticker text, not the card.
+(function wireTickerDetail(){
+  if (window._tickerDetailWired) return; window._tickerDetailWired = true;
+  document.addEventListener('click', e => {
+    const t = e.target && e.target.closest && e.target.closest('[data-ticker]');
+    if (t){
+      e.stopPropagation();
+      openTickerModal(t.getAttribute('data-ticker'));
+      return;
+    }
+    if (e.target && e.target.id === 'tickerDetailClose') closeTickerModal();
+    if (e.target && e.target.id === 'tickerDetailModal')  closeTickerModal();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeTickerModal();
+    const t = e.target && e.target.closest && e.target.closest('[data-ticker]');
+    if (t && (e.key === 'Enter' || e.key === ' ')){
+      e.preventDefault();
+      openTickerModal(t.getAttribute('data-ticker'));
     }
   });
 })();
