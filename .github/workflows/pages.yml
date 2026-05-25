@@ -122,6 +122,17 @@ jobs:
         run: python v2/app.py --no-open || echo "[v2] build failed; production deploy continues"
         continue-on-error: true
 
+      - name: Validate V2 dashboard JS structure
+        # Structural lint of the freshly-built v2/dashboard.html inline
+        # <script>. Catches the class of bug that bricked V2 in prod on
+        # 2026-05-24 (duplicate `const SIDECAR_FOR_TAB`, plus an `if
+        # (state.tab ...)` block accidentally nested inside a `V2.empty({...})`
+        # call literal from a take-both conflict resolution). Pure-stdlib
+        # Python — no new deps. FAILS THE BUILD on regression: the whole
+        # point is to block bad deploys before they ship to /v2/.
+        if: hashFiles('v2/dashboard.html') != ''
+        run: python tools/validate_v2_dashboard.py
+
       - name: Stage site directory
         run: |
           mkdir -p _site
