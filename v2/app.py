@@ -3268,9 +3268,7 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi' };
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', supplies: 'supplies' };
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', metals: 'metals' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi', supplies: 'supplies', metals: 'metals' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -11779,6 +11777,13 @@ function renderAll(){
           icon: '📊',
           title: 'Loading CPI data…',
           sub: 'Fetching FRED Consumer Price Index series.',
+          warm: true,
+        }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      }
+    }
+    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive);
+    if (!cpiLoadingActive) renderCpi();
+  }
   if (state.tab === 'supplies'){
     // Mirror the travel lazy-load pattern: while the sidecar is in flight we
     // show a placeholder; renderSupplies is a no-op until DATA.supplies lands
@@ -11794,6 +11799,13 @@ function renderAll(){
           icon: '🚢',
           title: 'Loading global supplies…',
           sub: 'Fetching port TEU, inventory ratio, and NY Fed GSCPI.',
+          warm: true,
+        }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      }
+    }
+    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive);
+    if (!suppliesLoadingActive) renderSupplies();
+  }
   if (state.tab === 'metals'){
     // Same lazy-load pattern as travel/defi/whale: show a placeholder while
     // the metals sidecar is in flight; once it lands, renderMetals() paints
@@ -11812,10 +11824,6 @@ function renderAll(){
         }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
       }
     }
-    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive);
-    if (!cpiLoadingActive) renderCpi();
-    if (suppliesContent) suppliesContent.classList.toggle('hidden', suppliesLoadingActive);
-    if (!suppliesLoadingActive) renderSupplies();
     if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive);
     if (!metalsLoadingActive) renderMetals();
   }
