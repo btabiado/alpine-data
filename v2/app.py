@@ -1817,7 +1817,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="loadBtcBtn" title="Paste BTC ETF flow CSV from Farside">Paste BTC</button>
       <button class="btn" id="loadEthBtn" title="Paste ETH ETF flow CSV from Farside">Paste ETH</button>
       <button class="btn" id="seedBtcBtn" title="Pull BTC from canadiancode/btc-etf-flows GitHub mirror (may be stale)">Seed BTC (mirror)</button>
-      <a class="btn" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
+      <a class="btn" id="bookmarkletLink" href="/bookmarklet" target="_blank" rel="noopener noreferrer" style="text-decoration:none" title="One-click bookmarklet for Farside pages">Get bookmarklet</a>
       <span id="loadStatus" class="sub" style="margin-left:8px;color:var(--muted)"></span>
     </div>
     <!-- Per-tab asset toggle: BTC or ETH (no spot LINK/LTC ETFs exist).
@@ -4872,6 +4872,11 @@ function applyTop20Filter(bucket){
   // tabs carry role="button" + tabindex="0" + one of the data-* attrs
   // below; one delegated handler keeps Enter/Space working everywhere
   // without per-renderer duplication.
+  // [data-symbol] / [data-per-coin-symbol] route directly into
+  // openSignalDetail. The other selectors ([data-stock-symbol],
+  // [data-poc-coin-id], [data-tns-symbol]) each have their own click
+  // handlers registered elsewhere — synthesize a click so we don't
+  // duplicate routing logic and stay WCAG 2.1.1 compliant.
   document.addEventListener('keydown', e => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const t = e.target;
@@ -4882,6 +4887,13 @@ function applyTop20Filter(bucket){
     if (sym){
       e.preventDefault();
       openSignalDetail(sym);
+      return;
+    }
+    if (t.hasAttribute('data-stock-symbol') ||
+        t.hasAttribute('data-poc-coin-id') ||
+        t.hasAttribute('data-tns-symbol')){
+      e.preventDefault();
+      t.click();
     }
   });
   document.addEventListener('keydown', e => {
@@ -13153,8 +13165,10 @@ if (!isServer){
   const _sb = document.getElementById('shareBtn');
   if (_sb) _sb.style.display = 'none';
   // ETF Flows tab Paste/Seed buttons POST to /api/* endpoints that only
-  // exist in local Flask mode. Hide them on the static mirror.
-  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn'].forEach(id => {
+  // exist in local Flask mode. Hide them on the static mirror. The
+  // bookmarklet anchor resolves to /bookmarklet which 404s on GitHub
+  // Pages — hide it the same way.
+  ['loadBtcBtn', 'loadEthBtn', 'seedBtcBtn', 'seedBtn', 'pasteBtn', 'bookmarkletLink'].forEach(id => {
     const b = document.getElementById(id);
     if (b) b.style.display = 'none';
   });
