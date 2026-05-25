@@ -397,6 +397,21 @@ def main() -> int:
     except Exception as e:
         print(f"[fetch-advisories] failed: {e}", file=sys.stderr)
 
+    # Consumer Price Index sidecar — refreshes v2/data-cpi.json from FRED
+    # before the HTML render. Same isolation pattern as advisories: a FRED
+    # outage (or missing API key) must NEVER kill the V2 build. The fetcher
+    # writes a clean "fred_available: false" payload when FRED_API_KEY is
+    # absent so the tab renders a friendly empty-state explainer rather than
+    # 404ing the sidecar.
+    try:
+        import fetch_cpi
+        rc = fetch_cpi.main(["--out", str(ROOT / "data-cpi.json")])
+        if rc != 0:
+            print(f"[fetch-cpi] non-zero exit ({rc}); "
+                  f"prior data-cpi.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-cpi] failed: {e}", file=sys.stderr)
+
     print("Building payload...")
     payload = build_payload()
     btc_n = len(payload["btc"].get("daily", []))
@@ -425,6 +440,14 @@ def main() -> int:
     travel_path = ROOT / "data-travel.json"
     if travel_path.exists():
         manifest["travel"] = "data-travel.json"
+
+    # CPI sidecar — same gating as travel. The file is always written by
+    # fetch_cpi (above), even when the API key is unset (it writes a clean
+    # "unavailable" payload); we still guard with .exists() so a broken
+    # fetcher in the future can't introduce a 404 on the client.
+    cpi_path = ROOT / "data-cpi.json"
+    if cpi_path.exists():
+        manifest["cpi"] = "data-cpi.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -1305,6 +1328,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
   <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
+  <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -2951,6 +2975,70 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div><!-- /travelContent -->
   </div>
+
+  <!-- ============ CONSUMER PRICE INDEX TAB ============ -->
+  <!-- FRED Consumer Price Index series: CPI-U headline + retail gasoline +
+       eggs + Food-at-Home subindex. Data is lazy-loaded from /data-cpi.json
+       via the SIDECARS mechanism. When FRED_API_KEY is not set on the
+       builder, the sidecar payload arrives with fred_available=false and we
+       render a friendly setup-instructions card instead of empty charts.
+       Range (5y/10y/20y/30y/all) and view mode (index100/dollar/pctchange)
+       live in state.cpiTimeRange / state.cpiViewMode. -->
+  <div id="tab-cpi" class="hidden">
+    <div id="aiTake-cpi" class="aiTake-slot"></div>
+    <div id="cpiLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading CPI data…</div>
+    <div id="cpiContent">
+      <!-- Empty state shown when FRED_API_KEY is unset (fred_available=false).
+           Replaced by the controls + chart grid once a real payload lands. -->
+      <div id="cpiEmpty" class="v2-card v2-card--info hidden" style="margin-bottom:12px">
+        <div class="v2-card__body">
+          <div class="v2-empty v2-empty--warm">
+            <div class="v2-empty__icon">&#128202;</div>
+            <div class="v2-empty__title">CPI data unavailable</div>
+            <div class="v2-empty__sub" id="cpiEmptySub">FRED API key not configured.</div>
+            <div class="v2-empty__sub" style="margin-top:8px">
+              Add <code>FRED_API_KEY=...</code> to <code>.env</code> and re-run the build.
+              Free key:
+              <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" rel="noreferrer"
+                 style="color:var(--v2-info)">fred.stlouisfed.org/docs/api/api_key.html &#8599;</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real CPI body — controls + 4 chart cards. Hidden while empty/loading. -->
+      <div id="cpiBody" class="hidden">
+        <div class="v2-card" style="margin-bottom:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Consumer Price Index</h2>
+              <div class="v2-card__subtitle" id="cpiAsOf">Source: FRED · 4 series</div>
+            </div>
+            <div><span class="v2-chip v2-chip--info" id="cpiChip">FRED</span></div>
+          </div>
+          <div class="v2-card__body">
+            <!-- View-mode toggle: Index 100 (rebased) / Absolute / % change -->
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+              <span class="lbl" style="margin:0">View</span>
+              <button class="btn active" data-cpiview="index100" type="button">Index = 100</button>
+              <button class="btn" data-cpiview="absolute" type="button">Absolute</button>
+              <button class="btn" data-cpiview="pctchange" type="button">% change</button>
+            </div>
+            <!-- Time-range toggle: 5y / 10y / 20y / 30y / All -->
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="lbl" style="margin:0">Range</span>
+              <button class="btn" data-cpirange="5y" type="button">5y</button>
+              <button class="btn" data-cpirange="10y" type="button">10y</button>
+              <button class="btn" data-cpirange="20y" type="button">20y</button>
+              <button class="btn" data-cpirange="30y" type="button">30y</button>
+              <button class="btn active" data-cpirange="all" type="button">All</button>
+            </div>
+          </div>
+        </div>
+        <div id="cpiGrid" class="grid2"></div>
+      </div>
+    </div><!-- /cpiContent -->
+  </div>
 </div>
 
 <footer>
@@ -3039,7 +3127,7 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -3099,7 +3187,16 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   // a single function call rather than DOM scraping for current values.
   travelQuery: '',
   travelTerrorOnly: false,
-  travelSort: 'level' };
+  travelSort: 'level',
+  // Consumer Price Index tab: time-range filter for all 4 series charts.
+  // 'all' | '5y' | '10y' | '20y' | '30y'. Default 'all' so the user sees
+  // the full multi-decade context on first paint.
+  cpiTimeRange: 'all',
+  // View mode for CPI charts: 'index100' rebases each series to 100 at the
+  // start of the selected range (best for side-by-side comparison), 'absolute'
+  // shows the raw native unit ($/gallon, index points), 'pctchange' shows
+  // cumulative % change from the start of the range.
+  cpiViewMode: 'index100' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -10534,6 +10631,248 @@ function renderSocial(){
   renderSantimentCards();
 }
 
+// ---------- Consumer Price Index ----------
+// Tab renderer for the CPI tab. Reads DATA.cpi (lazy-loaded sidecar). Two
+// paths: empty state when fred_available=false (FRED_API_KEY missing on the
+// builder), and the real grid with 4 charts otherwise.
+function renderCpi(){
+  const cpi = DATA.cpi || null;
+  const emptyEl = document.getElementById('cpiEmpty');
+  const bodyEl  = document.getElementById('cpiBody');
+  const grid    = document.getElementById('cpiGrid');
+  const asOf    = document.getElementById('cpiAsOf');
+  const chip    = document.getElementById('cpiChip');
+  const sub     = document.getElementById('cpiEmptySub');
+  if (!emptyEl || !bodyEl) return;
+
+  // No payload at all yet (sidecar still warming up or absent from manifest).
+  // renderAll's loading branch above usually handles this; fall through to
+  // empty state as a defensive default.
+  if (!cpi){
+    emptyEl.classList.remove('hidden');
+    bodyEl.classList.add('hidden');
+    if (sub) sub.textContent = 'CPI sidecar not yet loaded.';
+    return;
+  }
+
+  if (cpi.fred_available === false){
+    emptyEl.classList.remove('hidden');
+    bodyEl.classList.add('hidden');
+    if (sub) sub.textContent = cpi.note || 'FRED_API_KEY not configured on the builder.';
+    return;
+  }
+
+  emptyEl.classList.add('hidden');
+  bodyEl.classList.remove('hidden');
+
+  // Header chip + freshness line.
+  if (asOf) {
+    const series = cpi.series || [];
+    const okCount = series.filter(s => (s.observations||[]).length).length;
+    let when = '';
+    if (cpi.generated_at){
+      try { when = ' · updated ' + new Date(cpi.generated_at).toLocaleDateString(); } catch(_) {}
+    }
+    asOf.textContent = 'Source: FRED · ' + okCount + ' of ' + series.length + ' series loaded' + when;
+  }
+  if (chip) chip.textContent = 'FRED · ' + (state.cpiViewMode || 'index100');
+
+  // Sync toggle button .active classes to current state (covers initial
+  // paint after the sidecar lands — buttons start with the default range
+  // active, but on re-render we want to reflect whichever the user chose).
+  document.querySelectorAll('#tab-cpi .btn[data-cpirange]').forEach(b => {
+    b.classList.toggle('active', b.dataset.cpirange === (state.cpiTimeRange || 'all'));
+  });
+  document.querySelectorAll('#tab-cpi .btn[data-cpiview]').forEach(b => {
+    b.classList.toggle('active', b.dataset.cpiview === (state.cpiViewMode || 'index100'));
+  });
+
+  // Render the 4 series cards.
+  if (!grid) return;
+  const series = cpi.series || [];
+  if (!series.length){
+    grid.innerHTML = V2.empty({
+      icon: '📊',
+      title: 'No series available',
+      sub: 'The CPI sidecar has no series payload. Re-run fetch_cpi.py.',
+      warm: true,
+    });
+    return;
+  }
+  grid.innerHTML = series.map(renderCpiCard).join('');
+}
+
+// Build a single series card with a header (label, current value badge) +
+// an inline SVG line chart. Empty/errored series render as a small notice.
+function renderCpiCard(s){
+  const id = (s.id || 'unknown').replace(/[^A-Za-z0-9_-]/g, '');
+  const label = escapeHtml(s.label || s.id || 'series');
+  const unit  = escapeHtml(s.unit || '');
+  const obs   = s.observations || [];
+
+  if (!obs.length){
+    const err = escapeHtml(s.error || 'no observations');
+    return V2.card({
+      title: label,
+      subtitle: unit,
+      severity: 'warn',
+      head_right: '<span class="v2-chip v2-chip--warn">' + err + '</span>',
+      body: V2.empty({
+        icon: '⚠️',
+        title: 'Series unavailable',
+        sub: err,
+        warm: true,
+      }),
+    });
+  }
+
+  // Clip to the selected time range.
+  const range = state.cpiTimeRange || 'all';
+  const years = ({ '5y':5, '10y':10, '20y':20, '30y':30 })[range] || null;
+  let clipped = obs;
+  if (years){
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - years);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    clipped = obs.filter(o => o.date >= cutoffStr);
+    // Fallback: range is broader than available history -> use all.
+    if (clipped.length < 2) clipped = obs;
+  }
+
+  // Apply view-mode transform.
+  const mode = state.cpiViewMode || 'index100';
+  const base = clipped[0].value;
+  let pts;
+  let yLabel;
+  if (mode === 'absolute'){
+    pts = clipped.map(o => ({ date: o.date, value: o.value }));
+    yLabel = unit;
+  } else if (mode === 'pctchange'){
+    pts = clipped.map(o => ({ date: o.date, value: base ? ((o.value - base) / base) * 100 : 0 }));
+    yLabel = '% change';
+  } else {
+    pts = clipped.map(o => ({ date: o.date, value: base ? (o.value / base) * 100 : 100 }));
+    yLabel = 'Rebased to 100';
+  }
+
+  const first = pts[0];
+  const last  = pts[pts.length - 1];
+  const startVal = clipped[0].value;
+  const endVal   = clipped[clipped.length - 1].value;
+  const pctChange = startVal ? ((endVal - startVal) / startVal) * 100 : 0;
+  const isDollar = (s.kind === 'dollar');
+  const fmtValue = v => isDollar ? '$' + Number(v).toFixed(2) : Number(v).toFixed(2);
+  const sev = pctChange >= 0 ? 'bad' : 'good';   // CPI rises = bad for consumers
+  const arrow = pctChange >= 0 ? '▲' : '▼';
+  const chipText = arrow + ' ' + Math.abs(pctChange).toFixed(1) + '% since ' + first.date.slice(0,4);
+  const chipHtml = '<span class="v2-chip v2-chip--' + sev + '">' + escapeHtml(chipText) + '</span>';
+
+  const headRight =
+    '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
+      '<div style="font-size:20px;font-weight:700">' + fmtValue(endVal) + '</div>' +
+      chipHtml +
+    '</div>';
+
+  return V2.card({
+    title: label,
+    subtitle: unit + ' · ' + clipped.length.toLocaleString() + ' obs · ' + first.date + ' → ' + last.date,
+    head_right: headRight,
+    body:
+      '<div class="cpi-chart-wrap" data-cpi-series="' + escapeHtml(s.id) + '">' +
+        cpiSparkSvg(pts, { isDollar, mode, yLabel }) +
+      '</div>',
+  });
+}
+
+// Build an inline SVG line chart for a CPI series. No chart library — the
+// dataset is small (couple thousand monthly points max) and a polyline with
+// hover tooltip is plenty here. viewBox-based so it scales with the card.
+function cpiSparkSvg(pts, opts){
+  const W = 560, H = 180, PADL = 44, PADR = 8, PADT = 12, PADB = 22;
+  if (!pts || pts.length < 2){
+    return '<div class="v2-empty"><div class="v2-empty__sub">Not enough points to chart.</div></div>';
+  }
+  const xs = pts.map((p, i) => i);
+  const ys = pts.map(p => p.value);
+  const ymin = Math.min.apply(null, ys);
+  const ymax = Math.max.apply(null, ys);
+  const yspan = (ymax - ymin) || 1;
+  const xspan = (xs.length - 1) || 1;
+  const sx = i => PADL + (i / xspan) * (W - PADL - PADR);
+  const sy = v => PADT + (1 - (v - ymin) / yspan) * (H - PADT - PADB);
+
+  // Polyline path.
+  const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + sx(i).toFixed(1) + ' ' + sy(p.value).toFixed(1)).join(' ');
+  // Area fill.
+  const area = path + ' L' + sx(pts.length - 1).toFixed(1) + ' ' + (H - PADB).toFixed(1) +
+               ' L' + sx(0).toFixed(1) + ' ' + (H - PADB).toFixed(1) + ' Z';
+
+  // Y-axis labels (3 ticks: min, mid, max).
+  const fmtY = v => (opts && opts.isDollar && opts.mode === 'absolute') ? '$' + v.toFixed(2)
+              : (opts && opts.mode === 'pctchange') ? v.toFixed(0) + '%'
+              : v.toFixed(1);
+  const yticks = [ymin, (ymin+ymax)/2, ymax].map(v => ({ v, y: sy(v) }));
+  const yAxis = yticks.map(t =>
+    '<line x1="' + PADL + '" y1="' + t.y.toFixed(1) + '" x2="' + (W - PADR) + '" y2="' + t.y.toFixed(1) +
+      '" stroke="#252b3a" stroke-width="1" stroke-dasharray="2 3"/>' +
+    '<text x="' + (PADL - 4) + '" y="' + (t.y + 3).toFixed(1) + '" font-size="9" fill="#8a93a6" text-anchor="end">' +
+      escapeHtml(fmtY(t.v)) + '</text>'
+  ).join('');
+
+  // X-axis: first + last date label.
+  const xLabels =
+    '<text x="' + sx(0).toFixed(1) + '" y="' + (H - 6) + '" font-size="9" fill="#8a93a6" text-anchor="start">' +
+      escapeHtml(pts[0].date.slice(0,7)) + '</text>' +
+    '<text x="' + sx(pts.length-1).toFixed(1) + '" y="' + (H - 6) + '" font-size="9" fill="#8a93a6" text-anchor="end">' +
+      escapeHtml(pts[pts.length-1].date.slice(0,7)) + '</text>';
+
+  // Stroke color matches "warm/inflation" hue.
+  const stroke = 'var(--v2-orange, #f59e0b)';
+  const fill = 'rgba(245,158,11,0.10)';
+
+  // Native <title> for hover — surfaces last point's date+value as a quick
+  // sanity-check tooltip without requiring JS event listeners on every node.
+  const lastTip = pts[pts.length-1].date + ': ' + fmtY(pts[pts.length-1].value);
+
+  return '' +
+    '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="none" role="img" aria-label="CPI series chart">' +
+      '<title>' + escapeHtml(lastTip) + '</title>' +
+      yAxis +
+      '<path d="' + area + '" fill="' + fill + '" stroke="none"/>' +
+      '<path d="' + path + '" fill="none" stroke="' + stroke + '" stroke-width="1.5" stroke-linejoin="round"/>' +
+      '<circle cx="' + sx(pts.length-1).toFixed(1) + '" cy="' + sy(pts[pts.length-1].value).toFixed(1) +
+        '" r="2.5" fill="' + stroke + '"/>' +
+      xLabels +
+    '</svg>';
+}
+
+// CPI tab button wiring — range + view-mode toggles. Delegated on the tab
+// container so we don't re-bind on every render. Mirrors how the travel tab
+// wires its sub-tab strip from a single click handler.
+(function(){
+  const root = document.getElementById('tab-cpi');
+  if (!root) return;
+  root.addEventListener('click', (e) => {
+    const r = e.target.closest('.btn[data-cpirange]');
+    if (r){
+      const v = r.dataset.cpirange;
+      if (v && v !== state.cpiTimeRange){
+        state.cpiTimeRange = v;
+        renderCpi();
+      }
+      return;
+    }
+    const m = e.target.closest('.btn[data-cpiview]');
+    if (m){
+      const v = m.dataset.cpiview;
+      if (v && v !== state.cpiViewMode){
+        state.cpiViewMode = v;
+        renderCpi();
+      }
+    }
+  });
+})();
+
 function renderAll(){
   renderInsights();
   renderAiTakeBands();
@@ -10691,6 +11030,26 @@ function renderAll(){
     if (travelContent) travelContent.classList.toggle('hidden', travelLoadingActive);
     if (!travelLoadingActive) renderTravel();
   }
+  if (state.tab === 'cpi'){
+    // Lazy-load gate (mirrors travel/defi): show the placeholder while the
+    // sidecar is in flight, then swap to the real content once it lands.
+    const cpiLoading = document.getElementById('cpiLoading');
+    const cpiContent = document.getElementById('cpiContent');
+    const cpiLoadingActive = !DATA.cpi && SIDECAR_STATE.cpi === 'loading';
+    if (cpiLoading) {
+      cpiLoading.classList.toggle('hidden', !cpiLoadingActive);
+      if (cpiLoadingActive) {
+        cpiLoading.innerHTML = V2.empty({
+          icon: '📊',
+          title: 'Loading CPI data…',
+          sub: 'Fetching FRED Consumer Price Index series.',
+          warm: true,
+        }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      }
+    }
+    if (cpiContent) cpiContent.classList.toggle('hidden', cpiLoadingActive);
+    if (!cpiLoadingActive) renderCpi();
+  }
   renderCoverage();
 }
 
@@ -10758,6 +11117,7 @@ function selectTab(t){
   document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
   document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
+  document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
