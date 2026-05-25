@@ -250,6 +250,14 @@ def build_payload() -> dict:
     eth_df = ensure_total(load_csv(DATA_DIR / "eth_flows.csv"))
     market = load_json(DATA_DIR / "market.json")
     whale = load_json(DATA_DIR / "whale.json")
+    # Coinbase Pulse — taker buy/sell ratio per coin (BTC/ETH/SOL/LINK)
+    # written by fetch_coinbase.py. Hangs off market.coinbase_pulse so the
+    # dashboard reads it under DATA.market.coinbase_pulse (no sidecar; the
+    # payload is tiny — ~4 coins × ~15 fields). Missing file -> empty dict,
+    # renderer hides its card.
+    coinbase_pulse = load_json(DATA_DIR / "coinbase.json")
+    if isinstance(market, dict) and isinstance(coinbase_pulse, dict) and coinbase_pulse:
+        market["coinbase_pulse"] = coinbase_pulse
     # Defensive cap on fear_greed history (see FEAR_GREED_MAX_DAYS docstring).
     # Done here instead of (only) at fetch so stale on-disk caches that
     # pre-date the fetcher's slice still get trimmed in the inlined payload.
@@ -740,6 +748,16 @@ def main() -> int:
             fetch_market.fetch_all()
         except Exception as e:
             print(f"[fetch-market] failed: {e}", file=sys.stderr)
+        # Coinbase Pulse — per-coin taker buy/sell ratio + ticker insights.
+        # Public Exchange API, no auth. Separate fetcher so a Coinbase
+        # outage can't poison the main market.json blob. Stale-fallback
+        # inside fetch_coinbase.main keeps the prior data/coinbase.json
+        # intact if all coins fail.
+        try:
+            import fetch_coinbase
+            fetch_coinbase.main()
+        except Exception as e:
+            print(f"[fetch-coinbase] failed: {e}", file=sys.stderr)
 
     print("Building payload...")
     payload = build_payload()
@@ -1685,6 +1703,33 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <tbody></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Coinbase Pulse — taker buy/sell ratio per coin (BTC/ETH/SOL/LINK)
+         computed from the last 300 trades on the Coinbase Exchange public
+         /trades endpoint. Sits next to the spot card so traders can read
+         price + flow side-by-side. Source: DATA.market.coinbase_pulse,
+         written by fetch_coinbase.py. -->
+    <div id="coinbasePulseWrap" class="chart-card hidden" style="padding:12px 16px;margin-top:6px">
+      <div class="head">
+        <h2 style="margin:0;font-size:15px">Coinbase Pulse <span class="tag">taker buy ratio</span></h2>
+        <span class="desc">Coinbase taker buy-vs-sell over last 300 trades. &gt;50% = taker-side buying (bullish flow); &lt;50% = taker-side selling (bearish flow). Sparkline = 5-min buckets over last ~25 minutes.</span>
+      </div>
+      <div style="overflow:auto">
+        <table id="coinbasePulseTable" style="margin:0;font-size:12px">
+          <thead><tr>
+            <th>Asset</th>
+            <th style="text-align:right">Price</th>
+            <th style="text-align:right">24h %</th>
+            <th style="text-align:right">Buy ratio</th>
+            <th style="text-align:right">Flow trend</th>
+            <th style="text-align:right">Spread</th>
+            <th style="text-align:right">24h vol</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="coinbasePulseMeta" class="sub" style="margin-top:6px;font-size:10px;color:var(--muted)"></div>
     </div>
 
     <!-- Bottom-of-Overview: continues the news feed past the top-4 teaser
@@ -6708,6 +6753,7 @@ function renderOverview(){
   renderOverviewSentiment();      // crypto market sentiment composite card
   renderOverviewSignals();
   renderCoinbaseSpot();           // compact Coinbase exchange bid/ask + 24h range
+  renderCoinbasePulse();          // taker buy/sell ratio per coin (Coinbase /trades)
   renderOverviewStrongBuys();
   renderOverviewTop15();
   renderOverviewMacro();
@@ -6753,6 +6799,89 @@ function renderCoinbaseSpot(){
       <td style="text-align:right;font-variant-numeric:tabular-nums">${vol}</td>
     </tr>`;
   }).join('');
+}
+
+// Coinbase Pulse: per-coin taker buy/sell ratio computed from the last 300
+// trades on the Coinbase Exchange /trades endpoint. Color-coded green/red
+// at 55/45% — taker buys >55% reads as bullish flow, <45% bearish, in
+// between is balanced. Inline SVG sparkline of buy ratio over the trailing
+// ~25 minutes when ≥2 buckets are present (fast-moving pairs often only
+// give us one bucket because all 300 trades happened in <5 min). Source:
+// DATA.market.coinbase_pulse, written by fetch_coinbase.py.
+function renderCoinbasePulse(){
+  const wrap = document.getElementById('coinbasePulseWrap');
+  const tbody = document.querySelector('#coinbasePulseTable tbody');
+  const meta = document.getElementById('coinbasePulseMeta');
+  if (!wrap || !tbody) return;
+  const pulse = ((DATA.market || {}).coinbase_pulse) || {};
+  const byCoin = pulse.by_coin || {};
+  const order = ['BTC', 'ETH', 'SOL', 'LINK'];
+  const rows = order.filter(k => byCoin[k] && typeof byCoin[k] === 'object');
+  if (!rows.length){
+    wrap.classList.add('hidden');
+    tbody.innerHTML = '';
+    if (meta) meta.textContent = '';
+    return;
+  }
+  wrap.classList.remove('hidden');
+
+  // Inline SVG sparkline of buy ratio over the trailing ~25 minutes. Plots
+  // each bucket's buy ratio on a 0-1 y-axis with a 50% reference line.
+  // Returns "—" when fewer than 2 buckets exist (single point isn't a trend).
+  function brSparkline(points){
+    if (!Array.isArray(points) || points.length < 2) return '—';
+    const w = 72, h = 18, pad = 1;
+    const xs = points.map((_, i) => pad + i * (w - 2*pad) / (points.length - 1));
+    const ys = points.map(p => {
+      const br = Math.max(0, Math.min(1, Number(p.br) || 0));
+      return pad + (1 - br) * (h - 2*pad);
+    });
+    const d = xs.map((x, i) => (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + ys[i].toFixed(1)).join(' ');
+    const last = Number(points[points.length-1].br) || 0;
+    const stroke = last >= 0.55 ? '#22c55e' : (last <= 0.45 ? '#ef4444' : '#94a3b8');
+    const midY = pad + 0.5 * (h - 2*pad);
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true" style="vertical-align:middle">
+      <line x1="0" y1="${midY.toFixed(1)}" x2="${w}" y2="${midY.toFixed(1)}" stroke="#2a3142" stroke-dasharray="2,2" stroke-width="0.5"/>
+      <path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  tbody.innerHTML = rows.map(sym => {
+    const q = byCoin[sym] || {};
+    const price = (q.price != null) ? fmtUSD(q.price, 'auto') : '—';
+    const pct = (typeof q.change_24h_pct === 'number') ? q.change_24h_pct : null;
+    const pctStr = (pct == null) ? '—' : ((pct >= 0 ? '+' : '') + pct.toFixed(2) + '%');
+    const pctCls = (pct == null) ? '' : (pct >= 0 ? 'green' : 'red');
+    const br = (typeof q.buy_ratio_volume === 'number') ? q.buy_ratio_volume : null;
+    let brStr = '—', brCls = '', brColor = 'var(--muted)';
+    if (br != null){
+      brStr = (br * 100).toFixed(1) + '%';
+      if (br >= 0.55){ brCls = 'green'; brColor = '#22c55e'; }
+      else if (br <= 0.45){ brCls = 'red'; brColor = '#ef4444'; }
+      else { brCls = ''; brColor = '#94a3b8'; }
+    }
+    const brCount = (typeof q.buy_ratio_count === 'number')
+      ? ' <span style="color:var(--muted);font-size:10px">(' + (q.buy_ratio_count * 100).toFixed(0) + '% by count)</span>'
+      : '';
+    const spark = brSparkline(q.buy_ratio_sparkline);
+    const spread = (q.spread_bps != null) ? (Number(q.spread_bps).toFixed(2) + ' bps') : '—';
+    const volUsd = (q.vol_24h_usd != null) ? fmtUSD(q.vol_24h_usd / 1e6) : '—';  // fmtUSD takes millions by default
+    return `<tr>
+      <td><strong>${escapeHtml(sym)}</strong></td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${price}</td>
+      <td class="${pctCls}" style="text-align:right;font-variant-numeric:tabular-nums">${pctStr}</td>
+      <td class="${brCls}" style="text-align:right;font-variant-numeric:tabular-nums;color:${brColor};font-weight:700">${brStr}${brCount}</td>
+      <td style="text-align:right">${spark}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${spread}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums">${volUsd}</td>
+    </tr>`;
+  }).join('');
+
+  if (meta){
+    const when = pulse.generated_at || '';
+    const src = pulse.source || 'Coinbase Exchange';
+    meta.textContent = src + (when ? ' · generated ' + when : '');
+  }
 }
 
 // Top 25 coins by market-cap rank from the top-50 signal computation.
