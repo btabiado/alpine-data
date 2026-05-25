@@ -3594,7 +3594,13 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   // breakdown table all describe long-term trend math and stay constant.
   // Window anchors to the dataset cutoff (most recent full year, currently
   // 2013), NOT today. Valid values: '5y' | '10y' | '20y' | '30y' | 'all'.
-  mufonTrendRange: '5y' };
+  mufonTrendRange: '5y',
+  // UAP shapes (Section D) — visible window for the stacked-area classification
+  // chart. Defaults to '5y' to match the trend card above it. Toggling re-slices
+  // the stacked area only — the "All-time totals" legend on the right stays put.
+  // Window anchors to the dataset's last year (currently 2014).
+  // Valid values: '1y' | '3y' | '5y' | '10y' | '20y' | '30y' | 'all'.
+  mufonShapesRange: '5y' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -9707,9 +9713,9 @@ function renderMufonShapes(){
 
   const totals = (m.shape_totals || []).slice();
   const byYear = m.shape_by_year || {};
-  const yearKeys = Object.keys(byYear).sort();
+  const allYearKeys = Object.keys(byYear).sort();
 
-  if (!totals.length || !yearKeys.length) {
+  if (!totals.length || !allYearKeys.length) {
     if (asOf) asOf.textContent = '● unavailable';
     body.innerHTML = V2.empty({
       icon: '🛸',
@@ -9719,6 +9725,44 @@ function renderMufonShapes(){
     });
     return;
   }
+
+  // Apply the active range window. The all-time totals legend on the right
+  // still uses `totals` (unfiltered), but the stacked area, axes, and the
+  // caption underneath only describe `yearKeys`. Anchors to the dataset's
+  // most-recent year (e.g. 2014), NOT today.
+  const activeRange = state.mufonShapesRange || '5y';
+  const allYearNums = allYearKeys.map(y => parseInt(y, 10)).sort((a,b) => a-b);
+  const dataMaxYear = allYearNums[allYearNums.length - 1];
+  let windowYears;
+  if (activeRange === 'all') {
+    windowYears = allYearNums.length;
+  } else {
+    windowYears = parseInt(activeRange.replace('y',''), 10) || allYearNums.length;
+  }
+  const cutoff = dataMaxYear - windowYears + 1;
+  const yearKeys = allYearNums.filter(y => y >= cutoff).map(y => String(y));
+
+  // Keep the card subtitle in sync with the active window so the caption
+  // matches what's drawn. Falls back to the original copy for 'all'.
+  const subEl = document.getElementById('mufonShapesSub');
+  if (subEl) {
+    if (activeRange === 'all') {
+      subEl.textContent = 'NUFORC-reported shapes · ' + allYearNums[0] + '–' + dataMaxYear;
+    } else if (yearKeys.length) {
+      subEl.textContent = 'NUFORC-reported shapes · ' + yearKeys[0] + '–' + yearKeys[yearKeys.length - 1];
+    }
+  }
+
+  // Range toggle markup — reused by both the chart-present and
+  // single-point-fallback paths so the user can always toggle back out.
+  // SAFE PATTERN: single-line map() callback, no line-leading `+` inside
+  // the function body (that's what bricked production on 2026-05-23).
+  const rangeToggleHtml = ''
+    + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
+    +   '<div class="mufon-shapes-range" style="display:flex;gap:4px;flex-wrap:wrap">'
+    +     ['1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === activeRange ? ' active' : '') + '" data-mufonshapesrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : r) + '</button>'; }).join('')
+    +   '</div>'
+    + '</div>';
 
   if (asOf) {
     const dr = m.date_range || [null, null];
@@ -9746,7 +9790,10 @@ function renderMufonShapes(){
   const years = yearKeys.map(y => parseInt(y, 10)).sort((a,b) => a-b);
   const yMin = years[0];
   const yMax = years[years.length - 1];
+  // For a 1-year window we render single dots instead of polygons (a polygon
+  // with collapsed x-span is invisible), so the span calc uses 1 as a floor.
   const yearSpan = Math.max(1, yMax - yMin);
+  const singlePoint = years.length < 2;
 
   // Per-year total — used to set the y-axis max. Recomputed from byYear so
   // we don't depend on totals_by_year being in sync (it should be, but the
@@ -9777,34 +9824,68 @@ function renderMufonShapes(){
     let anyVal = false;
     const lowerPts = [];
     const upperPts = [];
+    const dotsForShape = [];
     yearKeys.forEach(y => {
       const yearN = parseInt(y, 10);
       const v = (byYear[y] || {})[sh] || 0;
       const lower = runningBottom[y];
       const upper = lower + v;
       if (v > 0) anyVal = true;
-      lowerPts.push(xFor(yearN) + ',' + yFor(lower));
-      upperPts.push(xFor(yearN) + ',' + yFor(upper));
+      // Center the single-year case horizontally so the dots don't all glue
+      // to the left axis line.
+      const xp = singlePoint ? (padL + plotW / 2) : xFor(yearN);
+      lowerPts.push(xp + ',' + yFor(lower));
+      upperPts.push(xp + ',' + yFor(upper));
+      if (v > 0) {
+        // Plot a thin horizontal segment at the band's mid-y so the stacking
+        // is still visible at a single point. Width is just for legibility.
+        const midY = yFor((lower + upper) / 2);
+        const segW = Math.max(6, plotW * 0.06);
+        dotsForShape.push({ x: xp, y: midY, h: Math.max(2, yFor(lower) - yFor(upper)), w: segW });
+      }
       runningBottom[y] = upper;
     });
     if (!anyVal) return;
-    // polygon: lower L→R, then upper R→L
-    const pts = lowerPts.concat(upperPts.slice().reverse()).join(' ');
     const color = colorFor[sh];
-    polygons.push(
-      '<polygon points="' + pts + '" fill="' + color + '" '
-      + 'fill-opacity="0.82" stroke="none">'
-      +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
-      + '</polygon>'
-    );
+    if (singlePoint) {
+      // Single-year window — render a small stacked rect strip per shape
+      // instead of a degenerate polygon (which collapses to a vertical line
+      // and disappears on most renderers).
+      dotsForShape.forEach(d => {
+        polygons.push(
+          '<rect x="' + (d.x - d.w / 2) + '" y="' + (d.y - d.h / 2) + '" '
+          + 'width="' + d.w + '" height="' + d.h + '" '
+          + 'fill="' + color + '" fill-opacity="0.82" stroke="none">'
+          +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+          + '</rect>'
+        );
+      });
+    } else {
+      // polygon: lower L→R, then upper R→L
+      const pts = lowerPts.concat(upperPts.slice().reverse()).join(' ');
+      polygons.push(
+        '<polygon points="' + pts + '" fill="' + color + '" '
+        + 'fill-opacity="0.82" stroke="none">'
+        +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+        + '</polygon>'
+      );
+    }
   });
 
-  // X-axis ticks: roughly every 15 years, plus the endpoints.
+  // X-axis ticks. Step adapts to the visible span so short windows (1y/3y/5y)
+  // get yearly ticks instead of nothing between the two endpoints; longer
+  // windows fall back to the original 15-year cadence.
   const xTicks = [];
-  const tickStep = 15;
+  let tickStep;
+  if (yearSpan <= 1) tickStep = 1;
+  else if (yearSpan <= 5) tickStep = 1;
+  else if (yearSpan <= 12) tickStep = 2;
+  else if (yearSpan <= 25) tickStep = 5;
+  else if (yearSpan <= 60) tickStep = 10;
+  else tickStep = 15;
   let t0 = Math.ceil(yMin / tickStep) * tickStep;
   for (let yy = t0; yy <= yMax; yy += tickStep) xTicks.push(yy);
-  if (xTicks[0] !== yMin) xTicks.unshift(yMin);
+  if (!xTicks.length || xTicks[0] !== yMin) xTicks.unshift(yMin);
   if (xTicks[xTicks.length - 1] !== yMax) xTicks.push(yMax);
 
   const xAxisMarks = xTicks.map(yy => {
@@ -9845,7 +9926,7 @@ function renderMufonShapes(){
     + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
     +    'preserveAspectRatio="xMidYMid meet" '
     +    'style="font-family:inherit;display:block;max-height:340px" '
-    +    'role="img" aria-label="Stacked area chart of UAP sightings by shape, ' + yMin + ' to ' + yMax + '">'
+    +    'role="img" aria-label="Stacked area chart of UAP sightings by shape, ' + yMin + ' to ' + yMax + ' (range ' + activeRange + ')">'
     +   yAxisMarks
     +   polygons.join('')
     +   xAxisMarks
@@ -9883,16 +9964,36 @@ function renderMufonShapes(){
     +   'Top 15 shapes shown; rarer ones collapse into "other". '
     +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ' — '
     +   'the planetsig mirror has not refreshed since 2014, so post-2014 activity is '
-    +   '<strong>not</strong> reflected. Treat as a historical pattern, not current state.'
+    +   '<strong>not</strong> reflected. Treat as a historical pattern, not current state. '
+    +   'Range toggle re-slices the stacked area only; the legend totals stay all-time.'
     + '</div>';
 
   body.innerHTML = ''
+    + rangeToggleHtml
     + '<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(220px, 1fr);gap:14px;align-items:start">'
     +   '<div style="min-width:0">' + chartSvg + '</div>'
     +   legendBlock
     + '</div>'
     + footnote;
 }
+
+// UAP shapes range-toggle wiring. Delegated on the card so it survives every
+// re-render (renderMufonShapes rebuilds body.innerHTML wholesale). Mirrors
+// the trend-card handler above. Re-renders the shapes card only — the
+// trend / map cards don't touch state.mufonShapesRange.
+(function(){
+  const card = document.getElementById('mufonShapesCard');
+  if (!card) return;
+  card.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-mufonshapesrange]');
+    if (!b) return;
+    const v = b.getAttribute('data-mufonshapesrange');
+    if (v && v !== state.mufonShapesRange) {
+      state.mufonShapesRange = v;
+      renderMufonShapes();
+    }
+  });
+})();
 
 // ─── GLOBAL SUPPLIES TAB ──────────────────────────────────────────────────
 // Renders the four cards on the Supplies tab: snapshot strip + 3 SVG charts
