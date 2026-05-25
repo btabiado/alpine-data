@@ -440,6 +440,21 @@ def main() -> int:
                   f"prior data-metals.json preserved.", file=sys.stderr)
     except Exception as e:
         print(f"[fetch-metals] failed: {e}", file=sys.stderr)
+    # UAP / NUFORC sightings sidecar — refreshes v2/data-mufon.json with
+    # the state x year sightings aggregate (latest updates + document
+    # library are static, baked into HTML_TEMPLATE). Same isolation as
+    # advisories: a probe miss (the canonical Renner mirror is DVC-backed
+    # and usually 404s, so we lean on the planetsig mirror) must not abort
+    # the V2 build. The fetcher itself preserves the prior on-disk JSON
+    # when every CSV candidate fails.
+    try:
+        import fetch_mufon
+        rc = fetch_mufon.main(["--out", str(ROOT / "data-mufon.json")])
+        if rc != 0:
+            print(f"[fetch-mufon] non-zero exit ({rc}); "
+                  f"prior data-mufon.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-mufon] failed: {e}", file=sys.stderr)
 
     print("Building payload...")
     payload = build_payload()
@@ -490,6 +505,13 @@ def main() -> int:
     metals_path = ROOT / "data-metals.json"
     if metals_path.exists():
         manifest["metals"] = "data-metals.json"
+    # UAP/MUFON sidecar — written by fetch_mufon above. Same gating as
+    # the other lazy-load tabs: only register in the manifest when the
+    # file actually exists on disk so the client loader doesn't 404 on
+    # a missing seed (e.g. first build with no network).
+    mufon_path = ROOT / "data-mufon.json"
+    if mufon_path.exists():
+        manifest["mufon"] = "data-mufon.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -1373,6 +1395,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
   <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
   <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
+  <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -3184,6 +3207,77 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div><!-- /metalsContent -->
   </div>
+
+  <!-- ============================================================
+       UAP / MUFON tab. Three sections:
+         1. Latest Updates — curated, baked-in (PURSUE drops + AARO).
+         2. Document Library — curated external links to .gov archives.
+         3. US Sightings Map — NUFORC eyewitness data via the data-mufon.json
+            sidecar (lazy-loaded; the renderer is a no-op until it lands).
+       Map uses a state-tile grid (50 + DC) instead of true polygons — under
+       1KB inline vs. ~30KB+ for topojson. Geographically intuitive enough
+       for heat-map reading; explicitly not a precise outline.
+       ============================================================ -->
+  <div id="tab-mufon" class="hidden">
+    <div id="aiTake-mufon" class="aiTake-slot"></div>
+
+    <!-- Section A: Latest Updates -->
+    <div class="v2-card" id="mufonUpdatesCard" style="margin-bottom:14px">
+      <div class="v2-card__head">
+        <div><h2 class="v2-card__title">Latest updates</h2><div class="v2-card__subtitle">Curated, government-sourced UAP releases</div></div>
+        <div><span class="v2-chip v2-chip--info">● curated</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonUpdatesBody" style="padding:14px"></div>
+      <div style="padding:0 14px 12px;font-size:11px;color:var(--muted)">
+        Last reviewed: 2026-05-25 — curated. PURSUE drops every few weeks, not daily.
+      </div>
+    </div>
+
+    <!-- Section B: Document Library -->
+    <div class="v2-card" id="mufonDocsCard" style="margin-bottom:14px">
+      <div class="v2-card__head">
+        <div><h2 class="v2-card__title">Document library</h2><div class="v2-card__subtitle">Primary .gov archives & official UAP portals</div></div>
+        <div><span class="v2-chip v2-chip--info">● external</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonDocsBody" style="padding:14px"></div>
+    </div>
+
+    <!-- Section C: US Sightings Map -->
+    <div id="mufonMapLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading NUFORC sightings…</div>
+    <div id="mufonMapContent">
+      <div class="v2-card" id="mufonMapCard">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">US sightings map</h2>
+            <div class="v2-card__subtitle" id="mufonMapSub">NUFORC eyewitness reports · click a state for top cities</div>
+          </div>
+          <div><span class="v2-chip v2-chip--info" id="mufonMapAsOf">● —</span></div>
+        </div>
+        <div class="v2-card__body" id="mufonMapBody" style="padding:14px">
+          <!-- time-range filter row -->
+          <div id="mufonMapFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+            <span style="font-size:11px;color:var(--muted);margin-right:4px">Window:</span>
+            <button class="btn btn--small" data-mufonrange="30d">30d</button>
+            <button class="btn btn--small" data-mufonrange="60d">60d</button>
+            <button class="btn btn--small" data-mufonrange="90d">90d</button>
+            <button class="btn btn--small" data-mufonrange="365d">12mo</button>
+            <button class="btn btn--small" data-mufonrange="all">All-time</button>
+            <span id="mufonRangeNote" style="font-size:11px;color:var(--muted);margin-left:8px"></span>
+          </div>
+          <!-- grid: map (left) + side panel (right) on wide screens, stacks on narrow -->
+          <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(220px, 1fr);gap:14px" id="mufonMapGrid">
+            <div id="mufonMapSvgWrap" style="min-width:0"></div>
+            <div id="mufonMapSidePanel" style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px;font-size:12px"></div>
+          </div>
+          <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
+            Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
+            Filed shapes and durations are eyewitness claims. Browse the live database at
+            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer">nuforc.org</a>.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -3272,7 +3366,7 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi', supplies: 'supplies', metals: 'metals' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel', cpi: 'cpi', supplies: 'supplies', metals: 'metals', mufon: 'mufon' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -3341,7 +3435,14 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   // start of the selected range (best for side-by-side comparison), 'absolute'
   // shows the raw native unit ($/gallon, index points), 'pctchange' shows
   // cumulative % change from the start of the range.
-  cpiViewMode: 'index100' };
+  cpiViewMode: 'index100',
+  // UAP / MUFON tab — sightings-map time filter and currently-selected
+  // state (for the side panel of top-10 cities). 'all' shows all-time
+  // counts; '30d'/'60d'/'90d'/'365d' use the recent_buckets pre-aggregate
+  // from the sidecar (which is anchored to the dataset's own most-recent
+  // entry, NOT today's date — see fetch_mufon.py for rationale).
+  mufonTimeRange: 'all',
+  mufonSelectedState: null };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -8528,6 +8629,325 @@ function metalsRenderSilverProd(payload){
   }
 })();
 
+// ─── UAP / MUFON TAB ──────────────────────────────────────────────────────
+// Three sections rendered independently. Updates + Docs are populated from
+// JS-local constants (curated content, no fetch); Map is populated from the
+// data-mufon.json sidecar (lazy-loaded, may be undefined on first paint).
+//
+// Map is a state-tile grid (one rectangle per state, geographically arranged)
+// rather than a true cartographic outline — gives heat-map readability for
+// well under 1KB of embedded data vs. ~30KB+ for topojson, and aligns with
+// the "no chart library" rule. Tooltip on hover, click for top-10 cities
+// in the side panel.
+
+// Curated content — edit these arrays to update the tab. Keeping it inline
+// (not a fetcher) because PURSUE drops and AARO updates land sporadically
+// and the operator wants to vet every line before it appears.
+const MUFON_UPDATES = [
+  {
+    date: '2026-05-22',
+    title: 'PURSUE Release 02',
+    body: 'Department of War published the second tranche of UAP files at war.gov/ufo. Source counts vary; treat the headline number as "additional files released" rather than a precise figure.',
+    href: 'https://www.war.gov/ufo/',
+  },
+  {
+    date: '2026-05-08',
+    title: 'PURSUE Release 01',
+    body: 'First batch — 162 declassified files dating back to 1944–45 — released at war.gov/ufo. Coordinated across Pentagon, ODNI, FBI, NASA, DOE.',
+    href: 'https://www.war.gov/ufo/',
+  },
+  {
+    date: '2026-02-25',
+    title: 'AARO caseload exceeds 2,000',
+    body: 'All-domain Anomaly Resolution Office reported its case count crossed 2,000, up from ~1,600 in late 2024.',
+    href: 'https://www.aaro.mil/',
+  },
+];
+
+const MUFON_DOCS = [
+  { title: 'PURSUE portal', url: 'https://www.war.gov/ufo/',
+    desc: 'Department of War — current UAP file releases.' },
+  { title: 'AARO',          url: 'https://www.aaro.mil/',
+    desc: 'All-domain Anomaly Resolution Office — DoD UAP intake.' },
+  { title: 'NARA — Project BLUE BOOK', url: 'https://www.archives.gov/research/military/air-force/ufos',
+    desc: 'National Archives — Air Force UFO investigation records.' },
+  { title: 'CIA Reading Room — UFOs', url: 'https://www.cia.gov/readingroom/collection/ufos-fact-or-fiction',
+    desc: 'CIA — Declassified UFO Cold War material.' },
+  { title: 'FBI Vault — UFO', url: 'https://vault.fbi.gov/UFO',
+    desc: 'FBI — Public reading room UFO files.' },
+  { title: 'ODNI 2024 Consolidated UAP Report', url: 'https://www.dni.gov/index.php/newsroom/reports-publications/reports-publications-2024/4020-uap-2024',
+    desc: 'Director of National Intelligence — Congressional UAP report.' },
+];
+
+// State-tile grid (50 + DC) — [code, col, row], 12 cols x 8 rows. Hand-tuned
+// for geographic intuitiveness; not a precise outline (deliberately).
+const MUFON_STATE_GRID = [
+  ["ME",11,0],["VT",10,1],["NH",11,1],
+  ["WA",1,2],["MT",3,2],["ND",4,2],["MN",5,2],["WI",6,2],["MI",7,2],["NY",9,2],["MA",10,2],["RI",11,2],
+  ["OR",1,3],["ID",2,3],["WY",3,3],["SD",4,3],["IA",5,3],["IL",6,3],["IN",7,3],["OH",8,3],["PA",9,3],["NJ",10,3],["CT",11,3],
+  ["NV",2,4],["UT",3,4],["CO",4,4],["NE",5,4],["MO",6,4],["KY",7,4],["WV",8,4],["VA",9,4],["MD",10,4],["DE",11,4],
+  ["CA",1,5],["AZ",3,5],["NM",4,5],["KS",5,5],["AR",6,5],["TN",7,5],["NC",8,5],["SC",9,5],["DC",10,5],
+  ["OK",5,6],["LA",6,6],["MS",7,6],["AL",8,6],["GA",9,6],
+  ["AK",0,7],["TX",5,7],["FL",10,7],["HI",11,7],
+];
+
+const MUFON_STATE_NAMES = {
+  AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",
+  CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",
+  HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",
+  LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",
+  MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",
+  NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",
+  OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",
+  SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",
+  WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",
+};
+
+function renderMufon(){
+  renderMufonUpdates();
+  renderMufonDocs();
+  // Map is gated on the sidecar — if not yet loaded, the loading
+  // placeholder elsewhere handles the empty state.
+  renderMufonMap();
+}
+
+function renderMufonUpdates(){
+  const el = document.getElementById('mufonUpdatesBody');
+  if (!el) return;
+  const items = MUFON_UPDATES.map(u => {
+    const linkOpen  = u.href ? '<a href="'+u.href+'" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">' : '';
+    const linkClose = u.href ? ' <span style="font-size:10px;color:var(--v2-info);text-decoration:underline">source ↗</span></a>' : '';
+    return ''
+      + '<div style="display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--bd,#27313d)">'
+      +   '<div style="flex:0 0 90px"><span class="v2-chip v2-chip--info" style="font-variant-numeric:tabular-nums">'+u.date+'</span></div>'
+      +   '<div style="flex:1;min-width:0">'
+      +     linkOpen
+      +     '<div style="font-weight:600;margin-bottom:3px">'+u.title+linkClose+'</div>'
+      +     (u.href ? '' : '</div>')
+      +     '<div style="color:var(--muted);font-size:12px;line-height:1.45">'+u.body+'</div>'
+      +   '</div>'
+      + '</div>';
+  }).join('');
+  // Strip the leading border-top by zeroing the first item's border.
+  el.innerHTML = items.replace('border-top:1px solid var(--bd,#27313d)', 'border-top:0');
+}
+
+function renderMufonDocs(){
+  const el = document.getElementById('mufonDocsBody');
+  if (!el) return;
+  const cards = MUFON_DOCS.map(d => ''
+    + '<a href="'+d.url+'" target="_blank" rel="noopener noreferrer" '
+    +    'style="display:block;padding:12px;background:var(--bg2,#0f1419);'
+    +    'border:1px solid var(--bd,#27313d);border-radius:8px;text-decoration:none;color:inherit;'
+    +    'transition:border-color .15s ease, transform .15s ease" '
+    +    'onmouseover="this.style.borderColor=\'var(--v2-info)\';this.style.transform=\'translateY(-1px)\'" '
+    +    'onmouseout="this.style.borderColor=\'var(--bd,#27313d)\';this.style.transform=\'\'">'
+    +   '<div style="font-weight:600;font-size:13px;margin-bottom:4px">'+d.title+' <span style="color:var(--v2-info);font-size:11px">↗</span></div>'
+    +   '<div style="font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:6px">'+d.desc+'</div>'
+    +   '<div style="font-size:10px;color:var(--muted);font-family:monospace;word-break:break-all;opacity:.7">'+d.url.replace(/^https?:\/\//,'')+'</div>'
+    + '</a>').join('');
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:10px">' + cards + '</div>';
+}
+
+// Compute per-state count for the active time range. For 'all' we sum
+// across all years in by_state_year; for 30d/60d/90d/365d we read from the
+// pre-aggregated recent_buckets (anchored to the dataset's most recent
+// entry, NOT today — see fetch_mufon.py).
+function mufonCountsForRange(m, range){
+  const out = {};
+  if (!m) return out;
+  if (range === 'all') {
+    const bsy = m.by_state_year || {};
+    for (const state in bsy) {
+      let total = 0;
+      for (const y in bsy[state]) total += bsy[state][y];
+      out[state] = total;
+    }
+    return out;
+  }
+  const rb = m.recent_buckets || {};
+  for (const state in rb) {
+    out[state] = (rb[state] || {})[range] || 0;
+  }
+  return out;
+}
+
+function renderMufonMap(){
+  const m = DATA.mufon;
+  if (!m) return; // sidecar pending; selectTab() shows the loading placeholder
+
+  const sub  = document.getElementById('mufonMapSub');
+  const asOf = document.getElementById('mufonMapAsOf');
+  const wrap = document.getElementById('mufonMapSvgWrap');
+  const side = document.getElementById('mufonMapSidePanel');
+  const note = document.getElementById('mufonRangeNote');
+  if (!wrap) return;
+
+  // Empty-state: the fetcher wrote an _error placeholder.
+  if (!m.total_records) {
+    if (asOf) asOf.textContent = '● unavailable';
+    wrap.innerHTML = V2.empty({icon:'🛸', title:'No sightings data',
+      sub: m._error || 'Upstream CSV unavailable; retry on next dashboard refresh.',
+      warm:false});
+    side.innerHTML = '';
+    if (note) note.textContent = '';
+    return;
+  }
+
+  if (asOf) {
+    const d = (m.date_range && m.date_range[1]) || '—';
+    asOf.textContent = '● to ' + d + (m._stale ? ' (stale)' : '');
+  }
+
+  const range = state.mufonTimeRange || 'all';
+  const counts = mufonCountsForRange(m, range);
+
+  // Range-specific honesty note about the anchor.
+  if (note) {
+    if (range === 'all') {
+      const dr = m.date_range || [null,null];
+      note.textContent = (dr[0] && dr[1]) ? ('All records ' + dr[0] + ' to ' + dr[1] + '.') : '';
+    } else {
+      const anchor = (m.date_range && m.date_range[1]) || '—';
+      note.textContent = 'Window anchored to the dataset’s most-recent entry (' + anchor + '), not today.';
+    }
+  }
+
+  // Pre-compute color ramp. Sort counts ascending; bucket into 5 quantiles.
+  const values = Object.values(counts).filter(v => v > 0).sort((a,b) => a-b);
+  const maxC = values.length ? values[values.length - 1] : 0;
+  function bucketColor(c){
+    if (!c) return 'var(--bg2, #0f1419)';
+    // 5 quantile bands, 0-indexed
+    if (!values.length) return 'var(--v2-good-bg, #1f3b2a)';
+    const idx = values.indexOf(c);
+    const q = idx / Math.max(1, values.length - 1); // 0..1
+    if (q < 0.20) return 'var(--v2-good, #4ade80)';
+    if (q < 0.45) return 'var(--v2-good, #4ade80)';
+    if (q < 0.70) return 'var(--v2-warn, #fbbf24)';
+    if (q < 0.90) return 'var(--v2-orange, #fb923c)';
+    return 'var(--v2-bad, #f87171)';
+  }
+
+  // SVG dims: 12 cols x 8 rows tiles. Use viewBox so it scales to container.
+  const CELL = 50, GAP = 4;
+  const COLS = 12, ROWS = 8;
+  const W = COLS * (CELL + GAP) - GAP;
+  const H = ROWS * (CELL + GAP) - GAP;
+
+  // Build tiles
+  const tiles = MUFON_STATE_GRID.map(([code, cx, cy]) => {
+    const x = cx * (CELL + GAP);
+    const y = cy * (CELL + GAP);
+    const c = counts[code] || 0;
+    const fill = bucketColor(c);
+    const isSel = state.mufonSelectedState === code;
+    const stroke = isSel ? 'var(--v2-info, #38bdf8)' : 'rgba(255,255,255,0.08)';
+    const strokeW = isSel ? 2.5 : 1;
+    return ''
+      + '<g class="mufonTile" data-state="'+code+'" style="cursor:pointer">'
+      +   '<rect x="'+x+'" y="'+y+'" width="'+CELL+'" height="'+CELL+'" rx="6" '
+      +     'fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
+      +     '<title>'+ (MUFON_STATE_NAMES[code]||code) +': '+c.toLocaleString()+' sightings</title>'
+      +   '</rect>'
+      +   '<text x="'+(x + CELL/2)+'" y="'+(y + CELL/2 - 4)+'" '
+      +     'text-anchor="middle" font-size="13" font-weight="700" '
+      +     'fill="rgba(0,0,0,0.7)" pointer-events="none">'+code+'</text>'
+      +   '<text x="'+(x + CELL/2)+'" y="'+(y + CELL/2 + 12)+'" '
+      +     'text-anchor="middle" font-size="10" '
+      +     'fill="rgba(0,0,0,0.55)" pointer-events="none">'+c.toLocaleString()+'</text>'
+      + '</g>';
+  }).join('');
+
+  // Legend
+  const legendBuckets = [
+    ['0', 'var(--bg2, #0f1419)'],
+    ['Low', 'var(--v2-good, #4ade80)'],
+    ['Med', 'var(--v2-warn, #fbbf24)'],
+    ['High', 'var(--v2-orange, #fb923c)'],
+    ['Max', 'var(--v2-bad, #f87171)'],
+  ];
+  const legend = '<div style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:10px">'
+    + '<span>fewer</span>'
+    + legendBuckets.map(b => '<span style="display:inline-block;width:18px;height:14px;border-radius:3px;background:'+b[1]+'" title="'+b[0]+'"></span>').join('')
+    + '<span>more</span>'
+    + (maxC ? '<span style="margin-left:12px">max: '+maxC.toLocaleString()+'</span>' : '')
+    + '</div>';
+
+  wrap.innerHTML = ''
+    + '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" '
+    +    'style="font-family:inherit;display:block;max-height:560px" '
+    +    'role="img" aria-label="US state sightings heatmap">'
+    +   tiles
+    + '</svg>'
+    + legend;
+
+  // Bind clicks (delegated through SVG since tiles re-render on each call).
+  wrap.querySelectorAll('.mufonTile').forEach(g => {
+    g.addEventListener('click', () => {
+      const s = g.getAttribute('data-state');
+      state.mufonSelectedState = (state.mufonSelectedState === s) ? null : s;
+      renderMufonMap(); // re-render to update stroke + side panel
+    });
+  });
+
+  // Side panel: top-10 cities for the selected state (or top-10 states overall).
+  if (state.mufonSelectedState) {
+    const s = state.mufonSelectedState;
+    const cities = ((m.top_cities_by_state || {})[s]) || [];
+    const c = counts[s] || 0;
+    side.innerHTML = ''
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">'
+      +   '<div style="font-weight:700;font-size:14px">'+(MUFON_STATE_NAMES[s]||s)+'</div>'
+      +   '<button class="btn btn--small" id="mufonSideClose" style="padding:2px 8px;font-size:11px">×</button>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+c.toLocaleString()+' sightings · '+(range==='all'?'all-time':range)+'</div>'
+      + (cities.length
+          ? '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Top cities (all-time)</div>'
+            + '<ol style="margin:0;padding-left:18px;line-height:1.7">'
+            +   cities.map(c => '<li>'+c.city+' <span style="color:var(--muted)">— '+c.count.toLocaleString()+'</span></li>').join('')
+            + '</ol>'
+          : '<div style="font-size:11px;color:var(--muted);font-style:italic">No per-city detail available.</div>');
+    const closeBtn = document.getElementById('mufonSideClose');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+      state.mufonSelectedState = null; renderMufonMap();
+    });
+  } else {
+    // No selection — show top-10 states by current range.
+    const ranked = Object.entries(counts).filter(([,c]) => c > 0).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    side.innerHTML = ''
+      + '<div style="font-weight:700;font-size:14px;margin-bottom:8px">Top 10 states</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+(range==='all'?'All-time totals':range+' window')+' · click a tile for cities</div>'
+      + (ranked.length
+          ? '<ol style="margin:0;padding-left:18px;line-height:1.7">'
+            + ranked.map(([s,c]) => '<li><strong>'+(MUFON_STATE_NAMES[s]||s)+'</strong> <span style="color:var(--muted)">— '+c.toLocaleString()+'</span></li>').join('')
+            + '</ol>'
+          : '<div style="font-size:11px;color:var(--muted);font-style:italic">No sightings in this window.</div>');
+  }
+
+  // Range filter buttons — bind once per render so they always reflect state.
+  const filterRow = document.getElementById('mufonMapFilters');
+  if (filterRow) {
+    filterRow.querySelectorAll('button[data-mufonrange]').forEach(b => {
+      const v = b.getAttribute('data-mufonrange');
+      b.classList.toggle('active', v === (state.mufonTimeRange || 'all'));
+      // Replace handler on each render (button HTML is static, so replaceWith
+      // is overkill — just attach idempotently with a marker).
+      if (!b._mufonBound) {
+        b._mufonBound = true;
+        b.addEventListener('click', () => {
+          if (v && v !== state.mufonTimeRange) {
+            state.mufonTimeRange = v;
+            // Don't clobber selection on range change — user may want to
+            // see "how does CA's 30d count compare to all-time."
+            renderMufonMap();
+          }
+        });
+      }
+    });
+  }
+}
+
 // ─── GLOBAL SUPPLIES TAB ──────────────────────────────────────────────────
 // Renders the four cards on the Supplies tab: snapshot strip + 3 SVG charts
 // (port TEU dual line, inventory ratio, GSCPI). All visuals are hand-rolled
@@ -11830,6 +12250,31 @@ function renderAll(){
     }
     if (metalsContent) metalsContent.classList.toggle('hidden', metalsLoadingActive);
     if (!metalsLoadingActive) renderMetals();
+  }
+  if (state.tab === 'mufon'){
+    // Same lazy-load pattern as the other sidecar-backed tabs: while the
+    // mufon sidecar is in flight, show a placeholder over the map section.
+    // Updates + Docs sections render eagerly (they're static, no sidecar
+    // dependency) so users see content immediately even before the heat
+    // map paints.
+    renderMufonUpdates();
+    renderMufonDocs();
+    const mufonLoading = document.getElementById('mufonMapLoading');
+    const mufonContent = document.getElementById('mufonMapContent');
+    const mufonLoadingActive = !DATA.mufon && SIDECAR_STATE.mufon === 'loading';
+    if (mufonLoading) {
+      mufonLoading.classList.toggle('hidden', !mufonLoadingActive);
+      if (mufonLoadingActive) {
+        mufonLoading.innerHTML = V2.empty({
+          icon: '🛸',
+          title: 'Loading sightings map…',
+          sub: 'Fetching NUFORC eyewitness reports — aggregated by state.',
+          warm: true,
+        }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      }
+    }
+    if (mufonContent) mufonContent.classList.toggle('hidden', mufonLoadingActive);
+    if (!mufonLoadingActive) renderMufonMap();
   }
   renderCoverage();
 }
