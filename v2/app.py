@@ -383,6 +383,20 @@ def main() -> int:
         except Exception as e:
             print(f"[fetch-market] failed: {e}", file=sys.stderr)
 
+    # Travel Advisories sidecar — refreshes v2/data-travel.json from
+    # travel.state.gov before the HTML render so the tab has fresh data.
+    # Isolated in its own try/except: a scrape failure (or 404 from State
+    # Dept) must NEVER kill the V2 build. The fetcher itself preserves the
+    # prior good JSON on failure.
+    try:
+        import fetch_advisories
+        rc = fetch_advisories.main(["--out", str(ROOT / "data-travel.json")])
+        if rc != 0:
+            print(f"[fetch-advisories] non-zero exit ({rc}); "
+                  f"prior data-travel.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-advisories] failed: {e}", file=sys.stderr)
+
     print("Building payload...")
     payload = build_payload()
     btc_n = len(payload["btc"].get("daily", []))
@@ -403,6 +417,14 @@ def main() -> int:
         sidecar_path = ROOT / f"data-{name}.json"
         sidecar_path.write_text(json.dumps(blob))
         print(f"  Wrote {sidecar_path.name} ({sidecar_path.stat().st_size:,} bytes)")
+
+    # Register the Travel Advisories sidecar in the manifest so the client's
+    # SIDECARS map points at /data-travel.json. The file itself is written
+    # separately by fetch_advisories (above); we only add it to the manifest
+    # when it exists on disk so the loader doesn't 404 on a missing seed.
+    travel_path = ROOT / "data-travel.json"
+    if travel_path.exists():
+        manifest["travel"] = "data-travel.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -439,6 +461,7 @@ HTML_TEMPLATE = r"""<!doctype html>
   --v2-warn:#f59e0b; --v2-warn-bg:rgba(245,158,11,0.14); --v2-warn-bd:rgba(245,158,11,0.36);
   --v2-info:#06b6d4; --v2-info-bg:rgba(6,182,212,0.14);  --v2-info-bd:rgba(6,182,212,0.36);
   --v2-ai:#a78bfa;   --v2-ai-bg:rgba(167,139,250,0.14); --v2-ai-bd:rgba(167,139,250,0.36);
+  --v2-orange:#cc7a2b; --v2-orange-bg:rgba(204,122,43,0.14); --v2-orange-bd:rgba(204,122,43,0.36);
   /* Spacing scale — small set, used pervasively in V2 layouts so mobile
      and desktop both feel deliberate instead of guessed-each-time. */
   --v2-s1:4px; --v2-s2:8px; --v2-s3:12px; --v2-s4:16px; --v2-s5:24px;
@@ -1116,6 +1139,122 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .symbol-suggest-sym{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--text)}
 .symbol-suggest-name{color:var(--muted);font-size:11px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
 .symbol-suggest-empty{padding:8px 10px;color:var(--muted);font-size:11px;font-style:italic}
+/* --- TRAVEL ADVISORIES TAB ----------------------------------------------
+   Scoped styles for the Travel Advisories tab. Maps the State Dept's 4-level
+   advisory scheme onto the V2 semantic palette:
+     L1 (Exercise Normal Precautions) -> --v2-good   (green)
+     L2 (Exercise Increased Caution)  -> --v2-warn   (amber)
+     L3 (Reconsider Travel)           -> --v2-orange (orange — matches State Dept palette)
+     L4 (Do Not Travel)               -> --v2-bad    (red)
+   Plus an --v2-ai (purple) accent for the Terrorism cross-cut filter.
+   Everything else (cards, chips, empty state) reuses .v2-card / .v2-chip. */
+.travel-subtabs{display:flex;gap:4px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:14px;padding-bottom:0}
+.travel-subtab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 14px;cursor:pointer;color:var(--muted);font:600 12px/1 inherit;letter-spacing:.04em;display:inline-flex;align-items:center;gap:6px;margin-bottom:-1px}
+.travel-subtab:hover{color:var(--text)}
+.travel-subtab.active{color:var(--text);border-bottom-color:var(--v2-ai)}
+.travel-dot{width:8px;height:8px;border-radius:99px;display:inline-block}
+.travel-dot--l1{background:var(--v2-good)}
+.travel-dot--l2{background:var(--v2-warn)}
+.travel-dot--l3{background:var(--v2-orange)}
+.travel-dot--l4{background:var(--v2-bad)}
+.travel-dot--terror{background:var(--v2-ai)}
+.travel-stat{background:var(--panel);border:1px solid var(--border);border-top:3px solid var(--border);border-radius:var(--v2-radius);padding:14px 16px;cursor:pointer;text-align:left;font:inherit;color:var(--text);transition:transform .12s,border-color .12s;display:flex;flex-direction:column;gap:4px}
+.travel-stat:hover{transform:translateY(-2px);border-color:var(--v2-ai)}
+.travel-stat:focus-visible{outline:2px solid var(--v2-ai);outline-offset:2px}
+.travel-stat--l1{border-top-color:var(--v2-good)}
+.travel-stat--l2{border-top-color:var(--v2-warn)}
+.travel-stat--l3{border-top-color:var(--v2-orange)}
+.travel-stat--l4{border-top-color:var(--v2-bad)}
+.travel-stat--terror{border-top-color:var(--v2-ai)}
+.travel-stat__num{font-size:28px;font-weight:700;line-height:1}
+.travel-stat--l1 .travel-stat__num{color:var(--v2-good)}
+.travel-stat--l2 .travel-stat__num{color:var(--v2-warn)}
+.travel-stat--l3 .travel-stat__num{color:var(--v2-orange)}
+.travel-stat--l4 .travel-stat__num{color:var(--v2-bad)}
+.travel-stat--terror .travel-stat__num{color:var(--v2-ai)}
+.travel-stat__label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.travel-stat__sub{font-size:11px;color:var(--muted)}
+.travel-bullet{display:flex;gap:10px;align-items:flex-start;background:#0e1118;border:1px solid var(--border);border-radius:8px;padding:10px 12px;text-decoration:none;color:var(--text);transition:border-color .12s,transform .12s}
+.travel-bullet:hover{border-color:var(--v2-ai);transform:translateX(2px)}
+.travel-bullet__stripe{width:3px;align-self:stretch;border-radius:3px;flex-shrink:0}
+.travel-bullet__stripe--red{background:var(--v2-bad)}
+.travel-bullet__stripe--amber{background:var(--v2-warn)}
+.travel-bullet__stripe--green{background:var(--v2-good)}
+.travel-bullet__body{flex:1;min-width:0}
+.travel-bullet__top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.travel-bullet__date{font-size:11px;color:var(--muted)}
+.travel-bullet__title{font-size:13px;font-weight:600;margin-top:4px;line-height:1.3}
+.travel-bullet__excerpt{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+.travel-bullet__arrow{color:var(--muted);font-size:13px;flex-shrink:0}
+.travel-contact-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+.travel-contact-label{color:var(--text);text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:600}
+.travel-contact-sep{color:var(--border)}
+.travel-contact-link{color:var(--v2-ai);text-decoration:none;font-weight:600}
+.travel-contact-link:hover{text-decoration:underline}
+.travel-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.travel-bar-label{width:64px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.travel-bar-track{flex:1;height:18px;background:#0e1118;border-radius:5px;overflow:hidden}
+.travel-bar-fill{height:100%;border-radius:5px;transition:width .4s ease}
+.travel-bar-fill--l1{background:var(--v2-good)}
+.travel-bar-fill--l2{background:var(--v2-warn)}
+.travel-bar-fill--l3{background:var(--v2-orange)}
+.travel-bar-fill--l4{background:var(--v2-bad)}
+.travel-bar-num{width:32px;text-align:right;font-size:12px;color:var(--text)}
+.travel-recent{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.travel-recent li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--border)}
+.travel-recent li:first-child{border-top:none;padding-top:0}
+.travel-recent__dot{width:8px;height:8px;border-radius:99px;margin-top:6px;flex-shrink:0}
+.travel-recent__dot--l1{background:var(--v2-good)}
+.travel-recent__dot--l2{background:var(--v2-warn)}
+.travel-recent__dot--l3{background:var(--v2-orange)}
+.travel-recent__dot--l4{background:var(--v2-bad)}
+.travel-recent__name{color:var(--text);text-decoration:none;font-size:13px;font-weight:600}
+.travel-recent__name:hover{text-decoration:underline}
+.travel-recent__meta{font-size:11px;color:var(--muted);margin-top:2px}
+.travel-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.travel-search{flex:1 1 220px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
+.travel-search:focus{border-color:var(--v2-ai)}
+.travel-toggle{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit}
+.travel-toggle:hover{border-color:var(--v2-ai)}
+.travel-toggle.active{background:var(--v2-bad-bg);border-color:var(--v2-bad-bd);color:var(--v2-bad)}
+.travel-segment{display:flex;background:#0e1118;border:1px solid var(--border);border-radius:6px;padding:2px;gap:2px}
+.travel-seg-btn{background:none;border:none;border-radius:4px;padding:6px 10px;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit}
+.travel-seg-btn:hover{color:var(--text)}
+.travel-seg-btn.active{background:var(--v2-ai);color:#0b0d12;font-weight:600}
+.travel-select{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit}
+.travel-count{margin-left:auto;font-size:11px;color:var(--muted)}
+.travel-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.travel-card{display:flex;background:var(--panel);border:1px solid var(--border);border-radius:var(--v2-radius);overflow:hidden;text-decoration:none;color:var(--text);transition:transform .12s,border-color .12s}
+.travel-card:hover{transform:translateY(-2px);border-color:var(--v2-ai)}
+.travel-card__bar{width:4px;flex-shrink:0}
+.travel-card__bar--l1{background:var(--v2-good)}
+.travel-card__bar--l2{background:var(--v2-warn)}
+.travel-card__bar--l3{background:var(--v2-orange)}
+.travel-card__bar--l4{background:var(--v2-bad)}
+.travel-card__body{padding:12px 14px;flex:1;min-width:0}
+.travel-card__top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.travel-card__name{font-size:13.5px;font-weight:600;line-height:1.25;min-width:0;word-wrap:break-word}
+.travel-card__badge{font-size:10.5px;border:1px solid;border-radius:5px;padding:1px 6px;flex-shrink:0;font-weight:700;letter-spacing:.04em}
+.travel-card__badge--l1{color:var(--v2-good);border-color:var(--v2-good-bd)}
+.travel-card__badge--l2{color:var(--v2-warn);border-color:var(--v2-warn-bd)}
+.travel-card__badge--l3{color:var(--v2-orange);border-color:var(--v2-orange-bd)}
+.travel-card__badge--l4{color:var(--v2-bad);border-color:var(--v2-bad-bd)}
+.travel-card__lvl{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.travel-card__lvl--l1{color:var(--v2-good)}
+.travel-card__lvl--l2{color:var(--v2-warn)}
+.travel-card__lvl--l3{color:var(--v2-orange)}
+.travel-card__lvl--l4{color:var(--v2-bad)}
+.travel-card__chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:9px}
+.travel-card__date{margin-top:10px;font-size:11px;color:var(--muted)}
+.travel-card__norisk{font-size:11px;color:var(--muted);font-style:italic}
+@media (max-width:480px){
+  .travel-subtab{padding:7px 10px;font-size:11px}
+  .travel-stat__num{font-size:22px}
+  .travel-controls{gap:6px}
+  .travel-search{flex:1 1 100%;font-size:12px;padding:7px 10px}
+  .travel-count{flex:1 1 100%;margin-left:0;text-align:right}
+  .travel-grid{grid-template-columns:1fr;gap:8px}
+}
 </style>
 </head>
 <body>
@@ -1165,6 +1304,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
   <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
   <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
+  <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -2720,6 +2860,97 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div> <!-- /whaleEthPanel -->
     </div>
   </div>
+
+  <!-- ============ TRAVEL ADVISORIES TAB ============ -->
+  <!-- U.S. State Dept travel advisory levels (1-4) for ~190 destinations,
+       latest bulletins feed, and per-level + terrorism filtering. Data is
+       lazy-loaded from /data-travel.json via the SIDECARS mechanism. The
+       sub-view tab strip (overview / level1 / level2 / level34 / terror)
+       lives in state.travelSub; selectTab('travel') resets it to 'overview'. -->
+  <div id="tab-travel" class="hidden">
+    <div id="aiTake-travel" class="aiTake-slot"></div>
+    <div id="travelLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading travel advisories…</div>
+    <div id="travelContent">
+      <!-- Sub-view tab strip (Overview / L1 / L2 / L3&4 / Terrorism). These
+           are INTERNAL sub-tabs — not new top-level tabs. -->
+      <div class="travel-subtabs" id="travelSubtabs" role="tablist" aria-label="Travel advisory sub-views">
+        <button class="travel-subtab active" data-travelsub="overview" role="tab" aria-selected="true">Overview</button>
+        <button class="travel-subtab" data-travelsub="level1" role="tab" aria-selected="false"><span class="travel-dot travel-dot--l1"></span>Level 1</button>
+        <button class="travel-subtab" data-travelsub="level2" role="tab" aria-selected="false"><span class="travel-dot travel-dot--l2"></span>Level 2</button>
+        <button class="travel-subtab" data-travelsub="level34" role="tab" aria-selected="false"><span class="travel-dot travel-dot--l4"></span>Level 3 &amp; 4</button>
+        <button class="travel-subtab" data-travelsub="terror" role="tab" aria-selected="false"><span class="travel-dot travel-dot--terror"></span>Terrorism</button>
+      </div>
+
+      <!-- Overview view: bulletins, stat cards, distribution, recent updates -->
+      <div id="travelOverview" class="travel-view">
+        <!-- Stat cards row — clickable; each L1-L4 card navigates to its level
+             sub-view, Terrorism card navigates to the Terrorism sub-view. -->
+        <div class="row" id="travelStatCards" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px"></div>
+
+        <!-- Latest Bulletins feed + Consular Affairs contact bar -->
+        <div class="v2-card" id="travelBulletinsCard" style="margin-bottom:12px">
+          <div class="v2-card__head">
+            <div>
+              <h2 class="v2-card__title">Latest Bulletins</h2>
+              <div class="v2-card__subtitle">Worldwide / regional alerts + recent advisory reissues · newest first</div>
+            </div>
+            <div><span class="v2-chip v2-chip--good" id="travelBulletinsAsOf">● Updated —</span></div>
+          </div>
+          <div class="v2-card__body">
+            <div id="travelBulletinsList" style="display:grid;gap:8px"></div>
+            <div class="travel-contact-bar">
+              <span class="travel-contact-label">Consular Affairs 24/7</span>
+              <span>+1-888-407-4747 (U.S./Canada)</span>
+              <span class="travel-contact-sep">·</span>
+              <span>+1-202-501-4444 (abroad)</span>
+              <span class="travel-contact-sep">·</span>
+              <a href="https://step.state.gov" target="_blank" rel="noreferrer" class="travel-contact-link">Enroll in STEP &#8599;</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <!-- Advisory level distribution bars -->
+          <div class="v2-card">
+            <div class="v2-card__head"><div><h2 class="v2-card__title">Advisory distribution</h2><div class="v2-card__subtitle">Destination count per advisory level</div></div></div>
+            <div class="v2-card__body"><div id="travelDistribution"></div><div class="v2-card__footer" id="travelDistributionFoot"></div></div>
+          </div>
+          <!-- Recently-updated countries feed (8 most recent) -->
+          <div class="v2-card">
+            <div class="v2-card__head"><div><h2 class="v2-card__title">Latest updates</h2><div class="v2-card__subtitle">8 most-recently reissued advisories</div></div></div>
+            <div class="v2-card__body"><ul id="travelRecentList" class="travel-recent"></ul></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- List view: shared shell for Level 1 / Level 2 / Level 3&4 / Terrorism.
+           Controls bar (search, terrorism toggle, L3/L4 segmented when applicable,
+           sort) + a count line + the country card grid. -->
+      <div id="travelList" class="travel-view hidden">
+        <div class="travel-controls">
+          <input id="travelSearch" type="text" placeholder="Search destinations…" class="travel-search" aria-label="Search destinations">
+          <div class="travel-segment hidden" id="travelLevelSegment" role="tablist" aria-label="Level 3 / 4 filter">
+            <button class="travel-seg-btn active" data-travelsublevel="all">All 3 &amp; 4</button>
+            <button class="travel-seg-btn" data-travelsublevel="3">Level 3</button>
+            <button class="travel-seg-btn" data-travelsublevel="4">Level 4</button>
+          </div>
+          <button id="travelTerrorToggle" class="travel-toggle" type="button">&#9888; Terrorism-flagged only</button>
+          <select id="travelSort" class="travel-select" aria-label="Sort destinations">
+            <option value="level">Sort: Level (high&rarr;low)</option>
+            <option value="name">Sort: Name (A&rarr;Z)</option>
+            <option value="date">Sort: Recently updated</option>
+          </select>
+          <div class="travel-count" id="travelCount"></div>
+        </div>
+        <div id="travelGrid" class="travel-grid"></div>
+        <div id="travelEmpty" class="v2-empty hidden">
+          <div class="v2-empty__icon">&#128269;</div>
+          <div class="v2-empty__title">No destinations match your filters</div>
+          <div class="v2-empty__sub">Try clearing the search or terrorism-only toggle.</div>
+        </div>
+      </div>
+    </div><!-- /travelContent -->
+  </div>
 </div>
 
 <footer>
@@ -2808,7 +3039,7 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi' };
+const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi', travel: 'travel' };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -2854,7 +3085,21 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
     if (typeof localStorage === 'undefined') return 'Ethereum';
     const v = localStorage.getItem('defiChain');
     return ['Ethereum','Solana','Arbitrum','Base'].includes(v) ? v : 'Ethereum';
-  })() };
+  })(),
+  // Travel Advisories tab sub-view: 'overview' | 'level1' | 'level2' |
+  // 'level34' | 'terror'. Reset to 'overview' each time the user enters
+  // the tab so a deep-linked filter from a previous session doesn't
+  // surprise them. Not persisted.
+  travelSub: 'overview',
+  // Within the merged Level 3 & 4 sub-view: 'all' | '3' | '4'. Resets with
+  // travelSub. Drives the segmented filter inside the L3&4 list.
+  travelSubLevel: 'all',
+  // Per-sub-view ephemeral filters (search box, terrorism-only toggle, sort)
+  // — kept on state so re-rendering the list (e.g. after a sort change) is
+  // a single function call rather than DOM scraping for current values.
+  travelQuery: '',
+  travelTerrorOnly: false,
+  travelSort: 'level' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -7502,6 +7747,327 @@ function renderAiNewsSpotlight(){
   host.innerHTML = V2.card({ title: 'Top AI signals', severity: 'ai', body });
 }
 
+// ─── TRAVEL ADVISORIES TAB ────────────────────────────────────────────────
+// Renders all five sub-views (Overview / L1 / L2 / L3&4 / Terrorism) from
+// DATA.travel ({advisories, bulletins, generated_at}). No-op when the sidecar
+// hasn't loaded yet — renderAll's travelLoadingActive branch shows a
+// placeholder in that case. Reads state.travelSub / travelSubLevel /
+// travelQuery / travelTerrorOnly / travelSort.
+function renderTravel(){
+  const travel = DATA.travel;
+  if (!travel || !Array.isArray(travel.advisories)) return; // sidecar pending
+  const advisories = travel.advisories;
+  const bulletins = Array.isArray(travel.bulletins) ? travel.bulletins : [];
+
+  // Aggregate counts: per-level + terrorism cross-cut
+  const counts = {1:0, 2:0, 3:0, 4:0, terror:0};
+  for (const a of advisories) {
+    if (counts[a.level] != null) counts[a.level]++;
+    if (Array.isArray(a.risks) && a.risks.indexOf('T') !== -1) counts.terror++;
+  }
+
+  const sub = state.travelSub || 'overview';
+
+  // Toggle sub-view visibility
+  const overviewEl = document.getElementById('travelOverview');
+  const listEl = document.getElementById('travelList');
+  if (overviewEl) overviewEl.classList.toggle('hidden', sub !== 'overview');
+  if (listEl) listEl.classList.toggle('hidden', sub === 'overview');
+
+  // Sync the sub-tab strip's active state
+  document.querySelectorAll('.travel-subtab').forEach(b => {
+    const isActive = b.dataset.travelsub === sub;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+
+  if (sub === 'overview') {
+    renderTravelOverview(advisories, bulletins, counts, travel.generated_at);
+  } else {
+    renderTravelList(advisories, sub, counts);
+  }
+}
+
+const TRAVEL_LEVEL_LABEL = {1:'Exercise Normal Precautions', 2:'Exercise Increased Caution',
+  3:'Reconsider Travel', 4:'Do Not Travel'};
+const TRAVEL_LEVEL_SHORT = {1:'Normal Precautions', 2:'Increased Caution',
+  3:'Reconsider Travel', 4:'Do Not Travel'};
+const TRAVEL_RISK_LABEL = {T:'Terrorism', C:'Crime', U:'Civil Unrest', H:'Health',
+  K:'Kidnapping', N:'Natural Disaster', D:'Wrongful Detention', O:'Other', E:'Time-limited Event'};
+
+function travelFmtDate(iso){
+  if (!iso) return '';
+  const parts = String(iso).split('-');
+  if (parts.length < 3) return iso;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const m = parseInt(parts[1], 10) - 1;
+  const d = parseInt(parts[2], 10);
+  if (m < 0 || m > 11 || isNaN(d)) return iso;
+  return months[m] + ' ' + d + ', ' + parts[0];
+}
+
+function renderTravelOverview(advisories, bulletins, counts, generatedAt){
+  // Stat cards row — clicking L1/L2/L3/L4 navigates to that level sub-view;
+  // Terrorism card opens the Terrorism sub-view.
+  const statHost = document.getElementById('travelStatCards');
+  if (statHost) {
+    const cards = [1,2,3,4].map(l =>
+      '<button class="travel-stat travel-stat--l' + l + '" data-travelstat="' + l + '" type="button">' +
+        '<div class="travel-stat__num">' + counts[l] + '</div>' +
+        '<div class="travel-stat__label">Level ' + l + '</div>' +
+        '<div class="travel-stat__sub">' + escapeHtml(TRAVEL_LEVEL_SHORT[l]) + '</div>' +
+      '</button>'
+    ).join('') +
+    '<button class="travel-stat travel-stat--terror" data-travelstat="terror" type="button">' +
+      '<div class="travel-stat__num">' + counts.terror + '</div>' +
+      '<div class="travel-stat__label">Terrorism</div>' +
+      '<div class="travel-stat__sub">Flagged destinations &rarr;</div>' +
+    '</button>';
+    statHost.innerHTML = cards;
+  }
+
+  // Updated-at chip
+  const asOfEl = document.getElementById('travelBulletinsAsOf');
+  if (asOfEl) {
+    asOfEl.textContent = generatedAt
+      ? '● Updated ' + travelFmtDate(String(generatedAt).slice(0,10))
+      : '● Updated —';
+  }
+
+  // Bulletins list — sort newest first
+  const bullHost = document.getElementById('travelBulletinsList');
+  if (bullHost) {
+    const sorted = bulletins.slice().sort((a,b) => String(b.date).localeCompare(String(a.date)));
+    if (sorted.length === 0) {
+      bullHost.innerHTML = V2.empty({icon:'📭', title:'No bulletins available', sub:'The State Dept RSS feed returned nothing on the last fetch.'});
+    } else {
+      bullHost.innerHTML = sorted.map(b => {
+        const sev = (b.severity === 'red' || b.severity === 'amber' || b.severity === 'green') ? b.severity : 'amber';
+        const href = sanitizeUrl(b.href, '#');
+        return '<a class="travel-bullet" href="' + escapeHtml(href) + '" target="_blank" rel="noreferrer">' +
+                 '<div class="travel-bullet__stripe travel-bullet__stripe--' + sev + '"></div>' +
+                 '<div class="travel-bullet__body">' +
+                   '<div class="travel-bullet__top">' +
+                     '<span class="v2-chip v2-chip--' + (sev === 'red' ? 'bad' : sev === 'amber' ? 'warn' : 'good') + '">' + escapeHtml(b.tag || '') + '</span>' +
+                     '<span class="travel-bullet__date">' + escapeHtml(travelFmtDate(b.date)) + '</span>' +
+                   '</div>' +
+                   '<div class="travel-bullet__title">' + escapeHtml(b.title || '') + '</div>' +
+                   (b.body ? '<div class="travel-bullet__excerpt">' + escapeHtml(b.body) + '</div>' : '') +
+                 '</div>' +
+                 '<span class="travel-bullet__arrow">&#8599;</span>' +
+               '</a>';
+      }).join('');
+    }
+  }
+
+  // Distribution bars
+  const distHost = document.getElementById('travelDistribution');
+  if (distHost) {
+    const max = Math.max(counts[1], counts[2], counts[3], counts[4], 1);
+    distHost.innerHTML = [1,2,3,4].map(l =>
+      '<div class="travel-bar-row">' +
+        '<div class="travel-bar-label"><span class="travel-dot travel-dot--l' + l + '"></span>Lvl ' + l + '</div>' +
+        '<div class="travel-bar-track"><div class="travel-bar-fill travel-bar-fill--l' + l + '" style="width:' + ((counts[l]/max)*100).toFixed(1) + '%"></div></div>' +
+        '<div class="travel-bar-num">' + counts[l] + '</div>' +
+      '</div>'
+    ).join('');
+    const total = counts[1]+counts[2]+counts[3]+counts[4];
+    const distFoot = document.getElementById('travelDistributionFoot');
+    if (distFoot) {
+      const high = total > 0 ? Math.round(((counts[3]+counts[4])/total)*100) : 0;
+      distFoot.textContent = total + ' destinations rated · ' + high + '% at Level 3 or higher';
+    }
+  }
+
+  // Recent updates feed (8 most recent reissues)
+  const recentHost = document.getElementById('travelRecentList');
+  if (recentHost) {
+    const recent = advisories.slice().sort((a,b) => String(b.date).localeCompare(String(a.date))).slice(0,8);
+    recentHost.innerHTML = recent.map(d => {
+      const href = sanitizeUrl(d.url, '#');
+      return '<li>' +
+               '<span class="travel-recent__dot travel-recent__dot--l' + d.level + '"></span>' +
+               '<div style="min-width:0;flex:1">' +
+                 '<a class="travel-recent__name" href="' + escapeHtml(href) + '" target="_blank" rel="noreferrer">' + escapeHtml(d.name) + '</a>' +
+                 '<div class="travel-recent__meta">Level ' + d.level + ' · ' + escapeHtml(TRAVEL_LEVEL_SHORT[d.level] || '') + ' · updated ' + escapeHtml(travelFmtDate(d.date)) + '</div>' +
+               '</div>' +
+             '</li>';
+    }).join('');
+  }
+}
+
+function renderTravelList(advisories, sub, counts){
+  // Determine level filter and whether the segmented L3/L4 control is shown
+  let levelSet = null;
+  let merged = false;
+  let isTerror = false;
+  if (sub === 'level1') levelSet = [1];
+  else if (sub === 'level2') levelSet = [2];
+  else if (sub === 'level34') {
+    merged = true;
+    levelSet = state.travelSubLevel === '3' ? [3]
+             : state.travelSubLevel === '4' ? [4]
+             : [3,4];
+  } else if (sub === 'terror') {
+    isTerror = true;
+  }
+
+  // Show/hide controls
+  const segment = document.getElementById('travelLevelSegment');
+  if (segment) segment.classList.toggle('hidden', !merged);
+  const terrorToggle = document.getElementById('travelTerrorToggle');
+  if (terrorToggle) {
+    terrorToggle.classList.toggle('hidden', isTerror); // hidden on the dedicated Terrorism view
+    terrorToggle.classList.toggle('active', !!state.travelTerrorOnly);
+  }
+  // Sync segment active state
+  document.querySelectorAll('.travel-seg-btn').forEach(b => {
+    b.classList.toggle('active', (b.dataset.travelsublevel || 'all') === (state.travelSubLevel || 'all'));
+  });
+  // Sync sort + search inputs to state (in case of programmatic resets)
+  const sortEl = document.getElementById('travelSort');
+  if (sortEl && sortEl.value !== state.travelSort) sortEl.value = state.travelSort;
+  const searchEl = document.getElementById('travelSearch');
+  if (searchEl && searchEl.value !== state.travelQuery) searchEl.value = state.travelQuery;
+
+  // Apply filters
+  const q = (state.travelQuery || '').toLowerCase();
+  const rows = advisories.filter(d => {
+    if (levelSet && levelSet.indexOf(d.level) === -1) return false;
+    if ((state.travelTerrorOnly || isTerror) && !(Array.isArray(d.risks) && d.risks.indexOf('T') !== -1)) return false;
+    if (q && !String(d.name || '').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // Sort
+  rows.sort((a,b) => {
+    if (state.travelSort === 'name') return String(a.name).localeCompare(String(b.name));
+    if (state.travelSort === 'date') return String(b.date).localeCompare(String(a.date));
+    // default: level (high→low), then name
+    return (b.level - a.level) || String(a.name).localeCompare(String(b.name));
+  });
+
+  // Count line
+  const countEl = document.getElementById('travelCount');
+  if (countEl) {
+    let extra = '';
+    if (isTerror) extra = ' · terrorism-flagged';
+    else if (merged && state.travelSubLevel && state.travelSubLevel !== 'all') extra = ' · Level ' + state.travelSubLevel + ' only';
+    else if (merged) extra = ' · L3 + L4';
+    countEl.textContent = rows.length + ' shown' + extra;
+  }
+
+  // Grid + empty state
+  const gridHost = document.getElementById('travelGrid');
+  const emptyEl = document.getElementById('travelEmpty');
+  if (rows.length === 0) {
+    if (gridHost) gridHost.innerHTML = '';
+    if (emptyEl) emptyEl.classList.remove('hidden');
+    return;
+  }
+  if (emptyEl) emptyEl.classList.add('hidden');
+  if (!gridHost) return;
+  gridHost.innerHTML = rows.map(d => {
+    const lv = d.level;
+    const href = sanitizeUrl(d.url, '#');
+    const risks = Array.isArray(d.risks) ? d.risks : [];
+    const chips = risks.length === 0
+      ? '<span class="travel-card__norisk">No specific risk indicators</span>'
+      : risks.map(r => {
+          const isT = (r === 'T');
+          const cls = isT ? 'v2-chip v2-chip--bad' : 'v2-chip v2-chip--info';
+          return '<span class="' + cls + '" title="' + escapeHtml(TRAVEL_RISK_LABEL[r] || r) + '">' +
+                   escapeHtml(TRAVEL_RISK_LABEL[r] || r) +
+                 '</span>';
+        }).join('');
+    return '<a class="travel-card" href="' + escapeHtml(href) + '" target="_blank" rel="noreferrer">' +
+             '<div class="travel-card__bar travel-card__bar--l' + lv + '"></div>' +
+             '<div class="travel-card__body">' +
+               '<div class="travel-card__top">' +
+                 '<span class="travel-card__name">' + escapeHtml(d.name || '') + '</span>' +
+                 '<span class="travel-card__badge travel-card__badge--l' + lv + '">L' + lv + '</span>' +
+               '</div>' +
+               '<div class="travel-card__lvl travel-card__lvl--l' + lv + '">' + escapeHtml(TRAVEL_LEVEL_SHORT[lv] || '') + '</div>' +
+               '<div class="travel-card__chips">' + chips + '</div>' +
+               '<div class="travel-card__date">Issued ' + escapeHtml(travelFmtDate(d.date)) + ' &rarr;</div>' +
+             '</div>' +
+           '</a>';
+  }).join('');
+}
+
+// ─── TRAVEL ADVISORIES — control wiring (sub-tabs, stat cards, filters) ──
+// Delegated handlers so the markup only carries data-attributes, not inline
+// onclick. Anchored to #tab-travel so events from other tabs (e.g. share
+// modal close × buttons inside other cards) never reach these handlers.
+(function wireTravelControls(){
+  function bind(){
+    const root = document.getElementById('tab-travel');
+    if (!root) return;
+    // Sub-tab strip
+    root.addEventListener('click', e => {
+      const subBtn = e.target.closest('.travel-subtab');
+      if (subBtn) {
+        const next = subBtn.dataset.travelsub;
+        if (next && next !== state.travelSub) {
+          state.travelSub = next;
+          // Entering the dedicated Terrorism view auto-enables the filter
+          // (the toggle itself is hidden there). Leaving any sub-view also
+          // resets the L3/L4 segment so re-entry shows All by default.
+          if (next !== 'level34') state.travelSubLevel = 'all';
+          renderTravel();
+        }
+        return;
+      }
+      // Stat cards in the Overview view
+      const stat = e.target.closest('.travel-stat');
+      if (stat) {
+        const v = stat.dataset.travelstat;
+        if (v === '1') { state.travelSub = 'level1'; state.travelSubLevel = 'all'; }
+        else if (v === '2') { state.travelSub = 'level2'; state.travelSubLevel = 'all'; }
+        else if (v === '3') { state.travelSub = 'level34'; state.travelSubLevel = '3'; }
+        else if (v === '4') { state.travelSub = 'level34'; state.travelSubLevel = '4'; }
+        else if (v === 'terror') { state.travelSub = 'terror'; }
+        renderTravel();
+        return;
+      }
+      // L3/L4 segmented toggle
+      const seg = e.target.closest('.travel-seg-btn');
+      if (seg) {
+        state.travelSubLevel = seg.dataset.travelsublevel || 'all';
+        renderTravel();
+        return;
+      }
+      // Terrorism-only toggle (list views, not the dedicated Terrorism view)
+      if (e.target.closest('#travelTerrorToggle')) {
+        state.travelTerrorOnly = !state.travelTerrorOnly;
+        renderTravel();
+        return;
+      }
+    });
+    // Search box + sort dropdown
+    root.addEventListener('input', e => {
+      if (e.target.id === 'travelSearch') {
+        state.travelQuery = e.target.value || '';
+        renderTravel();
+      } else if (e.target.id === 'travelSort') {
+        state.travelSort = e.target.value || 'level';
+        renderTravel();
+      }
+    });
+    root.addEventListener('change', e => {
+      if (e.target.id === 'travelSort') {
+        state.travelSort = e.target.value || 'level';
+        renderTravel();
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind);
+  } else {
+    bind();
+  }
+})();
+
 function renderAiNewsTab(){
   const ai = ((DATA.market||{}).ai_news) || null;
   const empty = document.getElementById('aiNewsEmpty');
@@ -10103,6 +10669,28 @@ function renderAll(){
   if (state.tab === 'ainews'){
     renderAiNewsTab();
   }
+  if (state.tab === 'travel'){
+    // Show "Loading travel advisories…" placeholder while the sidecar is in
+    // flight (mirrors the defi/whale lazy-load pattern). renderTravel() is
+    // a no-op until DATA.travel lands; once loaded, replace the placeholder
+    // and render the active sub-view.
+    const travelLoading = document.getElementById('travelLoading');
+    const travelContent = document.getElementById('travelContent');
+    const travelLoadingActive = !DATA.travel && SIDECAR_STATE.travel === 'loading';
+    if (travelLoading) {
+      travelLoading.classList.toggle('hidden', !travelLoadingActive);
+      if (travelLoadingActive) {
+        travelLoading.innerHTML = V2.empty({
+          icon: '🌎',
+          title: 'Loading travel advisories…',
+          sub: 'Fetching State Dept advisory levels for ~190 destinations.',
+          warm: true,
+        }) + '<div style="padding:0 14px 14px">' + V2.skel('lines:4') + '</div>';
+      }
+    }
+    if (travelContent) travelContent.classList.toggle('hidden', travelLoadingActive);
+    if (!travelLoadingActive) renderTravel();
+  }
   renderCoverage();
 }
 
@@ -10134,6 +10722,16 @@ function selectTab(t){
     state.asset = state.futuresAsset;
     setActive('asset', state.asset);
   }
+  // Travel Advisories: reset to the Overview sub-view + clear the search/
+  // toggle filters each time the user enters the tab so a half-typed query
+  // from a previous visit doesn't hide all results on re-entry.
+  if (t === 'travel') {
+    state.travelSub = 'overview';
+    state.travelSubLevel = 'all';
+    state.travelQuery = '';
+    state.travelTerrorOnly = false;
+    state.travelSort = 'level';
+  }
   // Scroll the newly-active tab into view on the horizontal-scroll tab
   // strip (mobile only — desktop the strip never overflows). Without this
   // "Research" / "Whale Activity" sat off-screen on iPhone widths.
@@ -10159,6 +10757,7 @@ function selectTab(t){
   document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
   document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
+  document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
