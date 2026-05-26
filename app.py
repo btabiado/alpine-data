@@ -782,14 +782,15 @@ def main() -> int:
 
     # External sidecars produced by standalone fetchers (fetch_cpi.py,
     # fetch_supplies.py, fetch_metals.py — each dual-writes to v2/data-X.json
-    # AND data-X.json at repo root). When the file exists on disk we surface
-    # it in the manifest so the JS lazy-loader picks it up on tab-select;
-    # missing files are silently skipped so a fetcher outage shows the
-    # tab's empty state instead of triggering a fetch that 404s.
+    # AND data-X.json at repo root). Always declare them in the manifest —
+    # in CI, V1 builds BEFORE V2 (which is what triggers the dual-write
+    # fetchers), so the .exists() check we used to do would always miss and
+    # the JS lazy-loader would never try the fetch. By the time the page is
+    # served from _site/, V2 has run and the files exist. The JS-side fetch
+    # gracefully handles 404 → empty-state, so unconditional declaration is
+    # safe and lets V1 pick up the data on the first deploy.
     for ext_key in ("cpi", "supplies", "metals"):
-        ext_path = ROOT / f"data-{ext_key}.json"
-        if ext_path.exists():
-            manifest[ext_key] = f"data-{ext_key}.json"
+        manifest[ext_key] = f"data-{ext_key}.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
