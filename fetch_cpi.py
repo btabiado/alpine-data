@@ -126,7 +126,10 @@ SERIES_CATALOG: list[dict[str, str]] = [
         "kind": "index",
     },
     {
-        "id": "CUSR0000SAF12",
+        # Was CUSR0000SAF12 — 404 on FRED. Correct ID is the SEFV item code
+        # (BLS renamed at some point; "Food away from home" lives under SEFV
+        # rather than the SAF1{n} family used for in-home food).
+        "id": "CUSR0000SEFV",
         "label": "Food away from home (restaurants)",
         "category": "food",
         "unit": "Index",
