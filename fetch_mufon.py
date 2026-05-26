@@ -128,7 +128,7 @@ NUFORC_BASE = "https://nuforc.org"
 NUFORC_MONTH_PAGE = f"{NUFORC_BASE}/subndx/?id=e"  # + YYYYMM
 NUFORC_AJAX_URL = f"{NUFORC_BASE}/wp-admin/admin-ajax.php"
 NUFORC_REQUEST_DELAY_SEC = 2.0      # polite floor between requests
-NUFORC_WALL_CLOCK_CAP_SEC = 300     # 5 minutes total
+NUFORC_WALL_CLOCK_CAP_SEC = 900     # 15 min total (cold-start no-cache needs ~9min; raised from 300s after partial-pull in CI on 2026-05-25)
 NUFORC_404_STREAK_CAP = 3           # stop after this many consecutive misses
 NUFORC_CACHE_DIR = ROOT / "data" / ".stale"
 
