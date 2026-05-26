@@ -2837,14 +2837,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="v2-card__body">
           <div class="chart-wrap tall"><canvas id="whaleCohortChart"></canvas></div>
           <div class="row" id="whaleCohortKpis" style="margin-top:10px"></div>
-          <!-- Glassnode-powered KPIs — visible only if GLASSNODE_API_KEY is set
-               and the metric returned 200. Otherwise stays empty. -->
-          <div id="glassnodeStrip" class="hidden" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--border)">
-            <div class="sub" style="margin-bottom:8px;color:var(--muted)">
-              🔓 <strong>Glassnode</strong> — true cohort metrics (replaces the bitinfocharts proxy when active)
-            </div>
-            <div class="row" id="glassnodeKpis"></div>
-          </div>
         </div>
       </div>
       <!-- Whale activity proxy: BTC volume + avg tx size combined view -->
@@ -5553,7 +5545,6 @@ function renderWhale(){
   renderWhaleAlerts();
   renderWhaleCohortChart();
   renderWhaleProxyChart();
-  renderGlassnodeStrip();
   renderMultichainWhale();
 }
 
@@ -6030,51 +6021,6 @@ function renderMultichainWhale(){
   if (!cards){ card.classList.add('hidden'); return; }
   card.classList.remove('hidden');
   grid.innerHTML = cards;
-}
-
-// Glassnode KPIs: only render when the user has set GLASSNODE_API_KEY and
-// at least one metric came back 200. Otherwise the whole strip stays hidden.
-function renderGlassnodeStrip(){
-  const strip = document.getElementById('glassnodeStrip');
-  const host  = document.getElementById('glassnodeKpis');
-  if (!strip || !host) return;
-  const gn = ((DATA.whale||{}).glassnode || {});
-  const series = gn.series || {};
-  if (!gn.available) {
-    strip.classList.add('hidden');
-    return;
-  }
-  strip.classList.remove('hidden');
-  // Helper: latest value + 7d % change for a series
-  const latest = (s) => {
-    const arr = series[s] || [];
-    if (!arr.length) return null;
-    const last = arr[arr.length-1]?.value;
-    if (last == null) return null;
-    const back = arr.length > 7 ? arr[arr.length-1-7]?.value : null;
-    const ch = (back != null && back !== 0) ? ((last - back) / Math.abs(back) * 100) : null;
-    return {last, ch};
-  };
-  const items = [];
-  const w1k  = latest('addresses/min_1k_count');
-  const w10k = latest('addresses/min_10k_count');
-  const txv  = latest('transactions/transfers_volume_sum');
-  const txEx = latest('transactions/transfers_to_exchanges_sum');
-  const txFx = latest('transactions/transfers_from_exchanges_sum');
-  const prof = latest('supply/profit_relative');
-  if (w1k)  items.push({label:'Whale addresses (≥1K BTC)',  val:fmtNum(w1k.last, 0), sub:`7d ${w1k.ch == null ? '—' : (w1k.ch>=0?'+':'')+w1k.ch.toFixed(2)+'%'}`, cls: w1k.ch == null ? '' : (w1k.ch>=0?'green':'red')});
-  if (w10k) items.push({label:'Mega-whale addresses (≥10K)', val:fmtNum(w10k.last, 0), sub:`7d ${w10k.ch == null ? '—' : (w10k.ch>=0?'+':'')+w10k.ch.toFixed(2)+'%'}`, cls: w10k.ch == null ? '' : (w10k.ch>=0?'green':'red')});
-  if (txv)  items.push({label:'Transfer volume (BTC)',      val:fmtNum(txv.last, 0) + ' BTC', sub:`7d ${txv.ch == null ? '—' : (txv.ch>=0?'+':'')+txv.ch.toFixed(2)+'%'}`, cls: txv.ch == null ? '' : (txv.ch>=0?'green':'red')});
-  if (txEx) items.push({label:'Exchange inflow (BTC)',      val:fmtNum(txEx.last, 0) + ' BTC', sub:`7d ${txEx.ch == null ? '—' : (txEx.ch>=0?'+':'')+txEx.ch.toFixed(2)+'%'}`, cls: txEx.ch == null ? '' : (txEx.ch>=0?'red':'green')});
-  if (txFx) items.push({label:'Exchange outflow (BTC)',     val:fmtNum(txFx.last, 0) + ' BTC', sub:`7d ${txFx.ch == null ? '—' : (txFx.ch>=0?'+':'')+txFx.ch.toFixed(2)+'%'}`, cls: txFx.ch == null ? '' : (txFx.ch>=0?'green':'red')});
-  if (prof) items.push({label:'Supply in profit',           val:(prof.last*100).toFixed(1)+'%', sub:`7d ${prof.ch == null ? '—' : (prof.ch>=0?'+':'')+prof.ch.toFixed(2)+'pp'}`, cls: prof.ch == null ? '' : (prof.ch>=0?'green':'red')});
-  if (!items.length) {
-    host.innerHTML = '<div class="sub" style="color:var(--muted)">Key valid but no metrics returned data — check Glassnode tier.</div>';
-    return;
-  }
-  host.innerHTML = items.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div><div class="sub">${i.sub}</div></div>`
-  ).join('');
 }
 
 // BTC supply held: whales (≥1,000 BTC addresses) vs non-whales (<1,000 BTC).
