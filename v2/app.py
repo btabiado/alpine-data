@@ -3328,7 +3328,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
        for heat-map reading; explicitly not a precise outline.
        ============================================================ -->
   <div id="tab-mufon" class="hidden">
-    <div id="aiTake-mufon" class="aiTake-slot"></div>
+    <!-- aiTake-mufon slot intentionally removed: UAP doesn't have AI
+         insights and the "warming up" placeholder added noise rather
+         than value. -->
+
 
     <!-- Section A: Latest Updates -->
     <div class="v2-card" id="mufonUpdatesCard" style="margin-bottom:14px">
