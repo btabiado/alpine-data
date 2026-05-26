@@ -780,6 +780,17 @@ def main() -> int:
         sidecar_path.write_text(json.dumps(blob))
         print(f"  Wrote {sidecar_path.name} ({sidecar_path.stat().st_size:,} bytes)")
 
+    # External sidecars produced by standalone fetchers (fetch_cpi.py,
+    # fetch_supplies.py, fetch_metals.py — each dual-writes to v2/data-X.json
+    # AND data-X.json at repo root). When the file exists on disk we surface
+    # it in the manifest so the JS lazy-loader picks it up on tab-select;
+    # missing files are silently skipped so a fetcher outage shows the
+    # tab's empty state instead of triggering a fetch that 404s.
+    for ext_key in ("cpi", "supplies", "metals"):
+        ext_path = ROOT / f"data-{ext_key}.json"
+        if ext_path.exists():
+            manifest[ext_key] = f"data-{ext_key}.json"
+
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
 
@@ -1302,6 +1313,43 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .symbol-suggest-sym{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--text)}
 .symbol-suggest-name{color:var(--muted);font-size:11px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px}
 .symbol-suggest-empty{padding:8px 10px;color:var(--muted);font-size:11px;font-style:italic}
+/* CPI / Supplies / Metals tabs — additive, mirrors V2's compact grid layout
+   but uses V1 tokens (var(--panel), var(--border), var(--muted), .chart-card
+   etc.) for visual continuity with the rest of the V1 dashboard. */
+.cpi-cat{margin-bottom:14px}
+.cpi-cat__head{display:flex;align-items:baseline;justify-content:space-between;margin:8px 2px 6px;gap:8px}
+.cpi-cat__title{margin:0;font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.06em}
+.cpi-cat__count{font-size:11px;color:var(--muted)}
+.cpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.cpi-mini{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.cpi-mini__head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cpi-mini__label{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.cpi-mini__unit{font-size:10px;color:var(--muted);margin-top:1px}
+.cpi-mini__val{font-size:15px;font-weight:700;color:var(--text);line-height:1}
+.cpi-mini__chip{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid var(--border);color:var(--muted);white-space:nowrap}
+.cpi-mini__chip.bad{color:#ef4444;border-color:#ef4444}
+.cpi-mini__chip.good{color:#22c55e;border-color:#22c55e}
+.cpi-mini__err{font-size:11px;color:#f59e0b;padding:6px 0}
+/* Metals strength band */
+.metals-strength{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:820px){.metals-strength{grid-template-columns:1fr}}
+.metals-col__lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.metals-col__note{font-size:11px;color:var(--muted);line-height:1.4;margin-top:4px}
+.metals-row{display:flex;align-items:center;gap:6px;min-width:0;margin-bottom:6px}
+.metals-row__name{width:48px;font-size:11px;font-weight:600;color:var(--text)}
+.metals-row__cells{display:flex;flex:1;gap:4px;min-width:0}
+.metals-cell{text-align:center;flex:1;min-width:0}
+.metals-cell__lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.metals-pct{display:inline-block;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid var(--border);color:var(--muted);margin-top:2px}
+.metals-pct.good{color:#22c55e;border-color:#22c55e}
+.metals-pct.bad{color:#ef4444;border-color:#ef4444}
+.metals-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.metals-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
+.metals-card h3{margin:0 0 4px;font-size:12px;font-weight:700;color:var(--text)}
+.metals-card .sub{font-size:11px;color:var(--muted)}
+/* Supplies grid */
+.supplies-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.supplies-snapshot{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -1348,6 +1396,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
   <div class="tab" data-tab="lthcs" role="tab" tabindex="0" aria-selected="false">LTHCS</div>
   <div class="tab" data-tab="real_estate" role="tab" tabindex="0" aria-selected="false">Real Estate</div>
+  <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
+  <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
+  <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -2859,6 +2910,149 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div> <!-- /whaleEthPanel -->
     </div>
   </div>
+
+  <!-- ============ CPI TAB (ported from V2) ============ -->
+  <!-- 22 FRED Consumer Price Index series across 7 categories (Headlines /
+       Food / Energy / Housing / Cars / Healthcare / Other). Sidecar is
+       data-cpi.json — dual-written by fetch_cpi.py to v2/data-cpi.json
+       AND data-cpi.json. Loads lazily via SIDECAR_FOR_TAB.cpi the first
+       time the user opens this tab. When FRED_API_KEY is unset the
+       payload arrives with fred_available=false and we render an
+       empty-state explainer instead of an empty grid. -->
+  <div id="tab-cpi" class="hidden">
+    <div id="cpiLoading" class="hidden empty">Loading CPI data&hellip;</div>
+    <div id="cpiContent">
+      <div id="cpiEmpty" class="chart-card" style="margin-bottom:12px">
+        <div class="head">
+          <h2>Consumer Price Index <span class="tag">FRED</span></h2>
+          <span class="desc" id="cpiEmptySub">CPI data unavailable — FRED_API_KEY not set on the server.</span>
+        </div>
+        <div class="empty" style="padding:24px 12px">
+          Add <code>FRED_API_KEY=&lt;your_key&gt;</code> to <code>.env</code> and trigger a new deploy.
+          Get a free key at <a href="https://fred.stlouisfed.org/docs/api/api_key.html" target="_blank" rel="noreferrer" style="color:#a78bfa">fred.stlouisfed.org/docs/api/api_key.html &#8599;</a>.
+        </div>
+      </div>
+      <div id="cpiBody" class="hidden">
+        <div class="chart-card" style="margin-bottom:12px">
+          <div class="head">
+            <h2>Consumer Price Index <span class="tag" id="cpiChip">FRED</span></h2>
+            <span class="desc" id="cpiAsOf">Source: FRED</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 4px">
+            <span class="lbl" style="margin:0">View</span>
+            <button class="btn active" data-cpiview="index100" type="button">Index = 100</button>
+            <button class="btn" data-cpiview="absolute" type="button">Absolute</button>
+            <button class="btn" data-cpiview="pctchange" type="button">% change</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="lbl" style="margin:0">Range</span>
+            <button class="btn" data-cpirange="5y" type="button">5y</button>
+            <button class="btn" data-cpirange="10y" type="button">10y</button>
+            <button class="btn" data-cpirange="20y" type="button">20y</button>
+            <button class="btn" data-cpirange="30y" type="button">30y</button>
+            <button class="btn active" data-cpirange="all" type="button">All</button>
+          </div>
+        </div>
+        <div id="cpiCategories"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SUPPLIES TAB (ported from V2) ============ -->
+  <!-- Macro / logistics indicators: monthly TEU at LA + NY/NJ ports,
+       FRED inventory-to-sales ratio (ISRATIO), and NY Fed Global Supply
+       Chain Pressure Index. Sidecar is data-supplies.json — produced by
+       fetch_supplies.py. Inline-SVG charts only — no Chart.js dependency
+       on this tab (mirrors V2's approach so the tab stays lightweight). -->
+  <div id="tab-supplies" class="hidden">
+    <div id="suppliesLoading" class="hidden empty">Loading global supplies&hellip;</div>
+    <div id="suppliesContent">
+      <div class="supplies-snapshot" id="suppliesSnapshot"></div>
+      <div class="supplies-grid">
+        <div class="chart-card" id="suppliesCardPorts">
+          <div class="head">
+            <h2>U.S. port container throughput <span class="tag" id="suppliesPortsAsOf">&mdash;</span></h2>
+            <span class="desc">Monthly TEU &middot; Port of Los Angeles vs Port of NY/NJ</span>
+          </div>
+          <div id="suppliesPortsChart"></div>
+          <div class="sub" id="suppliesPortsFoot" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+        </div>
+        <div class="chart-card" id="suppliesCardInv">
+          <div class="head">
+            <h2>Inventory-to-sales ratio <span class="tag" id="suppliesInvAsOf">&mdash;</span></h2>
+            <span class="desc">Total business &middot; FRED series ISRATIO &middot; last 10y</span>
+          </div>
+          <div id="suppliesInvChart"></div>
+          <div class="sub" id="suppliesInvFoot" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+        </div>
+      </div>
+      <div class="chart-card" id="suppliesCardGscpi" style="margin-top:14px">
+        <div class="head">
+          <h2>NY Fed Global Supply Chain Pressure Index <span class="tag" id="suppliesGscpiAsOf">&mdash;</span></h2>
+          <span class="desc">Standard deviations from historical mean &middot; positive = pressure above average &middot; last 10y</span>
+        </div>
+        <div id="suppliesGscpiChart"></div>
+        <div class="sub" id="suppliesGscpiFoot" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ METALS TAB (ported from V2) ============ -->
+  <!-- Gold + silver spot prices (5y daily lines from FRED + Yahoo),
+       central-bank gold holdings (top 20 — IMF IRFCL), and world gold +
+       silver mine production by country (USGS MCS). Strength KPI band
+       at the top is derived from the same price series (gold/silver
+       ratio, period returns, 52-week position) — no extra data. Sidecar
+       is data-metals.json — produced by fetch_metals.py. -->
+  <div id="tab-metals" class="hidden">
+    <div id="metalsLoading" class="hidden empty">Loading gold &amp; silver data&hellip;</div>
+    <div id="metalsContent">
+      <div class="chart-card" id="metalsStrength" style="margin-bottom:14px">
+        <div class="head">
+          <h2>Gold &amp; silver &mdash; strength snapshot <span class="tag" id="metalsStrengthAsOf">&mdash;</span></h2>
+          <span class="desc" id="metalsStrengthSub">Derived from the daily-close series below</span>
+        </div>
+        <div id="metalsStrengthBody"></div>
+      </div>
+      <div class="metals-grid2" id="metalsGrid">
+        <div class="chart-card" id="metalsGoldPriceCard">
+          <div class="head">
+            <h2>Gold spot price <span class="tag" id="metalsGoldAsOf">&mdash;</span></h2>
+            <span class="desc" id="metalsGoldSub">USD per troy ounce &middot; 5y daily</span>
+          </div>
+          <div id="metalsGoldBody"></div>
+        </div>
+        <div class="chart-card" id="metalsSilverPriceCard">
+          <div class="head">
+            <h2>Silver spot price <span class="tag" id="metalsSilverAsOf">&mdash;</span></h2>
+            <span class="desc" id="metalsSilverSub">USD per troy ounce &middot; 5y daily</span>
+          </div>
+          <div id="metalsSilverBody"></div>
+        </div>
+        <div class="chart-card" id="metalsGoldProdCard">
+          <div class="head">
+            <h2>Gold mine production by country <span class="tag" id="metalsGoldProdAsOf">&mdash;</span></h2>
+            <span class="desc" id="metalsGoldProdSub">Metric tons &middot; USGS MCS</span>
+          </div>
+          <div id="metalsGoldProdBody"></div>
+        </div>
+        <div class="chart-card" id="metalsSilverProdCard">
+          <div class="head">
+            <h2>Silver mine production by country <span class="tag" id="metalsSilverProdAsOf">&mdash;</span></h2>
+            <span class="desc" id="metalsSilverProdSub">Metric tons &middot; USGS MCS</span>
+          </div>
+          <div id="metalsSilverProdBody"></div>
+        </div>
+        <div class="chart-card" id="metalsCBGoldCard">
+          <div class="head">
+            <h2>Central-bank gold holdings (top 20) <span class="tag" id="metalsCBGoldAsOf">&mdash;</span></h2>
+            <span class="desc" id="metalsCBGoldSub">Tonnes &middot; latest IMF IRFCL report</span>
+          </div>
+          <div id="metalsCBGoldBody"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <footer>
@@ -2947,7 +3141,13 @@ async function loadSidecar(name){
 }
 
 // Which sidecar (if any) each tab needs. Tabs absent here are eager-rendered.
-const SIDECAR_FOR_TAB = { whale: 'whale', defi: 'defi' };
+// cpi / supplies / metals payloads are produced by standalone fetchers
+// (fetch_cpi.py / fetch_supplies.py / fetch_metals.py) which dual-write to
+// v2/data-X.json AND data-X.json — the latter is what V1 loads here.
+const SIDECAR_FOR_TAB = {
+  whale: 'whale', defi: 'defi',
+  cpi: 'cpi', supplies: 'supplies', metals: 'metals',
+};
 
 // In share mode, transparently append ?share=<token> to all /api/* and
 // /data-*.json fetches so the read-only allowlist on the server lets the
@@ -2993,7 +3193,12 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
     if (typeof localStorage === 'undefined') return 'Ethereum';
     const v = localStorage.getItem('defiChain');
     return ['Ethereum','Solana','Arbitrum','Base'].includes(v) ? v : 'Ethereum';
-  })() };
+  })(),
+  // CPI tab toggles — time range (5y/10y/20y/30y/all) and view mode
+  // (index100 / absolute / pctchange). Default "all" range + "index100"
+  // mirrors the V2 defaults so cross-version users see the same picture.
+  cpiTimeRange: 'all',
+  cpiViewMode: 'index100' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -10158,6 +10363,15 @@ function renderAll(){
   if (state.tab === 'ainews'){
     renderAiNewsTab();
   }
+  if (state.tab === 'cpi'){
+    renderCpiTab();
+  }
+  if (state.tab === 'supplies'){
+    renderSuppliesTab();
+  }
+  if (state.tab === 'metals'){
+    renderMetalsTab();
+  }
   renderCoverage();
 }
 
@@ -10216,6 +10430,9 @@ function selectTab(t){
   document.getElementById('tab-lthcs').classList.toggle('hidden', t!=='lthcs');
   document.getElementById('tab-real_estate').classList.toggle('hidden', t!=='real_estate');
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
+  document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
+  document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
+  document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
@@ -12578,6 +12795,818 @@ function _setSymbolSuggestActive(box, idx){
   // Initial paint of any previously-stored recents (no-op if list is empty).
   try { renderSymbolRecentChips(); } catch (_) { /* defensive — never block boot */ }
 })();
+
+// ============================================================================
+// CPI / SUPPLIES / METALS TABS (ported from V2 — V1 visual style)
+// ============================================================================
+// Each tab is sidecar-loaded via the existing SIDECAR_FOR_TAB mechanism
+// (see SIDECAR_FOR_TAB above). Renderers are NO-OPs until the sidecar lands
+// (DATA.cpi / DATA.supplies / DATA.metals are undefined on first paint).
+// All charts are inline SVG — no Chart.js dependency for these tabs.
+
+// ---------- CPI: shared category list (must mirror fetch_cpi.py) ----------
+const CPI_CATEGORY_ORDER = ['headlines','food','energy','housing','cars','healthcare','other'];
+const CPI_CATEGORY_LABELS = {
+  headlines:'Headlines', food:'Food', energy:'Energy', housing:'Housing',
+  cars:'Cars', healthcare:'Healthcare', other:'Other',
+};
+
+function renderCpiTab(){
+  const cpi = DATA.cpi || null;
+  const emptyEl = document.getElementById('cpiEmpty');
+  const bodyEl  = document.getElementById('cpiBody');
+  const catsEl  = document.getElementById('cpiCategories');
+  const asOf    = document.getElementById('cpiAsOf');
+  const chip    = document.getElementById('cpiChip');
+  const sub     = document.getElementById('cpiEmptySub');
+  const loading = document.getElementById('cpiLoading');
+  if (!emptyEl || !bodyEl) return;
+  // Loading state — sidecar fetch in flight + no payload yet.
+  if (!cpi && state.tab === 'cpi' && SIDECAR_STATE.cpi === 'loading'){
+    if (loading) loading.classList.remove('hidden');
+    emptyEl.classList.add('hidden');
+    bodyEl.classList.add('hidden');
+    return;
+  }
+  if (loading) loading.classList.add('hidden');
+
+  const noPayload = !cpi;
+  const noFredKey = !!cpi && cpi.fred_available === false;
+  const noSeries  = !!cpi && (!Array.isArray(cpi.series) || cpi.series.length === 0);
+  if (noPayload || noFredKey || noSeries){
+    emptyEl.classList.remove('hidden');
+    bodyEl.classList.add('hidden');
+    if (sub){
+      const note = (cpi && typeof cpi.note === 'string' && cpi.note.trim()) ? cpi.note.trim() : '';
+      if (note) sub.textContent = note;
+      else if (noPayload) sub.textContent = 'CPI sidecar not yet loaded.';
+      else if (noFredKey) sub.textContent = 'FRED_API_KEY is not set on the server.';
+      else sub.textContent = 'No CPI series available in the latest payload.';
+    }
+    return;
+  }
+  emptyEl.classList.add('hidden');
+  bodyEl.classList.remove('hidden');
+
+  const series = cpi.series || [];
+  const okCount = series.filter(s => (s.observations||[]).length).length;
+  let when = '';
+  if (cpi.generated_at){ try { when = ' · updated ' + new Date(cpi.generated_at).toLocaleDateString(); } catch(_){} }
+  if (asOf) asOf.textContent = 'Source: FRED · ' + okCount + ' of ' + series.length + ' series loaded' + when;
+  if (chip) chip.textContent = 'FRED · ' + (state.cpiViewMode || 'index100');
+
+  // Sync toggle button states to current state.
+  document.querySelectorAll('#tab-cpi .btn[data-cpirange]').forEach(b => {
+    b.classList.toggle('active', b.dataset.cpirange === (state.cpiTimeRange || 'all'));
+  });
+  document.querySelectorAll('#tab-cpi .btn[data-cpiview]').forEach(b => {
+    b.classList.toggle('active', b.dataset.cpiview === (state.cpiViewMode || 'index100'));
+  });
+
+  if (!catsEl) return;
+  const known = new Set(CPI_CATEGORY_ORDER);
+  const groups = {};
+  CPI_CATEGORY_ORDER.forEach(k => { groups[k] = []; });
+  series.forEach(s => {
+    const cat = (s && known.has(s.category)) ? s.category : 'other';
+    groups[cat].push(s);
+  });
+  catsEl.innerHTML = CPI_CATEGORY_ORDER.map(cat => {
+    const items = groups[cat];
+    if (!items.length) return '';
+    const okC = items.filter(s => (s.observations||[]).length).length;
+    const cards = items.map(renderCpiCardV1).join('');
+    return ''
+      + '<section class="cpi-cat" data-cpi-cat="' + escapeHtml(cat) + '">'
+      +   '<div class="cpi-cat__head">'
+      +     '<h3 class="cpi-cat__title">' + escapeHtml(CPI_CATEGORY_LABELS[cat] || cat) + '</h3>'
+      +     '<span class="cpi-cat__count">' + okC + ' / ' + items.length + '</span>'
+      +   '</div>'
+      +   '<div class="cpi-grid">' + cards + '</div>'
+      + '</section>';
+  }).join('');
+}
+
+function renderCpiCardV1(s){
+  const label = escapeHtml(s.label || s.id || 'series');
+  const unit  = escapeHtml(s.unit || '');
+  const obs   = s.observations || [];
+  const idAttr = escapeHtml(s.id || '');
+  if (!obs.length){
+    const err = escapeHtml(s.error || 'no observations');
+    return ''
+      + '<div class="cpi-mini" data-cpi-series="' + idAttr + '">'
+      +   '<div class="cpi-mini__head"><div style="min-width:0">'
+      +     '<div class="cpi-mini__label">' + label + '</div>'
+      +     '<div class="cpi-mini__unit">' + unit + '</div>'
+      +   '</div><span class="cpi-mini__chip" style="color:#f59e0b;border-color:#f59e0b">n/a</span></div>'
+      +   '<div class="cpi-mini__err">' + err + '</div>'
+      + '</div>';
+  }
+  // Clip to range.
+  const range = state.cpiTimeRange || 'all';
+  const years = ({ '5y':5, '10y':10, '20y':20, '30y':30 })[range] || null;
+  let clipped = obs;
+  if (years){
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - years);
+    const cutoffStr = cutoff.toISOString().slice(0,10);
+    clipped = obs.filter(o => o.date >= cutoffStr);
+    if (clipped.length < 2) clipped = obs;
+  }
+  const mode = state.cpiViewMode || 'index100';
+  const base = clipped[0].value;
+  let pts;
+  if (mode === 'absolute')       pts = clipped.map(o => ({date:o.date, value:o.value}));
+  else if (mode === 'pctchange') pts = clipped.map(o => ({date:o.date, value: base ? ((o.value-base)/base)*100 : 0}));
+  else                            pts = clipped.map(o => ({date:o.date, value: base ? (o.value/base)*100 : 100}));
+
+  const startVal = clipped[0].value;
+  const endVal   = clipped[clipped.length-1].value;
+  const pctRange = startVal ? ((endVal - startVal) / startVal) * 100 : 0;
+  const isDollar = (s.kind === 'dollar');
+  const fmtValue = v => isDollar ? '$' + Number(v).toFixed(2)
+                                  : Number(v).toFixed(Math.abs(v) >= 100 ? 1 : 2);
+  // YoY chip from raw obs (so chip is meaningful even when range < 1y).
+  const lastRaw = obs[obs.length-1];
+  let yoyPct = null;
+  if (lastRaw && lastRaw.date){
+    const lastDate = new Date(lastRaw.date);
+    const targetDate = new Date(lastDate);
+    targetDate.setFullYear(targetDate.getFullYear() - 1);
+    const targetStr = targetDate.toISOString().slice(0,10);
+    let prior = null;
+    for (let i = obs.length-1; i >= 0; i--){
+      if (obs[i].date <= targetStr){ prior = obs[i]; break; }
+    }
+    if (prior && prior.value) yoyPct = ((lastRaw.value - prior.value) / prior.value) * 100;
+  }
+  const chipPct = (yoyPct !== null) ? yoyPct : pctRange;
+  const chipLbl = (yoyPct !== null) ? 'YoY' : ('since ' + pts[0].date.slice(0,4));
+  // CPI rising = bad for consumers. Red = bad, green = good.
+  const sevCls = chipPct >= 0 ? 'bad' : 'good';
+  const arrow  = chipPct >= 0 ? '▲' : '▼';
+  const chipText = arrow + ' ' + Math.abs(chipPct).toFixed(1) + '% ' + chipLbl;
+
+  return ''
+    + '<div class="cpi-mini" data-cpi-series="' + idAttr + '">'
+    +   '<div class="cpi-mini__head"><div style="min-width:0">'
+    +     '<div class="cpi-mini__label" title="' + escapeHtml(s.label || '') + '">' + label + '</div>'
+    +     '<div class="cpi-mini__unit">' + unit + '</div>'
+    +   '</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
+    +     '<div class="cpi-mini__val">' + fmtValue(endVal) + '</div>'
+    +     '<span class="cpi-mini__chip ' + sevCls + '">' + escapeHtml(chipText) + '</span>'
+    +   '</div></div>'
+    +   cpiSparkSvgV1(pts, {isDollar, mode})
+    + '</div>';
+}
+
+function cpiSparkSvgV1(pts, opts){
+  const W = 320, H = 80, PADL = 32, PADR = 4, PADT = 6, PADB = 16;
+  if (!pts || pts.length < 2){
+    return '<div class="empty" style="padding:8px 0;font-size:11px">Not enough points to chart.</div>';
+  }
+  const ys = pts.map(p => p.value);
+  const ymin = Math.min.apply(null, ys);
+  const ymax = Math.max.apply(null, ys);
+  const yspan = (ymax - ymin) || 1;
+  const xspan = (pts.length - 1) || 1;
+  const sx = i => PADL + (i / xspan) * (W - PADL - PADR);
+  const sy = v => PADT + (1 - (v - ymin) / yspan) * (H - PADT - PADB);
+  const path = pts.map((p,i) => (i===0 ? 'M' : 'L') + sx(i).toFixed(1) + ' ' + sy(p.value).toFixed(1)).join(' ');
+  const area = path + ' L' + sx(pts.length-1).toFixed(1) + ' ' + (H-PADB).toFixed(1)
+             + ' L' + sx(0).toFixed(1) + ' ' + (H-PADB).toFixed(1) + ' Z';
+  const fmtY = v => (opts && opts.isDollar && opts.mode === 'absolute') ? '$' + v.toFixed(2)
+                  : (opts && opts.mode === 'pctchange') ? v.toFixed(0) + '%'
+                  : v.toFixed(1);
+  const yticks = [ymin, ymax].map(v => ({v, y: sy(v)}));
+  const yAxis = yticks.map(t =>
+    '<line x1="' + PADL + '" y1="' + t.y.toFixed(1) + '" x2="' + (W-PADR) + '" y2="' + t.y.toFixed(1) +
+      '" stroke="#252b3a" stroke-width="1" stroke-dasharray="2 3"/>' +
+    '<text x="' + (PADL-4) + '" y="' + (t.y+3).toFixed(1) + '" font-size="9" fill="#8a93a6" text-anchor="end">' +
+      escapeHtml(fmtY(t.v)) + '</text>'
+  ).join('');
+  const xLabels =
+    '<text x="' + sx(0).toFixed(1) + '" y="' + (H-4) + '" font-size="9" fill="#8a93a6" text-anchor="start">' + escapeHtml(pts[0].date.slice(0,7)) + '</text>' +
+    '<text x="' + sx(pts.length-1).toFixed(1) + '" y="' + (H-4) + '" font-size="9" fill="#8a93a6" text-anchor="end">' + escapeHtml(pts[pts.length-1].date.slice(0,7)) + '</text>';
+  const stroke = '#f59e0b';
+  const fill = 'rgba(245,158,11,0.10)';
+  const lastTip = pts[pts.length-1].date + ': ' + fmtY(pts[pts.length-1].value);
+  return ''
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '" preserveAspectRatio="none" role="img" aria-label="CPI series chart">'
+    +   '<title>' + escapeHtml(lastTip) + '</title>'
+    +   yAxis
+    +   '<path d="' + area + '" fill="' + fill + '" stroke="none"/>'
+    +   '<path d="' + path + '" fill="none" stroke="' + stroke + '" stroke-width="1.5" stroke-linejoin="round"/>'
+    +   '<circle cx="' + sx(pts.length-1).toFixed(1) + '" cy="' + sy(pts[pts.length-1].value).toFixed(1) + '" r="2.5" fill="' + stroke + '"/>'
+    +   xLabels
+    + '</svg>';
+}
+
+// CPI tab control wiring — delegated on #tab-cpi.
+(function(){
+  const root = document.getElementById('tab-cpi');
+  if (!root) return;
+  root.addEventListener('click', (e) => {
+    const r = e.target.closest('.btn[data-cpirange]');
+    if (r){
+      const v = r.dataset.cpirange;
+      if (v && v !== state.cpiTimeRange){ state.cpiTimeRange = v; renderCpiTab(); }
+      return;
+    }
+    const m = e.target.closest('.btn[data-cpiview]');
+    if (m){
+      const v = m.dataset.cpiview;
+      if (v && v !== state.cpiViewMode){ state.cpiViewMode = v; renderCpiTab(); }
+    }
+  });
+})();
+
+// ---------- SUPPLIES tab ----------
+function renderSuppliesTab(){
+  const sup = DATA.supplies;
+  const loading = document.getElementById('suppliesLoading');
+  const content = document.getElementById('suppliesContent');
+  if (!sup && state.tab === 'supplies' && SIDECAR_STATE.supplies === 'loading'){
+    if (loading) loading.classList.remove('hidden');
+    if (content) content.classList.add('hidden');
+    return;
+  }
+  if (loading) loading.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
+  if (!sup) {
+    const snap = document.getElementById('suppliesSnapshot');
+    if (snap) snap.innerHTML = '<div class="empty" style="padding:24px 12px;grid-column:1/-1">Supplies sidecar not yet loaded.</div>';
+    return;
+  }
+  renderSuppliesSnapshotV1(sup);
+  renderSuppliesPortsV1(sup);
+  renderSuppliesInventoryV1(sup);
+  renderSuppliesGscpiV1(sup);
+}
+
+function _suppPctDelta(obs, key){
+  if (!Array.isArray(obs) || obs.length < 2) return null;
+  const a = obs[obs.length-2][key];
+  const b = obs[obs.length-1][key];
+  if (a == null || b == null || a === 0) return null;
+  return ((b - a) / a) * 100;
+}
+function _suppFmtPct(p){
+  if (p == null || !isFinite(p)) return '—';
+  return (p > 0 ? '+' : '') + p.toFixed(1) + '%';
+}
+function _suppFmtAbs(v){
+  if (v == null || !isFinite(v)) return '—';
+  if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(0) + 'k';
+  return String(v);
+}
+
+function renderSuppliesSnapshotV1(sup){
+  const host = document.getElementById('suppliesSnapshot');
+  if (!host) return;
+  const cards = [];
+  const la = ((sup.port_teu||{}).los_angeles) || null;
+  const nynj = ((sup.port_teu||{}).ny_nj) || null;
+  const inv = sup.inventory_ratio || null;
+  const gscpi = sup.gscpi || null;
+
+  function snapCard(title, sub, val, delta, deltaCls){
+    const d = (delta == null) ? '' : '<span class="cpi-mini__chip ' + deltaCls + '" style="margin-left:6px">' + escapeHtml(delta) + '</span>';
+    return ''
+      + '<div class="card" style="padding:12px">'
+      +   '<h3>' + escapeHtml(title) + '</h3>'
+      +   '<div class="v">' + escapeHtml(val) + d + '</div>'
+      +   '<div class="sub">' + escapeHtml(sub) + '</div>'
+      + '</div>';
+  }
+  if (la && Array.isArray(la.observations) && la.observations.length){
+    const last = la.observations[la.observations.length-1];
+    const delta = _suppPctDelta(la.observations, 'total');
+    const cls = (delta == null) ? '' : (delta > 0 ? 'good' : (delta < 0 ? 'bad' : ''));
+    cards.push(snapCard('Port of L.A.', 'Monthly TEU · ' + (la.as_of||''), _suppFmtAbs(last.total), _suppFmtPct(delta) + ' MoM', cls));
+  }
+  if (nynj && Array.isArray(nynj.observations) && nynj.observations.length){
+    const last = nynj.observations[nynj.observations.length-1];
+    const delta = _suppPctDelta(nynj.observations, 'total');
+    const cls = (delta == null) ? '' : (delta > 0 ? 'good' : (delta < 0 ? 'bad' : ''));
+    cards.push(snapCard('Port of NY/NJ', 'Loaded imp+exp · ' + (nynj.as_of||''), _suppFmtAbs(last.total), _suppFmtPct(delta) + ' MoM', cls));
+  }
+  if (inv && Array.isArray(inv.observations) && inv.observations.length){
+    const last = inv.observations[inv.observations.length-1];
+    const prev = inv.observations[inv.observations.length-2];
+    const delta = (prev && prev.value) ? ((last.value - prev.value) / prev.value) * 100 : null;
+    // Higher ratio = sluggish demand. Invert the color.
+    const cls = (delta == null) ? '' : (delta > 0 ? 'bad' : (delta < 0 ? 'good' : ''));
+    cards.push(snapCard('Inventory/Sales', 'ISRATIO · ' + (inv.as_of||''), last.value.toFixed(2), _suppFmtPct(delta) + ' MoM', cls));
+  } else if (inv && inv.available === false){
+    cards.push(snapCard('Inventory/Sales', 'FRED_API_KEY not set', '—', null, ''));
+  }
+  if (gscpi && Array.isArray(gscpi.observations) && gscpi.observations.length){
+    const last = gscpi.observations[gscpi.observations.length-1];
+    const prev = gscpi.observations[gscpi.observations.length-2];
+    const delta = prev ? (last.value - prev.value) : null;
+    // GSCPI: positive = stress. Color by level here (not delta).
+    const cls = (last.value > 1) ? 'bad' : (last.value < -1 ? 'good' : '');
+    const deltaStr = (delta == null) ? '' : ((delta > 0 ? '+' : '') + delta.toFixed(2) + ' MoM');
+    cards.push(snapCard('GSCPI', 'NY Fed · ' + (gscpi.as_of||''), last.value.toFixed(2) + 'σ', deltaStr, cls));
+  }
+  host.innerHTML = cards.length ? cards.join('') : '<div class="empty" style="padding:24px 12px;grid-column:1/-1">No supply data on the last fetch.</div>';
+}
+
+// Shared inline-SVG line chart for the Supplies tab. series:
+//   [{label, color:'orange'|'info'|'ai'|'good'|'bad', values:[{x,y}], xLabels:{first,last}, dashed?}]
+function svgLineChartV1(series, opts){
+  const o = Object.assign({width:560, height:200, padX:38, padY:14, zeroLine:false,
+                           yFmt: (v) => v.toFixed(2)}, opts || {});
+  const W = o.width, H = o.height, PX = o.padX, PY = o.padY;
+  const allPts = [];
+  for (const s of series){ for (const p of (s.values||[])){ allPts.push(p); } }
+  if (!allPts.length){
+    return '<div class="empty" style="padding:24px 12px">No data.</div>';
+  }
+  let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
+  for (const p of allPts){
+    if (p.x < xMin) xMin = p.x;
+    if (p.x > xMax) xMax = p.x;
+    if (p.y < yMin) yMin = p.y;
+    if (p.y > yMax) yMax = p.y;
+  }
+  if (yMin === yMax){ yMin -= 1; yMax += 1; }
+  const yPad = (yMax - yMin) * 0.08;
+  yMin -= yPad; yMax += yPad;
+  const xScale = (x) => PX + ((x - xMin) / Math.max(1, (xMax - xMin))) * (W - PX*2);
+  const yScale = (y) => H - PY - ((y - yMin) / Math.max(1e-9, (yMax - yMin))) * (H - PY*2);
+  function color(name){
+    const map = { good:'#22c55e', bad:'#ef4444', warn:'#f59e0b',
+                  info:'#06b6d4', ai:'#a78bfa', orange:'#f59e0b' };
+    return map[name] || '#06b6d4';
+  }
+  const ticks = [];
+  for (let i=0; i<=3; i++){
+    const v = yMin + ((yMax - yMin) * i / 3);
+    ticks.push({v, y: yScale(v)});
+  }
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="xMidYMid meet" style="display:block;max-width:100%">';
+  for (const t of ticks){
+    svg += '<line x1="' + PX + '" x2="' + (W-PX) + '" y1="' + t.y + '" y2="' + t.y + '" stroke="#252b3a" stroke-width="1" stroke-dasharray="2 4"/>';
+    svg += '<text x="' + (PX-6) + '" y="' + (t.y+4) + '" font-size="10" fill="#8a93a6" text-anchor="end">' + escapeHtml(o.yFmt(t.v)) + '</text>';
+  }
+  if (o.zeroLine && yMin < 0 && yMax > 0){
+    const y0 = yScale(0);
+    svg += '<line x1="' + PX + '" x2="' + (W-PX) + '" y1="' + y0 + '" y2="' + y0 + '" stroke="#8a93a6" stroke-width="1.5"/>';
+  }
+  for (const s of series){
+    if (!s.values || !s.values.length) continue;
+    const pts = s.values.map(p => xScale(p.x) + ',' + yScale(p.y)).join(' ');
+    const dash = s.dashed ? ' stroke-dasharray="4 3"' : '';
+    svg += '<polyline points="' + pts + '" fill="none" stroke="' + color(s.color) + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"' + dash + '/>';
+    const last = s.values[s.values.length-1];
+    svg += '<circle cx="' + xScale(last.x) + '" cy="' + yScale(last.y) + '" r="3" fill="' + color(s.color) + '"/>';
+  }
+  if (series[0] && series[0].xLabels){
+    const xl = series[0].xLabels;
+    svg += '<text x="' + PX + '" y="' + (H-2) + '" font-size="10" fill="#8a93a6" text-anchor="start">' + escapeHtml(xl.first || '') + '</text>';
+    svg += '<text x="' + (W-PX) + '" y="' + (H-2) + '" font-size="10" fill="#8a93a6" text-anchor="end">' + escapeHtml(xl.last || '') + '</text>';
+  }
+  svg += '</svg>';
+  const legend = series.map(s => '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:14px;font-size:11px;color:#8a93a6">'
+    + '<span style="width:10px;height:2px;background:' + color(s.color) + ';display:inline-block"></span>'
+    + escapeHtml(s.label || '') + '</span>').join('');
+  return svg + '<div style="margin-top:6px">' + legend + '</div>';
+}
+
+function _trimByMonths(obs, n){
+  if (!Array.isArray(obs) || obs.length === 0) return [];
+  const k = Math.min(obs.length, n);
+  return obs.slice(obs.length - k);
+}
+function _ymToX(s){
+  if (!s) return 0;
+  const p = String(s).split('-');
+  const y = parseInt(p[0], 10);
+  const m = parseInt(p[1], 10);
+  if (isNaN(y) || isNaN(m)) return 0;
+  return y * 12 + (m - 1);
+}
+function _fmtYearMonth(s){
+  if (!s) return '';
+  const p = String(s).split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const mi = parseInt(p[1], 10) - 1;
+  if (mi < 0 || mi > 11) return s;
+  return months[mi] + ' ' + p[0];
+}
+
+function renderSuppliesPortsV1(sup){
+  const host = document.getElementById('suppliesPortsChart');
+  const foot = document.getElementById('suppliesPortsFoot');
+  const asOf = document.getElementById('suppliesPortsAsOf');
+  if (!host) return;
+  const la = ((sup.port_teu||{}).los_angeles) || null;
+  const nynj = ((sup.port_teu||{}).ny_nj) || null;
+  if (!la && !nynj){
+    host.innerHTML = '<div class="empty" style="padding:24px 12px">No port data on the last fetch.</div>';
+    if (foot) foot.textContent = '';
+    if (asOf) asOf.textContent = '—';
+    return;
+  }
+  const series = [];
+  if (la){
+    const trimmed = _trimByMonths(la.observations || [], 60);
+    series.push({
+      label: 'L.A. monthly total TEU', color: 'orange',
+      values: trimmed.map(o => ({x: _ymToX(o.month), y: o.total})),
+      xLabels: {first: _fmtYearMonth(trimmed[0] && trimmed[0].month),
+                last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month)},
+    });
+  }
+  if (nynj){
+    const trimmed = _trimByMonths(nynj.observations || [], 60);
+    series.push({
+      label: 'NY/NJ loaded imp+exp', color: 'info',
+      values: trimmed.map(o => ({x: _ymToX(o.month), y: o.total})),
+      xLabels: {first: _fmtYearMonth(trimmed[0] && trimmed[0].month),
+                last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month)},
+    });
+  }
+  host.innerHTML = svgLineChartV1(series, {
+    yFmt: (v) => (v >= 1e6 ? (v/1e6).toFixed(1) + 'M' : (v/1e3).toFixed(0) + 'k'),
+  });
+  const sources = [];
+  if (la) sources.push('LA: ' + la.source + (la.as_of ? ' · ' + la.as_of : ''));
+  if (nynj) sources.push('NY/NJ: ' + nynj.source + (nynj.as_of ? ' · ' + nynj.as_of : ''));
+  if (foot) foot.textContent = sources.join(' · ');
+  const latest = [la && la.as_of, nynj && nynj.as_of].filter(Boolean).sort().pop();
+  if (asOf) asOf.textContent = latest || '—';
+}
+
+function renderSuppliesInventoryV1(sup){
+  const host = document.getElementById('suppliesInvChart');
+  const foot = document.getElementById('suppliesInvFoot');
+  const asOf = document.getElementById('suppliesInvAsOf');
+  if (!host) return;
+  const inv = sup.inventory_ratio;
+  if (!inv || inv.available === false){
+    host.innerHTML = '<div class="empty" style="padding:24px 12px">FRED_API_KEY required &mdash; free key at fredaccount.stlouisfed.org enables this chart.</div>';
+    if (foot) foot.textContent = 'Series: FRED ISRATIO · Total business inventory-to-sales ratio';
+    if (asOf) asOf.textContent = 'not configured';
+    return;
+  }
+  if (!Array.isArray(inv.observations) || !inv.observations.length){
+    host.innerHTML = '<div class="empty" style="padding:24px 12px">FRED returned an empty series.</div>';
+    if (foot) foot.textContent = '';
+    if (asOf) asOf.textContent = '—';
+    return;
+  }
+  const trimmed = _trimByMonths(inv.observations, 120);
+  const series = [{
+    label: 'Inventory/Sales ratio', color: 'ai',
+    values: trimmed.map(o => ({x: _ymToX(o.date), y: o.value})),
+    xLabels: {first: _fmtYearMonth(trimmed[0] && trimmed[0].date),
+              last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].date)},
+  }];
+  host.innerHTML = svgLineChartV1(series, { yFmt: (v) => v.toFixed(2) });
+  if (foot) foot.textContent = 'Source: ' + (inv.source || 'FRED') + ' · ' + (inv.label || 'ISRATIO');
+  if (asOf) asOf.textContent = inv.as_of || '—';
+}
+
+function renderSuppliesGscpiV1(sup){
+  const host = document.getElementById('suppliesGscpiChart');
+  const foot = document.getElementById('suppliesGscpiFoot');
+  const asOf = document.getElementById('suppliesGscpiAsOf');
+  if (!host) return;
+  const g = sup.gscpi;
+  if (!g || !Array.isArray(g.observations) || !g.observations.length){
+    host.innerHTML = '<div class="empty" style="padding:24px 12px">GSCPI unavailable &mdash; NY Fed CSV returned nothing.</div>';
+    if (foot) foot.textContent = '';
+    if (asOf) asOf.textContent = '—';
+    return;
+  }
+  const trimmed = _trimByMonths(g.observations, 120);
+  const last = trimmed[trimmed.length-1];
+  const col = (last && last.value > 0) ? 'orange' : 'good';
+  const series = [{
+    label: 'GSCPI (σ from mean)', color: col,
+    values: trimmed.map(o => ({x: _ymToX(o.date), y: o.value})),
+    xLabels: {first: _fmtYearMonth(trimmed[0] && trimmed[0].date),
+              last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].date)},
+  }];
+  host.innerHTML = svgLineChartV1(series, {
+    zeroLine: true,
+    yFmt: (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + 'σ',
+  });
+  if (foot) foot.textContent = 'Source: ' + (g.source || 'NY Fed') + ' · published monthly · zero = historical average';
+  if (asOf) asOf.textContent = g.as_of || '—';
+}
+
+// ---------- METALS tab ----------
+function renderMetalsTab(){
+  const m = DATA.metals;
+  const loading = document.getElementById('metalsLoading');
+  const content = document.getElementById('metalsContent');
+  if (!m && state.tab === 'metals' && SIDECAR_STATE.metals === 'loading'){
+    if (loading) loading.classList.remove('hidden');
+    if (content) content.classList.add('hidden');
+    return;
+  }
+  if (loading) loading.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
+  if (!m || typeof m !== 'object'){
+    const strength = document.getElementById('metalsStrengthBody');
+    if (strength) strength.innerHTML = '<div class="empty" style="padding:24px 12px">Metals sidecar not yet loaded.</div>';
+    return;
+  }
+  metalsRenderStrengthV1(m);
+  metalsRenderPriceCardV1('gold',   m.gold_price,   'metalsGoldBody',   'metalsGoldAsOf',   'metalsGoldSub',   '#f59e0b');
+  metalsRenderPriceCardV1('silver', m.silver_price, 'metalsSilverBody', 'metalsSilverAsOf', 'metalsSilverSub', '#cbd5e1');
+  metalsRenderProdCardV1(m.gold_mine_production,   {bodyId:'metalsGoldProdBody',   asOfId:'metalsGoldProdAsOf',   subId:'metalsGoldProdSub',   emptyTitle:'No gold production data',   color:'#f59e0b'});
+  metalsRenderProdCardV1(m.silver_mine_production, {bodyId:'metalsSilverProdBody', asOfId:'metalsSilverProdAsOf', subId:'metalsSilverProdSub', emptyTitle:'No silver production data', color:'#cbd5e1'});
+  metalsRenderCBGoldV1(m.central_bank_gold);
+}
+
+function _metalsFmtNum(n, d){
+  if (n == null || isNaN(n)) return '—';
+  if (d == null) d = 2;
+  return Number(n).toLocaleString('en-US', {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+function _metalsFmtInt(n){
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('en-US', {maximumFractionDigits: 0});
+}
+function _metalsPctChip(pct){
+  if (pct == null || !isFinite(pct)) return '<span class="metals-pct">—</span>';
+  const cls = pct >= 0 ? 'good' : 'bad';
+  const sign = pct >= 0 ? '+' : '';
+  return '<span class="metals-pct ' + cls + '">' + sign + pct.toFixed(2) + '%</span>';
+}
+function _metalsLookback(obs, days){
+  if (!Array.isArray(obs) || obs.length < 2) return null;
+  const idx = Math.max(0, obs.length - 1 - days);
+  return obs[idx];
+}
+
+function metalsRenderStrengthV1(m){
+  const body = document.getElementById('metalsStrengthBody');
+  const asOf = document.getElementById('metalsStrengthAsOf');
+  const sub  = document.getElementById('metalsStrengthSub');
+  if (!body) return;
+  const gold   = (m && m.gold_price && Array.isArray(m.gold_price.observations))   ? m.gold_price.observations : [];
+  const silver = (m && m.silver_price && Array.isArray(m.silver_price.observations)) ? m.silver_price.observations : [];
+  if (gold.length < 30 || silver.length < 30){
+    body.innerHTML = '<div class="empty" style="padding:24px 12px">Insufficient price history &mdash; need 30+ daily closes for both metals.</div>';
+    if (asOf) asOf.textContent = 'unavailable';
+    return;
+  }
+  // Gold/silver ratio
+  const pairLen = Math.min(gold.length, silver.length);
+  const gTail = gold.slice(-pairLen);
+  const sTail = silver.slice(-pairLen);
+  const ratioObs = [];
+  for (let i=0; i < pairLen; i++){
+    const gv = gTail[i].value, sv = sTail[i].value;
+    if (gv != null && sv != null && sv !== 0){
+      ratioObs.push({date: gTail[i].date || sTail[i].date, value: gv / sv});
+    }
+  }
+  const ratioNow = ratioObs.length ? ratioObs[ratioObs.length-1].value : null;
+  let ratioLabel = '—', ratioCls = '';
+  if (ratioNow != null){
+    if (ratioNow < 50){ ratioLabel = 'Silver-strong'; ratioCls = 'good'; }
+    else if (ratioNow > 70){ ratioLabel = 'Gold-strong'; ratioCls = 'bad'; }
+    else { ratioLabel = 'Neutral band'; ratioCls = ''; }
+  }
+  const sparkColor = ratioCls === 'good' ? '#22c55e' : (ratioCls === 'bad' ? '#f59e0b' : '#06b6d4');
+  const ratioSpark = metalsSparkV1(ratioObs.slice(-90), sparkColor);
+  const col1 = ''
+    + '<div style="display:flex;flex-direction:column;gap:6px;min-width:0">'
+    +   '<div class="metals-col__lbl">Gold / silver ratio</div>'
+    +   '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">'
+    +     '<div style="font-size:24px;font-weight:700;color:var(--text)">' + (ratioNow == null ? '—' : ratioNow.toFixed(1)) + '</div>'
+    +     '<span class="metals-pct ' + ratioCls + '">' + escapeHtml(ratioLabel) + '</span>'
+    +   '</div>'
+    +   ratioSpark
+    +   '<div class="metals-col__note">Historical mean ~60. Above = silver undervalued; below = silver outperforming.</div>'
+    + '</div>';
+
+  // Period returns
+  const windows = [
+    {label:'1M', days:21}, {label:'3M', days:63}, {label:'6M', days:126},
+    {label:'1Y', days:252}, {label:'5Y', days:1260},
+  ];
+  function returnsRow(name, obs){
+    const last = obs[obs.length-1];
+    const cells = windows.map(w => {
+      if (obs.length <= w.days){
+        return '<div class="metals-cell"><div class="metals-cell__lbl">' + w.label + '</div><div><span class="metals-pct">n/a</span></div></div>';
+      }
+      const ref = obs[obs.length-1-w.days];
+      const pct = (ref && ref.value) ? ((last.value - ref.value) / ref.value) * 100 : null;
+      return '<div class="metals-cell"><div class="metals-cell__lbl">' + w.label + '</div><div>' + _metalsPctChip(pct) + '</div></div>';
+    }).join('');
+    return '<div class="metals-row"><div class="metals-row__name">' + escapeHtml(name) + '</div><div class="metals-row__cells">' + cells + '</div></div>';
+  }
+  const col2 = ''
+    + '<div style="display:flex;flex-direction:column;gap:4px;min-width:0">'
+    +   '<div class="metals-col__lbl">Period returns</div>'
+    +   returnsRow('Gold', gold)
+    +   returnsRow('Silver', silver)
+    +   '<div class="metals-col__note">Trading-day lookbacks vs latest close.</div>'
+    + '</div>';
+
+  // 52-week position
+  function fiftyTwo(name, obs){
+    const window = obs.slice(-252);
+    let lo = Infinity, hi = -Infinity;
+    for (const p of window){ if (p.value < lo) lo = p.value; if (p.value > hi) hi = p.value; }
+    const cur = obs[obs.length-1].value;
+    const range = hi - lo;
+    const pos = range > 0 ? Math.max(0, Math.min(1, (cur - lo) / range)) : 0.5;
+    const posPct = Math.round(pos * 100);
+    const dotColor = posPct >= 70 ? '#f59e0b' : (posPct <= 30 ? '#22c55e' : '#06b6d4');
+    const bar = ''
+      + '<div style="position:relative;height:8px;background:#0b0d12;border-radius:4px;margin:4px 0">'
+      +   '<div style="position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(148,163,184,0.25)"></div>'
+      +   '<div style="position:absolute;left:' + posPct + '%;top:-2px;width:4px;height:12px;background:' + dotColor + ';border-radius:2px;transform:translateX(-2px)"></div>'
+      + '</div>';
+    return ''
+      + '<div style="display:flex;flex-direction:column;gap:2px;min-width:0;margin-bottom:6px">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'
+      +     '<div style="font-size:11px;color:var(--text);font-weight:600">' + escapeHtml(name) + '</div>'
+      +     '<div style="font-size:11px;color:var(--muted)">$' + _metalsFmtNum(cur, 2) + ' &middot; <span style="color:var(--text)">' + posPct + '%</span> of 52w</div>'
+      +   '</div>'
+      +   bar
+      +   '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">'
+      +     '<span>low $' + _metalsFmtNum(lo, 2) + '</span>'
+      +     '<span>high $' + _metalsFmtNum(hi, 2) + '</span>'
+      +   '</div>'
+      + '</div>';
+  }
+  const col3 = ''
+    + '<div style="display:flex;flex-direction:column;gap:4px;min-width:0">'
+    +   '<div class="metals-col__lbl">52-week position</div>'
+    +   fiftyTwo('Gold', gold)
+    +   fiftyTwo('Silver', silver)
+    + '</div>';
+
+  body.innerHTML = '<div class="metals-strength">' + col1 + col2 + col3 + '</div>';
+  const lastDate = gold[gold.length-1].date || silver[silver.length-1].date || '—';
+  if (asOf) asOf.textContent = 'as of ' + lastDate;
+  if (sub) sub.textContent = 'Derived from ' + Math.min(gold.length, silver.length) + ' daily closes · ratio, returns, 52w range';
+}
+
+function metalsSparkV1(points, color){
+  if (!Array.isArray(points) || points.length < 2) return '';
+  const W = 240, H = 30, padT = 3, padB = 3;
+  let lo = Infinity, hi = -Infinity;
+  for (const p of points){ if (p.value < lo) lo = p.value; if (p.value > hi) hi = p.value; }
+  if (!isFinite(lo) || !isFinite(hi) || hi === lo) hi = lo + 1;
+  const n = points.length;
+  const pts = points.map((p, i) => {
+    const x = (i / (n - 1)) * W;
+    const y = padT + (1 - (p.value - lo) / (hi - lo)) * (H - padT - padB);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:30px;display:block;border-radius:4px;background:#0b0d12">'
+    + '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.4" vector-effect="non-scaling-stroke"/>'
+    + '</svg>';
+}
+
+function metalsRenderPriceCardV1(metal, payload, bodyId, asOfId, subId, color){
+  const body = document.getElementById(bodyId);
+  const asOf = document.getElementById(asOfId);
+  const sub  = document.getElementById(subId);
+  if (!body) return;
+  const obs = (payload && Array.isArray(payload.observations)) ? payload.observations : [];
+  if (!obs.length){
+    body.innerHTML = '<div class="empty" style="padding:24px 12px">No ' + escapeHtml(metal) + ' price data.</div>';
+    if (asOf) asOf.textContent = 'unavailable';
+    return;
+  }
+  const last = obs[obs.length-1];
+  const lastVal = last.value;
+  const refs = [
+    {label:'1d', obs: _metalsLookback(obs, 1)},
+    {label:'1w', obs: _metalsLookback(obs, 5)},
+    {label:'1m', obs: _metalsLookback(obs, 21)},
+    {label:'1y', obs: _metalsLookback(obs, 252)},
+  ];
+  const deltas = refs.map(r => {
+    if (!r.obs) return {label:r.label, pct:null};
+    return {label:r.label, pct: (lastVal - r.obs.value) / r.obs.value * 100};
+  });
+  // Inline SVG line chart of full series.
+  const W = 600, Hc = 160, padL = 8, padR = 8, padT = 6, padB = 18;
+  const innerW = W - padL - padR, innerH = Hc - padT - padB;
+  let lo = Infinity, hi = -Infinity;
+  for (const p of obs){ if (p.value < lo) lo = p.value; if (p.value > hi) hi = p.value; }
+  if (!isFinite(lo) || !isFinite(hi) || hi === lo) hi = lo + 1;
+  const xStep = innerW / Math.max(1, obs.length - 1);
+  const pts = obs.map((p, i) => {
+    const x = padL + i * xStep;
+    const y = padT + innerH - ((p.value - lo) / (hi - lo)) * innerH;
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const areaPts = pts + ' ' + (padL + (obs.length - 1) * xStep).toFixed(1) + ',' +
+                  (padT + innerH).toFixed(1) + ' ' + padL.toFixed(1) + ',' +
+                  (padT + innerH).toFixed(1);
+  const fillId = 'metalsFillV1_' + metal;
+  let lastYearTick = '';
+  const yearTicks = obs.map((p, i) => {
+    const y = (p.date || '').slice(0, 4);
+    if (y && y !== lastYearTick && i % Math.ceil(obs.length/6) === 0){
+      lastYearTick = y;
+      const x = padL + i * xStep;
+      return '<text x="' + x.toFixed(0) + '" y="' + (Hc - 4) + '" text-anchor="middle" font-size="9" fill="#8a93a6">' + y + '</text>';
+    }
+    return '';
+  }).join('');
+  const chartSvg = ''
+    + '<svg viewBox="0 0 ' + W + ' ' + Hc + '" preserveAspectRatio="none" style="width:100%;height:auto;max-height:200px;display:block;border-radius:6px;background:#0b0d12">'
+    +   '<defs><linearGradient id="' + fillId + '" x1="0" y1="0" x2="0" y2="1">'
+    +     '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.35"/>'
+    +     '<stop offset="100%" stop-color="' + color + '" stop-opacity="0"/>'
+    +   '</linearGradient></defs>'
+    +   '<polygon points="' + areaPts + '" fill="url(#' + fillId + ')"/>'
+    +   '<polyline points="' + pts + '" fill="none" stroke="' + color + '" stroke-width="1.4" vector-effect="non-scaling-stroke"/>'
+    +   yearTicks
+    + '</svg>';
+  const deltaCells = deltas.map(d =>
+    '<div class="metals-cell"><div class="metals-cell__lbl">' + d.label + '</div><div>' + _metalsPctChip(d.pct) + '</div></div>'
+  ).join('');
+  body.innerHTML = ''
+    + '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px">'
+    +   '<div style="font-size:24px;font-weight:700;color:var(--text)">$' + _metalsFmtNum(lastVal, 2) + '</div>'
+    +   '<div style="font-size:11px;color:var(--muted)">/troy oz</div>'
+    + '</div>'
+    + chartSvg
+    + '<div style="display:flex;justify-content:space-between;margin-top:10px;gap:6px">' + deltaCells + '</div>'
+    + '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:8px">Source: ' + escapeHtml(payload.source || '—') + '</div>';
+  if (asOf) asOf.textContent = 'as of ' + (last.date || '—');
+  if (sub) sub.textContent = 'USD per troy ounce · ' + obs.length + ' daily closes';
+}
+
+function metalsHBarV1(rows, color){
+  if (!rows.length) return '';
+  const W = 600, rowH = 22, padTop = 4;
+  const Hc = padTop + rows.length * rowH + 4;
+  const max = rows[0].value || 1;
+  const labelW = 150, valueW = 70;
+  const barX = labelW + 6;
+  const barW = W - barX - valueW - 4;
+  const parts = rows.map((r, i) => {
+    const y = padTop + i * rowH;
+    const w = Math.max(2, (r.value / max) * barW);
+    const lbl = escapeHtml(r.label);
+    const val = _metalsFmtInt(r.value);
+    return ''
+      + '<text x="' + (labelW - 4) + '" y="' + (y + 14) + '" text-anchor="end" font-size="11" fill="#e6e8ee">' + lbl + '</text>'
+      + '<rect x="' + barX + '" y="' + (y + 4) + '" width="' + w.toFixed(1) + '" height="14" rx="2" fill="' + color + '" opacity="0.85"/>'
+      + '<text x="' + (barX + w + 4) + '" y="' + (y + 14) + '" font-size="11" fill="#8a93a6">' + val + '</text>';
+  }).join('');
+  return '<svg viewBox="0 0 ' + W + ' ' + Hc + '" preserveAspectRatio="xMinYMin meet" style="width:100%;height:auto;display:block;background:transparent">' + parts + '</svg>';
+}
+
+function metalsRenderCBGoldV1(payload){
+  const body = document.getElementById('metalsCBGoldBody');
+  const asOf = document.getElementById('metalsCBGoldAsOf');
+  const sub  = document.getElementById('metalsCBGoldSub');
+  if (!body) return;
+  const rows = (payload && Array.isArray(payload.holdings)) ? payload.holdings : [];
+  if (!rows.length){
+    body.innerHTML = '<div class="empty" style="padding:24px 12px">No central-bank gold data on the last fetch.</div>';
+    if (asOf) asOf.textContent = 'unavailable';
+    return;
+  }
+  const bars = rows.map(r => ({label: r.country, value: r.tonnes}));
+  body.innerHTML = metalsHBarV1(bars, '#f59e0b')
+    + '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:8px">Unit: ' + escapeHtml(payload.unit || 'tonnes')
+    + ' · Source: ' + escapeHtml(payload.source || '—') + '</div>';
+  if (asOf) asOf.textContent = payload.as_of || '—';
+  if (sub) sub.textContent = 'Tonnes · top 20 holders · IMF IRFCL';
+}
+
+function metalsRenderProdCardV1(payload, opts){
+  const body = document.getElementById(opts.bodyId);
+  const asOf = document.getElementById(opts.asOfId);
+  const sub  = document.getElementById(opts.subId);
+  if (!body) return;
+  const all = (payload && Array.isArray(payload.by_country)) ? payload.by_country : [];
+  if (!all.length){
+    body.innerHTML = '<div class="empty" style="padding:24px 12px">' + escapeHtml(opts.emptyTitle) + '.</div>';
+    if (asOf) asOf.textContent = 'unavailable';
+    return;
+  }
+  const top = all.slice(0, 10);
+  const bars = top.map(r => ({label: r.country, value: r.tonnes}));
+  body.innerHTML = metalsHBarV1(bars, opts.color)
+    + '<div class="sub" style="font-size:11px;color:var(--muted);margin-top:8px">Unit: ' + escapeHtml(payload.unit || 'metric tons')
+    + ' · Year: ' + (payload.year || '—')
+    + ' · Source: ' + escapeHtml(payload.source || '—') + '</div>';
+  if (asOf) asOf.textContent = String(payload.year || '—');
+  if (sub) sub.textContent = 'Metric tons · top 10 producers · USGS MCS ' + (payload.year || '');
+}
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
 selectTab('overview');

@@ -68,6 +68,13 @@ UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0; +metals-fetcher)"
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
 DEFAULT_OUT = ROOT / "v2" / "data-metals.json"
+# V1 dual-write target — the V1 dashboard lazy-loads /data-metals.json via
+# the same SIDECARS mechanism it already uses for whale/defi (those live at
+# data-whale.json / data-defi.json next to dashboard.html). Writing here
+# keeps V2's existing wiring untouched while giving V1 a self-contained
+# sidecar that the CI stage step picks up automatically (it globs
+# `data-*.json` at repo root). Pass --out-v1 '' to disable.
+DEFAULT_OUT_V1 = ROOT / "data-metals.json"
 
 # IMF SDMX namespaces (SDMX-ML StructureSpecificData v2.1)
 NS_MSG = "http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message"
@@ -705,6 +712,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Fetch gold/silver metals data.")
     ap.add_argument("--out", default=str(DEFAULT_OUT),
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
+    ap.add_argument("--out-v1", default=str(DEFAULT_OUT_V1),
+                    help=f"V1 dashboard dual-write path (default: {DEFAULT_OUT_V1}; "
+                         f"pass empty string '' to disable)")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
     args = ap.parse_args(argv)
@@ -744,6 +754,20 @@ def main(argv: list[str] | None = None) -> int:
           f"silver:{sizes['silver_price']}d CB:{sizes['central_bank_gold']} "
           f"Ag_prod:{sizes['silver_mine_production']} "
           f"Au_prod:{sizes['gold_mine_production']})")
+
+    # V1 dual-write — non-fatal on failure. V1 reads /data/metals.json
+    # lazily; if the mirror fails the tab just shows its empty state until
+    # the next run.
+    v1_out_arg = (args.out_v1 or "").strip()
+    if v1_out_arg:
+        v1_out_path = Path(v1_out_arg)
+        try:
+            v1_out_path.parent.mkdir(parents=True, exist_ok=True)
+            v1_out_path.write_text(json.dumps(payload, indent=2))
+            print(f"  [metals] mirrored payload to {v1_out_path}")
+        except Exception as e:
+            print(f"  [metals] v1 dual-write failed ({v1_out_path}): {e}",
+                  file=sys.stderr)
     return 0
 
 

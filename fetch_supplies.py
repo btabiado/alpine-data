@@ -78,6 +78,13 @@ UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
 DEFAULT_OUT = ROOT / "v2" / "data-supplies.json"
+# V1 dual-write target — the V1 dashboard lazy-loads /data-supplies.json via
+# the same SIDECARS mechanism it already uses for whale/defi (those live at
+# data-whale.json / data-defi.json next to dashboard.html). Writing here
+# keeps V2's existing wiring untouched while giving V1 a self-contained
+# sidecar that the CI stage step picks up automatically (it globs
+# `data-*.json` at repo root). Pass --out-v1 '' to disable.
+DEFAULT_OUT_V1 = ROOT / "data-supplies.json"
 
 LA_PORT_URL = "https://data.lacity.org/resource/tsuv-4rgh.json"
 NYNJ_PORT_URL = "https://data.ny.gov/resource/629s-5a55.json"
@@ -505,6 +512,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Fetch Global Supplies indicators.")
     ap.add_argument("--out", default=str(DEFAULT_OUT),
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
+    ap.add_argument("--out-v1", default=str(DEFAULT_OUT_V1),
+                    help=f"V1 dashboard dual-write path (default: {DEFAULT_OUT_V1}; "
+                         f"pass empty string '' to disable)")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
     args = ap.parse_args(argv)
@@ -534,6 +544,20 @@ def main(argv: list[str] | None = None) -> int:
     out_path.write_text(json.dumps(payload, indent=2))
     print(f"  Wrote {out_path} "
           f"({out_path.stat().st_size:,} bytes)")
+
+    # V1 dual-write — non-fatal on failure. V1 reads /data/supplies.json
+    # lazily; if the mirror fails the tab just shows its empty state until
+    # the next run.
+    v1_out_arg = (args.out_v1 or "").strip()
+    if v1_out_arg:
+        v1_out_path = Path(v1_out_arg)
+        try:
+            v1_out_path.parent.mkdir(parents=True, exist_ok=True)
+            v1_out_path.write_text(json.dumps(payload, indent=2))
+            print(f"  [supplies] mirrored payload to {v1_out_path}")
+        except Exception as e:
+            print(f"  [supplies] v1 dual-write failed ({v1_out_path}): {e}",
+                  file=sys.stderr)
     return 0
 
 

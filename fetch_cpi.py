@@ -86,6 +86,13 @@ UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
 H = {"User-Agent": UA}
 ROOT = Path(__file__).parent
 DEFAULT_OUT = ROOT / "v2" / "data-cpi.json"
+# V1 dual-write target — the V1 dashboard lazy-loads /data-cpi.json via the
+# same SIDECARS mechanism it already uses for whale/defi (those live at
+# data-whale.json / data-defi.json next to dashboard.html). Writing here
+# keeps V2's existing wiring untouched while giving V1 a self-contained
+# sidecar that the CI stage step picks up automatically (it globs
+# `data-*.json` at repo root). Pass --out-v1 '' to disable.
+DEFAULT_OUT_V1 = ROOT / "data-cpi.json"
 
 FRED_OBS_URL = "https://api.stlouisfed.org/fred/series/observations"
 
@@ -521,6 +528,9 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Fetch FRED Consumer Price Index series.")
     ap.add_argument("--out", default=str(DEFAULT_OUT),
                     help=f"Output JSON path (default: {DEFAULT_OUT})")
+    ap.add_argument("--out-v1", default=str(DEFAULT_OUT_V1),
+                    help=f"V1 dashboard dual-write path (default: {DEFAULT_OUT_V1}; "
+                         f"pass empty string '' to disable)")
     ap.add_argument("--no-network", action="store_true",
                     help="Run offline parser self-test and exit (no HTTP).")
     args = ap.parse_args(argv)
@@ -532,12 +542,32 @@ def main(argv: list[str] | None = None) -> int:
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     api_key = os.environ.get("FRED_API_KEY", "").strip()
+    # Build the optional V1 dual-write target (empty arg disables it).
+    v1_out_path: Path | None = None
+    if (args.out_v1 or "").strip():
+        v1_out_path = Path(args.out_v1)
+
+    def _write_v1(payload_dict: dict) -> None:
+        """Mirror the V2 payload to data/cpi.json so the V1 dashboard's
+        lazy-load can pick it up. Failure here is non-fatal — V1 just shows
+        its empty state until the next run."""
+        if v1_out_path is None:
+            return
+        try:
+            v1_out_path.parent.mkdir(parents=True, exist_ok=True)
+            v1_out_path.write_text(json.dumps(payload_dict, indent=2))
+            print(f"  [cpi] mirrored payload to {v1_out_path}")
+        except Exception as e:
+            print(f"  [cpi] v1 dual-write failed ({v1_out_path}): {e}",
+                  file=sys.stderr)
+
     if not api_key:
         # Clean opt-out branch. Always overwrites with the unavailable payload
         # so the dashboard's empty state is fresh-dated, not stale from a
         # previous broken run.
         payload = _payload_unavailable()
         out_path.write_text(json.dumps(payload, indent=2))
+        _write_v1(payload)
         print(f"  [cpi] FRED_API_KEY not set; wrote {out_path} with empty-state payload.")
         return 0
 
@@ -551,6 +581,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     out_path.write_text(json.dumps(payload, indent=2))
+    _write_v1(payload)
     n_ok = sum(1 for s in payload["series"] if s.get("observations"))
     n_err = sum(1 for s in payload["series"] if s.get("error"))
     total_obs = sum(len(s.get("observations") or []) for s in payload["series"])
