@@ -3594,13 +3594,18 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   // sparkline only — the signal direction chip, score, and component
   // breakdown table all describe long-term trend math and stay constant.
   // Window anchors to the dataset cutoff (most recent full year, currently
-  // 2013), NOT today. Valid values: '5y' | '10y' | '20y' | '30y' | 'all'.
+  // 2013), NOT today. Valid values:
+  //   '30d' | '90d' | 'ytd' | '1y' | '3y' | '5y' | '10y' | '20y' | '30y' | 'all'.
+  // Sub-yearly values (30d / 90d / YTD) flip the sparkline to a monthly
+  // series sourced from m.totals_by_month.
   mufonTrendRange: '5y',
   // UAP shapes (Section D) — visible window for the stacked-area classification
   // chart. Defaults to '5y' to match the trend card above it. Toggling re-slices
   // the stacked area only — the "All-time totals" legend on the right stays put.
   // Window anchors to the dataset's last year (currently 2014).
-  // Valid values: '1y' | '3y' | '5y' | '10y' | '20y' | '30y' | 'all'.
+  // Valid values:
+  //   '30d' | '90d' | 'ytd' | '1y' | '3y' | '5y' | '10y' | '20y' | '30y' | 'all'.
+  // Sub-yearly values use m.shape_by_month (last 36 months cached upstream).
   mufonShapesRange: '5y' };
 
 // ---------- formatters ----------
@@ -9209,6 +9214,43 @@ function mufonLinearSlope(years, totals){
   return num / den;
 }
 
+// Month-keyed twin of mufonTrendSparkline. Used by the sub-yearly toggles
+// (30d / 90d / YTD) which slice totals_by_month rather than totals_by_year.
+// Inputs: ``months`` is a list of "YYYY-MM" strings in ascending order;
+// ``totals`` is the m.totals_by_month dict. No peak marker — the sub-year
+// windows are short enough that the right-edge endpoint label suffices.
+function mufonTrendSparklineMonths(months, totals){
+  const n = months.length;
+  if (n < 2) return '';
+  const ys = months.map(function(s){ return Number(totals[s]) || 0; });
+  const lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+  const range = (hi - lo) || 1;
+  const w = 600, h = 90, padL = 4, padR = 4, padTop = 14, padBot = 18;
+  const innerW = w - padL - padR;
+  const innerH = h - padTop - padBot;
+  const xFor = function(i){ return padL + (i / (n - 1)) * innerW; };
+  const yFor = function(v){ return padTop + (1 - (v - lo) / range) * innerH; };
+  const pts = months.map(function(m, i){ return xFor(i) + ',' + yFor(ys[i]).toFixed(1); }).join(' ');
+  const first = ys[0], last = ys[n - 1];
+  const flatTol = Math.max(Math.abs(first) * 0.10, 10);
+  const stroke = Math.abs(last - first) <= flatTol
+    ? 'var(--v2-warn, #fbbf24)'
+    : (last >= first ? 'var(--v2-good, #4ade80)' : 'var(--v2-bad, #f87171)');
+  const startLabel = '<text x="' + xFor(0).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="start" font-size="9" fill="var(--muted)">' + months[0] + '</text>';
+  const endLabel = '<text x="' + xFor(n - 1).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="end" font-size="9" fill="var(--muted)">' + months[n - 1] + ' · ' + last.toLocaleString() + '</text>';
+  return ''
+    + '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" '
+    +   'style="width:100%;height:90px;display:block;background:#0b0d12;border-radius:6px" '
+    +   'role="img" aria-label="Monthly UAP sighting reports">'
+    +   '<polyline points="' + pts + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" '
+    +     'vector-effect="non-scaling-stroke"/>'
+    +   startLabel
+    +   endLabel
+    + '</svg>';
+}
+
 // Inline sparkline for the full totals_by_year series. Distinct from
 // signalScoreSparkline because we need year labels at start/end/peak and a
 // trend-direction stroke color. Hand-rolled SVG, no library.
@@ -9347,7 +9389,50 @@ function renderMufonTrend(){
   // most-recent full year (e.g. 2013), NOT today's date. Long-term math
   // (score / chip / component table) still uses the full fullYears array
   // above, so toggling this only changes the visual.
+  //
+  // Sub-yearly windows ('30d', '90d', 'ytd') flip to a MONTHLY series
+  // sourced from m.totals_by_month. The trend math above (CAGR, momentum,
+  // slope, chip, score) is unconditionally annual — it stays put.
   const trendRange = state.mufonTrendRange || '5y';
+  const subYearly = (trendRange === '30d' || trendRange === '90d' || trendRange === 'ytd');
+  let spark = '';
+  let captionText = '';
+  if (subYearly) {
+    const totalsByMonth = m.totals_by_month || {};
+    const allMonths = Object.keys(totalsByMonth).sort();
+    let visibleMonths = [];
+    if (allMonths.length) {
+      if (trendRange === '30d') {
+        visibleMonths = allMonths.slice(-2);
+      } else if (trendRange === '90d') {
+        visibleMonths = allMonths.slice(-4);
+      } else {
+        // YTD — slice to the current year. "Current" = year of the latest
+        // month present in the data (so it stays sensible against a frozen
+        // sidecar). Edge case: if the latest month is January, you get a
+        // single point and the sparkline shows the start/end label only.
+        const latestMonth = allMonths[allMonths.length - 1];
+        const ytdYear = latestMonth.slice(0, 4);
+        visibleMonths = allMonths.filter(function(s){ return s.slice(0, 4) === ytdYear; });
+      }
+    }
+    if (visibleMonths.length >= 2) {
+      spark = mufonTrendSparklineMonths(visibleMonths, totalsByMonth);
+      captionText = 'Monthly reports · ' + visibleMonths[0] + '–' + visibleMonths[visibleMonths.length - 1];
+    } else if (visibleMonths.length === 1) {
+      // Single-month case (e.g. YTD in January). Show a one-line summary
+      // instead of a degenerate sparkline.
+      const only = visibleMonths[0];
+      const cnt = Number(totalsByMonth[only]) || 0;
+      spark = '<div style="padding:18px 12px;background:#0b0d12;border-radius:6px;color:var(--muted);font-size:12px;text-align:center">'
+        + only + ' · ' + cnt.toLocaleString() + ' sightings (only one month in window)'
+        + '</div>';
+      captionText = 'Monthly reports · ' + only;
+    } else {
+      spark = '<div style="padding:18px 12px;background:#0b0d12;border-radius:6px;color:var(--muted);font-size:12px;text-align:center">Insufficient monthly data for this window — try 1y or longer.</div>';
+      captionText = 'Monthly reports · (no data)';
+    }
+  }
   const rangeWindow = { '5y':5, '10y':10, '20y':20, '30y':30 }[trendRange] || fullYears.length;
   const visibleYears = (rangeWindow >= fullYears.length)
     ? fullYears
@@ -9356,7 +9441,11 @@ function renderMufonTrend(){
   // otherwise it'd render off-canvas or be misleading.
   const peakInWindow = (peakYear != null && visibleYears.indexOf(Number(peakYear)) >= 0)
     ? peakYear : null;
-  const spark = mufonTrendSparkline(visibleYears, totals, peakInWindow);
+  if (!subYearly) {
+    spark = mufonTrendSparkline(visibleYears, totals, peakInWindow);
+    // captionText for the annual case is filled in below, after lastFull
+    // is computed — it depends on it.
+  }
 
   // Component table — value column carries the raw metric (so a sceptical
   // reader can sanity-check), Δ column shows a directional badge.
@@ -9390,6 +9479,12 @@ function renderMufonTrend(){
   const lastFullTxt = (lastFull == null)
     ? '—'
     : (lastFull + ' — ' + (Number(totals[String(lastFull)]) || 0).toLocaleString() + ' sightings');
+  // Annual-branch caption — needs lastFull, so we resolve it here. Subyearly
+  // branches set captionText earlier (they don't depend on annual math).
+  if (!subYearly) {
+    captionText = 'Annual reports · ' + visibleYears[0] + '–' + (lastFull || '—')
+      + (partialYear && trendRange === 'all' ? ' (' + partialYear + ' partial, excluded)' : '');
+  }
   // Partial year (e.g. 2014)
   const partialTxt = (partialYear == null)
     ? null
@@ -9441,9 +9536,9 @@ function renderMufonTrend(){
     // the sidecar lands matches whatever the user last picked.
     + '<div style="margin-bottom:14px">'
     +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px">'
-    +     '<div style="font-size:11px;color:var(--muted)">Annual reports · ' + visibleYears[0] + '–' + (lastFull || '—') + (partialYear && trendRange === 'all' ? ' (' + partialYear + ' partial, excluded)' : '') + '</div>'
+    +     '<div style="font-size:11px;color:var(--muted)">' + captionText + '</div>'
     +     '<div class="mufon-trend-range" style="display:flex;gap:4px;flex-wrap:wrap">'
-    +       ['1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === trendRange ? ' active' : '') + '" data-mufontrendrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : r) + '</button>'; }).join('')
+    +       ['30d','90d','ytd','1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === trendRange ? ' active' : '') + '" data-mufontrendrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : (r === 'ytd' ? 'YTD' : r)) + '</button>'; }).join('')
     +     '</div>'
     +   '</div>'
     +   spark
@@ -9712,6 +9807,175 @@ function mufonShapeColor(rankIdx){
   return MUFON_SHAPE_COLOR_FALLBACK;
 }
 
+// Month-keyed twin of the yearly stacked-area renderer. Same visual shape
+// (legend + footnote + stacked polygons + axes) but the x-axis is indexed
+// by monthKeys position rather than year number. Called from renderMufonShapes
+// when the active range is sub-yearly (30d / 90d / YTD); the all-time totals
+// legend is unchanged.
+function renderMufonShapesMonths(m, monthKeys, totals, byMonth, activeRange, rangeToggleHtml){
+  const body = document.getElementById('mufonShapesBody');
+  const asOf = document.getElementById('mufonShapesAsOf');
+  if (!body) return;
+
+  if (asOf) {
+    const dr = m.date_range || [null, null];
+    const asOfTxt = (dr[0] && dr[1]) ? (dr[0] + ' → ' + dr[1]) : '—';
+    asOf.textContent = '● ' + asOfTxt + (m._stale ? ' (stale)' : '');
+  }
+
+  const subEl = document.getElementById('mufonShapesSub');
+  if (subEl) {
+    subEl.textContent = 'NUFORC-reported shapes · ' + monthKeys[0] + '–' + monthKeys[monthKeys.length - 1];
+  }
+
+  // Rank shapes by all-time total so colors stay consistent with the legend.
+  const ranked = totals.slice().sort(function(a,b){ return b.count - a.count; });
+  const shapeOrder = ranked.map(function(s){ return s.shape; });
+  const colorFor = {};
+  shapeOrder.forEach(function(sh, i){ colorFor[sh] = mufonShapeColor(i); });
+
+  const W = 720, H = 280;
+  const padL = 44, padR = 12, padT = 14, padB = 28;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  // x-axis is indexed by position in monthKeys (0..N-1) since months are
+  // discrete buckets. With shape_by_month capped at 36, monthKeys.length is
+  // always small (<=12 for YTD, 2-4 for 30d/90d), so single-point handling
+  // mirrors the year renderer.
+  const N = monthKeys.length;
+  const monthSpan = Math.max(1, N - 1);
+
+  // Per-month total drives the y-axis max.
+  let maxTotal = 0;
+  monthKeys.forEach(function(mk){
+    const b = byMonth[mk] || {};
+    let t = 0;
+    for (const sh in b) t += b[sh];
+    if (t > maxTotal) maxTotal = t;
+  });
+  if (!maxTotal) maxTotal = 1;
+
+  function xFor(i){ return padL + (i / monthSpan) * plotW; }
+  function yFor(v){ return padT + plotH - (v / maxTotal) * plotH; }
+
+  const runningBottom = {}; // monthKey -> cumulative bottom (units)
+  monthKeys.forEach(function(mk){ runningBottom[mk] = 0; });
+
+  const polygons = [];
+  shapeOrder.forEach(function(sh, idx){
+    let anyVal = false;
+    const lowerPts = [];
+    const upperPts = [];
+    monthKeys.forEach(function(mk, i){
+      const v = (byMonth[mk] || {})[sh] || 0;
+      const lower = runningBottom[mk];
+      const upper = lower + v;
+      if (v > 0) anyVal = true;
+      const xp = xFor(i);
+      lowerPts.push(xp + ',' + yFor(lower));
+      upperPts.push(xp + ',' + yFor(upper));
+      runningBottom[mk] = upper;
+    });
+    if (!anyVal) return;
+    const color = colorFor[sh];
+    const pts = lowerPts.concat(upperPts.slice().reverse()).join(' ');
+    polygons.push(
+      '<polygon points="' + pts + '" fill="' + color + '" '
+      + 'fill-opacity="0.82" stroke="none">'
+      +   '<title>' + sh + ' — ' + (ranked[idx] ? ranked[idx].count.toLocaleString() : '?') + ' all-time</title>'
+      + '</polygon>'
+    );
+  });
+
+  // X-axis ticks: label each month at its position. Skip every other one
+  // if there are more than 8 to avoid overlap.
+  const tickEvery = N > 8 ? 2 : 1;
+  const xAxisMarks = monthKeys.map(function(mk, i){
+    if (i % tickEvery !== 0 && i !== N - 1) return '';
+    const xp = xFor(i);
+    return ''
+      + '<line x1="' + xp + '" y1="' + (padT + plotH) + '" '
+      +     'x2="' + xp + '" y2="' + (padT + plotH + 4) + '" '
+      +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+      + '<text x="' + xp + '" y="' + (padT + plotH + 16) + '" '
+      +     'text-anchor="middle" font-size="9" '
+      +     'fill="var(--muted)">' + mk + '</text>';
+  }).join('');
+
+  const yTickVals = [0, Math.round(maxTotal * 0.25), Math.round(maxTotal * 0.5),
+                     Math.round(maxTotal * 0.75), maxTotal];
+  const yAxisMarks = yTickVals.map(function(v){
+    const yp = yFor(v);
+    return ''
+      + '<line x1="' + padL + '" y1="' + yp + '" '
+      +     'x2="' + (padL + plotW) + '" y2="' + yp + '" '
+      +     'stroke="rgba(255,255,255,0.06)" stroke-width="1" />'
+      + '<text x="' + (padL - 6) + '" y="' + (yp + 3) + '" '
+      +     'text-anchor="end" font-size="10" '
+      +     'fill="var(--muted)" font-variant-numeric="tabular-nums">' + v.toLocaleString() + '</text>';
+  }).join('');
+
+  const frame = ''
+    + '<line x1="' + padL + '" y1="' + padT + '" '
+    +     'x2="' + padL + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+    + '<line x1="' + padL + '" y1="' + (padT + plotH) + '" '
+    +     'x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />';
+
+  const chartSvg = ''
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
+    +    'preserveAspectRatio="xMidYMid meet" '
+    +    'style="font-family:inherit;display:block;max-height:340px" '
+    +    'role="img" aria-label="Stacked area chart of UAP sightings by shape, ' + monthKeys[0] + ' to ' + monthKeys[monthKeys.length - 1] + ' (range ' + activeRange + ')">'
+    +   yAxisMarks
+    +   polygons.join('')
+    +   xAxisMarks
+    +   frame
+    + '</svg>';
+
+  // Legend stays all-time (per spec). Mirrors the yearly renderer exactly.
+  const grandTotal = ranked.reduce(function(s, r){ return s + r.count; }, 0) || 1;
+  const legendRows = ranked.map(function(r, i){
+    const pct = (r.count / grandTotal) * 100;
+    const color = mufonShapeColor(i);
+    return ''
+      + '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
+      +   '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color + '"></span>'
+      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + r.shape + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums">' + r.count.toLocaleString() + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>'
+      + '</li>';
+  }).join('');
+
+  const legendBlock = ''
+    + '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);'
+    +    'border-radius:8px;padding:10px 12px">'
+    +   '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;'
+    +     'letter-spacing:.5px;margin-bottom:6px">All-time totals</div>'
+    +   '<ul style="list-style:none;margin:0;padding:0">' + legendRows + '</ul>'
+    + '</div>';
+
+  const dr = m.date_range || [null, null];
+  const footnote = ''
+    + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
+    +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
+    +   'Top 15 shapes shown; rarer ones collapse into "other". '
+    +   'Monthly view spans ' + monthKeys[0] + ' through ' + monthKeys[monthKeys.length - 1] + ', '
+    +   'sourced from shape_by_month (last ~36 months). Full history available on yearly ranges (1y+). '
+    +   'Range toggle re-slices the stacked area only; the legend totals stay all-time.'
+    + '</div>';
+
+  body.innerHTML = ''
+    + rangeToggleHtml
+    + '<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(220px, 1fr);gap:14px;align-items:start">'
+    +   '<div style="min-width:0">' + chartSvg + '</div>'
+    +   legendBlock
+    + '</div>'
+    + footnote;
+}
+
 function renderMufonShapes(){
   const m = DATA.mufon;
   const body = document.getElementById('mufonShapesBody');
@@ -9721,7 +9985,9 @@ function renderMufonShapes(){
 
   const totals = (m.shape_totals || []).slice();
   const byYear = m.shape_by_year || {};
+  const byMonth = m.shape_by_month || {};
   const allYearKeys = Object.keys(byYear).sort();
+  const allMonthKeys = Object.keys(byMonth).sort();
 
   if (!totals.length || !allYearKeys.length) {
     if (asOf) asOf.textContent = '● unavailable';
@@ -9736,9 +10002,62 @@ function renderMufonShapes(){
 
   // Apply the active range window. The all-time totals legend on the right
   // still uses `totals` (unfiltered), but the stacked area, axes, and the
-  // caption underneath only describe `yearKeys`. Anchors to the dataset's
-  // most-recent year (e.g. 2014), NOT today.
+  // caption underneath only describe `bucketKeys`. Yearly ranges anchor to
+  // the dataset's most-recent year; sub-yearly ranges (30d/90d/YTD) slice
+  // shape_by_month and anchor to the latest month present.
   const activeRange = state.mufonShapesRange || '5y';
+  const subYearlyShapes = (activeRange === '30d' || activeRange === '90d' || activeRange === 'ytd');
+
+  // Range toggle markup — reused by both the chart-present and
+  // single-point-fallback paths so the user can always toggle back out.
+  // SAFE PATTERN: single-line map() callback, no line-leading `+` inside
+  // the function body (that's what bricked production on 2026-05-23).
+  const rangeToggleHtml = ''
+    + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
+    +   '<div class="mufon-shapes-range" style="display:flex;gap:4px;flex-wrap:wrap">'
+    +     ['30d','90d','ytd','1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === activeRange ? ' active' : '') + '" data-mufonshapesrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : (r === 'ytd' ? 'YTD' : r)) + '</button>'; }).join('')
+    +   '</div>'
+    + '</div>';
+
+  // Sub-yearly windows need shape_by_month (the upstream fetcher caps it at
+  // ~36 months). If that key is missing or too sparse, show a friendly fall-
+  // back with the toggle still rendered so the user can switch back to 1y+.
+  if (subYearlyShapes) {
+    let monthKeys = [];
+    if (allMonthKeys.length) {
+      if (activeRange === '30d') {
+        monthKeys = allMonthKeys.slice(-2);
+      } else if (activeRange === '90d') {
+        monthKeys = allMonthKeys.slice(-4);
+      } else {
+        const latest = allMonthKeys[allMonthKeys.length - 1];
+        const ytdYear = latest.slice(0, 4);
+        monthKeys = allMonthKeys.filter(function(s){ return s.slice(0, 4) === ytdYear; });
+      }
+    }
+    if (monthKeys.length < 2) {
+      // Not enough months to render even a degenerate chart. Show the
+      // toggle + a message so the user can pick a longer window.
+      if (asOf) {
+        const dr = m.date_range || [null, null];
+        const asOfTxt = (dr[0] && dr[1]) ? (dr[0] + ' → ' + dr[1]) : '—';
+        asOf.textContent = '● ' + asOfTxt + (m._stale ? ' (stale)' : '');
+      }
+      const subEl = document.getElementById('mufonShapesSub');
+      if (subEl) {
+        subEl.textContent = 'NUFORC-reported shapes · monthly view';
+      }
+      body.innerHTML = ''
+        + rangeToggleHtml
+        + '<div style="padding:24px 16px;background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);'
+        +    'border-radius:8px;color:var(--muted);font-size:12px;text-align:center;line-height:1.5">'
+        +   'Insufficient monthly data for this window — try 1y or longer.'
+        + '</div>';
+      return;
+    }
+    return renderMufonShapesMonths(m, monthKeys, totals, byMonth, activeRange, rangeToggleHtml);
+  }
+
   const allYearNums = allYearKeys.map(y => parseInt(y, 10)).sort((a,b) => a-b);
   const dataMaxYear = allYearNums[allYearNums.length - 1];
   let windowYears;
@@ -9760,17 +10079,6 @@ function renderMufonShapes(){
       subEl.textContent = 'NUFORC-reported shapes · ' + yearKeys[0] + '–' + yearKeys[yearKeys.length - 1];
     }
   }
-
-  // Range toggle markup — reused by both the chart-present and
-  // single-point-fallback paths so the user can always toggle back out.
-  // SAFE PATTERN: single-line map() callback, no line-leading `+` inside
-  // the function body (that's what bricked production on 2026-05-23).
-  const rangeToggleHtml = ''
-    + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
-    +   '<div class="mufon-shapes-range" style="display:flex;gap:4px;flex-wrap:wrap">'
-    +     ['1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === activeRange ? ' active' : '') + '" data-mufonshapesrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : r) + '</button>'; }).join('')
-    +   '</div>'
-    + '</div>';
 
   if (asOf) {
     const dr = m.date_range || [null, null];

@@ -72,8 +72,23 @@ Output schema (sidecar v2/data-mufon.json) ::
         "1906": {"unknown": 2, "light": 0, ...},
         ...
         "2026": {"light": 412, "triangle": 187, ...}
+      },
+      "totals_by_month": {
+        "1906-11": 1, "1906-12": 0, ...,
+        "2026-05": 1066
+      },
+      "shape_by_month": {
+        "2023-06": {"light": 41, "triangle": 18, ...},
+        ...
+        "2026-05": {"light": 412, "triangle": 187, ...}
       }
     }
+
+The ``totals_by_month`` series spans the entire date range (one entry per
+calendar month from min to max, gaps filled with 0). ``shape_by_month`` is
+capped at the trailing 36 months only — pre-2024 monthly shape detail is
+rarely useful and the payload bloat isn't justified. Both feed the V2 UAP
+trend / shapes charts' sub-yearly toggles (30d / 90d / YTD).
 
 The ``recent_buckets`` field is anchored to **today** (UTC) once the live
 scrape contributes data — so "30d" really means the last 30 days. If the
@@ -358,6 +373,13 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
     by_state_year: dict[str, dict[str, int]] = {}
     city_counts: dict[str, dict[str, int]] = {}
     totals_by_year: dict[str, int] = {}
+    # Monthly granularity series — drives the sub-yearly (30d / 90d / YTD)
+    # toggles on the V2 trend + shapes charts. ``totals_by_month`` is the
+    # full historical span (one entry per month from min..max, zeros filled
+    # post-loop). ``shape_by_month_raw`` is the parallel shape breakdown;
+    # we cap that to the last 36 months downstream to keep payload small.
+    totals_by_month_raw: dict[str, int] = {}
+    shape_by_month_raw: dict[str, dict[str, int]] = {}
     # Shape aggregations — used by the "sightings by classification" chart
     # at the bottom of the UAP tab. Per-row shape comes from _norm_shape
     # (blanks already mapped to "unknown").
@@ -372,10 +394,14 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
         city: str = r["city"]
         shape: str = r.get("shape", "unknown")
         year = str(dt.year)
+        ym = f"{dt.year:04d}-{dt.month:02d}"
         totals_by_year[year] = totals_by_year.get(year, 0) + 1
+        totals_by_month_raw[ym] = totals_by_month_raw.get(ym, 0) + 1
         shape_totals_raw[shape] = shape_totals_raw.get(shape, 0) + 1
         ybucket = shape_by_year_raw.setdefault(year, {})
         ybucket[shape] = ybucket.get(shape, 0) + 1
+        mbucket = shape_by_month_raw.setdefault(ym, {})
+        mbucket[shape] = mbucket.get(shape, 0) + 1
         if min_dt is None or dt < min_dt:
             min_dt = dt
         if max_dt is None or dt > max_dt:
@@ -459,6 +485,43 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
         if out:
             shape_by_year[year] = out
 
+    # Build `totals_by_month` as a dense series (zeros filled) from the
+    # earliest seen month to the latest. The dashboard's sub-yearly toggles
+    # rely on consecutive months for windowing math (last-N-months slicing
+    # would skip gaps otherwise).
+    totals_by_month: dict[str, int] = {}
+    if min_dt is not None and max_dt is not None:
+        cy, cm = min_dt.year, min_dt.month
+        end_y, end_m = max_dt.year, max_dt.month
+        while (cy, cm) <= (end_y, end_m):
+            key = f"{cy:04d}-{cm:02d}"
+            totals_by_month[key] = totals_by_month_raw.get(key, 0)
+            cm += 1
+            if cm > 12:
+                cm = 1
+                cy += 1
+
+    # `shape_by_month` — same compaction rule as `shape_by_year` (top-N kept,
+    # tail rolled into "other"), and capped at the trailing 36 months so the
+    # JSON payload doesn't balloon. Older months are still represented in
+    # `totals_by_year` / `shape_by_year` for the long-range views.
+    SHAPE_BY_MONTH_CAP = 36
+    shape_by_month: dict[str, dict[str, int]] = {}
+    recent_month_keys = sorted(shape_by_month_raw.keys())[-SHAPE_BY_MONTH_CAP:]
+    for ym in recent_month_keys:
+        buckets = shape_by_month_raw[ym]
+        out: dict[str, int] = {}
+        tail = 0
+        for name, count in buckets.items():
+            if name in kept:
+                out[name] = out.get(name, 0) + count
+            else:
+                tail += count
+        if tail:
+            out["other"] = out.get("other", 0) + tail
+        if out:
+            shape_by_month[ym] = out
+
     payload: dict[str, Any] = {
         "total_records": len(rows),
         "date_range": [
@@ -471,6 +534,8 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
         "totals_by_year": totals_by_year,
         "shape_totals": shape_totals_list,
         "shape_by_year": shape_by_year,
+        "totals_by_month": totals_by_month,
+        "shape_by_month": shape_by_month,
     }
     return payload
 
@@ -916,6 +981,41 @@ def _self_test() -> int:
              == payload["totals_by_year"][y]
              for y in payload["totals_by_year"]),
          "shape_by_year per-year sum != totals_by_year"),
+        # Monthly series must exist and be a dense span (every month from
+        # min..max present, zeros filled). The sample CSV has rows in
+        # 1949-10, 2014-01, 2014-02, 2014-03, 2014-04, 2014-05, 2014-06,
+        # 2014-07 — so totals_by_month should span 1949-10..2014-07
+        # inclusive (which is 778 months).
+        ("totals_by_month" in payload,
+         "totals_by_month missing from payload"),
+        (payload["totals_by_month"].get("1949-10") == 2,
+         f"totals_by_month 1949-10: "
+         f"{payload['totals_by_month'].get('1949-10')}"),
+        (payload["totals_by_month"].get("2014-01") == 1,
+         f"totals_by_month 2014-01: "
+         f"{payload['totals_by_month'].get('2014-01')}"),
+        (payload["totals_by_month"].get("2014-03") == 2,
+         f"totals_by_month 2014-03: "
+         f"{payload['totals_by_month'].get('2014-03')}"),
+        # Dense fill: a month with no rows still gets a 0 entry.
+        (payload["totals_by_month"].get("1949-11") == 0,
+         f"totals_by_month 1949-11 should be 0 (dense fill), got "
+         f"{payload['totals_by_month'].get('1949-11')}"),
+        # Per-month sums must equal total_records (every row contributes
+        # exactly one month bucket).
+        (sum(payload["totals_by_month"].values()) == payload["total_records"],
+         f"totals_by_month sum {sum(payload['totals_by_month'].values())} "
+         f"!= total_records {payload['total_records']}"),
+        # shape_by_month present, capped at 36 months. The sample has at
+        # most 8 distinct months, so it should be 8 entries (well under cap).
+        ("shape_by_month" in payload,
+         "shape_by_month missing from payload"),
+        (len(payload["shape_by_month"]) <= 36,
+         f"shape_by_month exceeded 36-month cap: "
+         f"{len(payload['shape_by_month'])} entries"),
+        (payload["shape_by_month"].get("2014-03", {}).get("light") == 2,
+         f"shape_by_month 2014-03 light=2: "
+         f"{payload['shape_by_month'].get('2014-03')}"),
         (_norm_shape("LIGHT") == "light", "_norm_shape lowercases"),
         (_norm_shape("  Triangle  ") == "triangle", "_norm_shape strips"),
         (_norm_shape("") == "unknown", "_norm_shape blank → unknown"),
@@ -1023,6 +1123,8 @@ def main(argv: list[str] | None = None) -> int:
             "totals_by_year": {},
             "shape_totals": [],
             "shape_by_year": {},
+            "totals_by_month": {},
+            "shape_by_month": {},
             "_error": "all CSV probes failed",
         }
         out_path.parent.mkdir(parents=True, exist_ok=True)
