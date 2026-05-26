@@ -2952,9 +2952,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
 
   <!-- ============ SUPPLIES TAB (ported from V2) ============ -->
-  <!-- Macro / logistics indicators: monthly TEU at LA + NY/NJ ports,
-       FRED inventory-to-sales ratio (ISRATIO), and NY Fed Global Supply
-       Chain Pressure Index. Sidecar is data-supplies.json — produced by
+  <!-- Macro / logistics indicators: monthly TEU at the Port of Los Angeles
+       (total + loaded imports as a leading-indicator subset), FRED
+       inventory-to-sales ratio (ISRATIO), and NY Fed Global Supply Chain
+       Pressure Index. Sidecar is data-supplies.json — produced by
        fetch_supplies.py. Inline-SVG charts only — no Chart.js dependency
        on this tab (mirrors V2's approach so the tab stays lightweight). -->
   <div id="tab-supplies" class="hidden">
@@ -2965,7 +2966,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="chart-card" id="suppliesCardPorts">
           <div class="head">
             <h2>U.S. port container throughput <span class="tag" id="suppliesPortsAsOf">&mdash;</span></h2>
-            <span class="desc">Monthly TEU &middot; Port of Los Angeles vs Port of NY/NJ</span>
+            <span class="desc">Monthly TEU &middot; Port of Los Angeles &middot; total vs loaded imports</span>
           </div>
           <div id="suppliesPortsChart"></div>
           <div class="sub" id="suppliesPortsFoot" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
@@ -13015,7 +13016,6 @@ function renderSuppliesSnapshotV1(sup){
   if (!host) return;
   const cards = [];
   const la = ((sup.port_teu||{}).los_angeles) || null;
-  const nynj = ((sup.port_teu||{}).ny_nj) || null;
   const inv = sup.inventory_ratio || null;
   const gscpi = sup.gscpi || null;
 
@@ -13032,13 +13032,15 @@ function renderSuppliesSnapshotV1(sup){
     const last = la.observations[la.observations.length-1];
     const delta = _suppPctDelta(la.observations, 'total');
     const cls = (delta == null) ? '' : (delta > 0 ? 'good' : (delta < 0 ? 'bad' : ''));
-    cards.push(snapCard('Port of L.A.', 'Monthly TEU · ' + (la.as_of||''), _suppFmtAbs(last.total), _suppFmtPct(delta) + ' MoM', cls));
-  }
-  if (nynj && Array.isArray(nynj.observations) && nynj.observations.length){
-    const last = nynj.observations[nynj.observations.length-1];
-    const delta = _suppPctDelta(nynj.observations, 'total');
-    const cls = (delta == null) ? '' : (delta > 0 ? 'good' : (delta < 0 ? 'bad' : ''));
-    cards.push(snapCard('Port of NY/NJ', 'Loaded imp+exp · ' + (nynj.as_of||''), _suppFmtAbs(last.total), _suppFmtPct(delta) + ' MoM', cls));
+    cards.push(snapCard('Port of L.A. · total', 'Monthly TEU · ' + (la.as_of||''), _suppFmtAbs(last.total), _suppFmtPct(delta) + ' MoM', cls));
+    // Second card: loaded-imports-only — leading indicator for US consumer
+    // demand (replaces the NY/NJ slot, since panynj.gov is unscrapeable and
+    // the data.ny.gov Socrata feed it used to come from was retired 2015).
+    if (last.loaded_imports != null){
+      const deltaI = _suppPctDelta(la.observations, 'loaded_imports');
+      const clsI = (deltaI == null) ? '' : (deltaI > 0 ? 'good' : (deltaI < 0 ? 'bad' : ''));
+      cards.push(snapCard('Port of L.A. · loaded imports', 'Monthly TEU · ' + (la.as_of||''), _suppFmtAbs(last.loaded_imports), _suppFmtPct(deltaI) + ' MoM', clsI));
+    }
   }
   if (inv && Array.isArray(inv.observations) && inv.observations.length){
     const last = inv.observations[inv.observations.length-1];
@@ -13152,41 +13154,35 @@ function renderSuppliesPortsV1(sup){
   const asOf = document.getElementById('suppliesPortsAsOf');
   if (!host) return;
   const la = ((sup.port_teu||{}).los_angeles) || null;
-  const nynj = ((sup.port_teu||{}).ny_nj) || null;
-  if (!la && !nynj){
+  if (!la){
     host.innerHTML = '<div class="empty" style="padding:24px 12px">No port data on the last fetch.</div>';
     if (foot) foot.textContent = '';
     if (asOf) asOf.textContent = '—';
     return;
   }
-  const series = [];
-  if (la){
-    const trimmed = _trimByMonths(la.observations || [], 60);
-    series.push({
-      label: 'L.A. monthly total TEU', color: 'orange',
-      values: trimmed.map(o => ({x: _ymToX(o.month), y: o.total})),
-      xLabels: {first: _fmtYearMonth(trimmed[0] && trimmed[0].month),
-                last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month)},
-    });
-  }
-  if (nynj){
-    const trimmed = _trimByMonths(nynj.observations || [], 60);
-    series.push({
-      label: 'NY/NJ loaded imp+exp', color: 'info',
-      values: trimmed.map(o => ({x: _ymToX(o.month), y: o.total})),
-      xLabels: {first: _fmtYearMonth(trimmed[0] && trimmed[0].month),
-                last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month)},
-    });
+  const trimmed = _trimByMonths(la.observations || [], 60);
+  const xLabels = {first: _fmtYearMonth(trimmed[0] && trimmed[0].month),
+                   last:  _fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month)};
+  const series = [
+    {label: 'L.A. total monthly TEU', color: 'orange',
+     values: trimmed.map(o => ({x: _ymToX(o.month), y: o.total})),
+     xLabels: xLabels},
+  ];
+  // Loaded imports = subset of total; included as a second line because it's
+  // the leading indicator that actually tracks US consumer demand (empties
+  // and exports add noise). Skip when the underlying source lacks the
+  // breakdown (older POLA pages were total-only for a few rows).
+  const hasLoadedImp = trimmed.some(o => o.loaded_imports != null);
+  if (hasLoadedImp){
+    series.push({label: 'L.A. loaded imports (subset)', color: 'info',
+                 values: trimmed.filter(o => o.loaded_imports != null).map(o => ({x: _ymToX(o.month), y: o.loaded_imports})),
+                 xLabels: xLabels});
   }
   host.innerHTML = svgLineChartV1(series, {
     yFmt: (v) => (v >= 1e6 ? (v/1e6).toFixed(1) + 'M' : (v/1e3).toFixed(0) + 'k'),
   });
-  const sources = [];
-  if (la) sources.push('LA: ' + la.source + (la.as_of ? ' · ' + la.as_of : ''));
-  if (nynj) sources.push('NY/NJ: ' + nynj.source + (nynj.as_of ? ' · ' + nynj.as_of : ''));
-  if (foot) foot.textContent = sources.join(' · ');
-  const latest = [la && la.as_of, nynj && nynj.as_of].filter(Boolean).sort().pop();
-  if (asOf) asOf.textContent = latest || '—';
+  if (foot) foot.textContent = 'Source: ' + la.source + (la.as_of ? ' · ' + la.as_of : '') + ' · NY/NJ feed retired by publisher in 2015; L.A. shown alone.';
+  if (asOf) asOf.textContent = la.as_of || '—';
 }
 
 function renderSuppliesInventoryV1(sup){

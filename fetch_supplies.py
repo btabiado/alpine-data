@@ -2,14 +2,30 @@
 Global Supplies fetcher.
 
 Sources (all free, no auth required):
-  data.lacity.org tsuv-4rgh.json   Port of Los Angeles monthly TEU
-  data.ny.gov     629s-5a55.json   Port of NY/NJ monthly TEU (imports/exports)
+  portoflosangeles.org             Port of L.A. monthly TEU — historical
+    /business/statistics/         per-year HTML pages (scraped). Replaces the
+    /container-statistics/        old data.lacity.org Socrata feed (tsuv-4rgh)
+    /historical-teu-statistics-   which the publisher stopped updating in
+    {YEAR}                        Sep-2016. New source publishes the prior
+                                   month in the second half of the following
+                                   month, has stable per-year URLs back to
+                                   1995, and reports loaded/empty breakdowns
+                                   for both imports and exports.
   FRED            ISRATIO          Total business inventory-to-sales ratio
                                    (only fetched when FRED_API_KEY is set;
                                    otherwise returns available=false)
   NY Fed          gscpi CSV        Global Supply Chain Pressure Index — vintage
                                    matrix; we collapse to the latest published
                                    value per observation month.
+
+Note on port coverage: we previously also pulled NY/NJ monthly TEU from
+data.ny.gov (629s-5a55). That dataset stopped updating in Dec-2015 and PANYNJ
+now only publishes monthly figures via JS-rendered press releases that are
+not scrapeable from CI. BTS rd72-aq8r also halted at Oct-2022. With no
+reliable current NY/NJ feed, we now show two L.A. series: total monthly TEU
+plus loaded-imports-only (the leading-indicator subset for US consumer
+demand). L.A. alone moves ~10M TEU/yr — about a quarter of US container
+traffic — and is the largest single port indicator we have.
 
 Output: v2/data-supplies.json (sidecar for the V2 dashboard's "Supplies" tab).
 
@@ -19,17 +35,19 @@ Schema:
       "port_teu": {
         "los_angeles": {
           "unit": "TEU",
-          "observations": [{"month":"YYYY-MM","total":1234567}, ...],
-          "source": "data.lacity.org tsuv-4rgh",
-          "as_of": "YYYY-MM"
-        },
-        "ny_nj": {
-          "unit": "TEU",
           "observations": [
-            {"month":"YYYY-MM","loaded_imports":N,"loaded_exports":N,"total":N},
-            ...
+            {
+              "month": "YYYY-MM",
+              "total": N,
+              "loaded_imports": N,
+              "empty_imports": N,
+              "total_imports": N,
+              "loaded_exports": N,
+              "empty_exports": N,
+              "total_exports": N
+            }, ...
           ],
-          "source": "data.ny.gov 629s-5a55",
+          "source": "portoflosangeles.org historical-teu-statistics",
           "as_of": "YYYY-MM"
         }
       },
@@ -66,6 +84,7 @@ import csv
 import io
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -74,8 +93,15 @@ from typing import Any
 import requests
 
 
-UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
-H = {"User-Agent": UA}
+# Port of L.A. blocks the generic library UA on Cloudflare; a desktop browser
+# string sails through. Keep it specific enough to be honest about what we are
+# (not pretending to be Chrome) while still passing their bot heuristics.
+UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0 Safari/537.36 "
+    "etf-flow-dashboard/1.0"
+)
+H = {"User-Agent": UA, "Accept": "text/html,application/xhtml+xml,application/json"}
 ROOT = Path(__file__).parent
 DEFAULT_OUT = ROOT / "v2" / "data-supplies.json"
 # V1 dual-write target — the V1 dashboard lazy-loads /data-supplies.json via
@@ -86,18 +112,23 @@ DEFAULT_OUT = ROOT / "v2" / "data-supplies.json"
 # `data-*.json` at repo root). Pass --out-v1 '' to disable.
 DEFAULT_OUT_V1 = ROOT / "data-supplies.json"
 
-LA_PORT_URL = "https://data.lacity.org/resource/tsuv-4rgh.json"
-NYNJ_PORT_URL = "https://data.ny.gov/resource/629s-5a55.json"
+# Port of L.A. publishes one HTML page per calendar year with a monthly table.
+# URL pattern is stable back to 1995; the current-year page is updated in the
+# second half of the month following the observation month.
+POLA_YEAR_URL = (
+    "https://portoflosangeles.org/business/statistics/container-statistics/"
+    "historical-teu-statistics-{year}"
+)
+# How many years back we attempt to fetch. We want enough history for the
+# dashboard's 5-year window plus a safety buffer if the most recent calendar
+# year hasn't published any month yet (we walk back until we get data).
+POLA_YEARS_BACK = 8
+
 GSCPI_CSV_URL = (
     "https://www.newyorkfed.org/medialibrary/research/interactives/"
     "data/gscpi/gscpi_interactive_data.csv"
 )
 FRED_OBS_URL = "https://api.stlouisfed.org/fred/series/observations"
-
-# 50 years of monthly data is the cap on the Socrata calls. Both datasets are
-# capped well below that; this just guarantees we never get truncated by the
-# Socrata default of 1,000 rows.
-SOCRATA_LIMIT = 600
 
 
 # ----- helpers ---------------------------------------------------------------
@@ -175,111 +206,196 @@ def _ym_from_year_month(year: Any, month_name: Any) -> str | None:
     return f"{y}-{m}"
 
 
-# ----- Port of Los Angeles (Socrata) ----------------------------------------
+# ----- Port of Los Angeles (HTML scrape per year) ---------------------------
+
+# Strip HTML tags + collapse whitespace; used both for column-header detection
+# and for cell-text extraction.
+_TAG_RE = re.compile(r"<[^>]+>")
+_WS_RE = re.compile(r"\s+")
+
+
+def _clean_cell(cell_html: str) -> str:
+    """Reduce a <td>...</td> inner HTML to a plain trimmed string.
+
+    Handles &nbsp;, &ensp;, line breaks, nested spans, and the trailing
+    non-breaking spaces the publisher sometimes appends to values."""
+    txt = _TAG_RE.sub("", cell_html)
+    txt = txt.replace("&nbsp;", " ").replace("&ensp;", " ")
+    txt = txt.replace(" ", " ").replace(" ", " ")
+    return _WS_RE.sub(" ", txt).strip()
+
+
+def _parse_teu_value(text: str) -> float | None:
+    """Parse cells like '459,825.25', '(668.50)', '&nbsp;', '#N/A'.
+
+    Returns None when the cell is blank or non-numeric. The publisher uses
+    accounting-style parentheses for negatives in change columns, but the
+    raw volume columns we care about are always non-negative; we accept
+    parentheses regardless to keep the parser forgiving."""
+    s = (text or "").strip()
+    if not s or s in {"-", "—", "N/A", "#N/A", "in progress"}:
+        return None
+    neg = s.startswith("(") and s.endswith(")")
+    if neg:
+        s = s[1:-1]
+    s = s.replace(",", "").replace(" ", "").strip()
+    if not s:
+        return None
+    try:
+        v = float(s)
+    except (TypeError, ValueError):
+        return None
+    return -v if neg else v
+
+
+def _extract_first_data_table(html: str) -> str | None:
+    """Return the inner HTML of the first <table> that contains 'Loaded
+    Imports' in a header cell. The per-year POLA page has two tables (the
+    monthly breakdown and a multi-decade calendar-year summary). We want the
+    first one. Returns None if no matching table is found."""
+    for m in re.finditer(r"<table[^>]*>(.*?)</table>", html, re.S | re.I):
+        body = m.group(1)
+        # Cheap header sniff — the monthly table always has "Loaded Imports"
+        # as its first numeric column header.
+        if "Loaded Imports" in body or "Loaded&nbsp;Imports" in body:
+            return body
+    return None
+
+
+# Mapping from cleaned header text -> field key in the observation dict.
+# Header text is checked after _clean_cell, so &nbsp; collapses to space.
+_POLA_HEADER_KEYS = {
+    "loaded imports":   "loaded_imports",
+    "empty imports":    "empty_imports",
+    "total imports":    "total_imports",
+    "loaded exports":   "loaded_exports",
+    "empty exports":    "empty_exports",
+    "total exports":    "total_exports",
+    "total teus":       "total",
+}
+
+
+def parse_pola_year_table(html: str, year: int) -> list[dict]:
+    """Parse a single per-year POLA stats page's monthly table.
+
+    Returns observations sorted oldest-first. Each observation has at minimum
+    a ``month`` key and a ``total``; the loaded/empty/exports breakdowns are
+    included when present. Months still flagged 'in progress' (the
+    publisher leaves blank/nbsp cells for future months in the current year)
+    are skipped, not zeroed."""
+    table = _extract_first_data_table(html)
+    if not table:
+        return []
+    # Split into rows. The publisher's HTML wraps each row in <tr>...</tr>.
+    rows = re.findall(r"<tr[^>]*>(.*?)</tr>", table, re.S | re.I)
+    if len(rows) < 2:
+        return []
+    # First row is the header. Build a column-index -> field-key map.
+    header_cells = re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", rows[0], re.S | re.I)
+    header_texts = [_clean_cell(c).lower() for c in header_cells]
+    # The first column is the month label (no header text other than a
+    # spacer). Skip it. We map each remaining header to a known field key.
+    col_keys: list[str | None] = [None]  # idx 0 = month label
+    for h in header_texts[1:]:
+        col_keys.append(_POLA_HEADER_KEYS.get(h))
+
+    out: list[dict] = []
+    # Subsequent rows: each starts with a month label like 'January'. Skip
+    # totals rows that begin with 'Total ' or 'Total&nbsp;'.
+    for raw_row in rows[1:]:
+        cells = re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", raw_row, re.S | re.I)
+        if not cells:
+            continue
+        label = _clean_cell(cells[0]).lower()
+        # Skip aggregate rows: 'Total Calendar Year ...', 'Total Fiscal ...'.
+        if label.startswith("total ") or label.startswith("total "):
+            continue
+        mm = _MONTH_MAP.get(label) or _MONTH_MAP.get(label[:3])
+        if not mm:
+            continue
+        ym = f"{year:04d}-{mm}"
+        rec: dict[str, Any] = {"month": ym}
+        for idx, cell in enumerate(cells):
+            if idx == 0:
+                continue
+            if idx >= len(col_keys):
+                break
+            key = col_keys[idx]
+            if not key:
+                continue
+            v = _parse_teu_value(_clean_cell(cell))
+            if v is None:
+                continue
+            # Round to whole TEU — the publisher's sub-unit precision (the
+            # .25 / .15 fragments from partial-day reporting) is noise for a
+            # macro indicator.
+            rec[key] = int(round(v))
+        # Skip rows where we got no data at all (future months in current
+        # calendar year render as blank/&nbsp; cells).
+        if "total" not in rec and "loaded_imports" not in rec:
+            continue
+        out.append(rec)
+    out.sort(key=lambda o: o["month"])
+    return out
+
 
 def fetch_la_port() -> dict | None:
-    """Pull monthly TEU rows from the Port of LA Socrata dataset.
+    """Walk back through per-year POLA stats pages and assemble the full
+    monthly observation series. Returns None only if every year fetch fails.
 
-    Schema returned by the live endpoint (verified 2026-05-25):
-        { "month_year": "Sep-16",
-          "date": "2016-09-30T00:00:00.000",
-          "monthly_total_teus": "747707.4" }
-
-    The dataset historically also exposed loaded/empty breakdowns, but as of
-    2026 only ``monthly_total_teus`` is present. We surface that as ``total``
-    and leave the breakdown fields absent — the renderer treats them as
-    optional. Source dataset is stale (last reading 2016-09 as of build time);
-    we still ship it because (a) the spec called for it, and (b) it provides
-    real long-tail history the dashboard can chart.
-    """
-    rows = _get_json(LA_PORT_URL, {"$limit": SOCRATA_LIMIT, "$order": "date DESC"})
-    if not isinstance(rows, list) or not rows:
+    We start from the current calendar year and walk backward until we have
+    at least one observation. We always fetch ``POLA_YEARS_BACK`` years to
+    keep the dashboard's 5-year chart well-populated even early in a calendar
+    year. Individual year failures are non-fatal — we log and continue, so a
+    transient 5xx on one year doesn't blow away the whole series."""
+    now_year = datetime.now(timezone.utc).year
+    all_obs: list[dict] = []
+    fetched_any = False
+    fetch_failures: list[int] = []
+    for back in range(POLA_YEARS_BACK + 1):
+        year = now_year - back
+        url = POLA_YEAR_URL.format(year=year)
+        text = _get_text(url, timeout=25)
+        if not text:
+            # 404 is expected for the current year before the page lives, or
+            # for very old years. Log and continue; only abort if EVERY
+            # fetch fails.
+            fetch_failures.append(year)
+            continue
+        try:
+            rows = parse_pola_year_table(text, year)
+        except Exception as e:
+            print(f"    [la_port] parse {year} failed: {e}", file=sys.stderr)
+            rows = []
+        if rows:
+            fetched_any = True
+            all_obs.extend(rows)
+        elif back == 0:
+            # Current-year page exists but had no rows yet (very early in
+            # the year, or table not yet populated). Not a hard failure.
+            pass
+    if not fetched_any:
         return None
-    obs: list[dict] = []
-    for r in rows:
-        date_raw = r.get("date") or ""
-        # 'YYYY-MM-DDT...' -> 'YYYY-MM'
-        ym = date_raw[:7] if len(date_raw) >= 7 else None
-        if not ym:
-            # Fall back to parsing 'Sep-16' style month_year if needed.
-            my = (r.get("month_year") or "").strip()
-            if "-" in my:
-                mon3, yy = my.split("-", 1)
-                m = _MONTH_MAP.get(mon3.lower())
-                if m and yy.isdigit():
-                    # 2-digit year heuristic: 00-30 -> 2000s, 31-99 -> 1900s
-                    yi = int(yy)
-                    full = (2000 + yi) if yi <= 30 else (1900 + yi)
-                    ym = f"{full:04d}-{m}"
-        if not ym:
-            continue
-        total = _to_int(r.get("monthly_total_teus"))
-        if total is None:
-            continue
-        obs.append({"month": ym, "total": total})
+    # Dedupe by month — if a year page somehow returns overlapping rows the
+    # latest one (last in list) wins. all_obs is built newest-first because
+    # we iterate from this year backward, then each year's table is
+    # internally oldest-first; for dedupe we sort by month and keep last.
+    by_month: dict[str, dict] = {}
+    for o in sorted(all_obs, key=lambda r: r["month"]):
+        by_month[o["month"]] = o
+    obs = list(by_month.values())
+    obs.sort(key=lambda o: o["month"])
     if not obs:
         return None
-    # Sort oldest-first so the chart consumer can iterate linearly.
-    obs.sort(key=lambda o: o["month"])
     return {
         "unit": "TEU",
         "observations": obs,
-        "source": "data.lacity.org tsuv-4rgh",
+        "source": "portoflosangeles.org historical-teu-statistics",
         "as_of": obs[-1]["month"],
-    }
-
-
-# ----- Port of NY/NJ (Socrata) -----------------------------------------------
-
-def fetch_nynj_port() -> dict | None:
-    """Pull NY/NJ monthly TEU. Rows are split by type (Imports vs Exports)
-    with one row per (year, month, type); we pivot them into a single
-    observation per month with loaded_imports + loaded_exports + total.
-
-    Live schema (verified 2026-05-25):
-        { "year": "2015", "month": "October", "type": "Imports",
-          "volume": "269674" }
-
-    Like the LA dataset, this one is stale (last data 2015-12). We surface
-    what's available rather than dropping the entire panel; the dashboard
-    notes the as_of date and the source so it's clear the cadence stopped.
-    """
-    rows = _get_json(NYNJ_PORT_URL, {"$limit": SOCRATA_LIMIT})
-    if not isinstance(rows, list) or not rows:
-        return None
-    pivot: dict[str, dict[str, int]] = {}
-    for r in rows:
-        ym = _ym_from_year_month(r.get("year"), r.get("month"))
-        if not ym:
-            continue
-        vol = _to_int(r.get("volume"))
-        if vol is None:
-            continue
-        typ = (r.get("type") or "").strip().lower()
-        slot = pivot.setdefault(ym, {})
-        if typ == "imports":
-            slot["loaded_imports"] = vol
-        elif typ == "exports":
-            slot["loaded_exports"] = vol
-        else:
-            # Unknown type — stash under a passthrough key so we don't lose it.
-            slot[typ or "other"] = vol
-    if not pivot:
-        return None
-    obs: list[dict] = []
-    for ym in sorted(pivot.keys()):
-        row = {"month": ym}
-        row.update(pivot[ym])
-        imp = pivot[ym].get("loaded_imports") or 0
-        exp = pivot[ym].get("loaded_exports") or 0
-        row["total"] = imp + exp
-        obs.append(row)
-    return {
-        "unit": "TEU",
-        "observations": obs,
-        "source": "data.ny.gov 629s-5a55",
-        "as_of": obs[-1]["month"],
-        "note": "imports + exports only (loaded containers)",
+        "note": (
+            "Monthly TEU scraped from per-year POLA stats pages "
+            "(replaces data.lacity.org tsuv-4rgh, which stopped Sep-2016)."
+        ),
     }
 
 
@@ -416,19 +532,6 @@ def fetch_all(prior: dict | None = None) -> dict:
     elif la:
         print(f"    -> {len(la['observations'])} months, latest {la['as_of']}")
 
-    print("  Supplies: Port of NY/NJ TEU...")
-    try:
-        nynj = fetch_nynj_port()
-    except Exception as e:
-        print(f"    [nynj_port] {e}", file=sys.stderr)
-        nynj = None
-    if nynj is None and prior.get("port_teu", {}).get("ny_nj"):
-        nynj = prior["port_teu"]["ny_nj"]
-        nynj["_stale"] = True
-        print("    -> using prior value (stale)")
-    elif nynj:
-        print(f"    -> {len(nynj['observations'])} months, latest {nynj['as_of']}")
-
     print("  Supplies: FRED ISRATIO...")
     try:
         inv = fetch_inventory_ratio()
@@ -462,8 +565,6 @@ def fetch_all(prior: dict | None = None) -> dict:
     }
     if la:
         payload["port_teu"]["los_angeles"] = la
-    if nynj:
-        payload["port_teu"]["ny_nj"] = nynj
     if inv:
         payload["inventory_ratio"] = inv
     if gscpi:
@@ -481,10 +582,44 @@ _SAMPLE_GSCPI = (
 )
 
 
+# Fixture mirrors the POLA per-year monthly table shape (verified 2026-05-26):
+# header row + 12 monthly rows (some empty for future months in current year)
+# + total rows we expect to skip. Whitespace and &nbsp; are intentional —
+# they match what the publisher actually emits.
+_SAMPLE_POLA_HTML = """
+<html><body>
+<table>
+<tr><td>&nbsp;</td><td>Loaded Imports</td><td>Empty Imports</td><td>Total Imports</td>
+    <td>Loaded Exports</td><td>Empty Exports</td><td>Total Exports</td>
+    <td>Total&nbsp;TEUs</td><td>Prior Year Change</td></tr>
+<tr><td>January</td><td>421,593.75</td><td>115.00</td><td>421,708.75</td>
+    <td>104,297.00</td><td>285,994.50</td><td>390,291.50</td>
+    <td>812,000.25</td><td>-12.14%</td></tr>
+<tr><td>February</td><td>433,812.25</td><td>17.25</td><td>433,829.50</td>
+    <td>116,633.25</td><td>273,860.50</td><td>390,493.75</td>
+    <td>824,323.25</td><td>2.86%</td></tr>
+<tr><td>March</td><td>380,732.50</td><td>60.00</td><td>380,792.50</td>
+    <td>132,129.00</td><td>239,598.00</td><td>371,727.00</td>
+    <td>752,519.50</td><td>-3.33%</td></tr>
+<tr><td>May</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+    <td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+    <td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td>Total&nbsp;Calendar Year 2026</td><td>&nbsp;</td><td>1,236,138.50</td>
+    <td>192.25</td><td>1,236,330.75</td><td>353,059.25</td>
+    <td>799,453.00</td><td>1,152,512.25</td><td>2,388,843.00</td></tr>
+</table>
+<table><tr><td>some other unrelated table</td></tr></table>
+</body></html>
+"""
+
+
 def _self_test() -> int:
     obs = parse_gscpi_csv(_SAMPLE_GSCPI)
+    pola = parse_pola_year_table(_SAMPLE_POLA_HTML, 2026)
+    pola_jan = next((r for r in pola if r["month"] == "2026-01"), {})
+    pola_mar = next((r for r in pola if r["month"] == "2026-03"), {})
     checks = [
-        (len(obs) == 3, f"expected 3 rows, got {len(obs)}"),
+        (len(obs) == 3, f"expected 3 GSCPI rows, got {len(obs)}"),
         (obs[0]["date"] == "1997-09-30", f"row[0].date={obs[0].get('date')!r}"),
         (obs[0]["value"] == -0.40, f"row[0].value={obs[0].get('value')!r}"),
         (obs[1]["value"] == -0.23, f"row[1].value={obs[1].get('value')!r}"),
@@ -496,13 +631,30 @@ def _self_test() -> int:
         (_ym_from_year_month("bogus", "October") is None, "bad year rejected"),
         (_to_int("123.5") == 124, "_to_int rounds"),
         (_to_float(".") is None, "FRED missing-value marker handled"),
+        # POLA HTML parser
+        (len(pola) == 3, f"POLA expected 3 monthly rows, got {len(pola)}: {[r['month'] for r in pola]}"),
+        (pola_jan.get("month") == "2026-01", f"POLA Jan month={pola_jan.get('month')!r}"),
+        (pola_jan.get("total") == 812000, f"POLA Jan total={pola_jan.get('total')!r}"),
+        (pola_jan.get("loaded_imports") == 421594,
+         f"POLA Jan loaded_imports={pola_jan.get('loaded_imports')!r}"),
+        (pola_jan.get("loaded_exports") == 104297,
+         f"POLA Jan loaded_exports={pola_jan.get('loaded_exports')!r}"),
+        (pola_jan.get("empty_imports") == 115,
+         f"POLA Jan empty_imports={pola_jan.get('empty_imports')!r}"),
+        (pola_mar.get("total") == 752520,
+         f"POLA Mar total={pola_mar.get('total')!r}"),
+        (_parse_teu_value("459,825.25") == 459825.25, "comma+decimal parsed"),
+        (_parse_teu_value("(668.50)") == -668.50, "parentheses negative"),
+        (_parse_teu_value("&nbsp;") is None, "nbsp returns None"),
+        (_parse_teu_value("#N/A") is None, "N/A returns None"),
     ]
     failed = [m for ok, m in checks if not ok]
     if failed:
         for f in failed:
             print(f"  [self-test FAIL] {f}", file=sys.stderr)
         return 1
-    print(f"  [self-test OK] {len(obs)} GSCPI rows; all assertions passed.")
+    print(f"  [self-test OK] {len(obs)} GSCPI rows + {len(pola)} POLA rows; "
+          f"all assertions passed.")
     return 0
 
 

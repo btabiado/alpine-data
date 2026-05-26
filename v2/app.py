@@ -3202,7 +3202,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div class="v2-card__head">
             <div>
               <h2 class="v2-card__title">U.S. port container throughput</h2>
-              <div class="v2-card__subtitle">Monthly TEU — Port of Los Angeles vs Port of NY/NJ</div>
+              <div class="v2-card__subtitle">Monthly TEU — Port of Los Angeles · total vs loaded imports</div>
             </div>
             <div><span class="v2-chip v2-chip--info" id="suppliesPortsAsOf">● —</span></div>
           </div>
@@ -10282,7 +10282,6 @@ function renderSuppliesSnapshot(sup){
   if (!host) return;
   const cards = [];
   const la = ((sup.port_teu||{}).los_angeles) || null;
-  const nynj = ((sup.port_teu||{}).ny_nj) || null;
   const inv = sup.inventory_ratio || null;
   const gscpi = sup.gscpi || null;
 
@@ -10317,24 +10316,26 @@ function renderSuppliesSnapshot(sup){
     const delta = pctDelta(la.observations, 'total');
     const sev = sevFromDelta(delta);
     cards.push(V2.card({
-      title: 'Port of L.A.',
+      title: 'Port of L.A. · total',
       subtitle: 'Monthly TEU · ' + (la.as_of || ''),
       severity: sev,
       head_right: V2.chip(fmtPct(delta) + ' MoM', sev),
       body: '<div class="v2-value v2-value--lg">' + fmtAbs(last.total) + '</div>',
     }));
-  }
-  if (nynj && Array.isArray(nynj.observations) && nynj.observations.length){
-    const last = nynj.observations[nynj.observations.length-1];
-    const delta = pctDelta(nynj.observations, 'total');
-    const sev = sevFromDelta(delta);
-    cards.push(V2.card({
-      title: 'Port of NY/NJ',
-      subtitle: 'Loaded imports+exports · ' + (nynj.as_of || ''),
-      severity: sev,
-      head_right: V2.chip(fmtPct(delta) + ' MoM', sev),
-      body: '<div class="v2-value v2-value--lg">' + fmtAbs(last.total) + '</div>',
-    }));
+    // Loaded-imports-only card replaces the old NY/NJ slot (panynj.gov is
+    // JS-rendered + unscrapeable; data.ny.gov 629s-5a55 stopped Dec-2015).
+    // Loaded imports are the leading-indicator subset for US consumer demand.
+    if (last.loaded_imports != null){
+      const deltaI = pctDelta(la.observations, 'loaded_imports');
+      const sevI = sevFromDelta(deltaI);
+      cards.push(V2.card({
+        title: 'Port of L.A. · loaded imports',
+        subtitle: 'Leading-indicator subset · ' + (la.as_of || ''),
+        severity: sevI,
+        head_right: V2.chip(fmtPct(deltaI) + ' MoM', sevI),
+        body: '<div class="v2-value v2-value--lg">' + fmtAbs(last.loaded_imports) + '</div>',
+      }));
+    }
   }
   if (inv && Array.isArray(inv.observations) && inv.observations.length){
     const last = inv.observations[inv.observations.length-1];
@@ -10514,49 +10515,38 @@ function renderSuppliesPorts(sup){
   const asOf = document.getElementById('suppliesPortsAsOf');
   if (!host) return;
   const la = ((sup.port_teu||{}).los_angeles) || null;
-  const nynj = ((sup.port_teu||{}).ny_nj) || null;
-  if (!la && !nynj){
+  if (!la){
     host.innerHTML = V2.empty({icon:'🚢', title:'No port data',
-      sub:'Socrata endpoints returned nothing on the last build.'});
+      sub:'Port of L.A. stats page returned nothing on the last build.'});
     if (foot) foot.textContent = '';
     if (asOf) asOf.textContent = '● —';
     return;
   }
 
   // Trim to last 5 years (60 months) for readability.
-  const series = [];
-  if (la){
-    const trimmed = trimByMonths(la.observations || [], 60);
-    series.push({
-      label: 'L.A. monthly total TEU',
-      color: 'orange',
+  const trimmed = trimByMonths(la.observations || [], 60);
+  const xLabels = { first: fmtYearMonth(trimmed[0] && trimmed[0].month),
+                    last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month) };
+  const series = [
+    { label: 'L.A. total monthly TEU', color: 'orange',
       values: trimmed.map(o => ({ x: ymToX(o.month), y: o.total })),
-      xLabels: { first: fmtYearMonth(trimmed[0] && trimmed[0].month),
-                 last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month) },
-    });
-  }
-  if (nynj){
-    const trimmed = trimByMonths(nynj.observations || [], 60);
-    series.push({
-      label: 'NY/NJ loaded imports+exports',
-      color: 'info',
-      values: trimmed.map(o => ({ x: ymToX(o.month), y: o.total })),
-      xLabels: { first: fmtYearMonth(trimmed[0] && trimmed[0].month),
-                 last:  fmtYearMonth(trimmed[trimmed.length-1] && trimmed[trimmed.length-1].month) },
-    });
+      xLabels: xLabels },
+  ];
+  // Loaded imports = leading-indicator subset of total. Skip if absent (the
+  // POLA per-year pages have always carried this column, but defensive
+  // checks keep us robust if a page layout shifts).
+  const hasLoadedImp = trimmed.some(o => o.loaded_imports != null);
+  if (hasLoadedImp){
+    series.push({ label: 'L.A. loaded imports (subset)', color: 'info',
+                  values: trimmed.filter(o => o.loaded_imports != null).map(o => ({ x: ymToX(o.month), y: o.loaded_imports })),
+                  xLabels: xLabels });
   }
   host.innerHTML = svgLineChart(series, {
     yFmt: (v) => (v >= 1e6 ? (v/1e6).toFixed(1) + 'M' : (v/1e3).toFixed(0) + 'k'),
   });
 
-  const sources = [];
-  if (la) sources.push('LA: ' + la.source + (la.as_of ? ' · ' + la.as_of : ''));
-  if (nynj) sources.push('NY/NJ: ' + nynj.source + (nynj.as_of ? ' · ' + nynj.as_of : ''));
-  if (foot) foot.textContent = sources.join(' · ');
-
-  // "Updated" chip = freshest of the two as_of strings.
-  const latest = [la && la.as_of, nynj && nynj.as_of].filter(Boolean).sort().pop();
-  if (asOf) asOf.textContent = '● ' + (latest || '—');
+  if (foot) foot.textContent = 'Source: ' + la.source + (la.as_of ? ' · ' + la.as_of : '') + ' · NY/NJ feed retired by publisher in 2015; L.A. shown alone.';
+  if (asOf) asOf.textContent = '● ' + (la.as_of || '—');
 }
 
 function renderSuppliesInventory(sup){
