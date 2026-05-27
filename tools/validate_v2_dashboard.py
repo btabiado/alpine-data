@@ -16,9 +16,15 @@ breakage was only spotted live. This validator closes that hole.
 
 Design
 ------
-Pure stdlib, no JS parser. Targeted regex checks against the largest
-<script> block in the freshly-built v2/dashboard.html:
+Pure stdlib + `mini-racer` (V8) for the authoritative parse check.
+Targeted checks against the largest <script> block in the freshly-built
+v2/dashboard.html:
 
+  0. **AUTHORITATIVE**: Parse the inline JS with V8 via py_mini_racer.
+     Wrapped as a non-executing function expression so any real syntax
+     error (e.g. the 2026-05-25 unary-plus regression that bricked V2)
+     fails the build before deploy. Runs FIRST — if this fails, the
+     remaining structural heuristics are noise.
   1. Top-level `const NAME = ...` declarations are unique
      (catches SIDECAR_FOR_TAB-style duplicates).
   2. No `V2.empty({...})` call contains a literal `if (state.tab` inside
@@ -74,6 +80,117 @@ def extract_largest_script(html: str) -> tuple[str, int]:
             # wants to report line numbers in the original file.
             best_start = m.start("body")
     return best_body, best_start
+
+
+def check_inline_js_parses_with_v8(html: str, primary_js: str) -> bool:
+    """Authoritative syntax check — parse every inline script with V8.
+
+    The regex heuristics elsewhere in this file catch known structural bug
+    classes (duplicate consts, take-both conflict patterns), but they
+    don't actually parse JS. The 2026-05-25 incident shipped a real
+    unary-plus syntax error that bricked V2 in prod because nothing in CI
+    ran a real parser. This closes that gap.
+
+    Coverage: every inline `<script>` whose body is non-trivial is parsed
+    individually — `primary_js` (the largest, ~4MB app bundle) plus any
+    smaller inline scripts the template emits. The CDN `<script src=...>`
+    tags have empty bodies and are skipped naturally. Each is wrapped as
+    a non-executing function expression `(function() { ...body... })` and
+    eval'd: V8 parses the body fully but never invokes it (no trailing
+    `()`), so DOM access, fetch, Chart.js construction never fire — the
+    validator stays hermetic.
+
+    A `SyntaxError` raises `JSEvalException` with a `line:col` pointer
+    into the wrapped source; we subtract the 1-line wrapper offset so
+    the reported line matches the original script and print 3 lines of
+    context for an actionable CI log.
+    """
+    # Imported lazily so a fresh checkout without mini-racer still
+    # gets useful output from the other checks instead of a top-level
+    # ImportError that hides everything.
+    try:
+        from py_mini_racer import MiniRacer, JSEvalException
+    except ImportError as exc:
+        _log(
+            False,
+            "Inline JS parses via mini-racer (V8)",
+            f"py_mini_racer not importable ({exc}); install `mini-racer`",
+        )
+        return False
+
+    # Collect (body, label) pairs for every inline script with a non-trivial
+    # body. The primary (largest) script is parsed first so an error there
+    # is the headline; secondary scripts catch e.g. a tiny `<script>const x
+    # = ;</script>` injection near </body> that the largest-script check
+    # would otherwise miss.
+    pat = re.compile(r"<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL)
+    bodies: list[tuple[str, str]] = []
+    seen_primary = False
+    for m in pat.finditer(html):
+        body = m.group("body")
+        # Skip CDN includes (`<script src="...">` with empty body) and
+        # whitespace-only blocks — nothing to parse.
+        if not body.strip():
+            continue
+        if body is primary_js or (not seen_primary and body == primary_js):
+            bodies.insert(0, (body, "primary app JS"))
+            seen_primary = True
+        else:
+            bodies.append((body, f"inline #{len(bodies)}"))
+    if not seen_primary and primary_js.strip():
+        # Defensive fallback if identity match missed (shouldn't happen):
+        bodies.insert(0, (primary_js, "primary app JS"))
+
+    ctx = MiniRacer()
+    total_chars = 0
+    for js, label in bodies:
+        # Non-executing wrap: function *expression* with no trailing `()`.
+        # The leading `\n` keeps the body's own line numbering aligned so
+        # V8's reported line minus 1 maps to the line in the original body.
+        wrapped = "(function() {\n" + js + "\n})"
+        try:
+            ctx.eval(wrapped)
+        except JSEvalException as exc:
+            msg = str(exc)
+            # mini-racer's exception text starts with `<anonymous>:<line>:`
+            # or `undefined:<line>:`; pull the first line number out for
+            # context windowing.
+            m = re.search(r":(\d+):", msg)
+            line_in_wrap = int(m.group(1)) if m else -1
+            # Subtract the 1-line `(function() {` prefix to map back to
+            # the extracted body's own line numbering.
+            line_in_js = line_in_wrap - 1 if line_in_wrap > 0 else -1
+            context = ""
+            if line_in_js > 0:
+                lines = js.splitlines()
+                lo = max(0, line_in_js - 2)
+                hi = min(len(lines), line_in_js + 1)
+                numbered = []
+                for i in range(lo, hi):
+                    marker = ">>" if (i + 1) == line_in_js else "  "
+                    numbered.append(f"  {marker} {i + 1:>6}: {lines[i]}")
+                context = "\n" + "\n".join(numbered)
+            first = msg.splitlines()[0] if msg else "unknown V8 error"
+            _log(
+                False,
+                "Inline JS parses via mini-racer (V8)",
+                f"[{label}] syntax error at line {line_in_js}: {first}{context}",
+            )
+            return False
+        except Exception as exc:  # noqa: BLE001 — surface anything mini-racer raises
+            _log(
+                False,
+                "Inline JS parses via mini-racer (V8)",
+                f"[{label}] unexpected {type(exc).__name__}: {exc}",
+            )
+            return False
+        total_chars += len(js)
+    _log(
+        True,
+        "Inline JS parses via mini-racer (V8)",
+        f"{len(bodies)} inline script(s), {total_chars:,} chars",
+    )
+    return True
 
 
 def check_no_duplicate_top_level_consts(js: str) -> bool:
@@ -362,7 +479,12 @@ def validate(path: Path) -> int:
         return 1
     print(f"[info ] Largest inline script body: {len(js):,} chars, {js.count(chr(10)):,} lines")
 
+    # V8 parse runs FIRST — if the inline JS doesn't parse, the structural
+    # heuristics below are noise. Keep them in the run anyway so the log
+    # surfaces every signal in one shot (a take-both conflict often trips
+    # both #0 and #2, etc.) — exit code is still driven by all() below.
     results = [
+        check_inline_js_parses_with_v8(html, js),
         check_no_duplicate_top_level_consts(js),
         check_no_state_tab_in_v2_empty(js),
         check_no_conflict_markers(js),

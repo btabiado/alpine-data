@@ -21,3 +21,10 @@ yfinance==1.2.0
 pytrends==4.9.2
 # LTHCS Phase 5 (Tier 5 #26: MCP server)
 mcp[cli]==1.27.1
+
+# V2 dashboard CI guard — used by tools/validate_v2_dashboard.py to actually
+# parse the inline app JS via embedded V8 instead of regex-only heuristics.
+# Catches the class of bug that bricked V2 in prod on 2026-05-25 (unary-plus
+# syntax error) which pattern-only checks couldn't see. ~30MB wheel,
+# parse-only (no script execution) — adds ~1-2s to the validate step.
+mini-racer==0.12.4
