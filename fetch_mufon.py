@@ -559,13 +559,39 @@ def _strip_html(s: str) -> str:
 
 
 def _nuforc_extract_nonce(html_text: str) -> str | None:
-    """Pull the wpDataTables CSRF nonce from a /ndx/ or /subndx/ page. The
-    field is named ``wdtNonceFrontendServerSide_1`` and ships as a hidden
-    input. Returns the 10-character hex token or None on miss."""
-    m = re.search(
+    """Pull the wpDataTables CSRF nonce from a /ndx/ or /subndx/ page.
+
+    The primary field is named ``wdtNonceFrontendServerSide_1`` and ships
+    as a hidden input. We try a series of progressively more tolerant
+    patterns so that minor markup churn (attribute reordering, whitespace,
+    table_id increments after a plugin update, etc.) doesn't break the
+    bootstrap. Returns the hex token or None on miss.
+    """
+    # Try patterns in order of specificity. Each is a (label, regex) pair —
+    # the label is purely for debug logging by the caller if it wants it.
+    patterns = (
+        # Original strict pattern: name="..."<sp>value="<hex>"
         r'wdtNonceFrontendServerSide_1"\s+value="([a-f0-9]+)"',
-        html_text)
-    return m.group(1) if m else None
+        # Attribute order flipped: value="<hex>" ... name="wdtNonceFrontendServerSide_1"
+        r'value="([a-f0-9]+)"[^>]*name="wdtNonceFrontendServerSide_1"',
+        # Any wdtNonceFrontendServerSide_N (plugin sometimes bumps the suffix
+        # when more than one wpDataTables instance lands on a page).
+        r'name="wdtNonceFrontendServerSide_\d+"\s+value="([a-f0-9]+)"',
+        r'value="([a-f0-9]+)"[^>]*name="wdtNonceFrontendServerSide_\d+"',
+        # Most tolerant: any input whose name contains "wdtNonce" anywhere
+        # near a value="<hex>" attribute on the same tag.
+        r'<input[^>]*name="[^"]*wdtNonce[^"]*"[^>]*value="([a-f0-9]+)"',
+        r'<input[^>]*value="([a-f0-9]+)"[^>]*name="[^"]*wdtNonce[^"]*"',
+    )
+    for pat in patterns:
+        m = re.search(pat, html_text)
+        if m:
+            tok = m.group(1)
+            # Sanity-check: real WP nonces are 10-char hex. Accept anything
+            # 8-20 chars to leave a small margin for future format changes.
+            if 8 <= len(tok) <= 20:
+                return tok
+    return None
 
 
 def _nuforc_fetch_month(yyyymm: str, nonce: str,
@@ -717,7 +743,17 @@ def _fetch_nuforc_live(months_back: int = 144,
                 break
             nonce = _nuforc_extract_nonce(bootstrap_html)
             if not nonce:
-                stopped_reason = "could_not_extract_nonce"
+                # Diagnostic dump — surface enough context in CI logs that a
+                # future regression is debuggable without re-fetching the page.
+                has_wdt = "wdtNonce" in bootstrap_html
+                has_input = '<input' in bootstrap_html
+                size = len(bootstrap_html)
+                stopped_reason = (
+                    f"could_not_extract_nonce "
+                    f"(bootstrap={size}B, has_wdtNonce_token={has_wdt}, "
+                    f"has_input_tag={has_input}, url={NUFORC_MONTH_PAGE}{ym})"
+                )
+                print(f"  NUFORC: {stopped_reason}", file=sys.stderr)
                 break
 
         # Polite delay between actual network requests. Skip on the very
