@@ -1,0 +1,33 @@
+{
+  "aaii": {
+    "bearish_pct": 43.6,
+    "bull_bear_spread": -11.900000000000002,
+    "bullish_pct": 31.7,
+    "neutral_pct": 24.7,
+    "regime": "bearish",
+    "spread_4w_ma": -11.900000000000002,
+    "week_ending": "2026-05-20"
+  },
+  "as_of": "2026-05-26",
+  "composite_regime": "cautious",
+  "data_quality": {
+    "failed_sources": [],
+    "sources_failed": 0,
+    "sources_ok": 3
+  },
+  "naaim": {
+    "exposure": 82.02,
+    "mean_4w": 87.45500000000001,
+    "percentile_1y": 0.7,
+    "regime": "aggressive",
+    "week_ending": "2026-05-20"
+  },
+  "put_call": {
+    "last_updated": "2026-05-22",
+    "latest": 0.85,
+    "mean_30d": null,
+    "percentile_1y": null,
+    "regime": "normal",
+    "source": "cboe_daily_html"
+  }
+}

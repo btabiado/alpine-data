@@ -1,0 +1,64 @@
+{
+  "as_of": "2026-05-26",
+  "band_key": "monitor",
+  "color": "#F0A861",
+  "components": [
+    {
+      "delta": -21,
+      "name": "Band lean (bullish % minus bearish %)",
+      "read": "universe distributing",
+      "value": "-69.9%"
+    },
+    {
+      "delta": 0,
+      "name": "Adoption pillar avg",
+      "read": "adoption neutral",
+      "value": 51.2
+    },
+    {
+      "delta": 0,
+      "name": "Institutional pillar avg",
+      "read": "institutional steady",
+      "value": 49.0
+    },
+    {
+      "delta": 1,
+      "name": "Financial pillar avg",
+      "read": "fundamentals stable",
+      "value": 55.3
+    },
+    {
+      "delta": 2,
+      "name": "Thesis pillar avg",
+      "read": "narrative mixed",
+      "value": 58.0
+    },
+    {
+      "delta": -1,
+      "name": "DES (demand environment) avg",
+      "read": "macro neutral",
+      "value": 47.0
+    },
+    {
+      "delta": 10,
+      "name": "Macro regime (HY OAS / curve / USD)",
+      "read": "risk-on backdrop",
+      "value": "clean"
+    },
+    {
+      "delta": -7,
+      "name": "Insider conviction breadth",
+      "read": "insiders distributing",
+      "value": "139 active signals"
+    },
+    {
+      "delta": -9,
+      "name": "13F conviction breadth (acc vs dist)",
+      "read": "institutions distributing",
+      "value": "3 vs 58"
+    }
+  ],
+  "label": "LTHCS NEUTRAL",
+  "note": "Aggregate of 209-ticker LTHCS universe. Directional read, not a trading signal.",
+  "score": -25
+}
