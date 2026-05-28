@@ -104,6 +104,19 @@ jobs:
         if: hashFiles('dashboard.html') == ''
         run: python app.py --no-open
 
+      - name: Validate V1 dashboard JS structure
+        # Structural lint of the freshly-built dashboard.html inline <script>,
+        # including the SIDECARS↔SIDECAR_FOR_TAB coverage check that caught
+        # the V1 regression on 2026-05-27 (new tabs ported into V1 added
+        # entries to SIDECAR_FOR_TAB without corresponding SIDECARS keys, so
+        # the lazy loader returned null and tabs sat in their empty state
+        # forever). Mirrors the V2 validation step below. Pure-stdlib Python
+        # — no new deps. FAILS THE BUILD on regression: production at `/` is
+        # the source of truth and we'd rather block a deploy than ship dead
+        # tabs.
+        if: hashFiles('dashboard.html') != ''
+        run: python tools/validate_dashboard.py dashboard.html
+
       - name: Build dashboard health status JSON
         # Scans data/ + data/.stale/ mtimes to emit data/health/status.json,
         # consumed by /health/ to show per-tab freshness. Pure-stdlib script,

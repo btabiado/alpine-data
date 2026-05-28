@@ -312,6 +312,202 @@ def check_brace_paren_balance(js: str) -> tuple[bool, dict]:
     return True, deltas
 
 
+def _extract_object_literal(js: str, decl_pattern: str) -> str | None:
+    """Slice `const NAME = { ... }` body using a depth/string/comment-aware walk.
+
+    Returns the inner text between the outer `{...}` (exclusive of the braces),
+    or None if the declaration is not found / unbalanced. Shared helper for the
+    SIDECARS / SIDECAR_FOR_TAB coverage check below — same algorithm as the
+    inline scanner in check_state_keys_unique, factored out for reuse.
+    """
+    m = re.search(decl_pattern, js, re.MULTILINE)
+    if not m:
+        return None
+    # Find the first `{` at or after the regex end — handles both
+    # `const X = {` (brace included in match) and `const X =\n{` shapes.
+    open_idx = js.find("{", m.end() - 1)
+    if open_idx < 0:
+        return None
+    depth = 0
+    in_str: str | None = None
+    in_line_comment = False
+    in_block_comment = False
+    i = open_idx
+    while i < len(js):
+        ch = js[i]
+        nxt = js[i + 1] if i + 1 < len(js) else ""
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+        elif in_block_comment:
+            if ch == "*" and nxt == "/":
+                in_block_comment = False
+                i += 2
+                continue
+        elif in_str:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == in_str:
+                in_str = None
+        else:
+            if ch == "/" and nxt == "/":
+                in_line_comment = True
+                i += 2
+                continue
+            if ch == "/" and nxt == "*":
+                in_block_comment = True
+                i += 2
+                continue
+            if ch in ("'", '"', "`"):
+                in_str = ch
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    return js[open_idx + 1 : i]
+        i += 1
+    return None
+
+
+def _parse_simple_obj_pairs(body: str) -> list[tuple[str, str]]:
+    """Parse a flat `{ k1: 'v1', k2: "v2", k3: `v3`, ... }` body into [(k, v)].
+
+    Only handles the shape SIDECARS and SIDECAR_FOR_TAB actually use: a single
+    level of identifier-or-string keys mapped to single-line string values. Any
+    pair we can't confidently parse is skipped (we'd rather under-report than
+    raise on a future shape we haven't seen). Comments and whitespace are
+    tolerated; nested objects/arrays would be skipped silently.
+    """
+    pairs: list[tuple[str, str]] = []
+    # Strip comments so the per-pair regex doesn't trip on // or /* */.
+    cleaned = re.sub(r"/\*.*?\*/", "", body, flags=re.DOTALL)
+    cleaned = re.sub(r"//[^\n]*", "", cleaned)
+    # Match `key: 'value'` / `"key": "value"` / `key: \`value\``. The value
+    # group is non-greedy and ends at the closing quote that matches the
+    # opening quote — we capture the quote char as a backreference.
+    pair_pat = re.compile(
+        r"""
+        (?:                                  # key — bare ident or quoted string
+            (?P<key_ident>[A-Za-z_$][\w$]*)
+          | (?P<kq>['"`])(?P<key_str>[^'"`]*)(?P=kq)
+        )
+        \s*:\s*
+        (?P<vq>['"`])(?P<val>[^'"`]*)(?P=vq)   # value — quoted string only
+        """,
+        re.VERBOSE,
+    )
+    for m in pair_pat.finditer(cleaned):
+        key = m.group("key_ident") or m.group("key_str") or ""
+        val = m.group("val") or ""
+        if key:
+            pairs.append((key, val))
+    return pairs
+
+
+def check_sidecars_coverage(js: str) -> bool:
+    """Every SIDECAR_FOR_TAB *value* must appear as a SIDECARS *key*.
+
+    Drift between the two broke V1 on 2026-05-27: new tabs were added to
+    SIDECAR_FOR_TAB but the corresponding manifest entries were never added
+    to SIDECARS, so loadSidecar() returned null and the tabs sat in their
+    empty state forever.
+
+    The reverse direction (SIDECARS key with no SIDECAR_FOR_TAB pointing at
+    it) is reported as a warning only — orphaned manifests are wasteful but
+    not user-visible breakage (e.g. a tab may legitimately use a sidecar
+    name that doesn't match the tab id, like stocks→stockprices).
+
+    For V1 dashboards: SIDECARS is the *server-rendered* JSON manifest
+    (`const SIDECARS = __SIDECARS_JSON__;` where the placeholder is replaced
+    at build time with the real `{name: '/data-name.json', ...}` dict). The
+    placeholder check (check_no_placeholder_remnant) ensures the literal got
+    substituted; here we just parse whatever JSON ended up on the right.
+    """
+    # SIDECAR_FOR_TAB is always an inline object literal — parse with the
+    # depth-aware walker so multi-line shapes (V1) and single-line shapes (V2)
+    # both work.
+    sft_body = _extract_object_literal(js, r"^const\s+SIDECAR_FOR_TAB\s*=\s*\{")
+    if sft_body is None:
+        _log(False, "SIDECAR_FOR_TAB declaration found", "no `const SIDECAR_FOR_TAB = {` declaration")
+        return False
+    sft_pairs = _parse_simple_obj_pairs(sft_body)
+    if not sft_pairs:
+        _log(False, "SIDECAR_FOR_TAB parses", "no key/value pairs extracted")
+        return False
+    sft_values = {v for _, v in sft_pairs}
+
+    # SIDECARS may be either a substituted JSON object literal (post-render)
+    # or the raw `__SIDECARS_JSON__` placeholder (pre-render). The latter is
+    # already caught by check_no_placeholder_remnant — if we see it here, the
+    # coverage check is meaningless, so bail with a clear message.
+    decl_m = re.search(r"^const\s+SIDECARS\s*=\s*(.+?);?\s*$", js, re.MULTILINE)
+    if not decl_m:
+        _log(False, "SIDECARS declaration found", "no `const SIDECARS = ...` declaration")
+        return False
+    rhs = decl_m.group(1).strip().rstrip(";").strip()
+    if rhs.startswith("__") and rhs.endswith("__"):
+        _log(False, "SIDECARS substituted", f"placeholder `{rhs}` still present — template not rendered")
+        return False
+    # Try strict JSON first (the manifest is emitted by json.dumps so it's
+    # valid JSON). Fall back to the same simple-pair extractor if a future
+    # change makes it a JS literal with bare identifier keys.
+    sidecars_keys: set[str] = set()
+    try:
+        import json as _json
+        parsed = _json.loads(rhs)
+        if isinstance(parsed, dict):
+            sidecars_keys = set(parsed.keys())
+    except Exception:
+        # If the RHS is wrapped in `{...}` we can still parse it as a JS
+        # literal — extract the body and reuse the pair parser.
+        inner = rhs
+        if inner.startswith("{") and inner.endswith("}"):
+            inner = inner[1:-1]
+        sidecars_keys = {k for k, _ in _parse_simple_obj_pairs(inner)}
+    if not sidecars_keys:
+        # Empty manifest is legal (no sidecars configured) but only if
+        # SIDECAR_FOR_TAB is also empty — otherwise it's the V1 bug pattern.
+        if sft_values:
+            missing = sorted(sft_values)
+            _log(
+                False,
+                "SIDECARS covers SIDECAR_FOR_TAB",
+                f"SIDECARS is empty but SIDECAR_FOR_TAB references {missing}",
+            )
+            return False
+        _log(True, "SIDECARS covers SIDECAR_FOR_TAB", "both empty")
+        return True
+
+    missing = sorted(sft_values - sidecars_keys)
+    if missing:
+        # Report each miss in the V1-bug-style message so the fix is obvious
+        # at a glance in CI logs.
+        for name in missing:
+            print(f"[FAIL] SIDECAR_FOR_TAB references sidecar '{name}' but SIDECARS map has no '{name}' key")
+        _log(
+            False,
+            "SIDECARS covers SIDECAR_FOR_TAB",
+            f"{len(missing)} missing key(s): {missing}",
+        )
+        return False
+
+    # Reverse direction — warn only. Orphaned manifests are wasteful (the
+    # JSON file is fetched-but-unused) but not user-visible. Tabs may also
+    # legitimately reference a sidecar by a name that doesn't match the
+    # tab id (V2 has `stocks: 'stockprices'`), so silence isn't a bug.
+    orphans = sorted(sidecars_keys - sft_values)
+    if orphans:
+        print(f"[warn ] SIDECARS keys not referenced by SIDECAR_FOR_TAB (orphaned manifests): {orphans}")
+    _log(
+        True,
+        "SIDECARS covers SIDECAR_FOR_TAB",
+        f"{len(sft_values)} tab-sidecar(s), {len(sidecars_keys)} manifest key(s)",
+    )
+    return True
+
+
 def check_state_keys_unique(js: str) -> bool:
     """`const state = { ... }` — top-level keys must not collide.
 
@@ -491,9 +687,10 @@ def validate(path: Path) -> int:
         check_no_placeholder_remnant(js),
         check_brace_paren_balance(js)[0],
         check_state_keys_unique(js),
+        check_sidecars_coverage(js),
     ]
     if all(results):
-        print("[ok   ] All v2/dashboard.html JS structural checks passed.")
+        print(f"[ok   ] All {path} JS structural checks passed.")
         return 0
     failed = sum(1 for r in results if not r)
     print(f"[ERROR] {failed} check(s) failed — see above. Refusing to deploy.")
