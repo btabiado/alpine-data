@@ -211,9 +211,10 @@ def _mean(values: List[float]) -> Optional[float]:
 def _strip_html_text(s: str) -> str:
     # Inline (?is) flags instead of runtime re.I|re.S — CodeQL
     # py/bad-tag-filter inspects the pattern string itself and doesn't
-    # trust runtime IGNORECASE kwargs.
-    s = re.sub(r"(?is)<script\b[^>]*>.*?</script>", " ", s)
-    s = re.sub(r"(?is)<style\b[^>]*>.*?</style>", " ", s)
+    # trust runtime IGNORECASE kwargs. \s* on the end-tag handles
+    # HTML-tolerant whitespace like </script >.
+    s = re.sub(r"(?is)<script\b[^>]*>.*?</script\s*>", " ", s)
+    s = re.sub(r"(?is)<style\b[^>]*>.*?</style\s*>", " ", s)
     s = re.sub(r"<[^>]+>", " ", s)
     s = html.unescape(s)
     return re.sub(r"\s+", " ", s).strip()
