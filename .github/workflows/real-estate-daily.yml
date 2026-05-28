@@ -53,30 +53,16 @@ jobs:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python scripts/fetch_real_estate.py
 
-      - name: Commit and push if data changed
+      - name: Commit data changes via signed API commit
+        # Switched from plain `git push` to API-based commit so the
+        # resulting commit is auto-signed by GitHub (Verified badge).
+        # See .github/scripts/api-commit.sh — its retry loop mirrors the
+        # rebase-on-conflict behaviour the old shell loop provided.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: real-estate-bot
+          AUTHOR_EMAIL: real-estate-bot@users.noreply.github.com
         run: |
-          git config user.name "real-estate-bot"
-          git config user.email "real-estate-bot@users.noreply.github.com"
           git add data/real_estate.json
-          if git diff --staged --quiet; then
-            echo "No real estate data changes; skipping commit."
-          else
-            git commit -m "real-estate: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
-            # Race-safe push: mirror lthcs-*'s retry loop so main moving
-            # under us (concurrent cron, manual dev push) doesn't eat
-            # tonight's refresh.
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                echo "Push succeeded on attempt $attempt."
-                exit 0
-              fi
-              echo "Push attempt $attempt rejected — fetching + rebasing..."
-              git fetch origin main
-              git rebase --autostash origin/main || {
-                echo "Rebase conflict on attempt $attempt; aborting."
-                git rebase --abort
-                exit 1
-              }
-            done
-            echo "All 3 push attempts failed; giving up." && exit 1
-          fi
+          .github/scripts/api-commit.sh \
+            "real-estate: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
