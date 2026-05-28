@@ -48,7 +48,6 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Any
 
 import requests
 
@@ -164,28 +163,47 @@ class _AdvisoryTableParser(HTMLParser):
     """Stateful HTMLParser that pulls the advisory rows out of the State Dept
     advisory-list page.
 
-    Page layout (as of May 2026) — a single ``<table id="htmlTable">``
-    whose ``<tbody>`` rows look like:
+    Page layout (current as of 2026-05-28; State Dept migrated to U.S. Web
+    Design System sometime between 2026-05-26 and 2026-05-28):
 
-        <tr>
-          <th scope="row"><a ...>Country Name</a></th>
-          <td><p><span class="level-badge level-badge-N"></span>Level N: ...</p></td>
-          <td>
-            <div class="tsg-utility-risk-pill-container">
-              <span class="tsg-utility-risk-pill">UNREST (U)</span>
-              <span class="tsg-utility-risk-pill">CRIME (C)</span>
-              ...
-            </div>
-          </td>
-          <td><p>MM/DD/YYYY</p></td>
-        </tr>
+        <table data-table-type="structTable"
+               class="usa-table usa-table--destination ...">
+          ...
+          <tbody>
+            <tr>
+              <th scope="row"><a ...>Country Name</a></th>
+              <td><p class="level-title level-title-N">Level N: ...</p></td>
+              <td>
+                <div class="tsg-utility-risk-pill-container">
+                  <span class="tsg-utility-risk-pill">UNREST (U)</span>
+                  <span class="tsg-utility-risk-pill">CRIME (C)</span>
+                  ...
+                </div>
+              </td>
+              <td><p>MM/DD/YYYY</p></td>
+            </tr>
 
-    We lock onto the table by ``id="htmlTable"`` so peripheral tables (the
-    megamenu, sidebars, etc.) can't pollute parser state, and we skip the
-    ``<thead>`` row so its column labels never reach ``_flush_row``.
+    Legacy layout (pre-migration; used by the offline self-test fixture):
+
+        <table id="htmlTable">
+          ...
+          <tr>
+            <th scope="row"><a ...>Country Name</a></th>
+            <td><p><span class="level-badge level-badge-N"></span>Level N: ...</p></td>
+            ...same 4-cell shape...
+          </tr>
+
+    The tbody row layout is identical across both — only the wrapping
+    ``<table>`` identifier changed. We lock onto the table on EITHER
+    ``id="htmlTable"`` (legacy) OR ``class`` containing
+    ``usa-table--destination`` (current USWDS layout) so peripheral tables
+    (megamenu, sidebars, footer link-grids, etc.) can't pollute parser
+    state. We skip the ``<thead>`` row so its column labels never reach
+    ``_flush_row``.
 
     Anything we can't parse is silently skipped — the State Dept rebuilds
-    this page periodically and the exact markup drifts.
+    this page periodically and the exact markup drifts. See the May-2026
+    migration note above for the most recent drift.
     """
 
     def __init__(self) -> None:
@@ -200,8 +218,19 @@ class _AdvisoryTableParser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag == "table":
-            if dict(attrs).get("id") == "htmlTable":
+            attrs_d = dict(attrs)
+            # Legacy id-based lock (kept for the offline test fixture and any
+            # cached pre-migration HTML the user might pass in).
+            if attrs_d.get("id") == "htmlTable":
                 self._in_target_table = True
+            else:
+                # Current USWDS layout: lock on the destination-table class.
+                # split() handles the multi-class string defensively (other
+                # tables on the page like usa-table--striped wouldn't match
+                # without the --destination modifier).
+                cls = (attrs_d.get("class") or "").split()
+                if "usa-table--destination" in cls:
+                    self._in_target_table = True
         elif not self._in_target_table:
             return
         elif tag == "thead":
