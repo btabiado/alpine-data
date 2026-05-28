@@ -420,8 +420,16 @@ def api_share() -> Response:
         label = (body.get("label") or "")[:120]
         try:
             entry = shares.create(days=days, label=label, created_by=DASH_USER or "")
-        except Exception as e:
-            return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 500
+        except Exception:
+            # CodeQL py/stack-trace-exposure: log the full detail server-side
+            # (preserves debuggability for Bryan) but return a generic
+            # message to the HTTP client. Exception text can leak local
+            # paths, internal class names, or upstream API endpoints —
+            # low impact on a single-user local server, but trivial to
+            # contain. Same pattern used at /api/fetch-btc and
+            # /api/upload-csv below.
+            traceback.print_exc(file=sys.stderr)
+            return jsonify({"ok": False, "error": "internal error creating share"}), 500
         return jsonify({"ok": True, "share": entry})
     # GET: list active shares
     shares.prune_expired()
@@ -472,8 +480,11 @@ def api_seed_etf() -> Response:
     try:
         n = fetch_live.fetch_btc_from_github_mirror(dash.DATA_DIR)
         return jsonify({"ok": True, "rows": n, "source": "canadiancode/btc-etf-flows"})
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"{type(e).__name__}: {e}"}), 503
+    except Exception:
+        # Log full detail server-side, return generic message to client (see
+        # api_share_create above for rationale — CodeQL py/stack-trace-exposure).
+        traceback.print_exc(file=sys.stderr)
+        return jsonify({"ok": False, "error": "fetch failed; check server logs"}), 503
 
 
 @flask_app.route("/api/upload-csv", methods=["POST"])
@@ -497,8 +508,11 @@ def api_upload_csv() -> Response:
         import parse_farside
         if parse_farside.looks_like_vertical_farside(body):
             body = parse_farside.parse_farside_vertical(body, asset_hint=asset)
-    except Exception as e:
-        return jsonify({"ok": False, "error": f"farside parse: {e}"}), 400
+    except Exception:
+        # Log full detail server-side, return generic message to client (see
+        # api_share_create above for rationale — CodeQL py/stack-trace-exposure).
+        traceback.print_exc(file=sys.stderr)
+        return jsonify({"ok": False, "error": "could not parse Farside paste"}), 400
 
     # Allow tab-separated (typical browser copy-paste from Farside)
     sample = body.splitlines()[0]
