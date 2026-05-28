@@ -991,7 +991,6 @@ def _ai_keyword_hit(name: str) -> bool:
     multi-word phrases). Defensive against empty / non-string input."""
     if not isinstance(name, str) or not name:
         return False
-    import re
     low = name.lower()
     for kw in _SEC_AI_KEYWORDS:
         if " " in kw or "." in kw:
@@ -1063,7 +1062,6 @@ def _parse_form_d_xml(xml_text: str) -> dict:
         # primary_doc.xml uses no default namespace at the leaf-text level
         # for the fields we care about, but some have eis: prefixes. The
         # simplest cross-version-tolerant approach: strip namespaces.
-        import re
         cleaned = re.sub(r'\sxmlns(:\w+)?="[^"]+"', "", xml_text, count=0)
         cleaned = re.sub(r"<(/?)\w+:", r"<\1", cleaned)
         root = ET.fromstring(cleaned)
@@ -4841,7 +4839,6 @@ def bitinfocharts_btc_distribution() -> dict:
         previous `distribution` from `data/whale.json` is reused if present
         instead of returning empty and clobbering the cached payload.
     """
-    import re
     try:
         r = requests.get(
             "https://bitinfocharts.com/bitcoin-distribution-history.html",
