@@ -78,7 +78,6 @@ _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _RATE_LIMIT_HINTS = ("429", "RateLimit", "rate limit", "Too Many Requests")
 
 _DATA_ROOT = _REPO_ROOT / "data" / "lthcs"
-_SNAPSHOTS_DIR = _DATA_ROOT / "snapshots"
 
 
 # ---------------------------------------------------------------------------

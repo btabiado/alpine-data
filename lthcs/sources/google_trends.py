@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import datetime as _dt
 import json
-import logging
 import math
 import os
 from pathlib import Path
@@ -100,9 +99,6 @@ TICKER_TO_TREND_TERM: Dict[str, str] = {
     "GE": "/m/036wy",         # General Electric
     "F": "/m/02xry",          # Ford Motor Company (caution: "F" is too short solo)
 }
-
-
-logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
