@@ -522,8 +522,8 @@ def crypto_news_rss(limit: int = 120) -> list[dict]:
                     if dt:
                         ts = int(dt.timestamp())
                         date_str = dt.strftime("%Y-%m-%d %H:%M")
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"  [news] pubdate parse suppressed: {type(e).__name__}", file=sys.stderr)
                 if title and link:
                     out.append({
                         "title": title,
@@ -645,16 +645,16 @@ def ai_news_rss(per_feed_limit: int = 15) -> list[dict]:
                         if dt:
                             ts = int(dt.timestamp())
                             date_str = dt.strftime("%Y-%m-%d %H:%M")
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"  [news] RFC822 pubdate parse suppressed: {type(e).__name__}", file=sys.stderr)
                     if ts is None and pub:
                         try:
                             # Atom often has e.g. 2026-05-15T12:34:56Z
                             dt = datetime.fromisoformat(pub.replace("Z", "+00:00"))
                             ts = int(dt.timestamp())
                             date_str = dt.strftime("%Y-%m-%d %H:%M")
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            print(f"  [news] ISO8601 pubdate parse suppressed: {type(e).__name__}", file=sys.stderr)
                     if title and link:
                         out.append({
                             "title": title,
@@ -1479,8 +1479,8 @@ def _social_stale_fallback(key: str, default):
         if val:
             print(f"  [stale-keep] social.{key} kept from previous fetch", file=sys.stderr)
             return val
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [stale-keep] social.{key} suppressed: {type(e).__name__}", file=sys.stderr)
     return default
 
 
@@ -2271,8 +2271,8 @@ def santiment_metrics() -> dict:
             prev_san = ((prev.get("social") or {}).get("santiment")) or None
             if prev_san and prev_san.get("coins"):
                 return {**prev_san, "stale": True, "stale_reason": f"daily_gate_hour_{now_hour}"}
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  [stale-keep] santiment daily-gate suppressed: {type(e).__name__}", file=sys.stderr)
         return {"available": False, "reason": f"daily_gate_hour_{now_hour}",
                 "coins": {},
                 "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
@@ -2540,8 +2540,8 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
             cid = e.get("coin_id")
             if cid:
                 stale_map[cid] = e
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [stale-keep] poc_top stale map suppressed: {type(e).__name__}", file=sys.stderr)
     for c in coins:
         coin_id = c.get("id")
         symbol = (c.get("symbol") or "").upper()
@@ -3525,8 +3525,8 @@ def _etherscan_gas_impl() -> dict:
         out["propose_gwei"] = float(r.get("ProposeGasPrice", 0))
         out["fast_gwei"] = float(r.get("FastGasPrice", 0))
         out["base_fee_gwei"] = float(r.get("suggestBaseFee", 0))
-    except (TypeError, ValueError):
-        pass
+    except (TypeError, ValueError) as e:
+        print(f"  [gas] etherscan gwei parse suppressed: {type(e).__name__}", file=sys.stderr)
     return out
 
 
@@ -4804,8 +4804,8 @@ def _bitinfocharts_cached_distribution() -> dict:
             print("  [stale-keep] whale.distribution kept from previous fetch",
                   file=sys.stderr)
             return d
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [stale-keep] whale.distribution suppressed: {type(e).__name__}", file=sys.stderr)
     return {}
 
 
