@@ -713,8 +713,8 @@ def stage_2_fetch_data(state: PipelineState) -> bool:
         try:
             yahoo.get_daily_prices(sym, **as_of_kw)
             counts["yahoo_prices_ok"] += 1
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  [lthcs_daily] yahoo.get_daily_prices({sym}) suppressed: {type(e).__name__}", file=sys.stderr)
         try:
             mom = yahoo.get_momentum_pct(sym, days=90, **as_of_kw)
             state.momentum_by_ticker[sym] = mom
@@ -2520,8 +2520,8 @@ def run_news_only(args: argparse.Namespace) -> int:
                     reco_signal = finnhub.parse_recommendation_signal(reco_history)
                     state.recommendation_by_ticker[sym] = reco_signal
                     n_finnhub += 1
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"  [lthcs_daily] finnhub.parse_recommendation_signal({sym}) suppressed: {type(e).__name__}", file=sys.stderr)
         # SEC 8-K material events.
         try:
             sig = sec_8k.event_signal_for_ticker(sym, days=90)
