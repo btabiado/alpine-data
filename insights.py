@@ -1155,8 +1155,8 @@ def _social_insights(payload: dict) -> list[dict]:
                         "headline": f"{sym.upper()} news + Reddit alignment: {direction} news net {net:+d} with r/{sub_key} at {active:,} active users",
                         "detail": "Cross-source agreement strengthens the signal.",
                     })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [insights] news+reddit alignment suppressed: {type(e).__name__}", file=sys.stderr)
 
     return out
 
@@ -1937,8 +1937,8 @@ def _ainews_insights(payload: dict) -> list[dict]:
                         "detail": "One source dominates — read the sentiment skew with that in mind.",
                         "score": 50,
                     })
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  [insights] ai news source-concentration suppressed: {type(e).__name__}", file=sys.stderr)
 
     # Rule 4: Top AI-exposed ticker — STRONG BUY / STRONG SELL (|score| ≥ 50)
     # OR a label flip vs. ~7 days ago using the cached score history. Pick
@@ -1983,8 +1983,8 @@ def _ainews_insights(payload: dict) -> list[dict]:
                         "detail": f"{name} — weakest score among the AI-exposed subset.",
                         "score": 70,
                     })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [insights] ai-exposed top score suppressed: {type(e).__name__}", file=sys.stderr)
 
     # Rule 4b: label flip vs ~7d ago using cached rolling score history.
     # We compare today's score against the score from ~7 entries ago and
@@ -2020,8 +2020,8 @@ def _ainews_insights(payload: dict) -> list[dict]:
                 "score": 65,
             })
             break  # one flip is enough — don't spam the bar
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [insights] ai-exposed label flip suppressed: {type(e).__name__}", file=sys.stderr)
 
     # Rule 5: Sentiment / price divergence. AI news leans one way but the
     # AI-exposed stocks lean the opposite. Helpful for spotting dislocations.
@@ -2048,8 +2048,8 @@ def _ainews_insights(payload: dict) -> list[dict]:
                         "detail": "News tape bearish while AI-exposed equities hold up — possible dislocation.",
                         "score": 75,
                     })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [insights] ai sentiment/price divergence suppressed: {type(e).__name__}", file=sys.stderr)
 
     # Rule 6: Mega funding round in the last 7 days. Curated snapshot exposes
     # `top_funded_companies` with last_round_size_usd + last_round_date. We
@@ -2085,8 +2085,8 @@ def _ainews_insights(payload: dict) -> list[dict]:
                 "detail": f"Closed {c.get('last_round_date','')}. Among the largest AI rounds on record.",
                 "score": 85,
             })
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  [insights] ai mega-round suppressed: {type(e).__name__}", file=sys.stderr)
 
     # Rule 7 (rolling history): sentiment label flipped vs yesterday. Only
     # fires on a POSITIVE↔NEGATIVE transition with material skew on both
