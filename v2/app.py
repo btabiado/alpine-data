@@ -341,14 +341,34 @@ def build_payload() -> dict:
     return payload
 
 
+def _json_for_script(obj) -> str:
+    """json.dumps + escape the characters that can break out of an inline
+    <script> context: '<', '>', '&', "'". Plain json.dumps preserves
+    '</script>' literally, which would break out of the script tag when
+    embedded into HTML — a real XSS sink if any string field reaching the
+    payload is attacker-controlled (today: the share label set via
+    /api/share, broadcast to other viewers via the share link).
+
+    Standard OWASP pattern: encode the dangerous bytes as \\uXXXX escapes.
+    JSON parsers decode them back to the original characters at runtime,
+    so DATA / SHARE_TOKEN / SIDECARS see the original strings — but the
+    embedded JSON literal in the served HTML can't escape <script>.
+    """
+    return (json.dumps(obj)
+            .replace("<", "\\u003c")
+            .replace(">", "\\u003e")
+            .replace("&", "\\u0026")
+            .replace("'", "\\u0027"))
+
+
 def render_html(
     payload: dict,
     share_token: str | None = None,
     sidecars_manifest: dict[str, str] | None = None,
 ) -> str:
-    html = HTML_TEMPLATE.replace("__DATA_JSON__", json.dumps(payload))
-    html = html.replace("__SHARE_TOKEN__", json.dumps(share_token))
-    html = html.replace("__SIDECARS_JSON__", json.dumps(sidecars_manifest or {}))
+    html = HTML_TEMPLATE.replace("__DATA_JSON__", _json_for_script(payload))
+    html = html.replace("__SHARE_TOKEN__", _json_for_script(share_token))
+    html = html.replace("__SIDECARS_JSON__", _json_for_script(sidecars_manifest or {}))
     return html
 
 
