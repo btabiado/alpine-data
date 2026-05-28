@@ -16,7 +16,6 @@ data is not present, since CI may not always have populated data.
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import pytest

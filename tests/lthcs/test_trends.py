@@ -510,7 +510,7 @@ def test_run_daily_batch_429_triggers_backoff(
         side_effect=lambda t: f"{t.upper()} stock",
     ), patch.object(daily.time, "sleep", lambda _s: None):
         # Patch inner pytrends backoff sleep too so test is fast.
-        snapshot = daily.run_daily_batch(
+        _ = daily.run_daily_batch(
             args, trend_req_factory=factory, sleeper=sleeper,
         )
 
@@ -590,7 +590,7 @@ def test_run_daily_batch_dry_run_no_writes(
         daily, "resolve_search_term",
         side_effect=lambda t: f"{t.upper()} stock",
     ):
-        snapshot = daily.run_daily_batch(
+        _ = daily.run_daily_batch(
             args, trend_req_factory=factory, sleeper=_silent_sleeper,
         )
 

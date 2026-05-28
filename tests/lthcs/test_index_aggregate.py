@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
 
 from lthcs.index_aggregate import compute_lthcs_index
 

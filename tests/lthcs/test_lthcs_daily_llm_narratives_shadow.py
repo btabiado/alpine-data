@@ -16,7 +16,6 @@ needed ones here to keep this file self-contained for the swarm.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any, Dict, List
 from unittest.mock import MagicMock
 

@@ -465,7 +465,7 @@ def test_status_file_written_after_successful_run(
 ):
     """A small JSON status file lands at the requested path."""
     status_path = tmp_path / "data" / "lthcs" / "prewarm_status.json"
-    report = prewarm.run_prewarm(
+    _ = prewarm.run_prewarm(
         tickers=["AAPL", "MSFT"],
         days=42,
         end_date=date(2026, 5, 17),

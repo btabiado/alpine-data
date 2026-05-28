@@ -9,7 +9,6 @@ hit the pure helpers directly.
 from __future__ import annotations
 
 import importlib.util
-import statistics
 import sys
 from pathlib import Path
 from typing import Any, Dict, List

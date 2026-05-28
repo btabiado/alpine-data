@@ -1,10 +1,8 @@
 """Tests for signals.py — compute_signal scoring + bounds."""
 from __future__ import annotations
 
-import math
 
 import pandas as pd
-import pytest
 
 import signals
 

@@ -77,7 +77,7 @@ def test_spearman_returns_none_on_degenerate_input(audit_mod):
 
 def _make_ic_block(sharpes):
     """Build an ic-by-pillar dict for the canonical 5 pillars."""
-    pillars = audit_mod_PILLARS = [
+    pillars = _ = [
         "adoption_momentum",
         "institutional_confidence",
         "financial_evolution",

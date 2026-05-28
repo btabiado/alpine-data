@@ -10,7 +10,6 @@ Covers:
 """
 from __future__ import annotations
 
-import pytest
 
 import fetch_market
 

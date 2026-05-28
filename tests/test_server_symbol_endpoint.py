@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -76,7 +75,7 @@ def _canned_crypto_series(days: int = 180) -> dict:
     score (above SMAs, positive momentum). Enough rows to satisfy the
     SMA200 / 30d rolling history branches.
     """
-    base_date = 20000  # arbitrary; only ordering matters for the scorer
+    _ = 20000  # arbitrary; only ordering matters for the scorer
     prices = []
     volumes = []
     for i in range(days):

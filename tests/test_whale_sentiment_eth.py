@@ -4,7 +4,6 @@ a 30-day baseline, scale to ±25 per component, sum and clip to ±100.
 """
 from __future__ import annotations
 
-import pytest
 
 import fetch_market as fm
 

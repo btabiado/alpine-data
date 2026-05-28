@@ -11,7 +11,6 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import Dict, Optional
 
-import pytest
 
 from lthcs.narratives import (
     BAND_DESCRIPTORS,

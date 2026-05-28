@@ -7,10 +7,8 @@ Covers:
 """
 from __future__ import annotations
 
-import os
 from datetime import datetime, timezone
 
-import pytest
 
 import fetch_market
 from insights import build_insights

@@ -8,7 +8,7 @@ a no-wait bucket.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -455,7 +455,7 @@ def test_fetch_sector_strength_as_of_cache_key_isolated(tmp_path: Path) -> None:
         b = sector_etf.fetch_sector_strength(
             cache_dir=isolated, as_of="2026-02-15"
         )
-        c = sector_etf.fetch_sector_strength(cache_dir=isolated)  # today
+        _ = sector_etf.fetch_sector_strength(cache_dir=isolated)  # today
     assert a["as_of"] == "2026-04-15"
     assert b["as_of"] == "2026-02-15"
     # Three distinct snapshots cached separately.

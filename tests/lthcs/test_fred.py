@@ -6,7 +6,7 @@ All HTTP is mocked — no live network calls.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from unittest.mock import MagicMock, patch
 
 import pytest

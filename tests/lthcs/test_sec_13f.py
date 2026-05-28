@@ -536,7 +536,7 @@ def test_fetch_universe_full_path(ua: None, fixed_today: date) -> None:
          "reportDate": "2025-12-31"},
     ])
     index = _index_json(["primary_doc.xml", "form13fInfoTable.xml"])
-    side = _build_dispatcher(
+    _ = _build_dispatcher(
         tickers_resp=_fake_response(TICKERS_FIXTURE),
         submissions_by_cik={
             "0000000999": _fake_response(submissions_a),

@@ -7,7 +7,6 @@ Every test uses ``tmp_path`` as the data root so we never touch the real
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import List
 

@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import datetime as _dt
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any, List
 from unittest.mock import MagicMock, patch
 
 import pandas as pd

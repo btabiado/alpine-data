@@ -16,18 +16,11 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 import pytest
 
-from lthcs.peer_groups_loader import (
-    DEFAULT_PEER_GROUPS_PATH,
-    DEFAULT_STRATEGY,
-    get_pillar_strategy,
-    is_active,
-    load_peer_groups_config,
-    resolve_cohort,
-)
+from lthcs.peer_groups_loader import DEFAULT_STRATEGY, get_pillar_strategy, is_active, load_peer_groups_config, resolve_cohort
 
 
 # ---------------------------------------------------------------------------

@@ -246,7 +246,7 @@ def test_short_leg_round_trip_adds_cost_drag():
     # side bps. With cost_bps=5 the round-trip drag is at least 10bps
     # per leg = 20bps total.
     assert final_eq < 1.0
-    expected_drag = 4 * (5.0 / 10000.0)  # 2 round-trips at 5bps each
+    _ = 4 * (5.0 / 10000.0)  # 2 round-trips at 5bps each
     expected_eq = (1.0 - 5.0 / 10000.0) ** 4  # entry/exit on each leg
     assert final_eq == pytest.approx(expected_eq, rel=1e-6)
 

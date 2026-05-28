@@ -18,22 +18,7 @@ from typing import Dict, List
 
 import pytest
 
-from lthcs.peer_groups import (
-    ALLOWED_TECH_SUB_BUCKETS,
-    DEFAULT_PEER_GROUPS_PATH,
-    DEFAULT_SECTOR_GROUP,
-    STRATEGY_COMPOUND,
-    STRATEGY_MATURITY_ONLY,
-    STRATEGY_SECTOR_GROUP_ONLY,
-    STRATEGY_UNIVERSE_FALLBACK,
-    TECH_SECTORS,
-    get_compound_peer_key,
-    get_peer_cohort,
-    get_peer_cohort_with_strategy,
-    get_sector_group,
-    get_tech_sub_bucket,
-    load_peer_groups_config,
-)
+from lthcs.peer_groups import ALLOWED_TECH_SUB_BUCKETS, DEFAULT_SECTOR_GROUP, STRATEGY_COMPOUND, STRATEGY_MATURITY_ONLY, STRATEGY_SECTOR_GROUP_ONLY, STRATEGY_UNIVERSE_FALLBACK, TECH_SECTORS, get_compound_peer_key, get_peer_cohort, get_peer_cohort_with_strategy, get_sector_group, get_tech_sub_bucket, load_peer_groups_config
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
