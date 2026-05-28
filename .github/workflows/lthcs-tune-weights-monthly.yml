@@ -69,30 +69,18 @@ jobs:
             echo "_Auto-flip is disabled by design; promoting these weights to live scoring requires a manual edit of \`data/lthcs/adaptive_weights/weights.json\`._"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Commit and push if data changed
+      - name: Commit data changes via signed API commit
+        # Switched from plain `git push` to API-based commit so the
+        # resulting commit is auto-signed by GitHub (Verified badge).
+        # See .github/scripts/api-commit.sh for race-safety details.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: lthcs-bot
+          AUTHOR_EMAIL: lthcs-bot@users.noreply.github.com
         run: |
-          git config user.name "lthcs-bot"
-          git config user.email "lthcs-bot@users.noreply.github.com"
           # Only the JSON output, never weights.json — the enabled flag
           # is curated by hand. `*.json` would risk staging weights.json
           # if the tuner ever writes there accidentally, so be explicit.
           git add 'data/lthcs/adaptive_weights/2*.json' 2>/dev/null || true
-          if git diff --staged --quiet; then
-            echo "No adaptive-weights data changes; skipping commit."
-          else
-            git commit -m "lthcs: monthly walk-forward CV $(date -u +%Y-%m) [skip ci]"
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                echo "Push succeeded on attempt $attempt."
-                exit 0
-              fi
-              echo "Push attempt $attempt rejected — fetching + rebasing..."
-              git fetch origin main
-              git rebase --autostash origin/main || {
-                echo "Rebase conflict on attempt $attempt; aborting."
-                git rebase --abort
-                exit 1
-              }
-            done
-            echo "All 3 push attempts failed; giving up." && exit 1
-          fi
+          .github/scripts/api-commit.sh \
+            "lthcs: monthly walk-forward CV $(date -u +%Y-%m) [skip ci]"
