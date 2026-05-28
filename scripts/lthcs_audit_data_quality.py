@@ -27,7 +27,8 @@ YESTERDAY = "2026-05-17"
 def jload(p: Path):
     if not p.exists():
         return None
-    return json.load(open(p))
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 def section(title: str):

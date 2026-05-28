@@ -166,12 +166,14 @@ def parse_farside_vertical(text: str, asset_hint: str | None = None) -> str:
 def _fmt_num(v: float) -> str:
     if v == 0:
         return "0"
-    return f"{v:.1f}" if abs(v) >= 0.1 or v == 0 else f"{v:g}"
+    # v == 0 already short-circuited above; only the magnitude test matters.
+    return f"{v:.1f}" if abs(v) >= 0.1 else f"{v:g}"
 
 
 def main(argv: list[str]) -> int:
     if len(argv) >= 2 and argv[1] not in ("-", "--stdin"):
-        text = open(argv[1]).read()
+        with open(argv[1], encoding="utf-8") as fh:
+            text = fh.read()
     else:
         text = sys.stdin.read()
     if not looks_like_vertical_farside(text):
