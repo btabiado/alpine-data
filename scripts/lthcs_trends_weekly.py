@@ -51,7 +51,6 @@ import argparse
 import datetime as _dt
 import json
 import logging
-import os
 import random
 import sys
 import time
@@ -63,10 +62,7 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-from lthcs.sources.google_trends import (  # noqa: E402
-    TICKER_TO_TREND_TERM,
-    resolve_search_term,
-)
+from lthcs.sources.google_trends import resolve_search_term
 
 
 # ---------------------------------------------------------------------------

@@ -42,7 +42,7 @@ import statistics
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -190,7 +190,7 @@ def histogram(
     bins: Sequence[Tuple[int, int]] = HIST_BINS,
 ) -> List[Tuple[Tuple[int, int], int]]:
     """Bucket ``values`` into ``bins`` (inclusive intervals)."""
-    out = [((lo, hi), 0) for (lo, hi) in bins]
+    _ = [((lo, hi), 0) for (lo, hi) in bins]
     counts = [0] * len(bins)
     for v in values:
         if v is None:

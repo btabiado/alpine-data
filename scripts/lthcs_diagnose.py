@@ -418,7 +418,7 @@ def render_section(
     lines.append("  " + "-" * 71)
 
     subscores = snapshot_row.get("subscores", {})
-    weights_used = snapshot_row.get("weights_used", [])
+    _ = snapshot_row.get("weights_used", [])
     effective = snapshot_row.get("effective_weights", [])
     weighted_components = snapshot_row.get("weighted_components", [])
 
@@ -533,7 +533,7 @@ def wrap_paragraph(text: str, width: int, hang_indent: str) -> str:
         else:
             out_lines.append(cur)
             cur = hang_indent + word
-            first = False
+            _ = False
     if cur:
         out_lines.append(cur)
     return "\n".join(out_lines)

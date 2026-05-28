@@ -13,7 +13,6 @@ Reports:
 from __future__ import annotations
 
 import json
-import os
 import statistics
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -159,9 +158,9 @@ def audit_cross_source_consistency():
     # Compare conviction_score (insider) to signal_score (13F holdings)
     common = sorted(set(ins.keys()) & set(hold.keys()))
     pairs = []
-    insider_buy_13f_buy = 0
-    insider_sell_13f_sell = 0
-    disagree = 0
+    _ = 0
+    _ = 0
+    _ = 0
     both_pos = both_neg = mixed = 0
     for t in common:
         ic = ins[t].get("conviction_score")
@@ -198,7 +197,7 @@ def audit_cross_source_consistency():
 
 def audit_freshness():
     section("5. DATA FRESHNESS — per source")
-    today = TODAY
+    _ = TODAY
     sources = {
         "snapshots": DATA / "snapshots",
         "variable_detail": DATA / "variable_detail",
@@ -278,7 +277,7 @@ def audit_sector_gaps(today_snap, by_p_today):
     # Build ticker -> sector map
     sec_map = {s["ticker"]: s.get("sector") for s in today_snap["scores"]}
     # Compute pillar-NaN-equivalent (sub_score=50.0 indicates missing/neutral) by sector
-    pillars = ["adoption_momentum", "institutional_confidence", "financial_evolution", "thesis_integrity", "des"]
+    _ = ["adoption_momentum", "institutional_confidence", "financial_evolution", "thesis_integrity", "des"]
     # Show OCF coverage by sector for financial
     print("\n  Financial evolution — has_ocf=False (likely banks):")
     misses = []
@@ -304,10 +303,10 @@ def main():
     today_snap = jload(DATA / "snapshots" / f"{TODAY}.json")
     yesterday_vd = jload(DATA / "variable_detail" / f"{YESTERDAY}.json")
 
-    coverage, by_p_today_v = audit_today_variable_detail()
-    pillar_stats = audit_pillar_distributions(today_snap)
-    today_bands = audit_band_distribution_today(today_snap)
-    hist_bands, days = audit_band_distribution_90d()
+    _, _ = audit_today_variable_detail()
+    _ = audit_pillar_distributions(today_snap)
+    _ = audit_band_distribution_today(today_snap)
+    _, _ = audit_band_distribution_90d()
     audit_cross_source_consistency()
     audit_freshness()
     by_p_today, by_p_y = audit_pipeline_integration_health(yesterday_vd)

@@ -36,14 +36,13 @@ from __future__ import annotations
 import argparse
 import datetime as _dt
 import json
-import os
 import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # Repo-root self-locator so the script works whether invoked from cwd or via
 # an absolute path. Mirrors the lthcs_daily.py / lthcs_backfill.py pattern.

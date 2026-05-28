@@ -49,9 +49,9 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 # Repo-root self-locator so the script works whether invoked from cwd or via
 # an absolute path. Mirrors the lthcs_daily.py pattern.

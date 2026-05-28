@@ -70,7 +70,6 @@ import argparse
 import datetime as _dt
 import json
 import logging
-import os
 import random
 import sys
 import time
@@ -83,15 +82,7 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 # Reuse helpers from the weekly script so behaviour stays consistent.
-from scripts.lthcs_trends_weekly import (  # noqa: E402
-    _iso_week_str,
-    _is_rate_limit_error,
-    _per_ticker_cache_path,
-    _read_per_ticker_cache,
-    _write_per_ticker_cache,
-    fetch_one_live,
-    load_universe,
-)
+from scripts.lthcs_trends_weekly import _iso_week_str, _is_rate_limit_error, _per_ticker_cache_path, _write_per_ticker_cache, fetch_one_live, load_universe
 from lthcs.sources.google_trends import resolve_search_term  # noqa: E402
 
 
