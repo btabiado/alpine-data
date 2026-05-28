@@ -374,8 +374,8 @@ def fetch_put_call(cache_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]
         _log("CBOE daily page fetch failed")
         try:
             cache.set(cache_key, None, ttl_seconds=_CACHE_TTL_SECONDS)
-        except Exception:
-            pass
+        except Exception as e:
+            _log(f"cboe negative-cache write suppressed: {type(e).__name__}")
         return None
 
     parsed = _parse_cboe_html(body)
@@ -400,8 +400,8 @@ def fetch_put_call(cache_dir: Optional[Path] = None) -> Optional[Dict[str, Any]]
 
     try:
         cache.set(cache_key, result, ttl_seconds=_CACHE_TTL_SECONDS)
-    except Exception:
-        pass
+    except Exception as e:
+        _log(f"cboe cache write suppressed: {type(e).__name__}")
     return dict(result)
 
 
@@ -656,8 +656,8 @@ def fetch_aaii_sentiment(
         history = history[-52:]
         try:
             cache.set(history_key, history, ttl_seconds=_CACHE_TTL_SECONDS * 90)
-        except Exception:
-            pass
+        except Exception as e:
+            _log(f"aaii history cache write suppressed: {type(e).__name__}")
 
     recent_spreads = [float(r["spread"]) for r in history[-4:] if r.get("spread") is not None]
     spread_4w_ma = _mean(recent_spreads)
@@ -674,8 +674,8 @@ def fetch_aaii_sentiment(
 
     try:
         cache.set(cache_key, result, ttl_seconds=_CACHE_TTL_SECONDS)
-    except Exception:
-        pass
+    except Exception as e:
+        _log(f"aaii cache write suppressed: {type(e).__name__}")
     return dict(result)
 
 
@@ -854,8 +854,8 @@ def fetch_naaim_exposure(
     }
     try:
         cache.set(cache_key, result, ttl_seconds=_CACHE_TTL_SECONDS)
-    except Exception:
-        pass
+    except Exception as e:
+        _log(f"naaim cache write suppressed: {type(e).__name__}")
     return dict(result)
 
 
