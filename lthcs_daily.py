@@ -2474,7 +2474,7 @@ def run_news_only(args: argparse.Namespace) -> int:
         if not isinstance(sym, str) or not isinstance(pillar, str):
             continue
         prior_variable_detail_by_ticker.setdefault(sym, {})[pillar] = row
-    prior_narratives_by_ticker = {
+    _ = {
         n.get("ticker"): n
         for n in prior_narratives.get("narratives", [])
         if isinstance(n, dict) and n.get("ticker")

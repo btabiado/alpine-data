@@ -20,7 +20,6 @@ import json
 import statistics
 import sys
 from pathlib import Path
-from typing import Any
 from datetime import datetime, timedelta
 
 
