@@ -68,11 +68,12 @@ def extract_largest_script(html: str) -> tuple[str, int]:
     extra <script> doesn't trick us into validating the wrong one.
     """
     # Non-greedy match of any <script ...>...</script>. Captures the inner
-    # body so we can rank by length. re.IGNORECASE so the regex also matches
-    # uppercase <SCRIPT> tags — silences CodeQL py/bad-tag-filter (we only
-    # parse our own build artifact so it's not exploitable, but the alert is
-    # legitimate and trivial to address).
-    pat = re.compile(r"<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL | re.IGNORECASE)
+    # body so we can rank by length. (?i) inline case-insensitive flag also
+    # matches uppercase <SCRIPT> tags — silences CodeQL py/bad-tag-filter
+    # (we only parse our own build artifact so it's not exploitable, but
+    # the alert is legitimate; note CodeQL inspects the regex STRING and
+    # doesn't trust a runtime re.IGNORECASE kwarg, hence the inline flag).
+    pat = re.compile(r"(?i)<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL)
     best_body = ""
     best_start = -1
     for m in pat.finditer(html):
@@ -126,7 +127,10 @@ def check_inline_js_parses_with_v8(html: str, primary_js: str) -> bool:
     # is the headline; secondary scripts catch e.g. a tiny `<script>const x
     # = ;</script>` injection near </body> that the largest-script check
     # would otherwise miss.
-    pat = re.compile(r"<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL | re.IGNORECASE)
+    # (?i) inline case-insensitive flag + re.DOTALL. CodeQL py/bad-tag-filter
+    # inspects the regex string itself and doesn't trust runtime IGNORECASE,
+    # so the flag goes in the pattern rather than as a re.compile kwarg.
+    pat = re.compile(r"(?i)<script(?P<attrs>[^>]*)>(?P<body>.*?)</script>", re.DOTALL)
     bodies: list[tuple[str, str]] = []
     seen_primary = False
     for m in pat.finditer(html):
