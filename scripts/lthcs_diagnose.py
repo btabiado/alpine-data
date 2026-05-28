@@ -525,7 +525,6 @@ def wrap_paragraph(text: str, width: int, hang_indent: str) -> str:
     words = rest.split()
     out_lines: List[str] = []
     cur = leading
-    first = True
     for word in words:
         candidate = (cur + " " + word) if cur.strip() else (cur + word)
         if len(candidate) <= width:
@@ -533,7 +532,6 @@ def wrap_paragraph(text: str, width: int, hang_indent: str) -> str:
         else:
             out_lines.append(cur)
             cur = hang_indent + word
-            _ = False
     if cur:
         out_lines.append(cur)
     return "\n".join(out_lines)
