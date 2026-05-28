@@ -69,30 +69,15 @@ jobs:
             --batch-size "${{ github.event.inputs.batch_size || '30' }}" \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }}
 
-      - name: Commit and push if data changed
+      - name: Commit data changes via signed API commit
+        # Switched from plain `git push` to API-based commit so the
+        # resulting commit is auto-signed by GitHub (Verified badge).
+        # See .github/scripts/api-commit.sh for race-safety details.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: lthcs-bot
+          AUTHOR_EMAIL: lthcs-bot@users.noreply.github.com
         run: |
-          git config user.name "lthcs-bot"
-          git config user.email "lthcs-bot@users.noreply.github.com"
           git add data/lthcs/trends/
-          if git diff --staged --quiet; then
-            echo "No trends data changes; skipping commit."
-          else
-            git commit -m "lthcs: daily trends nudge $(date -u +%Y-%m-%d) [skip ci]"
-            # Race-safe push: mirror lthcs-daily.yml's retry loop so
-            # main moving under us (daily cron, manual dev push) doesn't
-            # eat tonight's batch.
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                echo "Push succeeded on attempt $attempt."
-                exit 0
-              fi
-              echo "Push attempt $attempt rejected — fetching + rebasing..."
-              git fetch origin main
-              git rebase --autostash origin/main || {
-                echo "Rebase conflict on attempt $attempt; aborting."
-                git rebase --abort
-                exit 1
-              }
-            done
-            echo "All 3 push attempts failed; giving up." && exit 1
-          fi
+          .github/scripts/api-commit.sh \
+            "lthcs: daily trends nudge $(date -u +%Y-%m-%d) [skip ci]"

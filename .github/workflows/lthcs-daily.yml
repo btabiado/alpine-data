@@ -88,37 +88,20 @@ jobs:
         # --force: re-running on a date that already has a snapshot is OK.
         run: python lthcs_daily.py --force --catch-up --skip-thesis
 
-      - name: Commit and push if data changed
+      - name: Commit data changes via signed API commit
+        # Switched from plain `git push` to API-based commit so the
+        # resulting commit is auto-signed by GitHub (Verified badge).
+        # See .github/scripts/api-commit.sh for race-safety details
+        # (re-reads remote tip + rebuilds tree on retry; same guarantee
+        # the previous rebase-loop provided after run 26034240346).
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: lthcs-bot
+          AUTHOR_EMAIL: lthcs-bot@users.noreply.github.com
         run: |
-          git config user.name "lthcs-bot"
-          git config user.email "lthcs-bot@users.noreply.github.com"
           git add data/lthcs/
-          # Only commit if there's an actual diff — a no-op cron run
-          # shouldn't pollute git history. `git diff --staged --quiet`
-          # exits 0 when there are no staged changes.
-          if git diff --staged --quiet; then
-            echo "No data changes; skipping commit."
-          else
-            # [skip ci] prevents pages.yml from triggering its own
-            # rebuild on every snapshot push (it catches up on the next
-            # hourly cron anyway).
-            git commit -m "lthcs: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
-            # Race-safe push: if main moved while CI ran (e.g. dev
-            # pushed other commits during the 3-5 min pipeline window),
-            # rebase onto the new tip and retry. Originally failed run
-            # 26034240346 ate today's snapshot because of this race.
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                echo "Push succeeded on attempt $attempt."
-                exit 0
-              fi
-              echo "Push attempt $attempt rejected — fetching + rebasing..."
-              git fetch origin main
-              git rebase --autostash origin/main || {
-                echo "Rebase conflict on attempt $attempt; aborting."
-                git rebase --abort
-                exit 1
-              }
-            done
-            echo "All 3 push attempts failed; giving up." && exit 1
-          fi
+          # [skip ci] prevents pages.yml from triggering its own rebuild
+          # on every snapshot push (it catches up on the next hourly
+          # cron anyway).
+          .github/scripts/api-commit.sh \
+            "lthcs: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"

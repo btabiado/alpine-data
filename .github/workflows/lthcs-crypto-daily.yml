@@ -68,40 +68,23 @@ jobs:
         # (e.g. a manually dispatched run on the same UTC date as the cron).
         run: python scripts/lthcs_crypto_daily.py --force --verbose
 
-      - name: Commit and push if data changed
+      - name: Commit data changes via signed API commit
+        # Switched from plain `git push` to API-based commit so the
+        # resulting commit is auto-signed by GitHub (Verified badge).
+        # See .github/scripts/api-commit.sh for race-safety details.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: lthcs-bot
+          AUTHOR_EMAIL: lthcs-bot@users.noreply.github.com
         run: |
-          git config user.name "lthcs-bot"
-          git config user.email "lthcs-bot@users.noreply.github.com"
           # Stage ONLY the crypto snapshot directory and the per-ticker
           # history files the crypto runner appends to. We do NOT
           # `git add -A` — that would catch any incidental .cache/ or
           # editor artifact in the runner workspace.
           git add data/lthcs/snapshots_crypto/
           git add data/lthcs/history/ || true
-          # Only commit if there's an actual diff — a no-op cron run
-          # shouldn't pollute git history.
-          if git diff --staged --quiet; then
-            echo "No crypto data changes; skipping commit."
-          else
-            # [skip ci] prevents pages.yml from triggering its own
-            # rebuild on every snapshot push (it catches up on the next
-            # hourly cron anyway).
-            git commit -m "lthcs/crypto: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
-            # Race-safe push: mirrors the rebase-retry pattern from
-            # lthcs-daily.yml (commit e3f072d) so a concurrent equity
-            # push to main doesn't eat the crypto snapshot.
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                echo "Push succeeded on attempt $attempt."
-                exit 0
-              fi
-              echo "Push attempt $attempt rejected — fetching + rebasing..."
-              git fetch origin main
-              git rebase --autostash origin/main || {
-                echo "Rebase conflict on attempt $attempt; aborting."
-                git rebase --abort
-                exit 1
-              }
-            done
-            echo "All 3 push attempts failed; giving up." && exit 1
-          fi
+          # [skip ci] prevents pages.yml from triggering its own rebuild
+          # on every snapshot push (it catches up on the next hourly cron
+          # anyway).
+          .github/scripts/api-commit.sh \
+            "lthcs/crypto: daily snapshot $(date -u +%Y-%m-%d) [skip ci]"
