@@ -11,7 +11,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Tuple
 
 from pydantic import ValidationError
 

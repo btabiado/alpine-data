@@ -28,7 +28,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from lthcs.normalize import bounded_linear
-from lthcs.sources.crypto_data import pct_change_30d, values_only
+from lthcs.sources.crypto_data import pct_change_30d
 
 
 # Sub-component weights (must sum to 1.0).
@@ -139,7 +139,7 @@ def compute_crypto_adoption(
         else:
             security_label = "tx_count_pct_30d"
 
-    components = {
+    _ = {
         "active_pct": active_pct,
         "txvol_pct": txvol_pct,
         "security_pct": sec_pct,

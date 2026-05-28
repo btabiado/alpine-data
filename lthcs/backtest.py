@@ -32,7 +32,7 @@ import math
 import os
 import tempfile
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 

@@ -751,7 +751,7 @@ def walk_forward_tune(
         return frame.loc[frame.index.isin(dates)].copy()
 
     train_score = _slice(score_history, train_dates)
-    test_score = _slice(score_history, test_dates)
+    _ = _slice(score_history, test_dates)
     train_pillars = {p: _slice(pillar_histories.get(p), train_dates) for p in PILLAR_NAMES}
     test_pillars = {p: _slice(pillar_histories.get(p), test_dates) for p in PILLAR_NAMES}
 

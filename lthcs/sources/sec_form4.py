@@ -56,13 +56,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 from lthcs.sources._cache import FileCache
-from lthcs.sources.sec_edgar import (
-    SECEdgarError,
-    _bucket as _SEC_BUCKET,
-    _headers,
-    _user_agent,
-    get_cik,
-)
+from lthcs.sources.sec_edgar import SECEdgarError, _bucket as _SEC_BUCKET, _headers, get_cik
 
 
 # --- Constants ---------------------------------------------------------------
@@ -724,7 +718,7 @@ def _aggregate_filings(
     # 10b5-1 sales): the caller may want to display that as "no signal,
     # but filings exist". Keep returning the dict in that case.
     net_dollar_value = buy_dollar - sell_dollar
-    net_weighted = weighted_buy - weighted_sell  # weighted_sell is already positive in magnitude — negate the contribution
+    _ = weighted_buy - weighted_sell  # weighted_sell is already positive in magnitude — negate the contribution
 
     # Above is subtle: we accumulate weighted_sell as positive magnitudes
     # but want sells to contribute negatively to net_weighted_score. The

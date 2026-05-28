@@ -53,7 +53,6 @@ import csv
 import datetime as _dt
 import html
 import io
-import os
 import re
 import sys
 from pathlib import Path

@@ -37,7 +37,7 @@ The module is pure: it takes in-memory data and returns a dict. The
 from __future__ import annotations
 
 import math
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import pandas as pd
 

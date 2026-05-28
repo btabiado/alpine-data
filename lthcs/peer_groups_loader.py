@@ -430,7 +430,7 @@ def resolve_cohort(
             tickers_in_universe=tickers_in_universe,
             ticker_to_group=ticker_to_group,
         )
-        last_cohort = cohort
+        _ = cohort
         last_label = _STRATEGY_LABEL_MAP.get(step, step)
         if len(cohort) >= min_cohort_size or step == "universe":
             # Universe is the terminal step — accept it even if below

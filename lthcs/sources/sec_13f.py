@@ -87,7 +87,7 @@ import logging
 import os
 import re
 import xml.etree.ElementTree as ET
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from io import BytesIO
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -95,13 +95,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import requests
 
 from lthcs.sources._cache import FileCache
-from lthcs.sources.sec_edgar import (
-    SECEdgarError,
-    _bucket as _SEC_BUCKET,
-    _headers,
-    _user_agent,
-    get_cik,
-)
+from lthcs.sources.sec_edgar import SECEdgarError, _bucket as _SEC_BUCKET, _headers
 
 
 # --- Tracked managers --------------------------------------------------------
