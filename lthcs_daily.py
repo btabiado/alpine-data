@@ -213,12 +213,14 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         try:
             as_of_dt = date.fromisoformat(args.as_of)
         except ValueError:
+            # ArgumentParser.error() raises SystemExit; assignment below never runs.
             p.error("--as-of %r is not a real calendar date" % args.as_of)
-        if as_of_dt > date.today():
-            p.error(
-                "--as-of %s is in the future (today=%s)"
-                % (args.as_of, date.today().isoformat())
-            )
+        else:
+            if as_of_dt > date.today():
+                p.error(
+                    "--as-of %s is in the future (today=%s)"
+                    % (args.as_of, date.today().isoformat())
+                )
         if args.catch_up:
             p.error("--as-of and --catch-up are mutually exclusive")
         if args.news_only:
