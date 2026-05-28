@@ -72,8 +72,8 @@ def main() -> int:
         rows = []
         try:
             rows = sec_edgar.get_revenue_history(ticker)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"  [check] sec_edgar.get_revenue_history({ticker}) suppressed: {type(e).__name__}", file=sys.stderr)
         result = adoption.compute_adoption(
             ticker=ticker,
             revenue_rows=rows,

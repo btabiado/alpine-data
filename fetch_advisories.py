@@ -525,8 +525,8 @@ def parse_advisory_rss(xml_str: str) -> list[dict]:
                 if dt:
                     ts = int(dt.timestamp())
                     date_iso = dt.strftime("%Y-%m-%d")
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"  [parse_advisory_rss] pubdate parse suppressed: {type(e).__name__}", file=sys.stderr)
         out.append({
             "tag": _tag_from_title(title),
             "severity": _severity_from_text(title, body),
