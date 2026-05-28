@@ -250,11 +250,11 @@ def classify_pillar(pillar: str, detail: Optional[Dict[str, Any]],
             notes_parts.append(f"{article_count} articles, mean_sentiment {mean_sent:+.2f}")
         if flagged_unavail or not has_sent or not sufficient:
             return ("STUB", "; ".join(notes_parts))
-        if has_sent and sufficient:
-            if sub_score is not None and abs(sub_score - 50.0) < 0.05:
-                return ("NEUTRAL", "; ".join(notes_parts) or "real sentiment but mean lands at neutral 50")
-            return ("REAL", "; ".join(notes_parts))
-        return ("PARTIAL", "; ".join(notes_parts))
+        # has_sent and sufficient must both be True here (the inverse case
+        # returned STUB above).
+        if sub_score is not None and abs(sub_score - 50.0) < 0.05:
+            return ("NEUTRAL", "; ".join(notes_parts) or "real sentiment but mean lands at neutral 50")
+        return ("REAL", "; ".join(notes_parts))
 
     if pillar == "des":
         has_macro = bool(dq.get("has_macro_inputs"))

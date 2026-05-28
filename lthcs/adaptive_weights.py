@@ -978,8 +978,10 @@ def _recommendation_equity(
             "engine slice too short or train_fraction too high."
             % (int(n_test_obs),),
         )
+    # n_test_obs <= 0 already returned "insufficient_data" above, so when
+    # not None it's strictly positive — only the upper bound needs testing.
     small_sample = (
-        n_test_obs is not None and 0 < n_test_obs < SHIP_MIN_TEST_OBS
+        n_test_obs is not None and n_test_obs < SHIP_MIN_TEST_OBS
     )
     if (
         test_sharpe > SHIP_MIN_TEST_SHARPE
