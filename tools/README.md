@@ -42,3 +42,29 @@ python tools/validate_dashboard.py                      # defaults to v2/dashboa
 `pages.yml` calls it after both the V1 and the V2 generate steps. Renaming
 the underlying module was avoided to keep the diff surgical while a parallel
 agent is also editing `validate_v2_dashboard.py`.
+
+## `security_audit.py`
+
+Reproducible posture sweep. Replaces the manual API queries the swarm session
+ran on 2026-05-22 (CodeQL/Dependabot/secret-scanning counts, OSV.dev CVE check
+on every pin in `requirements.txt`, deployed-surface 404 probe, response-header
+check, repo settings snapshot). Pure stdlib + `gh` CLI; no new repo deps.
+
+Run locally:
+
+```
+python3 tools/security_audit.py                 # full audit
+python3 tools/security_audit.py --skip-github   # no gh auth required
+python3 tools/security_audit.py --skip-network  # offline (skips OSV + Pages)
+```
+
+Runs weekly in CI via `.github/workflows/security-audit.yml` (Monday 09:00 UTC,
+plus `workflow_dispatch`). The job fails — and the user gets a notification —
+only when something is actionable: open Dependabot/secret-scanning alert, open
+error-severity CodeQL alert, an OSV hit on a pin, an exposed sensitive path,
+or missing HSTS. Repo posture (branch protection, workflow permissions) is
+informational; it's printed every run but never fails the job because the user
+tunes those settings outside this script.
+
+The script NEVER echoes secrets and NEVER posts results anywhere outside the
+repo. Findings land in the GitHub Actions step summary.
