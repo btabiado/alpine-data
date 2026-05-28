@@ -153,7 +153,7 @@ def test_seed_etf_uses_mocked_fetch(client, tmp_path: Path, monkeypatch):
     assert j["rows"] == 1
 
 
-def test_seed_etf_returns_503_on_failure(client, monkeypatch):
+def test_seed_etf_returns_503_on_failure(client, monkeypatch, capsys):
     def fake_fetch(data_dir):
         raise RuntimeError("boom")
     monkeypatch.setattr(server.fetch_live, "fetch_btc_from_github_mirror", fake_fetch)
@@ -161,7 +161,15 @@ def test_seed_etf_returns_503_on_failure(client, monkeypatch):
     assert r.status_code == 503
     j = r.get_json()
     assert j["ok"] is False
-    assert "boom" in j["error"]
+    # Post-CodeQL stack-trace-exposure fix (commit 55ac864): the HTTP
+    # response carries a generic message; the full traceback (including
+    # "boom") is logged to stderr instead so a network-side attacker
+    # can't pivot off internal exception text.
+    assert "fetch failed" in j["error"]
+    assert "boom" not in j["error"]
+    # The traceback should still be in stderr for debugging.
+    captured = capsys.readouterr()
+    assert "boom" in captured.err
 
 
 def test_api_refresh_kicks_off_background_fetch(client, monkeypatch):
