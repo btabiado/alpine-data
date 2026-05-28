@@ -1,0 +1,44 @@
+name: security-audit
+
+# Weekly posture sweep. Reproduces the manual queries from the 2026-05-22 swarm
+# session (CodeQL/Dependabot/secret-scanning counts, OSV CVE check on pinned
+# deps, deployed-surface probe, header check, repo settings snapshot) so the
+# user gets a notification only when something is actionable.
+#
+# Manual run: `gh workflow run security-audit.yml`
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"  # Monday 09:00 UTC
+  workflow_dispatch: {}
+
+# Read-only. We never need to write anything back to the repo.
+permissions:
+  contents: read
+  security-events: read
+
+concurrency:
+  group: security-audit-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Run security audit
+        env:
+          # `gh` reads this automatically; the workflow's GITHUB_TOKEN already
+          # has the read-only scopes declared above.
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/security_audit.py \
+            --repo "${GITHUB_REPOSITORY}" \
+            --requirements requirements.txt
