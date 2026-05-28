@@ -106,38 +106,22 @@ jobs:
           fi
           exit $rc
 
-      - name: Commit and push if data changed
+      - name: Commit data changes via signed API commit
+        # Uses .github/scripts/api-commit.sh which posts blobs + tree +
+        # commit + ref-update through the Git Data REST API. Commits made
+        # this way with GITHUB_TOKEN are auto-signed by GitHub's GPG key
+        # and show as "Verified" in the UI — `git push` over HTTPS
+        # produces unsigned commits no matter what user.* config says.
+        # No-op if `git diff --cached` is empty. Race-safe: the helper
+        # re-reads the remote tip and rebuilds the tree on retry.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: lthcs-bot
+          AUTHOR_EMAIL: lthcs-bot@users.noreply.github.com
         run: |
-          git config user.name "lthcs-bot"
-          git config user.email "lthcs-bot@users.noreply.github.com"
           git add data/lthcs/
-          # Only commit if there's an actual diff. Most hours will have
-          # zero or minimal Finnhub movement, so a no-op cron run shouldn't
-          # pollute git history.
-          if git diff --staged --quiet; then
-            echo "No data changes; skipping commit."
-          else
-            # [skip ci] prevents pages.yml from triggering its own
-            # rebuild on every hourly push (it catches up on the next
-            # hourly cron anyway).
-            git commit -m "lthcs: news-only refresh $(date -u +%Y-%m-%dT%H:%M) [skip ci]"
-            # Race-safe push: if main moved while CI ran (e.g. the daily
-            # 23:00 cron pushed during our window, or dev landed a
-            # commit), rebase onto the new tip and retry. Mirrors the
-            # pattern in lthcs-daily.yml; originally added there because
-            # run 26034240346 ate a snapshot due to the race.
-            for attempt in 1 2 3; do
-              if git push origin HEAD:main; then
-                echo "Push succeeded on attempt $attempt."
-                exit 0
-              fi
-              echo "Push attempt $attempt rejected — fetching + rebasing..."
-              git fetch origin main
-              git rebase --autostash origin/main || {
-                echo "Rebase conflict on attempt $attempt; aborting."
-                git rebase --abort
-                exit 1
-              }
-            done
-            echo "All 3 push attempts failed; giving up." && exit 1
-          fi
+          # [skip ci] prevents pages.yml from triggering its own rebuild
+          # on every hourly push (it catches up on the next hourly cron
+          # anyway).
+          .github/scripts/api-commit.sh \
+            "lthcs: news-only refresh $(date -u +%Y-%m-%dT%H:%M) [skip ci]"
