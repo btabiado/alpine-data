@@ -499,11 +499,16 @@ def main() -> int:
 
     # Register the Travel Advisories sidecar in the manifest so the client's
     # SIDECARS map points at /data-travel.json. The file itself is written
-    # separately by fetch_advisories (above); we only add it to the manifest
-    # when it exists on disk so the loader doesn't 404 on a missing seed.
-    travel_path = ROOT / "data-travel.json"
-    if travel_path.exists():
-        manifest["travel"] = "data-travel.json"
+    # separately by fetch_advisories (above). Declared UNCONDITIONALLY:
+    # travel.state.gov blocks the GitHub Actions IP ranges (0 advisories
+    # parsed in CI), and v2/data-travel.json is not committed to the repo,
+    # so the .exists() gate used to leave 'travel' out of the manifest on
+    # every CI build. That tripped the SIDECARS↔SIDECAR_FOR_TAB coverage
+    # validator (added 2026-05-27) and hard-failed the deploy. Mirrors V1's
+    # pattern for cpi/supplies/metals/travel — loadSidecar handles a 404
+    # gracefully (logs a warning, renders the empty state) so unconditional
+    # declaration is safe.
+    manifest["travel"] = "data-travel.json"
 
     # CPI sidecar — same gating as travel. The file is always written by
     # fetch_cpi (above), even when the API key is unset (it writes a clean
