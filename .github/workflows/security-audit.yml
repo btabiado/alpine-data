@@ -35,9 +35,21 @@ jobs:
 
       - name: Run security audit
         env:
-          # `gh` reads this automatically; the workflow's GITHUB_TOKEN already
-          # has the read-only scopes declared above.
-          GH_TOKEN: ${{ github.token }}
+          # `gh` reads GH_TOKEN automatically.
+          #
+          # The default workflow GITHUB_TOKEN canNOT read Dependabot or
+          # secret-scanning alerts — those endpoints reject it with HTTP 403
+          # regardless of the `permissions:` block above (documented limit).
+          # CodeQL works because `security-events: read` covers code-scanning.
+          #
+          # To get full coverage of Dependabot + secret-scanning in this job:
+          # create a fine-grained PAT with `Repository permissions →
+          # Dependabot alerts: Read` and `Secret scanning alerts: Read`,
+          # store it as the `SECURITY_AUDIT_TOKEN` repo secret, and the line
+          # below will pick it up. Otherwise the script logs those checks as
+          # `unavailable` and the job stays green on those two surfaces (the
+          # OSV + CodeQL + deployed-surface checks still run regardless).
+          GH_TOKEN: ${{ secrets.SECURITY_AUDIT_TOKEN || github.token }}
         run: |
           python3 tools/security_audit.py \
             --repo "${GITHUB_REPOSITORY}" \

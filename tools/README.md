@@ -68,3 +68,12 @@ tunes those settings outside this script.
 
 The script NEVER echoes secrets and NEVER posts results anywhere outside the
 repo. Findings land in the GitHub Actions step summary.
+
+Note: the default `GITHUB_TOKEN` cannot read Dependabot or secret-scanning
+alerts — those endpoints reject the workflow token with HTTP 403 (documented
+GitHub limit, independent of the `permissions:` block). The script logs them
+as `unavailable` and the job stays green on those two surfaces. To get full
+coverage, mint a fine-grained PAT with `Dependabot alerts: Read` +
+`Secret scanning alerts: Read` and store it as the `SECURITY_AUDIT_TOKEN`
+repo secret; the workflow picks it up automatically. CodeQL + OSV +
+deployed-surface checks run regardless.
