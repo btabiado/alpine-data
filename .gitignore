@@ -19,9 +19,19 @@ dashboard.html
 # Lazy-loaded sidecar payloads (whale, etc.) — written by app.py next to
 # dashboard.html on every build. Same lifecycle as the HTML itself.
 data-*.json
+# Carve-out: data-travel.json IS committed as a baseline. The State Dept
+# HTML parser in fetch_advisories.py is currently broken (returns 0
+# advisories on May 28+), so CI's fetch always falls back to "scrape
+# failed; preserving prior data-travel.json (no overwrite)" — which
+# requires the file to actually be on disk at checkout time. Once the
+# parser is repaired, every CI run will refresh this file in-place; the
+# committed copy is just the floor.
+!data-travel.json
 # V2 builder output mirrors the production layout one level down.
 v2/dashboard.html
 v2/data-*.json
+# Same carve-out for V2's sidecar — see comment above data-travel.json.
+!v2/data-travel.json
 
 # Local cached fetches stay on your machine (regenerated every run)
 data/*.json

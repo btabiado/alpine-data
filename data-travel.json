@@ -1,0 +1,2419 @@
+{
+  "generated_at": "2026-05-26T12:07:36Z",
+  "advisories": [
+    {
+      "name": "Afghanistan",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "T",
+        "D",
+        "N"
+      ],
+      "date": "2026-02-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/afghanistan.html"
+    },
+    {
+      "name": "Albania",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2024-12-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/albania.html"
+    },
+    {
+      "name": "Algeria",
+      "level": 2,
+      "risks": [
+        "K",
+        "T"
+      ],
+      "date": "2024-09-26",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/algeria.html"
+    },
+    {
+      "name": "Andorra",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/andorra.html"
+    },
+    {
+      "name": "Angola",
+      "level": 2,
+      "risks": [
+        "C",
+        "H",
+        "O"
+      ],
+      "date": "2026-03-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/angola.html"
+    },
+    {
+      "name": "Anguilla",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/anguilla.html"
+    },
+    {
+      "name": "Antarctica",
+      "level": 2,
+      "risks": [
+        "N",
+        "O"
+      ],
+      "date": "2025-09-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/antarctica.html"
+    },
+    {
+      "name": "Antigua and Barbuda",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/antigua-and-barbuda.html"
+    },
+    {
+      "name": "Argentina",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/argentina.html"
+    },
+    {
+      "name": "Armenia",
+      "level": 2,
+      "risks": [
+        "O"
+      ],
+      "date": "2025-09-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/armenia.html"
+    },
+    {
+      "name": "Aruba",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/aruba.html"
+    },
+    {
+      "name": "Australia",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-30",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/australia.html"
+    },
+    {
+      "name": "Austria",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/austria.html"
+    },
+    {
+      "name": "Azerbaijan",
+      "level": 3,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-04-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/azerbaijan.html"
+    },
+    {
+      "name": "Bahamas",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-03-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bahamas.html"
+    },
+    {
+      "name": "Bahrain",
+      "level": 3,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-03-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bahrain.html"
+    },
+    {
+      "name": "Bangladesh",
+      "level": 3,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2026-01-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bangladesh.html"
+    },
+    {
+      "name": "Barbados",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/barbados.html"
+    },
+    {
+      "name": "Belarus",
+      "level": 4,
+      "risks": [
+        "U",
+        "O"
+      ],
+      "date": "2025-12-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/belarus.html"
+    },
+    {
+      "name": "Belgium",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-05-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/belgium.html"
+    },
+    {
+      "name": "Belize",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2026-03-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/belize.html"
+    },
+    {
+      "name": "Benin",
+      "level": 2,
+      "risks": [
+        "C",
+        "K",
+        "T",
+        "U"
+      ],
+      "date": "2026-01-07",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/benin.html"
+    },
+    {
+      "name": "Bermuda",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bermuda.html"
+    },
+    {
+      "name": "Bhutan",
+      "level": 1,
+      "risks": [],
+      "date": "2025-10-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bhutan.html"
+    },
+    {
+      "name": "Bolivia",
+      "level": 2,
+      "risks": [
+        "U",
+        "C"
+      ],
+      "date": "2026-04-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bolivia.html"
+    },
+    {
+      "name": "Bonaire",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bonaire.html"
+    },
+    {
+      "name": "Bonaire, Sint Eustatius, and Saba",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bonaire-sint-eustatius-and-saba.html"
+    },
+    {
+      "name": "Bosnia and Herzegovina",
+      "level": 2,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2024-12-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bosnia-and-herzegovina.html"
+    },
+    {
+      "name": "Botswana",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2024-02-26",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/botswana.html"
+    },
+    {
+      "name": "Brazil",
+      "level": 2,
+      "risks": [
+        "C",
+        "K"
+      ],
+      "date": "2025-05-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/brazil.html"
+    },
+    {
+      "name": "British Virgin Islands",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/british-virgin-islands.html"
+    },
+    {
+      "name": "Brunei",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/brunei.html"
+    },
+    {
+      "name": "Bulgaria",
+      "level": 1,
+      "risks": [],
+      "date": "2025-10-09",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/bulgaria.html"
+    },
+    {
+      "name": "Burkina Faso",
+      "level": 4,
+      "risks": [
+        "C",
+        "K",
+        "T",
+        "H"
+      ],
+      "date": "2026-05-04",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/burkina-faso.html"
+    },
+    {
+      "name": "Burma (Myanmar)",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "O"
+      ],
+      "date": "2026-05-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/burma-myanmar.html"
+    },
+    {
+      "name": "Burundi",
+      "level": 3,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2025-04-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/burundi.html"
+    },
+    {
+      "name": "Cabo Verde",
+      "level": 1,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-12-18",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cabo-verde.html"
+    },
+    {
+      "name": "Cambodia",
+      "level": 2,
+      "risks": [
+        "C",
+        "O",
+        "U"
+      ],
+      "date": "2025-07-25",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cambodia.html"
+    },
+    {
+      "name": "Cameroon",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O",
+        "H"
+      ],
+      "date": "2024-12-18",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cameroon.html"
+    },
+    {
+      "name": "Canada",
+      "level": 1,
+      "risks": [],
+      "date": "2025-06-11",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/canada.html"
+    },
+    {
+      "name": "Cayman Islands",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cayman-islands.html"
+    },
+    {
+      "name": "Central African Republic",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "O",
+        "T"
+      ],
+      "date": "2026-01-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/central-african-republic.html"
+    },
+    {
+      "name": "Chad",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O",
+        "H"
+      ],
+      "date": "2026-04-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/chad.html"
+    },
+    {
+      "name": "Chile",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2026-05-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/chile.html"
+    },
+    {
+      "name": "China",
+      "level": 2,
+      "risks": [
+        "O"
+      ],
+      "date": "2024-11-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/china.html"
+    },
+    {
+      "name": "Colombia",
+      "level": 3,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "N"
+      ],
+      "date": "2026-03-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/colombia.html"
+    },
+    {
+      "name": "Comoros",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2026-01-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/comoros.html"
+    },
+    {
+      "name": "Costa Rica",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2024-12-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/costa-rica.html"
+    },
+    {
+      "name": "Croatia",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-18",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/croatia.html"
+    },
+    {
+      "name": "Cuba",
+      "level": 2,
+      "risks": [
+        "C",
+        "O"
+      ],
+      "date": "2025-05-07",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cuba.html"
+    },
+    {
+      "name": "Cura\u00e7ao",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/curacao.html"
+    },
+    {
+      "name": "Cyprus",
+      "level": 3,
+      "risks": [
+        "O"
+      ],
+      "date": "2026-03-03",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cyprus.html"
+    },
+    {
+      "name": "Czechia",
+      "level": 1,
+      "risks": [],
+      "date": "2026-01-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/czechia.html"
+    },
+    {
+      "name": "C\u00f4te d'Ivoire (Ivory-Coast)",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "T",
+        "O"
+      ],
+      "date": "2026-02-18",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/cote-divoire-ivory-coast.html"
+    },
+    {
+      "name": "Democratic Republic of the Congo (D.R.C.)",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O",
+        "H"
+      ],
+      "date": "2026-05-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/democratic-republic-of-the-congo.html"
+    },
+    {
+      "name": "Denmark",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2024-09-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/denmark.html"
+    },
+    {
+      "name": "Djibouti",
+      "level": 2,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2025-03-06",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/djibouti.html"
+    },
+    {
+      "name": "Dominica",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/dominica.html"
+    },
+    {
+      "name": "Dominican Republic",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-06-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/dominican-republic.html"
+    },
+    {
+      "name": "Ecuador",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2025-10-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/ecuador.html"
+    },
+    {
+      "name": "Egypt",
+      "level": 2,
+      "risks": [
+        "T",
+        "O",
+        "C",
+        "H"
+      ],
+      "date": "2025-07-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/egypt.html"
+    },
+    {
+      "name": "El Salvador",
+      "level": 1,
+      "risks": [],
+      "date": "2025-04-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/el-salvador.html"
+    },
+    {
+      "name": "Equatorial Guinea",
+      "level": 2,
+      "risks": [
+        "C",
+        "H",
+        "O"
+      ],
+      "date": "2025-10-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/equatorial-guinea.html"
+    },
+    {
+      "name": "Eritrea",
+      "level": 2,
+      "risks": [
+        "D",
+        "O"
+      ],
+      "date": "2023-07-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/eritrea.html"
+    },
+    {
+      "name": "Estonia",
+      "level": 1,
+      "risks": [],
+      "date": "2026-03-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/estonia.html"
+    },
+    {
+      "name": "Eswatini (Swaziland)",
+      "level": 2,
+      "risks": [
+        "U",
+        "C"
+      ],
+      "date": "2024-07-01",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/eswatini.html"
+    },
+    {
+      "name": "Ethiopia",
+      "level": 3,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O"
+      ],
+      "date": "2026-04-01",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/ethiopia.html"
+    },
+    {
+      "name": "Falkland Islands",
+      "level": 1,
+      "risks": [
+        "T",
+        "U",
+        "C"
+      ],
+      "date": "2025-05-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/falkland-islands.html"
+    },
+    {
+      "name": "Federated States of Micronesia",
+      "level": 1,
+      "risks": [],
+      "date": "2025-01-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/micronesia.html"
+    },
+    {
+      "name": "Fiji",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/fiji.html"
+    },
+    {
+      "name": "Finland",
+      "level": 1,
+      "risks": [],
+      "date": "2026-03-13",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/finland.html"
+    },
+    {
+      "name": "France",
+      "level": 2,
+      "risks": [
+        "U",
+        "T"
+      ],
+      "date": "2025-05-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/france.html"
+    },
+    {
+      "name": "French Guiana",
+      "level": 1,
+      "risks": [],
+      "date": "2025-01-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/french-guiana.html"
+    },
+    {
+      "name": "French Polynesia",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/french-polynesia.html"
+    },
+    {
+      "name": "French West Indies",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/french-west-indies.html"
+    },
+    {
+      "name": "Gabon",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2026-03-30",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/gabon.html"
+    },
+    {
+      "name": "Georgia",
+      "level": 1,
+      "risks": [
+        "U",
+        "C",
+        "O"
+      ],
+      "date": "2025-03-13",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/georgia.html"
+    },
+    {
+      "name": "Germany",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-05-13",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/germany.html"
+    },
+    {
+      "name": "Ghana",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "O"
+      ],
+      "date": "2025-04-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/ghana.html"
+    },
+    {
+      "name": "Gibraltar",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-06-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/gibraltar.html"
+    },
+    {
+      "name": "Greece",
+      "level": 1,
+      "risks": [],
+      "date": "2025-10-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/greece.html"
+    },
+    {
+      "name": "Greenland",
+      "level": 2,
+      "risks": [
+        "N",
+        "O"
+      ],
+      "date": "2024-10-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/greenland.html"
+    },
+    {
+      "name": "Grenada",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2026-01-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/grenada.html"
+    },
+    {
+      "name": "Guadeloupe (French West Indies)",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/guadeloupe.html"
+    },
+    {
+      "name": "Guadeloupe, Martinique, Saint Martin, and Saint Barth\u00e9lemy (French West Indies)",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/guadeloupe-martinique-saint-martin-and-saint-barthelemy-french-west-indies.html"
+    },
+    {
+      "name": "Guatemala",
+      "level": 3,
+      "risks": [
+        "C",
+        "T"
+      ],
+      "date": "2026-03-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/guatemala.html"
+    },
+    {
+      "name": "Guinea",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2026-02-25",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/guinea.html"
+    },
+    {
+      "name": "Guinea-Bissau",
+      "level": 3,
+      "risks": [
+        "U",
+        "H",
+        "O"
+      ],
+      "date": "2025-12-11",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/guinea-bissau.html"
+    },
+    {
+      "name": "Guyana",
+      "level": 3,
+      "risks": [],
+      "date": "2025-05-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/guyana.html"
+    },
+    {
+      "name": "Haiti",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "T"
+      ],
+      "date": "2026-04-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/haiti.html"
+    },
+    {
+      "name": "Honduras",
+      "level": 3,
+      "risks": [
+        "C"
+      ],
+      "date": "2024-12-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/honduras.html"
+    },
+    {
+      "name": "Hong Kong",
+      "level": 2,
+      "risks": [
+        "O"
+      ],
+      "date": "2024-11-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/hong-kong.html"
+    },
+    {
+      "name": "Hungary",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/hungary.html"
+    },
+    {
+      "name": "Iceland",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/iceland.html"
+    },
+    {
+      "name": "India",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "T",
+        "O"
+      ],
+      "date": "2025-06-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/india.html"
+    },
+    {
+      "name": "Indonesia",
+      "level": 2,
+      "risks": [
+        "U",
+        "N",
+        "T"
+      ],
+      "date": "2025-04-30",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/indonesia.html"
+    },
+    {
+      "name": "Iran",
+      "level": 4,
+      "risks": [
+        "U",
+        "K",
+        "T",
+        "D",
+        "O"
+      ],
+      "date": "2025-12-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/iran.html"
+    },
+    {
+      "name": "Iraq",
+      "level": 4,
+      "risks": [
+        "U",
+        "K",
+        "T",
+        "O"
+      ],
+      "date": "2026-03-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/iraq.html"
+    },
+    {
+      "name": "Ireland",
+      "level": 1,
+      "risks": [],
+      "date": "2026-03-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/ireland.html"
+    },
+    {
+      "name": "Isle of Man",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-06-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/isle-of-man.html"
+    },
+    {
+      "name": "Israel, The West Bank and Gaza",
+      "level": 3,
+      "risks": [
+        "U",
+        "T",
+        "O"
+      ],
+      "date": "2026-02-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/israel-the-west-bank-and-gaza.html"
+    },
+    {
+      "name": "Italy",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-05-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/italy.html"
+    },
+    {
+      "name": "Jamaica",
+      "level": 2,
+      "risks": [
+        "C",
+        "H",
+        "N"
+      ],
+      "date": "2026-01-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/jamaica.html"
+    },
+    {
+      "name": "Japan",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/japan.html"
+    },
+    {
+      "name": "Jerusalem",
+      "level": 3,
+      "risks": [
+        "U",
+        "T",
+        "O"
+      ],
+      "date": "2025-01-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/jerusalem.html"
+    },
+    {
+      "name": "Jordan",
+      "level": 2,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-05-04",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/jordan.html"
+    },
+    {
+      "name": "Kazakhstan",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/kazakhstan.html"
+    },
+    {
+      "name": "Kenya",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "T"
+      ],
+      "date": "2025-03-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/kenya.html"
+    },
+    {
+      "name": "Kiribati",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/kiribati.html"
+    },
+    {
+      "name": "Kosovo",
+      "level": 2,
+      "risks": [
+        "U",
+        "T"
+      ],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/kosovo.html"
+    },
+    {
+      "name": "Kuwait",
+      "level": 3,
+      "risks": [
+        "C",
+        "O"
+      ],
+      "date": "2026-03-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/kuwait.html"
+    },
+    {
+      "name": "Kyrgyzstan",
+      "level": 1,
+      "risks": [
+        "U"
+      ],
+      "date": "2026-02-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/kyrgyzstan.html"
+    },
+    {
+      "name": "Laos",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "O"
+      ],
+      "date": "2024-11-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/laos.html"
+    },
+    {
+      "name": "Latvia",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-01",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/latvia.html"
+    },
+    {
+      "name": "Lebanon",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O"
+      ],
+      "date": "2026-05-06",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/lebanon.html"
+    },
+    {
+      "name": "Lesotho",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2024-09-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/lesotho.html"
+    },
+    {
+      "name": "Liberia",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2025-12-11",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/liberia.html"
+    },
+    {
+      "name": "Libya",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O"
+      ],
+      "date": "2025-07-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/libya.html"
+    },
+    {
+      "name": "Liechtenstein",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/liechtenstein.html"
+    },
+    {
+      "name": "Lithuania",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/lithuania.html"
+    },
+    {
+      "name": "Luxembourg",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/luxembourg.html"
+    },
+    {
+      "name": "Macau",
+      "level": 2,
+      "risks": [
+        "O"
+      ],
+      "date": "2024-11-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/macau.html"
+    },
+    {
+      "name": "Madagascar",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2025-12-04",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/madagascar.html"
+    },
+    {
+      "name": "Malawi",
+      "level": 2,
+      "risks": [
+        "U",
+        "C"
+      ],
+      "date": "2026-02-25",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/malawi.html"
+    },
+    {
+      "name": "Malaysia",
+      "level": 1,
+      "risks": [
+        "K"
+      ],
+      "date": "2026-02-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/malaysia.html"
+    },
+    {
+      "name": "Maldives",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-10-07",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/maldives.html"
+    },
+    {
+      "name": "Mali",
+      "level": 4,
+      "risks": [
+        "C",
+        "K",
+        "T",
+        "U",
+        "H"
+      ],
+      "date": "2026-01-09",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/mali.html"
+    },
+    {
+      "name": "Malta",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/malta.html"
+    },
+    {
+      "name": "Marshall Islands",
+      "level": 1,
+      "risks": [
+        "H"
+      ],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/marshall-islands.html"
+    },
+    {
+      "name": "Martinique (French West Indies)",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/martinique.html"
+    },
+    {
+      "name": "Mauritania",
+      "level": 3,
+      "risks": [
+        "C",
+        "T"
+      ],
+      "date": "2025-07-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/mauritania.html"
+    },
+    {
+      "name": "Mauritius",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-12-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/mauritius.html"
+    },
+    {
+      "name": "Mexico",
+      "level": 2,
+      "risks": [
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2025-08-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/mexico.html"
+    },
+    {
+      "name": "Moldova",
+      "level": 2,
+      "risks": [],
+      "date": "2024-11-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/moldova.html"
+    },
+    {
+      "name": "Monaco",
+      "level": 2,
+      "risks": [
+        "U",
+        "T"
+      ],
+      "date": "2025-05-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/monaco.html"
+    },
+    {
+      "name": "Mongolia",
+      "level": 1,
+      "risks": [],
+      "date": "2025-01-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/mongolia.html"
+    },
+    {
+      "name": "Montenegro",
+      "level": 1,
+      "risks": [],
+      "date": "2024-11-26",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/montenegro.html"
+    },
+    {
+      "name": "Montserrat",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/montserrat.html"
+    },
+    {
+      "name": "Morocco",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-04-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/morocco.html"
+    },
+    {
+      "name": "Mozambique",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "T"
+      ],
+      "date": "2025-06-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/mozambique.html"
+    },
+    {
+      "name": "Namibia",
+      "level": 2,
+      "risks": [
+        "C",
+        "H"
+      ],
+      "date": "2026-05-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/namibia.html"
+    },
+    {
+      "name": "Nauru",
+      "level": 1,
+      "risks": [
+        "H"
+      ],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/nauru.html"
+    },
+    {
+      "name": "Nepal",
+      "level": 2,
+      "risks": [
+        "U"
+      ],
+      "date": "2026-03-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/nepal.html"
+    },
+    {
+      "name": "Netherlands",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2024-08-09",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/netherlands.html"
+    },
+    {
+      "name": "New Caledonia",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/new-caledonia.html"
+    },
+    {
+      "name": "New Zealand",
+      "level": 1,
+      "risks": [],
+      "date": "2026-04-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/new-zealand.html"
+    },
+    {
+      "name": "Nicaragua",
+      "level": 3,
+      "risks": [
+        "C",
+        "H",
+        "D",
+        "O"
+      ],
+      "date": "2025-05-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/nicaragua.html"
+    },
+    {
+      "name": "Niger",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "T"
+      ],
+      "date": "2026-01-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/niger.html"
+    },
+    {
+      "name": "Nigeria",
+      "level": 3,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "T"
+      ],
+      "date": "2026-04-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/nigeria.html"
+    },
+    {
+      "name": "North Korea (Democratic People's Republic of Korea)",
+      "level": 4,
+      "risks": [
+        "D",
+        "O"
+      ],
+      "date": "2025-04-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/korea-democratic-peoples-republic-of-korea-.html"
+    },
+    {
+      "name": "Norway",
+      "level": 1,
+      "risks": [],
+      "date": "2025-02-03",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/norway.html"
+    },
+    {
+      "name": "Oman",
+      "level": 3,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-04-09",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/oman.html"
+    },
+    {
+      "name": "Pakistan",
+      "level": 3,
+      "risks": [
+        "T",
+        "C",
+        "K",
+        "O"
+      ],
+      "date": "2026-03-03",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/pakistan.html"
+    },
+    {
+      "name": "Palau",
+      "level": 1,
+      "risks": [
+        "H",
+        "O"
+      ],
+      "date": "2026-01-07",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/palau.html"
+    },
+    {
+      "name": "Panama",
+      "level": 2,
+      "risks": [
+        "U",
+        "C"
+      ],
+      "date": "2024-09-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/panama.html"
+    },
+    {
+      "name": "Papua New Guinea",
+      "level": 3,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "N",
+        "O"
+      ],
+      "date": "2025-04-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/papua-new-guinea.html"
+    },
+    {
+      "name": "Paraguay",
+      "level": 1,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-04-30",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/paraguay.html"
+    },
+    {
+      "name": "Peru",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2025-05-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/peru.html"
+    },
+    {
+      "name": "Philippines",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2025-05-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/philippines.html"
+    },
+    {
+      "name": "Poland",
+      "level": 1,
+      "risks": [],
+      "date": "2025-06-05",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/poland.html"
+    },
+    {
+      "name": "Portugal",
+      "level": 1,
+      "risks": [],
+      "date": "2025-12-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/portugal.html"
+    },
+    {
+      "name": "Qatar",
+      "level": 3,
+      "risks": [
+        "O"
+      ],
+      "date": "2026-03-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/qatar.html"
+    },
+    {
+      "name": "Republic of North Macedonia",
+      "level": 1,
+      "risks": [],
+      "date": "2025-01-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/north-macedonia.html"
+    },
+    {
+      "name": "Republic of the Congo",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2024-10-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/republic-of-the-congo.html"
+    },
+    {
+      "name": "Romania",
+      "level": 1,
+      "risks": [],
+      "date": "2025-10-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/romania.html"
+    },
+    {
+      "name": "Russia",
+      "level": 4,
+      "risks": [
+        "U",
+        "T",
+        "D",
+        "O"
+      ],
+      "date": "2025-12-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/russia.html"
+    },
+    {
+      "name": "Rwanda",
+      "level": 3,
+      "risks": [
+        "C",
+        "H",
+        "U"
+      ],
+      "date": "2026-05-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/rwanda.html"
+    },
+    {
+      "name": "Saba",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saba.html"
+    },
+    {
+      "name": "Saint Barth\u00e9lemy (French West Indies)",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saint-barthelemy.html"
+    },
+    {
+      "name": "Saint Kitts and Nevis",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saint-kitts-and-nevis.html"
+    },
+    {
+      "name": "Saint Lucia",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saint-lucia.html"
+    },
+    {
+      "name": "Saint Martin (French West Indies)",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saint-martin.html"
+    },
+    {
+      "name": "Saint Vincent and the Grenadines",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-06",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saint-vincent-and-the-grenadines.html"
+    },
+    {
+      "name": "Samoa",
+      "level": 1,
+      "risks": [],
+      "date": "2025-03-10",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/samoa.html"
+    },
+    {
+      "name": "San Marino",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-05-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/san-marino.html"
+    },
+    {
+      "name": "Sao Tome and Principe",
+      "level": 3,
+      "risks": [
+        "H",
+        "U"
+      ],
+      "date": "2026-04-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sao-tome-and-principe.html"
+    },
+    {
+      "name": "Saudi Arabia",
+      "level": 3,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-03-13",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/saudi-arabia.html"
+    },
+    {
+      "name": "Senegal",
+      "level": 1,
+      "risks": [
+        "C",
+        "O"
+      ],
+      "date": "2025-12-01",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/senegal.html"
+    },
+    {
+      "name": "Serbia",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-04-11",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/serbia.html"
+    },
+    {
+      "name": "Seychelles",
+      "level": 1,
+      "risks": [],
+      "date": "2025-12-09",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/seychelles.html"
+    },
+    {
+      "name": "Sierra Leone",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H"
+      ],
+      "date": "2025-09-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sierra-leone.html"
+    },
+    {
+      "name": "Singapore",
+      "level": 1,
+      "risks": [],
+      "date": "2026-03-09",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/singapore.html"
+    },
+    {
+      "name": "Sint Eustatius",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sint-eustatius.html"
+    },
+    {
+      "name": "Sint Maarten",
+      "level": 1,
+      "risks": [],
+      "date": "2024-08-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sint-maarten.html"
+    },
+    {
+      "name": "Slovakia",
+      "level": 1,
+      "risks": [],
+      "date": "2026-02-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/slovakia.html"
+    },
+    {
+      "name": "Slovenia",
+      "level": 1,
+      "risks": [],
+      "date": "2026-05-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/slovenia.html"
+    },
+    {
+      "name": "Solomon Islands",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "O"
+      ],
+      "date": "2025-04-29",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/solomon-islands.html"
+    },
+    {
+      "name": "Somalia",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O",
+        "H"
+      ],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/somalia.html"
+    },
+    {
+      "name": "South Africa",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2025-05-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/south-africa.html"
+    },
+    {
+      "name": "South Korea",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/south-korea.html"
+    },
+    {
+      "name": "South Sudan",
+      "level": 4,
+      "risks": [
+        "C",
+        "K",
+        "U",
+        "H",
+        "O"
+      ],
+      "date": "2026-05-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/south-sudan.html"
+    },
+    {
+      "name": "Spain",
+      "level": 2,
+      "risks": [
+        "U",
+        "T"
+      ],
+      "date": "2025-05-12",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/spain.html"
+    },
+    {
+      "name": "Sri Lanka",
+      "level": 2,
+      "risks": [
+        "U",
+        "T",
+        "O"
+      ],
+      "date": "2025-10-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sri-lanka.html"
+    },
+    {
+      "name": "Sudan",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O",
+        "H"
+      ],
+      "date": "2026-05-15",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sudan.html"
+    },
+    {
+      "name": "Suriname",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-13",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/suriname.html"
+    },
+    {
+      "name": "Sweden",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2026-05-18",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/sweden.html"
+    },
+    {
+      "name": "Switzerland",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-20",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/switzerland.html"
+    },
+    {
+      "name": "Syria",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T",
+        "O"
+      ],
+      "date": "2025-12-11",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/syria.html"
+    },
+    {
+      "name": "Taiwan",
+      "level": 1,
+      "risks": [],
+      "date": "2025-11-25",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/taiwan.html"
+    },
+    {
+      "name": "Tajikistan",
+      "level": 2,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2025-05-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/tajikistan.html"
+    },
+    {
+      "name": "Tanzania",
+      "level": 3,
+      "risks": [
+        "C",
+        "T",
+        "O",
+        "U"
+      ],
+      "date": "2025-10-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/tanzania.html"
+    },
+    {
+      "name": "Thailand",
+      "level": 2,
+      "risks": [
+        "U"
+      ],
+      "date": "2025-07-25",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/thailand.html"
+    },
+    {
+      "name": "The Gambia",
+      "level": 2,
+      "risks": [
+        "C",
+        "H",
+        "O"
+      ],
+      "date": "2026-01-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/gambia-the.html"
+    },
+    {
+      "name": "Timor-Leste",
+      "level": 2,
+      "risks": [
+        "U",
+        "C"
+      ],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/timor-leste.html"
+    },
+    {
+      "name": "Togo",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "K",
+        "T"
+      ],
+      "date": "2024-11-07",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/togo.html"
+    },
+    {
+      "name": "Tonga",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/tonga.html"
+    },
+    {
+      "name": "Trinidad and Tobago",
+      "level": 3,
+      "risks": [
+        "C",
+        "T",
+        "H"
+      ],
+      "date": "2026-04-13",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/trinidad-and-tobago.html"
+    },
+    {
+      "name": "Tunisia",
+      "level": 2,
+      "risks": [
+        "T",
+        "U",
+        "C"
+      ],
+      "date": "2026-05-21",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/tunisia.html"
+    },
+    {
+      "name": "Turkey",
+      "level": 2,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-04-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/turkey.html"
+    },
+    {
+      "name": "Turkmenistan",
+      "level": 1,
+      "risks": [],
+      "date": "2025-02-28",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/turkmenistan.html"
+    },
+    {
+      "name": "Turks and Caicos Islands",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-03-04",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/turks-and-caicos-islands.html"
+    },
+    {
+      "name": "Tuvalu",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-02",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/tuvalu.html"
+    },
+    {
+      "name": "Uganda",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "T",
+        "O",
+        "H"
+      ],
+      "date": "2026-05-17",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/uganda.html"
+    },
+    {
+      "name": "Ukraine",
+      "level": 4,
+      "risks": [
+        "O"
+      ],
+      "date": "2024-11-14",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/ukraine.html"
+    },
+    {
+      "name": "United Arab Emirates",
+      "level": 3,
+      "risks": [
+        "T",
+        "O"
+      ],
+      "date": "2026-03-03",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/united-arab-emirates.html"
+    },
+    {
+      "name": "United Kingdom of Great Britain and Northern Ireland",
+      "level": 2,
+      "risks": [
+        "T",
+        "U",
+        "C"
+      ],
+      "date": "2025-05-08",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/united-kingdom.html"
+    },
+    {
+      "name": "Uruguay",
+      "level": 2,
+      "risks": [
+        "C"
+      ],
+      "date": "2025-05-07",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/uruguay.html"
+    },
+    {
+      "name": "Uzbekistan",
+      "level": 1,
+      "risks": [],
+      "date": "2026-01-26",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/uzbekistan.html"
+    },
+    {
+      "name": "Vanuatu",
+      "level": 1,
+      "risks": [],
+      "date": "2025-05-22",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/vanuatu.html"
+    },
+    {
+      "name": "Vatican City (Holy See)",
+      "level": 2,
+      "risks": [
+        "T"
+      ],
+      "date": "2025-05-23",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/holy-see.html"
+    },
+    {
+      "name": "Venezuela",
+      "level": 3,
+      "risks": [
+        "C",
+        "H",
+        "K",
+        "T"
+      ],
+      "date": "2026-05-18",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/venezuela.html"
+    },
+    {
+      "name": "Vietnam",
+      "level": 1,
+      "risks": [],
+      "date": "2024-12-16",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/vietnam.html"
+    },
+    {
+      "name": "Yemen",
+      "level": 4,
+      "risks": [
+        "U",
+        "C",
+        "H",
+        "K",
+        "T",
+        "O"
+      ],
+      "date": "2025-12-19",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/yemen.html"
+    },
+    {
+      "name": "Zambia",
+      "level": 1,
+      "risks": [],
+      "date": "2023-07-31",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/zambia.html"
+    },
+    {
+      "name": "Zimbabwe",
+      "level": 2,
+      "risks": [
+        "U",
+        "C",
+        "O"
+      ],
+      "date": "2023-06-27",
+      "url": "https://travel.state.gov/en/international-travel/travel-advisories/zimbabwe.html"
+    }
+  ],
+  "bulletins": [
+    {
+      "tag": "New Caledonia",
+      "severity": "amber",
+      "date": "",
+      "title": "New Caledonia - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was decreased to 2. The &#8220;Unrest&#8221; risk indicator was removed. Advisory Summary was updated.\nExercise Increased Caution in New Caledonia due to risk of crime. &nbsp;\nAdvisory summary&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;\nExercise increased caution in New Caledonia.\nReview our travel guidance for New Caledonia to learn how to prepare for a safe trip.\nExercise increased caution in Areas Outside Noumea at night due to crime.\nDue to the civil unrest in 2024, an increased police and m",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/new-caledonia-travel-advisory.html"
+    },
+    {
+      "tag": "Lebanon",
+      "severity": "red",
+      "date": "",
+      "title": "Lebanon - Level 4: Do Not Travel",
+      "body": "Do not travelto Lebanon for any reason due to the risk of crime, terrorism, unrest, kidnapping, landmines, and armed conflict.\u00c2\u00a0\nOn February 23, 2026, the Department of State ordered non-emergency U.S. government employees and U.S. government employee family members to depart Lebanon due to safety risks.\nU.S. government employee travel restrictions\u00c2\u00a0\n\nU.S. Embassy Beirut personnel are restricted from personal travel throughout Lebanon without advance permission.\nAdditional travel restrictions may be imposed on U.S. personnel under Chief of Mission security responsibility, with little to no not",
+      "href": "https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.lbn.html"
+    },
+    {
+      "tag": "Jordan",
+      "severity": "amber",
+      "date": "",
+      "title": "Jordan - Level 3: Reconsider Travel",
+      "body": "Reconsider traveldue to\u00c2\u00a0terrorism\u00c2\u00a0and\u00c2\u00a0armed conflict.\u00c2\u00a0\nOn March 2, 2026, the Department of State ordered non-emergency U.S. government employees and their family members to leave Jordan due to safety risks.\nArmed Conflict\n Following the onset of hostilities between the United States and Iran on February 28, there has been an ongoing threat of drone and missile attacks from Iran and significant disruptions to commercial flights.\nTerrorism\n There is a risk of terrorist violence, including terrorist attacks and other activity in Jordan. Visit the U.S. Department of State\u00e2\u0080\u0099s&nbsp;country repo",
+      "href": "https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.jor.html"
+    },
+    {
+      "tag": "Haiti",
+      "severity": "red",
+      "date": "",
+      "title": "Haiti - Level 4: Do Not Travel",
+      "body": "There was no change to the advisory level or risk indicators. Advisory summary was updated.\nDo Not Travel to Haiti due to the risk of&nbsp;crime,&nbsp;terrorism,&nbsp;kidnapping,&nbsp;unrest, and&nbsp;limited health care. Read the entire Travel Advisory.\nAdvisory Summary\nOn July 27, 2023, the Department of State ordered non-emergency U.S. government employees and their family members to leave Haiti due to safety risks. Haiti has been under a national state of emergency&nbsp;since March 2024. This state of emergency&nbsp;remains&nbsp;in effect.\nU.S. government employee travel restrictions&nbsp;",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/haiti-travel-advisory.html"
+    },
+    {
+      "tag": "Oman",
+      "severity": "amber",
+      "date": "",
+      "title": "Oman - Level 3: Reconsider Travel",
+      "body": "Reconsider travelto Oman due to the risk of terrorism and armed conflict. Some areas have increased risk. Read the entire Travel Advisory.\nOn March 13, 2026, the Department of State ordered non-emergency U.S. government employees and U.S. government employee family members to leave Oman due to safety risks.\nArmed Conflict\nFollowing the onset of hostilities between the United States and Iran on February 28, there has been an ongoing threat of drone and missile attacks from Iran and significant disruptions to commercial flights.\nTerrorism\nThere is a risk of terrorist violence, including terroris",
+      "href": "https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.omn.html"
+    },
+    {
+      "tag": "Nigeria",
+      "severity": "red",
+      "date": "",
+      "title": "Nigeria - Level 3: Reconsider Travel",
+      "body": "There were no changes to the Travel Advisory Level or risk indicators. Advisory summary was updated to reflect changes to U.S. embassy operations. Do not travel to Plateau, Jigawa, Kwara, Niger, Taraba states were added.\nReconsider travel to Nigeria due to crime, terrorism, unrest, kidnapping, and&nbsp;inconsistent availability of health care services.&nbsp;Some areas have increased risk. Read the entire Travel Advisory.\nDo Not Travel to:\n\nBorno, Jigawa, Kogi, Kwara, Niger, Plateau, Taraba, Yobe, northern Adamawa states due to terrorism, crime,&nbsp;and kidnapping\nBauchi, Gombe, Kaduna, Kano, ",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/nigeria-travel-advisory.html"
+    },
+    {
+      "tag": "Venezuela",
+      "severity": "red",
+      "date": "",
+      "title": "Venezuela - Level 3: Reconsider Travel",
+      "body": "The travel advisory level&nbsp;decreased&nbsp;to 3. The &#8220;Wrongful Detention,&#8221; &#8220;Unrest,&#8221;&nbsp;and &#8220;Other&#8221; risk indicators were removed.&nbsp;Areas&nbsp;of increased risk&nbsp;were&nbsp;added. Advisory summary was updated to reflect changes to U.S. embassy operations.\nReconsider travel to Venezuela due to&nbsp;risk of&nbsp;crime, kidnapping, terrorism, and poor health infrastructure. Some areas have increased risk. Read the entire Travel Advisory.&nbsp;\nDo Not Travel to:\n\nVenezuela-Colombia border region (20 miles from the border) due to the risk of crime, kid",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/venezuela-travel-advisory.html"
+    },
+    {
+      "tag": "Saudi Arabia",
+      "severity": "amber",
+      "date": "",
+      "title": "Saudi Arabia - Level 3: Reconsider Travel",
+      "body": "Reconsider travelto Saudi Arabia due to risk of\u00c2\u00a0Iranian drone and missile targeting of American interests, armed conflict,\u00c2\u00a0terrorism, exit bans,\u00c2\u00a0and\u00c2\u00a0local\u00c2\u00a0laws regarding social media activity.\u00c2\u00a0Some areas have increased risk. Read the entire Travel Advisory.\nOn March 8, 2026, the Department of State ordered non-emergency U.S. government employees and U.S. government employee family members to leave Saudi Arabia due to safety risks.\nThis amends the prior on March 3, 2026, Department of State authorization order for non-emergency U.S. government employees and U.S. government employee family",
+      "href": "https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.sau.html"
+    },
+    {
+      "tag": "Kuwait",
+      "severity": "amber",
+      "date": "",
+      "title": "Kuwait - Level 3: Reconsider Travel",
+      "body": "There were no changes to the advisory level or risk indicators. Advisory summary was updated to reflect changes to U.S. embassy operations.\nReconsider Travel to Kuwait due to the threat of armed conflict, landmines, and crime.\nAdvisory summary\nOn March 5, 2026, the U.S. Embassy in Kuwait suspended operations (including routine consular services).&nbsp; U.S. citizens in Kuwait should contact the State Department at +1-202-501-4444 or +1-888-407-4747 for emergency assistance or services.&nbsp;\nArmed conflict\nFollowing the onset of hostilities between the United States and Iran on February 28, th",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/kuwait-travel-advisory.html"
+    },
+    {
+      "tag": "Cyprus",
+      "severity": "amber",
+      "date": "",
+      "title": "Cyprus - Level 3: Reconsider Travel",
+      "body": "The advisory level was increased to 3. There were no changes to the risk indicators. Advisory summary was updated to reflect changes to U.S. embassy operations.\nReconsider travel&#8239;to Cyprus due to the threat of&#8239;armed conflict&nbsp;and&nbsp;limited U.S. embassy&nbsp;assistance&nbsp;for Americans in the Turkish Cypriot Administered area.\nAdvisory Summary&#8239;&#8239;&#8239;&#8239;\nOn March&#8239;3, 2026, the Department of State&#8239;authorized&#8239;non-emergency U.S. government&nbsp;employees&nbsp;and&nbsp;U.S. government employee&nbsp;family members to leave Cyprus due to&#8239;th",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/cyprus-travel-advisory.html"
+    },
+    {
+      "tag": "Pakistan",
+      "severity": "red",
+      "date": "",
+      "title": "Pakistan - Level 3: Reconsider Travel",
+      "body": "There were no changes to the advisory level or risk indicators. Advisory summary was updated to reflect changes to U.S. mission operations.\nReconsider travel to Pakistan due to armed conflict, terrorism, crime, and kidnapping. Some areas have increased risk. Read the entire Travel Advisory.\nDo not travel to:\n\nBalochistan Province&nbsp;due to&nbsp;terrorism&nbsp;and&nbsp;kidnapping.\nKhyber Pakhtunkhwa (KP) Province, including the former&nbsp;Federally Administered Tribal Areas (FATA), due to&nbsp;terrorism&nbsp;and&nbsp;kidnapping.\nThe immediate vicinity of&nbsp;the Line of Control&nbsp;due to&",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/pakistan-travel-advisory.html"
+    },
+    {
+      "tag": "United Arab Emirates",
+      "severity": "amber",
+      "date": "",
+      "title": "United Arab Emirates - Level 3: Reconsider Travel",
+      "body": "Updated to&nbsp;reflect the ordered departure of non-emergency U.S. government personnel and family members of government personnel on March&nbsp;2.&nbsp;Advisory summary was updated.\nReconsider travel to the United Arab Emirates due to&nbsp;the threat of armed conflict and terrorism.\nAdvisory Summary\nOn March 2, 2026, the Department of State ordered non-emergency U.S. government employees and U.S. government family members to leave the United Arab Emirates due to the threat of armed conflict.\nArmed Conflict\nFollowing the onset of hostilities between the United States and Iran on February 28, ",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/united-arab-emirates-travel-advisory.html"
+    },
+    {
+      "tag": "Bahrain",
+      "severity": "amber",
+      "date": "",
+      "title": "Bahrain - Level 3: Reconsider Travel",
+      "body": "Reconsider travelto Bahrain due to\u00c2\u00a0terrorism\u00c2\u00a0and\u00c2\u00a0armed conflict.\nOn March 2, 2026, the Department of State ordered non-emergency U.S. government employees and family members of U.S. government employees to leave Bahrain due to safety risks.\nArmed Conflict\nFollowing the onset of hostilities between the United States and Iran on February 28, there has been an ongoing threat of drone and missile attacks from Iran and significant disruptions to commercial flights.\nTerrorism\nThere is a risk of terrorist violence, including terrorist attacks and other activity in Bahrain. Visit the U.S. Departmen",
+      "href": "https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.bhr.html"
+    },
+    {
+      "tag": "Qatar",
+      "severity": "amber",
+      "date": "",
+      "title": "Qatar - Level 3: Reconsider Travel",
+      "body": "Updated to reflect the ordered departure of non-emergency U.S. government personnel and family members of government personnel on March 2. Advisory summary was updated.\nReconsider travel to Qatar due to risk of armed conflict.\nAdvisory summary\nOn March 2, 2026, the Department of State ordered non-emergency U.S. government employees and U.S. government employee family members to leave Qatar due to threat of armed conflict.\nOut of an abundance of caution and until further notice, U.S. Embassy Doha has suspended routine consular services.&nbsp;Americans should contact ACSDoha@state.gov in case of",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/qatar-travel-advisory.html"
+    },
+    {
+      "tag": "Iraq",
+      "severity": "red",
+      "date": "",
+      "title": "Iraq - Level 4: Do Not Travel",
+      "body": "There were no changes to the advisory level or risk indicators. Advisory summary was updated to reflect changes to U.S. embassy operations.\nDo not travel to Iraq due to terrorism, kidnapping, armed conflict, civil unrest, and the U.S. government&#8217;s limited ability to provide emergency services to U.S. citizens in Iraq. Do not travel to Iraq for any reason.&nbsp; Leave now if you are there.\nAdvisory Summary\nOn March 2, 2026, the Department of State ordered non-emergency U.S. government employees to leave Iraq due to security concerns.\nU.S. citizens in Iraq face high risks, including violen",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/iraq-travel-advisory.html"
+    },
+    {
+      "tag": "Jamaica",
+      "severity": "amber",
+      "date": "",
+      "title": "Jamaica - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was decreased to Level 2. There were no changes to the risk indicators. The advisory summary was updated.\nExercise Increased Caution due to&nbsp;crime, health,&nbsp;and&nbsp;natural disaster risks. Some areas have increased risk. Read the entire Travel Advisory.\nAdvisory Summary\n\nU.S. government employee travel restrictions\nU.S. government employees working in Jamaica are not allowed to use public buses or drive between cities at night. They are also not allowed to travel to certain high-risk areas, as noted below.\nU.S. citizens in Jamaica should take the same precautions.\nN",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/jamaica-travel-advisory.html"
+    },
+    {
+      "tag": "Grenada",
+      "severity": "amber",
+      "date": "",
+      "title": "Grenada - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was increased to 2. The &#8220;crime&#8221; risk indicator was added. Areas of increased risk were removed. Advisory summary was updated.\nExercise Increased Caution in Grenada due to risk of crime.\nAdvisory summary\nViolent crime can occur anywhere in Grenada. American citizens in Grenada have been victims of armed robbery, assault, burglary, and rape. In some cases, American citizens have been killed. Police response times are not as fast as one may expect in the United States.\nIf you decide to travel to Grenada:\n\nReview our information on Crime Abroad and for Victims of Cri",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/grenada-travel-advisory.html"
+    },
+    {
+      "tag": "Belarus",
+      "severity": "red",
+      "date": "",
+      "title": "Belarus - Level 4: Do Not Travel",
+      "body": "Do not travelto Belarus for any reason due to unrest and other risks.\nThe U.S. government has extremely limited ability to help detained U.S. citizens. You may not receive consular access. You could also face arbitrary detention with no contact with the outside world.\nOrdered departure\n On February 28, 2022, the U.S. Department of State ordered the departure of U.S. government employees. It also suspended operations at U.S. Embassy Minsk.\nThere are no consular services, routine or emergency, until further notice.\u00c2\u00a0The U.S. government has severely limited ability to assist U.S. citizens in Bela",
+      "href": "https://travel.state.gov/content/tsg_aem/us/en/home/international-travel/travel-advisories/destination.blr.html"
+    },
+    {
+      "tag": "Mauritius",
+      "severity": "amber",
+      "date": "",
+      "title": "Mauritius - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was increased to 2. The &#8220;crime&#8221; indicator was added. Advisory summary was updated.\nExercise increased caution to Mauritius due to crime.\nAdvisory summary\nCrime\nMost crimes against foreigners are crimes of opportunity. This includes pickpocketing, purse snatchings, and petty thefts.\nPetty crime occurs in crowded outdoor shopping areas, beaches, and other tourist spots. It also happens near ATMs.\nOther serious crimes in Mauritius include:\n\nBreak-ins\nViolent crimes (serious assaults, murder, rape)\nVerbal harassment and other crimes towards women traveling alone\n\nRev",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mauritius-travel-advisory.html"
+    },
+    {
+      "tag": "Madagascar",
+      "severity": "amber",
+      "date": "",
+      "title": "Madagascar - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was decreased from 3 to 2. The &#8220;health&#8221; risk indicator was added. Advisory summary was updated.\nExercise increased caution when traveling to Madagascar due to crime, unrest, and health. Some areas have increased risk. Read the entire Travel Advisory.\nReconsider travel to the following areas due to crime:\n\nThe area in and around the city of Tsaratanana in the Betsiboka Region.\nThe area along the unnamed road connecting the city of Tsiroanomandidy in the Bongolava Region with the coastal city of Maintirano in the Melaky Region.\nThe area in and around the city of Be",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/madagascar-travel-advisory.html"
+    },
+    {
+      "tag": "Tanzania",
+      "severity": "amber",
+      "date": "",
+      "title": "Tanzania - Level 3: Reconsider Travel",
+      "body": "The advisory level increased from Level 2 to 3.&nbsp; The &#8220;unrest&#8221; risk indicator was added.&nbsp;\nReconsider travel to Tanzania due to unrest, crime, terrorism, and targeting of gay and lesbian individuals. Some areas have increased risk. Read the entire Travel Advisory.\nAdvisory summary\nUnrest\nDemonstrations often take place in response to political or economic issues. They may also occur on holidays or during large events.\n\nDemonstrations can be unpredictable.\nThe Tanzanian government increases security presence around protests. This includes stationary checkpoints and roadblock",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/tanzania-travel-advisory.html"
+    },
+    {
+      "tag": "Niger",
+      "severity": "red",
+      "date": "",
+      "title": "Niger - Level 4: Do Not Travel",
+      "body": "The advisory level was increased to 4. There were no changes to the risk indicators. Advisory summary was updated to reflect changes to U.S. embassy operations.&nbsp;\nDo not travel to Niger for any reason due to crime, unrest, terrorism, health, and kidnapping.&nbsp;\nAdvisory summary\nDo not travel to Niger for any reason. On October 30, 2025, the Department of State authorized the departure of all family members of U.S. government employees in Niger due to safety risks.\nThe U.S. government cannot offer routine or emergency services to U.S. citizens outside of Niamey due to safety risks.\nA stat",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/niger-travel-advisory.html"
+    },
+    {
+      "tag": "Cambodia",
+      "severity": "red",
+      "date": "",
+      "title": "Cambodia - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was increased to 2. The &#8220;unrest&#8221; risk indicator was added. An area of increased risk was added. The advisory summary was updated.&nbsp;\nExercise increased caution in Cambodia due to crime and landmines. Some areas have increased risks. Read the entire Travel Advisory.\nDo Not Travel to:\n\nAreas along Cambodian and Thai border due to armed conflict.\n\n\nAdvisory summary:\nPhnom Penh\nStreet crime, particularly phone and bag snatchings, occurs frequently in areas where foreigners gather; resistance can result in injury. Violent crimes, such as sexual assault and homicide",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/cambodia-travel-advisory.html"
+    },
+    {
+      "tag": "Thailand",
+      "severity": "red",
+      "date": "",
+      "title": "Thailand - Level 2: Exercise Increased Caution",
+      "body": "The advisory level was increased to Level 2. An area of increased risk was added. The advisory summary was updated.\nExercise increased caution in Thailand due to risk of unrest. Some areas have increased risk.&nbsp; Read the entire Travel Advisory.\nDo Not Travel to:\n\nAreas along the Cambodian and Thai border due to armed conflict.\n\n\nAdvisory summary:&nbsp;\nExercise increased caution due to&nbsp;civil unrest&nbsp;associated with ongoing insurgent activities in the Yala, Pattani, and Narathiwat provinces.\n\nPeriodic violence between Thai security services and armed insurgents has been known to oc",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/thailand-travel-advisory.html"
+    },
+    {
+      "tag": "Egypt",
+      "severity": "red",
+      "date": "",
+      "title": "Egypt - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect a change in Travel Advisory level.\nExercise increased caution in Egypt due to terrorism, crime, and health. Some areas have increased risk. Read the entire Travel Advisory.\nDo not travel to:\n\nThe Northern and Middle Sinai Peninsula due to terrorism.&nbsp;\nThe Western Desert due to&nbsp;risk to safety and security unless traveling with a professionally licensed tour company.\nEgyptian border areas due to&nbsp;military zones.\n\nCountry Summary:&nbsp;The U.S. Embassy has limited ability to help dual national U.S.-Egyptian citizens who are arrested or detained. &nbsp;Egyptian law ",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/egypt-travel-advisory.html"
+    },
+    {
+      "tag": "Mozambique",
+      "severity": "red",
+      "date": "",
+      "title": "Mozambique - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect change in overall travel advisory level from 3 to 2 due to decrease of election related protests, and addition of Niassa Special Reserve to Do Not Travel section.\nExercise increased caution when traveling to Mozambique due to&nbsp;health issues,&nbsp;crime, civil unrest,&nbsp;and&nbsp;terrorism. Some areas have&nbsp;greater&nbsp;risk. Read the entire Travel Advisory.\nDo Not Travel To:\n\nCabo Delgado Province, the Niassa Special Reserve inside Niassa Province, and certain districts in the north of Nampula Province due to&nbsp;terrorism.\n\nCountry Summary:&nbsp;Unplanned protest",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/mozambique-travel-advisory.html"
+    },
+    {
+      "tag": "South Africa",
+      "severity": "amber",
+      "date": "",
+      "title": "South Africa - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect information on driving at night and addition of the terrorism risk indicator.&#8239;\nExercise increased caution in South Africa due to crime, terrorism, civil unrest, and kidnapping.&nbsp;\nAdvisory summary: Violent crime is common and includes robbery, rape, carjacking and mugging. There are also &quot;smash-and-grab&quot; attacks on vehicles.&#8239;Violent crime is more common in the downtown areas of big cities, especially after dark. Kidnapping is a threat in South Africa. Kidnappers target U.S. citizens and other foreign travelers to steal money. Captors often force vict",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/south-africa-travel-advisory.html"
+    },
+    {
+      "tag": "Vanuatu",
+      "severity": "amber",
+      "date": "",
+      "title": "Vanuatu - Level 1: Exercise Normal Precautions",
+      "body": "Updated to reflect lowering the Travel Advisory Level from Level 3 to Level 1 due to ongoing recovery efforts and removal of the Natural Disaster (N) indicator.\nExercise normal precautions in Vanuatu.\nCountry Summary: Infrastructure and roads in Port Vila and the surrounding area were damaged during the December 2024 earthquake, with repairs in progress.\nRead the country information page for additional information on travel to Vanuatu.\nIf you decide to travel to Vanuatu:\n\nMonitor local reports and updates from the Vanuatu government and follow all instructions from local authorities.\nBe aware ",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/vanuatu-travel-advisory.html"
+    },
+    {
+      "tag": "Cuba",
+      "severity": "amber",
+      "date": "",
+      "title": "Cuba - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect information on power grid failures and Department of the Treasury Office of Foreign Assets Control (OFAC) licenses for travel.\nExercise increased caution in Cuba due to&nbsp;crime and unreliable electrical power.\nCountry Summary:&nbsp;Petty crime is a risk for travelers in Cuba. This includes pick pocketing, purse snatchings, and car break-ins. Violent crime, including armed robbery and homicide, is also on the rise in Cuba.\nU.S. law and regulation prohibit travel to, from, or within Cuba for tourist activities. OFAC regulates travel to, from, and within Cuba by persons subj",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/cuba-travel-advisory.html"
+    },
+    {
+      "tag": "Burundi",
+      "severity": "red",
+      "date": "",
+      "title": "Burundi - Level 3: Reconsider Travel",
+      "body": "Updated to reflect the end of ordered departure of eligible family members and authorized departure for non-emergency employees and updates to U.S. government employee movement restrictions.\nReconsider travel to Burundi due to political violence, crime, and health. Some areas have increased risk. Read the entire Travel Advisory.\nDo Not Travel to:\n\nThe former Central Market located on Chaussee Prince Louis Rwagasore in Bujumbura due to the risk of violent crime.\nCibitoke and Bubanza provinces and Kibira National Park due to potential armed violence.\n\nCountry Summary:&nbsp;The possibility for po",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/burundi-travel-advisory.html"
+    },
+    {
+      "tag": "Ghana",
+      "severity": "amber",
+      "date": "",
+      "title": "Ghana - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect threats against women travelers and increased risks in specific regions. \nExercise increased caution in Ghana due to&nbsp;crime&nbsp;and&nbsp;violence against women travelers and lesbian, gay, and bisexual travelers.&nbsp; Some areas of Ghana have increased risk. Read the entire Travel Advisory.\nReconsider Travel to:\n\nThe Upper East Region, North East Region, Upper West Region, and the western portion of the Savannah Region (all areas west of the N12 Highway) that shares a border with Burkina Faso and C&#7897;te d&#8217;Ivoire due to&nbsp;civil unrest and crime.\n\nCountry Sum",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/ghana-travel-advisory.html"
+    },
+    {
+      "tag": "The Bahamas",
+      "severity": "amber",
+      "date": "",
+      "title": "The Bahamas - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect crime, swimming-related risks, and information on traveling with firearms and ammunition.\nExercise increased caution due to&nbsp;crime.\nCountry Summary:&nbsp;Violent crime&#8212;like armed robberies, burglaries, and sexual assaults&#8212;can occur anywhere in The Bahamas.\nMost crime occurs in Nassau and Freeport on New Providence and Grand Bahama islands. Stay alert in the &quot;Over the Hill&quot; area in Nassau, south of Shirley Street, where gangs have killed residents.\nStay alert in vacation rental properties, especially where private security is not present.\nJet skis an",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/the-bahamas-travel-advisory.html"
+    },
+    {
+      "tag": "Turks and Caicos Islands",
+      "severity": "amber",
+      "date": "",
+      "title": "Turks and Caicos Islands - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect information on traveling with firearms and ammunition.\nExercise increased caution in the Turks and Caicos Islands due to crime.&nbsp;\nCountry Summary:&nbsp;Most crime occurs in Providenciales. Police may have limited investigatory resources. U.S. Embassy Nassau, located in The Bahamas, provides consular services (including assistance to victims of crime) for U.S. citizens in the Turks and Caicos Islands.\nFirearms and ammunition, including single bullets brought by mistake in carry-on bags or luggage, are illegal. Police strictly enforce&nbsp;these laws, even at the airport w",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/turks-and-caicos-travel-advisory.html"
+    },
+    {
+      "tag": "Mainland China, Hong Kong & Macau",
+      "severity": "amber",
+      "date": "",
+      "title": "Mainland China, Hong Kong & Macau - See Summaries - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect a shift to Level 2 &#8220;Exercise increased caution&#8221; for Mainland China.\nSummary: Exercise increased caution when traveling to Mainland China due to arbitrary enforcement of local laws, including in relation to exit bans.\nExercise increased caution when traveling to the Hong Kong Special Administrative Region (SAR) due to the arbitrary enforcement of local laws.\nReconsider travel to the Macau Special Administrative Region (SAR) due to a limited ability to provide emergency consular services. Exercised increased caution when traveling to the Macau SAR due to the arbitr",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/china-travel-advisory.html"
+    },
+    {
+      "tag": "Greenland",
+      "severity": "amber",
+      "date": "",
+      "title": "Greenland - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect a new separate travel advisory from the Kingdom of Denmark.\nExercise increased caution in Greenland due to&nbsp;environmental hazards posed by extreme weather conditions&nbsp;and&nbsp;limited emergency services.\nCountry Summary:&nbsp;The U.S. government&#8217;s ability to provide consular services to U.S. citizens in Greenland is extremely limited.\nGreenland&#8217;s landscape includes vast stretches of territory remote from cities and settlements. The weather can be harsh, and resources to provide emergency services in areas distant from cities and large settlements, includi",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/greenland-travel-advisory.html"
+    },
+    {
+      "tag": "Panama",
+      "severity": "red",
+      "date": "",
+      "title": "Panama - Level 2: Exercise Increased Caution",
+      "body": "Updated to reflect information on areas of civil unrest.\nExercise increased caution in Panama due to crime and potential for civil unrest. Some areas have increased risk. Read the entire travel advisory.\nDo not travel to:\n\nParts of the Mosquito Gulf due to&nbsp;crime.\nParts of the Dari&#233;n Region due to&nbsp;crime.\n\nRead the&nbsp;country information page&nbsp;for additional information on travel to Panama.\nCountry Summary: Crime occurs in Panama, including theft and residential break-ins. Crimes of opportunity such as pickpocketing and purse snatching can happen in tourist areas. The Embass",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/panama-travel-advisory.html"
+    },
+    {
+      "tag": "Lesotho",
+      "severity": "amber",
+      "date": "",
+      "title": "Lesotho - Level 2: Exercise Increased Caution",
+      "body": "Reissued after periodic review with changes to overall Travel Advisory level from level 1 to level 2 due to an increase in crime.&nbsp; &nbsp; &nbsp;&nbsp;\nExercise increased caution in Lesotho due to crime.\nCountry Summary: Crime is common in Lesotho and sporadic armed robberies and carjackings occur. Local police may lack the resources to respond in a timely manner to criminal incidents.\nRead the country information page for additional information on travel to Lesotho.\nIf you decide to travel to Lesotho:\n\nEnroll in the Smart Traveler Enrollment Program (STEP) to receive Alerts and make it ea",
+      "href": "https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/lesotho-travel-advisory.html"
+    }
+  ]
+}
