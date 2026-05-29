@@ -186,6 +186,14 @@ jobs:
               cp "$f" "_site/v2/$(basename "$f")"
             done
           fi
+          # UAP/MUFON sidecar is generated only under v2/ (v2/app.py owns the
+          # network fetch). Serve it at the V1 root as well so the V1 UAP tab
+          # doesn't 404 if the V2 *page* build fails — this runs independently
+          # of the v2/dashboard.html gate above and only needs the JSON to
+          # exist. V1's manifest points at the root "data-mufon.json".
+          if [ -f v2/data-mufon.json ]; then
+            cp v2/data-mufon.json _site/data-mufon.json
+          fi
           # Stage the LTHCS standalone tab under /lthcs/ when present.
           # The page is committed under lthcs_tab/ and reads its data from
           # data/lthcs/ (also committed). CI doesn't run lthcs_daily.py —

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 import webbrowser
 from datetime import datetime
@@ -834,6 +835,19 @@ def main() -> int:
     # lazy-loader handles a missing file as an empty-state.
     for ext_key in ("cpi", "supplies", "metals", "travel"):
         manifest[ext_key] = f"data-{ext_key}.json"
+    # UAP/MUFON sidecar: only v2/app.py owns the network fetch (writes
+    # v2/data-mufon.json). Serve it from the V1 root so production V1 doesn't
+    # depend on the /v2/ preview path. Locally we copy the already-built v2
+    # file across (best-effort, no network); in CI the workflow stages the
+    # freshly-built v2/data-mufon.json to the root after the V2 step. The JS
+    # lazy-loader treats a missing file as an empty state.
+    _mufon_src = ROOT / "v2" / "data-mufon.json"
+    if _mufon_src.exists():
+        try:
+            shutil.copyfile(_mufon_src, ROOT / "data-mufon.json")
+        except OSError as e:
+            print(f"  [mufon] could not copy {_mufon_src} -> root: {e}", file=sys.stderr)
+    manifest["mufon"] = "data-mufon.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -901,6 +915,17 @@ header .meta{color:var(--muted);font-size:12px}
 .chart-card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap}
 .chart-card h2{font-size:13px;margin:0;font-weight:600}
 .chart-card .desc{font-size:11px;color:var(--muted)}
+/* UAP / MUFON tab shim — V2's mufon markup uses .v2-card* / .v2-chip* /
+   .btn--small classes that don't exist in V1. Map them onto V1 tokens so the
+   ported tab renders without restyling the copied HTML. */
+.v2-card{background:var(--panel);border:1px solid var(--border);border-radius:10px}
+.v2-card__head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:14px 14px 0}
+.v2-card__title{font-size:13px;margin:0;font-weight:600}
+.v2-card__subtitle{font-size:11px;color:var(--muted);margin-top:3px}
+.v2-card__body{font-size:13px}
+.v2-chip{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;border:1px solid var(--border);color:var(--muted)}
+.v2-chip--info{color:var(--btc);border-color:var(--btc)}
+.btn--small{padding:4px 9px;font-size:11px}
 /* Top-15 news-sentiment grid (Research tab). Three columns on desktop,
    two on mid-width tablets, one full-width column on phones (≤480px). */
 .top-news-sentiment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -1562,6 +1587,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
   <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
   <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
+  <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -3302,6 +3328,109 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
     </div><!-- /travelContent -->
   </div><!-- /tab-travel -->
+
+  <!-- ============================================================
+       UAP / MUFON tab (ported from V2 — uses V1 tokens + a small
+       .v2-card* CSS shim). Five sections:
+         A. Latest Updates — curated, baked-in (PURSUE drops + AARO).
+         B. Document Library — curated external links to .gov archives.
+         C. Sightings trend signal — derived client-side from data-mufon.json.
+         D. US Sightings Map — NUFORC eyewitness data via the data-mufon.json
+            sidecar (lazy-loaded; the renderer is a no-op until it lands).
+         E. Sightings by classification — stacked-area shapes chart.
+       Map uses a state-tile grid (50 + DC) instead of true polygons — under
+       1KB inline vs. ~30KB+ for topojson.
+       ============================================================ -->
+  <div id="tab-mufon" class="hidden">
+    <div class="container">
+
+    <!-- Section A: Latest Updates -->
+    <div class="v2-card" id="mufonUpdatesCard" style="margin-bottom:14px">
+      <div class="v2-card__head">
+        <div><h2 class="v2-card__title">Latest updates</h2><div class="v2-card__subtitle">Curated, government-sourced UAP releases</div></div>
+        <div><span class="v2-chip v2-chip--info">● curated</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonUpdatesBody" style="padding:14px"></div>
+      <div style="padding:0 14px 12px;font-size:11px;color:var(--muted)">
+        Last reviewed: 2026-05-25 — curated. PURSUE drops every few weeks, not daily.
+      </div>
+    </div>
+
+    <!-- Section B: Document Library -->
+    <div class="v2-card" id="mufonDocsCard" style="margin-bottom:14px">
+      <div class="v2-card__head">
+        <div><h2 class="v2-card__title">Document library</h2><div class="v2-card__subtitle">Primary .gov archives & official UAP portals</div></div>
+        <div><span class="v2-chip v2-chip--info">● external</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonDocsBody" style="padding:14px"></div>
+    </div>
+
+    <!-- Section C: Sightings trend signal (derived client-side from the
+         data-mufon.json sidecar; no extra fetch). -->
+    <div id="mufonTrendLoading" class="hidden" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Loading sightings trend…</div>
+    <div id="mufonTrendContent">
+      <div class="v2-card" id="mufonTrendCard" style="margin-bottom:14px">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">Sightings trend</h2>
+            <div class="v2-card__subtitle">Long-term direction of NUFORC report volume</div>
+          </div>
+          <div><span class="v2-chip v2-chip--info" id="mufonTrendAsOf">● —</span></div>
+        </div>
+        <div class="v2-card__body" id="mufonTrendBody" style="padding:14px"></div>
+      </div>
+    </div>
+
+    <!-- Section D: US Sightings Map -->
+    <div id="mufonMapLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading NUFORC sightings…</div>
+    <div id="mufonMapContent">
+      <div class="v2-card" id="mufonMapCard">
+        <div class="v2-card__head">
+          <div>
+            <h2 class="v2-card__title">US sightings map</h2>
+            <div class="v2-card__subtitle" id="mufonMapSub">NUFORC eyewitness reports · click a state for top cities</div>
+          </div>
+          <div><span class="v2-chip v2-chip--info" id="mufonMapAsOf">● —</span></div>
+        </div>
+        <div class="v2-card__body" id="mufonMapBody" style="padding:14px">
+          <!-- time-range filter row -->
+          <div id="mufonMapFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center">
+            <span style="font-size:11px;color:var(--muted);margin-right:4px">Window:</span>
+            <button class="btn btn--small" data-mufonrange="30d">30d</button>
+            <button class="btn btn--small" data-mufonrange="60d">60d</button>
+            <button class="btn btn--small" data-mufonrange="90d">90d</button>
+            <button class="btn btn--small" data-mufonrange="365d">12mo</button>
+            <button class="btn btn--small" data-mufonrange="all">All-time</button>
+            <span id="mufonRangeNote" style="font-size:11px;color:var(--muted);margin-left:8px"></span>
+          </div>
+          <!-- grid: map (left) + side panel (right) on wide screens, stacks on narrow -->
+          <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(220px, 1fr);gap:14px" id="mufonMapGrid">
+            <div id="mufonMapSvgWrap" style="min-width:0"></div>
+            <div id="mufonMapSidePanel" style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px;font-size:12px"></div>
+          </div>
+          <div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">
+            Data: NUFORC via community archive — sighting <strong>reports</strong>, not verified phenomena.
+            Filed shapes and durations are eyewitness claims. Browse the live database at
+            <a href="https://nuforc.org/" target="_blank" rel="noopener noreferrer">nuforc.org</a>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section E: Sightings by classification (shape) over time. -->
+    <div class="v2-card" id="mufonShapesCard" style="margin-top:14px">
+      <div class="v2-card__head">
+        <div>
+          <h2 class="v2-card__title">Sightings by classification</h2>
+          <div class="v2-card__subtitle" id="mufonShapesSub">NUFORC-reported shapes since recording began (1906)</div>
+        </div>
+        <div><span class="v2-chip v2-chip--info" id="mufonShapesAsOf">● —</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonShapesBody" style="padding:14px"></div>
+    </div>
+
+    </div>
+  </div><!-- /tab-mufon -->
 </div>
 
 <footer>
@@ -3398,7 +3527,7 @@ async function loadSidecar(name){
 const SIDECAR_FOR_TAB = {
   whale: 'whale', defi: 'defi',
   cpi: 'cpi', supplies: 'supplies', metals: 'metals',
-  travel: 'travel',
+  travel: 'travel', mufon: 'mufon',
 };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
@@ -3459,7 +3588,14 @@ const state = { tab:'etf', asset:'btc', period:'daily', range:'all', fundwin:'30
   travelSubLevel: 'all',
   travelQuery: '',
   travelTerrorOnly: false,
-  travelSort: 'level' };
+  travelSort: 'level',
+  // UAP / MUFON tab — sightings-map time filter + currently-selected state,
+  // plus per-card range toggles for the trend + shapes cards. Anchored to the
+  // dataset's most-recent entry (see fetch_mufon.py), not today's date.
+  mufonTimeRange: 'all',
+  mufonSelectedState: null,
+  mufonTrendRange: '5y',
+  mufonShapesRange: '5y' };
 
 // ---------- formatters ----------
 const fmtUSD = (n, unit='M') => {
@@ -10590,6 +10726,9 @@ function renderAll(){
   if (state.tab === 'travel'){
     renderTravelTab();
   }
+  if (state.tab === 'mufon'){
+    renderMufon();
+  }
   renderCoverage();
 }
 
@@ -10652,6 +10791,7 @@ function selectTab(t){
   document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
   document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
   document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
+  document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
@@ -13013,6 +13153,1144 @@ function _setSymbolSuggestActive(box, idx){
   });
   // Initial paint of any previously-stored recents (no-op if list is empty).
   try { renderSymbolRecentChips(); } catch (_) { /* defensive — never block boot */ }
+})();
+
+// ─── UAP / MUFON TAB (ported from V2 — V1 visual style) ───────────────────
+// Five sections rendered independently. Updates + Docs are populated from
+// JS-local constants (curated content, no fetch); Trend / Map / Shapes are
+// populated from the data-mufon.json sidecar (lazy-loaded, may be undefined
+// on first paint — every renderer guards `if (!m) return;`).
+//
+// V2's empty-state branches call V2.empty(...). V1 has no V2 object, so we
+// define a minimal shim here (inline-styled so it doesn't depend on V2's
+// .v2-empty* CSS classes). Only the bits the mufon code uses are provided.
+const V2 = {
+  empty: function(opts){
+    const o = opts || {};
+    return '<div style="text-align:center;padding:28px 16px;color:var(--muted)">'
+      + (o.icon  ? '<div style="font-size:28px;margin-bottom:8px">' + escapeHtml(String(o.icon))  + '</div>' : '')
+      + (o.title ? '<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px">' + escapeHtml(String(o.title)) + '</div>' : '')
+      + (o.sub   ? '<div style="font-size:12px;line-height:1.5">' + escapeHtml(String(o.sub))   + '</div>' : '')
+      + '</div>';
+  }
+};
+
+// Curated content — edit these arrays to update the tab. Keeping it inline
+// (not a fetcher) because PURSUE drops and AARO updates land sporadically
+// and the operator wants to vet every line before it appears.
+const MUFON_UPDATES = [
+  {
+    date: '2026-05-22',
+    title: 'PURSUE Release 02',
+    body: 'Department of War published the second tranche of UAP files at war.gov/ufo. Source counts vary; treat the headline number as "additional files released" rather than a precise figure.',
+    href: 'https://www.war.gov/ufo/',
+  },
+  {
+    date: '2026-05-08',
+    title: 'PURSUE Release 01',
+    body: 'First batch — 162 declassified files dating back to 1944–45 — released at war.gov/ufo. Coordinated across Pentagon, ODNI, FBI, NASA, DOE.',
+    href: 'https://www.war.gov/ufo/',
+  },
+  {
+    date: '2026-02-25',
+    title: 'AARO caseload exceeds 2,000',
+    body: 'All-domain Anomaly Resolution Office reported its case count crossed 2,000, up from ~1,600 in late 2024.',
+    href: 'https://www.aaro.mil/',
+  },
+];
+
+const MUFON_DOCS = [
+  { title: 'PURSUE portal', url: 'https://www.war.gov/ufo/',
+    desc: 'Department of War — current UAP file releases.' },
+  { title: 'AARO',          url: 'https://www.aaro.mil/',
+    desc: 'All-domain Anomaly Resolution Office — DoD UAP intake.' },
+  { title: 'NARA — Project BLUE BOOK', url: 'https://www.archives.gov/research/military/air-force/ufos',
+    desc: 'National Archives — Air Force UFO investigation records.' },
+  { title: 'CIA Reading Room — UFOs', url: 'https://www.cia.gov/readingroom/collection/ufos-fact-or-fiction',
+    desc: 'CIA — Declassified UFO Cold War material.' },
+  { title: 'FBI Vault — UFO', url: 'https://vault.fbi.gov/UFO',
+    desc: 'FBI — Public reading room UFO files.' },
+  { title: 'ODNI 2024 Consolidated UAP Report', url: 'https://www.dni.gov/index.php/newsroom/reports-publications/reports-publications-2024/4020-uap-2024',
+    desc: 'Director of National Intelligence — Congressional UAP report.' },
+];
+
+// State-tile grid (50 + DC) — [code, col, row], 12 cols x 8 rows. Hand-tuned
+// for geographic intuitiveness; not a precise outline (deliberately).
+const MUFON_STATE_GRID = [
+  ["ME",11,0],["VT",10,1],["NH",11,1],
+  ["WA",1,2],["MT",3,2],["ND",4,2],["MN",5,2],["WI",6,2],["MI",7,2],["NY",9,2],["MA",10,2],["RI",11,2],
+  ["OR",1,3],["ID",2,3],["WY",3,3],["SD",4,3],["IA",5,3],["IL",6,3],["IN",7,3],["OH",8,3],["PA",9,3],["NJ",10,3],["CT",11,3],
+  ["NV",2,4],["UT",3,4],["CO",4,4],["NE",5,4],["MO",6,4],["KY",7,4],["WV",8,4],["VA",9,4],["MD",10,4],["DE",11,4],
+  ["CA",1,5],["AZ",3,5],["NM",4,5],["KS",5,5],["AR",6,5],["TN",7,5],["NC",8,5],["SC",9,5],["DC",10,5],
+  ["OK",5,6],["LA",6,6],["MS",7,6],["AL",8,6],["GA",9,6],
+  ["AK",0,7],["TX",5,7],["FL",10,7],["HI",11,7],
+];
+
+const MUFON_STATE_NAMES = {
+  AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",
+  CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",
+  HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",
+  LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",
+  MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",
+  NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",
+  OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",
+  SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",
+  WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming",
+};
+
+function renderMufon(){
+  renderMufonUpdates();
+  renderMufonDocs();
+  // Trend + Map are both gated on the data-mufon.json sidecar — if not yet
+  // loaded, the loading placeholders elsewhere handle the empty state.
+  renderMufonTrend();
+  renderMufonMap();
+  renderMufonShapes();
+}
+
+function renderMufonUpdates(){
+  const el = document.getElementById('mufonUpdatesBody');
+  if (!el) return;
+  const items = MUFON_UPDATES.map(u => {
+    const linkOpen  = u.href ? '<a href="'+u.href+'" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">' : '';
+    const linkClose = u.href ? ' <span style="font-size:10px;color:var(--btc);text-decoration:underline">source ↗</span></a>' : '';
+    return ''
+      + '<div style="display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--bd,#27313d)">'
+      +   '<div style="flex:0 0 90px"><span class="v2-chip v2-chip--info" style="font-variant-numeric:tabular-nums">'+u.date+'</span></div>'
+      +   '<div style="flex:1;min-width:0">'
+      +     linkOpen
+      +     '<div style="font-weight:600;margin-bottom:3px">'+u.title+linkClose+'</div>'
+      +     (u.href ? '' : '</div>')
+      +     '<div style="color:var(--muted);font-size:12px;line-height:1.45">'+u.body+'</div>'
+      +   '</div>'
+      + '</div>';
+  }).join('');
+  // Strip the leading border-top by zeroing the first item's border.
+  el.innerHTML = items.replace('border-top:1px solid var(--bd,#27313d)', 'border-top:0');
+}
+
+function renderMufonDocs(){
+  const el = document.getElementById('mufonDocsBody');
+  if (!el) return;
+  const cards = MUFON_DOCS.map(d => ''
+    + '<a href="'+d.url+'" target="_blank" rel="noopener noreferrer" '
+    +    'style="display:block;padding:12px;background:var(--bg2,#0f1419);'
+    +    'border:1px solid var(--bd,#27313d);border-radius:8px;text-decoration:none;color:inherit;'
+    +    'transition:border-color .15s ease, transform .15s ease" '
+    +    'onmouseover="this.style.borderColor=\'var(--btc)\';this.style.transform=\'translateY(-1px)\'" '
+    +    'onmouseout="this.style.borderColor=\'var(--bd,#27313d)\';this.style.transform=\'\'">'
+    +   '<div style="font-weight:600;font-size:13px;margin-bottom:4px">'+d.title+' <span style="color:var(--btc);font-size:11px">↗</span></div>'
+    +   '<div style="font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:6px">'+d.desc+'</div>'
+    +   '<div style="font-size:10px;color:var(--muted);font-family:monospace;word-break:break-all;opacity:.7">'+d.url.replace(/^https?:\/\//,'')+'</div>'
+    + '</a>').join('');
+  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:10px">' + cards + '</div>';
+}
+
+// ─── UAP SIGHTINGS TREND SIGNAL ───────────────────────────────────────────
+// Drop the most-recent year if it looks partial (fewer than ~85% of the
+// rolling 3y mean of full years). Returns the (years, counts) arrays with the
+// partial year stripped AND a separate handle on the partial year.
+function mufonSplitPartialYear(totalsByYear){
+  const years = Object.keys(totalsByYear).map(Number).filter(y => isFinite(y)).sort((a,b)=>a-b);
+  if (years.length < 4) return { full: years, partial: null, totals: totalsByYear };
+  const last = years[years.length - 1];
+  const prev3 = years.slice(-4, -1);  // 3 years before the last
+  const prev3Mean = prev3.reduce((s,y) => s + (totalsByYear[String(y)] || 0), 0) / prev3.length;
+  const lastVal = totalsByYear[String(last)] || 0;
+  if (prev3Mean > 0 && lastVal < prev3Mean * 0.85) {
+    return { full: years.slice(0, -1), partial: last, totals: totalsByYear };
+  }
+  return { full: years, partial: null, totals: totalsByYear };
+}
+
+// Map a 5y CAGR to a -100..+100 score with diminishing returns near the
+// extremes (atan-based, like the crypto components).
+function mufonCagrToScore(cagr){
+  if (!isFinite(cagr)) return 0;
+  const k = 0.04; // sensitivity
+  const s = Math.atan(cagr / k) * (200 / Math.PI);
+  return Math.max(-100, Math.min(100, Math.round(s)));
+}
+
+// Linear regression slope of {y_i = totals[year_i]} on year. Returns the
+// slope in sightings-per-year. Pure stdlib (no library).
+function mufonLinearSlope(years, totals){
+  const n = years.length;
+  if (n < 2) return null;
+  const ys = years.map(String).map(s => Number(totals[s]) || 0);
+  const mx = years.reduce((a,b) => a + b, 0) / n;
+  const my = ys.reduce((a,b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++){
+    num += (years[i] - mx) * (ys[i] - my);
+    den += (years[i] - mx) * (years[i] - mx);
+  }
+  if (den === 0) return null;
+  return num / den;
+}
+
+// Month-keyed twin of mufonTrendSparkline. ``months`` is a list of "YYYY-MM"
+// strings in ascending order; ``totals`` is the m.totals_by_month dict.
+function mufonTrendSparklineMonths(months, totals){
+  const n = months.length;
+  if (n < 2) return '';
+  const ys = months.map(function(s){ return Number(totals[s]) || 0; });
+  const lo = Math.min.apply(null, ys), hi = Math.max.apply(null, ys);
+  const range = (hi - lo) || 1;
+  const w = 600, h = 90, padL = 4, padR = 4, padTop = 14, padBot = 18;
+  const innerW = w - padL - padR;
+  const innerH = h - padTop - padBot;
+  const xFor = function(i){ return padL + (i / (n - 1)) * innerW; };
+  const yFor = function(v){ return padTop + (1 - (v - lo) / range) * innerH; };
+  const pts = months.map(function(m, i){ return xFor(i) + ',' + yFor(ys[i]).toFixed(1); }).join(' ');
+  const first = ys[0], last = ys[n - 1];
+  const flatTol = Math.max(Math.abs(first) * 0.10, 10);
+  const stroke = Math.abs(last - first) <= flatTol
+    ? 'var(--v2-warn, #fbbf24)'
+    : (last >= first ? 'var(--v2-good, #4ade80)' : 'var(--v2-bad, #f87171)');
+  const startLabel = '<text x="' + xFor(0).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="start" font-size="9" fill="var(--muted)">' + months[0] + '</text>';
+  const endLabel = '<text x="' + xFor(n - 1).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="end" font-size="9" fill="var(--muted)">' + months[n - 1] + ' · ' + last.toLocaleString() + '</text>';
+  return ''
+    + '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" '
+    +   'style="width:100%;height:90px;display:block;background:#0b0d12;border-radius:6px" '
+    +   'role="img" aria-label="Monthly UAP sighting reports">'
+    +   '<polyline points="' + pts + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" '
+    +     'vector-effect="non-scaling-stroke"/>'
+    +   startLabel
+    +   endLabel
+    + '</svg>';
+}
+
+// Inline sparkline for the full totals_by_year series.
+function mufonTrendSparkline(years, totals, peakYear){
+  const n = years.length;
+  if (n < 2) return '';
+  const ys = years.map(String).map(s => Number(totals[s]) || 0);
+  const lo = Math.min(...ys), hi = Math.max(...ys);
+  const range = (hi - lo) || 1;
+  const w = 600, h = 90, padL = 4, padR = 4, padTop = 14, padBot = 18;
+  const innerW = w - padL - padR;
+  const innerH = h - padTop - padBot;
+  const xMin = years[0], xMax = years[n - 1];
+  const xSpan = (xMax - xMin) || 1;
+  const xFor = y => padL + ((y - xMin) / xSpan) * innerW;
+  const yFor = v => padTop + (1 - (v - lo) / range) * innerH;
+  const pts = years.map((yr, i) => xFor(yr) + ',' + yFor(ys[i]).toFixed(1)).join(' ');
+  const first = ys[0], last = ys[n - 1];
+  const flatTol = Math.max(Math.abs(first) * 0.10, 10);
+  const stroke = Math.abs(last - first) <= flatTol
+    ? 'var(--v2-warn, #fbbf24)'
+    : (last >= first ? 'var(--v2-good, #4ade80)' : 'var(--v2-bad, #f87171)');
+  const pi = peakYear != null ? years.indexOf(Number(peakYear)) : -1;
+  const peakMarker = (pi >= 0) ? (
+    '<circle cx="' + xFor(years[pi]).toFixed(1) + '" cy="' + yFor(ys[pi]).toFixed(1) + '" r="2.5" '
+    + 'fill="#fff" stroke="' + stroke + '" stroke-width="1.5"/>'
+    + '<text x="' + xFor(years[pi]).toFixed(1) + '" y="' + Math.max(8, yFor(ys[pi]) - 5).toFixed(1) + '" '
+    + 'text-anchor="middle" font-size="9" fill="var(--muted)">peak ' + years[pi] + '</text>'
+  ) : '';
+  const startLabel = '<text x="' + xFor(years[0]).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="start" font-size="9" fill="var(--muted)">' + years[0] + '</text>';
+  const endLabel = '<text x="' + xFor(years[n - 1]).toFixed(1) + '" y="' + (h - 4) + '" '
+    + 'text-anchor="end" font-size="9" fill="var(--muted)">' + years[n - 1] + ' · ' + last.toLocaleString() + '</text>';
+  return ''
+    + '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" '
+    +   'style="width:100%;height:90px;display:block;background:#0b0d12;border-radius:6px" '
+    +   'role="img" aria-label="Annual UAP sighting reports">'
+    +   '<polyline points="' + pts + '" fill="none" stroke="' + stroke + '" stroke-width="1.6" '
+    +     'vector-effect="non-scaling-stroke"/>'
+    +   peakMarker
+    +   startLabel
+    +   endLabel
+    + '</svg>';
+}
+
+function renderMufonTrend(){
+  const m = DATA.mufon;
+  const body = document.getElementById('mufonTrendBody');
+  const asOf = document.getElementById('mufonTrendAsOf');
+  if (!body) return;
+  if (!m) return; // sidecar pending; selectTab() shows the loading placeholder
+
+  // Empty-state — fetcher wrote an _error placeholder.
+  if (!m.total_records || !m.totals_by_year) {
+    if (asOf) asOf.textContent = '● unavailable';
+    body.innerHTML = V2.empty({icon:'🛸', title:'No trend data',
+      sub: m._error || 'Annual totals unavailable; retry on next dashboard refresh.',
+      warm:false});
+    return;
+  }
+
+  if (asOf) {
+    const d = (m.date_range && m.date_range[1]) || '—';
+    asOf.textContent = '● to ' + d + (m._stale ? ' (stale)' : '');
+  }
+
+  const totals = m.totals_by_year || {};
+  const split = mufonSplitPartialYear(totals);
+  const fullYears = split.full;          // years to actually fit a trend on
+  const partialYear = split.partial;     // 2014 typically — flagged, not used for math
+  const peakYear = fullYears.reduce((best, y) =>
+    (totals[String(y)] > (totals[String(best)] || 0) ? y : best),
+    fullYears[0] || null);
+
+  // 5y CAGR on the last 5 *full* years -> drives the headline score+chip.
+  let cagr = null, score = 0;
+  if (fullYears.length >= 5) {
+    const yEnd = fullYears[fullYears.length - 1];
+    const yStart = fullYears[fullYears.length - 5];
+    const vEnd = Number(totals[String(yEnd)]) || 0;
+    const vStart = Number(totals[String(yStart)]) || 0;
+    const span = yEnd - yStart;
+    if (vStart > 0 && span > 0) {
+      cagr = Math.pow(vEnd / vStart, 1 / span) - 1;
+      score = mufonCagrToScore(cagr);
+    }
+  }
+
+  // 5y momentum: mean(last 5 full years) vs mean(prior 5 full years).
+  let mom = null, momPrev = null, momCur = null;
+  if (fullYears.length >= 10) {
+    const tail5 = fullYears.slice(-5);
+    const prev5 = fullYears.slice(-10, -5);
+    momCur = tail5.reduce((s,y) => s + (Number(totals[String(y)]) || 0), 0) / 5;
+    momPrev = prev5.reduce((s,y) => s + (Number(totals[String(y)]) || 0), 0) / 5;
+    if (momPrev > 0) mom = momCur / momPrev - 1;
+  }
+
+  // 10y linear slope (sightings per year) on the last 10 *full* years.
+  let slope10 = null;
+  if (fullYears.length >= 10) {
+    slope10 = mufonLinearSlope(fullYears.slice(-10), totals);
+  }
+
+  // Recent buckets — sum across states.
+  const rb = m.recent_buckets || {};
+  const recent = { '30d':0, '60d':0, '90d':0, '365d':0 };
+  for (const s in rb) {
+    for (const k in recent) recent[k] += Number((rb[s] || {})[k]) || 0;
+  }
+
+  // Headline label — based on score band + momentum sign.
+  let chipText = 'STABLE', chipCls = 'v2-chip--warn';
+  if (score >= 60)       { chipText = 'ACCELERATING';  chipCls = 'v2-chip--good'; }
+  else if (score >= 25)  { chipText = 'TRENDING UP';   chipCls = 'v2-chip--good'; }
+  else if (score >= 10)  { chipText = 'GRADUAL RISE';  chipCls = 'v2-chip--good'; }
+  else if (score <= -60) { chipText = 'COLLAPSING';    chipCls = 'v2-chip--bad';  }
+  else if (score <= -25) { chipText = 'DECLINING';     chipCls = 'v2-chip--bad';  }
+  else if (score <= -10) { chipText = 'DECELERATING';  chipCls = 'v2-chip--bad';  }
+  // else: stays STABLE / warn
+
+  const scoreColor = score >= 25 ? 'var(--v2-good)' :
+                     score <= -25 ? 'var(--v2-bad)'  : 'var(--v2-warn)';
+  const scoreTxt = (score >= 0 ? '+' : '') + score;
+  const clamped = Math.max(-100, Math.min(100, score));
+  const markerPct = ((clamped + 100) / 200) * 100;
+
+  const trendRange = state.mufonTrendRange || '5y';
+  const subYearly = (trendRange === '30d' || trendRange === '90d' || trendRange === 'ytd');
+  let spark = '';
+  let captionText = '';
+  if (subYearly) {
+    const totalsByMonth = m.totals_by_month || {};
+    const allMonths = Object.keys(totalsByMonth).sort();
+    let visibleMonths = [];
+    if (allMonths.length) {
+      if (trendRange === '30d') {
+        visibleMonths = allMonths.slice(-2);
+      } else if (trendRange === '90d') {
+        visibleMonths = allMonths.slice(-4);
+      } else {
+        const latestMonth = allMonths[allMonths.length - 1];
+        const ytdYear = latestMonth.slice(0, 4);
+        visibleMonths = allMonths.filter(function(s){ return s.slice(0, 4) === ytdYear; });
+      }
+    }
+    if (visibleMonths.length >= 2) {
+      spark = mufonTrendSparklineMonths(visibleMonths, totalsByMonth);
+      captionText = 'Monthly reports · ' + visibleMonths[0] + '–' + visibleMonths[visibleMonths.length - 1];
+    } else if (visibleMonths.length === 1) {
+      const only = visibleMonths[0];
+      const cnt = Number(totalsByMonth[only]) || 0;
+      spark = '<div style="padding:18px 12px;background:#0b0d12;border-radius:6px;color:var(--muted);font-size:12px;text-align:center">'
+        + only + ' · ' + cnt.toLocaleString() + ' sightings (only one month in window)'
+        + '</div>';
+      captionText = 'Monthly reports · ' + only;
+    } else {
+      spark = '<div style="padding:18px 12px;background:#0b0d12;border-radius:6px;color:var(--muted);font-size:12px;text-align:center">Insufficient monthly data for this window — try 1y or longer.</div>';
+      captionText = 'Monthly reports · (no data)';
+    }
+  }
+  const rangeWindow = { '5y':5, '10y':10, '20y':20, '30y':30 }[trendRange] || fullYears.length;
+  const visibleYears = (rangeWindow >= fullYears.length)
+    ? fullYears
+    : fullYears.slice(-rangeWindow);
+  const peakInWindow = (peakYear != null && visibleYears.indexOf(Number(peakYear)) >= 0)
+    ? peakYear : null;
+  if (!subYearly) {
+    spark = mufonTrendSparkline(visibleYears, totals, peakInWindow);
+  }
+
+  // Component table.
+  function rowHtml(name, valueTxt, delta){
+    const col = delta == null ? 'var(--muted)'
+      : (delta > 0 ? 'var(--v2-good)' : (delta < 0 ? 'var(--v2-bad)' : 'var(--muted)'));
+    const arrow = delta == null ? '·'
+      : (delta > 0 ? '▲' : (delta < 0 ? '▼' : '·'));
+    return '<tr>'
+      + '<td style="padding:5px 6px;font-weight:500">' + escapeHtml(name) + '</td>'
+      + '<td style="padding:5px 6px;color:var(--muted);font-variant-numeric:tabular-nums">' + valueTxt + '</td>'
+      + '<td style="padding:5px 6px;color:' + col + ';text-align:right;font-weight:600">' + arrow + '</td>'
+      + '</tr>';
+  }
+
+  const momTxt = (mom == null)
+    ? '—'
+    : ((mom >= 0 ? '+' : '') + (mom * 100).toFixed(1) + '% '
+       + '(' + Math.round(momPrev).toLocaleString() + ' → ' + Math.round(momCur).toLocaleString() + '/yr)');
+  const slopeTxt = (slope10 == null)
+    ? '—'
+    : ((slope10 >= 0 ? '+' : '') + Math.round(slope10).toLocaleString() + ' sightings/year (last 10y)');
+  const peakTxt = (peakYear == null)
+    ? '—'
+    : (peakYear + ' — ' + (Number(totals[String(peakYear)]) || 0).toLocaleString() + ' sightings');
+  const lastFull = fullYears.length ? fullYears[fullYears.length - 1] : null;
+  const lastFullTxt = (lastFull == null)
+    ? '—'
+    : (lastFull + ' — ' + (Number(totals[String(lastFull)]) || 0).toLocaleString() + ' sightings');
+  if (!subYearly) {
+    captionText = 'Annual reports · ' + visibleYears[0] + '–' + (lastFull || '—')
+      + (partialYear && trendRange === 'all' ? ' (' + partialYear + ' partial, excluded)' : '');
+  }
+  const partialTxt = (partialYear == null)
+    ? null
+    : (partialYear + ' — ' + (Number(totals[String(partialYear)]) || 0).toLocaleString()
+       + ' sightings <em style="color:var(--muted);font-style:normal">(partial year)</em>');
+  const cagrTxt = (cagr == null)
+    ? '—'
+    : ((cagr >= 0 ? '+' : '') + (cagr * 100).toFixed(1) + '%/yr CAGR');
+
+  const recentAnchor = (m.date_range && m.date_range[1]) || '—';
+  const recentTxt = '30d ' + recent['30d'].toLocaleString()
+    + ' · 60d ' + recent['60d'].toLocaleString()
+    + ' · 90d ' + recent['90d'].toLocaleString()
+    + ' · 365d ' + recent['365d'].toLocaleString();
+
+  const rows = [
+    rowHtml('5y CAGR', cagrTxt, cagr),
+    rowHtml('5y momentum', momTxt, mom),
+    rowHtml('10y trend slope', slopeTxt, slope10),
+    rowHtml('Peak year', peakTxt, null),
+    rowHtml('Most recent full year', lastFullTxt, null),
+    partialTxt ? rowHtml('Most recent partial year', partialTxt, null) : '',
+    rowHtml('Recent windows (anchored to ' + recentAnchor + ')', recentTxt, null),
+  ].join('');
+
+  body.innerHTML = ''
+    + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">'
+    +   '<div style="min-width:0">'
+    +     '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Signal direction</div>'
+    +     '<span class="v2-chip ' + chipCls + '" style="font-size:14px;padding:6px 12px;font-weight:700">' + chipText + '</span>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-top:6px">5y CAGR-driven · last ' + fullYears.length + ' full years of data</div>'
+    +   '</div>'
+    +   '<div style="text-align:right">'
+    +     '<div style="font-size:11px;color:var(--muted)">Score</div>'
+    +     '<div style="font-size:34px;font-weight:700;color:' + scoreColor + ';line-height:1">' + scoreTxt + '</div>'
+    +     '<div style="font-size:11px;color:var(--muted);margin-top:2px">of &plusmn;100</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin-bottom:14px">'
+    +   '<div style="position:absolute;top:-3px;left:calc(' + markerPct.toFixed(1) + '% - 3px);width:6px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>'
+    + '</div>'
+    + '<div style="margin-bottom:14px">'
+    +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:6px">'
+    +     '<div style="font-size:11px;color:var(--muted)">' + captionText + '</div>'
+    +     '<div class="mufon-trend-range" style="display:flex;gap:4px;flex-wrap:wrap">'
+    +       ['30d','90d','ytd','1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === trendRange ? ' active' : '') + '" data-mufontrendrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : (r === 'ytd' ? 'YTD' : r)) + '</button>'; }).join('')
+    +     '</div>'
+    +   '</div>'
+    +   spark
+    + '</div>'
+    + '<div style="margin-bottom:10px">'
+    +   '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">Component breakdown</div>'
+    +   '<table style="font-size:12px;width:100%;border-collapse:collapse">'
+    +     '<tbody>' + rows + '</tbody>'
+    +   '</table>'
+    + '</div>'
+    + '<div style="margin-top:12px;padding:10px 12px;background:var(--bg2,#0f1419);border-left:3px solid var(--v2-warn,#fbbf24);border-radius:4px;font-size:11px;color:var(--muted);line-height:1.5">'
+    +   '<strong style="color:var(--v2-warn,#fbbf24)">Note:</strong> '
+    +   'Combines the planetsig community mirror (1906-2014) with a direct scrape of NUFORC\'s monthly subndx pages (2014+). '
+    +   'Recent-window counts run through <strong>' + recentAnchor + '</strong> and reflect actual recent activity — they ARE the last 30/60/90/365 days from now. '
+    +   'The "most recent partial year" row flags ' + (partialYear || 'the current year') + ' so the 5y CAGR doesn\'t compare a half-year to full ones.'
+    + '</div>';
+}
+
+// UAP trend sparkline range-toggle wiring. Delegated on the trend card so
+// it survives every re-render. Re-renders the trend card only.
+(function(){
+  const card = document.getElementById('mufonTrendCard');
+  if (!card) return;
+  card.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-mufontrendrange]');
+    if (!b) return;
+    const v = b.getAttribute('data-mufontrendrange');
+    if (v && v !== state.mufonTrendRange) {
+      state.mufonTrendRange = v;
+      renderMufonTrend();
+    }
+  });
+})();
+
+// Compute per-state count for the active time range.
+function mufonCountsForRange(m, range){
+  const out = {};
+  if (!m) return out;
+  if (range === 'all') {
+    const bsy = m.by_state_year || {};
+    for (const state in bsy) {
+      let total = 0;
+      for (const y in bsy[state]) total += bsy[state][y];
+      out[state] = total;
+    }
+    return out;
+  }
+  const rb = m.recent_buckets || {};
+  for (const state in rb) {
+    out[state] = (rb[state] || {})[range] || 0;
+  }
+  return out;
+}
+
+function renderMufonMap(){
+  const m = DATA.mufon;
+  if (!m) return; // sidecar pending; selectTab() shows the loading placeholder
+
+  const sub  = document.getElementById('mufonMapSub');
+  const asOf = document.getElementById('mufonMapAsOf');
+  const wrap = document.getElementById('mufonMapSvgWrap');
+  const side = document.getElementById('mufonMapSidePanel');
+  const note = document.getElementById('mufonRangeNote');
+  if (!wrap) return;
+
+  // Empty-state: the fetcher wrote an _error placeholder.
+  if (!m.total_records) {
+    if (asOf) asOf.textContent = '● unavailable';
+    wrap.innerHTML = V2.empty({icon:'🛸', title:'No sightings data',
+      sub: m._error || 'Upstream CSV unavailable; retry on next dashboard refresh.',
+      warm:false});
+    side.innerHTML = '';
+    if (note) note.textContent = '';
+    return;
+  }
+
+  if (asOf) {
+    const d = (m.date_range && m.date_range[1]) || '—';
+    asOf.textContent = '● to ' + d + (m._stale ? ' (stale)' : '');
+  }
+
+  const range = state.mufonTimeRange || 'all';
+  const counts = mufonCountsForRange(m, range);
+
+  if (note) {
+    if (range === 'all') {
+      const dr = m.date_range || [null,null];
+      note.textContent = (dr[0] && dr[1]) ? ('All records ' + dr[0] + ' to ' + dr[1] + '.') : '';
+    } else if (m._stale) {
+      const anchor = (m.date_range && m.date_range[1]) || '—';
+      note.textContent = 'Live scrape unavailable — window anchored to historical mirror cutoff (' + anchor + '), not today.';
+    } else {
+      note.textContent = 'Window anchored to today (UTC).';
+    }
+  }
+
+  // Pre-compute color ramp.
+  const values = Object.values(counts).filter(v => v > 0).sort((a,b) => a-b);
+  const maxC = values.length ? values[values.length - 1] : 0;
+  function bucketColor(c){
+    if (!c) return 'var(--bg2, #0f1419)';
+    if (!values.length) return 'var(--v2-good-bg, #1f3b2a)';
+    const idx = values.indexOf(c);
+    const q = idx / Math.max(1, values.length - 1); // 0..1
+    if (q < 0.20) return 'var(--v2-good, #4ade80)';
+    if (q < 0.45) return 'var(--v2-good, #4ade80)';
+    if (q < 0.70) return 'var(--v2-warn, #fbbf24)';
+    if (q < 0.90) return 'var(--v2-orange, #fb923c)';
+    return 'var(--v2-bad, #f87171)';
+  }
+
+  // SVG dims: 12 cols x 8 rows tiles.
+  const CELL = 50, GAP = 4;
+  const COLS = 12, ROWS = 8;
+  const W = COLS * (CELL + GAP) - GAP;
+  const H = ROWS * (CELL + GAP) - GAP;
+
+  // Build tiles
+  const tiles = MUFON_STATE_GRID.map(([code, cx, cy]) => {
+    const x = cx * (CELL + GAP);
+    const y = cy * (CELL + GAP);
+    const c = counts[code] || 0;
+    const fill = bucketColor(c);
+    const isSel = state.mufonSelectedState === code;
+    const stroke = isSel ? 'var(--v2-info, #38bdf8)' : 'rgba(255,255,255,0.08)';
+    const strokeW = isSel ? 2.5 : 1;
+    return ''
+      + '<g class="mufonTile" data-state="'+code+'" style="cursor:pointer">'
+      +   '<rect x="'+x+'" y="'+y+'" width="'+CELL+'" height="'+CELL+'" rx="6" '
+      +     'fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
+      +     '<title>'+ (MUFON_STATE_NAMES[code]||code) +': '+c.toLocaleString()+' sightings</title>'
+      +   '</rect>'
+      +   '<text x="'+(x + CELL/2)+'" y="'+(y + CELL/2 - 4)+'" '
+      +     'text-anchor="middle" font-size="13" font-weight="700" '
+      +     'fill="rgba(0,0,0,0.7)" pointer-events="none">'+code+'</text>'
+      +   '<text x="'+(x + CELL/2)+'" y="'+(y + CELL/2 + 12)+'" '
+      +     'text-anchor="middle" font-size="10" '
+      +     'fill="rgba(0,0,0,0.55)" pointer-events="none">'+c.toLocaleString()+'</text>'
+      + '</g>';
+  }).join('');
+
+  // Legend
+  const legendBuckets = [
+    ['0', 'var(--bg2, #0f1419)'],
+    ['Low', 'var(--v2-good, #4ade80)'],
+    ['Med', 'var(--v2-warn, #fbbf24)'],
+    ['High', 'var(--v2-orange, #fb923c)'],
+    ['Max', 'var(--v2-bad, #f87171)'],
+  ];
+  const legend = '<div style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);margin-top:10px">'
+    + '<span>fewer</span>'
+    + legendBuckets.map(b => '<span style="display:inline-block;width:18px;height:14px;border-radius:3px;background:'+b[1]+'" title="'+b[0]+'"></span>').join('')
+    + '<span>more</span>'
+    + (maxC ? '<span style="margin-left:12px">max: '+maxC.toLocaleString()+'</span>' : '')
+    + '</div>';
+
+  wrap.innerHTML = ''
+    + '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" '
+    +    'style="font-family:inherit;display:block;max-height:560px" '
+    +    'role="img" aria-label="US state sightings heatmap">'
+    +   tiles
+    + '</svg>'
+    + legend;
+
+  // Bind clicks (delegated through SVG since tiles re-render on each call).
+  wrap.querySelectorAll('.mufonTile').forEach(g => {
+    g.addEventListener('click', () => {
+      const s = g.getAttribute('data-state');
+      state.mufonSelectedState = (state.mufonSelectedState === s) ? null : s;
+      renderMufonMap(); // re-render to update stroke + side panel
+    });
+  });
+
+  // Side panel: top-10 cities for the selected state (or top-10 states overall).
+  if (state.mufonSelectedState) {
+    const s = state.mufonSelectedState;
+    const cities = ((m.top_cities_by_state || {})[s]) || [];
+    const c = counts[s] || 0;
+    side.innerHTML = ''
+      + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px">'
+      +   '<div style="font-weight:700;font-size:14px">'+(MUFON_STATE_NAMES[s]||s)+'</div>'
+      +   '<button class="btn btn--small" id="mufonSideClose" style="padding:2px 8px;font-size:11px">×</button>'
+      + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+c.toLocaleString()+' sightings · '+(range==='all'?'all-time':range)+'</div>'
+      + (cities.length
+          ? '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Top cities (all-time)</div>'
+            + '<ol style="margin:0;padding-left:18px;line-height:1.7">'
+            +   cities.map(c => '<li>'+c.city+' <span style="color:var(--muted)">— '+c.count.toLocaleString()+'</span></li>').join('')
+            + '</ol>'
+          : '<div style="font-size:11px;color:var(--muted);font-style:italic">No per-city detail available.</div>');
+    const closeBtn = document.getElementById('mufonSideClose');
+    if (closeBtn) closeBtn.addEventListener('click', () => {
+      state.mufonSelectedState = null; renderMufonMap();
+    });
+  } else {
+    // No selection — show top-10 states by current range.
+    const ranked = Object.entries(counts).filter(([,c]) => c > 0).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    side.innerHTML = ''
+      + '<div style="font-weight:700;font-size:14px;margin-bottom:8px">Top 10 states</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">'+(range==='all'?'All-time totals':range+' window')+' · click a tile for cities</div>'
+      + (ranked.length
+          ? '<ol style="margin:0;padding-left:18px;line-height:1.7">'
+            + ranked.map(([s,c]) => '<li><strong>'+(MUFON_STATE_NAMES[s]||s)+'</strong> <span style="color:var(--muted)">— '+c.toLocaleString()+'</span></li>').join('')
+            + '</ol>'
+          : '<div style="font-size:11px;color:var(--muted);font-style:italic">No sightings in this window.</div>');
+  }
+
+  // Range filter buttons — bind once per render so they always reflect state.
+  const filterRow = document.getElementById('mufonMapFilters');
+  if (filterRow) {
+    filterRow.querySelectorAll('button[data-mufonrange]').forEach(b => {
+      const v = b.getAttribute('data-mufonrange');
+      b.classList.toggle('active', v === (state.mufonTimeRange || 'all'));
+      if (!b._mufonBound) {
+        b._mufonBound = true;
+        b.addEventListener('click', () => {
+          if (v && v !== state.mufonTimeRange) {
+            state.mufonTimeRange = v;
+            renderMufonMap();
+          }
+        });
+      }
+    });
+  }
+}
+
+// Sightings-by-classification card colors.
+const MUFON_SHAPE_COLORS = [
+  'var(--v2-info, #06b6d4)',     // 0: top shape (light)
+  'var(--v2-warn, #f59e0b)',     // 1
+  'var(--v2-good, #22c55e)',     // 2
+  'var(--v2-bad, #ef4444)',      // 3
+  'var(--v2-ai, #a78bfa)',       // 4
+  'var(--v2-orange, #cc7a2b)',   // 5
+  '#0ea5e9',                     // 6 (sky — derived from info)
+  '#84cc16',                     // 7 (lime — derived from good)
+];
+const MUFON_SHAPE_COLOR_FALLBACK = 'rgba(148,163,184,0.55)'; // slate
+
+function mufonShapeColor(rankIdx){
+  if (rankIdx < MUFON_SHAPE_COLORS.length) return MUFON_SHAPE_COLORS[rankIdx];
+  return MUFON_SHAPE_COLOR_FALLBACK;
+}
+
+// Month-keyed twin of the yearly stacked-area renderer.
+function renderMufonShapesMonths(m, monthKeys, totals, byMonth, activeRange, rangeToggleHtml){
+  const body = document.getElementById('mufonShapesBody');
+  const asOf = document.getElementById('mufonShapesAsOf');
+  if (!body) return;
+
+  if (asOf) {
+    const dr = m.date_range || [null, null];
+    const asOfTxt = (dr[0] && dr[1]) ? (dr[0] + ' → ' + dr[1]) : '—';
+    asOf.textContent = '● ' + asOfTxt + (m._stale ? ' (stale)' : '');
+  }
+
+  const subEl = document.getElementById('mufonShapesSub');
+  if (subEl) {
+    subEl.textContent = 'NUFORC-reported shapes · ' + monthKeys[0] + '–' + monthKeys[monthKeys.length - 1];
+  }
+
+  const ranked = totals.slice().sort(function(a,b){ return b.count - a.count; });
+  const shapeOrder = ranked.map(function(s){ return s.shape; });
+  const colorFor = {};
+  shapeOrder.forEach(function(sh, i){ colorFor[sh] = mufonShapeColor(i); });
+
+  const W = 720, H = 280;
+  const padL = 44, padR = 12, padT = 14, padB = 28;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const N = monthKeys.length;
+  const monthSpan = Math.max(1, N - 1);
+
+  let maxTotal = 0;
+  monthKeys.forEach(function(mk){
+    const b = byMonth[mk] || {};
+    let t = 0;
+    for (const sh in b) t += b[sh];
+    if (t > maxTotal) maxTotal = t;
+  });
+  if (!maxTotal) maxTotal = 1;
+
+  function xFor(i){ return padL + (i / monthSpan) * plotW; }
+  function yFor(v){ return padT + plotH - (v / maxTotal) * plotH; }
+
+  const runningBottom = {}; // monthKey -> cumulative bottom (units)
+  monthKeys.forEach(function(mk){ runningBottom[mk] = 0; });
+
+  const polygons = [];
+  shapeOrder.forEach(function(sh, idx){
+    let anyVal = false;
+    const lowerPts = [];
+    const upperPts = [];
+    monthKeys.forEach(function(mk, i){
+      const v = (byMonth[mk] || {})[sh] || 0;
+      const lower = runningBottom[mk];
+      const upper = lower + v;
+      if (v > 0) anyVal = true;
+      const xp = xFor(i);
+      lowerPts.push(xp + ',' + yFor(lower));
+      upperPts.push(xp + ',' + yFor(upper));
+      runningBottom[mk] = upper;
+    });
+    if (!anyVal) return;
+    const color = colorFor[sh];
+    const pts = lowerPts.concat(upperPts.slice().reverse()).join(' ');
+    polygons.push(
+      '<polygon points="' + pts + '" fill="' + color + '" '
+      + 'fill-opacity="0.82" stroke="none">'
+      +   '<title>' + sh + ' — ' + (ranked[idx] ? ranked[idx].count.toLocaleString() : '?') + ' all-time</title>'
+      + '</polygon>'
+    );
+  });
+
+  const tickEvery = N > 8 ? 2 : 1;
+  const xAxisMarks = monthKeys.map(function(mk, i){
+    if (i % tickEvery !== 0 && i !== N - 1) return '';
+    const xp = xFor(i);
+    return ''
+      + '<line x1="' + xp + '" y1="' + (padT + plotH) + '" '
+      +     'x2="' + xp + '" y2="' + (padT + plotH + 4) + '" '
+      +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+      + '<text x="' + xp + '" y="' + (padT + plotH + 16) + '" '
+      +     'text-anchor="middle" font-size="9" '
+      +     'fill="var(--muted)">' + mk + '</text>';
+  }).join('');
+
+  const yTickVals = [0, Math.round(maxTotal * 0.25), Math.round(maxTotal * 0.5),
+                     Math.round(maxTotal * 0.75), maxTotal];
+  const yAxisMarks = yTickVals.map(function(v){
+    const yp = yFor(v);
+    return ''
+      + '<line x1="' + padL + '" y1="' + yp + '" '
+      +     'x2="' + (padL + plotW) + '" y2="' + yp + '" '
+      +     'stroke="rgba(255,255,255,0.06)" stroke-width="1" />'
+      + '<text x="' + (padL - 6) + '" y="' + (yp + 3) + '" '
+      +     'text-anchor="end" font-size="10" '
+      +     'fill="var(--muted)" font-variant-numeric="tabular-nums">' + v.toLocaleString() + '</text>';
+  }).join('');
+
+  const frame = ''
+    + '<line x1="' + padL + '" y1="' + padT + '" '
+    +     'x2="' + padL + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+    + '<line x1="' + padL + '" y1="' + (padT + plotH) + '" '
+    +     'x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />';
+
+  const chartSvg = ''
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
+    +    'preserveAspectRatio="xMidYMid meet" '
+    +    'style="font-family:inherit;display:block;max-height:340px" '
+    +    'role="img" aria-label="Stacked area chart of UAP sightings by shape, ' + monthKeys[0] + ' to ' + monthKeys[monthKeys.length - 1] + ' (range ' + activeRange + ')">'
+    +   yAxisMarks
+    +   polygons.join('')
+    +   xAxisMarks
+    +   frame
+    + '</svg>';
+
+  const grandTotal = ranked.reduce(function(s, r){ return s + r.count; }, 0) || 1;
+  const legendRows = ranked.map(function(r, i){
+    const pct = (r.count / grandTotal) * 100;
+    const color = mufonShapeColor(i);
+    return ''
+      + '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
+      +   '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color + '"></span>'
+      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + r.shape + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums">' + r.count.toLocaleString() + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>'
+      + '</li>';
+  }).join('');
+
+  const legendBlock = ''
+    + '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);'
+    +    'border-radius:8px;padding:10px 12px">'
+    +   '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;'
+    +     'letter-spacing:.5px;margin-bottom:6px">All-time totals</div>'
+    +   '<ul style="list-style:none;margin:0;padding:0">' + legendRows + '</ul>'
+    + '</div>';
+
+  const dr = m.date_range || [null, null];
+  const footnote = ''
+    + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
+    +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
+    +   'Top 15 shapes shown; rarer ones collapse into "other". '
+    +   'Monthly view spans ' + monthKeys[0] + ' through ' + monthKeys[monthKeys.length - 1] + ', '
+    +   'sourced from shape_by_month (last ~36 months). Full history available on yearly ranges (1y+). '
+    +   'Range toggle re-slices the stacked area only; the legend totals stay all-time.'
+    + '</div>';
+
+  body.innerHTML = ''
+    + rangeToggleHtml
+    + '<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(220px, 1fr);gap:14px;align-items:start">'
+    +   '<div style="min-width:0">' + chartSvg + '</div>'
+    +   legendBlock
+    + '</div>'
+    + footnote;
+}
+
+function renderMufonShapes(){
+  const m = DATA.mufon;
+  const body = document.getElementById('mufonShapesBody');
+  const asOf = document.getElementById('mufonShapesAsOf');
+  if (!body) return;
+  if (!m) return; // sidecar pending; the parent loading state already shows.
+
+  const totals = (m.shape_totals || []).slice();
+  const byYear = m.shape_by_year || {};
+  const byMonth = m.shape_by_month || {};
+  const allYearKeys = Object.keys(byYear).sort();
+  const allMonthKeys = Object.keys(byMonth).sort();
+
+  if (!totals.length || !allYearKeys.length) {
+    if (asOf) asOf.textContent = '● unavailable';
+    body.innerHTML = V2.empty({
+      icon: '🛸',
+      title: 'No classification data',
+      sub: 'Upstream CSV did not include a usable shape column.',
+      warm: false,
+    });
+    return;
+  }
+
+  const activeRange = state.mufonShapesRange || '5y';
+  const subYearlyShapes = (activeRange === '30d' || activeRange === '90d' || activeRange === 'ytd');
+
+  const rangeToggleHtml = ''
+    + '<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-bottom:8px">'
+    +   '<div class="mufon-shapes-range" style="display:flex;gap:4px;flex-wrap:wrap">'
+    +     ['30d','90d','ytd','1y','3y','5y','10y','20y','30y','all'].map(function(r){ return '<button class="btn btn--small' + (r === activeRange ? ' active' : '') + '" data-mufonshapesrange="' + r + '" type="button">' + (r === 'all' ? 'All-time' : (r === 'ytd' ? 'YTD' : r)) + '</button>'; }).join('')
+    +   '</div>'
+    + '</div>';
+
+  if (subYearlyShapes) {
+    let monthKeys = [];
+    if (allMonthKeys.length) {
+      if (activeRange === '30d') {
+        monthKeys = allMonthKeys.slice(-2);
+      } else if (activeRange === '90d') {
+        monthKeys = allMonthKeys.slice(-4);
+      } else {
+        const latest = allMonthKeys[allMonthKeys.length - 1];
+        const ytdYear = latest.slice(0, 4);
+        monthKeys = allMonthKeys.filter(function(s){ return s.slice(0, 4) === ytdYear; });
+      }
+    }
+    if (monthKeys.length < 2) {
+      if (asOf) {
+        const dr = m.date_range || [null, null];
+        const asOfTxt = (dr[0] && dr[1]) ? (dr[0] + ' → ' + dr[1]) : '—';
+        asOf.textContent = '● ' + asOfTxt + (m._stale ? ' (stale)' : '');
+      }
+      const subEl = document.getElementById('mufonShapesSub');
+      if (subEl) {
+        subEl.textContent = 'NUFORC-reported shapes · monthly view';
+      }
+      body.innerHTML = ''
+        + rangeToggleHtml
+        + '<div style="padding:24px 16px;background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);'
+        +    'border-radius:8px;color:var(--muted);font-size:12px;text-align:center;line-height:1.5">'
+        +   'Insufficient monthly data for this window — try 1y or longer.'
+        + '</div>';
+      return;
+    }
+    return renderMufonShapesMonths(m, monthKeys, totals, byMonth, activeRange, rangeToggleHtml);
+  }
+
+  const allYearNums = allYearKeys.map(y => parseInt(y, 10)).sort((a,b) => a-b);
+  const dataMaxYear = allYearNums[allYearNums.length - 1];
+  let windowYears;
+  if (activeRange === 'all') {
+    windowYears = allYearNums.length;
+  } else {
+    windowYears = parseInt(activeRange.replace('y',''), 10) || allYearNums.length;
+  }
+  const cutoff = dataMaxYear - windowYears + 1;
+  const yearKeys = allYearNums.filter(y => y >= cutoff).map(y => String(y));
+
+  const subEl = document.getElementById('mufonShapesSub');
+  if (subEl) {
+    if (activeRange === 'all') {
+      subEl.textContent = 'NUFORC-reported shapes · ' + allYearNums[0] + '–' + dataMaxYear;
+    } else if (yearKeys.length) {
+      subEl.textContent = 'NUFORC-reported shapes · ' + yearKeys[0] + '–' + yearKeys[yearKeys.length - 1];
+    }
+  }
+
+  if (asOf) {
+    const dr = m.date_range || [null, null];
+    const asOfTxt = (dr[0] && dr[1]) ? (dr[0] + ' → ' + dr[1]) : '—';
+    asOf.textContent = '● ' + asOfTxt + (m._stale ? ' (stale)' : '');
+  }
+
+  const ranked = totals.slice().sort((a,b) => b.count - a.count);
+  const shapeOrder = ranked.map(s => s.shape);
+  const colorFor = {};
+  shapeOrder.forEach((sh, i) => { colorFor[sh] = mufonShapeColor(i); });
+
+  const W = 720, H = 280;
+  const padL = 44, padR = 12, padT = 14, padB = 28;
+  const plotW = W - padL - padR;
+  const plotH = H - padT - padB;
+
+  const years = yearKeys.map(y => parseInt(y, 10)).sort((a,b) => a-b);
+  const yMin = years[0];
+  const yMax = years[years.length - 1];
+  const yearSpan = Math.max(1, yMax - yMin);
+  const singlePoint = years.length < 2;
+
+  let maxTotal = 0;
+  const totalsByYear = {};
+  yearKeys.forEach(y => {
+    let t = 0;
+    const b = byYear[y] || {};
+    for (const sh in b) t += b[sh];
+    totalsByYear[y] = t;
+    if (t > maxTotal) maxTotal = t;
+  });
+  if (!maxTotal) maxTotal = 1;
+
+  function xFor(year){ return padL + ((year - yMin) / yearSpan) * plotW; }
+  function yFor(v){ return padT + plotH - (v / maxTotal) * plotH; }
+
+  const runningBottom = {}; // yearKey -> current cumulative bottom (in units)
+  yearKeys.forEach(y => { runningBottom[y] = 0; });
+
+  const polygons = [];
+  shapeOrder.forEach((sh, i) => {
+    let anyVal = false;
+    const lowerPts = [];
+    const upperPts = [];
+    const dotsForShape = [];
+    yearKeys.forEach(y => {
+      const yearN = parseInt(y, 10);
+      const v = (byYear[y] || {})[sh] || 0;
+      const lower = runningBottom[y];
+      const upper = lower + v;
+      if (v > 0) anyVal = true;
+      const xp = singlePoint ? (padL + plotW / 2) : xFor(yearN);
+      lowerPts.push(xp + ',' + yFor(lower));
+      upperPts.push(xp + ',' + yFor(upper));
+      if (v > 0) {
+        const midY = yFor((lower + upper) / 2);
+        const segW = Math.max(6, plotW * 0.06);
+        dotsForShape.push({ x: xp, y: midY, h: Math.max(2, yFor(lower) - yFor(upper)), w: segW });
+      }
+      runningBottom[y] = upper;
+    });
+    if (!anyVal) return;
+    const color = colorFor[sh];
+    if (singlePoint) {
+      dotsForShape.forEach(d => {
+        polygons.push(
+          '<rect x="' + (d.x - d.w / 2) + '" y="' + (d.y - d.h / 2) + '" '
+          + 'width="' + d.w + '" height="' + d.h + '" '
+          + 'fill="' + color + '" fill-opacity="0.82" stroke="none">'
+          +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+          + '</rect>'
+        );
+      });
+    } else {
+      const pts = lowerPts.concat(upperPts.slice().reverse()).join(' ');
+      polygons.push(
+        '<polygon points="' + pts + '" fill="' + color + '" '
+        + 'fill-opacity="0.82" stroke="none">'
+        +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+        + '</polygon>'
+      );
+    }
+  });
+
+  const xTicks = [];
+  let tickStep;
+  if (yearSpan <= 1) tickStep = 1;
+  else if (yearSpan <= 5) tickStep = 1;
+  else if (yearSpan <= 12) tickStep = 2;
+  else if (yearSpan <= 25) tickStep = 5;
+  else if (yearSpan <= 60) tickStep = 10;
+  else tickStep = 15;
+  let t0 = Math.ceil(yMin / tickStep) * tickStep;
+  for (let yy = t0; yy <= yMax; yy += tickStep) xTicks.push(yy);
+  if (!xTicks.length || xTicks[0] !== yMin) xTicks.unshift(yMin);
+  if (xTicks[xTicks.length - 1] !== yMax) xTicks.push(yMax);
+
+  const xAxisMarks = xTicks.map(yy => {
+    const xp = xFor(yy);
+    return ''
+      + '<line x1="' + xp + '" y1="' + (padT + plotH) + '" '
+      +     'x2="' + xp + '" y2="' + (padT + plotH + 4) + '" '
+      +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+      + '<text x="' + xp + '" y="' + (padT + plotH + 16) + '" '
+      +     'text-anchor="middle" font-size="10" '
+      +     'fill="var(--muted)">' + yy + '</text>';
+  }).join('');
+
+  const yTickVals = [0, Math.round(maxTotal * 0.25), Math.round(maxTotal * 0.5),
+                     Math.round(maxTotal * 0.75), maxTotal];
+  const yAxisMarks = yTickVals.map(v => {
+    const yp = yFor(v);
+    return ''
+      + '<line x1="' + padL + '" y1="' + yp + '" '
+      +     'x2="' + (padL + plotW) + '" y2="' + yp + '" '
+      +     'stroke="rgba(255,255,255,0.06)" stroke-width="1" />'
+      + '<text x="' + (padL - 6) + '" y="' + (yp + 3) + '" '
+      +     'text-anchor="end" font-size="10" '
+      +     'fill="var(--muted)" font-variant-numeric="tabular-nums">' + v.toLocaleString() + '</text>';
+  }).join('');
+
+  const frame = ''
+    + '<line x1="' + padL + '" y1="' + padT + '" '
+    +     'x2="' + padL + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />'
+    + '<line x1="' + padL + '" y1="' + (padT + plotH) + '" '
+    +     'x2="' + (padL + plotW) + '" y2="' + (padT + plotH) + '" '
+    +     'stroke="rgba(255,255,255,0.25)" stroke-width="1" />';
+
+  const chartSvg = ''
+    + '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
+    +    'preserveAspectRatio="xMidYMid meet" '
+    +    'style="font-family:inherit;display:block;max-height:340px" '
+    +    'role="img" aria-label="Stacked area chart of UAP sightings by shape, ' + yMin + ' to ' + yMax + ' (range ' + activeRange + ')">'
+    +   yAxisMarks
+    +   polygons.join('')
+    +   xAxisMarks
+    +   frame
+    + '</svg>';
+
+  const grandTotal = ranked.reduce((s, r) => s + r.count, 0) || 1;
+  const legendRows = ranked.map((r, i) => {
+    const pct = (r.count / grandTotal) * 100;
+    const color = mufonShapeColor(i);
+    return ''
+      + '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
+      +   '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color + '"></span>'
+      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + r.shape + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums">' + r.count.toLocaleString() + '</span>'
+      +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>'
+      + '</li>';
+  }).join('');
+
+  const legendBlock = ''
+    + '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);'
+    +    'border-radius:8px;padding:10px 12px">'
+    +   '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;'
+    +     'letter-spacing:.5px;margin-bottom:6px">All-time totals</div>'
+    +   '<ul style="list-style:none;margin:0;padding:0">' + legendRows + '</ul>'
+    + '</div>';
+
+  const dr = m.date_range || [null, null];
+  const footnote = ''
+    + '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5">'
+    +   'Aggregated by NUFORC-reported shape (lowercased; blanks bucketed as "unknown"). '
+    +   'Top 15 shapes shown; rarer ones collapse into "other". '
+    +   'Series runs ' + (dr[0] || '?') + ' through ' + (dr[1] || '?') + ', '
+    +   'combining the planetsig historical mirror with a direct NUFORC subndx scrape'
+    +   (m._stale ? ' <strong>(live scrape unavailable this run — historical only)</strong>' : '')
+    +   '. Range toggle re-slices the stacked area only; the legend totals stay all-time.'
+    + '</div>';
+
+  body.innerHTML = ''
+    + rangeToggleHtml
+    + '<div style="display:grid;grid-template-columns:minmax(0,3fr) minmax(220px, 1fr);gap:14px;align-items:start">'
+    +   '<div style="min-width:0">' + chartSvg + '</div>'
+    +   legendBlock
+    + '</div>'
+    + footnote;
+}
+
+// UAP shapes range-toggle wiring. Delegated on the card so it survives every
+// re-render. Re-renders the shapes card only.
+(function(){
+  const card = document.getElementById('mufonShapesCard');
+  if (!card) return;
+  card.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-mufonshapesrange]');
+    if (!b) return;
+    const v = b.getAttribute('data-mufonshapesrange');
+    if (v && v !== state.mufonShapesRange) {
+      state.mufonShapesRange = v;
+      renderMufonShapes();
+    }
+  });
 })();
 
 // ============================================================================
