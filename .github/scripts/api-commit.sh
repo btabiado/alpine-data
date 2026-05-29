@@ -9,8 +9,6 @@
 # Inputs (env / args):
 #   $1                  commit message (required, single line OK)
 #   BRANCH              target branch (default: main)
-#   AUTHOR_NAME         commit author display name (default: github-actions[bot])
-#   AUTHOR_EMAIL        commit author email (default: 41898282+github-actions[bot]@users.noreply.github.com)
 #   GH_REPO / GITHUB_REPOSITORY   owner/repo (auto in Actions)
 #   GH_TOKEN / GITHUB_TOKEN       PAT/Actions token with contents:write
 #
@@ -24,11 +22,14 @@
 #   * No-op (exit 0) if the staged diff is empty.
 #   * Race-safe: re-reads remote HEAD between retries, rebuilds tree
 #     against the new base, retries up to 3 times on ref-update conflicts.
-#   * Author email defaults to the github-actions[bot] noreply so the
-#     signed commit's author lines up with the signer; pass
-#     AUTHOR_EMAIL=lthcs-bot@users.noreply.github.com explicitly if you
-#     need the historical bot identity preserved (commit will still be
-#     signed/verified — GitHub signs based on the token, not the author).
+#   * Sends ONLY message/tree/parents — no author/committer/signature.
+#     That is the exact condition under which GitHub auto-signs a Git Data
+#     API commit: it stamps the authenticated bot identity
+#     (github-actions[bot]) and signs with its own key -> "Verified".
+#     Supplying a custom author (e.g. real-estate-bot) silently yields an
+#     UNSIGNED commit — that was this script's original missing-signature
+#     bug. Bot provenance is carried in the commit message prefix instead
+#     (e.g. "lthcs: ...", "real-estate: ...").
 #
 # Exit codes:
 #   0   success (committed, or nothing to commit)
@@ -39,8 +40,6 @@ set -euo pipefail
 MSG="${1:?commit message required as first arg}"
 BRANCH="${BRANCH:-main}"
 REPO="${GH_REPO:-${GITHUB_REPOSITORY:-}}"
-AUTHOR_NAME="${AUTHOR_NAME:-github-actions[bot]}"
-AUTHOR_EMAIL="${AUTHOR_EMAIL:-41898282+github-actions[bot]@users.noreply.github.com}"
 
 if [ -z "$REPO" ]; then
   echo "api-commit: GITHUB_REPOSITORY / GH_REPO unset; aborting." >&2
@@ -153,28 +152,22 @@ while : ; do
   new_tree="$(printf '%s' "$tree_json" | gh api -X POST "repos/$REPO/git/trees" --input - --jq '.sha')"
   echo "api-commit:   new tree $new_tree"
 
-  # Create the signed commit. Author block (name+email+date) is preserved
-  # verbatim; GitHub signs the commit object with its internal key when
-  # the request is authenticated via GITHUB_TOKEN, producing the
-  # Verified badge.
+  # Create the commit with ONLY message/tree/parents — deliberately no
+  # author, committer, or signature. That is the exact condition under which
+  # GitHub auto-signs a Git Data API commit: it stamps the authenticated bot
+  # identity (github-actions[bot]) and signs with its own key, producing the
+  # Verified badge. Adding an author block (as this script used to) silently
+  # produced an UNSIGNED commit — that was the rollout's missing-signature bug.
   # The dynamic fields must be a *prefix* env assignment so they land in
-  # os.environ. They were previously placed AFTER `python3 -c '...'`, which
-  # makes the shell treat them as script argv (sys.argv), not env vars — so
-  # os.environ["MSG"] raised KeyError and aborted every commit. (AUTHOR_NAME/
-  # EMAIL also happen to be set as workflow env, but MSG/NEW_TREE/BASE_SHA are
-  # only known here.)
+  # os.environ. Placed AFTER `python3 -c '...'` the shell would treat them as
+  # script argv (sys.argv), not env vars — so os.environ["MSG"] would KeyError.
   commit_payload=$(MSG="$MSG" NEW_TREE="$new_tree" BASE_SHA="$base_sha" \
-    AUTHOR_NAME="$AUTHOR_NAME" AUTHOR_EMAIL="$AUTHOR_EMAIL" \
     python3 -c '
 import json, os
 print(json.dumps({
   "message": os.environ["MSG"],
   "tree": os.environ["NEW_TREE"],
   "parents": [os.environ["BASE_SHA"]],
-  "author": {
-    "name": os.environ["AUTHOR_NAME"],
-    "email": os.environ["AUTHOR_EMAIL"],
-  },
 }))
 ')
 
