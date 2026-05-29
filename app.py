@@ -5375,6 +5375,8 @@ function renderLthcsTab(){
 // missing the empty-state message stays in place.
 let _reCache = null;
 let _reSelectedState = null;
+let _reGeoCache = null;     // data-us_states.json polygons (lazy-loaded once)
+let _reGeoPaint = () => {}; // set per-render; lets the tile map repaint the geo map on selection sync
 function renderRealEstateTab(){
   const host = document.getElementById('realEstateSummary');
   if (!host) return;
@@ -5603,9 +5605,51 @@ function _drawRealEstate(host, d){
           '<svg id="reMapSvg" viewBox="0 0 '+RE_W+' '+RE_H+'" width="100%" preserveAspectRatio="xMidYMid meet" style="font-family:inherit;display:block;max-height:520px" role="img" aria-label="US housing heat by state">'+buildTiles()+'</svg>' +
           mapLegend +
         '</div>' +
-        '<div id="reStatePanel" style="flex:1 1 280px;min-width:260px"></div>' +
+        '<div id="reStatePanel" class="rePanelHost" style="flex:1 1 280px;min-width:260px"></div>' +
       '</div>' +
     '</div>';
+
+  // Per-metro heat from the same four signals the state/region aggregate uses,
+  // so a city's bar is directly comparable to its state's headline heat number.
+  const metroHeat = m => {
+    const k = m.kpis || {};
+    return heatFromSignals(
+      k.pct_above_list?.value,
+      k.days_on_market?.value,
+      k.pct_price_cut?.value,
+      k.zhvi?.yoy_pct
+    );
+  };
+  // One city row in the state drill-down: a hot/cold heat bar (length + colour
+  // = heat), the heat index, and ZHVI YoY. The full per-city detail rides along
+  // in the hover tooltip so the row stays compact.
+  const cityRow = m => {
+    const k = m.kpis || {};
+    const hv = metroHeat(m);
+    const h = hv == null ? null : Math.round(hv);
+    const col = h == null ? '#39414f' : heatColor(h);
+    const w = h == null ? 0 : clamp(h, 0, 100);
+    const yoy = k.zhvi?.yoy_pct;
+    const yoyTxt = yoy == null ? '—' : (yoy > 0 ? '+' : '') + yoy.toFixed(1) + '%';
+    const yoyCol = yoy == null ? 'var(--muted,#9aa3b2)' : (yoy > 0 ? '#3fb950' : yoy < 0 ? '#f85149' : 'var(--muted,#9aa3b2)');
+    const nm = esc(m.short_name || m.name || '—');
+    const stl = k.sale_to_list?.value;
+    const tip = nm + ' — heat ' + (h == null ? '—' : h)
+      + ' | ZHVI ' + fmtUsd(k.zhvi?.value) + ' (' + yoyTxt + ' YoY)'
+      + ' | sold ' + fmtNum(k.homes_sold?.value) + '/mo'
+      + ' | active ' + fmtNum(k.active_listings?.value)
+      + ' | ' + (k.days_on_market?.value == null ? '— DOM' : Math.round(k.days_on_market.value) + 'd on market')
+      + ' | above list ' + (k.pct_above_list?.value == null ? '—' : Math.round(k.pct_above_list.value * 100) + '%')
+      + ' | sale-to-list ' + (stl == null ? '—' : (stl * 100).toFixed(1) + '%');
+    return '<div title="' + tip + '" style="display:flex;align-items:center;gap:7px;font-size:11px">' +
+      '<span style="flex:0 0 92px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + nm + '</span>' +
+      '<span style="flex:1 1 auto;min-width:36px;height:11px;background:rgba(255,255,255,0.05);border-radius:3px;overflow:hidden">' +
+        '<span style="display:block;height:100%;width:' + w + '%;background:' + col + ';border-radius:3px"></span>' +
+      '</span>' +
+      '<span style="flex:0 0 24px;text-align:right;font-weight:700;color:' + col + '">' + (h == null ? '—' : h) + '</span>' +
+      '<span style="flex:0 0 50px;text-align:right;color:' + yoyCol + '">' + yoyTxt + '</span>' +
+    '</div>';
+  };
 
   // KPI grid used by the click-state panel.
   const statKpiGrid = ag => {
@@ -5620,8 +5664,10 @@ function _drawRealEstate(host, d){
       cell('Median sale', fmtUsd(ag.medianSale), '') +
       cell('Homes sold', fmtNum(ag.homesSold), 'monthly') +
       cell('Active listings', fmtNum(ag.activeListings), 'inventory') +
+      cell('New listings', fmtNum(ag.newListings), 'monthly') +
       cell('Days on market', ag.dom==null?'—':Math.round(ag.dom)+'d', '') +
       cell('Above list', ag.aboveList==null?'—':Math.round(ag.aboveList*100)+'%', 'sold over ask') +
+      cell('Sale-to-list', ag.saleToList==null?'—':(ag.saleToList*100).toFixed(1)+'%', ag.saleToList==null?'':(ag.saleToList<1?'below ask':ag.saleToList>1?'above ask':'at ask')) +
       cell('Price cuts', ag.priceCut==null?'—':Math.round(ag.priceCut*100)+'%', 'reduced') +
       cell('Permits', fmtNum(ag.permits), 'building') +
     '</div>';
@@ -5629,17 +5675,21 @@ function _drawRealEstate(host, d){
 
   // Right-hand panel: selected-state detail, or a hottest-states leaderboard.
   const renderRePanel = () => {
-    const panel = document.getElementById('reStatePanel');
-    if (!panel) return;
+    // Both maps (tile grid + geographic) each have a .rePanelHost beside them,
+    // so a click on either map shows the drill-down right next to where the
+    // user clicked. Render the same markup into every host.
+    const panels = document.querySelectorAll('.rePanelHost');
+    if (!panels.length) return;
+    let html;
     if (_reSelectedState && stateAgg[_reSelectedState]) {
       const s = _reSelectedState, ag = stateAgg[s];
       const hb = heatLabel(ag.heat) || {};
-      const topMetros = (byState[s]||[]).slice()
-        .sort((a,b)=>(b.kpis?.homes_sold?.value||0)-(a.kpis?.homes_sold?.value||0)).slice(0,6);
-      panel.innerHTML =
+      const cities = (byState[s]||[]).slice()
+        .sort((a,b)=>((metroHeat(b)??-1)-(metroHeat(a)??-1)));  // hottest first; no-data last
+      html =
         '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">' +
           '<div style="font-weight:700;font-size:15px">'+esc(MUFON_STATE_NAMES[s]||s)+'</div>' +
-          '<button id="rePanelClose" style="padding:2px 8px;font-size:11px;background:transparent;border:1px solid var(--border,#2a3142);color:var(--muted,#9aa3b2);border-radius:6px;cursor:pointer">×</button>' +
+          '<button class="rePanelClose" style="padding:2px 8px;font-size:11px;background:transparent;border:1px solid var(--border,#2a3142);color:var(--muted,#9aa3b2);border-radius:6px;cursor:pointer">×</button>' +
         '</div>' +
         '<div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">' +
           '<span style="font-size:24px;font-weight:700;color:'+(hb.c||'#fff')+'">'+(ag.heat==null?'—':ag.heat)+'</span>' +
@@ -5647,21 +5697,25 @@ function _drawRealEstate(host, d){
           '<span style="font-size:10px;color:var(--muted,#9aa3b2)">heat · '+ag.n+' metros · '+(REGION_OF[s]||'')+'</span>' +
         '</div>' +
         statKpiGrid(ag) +
-        '<div style="font-size:10px;color:var(--muted,#9aa3b2);margin-top:12px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Largest metros</div>' +
-        '<div style="display:flex;flex-direction:column;gap:4px">' +
-          topMetros.map(m => '<div style="display:flex;justify-content:space-between;font-size:12px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.short_name||m.name)+'</span><span style="color:var(--muted,#9aa3b2);white-space:nowrap;margin-left:8px">'+fmtUsd(m.kpis?.zhvi?.value)+'</span></div>').join('') +
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;margin-bottom:5px">' +
+          '<span style="font-size:10px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:.05em">Cities by heat</span>' +
+          '<span style="font-size:9px;color:var(--muted,#9aa3b2)">'+cities.length+' metros · bar=heat · right=ZHVI YoY</span>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;gap:5px;max-height:240px;overflow-y:auto;padding-right:4px">' +
+          cities.map(cityRow).join('') +
         '</div>';
-      const cb = document.getElementById('rePanelClose');
-      if (cb) cb.addEventListener('click', () => { _reSelectedState = null; _paintMap(); renderRePanel(); });
     } else {
       const ranked = Object.keys(stateAgg).filter(s => stateAgg[s].heat != null)
         .sort((a,b) => stateAgg[b].heat - stateAgg[a].heat).slice(0,10);
       const row = s => '<li style="display:flex;justify-content:space-between;padding:2px 0"><span><strong>'+esc(MUFON_STATE_NAMES[s]||s)+'</strong> <span style="color:var(--muted,#9aa3b2);font-size:10px">'+(REGION_OF[s]||'')+'</span></span><span style="color:'+heatColor(stateAgg[s].heat)+';font-weight:700">'+stateAgg[s].heat+'</span></li>';
-      panel.innerHTML =
+      html =
         '<div style="font-weight:700;font-size:14px;margin-bottom:2px">Hottest states</div>' +
-        '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-bottom:8px">by housing heat index · click a tile for detail</div>' +
+        '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-bottom:8px">by housing heat index · click a state for detail</div>' +
         '<ol style="margin:0;padding-left:20px;line-height:1.7;font-size:12px">'+ranked.map(row).join('')+'</ol>';
     }
+    panels.forEach(p => { p.innerHTML = html; });
+    document.querySelectorAll('.rePanelClose').forEach(cb =>
+      cb.addEventListener('click', () => { _reSelectedState = null; _paintMap(); _reGeoPaint(); renderRePanel(); }));
   };
   const _paintMap = () => {
     const svg = document.getElementById('reMapSvg');
@@ -5676,6 +5730,7 @@ function _drawRealEstate(host, d){
         if (!stateAgg[s]) return;
         _reSelectedState = (_reSelectedState === s) ? null : s;
         _paintMap();
+        _reGeoPaint();   // keep the geographic map's highlight in sync
         renderRePanel();
       });
     });
@@ -5833,9 +5888,80 @@ function _drawRealEstate(host, d){
   const snapshotHtml =
     '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
 
-  host.innerHTML = heroHtml + regionRowHtml + mapHtml + hotCarousel + coolCarousel + kpiRowHtml + snapshotHtml;
+  // ---- Geographic state map (real polygons, lazy sidecar) -------------
+  // Renders at the BOTTOM of the tab from data-us_states.json (51 pre-projected
+  // Albers-USA SVG paths, ~120KB, loaded once and cached). Additive to the tile
+  // grid above — it shares the same selection state, colour ramp, and detail
+  // panel. If the sidecar fails to load the tile grid above is unaffected, so
+  // the tab degrades gracefully.
+  const geoMapHtml =
+    '<div style="padding:14px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:10px;margin:0 14px 12px 14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+        '<div style="font-size:13px;font-weight:600;color:#e6e9ee">US Housing Heat — Geographic Map</div>' +
+        '<div style="font-size:11px;color:var(--muted,#9aa3b2)">click a state for KPIs</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">' +
+        '<div style="flex:1 1 460px;min-width:300px">' +
+          '<div id="reGeoWrap"><div class="empty" style="padding:28px 14px;text-align:center;color:var(--muted,#9aa3b2)">Loading map…</div></div>' +
+          mapLegend +
+        '</div>' +
+        '<div id="reGeoPanel" class="rePanelHost" style="flex:1 1 280px;min-width:260px"></div>' +
+      '</div>' +
+    '</div>';
+  const buildGeoSvg = () => {
+    const paths = Object.keys(_reGeoCache).map(code => {
+      const ag = stateAgg[code];
+      const hv = ag ? ag.heat : null;
+      const fill = ag ? heatColor(hv) : '#222836';
+      const isSel = _reSelectedState === code;
+      const tip = (MUFON_STATE_NAMES[code] || code)
+        + (hv == null ? ': no data' : ': heat ' + hv + (ag ? ' · ' + ag.n + ' metros' : ''));
+      return '<path class="reGeo" data-restate="' + code + '" d="' + _reGeoCache[code] + '"'
+        + ' fill="' + fill + '" stroke="' + (isSel ? '#ffffff' : '#0b0e14') + '"'
+        + ' stroke-width="' + (isSel ? 1.6 : 0.5) + '" stroke-linejoin="round"'
+        + ' style="cursor:pointer"><title>' + tip + '</title></path>';
+    }).join('');
+    return '<svg viewBox="0 0 960 600" width="100%" preserveAspectRatio="xMidYMid meet" '
+      + 'style="display:block;max-height:560px;font-family:inherit" role="img" '
+      + 'aria-label="US housing heat by state, geographic map">' + paths + '</svg>';
+  };
+  const bindGeo = () => {
+    document.querySelectorAll('#reGeoWrap .reGeo').forEach(p => {
+      p.addEventListener('click', () => {
+        const s = p.getAttribute('data-restate');
+        if (!stateAgg[s]) return;
+        _reSelectedState = (_reSelectedState === s) ? null : s;
+        _paintMap();
+        paintGeo();
+        renderRePanel();
+      });
+    });
+  };
+  const paintGeo = () => {
+    const wrap = document.getElementById('reGeoWrap');
+    if (!wrap || !_reGeoCache) return;
+    wrap.innerHTML = buildGeoSvg();
+    bindGeo();
+  };
+  _reGeoPaint = paintGeo;
+
+  host.innerHTML = heroHtml + regionRowHtml + mapHtml + hotCarousel + coolCarousel + kpiRowHtml + geoMapHtml + snapshotHtml;
   renderRePanel();
   bindTiles();
+
+  // Paint the geographic map from cache, else lazy-load its sidecar once.
+  if (_reGeoCache) {
+    paintGeo();
+  } else {
+    fetch('data-us_states.json', {cache: 'force-cache'})
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then(g => { _reGeoCache = g; paintGeo(); })
+      .catch(e => {
+        const w = document.getElementById('reGeoWrap');
+        if (w) w.innerHTML = '<div class="empty" style="padding:20px 14px;text-align:center">Geographic map unavailable ('
+          + String(e.message || e) + '). The state grid above shows the same data.</div>';
+      });
+  }
 }
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
@@ -11058,8 +11184,11 @@ function selectTab(t){
   const insightsBar = document.getElementById('insightsBar');
   // Overview has its own "Top insights" card; AI News tab has its own inline
   // insights card next to the sentiment summary — hide the global bar in
-  // both cases to avoid showing the same insights twice.
-  if (insightsBar) insightsBar.style.display = (isOverview || t === 'ainews') ? 'none' : '';
+  // both cases to avoid showing the same insights twice. Real Estate likewise
+  // has its own insight surface (heat-index 30d/1y delta chips + the
+  // "Hottest states" leaderboard), and no insight is tagged `real_estate`, so
+  // the generic bar would only ever read "none right now" — hide it there too.
+  if (insightsBar) insightsBar.style.display = (isOverview || t === 'ainews' || t === 'real_estate') ? 'none' : '';
   renderAll();
 }
 

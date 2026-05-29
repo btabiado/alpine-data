@@ -27,6 +27,11 @@ data-*.json
 # parser is repaired, every CI run will refresh this file in-place; the
 # committed copy is just the floor.
 !data-travel.json
+# Carve-out: data-us_states.json is committed STATIC geometry — 50 states + DC
+# SVG paths (pre-projected Albers USA) built once by
+# scripts/build_us_state_paths.py from us-atlas. Consumed by the V1 Real Estate
+# tab's geographic heat map. Refreshed essentially never (boundaries don't move).
+!data-us_states.json
 # V2 builder output mirrors the production layout one level down.
 v2/dashboard.html
 v2/data-*.json
