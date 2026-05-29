@@ -5374,6 +5374,7 @@ function renderLthcsTab(){
 // and shows it next to the CTA. Failure is graceful — if the JSON is
 // missing the empty-state message stays in place.
 let _reCache = null;
+let _reSelectedState = null;
 function renderRealEstateTab(){
   const host = document.getElementById('realEstateSummary');
   if (!host) return;
@@ -5473,6 +5474,233 @@ function _drawRealEstate(host, d){
     : v <= 85 ? {t:'Hot',       c:'#e8744a'}
     :           {t:'Scorching', c:'#d04545'};
   const hLbl = heatLabel(heatIdx);
+
+  // ---- State + Census-region aggregation ------------------------------
+  // Roll the ~894 metros up to states (and the 4 Census regions). Price /
+  // ratio signals are homes_sold-weighted so big markets dominate; counts
+  // are summed. State heat reuses the national norm endpoints on the
+  // weighted signal means so the colour scale is comparable everywhere.
+  const fmtNum = n => n == null ? '—' : Math.round(n).toLocaleString();
+  const CENSUS_REGION = {
+    Northeast: ['CT','ME','MA','NH','RI','VT','NJ','NY','PA'],
+    Midwest:   ['IL','IN','MI','OH','WI','IA','KS','MN','MO','NE','ND','SD'],
+    South:     ['DE','FL','GA','MD','NC','SC','VA','DC','WV','AL','KY','MS','TN','AR','LA','OK','TX'],
+    West:      ['AZ','CO','ID','MT','NV','NM','UT','WY','AK','CA','HI','OR','WA'],
+  };
+  const wt = m => m.kpis?.homes_sold?.value ?? 0;
+  const wMean = (items, valFn) => {
+    let sw = 0, swv = 0;
+    items.forEach(m => { const v = valFn(m), w = wt(m); if (v != null && isFinite(v) && w > 0) { sw += w; swv += v * w; } });
+    return sw > 0 ? swv / sw : null;
+  };
+  const uMean = (items, valFn) => {
+    const xs = items.map(valFn).filter(v => v != null && isFinite(v));
+    return xs.length ? xs.reduce((a,b)=>a+b,0) / xs.length : null;
+  };
+  const sumOf = (items, valFn) => {
+    let s = 0, any = false;
+    items.forEach(m => { const v = valFn(m); if (v != null && isFinite(v)) { s += v; any = true; } });
+    return any ? s : null;
+  };
+  const heatFromSignals = (above, dom, cut, yoy) => {
+    const parts = [];
+    if (above != null) parts.push(norm.above(above));
+    if (dom   != null) parts.push(norm.dom(dom));
+    if (cut   != null) parts.push(norm.cut(cut));
+    if (yoy   != null) parts.push(norm.yoy(yoy));
+    return parts.length ? parts.reduce((a,b)=>a+b,0) / parts.length : null;
+  };
+  const aggregate = items => {
+    const q = items.filter(qualifies);
+    const base = q.length ? q : items;
+    // Weighted by homes_sold, but fall back to an equal-weighted mean when a
+    // state's metros all lack a sales count (e.g. WY) so it still gets a heat
+    // value instead of dropping off the map.
+    const above = wMean(base, m => m.kpis?.pct_above_list?.value) ?? uMean(base, m => m.kpis?.pct_above_list?.value);
+    const dom   = wMean(base, m => m.kpis?.days_on_market?.value) ?? uMean(base, m => m.kpis?.days_on_market?.value);
+    const cut   = wMean(base, m => m.kpis?.pct_price_cut?.value)  ?? uMean(base, m => m.kpis?.pct_price_cut?.value);
+    const yoy   = wMean(base, m => m.kpis?.zhvi?.yoy_pct)         ?? uMean(base, m => m.kpis?.zhvi?.yoy_pct);
+    const hv    = heatFromSignals(above, dom, cut, yoy);
+    return {
+      n: items.length,
+      heat: hv == null ? null : Math.round(hv),
+      zhvi: wMean(items, m => m.kpis?.zhvi?.value) ?? uMean(items, m => m.kpis?.zhvi?.value),
+      zhviYoy: yoy,
+      medianSale: wMean(items, m => m.kpis?.median_sale?.value) ?? uMean(items, m => m.kpis?.median_sale?.value),
+      homesSold: sumOf(items, m => m.kpis?.homes_sold?.value),
+      newListings: sumOf(items, m => m.kpis?.new_listings?.value),
+      activeListings: sumOf(items, m => m.kpis?.active_listings?.value),
+      permits: sumOf(items, m => m.kpis?.permits?.value),
+      dom: dom,
+      aboveList: above,
+      priceCut: cut,
+      saleToList: wMean(base, m => m.kpis?.sale_to_list?.value) ?? uMean(base, m => m.kpis?.sale_to_list?.value),
+    };
+  };
+  const byState = {};
+  metros.forEach(m => { if (m.state) (byState[m.state] = byState[m.state] || []).push(m); });
+  const stateAgg = {};
+  Object.keys(byState).forEach(s => { stateAgg[s] = aggregate(byState[s]); });
+  const regionAgg = {};
+  Object.entries(CENSUS_REGION).forEach(([r, arr]) => {
+    regionAgg[r] = aggregate(metros.filter(m => arr.includes(m.state)));
+  });
+  if (_reSelectedState && !stateAgg[_reSelectedState]) _reSelectedState = null;
+
+  // ---- Heat colour ramp (matches the hero gradient stops) -------------
+  const HEAT_STOPS = [[0,[74,144,226]],[25,[95,179,168]],[50,[232,176,74]],[75,[232,116,74]],[100,[208,69,69]]];
+  const heatColor = v => {
+    if (v == null) return '#222836';
+    v = clamp(v, 0, 100);
+    for (let i = 1; i < HEAT_STOPS.length; i++) {
+      if (v <= HEAT_STOPS[i][0]) {
+        const a0 = HEAT_STOPS[i-1][0], c0 = HEAT_STOPS[i-1][1];
+        const a1 = HEAT_STOPS[i][0],   c1 = HEAT_STOPS[i][1];
+        const t = (v - a0) / (a1 - a0);
+        const ch = k => Math.round(c0[k] + (c1[k] - c0[k]) * t);
+        return 'rgb(' + ch(0) + ',' + ch(1) + ',' + ch(2) + ')';
+      }
+    }
+    return 'rgb(208,69,69)';
+  };
+
+  // ---- US state heat-map (reuses the UAP tile grid layout) ------------
+  const RE_CELL = 50, RE_GAP = 4, RE_COLS = 12, RE_ROWS = 8;
+  const RE_W = RE_COLS * (RE_CELL + RE_GAP) - RE_GAP;
+  const RE_H = RE_ROWS * (RE_CELL + RE_GAP) - RE_GAP;
+  const buildTiles = () => MUFON_STATE_GRID.map(([code, cx, cy]) => {
+    const x = cx * (RE_CELL + RE_GAP), y = cy * (RE_CELL + RE_GAP);
+    const ag = stateAgg[code];
+    const hv = ag ? ag.heat : null;
+    const fill = ag ? heatColor(hv) : '#1a1f2b';
+    const isSel = _reSelectedState === code;
+    const stroke = isSel ? '#ffffff' : 'rgba(255,255,255,0.10)';
+    const strokeW = isSel ? 2.5 : 1;
+    const tip = ag ? (MUFON_STATE_NAMES[code]||code) + ': heat ' + (hv==null?'—':hv) + ' · ' + ag.n + ' metros'
+                   : (MUFON_STATE_NAMES[code]||code) + ': no data';
+    return ''
+      + '<g class="reTile" data-restate="' + code + '" style="cursor:pointer">'
+      +   '<rect x="'+x+'" y="'+y+'" width="'+RE_CELL+'" height="'+RE_CELL+'" rx="6" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
+      +     '<title>'+tip+'</title>'
+      +   '</rect>'
+      +   '<text x="'+(x+RE_CELL/2)+'" y="'+(y+RE_CELL/2-3)+'" text-anchor="middle" font-size="13" font-weight="700" fill="rgba(0,0,0,0.72)" pointer-events="none">'+code+'</text>'
+      +   '<text x="'+(x+RE_CELL/2)+'" y="'+(y+RE_CELL/2+12)+'" text-anchor="middle" font-size="10" fill="rgba(0,0,0,0.6)" pointer-events="none">'+(hv==null?'—':hv)+'</text>'
+      + '</g>';
+  }).join('');
+  const mapLegendStops = [['Cold','#4a90e2'],['Cool','#5fb3a8'],['Warm','#e8b04a'],['Hot','#e8744a'],['Scorch','#d04545']];
+  const mapLegend = '<div style="display:flex;gap:8px;align-items:center;font-size:10px;color:var(--muted,#9aa3b2);margin-top:10px;flex-wrap:wrap">'
+    + '<span>cooler</span>'
+    + mapLegendStops.map(b => '<span style="display:inline-flex;align-items:center;gap:3px"><span style="display:inline-block;width:16px;height:12px;border-radius:3px;background:'+b[1]+'"></span>'+b[0]+'</span>').join('')
+    + '<span>hotter</span></div>';
+  const mapHtml =
+    '<div style="padding:14px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-radius:10px;margin:0 14px 12px 14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:8px">' +
+        '<div style="font-size:13px;font-weight:600;color:#e6e9ee">Housing Heat by State</div>' +
+        '<div style="font-size:11px;color:var(--muted,#9aa3b2)">click a state for KPIs</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">' +
+        '<div style="flex:1 1 420px;min-width:300px">' +
+          '<svg id="reMapSvg" viewBox="0 0 '+RE_W+' '+RE_H+'" width="100%" preserveAspectRatio="xMidYMid meet" style="font-family:inherit;display:block;max-height:520px" role="img" aria-label="US housing heat by state">'+buildTiles()+'</svg>' +
+          mapLegend +
+        '</div>' +
+        '<div id="reStatePanel" style="flex:1 1 280px;min-width:260px"></div>' +
+      '</div>' +
+    '</div>';
+
+  // KPI grid used by the click-state panel.
+  const statKpiGrid = ag => {
+    const cell = (label, val, sub) =>
+      '<div style="padding:8px 10px;background:var(--bg2,#0f1419);border:1px solid var(--border,#2a3142);border-radius:8px">' +
+        '<div style="font-size:9px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+label+'</div>' +
+        '<div style="font-size:14px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+val+'</div>' +
+        (sub?'<div style="font-size:9px;color:var(--muted,#9aa3b2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>':'') +
+      '</div>';
+    return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">' +
+      cell('Median ZHVI', fmtUsd(ag.zhvi), fmtPct(ag.zhviYoy) + ' YoY') +
+      cell('Median sale', fmtUsd(ag.medianSale), '') +
+      cell('Homes sold', fmtNum(ag.homesSold), 'monthly') +
+      cell('Active listings', fmtNum(ag.activeListings), 'inventory') +
+      cell('Days on market', ag.dom==null?'—':Math.round(ag.dom)+'d', '') +
+      cell('Above list', ag.aboveList==null?'—':Math.round(ag.aboveList*100)+'%', 'sold over ask') +
+      cell('Price cuts', ag.priceCut==null?'—':Math.round(ag.priceCut*100)+'%', 'reduced') +
+      cell('Permits', fmtNum(ag.permits), 'building') +
+    '</div>';
+  };
+
+  // Right-hand panel: selected-state detail, or a hottest-states leaderboard.
+  const renderRePanel = () => {
+    const panel = document.getElementById('reStatePanel');
+    if (!panel) return;
+    if (_reSelectedState && stateAgg[_reSelectedState]) {
+      const s = _reSelectedState, ag = stateAgg[s];
+      const hb = heatLabel(ag.heat) || {};
+      const topMetros = (byState[s]||[]).slice()
+        .sort((a,b)=>(b.kpis?.homes_sold?.value||0)-(a.kpis?.homes_sold?.value||0)).slice(0,6);
+      panel.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px">' +
+          '<div style="font-weight:700;font-size:15px">'+esc(MUFON_STATE_NAMES[s]||s)+'</div>' +
+          '<button id="rePanelClose" style="padding:2px 8px;font-size:11px;background:transparent;border:1px solid var(--border,#2a3142);color:var(--muted,#9aa3b2);border-radius:6px;cursor:pointer">×</button>' +
+        '</div>' +
+        '<div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">' +
+          '<span style="font-size:24px;font-weight:700;color:'+(hb.c||'#fff')+'">'+(ag.heat==null?'—':ag.heat)+'</span>' +
+          '<span style="font-size:13px;font-weight:600;color:'+(hb.c||'var(--muted,#9aa3b2)')+'">'+(hb.t||'—')+'</span>' +
+          '<span style="font-size:10px;color:var(--muted,#9aa3b2)">heat · '+ag.n+' metros · '+(REGION_OF[s]||'')+'</span>' +
+        '</div>' +
+        statKpiGrid(ag) +
+        '<div style="font-size:10px;color:var(--muted,#9aa3b2);margin-top:12px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em">Largest metros</div>' +
+        '<div style="display:flex;flex-direction:column;gap:4px">' +
+          topMetros.map(m => '<div style="display:flex;justify-content:space-between;font-size:12px"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(m.short_name||m.name)+'</span><span style="color:var(--muted,#9aa3b2);white-space:nowrap;margin-left:8px">'+fmtUsd(m.kpis?.zhvi?.value)+'</span></div>').join('') +
+        '</div>';
+      const cb = document.getElementById('rePanelClose');
+      if (cb) cb.addEventListener('click', () => { _reSelectedState = null; _paintMap(); renderRePanel(); });
+    } else {
+      const ranked = Object.keys(stateAgg).filter(s => stateAgg[s].heat != null)
+        .sort((a,b) => stateAgg[b].heat - stateAgg[a].heat).slice(0,10);
+      const row = s => '<li style="display:flex;justify-content:space-between;padding:2px 0"><span><strong>'+esc(MUFON_STATE_NAMES[s]||s)+'</strong> <span style="color:var(--muted,#9aa3b2);font-size:10px">'+(REGION_OF[s]||'')+'</span></span><span style="color:'+heatColor(stateAgg[s].heat)+';font-weight:700">'+stateAgg[s].heat+'</span></li>';
+      panel.innerHTML =
+        '<div style="font-weight:700;font-size:14px;margin-bottom:2px">Hottest states</div>' +
+        '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-bottom:8px">by housing heat index · click a tile for detail</div>' +
+        '<ol style="margin:0;padding-left:20px;line-height:1.7;font-size:12px">'+ranked.map(row).join('')+'</ol>';
+    }
+  };
+  const _paintMap = () => {
+    const svg = document.getElementById('reMapSvg');
+    if (!svg) return;
+    svg.innerHTML = buildTiles();
+    bindTiles();
+  };
+  const bindTiles = () => {
+    document.querySelectorAll('#reMapSvg .reTile').forEach(g => {
+      g.addEventListener('click', () => {
+        const s = g.getAttribute('data-restate');
+        if (!stateAgg[s]) return;
+        _reSelectedState = (_reSelectedState === s) ? null : s;
+        _paintMap();
+        renderRePanel();
+      });
+    });
+  };
+  const REGION_OF = {};
+  Object.entries(CENSUS_REGION).forEach(([r, arr]) => arr.forEach(s => REGION_OF[s] = r));
+
+  // ---- Census-region rollup row ---------------------------------------
+  const regionCard = name => {
+    const ag = regionAgg[name];
+    const hb = heatLabel(ag.heat) || {};
+    return '<div style="flex:1;min-width:0;padding:10px;background:var(--panel,#141923);border:1px solid var(--border,#2a3142);border-top:3px solid '+heatColor(ag.heat)+';border-radius:8px">' +
+      '<div style="font-size:11px;color:var(--muted,#9aa3b2);text-transform:uppercase;letter-spacing:.05em">'+name+'</div>' +
+      '<div style="display:flex;align-items:baseline;gap:6px;margin-top:4px">' +
+        '<span style="font-size:22px;font-weight:700;color:'+(hb.c||'#fff')+'">'+(ag.heat==null?'—':ag.heat)+'</span>' +
+        '<span style="font-size:11px;font-weight:600;color:'+(hb.c||'var(--muted,#9aa3b2)')+'">'+(hb.t||'—')+'</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--muted,#9aa3b2);margin-top:4px">'+fmtUsd(ag.zhvi)+' · '+fmtPct(ag.zhviYoy)+' YoY</div>' +
+    '</div>';
+  };
+  const regionRowHtml =
+    '<div style="font-size:13px;font-weight:600;color:#e6e9ee;padding:0 14px;margin-bottom:6px">Census regions</div>' +
+    '<div style="display:flex;gap:8px;padding:0 14px;margin-bottom:12px;flex-wrap:wrap">' +
+      ['Northeast','Midwest','South','West'].map(regionCard).join('') +
+    '</div>';
 
   // ---- Sparkline SVG helper -------------------------------------------
   // Compact inline polyline, no fill, single colour. Returns '' on bad input.
@@ -5585,17 +5813,29 @@ function _drawRealEstate(host, d){
       '<div style="font-size:14px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + value + '</div>' +
       (sub ? '<div style="font-size:10px;color:var(--muted,#9aa3b2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + sub + '</div>' : '') +
     '</div>';
+  const natAgg = aggregate(metros);
+  const natCards = [
+    ['Median ZHVI',     fmtUsd(medianZhvi),                                              'across ' + metros.length + ' metros'],
+    ['ZHVI YoY',        fmtPct(natAgg.zhviYoy),                                          'volume-weighted'],
+    ['+YoY metros',     positiveYoy + ' / ' + metros.length,                             'positive ZHVI YoY'],
+    ['Homes sold',      fmtNum(natAgg.homesSold),                                        'monthly, all metros'],
+    ['Active listings', fmtNum(natAgg.activeListings),                                   'inventory'],
+    ['Avg DOM',         avgDom == null ? '—' : avgDom + 'd',                             'days on market'],
+    ['Above list',      natAgg.aboveList == null ? '—' : Math.round(natAgg.aboveList*100) + '%', 'sold over ask'],
+    ['Price cuts',      natAgg.priceCut == null ? '—' : Math.round(natAgg.priceCut*100) + '%',   'listings reduced'],
+  ];
   const kpiRowHtml =
-    '<div style="display:flex;gap:8px;padding:0 14px;margin-top:6px">' +
-      smallCard('Median ZHVI', fmtUsd(medianZhvi), 'across ' + metros.length + ' metros') +
-      smallCard('+YoY metros',  positiveYoy + ' / ' + metros.length, 'positive ZHVI YoY') +
-      smallCard('Avg DOM',     avgDom == null ? '—' : avgDom + 'd', 'days on market') +
+    '<div style="font-size:13px;font-weight:600;color:#e6e9ee;padding:0 14px;margin-top:6px;margin-bottom:6px">National KPIs</div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:0 14px">' +
+      natCards.map(c => smallCard(c[0], c[1], c[2])).join('') +
     '</div>';
 
   const snapshotHtml =
     '<div style="padding:8px 14px 0 14px;font-size:10px;color:var(--muted,#9aa3b2);font-family:ui-monospace,monospace">snapshot ' + generated + ' UTC &middot; sources: Zillow Research, Redfin Data Center, FRED</div>';
 
-  host.innerHTML = heroHtml + hotCarousel + coolCarousel + kpiRowHtml + snapshotHtml;
+  host.innerHTML = heroHtml + regionRowHtml + mapHtml + hotCarousel + coolCarousel + kpiRowHtml + snapshotHtml;
+  renderRePanel();
+  bindTiles();
 }
 
 // 8 focused KPIs based on cohort migration + tx-shape signals (not the
