@@ -157,8 +157,16 @@ while : ; do
   # verbatim; GitHub signs the commit object with its internal key when
   # the request is authenticated via GITHUB_TOKEN, producing the
   # Verified badge.
-  commit_payload=$(python3 -c '
-import json, os, sys
+  # The dynamic fields must be a *prefix* env assignment so they land in
+  # os.environ. They were previously placed AFTER `python3 -c '...'`, which
+  # makes the shell treat them as script argv (sys.argv), not env vars — so
+  # os.environ["MSG"] raised KeyError and aborted every commit. (AUTHOR_NAME/
+  # EMAIL also happen to be set as workflow env, but MSG/NEW_TREE/BASE_SHA are
+  # only known here.)
+  commit_payload=$(MSG="$MSG" NEW_TREE="$new_tree" BASE_SHA="$base_sha" \
+    AUTHOR_NAME="$AUTHOR_NAME" AUTHOR_EMAIL="$AUTHOR_EMAIL" \
+    python3 -c '
+import json, os
 print(json.dumps({
   "message": os.environ["MSG"],
   "tree": os.environ["NEW_TREE"],
@@ -168,8 +176,7 @@ print(json.dumps({
     "email": os.environ["AUTHOR_EMAIL"],
   },
 }))
-' MSG="$MSG" NEW_TREE="$new_tree" BASE_SHA="$base_sha" \
-   AUTHOR_NAME="$AUTHOR_NAME" AUTHOR_EMAIL="$AUTHOR_EMAIL")
+')
 
   new_commit="$(printf '%s' "$commit_payload" | gh api -X POST "repos/$REPO/git/commits" --input - --jq '.sha')"
   echo "api-commit:   new commit $new_commit"
