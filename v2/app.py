@@ -13521,8 +13521,14 @@ function renderCpiCard(s){
   const endVal   = clipped[clipped.length - 1].value;
   const pctRange = startVal ? ((endVal - startVal) / startVal) * 100 : 0;
   const isDollar = (s.kind === 'dollar');
-  const fmtValue = v => isDollar ? '$' + Number(v).toFixed(2)
-                                 : Number(v).toFixed(Math.abs(v) >= 100 ? 1 : 2);
+  // Headline tracks the active view so it matches the chart: rebased index in
+  // index100, % change in pctchange, raw native unit in absolute.
+  const fmtValue = v => {
+    if (mode === 'pctchange') return (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%';
+    if (mode === 'index100')  return Number(v).toFixed(1);
+    return isDollar ? '$' + Number(v).toFixed(2)
+                    : Number(v).toFixed(Math.abs(v) >= 100 ? 1 : 2);
+  };
 
   // YoY chip — last value vs the closest observation ~365d earlier inside
   // the *raw* series (so the chip is meaningful even when the user picks
@@ -13560,7 +13566,7 @@ function renderCpiCard(s){
           '<div class="v2-card__subtitle">' + unit + '</div>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">' +
-          '<div class="cpi-mini__val">' + fmtValue(endVal) + '</div>' +
+          '<div class="cpi-mini__val">' + fmtValue(last.value) + '</div>' +
           '<span class="v2-chip v2-chip--' + sev + ' cpi-mini__chip">' + escapeHtml(chipText) + '</span>' +
         '</div>' +
       '</div>' +

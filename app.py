@@ -13142,10 +13142,18 @@ function renderCpiCardV1(s){
 
   const startVal = clipped[0].value;
   const endVal   = clipped[clipped.length-1].value;
+  // Headline value tracks the active view so it matches the chart: the
+  // rebased index in index100, the % change in pctchange, the raw value
+  // (dollar or index) in absolute.
+  const dispVal  = pts[pts.length-1].value;
   const pctRange = startVal ? ((endVal - startVal) / startVal) * 100 : 0;
   const isDollar = (s.kind === 'dollar');
-  const fmtValue = v => isDollar ? '$' + Number(v).toFixed(2)
-                                  : Number(v).toFixed(Math.abs(v) >= 100 ? 1 : 2);
+  const fmtValue = v => {
+    if (mode === 'pctchange') return (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%';
+    if (mode === 'index100')  return Number(v).toFixed(1);
+    return isDollar ? '$' + Number(v).toFixed(2)
+                    : Number(v).toFixed(Math.abs(v) >= 100 ? 1 : 2);
+  };
   // YoY chip from raw obs (so chip is meaningful even when range < 1y).
   const lastRaw = obs[obs.length-1];
   let yoyPct = null;
@@ -13173,7 +13181,7 @@ function renderCpiCardV1(s){
     +     '<div class="cpi-mini__label" title="' + escapeHtml(s.label || '') + '">' + label + '</div>'
     +     '<div class="cpi-mini__unit">' + unit + '</div>'
     +   '</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
-    +     '<div class="cpi-mini__val">' + fmtValue(endVal) + '</div>'
+    +     '<div class="cpi-mini__val">' + fmtValue(dispVal) + '</div>'
     +     '<span class="cpi-mini__chip ' + sevCls + '">' + escapeHtml(chipText) + '</span>'
     +   '</div></div>'
     +   cpiSparkSvgV1(pts, {isDollar, mode})
