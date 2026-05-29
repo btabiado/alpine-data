@@ -102,14 +102,17 @@ echo "api-commit: ${#UPSERT_PATHS[@]} upsert, ${#DELETE_PATHS[@]} delete on $REP
 # retries is harmless and returns the same SHA).
 declare -a UPSERT_SHAS=()
 for path in "${UPSERT_PATHS[@]}"; do
-  # base64 -w0 on GNU coreutils, fall back to plain base64 + tr on BSD.
-  if base64 --help 2>&1 | grep -q -- '-w'; then
-    b64="$(base64 -w0 -- "$path")"
-  else
-    b64="$(base64 -- "$path" | tr -d '\n')"
-  fi
-  sha="$(gh api -X POST "repos/$REPO/git/blobs" \
-    -f content="$b64" -f encoding="base64" --jq '.sha')"
+  # Build the blob payload in python3 (read file -> base64 -> JSON) and stream
+  # it to the API over stdin. The old code base64-encoded into a shell var and
+  # passed it as `-f content=...`; that blows past ARG_MAX on large data files
+  # (the ~3.4MB data/real_estate.json -> ~4.6MB arg -> "Argument list too long",
+  # exit 126, gh never runs). Piping via --input - has no size limit and matches
+  # the tree/commit POSTs below. python3 is already required by this script.
+  sha="$(python3 -c '
+import base64, json, sys
+with open(sys.argv[1], "rb") as fh:
+    sys.stdout.write(json.dumps({"content": base64.b64encode(fh.read()).decode("ascii"), "encoding": "base64"}))
+' "$path" | gh api -X POST "repos/$REPO/git/blobs" --input - --jq '.sha')"
   UPSERT_SHAS+=("$sha")
   echo "  blob $sha  $path"
 done
