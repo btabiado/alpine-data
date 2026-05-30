@@ -124,8 +124,8 @@
     },
     {
       "ticker": "ARM",
-      "todays_take": "ARM is showing Weakening at 53.8 (-4.8 over 30 days), supported by Institutional Confidence at 94.0.",
-      "why_changed": "Score is at 53.8 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "todays_take": "ARM is showing Weakening at 51.0 (-4.8 over 30 days), supported by Institutional Confidence at 94.0.",
+      "why_changed": "Score is at 51.0 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Financial Evolution at 34.1 is well below the universe median, and Adoption Momentum at 40.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "A sustained drop in Financial Evolution below 24, or a Structural Review composite move below 50, would force a structural review.",
       "confidence_level": "high"
@@ -1012,7 +1012,7 @@
     },
     {
       "ticker": "PFE",
-      "todays_take": "PFE requires Structural Review at 34.2 (-8.5 over 30 days), supported by Thesis Integrity at 63.8.",
+      "todays_take": "PFE requires Structural Review at 34.2 (-8.5 over 30 days), supported by Thesis Integrity at 53.8.",
       "why_changed": "Score is at 34.2 (drift over 1d +0.2); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Adoption Momentum at 8.8 is well below the universe median, and Financial Evolution at 30.5 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
@@ -1116,7 +1116,7 @@
     },
     {
       "ticker": "SNPS",
-      "todays_take": "SNPS requires Structural Review at 44.0 (-15.8 over 30 days), supported by Thesis Integrity at 64.1.",
+      "todays_take": "SNPS requires Structural Review at 44.0 (-15.8 over 30 days), supported by Thesis Integrity at 71.0.",
       "why_changed": "Score is at 44.0 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 28.7 is well below the universe median, and Demand Environment at 46.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
@@ -1188,7 +1188,7 @@
     },
     {
       "ticker": "TSLA",
-      "todays_take": "TSLA requires Structural Review at 32.7 (+7.0 over 30 days), supported by Thesis Integrity at 67.7.",
+      "todays_take": "TSLA requires Structural Review at 32.7 (+7.0 over 30 days), supported by Demand Environment at 51.2.",
       "why_changed": "Score is at 32.7 (drift over 1d +1.8); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Adoption Momentum at 5.0 is well below the universe median, and Financial Evolution at 38.3 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
