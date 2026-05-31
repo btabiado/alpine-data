@@ -1,0 +1,75 @@
+{
+  "_meta": {
+    "name": "city_registry",
+    "version": "1.0",
+    "description": "City tab registry config — Layer A (City Pulse operational feeds) + Layer B (cross-city context). Adapter reads this directly.",
+    "source_of_truth": "CITY_TAB_BUILD.md (methodology in section 2; field notes in sections 3-4)",
+    "conventions": {
+      "polarity": "+1 up-is-favorable, -1 down-is-favorable, 0 context-only",
+      "date_col_verify": "true means confirm the column with a one-row ?$limit=1 probe before first use",
+      "date_col=verify": "ArcGIS attribute name not yet confirmed; resolve at build",
+      "baseline_dataset": "union with primary dataset to assemble the trailing-12-month baseline",
+      "dataset_rotates_yearly": "resolve the current-year dataset by convention (or union recent years)"
+    }
+  },
+  "pulse": {
+    "baseline_months": 12,
+    "comparison": "year_over_year",
+    "z_clip": 3,
+    "pillar_weights": { "public_safety": 1, "development_economy": 1, "city_services": 1 },
+    "map": "50 + (C/3)*50"
+  },
+  "cities": [
+    { "id": "chicago", "name": "Chicago", "scope": "city", "adapter": "socrata", "host": "data.cityofchicago.org",
+      "feeds": [
+        { "pillar": "city_services",       "label": "311 Service Requests", "dataset": "v6vf-nfxy", "date_col": "created_date", "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "Crimes 2001-present",  "dataset": "ijzp-q8t2", "date_col": "date", "polarity": -1, "metric": "count", "note": "excludes last 7 days" },
+        { "pillar": "development_economy",  "label": "Building Permits",     "dataset": "ydr8-5enu", "date_col": "issue_date", "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "nyc", "name": "New York City", "scope": "city", "adapter": "socrata", "host": "data.cityofnewyork.us",
+      "feeds": [
+        { "pillar": "city_services",       "label": "311 (2010-present)", "dataset": "erm2-nwe9", "date_col": "created_date", "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "NYPD Complaints",    "dataset": "5uac-w243", "baseline_dataset": "qgea-i56i", "date_col": "cmplnt_fr_dt", "polarity": -1, "metric": "count" },
+        { "pillar": "development_economy",  "label": "DOB Permit Issuance","dataset": "ipu4-2q9a", "date_col": "issuance_date", "date_col_verify": true, "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "la", "name": "Los Angeles", "scope": "city", "adapter": "socrata", "host": "data.lacity.org",
+      "feeds": [
+        { "pillar": "city_services",       "label": "MyLA311",            "dataset": "h73f-gn57", "dataset_rotates_yearly": true, "date_col": "createddate", "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "LAPD NIBRS Offenses","dataset": "k7nn-b2ep", "baseline_dataset": "y8y3-fqfu", "date_col": "date_occ", "date_col_verify": true, "polarity": -1, "metric": "count", "note": "legacy 2nrs-mtv8 frozen" },
+        { "pillar": "development_economy",  "label": "B&S Permits 2020+",  "dataset": "pi9x-tg5x", "date_col": "issue_date", "date_col_verify": true, "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "seattle", "name": "Seattle", "scope": "city", "adapter": "socrata", "host": "data.seattle.gov",
+      "feeds": [
+        { "pillar": "city_services",       "label": "Customer Service Requests", "dataset": "5ngg-rpne", "date_col": "created_date", "date_col_verify": true, "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "SPD Crime 2008+",           "dataset": "tazs-3rd5", "date_col": "report_datetime", "polarity": -1, "metric": "count", "note": "RMS change 2019 = breakpoint" },
+        { "pillar": "development_economy",  "label": "Building Permits",          "dataset": "76t5-zqzr", "date_col": "issueddate", "date_col_verify": true, "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "sf", "name": "San Francisco", "scope": "city", "adapter": "socrata", "host": "data.sfgov.org",
+      "feeds": [
+        { "pillar": "city_services",       "label": "311 Cases",                "dataset": "vw6y-z8j6", "date_col": "requested_datetime", "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "Police Incident Reports",  "dataset": "wg3w-h783", "date_col": "incident_datetime", "polarity": -1, "metric": "count" },
+        { "pillar": "development_economy",  "label": "Building Permits",         "dataset": "i98e-djp9", "date_col": "permit_creation_date", "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "miami", "name": "Miami (Miami-Dade County)", "scope": "county", "adapter": "arcgis", "host": "gis-mdc.opendata.arcgis.com",
+      "feeds": [
+        { "pillar": "city_services",       "label": "Miami-Dade 311",      "layer": "6fce6d69cdd8447389894138444aea2d", "date_col": "verify", "polarity": -1, "metric": "count", "note": "excludes City-of-Miami-proper requests; confirm current vintage" },
+        { "pillar": "development_economy",  "label": "MDC Building Permit", "layer": "31cd319f45544648b59f0418aea60091", "date_col": "verify", "polarity": 1, "metric": "count", "note": "rolling 3-yr window" },
+        { "pillar": "public_safety",        "label": "FBI CDE (fallback)",  "adapter": "fbi", "ori": "RESOLVE_AT_BUILD", "polarity": -1, "metric": "count", "note": "MDSO has a dashboard, no clean open dataset" }
+      ] }
+  ],
+  "context_layer": {
+    "adapter": "national_apis",
+    "sources": {
+      "census_acs": {
+        "api": "api.census.gov/data/{yr}/acs/acs5",
+        "geo": "place",
+        "vars": { "median_income": "B19013_001E", "median_rent": "B25064_001E", "median_home_value": "B25077_001E", "median_real_estate_taxes": "B25103_001E" },
+        "derived": { "effective_property_tax_rate": "B25103_001E / B25077_001E" }
+      },
+      "bls_laus":   { "api": "api.bls.gov/publicAPI/v2", "kpi": "unemployment_rate" },
+      "epa_airnow": { "api": "airnowapi.org", "kpi": "aqi" },
+      "fbi_cde":    { "api": "cde.ucr.cjis.gov", "ori_resolution": "agencies endpoint by state, cached" },
+      "hud":        { "api": "huduser.gov", "kpi": "fair_market_rent" }
+    }
+  }
+}

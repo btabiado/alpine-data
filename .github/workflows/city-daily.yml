@@ -1,0 +1,74 @@
+name: city-daily
+
+# Daily refresh for the City tab (City Pulse). fetch_city.py writes
+# data-city.json, which the V1 dashboard reads at deploy time. Municipal
+# open-data portals (Socrata: Chicago/NYC/LA/Seattle/SF; ArcGIS:
+# Miami-Dade County) publish on a daily-at-best cadence, so a daily cron
+# catches every refresh without hammering the sources. fetch_city.py has
+# a 24h freshness guard; we pass --force here so the scheduled run always
+# refreshes.
+#
+# SOCRATA_APP_TOKEN raises the Socrata rate limit (avoids HTTP 429) and is
+# required for full 6/6 Pulse coverage. The other city keys are OPTIONAL —
+# the adapters degrade gracefully (null pillars labeled "N of 3") when a
+# key is unset, so they are referenced here but need not exist yet.
+#
+# Runs at 07:00 UTC (offset from real-estate-daily's 06:00 so the two
+# data-refresh bots don't race the same commit). [skip ci] keeps the push
+# from retriggering pages.yml — its own hourly cron picks up the new
+# data-city.json on the next tick.
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Solo concurrency group — keep manual dispatch from overlapping a run.
+concurrency:
+  group: city-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        # The city adapters' only third-party import is `requests`
+        # (everything else is stdlib), so keep the install minimal.
+        run: pip install requests
+
+      - name: Fetch city data
+        # --force overrides the 24h freshness guard so the daily run always
+        # refreshes. Non-zero exit fails the workflow on purpose: a dead
+        # fetcher should be visible in the Actions UI, not silently swallowed.
+        env:
+          SOCRATA_APP_TOKEN: ${{ secrets.SOCRATA_APP_TOKEN }}
+          CENSUS_API_KEY: ${{ secrets.CENSUS_API_KEY }}
+          AIRNOW_API_KEY: ${{ secrets.AIRNOW_API_KEY }}
+          FBI_CDE_API_KEY: ${{ secrets.FBI_CDE_API_KEY }}
+          BLS_API_KEY: ${{ secrets.BLS_API_KEY }}
+        run: python fetch_city.py --force
+
+      - name: Commit data changes via signed API commit
+        # Mirrors real-estate-daily.yml: API-based commit so the bot commit
+        # is GitHub-signed (Verified). api-commit.sh retries on rebase conflict.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: city-bot
+          AUTHOR_EMAIL: city-bot@users.noreply.github.com
+        run: |
+          git add data-city.json
+          .github/scripts/api-commit.sh \
+            "city: daily refresh $(date -u +%Y-%m-%d) [skip ci]"

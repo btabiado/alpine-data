@@ -1,5 +1,6 @@
 # Python
 .venv/
+.venv-city/
 venv/
 __pycache__/
 *.py[cod]
@@ -32,6 +33,10 @@ data-*.json
 # scripts/build_us_state_paths.py from us-atlas. Consumed by the V1 Real Estate
 # tab's geographic heat map. Refreshed essentially never (boundaries don't move).
 !data-us_states.json
+# Carve-out: data-city.json IS committed — the City tab's sidecar, refreshed
+# daily by city-daily.yml (mirrors data/real_estate.json's committed-data model)
+# so the V1 build always has city data even on a cold CI checkout.
+!data-city.json
 # V2 builder output mirrors the production layout one level down.
 v2/dashboard.html
 v2/data-*.json

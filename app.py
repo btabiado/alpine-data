@@ -849,6 +849,23 @@ def main() -> int:
             print(f"  [mufon] could not copy {_mufon_src} -> root: {e}", file=sys.stderr)
     manifest["mufon"] = "data-mufon.json"
 
+    # City Pulse sidecar (data-city.json at repo root): produced by the City
+    # Pulse scorer (city/*.py) out-of-band. If the root file is missing, seed
+    # it from the validated mock fixture so the tab renders something locally;
+    # in production the scorer writes the real payload. Declared in the
+    # manifest unconditionally — same rationale as mufon/cpi/metals: the JS
+    # lazy-loader treats a missing file as an empty state, so this is safe and
+    # lets V1 pick up the data on first deploy. City is a V1-only tab.
+    _city_dst = ROOT / "data-city.json"
+    if not _city_dst.exists():
+        _city_src = ROOT / "data-city.sample.json"
+        if _city_src.exists():
+            try:
+                shutil.copyfile(_city_src, _city_dst)
+            except OSError as e:
+                print(f"  [city] could not seed {_city_dst} from sample: {e}", file=sys.stderr)
+    manifest["city"] = "data-city.json"
+
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
 
@@ -1588,6 +1605,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
   <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
   <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
+  <div class="tab" data-tab="city" role="tab" tabindex="0" aria-selected="false">City</div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -3431,6 +3449,61 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
     </div>
   </div><!-- /tab-mufon -->
+
+  <!-- ============ CITY PULSE TAB ============
+       Layer A "City Pulse": within-city operational momentum (0-100) across
+       3 pillars (Public Safety / Development & Economy / City Services).
+       Sidecar-loaded via SIDECAR_FOR_TAB.city from /data-city.json (seeded
+       from data-city.sample.json by the V1 build; real payload written by the
+       City Pulse scorer in city/*.py). renderCityTab() is a NO-OP until the
+       sidecar lands — the loading placeholder below covers that window.
+       NOT a cross-city ranking; caveats live in the methodology panel. -->
+  <div id="tab-city" class="hidden">
+    <div class="container"><!-- city -->
+
+    <!-- Loading state while data-city.json is in flight (mirrors metals). -->
+    <div id="cityLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading City Pulse…</div>
+
+    <div id="cityContent">
+      <!-- Intro / framing -->
+      <div class="chart-card" style="margin-bottom:14px">
+        <div class="head" style="align-items:flex-start">
+          <div>
+            <h2 style="margin:0;font-size:16px">City Pulse</h2>
+            <div class="desc">Each city scored against <strong>its own</strong> trailing-12-month history — 50 = on baseline, higher = trending better, lower = worse. Click a card for the per-pillar &amp; per-feed breakdown.</div>
+          </div>
+          <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+            <span class="tag" id="cityAsOf" style="white-space:nowrap">as of —</span>
+            <button class="btn btn--small" id="cityCompareToggle" type="button" aria-pressed="false">Compare cities</button>
+          </div>
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.5">
+          <strong>Not a cross-city ranking.</strong> Raw counts aren't comparable across cities (different systems, populations, definitions); a higher Pulse means a city is improving versus its own normal, not that it is a “better city.”
+        </div>
+      </div>
+
+      <!-- Card grid of cities (populated by renderCityCards) -->
+      <div id="cityGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:14px"></div>
+
+      <!-- Cross-city CONTEXT-LEVELS compare table (populated by renderCityCompare).
+           Swaps in for the card grid via the Compare toggle. Explicitly NOT a
+           Pulse leaderboard — see the in-panel caption. -->
+      <div id="cityCompare" class="hidden" style="margin-bottom:14px"></div>
+
+      <!-- Detail panel — pillars + per-feed tables for the selected city -->
+      <div id="cityDetail" style="margin-bottom:14px"></div>
+
+      <!-- Methodology + per-city disclosures (collapsible GATE) -->
+      <details id="cityMethodology" class="chart-card" style="margin-bottom:4px">
+        <summary style="cursor:pointer;font-weight:600;font-size:14px;list-style:none">
+          Methodology &amp; caveats <span style="color:var(--muted);font-weight:400;font-size:12px">— how Pulse is computed &amp; what it does not mean</span>
+        </summary>
+        <div id="cityMethodologyBody" style="margin-top:10px"></div>
+      </details>
+    </div>
+
+    </div>
+  </div><!-- /tab-city -->
 </div>
 
 <footer>
@@ -3527,7 +3600,7 @@ async function loadSidecar(name){
 const SIDECAR_FOR_TAB = {
   whale: 'whale', defi: 'defi',
   cpi: 'cpi', supplies: 'supplies', metals: 'metals',
-  travel: 'travel', mufon: 'mufon',
+  travel: 'travel', mufon: 'mufon', city: 'city',
 };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
@@ -11095,6 +11168,9 @@ function renderAll(){
   if (state.tab === 'mufon'){
     renderMufon();
   }
+  if (state.tab === 'city'){
+    renderCityTab();
+  }
   renderCoverage();
 }
 
@@ -11158,6 +11234,7 @@ function selectTab(t){
   document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
   document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
   document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
+  document.getElementById('tab-city').classList.toggle('hidden', t!=='city');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
@@ -14661,6 +14738,513 @@ function renderMufonShapes(){
     }
   });
 })();
+
+// ============================================================================
+// CITY PULSE TAB (Layer A — within-city operational momentum, 0-100)
+// ============================================================================
+// Sidecar-loaded via SIDECAR_FOR_TAB.city from /data-city.json. Renderer is a
+// NO-OP until the sidecar lands (DATA.city is undefined on first paint). Pulse
+// is each city vs ITS OWN trailing-12-mo baseline — never a cross-city
+// ranking. The score must not display without the caveats reachable, so the
+// methodology panel is rendered alongside the cards (see data-city.schema.json
+// + CITY_TAB_BUILD.md §2). Null-safe throughout: score / score_d / context /
+// per-feed math can all be null. All inline SVG/CSS — no chart deps.
+
+// Which city's detail panel is open. Defaults to the first city once data lands.
+let _citySelected = null;
+
+// Pillar display order + glyph styling. Glyphs mirror the contract enum
+// (up/flat/down -> ▲/▬/▼) and reuse the dashboard's green/amber/red palette.
+const CITY_PILLAR_ORDER = ['public_safety', 'development_economy', 'city_services'];
+const CITY_GLYPH = {
+  up:   { ch: '▲', color: 'var(--green)' },
+  flat: { ch: '▬', color: 'var(--amber)' },
+  down: { ch: '▼', color: 'var(--red)' },
+};
+
+// Pulse 0-100 -> colour along the same red→amber→green ramp the signal card
+// uses. 50 = on baseline (amber); higher favourable (green), lower (red).
+function cityScoreColor(score){
+  if (score == null || !isFinite(score)) return 'var(--muted)';
+  if (score >= 60) return 'var(--green)';
+  if (score >= 45) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+// Format a YoY percentage with sign; null -> em dash.
+function cityFmtPct(v){
+  if (v == null || !isFinite(v)) return '—';
+  return (v >= 0 ? '+' : '') + Number(v).toFixed(1) + '%';
+}
+// Format a signed number (z / d) to 2dp; null -> em dash.
+function cityFmtSigned(v){
+  if (v == null || !isFinite(v)) return '—';
+  return (v >= 0 ? '+' : '') + Number(v).toFixed(2);
+}
+// Format a plain count; null -> em dash.
+function cityFmtNum(v){
+  if (v == null || !isFinite(v)) return '—';
+  return Number(v).toLocaleString('en-US', {maximumFractionDigits: 0});
+}
+
+// Human-readable status copy for a feed that is NOT scored. note is preferred
+// for stale (carries e.g. "Source last updated 2023"); fall back to a generic
+// per-status string so the panel is never empty.
+function cityFeedStatusText(feed){
+  const note = feed && feed.note ? String(feed.note) : '';
+  switch (feed && feed.status){
+    case 'not_published':      return 'Not published by this city';
+    case 'stale':              return note || 'Source is stale — not contributing to current momentum';
+    case 'insufficient_history': return 'Building 12-mo baseline';
+    default:                   return note || '—';
+  }
+}
+
+// Short status chip for an extended (supplementary) feed — same vocabulary as
+// cityFeedStatusText but condensed for the inline table cell. insufficient_history
+// reads "Building 12-mo baseline" (e.g. Chicago's rolling towed-vehicles snapshot).
+function cityExtStatusText(feed){
+  switch (feed && feed.status){
+    case 'not_published':        return 'Not published';
+    case 'stale':                return 'Source stale';
+    case 'insufficient_history': return 'Building 12-mo baseline';
+    default:                     return '—';
+  }
+}
+
+// Layer-B context-level formatters for the strip + compare table. Null-safe
+// throughout (most context fields are null until keys land).
+function cityFmtMoney(v){                       // whole dollars, e.g. $1,234
+  if (v == null || !isFinite(v)) return '—';
+  return '$' + Number(v).toLocaleString('en-US', {maximumFractionDigits: 0});
+}
+function cityFmtPctPlain(v, dp){                 // unsigned %, e.g. 5.1%
+  if (v == null || !isFinite(v)) return '—';
+  return Number(v).toFixed(dp == null ? 1 : dp) + '%';
+}
+function cityFmtRate(v){                          // a 0..1 rate -> %, e.g. 1.23%
+  if (v == null || !isFinite(v)) return '—';
+  return (Number(v) * 100).toFixed(2) + '%';
+}
+function cityFmtScore0to100(v){                  // Context composite 0-100
+  if (v == null || !isFinite(v)) return '—';
+  return String(Math.round(Number(v)));
+}
+
+// Cross-city compare view: false = card grid (default), true = compare table.
+let _cityCompare = false;
+// Compare-table sort state. key matches a column id below; dir 1 = asc, -1 = desc.
+let _cityCompareSort = { key: 'context_score', dir: -1 };
+
+// Column spec for the cross-city compare table. accessor pulls a comparable
+// number (or null) out of a city's context object; fmt renders the cell.
+// `better` documents the favorable direction (display-only — the compare view
+// is explicitly NOT a ranking). polarity-style note shown in the header title.
+const CITY_COMPARE_COLS = [
+  { key: 'median_rent',                 label: 'Median rent',        better: 'lower',  acc: x => x.median_rent,                 fmt: cityFmtMoney },
+  { key: 'effective_property_tax_rate', label: 'Eff. property tax',  better: 'lower',  acc: x => x.effective_property_tax_rate, fmt: cityFmtRate },
+  { key: 'median_income',               label: 'Median income',      better: 'higher', acc: x => x.median_income,               fmt: cityFmtMoney },
+  { key: 'unemployment_rate',           label: 'Unemployment',       better: 'lower',  acc: x => x.unemployment_rate,           fmt: v => cityFmtPctPlain(v, 1) },
+  { key: 'aqi',                         label: 'AQI',                better: 'lower',  acc: x => x.aqi,                         fmt: v => (v == null || !isFinite(v)) ? '—' : String(Math.round(v)) },
+  { key: 'context_score',               label: 'Context composite',  better: 'higher', acc: x => x.context_score,               fmt: cityFmtScore0to100 },
+];
+
+// Entry point dispatched from renderAll() when state.tab === 'city'.
+function renderCityTab(){
+  const data = DATA.city || null;
+  const loading = document.getElementById('cityLoading');
+  const content = document.getElementById('cityContent');
+  // Loading window: sidecar in flight, nothing inlined yet (mirrors metals).
+  if (!data && state.tab === 'city' && SIDECAR_STATE.city === 'loading'){
+    if (loading) loading.classList.remove('hidden');
+    if (content) content.classList.add('hidden');
+    return;
+  }
+  if (loading) loading.classList.add('hidden');
+  if (content) content.classList.remove('hidden');
+
+  const asOfEl = document.getElementById('cityAsOf');
+  const cities = (data && Array.isArray(data.cities)) ? data.cities : [];
+
+  if (!data || !cities.length){
+    if (asOfEl) asOfEl.textContent = 'as of —';
+    const grid = document.getElementById('cityGrid');
+    if (grid) grid.innerHTML = '<div class="empty" style="padding:24px 12px;grid-column:1/-1">City Pulse data not yet loaded.</div>';
+    const detail = document.getElementById('cityDetail');
+    if (detail) detail.innerHTML = '';
+    renderCityMethodology(data);   // still render any disclosures we do have
+    return;
+  }
+
+  if (asOfEl){
+    const mock = data._mock ? ' · sample data' : '';
+    asOfEl.textContent = 'as of ' + escapeHtml(String(data.as_of || '—')) + mock;
+  }
+
+  // Default the open detail to the first city; keep prior selection if still present.
+  if (!_citySelected || !cities.some(c => c && c.id === _citySelected)){
+    _citySelected = cities[0] && cities[0].id;
+  }
+
+  // Toggle button: wires once (idempotent guard), reflects current mode.
+  const toggle = document.getElementById('cityCompareToggle');
+  if (toggle){
+    toggle.textContent = _cityCompare ? 'Back to cards' : 'Compare cities';
+    toggle.setAttribute('aria-pressed', _cityCompare ? 'true' : 'false');
+    toggle.classList.toggle('active', _cityCompare);
+    if (!toggle._cityWired){
+      toggle._cityWired = true;
+      toggle.addEventListener('click', () => { _cityCompare = !_cityCompare; renderCityTab(); });
+    }
+  }
+
+  // Mode swap: compare table replaces the card grid + per-city detail; the
+  // methodology panel stays mounted in both modes (caveats always reachable).
+  const gridEl    = document.getElementById('cityGrid');
+  const compareEl = document.getElementById('cityCompare');
+  const detailEl  = document.getElementById('cityDetail');
+  if (_cityCompare){
+    if (gridEl)    gridEl.classList.add('hidden');
+    if (detailEl)  detailEl.classList.add('hidden');
+    if (compareEl) compareEl.classList.remove('hidden');
+    renderCityCompare(cities);
+  } else {
+    if (compareEl) compareEl.classList.add('hidden');
+    if (gridEl)    gridEl.classList.remove('hidden');
+    if (detailEl)  detailEl.classList.remove('hidden');
+    renderCityCards(cities);
+    renderCityDetail(cities);
+  }
+  renderCityMethodology(data);
+}
+
+// --- Card grid: one card per city -----------------------------------------
+function renderCityCards(cities){
+  const grid = document.getElementById('cityGrid');
+  if (!grid) return;
+  grid.innerHTML = cities.map(c => {
+    const p = (c && c.pulse) || {};
+    const score = (typeof p.score === 'number') ? p.score : null;
+    const color = cityScoreColor(score);
+    const g = CITY_GLYPH[p.glyph] || CITY_GLYPH.flat;
+    const present = (p.pillars_present != null) ? p.pillars_present : 0;
+    const total   = (p.pillars_total != null) ? p.pillars_total : 3;
+    const isSel = (c.id === _citySelected);
+    // Gauge thumb position: Pulse is 0-100, so the thumb sits at score%.
+    const pct = (score == null) ? 50 : Math.max(0, Math.min(100, score));
+    // Context (Layer B) — null until keys land; degrade gracefully.
+    const ctx = c.context || null;
+    // Context COMPOSITE (0-100 cross-city level). Shown as a SECOND, clearly
+    // distinct number next to Pulse — NEVER summed/averaged/merged with it.
+    // Pulse = this city vs its own history; Context = cross-city level.
+    const cscore = (ctx && typeof ctx.context_score === 'number') ? ctx.context_score : null;
+    const cscoreTxt = (cscore == null) ? '—' : Math.round(cscore);
+    // Context strip (the raw levels) — null-safe; surfaces the same fields the
+    // compare table uses. median_home_value lives here but is out of composite.
+    let ctxStrip;
+    if (!ctx){
+      ctxStrip = '<div style="font-size:11px;color:var(--muted);margin-top:8px">Median rent — · Eff. property tax — <span style="opacity:.8">· Context levels pending keys</span></div>';
+    } else {
+      const rent = cityFmtMoney(ctx.median_rent);
+      const tax  = cityFmtRate(ctx.effective_property_tax_rate);
+      // Unemployment (BLS LAUS) is the one Context field populated without API
+      // keys, so surface it FIRST — otherwise the strip is all em-dashes until
+      // the Census/AirNow keys land.
+      const unemp = (typeof ctx.unemployment_rate === 'number') ? ctx.unemployment_rate.toFixed(1) + '%' : '—';
+      ctxStrip = '<div style="font-size:11px;color:var(--muted);margin-top:8px">Unemployment ' + escapeHtml(unemp) + ' · Median rent ' + escapeHtml(rent) + ' · Eff. property tax ' + escapeHtml(tax) + '</div>';
+    }
+    return ''
+      + '<div class="chart-card city-card" role="button" tabindex="0" data-cityid="' + escapeHtml(c.id) + '" '
+      +      'aria-pressed="' + (isSel ? 'true' : 'false') + '" '
+      +      'style="cursor:pointer;padding:12px;' + (isSel ? 'border-color:' + color + ';box-shadow:0 0 0 1px ' + color : '') + '">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">'
+      +     '<div style="min-width:0">'
+      +       '<div style="font-weight:600;font-size:13px;line-height:1.25">' + escapeHtml(c.name || c.id || '') + '</div>'
+      +       '<div style="font-size:11px;color:var(--muted)">' + escapeHtml(p.label || '') + '</div>'
+      +     '</div>'
+      +     '<div style="font-size:22px;line-height:1;color:' + g.color + '" title="' + escapeHtml(p.glyph || '') + '">' + g.ch + '</div>'
+      +   '</div>'
+      // Two clearly distinct, separately-labeled numbers on different axes.
+      // Left = Pulse (within-city momentum); right = Context (cross-city level).
+      +   '<div style="display:flex;align-items:flex-end;gap:14px;margin-top:8px">'
+      +     '<div style="min-width:0">'
+      +       '<div style="font-size:32px;font-weight:700;line-height:1;color:' + color + '">' + (score == null ? '—' : score) + '</div>'
+      +       '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Pulse · vs own history</div>'
+      +     '</div>'
+      +     '<div style="width:1px;align-self:stretch;background:var(--border)"></div>'
+      +     '<div style="min-width:0">'
+      +       '<div style="font-size:32px;font-weight:700;line-height:1;color:var(--text)">' + cscoreTxt + '</div>'
+      +       '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em">Context · cross-city</div>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div style="height:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:4px;position:relative;margin:7px 0 2px">'
+      +     '<div style="position:absolute;top:-3px;left:calc(' + pct.toFixed(1) + '% - 3px);width:6px;height:14px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px var(--panel)"></div>'
+      +   '</div>'
+      +   '<div style="font-size:11px;color:var(--muted)">' + present + ' of ' + total + ' pillars · Pulse gauge</div>'
+      +   ctxStrip
+      + '</div>';
+  }).join('');
+
+  // Click / keyboard select -> swap the detail panel.
+  grid.querySelectorAll('.city-card').forEach(el => {
+    const pick = () => {
+      _citySelected = el.dataset.cityid;
+      renderCityTab();
+      const detail = document.getElementById('cityDetail');
+      if (detail && detail.scrollIntoView){ try { detail.scrollIntoView({block:'nearest', behavior:'smooth'}); } catch(_){} }
+    };
+    el.addEventListener('click', pick);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pick(); } });
+  });
+}
+
+// --- Detail panel: pillars + per-feed breakdown for the selected city ------
+function renderCityDetail(cities){
+  const host = document.getElementById('cityDetail');
+  if (!host) return;
+  const c = cities.find(x => x && x.id === _citySelected) || cities[0];
+  if (!c){ host.innerHTML = ''; return; }
+  const p = c.pulse || {};
+  const score = (typeof p.score === 'number') ? p.score : null;
+  const color = cityScoreColor(score);
+  const g = CITY_GLYPH[p.glyph] || CITY_GLYPH.flat;
+  const present = (p.pillars_present != null) ? p.pillars_present : 0;
+  const total   = (p.pillars_total != null) ? p.pillars_total : 3;
+  const scopeNote = (c.scope === 'county') ? ' · county footprint' : '';
+
+  // Pillars, in canonical order, falling back to whatever order the payload has.
+  const pillars = Array.isArray(p.pillars) ? p.pillars.slice() : [];
+  pillars.sort((a, b) => {
+    const ia = CITY_PILLAR_ORDER.indexOf(a && a.key); const ib = CITY_PILLAR_ORDER.indexOf(b && b.key);
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  });
+
+  const pillarHtml = pillars.map(pl => {
+    const feeds = Array.isArray(pl.feeds) ? pl.feeds : [];
+    const rows = feeds.map(f => {
+      const scored = f && f.status === 'ok';
+      if (scored){
+        const cls = (f.d > 0) ? 'green' : (f.d < 0 ? 'red' : 'amber');
+        const polTxt = f.polarity === 1 ? 'up-favorable' : (f.polarity === -1 ? 'down-favorable' : 'context-only');
+        return ''
+          + '<tr>'
+          +   '<td>' + escapeHtml(f.label || '') + '<div style="font-size:10px;color:var(--muted)">' + escapeHtml(polTxt) + (f.recent_period ? ' · ' + escapeHtml(f.recent_period) : '') + '</div></td>'
+          +   '<td>' + cityFmtPct(f.yoy_pct) + '</td>'
+          +   '<td>' + cityFmtSigned(f.z) + '</td>'
+          +   '<td class="' + cls + '">' + cityFmtSigned(f.d) + '</td>'
+          + '</tr>'
+          + (f.note ? '<tr><td colspan="4" style="color:var(--muted);font-size:11px;padding-top:0;border-top:0">' + escapeHtml(f.note) + '</td></tr>' : '');
+      }
+      // Non-scored feeds: render the status explicitly, never an empty row.
+      return ''
+        + '<tr>'
+        +   '<td>' + escapeHtml(f.label || '') + '</td>'
+        +   '<td colspan="3" style="color:var(--muted);font-size:12px">' + escapeHtml(cityFeedStatusText(f)) + '</td>'
+        + '</tr>';
+    }).join('');
+
+    const sd = (typeof pl.score_d === 'number') ? pl.score_d : null;
+    const sdCls = sd == null ? '' : (sd > 0 ? 'green' : (sd < 0 ? 'red' : 'amber'));
+    return ''
+      + '<div style="margin-top:12px">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'
+      +     '<div style="font-weight:600;font-size:13px">' + escapeHtml(pl.name || pl.key || '') + '</div>'
+      +     '<div style="font-size:12px;color:var(--muted)">pillar Δ <strong class="' + sdCls + '">' + cityFmtSigned(sd) + '</strong></div>'
+      +   '</div>'
+      +   '<table style="margin-top:4px"><thead><tr><th>Feed</th><th>YoY %</th><th>z</th><th>Δ</th></tr></thead><tbody>' + rows + '</tbody></table>'
+      + '</div>';
+  }).join('');
+
+  // --- Extended / supplementary KPIs (P2) ---------------------------------
+  // DISPLAY-ONLY — never folded into the Pulse composite. Rendered generically
+  // off c.extended (same feed shape as pillar feeds). Hidden when absent/empty
+  // (e.g. LA, Miami carry no extended array). Handles every status state and
+  // polarity 0 (context-only, no Δ colour, no Δ cell value).
+  const extended = Array.isArray(c.extended) ? c.extended : [];
+  let extendedHtml = '';
+  if (extended.length){
+    const extRows = extended.map(f => {
+      const polTxt = f.polarity === 1 ? 'up-favorable' : (f.polarity === -1 ? 'down-favorable' : 'context-only');
+      const sub = escapeHtml(polTxt) + (f.recent_period ? ' · ' + escapeHtml(f.recent_period) : '');
+      if (f && f.status === 'ok'){
+        // polarity 0 = context-only: show z (magnitude) but no directional Δ.
+        const ctxOnly = (f.polarity === 0);
+        const dCls = ctxOnly ? '' : (f.d > 0 ? 'green' : (f.d < 0 ? 'red' : 'amber'));
+        const dCell = ctxOnly
+          ? '<td style="color:var(--muted)">— <span style="font-size:10px">context</span></td>'
+          : '<td class="' + dCls + '">' + cityFmtSigned(f.d) + '</td>';
+        return ''
+          + '<tr>'
+          +   '<td>' + escapeHtml(f.label || '') + '<div style="font-size:10px;color:var(--muted)">' + sub + '</div></td>'
+          +   '<td>' + cityFmtPct(f.yoy_pct) + '</td>'
+          +   '<td>' + cityFmtSigned(f.z) + '</td>'
+          +   dCell
+          + '</tr>';
+      }
+      // Non-scored extended feed: surface the status (insufficient_history ->
+      // "Building 12-mo baseline", e.g. Chicago towed-vehicles snapshot).
+      const statusTxt = cityExtStatusText(f);
+      // insufficient_history can still carry a recent volume — show it inline.
+      const volTxt = (f.recent != null && isFinite(f.recent)) ? (' · recent ' + cityFmtNum(f.recent) + (f.recent_period ? ' (' + escapeHtml(f.recent_period) + ')' : '')) : '';
+      return ''
+        + '<tr>'
+        +   '<td>' + escapeHtml(f.label || '') + '</td>'
+        +   '<td colspan="3" style="color:var(--muted);font-size:12px">' + escapeHtml(statusTxt) + volTxt + '</td>'
+        + '</tr>';
+    }).join('');
+    extendedHtml = ''
+      + '<div id="cityExtended" style="margin-top:16px;border-top:1px solid var(--border);padding-top:10px">'
+      +   '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">'
+      +     '<div style="font-weight:600;font-size:13px">More indicators</div>'
+      +     '<div style="font-size:11px;color:var(--muted)">supplementary — not in the Pulse score</div>'
+      +   '</div>'
+      +   '<div style="font-size:11px;color:var(--muted);margin:2px 0 4px;line-height:1.5">Extra per-city feeds beyond the 3-pillar backbone. Scored the same way (vs each city\'s own history) but <strong>display-only</strong> — they never move the Pulse composite.</div>'
+      +   '<table style="margin-top:4px"><thead><tr><th>Indicator</th><th>YoY %</th><th>z</th><th>Δ</th></tr></thead><tbody>' + extRows + '</tbody></table>'
+      + '</div>';
+  }
+
+  host.innerHTML = ''
+    + '<div class="chart-card">'
+    +   '<div class="head" style="align-items:flex-start">'
+    +     '<div>'
+    +       '<h2 style="margin:0;font-size:15px">' + escapeHtml(c.name || c.id || '') + '<span style="font-size:11px;color:var(--muted);font-weight:400"> ' + escapeHtml(c.scope || '') + scopeNote + '</span></h2>'
+    +       '<div class="desc">' + present + ' of ' + total + ' pillars present · composite C ' + cityFmtSigned(p.composite_c) + '</div>'
+    +     '</div>'
+    +     '<div style="text-align:right">'
+    +       '<div style="font-size:26px;font-weight:700;color:' + color + '">' + (score == null ? '—' : score) + ' <span style="font-size:18px">' + g.ch + '</span></div>'
+    +       '<div style="font-size:12px;color:var(--muted)">' + escapeHtml(p.label || '') + '</div>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 25%,#f59e0b 50%,#22c55e 75%,#16a34a 100%);border-radius:5px;position:relative;margin:8px 0">'
+    +     '<div style="position:absolute;top:-4px;left:calc(' + (score == null ? 50 : Math.max(0, Math.min(100, score))).toFixed(1) + '% - 4px);width:8px;height:18px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px var(--panel)"></div>'
+    +   '</div>'
+    +   pillarHtml
+    +   extendedHtml
+    +   ((Array.isArray(c.disclosures) && c.disclosures.length)
+        ? '<div style="margin-top:12px;font-size:11px;color:var(--muted);line-height:1.5"><strong>City notes:</strong><ul style="margin:4px 0 0;padding-left:18px">' + c.disclosures.map(d => '<li>' + escapeHtml(d) + '</li>').join('') + '</ul></div>'
+        : '')
+    + '</div>';
+}
+
+// --- Cross-city compare view (P2) ------------------------------------------
+// A TABLE of cross-city Context LEVELS (median rent, eff. property tax %, median
+// income, unemployment %, AQI) + the transparent Context composite. Columns are
+// sortable. This is the ONLY cross-city view in the tab and it is explicitly NOT
+// a quality-of-life ranking — and NEVER a Pulse leaderboard (Pulse is each city
+// vs its own history and is never compared across cities; that guardrail is the
+// spec's core principle). Every cell is null-safe ("—"). The header arrow lets
+// you sort; nulls always sort last regardless of direction.
+function renderCityCompare(cities){
+  const host = document.getElementById('cityCompare');
+  if (!host) return;
+
+  const sortKey = _cityCompareSort.key;
+  const sortDir = _cityCompareSort.dir;
+  const col = CITY_COMPARE_COLS.find(c => c.key === sortKey) || CITY_COMPARE_COLS[CITY_COMPARE_COLS.length - 1];
+
+  // Sort a copy. Missing values (null/NaN) sort to the bottom in both directions.
+  const rows = cities.slice().sort((a, b) => {
+    const ctxA = (a && a.context) || {}; const ctxB = (b && b.context) || {};
+    const va = col.acc(ctxA); const vb = col.acc(ctxB);
+    const na = (va == null || !isFinite(va)); const nb = (vb == null || !isFinite(vb));
+    if (na && nb) return 0;
+    if (na) return 1;          // a missing -> after b
+    if (nb) return -1;         // b missing -> after a
+    return (va - vb) * sortDir;
+  });
+
+  const headCells = CITY_COMPARE_COLS.map(c => {
+    const isSort = (c.key === sortKey);
+    const arrow = isSort ? (sortDir === 1 ? ' ▲' : ' ▼') : '';
+    const aria = isSort ? (sortDir === 1 ? 'ascending' : 'descending') : 'none';
+    return '<th role="columnheader" aria-sort="' + aria + '" data-citycol="' + escapeHtml(c.key) + '" '
+         +     'title="' + escapeHtml(c.better) + ' is more favorable; sort only — not a ranking" '
+         +     'style="cursor:pointer;white-space:nowrap;' + (isSort ? 'color:var(--text)' : '') + '">'
+         +   escapeHtml(c.label) + '<span style="font-size:10px;color:var(--muted)"> (' + escapeHtml(c.better) + ')</span>' + arrow
+         + '</th>';
+  }).join('');
+
+  const bodyRows = rows.map(c => {
+    const ctx = (c && c.context) || {};
+    const cells = CITY_COMPARE_COLS.map(col => {
+      const v = col.acc(ctx);
+      const isSortCol = (col.key === sortKey);
+      return '<td' + (isSortCol ? ' style="color:var(--text)"' : '') + '>' + escapeHtml(col.fmt(v)) + '</td>';
+    }).join('');
+    const scopeNote = (c && c.scope === 'county') ? '<span style="font-size:10px;color:var(--muted)"> · county</span>' : '';
+    return '<tr><td style="font-weight:600;white-space:nowrap">' + escapeHtml((c && (c.name || c.id)) || '') + scopeNote + '</td>' + cells + '</tr>';
+  }).join('');
+
+  host.innerHTML = ''
+    + '<div class="chart-card">'
+    +   '<div class="head" style="align-items:flex-start">'
+    +     '<div>'
+    +       '<h2 style="margin:0;font-size:15px">Cross-city context levels</h2>'
+    +       '<div class="desc">Levels of cost, taxes, income, jobs &amp; air across the 6 cities, plus the transparent Context composite. Click a column header to sort.</div>'
+    +     '</div>'
+    +   '</div>'
+    // The guardrail caption — the spec's core principle, made prominent.
+    +   '<div style="margin:8px 0 10px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);font-size:11px;color:var(--muted);line-height:1.5">'
+    +     '<strong style="color:var(--text)">Cross-city context levels — not a ranking of city quality.</strong> '
+    +     'City Pulse is each city vs its own history and is never compared across cities. '
+    +     'The Context composite is a transparent, editorial 0-100 construction (see Methodology), not a verdict on which city is “best.”'
+    +   '</div>'
+    +   '<div style="overflow-x:auto">'
+    +     '<table><thead><tr><th data-citycol="name" style="white-space:nowrap">City</th>' + headCells + '</tr></thead>'
+    +     '<tbody>' + bodyRows + '</tbody></table>'
+    +   '</div>'
+    + '</div>';
+
+  // Header click / keyboard -> set sort. Re-click a sorted column flips direction.
+  host.querySelectorAll('th[data-citycol]').forEach(th => {
+    const key = th.dataset.citycol;
+    if (key === 'name') return;   // city-name column is not a sortable metric
+    const apply = () => {
+      if (_cityCompareSort.key === key){ _cityCompareSort.dir = -_cityCompareSort.dir; }
+      else { _cityCompareSort.key = key; _cityCompareSort.dir = -1; }  // new col defaults desc
+      renderCityCompare(cities);
+    };
+    th.setAttribute('tabindex', '0');
+    th.addEventListener('click', apply);
+    th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); apply(); } });
+  });
+}
+
+// --- Methodology + disclosures panel (the GATE — caveats always reachable) --
+function renderCityMethodology(data){
+  const body = document.getElementById('cityMethodologyBody');
+  if (!body) return;
+  const md = (data && Array.isArray(data.methodology_disclosures)) ? data.methodology_disclosures : [];
+  const cities = (data && Array.isArray(data.cities)) ? data.cities : [];
+
+  let html = ''
+    + '<div style="font-size:12px;color:var(--muted);line-height:1.55">'
+    +   '<p style="margin:0 0 8px">Pulse = round(50 + (C / 3) × 50), clipped to [0, 100], where C is the weighted mean of present pillars’ directional scores. Each feed: z = clip((Recent − μ) / σ, −3, +3) over a trailing-12-month baseline; directional contribution Δ = polarity × z. Missing pillars are dropped (“N of 3”), never treated as zero.</p>'
+    + '</div>';
+
+  if (md.length){
+    html += '<ul style="margin:8px 0 0;padding-left:18px;font-size:12px;color:var(--muted);line-height:1.55">'
+          + md.map(s => '<li style="margin-bottom:6px">' + escapeHtml(s) + '</li>').join('')
+          + '</ul>';
+  }
+
+  // Per-city disclosures, grouped, so every city's caveats are reachable here too.
+  const perCity = cities.filter(c => c && Array.isArray(c.disclosures) && c.disclosures.length);
+  if (perCity.length){
+    html += '<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">'
+          + '<div style="font-weight:600;font-size:12px;margin-bottom:6px">Per-city disclosures</div>'
+          + perCity.map(c => ''
+              + '<div style="margin-bottom:8px">'
+              +   '<div style="font-size:12px;font-weight:600">' + escapeHtml(c.name || c.id || '') + '</div>'
+              +   '<ul style="margin:2px 0 0;padding-left:18px;font-size:11px;color:var(--muted);line-height:1.5">'
+              +     c.disclosures.map(d => '<li>' + escapeHtml(d) + '</li>').join('')
+              +   '</ul>'
+              + '</div>').join('')
+          + '</div>';
+  }
+
+  body.innerHTML = html;
+}
 
 // ============================================================================
 // CPI / SUPPLIES / METALS TABS (ported from V2 — V1 visual style)

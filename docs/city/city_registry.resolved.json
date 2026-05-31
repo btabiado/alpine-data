@@ -1,0 +1,123 @@
+{
+  "_meta": {
+    "name": "city_registry",
+    "version": "1.0-resolved",
+    "resolved_at": "2026-05-31",
+    "resolved_by": "Phase-0 recon (live curl probes). See RECON.md for evidence.",
+    "description": "Resolved City tab registry. Every date_col_verify / 'verify' / RESOLVE_AT_BUILD replaced with confirmed live values; ArcGIS FeatureServer URLs + date fields added; FBI ORI filled; LA current-year-311 resolution + crime union seam documented; Census place/county FIPS added to context_layer.",
+    "source_of_truth": "CITY_TAB_BUILD.md (methodology section 2; field notes sections 3-4)",
+    "conventions": {
+      "polarity": "+1 up-is-favorable, -1 down-is-favorable, 0 context-only",
+      "date_col": "all confirmed live 2026-05-31 unless date_col_status says otherwise",
+      "date_col_status": "confirmed | corrected | text_not_date | stale_source",
+      "baseline_dataset": "union with primary dataset to assemble the trailing-12-month baseline",
+      "dataset_rotates_yearly": "resolve the current-year dataset by convention (or union recent years)"
+    },
+    "as_of_complete_month": "2026-04",
+    "notes_global": [
+      "Socrata app token (SOCRATA_APP_TOKEN) is portal-agnostic: one free token works across all 5 hosts; pass as $$app_token query or X-App-Token header. Keyless = 429s + timeouts on large tables.",
+      "Align every Recent to the last COMPLETE month per feed; Chicago crime excludes ~last 7 days (May partial).",
+      "Filter IS NOT NULL on issued/created date before bucketing (Seattle permits + ArcGIS permits have large null buckets)."
+    ]
+  },
+  "pulse": {
+    "baseline_months": 12,
+    "comparison": "year_over_year",
+    "z_clip": 3,
+    "pillar_weights": { "public_safety": 1, "development_economy": 1, "city_services": 1 },
+    "map": "50 + (C/3)*50"
+  },
+  "cities": [
+    { "id": "chicago", "name": "Chicago", "scope": "city", "adapter": "socrata", "host": "data.cityofchicago.org",
+      "feeds": [
+        { "pillar": "city_services",       "label": "311 Service Requests", "dataset": "v6vf-nfxy", "date_col": "created_date", "date_col_status": "confirmed", "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "Crimes 2001-present",  "dataset": "ijzp-q8t2", "date_col": "date", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "excludes last ~7 days; latest complete month lags to prior month" },
+        { "pillar": "development_economy",  "label": "Building Permits",     "dataset": "ydr8-5enu", "date_col": "issue_date", "date_col_status": "confirmed", "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "nyc", "name": "New York City", "scope": "city", "adapter": "socrata", "host": "data.cityofnewyork.us",
+      "feeds": [
+        { "pillar": "city_services",       "label": "311 (2010-present)", "dataset": "erm2-nwe9", "date_col": "created_date", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "~38M rows; REQUIRES app token + recent $where filter or it times out" },
+        { "pillar": "public_safety",        "label": "NYPD Complaints",    "dataset": "5uac-w243", "baseline_dataset": "qgea-i56i", "date_col": "cmplnt_fr_dt", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "YTD file lags ~1 month; baseline qgea-i56i same col" },
+        { "pillar": "development_economy",  "label": "DOB Permit Issuance","dataset": "ipu4-2q9a", "date_col": "issuance_date", "date_col_status": "text_not_date", "date_col_type": "text", "date_text_format": "MM/DD/YYYY", "date_alt_real": "dobrundate", "polarity": 1, "metric": "count", "note": "issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy)." }
+      ] },
+    { "id": "la", "name": "Los Angeles", "scope": "city", "adapter": "socrata", "host": "data.lacity.org",
+      "feeds": [
+        { "pillar": "city_services",       "label": "MyLA311 Cases",     "dataset": "2cy6-i7zn", "baseline_dataset": "73a2-6ar5", "dataset_rotates_yearly": true, "date_col": "createddate", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
+          "note": "RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs." },
+        { "pillar": "public_safety",        "label": "LAPD NIBRS Offenses","dataset": "k7nn-b2ep", "baseline_dataset": "y8y3-fqfu", "date_col": "date_occ", "date_col_status": "confirmed", "polarity": -1, "metric": "count",
+          "note": "UNION SEAM CONFIRMED: baseline y8y3-fqfu complete through 2025-12; live k7nn-b2ep dense from 2026-01. Both keyed on date_occ. Clip baseline to trailing window - both tables hold a few dirty pre-2010 dates from data-entry errors; ignore raw MIN(date_occ). Legacy 2nrs-mtv8 frozen - never poll." },
+        { "pillar": "development_economy",  "label": "B&S Permits 2020+",  "dataset": "pi9x-tg5x", "date_col": "issue_date", "date_col_status": "confirmed", "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "seattle", "name": "Seattle", "scope": "city", "adapter": "socrata", "host": "data.seattle.gov",
+      "feeds": [
+        { "pillar": "city_services",       "label": "Customer Service Requests", "dataset": "5ngg-rpne", "date_col": "createddate", "date_col_status": "corrected", "date_col_was": "created_date", "polarity": -1, "metric": "count", "note": "CORRECTED: column is 'createddate' (one word), not 'created_date'." },
+        { "pillar": "public_safety",        "label": "SPD Crime 2008+",           "dataset": "tazs-3rd5", "date_col": "report_date_time", "date_col_status": "corrected", "date_col_was": "report_datetime", "date_col_alt": "offense_date", "polarity": -1, "metric": "count", "note": "CORRECTED: column is 'report_date_time' (underscores), not 'report_datetime'. 2019 RMS change = continuity breakpoint." },
+        { "pillar": "development_economy",  "label": "Building Permits",          "dataset": "76t5-zqzr", "date_col": "issueddate", "date_col_status": "confirmed", "polarity": 1, "metric": "count", "note": "Confirmed via columns metadata (a $limit=1 row had it null). MUST filter issueddate IS NOT NULL - large null bucket = un-issued applications." }
+      ] },
+    { "id": "sf", "name": "San Francisco", "scope": "city", "adapter": "socrata", "host": "data.sfgov.org",
+      "feeds": [
+        { "pillar": "city_services",       "label": "311 Cases",                "dataset": "vw6y-z8j6", "date_col": "requested_datetime", "date_col_status": "confirmed", "polarity": -1, "metric": "count" },
+        { "pillar": "public_safety",        "label": "Police Incident Reports",  "dataset": "wg3w-h783", "date_col": "incident_datetime", "date_col_status": "confirmed", "polarity": -1, "metric": "count", "note": "2018 portal/system migration = continuity breakpoint" },
+        { "pillar": "development_economy",  "label": "Building Permits",         "dataset": "i98e-djp9", "date_col": "permit_creation_date", "date_col_status": "confirmed", "polarity": 1, "metric": "count" }
+      ] },
+    { "id": "miami", "name": "Miami (Miami-Dade County)", "scope": "county", "adapter": "arcgis", "host": "gis-mdc.opendata.arcgis.com",
+      "feeds": [
+        { "pillar": "city_services",       "label": "Miami-Dade 311",
+          "hub_item": "6fce6d69cdd8447389894138444aea2d",
+          "feature_server": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/data_311_2023/FeatureServer",
+          "endpoint": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/data_311_2023/FeatureServer/0",
+          "arcgis_entity": "table", "entity_id": 0,
+          "date_col": "ticket_created_date_time", "date_col_status": "stale_source", "date_col_type": "esriFieldTypeDate",
+          "month_bucket_field": "created_year_month", "object_id_field": "ObjectId",
+          "polarity": -1, "metric": "count",
+          "note": "STALE: this is the 2023 yearly snapshot (ticket_created_date_time range 2023-01-01 -> 2024-01-01). County 311 is published only as frozen per-year snapshots ('311 Service Requests - Miami-Dade County - {year}'); latest = 2023. NO current County 311 feed exists (alternates b74b1dd0=2018 max, a6b9c3e3=OBJECTID-only, 7cc10915=City-of-Miami footprint max 2024-08). opendata.miamidade.gov is the same ArcGIS Hub org (no Socrata BETA found). Resolve latest snapshot by catalog title pattern; use created_year_month (int yyyymm) for bucketing. Expect Miami Services = stale in P0; Miami likely ships 2-of-3 pillars." },
+        { "pillar": "development_economy",  "label": "MDC Building Permit",
+          "hub_item": "31cd319f45544648b59f0418aea60091",
+          "feature_server": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer",
+          "endpoint": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0",
+          "arcgis_entity": "layer", "entity_id": 0,
+          "date_col": "ISSUDATE", "date_col_status": "confirmed", "date_col_type": "esriFieldTypeDate",
+          "object_id_field": "OBJECTID", "max_record_count": 2000, "supports_statistics": true,
+          "polarity": 1, "metric": "count",
+          "note": "LIVE: ISSUDATE range 1982-09-22 -> 2026-05-21 (current). Plenty for 12-mo baseline + YoY. No date_trunc in ArcGIS: bucket via monthly date-range loop (where=ISSUDATE >= timestamp 'YYYY-MM-01' AND < next-month, returnCountOnly=true) or paginate (resultOffset, maxRecordCount 2000) + bucket client-side. Filter ISSUDATE IS NOT NULL." },
+        { "pillar": "public_safety",        "label": "FBI CDE (fallback)",  "adapter": "fbi",
+          "ori": "FL0130000", "ori_status": "resolved", "agency_name": "Miami-Dade County Police Department", "agency_type": "County",
+          "agencies_endpoint": "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL",
+          "data_endpoint_base": "https://cde.ucr.cjis.gov/LATEST",
+          "nibrs_start_date": "2022-01-01", "is_nibrs": true,
+          "polarity": -1, "metric": "count",
+          "note": "ORI FL0130000 resolved keyless from agencies endpoint. Spec's 'MDSO' = this county PD entry (county PD->Sheriff transition not yet renamed in CDE). City-of-Miami-proper PD = FL0130600 if scope flips. DATA series requires free api.data.gov key (FBI_CDE_API_KEY) as ?API_KEY=...; agencies list is keyless. NIBRS from 2022-01 -> 12-mo baseline+YoY feasible once keyed. P0: Safety = not_published/pending until key set." }
+      ] }
+  ],
+  "context_layer": {
+    "adapter": "national_apis",
+    "acs_vintage": 2024,
+    "acs_vintage_status": "confirmed available 2026-05-31 (api.census.gov/data/2024/acs/acs5 c_isAvailable:true); 2023 viable fallback",
+    "key_required_note": "Census now REQUIRES a key for DATA queries (keyless returns 'Missing Key' HTML). Metadata (variables.json) stays keyless.",
+    "miami_geography_decision": "Use Miami-Dade COUNTY (state 12, county 086, GEOID 12086) for Context to match the Pulse footprint (ArcGIS County feeds + FBI ORI FL0130000). City-of-Miami place 1245000 covers only the urban core. MISMATCH: every other city's Context is a place; Miami's is a county. ACS supports county geography for all B-table vars.",
+    "sources": {
+      "census_acs": {
+        "api": "api.census.gov/data/{yr}/acs/acs5",
+        "vintage": 2024,
+        "env_var": "CENSUS_API_KEY",
+        "key_required": true,
+        "vars": { "median_income": "B19013_001E", "median_rent": "B25064_001E", "median_home_value": "B25077_001E", "median_real_estate_taxes": "B25103_001E" },
+        "derived": { "effective_property_tax_rate": "B25103_001E / B25077_001E" },
+        "geo_by_city": {
+          "chicago":  { "geo": "place",  "state": "17", "place": "14000", "geoid": "1714000", "census_name": "Chicago city" },
+          "nyc":      { "geo": "place",  "state": "36", "place": "51000", "geoid": "3651000", "census_name": "New York city" },
+          "la":       { "geo": "place",  "state": "06", "place": "44000", "geoid": "0644000", "census_name": "Los Angeles city" },
+          "seattle":  { "geo": "place",  "state": "53", "place": "63000", "geoid": "5363000", "census_name": "Seattle city" },
+          "sf":       { "geo": "place",  "state": "06", "place": "67000", "geoid": "0667000", "census_name": "San Francisco city" },
+          "miami":    { "geo": "county", "state": "12", "county": "086",  "geoid": "12086",   "census_name": "Miami-Dade County",
+                        "alt_place": { "state": "12", "place": "45000", "geoid": "1245000", "census_name": "Miami city" },
+                        "note": "RECOMMENDED county 12086 to match ops footprint; alt_place is city-of-Miami core if scope flips." }
+        }
+      },
+      "bls_laus":   { "api": "api.bls.gov/publicAPI/v2", "kpi": "unemployment_rate", "env_var": "BLS_API_KEY", "key_required": false, "key_note": "free key raises daily limits" },
+      "epa_airnow": { "api": "airnowapi.org", "kpi": "aqi", "env_var": "AIRNOW_API_KEY", "key_required": true },
+      "fbi_cde":    { "api": "cde.ucr.cjis.gov", "env_var": "FBI_CDE_API_KEY", "key_required": true, "key_note": "free via api.data.gov; needed for data series, not for ORI list", "ori_resolution": "GET https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/{ST} (keyless), match by county/name, cache" },
+      "hud":        { "api": "huduser.gov", "kpi": "fair_market_rent", "env_var": "HUD_API_KEY", "key_required": true }
+    }
+  }
+}
