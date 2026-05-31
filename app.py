@@ -15034,25 +15034,38 @@ function citySparkline(feed){
   else if (ok(feed.d) && feed.d < 0) color = 'var(--red)';
   else color = 'var(--amber)';
 
-  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:64px;display:block">';
-  // (a) ±1σ band
+  // Decorative chart (aria-hidden): every value is also in an adjacent cell.
+  // preserveAspectRatio="none" stretches the 300x64 viewBox to fill the panel
+  // width, so anything that must stay round/uniform uses non-scaling tricks:
+  // the polyline gets vector-effect="non-scaling-stroke" for a crisp 1.5px
+  // stroke at any width, and the end marker is a short vertical tick (which
+  // reads cleanly under non-uniform x-scaling) rather than a circle (which
+  // would render as a horizontal ellipse on wide panels).
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" aria-hidden="true" style="width:100%;height:64px;display:block">';
+  // (a) ±1σ band — var(--panel2) at a perceptible opacity so the "baseline
+  // ±1σ" caption is actually visible on the dark panel, without competing
+  // with the data line.
   if (hasBand){
     const yTop = yFor(mean + std);
     const yBot = yFor(mean - std);
-    svg += '<rect x="0" y="' + yTop.toFixed(1) + '" width="' + W + '" height="' + Math.max(0, yBot - yTop).toFixed(1) + '" fill="var(--border)" opacity="0.6"/>';
+    svg += '<rect x="0" y="' + yTop.toFixed(1) + '" width="' + W + '" height="' + Math.max(0, yBot - yTop).toFixed(1) + '" fill="var(--panel2)" opacity="0.9"/>';
   }
   // (b) dotted baseline-mean line
   if (mean != null){
     const ym = yFor(mean).toFixed(1);
-    svg += '<line x1="0" y1="' + ym + '" x2="' + W + '" y2="' + ym + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,2"/>';
+    svg += '<line x1="0" y1="' + ym + '" x2="' + W + '" y2="' + ym + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,2" vector-effect="non-scaling-stroke"/>';
   }
-  // (c) data polyline
+  // (c) data polyline — non-scaling stroke keeps it crisp at any panel width.
   const poly = pts.map((p, i) => xFor(i).toFixed(1) + ',' + yFor(p.n).toFixed(1)).join(' ');
-  svg += '<polyline points="' + poly + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
-  // (d) filled dot on the last point
+  svg += '<polyline points="' + poly + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
+  // (d) end marker on the last point: a short vertical tick. Unlike a circle,
+  // it does not distort into an ellipse under preserveAspectRatio="none", and
+  // non-scaling-stroke keeps its thickness constant across viewports.
   const lx = xFor(pts.length - 1).toFixed(1);
-  const ly = yFor(pts[pts.length - 1].n).toFixed(1);
-  svg += '<circle cx="' + lx + '" cy="' + ly + '" r="2.5" fill="' + color + '"/>';
+  const ly = yFor(pts[pts.length - 1].n);
+  const tickTop = Math.max(padT, ly - 3).toFixed(1);
+  const tickBot = Math.min(H - padB, ly + 3).toFixed(1);
+  svg += '<line x1="' + lx + '" y1="' + tickTop + '" x2="' + lx + '" y2="' + tickBot + '" stroke="' + color + '" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>';
   svg += '</svg>';
 
   const cap = pts.length + '-mo trend' + (hasBand ? ' · baseline ±1σ' : '');
@@ -15100,11 +15113,16 @@ function renderCityDetail(cities){
           + (sparkHtml ? '<tr><td colspan="4" style="padding-top:0;border-top:0">' + sparkHtml + '</td></tr>' : '');
       }
       // Non-scored feeds: render the status explicitly, never an empty row.
+      // Still show the 36-mo trend when the feed carries a usable series
+      // (e.g. stale/insufficient_history feeds that have history);
+      // not_published feeds have series:null -> citySparkline returns '' -> no row.
+      const sparkHtml = citySparkline(f);
       return ''
         + '<tr>'
         +   '<td>' + escapeHtml(f.label || '') + '</td>'
         +   '<td colspan="3" style="color:var(--muted);font-size:12px">' + escapeHtml(cityFeedStatusText(f)) + '</td>'
-        + '</tr>';
+        + '</tr>'
+        + (sparkHtml ? '<tr><td colspan="4" style="padding-top:0;border-top:0">' + sparkHtml + '</td></tr>' : '');
     }).join('');
 
     const sd = (typeof pl.score_d === 'number') ? pl.score_d : null;
@@ -15152,11 +15170,16 @@ function renderCityDetail(cities){
       const statusTxt = cityExtStatusText(f);
       // insufficient_history can still carry a recent volume — show it inline.
       const volTxt = (f.recent != null && isFinite(f.recent)) ? (' · recent ' + cityFmtNum(f.recent) + (f.recent_period ? ' (' + escapeHtml(f.recent_period) + ')' : '')) : '';
+      // Show the trend too when a usable series exists (e.g. insufficient_history
+      // feeds with a short series like Chicago "Towed Vehicles" 2-pt);
+      // not_published feeds have series:null -> citySparkline returns '' -> no row.
+      const sparkHtml = citySparkline(f);
       return ''
         + '<tr>'
         +   '<td>' + escapeHtml(f.label || '') + '</td>'
         +   '<td colspan="3" style="color:var(--muted);font-size:12px">' + escapeHtml(statusTxt) + volTxt + '</td>'
-        + '</tr>';
+        + '</tr>'
+        + (sparkHtml ? '<tr><td colspan="4" style="padding-top:0;border-top:0">' + sparkHtml + '</td></tr>' : '');
     }).join('');
     extendedHtml = ''
       + '<div id="cityExtended" style="margin-top:16px;border-top:1px solid var(--border);padding-top:10px">'

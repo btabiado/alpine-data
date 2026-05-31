@@ -313,7 +313,7 @@ def main(argv=None) -> int:
         generated_at=_now_iso(),
     )
 
-    out_path.write_text(json.dumps(payload, indent=2))
+    out_path.write_text(json.dumps(payload, indent=2, allow_nan=False))
     scored = sum(1 for c in cities if (c.get("pulse") or {}).get("score") is not None)
     print("[fetch-city] wrote {} ({} cities, {} with a Pulse score, as_of={})".format(
         out_path, len(cities), scored, as_of))

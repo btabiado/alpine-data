@@ -548,6 +548,42 @@ def test_payload_explicit_generated_at_preserved():
 
 
 # ===========================================================================
+# 13b. JSON serialization guard -- the build emits valid JSON (no NaN/Inf)
+# ===========================================================================
+def test_payload_serializes_with_allow_nan_false():
+    """fetch_city writes the artifact with json.dumps(..., allow_nan=False) so a
+    stray NaN/Infinity fails the build LOUDLY instead of shipping non-JSON that
+    JSON.parse would reject. A real, fully-scored payload must serialize cleanly
+    under that strict mode (i.e. it contains no NaN/Infinity)."""
+    payload = pulse.score_payload(
+        [_build_full_city()], as_of=AS_OF,
+        methodology_disclosures=["Not a cross-city ranking."])
+    # Must NOT raise -- mirrors the fetch_city.py write path exactly.
+    json.dumps(payload, indent=2, allow_nan=False)
+
+
+def test_injected_nan_raises_under_allow_nan_false():
+    """Prove the guard bites: a deliberately-injected NaN in a series point
+    raises ValueError under allow_nan=False (and would silently emit the
+    literal `NaN` token under the permissive default)."""
+    payload = pulse.score_payload(
+        [_build_full_city()], as_of=AS_OF, methodology_disclosures=[])
+    # Find a real series point and poison its count with NaN.
+    poisoned = False
+    for pillar in payload["cities"][0]["pulse"]["pillars"]:
+        for feed in pillar["feeds"]:
+            if feed.get("series"):
+                feed["series"][0]["n"] = float("nan")
+                poisoned = True
+                break
+        if poisoned:
+            break
+    assert poisoned, "fixture should contain at least one feed with a series"
+    with pytest.raises(ValueError):
+        json.dumps(payload, allow_nan=False)
+
+
+# ===========================================================================
 # 14. schema conformance (jsonschema if available; structural fallback)
 # ===========================================================================
 def _build_full_city():

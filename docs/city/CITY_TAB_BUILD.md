@@ -141,6 +141,7 @@ GET https://{host}/datasets/{layer}_0.geojson  (or the FeatureServer /query endp
 
 **P0 — ships v1**
 - [ ] Implement Socrata adapter + City Pulse calculator (§2 math, §5 config).
+  - The build serializes `data-city.json` with `json.dumps(..., allow_nan=False)` — it fails fast (raises `ValueError`) rather than emit non-JSON `NaN`/`Infinity` tokens that `JSON.parse` would reject.
 - [ ] Wire the 5 Socrata cities, full 3-pillar Pulse on each card + click-through to feed trends.
 - [ ] LA period-split logic: current-year 311 resolution; crime baseline `k7nn-b2ep` ∪ `y8y3-fqfu`.
 - [ ] ArcGIS adapter + Miami (311 + permits); Miami scores 2-of-3 until FBI crime lands.
