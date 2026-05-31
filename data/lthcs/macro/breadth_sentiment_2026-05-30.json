@@ -9,7 +9,7 @@
     "week_ending": "2026-05-27"
   },
   "as_of": "2026-05-30",
-  "composite_regime": "neutral",
+  "composite_regime": "complacent",
   "data_quality": {
     "failed_sources": [],
     "sources_failed": 0,
@@ -23,11 +23,11 @@
     "week_ending": "2026-05-27"
   },
   "put_call": {
-    "last_updated": "2026-05-28",
-    "latest": 0.74,
+    "last_updated": "2026-05-29",
+    "latest": 0.64,
     "mean_30d": null,
     "percentile_1y": null,
-    "regime": "normal",
+    "regime": "complacent",
     "source": "cboe_daily_html"
   }
 }

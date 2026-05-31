@@ -55,7 +55,7 @@
       "shape": "header: ticker, calc_date, lthcs_score, band, confidence_level, adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des, dropped_pillars, data_quality_flags, drift_1d, drift_7d, drift_30d, drift_90d, sector, maturity_stage"
     }
   ],
-  "generated_at": "2026-05-30T00:57:57Z",
+  "generated_at": "2026-05-31T00:44:35Z",
   "latest_snapshot_date": "2026-05-30",
   "license": "Read-only public mirror. Data is for informational use only \u2014 not investment advice.",
   "pillars": [
