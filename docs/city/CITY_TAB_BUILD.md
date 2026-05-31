@@ -44,6 +44,13 @@ Landing = a grid of **city cards**, each showing a **City Pulse** score (0–100
 - Data-continuity breaks cause artificial jumps (SPD's 2019 RMS change; LA's yearly dataset rotation; SF portal migration) — flag known breakpoints.
 - Reporting lag — Chicago Crimes excludes the last 7 days; align "Recent" to complete periods.
 
+**Per-feed trend series (methodology 1.1, additive).** As of `methodology_version: "1.1"`, each scored feed object additionally carries a `"series"` field for frontend sparklines. This is purely **additive** — no existing field changes, and the 1.0 scoring math is untouched.
+- `series` is an **ascending** list of `{"month": "YYYY-MM", "n": <number>}` points.
+- It holds the **last 36 months** of the feed's monthly series that are present in the data, none later than the feed's `recent_period` / `complete_through` (incomplete trailing months are dropped, same as `Recent`).
+- It is attached whenever the parsed series has **≥ 2 points, regardless of feed status** (`ok` / `insufficient_history` / `stale`) — trends are useful even when the feed can't be scored. With < 2 points, `series` is `null` (or omitted).
+- For an `ok` feed, the last `series` point's `month` equals `recent_period`.
+- The fetch window was widened accordingly: `fetch_city.py --baseline-months-back` defaults to **37** (36 trend months + a boundary month), up from 26.
+
 ---
 
 ## 3. Layer A registry — operational feeds (RESOLVED)

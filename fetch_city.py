@@ -250,8 +250,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Build data-city.json (City Pulse).")
     ap.add_argument("--out", default=str(DEFAULT_OUT), help="output JSON path")
     ap.add_argument("--as-of", default=None, help="most recent complete month YYYY-MM")
-    ap.add_argument("--baseline-months-back", type=int, default=26,
-                    help="how many months of history to request")
+    ap.add_argument("--baseline-months-back", type=int, default=37,
+                    help="how many months of history to request "
+                         "(37 = 36 months of trend series + a boundary month)")
     ap.add_argument("--force", action="store_true",
                     help="ignore the 24h freshness guard")
     args = ap.parse_args(argv)

@@ -14998,6 +14998,68 @@ function renderCityCards(cities){
   });
 }
 
+// --- Per-feed 36-month trend sparkline (hand-rolled inline SVG) ------------
+// Draws, back to front: a faint ±1σ baseline band, a dotted baseline-mean
+// line, the data polyline, and a filled dot on the last point. Y-scale spans
+// BOTH the series and the baseline band so the band is always in frame.
+// Polarity-aware colour mirrors renderCityDetail's Δ-column logic. Returns ''
+// when there is nothing meaningful to draw. Null-safe to the data contract.
+function citySparkline(feed){
+  if (!feed || !Array.isArray(feed.series) || feed.series.length < 2) return '';
+  const ok = x => typeof x === 'number' && isFinite(x);
+  const pts = feed.series.filter(p => p && ok(p.n));
+  if (pts.length < 2) return '';
+
+  const W = 300, H = 64, padX = 4, padT = 4, padB = 4;
+  const vals = pts.map(p => p.n);
+  const mean = ok(feed.baseline_mean) ? feed.baseline_mean : null;
+  const std  = ok(feed.baseline_std)  ? feed.baseline_std  : null;
+  const hasBand = (mean != null && std != null);
+
+  // Y-scale spans the series AND the baseline band (mean ± std) when present.
+  let lo = Math.min.apply(null, vals);
+  let hi = Math.max.apply(null, vals);
+  if (mean != null){ lo = Math.min(lo, mean); hi = Math.max(hi, mean); }
+  if (hasBand){ lo = Math.min(lo, mean - std); hi = Math.max(hi, mean + std); }
+  const range = (hi - lo) || 1;
+  const yFor = v => padT + (H - padT - padB) * (1 - (v - lo) / range);
+  const step = (pts.length > 1) ? (W - padX * 2) / (pts.length - 1) : 0;
+  const xFor = i => padX + i * step;
+
+  // Polarity-aware colour: context-only (0) is muted; otherwise improving
+  // (d>0) green, worsening (d<0) red, flat/unknown amber. Mirrors the Δ cell.
+  let color;
+  if (feed.polarity === 0) color = 'var(--muted)';
+  else if (ok(feed.d) && feed.d > 0) color = 'var(--green)';
+  else if (ok(feed.d) && feed.d < 0) color = 'var(--red)';
+  else color = 'var(--amber)';
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:64px;display:block">';
+  // (a) ±1σ band
+  if (hasBand){
+    const yTop = yFor(mean + std);
+    const yBot = yFor(mean - std);
+    svg += '<rect x="0" y="' + yTop.toFixed(1) + '" width="' + W + '" height="' + Math.max(0, yBot - yTop).toFixed(1) + '" fill="var(--border)" opacity="0.6"/>';
+  }
+  // (b) dotted baseline-mean line
+  if (mean != null){
+    const ym = yFor(mean).toFixed(1);
+    svg += '<line x1="0" y1="' + ym + '" x2="' + W + '" y2="' + ym + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,2"/>';
+  }
+  // (c) data polyline
+  const poly = pts.map((p, i) => xFor(i).toFixed(1) + ',' + yFor(p.n).toFixed(1)).join(' ');
+  svg += '<polyline points="' + poly + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  // (d) filled dot on the last point
+  const lx = xFor(pts.length - 1).toFixed(1);
+  const ly = yFor(pts[pts.length - 1].n).toFixed(1);
+  svg += '<circle cx="' + lx + '" cy="' + ly + '" r="2.5" fill="' + color + '"/>';
+  svg += '</svg>';
+
+  const cap = pts.length + '-mo trend' + (hasBand ? ' · baseline ±1σ' : '');
+  return '<div style="margin-top:2px">' + svg
+    + '<div style="font-size:10px;color:var(--muted);margin-top:1px">' + cap + '</div></div>';
+}
+
 // --- Detail panel: pillars + per-feed breakdown for the selected city ------
 function renderCityDetail(cities){
   const host = document.getElementById('cityDetail');
@@ -15026,6 +15088,7 @@ function renderCityDetail(cities){
       if (scored){
         const cls = (f.d > 0) ? 'green' : (f.d < 0 ? 'red' : 'amber');
         const polTxt = f.polarity === 1 ? 'up-favorable' : (f.polarity === -1 ? 'down-favorable' : 'context-only');
+        const sparkHtml = citySparkline(f);
         return ''
           + '<tr>'
           +   '<td>' + escapeHtml(f.label || '') + '<div style="font-size:10px;color:var(--muted)">' + escapeHtml(polTxt) + (f.recent_period ? ' · ' + escapeHtml(f.recent_period) : '') + '</div></td>'
@@ -15033,7 +15096,8 @@ function renderCityDetail(cities){
           +   '<td>' + cityFmtSigned(f.z) + '</td>'
           +   '<td class="' + cls + '">' + cityFmtSigned(f.d) + '</td>'
           + '</tr>'
-          + (f.note ? '<tr><td colspan="4" style="color:var(--muted);font-size:11px;padding-top:0;border-top:0">' + escapeHtml(f.note) + '</td></tr>' : '');
+          + (f.note ? '<tr><td colspan="4" style="color:var(--muted);font-size:11px;padding-top:0;border-top:0">' + escapeHtml(f.note) + '</td></tr>' : '')
+          + (sparkHtml ? '<tr><td colspan="4" style="padding-top:0;border-top:0">' + sparkHtml + '</td></tr>' : '');
       }
       // Non-scored feeds: render the status explicitly, never an empty row.
       return ''
@@ -15073,13 +15137,15 @@ function renderCityDetail(cities){
         const dCell = ctxOnly
           ? '<td style="color:var(--muted)">— <span style="font-size:10px">context</span></td>'
           : '<td class="' + dCls + '">' + cityFmtSigned(f.d) + '</td>';
+        const sparkHtml = citySparkline(f);
         return ''
           + '<tr>'
           +   '<td>' + escapeHtml(f.label || '') + '<div style="font-size:10px;color:var(--muted)">' + sub + '</div></td>'
           +   '<td>' + cityFmtPct(f.yoy_pct) + '</td>'
           +   '<td>' + cityFmtSigned(f.z) + '</td>'
           +   dCell
-          + '</tr>';
+          + '</tr>'
+          + (sparkHtml ? '<tr><td colspan="4" style="padding-top:0;border-top:0">' + sparkHtml + '</td></tr>' : '');
       }
       // Non-scored extended feed: surface the status (insufficient_history ->
       // "Building 12-mo baseline", e.g. Chicago towed-vehicles snapshot).

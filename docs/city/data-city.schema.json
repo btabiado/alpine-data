@@ -1,0 +1,427 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "data-city.schema.json",
+  "title": "City tab output contract (FROZEN \u2014 methodology v1.0)",
+  "description": "The frozen contract the City Pulse scorer emits and the frontend consumes. Pulse (Layer A) is the within-city momentum score; context (Layer B) is null in P0, shape reserved for P1. Each feed carries full per-feed math so the detail view can render the breakdown. See CITY_TAB_BUILD.md section 2 for the methodology and RECON.md for the resolved registry the producer reads.",
+  "type": "object",
+  "required": [
+    "generated_at",
+    "methodology_version",
+    "as_of",
+    "methodology_disclosures",
+    "cities"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "_mock": {
+      "type": "boolean",
+      "description": "Present and true ONLY in fixtures/mocks; absent or false in real output."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 UTC timestamp of when this payload was produced."
+    },
+    "methodology_version": {
+      "type": "string",
+      "const": "1.1"
+    },
+    "as_of": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}$",
+      "description": "Most recent COMPLETE month used across feeds (YYYY-MM). At freeze time = 2026-04 (latest complete month; Chicago crime ~7-day lag pulls the network to prior month)."
+    },
+    "methodology_disclosures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "The section-2 caveat strings shown in the methodology panel (cross-city-ranking warning, polarity-is-editorial, continuity breakpoints, reporting lag)."
+    },
+    "cities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/city"
+      }
+    }
+  },
+  "definitions": {
+    "city": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "scope",
+        "pulse",
+        "context",
+        "disclosures",
+        "data_health"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "enum": [
+            "chicago",
+            "nyc",
+            "la",
+            "seattle",
+            "sf",
+            "miami"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "city",
+            "county"
+          ],
+          "description": "Miami = county (Miami-Dade); all others = city."
+        },
+        "pulse": {
+          "$ref": "#/definitions/pulse"
+        },
+        "context": {
+          "description": "null in P0. In P1 = Layer B context object.",
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/definitions/context"
+            }
+          ]
+        },
+        "disclosures": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Per-city caveat strings (footprint, source vintage, continuity breaks)."
+        },
+        "data_health": {
+          "$ref": "#/definitions/data_health"
+        },
+        "extended": {
+          "type": "array",
+          "description": "P2 supplementary KPIs beyond the 3-pillar backbone (Chicago is the template). Each is a scored feed shown in the detail view; DISPLAY-ONLY \u2014 never folded into the Pulse composite.",
+          "items": {
+            "$ref": "#/definitions/feed"
+          }
+        }
+      }
+    },
+    "pulse": {
+      "type": "object",
+      "required": [
+        "score",
+        "glyph",
+        "label",
+        "pillars_present",
+        "pillars_total",
+        "composite_c",
+        "pillars"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "score": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Pulse 0-100 = round(50 + (C/3)*50), clipped. null if no pillars present."
+        },
+        "glyph": {
+          "type": "string",
+          "enum": [
+            "up",
+            "flat",
+            "down"
+          ],
+          "description": "Headline direction (maps to triangle up / dash / triangle down)."
+        },
+        "label": {
+          "type": "string",
+          "description": "Short headline label, e.g. 'Improving', 'On baseline', 'Worsening'."
+        },
+        "pillars_present": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "pillars_total": {
+          "type": "integer",
+          "const": 3
+        },
+        "composite_c": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -3,
+          "maximum": 3,
+          "description": "Weighted mean of present pillars' score_d (-3..3). null if no pillars."
+        },
+        "pillars": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pillar"
+          }
+        }
+      }
+    },
+    "pillar": {
+      "type": "object",
+      "required": [
+        "key",
+        "name",
+        "score_d",
+        "feeds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "enum": [
+            "public_safety",
+            "development_economy",
+            "city_services"
+          ]
+        },
+        "name": {
+          "type": "string"
+        },
+        "score_d": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -3,
+          "maximum": 3,
+          "description": "Mean of this pillar's feeds' directional contribution d. null if pillar absent (no usable feed)."
+        },
+        "feeds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/feed"
+          }
+        }
+      }
+    },
+    "feed": {
+      "type": "object",
+      "required": [
+        "label",
+        "dataset",
+        "polarity",
+        "status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "dataset": {
+          "type": "string",
+          "description": "Socrata 4x4 id, ArcGIS feature-server/layer ref, or FBI ORI."
+        },
+        "polarity": {
+          "type": "integer",
+          "enum": [
+            -1,
+            0,
+            1
+          ],
+          "description": "+1 up-favorable, -1 down-favorable, 0 context-only."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "not_published",
+            "stale",
+            "insufficient_history"
+          ],
+          "description": "ok = scored; not_published = city/source has no feed (Miami Safety pending FBI key); stale = source exists but lags badly (Miami 311 2023 snapshot); insufficient_history = <12mo baseline."
+        },
+        "recent": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Metric M for the recent complete period (usually a count)."
+        },
+        "recent_period": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4}-[0-9]{2}$"
+        },
+        "baseline_mean": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Trailing-12-month mean mu."
+        },
+        "baseline_std": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Trailing-12-month std sigma."
+        },
+        "z": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -3,
+          "maximum": 3,
+          "description": "clip((Recent-mu)/sigma, -3, +3)."
+        },
+        "yoy_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Recent vs same period prior year, percent."
+        },
+        "d": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -3,
+          "maximum": 3,
+          "description": "Directional contribution = polarity * z."
+        },
+        "complete_through": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9]{4}-[0-9]{2}$",
+          "description": "Latest COMPLETE month available for this feed."
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "series": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Ascending trailing-36-month trend of metric M (monthly). Additive in methodology_version 1.1; consumed by the City tab per-feed sparkline. null when <2 complete months.",
+          "items": {
+            "type": "object",
+            "required": [
+              "month",
+              "n"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "month": {
+                "type": "string",
+                "pattern": "^[0-9]{4}-[0-9]{2}$"
+              },
+              "n": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "context": {
+      "type": "object",
+      "description": "Layer B. null in P0; this shape reserved for P1 (Census ACS 2024 + BLS + AirNow). Miami uses Miami-Dade County geography (12086).",
+      "additionalProperties": false,
+      "properties": {
+        "median_income": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "median_rent": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "median_home_value": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "median_real_estate_taxes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "effective_property_tax_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "median_real_estate_taxes / median_home_value (B25103_001E / B25077_001E)."
+        },
+        "unemployment_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "aqi": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "context_score": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Optional transparent 0-100 composite (P2). null until built."
+        }
+      }
+    },
+    "data_health": {
+      "type": "object",
+      "required": [
+        "feeds_ok",
+        "feeds_total",
+        "last_updated"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "feeds_ok": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "feeds_total": {
+          "type": "integer",
+          "const": 3
+        },
+        "last_updated": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  }
+}

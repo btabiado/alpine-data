@@ -37,6 +37,11 @@ data-*.json
 # daily by city-daily.yml (mirrors data/real_estate.json's committed-data model)
 # so the V1 build always has city data even on a cold CI checkout.
 !data-city.json
+# Carve-out: data-city.schema.json is a hand-authored CONTRACT (not a generated
+# sidecar), loaded by the City Pulse conformance tests (tests/test_city_pulse.py).
+# The data-*.json rule above matches it by name and was silently keeping it out of
+# git — which is why those tests FileNotFound in CI. Un-ignore so it ships.
+!docs/city/data-city.schema.json
 # V2 builder output mirrors the production layout one level down.
 v2/dashboard.html
 v2/data-*.json

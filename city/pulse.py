@@ -58,8 +58,12 @@ PILLAR_NAMES = {
 # C < -GLYPH_BAND  -> worsening. See module docstring for the rationale.
 GLYPH_BAND = 0.15
 
-METHODOLOGY_VERSION = "1.0"
+METHODOLOGY_VERSION = "1.1"
 PILLARS_TOTAL = 3
+
+# How many trailing months of the per-feed monthly series to carry through to
+# the output (for frontend sparklines). Additive in methodology 1.1.
+SERIES_TRAIL_MONTHS = 36
 
 
 # ---------------------------------------------------------------------------
@@ -135,6 +139,17 @@ def score_feed(series, *, polarity, as_of, label, dataset, baseline_months=12,
     # Anything strictly after cutoff is an incomplete trailing period -> dropped.
     eligible = [m for m in by_month if _parse_month(m) <= _parse_month(cutoff)]
 
+    # Trend series (additive, methodology 1.1): the LAST SERIES_TRAIL_MONTHS
+    # months of the parsed monthly series, ascending, none later than the
+    # feed's Recent/complete_through (eligible already excludes months > cutoff).
+    # Attach whenever >=2 points exist, regardless of feed status (trends are
+    # useful even when not scored); otherwise null. Does NOT change any existing
+    # field. See docs/city/CITY_TAB_BUILD.md.
+    eligible_sorted = sorted(eligible, key=_parse_month)
+    trail = eligible_sorted[-SERIES_TRAIL_MONTHS:]
+    series_out = ([{"month": m, "n": by_month[m]} for m in trail]
+                  if len(trail) >= 2 else None)
+
     base = {
         "label": label,
         "dataset": dataset,
@@ -154,6 +169,7 @@ def score_feed(series, *, polarity, as_of, label, dataset, baseline_months=12,
         out.setdefault("z", None)
         out.setdefault("yoy_pct", None)
         out.setdefault("d", None)
+        out.setdefault("series", series_out)
         out.update(extra)
         return out
 
@@ -359,7 +375,9 @@ def score_payload(cities, *, as_of, methodology_disclosures, generated_at=None):
     """Wrap scored city objects into the top-level payload.
 
     ``generated_at`` defaults to ``datetime.now(timezone.utc)`` ISO8601.
-    ``methodology_version`` is pinned to "1.0" (the frozen contract).
+    ``methodology_version`` is "1.1": the 1.0 scoring contract is unchanged;
+    1.1 only *adds* the optional per-feed ``series`` field (ascending
+    ``{"month", "n"}`` points, last 36 months) for frontend sparklines.
     """
     if generated_at is None:
         generated_at = datetime.now(timezone.utc).isoformat()

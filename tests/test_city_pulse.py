@@ -385,6 +385,75 @@ def test_yoy_null_when_anchor_missing():
 
 
 # ===========================================================================
+# 9b. per-feed trend series (additive, methodology 1.1)
+# ===========================================================================
+def test_series_carried_through_for_ok_feed():
+    """A normal multi-month feed carries an ascending {month, n} series whose
+    last point is Recent; <=36 points; each n numeric."""
+    s = series_from_baseline(AS_OF, baseline=varied_baseline(100), recent=85)
+    f = pulse.score_feed(s, polarity=-1, as_of=AS_OF, label="Crimes", dataset="C")
+    assert f["status"] == "ok"
+    series = f["series"]
+    assert isinstance(series, list)
+    assert len(series) <= 36
+    # Each element is {month: 'YYYY-MM' str, n: number}.
+    for pt in series:
+        assert set(pt) == {"month", "n"}
+        assert isinstance(pt["month"], str) and len(pt["month"]) == 7
+        assert pt["month"][4] == "-"
+        assert isinstance(pt["n"], (int, float)) and not isinstance(pt["n"], bool)
+    # Ascending by month key.
+    months = [pt["month"] for pt in series]
+    assert months == sorted(months, key=pulse._parse_month)
+    # Last point is the feed's Recent period.
+    assert series[-1]["month"] == f["recent_period"]
+
+
+def test_series_trimmed_to_last_36_months():
+    """A long series (>36 months) is trimmed to the trailing 36, ending at
+    Recent; nothing later than complete_through leaks in."""
+    s = series_constant(AS_OF, value=100, length=50)  # 50 contiguous months
+    f = pulse.score_feed(s, polarity=-1, as_of=AS_OF, label="x", dataset="d")
+    series = f["series"]
+    assert len(series) == 36
+    assert series[-1]["month"] == AS_OF
+    assert series[0]["month"] == _month_minus(AS_OF, 35)
+    months = [pt["month"] for pt in series]
+    assert months == sorted(months, key=pulse._parse_month)
+    # No month later than the cutoff/Recent.
+    assert all(pulse._parse_month(m) <= pulse._parse_month(AS_OF) for m in months)
+
+
+def test_series_excludes_incomplete_trailing_month():
+    """Months after complete_through are dropped from the series too."""
+    s = series_constant(AS_OF, value=100, length=13)
+    s = s + [{"month": "2026-05", "n": 999}]  # incomplete future month
+    f = pulse.score_feed(s, polarity=-1, as_of=AS_OF, label="x", dataset="d")
+    months = [pt["month"] for pt in f["series"]]
+    assert "2026-05" not in months
+    assert f["series"][-1]["month"] == AS_OF
+
+
+def test_series_null_when_fewer_than_two_months():
+    """A single eligible point (or none) yields a null/absent series."""
+    one = pulse.score_feed([{"month": AS_OF, "n": 42}],
+                           polarity=1, as_of=AS_OF, label="x", dataset="d")
+    assert one.get("series") is None
+    none = pulse.score_feed([], polarity=1, as_of=AS_OF, label="x", dataset="d")
+    assert none.get("series") is None
+
+
+def test_series_present_even_when_insufficient_history():
+    """Trends are useful even when not scored: a short (<12 baseline) but
+    >=2-point series still carries a series despite insufficient_history."""
+    s = series_constant(AS_OF, value=100, length=6)  # too short to score
+    f = pulse.score_feed(s, polarity=-1, as_of=AS_OF, label="x", dataset="d")
+    assert f["status"] == "insufficient_history"
+    assert isinstance(f["series"], list) and len(f["series"]) == 6
+    assert f["series"][-1]["month"] == AS_OF
+
+
+# ===========================================================================
 # 10. map endpoints -- C=+3 -> 100, C=-3 -> 0, C=0 -> 50
 # ===========================================================================
 def test_pulse_map_endpoints_unit():
@@ -466,7 +535,7 @@ def test_payload_shape_and_defaults():
                          polarity=-1, as_of=AS_OF, label="Crime", dataset="C"))
     payload = pulse.score_payload([city], as_of=AS_OF,
                                   methodology_disclosures=["Not a cross-city ranking."])
-    assert payload["methodology_version"] == "1.0"
+    assert payload["methodology_version"] == "1.1"  # 1.1 adds additive feed.series
     assert payload["as_of"] == AS_OF
     assert payload["cities"] == [city]
     assert "generated_at" in payload and payload["generated_at"]  # auto-filled
