@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T15:47:22Z",
+  "generated_at": "2026-05-31T16:53:32Z",
   "methodology_version": "1.0",
   "as_of": "2026-04",
   "methodology_disclosures": [
@@ -22,17 +22,17 @@
       "name": "Chicago",
       "scope": "city",
       "pulse": {
-        "score": 57,
-        "glyph": "up",
-        "label": "Improving",
-        "pillars_present": 2,
+        "score": 48,
+        "glyph": "flat",
+        "label": "On baseline",
+        "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.4166989070559207,
+        "composite_c": -0.1483645748449199,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": null,
+            "score_d": -1.2784915386466011,
             "feeds": [
               {
                 "label": "311 Service Requests",
@@ -40,14 +40,14 @@
                 "polarity": -1,
                 "complete_through": "2026-04",
                 "note": null,
-                "status": "not_published",
-                "recent": null,
-                "recent_period": null,
-                "baseline_mean": null,
-                "baseline_std": null,
-                "z": null,
-                "yoy_pct": null,
-                "d": null
+                "status": "ok",
+                "recent": 187464,
+                "recent_period": "2026-04",
+                "baseline_mean": 168263.41666666666,
+                "baseline_std": 15018.15440535406,
+                "z": 1.2784915386466011,
+                "yoy_pct": 19.11097556326484,
+                "d": -1.2784915386466011
               }
             ]
           },
@@ -111,7 +111,7 @@
         "Crimes 2001-present: excludes last ~7 days; latest complete month lags to prior month"
       ],
       "data_health": {
-        "feeds_ok": 2,
+        "feeds_ok": 3,
         "feeds_total": 3,
         "last_updated": "2026-04-01T00:00:00+00:00"
       },
@@ -140,11 +140,11 @@
           "status": "ok",
           "recent": 8960,
           "recent_period": "2026-04",
-          "baseline_mean": 9196.0,
-          "baseline_std": 716.2741560789882,
-          "z": -0.3294827797388445,
+          "baseline_mean": 9196.083333333334,
+          "baseline_std": 716.2575721918912,
+          "z": -0.3296067539095912,
           "yoy_pct": 0.47095761381475665,
-          "d": 0.3294827797388445
+          "d": 0.3296067539095912
         },
         {
           "label": "Towed Vehicles",
@@ -186,14 +186,14 @@
         "score": 61,
         "glyph": "up",
         "label": "Improving",
-        "pillars_present": 2,
+        "pillars_present": 1,
         "pillars_total": 3,
-        "composite_c": 0.6596602645710838,
+        "composite_c": 0.6680610705924702,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": 0.6512594585496975,
+            "score_d": null,
             "feeds": [
               {
                 "label": "311 (2010-present)",
@@ -201,14 +201,14 @@
                 "polarity": -1,
                 "complete_through": "2026-04",
                 "note": "~38M rows; REQUIRES app token + recent $where filter or it times out",
-                "status": "ok",
-                "recent": 302189,
-                "recent_period": "2026-04",
-                "baseline_mean": 316313.4166666667,
-                "baseline_std": 21687.84880010899,
-                "z": -0.6512594585496975,
-                "yoy_pct": 10.874701889561548,
-                "d": 0.6512594585496975
+                "status": "not_published",
+                "recent": null,
+                "recent_period": null,
+                "baseline_mean": null,
+                "baseline_std": null,
+                "z": null,
+                "yoy_pct": null,
+                "d": null
               }
             ]
           },
@@ -274,7 +274,7 @@
         "DOB Permit Issuance: issuance_date is TEXT -> date_trunc_ym fails. Bucket via substring(issuance_date,7,4)||'-'||substring(issuance_date,1,2) and filter IS NOT NULL, OR use dobrundate (real calendar_date, ~1-day proxy)."
       ],
       "data_health": {
-        "feeds_ok": 2,
+        "feeds_ok": 1,
         "feeds_total": 3,
         "last_updated": "2026-04-01T00:00:00+00:00"
       },
@@ -316,17 +316,17 @@
       "name": "Los Angeles",
       "scope": "city",
       "pulse": {
-        "score": 66,
+        "score": 77,
         "glyph": "up",
         "label": "Improving",
-        "pillars_present": 3,
+        "pillars_present": 2,
         "pillars_total": 3,
-        "composite_c": 0.9361535459811416,
+        "composite_c": 1.6197720600322556,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": -0.4310834821210862,
+            "score_d": null,
             "feeds": [
               {
                 "label": "MyLA311 Cases",
@@ -334,14 +334,14 @@
                 "polarity": -1,
                 "complete_through": "2026-04",
                 "note": "RESOLVED: LA retired the 'MyLA311 Service Request Data {year}' series ~Aug 2025 (old h73f-gn57=2025 is dead for current data). Current product = 'MyLA311 Cases {year}'. 2026 = 2cy6-i7zn (date col createddate, live, ~185k/mo). Baseline = 73a2-6ar5 ('MyLA311 Cases March 2025 to December 2025'). Resolve current-year by catalog search: GET data.lacity.org/api/catalog/v1?q=MyLA311%20Cases -> item titled 'MyLA311 Cases {currentYear}'. Do NOT auto-build '...Service Request Data {year}' IDs.",
-                "status": "ok",
-                "recent": 199584,
-                "recent_period": "2026-04",
-                "baseline_mean": 192699.58333333334,
-                "baseline_std": 15970.031217138834,
-                "z": 0.4310834821210862,
-                "yoy_pct": 2.5490306901034305,
-                "d": -0.4310834821210862
+                "status": "not_published",
+                "recent": null,
+                "recent_period": null,
+                "baseline_mean": null,
+                "baseline_std": null,
+                "z": null,
+                "yoy_pct": null,
+                "d": null
               }
             ]
           },
@@ -406,7 +406,7 @@
         "LAPD NIBRS Offenses: UNION SEAM CONFIRMED: baseline y8y3-fqfu complete through 2025-12; live k7nn-b2ep dense from 2026-01. Both keyed on date_occ. Clip baseline to trailing window - both tables hold a few dirty pre-2010 dates from data-entry errors; ignore raw MIN(date_occ). Legacy 2nrs-mtv8 frozen - never poll."
       ],
       "data_health": {
-        "feeds_ok": 3,
+        "feeds_ok": 2,
         "feeds_total": 3,
         "last_updated": "2026-04-01T00:00:00+00:00"
       }
@@ -438,7 +438,7 @@
                 "recent": 26046,
                 "recent_period": "2026-04",
                 "baseline_mean": 27474.0,
-                "baseline_std": 4068.784933285776,
+                "baseline_std": 4068.7849332857754,
                 "z": -0.3509647286387311,
                 "yoy_pct": -4.934666763997372,
                 "d": 0.3509647286387311
@@ -566,7 +566,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.8158777590892519,
+            "score_d": 0.8158777590892518,
             "feeds": [
               {
                 "label": "Police Incident Reports",
@@ -578,10 +578,10 @@
                 "recent": 7314,
                 "recent_period": "2026-04",
                 "baseline_mean": 7678.583333333333,
-                "baseline_std": 446.86024256907086,
-                "z": -0.8158777590892519,
+                "baseline_std": 446.8602425690709,
+                "z": -0.8158777590892518,
                 "yoy_pct": -5.953452488105953,
-                "d": 0.8158777590892519
+                "d": 0.8158777590892518
               }
             ]
           },
