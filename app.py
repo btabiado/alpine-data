@@ -849,21 +849,11 @@ def main() -> int:
             print(f"  [mufon] could not copy {_mufon_src} -> root: {e}", file=sys.stderr)
     manifest["mufon"] = "data-mufon.json"
 
-    # City Pulse sidecar (data-city.json at repo root): produced by the City
-    # Pulse scorer (city/*.py) out-of-band. If the root file is missing, seed
-    # it from the validated mock fixture so the tab renders something locally;
-    # in production the scorer writes the real payload. Declared in the
-    # manifest unconditionally — same rationale as mufon/cpi/metals: the JS
-    # lazy-loader treats a missing file as an empty state, so this is safe and
-    # lets V1 pick up the data on first deploy. City is a V1-only tab.
-    _city_dst = ROOT / "data-city.json"
-    if not _city_dst.exists():
-        _city_src = ROOT / "data-city.sample.json"
-        if _city_src.exists():
-            try:
-                shutil.copyfile(_city_src, _city_dst)
-            except OSError as e:
-                print(f"  [city] could not seed {_city_dst} from sample: {e}", file=sys.stderr)
+    # City Pulse sidecar (data-city.json at repo root): written out-of-band by
+    # the City Pulse scorer (city/*.py via fetch_city.py) and committed to the
+    # repo through a .gitignore carve-out, then refreshed daily by city-daily.yml.
+    # Declared in the manifest unconditionally — same rationale as mufon/cpi/metals:
+    # the JS lazy-loader treats a missing file as an empty state. City is V1-only.
     manifest["city"] = "data-city.json"
 
     print(f"Writing {OUT.name}...")
@@ -3453,9 +3443,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ CITY PULSE TAB ============
        Layer A "City Pulse": within-city operational momentum (0-100) across
        3 pillars (Public Safety / Development & Economy / City Services).
-       Sidecar-loaded via SIDECAR_FOR_TAB.city from /data-city.json (seeded
-       from data-city.sample.json by the V1 build; real payload written by the
-       City Pulse scorer in city/*.py). renderCityTab() is a NO-OP until the
+       Sidecar-loaded via SIDECAR_FOR_TAB.city from /data-city.json (committed
+       payload written by the City Pulse scorer in city/*.py via fetch_city.py,
+       refreshed daily by city-daily.yml). renderCityTab() is a NO-OP until the
        sidecar lands — the loading placeholder below covers that window.
        NOT a cross-city ranking; caveats live in the methodology panel. -->
   <div id="tab-city" class="hidden">
