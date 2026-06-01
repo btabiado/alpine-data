@@ -1,53 +1,53 @@
 {
-  "asof": "2026-05-20",
-  "snapshot_date": "2026-05-20",
-  "generated_at_utc": "2026-05-20T10:14:17+00:00",
+  "asof": "2026-06-01",
+  "snapshot_date": "2026-05-31",
+  "generated_at_utc": "2026-06-01T14:43:56+00:00",
   "overall_verdict": "CRITICAL",
   "pillars": {
     "adoption_momentum": {
-      "coverage_pct": 97.6,
-      "mean": 50.8,
-      "stdev": 23.97,
+      "coverage_pct": 99.0,
+      "mean": 51.35,
+      "stdev": 22.25,
       "verdict": "HEALTHY",
-      "n": 167
+      "n": 209
     },
     "institutional_confidence": {
-      "coverage_pct": 99.4,
-      "mean": 48.6,
-      "stdev": 28.68,
+      "coverage_pct": 99.5,
+      "mean": 49.38,
+      "stdev": 28.29,
       "verdict": "HEALTHY",
-      "n": 167
+      "n": 209
     },
     "financial_evolution": {
-      "coverage_pct": 98.2,
-      "mean": 55.83,
-      "stdev": 17.65,
+      "coverage_pct": 98.1,
+      "mean": 55.37,
+      "stdev": 17.48,
       "verdict": "HEALTHY",
-      "n": 167
+      "n": 209
     },
     "thesis_integrity": {
-      "coverage_pct": 89.2,
-      "mean": 59.2,
-      "stdev": 10.5,
+      "coverage_pct": 87.6,
+      "mean": 58.3,
+      "stdev": 9.5,
       "verdict": "HEALTHY",
-      "n": 167
+      "n": 209
     },
     "des": {
       "coverage_pct": 100.0,
-      "mean": 46.8,
-      "stdev": 9.55,
+      "mean": 45.38,
+      "stdev": 5.31,
       "verdict": "HEALTHY",
-      "n": 167
+      "n": 209
     }
   },
   "distribution": {
-    "n": 167,
-    "mean": 49.35,
-    "stdev": 11.71,
+    "n": 209,
+    "mean": 51.01,
+    "stdev": 11.52,
     "elite_count": 0,
     "high_conf_count": 0,
-    "review_count": 83,
-    "review_pct": 49.7,
+    "review_count": 98,
+    "review_pct": 46.9,
     "critical": true
   },
   "weights": {
@@ -60,36 +60,36 @@
     "counts": {
       "elite": 0,
       "high_confidence": 0,
-      "constructive": 6,
-      "monitor": 26,
-      "weakening": 52,
-      "review": 83
+      "constructive": 13,
+      "monitor": 32,
+      "weakening": 66,
+      "review": 98
     },
     "starved": [
       "elite",
       "high_confidence"
     ],
-    "review_pct": 49.7
+    "review_pct": 46.9
   },
   "alerts": [],
   "sub_audits": {
     "pillar_quality": {
       "ok": true,
-      "path": "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-05-20_pillar_quality.md",
-      "snapshot_date": "2026-05-20"
+      "path": "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-06-01_pillar_quality.md",
+      "snapshot_date": "2026-05-31"
     },
     "score_distribution": {
       "ok": true,
       "paths": [
-        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-05-20_composite_distribution.md",
-        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-05-20_pillar_correlation.md"
+        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-06-01_composite_distribution.md",
+        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-06-01_pillar_correlation.md"
       ]
     },
     "weights_thresholds": {
       "ok": true,
       "paths": [
-        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-05-20_weights_vs_ic.md",
-        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-05-20_band_distribution.md"
+        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-06-01_weights_vs_ic.md",
+        "/home/runner/work/btc-eth-etf-dashboard/btc-eth-etf-dashboard/data/lthcs/quality_audit/2026-06-01_band_distribution.md"
       ]
     }
   }
