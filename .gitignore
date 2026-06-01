@@ -37,6 +37,14 @@ data-*.json
 # daily by city-daily.yml (mirrors data/real_estate.json's committed-data model)
 # so the V1 build always has city data even on a cold CI checkout.
 !data-city.json
+# Carve-out: data-aviation.json IS committed — the Aviation tab's static sidecar
+# (FAA airman/registry data, used-market snapshot, live seed). Refreshed by hand.
+!data-aviation.json
+# Carve-out: data-opensky.json IS committed — the Aviation tab's live OpenSky
+# "airborne now" snapshot, refreshed hourly by aviation-opensky.yml.
+!data-opensky.json
+# Carve-out: data-opensky-positions.json — trimmed live positions for the Flight Map (hourly cron)
+!data-opensky-positions.json
 # Carve-out: data-city.schema.json is a hand-authored CONTRACT (not a generated
 # sidecar), loaded by the City Pulse conformance tests (tests/test_city_pulse.py).
 # The data-*.json rule above matches it by name and was silently keeping it out of
