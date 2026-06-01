@@ -1,0 +1,71 @@
+{
+  "run_id": "20260601T110611",
+  "generated_at": "2026-06-01T11:09:35.504810Z",
+  "start": "2026-03-02",
+  "end": "2026-05-31",
+  "horizon_days": 21,
+  "bands_long": [
+    "elite",
+    "high_confidence",
+    "constructive"
+  ],
+  "bands_short": [
+    "review"
+  ],
+  "n_tickers": 209,
+  "n_observation_dates": 102,
+  "portfolio": {
+    "cumulative_return": 2830.0124179728523,
+    "sharpe": 25.77328400741132,
+    "max_drawdown": -0.1135130824603372,
+    "turnover_per_rebalance": 0.0640932613296818,
+    "n_rebalances": 89,
+    "hit_rate": 0.9101123595505618,
+    "n_long_avg": 7.53932584269663,
+    "n_short_avg": 69.1685393258427
+  },
+  "pillar_ic": [
+    {
+      "pillar": "composite",
+      "ic_mean": 0.10182163814257927,
+      "ic_std": 0.07735351691546172,
+      "ic_sharpe": 20.895861754150637,
+      "n_obs": 89
+    },
+    {
+      "pillar": "institutional_confidence",
+      "ic_mean": 0.19858624001972838,
+      "ic_std": 0.15113056677617773,
+      "ic_sharpe": 20.85917426630346,
+      "n_obs": 89
+    },
+    {
+      "pillar": "thesis_integrity",
+      "ic_mean": 0.10803269089552887,
+      "ic_std": 0.08078058086871834,
+      "ic_sharpe": 21.22992658638079,
+      "n_obs": 89
+    },
+    {
+      "pillar": "financial_evolution",
+      "ic_mean": 0.06322117234134068,
+      "ic_std": 0.09092579143741807,
+      "ic_sharpe": 11.03762729792252,
+      "n_obs": 89
+    },
+    {
+      "pillar": "des",
+      "ic_mean": 0.040501810051324014,
+      "ic_std": 0.0735313681803378,
+      "ic_sharpe": 8.743837061291078,
+      "n_obs": 89
+    },
+    {
+      "pillar": "adoption_momentum",
+      "ic_mean": -0.0259294098636933,
+      "ic_std": 0.07742517312167675,
+      "ic_sharpe": -5.316315149920481,
+      "n_obs": 89
+    }
+  ]
+}
