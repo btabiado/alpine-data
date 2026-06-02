@@ -1,0 +1,24 @@
+{
+  "as_of": "2026-06-02",
+  "broad_dollar": {
+    "change_30d_pct": -0.001841,
+    "current": 118.8783,
+    "percentile_2y": 0.10040160642570281
+  },
+  "data_quality": {
+    "sources_failed": 2,
+    "sources_ok": 2
+  },
+  "hy_oas": null,
+  "ig_oas": null,
+  "regime_flags": {
+    "curve_inverted": false,
+    "dollar_strong": false,
+    "hy_stress": false
+  },
+  "yield_curve_2s10s": {
+    "change_30d_bp": -10.0,
+    "current": 0.42,
+    "inverted": false
+  }
+}
