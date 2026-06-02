@@ -890,12 +890,31 @@ body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-syste
 header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 header h1{font-size:17px;margin:0;font-weight:600}
 header .meta{color:var(--muted);font-size:12px}
-.tabs{display:flex;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--panel)}
-.tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;border-bottom:2px solid transparent;letter-spacing:.02em}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--panel);position:relative}
+.tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;border-bottom:2px solid transparent;letter-spacing:.02em;white-space:nowrap}
 .tab:hover{color:var(--text)}
 .tab.active{color:var(--text);border-bottom-color:var(--btc)}
 .tab.active.eth{border-bottom-color:var(--eth)}
 .tab.active.link{border-bottom-color:var(--link)}
+/* Grouped dropdown tab nav */
+.tabgroup{position:relative;display:inline-flex;align-items:stretch}
+.tabgroup-btn{display:inline-flex;align-items:center;gap:6px;padding:11px 16px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;background:none;border:none;border-bottom:2px solid transparent;letter-spacing:.02em;font-family:inherit;white-space:nowrap}
+.tabgroup-btn:hover{color:var(--text)}
+.tabgroup-btn.active{color:var(--text);border-bottom-color:var(--btc)}
+.tabgroup-btn.active.eth{border-bottom-color:var(--eth)}
+.tabgroup-btn.active.link{border-bottom-color:var(--link)}
+.tabgroup-btn .caret{font-size:9px;opacity:.6;transition:transform .15s}
+.tabgroup.open .tabgroup-btn{color:var(--text)}
+.tabgroup.open .tabgroup-btn .caret{transform:rotate(180deg)}
+.tabgroup-menu{position:absolute;top:calc(100% + 1px);left:0;min-width:190px;background:var(--panel2);border:1px solid var(--border);border-radius:0 0 9px 9px;box-shadow:0 10px 28px rgba(0,0,0,.45);z-index:120;padding:5px;flex-direction:column;gap:1px;display:none}
+.tabgroup.open .tabgroup-menu{display:flex}
+.tabgroup:last-child .tabgroup-menu{left:auto;right:0}
+.tabgroup-menu .tab{padding:9px 13px;border-bottom:none!important;border-radius:6px;white-space:nowrap;border-left:2px solid transparent}
+.tabgroup-menu .tab:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.tabgroup-menu .tab.active{color:var(--text);background:rgba(255,255,255,.06);border-left-color:var(--btc)}
+.tabgroup-menu .tab.active.eth{border-left-color:var(--eth)}
+.tabgroup-menu .tab.active.link{border-left-color:var(--link)}
+.tab--solo{padding:11px 16px}
 .controls{display:flex;gap:6px;flex-wrap:wrap;padding:14px 24px;border-bottom:1px solid var(--border);background:#0e1118}
 .btn{background:var(--panel2);color:var(--text);border:1px solid var(--border);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px}
 .btn:hover{background:#222838}
@@ -1131,21 +1150,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   header .controls > span{width:6px !important}
 
   /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */
+  /* Grouped nav has few top-level items, so no horizontal scroll is needed;
+     keep overflow visible so the dropdown menus aren't clipped. */
   .tabs{
-    padding:0 8px;
-    gap:0;
-    overflow-x:auto;
-    overflow-y:hidden;
-    flex-wrap:nowrap;
-    white-space:nowrap;
-    -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-    /* Fade-right affordance so users see there's more content to scroll —
-       without this, "Research" / "Whale Activity" looked like they didn't
-       exist because they sit off-screen past 390px. */
-    -webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
-            mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);
+    padding:0 10px;
+    gap:2px;
+    flex-wrap:wrap;
+    overflow:visible;
   }
+  /* Mobile: drop a full-width panel below the nav so menus never run off-screen */
+  .tabgroup{position:static}
+  .tabgroup-menu,.tabgroup:last-child .tabgroup-menu{left:10px;right:10px;min-width:0}
   .tabs::-webkit-scrollbar{display:none}
   .tab{padding:9px 12px;font-size:13px;flex:0 0 auto;min-height:44px;display:inline-flex;align-items:center}
 
@@ -1585,25 +1600,47 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </header>
 
 <div class="tabs" role="tablist">
-  <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
-  <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Crypto</div>
-  <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Crypto Signals</div>
-  <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale Activity</div>
-  <div class="tab" data-tab="poc" role="tab" tabindex="0" aria-selected="false">Point of Control</div>
-  <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
-  <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
-  <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
-  <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
-  <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
-  <div class="tab" data-tab="lthcs" role="tab" tabindex="0" aria-selected="false">LTHCS</div>
-  <div class="tab" data-tab="real_estate" role="tab" tabindex="0" aria-selected="false">Real Estate</div>
-  <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
-  <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
-  <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
-  <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
-  <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
-  <div class="tab" data-tab="city" role="tab" tabindex="0" aria-selected="false">City</div>
-  <div class="tab" data-tab="aviation" role="tab" tabindex="0" aria-selected="false">Aviation</div>
+  <div class="tabgroup" data-group="crypto">
+    <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Crypto<span class="caret" aria-hidden="true">&#9662;</span></button>
+    <div class="tabgroup-menu" role="group" aria-label="Crypto views">
+    <div class="tab active" data-tab="overview" role="tab" tabindex="0" aria-selected="true">Overview</div>
+    <div class="tab" data-tab="signals" role="tab" tabindex="0" aria-selected="false">Signals</div>
+    <div class="tab" data-tab="whale" role="tab" tabindex="0" aria-selected="false">Whale</div>
+    <div class="tab" data-tab="poc" role="tab" tabindex="0" aria-selected="false">Point of Control</div>
+    <div class="tab" data-tab="defi" role="tab" tabindex="0" aria-selected="false">DeFi</div>
+    <div class="tab" data-tab="etf" role="tab" tabindex="0" aria-selected="false">ETF Flows</div>
+    <div class="tab" data-tab="trading" role="tab" tabindex="0" aria-selected="false">Futures</div>
+    </div>
+  </div>
+  <div class="tabgroup" data-group="markets">
+    <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Markets<span class="caret" aria-hidden="true">&#9662;</span></button>
+    <div class="tabgroup-menu" role="group" aria-label="Markets views">
+    <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
+    <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
+    <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
+    </div>
+  </div>
+  <div class="tabgroup" data-group="macro">
+    <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Macro<span class="caret" aria-hidden="true">&#9662;</span></button>
+    <div class="tabgroup-menu" role="group" aria-label="Macro views">
+    <div class="tab" data-tab="cpi" role="tab" tabindex="0" aria-selected="false">CPI</div>
+    <div class="tab" data-tab="supplies" role="tab" tabindex="0" aria-selected="false">Supplies</div>
+    <div class="tab" data-tab="metals" role="tab" tabindex="0" aria-selected="false">Metals</div>
+    <div class="tab" data-tab="real_estate" role="tab" tabindex="0" aria-selected="false">Real Estate</div>
+    </div>
+  </div>
+  <div class="tabgroup tabgroup--solo">
+    <div class="tab tab--solo" data-tab="lthcs" role="tab" tabindex="0" aria-selected="false">LTHCS</div>
+  </div>
+  <div class="tabgroup" data-group="explore">
+    <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Explore<span class="caret" aria-hidden="true">&#9662;</span></button>
+    <div class="tabgroup-menu" role="group" aria-label="Explore views">
+    <div class="tab" data-tab="travel" role="tab" tabindex="0" aria-selected="false">Travel Advisories</div>
+    <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
+    <div class="tab" data-tab="city" role="tab" tabindex="0" aria-selected="false">City</div>
+    <div class="tab" data-tab="aviation" role="tab" tabindex="0" aria-selected="false">Aviation</div>
+    </div>
+  </div>
 </div>
 
 <!-- Global Period + Timeframe header bar removed: it was clutter on tabs
@@ -11902,6 +11939,8 @@ function selectTab(t){
     el.classList.toggle('eth',  state.asset === 'eth');
     el.classList.toggle('link', state.asset === 'link');
   });
+  syncTabGroups();
+  closeTabMenus();
   document.getElementById('tab-overview').classList.toggle('hidden', t!=='overview');
   document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
   document.getElementById('tab-trading').classList.toggle('hidden', t!=='trading');
@@ -12399,6 +12438,40 @@ document.getElementById('insightsToggle')?.addEventListener('click', () => {
     list.style.display = 'none'; btn.textContent = 'Show';
   }
 });
+// ----- Grouped tab nav: dropdown open/close + active-group highlight -----
+function closeTabMenus(){
+  document.querySelectorAll('.tabgroup.open').forEach(g=>{
+    g.classList.remove('open');
+    const b=g.querySelector('.tabgroup-btn'); if(b) b.setAttribute('aria-expanded','false');
+  });
+}
+function syncTabGroups(){
+  const active=document.querySelector('.tab.active');
+  const asset=active ? (active.classList.contains('eth')?'eth':active.classList.contains('link')?'link':'') : '';
+  document.querySelectorAll('.tabgroup').forEach(g=>{
+    const has=!!(active && g.contains(active));
+    const b=g.querySelector('.tabgroup-btn');
+    if(b){ b.classList.toggle('active',has); b.classList.toggle('eth',has&&asset==='eth'); b.classList.toggle('link',has&&asset==='link'); }
+  });
+}
+document.querySelectorAll('.tabgroup-btn').forEach(btn=>{
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    const g=btn.closest('.tabgroup'); const open=g.classList.contains('open');
+    closeTabMenus();
+    if(!open){ g.classList.add('open'); btn.setAttribute('aria-expanded','true'); }
+  });
+  btn.addEventListener('keydown', e=>{
+    if(e.key==='ArrowDown'||e.key==='Enter'||e.key===' '){
+      e.preventDefault();
+      const g=btn.closest('.tabgroup'); g.classList.add('open'); btn.setAttribute('aria-expanded','true');
+      const first=g.querySelector('.tabgroup-menu .tab'); if(first) first.focus();
+    } else if(e.key==='Escape'){ closeTabMenus(); btn.focus(); }
+  });
+});
+document.addEventListener('click', e=>{ if(!e.target.closest('.tabgroup')) closeTabMenus(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTabMenus(); });
+syncTabGroups();
 document.querySelectorAll('.tab').forEach(b => {
   b.addEventListener('click', () => selectTab(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
