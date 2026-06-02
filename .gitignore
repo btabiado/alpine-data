@@ -17,6 +17,13 @@ Thumbs.db
 
 # Generated dashboard output
 dashboard.html
+# Local convenience copy of the built dashboard. Some setups copy/symlink
+# dashboard.html -> index.html to preview at file://.../index.html. The
+# PUBLIC site never uses a tracked root index.html: pages.yml regenerates
+# from app.py and writes _site/index.html from dashboard.html, and server.py
+# serves "/" by live-rendering via dash.render_html(). Ignore so a local
+# copy is never recommitted.
+index.html
 # Lazy-loaded sidecar payloads (whale, etc.) — written by app.py next to
 # dashboard.html on every build. Same lifecycle as the HTML itself.
 data-*.json
