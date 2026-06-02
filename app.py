@@ -3368,7 +3368,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <div class="v2-card__body" id="mufonUpdatesBody" style="padding:14px"></div>
       <div style="padding:0 14px 12px;font-size:11px;color:var(--muted)">
-        Last reviewed: 2026-05-25 — curated. PURSUE drops every few weeks, not daily.
+        Last reviewed: <span id="mufonUpdatesAsOf">—</span> — curated. PURSUE drops every few weeks, not daily.
       </div>
     </div>
 
@@ -5975,7 +5975,7 @@ function _drawRealEstate(host, d){
     const tip = ag ? (MUFON_STATE_NAMES[code]||code) + ': heat ' + (hv==null?'—':hv) + ' · ' + ag.n + ' metros'
                    : (MUFON_STATE_NAMES[code]||code) + ': no data';
     return ''
-      + '<g class="reTile" data-restate="' + code + '" style="cursor:pointer">'
+      + '<g class="reTile" data-restate="' + code + '" role="button" tabindex="0" style="cursor:pointer">'
       +   '<rect x="'+x+'" y="'+y+'" width="'+RE_CELL+'" height="'+RE_CELL+'" rx="6" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
       +     '<title>'+tip+'</title>'
       +   '</rect>'
@@ -6127,6 +6127,7 @@ function _drawRealEstate(host, d){
         _reGeoPaint();   // keep the geographic map's highlight in sync
         renderRePanel();
       });
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); g.click(); } });
     });
   };
   const REGION_OF = {};
@@ -6313,7 +6314,7 @@ function _drawRealEstate(host, d){
       return '<path class="reGeo" data-restate="' + code + '" d="' + _reGeoCache[code] + '"'
         + ' fill="' + fill + '" stroke="' + (isSel ? '#ffffff' : '#0b0e14') + '"'
         + ' stroke-width="' + (isSel ? 1.6 : 0.5) + '" stroke-linejoin="round"'
-        + ' style="cursor:pointer"><title>' + tip + '</title></path>';
+        + ' role="button" tabindex="0" style="cursor:pointer"><title>' + tip + '</title></path>';
     }).join('');
     return '<svg viewBox="0 0 960 600" width="100%" preserveAspectRatio="xMidYMid meet" '
       + 'style="display:block;max-height:560px;font-family:inherit" role="img" '
@@ -6329,6 +6330,7 @@ function _drawRealEstate(host, d){
         paintGeo();
         renderRePanel();
       });
+      p.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); p.click(); } });
     });
   };
   const paintGeo = () => {
@@ -6476,214 +6478,6 @@ function renderWhaleKpisV2(){
       const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
       const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
       asOfEl.textContent = `data as of ${freshest} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})`;
-      asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
-    }
-  }
-}
-
-// Legacy KPI function kept for reference; renderWhaleKpisV2 is the new one
-// wired into renderWhale(). Delete after a few commits if no rollback needed.
-function renderWhaleKpis(){
-  const w = whaleData();
-  const last = (a) => (a||[]).slice(-1)[0];
-  // Compute 1d delta-% from a value series. Returns null if <2 points.
-  const delta1d = (series) => {
-    const arr = series || [];
-    if (arr.length < 2) return null;
-    const cur = arr[arr.length-1]?.value;
-    const prev = arr[arr.length-2]?.value;
-    if (cur == null || prev == null || prev === 0) return null;
-    return (cur - prev) / Math.abs(prev) * 100;
-  };
-  // Mean of the last N values.
-  const meanN = (series, n) => {
-    const arr = (series||[]).slice(-n).map(r => r?.value).filter(v => v != null);
-    if (!arr.length) return null;
-    return arr.reduce((s,v) => s+v, 0) / arr.length;
-  };
-  const deltaClass = (d) => d == null ? '' : (d >= 0 ? 'green' : 'red');
-  const deltaStr = (d) => d == null ? '—' : (d >= 0 ? '+' : '') + d.toFixed(2) + '%';
-
-  const items = [];
-
-  // Active addresses
-  {
-    const cur = last(w.active_addresses);
-    const d = delta1d(w.active_addresses);
-    const avg30 = meanN(w.active_addresses, 30);
-    items.push({
-      label: 'Active addresses',
-      val: cur ? fmtNum(cur.value, 0) : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)}${avg30 != null ? ` · 30d avg ${fmtNum(avg30, 0)}` : ''}`,
-    });
-  }
-  // Tx count
-  {
-    const cur = last(w.tx_count);
-    const d = delta1d(w.tx_count);
-    items.push({
-      label: 'Tx count',
-      val: cur ? fmtNum(cur.value, 0) : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)}`,
-    });
-  }
-  // Avg tx size — whale-movement proxy
-  {
-    const cur = last(w.avg_tx_usd);
-    const d = delta1d(w.avg_tx_usd);
-    items.push({
-      label: 'Avg tx size',
-      val: cur ? fmtUSD(cur.value, 'auto') : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)} · whale-movement proxy`,
-    });
-  }
-  // Miner revenue (1d)
-  {
-    const cur = last(w.miners_revenue_usd);
-    const d = delta1d(w.miners_revenue_usd);
-    items.push({
-      label: 'Miner revenue (1d)',
-      val: cur ? fmtUSD(cur.value, 'auto') : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)}`,
-    });
-  }
-  // Output volume (BTC)
-  {
-    const cur = last(w.output_volume_btc);
-    const d = delta1d(w.output_volume_btc);
-    items.push({
-      label: 'Output volume',
-      val: cur ? fmtNum(cur.value, 0) + ' BTC' : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)}`,
-    });
-  }
-  // Hash rate (EH/s) — series is in TH/s but blockchain.info "hash_rate" is GH/s.
-  // Existing chart treats it as TH/s; convert /1e9 from raw → EH/s here as
-  // specified, which matches the order-of-magnitude expected by the UI.
-  {
-    const cur = last(w.hash_rate);
-    const d = delta1d(w.hash_rate);
-    const eh = cur ? cur.value / 1e9 : null;
-    items.push({
-      label: 'Hash rate',
-      val: eh != null ? fmtNum(eh, 0) + ' EH/s' : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)}`,
-    });
-  }
-
-  // --- Derived "tracking-style" KPIs ----------------------------------
-  // Helper: read .value at offset from the end (0 = latest, 1 = yesterday).
-  const at = (series, back) => {
-    const arr = series || [];
-    const i = arr.length - 1 - back;
-    if (i < 0) return null;
-    const r = arr[i];
-    return (r && r.value != null) ? r.value : null;
-  };
-
-  // 7. Network velocity = tx_volume_usd / active_addresses (latest day).
-  {
-    const volCur = at(w.tx_volume_usd, 0);
-    const addrCur = at(w.active_addresses, 0);
-    const volPrev = at(w.tx_volume_usd, 1);
-    const addrPrev = at(w.active_addresses, 1);
-    const cur = (volCur != null && addrCur && addrCur !== 0) ? volCur / addrCur : null;
-    const prev = (volPrev != null && addrPrev && addrPrev !== 0) ? volPrev / addrPrev : null;
-    const d = (cur != null && prev != null && prev !== 0) ? (cur - prev) / Math.abs(prev) * 100 : null;
-    items.push({
-      label: 'Network velocity',
-      val: cur != null ? fmtUSD(cur, 'auto') : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)} · USD moved per active address`,
-    });
-  }
-
-  // 8. Miner profitability = miners_revenue_usd / (hash_rate / 1e9)  → $/EH/s.
-  {
-    const revCur = at(w.miners_revenue_usd, 0);
-    const hashCur = at(w.hash_rate, 0);
-    const revPrev = at(w.miners_revenue_usd, 1);
-    const hashPrev = at(w.hash_rate, 1);
-    const cur = (revCur != null && hashCur && hashCur !== 0) ? revCur / (hashCur / 1e9) : null;
-    const prev = (revPrev != null && hashPrev && hashPrev !== 0) ? revPrev / (hashPrev / 1e9) : null;
-    const d = (cur != null && prev != null && prev !== 0) ? (cur - prev) / Math.abs(prev) * 100 : null;
-    items.push({
-      label: 'Miner profitability',
-      val: cur != null ? fmtUSD(cur, 'auto') : '—',
-      cls: deltaClass(d),
-      sub: `1d ${deltaStr(d)} · revenue per EH/s of hashpower`,
-    });
-  }
-
-  // 9. 7d tx volume — sum of last 7d vs prior 7d.
-  {
-    const arr = (w.tx_volume_usd || []).map(r => r && r.value).filter(v => v != null);
-    let cur = null, prev = null, d = null;
-    if (arr.length >= 7) {
-      cur = arr.slice(-7).reduce((s,v) => s+v, 0);
-    }
-    if (arr.length >= 14) {
-      prev = arr.slice(-14, -7).reduce((s,v) => s+v, 0);
-      if (prev !== 0) d = (cur - prev) / Math.abs(prev) * 100;
-    }
-    items.push({
-      label: '7d tx volume',
-      val: cur != null ? fmtUSD(cur, 'auto') : '—',
-      cls: deltaClass(d),
-      sub: `vs prior 7d: ${deltaStr(d)}`,
-    });
-  }
-
-  // 10. 30d range position for active addresses — percentile within min↔max.
-  {
-    const arr = (w.active_addresses || []).slice(-30).map(r => r && r.value).filter(v => v != null);
-    let pct = null;
-    if (arr.length >= 2) {
-      const mn = Math.min(...arr);
-      const mx = Math.max(...arr);
-      const cur = arr[arr.length - 1];
-      if (mx !== mn && cur != null) pct = (cur - mn) / (mx - mn) * 100;
-      else if (mx === mn && cur != null) pct = 100; // flat series → top of range
-    }
-    let cls = '';
-    if (pct != null) {
-      if (pct >= 66) cls = 'green';
-      else if (pct <= 33) cls = 'red';
-      else cls = 'amber';
-    }
-    items.push({
-      label: '30d range position',
-      val: pct != null ? pct.toFixed(0) + '%' : '—',
-      cls,
-      sub: 'of 30d active-address range',
-    });
-  }
-
-  document.getElementById('whaleKpis').innerHTML = items.map(i =>
-    `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
-  ).join('');
-
-  // "data as of" badge — show freshest date across primary series so the user
-  // notices when blockchain.info is stale.
-  const asOfEl = document.getElementById('whaleAsOf');
-  if (asOfEl){
-    const candidates = [w.tx_volume_usd, w.active_addresses, w.large_tx]
-      .map(s => last(s))
-      .filter(p => p && p.date);
-    if (!candidates.length){
-      asOfEl.textContent = '';
-      asOfEl.style.color = '';
-    } else {
-      const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
-      const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
-      const ageStr = ageDays <= 0 ? 'today' : `${ageDays}d ago`;
-      asOfEl.textContent = `data as of ${freshest} (${ageStr})`;
       asOfEl.style.color = ageDays > 7 ? '#f59e0b' : '';
     }
   }
@@ -11530,8 +11324,8 @@ function renderAviationTab(){
   if (loadingEl) loadingEl.classList.add('hidden');
   if (sectionEl) sectionEl.classList.remove('hidden');
   if (_avBooted) return;   // sub-views persist in the DOM across tab switches; render once
-  _avBooted = true;
-  avBootAviation(data);
+  try { avBootAviation(data); _avBooted = true; }   // only latch on success so a partial-data throw can retry on a later visit
+  catch(e){ if (loadingEl){ loadingEl.classList.remove('hidden'); loadingEl.textContent = 'Aviation render failed: ' + ((e && e.message) || e); } }
 }
 function avBootAviation(DATA){
 
@@ -14383,6 +14177,8 @@ function renderMufon(){
 function renderMufonUpdates(){
   const el = document.getElementById('mufonUpdatesBody');
   if (!el) return;
+  const asOfEl = document.getElementById('mufonUpdatesAsOf');
+  if (asOfEl && MUFON_UPDATES.length) asOfEl.textContent = MUFON_UPDATES[0].date;
   const items = MUFON_UPDATES.map(u => {
     const linkOpen  = u.href ? '<a href="'+u.href+'" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">' : '';
     const linkClose = u.href ? ' <span style="font-size:10px;color:var(--btc);text-decoration:underline">source ↗</span></a>' : '';
@@ -14654,7 +14450,7 @@ function renderMufonTrend(){
       captionText = 'Monthly reports · (no data)';
     }
   }
-  const rangeWindow = { '5y':5, '10y':10, '20y':20, '30y':30 }[trendRange] || fullYears.length;
+  const rangeWindow = { '1y':1, '3y':3, '5y':5, '10y':10, '20y':20, '30y':30 }[trendRange] || fullYears.length;
   const visibleYears = (rangeWindow >= fullYears.length)
     ? fullYears
     : fullYears.slice(-rangeWindow);
@@ -14811,7 +14607,7 @@ function renderMufonMap(){
     wrap.innerHTML = V2.empty({icon:'🛸', title:'No sightings data',
       sub: m._error || 'Upstream CSV unavailable; retry on next dashboard refresh.',
       warm:false});
-    side.innerHTML = '';
+    if (side) side.innerHTML = '';
     if (note) note.textContent = '';
     return;
   }
@@ -14844,7 +14640,6 @@ function renderMufonMap(){
     if (!values.length) return 'var(--v2-good-bg, #1f3b2a)';
     const idx = values.indexOf(c);
     const q = idx / Math.max(1, values.length - 1); // 0..1
-    if (q < 0.20) return 'var(--v2-good, #4ade80)';
     if (q < 0.45) return 'var(--v2-good, #4ade80)';
     if (q < 0.70) return 'var(--v2-warn, #fbbf24)';
     if (q < 0.90) return 'var(--v2-orange, #fb923c)';
@@ -14867,7 +14662,7 @@ function renderMufonMap(){
     const stroke = isSel ? 'var(--v2-info, #38bdf8)' : 'rgba(255,255,255,0.08)';
     const strokeW = isSel ? 2.5 : 1;
     return ''
-      + '<g class="mufonTile" data-state="'+code+'" style="cursor:pointer">'
+      + '<g class="mufonTile" data-state="'+code+'" role="button" tabindex="0" style="cursor:pointer">'
       +   '<rect x="'+x+'" y="'+y+'" width="'+CELL+'" height="'+CELL+'" rx="6" '
       +     'fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+strokeW+'">'
       +     '<title>'+ (MUFON_STATE_NAMES[code]||code) +': '+c.toLocaleString()+' sightings</title>'
@@ -14911,6 +14706,7 @@ function renderMufonMap(){
       state.mufonSelectedState = (state.mufonSelectedState === s) ? null : s;
       renderMufonMap(); // re-render to update stroke + side panel
     });
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); g.click(); } });
   });
 
   // Side panel: top-10 cities for the selected state (or top-10 states overall).
@@ -14927,7 +14723,7 @@ function renderMufonMap(){
       + (cities.length
           ? '<div style="font-size:11px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Top cities (all-time)</div>'
             + '<ol style="margin:0;padding-left:18px;line-height:1.7">'
-            +   cities.map(c => '<li>'+c.city+' <span style="color:var(--muted)">— '+c.count.toLocaleString()+'</span></li>').join('')
+            +   cities.map(c => '<li>'+escapeHtml(c.city)+' <span style="color:var(--muted)">— '+c.count.toLocaleString()+'</span></li>').join('')
             + '</ol>'
           : '<div style="font-size:11px;color:var(--muted);font-style:italic">No per-city detail available.</div>');
     const closeBtn = document.getElementById('mufonSideClose');
@@ -15107,7 +14903,7 @@ function renderMufonShapesMonths(m, monthKeys, totals, byMonth, activeRange, ran
     return ''
       + '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
       +   '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color + '"></span>'
-      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + r.shape + '</span>'
+      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + escapeHtml(r.shape) + '</span>'
       +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums">' + r.count.toLocaleString() + '</span>'
       +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>'
       + '</li>';
@@ -15375,7 +15171,7 @@ function renderMufonShapes(){
     return ''
       + '<li style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px">'
       +   '<span style="display:inline-block;width:12px;height:12px;border-radius:3px;flex:0 0 auto;background:' + color + '"></span>'
-      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + r.shape + '</span>'
+      +   '<span style="flex:1;min-width:0;text-transform:capitalize">' + escapeHtml(r.shape) + '</span>'
       +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums">' + r.count.toLocaleString() + '</span>'
       +   '<span style="color:var(--muted);font-variant-numeric:tabular-nums;width:42px;text-align:right">' + pct.toFixed(1) + '%</span>'
       + '</li>';
@@ -15555,7 +15351,8 @@ function renderCityTab(){
   if (!data || !cities.length){
     if (asOfEl) asOfEl.textContent = 'as of —';
     const grid = document.getElementById('cityGrid');
-    if (grid) grid.innerHTML = '<div class="empty" style="padding:24px 12px;grid-column:1/-1">City Pulse data not yet loaded.</div>';
+    const cityMsg = SIDECAR_STATE.city === 'error' ? 'City Pulse data failed to load — check data-city.json.' : 'City Pulse data not yet loaded.';
+    if (grid) grid.innerHTML = '<div class="empty" style="padding:24px 12px;grid-column:1/-1">' + cityMsg + '</div>';
     const detail = document.getElementById('cityDetail');
     if (detail) detail.innerHTML = '';
     renderCityMethodology(data);   // still render any disclosures we do have
@@ -15955,7 +15752,7 @@ function renderCityCompare(cities){
     +   '<div class="head" style="align-items:flex-start">'
     +     '<div>'
     +       '<h2 style="margin:0;font-size:15px">Cross-city context levels</h2>'
-    +       '<div class="desc">Levels of cost, taxes, income, jobs &amp; air across the 6 cities, plus the transparent Context composite. Click a column header to sort.</div>'
+    +       '<div class="desc">Levels of cost, taxes, income, jobs &amp; air across the ' + cities.length + ' cities, plus the transparent Context composite. Click a column header to sort.</div>'
     +     '</div>'
     +   '</div>'
     // The guardrail caption — the spec's core principle, made prominent.
