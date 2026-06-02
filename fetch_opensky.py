@@ -34,7 +34,7 @@ TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protoc
 OUT = os.path.join(os.path.dirname(__file__), "data-opensky.json")
 OUT_POS = os.path.join(os.path.dirname(__file__), "data-opensky-positions.json")
 UA = "btc-eth-etf-dashboard/aviation-tab (non-commercial)"
-MAX_POINTS = 4000
+MAX_POINTS = 2000
 STR_CAP = 24  # max chars for any external string in positions output
 
 
@@ -118,7 +118,7 @@ def positions(d):
       s[8]  on_ground       s[10] true_track       s[1]  callsign
       s[2]  origin_country
 
-    Caps output at MAX_POINTS (4000) and sanitizes external strings to STR_CAP chars.
+    Caps output at MAX_POINTS (2000) and sanitizes external strings to STR_CAP chars.
     """
     sv = [s for s in (d.get("states") or []) if s and len(s) > 10]
     ts = d.get("time") or int(time.time())
@@ -139,7 +139,7 @@ def positions(d):
 
         # True track / heading; None if missing
         heading = s[10]
-        heading = round(heading, 1) if heading is not None else None
+        heading = round(heading) if heading is not None else None
 
         # Callsign: strip whitespace, cap to STR_CAP chars
         raw_cs = s[1]
@@ -149,10 +149,10 @@ def positions(d):
         raw_oc = s[2]
         origin_country = (raw_oc.strip()[:STR_CAP] if raw_oc else "")
 
-        points.append([round(lat, 3), round(lon, 3), alt_ft, heading, callsign, origin_country])
+        points.append([round(lat, 2), round(lon, 2), alt_ft, heading, callsign, origin_country])
 
         if len(points) >= MAX_POINTS:
-            break  # hard cap — already have 4000 points
+            break  # hard cap — already have 2000 points
 
     return {
         "ts": ts,

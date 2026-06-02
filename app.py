@@ -11903,7 +11903,7 @@ function selectTab(t){
   // tab's empty-state handles that), then re-runs once the fetch lands.
   const _sc = SIDECAR_FOR_TAB[t];
   if (_sc && (SIDECARS||{})[_sc] && SIDECAR_STATE[_sc] !== 'loaded'){
-    loadSidecar(_sc).then(loaded => { if (state.tab === t && loaded) renderAll(); });
+    loadSidecar(_sc).then(loaded => { if (state.tab === t) renderAll(); });
   }
   // Close any open detail modals when switching tabs — leaving a POC or
   // Stocks modal floating over an unrelated tab is disorienting.
