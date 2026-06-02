@@ -240,7 +240,7 @@
     },
     {
       "ticker": "ADBE",
-      "lthcs_score": 51.9,
+      "lthcs_score": 51.6,
       "band": "weakening",
       "drift_1d": 2.0,
       "drift_7d": 3.5,
@@ -252,7 +252,7 @@
         "adoption_momentum": 51.8,
         "institutional_confidence": 24.8,
         "financial_evolution": 72.2,
-        "thesis_integrity": 65.4,
+        "thesis_integrity": 63.9,
         "des": 45.5
       },
       "modifiers": {
@@ -280,7 +280,7 @@
         10.36,
         4.960000000000001,
         14.440000000000001,
-        13.080000000000002,
+        12.780000000000001,
         9.1
       ],
       "sector": "Technology"
@@ -3870,7 +3870,7 @@
         "adoption_momentum": 30.8,
         "institutional_confidence": 51.1,
         "financial_evolution": 53.2,
-        "thesis_integrity": 61.9,
+        "thesis_integrity": 72.6,
         "des": 44.6
       },
       "modifiers": {
@@ -5809,7 +5809,7 @@
         "adoption_momentum": 19.6,
         "institutional_confidence": 93.7,
         "financial_evolution": 59.8,
-        "thesis_integrity": 66.8,
+        "thesis_integrity": 53.0,
         "des": 45.5
       },
       "modifiers": {
@@ -6982,7 +6982,7 @@
         "adoption_momentum": 47.8,
         "institutional_confidence": 64.1,
         "financial_evolution": 58.9,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 68.7,
         "des": 41.0
       },
       "modifiers": {
@@ -7339,7 +7339,7 @@
         "adoption_momentum": 5.0,
         "institutional_confidence": 32.2,
         "financial_evolution": 38.3,
-        "thesis_integrity": 67.8,
+        "thesis_integrity": 50.3,
         "des": 47.8
       },
       "modifiers": {
@@ -10298,7 +10298,7 @@
         "adoption_momentum": 99.4,
         "institutional_confidence": 58.3,
         "financial_evolution": 84.1,
-        "thesis_integrity": 73.3,
+        "thesis_integrity": 75.2,
         "des": 41.0
       },
       "modifiers": {
