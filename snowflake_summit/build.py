@@ -437,6 +437,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 
   <div class="note" id="note"></div>
+  <div class="totop no-print" style="text-align:center;margin:14px 0 2px"><button id="toTop" type="button" class="dl" style="cursor:pointer;margin:0">↑ Back to top</button></div>
 </div>
 
 <div id="newsView">
@@ -808,6 +809,7 @@ draw();
 // Download / print to PDF — the @media print stylesheet restyles the page; the
 // browser print dialog saves the whole dashboard (all sections + current MQ view).
 (function(){var b=document.getElementById('pdfBtn');if(b)b.addEventListener('click',function(){window.print();});})();
+(function(){var t=document.getElementById('toTop');if(t)t.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
 
 document.getElementById('note').innerHTML =
   `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
