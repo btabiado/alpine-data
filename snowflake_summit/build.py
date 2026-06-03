@@ -326,13 +326,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .filterrow select{width:100%;min-width:0;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:11px}
   .ovrbar{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
   /* Summit News feed */
-  .newsfeed{border:1px solid var(--border);border-radius:10px}
-  .nitem{display:flex;gap:15px;padding:16px 20px;border-bottom:1px solid var(--border)}
-  .nitem:last-child{border-bottom:none}
-  .nitem:hover{background:var(--panel2)}
+  .nitem{display:flex;gap:16px;padding:22px 24px;margin-bottom:14px;background:linear-gradient(160deg,#15233f,#101a30);border:1px solid var(--border);border-radius:12px}
+  .nitem:last-child{margin-bottom:0}
+  .nitem:hover{border-color:var(--accent);background:linear-gradient(160deg,#18294a,#111c34)}
   .nitem .nd{font-size:12px;color:var(--muted);white-space:nowrap;min-width:76px;font-variant-numeric:tabular-nums;padding-top:3px}
   .nitem .nbody{flex:1;min-width:0}
-  .nitem .nh{font-size:16px;font-weight:600;line-height:1.42}
+  .nitem .nh{font-size:17px;font-weight:600;line-height:1.45}
   .nitem .nh a{color:var(--text);text-decoration:none}
   .nitem .nh a:hover{color:var(--accent);text-decoration:underline}
   .nitem .nh a .ext{font-size:.82em;color:var(--accent);margin-left:4px;opacity:.75;text-decoration:none;font-weight:400}
@@ -352,7 +351,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .zbtn:hover{border-color:var(--accent);color:#dff3ff}
   .zlevel{font-size:11px;color:var(--muted);min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
   .nitem .nmeta{font-size:12.5px;color:var(--muted);margin-top:7px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-  .nitem .nsum{font-size:13.5px;color:#b9c8e6;margin-top:7px;white-space:normal;line-height:1.55}
+  .nitem .nsum{font-size:14px;color:#c3d2ee;margin-top:8px;white-space:normal;line-height:1.6}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
   .note{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55;border-top:1px solid var(--border);padding-top:14px}
   .note code{color:var(--accent)}
