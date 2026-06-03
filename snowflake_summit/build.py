@@ -716,9 +716,9 @@ draw();
   const chart=new Chart(document.getElementById('mqChart'),{type:'scatter',data:{datasets:datasetsFor(ALL)},
     options:{maintainAspectRatio:false,animation:false,
       plugins:{legend:{labels:{color:C.tick,usePointStyle:true}},
-        tooltip:{callbacks:{
+        tooltip:{displayColors:false,padding:16,titleFont:{size:18,weight:'700'},bodyFont:{size:16},bodySpacing:7,callbacks:{
           title:c=>c[0].raw.name,
-          label:c=>[c.raw.q+' · Tier '+c.raw.tier,'Execute '+c.raw.ex+' · Vision '+c.raw.vi+' · Overall '+c.raw.ov, c.raw.cat]}}},
+          label:c=>['Tier '+c.raw.tier+' · '+c.raw.q,'Overall  '+c.raw.ov+' / 10','Execute '+c.raw.ex+'  ·  Vision '+c.raw.vi, c.raw.cat]}}},
       scales:{
         x:{min:3,max:10,title:{display:true,text:'Completeness of Vision  →   (AI + IPO/Upside)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}},
         y:{min:3,max:10,title:{display:true,text:'Ability to Execute  →   (Snowflake + Retail)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}}}},
