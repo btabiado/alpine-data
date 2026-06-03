@@ -337,6 +337,15 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .nitem .nh a:hover{color:var(--accent);text-decoration:underline}
   .nitem .nh a .ext{font-size:.82em;color:var(--accent);margin-left:4px;opacity:.75;text-decoration:none;font-weight:400}
   .nitem .nh a:hover .ext{opacity:1}
+  /* News-only view (opened in its own window via ?view=news) + category buckets */
+  #newsView{display:none}
+  body.newsmode>header,body.newsmode #dashwrap{display:none}
+  body.newsmode #newsView{display:block}
+  .bucketbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .bchip{background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;user-select:none;white-space:nowrap}
+  .bchip:hover{color:var(--text)}
+  .bchip.on{background:var(--accent2);border-color:var(--accent);color:#dff3ff}
+  .bchip .bc{opacity:.65;font-weight:400;margin-left:2px}
   .nitem .nmeta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
   .nitem .nsum{font-size:11.5px;color:#b9c8e6;margin-top:5px;white-space:normal;line-height:1.45}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
@@ -353,28 +362,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <h1>Snowflake Summit 2026 — Partner Scouting Dashboard</h1>
       <div class="sub" id="subhead"></div>
     </div>
-    <a class="dl" href="#news" style="margin-left:auto">📰 Summit News</a>
+    <a class="dl" href="?view=news" target="_blank" rel="noopener" style="margin-left:auto" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
     <a class="dl" href="#mq" style="margin-left:0">📊 Magic Quadrant</a>
     <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
     <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
   </div>
 </header>
-<div class="wrap">
+<div class="wrap" id="dashwrap">
   <div class="kpis" id="kpis"></div>
-
-  <h3 class="sec" id="news">📰 Summit News <span class="hint">— live Snowflake Summit 2026 announcements from partner vendors</span></h3>
-  <div class="panel">
-    <div class="controls" style="margin-bottom:11px">
-      <span class="sub" id="newsMeta"></span>
-      <label class="sub" style="margin-left:auto;align-self:center">Relevance</label>
-      <select id="newsRel"><option value="">All</option><option value="high">High only</option><option value="medium">High + Medium</option></select>
-      <label class="sub" style="align-self:center">Vendor</label>
-      <select id="newsVendor"><option value="">All vendors</option></select>
-    </div>
-    <div class="newsfeed" id="newsfeed"></div>
-    <div class="sub" id="newsEmpty" style="display:none;padding:16px 4px">No partner Summit announcements gathered yet — the feed populates on the next research run.</div>
-    <div class="sub" style="margin-top:11px;line-height:1.5">Gathered by AI research agents searching public news / press per vendor; each link opens the primary source. Directional — verify before relying. Refreshes whenever the feed is rebuilt.</div>
-  </div>
 
   <div class="topbar">
     <div class="searchwrap">
@@ -449,11 +444,46 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="note" id="note"></div>
 </div>
 
+<div id="newsView">
+  <header>
+    <div class="brand">
+      <div class="logo">📰</div>
+      <div>
+        <h1>Snowflake Summit 2026 — Partner News</h1>
+        <div class="sub">Live announcements from partner vendors · its own window</div>
+      </div>
+      <a class="dl" href="./" style="margin-left:auto">← Back to dashboard</a>
+    </div>
+  </header>
+  <div class="wrap">
+    <h3 class="sec" id="news">📰 Summit News <span class="hint">— Snowflake Summit 2026 announcements from partner vendors, by category</span></h3>
+    <div id="newsBuckets" class="bucketbar"></div>
+    <div class="panel">
+      <div class="controls" style="margin-bottom:11px">
+        <span class="sub" id="newsMeta"></span>
+        <label class="sub" style="margin-left:auto;align-self:center">Relevance</label>
+        <select id="newsRel"><option value="">All</option><option value="high">High only</option><option value="medium">High + Medium</option></select>
+        <label class="sub" style="align-self:center">Vendor</label>
+        <select id="newsVendor"><option value="">All vendors</option></select>
+      </div>
+      <div class="newsfeed" id="newsfeed"></div>
+      <div class="sub" id="newsEmpty" style="display:none;padding:16px 4px">No partner Summit announcements gathered yet — the feed populates on the next research run.</div>
+      <div class="sub" style="margin-top:11px;line-height:1.5">Gathered by AI research agents searching public news / press per vendor; each link opens the primary source. Directional — verify before relying. Refreshes whenever the feed is rebuilt.</div>
+    </div>
+  </div>
+</div>
+
 <script>
 const DATA = /*__DATA__*/;
 const fmt = n => (n===null||n===undefined||n==='')?"—":n;
 const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const tierClass = t => ({A:'tA',B:'tB',C:'tC',D:'tD'})[t]||'tC';
+
+// View router: ?view=news opens the news-only view (in its own window).
+if(new URLSearchParams(location.search).get('view')==='news'){
+  document.body.classList.add('newsmode');
+  document.title='Summit News — Snowflake Summit 2026';
+}
 
 document.getElementById('subhead').textContent =
   `${DATA.vendors.length} partners · ${DATA.meta.event||''} · scoring by ${DATA.meta.owner||'owner'} · source: ${DATA.source}`;
@@ -534,23 +564,42 @@ document.querySelectorAll('#vtable thead tr:first-child th').forEach(th=>th.oncl
 ['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);typeSel.addEventListener(e,draw);});
 draw();
 
-// Summit News feed — partner announcements gathered per vendor (see load_news()
-// in build.py). Newest first; filter by relevance / vendor; links open the
-// primary source. Every field is esc()-escaped and URLs are http(s)-only.
+// Summit News feed (news-only view, ?view=news). Category buckets + relevance /
+// vendor filters. Newest first. Every field esc()-escaped; URLs http(s)-only.
 (function(){
   var feed=document.getElementById('newsfeed'), metaEl=document.getElementById('newsMeta'),
       relSel=document.getElementById('newsRel'), venSel=document.getElementById('newsVendor'),
-      empty=document.getElementById('newsEmpty');
+      empty=document.getElementById('newsEmpty'), bucketBar=document.getElementById('newsBuckets');
   if(!feed) return;
   var news=(DATA.news||[]).slice();
-  var tierOf={}; DATA.vendors.forEach(function(v){tierOf[v.name]=v.tier;});
+  var tierOf={}; (DATA.vendors||[]).forEach(function(v){tierOf[v.name]=v.tier;});
   var relRank={high:3,medium:2,low:1}, relColor={high:'#34d399',medium:'#fbbf24',low:'#64748b'};
+  function bucketOf(n){
+    var t=((n.headline||'')+' '+(n.summary||'')).toLowerCase();
+    if(/partner of the year|\baward|recogniz/.test(t)) return 'Awards';
+    if(/acqui|\bmerger|\bmerge\b|raises|\bfunding|series [a-e]\b|seed round|invest/.test(t)) return 'M&A / Funding';
+    if(/marketplace|native app|integrat|connector|interoperab/.test(t)) return 'Integrations';
+    if(/launch|unveil|introduc|\bdebut|general availability|announces? new|new .{0,20}capabilit/.test(t)) return 'Launches';
+    if(/\bbooth|session|reception|happy hour|keynote|\bevent|exhibit|aperitif/.test(t)) return 'Events & Booths';
+    if(/partnership|collaborat|\bjoins\b|expand|alliance/.test(t)) return 'Partnerships';
+    return 'Other';
+  }
+  var BUCKETS=['Awards','Launches','Integrations','Partnerships','Events & Booths','M&A / Funding','Other'];
+  var ICON={'Awards':'🏆','Launches':'🚀','Integrations':'🔗','Partnerships':'🤝','Events & Booths':'📅','M&A / Funding':'💰','Other':'•'};
+  news.forEach(function(n){ n._bucket=bucketOf(n); });
   news.sort(function(a,b){var d=String(b.date||'').localeCompare(String(a.date||''));return d!==0?d:((relRank[b.relevance]||0)-(relRank[a.relevance]||0));});
-  metaEl.textContent = news.length ? (news.length+' announcement'+(news.length===1?'':'s')+(DATA.news_generated?(' · gathered '+DATA.news_generated):'')) : 'Feed is empty';
   Array.from(new Set(news.map(function(n){return n.vendor;}))).sort().forEach(function(v){venSel.add(new Option(v,v));});
+  var bucketFilter='';
+  if(bucketBar){
+    var counts={}; news.forEach(function(n){counts[n._bucket]=(counts[n._bucket]||0)+1;});
+    var chips=[['','All',news.length]].concat(BUCKETS.filter(function(b){return counts[b];}).map(function(b){return [b, ICON[b]+' '+b, counts[b]];}));
+    bucketBar.innerHTML=chips.map(function(c){return '<span class="bchip'+(c[0]===''?' on':'')+'" data-b="'+esc(c[0])+'">'+esc(c[1])+' <span class="bc">'+c[2]+'</span></span>';}).join('');
+    bucketBar.querySelectorAll('.bchip').forEach(function(ch){ch.addEventListener('click',function(){bucketFilter=ch.getAttribute('data-b');bucketBar.querySelectorAll('.bchip').forEach(function(x){x.classList.remove('on');});ch.classList.add('on');render();});});
+  }
   function render(){
     var rf=relSel.value, vf=venSel.value, min=relRank[rf]||0;
-    var rows=news.filter(function(n){return (!rf||(relRank[n.relevance]||0)>=min)&&(!vf||n.vendor===vf);});
+    var rows=news.filter(function(n){return (!rf||(relRank[n.relevance]||0)>=min)&&(!vf||n.vendor===vf)&&(!bucketFilter||n._bucket===bucketFilter);});
+    metaEl.textContent = news.length ? (rows.length+' of '+news.length+' announcement'+(news.length===1?'':'s')+(DATA.news_generated?(' · gathered '+DATA.news_generated):'')) : 'Feed is empty';
     empty.style.display = rows.length?'none':'block';
     feed.style.display = rows.length?'block':'none';
     feed.innerHTML = rows.map(function(n){
@@ -561,7 +610,7 @@ draw();
         '<div class="nd">'+esc(n.date||'')+'</div>'+
         '<div class="nbody">'+
           '<div class="nh"><span class="rdot" style="background:'+(relColor[n.relevance]||'#64748b')+'"></span>'+head+'</div>'+
-          '<div class="nmeta"><span class="tag '+tierClass(t)+'">'+esc(n.vendor)+' · '+t+'</span><span>'+esc(n.source||'')+'</span></div>'+
+          '<div class="nmeta"><span class="tag '+tierClass(t)+'">'+esc(n.vendor)+' · '+t+'</span><span>'+esc(n._bucket)+'</span><span>'+esc(n.source||'')+'</span></div>'+
           (n.summary?('<div class="nsum">'+esc(n.summary)+'</div>'):'')+
         '</div></div>';
     }).join('');
