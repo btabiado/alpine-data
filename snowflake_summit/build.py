@@ -346,6 +346,11 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .bchip:hover{color:var(--text)}
   .bchip.on{background:var(--accent2);border-color:var(--accent);color:#dff3ff}
   .bchip .bc{opacity:.65;font-weight:400;margin-left:2px}
+  /* A-/A+ text-zoom control */
+  .zoomctl{display:inline-flex;align-items:center;gap:6px}
+  .zbtn{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:7px;min-width:30px;height:30px;font-size:14px;font-weight:700;cursor:pointer;padding:0 6px}
+  .zbtn:hover{border-color:var(--accent);color:#dff3ff}
+  .zlevel{font-size:11px;color:var(--muted);min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
   .nitem .nmeta{font-size:12.5px;color:var(--muted);margin-top:7px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
   .nitem .nsum{font-size:13.5px;color:#b9c8e6;margin-top:7px;white-space:normal;line-height:1.55}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
@@ -366,6 +371,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <a class="dl" href="#mq" style="margin-left:0">📊 Magic Quadrant</a>
     <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
     <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
+    <span class="zoomctl" title="Text size" style="margin-left:10px"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
   </div>
 </header>
 <div class="wrap" id="dashwrap">
@@ -452,7 +458,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <h1>Snowflake Summit 2026 — Partner News</h1>
         <div class="sub">Live announcements from partner vendors · its own window</div>
       </div>
-      <a class="dl" href="./" style="margin-left:auto">← Back to dashboard</a>
+      <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <a class="dl" href="?" style="margin-left:14px">← Back to dashboard</a>
     </div>
   </header>
   <div class="wrap">
@@ -484,6 +491,15 @@ if(new URLSearchParams(location.search).get('view')==='news'){
   document.body.classList.add('newsmode');
   document.title='Summit News — Snowflake Summit 2026';
 }
+
+// A-/A+ text zoom — scales the page via CSS zoom; persists across visits + views.
+(function(){
+  var z=parseFloat(localStorage.getItem('summitZoom')); if(!z||isNaN(z)) z=1;
+  function apply(){document.documentElement.style.zoom=z;document.querySelectorAll('.zlevel').forEach(function(e){e.textContent=Math.round(z*100)+'%';});}
+  function step(d){z=Math.min(1.6,Math.max(0.8,Math.round((z+d)*100)/100));localStorage.setItem('summitZoom',String(z));apply();}
+  document.querySelectorAll('.zbtn').forEach(function(b){b.addEventListener('click',function(){step(b.getAttribute('data-zoom')==='in'?0.1:-0.1);});});
+  apply();
+})();
 
 document.getElementById('subhead').textContent =
   `${DATA.vendors.length} partners · ${DATA.meta.event||''} · scoring by ${DATA.meta.owner||'owner'} · source: ${DATA.source}`;
