@@ -16,6 +16,7 @@ Usage:
 import json
 import sys
 import os
+import hashlib
 from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -83,7 +84,83 @@ def aggregate_count(vendors, key):
     return dict(sorted(out.items(), key=lambda kv: -kv[1]))
 
 
+def _jitter(name, salt):
+    """Deterministic ±0.2 jitter (md5 of name) so dots on the coarse score grid
+    don't overplot, while the build stays byte-reproducible."""
+    h = int(hashlib.md5((str(name) + salt).encode("utf-8")).hexdigest(), 16)
+    return ((h % 1000) / 1000.0 - 0.5) * 0.4
+
+
+def magic_quadrant(vendors):
+    """Gartner-style Magic Quadrant from the 0-10 scores. Ability to Execute (Y)
+    = mean(Snowflake, Retail/Customer); Completeness of Vision (X) = mean(AI,
+    IPO/Upside). Cross at the cohort MEAN of each axis. mq_x/mq_y carry jitter
+    for plotting; mq_execute/mq_vision keep the true values for the tooltip."""
+    for v in vendors:
+        ex = avg([v.get("snowflake_score"), v.get("retail_score")])
+        vi = avg([v.get("ai_score"), v.get("ipo_score")])
+        v["mq_execute"] = ex
+        v["mq_vision"] = vi
+        v["mq_x"] = max(0.0, min(10.0, round(vi + _jitter(v.get("name"), "x"), 3)))
+        v["mq_y"] = max(0.0, min(10.0, round(ex + _jitter(v.get("name"), "y"), 3)))
+    tx = round(sum(v["mq_vision"] for v in vendors) / len(vendors), 2) if vendors else 5.0
+    ty = round(sum(v["mq_execute"] for v in vendors) / len(vendors), 2) if vendors else 5.0
+    counts = {"Leaders": 0, "Challengers": 0, "Visionaries": 0, "Niche Players": 0}
+    for v in vendors:
+        hi_e = v["mq_execute"] >= ty
+        hi_v = v["mq_vision"] >= tx
+        q = ("Leaders" if (hi_e and hi_v) else "Challengers" if hi_e
+             else "Visionaries" if hi_v else "Niche Players")
+        v["mq_quadrant"] = q
+        counts[q] += 1
+    return {"tx": tx, "ty": ty, "counts": counts}
+
+
+def magic_quadrant_segments(vendors, min_n=5, var_floor=1.0):
+    """Per-niche Magic Quadrant metadata for the drill-down, keyed on the
+    workbook's own `niche` taxonomy. Niches below min_n fold into 'Other' so the
+    selector has no degenerate quadrants. Each niche gets its OWN cohort-mean
+    cross (segment-relative). `drillable` is false when the cohort is too flat
+    (var < var_floor) — e.g. the ~57-vendor 'Data Ecosystem' bucket whose
+    template scores give ~0 variance — so the UI caveats it as a ranked list."""
+    import statistics as _st
+    from collections import Counter
+    for v in vendors:
+        v["mq_segment"] = v.get("niche") or "Other"
+    sizes = Counter(v["mq_segment"] for v in vendors)
+    for v in vendors:
+        if sizes[v["mq_segment"]] < min_n:
+            v["mq_segment"] = "Other"
+    groups = {}
+    for v in vendors:
+        groups.setdefault(v["mq_segment"], []).append(v)
+    out = []
+    for label, vs in groups.items():
+        n = len(vs)
+        exs = [v["mq_execute"] for v in vs]
+        vis = [v["mq_vision"] for v in vs]
+        tx = round(sum(vis) / n, 2)
+        ty = round(sum(exs) / n, 2)
+        var = round(_st.pstdev(exs) + _st.pstdev(vis), 2) if n > 1 else 0.0
+        counts = {"Leaders": 0, "Challengers": 0, "Visionaries": 0, "Niche Players": 0}
+        for v in vs:
+            hi_e = v["mq_execute"] >= ty
+            hi_v = v["mq_vision"] >= tx
+            counts["Leaders" if (hi_e and hi_v) else "Challengers" if hi_e
+                   else "Visionaries" if hi_v else "Niche Players"] += 1
+        out.append({
+            "label": label, "n": n, "tx": tx, "ty": ty, "var": var,
+            "skew": round(max(counts.values()) / n, 2),
+            "drillable": bool(n >= min_n and var >= var_floor),
+            "counts": counts, "tierA": sum(1 for v in vs if v.get("tier") == "A"),
+        })
+    out.sort(key=lambda s: (-s["n"], s["label"]))
+    return out
+
+
 def render(meta, vendors, src_path):
+    mq = magic_quadrant(vendors)
+    mq_segments = magic_quadrant_segments(vendors)
     by_cat = aggregate_count(vendors, "category")
     by_niche = aggregate_count(vendors, "niche")
     by_tier = {t: sum(1 for v in vendors if v.get("tier") == t) for t in ["A", "B", "C", "D"]}
@@ -110,6 +187,8 @@ def render(meta, vendors, src_path):
         "must_see": tierA,
         "gems": [v for v in vendors if v["hidden_gem"] and v.get("tier") != "A"][:6],
         "best_fit": sorted(vendors, key=lambda v: -(v.get("bryan_score") or 0))[:6],
+        "mq": mq,
+        "mq_segments": mq_segments,
         "vendors": vendors,
     }
     html = HTML_TEMPLATE.replace("/*__DATA__*/", json.dumps(payload, ensure_ascii=False))
@@ -174,6 +253,21 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .tA{background:rgba(52,211,153,.16);color:var(--A)}.tB{background:rgba(251,191,36,.16);color:var(--B)}
   .tC{background:rgba(100,116,139,.2);color:#aab6c9}.tD{background:rgba(100,116,139,.2);color:#aab6c9}
   .tNi{background:rgba(41,181,232,.16);color:#7fd6f5;border:1px solid rgba(41,181,232,.3)}
+  /* Print / Save-as-PDF: keep the dark theme (so the canvas charts render as on
+     screen), hide interactive controls, and expand the table so the WHOLE
+     dashboard lands in the PDF. print-color-adjust:exact makes browsers keep
+     the panel/background colours. */
+  @media print{
+    @page{margin:9mm}
+    html,body{background:#0b1020 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .no-print,.dl,.controls,#search,#mqBack,#mqSegSel{display:none !important}
+    .wrap{max-width:none;padding:8px 2px}
+    .grid,.cards{grid-template-columns:1fr !important}
+    .panel,.card2,.kpi,canvas{break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    h3.sec{break-after:avoid;page-break-after:avoid}
+    .scroll{max-height:none !important;overflow:visible !important}
+    table{font-size:10px}
+  }
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
   .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-bottom:16px}
   .grid h4,.panel h4{margin:0 0 12px;font-size:13.5px;font-weight:700}
@@ -212,6 +306,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
     <a class="dl" href="../" style="margin-left:auto;background:transparent;border-color:var(--border);color:var(--muted)" title="Back to the main dashboard">← Main dashboard</a>
     <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
+    <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
   </div>
 </header>
 <div class="wrap">
@@ -261,6 +356,24 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       </tr></thead>
       <tbody></tbody>
     </table>
+    </div>
+  </div>
+
+  <h3 class="sec">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h3>
+  <div class="panel">
+    <div class="controls" style="margin-bottom:8px">
+      <label class="sub" style="align-self:center">Drill into niche:</label>
+      <select id="mqSegSel"></select>
+      <button id="mqBack" type="button" style="display:none;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;font-size:12px;cursor:pointer">← All partners</button>
+      <span id="mqCrumb" class="sub" style="align-self:center"></span>
+    </div>
+    <div id="mqLegend" class="sub" style="margin-bottom:10px"></div>
+    <div style="height:560px;position:relative">
+      <canvas id="mqChart" style="max-height:560px"></canvas>
+    </div>
+    <div id="mqCaveat" class="sub" style="margin-top:12px;line-height:1.5;color:#cfe0ff"></div>
+    <div class="sub" style="margin-top:10px;line-height:1.55">
+      <b style="color:var(--text)">How to read:</b> <b style="color:var(--text)">Ability to Execute</b> (vertical) = mean of Snowflake &amp; Retail/Customer scores · <b style="color:var(--text)">Completeness of Vision</b> (horizontal) = mean of AI &amp; IPO/Upside scores — both on the 0–10 scale. The cross sits at the cohort <i>average</i>: <b style="color:var(--A)">Leaders</b> (execute + vision), <b style="color:var(--accent)">Challengers</b> (execute), <b style="color:var(--gem)">Visionaries</b> (vision), <b style="color:#94a3b8">Niche Players</b> (neither). Tier-A must-sees are labelled; hover any dot for exact scores. <b style="color:var(--text)">Drill-down:</b> pick a niche to see its own quadrant, re-centred on that niche's cohort average. <b>This is Bryan's directional scouting, not an official Gartner Magic Quadrant</b> — small or template-scored niches (flagged) are exploratory only.
     </div>
   </div>
 
@@ -349,6 +462,89 @@ document.querySelectorAll('#vtable th').forEach(th=>th.onclick=()=>{
   const k=th.dataset.k;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();});
 ['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);});
 draw();
+
+// ----- Magic Quadrant + niche drill-down -----
+(function(){
+  const V=DATA.vendors, SEGS=DATA.mq_segments||[];
+  const ALL={label:'All Partners',n:V.length,tx:DATA.mq.tx,ty:DATA.mq.ty,drillable:true,all:true};
+  const byLabel={}; SEGS.forEach(s=>byLabel[s.label]=s);
+  const qFill={'Leaders':'rgba(52,211,153,.07)','Challengers':'rgba(41,181,232,.06)','Visionaries':'rgba(167,139,250,.06)','Niche Players':'rgba(100,116,139,.05)'};
+  let active=ALL, mqCross={tx:ALL.tx,ty:ALL.ty};
+  const quadOf=(v,s)=>{const he=v.mq_execute>=s.ty,hv=v.mq_vision>=s.tx;return he&&hv?'Leaders':he?'Challengers':hv?'Visionaries':'Niche Players';};
+  const vendorsIn=s=>s.all?V:V.filter(v=>v.mq_segment===s.label);
+  const sel=document.getElementById('mqSegSel');
+  const mkOpt=(val,txt)=>{const o=document.createElement('option');o.value=val;o.textContent=txt;sel.appendChild(o);};
+  mkOpt('All Partners','All Partners ('+V.length+')');
+  SEGS.forEach(s=>mkOpt(s.label, s.label+' ('+s.n+')'+(s.drillable?'':' — flat')));
+  const legend=document.getElementById('mqLegend'), crumb=document.getElementById('mqCrumb'),
+        back=document.getElementById('mqBack'), caveat=document.getElementById('mqCaveat');
+  const mqPlugin={id:'mqQuad',
+    beforeDraw(ch){
+      const a=ch.chartArea, x=ch.scales.x, y=ch.scales.y; if(!a)return;
+      const ctx=ch.ctx, cx=x.getPixelForValue(mqCross.tx), cy=y.getPixelForValue(mqCross.ty);
+      ctx.save();
+      ctx.fillStyle=qFill['Leaders'];      ctx.fillRect(cx,a.top,a.right-cx,cy-a.top);
+      ctx.fillStyle=qFill['Challengers'];  ctx.fillRect(a.left,a.top,cx-a.left,cy-a.top);
+      ctx.fillStyle=qFill['Visionaries'];  ctx.fillRect(cx,cy,a.right-cx,a.bottom-cy);
+      ctx.fillStyle=qFill['Niche Players'];ctx.fillRect(a.left,cy,cx-a.left,a.bottom-cy);
+      ctx.strokeStyle='#2c3e60';ctx.lineWidth=1;ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(cx,a.top);ctx.lineTo(cx,a.bottom);ctx.moveTo(a.left,cy);ctx.lineTo(a.right,cy);ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='800 12px -apple-system,BlinkMacSystemFont,sans-serif';
+      ctx.fillStyle='rgba(52,211,153,.85)'; ctx.textAlign='right';ctx.textBaseline='top';   ctx.fillText('LEADERS',a.right-10,a.top+8);
+      ctx.fillStyle='rgba(41,181,232,.85)'; ctx.textAlign='left'; ctx.textBaseline='top';    ctx.fillText('CHALLENGERS',a.left+10,a.top+8);
+      ctx.fillStyle='rgba(167,139,250,.9)'; ctx.textAlign='right';ctx.textBaseline='bottom'; ctx.fillText('VISIONARIES',a.right-10,a.bottom-8);
+      ctx.fillStyle='rgba(148,163,184,.95)';ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillText('NICHE PLAYERS',a.left+10,a.bottom-8);
+      ctx.restore();
+    },
+    afterDatasetsDraw(ch){
+      const ctx=ch.ctx, x=ch.scales.x, y=ch.scales.y;
+      ctx.save();ctx.font='600 10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle='rgba(232,238,255,.92)';ctx.textAlign='left';ctx.textBaseline='middle';
+      let lab=vendorsIn(active).filter(v=>v.tier==='A');
+      if(!active.all && lab.length===0) lab=vendorsIn(active).slice().sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).slice(0,3);
+      lab.forEach(v=>ctx.fillText(' '+v.name, x.getPixelForValue(v.mq_x)+5, y.getPixelForValue(v.mq_y)));
+      ctx.restore();
+    }
+  };
+  function datasetsFor(s){
+    const vs=vendorsIn(s);
+    return ['A','B','C','D'].map(t=>({label:'Tier '+t,
+      data:vs.filter(v=>v.tier===t).map(v=>({x:v.mq_x,y:v.mq_y,name:v.name,tier:v.tier,ov:v.overall_score,cat:v.category,ex:v.mq_execute,vi:v.mq_vision,q:quadOf(v,s)})),
+      backgroundColor:tierColor(t)+'cc',borderColor:tierColor(t),borderWidth:1,pointRadius:t==='A'?6:3.5,pointHoverRadius:8})).filter(d=>d.data.length);
+  }
+  const chart=new Chart(document.getElementById('mqChart'),{type:'scatter',data:{datasets:datasetsFor(ALL)},
+    options:{maintainAspectRatio:false,animation:false,
+      plugins:{legend:{labels:{color:C.tick,usePointStyle:true}},
+        tooltip:{callbacks:{
+          title:c=>c[0].raw.name,
+          label:c=>[c.raw.q+' · Tier '+c.raw.tier,'Execute '+c.raw.ex+' · Vision '+c.raw.vi+' · Overall '+c.raw.ov, c.raw.cat]}}},
+      scales:{
+        x:{min:3,max:10,title:{display:true,text:'Completeness of Vision  →   (AI + IPO/Upside)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}},
+        y:{min:3,max:10,title:{display:true,text:'Ability to Execute  →   (Snowflake + Retail)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}}}},
+    plugins:[mqPlugin]});
+  function render(s){
+    active=s; mqCross={tx:s.tx,ty:s.ty};
+    chart.data.datasets=datasetsFor(s); chart.update();
+    const vs=vendorsIn(s), cc={Leaders:0,Challengers:0,Visionaries:0,'Niche Players':0};
+    vs.forEach(v=>cc[quadOf(v,s)]++);
+    legend.innerHTML=(s.all?'All '+V.length+' partners':s.n+' partners in '+s.label)+
+      ' · cross at '+(s.all?'fleet':'niche')+' avg — Vision <b style="color:var(--text)">'+s.tx+'</b> · Execute <b style="color:var(--text)">'+s.ty+'</b>  &nbsp;·&nbsp;  '+
+      Object.entries(cc).map(([q,n])=>q+' <b style="color:var(--text)">'+n+'</b>').join('  ·  ');
+    crumb.innerHTML = s.all?'' : '&nbsp; All Partners › <b style="color:var(--text)">'+s.label+'</b>';
+    back.style.display = s.all?'none':'';
+    caveat.innerHTML = s.all ? '' : (s.drillable
+      ? '<b>Niche view.</b> The cross is recomputed to this niche cohort average, so positions are relative to '+s.label+' — a Leader here may sit elsewhere on the all-partners quadrant.'+((s.n<10||s.skew>0.7)?' <b style="color:#fbbf24">Small or lopsided cohort</b> ('+s.n+' partners, '+Math.round(s.skew*100)+'% in one quadrant) — interpret with care.':'')
+      : '⚠ <b>'+s.label+' is a flat / directional cohort</b> ('+s.n+' partners with little score spread; many carry template scores). Read it as a ranked list rather than a true quadrant.');
+    if(sel.value!==(s.all?'All Partners':s.label)) sel.value=s.all?'All Partners':s.label;
+  }
+  sel.addEventListener('change',()=>render(sel.value==='All Partners'?ALL:(byLabel[sel.value]||ALL)));
+  back.addEventListener('click',()=>render(ALL));
+  render(ALL);
+})();
+
+// Download / print to PDF — the @media print stylesheet restyles the page; the
+// browser print dialog saves the whole dashboard (all sections + current MQ view).
+(function(){var b=document.getElementById('pdfBtn');if(b)b.addEventListener('click',function(){window.print();});})();
 
 document.getElementById('note').innerHTML =
   `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
