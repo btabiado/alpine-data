@@ -517,7 +517,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
       <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
       <button class="dl no-print" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
-      <span class="zoomctl" title="Text size"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <span class="zoomctl" title="Zoom"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
     </div>
   </div>
 </header>
@@ -602,7 +602,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <h1>Snowflake Summit 2026 — Partner News</h1>
         <div class="sub">Live announcements from partner vendors · its own window</div>
       </div>
-      <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <span class="zoomctl" title="Zoom" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
       <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
       <a class="dl" href="?" style="margin-left:8px">← Back to dashboard</a>
     </div>
@@ -633,7 +633,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <h1>Snowflake Summit 2026 — Magic Quadrant</h1>
         <div class="sub">All 197 partners, or drill into a niche · its own window</div>
       </div>
-      <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <span class="zoomctl" title="Zoom" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
       <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
       <a class="dl" href="?" style="margin-left:8px">← Back to dashboard</a>
     </div>
@@ -668,7 +668,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <h1>Snowflake Summit 2026 — Basecamp Floor Map</h1>
         <div class="sub">Partner + Snowflake activations · our scouted partners placed by booth zone · its own window</div>
       </div>
-      <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <span class="zoomctl" title="Zoom" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
       <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
       <a class="dl" href="?" style="margin-left:8px">← Back to dashboard</a>
     </div>
