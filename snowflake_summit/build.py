@@ -85,6 +85,7 @@ def aggregate_count(vendors, key):
 
 def render(meta, vendors, src_path):
     by_cat = aggregate_count(vendors, "category")
+    by_niche = aggregate_count(vendors, "niche")
     by_tier = {t: sum(1 for v in vendors if v.get("tier") == t) for t in ["A", "B", "C", "D"]}
     by_tier = {t: c for t, c in by_tier.items() if c}
 
@@ -101,6 +102,7 @@ def render(meta, vendors, src_path):
         "score_keys": [k for k, _ in SCORE_KEYS],
         "kpis": kpis(vendors),
         "by_cat": by_cat,
+        "by_niche": by_niche,
         "by_tier": by_tier,
         "profile_all": profile(vendors),
         "profile_a": profile(tierA),
@@ -171,6 +173,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
   .tA{background:rgba(52,211,153,.16);color:var(--A)}.tB{background:rgba(251,191,36,.16);color:var(--B)}
   .tC{background:rgba(100,116,139,.2);color:#aab6c9}.tD{background:rgba(100,116,139,.2);color:#aab6c9}
+  .tNi{background:rgba(41,181,232,.16);color:#7fd6f5;border:1px solid rgba(41,181,232,.3)}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
   .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-bottom:16px}
   .grid h4,.panel h4{margin:0 0 12px;font-size:13.5px;font-weight:700}
@@ -184,6 +187,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   td.name{font-weight:600}
   .scroll{max-height:560px;overflow:auto;border:1px solid var(--border);border-radius:10px}
   .gem-row td.name::after{content:" 💎";font-size:10px}
+  .topbar{display:flex;gap:10px;align-items:center;margin:4px 0 18px;flex-wrap:wrap}
+  .topbar .searchwrap{position:relative;flex:1;min-width:240px}
+  .topbar .searchwrap::before{content:"🔎";position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;opacity:.7}
+  .topbar input{width:100%;background:var(--panel);border:1px solid var(--border);color:var(--text);
+       border-radius:11px;padding:12px 14px 12px 38px;font-size:14px}
+  .topbar input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(41,181,232,.18)}
+  .topbar .hit{font-size:12px;color:var(--muted);white-space:nowrap}
   .controls{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px;align-items:center}
   .controls input,.controls select{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:12.5px}
   .ovrbar{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
@@ -200,11 +210,19 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <h1>Snowflake Summit 2026 — Partner Scouting Dashboard</h1>
       <div class="sub" id="subhead"></div>
     </div>
-    <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
+    <a class="dl" href="../" style="margin-left:auto;background:transparent;border-color:var(--border);color:var(--muted)" title="Back to the main dashboard">← Main dashboard</a>
+    <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
   </div>
 </header>
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
+
+  <div class="topbar">
+    <div class="searchwrap">
+      <input id="search" placeholder="Search all vendors — name, category, niche…" autocomplete="off"/>
+    </div>
+    <span class="hit" id="searchhit"></span>
+  </div>
 
   <h3 class="sec">⭐ Must-See Vendors <span class="hint">— Priority Tier A, ranked by Overall Score</span></h3>
   <div class="cards" id="mustsee"></div>
@@ -214,7 +232,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart"></canvas></div>
   </div>
   <div class="grid">
-    <div class="panel"><h4>Partners by Category</h4><canvas id="catChart"></canvas></div>
+    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart"></canvas></div>
     <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart"></canvas></div>
   </div>
 
@@ -227,7 +245,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <h3 class="sec">All Partner Vendors <span class="hint">— click a column to sort · 💎 = hidden gem</span></h3>
   <div class="panel">
     <div class="controls">
-      <input id="search" placeholder="Search partner / category…" style="flex:1;min-width:200px"/>
+      <select id="nicheFilter"><option value="">All niches</option></select>
       <select id="catFilter"><option value="">All categories</option></select>
       <select id="tierFilter"><option value="">All tiers</option></select>
     </div>
@@ -235,7 +253,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <table id="vtable">
       <thead><tr>
         <th data-k="rank">#</th><th data-k="name">Partner</th><th data-k="booth">Booth</th>
-        <th data-k="category">Category</th><th data-k="company_type">Type</th>
+        <th data-k="niche">Niche</th><th data-k="category">Category</th><th data-k="company_type">Type</th>
         <th data-k="snowflake_score" class="num">Snow</th><th data-k="ai_score" class="num">AI</th>
         <th data-k="retail_score" class="num">Retail</th><th data-k="ipo_score" class="num">IPO</th>
         <th data-k="bryan_score" class="num">Fit</th>
@@ -266,7 +284,7 @@ function scoreChips(v){
 }
 function card(v){
   return `<div class="card2 ${v.hidden_gem?'':''}"><div class="rk">${v.rank}</div>
-    <div class="nm">${v.name} <span class="tag ${tierClass(v.tier)}">${v.tier}</span></div>
+    <div class="nm">${v.name} <span class="tag ${tierClass(v.tier)}">${v.tier}</span> <span class="tag tNi">${fmt(v.niche)}</span></div>
     <div class="ct">${v.category} · booth ${fmt(v.booth)}</div>
     <div class="scores">${scoreChips(v)}</div>
     <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+v.company_type):''}</span></div></div>`;
@@ -289,10 +307,10 @@ new Chart(document.getElementById('tierChart'),{type:'doughnut',
     datasets:[{data:Object.values(DATA.by_tier),backgroundColor:Object.keys(DATA.by_tier).map(tierColor)}]},
   options:{plugins:{legend:{position:'right',labels:{color:C.tick}}}}});
 
-const cats=Object.entries(DATA.by_cat).slice(0,14);
-new Chart(document.getElementById('catChart'),{type:'bar',
-  data:{labels:cats.map(c=>c[0]),datasets:[{data:cats.map(c=>c[1]),backgroundColor:'#29b5e8'}]},
-  options:{indexAxis:'y',plugins:{legend:{display:false}},
+const niches=Object.entries(DATA.by_niche);
+new Chart(document.getElementById('nicheChart'),{type:'bar',
+  data:{labels:niches.map(c=>c[0]),datasets:[{data:niches.map(c=>c[1]),backgroundColor:'#29b5e8'}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},onClick:(e,els)=>{if(els.length){nicheSel.value=niches[els[0].index][0];draw();document.getElementById('vtable').scrollIntoView({behavior:'smooth'});}},
     scales:{x:{ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:10.5}},grid:{display:false}}}}});
 
 new Chart(document.getElementById('profChart'),{type:'radar',
@@ -304,35 +322,39 @@ new Chart(document.getElementById('profChart'),{type:'radar',
 
 // Table
 const tbody=document.querySelector('#vtable tbody');
-const catSel=document.getElementById('catFilter'),tierSel=document.getElementById('tierFilter');
+const nicheSel=document.getElementById('nicheFilter'),catSel=document.getElementById('catFilter'),tierSel=document.getElementById('tierFilter');
+Object.keys(DATA.by_niche).forEach(nz=>nicheSel.add(new Option(`${nz} (${DATA.by_niche[nz]})`,nz)));
 [...new Set(DATA.vendors.map(v=>v.category))].sort().forEach(c=>catSel.add(new Option(c,c)));
 ['A','B','C'].forEach(t=>tierSel.add(new Option('Tier '+t,t)));
 let sortK='rank',sortAsc=true;
 function draw(){
-  const q=document.getElementById('search').value.toLowerCase(),cf=catSel.value,tf=tierSel.value;
-  let r=DATA.vendors.filter(v=>(!q||v.name.toLowerCase().includes(q)||(v.category||'').toLowerCase().includes(q))
-    &&(!cf||v.category===cf)&&(!tf||v.tier===tf));
+  const q=document.getElementById('search').value.toLowerCase(),nz=nicheSel.value,cf=catSel.value,tf=tierSel.value;
+  let r=DATA.vendors.filter(v=>(!q||v.name.toLowerCase().includes(q)||(v.category||'').toLowerCase().includes(q)||(v.niche||'').toLowerCase().includes(q))
+    &&(!nz||v.niche===nz)&&(!cf||v.category===cf)&&(!tf||v.tier===tf));
+  const hit=document.getElementById('searchhit');
+  if(hit) hit.textContent = (q||nz||cf||tf) ? `${r.length} of ${DATA.vendors.length} match` : `${DATA.vendors.length} vendors`;
   r.sort((a,b)=>{let x=a[sortK],y=b[sortK];if(typeof x==='string'){x=x.toLowerCase();y=(y||'').toLowerCase();}
     if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
   tbody.innerHTML=r.map(v=>{
     const w=Math.round(((v.overall_score||0)/10)*54)+6;
     return `<tr class="${v.hidden_gem?'gem-row':''}">
       <td class="num">${v.rank}</td><td class="name">${v.name}</td><td>${fmt(v.booth)}</td>
-      <td>${fmt(v.category)}</td><td>${fmt(v.company_type)}</td>
+      <td><span class="tag tNi">${fmt(v.niche)}</span></td><td>${fmt(v.category)}</td><td>${fmt(v.company_type)}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
       <td class="num">${fmt(v.retail_score)}</td><td class="num">${fmt(v.ipo_score)}</td><td class="num">${fmt(v.bryan_score)}</td>
       <td class="num"><span class="ovrbar" style="width:${w}px;background:${tierColor(v.tier)}"></span><b>${fmt(v.overall_score)}</b></td>
       <td><span class="tag ${tierClass(v.tier)}">${v.tier}</span></td></tr>`;}).join('');
 }
 document.querySelectorAll('#vtable th').forEach(th=>th.onclick=()=>{
-  const k=th.dataset.k;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier');}draw();});
-['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);});
+  const k=th.dataset.k;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();});
+['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);});
 draw();
 
 document.getElementById('note').innerHTML =
   `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
   `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit — `+
   `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> (A = must-see). `+
+  `<b>Niche</b> is a broad value-taxonomy label (Agents, Agent Platform, ETL, Dashboard, API, Security, Cost Savings, Governance, Observability, Database, Customer Data, Consulting, …) rolled up from each vendor's category — searchable and filterable above. `+
   `<b>Caveat:</b> ${DATA.meta.caveat||''} `+
   `Regenerate after editing <code>vendors.json</code> with <code>python build.py</code>.`;
 </script>

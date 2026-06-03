@@ -1596,6 +1596,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </form>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
+    <a class="btn" href="summit/" title="Snowflake Summit 2026 partner scouting dashboard">❄ Summit</a>
   </div>
 </header>
 

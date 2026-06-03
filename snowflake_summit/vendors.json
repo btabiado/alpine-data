@@ -14,7 +14,8 @@
    "bryan_score": "Bryan career / networking fit (0-10)",
    "overall_score": "Blended overall priority score (0-10)",
    "tier": "Priority tier A (must-see) / B / C"
-  }
+  },
+  "niche_note": "Higher-level 'value niche' rolled up from category (+ name for cost tools): what the vendor does for you."
  },
  "vendors": [
   {
@@ -35,7 +36,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Acceldata",
@@ -55,7 +57,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Acxiom",
@@ -75,7 +78,8 @@
    "overall_score": 6.4,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "Airbyte",
@@ -95,7 +99,8 @@
    "overall_score": 7.2,
    "tier": "B",
    "notes": "Open-source data movement.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Alation",
@@ -115,7 +120,8 @@
    "overall_score": 7.5,
    "tier": "B",
    "notes": "Established data catalog.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "Alteryx",
@@ -135,7 +141,8 @@
    "overall_score": 6.4,
    "tier": "C",
    "notes": "Taken private in 2024.",
-   "source": "https://clearlake.com/news/clearlake-capitalgroup-and-insight-partners-complete-acquisition-of-alteryx/"
+   "source": "https://clearlake.com/news/clearlake-capitalgroup-and-insight-partners-complete-acquisition-of-alteryx/",
+   "niche": "Dashboard"
   },
   {
    "name": "Altimate AI",
@@ -155,7 +162,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "Amperity",
@@ -175,7 +183,8 @@
    "overall_score": 8.0,
    "tier": "B",
    "notes": "Retail/customer data fit.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "Anomalo",
@@ -195,7 +204,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "Arango",
@@ -215,7 +225,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "Archetype",
@@ -235,7 +246,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Artie Technologies",
@@ -255,7 +267,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Astrato Analytics",
@@ -275,7 +288,8 @@
    "overall_score": 6.7,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "Astronomer",
@@ -295,7 +309,8 @@
    "overall_score": 8.2,
    "tier": "A",
    "notes": "Enterprise Airflow / DataOps.",
-   "source": "https://www.astronomer.io/press-releases/astronomer-secures-93-million-series-d-funding/"
+   "source": "https://www.astronomer.io/press-releases/astronomer-secures-93-million-series-d-funding/",
+   "niche": "ETL"
   },
   {
    "name": "Ataccama",
@@ -315,7 +330,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Atlan",
@@ -335,7 +351,8 @@
    "overall_score": 9.4,
    "tier": "A",
    "notes": "AI governance/catalog winner.",
-   "source": "https://atlan.com/atlan-raises-105m-funding/ ; Reuters May 2024"
+   "source": "https://atlan.com/atlan-raises-105m-funding/ ; Reuters May 2024",
+   "niche": "Governance"
   },
   {
    "name": "Atrium",
@@ -355,7 +372,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "AtScale",
@@ -375,7 +393,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Avaap",
@@ -395,7 +414,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "AVEVA",
@@ -415,7 +435,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "AWS",
@@ -435,7 +456,8 @@
    "overall_score": 7.6,
    "tier": "B",
    "notes": "Core cloud infrastructure.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "Bigeye",
@@ -455,7 +477,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "Blend360",
@@ -475,7 +498,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "BlueCloud",
@@ -495,7 +519,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Boomi",
@@ -515,7 +540,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Integration platform.",
-   "source": "https://www.franciscopartners.com/media/francisco-partners-and-tpg-to-acquire-boomi-from-dell-technologies"
+   "source": "https://www.franciscopartners.com/media/francisco-partners-and-tpg-to-acquire-boomi-from-dell-technologies",
+   "niche": "ETL"
   },
   {
    "name": "Braze",
@@ -535,7 +561,8 @@
    "overall_score": 7.9,
    "tier": "B",
    "notes": "Public customer engagement platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "Brilliant Enterprise Magic",
@@ -555,7 +582,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Bruin",
@@ -575,7 +603,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Brooklyn Data",
@@ -595,7 +624,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Capgemini",
@@ -615,7 +645,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Capital One Software",
@@ -635,7 +666,8 @@
    "overall_score": 5.0,
    "tier": "C",
    "notes": "Enterprise software from Capital One.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Cost Savings"
   },
   {
    "name": "CARTO",
@@ -655,7 +687,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "CData",
@@ -675,7 +708,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "CDW",
@@ -695,7 +729,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Chalk",
@@ -715,7 +750,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Cloudera",
@@ -735,7 +771,8 @@
    "overall_score": 5.8,
    "tier": "C",
    "notes": "Established data platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Coalesce",
@@ -755,7 +792,8 @@
    "overall_score": 8.1,
    "tier": "A",
    "notes": "Very Snowflake-native transformation automation.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Coastal",
@@ -775,7 +813,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Cognizant",
@@ -795,7 +834,8 @@
    "overall_score": 5.4,
    "tier": "C",
    "notes": "Large SI; less equity upside.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Collibra",
@@ -815,7 +855,8 @@
    "overall_score": 7.2,
    "tier": "B",
    "notes": "Large enterprise governance incumbent.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "Contentsquare",
@@ -835,7 +876,8 @@
    "overall_score": 6.4,
    "tier": "B",
    "notes": "Digital experience analytics.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "Crunchbase",
@@ -855,7 +897,8 @@
    "overall_score": 5.1,
    "tier": "C",
    "notes": "Company data source.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Marketplace"
   },
   {
    "name": "Cyera",
@@ -875,7 +918,8 @@
    "overall_score": 7.6,
    "tier": "B",
    "notes": "Hot data security / DSPM.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Security"
   },
   {
    "name": "Dagster Labs",
@@ -895,7 +939,8 @@
    "overall_score": 7.2,
    "tier": "B",
    "notes": "Software-defined assets / orchestration.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "DAS42",
@@ -915,7 +960,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Datacove",
@@ -935,7 +981,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Datafold",
@@ -955,7 +1002,8 @@
    "overall_score": 7.6,
    "tier": "B",
    "notes": "Data diffs and quality for analytics engineering.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "DataHub",
@@ -975,7 +1023,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "Dataiku",
@@ -995,7 +1044,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "DataOps.live",
@@ -1015,7 +1065,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "DataRadar",
@@ -1035,7 +1086,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "dbt Labs",
@@ -1055,7 +1107,8 @@
    "overall_score": 8.9,
    "tier": "A",
    "notes": "Transformation standard; merged with Fivetran.",
-   "source": "https://www.fivetran.com/press/fivetran-and-dbt-labs-unite-to-set-the-standard-for-open-data-infrastructure-2025"
+   "source": "https://www.fivetran.com/press/fivetran-and-dbt-labs-unite-to-set-the-standard-for-open-data-infrastructure-2025",
+   "niche": "ETL"
   },
   {
    "name": "dltHub",
@@ -1075,7 +1128,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Domo",
@@ -1095,7 +1149,8 @@
    "overall_score": 6.1,
    "tier": "C",
    "notes": "BI incumbent; public small-cap.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "DQLabs",
@@ -1115,7 +1170,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "Dremio",
@@ -1135,7 +1191,8 @@
    "overall_score": 6.9,
    "tier": "B",
    "notes": "Lakehouse query acceleration.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "Dun & Bradstreet",
@@ -1155,7 +1212,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "edata",
@@ -1175,7 +1233,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Elementum",
@@ -1195,7 +1254,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "EPAM",
@@ -1215,7 +1275,8 @@
    "overall_score": 5.4,
    "tier": "C",
    "notes": "Digital engineering services.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Espresso AI",
@@ -1235,7 +1296,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Cost Savings"
   },
   {
    "name": "Estuary",
@@ -1255,7 +1317,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Etleap",
@@ -1275,7 +1338,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Euno",
@@ -1295,7 +1359,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "evolv Consulting",
@@ -1315,7 +1380,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "FactSet",
@@ -1335,7 +1401,8 @@
    "overall_score": 4.0,
    "tier": "C",
    "notes": "Financial data provider.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Marketplace"
   },
   {
    "name": "FalkorDB",
@@ -1355,7 +1422,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "Fivetran",
@@ -1375,7 +1443,8 @@
    "overall_score": 8.9,
    "tier": "A",
    "notes": "Core data movement; merged with dbt Labs.",
-   "source": "https://www.fivetran.com/press/fivetran-and-dbt-labs-unite-to-set-the-standard-for-open-data-infrastructure-2025"
+   "source": "https://www.fivetran.com/press/fivetran-and-dbt-labs-unite-to-set-the-standard-for-open-data-infrastructure-2025",
+   "niche": "ETL"
   },
   {
    "name": "Flexor",
@@ -1395,7 +1464,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Foundational",
@@ -1415,7 +1485,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "FreedomPay",
@@ -1435,7 +1506,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Genesis Computing",
@@ -1455,7 +1527,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Genpact",
@@ -1475,7 +1548,8 @@
    "overall_score": 5.0,
    "tier": "C",
    "notes": "Services / operations.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Glean Technologies",
@@ -1495,7 +1569,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Google Cloud",
@@ -1515,7 +1590,8 @@
    "overall_score": 8.2,
    "tier": "A",
    "notes": "Gemini / BigQuery / Vertex alignment.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Gray Swan",
@@ -1535,7 +1611,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Greybeam",
@@ -1555,7 +1632,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "GrowthArc",
@@ -1575,7 +1653,8 @@
    "overall_score": 6.4,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "GrowthLoop",
@@ -1595,10 +1674,11 @@
    "overall_score": 6.4,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
-   "name": "an IBM Company\"",
+   "name": "Hakkoda (an IBM Company)",
    "booth": "2106",
    "category": "Consulting / Data Services",
    "company_type": "Subsidiary",
@@ -1615,7 +1695,8 @@
    "overall_score": 6.4,
    "tier": "C",
    "notes": "Snowflake services.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Hevo Data",
@@ -1635,7 +1716,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Hex",
@@ -1655,7 +1737,8 @@
    "overall_score": 8.2,
    "tier": "A",
    "notes": "AI analytics notebook/workspace.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "Hexaware",
@@ -1675,7 +1758,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Hightouch",
@@ -1695,7 +1779,8 @@
    "overall_score": 9.0,
    "tier": "A",
    "notes": "Strong Customer 360 / marketing activation fit.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "Honeydew",
@@ -1715,7 +1800,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "IBM",
@@ -1735,7 +1821,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Enterprise AI and consulting.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Immuta",
@@ -1755,7 +1842,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "Informatica",
@@ -1775,7 +1863,8 @@
    "overall_score": 6.9,
    "tier": "B",
    "notes": "Now Salesforce-owned.",
-   "source": "https://www.salesforce.com/news/press-releases/2025/11/18/salesforce-completes-acquisition-of-informatica/"
+   "source": "https://www.salesforce.com/news/press-releases/2025/11/18/salesforce-completes-acquisition-of-informatica/",
+   "niche": "Governance"
   },
   {
    "name": "Infosys",
@@ -1795,7 +1884,8 @@
    "overall_score": 5.4,
    "tier": "C",
    "notes": "Large SI; less equity upside.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Insider One",
@@ -1815,7 +1905,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "insightsoftware",
@@ -1835,7 +1926,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Integrated Quantum Technologies",
@@ -1855,7 +1947,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Keebo",
@@ -1875,7 +1968,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Cost Savings"
   },
   {
    "name": "Kipi.ai",
@@ -1895,7 +1989,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Kloudgen",
@@ -1915,7 +2010,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "KPMG",
@@ -1935,7 +2031,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Kumo",
@@ -1955,7 +2052,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "LandingAI",
@@ -1975,7 +2073,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "LlamaIndex",
@@ -1995,7 +2094,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "LTM",
@@ -2015,7 +2115,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Mastech Digital",
@@ -2035,7 +2136,8 @@
    "overall_score": 4.1,
    "tier": "C",
    "notes": "Small public services company.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Mastek",
@@ -2055,7 +2157,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "MathCo",
@@ -2075,7 +2178,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Matia",
@@ -2095,7 +2199,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Matillion",
@@ -2115,7 +2220,8 @@
    "overall_score": 7.4,
    "tier": "B",
    "notes": "Cloud ELT platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Maxa",
@@ -2135,7 +2241,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "MaxMyCloud AI",
@@ -2155,10 +2262,11 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
-   "name": "a Siemens Business\"",
+   "name": "Mendix (a Siemens Business)",
    "booth": "1321",
    "category": "Low-code App Platform",
    "company_type": "Subsidiary",
@@ -2175,7 +2283,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Low-code apps.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "API"
   },
   {
    "name": "Merkle",
@@ -2195,7 +2304,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "MessageGears",
@@ -2215,7 +2325,8 @@
    "overall_score": 6.4,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "Meta Integration",
@@ -2235,7 +2346,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Metric Insights",
@@ -2255,7 +2367,8 @@
    "overall_score": 6.7,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "Microsoft",
@@ -2275,7 +2388,8 @@
    "overall_score": 8.4,
    "tier": "A",
    "notes": "Azure/OpenAI/Copilot strategic ecosystem.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Monte Carlo",
@@ -2295,7 +2409,8 @@
    "overall_score": 8.4,
    "tier": "A",
    "notes": "Data reliability / observability leader.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "Neo4j",
@@ -2315,7 +2430,8 @@
    "overall_score": 6.6,
    "tier": "B",
    "notes": "Graph database / knowledge graph.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "NICE",
@@ -2335,7 +2451,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "CX/contact center platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "NTT DATA",
@@ -2355,7 +2472,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Omni Analytics",
@@ -2375,7 +2493,8 @@
    "overall_score": 8.0,
    "tier": "B",
    "notes": "Next-gen BI platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "OneSix",
@@ -2395,7 +2514,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "OneTrust",
@@ -2415,7 +2535,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Security"
   },
   {
    "name": "OpenAI",
@@ -2435,7 +2556,8 @@
    "overall_score": 8.5,
    "tier": "A",
    "notes": "Strategic AI platform stop.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Openlayer",
@@ -2455,7 +2577,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Pantomath",
@@ -2475,7 +2598,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "paradime.io",
@@ -2495,7 +2619,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Perficient",
@@ -2515,7 +2640,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "phData",
@@ -2535,7 +2661,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "PointFive",
@@ -2555,7 +2682,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Polytomic",
@@ -2575,7 +2703,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Posit",
@@ -2595,7 +2724,8 @@
    "overall_score": 6.7,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "Precisely",
@@ -2615,7 +2745,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Precog",
@@ -2635,7 +2766,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Prefect Technologies",
@@ -2655,7 +2787,8 @@
    "overall_score": 5.9,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Promethium",
@@ -2675,7 +2808,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Prophecy",
@@ -2695,7 +2829,8 @@
    "overall_score": 7.4,
    "tier": "B",
    "notes": "Low-code data engineering.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ETL"
   },
   {
    "name": "Qlik",
@@ -2715,7 +2850,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "PE-backed analytics/data integration.",
-   "source": "https://www.thomabravo.com/press-releases/qlik-announces-close-of-significant-investment-led-by-adia-and-thoma-bravo"
+   "source": "https://www.thomabravo.com/press-releases/qlik-announces-close-of-significant-investment-led-by-adia-and-thoma-bravo",
+   "niche": "Dashboard"
   },
   {
    "name": "Qualytics",
@@ -2735,7 +2871,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "Quest",
@@ -2755,7 +2892,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "RecordPoint",
@@ -2775,7 +2913,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Redpanda",
@@ -2795,7 +2934,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "Reducto",
@@ -2815,7 +2955,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Reflex",
@@ -2835,7 +2976,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "RelationalAI",
@@ -2855,7 +2997,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "Reltio",
@@ -2875,7 +3018,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "Remix",
@@ -2895,7 +3039,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Replit",
@@ -2915,7 +3060,8 @@
    "overall_score": 7.1,
    "tier": "B",
    "notes": "AI software building platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Retool",
@@ -2935,7 +3081,8 @@
    "overall_score": 6.5,
    "tier": "B",
    "notes": "Internal app builder.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Revefi",
@@ -2955,7 +3102,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "Row Zero",
@@ -2975,7 +3123,8 @@
    "overall_score": 6.7,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "RudderStack",
@@ -2995,7 +3144,8 @@
    "overall_score": 7.6,
    "tier": "B",
    "notes": "Customer data platform / event streaming.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "S\\&P Global",
@@ -3015,7 +3165,8 @@
    "overall_score": 4.0,
    "tier": "C",
    "notes": "Large data company.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Marketplace"
   },
   {
    "name": "Safe Software",
@@ -3035,7 +3186,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Salesforce",
@@ -3055,7 +3207,8 @@
    "overall_score": 8.5,
    "tier": "A",
    "notes": "Strategic platform partner.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "SAP",
@@ -3075,7 +3228,8 @@
    "overall_score": 7.1,
    "tier": "B",
    "notes": "Strategic enterprise platform.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "ERP"
   },
   {
    "name": "Seemore Data",
@@ -3095,7 +3249,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Cost Savings"
   },
   {
    "name": "SELECT",
@@ -3115,7 +3270,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Cost Savings"
   },
   {
    "name": "Sema4.ai",
@@ -3135,7 +3291,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "Semarchy",
@@ -3155,7 +3312,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "ServiceNow",
@@ -3175,7 +3333,8 @@
    "overall_score": 7.0,
    "tier": "B",
    "notes": "Enterprise AI workflow.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Sifflet",
@@ -3195,7 +3354,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Security"
   },
   {
    "name": "Sigma",
@@ -3215,7 +3375,8 @@
    "overall_score": 9.7,
    "tier": "A",
    "notes": "High-growth Snowflake-native BI / agentic analytics.",
-   "source": "https://www.sigmacomputing.com/resources/announcements/series-e"
+   "source": "https://www.sigmacomputing.com/resources/announcements/series-e",
+   "niche": "Dashboard"
   },
   {
    "name": "Skyflow",
@@ -3235,7 +3396,8 @@
    "overall_score": 6.6,
    "tier": "B",
    "notes": "Privacy vault.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Security"
   },
   {
    "name": "Slalom",
@@ -3255,7 +3417,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Snowplow",
@@ -3275,7 +3438,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Solid Data",
@@ -3295,7 +3459,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Sparq",
@@ -3315,7 +3480,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Spaulding Ridge",
@@ -3335,7 +3501,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "SqlDBM",
@@ -3355,7 +3522,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Starburst",
@@ -3375,7 +3543,8 @@
    "overall_score": 7.6,
    "tier": "A",
    "notes": "Data lakehouse / Trino ecosystem.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   },
   {
    "name": "Steep",
@@ -3395,7 +3564,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Sundial",
@@ -3415,7 +3585,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Superblocks",
@@ -3435,7 +3606,8 @@
    "overall_score": 6.1,
    "tier": "B",
    "notes": "Internal tooling / enterprise apps.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Syncari",
@@ -3455,7 +3627,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Tamr",
@@ -3475,7 +3648,8 @@
    "overall_score": 6.5,
    "tier": "B",
    "notes": "Entity resolution / data mastering.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Governance"
   },
   {
    "name": "tavily",
@@ -3495,7 +3669,8 @@
    "overall_score": 7.4,
    "tier": "B",
    "notes": "Agentic search API; interesting dark horse.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "Tealium",
@@ -3515,7 +3690,8 @@
    "overall_score": 6.8,
    "tier": "B",
    "notes": "CDP/customer data.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "TEKSystems Global Services",
@@ -3535,7 +3711,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "TextQL",
@@ -3555,7 +3732,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "The Trade Desk",
@@ -3575,7 +3753,8 @@
    "overall_score": 6.5,
    "tier": "B",
    "notes": "Retail media / advertising relevance.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Customer Data"
   },
   {
    "name": "Theom",
@@ -3595,7 +3774,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Security"
   },
   {
    "name": "ThoughtSpot",
@@ -3615,7 +3795,8 @@
    "overall_score": 7.4,
    "tier": "B",
    "notes": "Search-driven analytics.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Dashboard"
   },
   {
    "name": "Timbrai",
@@ -3635,7 +3816,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "TransUnion",
@@ -3655,7 +3837,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Data bureau; identity/customer data relevance.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Marketplace"
   },
   {
    "name": "Treasure AI",
@@ -3675,7 +3858,8 @@
    "overall_score": 6.2,
    "tier": "B",
    "notes": "Name from directory; needs verification.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agent Platform"
   },
   {
    "name": "Tredence",
@@ -3695,7 +3879,8 @@
    "overall_score": 4.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "Truility",
@@ -3715,7 +3900,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "TrustLogix",
@@ -3735,7 +3921,8 @@
    "overall_score": 5.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Security"
   },
   {
    "name": "Turgon",
@@ -3755,7 +3942,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Unravel Data",
@@ -3775,7 +3963,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Cost Savings"
   },
   {
    "name": "Uriver",
@@ -3795,7 +3984,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Validio AB",
@@ -3815,7 +4005,8 @@
    "overall_score": 6.5,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Observability"
   },
   {
    "name": "VaultSpeed",
@@ -3835,7 +4026,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Wipro Limited",
@@ -3855,7 +4047,8 @@
    "overall_score": 5.4,
    "tier": "C",
    "notes": "Large SI; less equity upside.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Consulting"
   },
   {
    "name": "WisdomAI",
@@ -3875,7 +4068,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Agents"
   },
   {
    "name": "Workato",
@@ -3895,7 +4089,8 @@
    "overall_score": 7.0,
    "tier": "B",
    "notes": "Enterprise automation / iPaaS.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "API"
   },
   {
    "name": "Yuki",
@@ -3915,7 +4110,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "ZeroError",
@@ -3935,7 +4131,8 @@
    "overall_score": 6.0,
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Data Ecosystem"
   },
   {
    "name": "Zilliz",
@@ -3955,7 +4152,8 @@
    "overall_score": 6.9,
    "tier": "B",
    "notes": "Vector DB / Milvus.",
-   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable"
+   "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
+   "niche": "Database"
   }
  ]
 }
