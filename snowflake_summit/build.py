@@ -281,11 +281,11 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
      the panel/background colours. */
   @media print{
     @page{margin:9mm}
-    html,body{background:#0b1020 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    html,body{background:#0b1020 !important;zoom:1 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .no-print,.dl,.controls,#search,#mqBack,#mqSegSel{display:none !important}
     .wrap{max-width:none;padding:8px 2px}
     .grid,.cards{grid-template-columns:1fr !important}
-    .panel,.card2,.kpi,canvas{break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .panel,.card2,.kpi,canvas,.nitem{break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     h3.sec{break-after:avoid;page-break-after:avoid}
     .scroll{max-height:none !important;overflow:visible !important}
     table{font-size:10px}
