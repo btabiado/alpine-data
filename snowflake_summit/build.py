@@ -326,13 +326,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .filterrow select{width:100%;min-width:0;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:11px}
   .ovrbar{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
   /* Summit News feed */
-  .newsfeed{max-height:480px;overflow:auto;border:1px solid var(--border);border-radius:10px}
-  .nitem{display:flex;gap:13px;padding:11px 14px;border-bottom:1px solid var(--border)}
+  .newsfeed{border:1px solid var(--border);border-radius:10px}
+  .nitem{display:flex;gap:15px;padding:16px 20px;border-bottom:1px solid var(--border)}
   .nitem:last-child{border-bottom:none}
   .nitem:hover{background:var(--panel2)}
-  .nitem .nd{font-size:10.5px;color:var(--muted);white-space:nowrap;min-width:62px;font-variant-numeric:tabular-nums;padding-top:2px}
+  .nitem .nd{font-size:12px;color:var(--muted);white-space:nowrap;min-width:76px;font-variant-numeric:tabular-nums;padding-top:3px}
   .nitem .nbody{flex:1;min-width:0}
-  .nitem .nh{font-size:13.5px;font-weight:600;line-height:1.35}
+  .nitem .nh{font-size:16px;font-weight:600;line-height:1.42}
   .nitem .nh a{color:var(--text);text-decoration:none}
   .nitem .nh a:hover{color:var(--accent);text-decoration:underline}
   .nitem .nh a .ext{font-size:.82em;color:var(--accent);margin-left:4px;opacity:.75;text-decoration:none;font-weight:400}
@@ -346,8 +346,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .bchip:hover{color:var(--text)}
   .bchip.on{background:var(--accent2);border-color:var(--accent);color:#dff3ff}
   .bchip .bc{opacity:.65;font-weight:400;margin-left:2px}
-  .nitem .nmeta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-  .nitem .nsum{font-size:11.5px;color:#b9c8e6;margin-top:5px;white-space:normal;line-height:1.45}
+  .nitem .nmeta{font-size:12.5px;color:var(--muted);margin-top:7px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+  .nitem .nsum{font-size:13.5px;color:#b9c8e6;margin-top:7px;white-space:normal;line-height:1.55}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
   .note{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55;border-top:1px solid var(--border);padding-top:14px}
   .note code{color:var(--accent)}
