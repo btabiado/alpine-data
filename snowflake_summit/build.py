@@ -158,6 +158,25 @@ def magic_quadrant_segments(vendors, min_n=5, var_floor=1.0):
     return out
 
 
+def load_news():
+    """Load the partner Summit-news feed (news.json) if present.
+
+    Sidecar produced by the research swarm (and, later, a news cron). Shape is
+    either a bare list of items or {"generated": "...", "items": [...]}. Always
+    returns {"items": [...], "generated": "..."} and never raises — a missing or
+    garbled file just yields an empty feed so the dashboard still builds."""
+    p = os.path.join(HERE, "news.json")
+    try:
+        with open(p) as f:
+            data = json.load(f)
+    except Exception:
+        return {"items": [], "generated": ""}
+    if isinstance(data, list):
+        return {"items": data, "generated": ""}
+    items = data.get("items", [])
+    return {"items": items if isinstance(items, list) else [], "generated": data.get("generated", "")}
+
+
 def render(meta, vendors, src_path):
     mq = magic_quadrant(vendors)
     mq_segments = magic_quadrant_segments(vendors)
@@ -170,6 +189,7 @@ def render(meta, vendors, src_path):
     def profile(subset):
         return [avg([v.get(k) for v in subset]) for k, _ in SCORE_KEYS]
     tierA = [v for v in vendors if v.get("tier") == "A"]
+    _news = load_news()
 
     payload = {
         "meta": meta,
@@ -190,6 +210,8 @@ def render(meta, vendors, src_path):
         "mq": mq,
         "mq_segments": mq_segments,
         "vendors": vendors,
+        "news": _news["items"],
+        "news_generated": _news["generated"],
     }
     html = HTML_TEMPLATE.replace("/*__DATA__*/", json.dumps(payload, ensure_ascii=False))
     # Inline Chart.js so the page is fully self-contained (no CDN dependency) —
@@ -303,6 +325,19 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .filterrow th{position:static;background:var(--panel);padding:4px 6px;border-bottom:1px solid var(--border)}
   .filterrow select{width:100%;min-width:0;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:11px}
   .ovrbar{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
+  /* Summit News feed */
+  .newsfeed{max-height:480px;overflow:auto;border:1px solid var(--border);border-radius:10px}
+  .nitem{display:flex;gap:13px;padding:11px 14px;border-bottom:1px solid var(--border)}
+  .nitem:last-child{border-bottom:none}
+  .nitem:hover{background:var(--panel2)}
+  .nitem .nd{font-size:10.5px;color:var(--muted);white-space:nowrap;min-width:62px;font-variant-numeric:tabular-nums;padding-top:2px}
+  .nitem .nbody{flex:1;min-width:0}
+  .nitem .nh{font-size:13.5px;font-weight:600;line-height:1.35}
+  .nitem .nh a{color:var(--text);text-decoration:none}
+  .nitem .nh a:hover{color:var(--accent);text-decoration:underline}
+  .nitem .nmeta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .nitem .nsum{font-size:11.5px;color:#b9c8e6;margin-top:5px;white-space:normal;line-height:1.45}
+  .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
   .note{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55;border-top:1px solid var(--border);padding-top:14px}
   .note code{color:var(--accent)}
   @media(max-width:1000px){.kpis{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
@@ -316,13 +351,28 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <h1>Snowflake Summit 2026 — Partner Scouting Dashboard</h1>
       <div class="sub" id="subhead"></div>
     </div>
-    <a class="dl" href="#mq" style="margin-left:auto">📊 Magic Quadrant</a>
+    <a class="dl" href="#news" style="margin-left:auto">📰 Summit News</a>
+    <a class="dl" href="#mq" style="margin-left:0">📊 Magic Quadrant</a>
     <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
     <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
   </div>
 </header>
 <div class="wrap">
   <div class="kpis" id="kpis"></div>
+
+  <h3 class="sec" id="news">📰 Summit News <span class="hint">— live Snowflake Summit 2026 announcements from partner vendors</span></h3>
+  <div class="panel">
+    <div class="controls" style="margin-bottom:11px">
+      <span class="sub" id="newsMeta"></span>
+      <label class="sub" style="margin-left:auto;align-self:center">Relevance</label>
+      <select id="newsRel"><option value="">All</option><option value="high">High only</option><option value="medium">High + Medium</option></select>
+      <label class="sub" style="align-self:center">Vendor</label>
+      <select id="newsVendor"><option value="">All vendors</option></select>
+    </div>
+    <div class="newsfeed" id="newsfeed"></div>
+    <div class="sub" id="newsEmpty" style="display:none;padding:16px 4px">No partner Summit announcements gathered yet — the feed populates on the next research run.</div>
+    <div class="sub" style="margin-top:11px;line-height:1.5">Gathered by AI research agents searching public news / press per vendor; each link opens the primary source. Directional — verify before relying. Refreshes whenever the feed is rebuilt.</div>
+  </div>
 
   <div class="topbar">
     <div class="searchwrap">
@@ -481,6 +531,42 @@ document.querySelectorAll('#vtable thead tr:first-child th').forEach(th=>th.oncl
   const k=th.dataset.k;if(!k)return;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();});
 ['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);typeSel.addEventListener(e,draw);});
 draw();
+
+// Summit News feed — partner announcements gathered per vendor (see load_news()
+// in build.py). Newest first; filter by relevance / vendor; links open the
+// primary source. Every field is esc()-escaped and URLs are http(s)-only.
+(function(){
+  var feed=document.getElementById('newsfeed'), metaEl=document.getElementById('newsMeta'),
+      relSel=document.getElementById('newsRel'), venSel=document.getElementById('newsVendor'),
+      empty=document.getElementById('newsEmpty');
+  if(!feed) return;
+  var news=(DATA.news||[]).slice();
+  var tierOf={}; DATA.vendors.forEach(function(v){tierOf[v.name]=v.tier;});
+  var relRank={high:3,medium:2,low:1}, relColor={high:'#34d399',medium:'#fbbf24',low:'#64748b'};
+  news.sort(function(a,b){var d=String(b.date||'').localeCompare(String(a.date||''));return d!==0?d:((relRank[b.relevance]||0)-(relRank[a.relevance]||0));});
+  metaEl.textContent = news.length ? (news.length+' announcement'+(news.length===1?'':'s')+(DATA.news_generated?(' · gathered '+DATA.news_generated):'')) : 'Feed is empty';
+  Array.from(new Set(news.map(function(n){return n.vendor;}))).sort().forEach(function(v){venSel.add(new Option(v,v));});
+  function render(){
+    var rf=relSel.value, vf=venSel.value, min=relRank[rf]||0;
+    var rows=news.filter(function(n){return (!rf||(relRank[n.relevance]||0)>=min)&&(!vf||n.vendor===vf);});
+    empty.style.display = rows.length?'none':'block';
+    feed.style.display = rows.length?'block':'none';
+    feed.innerHTML = rows.map(function(n){
+      var t=tierOf[n.vendor]||'C';
+      var safe=(n.url && /^https?:\/\//i.test(n.url)) ? n.url : '';
+      var head=safe?('<a href="'+esc(safe)+'" target="_blank" rel="noopener noreferrer">'+esc(n.headline)+'</a>'):esc(n.headline);
+      return '<div class="nitem">'+
+        '<div class="nd">'+esc(n.date||'')+'</div>'+
+        '<div class="nbody">'+
+          '<div class="nh"><span class="rdot" style="background:'+(relColor[n.relevance]||'#64748b')+'"></span>'+head+'</div>'+
+          '<div class="nmeta"><span class="tag '+tierClass(t)+'">'+esc(n.vendor)+' · '+t+'</span><span>'+esc(n.source||'')+'</span></div>'+
+          (n.summary?('<div class="nsum">'+esc(n.summary)+'</div>'):'')+
+        '</div></div>';
+    }).join('');
+  }
+  ['change','input'].forEach(function(e){relSel.addEventListener(e,render);venSel.addEventListener(e,render);});
+  render();
+})();
 
 // Name look-up typeahead on the search box — suggests matching vendor names as
 // you type; click / Enter jumps the table to that vendor. (draw() still filters
