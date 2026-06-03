@@ -417,17 +417,18 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .planzone{border:1px dashed #2a3a5c;padding:11px 2px 3px}
   .planzone>.zl{position:absolute;top:1px;left:0;right:0;text-align:center;font-size:8px;font-weight:800;color:var(--accent);letter-spacing:.02em}
   .planzone .dots{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:flex-start;height:100%;overflow:visible}
-  .planbooth{width:11px;height:11px;border-radius:3px;cursor:pointer;border:1px solid rgba(0,0,0,.35)}
-  .planbooth.must{width:13px;height:13px;border-radius:50%;box-shadow:0 0 0 1.5px #0b1020,0 0 0 3px var(--A)}
-  .planbooth.space{cursor:default;border-radius:50%}
+  .planbooth{width:16px;height:16px;border-radius:4px;cursor:pointer;border:1px solid rgba(0,0,0,.4)}
+  .planbooth.must{width:22px;height:22px;border-radius:50%;box-shadow:0 0 0 2px #0b1020,0 0 0 4px var(--A)}
+  .planbooth.space{cursor:default;border-radius:50%;width:12px;height:12px;opacity:.65}
   .planbooth.dim{opacity:.13}
-  .planbooth:hover{transform:scale(1.4);z-index:5;position:relative}
-  .planmark{display:flex;align-items:center;justify-content:center;text-align:center;padding:2px;font-size:8px;line-height:1.05;color:#9fb3d6;border:1px solid #243352;background:rgba(20,30,54,.5);font-weight:600}
-  .planmark.k-theater{background:rgba(41,181,232,.13);border-color:#2c5f86;color:#bfe3f5}
-  .planmark.k-lounge{background:rgba(52,211,153,.10);border-color:#2f6b54;color:#bff0db}
-  .planmark.k-concourse{background:rgba(167,139,250,.10);border-color:#5b4b86;color:#d6cbff}
-  .planmark.k-anchor{background:rgba(41,181,232,.07);border-color:#3a567e;color:#cfe0ff;font-weight:700;font-size:9px}
-  .planmark.k-structure{background:rgba(80,95,130,.09);border-color:#2a3650;color:#8da2c8;font-weight:400}
+  .planbooth:hover{transform:scale(1.55);z-index:5;position:relative}
+  /* landmarks "framed out" — faint, recessive, so the booth dots dominate */
+  .planmark{display:flex;align-items:center;justify-content:center;text-align:center;padding:2px;font-size:7.5px;line-height:1.05;color:#56688a;border:1px solid #1c2a44;background:rgba(20,30,54,.22);font-weight:600;opacity:.78}
+  .planmark.k-theater{border-color:#274d6b;color:#7ba2bd}
+  .planmark.k-lounge{border-color:#2a5544;color:#86bba2}
+  .planmark.k-concourse{border-color:#43386a;color:#a397c6}
+  .planmark.k-anchor{border-color:#2f486b;color:#93a9cf;font-weight:700;font-size:8px}
+  .planmark.k-structure{border-color:#212d45;color:#52648a;font-weight:400}
   .plancontainer{border:1px solid #1e2c48;background:rgba(120,150,200,.012);pointer-events:none}
   .plancontainer>.cl{position:absolute;top:2px;left:5px;font-size:8px;color:#5d6f92;font-weight:700;letter-spacing:.03em}
   @media(max-width:640px){.planbox{aspect-ratio:auto;height:560px}.planmark{font-size:7px}}
@@ -510,7 +511,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div class="sub" id="subhead"></div>
     </div>
     <div class="navbtns">
-      <button type="button" class="infobtn no-print" id="scoreInfoBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated">ⓘ Scoring</button>
+      <button type="button" class="infobtn no-print scoreInfoTrigger" id="scoreInfoBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated">ⓘ Scoring</button>
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
@@ -602,7 +603,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <div class="sub">Live announcements from partner vendors · its own window</div>
       </div>
       <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
-      <a class="dl" href="?" style="margin-left:14px">← Back to dashboard</a>
+      <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
+      <a class="dl" href="?" style="margin-left:8px">← Back to dashboard</a>
     </div>
   </header>
   <div class="wrap">
@@ -632,7 +634,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <div class="sub">All 197 partners, or drill into a niche · its own window</div>
       </div>
       <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
-      <a class="dl" href="?" style="margin-left:14px">← Back to dashboard</a>
+      <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
+      <a class="dl" href="?" style="margin-left:8px">← Back to dashboard</a>
     </div>
   </header>
   <div class="wrap">
@@ -666,7 +669,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <div class="sub">Partner + Snowflake activations · our scouted partners placed by booth zone · its own window</div>
       </div>
       <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
-      <a class="dl" href="?" style="margin-left:14px">← Back to dashboard</a>
+      <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
+      <a class="dl" href="?" style="margin-left:8px">← Back to dashboard</a>
     </div>
   </header>
   <div class="mapwrap">
@@ -1017,15 +1021,16 @@ draw();
 
 // Scoring-info popover — the upper-right "ⓘ Scoring" link defines each score component.
 (function(){
-  var btn=document.getElementById('scoreInfoBtn'), pop=document.getElementById('scorePop');
-  if(!btn||!pop) return;
+  var pop=document.getElementById('scorePop'); if(!pop) return;
+  var triggers=document.querySelectorAll('.scoreInfoTrigger'); if(!triggers.length) return;
   var x=document.getElementById('scorePopX');
-  function open(){pop.hidden=false;btn.setAttribute('aria-expanded','true');if(x)x.focus();}
-  function close(){pop.hidden=true;btn.setAttribute('aria-expanded','false');}
-  btn.addEventListener('click',function(e){e.stopPropagation();if(pop.hidden)open();else close();});
+  function setExp(v){Array.prototype.forEach.call(triggers,function(b){b.setAttribute('aria-expanded',String(v));});}
+  function open(){pop.hidden=false;setExp(true);if(x)x.focus();}
+  function close(){pop.hidden=true;setExp(false);}
+  Array.prototype.forEach.call(triggers,function(b){b.addEventListener('click',function(e){e.stopPropagation();if(pop.hidden)open();else close();});});
   if(x) x.addEventListener('click',close);
   document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!pop.hidden)close();});
-  document.addEventListener('click',function(e){if(!pop.hidden&&!pop.contains(e.target)&&e.target!==btn)close();});
+  document.addEventListener('click',function(e){if(pop.hidden)return;if(pop.contains(e.target))return;if(e.target.classList&&e.target.classList.contains('scoreInfoTrigger'))return;close();});
 })();
 
 // ----- Interactive Basecamp floor map (?view=map): spatial floor-plan + zone columns -----
