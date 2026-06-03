@@ -213,7 +213,15 @@ def render(meta, vendors, src_path):
         "news": _news["items"],
         "news_generated": _news["generated"],
     }
-    html = HTML_TEMPLATE.replace("/*__DATA__*/", json.dumps(payload, ensure_ascii=False))
+    # Embed as a JS object literal at /*__DATA__*/. json.dumps does NOT escape
+    # "</script>", U+2028 or U+2029, any of which would break out of the inline
+    # <script> at HTML-parse time — so neutralise them. "<\/" is identical to
+    # "</" once the JS string is parsed, so the data round-trips unchanged.
+    data_json = (json.dumps(payload, ensure_ascii=False)
+                 .replace("</", "<\\/")
+                 .replace("\u2028", "\\u2028")
+                 .replace("\u2029", "\\u2029"))
+    html = HTML_TEMPLATE.replace("/*__DATA__*/", data_json)
     # Inline Chart.js so the page is fully self-contained (no CDN dependency) —
     # works offline and for any recipient regardless of their network policy.
     chartjs_path = os.path.join(HERE, "vendor", "chart.umd.js")
@@ -252,7 +260,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#29b5e8,#1b7fb8);display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121f}
   h1{font-size:20px;margin:0;letter-spacing:.01em}
   .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
-  .dl{margin-left:auto;background:var(--accent2);border:1px solid var(--accent);color:#dff3ff;padding:8px 13px;border-radius:9px;font-size:12.5px;text-decoration:none;white-space:nowrap}
+  .dl{background:var(--accent2);border:1px solid var(--accent);color:#dff3ff;padding:8px 13px;border-radius:9px;font-size:12.5px;text-decoration:none;white-space:nowrap}
   .dl:hover{background:#176a9c}
   .wrap{max-width:1320px;margin:0 auto;padding:20px 24px 60px}
   .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:6px 0 24px}
@@ -343,7 +351,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   body.newsmode #newsView{display:block}
   body.mqmode #mqView{display:block}
   .bucketbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
-  .bchip{background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;user-select:none;white-space:nowrap}
+  .bchip{background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-family:inherit;line-height:1.3;cursor:pointer;user-select:none;white-space:nowrap}
   .bchip:hover{color:var(--text)}
   .bchip.on{background:var(--accent2);border-color:var(--accent);color:#dff3ff}
   .bchip .bc{opacity:.65;font-weight:400;margin-left:2px}
@@ -386,6 +394,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .vrow .vv{color:var(--text);font-weight:600}
   @media(max-width:480px){.vrow{flex-direction:column;gap:2px}.vrow .k{min-width:0}}
   .note code{color:var(--accent)}
+  /* Back-to-top — fixed floating control, revealed after scrolling down */
+  .totop{position:fixed;right:22px;bottom:24px;width:46px;height:46px;border-radius:50%;background:var(--accent2);border:1px solid var(--accent);color:#dff3ff;font-size:20px;cursor:pointer;opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease;z-index:120;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  .totop.show{opacity:1;visibility:visible}
+  .totop:hover{background:#176a9c}
   @media(max-width:920px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:700px){.kpis{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:1fr}}
   @media(max-width:430px){.kpis{grid-template-columns:repeat(2,1fr)}.nitem{flex-direction:column;gap:8px;padding:18px 20px}.nitem .nd{min-width:0}}
@@ -481,7 +493,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 
   <div class="note" id="note"></div>
-  <div class="totop no-print" style="text-align:center;margin:14px 0 2px"><button id="toTop" type="button" class="dl" style="cursor:pointer;margin:0">↑ Back to top</button></div>
+  <button id="toTop" type="button" class="totop no-print" aria-label="Back to top" title="Back to top">↑</button>
 </div>
 
 <div id="newsView">
@@ -522,7 +534,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <h1>Snowflake Summit 2026 — Magic Quadrant</h1>
         <div class="sub">All 197 partners, or drill into a niche · its own window</div>
       </div>
-      <a class="dl" href="?" style="margin-left:auto">← Back to dashboard</a>
+      <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <a class="dl" href="?" style="margin-left:14px">← Back to dashboard</a>
     </div>
   </header>
   <div class="wrap">
@@ -590,7 +603,7 @@ function scoreChips(v){
   return items.map(([l,x])=>`<span class="schip">${l} <b>${fmt(x)}</b></span>`).join('');
 }
 function card(v){
-  return `<div class="card2 ${v.hidden_gem?'':''}" data-v="${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
+  return `<div class="card2 ${v.hidden_gem?'':''}" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
     <div class="nm">${esc(v.name)} <span class="tag ${tierClass(v.tier)}">${v.tier}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
     <div class="ct">${esc(v.category)} · booth ${fmt(v.booth)}</div>
     <div class="scores">${scoreChips(v)}</div>
@@ -644,8 +657,8 @@ new Chart(document.getElementById('profChart'),{type:'radar',
 // Top valuations — parse the $ figures from valuation/market_cap and chart the top 15.
 (function(){
   var cv=document.getElementById('valChart'); if(!cv) return;
-  function pv(s){if(!s)return null;var m=String(s).match(/\$\s*([\d.]+)\s*([BM])/i);if(!m)return null;var n=parseFloat(m[1]);return m[2].toUpperCase()==='B'?n*1000:n;}
-  function fb(n){return n>=1000?('$'+(n/1000).toFixed(n%1000?1:0)+'B'):('$'+Math.round(n)+'M');}
+  function pv(s){if(!s)return null;var m=String(s).match(/\$\s*([\d.]+)\s*([BMT])/i);if(!m)return null;var n=parseFloat(m[1]);var u=m[2].toUpperCase();return u==='T'?n*1000000:u==='B'?n*1000:n;}
+  function fb(n){return n>=1000000?('$'+(n/1000000).toFixed(n%1000000?2:0)+'T'):n>=1000?('$'+(n/1000).toFixed(n%1000?1:0)+'B'):('$'+Math.round(n)+'M');}
   var rows=(DATA.vendors||[]).map(function(v){return {name:v.name,tier:v.tier,num:pv(v.market_cap),raw:v.market_cap};}).filter(function(r){return r.num;}).sort(function(a,b){return b.num-a.num;}).slice(0,15);
   if(!rows.length) return;
   new Chart(cv,{type:'bar',
@@ -674,7 +687,7 @@ function draw(){
     if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
   tbody.innerHTML=r.map(v=>{
     const w=Math.round(((v.overall_score||0)/10)*54)+6;
-    return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" style="cursor:pointer">
+    return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" tabindex="0" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer">
       <td class="num">${v.rank}</td><td class="name">${esc(v.name)}</td><td>${fmt(v.booth)}</td>
       <td><span class="tag tNi">${esc(fmt(v.niche))}</span></td><td>${esc(fmt(v.category))}</td><td>${esc(fmt(v.company_type))}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
@@ -682,8 +695,15 @@ function draw(){
       <td class="num"><span class="ovrbar" style="width:${w}px;background:${tierColor(v.tier)}"></span><b>${fmt(v.overall_score)}</b></td>
       <td><span class="tag ${tierClass(v.tier)}">${v.tier}</span></td></tr>`;}).join('');
 }
-document.querySelectorAll('#vtable thead tr:first-child th').forEach(th=>th.onclick=()=>{
-  const k=th.dataset.k;if(!k)return;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();});
+function syncSortAria(){document.querySelectorAll('#vtable thead tr:first-child th[data-k]').forEach(function(th){th.setAttribute('aria-sort', th.dataset.k===sortK?(sortAsc?'ascending':'descending'):'none');});}
+document.querySelectorAll('#vtable thead tr:first-child th').forEach(function(th){
+  var k=th.dataset.k; if(!k) return;
+  th.tabIndex=0; th.setAttribute('role','button'); th.setAttribute('aria-sort','none');
+  function doSort(){if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();syncSortAria();}
+  th.onclick=doSort;
+  th.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){e.preventDefault();doSort();}});
+});
+syncSortAria();
 ['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);typeSel.addEventListener(e,draw);});
 draw();
 
@@ -716,8 +736,8 @@ draw();
   if(bucketBar){
     var counts={}; news.forEach(function(n){counts[n._bucket]=(counts[n._bucket]||0)+1;});
     var chips=[['','All',news.length]].concat(BUCKETS.filter(function(b){return counts[b];}).map(function(b){return [b, ICON[b]+' '+b, counts[b]];}));
-    bucketBar.innerHTML=chips.map(function(c){return '<span class="bchip'+(c[0]===''?' on':'')+'" data-b="'+esc(c[0])+'">'+esc(c[1])+' <span class="bc">'+c[2]+'</span></span>';}).join('');
-    bucketBar.querySelectorAll('.bchip').forEach(function(ch){ch.addEventListener('click',function(){bucketFilter=ch.getAttribute('data-b');bucketBar.querySelectorAll('.bchip').forEach(function(x){x.classList.remove('on');});ch.classList.add('on');render();});});
+    bucketBar.innerHTML=chips.map(function(c){return '<button type="button" class="bchip'+(c[0]===''?' on':'')+'" data-b="'+esc(c[0])+'" aria-pressed="'+(c[0]===''?'true':'false')+'">'+esc(c[1])+' <span class="bc">'+c[2]+'</span></button>';}).join('');
+    bucketBar.querySelectorAll('.bchip').forEach(function(ch){ch.addEventListener('click',function(){bucketFilter=ch.getAttribute('data-b');bucketBar.querySelectorAll('.bchip').forEach(function(x){x.classList.remove('on');x.setAttribute('aria-pressed','false');});ch.classList.add('on');ch.setAttribute('aria-pressed','true');render();});});
   }
   function render(){
     var rf=relSel.value, vf=venSel.value, min=relRank[rf]||0;
@@ -836,6 +856,8 @@ draw();
       data:vs.filter(v=>v.tier===t && visQ.has(quadOf(v,s))).map(v=>({x:v.mq_x,y:v.mq_y,name:v.name,tier:v.tier,ov:v.overall_score,cat:v.category,ex:v.mq_execute,vi:v.mq_vision,q:quadOf(v,s)})),
       backgroundColor:tierColor(t)+'cc',borderColor:tierColor(t),borderWidth:1,pointRadius:t==='A'?6:3.5,pointHoverRadius:8})).filter(d=>d.data.length);
   }
+  var mqVals=[]; V.forEach(function(v){mqVals.push(v.mq_x,v.mq_y);});
+  var mqLo=Math.max(0,Math.floor(Math.min.apply(null,mqVals.length?mqVals:[3])));
   const chart=new Chart(document.getElementById('mqChart'),{type:'scatter',data:{datasets:datasetsFor(ALL)},
     options:{maintainAspectRatio:false,animation:false,
       plugins:{legend:{labels:{color:C.tick,usePointStyle:true}},
@@ -843,8 +865,8 @@ draw();
           title:c=>c[0].raw.name,
           label:c=>['Tier '+c.raw.tier+' · '+c.raw.q,'Overall  '+c.raw.ov+' / 10','Execute '+c.raw.ex+'  ·  Vision '+c.raw.vi, c.raw.cat]}}},
       scales:{
-        x:{min:3,max:10,title:{display:true,text:'Completeness of Vision  →   (AI + IPO/Upside)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}},
-        y:{min:3,max:10,title:{display:true,text:'Ability to Execute  →   (Snowflake + Retail)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}}}},
+        x:{min:mqLo,max:10,title:{display:true,text:'Completeness of Vision  →   (AI + IPO/Upside)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}},
+        y:{min:mqLo,max:10,title:{display:true,text:'Ability to Execute  →   (Snowflake + Retail)',color:'#aab6c9',font:{weight:'700'}},ticks:{color:C.tick},grid:{color:C.grid}}}},
     plugins:[mqPlugin]});
   function render(s){
     active=s; mqCross={tx:s.tx,ty:s.ty};
@@ -869,14 +891,17 @@ draw();
 // Download / print to PDF — the @media print stylesheet restyles the page; the
 // browser print dialog saves the whole dashboard (all sections + current MQ view).
 (function(){var b=document.getElementById('pdfBtn');if(b)b.addEventListener('click',function(){window.print();});})();
-(function(){var t=document.getElementById('toTop');if(t)t.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
+(function(){var t=document.getElementById('toTop');if(!t)return;t.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
+  var onScroll=function(){t.classList.toggle('show',(window.scrollY||document.documentElement.scrollTop)>320);};
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();})();
 
 // Vendor detail — click any vendor card or table row for full company info.
 (function(){
   var m=document.createElement('div'); m.className='vmodal'; m.id='vModal';
-  m.innerHTML='<div class="vsheet"><button class="x" type="button" aria-label="Close">&times;</button><div id="vBody"></div></div>';
+  m.innerHTML='<div class="vsheet" role="dialog" aria-modal="true" aria-labelledby="vModalTitle" tabindex="-1"><button class="x" type="button" aria-label="Close">&times;</button><div id="vBody"></div></div>';
   document.body.appendChild(m);
   var body=m.querySelector('#vBody');
+  var sheet=m.querySelector('.vsheet'), lastFocus=null;
   var byName={}; (DATA.vendors||[]).forEach(function(v){byName[v.name]=v;});
   function row(k,val){return (val==null||val==='')?'':'<div class="vrow"><span class="k">'+esc(k)+'</span><span class="vv">'+esc(val)+'</span></div>';}
   function open(name){
@@ -885,27 +910,45 @@ draw();
     var scores=[['Snowflake',v.snowflake_score],['AI',v.ai_score],['Retail / Customer',v.retail_score],['IPO / Upside',v.ipo_score],['Bryan-Fit',v.bryan_score]]
       .map(function(s){return '<div class="vrow"><span class="k">'+s[0]+'</span><span class="vv">'+fmt(s[1])+' / 10</span></div>';}).join('')
       +'<div class="vrow"><span class="k">Overall</span><span class="vv">'+fmt(v.overall_score)+' / 10</span></div>';
-    body.innerHTML='<h2>'+esc(v.name)+'</h2> <span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span> <span class="tag tNi">'+esc(fmt(v.niche))+'</span>'+
+    body.innerHTML='<h2 id="vModalTitle">'+esc(v.name)+'</h2> <span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span> <span class="tag tNi">'+esc(fmt(v.niche))+'</span>'+
       '<div class="sub" style="margin-top:5px">'+esc(fmt(v.category))+' · booth '+esc(fmt(v.booth))+(v.company_type?(' · '+esc(v.company_type)):'')+'</div>'+
       '<div class="vsec">Company</div>'+(company||'<div class="sub" style="padding:6px 0">No funding / valuation data on file yet.</div>')+
       '<div class="vsec">Scores</div>'+scores+
       (v.notes?('<div class="vsec">Notes</div><div class="vrow" style="border:none"><span class="vv" style="font-weight:400;line-height:1.55">'+esc(v.notes)+'</span></div>'):'')+
       (v.source?('<div class="sub" style="margin-top:12px;font-size:11px;word-break:break-word">Source: '+esc(v.source)+'</div>'):'');
-    m.classList.add('on'); document.body.style.overflow='hidden';
+    lastFocus=document.activeElement; m.classList.add('on'); document.body.style.overflow='hidden'; var xb=m.querySelector('.x'); (xb||sheet).focus();
   }
-  function close(){m.classList.remove('on'); document.body.style.overflow='';}
+  function close(){m.classList.remove('on'); document.body.style.overflow=''; if(lastFocus&&lastFocus.focus){try{lastFocus.focus();}catch(_){}} lastFocus=null;}
   m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('x'))close();});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&m.classList.contains('on'))close();});
+  document.addEventListener('keydown',function(e){
+    if(!m.classList.contains('on'))return;
+    if(e.key==='Escape'){close();return;}
+    if(e.key==='Tab'){
+      var f=Array.prototype.filter.call(sheet.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),function(el){return el.offsetParent!==null&&!el.disabled;});
+      if(!f.length){e.preventDefault();return;}
+      var first=f[0],last=f[f.length-1];
+      if(!sheet.contains(document.activeElement)){first.focus();e.preventDefault();}
+      else if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}
+      else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}
+    }
+  });
   document.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-v]');if(el){var n=el.getAttribute('data-v');if(n&&byName[n])open(n);}});
+  document.addEventListener('keydown',function(e){
+    if(m.classList.contains('on'))return;
+    if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){
+      var a=document.activeElement, el=a&&a.closest&&a.closest('[data-v]');
+      if(el){var n=el.getAttribute('data-v');if(n&&byName[n]){e.preventDefault();open(n);}}
+    }
+  });
 })();
 
 document.getElementById('scoreDefBody').innerHTML =
-  `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
+  `<b>Scoring:</b> all scores are ${esc(DATA.meta.owner||'the owner')}'s directional 0–10 ratings from the scouting workbook — `+
   `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit — `+
-  `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> — tier is a scouting-priority call (A = must-see), editorial rather than a strict score cutoff. `+
+  `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> — tier is a scouting-priority call (A = must-see) that uses the Overall as a guideline (roughly A ≈ 7.5+, B ≈ 6+, C below) but is set editorially, so a handful of vendors sit a half-point either side of those marks. `+
   `Most high-priority vendors carry researched scores; some lower-priority and consulting entries share directional / template values. `+
   `<b>Niche</b> is a broad value-taxonomy label (Agents, Agent Platform, ETL, Dashboard, API, Security, Cost Savings, Governance, Observability, Database, Customer Data, Consulting, …) rolled up from each vendor's category — searchable and filterable above. `+
-  `<b>Caveat:</b> ${DATA.meta.caveat||''} `+
+  `<b>Caveat:</b> ${esc(DATA.meta.caveat||'')} `+
   `<b>Data sources:</b> funding, valuation, round and employee figures were enriched via AI web research (Crunchbase / PitchBook / news / company sites) and are directional — verify before relying. `+
   `Regenerate after editing <code>vendors.json</code> with <code>python build.py</code>.`;
 </script>
@@ -920,8 +963,9 @@ def main():
     rank(vendors)
     out = render(meta, vendors, src)
     print(f"Scored {len(vendors)} partners -> {out}")
-    print("Tier A must-see:")
-    for v in [v for v in vendors if v.get("tier") == "A"][:14]:
+    tier_a = [v for v in vendors if v.get("tier") == "A"]
+    print(f"Tier A must-see ({len(tier_a)}):")
+    for v in tier_a:
         print(f"  {v['rank']:>3}. {v['name']:<16} overall={v['overall_score']}  booth {v['booth']}  [{v['category']}]")
 
 

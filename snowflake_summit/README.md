@@ -27,7 +27,7 @@ the bundled `.xlsx`.
 
 ### Dashboard sections
 - **6 KPIs** — total partners, Must-See (Tier A) count, Priority (A+B), avg Overall score, avg AI score, public-company count.
-- **⭐ Must-See** — the 14 Tier-A partners, ranked by Overall Score (Sigma, Atlan, Hightouch, dbt, Fivetran, …).
+- **⭐ Must-See** — the 24 Tier-A partners, ranked by Overall Score (Sigma, Atlan, Hightouch, dbt, Fivetran, …).
 - **💎 Hidden Gems** — Overall ≥ 7 but not Tier A.
 - **🤝 Best Bryan-Fit** — top career/networking-fit partners.
 - **Charts** — Top 15 by Overall, Priority-Tier mix, Partners by Category, and a radar of the average
