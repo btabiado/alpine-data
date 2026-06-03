@@ -281,10 +281,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
      the panel/background colours. */
   @media print{
     @page{margin:9mm}
-    html,body{background:#0b1020 !important;zoom:1 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    html,body{background:#0b1020 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    html{zoom:.55 !important}
     .no-print,.dl,.controls,#search,#mqBack,#mqSegSel{display:none !important}
-    .wrap{max-width:none;padding:8px 2px}
-    .grid,.cards{grid-template-columns:1fr !important}
+    .wrap{width:1320px;max-width:none;padding:6px}
     .panel,.card2,.kpi,canvas,.nitem{break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     h3.sec{break-after:avoid;page-break-after:avoid}
     .scroll{max-height:none !important;overflow:visible !important}
@@ -523,20 +523,34 @@ document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
 
 const C={grid:'#243352',tick:'#8da2c8'};
 const tierColor=t=>({A:'#34d399',B:'#fbbf24',C:'#60a5fa',D:'#3b82f6'})[t]||'#60a5fa';
+// Inline plugin: print the value on each bar / doughnut slice (numbers on charts).
+const valueLabels={id:'valueLabels',afterDatasetsDraw(chart){
+  const ctx=chart.ctx,type=chart.config.type,area=chart.chartArea;ctx.save();
+  chart.data.datasets.forEach((ds,di)=>{const meta=chart.getDatasetMeta(di);if(meta.hidden)return;
+    meta.data.forEach((el,i)=>{const v=ds.data[i];if(v==null||v==='')return;
+      if(type==='bar'){ctx.font='700 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='middle';
+        var t=String(v),w=ctx.measureText(t).width;
+        if(el.x+6+w<=area.right){ctx.fillStyle='#e8eeff';ctx.textAlign='left';ctx.fillText(t,el.x+6,el.y);}
+        else{ctx.fillStyle='#06121f';ctx.textAlign='right';ctx.fillText(t,el.x-6,el.y);}}
+      else if(type==='doughnut'){var p=el.getCenterPoint();
+        ctx.font='800 13px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle='#06121f';ctx.textAlign='center';ctx.textBaseline='middle';
+        ctx.fillText(String(v),p.x,p.y);}});});
+  ctx.restore();
+}};
 
-new Chart(document.getElementById('topChart'),{type:'bar',
+new Chart(document.getElementById('topChart'),{type:'bar',plugins:[valueLabels],
   data:{labels:DATA.top15.map(v=>v.name),
     datasets:[{data:DATA.top15.map(v=>v.overall_score),backgroundColor:DATA.top15.map(v=>tierColor(v.tier))}]},
   options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:c=>'Tier '+DATA.top15[c.dataIndex].tier}}},
     scales:{x:{min:0,max:10,ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:11}},grid:{display:false}}}}});
 
-new Chart(document.getElementById('tierChart'),{type:'doughnut',
+new Chart(document.getElementById('tierChart'),{type:'doughnut',plugins:[valueLabels],
   data:{labels:Object.keys(DATA.by_tier).map(t=>'Tier '+t),
     datasets:[{data:Object.values(DATA.by_tier),backgroundColor:Object.keys(DATA.by_tier).map(tierColor)}]},
   options:{plugins:{legend:{position:'right',labels:{color:C.tick}}}}});
 
 const niches=Object.entries(DATA.by_niche);
-new Chart(document.getElementById('nicheChart'),{type:'bar',
+new Chart(document.getElementById('nicheChart'),{type:'bar',plugins:[valueLabels],
   data:{labels:niches.map(c=>c[0]),datasets:[{data:niches.map(c=>c[1]),backgroundColor:'#29b5e8'}]},
   options:{indexAxis:'y',plugins:{legend:{display:false}},onClick:(e,els)=>{if(els.length){nicheSel.value=niches[els[0].index][0];draw();document.getElementById('vtable').scrollIntoView({behavior:'smooth'});}},
     scales:{x:{ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:10.5}},grid:{display:false}}}}});
