@@ -285,14 +285,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .scorepop li{margin:5px 0;font-size:12px;color:#cfddf4;line-height:1.5}
   .scorepop b{color:var(--text)}
   .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#29b5e8,#1b7fb8);display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121f}
-  h1{font-size:20px;margin:0;letter-spacing:.01em}
+  h1{font-size:24px;font-weight:800;margin:0;letter-spacing:.01em}
   .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
   .dl{background:var(--accent2);border:1px solid var(--accent);color:#dff3ff;padding:8px 13px;border-radius:9px;font-size:12.5px;text-decoration:none;white-space:nowrap}
   .dl:hover{background:#176a9c}
   .wrap{max-width:1320px;margin:0 auto;padding:20px 24px 60px}
   .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:6px 0 24px}
   .kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 15px}
-  .kpi .v{font-size:25px;font-weight:800;color:#fff;line-height:1}
+  .kpi .v{font-size:23px;font-weight:800;color:var(--text);line-height:1}
   .kpi .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:8px}
   .kpi .s{font-size:11px;color:var(--accent);margin-top:3px}
   h3.sec{margin:22px 0 12px;font-size:15px}
@@ -306,7 +306,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .schip{font-size:10px;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--border);color:var(--muted)}
   .schip b{color:var(--text)}
   .ovr{display:flex;align-items:baseline;gap:7px;margin-top:6px}
-  .ovr b{font-size:22px;color:#fff}.ovr span{font-size:10.5px;color:var(--muted)}
+  .ovr b{font-size:22px;color:var(--text)}.ovr span{font-size:10.5px;color:var(--muted)}
   .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
   .tA{background:rgba(52,211,153,.16);color:var(--A)}.tB{background:rgba(251,191,36,.16);color:var(--B)}
   .tC{background:rgba(96,165,250,.18);color:#93c5fd}.tD{background:rgba(96,165,250,.18);color:#93c5fd}
@@ -385,6 +385,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .maplegend .sw{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid var(--border)}
   .mapscroll{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#0e1730,#0c1426);padding:14px}
   .maprow{display:flex;gap:12px;align-items:flex-start;min-width:min-content}
+  /* Always-visible horizontal scroll + slider for the wide Zone-columns map */
+  #mapColsWrap{scrollbar-width:auto;scrollbar-color:var(--accent) var(--panel2)}
+  #mapColsWrap::-webkit-scrollbar{height:14px}
+  #mapColsWrap::-webkit-scrollbar-track{background:var(--panel2);border-radius:7px}
+  #mapColsWrap::-webkit-scrollbar-thumb{background:var(--accent);border-radius:7px;border:3px solid var(--panel2)}
+  #mapColsNav{margin:0 0 8px}
+  .mapcols-hint{font-size:11px;color:var(--muted);text-align:center;letter-spacing:.04em;margin-bottom:4px}
+  .mapcols-slider{width:100%;accent-color:var(--accent);cursor:grab}
   .zonecol{flex:0 0 auto;width:150px;display:flex;flex-direction:column;gap:7px}
   .zonehd{font-size:12px;font-weight:800;color:var(--accent);text-align:center;letter-spacing:.04em;padding:6px 4px 8px;border-bottom:2px solid var(--accent2)}
   .booth{border:1px solid var(--border);border-radius:8px;padding:7px 9px;background:var(--panel);cursor:pointer;transition:transform .08s ease,border-color .12s ease}
@@ -445,7 +453,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   /* Gold embossed cursive signature — signs the foot of every view + the PDF */
   .signature{text-align:center;margin:38px auto 18px;padding-top:22px;border-top:1px solid var(--border);max-width:1320px}
   .sigrule{width:140px;height:1px;margin:0 auto 12px;background:linear-gradient(90deg,transparent,#d4af37,transparent)}
-  .signame{font-family:"Snell Roundhand","Apple Chancery","Brush Script MT",cursive;font-style:italic;font-size:48px;line-height:1.1;
+  .signame{font-family:"Snell Roundhand","Apple Chancery","Brush Script MT",cursive;font-style:italic;font-size:34px;line-height:1.1;
     background:linear-gradient(92deg,#9e7c2f,#f7e98e 28%,#e6c200 50%,#fdf5a6 72%,#b8860b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 7px rgba(212,175,55,.20));letter-spacing:.5px}
   .sigsub{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:8px}
@@ -682,6 +690,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
     <div class="maplegend" id="mapLegend"></div>
     <div id="mapPlanWrap"><div class="planbox" id="mapPlan" role="region" aria-label="Basecamp floor plan"></div></div>
+    <div id="mapColsNav" style="display:none">
+      <div class="mapcols-hint">◀ slide to pan across all zones ▶</div>
+      <input type="range" id="mapColsSlider" class="mapcols-slider" min="0" max="1000" value="0" aria-label="Scroll the floor map left and right">
+    </div>
     <div class="mapscroll" id="mapColsWrap" role="region" aria-label="Basecamp floor map, scroll horizontally" tabindex="0" style="display:none"><div class="maprow" id="mapRow"></div></div>
     <div class="mapfoot" id="mapFoot"></div>
     <details class="floorimg"><summary>📷 Original Basecamp board (photo) — cross-reference the real layout</summary><img src="__FLOOR_IMG_SRC__" alt="Snowflake Summit 2026 — Your Guide to Basecamp, original floor-map board" loading="lazy"></details>
@@ -735,7 +747,7 @@ function scoreChips(v){
 }
 function card(v){
   return `<div class="card2 ${v.hidden_gem?'':''}" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
-    <div class="nm">${esc(v.name)} <span class="tag ${tierClass(v.tier)}">${v.tier}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
+    <div class="nm">${esc(v.name)} <span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
     <div class="ct">${esc(v.category)} · booth ${fmt(v.booth)}</div>
     <div class="scores">${scoreChips(v)}</div>
     <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+esc(v.company_type)):''}</span></div></div>`;
@@ -745,6 +757,7 @@ document.getElementById('gems').innerHTML = DATA.gems.length?DATA.gems.map(card)
 document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
 
 const C={grid:'#243352',tick:'#8da2c8'};
+if(window.Chart){Chart.defaults.font.family='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';Chart.defaults.color=C.tick;}
 const tierColor=t=>({A:'#34d399',B:'#fbbf24',C:'#60a5fa',D:'#3b82f6'})[t]||'#60a5fa';
 // Inline plugin: print the value on each bar / doughnut slice (numbers on charts).
 const valueLabels={id:'valueLabels',afterDatasetsDraw(chart){
@@ -763,7 +776,7 @@ const valueLabels={id:'valueLabels',afterDatasetsDraw(chart){
 
 new Chart(document.getElementById('topChart'),{type:'bar',plugins:[valueLabels],
   data:{labels:DATA.top15.map(v=>v.name),
-    datasets:[{data:DATA.top15.map(v=>v.overall_score),backgroundColor:DATA.top15.map(v=>tierColor(v.tier))}]},
+    datasets:[{data:DATA.top15.map(v=>v.overall_score),backgroundColor:'#29b5e8',borderRadius:4}]},
   options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:c=>'Tier '+DATA.top15[c.dataIndex].tier}}},
     scales:{x:{min:0,max:10,ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:11}},grid:{display:false}}}}});
 
@@ -824,7 +837,7 @@ function draw(){
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
       <td class="num">${fmt(v.retail_score)}</td><td class="num">${fmt(v.ipo_score)}</td><td class="num">${fmt(v.bryan_score)}</td>
       <td class="num"><span class="ovrbar" style="width:${w}px;background:${tierColor(v.tier)}"></span><b>${fmt(v.overall_score)}</b></td>
-      <td><span class="tag ${tierClass(v.tier)}">${v.tier}</span></td></tr>`;}).join('');
+      <td><span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span></td></tr>`;}).join('');
 }
 function syncSortAria(){document.querySelectorAll('#vtable thead tr:first-child th[data-k]').forEach(function(th){th.setAttribute('aria-sort', th.dataset.k===sortK?(sortAsc?'ascending':'descending'):'none');});}
 document.querySelectorAll('#vtable thead tr:first-child th').forEach(function(th){
@@ -904,7 +917,7 @@ draw();
   function close(){box.classList.remove('on');box.innerHTML='';items=[];act=-1;}
   function pick(v){var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;set.call(inp,v.name);inp.dispatchEvent(new Event('input',{bubbles:true}));close();var t=document.getElementById('vtable');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
   function hi(){[].forEach.call(box.querySelectorAll('.sug[data-i]'),function(el){var on=(+el.dataset.i===act);el.classList.toggle('act',on);if(on)el.scrollIntoView({block:'nearest'});});}
-  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function build(){
     var q=inp.value.trim().toLowerCase();
     if(!q){close();return;}
@@ -1122,12 +1135,21 @@ draw();
   });
 
   var tabPlan=document.getElementById('tabPlan'), tabCols=document.getElementById('tabCols'),
-      planWrap=document.getElementById('mapPlanWrap'), colsWrap=document.getElementById('mapColsWrap');
+      planWrap=document.getElementById('mapPlanWrap'), colsWrap=document.getElementById('mapColsWrap'),
+      colsNav=document.getElementById('mapColsNav'), slider=document.getElementById('mapColsSlider');
+  function syncSlider(){if(!slider||!colsWrap)return;var max=colsWrap.scrollWidth-colsWrap.clientWidth;slider.value=max>0?Math.round(colsWrap.scrollLeft/max*1000):0;}
+  if(slider&&colsWrap){
+    slider.addEventListener('input',function(){var max=colsWrap.scrollWidth-colsWrap.clientWidth;colsWrap.scrollLeft=max*(slider.value/1000);});
+    colsWrap.addEventListener('scroll',syncSlider,{passive:true});
+    colsWrap.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){colsWrap.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+  }
   function show(p){
     if(planWrap) planWrap.style.display=p?'block':'none';
     if(colsWrap) colsWrap.style.display=p?'none':'block';
+    if(colsNav) colsNav.style.display=p?'none':'block';
     if(tabPlan){tabPlan.classList.toggle('on',p);tabPlan.setAttribute('aria-pressed',String(p));}
     if(tabCols){tabCols.classList.toggle('on',!p);tabCols.setAttribute('aria-pressed',String(!p));}
+    if(!p) setTimeout(syncSlider,30);
   }
   if(tabPlan) tabPlan.addEventListener('click',function(){show(true);});
   if(tabCols) tabCols.addEventListener('click',function(){show(false);});

@@ -13,9 +13,9 @@ python3 build.py          # reads vendors.json -> writes dashboard.html
 open dashboard.html       # (macOS) or just double-click it
 ```
 
-`dashboard.html` is fully self-contained (data inlined at build time). Charts load Chart.js from a CDN,
-so viewing needs an internet connection. A **⬇ Download source spreadsheet** button in the header serves
-the bundled `.xlsx`.
+`dashboard.html` is fully self-contained — the data **and** Chart.js are inlined at build time, so it
+works fully offline (no CDN or network needed). A **⬇ Download source spreadsheet** button in the header
+serves the bundled `.xlsx`.
 
 ## What's inside
 
