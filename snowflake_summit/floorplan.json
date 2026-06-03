@@ -1,0 +1,834 @@
+{
+"canvasW": 100,
+"canvasH": 62,
+"regions": [
+{
+"key": "hall-outline",
+"label": "Expo Hall (Partner + Snowflake Activations)",
+"kind": "structure",
+"x": 1.0,
+"y": 4.5,
+"w": 71.0,
+"h": 54.0
+},
+{
+"key": "1000s",
+"label": "1000s",
+"kind": "booth-zone",
+"x": 1.0,
+"y": 6.5,
+"w": 5.6,
+"h": 42.0
+},
+{
+"key": "1100s",
+"label": "1100s",
+"kind": "booth-zone",
+"x": 7.6,
+"y": 6.5,
+"w": 4.0,
+"h": 42.0
+},
+{
+"key": "1200s",
+"label": "1200s",
+"kind": "booth-zone",
+"x": 11.7,
+"y": 6.5,
+"w": 3.6,
+"h": 42.0
+},
+{
+"key": "1300s",
+"label": "1300s",
+"kind": "booth-zone",
+"x": 14.4,
+"y": 6.5,
+"w": 3.6,
+"h": 42.0
+},
+{
+"key": "1400s",
+"label": "1400s",
+"kind": "booth-zone",
+"x": 17.0,
+"y": 6.5,
+"w": 3.8,
+"h": 42.0
+},
+{
+"key": "1500s",
+"label": "1500s",
+"kind": "booth-zone",
+"x": 21.2,
+"y": 6.5,
+"w": 4.0,
+"h": 42.0
+},
+{
+"key": "1600s",
+"label": "1600s",
+"kind": "booth-zone",
+"x": 24.6,
+"y": 6.5,
+"w": 4.0,
+"h": 42.0
+},
+{
+"key": "2000s",
+"label": "2000s",
+"kind": "booth-zone",
+"x": 31.4,
+"y": 6.5,
+"w": 4.4,
+"h": 42.0
+},
+{
+"key": "2100s",
+"label": "2100s",
+"kind": "booth-zone",
+"x": 37.8,
+"y": 6.5,
+"w": 4.0,
+"h": 42.0
+},
+{
+"key": "2200s",
+"label": "2200s",
+"kind": "booth-zone",
+"x": 41.8,
+"y": 6.5,
+"w": 2.6,
+"h": 42.0
+},
+{
+"key": "2300s",
+"label": "2300s",
+"kind": "booth-zone",
+"x": 44.0,
+"y": 6.5,
+"w": 3.4,
+"h": 42.0
+},
+{
+"key": "2400s",
+"label": "2400s",
+"kind": "booth-zone",
+"x": 46.9,
+"y": 6.5,
+"w": 3.0,
+"h": 42.0
+},
+{
+"key": "2500s",
+"label": "2500s",
+"kind": "booth-zone",
+"x": 49.7,
+"y": 6.5,
+"w": 3.0,
+"h": 42.0
+},
+{
+"key": "2600s",
+"label": "2600s",
+"kind": "booth-zone",
+"x": 52.7,
+"y": 6.5,
+"w": 3.2,
+"h": 42.0
+},
+{
+"key": "2700s",
+"label": "2700s",
+"kind": "booth-zone",
+"x": 55.9,
+"y": 6.5,
+"w": 3.4,
+"h": 42.0
+},
+{
+"key": "2800s",
+"label": "2800s",
+"kind": "booth-zone",
+"x": 60.1,
+"y": 6.5,
+"w": 4.0,
+"h": 42.0
+},
+{
+"key": "2900s",
+"label": "2900s",
+"kind": "booth-zone",
+"x": 64.3,
+"y": 6.5,
+"w": 4.0,
+"h": 42.0
+},
+{
+"key": "3000s",
+"label": "3000s",
+"kind": "booth-zone",
+"x": 67.4,
+"y": 6.5,
+"w": 2.6,
+"h": 42.0
+},
+{
+"key": "4000s",
+"label": "4000s",
+"kind": "booth-zone",
+"x": 70.0,
+"y": 6.5,
+"w": 3.0,
+"h": 42.0
+},
+{
+"key": "4100s",
+"label": "4100s",
+"kind": "booth-zone",
+"x": 75.6,
+"y": 6.5,
+"w": 3.6,
+"h": 18.0
+},
+{
+"key": "4200s",
+"label": "4200s",
+"kind": "booth-zone",
+"x": 79.1,
+"y": 6.5,
+"w": 3.4,
+"h": 18.0
+},
+{
+"key": "4300s",
+"label": "4300s",
+"kind": "booth-zone",
+"x": 82.7,
+"y": 6.5,
+"w": 3.4,
+"h": 18.0
+},
+{
+"key": "5000s",
+"label": "5000s",
+"kind": "booth-zone",
+"x": 70.0,
+"y": 50.0,
+"w": 3.4,
+"h": 8.0
+},
+{
+"key": "5100s",
+"label": "5100s",
+"kind": "booth-zone",
+"x": 75.6,
+"y": 50.0,
+"w": 3.6,
+"h": 8.0
+},
+{
+"key": "5200s",
+"label": "5200s",
+"kind": "booth-zone",
+"x": 79.1,
+"y": 50.0,
+"w": 3.4,
+"h": 8.0
+},
+{
+"key": "5300s",
+"label": "5300s",
+"kind": "booth-zone",
+"x": 82.7,
+"y": 50.0,
+"w": 3.4,
+"h": 8.0
+},
+{
+"key": "vertical-village",
+"label": "Vertical Village",
+"kind": "anchor",
+"x": 28.5,
+"y": 15.0,
+"w": 11.0,
+"h": 9.0
+},
+{
+"key": "vv-theater-1",
+"label": "Vertical Village Theater 1",
+"kind": "theater",
+"x": 24.6,
+"y": 6.5,
+"w": 4.4,
+"h": 6.0
+},
+{
+"key": "vv-theater-2",
+"label": "Vertical Village Theater 2",
+"kind": "theater",
+"x": 31.4,
+"y": 6.5,
+"w": 4.4,
+"h": 6.0
+},
+{
+"key": "meeting-village",
+"label": "Meeting Village",
+"kind": "anchor",
+"x": 70.0,
+"y": 28.0,
+"w": 12.0,
+"h": 15.0
+},
+{
+"key": "openai",
+"label": "OpenAI",
+"kind": "anchor",
+"x": 21.2,
+"y": 23.0,
+"w": 4.0,
+"h": 5.0
+},
+{
+"key": "atlan",
+"label": "Atlan",
+"kind": "anchor",
+"x": 25.4,
+"y": 23.0,
+"w": 4.0,
+"h": 5.0
+},
+{
+"key": "aws",
+"label": "AWS",
+"kind": "anchor",
+"x": 21.4,
+"y": 30.0,
+"w": 3.4,
+"h": 4.0
+},
+{
+"key": "domo",
+"label": "Domo",
+"kind": "anchor",
+"x": 25.4,
+"y": 30.0,
+"w": 4.0,
+"h": 5.0
+},
+{
+"key": "capitalone",
+"label": "Capital One Software",
+"kind": "anchor",
+"x": 12.0,
+"y": 25.0,
+"w": 3.4,
+"h": 4.0
+},
+{
+"key": "infosys",
+"label": "Infosys",
+"kind": "anchor",
+"x": 14.6,
+"y": 25.0,
+"w": 3.2,
+"h": 4.0
+},
+{
+"key": "monte-carlo",
+"label": "Monte Carlo",
+"kind": "anchor",
+"x": 14.6,
+"y": 31.0,
+"w": 3.2,
+"h": 4.0
+},
+{
+"key": "thecube",
+"label": "theCUBE",
+"kind": "anchor",
+"x": 21.2,
+"y": 12.5,
+"w": 4.0,
+"h": 4.0
+},
+{
+"key": "thoughtspot",
+"label": "ThoughtSpot",
+"kind": "anchor",
+"x": 21.4,
+"y": 45.0,
+"w": 4.0,
+"h": 4.0
+},
+{
+"key": "data-cloud-now",
+"label": "Data Cloud Now",
+"kind": "anchor",
+"x": 25.4,
+"y": 45.0,
+"w": 4.0,
+"h": 5.0
+},
+{
+"key": "dbtlabs",
+"label": "dbt Labs",
+"kind": "anchor",
+"x": 38.0,
+"y": 23.0,
+"w": 3.6,
+"h": 5.0
+},
+{
+"key": "sigma",
+"label": "Sigma",
+"kind": "anchor",
+"x": 38.0,
+"y": 31.0,
+"w": 3.6,
+"h": 5.0
+},
+{
+"key": "coalesce",
+"label": "Coalesce",
+"kind": "anchor",
+"x": 38.0,
+"y": 39.0,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "fivetran",
+"label": "Fivetran",
+"kind": "anchor",
+"x": 44.0,
+"y": 23.0,
+"w": 3.4,
+"h": 5.0
+},
+{
+"key": "informatica",
+"label": "Informatica",
+"kind": "anchor",
+"x": 49.7,
+"y": 31.0,
+"w": 3.0,
+"h": 4.0
+},
+{
+"key": "hex",
+"label": "Hex",
+"kind": "anchor",
+"x": 49.7,
+"y": 39.0,
+"w": 3.0,
+"h": 4.0
+},
+{
+"key": "cognizant",
+"label": "Cognizant",
+"kind": "anchor",
+"x": 52.7,
+"y": 24.0,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "astronomer",
+"label": "Astronomer",
+"kind": "anchor",
+"x": 52.7,
+"y": 31.0,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "matillion",
+"label": "Matillion",
+"kind": "anchor",
+"x": 52.7,
+"y": 38.5,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "salesforce",
+"label": "Salesforce",
+"kind": "anchor",
+"x": 52.7,
+"y": 45.5,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "qlik",
+"label": "Qlik",
+"kind": "anchor",
+"x": 60.5,
+"y": 35.0,
+"w": 3.2,
+"h": 3.5
+},
+{
+"key": "startup-lodge",
+"label": "Startup Lodge",
+"kind": "anchor",
+"x": 56.0,
+"y": 42.0,
+"w": 4.4,
+"h": 5.0
+},
+{
+"key": "ey",
+"label": "EY",
+"kind": "anchor",
+"x": 75.6,
+"y": 8.0,
+"w": 3.4,
+"h": 4.0
+},
+{
+"key": "accenture",
+"label": "Accenture",
+"kind": "anchor",
+"x": 82.7,
+"y": 15.0,
+"w": 3.4,
+"h": 4.0
+},
+{
+"key": "deloitte",
+"label": "Deloitte",
+"kind": "anchor",
+"x": 75.6,
+"y": 51.0,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "basecamp-s-theater-2",
+"label": "Basecamp South Theater 2",
+"kind": "theater",
+"x": 1.0,
+"y": 7.0,
+"w": 5.6,
+"h": 7.0
+},
+{
+"key": "basecamp-s-theater-1",
+"label": "Basecamp South Theater 1",
+"kind": "theater",
+"x": 1.0,
+"y": 42.0,
+"w": 5.6,
+"h": 6.0
+},
+{
+"key": "basecamp-s-theater-4",
+"label": "Basecamp South Theater 4",
+"kind": "theater",
+"x": 64.3,
+"y": 7.0,
+"w": 4.4,
+"h": 6.0
+},
+{
+"key": "basecamp-s-theater-3",
+"label": "Basecamp South Theater 3",
+"kind": "theater",
+"x": 64.3,
+"y": 42.0,
+"w": 4.4,
+"h": 6.0
+},
+{
+"key": "braindate-lounge",
+"label": "Braindate Lounge",
+"kind": "lounge",
+"x": 1.0,
+"y": 24.0,
+"w": 5.6,
+"h": 11.0
+},
+{
+"key": "lounge-1117",
+"label": "Lounge (1117)",
+"kind": "lounge",
+"x": 7.6,
+"y": 12.0,
+"w": 4.0,
+"h": 6.0
+},
+{
+"key": "lounge-1419",
+"label": "Lounge (1419)",
+"kind": "lounge",
+"x": 17.0,
+"y": 7.0,
+"w": 3.8,
+"h": 4.0
+},
+{
+"key": "lounge-1602",
+"label": "Lounge (1602)",
+"kind": "lounge",
+"x": 25.4,
+"y": 38.0,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "lounge-2746",
+"label": "Lounge (2746)",
+"kind": "lounge",
+"x": 56.0,
+"y": 7.0,
+"w": 3.4,
+"h": 4.0
+},
+{
+"key": "lounge-2741",
+"label": "Lounge (2741)",
+"kind": "lounge",
+"x": 54.0,
+"y": 24.0,
+"w": 3.0,
+"h": 4.0
+},
+{
+"key": "campground-cafe",
+"label": "Campground Cafe",
+"kind": "structure",
+"x": 11.7,
+"y": 7.0,
+"w": 3.6,
+"h": 4.0
+},
+{
+"key": "prompt-pavilion",
+"label": "The Prompt Pavilion",
+"kind": "structure",
+"x": 17.0,
+"y": 35.0,
+"w": 3.8,
+"h": 6.0
+},
+{
+"key": "spin-and-win",
+"label": "Spin and Win",
+"kind": "snowflake-space",
+"x": 18.0,
+"y": 31.0,
+"w": 2.2,
+"h": 6.0
+},
+{
+"key": "activation-2910",
+"label": "Activation (2910)",
+"kind": "structure",
+"x": 64.3,
+"y": 24.0,
+"w": 4.4,
+"h": 5.0
+},
+{
+"key": "river",
+"label": "Diagonal River / Walkway",
+"kind": "structure",
+"x": 29.0,
+"y": 15.0,
+"w": 8.0,
+"h": 34.0
+},
+{
+"key": "fbmpo-1",
+"label": "F&B / MPO marker",
+"kind": "structure",
+"x": 33.0,
+"y": 22.0,
+"w": 2.6,
+"h": 2.6
+},
+{
+"key": "fbmpo-2",
+"label": "F&B / MPO marker",
+"kind": "structure",
+"x": 31.0,
+"y": 40.0,
+"w": 2.6,
+"h": 2.6
+},
+{
+"key": "escalator-1",
+"label": "Escalators",
+"kind": "structure",
+"x": 18.0,
+"y": 52.0,
+"w": 4.0,
+"h": 5.0
+},
+{
+"key": "escalator-2",
+"label": "Escalators",
+"kind": "structure",
+"x": 24.5,
+"y": 52.0,
+"w": 4.0,
+"h": 5.0
+},
+{
+"key": "concourse-outline",
+"label": "Concourse Spaces",
+"kind": "structure",
+"x": 74.0,
+"y": 4.5,
+"w": 25.0,
+"h": 54.0
+},
+{
+"key": "basecamp-south",
+"label": "Basecamp South",
+"kind": "concourse",
+"x": 74.0,
+"y": 11.0,
+"w": 25.0,
+"h": 18.0
+},
+{
+"key": "basecamp-north",
+"label": "Basecamp North",
+"kind": "concourse",
+"x": 74.0,
+"y": 30.0,
+"w": 25.0,
+"h": 12.0
+},
+{
+"key": "keynote",
+"label": "Keynote",
+"kind": "concourse",
+"x": 75.0,
+"y": 6.0,
+"w": 23.0,
+"h": 4.0
+},
+{
+"key": "labs-03",
+"label": "Hands-On Labs 03",
+"kind": "concourse",
+"x": 76.0,
+"y": 12.0,
+"w": 8.0,
+"h": 6.0
+},
+{
+"key": "labs-02",
+"label": "Hands-On Labs 02",
+"kind": "concourse",
+"x": 76.0,
+"y": 18.0,
+"w": 8.0,
+"h": 6.0
+},
+{
+"key": "labs-01",
+"label": "Hands-On Labs 01",
+"kind": "concourse",
+"x": 84.0,
+"y": 12.0,
+"w": 7.0,
+"h": 12.0
+},
+{
+"key": "platform-peak",
+"label": "Platform Peak",
+"kind": "concourse",
+"x": 76.0,
+"y": 36.0,
+"w": 8.0,
+"h": 6.0
+},
+{
+"key": "data-superheroes-lounge",
+"label": "Data Superheroes Lounge",
+"kind": "concourse",
+"x": 84.0,
+"y": 36.0,
+"w": 5.0,
+"h": 6.0
+},
+{
+"key": "builders-hub",
+"label": "Builders Hub",
+"kind": "concourse",
+"x": 80.0,
+"y": 44.0,
+"w": 7.0,
+"h": 11.0
+},
+{
+"key": "builders-hub-theater",
+"label": "Builders Hub Theater",
+"kind": "concourse",
+"x": 74.5,
+"y": 46.0,
+"w": 5.0,
+"h": 9.0
+},
+{
+"key": "battle-dataverse",
+"label": "Battle for the Snowflake AI Dataverse",
+"kind": "concourse",
+"x": 74.5,
+"y": 43.0,
+"w": 6.0,
+"h": 3.0
+},
+{
+"key": "hands-on-challenges",
+"label": "Hands-On Challenges",
+"kind": "concourse",
+"x": 81.0,
+"y": 42.0,
+"w": 6.0,
+"h": 3.0
+},
+{
+"key": "mlh-zone",
+"label": "Major League Hacking Zone",
+"kind": "concourse",
+"x": 74.5,
+"y": 55.0,
+"w": 5.0,
+"h": 3.5
+},
+{
+"key": "olympic-zone",
+"label": "Olympic and Paralympic Zone",
+"kind": "concourse",
+"x": 80.0,
+"y": 55.0,
+"w": 6.0,
+"h": 3.5
+},
+{
+"key": "ai-popup",
+"label": "AI Pop-Up",
+"kind": "concourse",
+"x": 87.0,
+"y": 48.0,
+"w": 3.5,
+"h": 4.0
+},
+{
+"key": "customer-spotlights",
+"label": "Customer Spotlights (Check-In 1224-A1 / Recording Studio 1225-A2)",
+"kind": "concourse",
+"x": 91.0,
+"y": 54.0,
+"w": 7.0,
+"h": 4.0
+}
+]
+}

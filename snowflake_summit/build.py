@@ -241,6 +241,13 @@ def render(meta, vendors, src_path):
         with open(floor_path, "rb") as ff:
             floor_uri = "data:image/jpeg;base64," + base64.b64encode(ff.read()).decode("ascii")
     html = html.replace("__FLOOR_IMG_SRC__", floor_uri)
+    # Inline the floor-plan layout spec (built artifact) so the spatial map renders offline.
+    fp_path = os.path.join(HERE, "floorplan.json")
+    fp_json = '{"regions":[]}'
+    if os.path.exists(fp_path):
+        with open(fp_path) as fp:
+            fp_json = fp.read().replace("</", "<\\/")
+    html = html.replace("/*__FLOORPLAN__*/", fp_json)
     out_path = os.path.join(HERE, "dashboard.html")
     with open(out_path, "w") as f:
         f.write(html)
@@ -266,6 +273,17 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   header{padding:24px 28px 16px;border-bottom:1px solid var(--border);background:linear-gradient(120deg,#0e1730,#10243f)}
   .brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .navbtns{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+  .infobtn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:7px 11px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+  .infobtn:hover,.infobtn[aria-expanded=true]{border-color:var(--accent);color:#dff3ff}
+  .scorepop{position:fixed;top:72px;right:18px;z-index:240;width:362px;max-width:calc(100vw - 32px);background:linear-gradient(165deg,#15233f,#0f1830);border:1px solid var(--accent2);border-radius:14px;box-shadow:0 22px 60px rgba(0,0,0,.6);padding:16px 18px 14px;color:var(--text)}
+  .scorepop[hidden]{display:none}
+  .scorepop .x{position:absolute;top:8px;right:12px;background:none;border:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+  .scorepop .x:hover{color:var(--text)}
+  .scorepop h3{margin:0 0 8px;font-size:14.5px}
+  .scorepop p{margin:8px 0;font-size:12px;color:var(--muted);line-height:1.55}
+  .scorepop ul{margin:8px 0;padding-left:17px}
+  .scorepop li{margin:5px 0;font-size:12px;color:#cfddf4;line-height:1.5}
+  .scorepop b{color:var(--text)}
   .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#29b5e8,#1b7fb8);display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121f}
   h1{font-size:20px;margin:0;letter-spacing:.01em}
   .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
@@ -388,6 +406,31 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .floorimg>summary{cursor:pointer;color:var(--accent);font-size:12px;letter-spacing:.04em}
   .floorimg img{width:100%;max-width:1200px;border:1px solid var(--border);border-radius:12px;margin-top:10px;display:block}
   @media(max-width:600px){.zonecol{width:130px}}
+  /* ----- spatial floor-PLAN (toggle) ----- */
+  .maptoggle{display:inline-flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;margin:0 0 14px}
+  .maptoggle button{background:var(--panel);border:none;color:var(--muted);font:inherit;font-size:12.5px;padding:8px 14px;cursor:pointer}
+  .maptoggle button.on{background:var(--accent2);color:#dff3ff}
+  .maptoggle button+button{border-left:1px solid var(--border)}
+  .booth:focus-visible,.planbooth:focus-visible{outline:2px solid #cfe8ff;outline-offset:2px}
+  .planbox{position:relative;width:100%;aspect-ratio:100/62;min-height:340px;background:linear-gradient(180deg,#0e1730,#0c1426);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .planregion{position:absolute;box-sizing:border-box;border-radius:5px;overflow:hidden}
+  .planzone{border:1px dashed #2a3a5c;padding:11px 2px 3px}
+  .planzone>.zl{position:absolute;top:1px;left:0;right:0;text-align:center;font-size:8px;font-weight:800;color:var(--accent);letter-spacing:.02em}
+  .planzone .dots{display:flex;flex-wrap:wrap;gap:2px;justify-content:center;align-content:flex-start;height:100%;overflow:visible}
+  .planbooth{width:11px;height:11px;border-radius:3px;cursor:pointer;border:1px solid rgba(0,0,0,.35)}
+  .planbooth.must{width:13px;height:13px;border-radius:50%;box-shadow:0 0 0 1.5px #0b1020,0 0 0 3px var(--A)}
+  .planbooth.space{cursor:default;border-radius:50%}
+  .planbooth.dim{opacity:.13}
+  .planbooth:hover{transform:scale(1.4);z-index:5;position:relative}
+  .planmark{display:flex;align-items:center;justify-content:center;text-align:center;padding:2px;font-size:8px;line-height:1.05;color:#9fb3d6;border:1px solid #243352;background:rgba(20,30,54,.5);font-weight:600}
+  .planmark.k-theater{background:rgba(41,181,232,.13);border-color:#2c5f86;color:#bfe3f5}
+  .planmark.k-lounge{background:rgba(52,211,153,.10);border-color:#2f6b54;color:#bff0db}
+  .planmark.k-concourse{background:rgba(167,139,250,.10);border-color:#5b4b86;color:#d6cbff}
+  .planmark.k-anchor{background:rgba(41,181,232,.07);border-color:#3a567e;color:#cfe0ff;font-weight:700;font-size:9px}
+  .planmark.k-structure{background:rgba(80,95,130,.09);border-color:#2a3650;color:#8da2c8;font-weight:400}
+  .plancontainer{border:1px solid #1e2c48;background:rgba(120,150,200,.012);pointer-events:none}
+  .plancontainer>.cl{position:absolute;top:2px;left:5px;font-size:8px;color:#5d6f92;font-weight:700;letter-spacing:.03em}
+  @media(max-width:640px){.planbox{aspect-ratio:auto;height:560px}.planmark{font-size:7px}}
   .bucketbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
   .bchip{background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-family:inherit;line-height:1.3;cursor:pointer;user-select:none;white-space:nowrap}
   .bchip:hover{color:var(--text)}
@@ -467,6 +510,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div class="sub" id="subhead"></div>
     </div>
     <div class="navbtns">
+      <button type="button" class="infobtn no-print" id="scoreInfoBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated">ⓘ Scoring</button>
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
@@ -476,6 +520,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </div>
 </header>
+<div class="scorepop no-print" id="scorePop" role="dialog" aria-modal="false" aria-label="How the scores are calculated" hidden>
+  <button class="x" type="button" id="scorePopX" aria-label="Close">&times;</button>
+  <h3>How the scores work</h3>
+  <p>Every partner is rated <b>0–10</b> on five directional, scouting-lens dimensions, then blended into an Overall:</p>
+  <ul>
+    <li><b>Snowflake</b> — relevance to the Snowflake ecosystem (native apps, integrations, Summit presence, joint go-to-market).</li>
+    <li><b>AI</b> — strength &amp; relevance of the vendor's AI / ML / agent story.</li>
+    <li><b>Retail / Customer</b> — fit for retail &amp; customer-analytics use cases (the scouting focus).</li>
+    <li><b>IPO / Upside</b> — growth trajectory, funding / valuation momentum, and exit / investment upside.</li>
+    <li><b>Bryan-Fit</b> — career &amp; networking fit for Bryan specifically (directional — to confirm).</li>
+    <li><b>Overall</b> — the simple mean (average) of the five scores.</li>
+  </ul>
+  <p>Scores are Bryan's directional ratings from the scouting workbook (some researched, some template / estimated). <b>Tier</b> is a curated priority call (A = must-see) that uses Overall as a guideline (≈ 7.5+ / 6+ / below), set editorially. Funding &amp; valuation figures were enriched via AI web research — verify before relying.</p>
+</div>
 <div class="wrap" id="dashwrap">
   <div class="kpis" id="kpis"></div>
 
@@ -612,10 +670,15 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </header>
   <div class="mapwrap">
-    <h3 class="sec" id="floormap">🗺 Your Guide to Basecamp <span class="hint">— scouted partners placed on the Summit floor by booth zone; scroll sideways to pan, click any booth for detail</span></h3>
-    <div style="margin:4px 0 14px"><input id="mapSearch" class="mapsearch" type="search" placeholder="Highlight a vendor by name…" autocomplete="off"></div>
+    <h3 class="sec" id="floormap">🗺 Your Guide to Basecamp <span class="hint">— our scouted partners on the Summit floor; click any booth for full detail</span></h3>
+    <div style="margin:4px 0 12px"><input id="mapSearch" class="mapsearch" type="search" placeholder="Highlight a vendor by name…" autocomplete="off"></div>
+    <div class="maptoggle" role="group" aria-label="Floor map view">
+      <button type="button" id="tabPlan" class="on" aria-pressed="true">🗺 Floor plan</button>
+      <button type="button" id="tabCols" aria-pressed="false">▦ Zone columns</button>
+    </div>
     <div class="maplegend" id="mapLegend"></div>
-    <div class="mapscroll"><div class="maprow" id="mapRow"></div></div>
+    <div id="mapPlanWrap"><div class="planbox" id="mapPlan" role="region" aria-label="Basecamp floor plan"></div></div>
+    <div class="mapscroll" id="mapColsWrap" role="region" aria-label="Basecamp floor map, scroll horizontally" tabindex="0" style="display:none"><div class="maprow" id="mapRow"></div></div>
     <div class="mapfoot" id="mapFoot"></div>
     <details class="floorimg"><summary>📷 Original Basecamp board (photo) — cross-reference the real layout</summary><img src="__FLOOR_IMG_SRC__" alt="Snowflake Summit 2026 — Your Guide to Basecamp, original floor-map board" loading="lazy"></details>
   </div>
@@ -952,57 +1015,118 @@ draw();
   render(ALL);
 })();
 
-// ----- Interactive Basecamp floor map (?view=map): scouted partners placed by booth zone -----
+// Scoring-info popover — the upper-right "ⓘ Scoring" link defines each score component.
 (function(){
-  var row=document.getElementById('mapRow'); if(!row) return;
+  var btn=document.getElementById('scoreInfoBtn'), pop=document.getElementById('scorePop');
+  if(!btn||!pop) return;
+  var x=document.getElementById('scorePopX');
+  function open(){pop.hidden=false;btn.setAttribute('aria-expanded','true');if(x)x.focus();}
+  function close(){pop.hidden=true;btn.setAttribute('aria-expanded','false');}
+  btn.addEventListener('click',function(e){e.stopPropagation();if(pop.hidden)open();else close();});
+  if(x) x.addEventListener('click',close);
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!pop.hidden)close();});
+  document.addEventListener('click',function(e){if(!pop.hidden&&!pop.contains(e.target)&&e.target!==btn)close();});
+})();
+
+// ----- Interactive Basecamp floor map (?view=map): spatial floor-plan + zone columns -----
+(function(){
+  var plan=document.getElementById('mapPlan'), row=document.getElementById('mapRow');
+  if(!plan && !row) return;
+  var FP; try{ FP=(/*__FLOORPLAN__*/); }catch(e){ FP={regions:[]}; }
+  var REG=(FP&&FP.regions)||[], CH=(FP&&FP.canvasH)||62;
   // Official non-vendor Snowflake spaces from the printed Basecamp board.
   var SPACES=[
     ['AI Pop-Up',6101],['Basecamp South Theater 1',1001],['Basecamp South Theater 2',1017],
     ['Basecamp South Theater 3',2901],['Basecamp South Theater 4',2911],['Battle for the Snowflake AI Dataverse',6005],
     ['Braindate Lounge',1007],['Builders Hub',6001],['Builders Hub Theater',6004],
-    ['Customer Spotlights Check-In',1224],['Customer Spotlights Studio',1225],['Data Cloud Now',1601],
+    ['Customer Spotlights Check-In & Photography',1224],['Customer Spotlights Recording Studio',1225],['Data Cloud Now',1601],
     ['Data Superheroes Lounge',7002],['Hands-On Challenges',6006],['Hands-On Labs 01',7101],
     ['Hands-On Labs 02',7102],['Hands-On Labs 03',7103],['Keynote',8000],['Major League Hacking Zone',6003],
     ['Meeting Village',4001],['Olympic & Paralympic Zone',6002],['Platform Peak',7001],['Startup Lodge',2700],
     ['theCUBE',1417],['Vertical Village',2002],['Vertical Village Theater 1',2003],['Vertical Village Theater 2',2004]
   ];
-  function digits(b){return parseInt(String(b==null?'':b).replace(/[^0-9]/g,''),10);}
+  function digits(b){var m=String(b==null?'':b).match(/\d+/);return m?parseInt(m[0],10):NaN;}
   function zoneOf(b){var n=digits(b);return isNaN(n)?null:Math.floor(n/100)*100;}
-  var items=[], total=(DATA.vendors||[]).length, placedV=0, must=0;
-  (DATA.vendors||[]).forEach(function(v){var z=zoneOf(v.booth);if(z!=null){placedV++;if(v.tier==='A')must++;items.push({z:z,b:digits(v.booth),kind:'v',v:v});}});
-  SPACES.forEach(function(s){var z=zoneOf(s[1]);if(z!=null)items.push({z:z,b:s[1],kind:'s',name:s[0]});});
-  var zones={};items.forEach(function(it){(zones[it.z]=zones[it.z]||[]).push(it);});
-  var zkeys=Object.keys(zones).map(Number).sort(function(a,b){return a-b;});
-  row.innerHTML=zkeys.map(function(z){
-    var cells=zones[z].sort(function(a,b){return a.b-b.b;}).map(function(it){
-      if(it.kind==='s') return '<div class="booth space"><div class="bn">'+it.b+'</div><div class="bnm">❄ '+esc(it.name)+'</div></div>';
-      var v=it.v,isM=(v.tier==='A');
-      return '<div class="booth t'+esc(v.tier||'C')+(isM?' must':'')+'" data-v="'+esc(v.name)+'" tabindex="0" role="button" aria-label="Booth '+esc(fmt(v.booth))+': '+esc(v.name)+', tier '+esc(v.tier)+', overall '+esc(fmt(v.overall_score))+' of 10" title="Click for full company detail">'+
-        '<div class="bn">#'+esc(fmt(v.booth))+(isM?' ⭐':'')+'</div>'+
-        '<div class="bnm">'+esc(v.name)+'</div>'+
-        '<div class="bt" style="color:'+tierColor(v.tier)+'">'+esc(v.tier)+' · '+esc(fmt(v.overall_score))+'/10</div></div>';
+  var byZone={}, total=(DATA.vendors||[]).length, placedV=0, must=0;
+  (DATA.vendors||[]).forEach(function(v){var z=zoneOf(v.booth);if(z!=null){placedV++;if(v.tier==='A')must++;(byZone[z]=byZone[z]||[]).push({b:digits(v.booth),kind:'v',v:v});}});
+  SPACES.forEach(function(s){var z=zoneOf(s[1]);if(z!=null)(byZone[z]=byZone[z]||[]).push({b:s[1],kind:'s',name:s[0]});});
+  Object.keys(byZone).forEach(function(z){byZone[z].sort(function(a,b){return a.b-b.b;});});
+  var zkeys=Object.keys(byZone).map(Number).sort(function(a,b){return a-b;});
+
+  if(row){
+    row.innerHTML=zkeys.map(function(z){
+      var cells=byZone[z].map(function(it){
+        if(it.kind==='s') return '<div class="booth space"><div class="bn">'+it.b+'</div><div class="bnm">❄ '+esc(it.name)+'</div></div>';
+        var v=it.v,isM=(v.tier==='A');
+        return '<div class="booth t'+esc(v.tier||'C')+(isM?' must':'')+'" data-v="'+esc(v.name)+'" tabindex="0" role="button" aria-label="Booth '+esc(fmt(v.booth))+': '+esc(v.name)+', tier '+esc(v.tier)+', overall '+esc(fmt(v.overall_score))+' of 10" title="Click for full company detail">'+
+          '<div class="bn">#'+esc(fmt(v.booth))+(isM?' ⭐':'')+'</div><div class="bnm">'+esc(v.name)+'</div>'+
+          '<div class="bt" style="color:'+tierColor(v.tier)+'">'+esc(v.tier)+' · '+esc(fmt(v.overall_score))+'/10</div></div>';
+      }).join('');
+      return '<div class="zonecol"><div class="zonehd">'+z+'s</div>'+cells+'</div>';
     }).join('');
-    return '<div class="zonecol"><div class="zonehd">'+z+'s</div>'+cells+'</div>';
-  }).join('');
+  }
+
+  if(plan && REG.length){
+    function pos(r){return 'left:'+r.x+'%;top:'+(r.y/CH*100).toFixed(2)+'%;width:'+r.w+'%;height:'+(r.h/CH*100).toFixed(2)+'%';}
+    var html='';
+    // big container areas first (faint, behind, small corner label)
+    REG.forEach(function(r){
+      if(r.kind==='booth-zone' || (r.w*r.h)<=250) return;
+      html+='<div class="planregion plancontainer" style="'+pos(r)+'"><span class="cl">'+esc(r.label)+'</span></div>';
+    });
+    // feature boxes (theaters, lounges, concourse rooms, large named anchors)
+    REG.forEach(function(r){
+      if(r.kind==='booth-zone' || (r.w*r.h)>250) return;
+      if(r.kind==='anchor' && (r.w*r.h)<40) return;
+      var kc=({theater:'k-theater',lounge:'k-lounge',concourse:'k-concourse',anchor:'k-anchor',structure:'k-structure','snowflake-space':'k-concourse'})[r.kind]||'k-structure';
+      html+='<div class="planregion planmark '+kc+'" style="'+pos(r)+'" title="'+esc(r.label)+'">'+esc(r.label)+'</div>';
+    });
+    REG.forEach(function(r){
+      if(r.kind!=='booth-zone') return;
+      var z=digits(r.key), list=byZone[z];
+      if(!list||!list.length) return;
+      var dots=list.map(function(it){
+        if(it.kind==='s') return '<span class="planbooth space" style="background:#1c4a6e" title="❄ '+esc(it.name)+'"></span>';
+        var v=it.v,isM=(v.tier==='A');
+        return '<span class="planbooth'+(isM?' must':'')+'" data-v="'+esc(v.name)+'" tabindex="0" role="button" style="background:'+tierColor(v.tier)+'" title="#'+esc(fmt(v.booth))+' '+esc(v.name)+' — '+esc(v.tier)+' '+esc(fmt(v.overall_score))+'/10" aria-label="Booth '+esc(fmt(v.booth))+': '+esc(v.name)+', tier '+esc(v.tier)+'"></span>';
+      }).join('');
+      html+='<div class="planregion planzone" style="'+pos(r)+'"><span class="zl">'+esc(r.label)+'</span><div class="dots">'+dots+'</div></div>';
+    });
+    plan.innerHTML=html;
+  }
+
   document.getElementById('mapLegend').innerHTML=
     '<span class="lg"><span class="sw" style="background:'+tierColor('A')+'"></span> Tier A ⭐ must-see</span>'+
     '<span class="lg"><span class="sw" style="background:'+tierColor('B')+'"></span> Tier B</span>'+
     '<span class="lg"><span class="sw" style="background:'+tierColor('C')+'"></span> Tier C</span>'+
-    '<span class="lg"><span class="sw" style="background:#102338;border-color:#2c5f86"></span> ❄ Snowflake space</span>';
+    '<span class="lg"><span class="sw" style="background:#1c4a6e;border-color:#2c5f86"></span> ❄ Snowflake space</span>';
   document.getElementById('mapFoot').innerHTML=
-    '<b style="color:var(--text)">'+placedV+'</b> of '+total+' scouted partners placed by booth zone'+((total-placedV)>0?(' ('+(total-placedV)+' without a numeric booth omitted)'):'')+
+    '<b style="color:var(--text)">'+placedV+'</b> of '+total+' scouted partners placed'+((total-placedV)>0?(' ('+(total-placedV)+' without a numeric booth omitted)'):'')+
     ' · <b style="color:var(--text)">'+must+'</b> Tier-A must-sees ⭐ · '+SPACES.length+' Snowflake spaces ❄. '+
-    'A re-visioned, interactive build of the printed Basecamp board — booths grouped into the official zone columns (1000s–8000s) by number, not a to-scale plan. '+
-    'Click any partner booth for its full scouting detail; cross-check positions against the original photo below.';
+    '<b>Floor plan</b> approximates the printed Basecamp board (booths shown as dots in their zone); <b>Zone columns</b> lists every booth. Click any partner for full detail; cross-check against the original photo below.';
+
   var si=document.getElementById('mapSearch');
   if(si) si.addEventListener('input',function(){
     var q=si.value.trim().toLowerCase();
-    Array.prototype.forEach.call(row.querySelectorAll('.booth'),function(el){
-      if(!q){el.classList.remove('dim');return;}
-      var nm=(el.getAttribute('data-v')||el.textContent||'').toLowerCase();
-      el.classList.toggle('dim',nm.indexOf(q)<0);
+    Array.prototype.forEach.call(document.querySelectorAll('#mapView .booth[data-v],#mapView .planbooth[data-v]'),function(el){
+      var hit=!q||(el.getAttribute('data-v')||'').toLowerCase().indexOf(q)>=0;
+      el.classList.toggle('dim',!hit);
+      if(q&&!hit){el.setAttribute('aria-hidden','true');el.setAttribute('tabindex','-1');}
+      else{el.removeAttribute('aria-hidden');el.setAttribute('tabindex','0');}
     });
   });
+
+  var tabPlan=document.getElementById('tabPlan'), tabCols=document.getElementById('tabCols'),
+      planWrap=document.getElementById('mapPlanWrap'), colsWrap=document.getElementById('mapColsWrap');
+  function show(p){
+    if(planWrap) planWrap.style.display=p?'block':'none';
+    if(colsWrap) colsWrap.style.display=p?'none':'block';
+    if(tabPlan){tabPlan.classList.toggle('on',p);tabPlan.setAttribute('aria-pressed',String(p));}
+    if(tabCols){tabCols.classList.toggle('on',!p);tabCols.setAttribute('aria-pressed',String(!p));}
+  }
+  if(tabPlan) tabPlan.addEventListener('click',function(){show(true);});
+  if(tabCols) tabCols.addEventListener('click',function(){show(false);});
+  show(!!(plan && REG.length));
 })();
 
 // Download / print to PDF — the @media print stylesheet restyles the page; the
