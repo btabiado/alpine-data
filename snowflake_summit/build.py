@@ -337,9 +337,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .nitem .nh a .ext{font-size:.82em;color:var(--accent);margin-left:4px;opacity:.75;text-decoration:none;font-weight:400}
   .nitem .nh a:hover .ext{opacity:1}
   /* News-only view (opened in its own window via ?view=news) + category buckets */
-  #newsView{display:none}
-  body.newsmode>header,body.newsmode #dashwrap{display:none}
+  #newsView,#mqView{display:none}
+  body.newsmode>header,body.newsmode #dashwrap,body.mqmode>header,body.mqmode #dashwrap{display:none}
   body.newsmode #newsView{display:block}
+  body.mqmode #mqView{display:block}
   .bucketbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
   .bchip{background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;user-select:none;white-space:nowrap}
   .bchip:hover{color:var(--text)}
@@ -367,7 +368,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div class="sub" id="subhead"></div>
     </div>
     <a class="dl" href="?view=news" target="_blank" rel="noopener" style="margin-left:auto" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
-    <a class="dl" href="#mq" style="margin-left:0">📊 Magic Quadrant</a>
+    <a class="dl" href="?view=mq" target="_blank" rel="noopener" style="margin-left:0" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
     <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
     <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
     <span class="zoomctl" title="Text size" style="margin-left:10px"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
@@ -427,25 +428,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
   </div>
 
-  <h3 class="sec" id="mq">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h3>
-  <div class="panel">
-    <div class="controls" style="margin-bottom:8px">
-      <label class="sub" style="align-self:center">Drill into niche:</label>
-      <select id="mqSegSel"></select>
-      <button id="mqBack" type="button" style="display:none;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;font-size:12px;cursor:pointer">← All partners</button>
-      <span id="mqCrumb" class="sub" style="align-self:center"></span>
-    </div>
-    <div id="mqLegend" class="sub" style="margin-bottom:8px"></div>
-    <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
-    <div style="height:560px;position:relative">
-      <canvas id="mqChart" style="max-height:560px"></canvas>
-    </div>
-    <div id="mqCaveat" class="sub" style="margin-top:12px;line-height:1.5;color:#cfe0ff"></div>
-    <div class="sub" style="margin-top:10px;line-height:1.55">
-      <b style="color:var(--text)">How to read:</b> <b style="color:var(--text)">Ability to Execute</b> (vertical) = mean of Snowflake &amp; Retail/Customer scores · <b style="color:var(--text)">Completeness of Vision</b> (horizontal) = mean of AI &amp; IPO/Upside scores — both on the 0–10 scale. The cross sits at the cohort <i>average</i>: <b style="color:var(--A)">Leaders</b> (execute + vision), <b style="color:var(--accent)">Challengers</b> (execute), <b style="color:var(--gem)">Visionaries</b> (vision), <b style="color:#94a3b8">Niche Players</b> (neither). Tier-A must-sees are labelled; hover any dot for exact scores. <b style="color:var(--text)">Drill-down:</b> pick a niche to see its own quadrant, re-centred on that niche's cohort average. <b>This is Bryan's directional scouting, not an official Gartner Magic Quadrant</b> — small or template-scored niches (flagged) are exploratory only.
-    </div>
-  </div>
-
   <div class="note" id="note"></div>
 </div>
 
@@ -479,6 +461,39 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 </div>
 
+<div id="mqView">
+  <header>
+    <div class="brand">
+      <div class="logo">📊</div>
+      <div>
+        <h1>Snowflake Summit 2026 — Magic Quadrant</h1>
+        <div class="sub">All 197 partners, or drill into a niche · its own window</div>
+      </div>
+      <a class="dl" href="?" style="margin-left:auto">← Back to dashboard</a>
+    </div>
+  </header>
+  <div class="wrap">
+    <h3 class="sec" id="mq">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h3>
+    <div class="panel">
+      <div class="controls" style="margin-bottom:8px">
+        <label class="sub" style="align-self:center">Drill into niche:</label>
+        <select id="mqSegSel"></select>
+        <button id="mqBack" type="button" style="display:none;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;font-size:12px;cursor:pointer">← All partners</button>
+        <span id="mqCrumb" class="sub" style="align-self:center"></span>
+      </div>
+      <div id="mqLegend" class="sub" style="margin-bottom:8px"></div>
+      <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div style="height:560px;position:relative">
+        <canvas id="mqChart" style="max-height:560px"></canvas>
+      </div>
+      <div id="mqCaveat" class="sub" style="margin-top:12px;line-height:1.5;color:#cfe0ff"></div>
+      <div class="sub" style="margin-top:10px;line-height:1.55">
+        <b style="color:var(--text)">How to read:</b> <b style="color:var(--text)">Ability to Execute</b> (vertical) = mean of Snowflake &amp; Retail/Customer scores · <b style="color:var(--text)">Completeness of Vision</b> (horizontal) = mean of AI &amp; IPO/Upside scores — both on the 0–10 scale. The cross sits at the cohort <i>average</i>: <b style="color:var(--A)">Leaders</b> (execute + vision), <b style="color:var(--accent)">Challengers</b> (execute), <b style="color:var(--gem)">Visionaries</b> (vision), <b style="color:#94a3b8">Niche Players</b> (neither). Tier-A must-sees are labelled; hover any dot for exact scores. <b style="color:var(--text)">Drill-down:</b> pick a niche to see its own quadrant, re-centred on that niche's cohort average. <b>This is Bryan's directional scouting, not an official Gartner Magic Quadrant</b> — small or template-scored niches (flagged) are exploratory only.
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 const DATA = /*__DATA__*/;
 const fmt = n => (n===null||n===undefined||n==='')?"—":n;
@@ -486,9 +501,13 @@ const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 const tierClass = t => ({A:'tA',B:'tB',C:'tC',D:'tD'})[t]||'tC';
 
 // View router: ?view=news opens the news-only view (in its own window).
-if(new URLSearchParams(location.search).get('view')==='news'){
+var _view=new URLSearchParams(location.search).get('view');
+if(_view==='news'){
   document.body.classList.add('newsmode');
   document.title='Summit News — Snowflake Summit 2026';
+}else if(_view==='mq'){
+  document.body.classList.add('mqmode');
+  document.title='Magic Quadrant — Snowflake Summit 2026';
 }
 
 // A-/A+ text zoom — scales the page via CSS zoom; persists across visits + views.
