@@ -363,6 +363,19 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .nitem .nsum{font-size:14px;color:#c3d2ee;margin-top:8px;white-space:normal;line-height:1.6}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
   .note{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55;border-top:1px solid var(--border);padding-top:14px}
+  /* Vendor detail modal — click any card or table row */
+  .vmodal{position:fixed;inset:0;background:rgba(6,12,24,.74);display:none;z-index:200;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}
+  .vmodal.on{display:flex}
+  .vsheet{background:linear-gradient(165deg,#15233f,#0f1830);border:1px solid var(--border);border-radius:16px;max-width:640px;width:100%;padding:22px 26px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+  .vsheet .x{position:absolute;top:12px;right:16px;cursor:pointer;font-size:22px;line-height:1;color:var(--muted);background:none;border:none}
+  .vsheet .x:hover{color:var(--text)}
+  .vsheet h2{margin:0;font-size:21px;display:inline}
+  .vsec{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:16px 0 2px;font-weight:700}
+  .vrow{display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .vrow:last-child{border-bottom:none}
+  .vrow .k{color:var(--muted);min-width:160px;flex:none}
+  .vrow .vv{color:var(--text);font-weight:600}
+  @media(max-width:480px){.vrow{flex-direction:column;gap:2px}.vrow .k{min-width:0}}
   .note code{color:var(--accent)}
   @media(max-width:920px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:700px){.kpis{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:1fr}}
@@ -405,6 +418,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart"></canvas></div>
     <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart"></canvas></div>
   </div>
+  <div class="panel" style="margin-bottom:16px"><h4>💰 Top 15 by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px"></canvas></div>
 
   <h3 class="sec">💎 Hidden Gems <span class="hint">— Overall ≥ 7 but not Tier A</span></h3>
   <div class="cards" id="gems"></div>
@@ -547,7 +561,7 @@ function scoreChips(v){
   return items.map(([l,x])=>`<span class="schip">${l} <b>${fmt(x)}</b></span>`).join('');
 }
 function card(v){
-  return `<div class="card2 ${v.hidden_gem?'':''}"><div class="rk">${v.rank}</div>
+  return `<div class="card2 ${v.hidden_gem?'':''}" data-v="${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
     <div class="nm">${esc(v.name)} <span class="tag ${tierClass(v.tier)}">${v.tier}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
     <div class="ct">${esc(v.category)} · booth ${fmt(v.booth)}</div>
     <div class="scores">${scoreChips(v)}</div>
@@ -598,6 +612,21 @@ new Chart(document.getElementById('profChart'),{type:'radar',
   options:{plugins:{legend:{labels:{color:C.tick}}},
     scales:{r:{min:0,max:10,angleLines:{color:C.grid},grid:{color:C.grid},pointLabels:{color:C.tick,font:{size:11}},ticks:{display:false}}}}});
 
+// Top valuations — parse the $ figures from valuation/market_cap and chart the top 15.
+(function(){
+  var cv=document.getElementById('valChart'); if(!cv) return;
+  function pv(s){if(!s)return null;var m=String(s).match(/\$\s*([\d.]+)\s*([BM])/i);if(!m)return null;var n=parseFloat(m[1]);return m[2].toUpperCase()==='B'?n*1000:n;}
+  function fb(n){return n>=1000?('$'+(n/1000).toFixed(n%1000?1:0)+'B'):('$'+Math.round(n)+'M');}
+  var rows=(DATA.vendors||[]).map(function(v){return {name:v.name,tier:v.tier,num:pv(v.market_cap),raw:v.market_cap};}).filter(function(r){return r.num;}).sort(function(a,b){return b.num-a.num;}).slice(0,15);
+  if(!rows.length) return;
+  new Chart(cv,{type:'bar',
+    data:{labels:rows.map(function(r){return r.name;}),datasets:[{data:rows.map(function(r){return r.num;}),backgroundColor:rows.map(function(r){return tierColor(r.tier);})}]},
+    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fb(c.raw)+(rows[c.dataIndex].raw?(' · '+rows[c.dataIndex].raw):'');}}}},
+      scales:{x:{ticks:{color:C.tick,callback:function(v){return fb(v);}},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:11}},grid:{display:false}}}},
+    plugins:[{id:'vlab',afterDatasetsDraw:function(ch){var ctx=ch.ctx,a=ch.chartArea;ctx.save();ctx.font='700 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='middle';ch.getDatasetMeta(0).data.forEach(function(el,i){var t=fb(rows[i].num),w=ctx.measureText(t).width;if(el.x+6+w<=a.right){ctx.fillStyle='#e8eeff';ctx.textAlign='left';ctx.fillText(t,el.x+6,el.y);}else{ctx.fillStyle='#06121f';ctx.textAlign='right';ctx.fillText(t,el.x-6,el.y);}});ctx.restore();}}]
+  });
+})();
+
 // Table
 const tbody=document.querySelector('#vtable tbody');
 const nicheSel=document.getElementById('nicheFilter'),catSel=document.getElementById('catFilter'),tierSel=document.getElementById('tierFilter'),typeSel=document.getElementById('typeFilter');
@@ -616,7 +645,7 @@ function draw(){
     if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
   tbody.innerHTML=r.map(v=>{
     const w=Math.round(((v.overall_score||0)/10)*54)+6;
-    return `<tr class="${v.hidden_gem?'gem-row':''}">
+    return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" style="cursor:pointer">
       <td class="num">${v.rank}</td><td class="name">${esc(v.name)}</td><td>${fmt(v.booth)}</td>
       <td><span class="tag tNi">${esc(fmt(v.niche))}</span></td><td>${esc(fmt(v.category))}</td><td>${esc(fmt(v.company_type))}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
@@ -812,6 +841,34 @@ draw();
 // browser print dialog saves the whole dashboard (all sections + current MQ view).
 (function(){var b=document.getElementById('pdfBtn');if(b)b.addEventListener('click',function(){window.print();});})();
 (function(){var t=document.getElementById('toTop');if(t)t.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});})();
+
+// Vendor detail — click any vendor card or table row for full company info.
+(function(){
+  var m=document.createElement('div'); m.className='vmodal'; m.id='vModal';
+  m.innerHTML='<div class="vsheet"><button class="x" type="button" aria-label="Close">&times;</button><div id="vBody"></div></div>';
+  document.body.appendChild(m);
+  var body=m.querySelector('#vBody');
+  var byName={}; (DATA.vendors||[]).forEach(function(v){byName[v.name]=v;});
+  function row(k,val){return (val==null||val==='')?'':'<div class="vrow"><span class="k">'+esc(k)+'</span><span class="vv">'+esc(val)+'</span></div>';}
+  function open(name){
+    var v=byName[name]; if(!v) return;
+    var company=row('Valuation / Market cap',v.market_cap)+row('Funding raised',v.funding)+row('Round',v.round)+row('Revenue / ARR',v.revenue)+row('Employees',v.employees)+row('Key investors / owner',v.investors)+row('Ticker / parent',v.ticker_parent);
+    var scores=[['Snowflake',v.snowflake_score],['AI',v.ai_score],['Retail / Customer',v.retail_score],['IPO / Upside',v.ipo_score],['Bryan-Fit',v.bryan_score]]
+      .map(function(s){return '<div class="vrow"><span class="k">'+s[0]+'</span><span class="vv">'+fmt(s[1])+' / 10</span></div>';}).join('')
+      +'<div class="vrow"><span class="k">Overall</span><span class="vv">'+fmt(v.overall_score)+' / 10</span></div>';
+    body.innerHTML='<h2>'+esc(v.name)+'</h2> <span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span> <span class="tag tNi">'+esc(fmt(v.niche))+'</span>'+
+      '<div class="sub" style="margin-top:5px">'+esc(fmt(v.category))+' · booth '+esc(fmt(v.booth))+(v.company_type?(' · '+esc(v.company_type)):'')+'</div>'+
+      '<div class="vsec">Company</div>'+(company||'<div class="sub" style="padding:6px 0">No funding / valuation data on file yet.</div>')+
+      '<div class="vsec">Scores</div>'+scores+
+      (v.notes?('<div class="vsec">Notes</div><div class="vrow" style="border:none"><span class="vv" style="font-weight:400;line-height:1.55">'+esc(v.notes)+'</span></div>'):'')+
+      (v.source?('<div class="sub" style="margin-top:12px;font-size:11px;word-break:break-word">Source: '+esc(v.source)+'</div>'):'');
+    m.classList.add('on'); document.body.style.overflow='hidden';
+  }
+  function close(){m.classList.remove('on'); document.body.style.overflow='';}
+  m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('x'))close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&m.classList.contains('on'))close();});
+  document.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-v]');if(el){var n=el.getAttribute('data-v');if(n&&byName[n])open(n);}});
+})();
 
 document.getElementById('note').innerHTML =
   `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
