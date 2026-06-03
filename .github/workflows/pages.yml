@@ -452,6 +452,20 @@ jobs:
               cp data/health/status.json _site/data/health/status.json
             fi
           fi
+          # Stage the Snowflake Summit partner-scouting dashboard under /summit/.
+          # The page at snowflake_summit/dashboard.html is fully self-contained
+          # (Chart.js is vendored inline, data is baked in at build time), so it
+          # needs no sidecar JSON or network at view time. We also serve the
+          # source workbook next to it for the in-page download button. V1 (`/`),
+          # V2 (`/v2/`), /lthcs/*, and /health/ are all untouched — /summit/ is a
+          # sibling route. Missing dashboard.html makes this a no-op.
+          if [ -f snowflake_summit/dashboard.html ]; then
+            mkdir -p _site/summit
+            cp snowflake_summit/dashboard.html _site/summit/index.html
+            if [ -f snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx ]; then
+              cp snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx _site/summit/
+            fi
+          fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot

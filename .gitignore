@@ -17,6 +17,8 @@ Thumbs.db
 
 # Generated dashboard output
 dashboard.html
+# ...but the Snowflake Summit dashboard ships its built HTML as the deliverable.
+!snowflake_summit/dashboard.html
 # Local convenience copy of the built dashboard. Some setups copy/symlink
 # dashboard.html -> index.html to preview at file://.../index.html. The
 # PUBLIC site never uses a tracked root index.html: pages.yml regenerates
