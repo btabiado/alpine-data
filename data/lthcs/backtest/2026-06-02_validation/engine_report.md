@@ -1,21 +1,21 @@
 # LTHCS Backtest Engine Report
 
-Window: **2026-02-17 -> 2026-06-01** (73 trading days)
+Window: **2026-02-17 -> 2026-06-02** (74 trading days)
 Universe: **209 tickers** | long bands: ['constructive', 'elite', 'high_confidence'] | cost: 5.0 bps/side | delay: 1 td
 
 ## Headline P&L (non-overlapping)
 
 | Metric | Value |
 |:-------|------:|
-| Total return | +0.2024 |
-| Annualized return | +0.9060 |
-| Annualized Sharpe | +2.655 (95% CI: -0.86 ... +6.77) |
-| Annualized Sortino | +2.594 (95% CI: -0.84 ... +7.65) |
+| Total return | +0.2412 |
+| Annualized return | +1.1082 |
+| Annualized Sharpe | +3.006 (95% CI: -0.65 ... +7.17) |
+| Annualized Sortino | +2.985 (95% CI: -0.56 ... +8.36) |
 | Max drawdown | -0.1058 |
-| Hit rate (daily) | 0.603 |
+| Hit rate (daily) | 0.608 |
 | Avg hold days | 7.6 |
-| Avg turnover / day | 0.1948 |
-| Total trades | 53 |
+| Avg turnover / day | 0.1942 |
+| Total trades | 54 |
 | Unique tickers | 21 |
 
 > Non-overlapping construction: every trading day's return is realized on the actual close-to-close of held names. No forward-window reuse, so Sharpe is directly comparable to a passive benchmark.
@@ -25,15 +25,15 @@ Universe: **209 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 | Band | Total return |
 |:-----|------:|
 | elite | +0.0000 |
-| high_confidence | +0.5461 |
-| constructive | +0.1442 |
-| monitor | +0.0899 |
-| weakening | +0.0965 |
-| review | +0.0195 |
+| high_confidence | +0.5880 |
+| constructive | +0.1815 |
+| monitor | +0.1063 |
+| weakening | +0.0958 |
+| review | +0.0162 |
 
 ## Benchmark
 
-Benchmark total return: **+0.1139**
+Benchmark total return: **+0.1154**
 
 ## Run metadata
 
@@ -62,15 +62,15 @@ Benchmark total return: **+0.1139**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "740c91e029443b94",
+  "price_hash": "a00ec8148afc0c2b",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
   "top_k": 0,
   "universe_size": 209,
   "window": {
-    "end": "2026-06-01",
-    "n_trading_days": 73,
+    "end": "2026-06-02",
+    "n_trading_days": 74,
     "start": "2026-02-17"
   }
 }
