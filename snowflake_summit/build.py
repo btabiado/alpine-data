@@ -22,11 +22,11 @@ from datetime import datetime, timezone
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 SCORE_KEYS = [
+    ("bryan_score", "Bryan Rec"),
     ("snowflake_score", "Snowflake"),
     ("ai_score", "AI"),
     ("retail_score", "Retail/Cust"),
     ("ipo_score", "IPO/Upside"),
-    ("bryan_score", "Bryan Fit"),
 ]
 
 
@@ -526,11 +526,11 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <h3>How the scores work</h3>
   <p>Every partner is rated <b>0–10</b> on five directional, scouting-lens dimensions, then blended into an Overall:</p>
   <ul>
+    <li><b>Bryan Recommend</b> — career &amp; networking fit for Bryan specifically; baseline calibrated from a sample of <b>30 vendor booth selling pitches</b> (directional — to confirm).</li>
     <li><b>Snowflake</b> — relevance to the Snowflake ecosystem (native apps, integrations, Summit presence, joint go-to-market).</li>
     <li><b>AI</b> — strength &amp; relevance of the vendor's AI / ML / agent story.</li>
     <li><b>Retail / Customer</b> — fit for retail &amp; customer-analytics use cases (the scouting focus).</li>
     <li><b>IPO / Upside</b> — growth trajectory, funding / valuation momentum, and exit / investment upside.</li>
-    <li><b>Bryan-Fit</b> — career &amp; networking fit for Bryan specifically; baseline calibrated from a sample of <b>30 vendor booth selling pitches</b> (directional — to confirm).</li>
     <li><b>Overall</b> — the simple mean (average) of the five scores.</li>
   </ul>
   <p>Scores are Bryan's directional ratings from the scouting workbook (some researched, some template / estimated). <b>Tier</b> is a curated priority call (A = must-see) that uses Overall as a guideline (≈ 7.5+ / 6+ / below), set editorially. Funding &amp; valuation figures were enriched via AI web research — verify before relying.</p>
@@ -561,7 +561,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <h3 class="sec">💎 Hidden Gems <span class="hint">— Overall ≥ 7 but not Tier A</span></h3>
   <div class="cards" id="gems"></div>
 
-  <h3 class="sec">🤝 Best Bryan-Fit <span class="hint">— top career / networking fit</span></h3>
+  <h3 class="sec">🤝 Best Bryan Recommend <span class="hint">— top career / networking fit</span></h3>
   <div class="cards" id="bestfit"></div>
 
   <h3 class="sec">All Partner Vendors <span class="hint">— click a column to sort · 💎 = hidden gem</span></h3>
@@ -574,7 +574,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <th data-k="niche">Niche</th><th data-k="category">Category</th><th data-k="company_type">Type</th>
         <th data-k="snowflake_score" class="num">Snow</th><th data-k="ai_score" class="num">AI</th>
         <th data-k="retail_score" class="num">Retail</th><th data-k="ipo_score" class="num">IPO</th>
-        <th data-k="bryan_score" class="num">Fit</th>
+        <th data-k="bryan_score" class="num">Bryan</th>
         <th data-k="overall_score" class="num">Overall</th><th data-k="tier">Tier</th>
       </tr>
       <tr class="filterrow">
@@ -730,7 +730,7 @@ document.getElementById('kpis').innerHTML = DATA.kpis.map(k=>
   `<div class="kpi"><div class="v">${k.value}</div><div class="l">${k.label}</div><div class="s">${k.sub}</div></div>`).join('');
 
 function scoreChips(v){
-  const items=[['Snow',v.snowflake_score],['AI',v.ai_score],['Retail',v.retail_score],['IPO',v.ipo_score],['Fit',v.bryan_score]];
+  const items=[['Bryan',v.bryan_score],['Snow',v.snowflake_score],['AI',v.ai_score],['Retail',v.retail_score],['IPO',v.ipo_score]];
   return items.map(([l,x])=>`<span class="schip">${l} <b>${fmt(x)}</b></span>`).join('');
 }
 function card(v){
@@ -1153,7 +1153,7 @@ draw();
   function open(name){
     var v=byName[name]; if(!v) return;
     var company=row('Valuation / Market cap',v.market_cap)+row('Funding raised',v.funding)+row('Round',v.round)+row('Revenue / ARR',v.revenue)+row('Employees',v.employees)+row('Key investors / owner',v.investors)+row('Ticker / parent',v.ticker_parent);
-    var scores=[['Snowflake',v.snowflake_score],['AI',v.ai_score],['Retail / Customer',v.retail_score],['IPO / Upside',v.ipo_score],['Bryan-Fit',v.bryan_score]]
+    var scores=[['Bryan Recommend',v.bryan_score],['Snowflake',v.snowflake_score],['AI',v.ai_score],['Retail / Customer',v.retail_score],['IPO / Upside',v.ipo_score]]
       .map(function(s){return '<div class="vrow"><span class="k">'+s[0]+'</span><span class="vv">'+fmt(s[1])+' / 10</span></div>';}).join('')
       +'<div class="vrow"><span class="k">Overall</span><span class="vv">'+fmt(v.overall_score)+' / 10</span></div>';
     body.innerHTML='<h2 id="vModalTitle">'+esc(v.name)+'</h2> <span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span> <span class="tag tNi">'+esc(fmt(v.niche))+'</span>'+
@@ -1190,7 +1190,7 @@ draw();
 
 document.getElementById('scoreDefBody').innerHTML =
   `<b>Scoring:</b> all scores are ${esc(DATA.meta.owner||'the owner')}'s directional 0–10 ratings from the scouting workbook — `+
-  `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit (baselined against a sample of 30 vendor booth selling pitches) — `+
+  `Bryan Recommend (career/networking fit, baselined against a sample of 30 vendor booth selling pitches), Snowflake relevance, AI relevance, retail/customer-analytics relevance, and IPO/upside — `+
   `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> — tier is a scouting-priority call (A = must-see) that uses the Overall as a guideline (roughly A ≈ 7.5+, B ≈ 6+, C below) but is set editorially, so a handful of vendors sit a half-point either side of those marks. `+
   `Most high-priority vendors carry researched scores; some lower-priority and consulting entries share directional / template values. `+
   `<b>Niche</b> is a broad value-taxonomy label (Agents, Agent Platform, ETL, Dashboard, API, Security, Cost Savings, Governance, Observability, Database, Customer Data, Consulting, …) rolled up from each vendor's category — searchable and filterable above. `+
