@@ -251,7 +251,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .ovr b{font-size:22px;color:#fff}.ovr span{font-size:10.5px;color:var(--muted)}
   .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
   .tA{background:rgba(52,211,153,.16);color:var(--A)}.tB{background:rgba(251,191,36,.16);color:var(--B)}
-  .tC{background:rgba(100,116,139,.2);color:#aab6c9}.tD{background:rgba(100,116,139,.2);color:#aab6c9}
+  .tC{background:rgba(96,165,250,.18);color:#93c5fd}.tD{background:rgba(96,165,250,.18);color:#93c5fd}
   .tNi{background:rgba(41,181,232,.16);color:#7fd6f5;border:1px solid rgba(41,181,232,.3)}
   /* Print / Save-as-PDF: keep the dark theme (so the canvas charts render as on
      screen), hide interactive controls, and expand the table so the WHOLE
@@ -288,8 +288,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
        border-radius:11px;padding:12px 14px 12px 38px;font-size:14px}
   .topbar input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(41,181,232,.18)}
   .topbar .hit{font-size:12px;color:var(--muted);white-space:nowrap}
+  /* Search name-lookup typeahead dropdown */
+  .sugbox{position:absolute;top:calc(100% + 5px);left:0;right:0;background:var(--panel2);border:1px solid var(--border);border-radius:9px;z-index:60;max-height:300px;overflow:auto;display:none;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+  .sugbox.on{display:block}
+  .sug{padding:8px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+  .sug:last-child{border-bottom:none}
+  .sug:hover,.sug.act{background:var(--panel)}
+  .sug .nm{font-weight:600;font-size:13px}
+  .sug .meta{color:var(--muted);font-size:11px;white-space:nowrap}
   .controls{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px;align-items:center}
   .controls input,.controls select{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 10px;font-size:12.5px}
+  /* In-table filter row: a dropdown aligned under each filterable column header.
+     Static (not sticky) so it scrolls away while the column titles stick. */
+  .filterrow th{position:static;background:var(--panel);padding:4px 6px;border-bottom:1px solid var(--border)}
+  .filterrow select{width:100%;min-width:0;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 6px;font-size:11px}
   .ovrbar{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
   .note{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55;border-top:1px solid var(--border);padding-top:14px}
   .note code{color:var(--accent)}
@@ -304,7 +316,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <h1>Snowflake Summit 2026 — Partner Scouting Dashboard</h1>
       <div class="sub" id="subhead"></div>
     </div>
-    <a class="dl" href="../" style="margin-left:auto;background:transparent;border-color:var(--border);color:var(--muted)" title="Back to the main dashboard">← Main dashboard</a>
+    <a class="dl" href="#mq" style="margin-left:auto">📊 Magic Quadrant</a>
     <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
     <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
   </div>
@@ -339,27 +351,31 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
   <h3 class="sec">All Partner Vendors <span class="hint">— click a column to sort · 💎 = hidden gem</span></h3>
   <div class="panel">
-    <div class="controls">
-      <select id="nicheFilter"><option value="">All niches</option></select>
-      <select id="catFilter"><option value="">All categories</option></select>
-      <select id="tierFilter"><option value="">All tiers</option></select>
-    </div>
     <div class="scroll">
     <table id="vtable">
-      <thead><tr>
+      <thead>
+      <tr>
         <th data-k="rank">#</th><th data-k="name">Partner</th><th data-k="booth">Booth</th>
         <th data-k="niche">Niche</th><th data-k="category">Category</th><th data-k="company_type">Type</th>
         <th data-k="snowflake_score" class="num">Snow</th><th data-k="ai_score" class="num">AI</th>
         <th data-k="retail_score" class="num">Retail</th><th data-k="ipo_score" class="num">IPO</th>
         <th data-k="bryan_score" class="num">Fit</th>
         <th data-k="overall_score" class="num">Overall</th><th data-k="tier">Tier</th>
+      </tr>
+      <tr class="filterrow">
+        <th></th><th></th><th></th>
+        <th><select id="nicheFilter"><option value="">All niches</option></select></th>
+        <th><select id="catFilter"><option value="">All categories</option></select></th>
+        <th><select id="typeFilter"><option value="">All types</option></select></th>
+        <th></th><th></th><th></th><th></th><th></th><th></th>
+        <th><select id="tierFilter"><option value="">All tiers</option></select></th>
       </tr></thead>
       <tbody></tbody>
     </table>
     </div>
   </div>
 
-  <h3 class="sec">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h3>
+  <h3 class="sec" id="mq">📊 Magic Quadrant <span class="hint">— all partners, or drill into a niche</span></h3>
   <div class="panel">
     <div class="controls" style="margin-bottom:8px">
       <label class="sub" style="align-self:center">Drill into niche:</label>
@@ -367,7 +383,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <button id="mqBack" type="button" style="display:none;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 11px;font-size:12px;cursor:pointer">← All partners</button>
       <span id="mqCrumb" class="sub" style="align-self:center"></span>
     </div>
-    <div id="mqLegend" class="sub" style="margin-bottom:10px"></div>
+    <div id="mqLegend" class="sub" style="margin-bottom:8px"></div>
+    <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
     <div style="height:560px;position:relative">
       <canvas id="mqChart" style="max-height:560px"></canvas>
     </div>
@@ -383,6 +400,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <script>
 const DATA = /*__DATA__*/;
 const fmt = n => (n===null||n===undefined||n==='')?"—":n;
+const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const tierClass = t => ({A:'tA',B:'tB',C:'tC',D:'tD'})[t]||'tC';
 
 document.getElementById('subhead').textContent =
@@ -397,17 +415,17 @@ function scoreChips(v){
 }
 function card(v){
   return `<div class="card2 ${v.hidden_gem?'':''}"><div class="rk">${v.rank}</div>
-    <div class="nm">${v.name} <span class="tag ${tierClass(v.tier)}">${v.tier}</span> <span class="tag tNi">${fmt(v.niche)}</span></div>
-    <div class="ct">${v.category} · booth ${fmt(v.booth)}</div>
+    <div class="nm">${esc(v.name)} <span class="tag ${tierClass(v.tier)}">${v.tier}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
+    <div class="ct">${esc(v.category)} · booth ${fmt(v.booth)}</div>
     <div class="scores">${scoreChips(v)}</div>
-    <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+v.company_type):''}</span></div></div>`;
+    <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+esc(v.company_type)):''}</span></div></div>`;
 }
 document.getElementById('mustsee').innerHTML = DATA.must_see.map(card).join('');
 document.getElementById('gems').innerHTML = DATA.gems.length?DATA.gems.map(card).join(''):'<div class="sub">None above threshold.</div>';
 document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
 
 const C={grid:'#243352',tick:'#8da2c8'};
-const tierColor=t=>({A:'#34d399',B:'#fbbf24',C:'#64748b',D:'#475569'})[t]||'#64748b';
+const tierColor=t=>({A:'#34d399',B:'#fbbf24',C:'#60a5fa',D:'#3b82f6'})[t]||'#60a5fa';
 
 new Chart(document.getElementById('topChart'),{type:'bar',
   data:{labels:DATA.top15.map(v=>v.name),
@@ -435,33 +453,69 @@ new Chart(document.getElementById('profChart'),{type:'radar',
 
 // Table
 const tbody=document.querySelector('#vtable tbody');
-const nicheSel=document.getElementById('nicheFilter'),catSel=document.getElementById('catFilter'),tierSel=document.getElementById('tierFilter');
+const nicheSel=document.getElementById('nicheFilter'),catSel=document.getElementById('catFilter'),tierSel=document.getElementById('tierFilter'),typeSel=document.getElementById('typeFilter');
 Object.keys(DATA.by_niche).forEach(nz=>nicheSel.add(new Option(`${nz} (${DATA.by_niche[nz]})`,nz)));
 [...new Set(DATA.vendors.map(v=>v.category))].sort().forEach(c=>catSel.add(new Option(c,c)));
+[...new Set(DATA.vendors.map(v=>v.company_type).filter(Boolean))].sort().forEach(t=>typeSel.add(new Option(t,t)));
 ['A','B','C'].forEach(t=>tierSel.add(new Option('Tier '+t,t)));
 let sortK='rank',sortAsc=true;
 function draw(){
-  const q=document.getElementById('search').value.toLowerCase(),nz=nicheSel.value,cf=catSel.value,tf=tierSel.value;
+  const q=document.getElementById('search').value.toLowerCase(),nz=nicheSel.value,cf=catSel.value,tf=tierSel.value,yf=typeSel.value;
   let r=DATA.vendors.filter(v=>(!q||v.name.toLowerCase().includes(q)||(v.category||'').toLowerCase().includes(q)||(v.niche||'').toLowerCase().includes(q))
-    &&(!nz||v.niche===nz)&&(!cf||v.category===cf)&&(!tf||v.tier===tf));
+    &&(!nz||v.niche===nz)&&(!cf||v.category===cf)&&(!tf||v.tier===tf)&&(!yf||v.company_type===yf));
   const hit=document.getElementById('searchhit');
-  if(hit) hit.textContent = (q||nz||cf||tf) ? `${r.length} of ${DATA.vendors.length} match` : `${DATA.vendors.length} vendors`;
+  if(hit) hit.textContent = (q||nz||cf||tf||yf) ? `${r.length} of ${DATA.vendors.length} match` : `${DATA.vendors.length} vendors`;
   r.sort((a,b)=>{let x=a[sortK],y=b[sortK];if(typeof x==='string'){x=x.toLowerCase();y=(y||'').toLowerCase();}
     if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
   tbody.innerHTML=r.map(v=>{
     const w=Math.round(((v.overall_score||0)/10)*54)+6;
     return `<tr class="${v.hidden_gem?'gem-row':''}">
-      <td class="num">${v.rank}</td><td class="name">${v.name}</td><td>${fmt(v.booth)}</td>
-      <td><span class="tag tNi">${fmt(v.niche)}</span></td><td>${fmt(v.category)}</td><td>${fmt(v.company_type)}</td>
+      <td class="num">${v.rank}</td><td class="name">${esc(v.name)}</td><td>${fmt(v.booth)}</td>
+      <td><span class="tag tNi">${esc(fmt(v.niche))}</span></td><td>${esc(fmt(v.category))}</td><td>${esc(fmt(v.company_type))}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
       <td class="num">${fmt(v.retail_score)}</td><td class="num">${fmt(v.ipo_score)}</td><td class="num">${fmt(v.bryan_score)}</td>
       <td class="num"><span class="ovrbar" style="width:${w}px;background:${tierColor(v.tier)}"></span><b>${fmt(v.overall_score)}</b></td>
       <td><span class="tag ${tierClass(v.tier)}">${v.tier}</span></td></tr>`;}).join('');
 }
-document.querySelectorAll('#vtable th').forEach(th=>th.onclick=()=>{
-  const k=th.dataset.k;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();});
-['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);});
+document.querySelectorAll('#vtable thead tr:first-child th').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k;if(!k)return;if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='rank'||k==='name'||k==='category'||k==='tier'||k==='niche');}draw();});
+['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);typeSel.addEventListener(e,draw);});
 draw();
+
+// Name look-up typeahead on the search box — suggests matching vendor names as
+// you type; click / Enter jumps the table to that vendor. (draw() still filters
+// the table live; this is the by-name lookup on top.)
+(function(){
+  var inp=document.getElementById('search'); if(!inp) return;
+  var wrap=inp.closest('.searchwrap')||inp.parentNode;
+  var box=document.createElement('div'); box.className='sugbox'; wrap.appendChild(box);
+  var items=[], act=-1;
+  function close(){box.classList.remove('on');box.innerHTML='';items=[];act=-1;}
+  function pick(v){var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;set.call(inp,v.name);inp.dispatchEvent(new Event('input',{bubbles:true}));close();var t=document.getElementById('vtable');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
+  function hi(){[].forEach.call(box.querySelectorAll('.sug[data-i]'),function(el){var on=(+el.dataset.i===act);el.classList.toggle('act',on);if(on)el.scrollIntoView({block:'nearest'});});}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+  function build(){
+    var q=inp.value.trim().toLowerCase();
+    if(!q){close();return;}
+    var m=DATA.vendors.filter(function(v){return (v.name||'').toLowerCase().includes(q);});
+    m.sort(function(a,b){var ai=(a.name||'').toLowerCase().indexOf(q),bi=(b.name||'').toLowerCase().indexOf(q);if(ai!==bi)return ai-bi;return (b.overall_score||0)-(a.overall_score||0);});
+    items=m.slice(0,8); act=-1;
+    if(!items.length){box.innerHTML='<div class="sug" style="cursor:default;color:var(--muted)">No vendor matches</div>';box.classList.add('on');return;}
+    box.innerHTML=items.map(function(v,i){return '<div class="sug" data-i="'+i+'"><span class="nm">'+esc(v.name)+' <span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></span><span class="meta">'+esc(v.niche)+' &middot; '+(v.overall_score!=null?v.overall_score:'')+'</span></div>';}).join('');
+    box.classList.add('on');
+    [].forEach.call(box.querySelectorAll('.sug[data-i]'),function(el){el.addEventListener('mousedown',function(e){e.preventDefault();pick(items[+el.dataset.i]);});});
+  }
+  inp.addEventListener('input',build);
+  inp.addEventListener('focus',function(){if(inp.value.trim())build();});
+  inp.addEventListener('keydown',function(e){
+    if(!box.classList.contains('on'))return;
+    if(e.key==='ArrowDown'){act=Math.min(act+1,items.length-1);hi();e.preventDefault();}
+    else if(e.key==='ArrowUp'){act=Math.max(act-1,0);hi();e.preventDefault();}
+    else if(e.key==='Enter'){if(act>=0&&items[act]){pick(items[act]);e.preventDefault();}}
+    else if(e.key==='Escape'){close();}
+  });
+  document.addEventListener('mousedown',function(e){if(!wrap.contains(e.target))close();});
+})();
 
 // ----- Magic Quadrant + niche drill-down -----
 (function(){
@@ -478,6 +532,16 @@ draw();
   SEGS.forEach(s=>mkOpt(s.label, s.label+' ('+s.n+')'+(s.drillable?'':' — flat')));
   const legend=document.getElementById('mqLegend'), crumb=document.getElementById('mqCrumb'),
         back=document.getElementById('mqBack'), caveat=document.getElementById('mqCaveat');
+  // Quadrant filter chips — show/hide each quadrant's dots (same cross; a visual
+  // filter, NOT a re-quadrant). Niche Players hidden by default for a cleaner view.
+  const QUADS=['Leaders','Challengers','Visionaries','Niche Players'];
+  const qDot={'Leaders':'#34d399','Challengers':'#29b5e8','Visionaries':'#a78bfa','Niche Players':'#64748b'};
+  let visQ=new Set(['Leaders','Challengers','Visionaries']);
+  const chipsEl=document.getElementById('mqQuadChips');
+  function renderChips(cc){
+    chipsEl.innerHTML=QUADS.map(function(q){var on=visQ.has(q);return '<button type="button" data-q="'+q+'" title="Show/hide '+q+'" style="display:inline-flex;align-items:center;gap:6px;background:'+(on?'var(--panel2)':'transparent')+';border:1px solid '+(on?qDot[q]:'var(--border)')+';color:'+(on?'var(--text)':'var(--muted)')+';border-radius:14px;padding:4px 11px;font-size:12px;cursor:pointer;opacity:'+(on?'1':'.55')+'"><span style="width:9px;height:9px;border-radius:50%;background:'+qDot[q]+';display:inline-block"></span>'+q+' <b style="color:'+(on?'var(--text)':'var(--muted)')+'">'+(cc[q]||0)+'</b></button>';}).join('');
+    chipsEl.querySelectorAll('button').forEach(function(b){b.onclick=function(){var q=this.dataset.q; if(visQ.has(q))visQ.delete(q); else visQ.add(q); render(active);};});
+  }
   const mqPlugin={id:'mqQuad',
     beforeDraw(ch){
       const a=ch.chartArea, x=ch.scales.x, y=ch.scales.y; if(!a)return;
@@ -500,8 +564,8 @@ draw();
     afterDatasetsDraw(ch){
       const ctx=ch.ctx, x=ch.scales.x, y=ch.scales.y;
       ctx.save();ctx.font='600 10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle='rgba(232,238,255,.92)';ctx.textAlign='left';ctx.textBaseline='middle';
-      let lab=vendorsIn(active).filter(v=>v.tier==='A');
-      if(!active.all && lab.length===0) lab=vendorsIn(active).slice().sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).slice(0,3);
+      let lab=vendorsIn(active).filter(v=>v.tier==='A' && visQ.has(quadOf(v,active)));
+      if(!active.all && lab.length===0) lab=vendorsIn(active).filter(v=>visQ.has(quadOf(v,active))).sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).slice(0,3);
       lab.forEach(v=>ctx.fillText(' '+v.name, x.getPixelForValue(v.mq_x)+5, y.getPixelForValue(v.mq_y)));
       ctx.restore();
     }
@@ -509,7 +573,7 @@ draw();
   function datasetsFor(s){
     const vs=vendorsIn(s);
     return ['A','B','C','D'].map(t=>({label:'Tier '+t,
-      data:vs.filter(v=>v.tier===t).map(v=>({x:v.mq_x,y:v.mq_y,name:v.name,tier:v.tier,ov:v.overall_score,cat:v.category,ex:v.mq_execute,vi:v.mq_vision,q:quadOf(v,s)})),
+      data:vs.filter(v=>v.tier===t && visQ.has(quadOf(v,s))).map(v=>({x:v.mq_x,y:v.mq_y,name:v.name,tier:v.tier,ov:v.overall_score,cat:v.category,ex:v.mq_execute,vi:v.mq_vision,q:quadOf(v,s)})),
       backgroundColor:tierColor(t)+'cc',borderColor:tierColor(t),borderWidth:1,pointRadius:t==='A'?6:3.5,pointHoverRadius:8})).filter(d=>d.data.length);
   }
   const chart=new Chart(document.getElementById('mqChart'),{type:'scatter',data:{datasets:datasetsFor(ALL)},
@@ -527,14 +591,14 @@ draw();
     chart.data.datasets=datasetsFor(s); chart.update();
     const vs=vendorsIn(s), cc={Leaders:0,Challengers:0,Visionaries:0,'Niche Players':0};
     vs.forEach(v=>cc[quadOf(v,s)]++);
-    legend.innerHTML=(s.all?'All '+V.length+' partners':s.n+' partners in '+s.label)+
-      ' · cross at '+(s.all?'fleet':'niche')+' avg — Vision <b style="color:var(--text)">'+s.tx+'</b> · Execute <b style="color:var(--text)">'+s.ty+'</b>  &nbsp;·&nbsp;  '+
-      Object.entries(cc).map(([q,n])=>q+' <b style="color:var(--text)">'+n+'</b>').join('  ·  ');
-    crumb.innerHTML = s.all?'' : '&nbsp; All Partners › <b style="color:var(--text)">'+s.label+'</b>';
+    renderChips(cc);
+    legend.innerHTML=(s.all?'All '+V.length+' partners':s.n+' partners in '+esc(s.label))+
+      ' · cross at '+(s.all?'fleet':'niche')+' avg — Vision <b style="color:var(--text)">'+s.tx+'</b> · Execute <b style="color:var(--text)">'+s.ty+'</b> &nbsp;·&nbsp; <span style="color:var(--muted)">click a quadrant chip to show/hide it</span>';
+    crumb.innerHTML = s.all?'' : '&nbsp; All Partners › <b style="color:var(--text)">'+esc(s.label)+'</b>';
     back.style.display = s.all?'none':'';
     caveat.innerHTML = s.all ? '' : (s.drillable
-      ? '<b>Niche view.</b> The cross is recomputed to this niche cohort average, so positions are relative to '+s.label+' — a Leader here may sit elsewhere on the all-partners quadrant.'+((s.n<10||s.skew>0.7)?' <b style="color:#fbbf24">Small or lopsided cohort</b> ('+s.n+' partners, '+Math.round(s.skew*100)+'% in one quadrant) — interpret with care.':'')
-      : '⚠ <b>'+s.label+' is a flat / directional cohort</b> ('+s.n+' partners with little score spread; many carry template scores). Read it as a ranked list rather than a true quadrant.');
+      ? '<b>Niche view.</b> The cross is recomputed to this niche cohort average, so positions are relative to '+esc(s.label)+' — a Leader here may sit elsewhere on the all-partners quadrant.'+((s.n<10||s.skew>0.7)?' <b style="color:#fbbf24">Small or lopsided cohort</b> ('+s.n+' partners, '+Math.round(s.skew*100)+'% in one quadrant) — interpret with care.':'')
+      : '⚠ <b>'+esc(s.label)+' is a flat / directional cohort</b> ('+s.n+' partners with little score spread; many carry template scores). Read it as a ranked list rather than a true quadrant.');
     if(sel.value!==(s.all?'All Partners':s.label)) sel.value=s.all?'All Partners':s.label;
   }
   sel.addEventListener('change',()=>render(sel.value==='All Partners'?ALL:(byLabel[sel.value]||ALL)));
@@ -549,7 +613,8 @@ draw();
 document.getElementById('note').innerHTML =
   `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
   `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit — `+
-  `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> (A = must-see). `+
+  `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> — tier is a scouting-priority call (A = must-see), editorial rather than a strict score cutoff. `+
+  `Most high-priority vendors carry researched scores; some lower-priority and consulting entries share directional / template values. `+
   `<b>Niche</b> is a broad value-taxonomy label (Agents, Agent Platform, ETL, Dashboard, API, Security, Cost Savings, Governance, Observability, Database, Customer Data, Consulting, …) rolled up from each vendor's category — searchable and filterable above. `+
   `<b>Caveat:</b> ${DATA.meta.caveat||''} `+
   `Regenerate after editing <code>vendors.json</code> with <code>python build.py</code>.`;
