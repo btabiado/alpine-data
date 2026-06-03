@@ -232,6 +232,15 @@ def render(meta, vendors, src_path):
             '<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>',
             "<script>\n/* Chart.js 4.4.1 (vendored, MIT) */\n" + chartjs + "\n</script>",
         )
+    # Inline the compressed Basecamp floor-map photo (built artifact) as a data
+    # URI so the Floor Map view's reference image is self-contained.
+    floor_path = os.path.join(HERE, "floor_basecamp.jpg")
+    floor_uri = ""
+    if os.path.exists(floor_path):
+        import base64
+        with open(floor_path, "rb") as ff:
+            floor_uri = "data:image/jpeg;base64," + base64.b64encode(ff.read()).decode("ascii")
+    html = html.replace("__FLOOR_IMG_SRC__", floor_uri)
     out_path = os.path.join(HERE, "dashboard.html")
     with open(out_path, "w") as f:
         f.write(html)
@@ -346,10 +355,39 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .nitem .nh a .ext{font-size:.82em;color:var(--accent);margin-left:4px;opacity:.75;text-decoration:none;font-weight:400}
   .nitem .nh a:hover .ext{opacity:1}
   /* News-only view (opened in its own window via ?view=news) + category buckets */
-  #newsView,#mqView{display:none}
-  body.newsmode>header,body.newsmode #dashwrap,body.mqmode>header,body.mqmode #dashwrap{display:none}
+  #newsView,#mqView,#mapView{display:none}
+  body.newsmode>header,body.newsmode #dashwrap,body.mqmode>header,body.mqmode #dashwrap,body.mapmode>header,body.mapmode #dashwrap{display:none}
   body.newsmode #newsView{display:block}
   body.mqmode #mqView{display:block}
+  body.mapmode #mapView{display:block}
+  /* ===== Interactive Basecamp floor map (?view=map) ===== */
+  .mapwrap{max-width:1320px;margin:0 auto;padding:8px 24px 60px}
+  .maplegend{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin:6px 0 14px;font-size:12px;color:var(--muted)}
+  .maplegend .lg{display:inline-flex;align-items:center;gap:6px}
+  .maplegend .sw{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid var(--border)}
+  .mapscroll{overflow-x:auto;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,#0e1730,#0c1426);padding:14px}
+  .maprow{display:flex;gap:12px;align-items:flex-start;min-width:min-content}
+  .zonecol{flex:0 0 auto;width:150px;display:flex;flex-direction:column;gap:7px}
+  .zonehd{font-size:12px;font-weight:800;color:var(--accent);text-align:center;letter-spacing:.04em;padding:6px 4px 8px;border-bottom:2px solid var(--accent2)}
+  .booth{border:1px solid var(--border);border-radius:8px;padding:7px 9px;background:var(--panel);cursor:pointer;transition:transform .08s ease,border-color .12s ease}
+  .booth:hover,.booth:focus{transform:translateY(-1px);border-color:var(--accent);outline:none}
+  .booth .bn{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .booth .bnm{font-size:12px;font-weight:700;color:var(--text);line-height:1.25;margin-top:1px}
+  .booth .bt{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;margin-top:3px;font-weight:700}
+  .booth.tA{border-left:4px solid var(--A)} .booth.tB{border-left:4px solid var(--B)} .booth.tC{border-left:4px solid var(--C)}
+  .booth.must{box-shadow:0 0 0 1px var(--A) inset;background:linear-gradient(160deg,#13261f,#101a30)}
+  .booth.space{background:linear-gradient(160deg,#102338,#0d1830);border-style:dashed;border-color:#2c5f86;cursor:default}
+  .booth.space:hover{transform:none;border-color:#2c5f86}
+  .booth.space .bnm{color:#7fd6f5}
+  .booth.dim{opacity:.2}
+  .mapfoot{font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:14px}
+  .mapfoot code{color:var(--accent)}
+  .mapsearch{background:var(--panel);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px 13px;font-size:13.5px;width:300px;max-width:100%}
+  .mapsearch:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px rgba(41,181,232,.18)}
+  .floorimg{margin-top:16px}
+  .floorimg>summary{cursor:pointer;color:var(--accent);font-size:12px;letter-spacing:.04em}
+  .floorimg img{width:100%;max-width:1200px;border:1px solid var(--border);border-radius:12px;margin-top:10px;display:block}
+  @media(max-width:600px){.zonecol{width:130px}}
   .bucketbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
   .bchip{background:var(--panel2);border:1px solid var(--border);color:var(--muted);border-radius:20px;padding:6px 12px;font-size:12px;font-family:inherit;line-height:1.3;cursor:pointer;user-select:none;white-space:nowrap}
   .bchip:hover{color:var(--text)}
@@ -431,6 +469,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <div class="navbtns">
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
+      <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
       <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
       <button class="dl no-print" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
       <span class="zoomctl" title="Text size"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
@@ -560,6 +599,28 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 </div>
 
+<div id="mapView">
+  <header>
+    <div class="brand">
+      <div class="logo">🗺</div>
+      <div>
+        <h1>Snowflake Summit 2026 — Basecamp Floor Map</h1>
+        <div class="sub">Partner + Snowflake activations · our scouted partners placed by booth zone · its own window</div>
+      </div>
+      <span class="zoomctl" title="Text size" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+      <a class="dl" href="?" style="margin-left:14px">← Back to dashboard</a>
+    </div>
+  </header>
+  <div class="mapwrap">
+    <h3 class="sec" id="floormap">🗺 Your Guide to Basecamp <span class="hint">— scouted partners placed on the Summit floor by booth zone; scroll sideways to pan, click any booth for detail</span></h3>
+    <div style="margin:4px 0 14px"><input id="mapSearch" class="mapsearch" type="search" placeholder="Highlight a vendor by name…" autocomplete="off"></div>
+    <div class="maplegend" id="mapLegend"></div>
+    <div class="mapscroll"><div class="maprow" id="mapRow"></div></div>
+    <div class="mapfoot" id="mapFoot"></div>
+    <details class="floorimg"><summary>📷 Original Basecamp board (photo) — cross-reference the real layout</summary><img src="__FLOOR_IMG_SRC__" alt="Snowflake Summit 2026 — Your Guide to Basecamp, original floor-map board" loading="lazy"></details>
+  </div>
+</div>
+
 <div class="signature">
   <div class="sigrule"></div>
   <div class="signame">BDT- Bryan D Tabiadon</div>
@@ -581,6 +642,9 @@ if(_view==='news'){
 }else if(_view==='mq'){
   document.body.classList.add('mqmode');
   document.title='Magic Quadrant — Snowflake Summit 2026';
+}else if(_view==='map'){
+  document.body.classList.add('mapmode');
+  document.title='Basecamp Floor Map — Snowflake Summit 2026';
 }
 
 // A-/A+ text zoom — scales the page via CSS zoom; persists across visits + views.
@@ -886,6 +950,59 @@ draw();
   sel.addEventListener('change',()=>render(sel.value==='All Partners'?ALL:(byLabel[sel.value]||ALL)));
   back.addEventListener('click',()=>render(ALL));
   render(ALL);
+})();
+
+// ----- Interactive Basecamp floor map (?view=map): scouted partners placed by booth zone -----
+(function(){
+  var row=document.getElementById('mapRow'); if(!row) return;
+  // Official non-vendor Snowflake spaces from the printed Basecamp board.
+  var SPACES=[
+    ['AI Pop-Up',6101],['Basecamp South Theater 1',1001],['Basecamp South Theater 2',1017],
+    ['Basecamp South Theater 3',2901],['Basecamp South Theater 4',2911],['Battle for the Snowflake AI Dataverse',6005],
+    ['Braindate Lounge',1007],['Builders Hub',6001],['Builders Hub Theater',6004],
+    ['Customer Spotlights Check-In',1224],['Customer Spotlights Studio',1225],['Data Cloud Now',1601],
+    ['Data Superheroes Lounge',7002],['Hands-On Challenges',6006],['Hands-On Labs 01',7101],
+    ['Hands-On Labs 02',7102],['Hands-On Labs 03',7103],['Keynote',8000],['Major League Hacking Zone',6003],
+    ['Meeting Village',4001],['Olympic & Paralympic Zone',6002],['Platform Peak',7001],['Startup Lodge',2700],
+    ['theCUBE',1417],['Vertical Village',2002],['Vertical Village Theater 1',2003],['Vertical Village Theater 2',2004]
+  ];
+  function digits(b){return parseInt(String(b==null?'':b).replace(/[^0-9]/g,''),10);}
+  function zoneOf(b){var n=digits(b);return isNaN(n)?null:Math.floor(n/100)*100;}
+  var items=[], total=(DATA.vendors||[]).length, placedV=0, must=0;
+  (DATA.vendors||[]).forEach(function(v){var z=zoneOf(v.booth);if(z!=null){placedV++;if(v.tier==='A')must++;items.push({z:z,b:digits(v.booth),kind:'v',v:v});}});
+  SPACES.forEach(function(s){var z=zoneOf(s[1]);if(z!=null)items.push({z:z,b:s[1],kind:'s',name:s[0]});});
+  var zones={};items.forEach(function(it){(zones[it.z]=zones[it.z]||[]).push(it);});
+  var zkeys=Object.keys(zones).map(Number).sort(function(a,b){return a-b;});
+  row.innerHTML=zkeys.map(function(z){
+    var cells=zones[z].sort(function(a,b){return a.b-b.b;}).map(function(it){
+      if(it.kind==='s') return '<div class="booth space"><div class="bn">'+it.b+'</div><div class="bnm">❄ '+esc(it.name)+'</div></div>';
+      var v=it.v,isM=(v.tier==='A');
+      return '<div class="booth t'+esc(v.tier||'C')+(isM?' must':'')+'" data-v="'+esc(v.name)+'" tabindex="0" role="button" aria-label="Booth '+esc(fmt(v.booth))+': '+esc(v.name)+', tier '+esc(v.tier)+', overall '+esc(fmt(v.overall_score))+' of 10" title="Click for full company detail">'+
+        '<div class="bn">#'+esc(fmt(v.booth))+(isM?' ⭐':'')+'</div>'+
+        '<div class="bnm">'+esc(v.name)+'</div>'+
+        '<div class="bt" style="color:'+tierColor(v.tier)+'">'+esc(v.tier)+' · '+esc(fmt(v.overall_score))+'/10</div></div>';
+    }).join('');
+    return '<div class="zonecol"><div class="zonehd">'+z+'s</div>'+cells+'</div>';
+  }).join('');
+  document.getElementById('mapLegend').innerHTML=
+    '<span class="lg"><span class="sw" style="background:'+tierColor('A')+'"></span> Tier A ⭐ must-see</span>'+
+    '<span class="lg"><span class="sw" style="background:'+tierColor('B')+'"></span> Tier B</span>'+
+    '<span class="lg"><span class="sw" style="background:'+tierColor('C')+'"></span> Tier C</span>'+
+    '<span class="lg"><span class="sw" style="background:#102338;border-color:#2c5f86"></span> ❄ Snowflake space</span>';
+  document.getElementById('mapFoot').innerHTML=
+    '<b style="color:var(--text)">'+placedV+'</b> of '+total+' scouted partners placed by booth zone'+((total-placedV)>0?(' ('+(total-placedV)+' without a numeric booth omitted)'):'')+
+    ' · <b style="color:var(--text)">'+must+'</b> Tier-A must-sees ⭐ · '+SPACES.length+' Snowflake spaces ❄. '+
+    'A re-visioned, interactive build of the printed Basecamp board — booths grouped into the official zone columns (1000s–8000s) by number, not a to-scale plan. '+
+    'Click any partner booth for its full scouting detail; cross-check positions against the original photo below.';
+  var si=document.getElementById('mapSearch');
+  if(si) si.addEventListener('input',function(){
+    var q=si.value.trim().toLowerCase();
+    Array.prototype.forEach.call(row.querySelectorAll('.booth'),function(el){
+      if(!q){el.classList.remove('dim');return;}
+      var nm=(el.getAttribute('data-v')||el.textContent||'').toLowerCase();
+      el.classList.toggle('dim',nm.indexOf(q)<0);
+    });
+  });
 })();
 
 // Download / print to PDF — the @media print stylesheet restyles the page; the
