@@ -248,6 +248,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
        background:linear-gradient(180deg,#0b1020,#0d1426);color:var(--text)}
   header{padding:24px 28px 16px;border-bottom:1px solid var(--border);background:linear-gradient(120deg,#0e1730,#10243f)}
   .brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .navbtns{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
   .logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#29b5e8,#1b7fb8);display:flex;align-items:center;justify-content:center;font-weight:800;color:#06121f}
   h1{font-size:20px;margin:0;letter-spacing:.01em}
   .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
@@ -358,6 +359,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     background:linear-gradient(92deg,#9e7c2f,#f7e98e 28%,#e6c200 50%,#fdf5a6 72%,#b8860b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 7px rgba(212,175,55,.20));letter-spacing:.5px}
   .sigsub{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  .note:empty{display:none}
+  .scoredef{margin:16px auto 0;max-width:740px}
+  .scoredef>summary{cursor:pointer;color:var(--accent);font-size:11px;letter-spacing:.08em;text-transform:uppercase;text-align:center;list-style:none}
+  .scoredef>summary::-webkit-details-marker{display:none}
+  .scoredef>summary:hover{text-decoration:underline}
+  .scoredef[open]>summary{margin-bottom:4px}
+  .scoredef-body{text-align:left;font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:10px;padding-top:12px;border-top:1px solid var(--border)}
+  .scoredef-body code{color:var(--accent)}
   @media print{.signame{-webkit-text-fill-color:#b8902f !important;filter:none}}
   .nitem .nmeta{font-size:12.5px;color:var(--muted);margin-top:7px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
   .nitem .nsum{font-size:14px;color:#c3d2ee;margin-top:8px;white-space:normal;line-height:1.6}
@@ -407,11 +416,13 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <h1>Snowflake Summit 2026 — Partner Scouting Dashboard</h1>
       <div class="sub" id="subhead"></div>
     </div>
-    <a class="dl" href="?view=news" target="_blank" rel="noopener" style="margin-left:auto" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
-    <a class="dl" href="?view=mq" target="_blank" rel="noopener" style="margin-left:0" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
-    <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download style="margin-left:0">⬇ Download source spreadsheet</a>
-    <button class="dl no-print" id="pdfBtn" type="button" style="margin-left:0;cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
-    <span class="zoomctl" title="Text size" style="margin-left:10px"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+    <div class="navbtns">
+      <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
+      <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
+      <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
+      <button class="dl no-print" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
+      <span class="zoomctl" title="Text size"><button type="button" class="zbtn" data-zoom="out" aria-label="Smaller text">A−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Larger text">A+</button></span>
+    </div>
   </div>
 </header>
 <div class="wrap" id="dashwrap">
@@ -538,8 +549,9 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 
 <div class="signature">
   <div class="sigrule"></div>
-  <div class="signame">Bryan D Tabiadon</div>
+  <div class="signame">BDT- Bryan D Tabiadon</div>
   <div class="sigsub">Partner Scouting · Snowflake Summit 2026</div>
+  <details class="scoredef"><summary>Scoring Defined</summary><div class="scoredef-body" id="scoreDefBody"></div></details>
 </div>
 
 <script>
@@ -887,13 +899,14 @@ draw();
   document.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-v]');if(el){var n=el.getAttribute('data-v');if(n&&byName[n])open(n);}});
 })();
 
-document.getElementById('note').innerHTML =
+document.getElementById('scoreDefBody').innerHTML =
   `<b>Scoring:</b> all scores are ${DATA.meta.owner||'the owner'}'s directional 0–10 ratings from the scouting workbook — `+
   `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit — `+
   `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> — tier is a scouting-priority call (A = must-see), editorial rather than a strict score cutoff. `+
   `Most high-priority vendors carry researched scores; some lower-priority and consulting entries share directional / template values. `+
   `<b>Niche</b> is a broad value-taxonomy label (Agents, Agent Platform, ETL, Dashboard, API, Security, Cost Savings, Governance, Observability, Database, Customer Data, Consulting, …) rolled up from each vendor's category — searchable and filterable above. `+
   `<b>Caveat:</b> ${DATA.meta.caveat||''} `+
+  `<b>Data sources:</b> funding, valuation, round and employee figures were enriched via AI web research (Crunchbase / PitchBook / news / company sites) and are directional — verify before relying. `+
   `Regenerate after editing <code>vendors.json</code> with <code>python build.py</code>.`;
 </script>
 </body>
