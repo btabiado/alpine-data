@@ -21,7 +21,7 @@
   },
   {
    "vendor": "Arango",
-   "headline": "Arango showcases AutoGraph and previews Virtual Graph for Snowflake at Summit 2026",
+   "headline": "Arango Showcases Live Contextual Data Layer for Enterprise AI at Snowflake Summit 2026 (AutoGraph + Virtual Graph preview)",
    "date": "2026-06-02",
    "url": "https://www.businesswire.com/news/home/20260602127934/en/Arango-Showcases-Live-Contextual-Data-Layer-for-Enterprise-AI-at-Snowflake-Summit-2026",
    "source": "Business Wire",
@@ -68,7 +68,7 @@
    "vendor": "CDW",
    "headline": "CDW named 2026 AMER Snowflake Resale Partner of the Year",
    "date": "2026-06-02",
-   "url": "https://www.cdw.com/content/cdw/en/newsroom/articles/awards/2026/06/02/cdw-recognized-with-snowflake-partner-award.html",
+   "url": "https://www.snowflake.com/en/blog/2026-summit-partner-awards/",
    "source": "CDW",
    "summary": "CDW received the 2026 AMER Snowflake Resale Partner of the Year award, announced during Snowflake Summit 2026 in San Francisco.",
    "relevance": "high"
@@ -219,9 +219,9 @@
   },
   {
    "vendor": "Microsoft",
-   "headline": "Microsoft OneLake-Snowflake interoperability goes GA; Snowflake item in OneLake and Foundry integration unveiled at Summit 26",
+   "headline": "Microsoft OneLake and Snowflake interoperability is now generally available, including a Snowflake item in OneLake",
    "date": "2026-06-02",
-   "url": "https://blog.fabric.microsoft.com/en-us/blog/microsoft-onelake-and-snowflake-interoperability-is-now-generally-available/",
+   "url": "https://blog.fabric.microsoft.com/en-US/blog/microsoft-onelake-and-snowflake-interoperability-is-now-generally-available/",
    "source": "Microsoft Fabric Blog",
    "summary": "At Summit 26, OneLake-Snowflake Iceberg interoperability reached GA, a Snowflake-branded OneLake item entered preview, plus deeper Microsoft Foundry integration.",
    "relevance": "high"
@@ -248,7 +248,7 @@
    "vendor": "phData",
    "headline": "phData Named 2026 Global Snowflake Services AI Partner of the Year and 2026 AMER Snowflake Services Implementation Partner of the Year",
    "date": "2026-06-02",
-   "url": "https://www.accessnewswire.com/newsroom/en/business-and-professional-services/phdata-named-2026-global-snowflake-services-ai-partner-of-the-ye-1172790",
+   "url": "https://www.snowflake.com/en/blog/2026-summit-partner-awards/",
    "source": "ACCESS Newswire",
    "summary": "phData won two Snowflake Partner of the Year awards at Summit 26, its seventh consecutive year, spotlighting a Cortex-based Data Modeling Agent.",
    "relevance": "high"
@@ -266,7 +266,7 @@
    "vendor": "RelationalAI",
    "headline": "RelationalAI Closes the AI Value Gap with New Agentic Decision Intelligence Capabilities for the Snowflake AI Data Cloud",
    "date": "2026-06-02",
-   "url": "https://www.globenewswire.com/news-release/2026/06/02/relationalai-closes-the-ai-value-gap-with-new-agentic-decision-intelligence-capabilities-for-the-snowflake-ai-data-cloud",
+   "url": "https://www.manilatimes.net/2026/06/03/tmt-newswire/globenewswire/relationalai-closes-the-ai-value-gap-with-new-agentic-decision-intelligence-capabilities-for-the-snowflake-ai-data-cloud/2357275",
    "source": "GlobeNewswire",
    "summary": "At Snowflake Summit 26, RelationalAI launched the Rel App plus prescriptive/predictive reasoners, Snowflake CoWork conversational decision intelligence, and push-button post-training, native to Snowflake.",
    "relevance": "high"
@@ -300,7 +300,7 @@
   },
   {
    "vendor": "Sigma",
-   "headline": "Sigma Named 2026 Business Intelligence Snowflake Product Partner of the Year and EMEA Product Growth Partner of the Year",
+   "headline": "Sigma Named 2026 Business Intelligence Snowflake Product Partner of the Year and 2026 EMEA Snowflake Product Growth Partner of the Year",
    "date": "2026-06-02",
    "url": "https://www.businesswire.com/news/home/20260602857603/en/Sigma-Named-2026-Business-Intelligence-Snowflake-Product-Partner-of-the-Year-and-2026-EMEA-Snowflake-Product-Growth-Partner-of-the-Year",
    "source": "Business Wire",
@@ -318,9 +318,9 @@
   },
   {
    "vendor": "Spaulding Ridge",
-   "headline": "Spaulding Ridge sponsors Snowflake Summit 2026, demos Openflow accelerator; named Media & Entertainment Services Partner of the Year",
+   "headline": "Spaulding Ridge Named 2026 Media & Entertainment Snowflake Services Partner of the Year at Snowflake Summit 2026",
    "date": "2026-06-02",
-   "url": "https://spauldingridge.com/events/snowflake-summit-2026",
+   "url": "https://www.snowflake.com/en/blog/2026-summit-partner-awards/",
    "source": "Spaulding Ridge",
    "summary": "Spaulding Ridge sponsors Summit 2026 with live Openflow accelerator and CoCo/Snowflake Intelligence demos; recognized as 2026 Media & Entertainment Services Partner of the Year.",
    "relevance": "high"
@@ -426,7 +426,7 @@
   },
   {
    "vendor": "Capital One Software",
-   "headline": "Capital One Software unveils new observability and AI-powered optimization for Slingshot",
+   "headline": "Capital One Software announces new observability and AI-powered optimization capabilities for Slingshot",
    "date": "2026-06-01",
    "url": "https://www.businesswire.com/news/home/20260601466677/en/Capital-One-Software-Announces-New-Observability-and-AI-Powered-Optimization-Capabilities-for-Slingshot-to-Drive-System-Wide-Data-Efficiency",
    "source": "Business Wire",
@@ -489,7 +489,7 @@
   },
   {
    "vendor": "Hexaware",
-   "headline": "Hexaware exhibits at Snowflake Summit 2026 (Booth #2419) with Amaze AI-driven Snowflake solutions",
+   "headline": "Hexaware at Snowflake Summit 2026 (Booth #2419) showcasing Amaze for Data and AI",
    "date": "2026-06-01",
    "url": "https://hexaware.com/event/snowflake-summit-2026/",
    "source": "Hexaware",
@@ -527,7 +527,7 @@
    "vendor": "Prefect Technologies",
    "headline": "Prefect Launches Workflow Orchestration Offering on Snowflake Marketplace",
    "date": "2026-06",
-   "url": "https://www.hpcwire.com/bigdatawire/this-just-in/prefect-and-snowflake-partner-to-bring-dataflow-automation-to-the-enterprise/",
+   "url": "https://www.tipranks.com/news/private-companies/prefect-launches-workflow-orchestration-offering-on-snowflake-marketplace",
    "source": "BigDATAwire",
    "summary": "Prefect partnered with Snowflake, listing its workflow orchestration on Snowflake Marketplace and connecting AI agents to Snowflake via FastMCP and Horizon MCP Gateway.",
    "relevance": "high"
@@ -678,7 +678,7 @@
   },
   {
    "vendor": "Infosys",
-   "headline": "Infosys Topaz at Snowflake Summit 2026",
+   "headline": "Infosys Topaz at Snowflake Summit 2026 (Booth #1315)",
    "date": "2026-06",
    "url": "https://www.infosys.com/newsroom/events/2026/snowflake-summit-2026.html",
    "source": "Infosys",
@@ -963,15 +963,6 @@
    "source": "Hakkoda",
    "summary": "Hakkoda and Snowflake collaborate to launch Snowflake Energy Solutions, unifying IT/OT/IoT data and applying AI for oil, gas, power and utilities.",
    "relevance": "medium"
-  },
-  {
-   "vendor": "Yuki",
-   "headline": "Yuki emerges from stealth to solve Snowflake cost challenges",
-   "date": "2026-01-23",
-   "url": "https://www.enterprisetimes.co.uk/2026/01/23/yuki-emerges-from-stealth-to-solve-snowflake-cost-challenges/",
-   "source": "Enterprise Times",
-   "summary": "Yuki, a Snowflake Native App for automated compute cost optimization, exits stealth with $6M and a 14-day production free trial.",
-   "relevance": "low"
   },
   {
    "vendor": "Google Cloud",
