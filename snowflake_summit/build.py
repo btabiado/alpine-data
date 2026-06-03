@@ -335,6 +335,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .nitem .nh{font-size:13.5px;font-weight:600;line-height:1.35}
   .nitem .nh a{color:var(--text);text-decoration:none}
   .nitem .nh a:hover{color:var(--accent);text-decoration:underline}
+  .nitem .nh a .ext{font-size:.82em;color:var(--accent);margin-left:4px;opacity:.75;text-decoration:none;font-weight:400}
+  .nitem .nh a:hover .ext{opacity:1}
   .nitem .nmeta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
   .nitem .nsum{font-size:11.5px;color:#b9c8e6;margin-top:5px;white-space:normal;line-height:1.45}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
@@ -554,7 +556,7 @@ draw();
     feed.innerHTML = rows.map(function(n){
       var t=tierOf[n.vendor]||'C';
       var safe=(n.url && /^https?:\/\//i.test(n.url)) ? n.url : '';
-      var head=safe?('<a href="'+esc(safe)+'" target="_blank" rel="noopener noreferrer">'+esc(n.headline)+'</a>'):esc(n.headline);
+      var head=safe?('<a href="'+esc(safe)+'" target="_blank" rel="noopener noreferrer" title="Opens in a new tab">'+esc(n.headline)+'<span class="ext" aria-hidden="true">↗</span></a>'):esc(n.headline);
       return '<div class="nitem">'+
         '<div class="nd">'+esc(n.date||'')+'</div>'+
         '<div class="nbody">'+
