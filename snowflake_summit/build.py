@@ -529,7 +529,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <li><b>AI</b> — strength &amp; relevance of the vendor's AI / ML / agent story.</li>
     <li><b>Retail / Customer</b> — fit for retail &amp; customer-analytics use cases (the scouting focus).</li>
     <li><b>IPO / Upside</b> — growth trajectory, funding / valuation momentum, and exit / investment upside.</li>
-    <li><b>Bryan-Fit</b> — career &amp; networking fit for Bryan specifically (directional — to confirm).</li>
+    <li><b>Bryan-Fit</b> — career &amp; networking fit for Bryan specifically; baseline calibrated from a sample of <b>30 vendor booth selling pitches</b> (directional — to confirm).</li>
     <li><b>Overall</b> — the simple mean (average) of the five scores.</li>
   </ul>
   <p>Scores are Bryan's directional ratings from the scouting workbook (some researched, some template / estimated). <b>Tier</b> is a curated priority call (A = must-see) that uses Overall as a guideline (≈ 7.5+ / 6+ / below), set editorially. Funding &amp; valuation figures were enriched via AI web research — verify before relying.</p>
@@ -1185,7 +1185,7 @@ draw();
 
 document.getElementById('scoreDefBody').innerHTML =
   `<b>Scoring:</b> all scores are ${esc(DATA.meta.owner||'the owner')}'s directional 0–10 ratings from the scouting workbook — `+
-  `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit — `+
+  `Snowflake relevance, AI relevance, retail/customer-analytics relevance, IPO/upside, and Bryan career/networking fit (baselined against a sample of 30 vendor booth selling pitches) — `+
   `blended into an <b>Overall Score</b> and a <b>Priority Tier</b> — tier is a scouting-priority call (A = must-see) that uses the Overall as a guideline (roughly A ≈ 7.5+, B ≈ 6+, C below) but is set editorially, so a handful of vendors sit a half-point either side of those marks. `+
   `Most high-priority vendors carry researched scores; some lower-priority and consulting entries share directional / template values. `+
   `<b>Niche</b> is a broad value-taxonomy label (Agents, Agent Platform, ETL, Dashboard, API, Security, Cost Savings, Governance, Observability, Database, Customer Data, Consulting, …) rolled up from each vendor's category — searchable and filterable above. `+
