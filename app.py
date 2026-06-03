@@ -1640,6 +1640,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
     <div class="tab" data-tab="city" role="tab" tabindex="0" aria-selected="false">City</div>
     <div class="tab" data-tab="aviation" role="tab" tabindex="0" aria-selected="false">Aviation</div>
+    <div class="tab" data-tab="summit" role="tab" tabindex="0" aria-selected="false">Summit</div>
     </div>
   </div>
 </div>
@@ -2462,6 +2463,29 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         </div>
         <div style="padding:4px 14px 14px 14px">
           <a href="real-estate/" class="btn" style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600">Open Full Dashboard &rarr;</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SUMMIT (Snowflake Summit 2026) TAB ============ -->
+  <!-- Gateway for the standalone Snowflake Summit 2026 partner-scouting
+       dashboard at /summit/ (built by snowflake_summit/build.py, staged into
+       _site/summit/ by pages.yml). Pure static link card — no data fetch, no
+       sidecar, no render fn — mirrors the Real Estate gateway, so it adds
+       nothing to the SIDECAR_FOR_TAB coverage the validator checks. -->
+  <div id="tab-summit" class="hidden">
+    <div class="container">
+      <div class="chart-card" id="summitCard">
+        <div class="head">
+          <h2>Snowflake Summit 2026 <span class="tag">Partner Scouting</span></h2>
+          <span class="desc">197 partner vendors scored across five dimensions &middot; ranked Must-See list &middot; KPIs &amp; charts &middot; full view at <a href="summit/" style="color:var(--accent)">/summit/</a></span>
+        </div>
+        <div style="padding:12px 14px;color:var(--muted);font-size:13px;line-height:1.55">
+          Self-contained scouting dashboard built from Bryan&rsquo;s Master Partner Scouting workbook &mdash; 6 KPIs, a ranked Tier-A &ldquo;Must-See&rdquo; shortlist, score charts, and a downloadable source spreadsheet. Decide which Summit booths to hit first.
+        </div>
+        <div style="padding:4px 14px 14px 14px">
+          <a href="summit/" class="btn" style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600">Open Summit Dashboard &rarr;</a>
         </div>
       </div>
     </div>
@@ -11755,6 +11779,7 @@ function selectTab(t){
   document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
   document.getElementById('tab-city').classList.toggle('hidden', t!=='city');
   document.getElementById('tab-aviation').classList.toggle('hidden', t!=='aviation');
+  document.getElementById('tab-summit').classList.toggle('hidden', t!=='summit');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
@@ -11785,7 +11810,7 @@ function selectTab(t){
   // has its own insight surface (heat-index 30d/1y delta chips + the
   // "Hottest states" leaderboard), and no insight is tagged `real_estate`, so
   // the generic bar would only ever read "none right now" — hide it there too.
-  if (insightsBar) insightsBar.style.display = (isOverview || t === 'ainews' || t === 'real_estate') ? 'none' : '';
+  if (insightsBar) insightsBar.style.display = (isOverview || t === 'ainews' || t === 'real_estate' || t === 'summit') ? 'none' : '';
   renderAll();
 }
 
