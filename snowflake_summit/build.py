@@ -351,6 +351,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .zbtn{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:7px;min-width:30px;height:30px;font-size:14px;font-weight:700;cursor:pointer;padding:0 6px}
   .zbtn:hover{border-color:var(--accent);color:#dff3ff}
   .zlevel{font-size:11px;color:var(--muted);min-width:36px;text-align:center;font-variant-numeric:tabular-nums}
+  /* Gold embossed cursive signature — signs the foot of every view + the PDF */
+  .signature{text-align:center;margin:38px auto 18px;padding-top:22px;border-top:1px solid var(--border);max-width:1320px}
+  .sigrule{width:140px;height:1px;margin:0 auto 12px;background:linear-gradient(90deg,transparent,#d4af37,transparent)}
+  .signame{font-family:"Snell Roundhand","Apple Chancery","Brush Script MT",cursive;font-style:italic;font-size:48px;line-height:1.1;
+    background:linear-gradient(92deg,#9e7c2f,#f7e98e 28%,#e6c200 50%,#fdf5a6 72%,#b8860b);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,.55)) drop-shadow(0 0 7px rgba(212,175,55,.20));letter-spacing:.5px}
+  .sigsub{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+  @media print{.signame{-webkit-text-fill-color:#b8902f !important;filter:none}}
   .nitem .nmeta{font-size:12.5px;color:var(--muted);margin-top:7px;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
   .nitem .nsum{font-size:14px;color:#c3d2ee;margin-top:8px;white-space:normal;line-height:1.6}
   .rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;flex:none}
@@ -492,6 +500,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       </div>
     </div>
   </div>
+</div>
+
+<div class="signature">
+  <div class="sigrule"></div>
+  <div class="signame">Bryan D Tabiadon</div>
+  <div class="sigsub">Partner Scouting · Snowflake Summit 2026</div>
 </div>
 
 <script>
