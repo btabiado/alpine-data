@@ -380,6 +380,23 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   @media(max-width:920px){.grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
   @media(max-width:700px){.kpis{grid-template-columns:repeat(3,1fr)}.cards{grid-template-columns:1fr}}
   @media(max-width:430px){.kpis{grid-template-columns:repeat(2,1fr)}.nitem{flex-direction:column;gap:8px;padding:18px 20px}.nitem .nd{min-width:0}}
+  /* Mobile compaction — desktop sizes are too big on phones */
+  @media(max-width:480px){
+    .wrap{padding:14px 12px}
+    header{padding:16px 14px 12px}
+    h1{font-size:17px}
+    h3.sec{font-size:13.5px;margin:18px 0 10px}
+    .kpi{padding:11px 12px}
+    .kpi .v{font-size:21px}
+    .kpi .l{font-size:9.5px}
+    .kpis{gap:8px}
+    .card2{padding:12px 13px}
+    .card2 .nm{font-size:13.5px}
+    .card2 .ovr b{font-size:18px}
+    .card2 .rk{font-size:20px}
+    .vsheet{padding:18px 16px}
+    .nitem .nh{font-size:15px}
+  }
 </style>
 </head>
 <body>
