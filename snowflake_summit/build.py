@@ -67,12 +67,12 @@ def kpis(vendors):
     pub = sum(1 for v in vendors if is_public(v))
     cats = {v.get("category") for v in vendors}
     return [
-        {"label": "Partner Vendors", "value": n, "sub": f"{len(cats)} categories"},
-        {"label": "Must-See (Tier A)", "value": a, "sub": "top priority"},
-        {"label": "Priority (Tier A+B)", "value": a + b, "sub": f"{round(100*(a+b)/n) if n else 0}% of floor"},
+        {"label": "Partner Vendors", "value": n, "sub": f"{len(cats)} categories", "filter": "all"},
+        {"label": "Must-See (Tier A)", "value": a, "sub": "top priority", "filter": "tierA"},
+        {"label": "Priority (Tier A+B)", "value": a + b, "sub": f"{round(100*(a+b)/n) if n else 0}% of floor", "filter": "tierAB"},
         {"label": "Avg Overall Score", "value": avg([v.get("overall_score") for v in vendors]), "sub": "out of 10"},
         {"label": "Avg AI Score", "value": avg([v.get("ai_score") for v in vendors]), "sub": "the Summit's hot theme"},
-        {"label": "Public Companies", "value": pub, "sub": f"{n-pub} private/other"},
+        {"label": "Public Companies", "value": pub, "sub": f"{n-pub} private/other", "filter": "public", "subFilter": "private"},
     ]
 
 
@@ -325,6 +325,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .kpi .v{font-size:23px;font-weight:800;color:var(--text);line-height:1}
   .kpi .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-top:8px}
   .kpi .s{font-size:11px;color:var(--accent);margin-top:3px}
+  .kpi-click{cursor:pointer;transition:border-color .12s ease,transform .08s ease}
+  .kpi-click:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .kpi-click:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .kpi-sub-link{color:inherit;text-decoration:none;border-bottom:1px dashed currentColor;cursor:pointer}
+  .kpi-sub-link:hover{opacity:.8}
+  @media(max-width:640px){#vModal .col-opt{display:none}}
   h3.sec{margin:22px 0 12px;font-size:15px}
   h3.sec .hint{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -767,15 +773,25 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div class="wrap" id="dashwrap">
   <div class="kpis" id="kpis"></div>
 
+  <h3 class="sec">🤝 Best Bryan Recommend <span class="hint">— top career / networking fit</span></h3>
+  <div class="cards" id="bestfit"></div>
+
+  <div class="grid" style="margin-top:22px">
+    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
+    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
+  </div>
+  <div class="grid">
+    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
+    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
+  </div>
+  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
+
   <div class="topbar">
     <div class="searchwrap">
       <input id="search" placeholder="Search all vendors — name, category, niche…" autocomplete="off"/>
     </div>
     <span class="hit" id="searchhit"></span>
   </div>
-
-  <h3 class="sec">🤝 Best Bryan Recommend <span class="hint">— top career / networking fit</span></h3>
-  <div class="cards" id="bestfit"></div>
 
   <h3 class="sec" id="allpartners">All Partner Vendors <span class="hint">— <span class="sorthint">click a column to sort · </span>💎 = hidden gem</span></h3>
   <div class="panel">
@@ -803,17 +819,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </table>
     </div>
     <div class="vcards" id="vcards"></div>
+    <div id="vmore" class="no-print"></div>
   </div>
-
-  <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
-    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
-  </div>
-  <div class="grid">
-    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
-    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
-  </div>
-  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
 
   <div class="note" id="note"></div>
   <button id="toTop" type="button" class="totop no-print" aria-label="Back to top" title="Back to top">↑</button>
@@ -1002,8 +1009,19 @@ if(_view==='news'){
   sh.textContent = isMobile ? base : (base + ` · source: ${DATA.source}`);
 })();
 
-document.getElementById('kpis').innerHTML = DATA.kpis.map(k=>
-  `<div class="kpi"><div class="v">${k.value}</div><div class="l">${k.label}</div><div class="s">${k.sub}</div></div>`).join('');
+document.getElementById('kpis').innerHTML = DATA.kpis.map(k=>{
+  const clickable=!!k.filter;
+  const sub = k.subFilter
+    ? `<a href="#" class="kpi-sub-link" data-filter="${k.subFilter}" role="button" tabindex="0" title="Show these" aria-label="Show ${k.sub}">${k.sub}</a>`
+    : k.sub;
+  return `<div class="kpi${clickable?' kpi-click':''}"${clickable?` data-filter="${k.filter}" role="button" tabindex="0" title="Show all ${k.value} ${k.label}" aria-label="Show all ${k.value} ${k.label}"`:''}><div class="v">${k.value}</div><div class="l">${k.label}</div><div class="s">${sub}</div></div>`;
+}).join('');
+(function(){
+  var kp=document.getElementById('kpis'); if(!kp) return;
+  function pick(t){var s=t.closest&&t.closest('.kpi-sub-link'); if(s) return s.getAttribute('data-filter'); var c=t.closest&&t.closest('.kpi-click'); if(c) return c.getAttribute('data-filter'); return null;}
+  kp.addEventListener('click',function(e){var f=pick(e.target); if(f){e.preventDefault(); if(window.summitOpenList) window.summitOpenList(f);}});
+  kp.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){var f=pick(e.target); if(f){e.preventDefault(); if(window.summitOpenList) window.summitOpenList(f);}}});
+})();
 
 function scoreChips(v){
   const items=[['Bryan',v.bryan_score],['Snow',v.snowflake_score],['AI',v.ai_score],['Retail',v.retail_score],['IPO',v.ipo_score]];
@@ -1025,9 +1043,10 @@ if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){(functio
   var dash=document.getElementById('dashwrap'); if(!dash) return;
   var bf=document.getElementById('bestfit'), bfh=bf&&bf.previousElementSibling;
   if(bf&&bfh){
+    // Heading rename only. The desktop DOM now orders Bryan → analytics → search →
+    // table, and mobile follows that same order, so Bryan no longer needs to be
+    // repositioned relative to the search bar (which has moved down by the table).
     bfh.innerHTML='🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span>';
-    var tb=dash.querySelector('.topbar');
-    if(tb&&tb.after) tb.after(bfh, bf);   // move heading + cards to the top
   }
   function collapse(id,label){
     var g=document.getElementById(id), h=g&&g.previousElementSibling; if(!g||!h) return;
@@ -1121,38 +1140,55 @@ Object.keys(DATA.by_niche).forEach(nz=>nicheSel.add(new Option(`${nz} (${DATA.by
 // table that normally hosts them is hidden). Moving the elements keeps their
 // change-listeners intact; desktop leaves them in the table columns.
 if(IS_MOBILE){var fbar=document.getElementById('vFiltersM');if(fbar){[nicheSel,catSel,typeSel,tierSel].forEach(function(s){fbar.appendChild(s);});}}
-let sortK='rank',sortAsc=true;
-function draw(){
-  const q=document.getElementById('search').value.toLowerCase(),nz=nicheSel.value,cf=catSel.value,tf=tierSel.value,yf=typeSel.value;
-  let r=DATA.vendors.filter(v=>(!q||v.name.toLowerCase().includes(q)||(v.category||'').toLowerCase().includes(q)||(v.niche||'').toLowerCase().includes(q))
-    &&(!nz||v.niche===nz)&&(!cf||v.category===cf)&&(!tf||v.tier===tf)&&(!yf||v.company_type===yf));
-  const hit=document.getElementById('searchhit');
-  if(hit) hit.textContent = (q||nz||cf||tf||yf) ? `${r.length} of ${DATA.vendors.length} match` : `${DATA.vendors.length} vendors`;
-  r.sort((a,b)=>{let x=a[sortK],y=b[sortK];if(typeof x==='string'){x=x.toLowerCase();y=(y||'').toLowerCase();}
-    if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
-  if(IS_MOBILE){
-    // Phones: a 13-column table can't fit — render stacked cards (Partner / Booth /
-    // Niche / score) instead, reusing the card aesthetic. Tap a card for full detail.
-    var vc=document.getElementById('vcards');
-    if(vc) vc.innerHTML=r.map(function(v){
-      var w=Math.round(((v.overall_score||0)/10)*54)+6;
-      return '<div class="vcard'+(v.hidden_gem?' gem':'')+'" data-v="'+esc(v.name)+'" role="button" tabindex="0" aria-label="View company detail for '+esc(v.name)+'">'+
-        '<div class="vcard-top"><span class="vcard-rank">#'+v.rank+'</span><span class="vcard-name">'+esc(v.name)+homeLink(v)+'</span><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></div>'+
-        '<div class="vcard-meta"><span class="tag tNi">'+esc(fmt(v.niche))+'</span> · booth '+esc(fmt(v.booth))+' · '+esc(fmt(v.category))+'</div>'+
-        '<div class="vcard-score"><span class="ovrbar" style="width:'+w+'px;background:'+tierColor(v.tier)+'"></span><b>'+fmt(v.overall_score)+'</b> <span>/ 10'+(v.company_type?(' · '+esc(v.company_type)):'')+'</span></div>'+
-        '</div>';
-    }).join('');
-    return;
-  }
-  tbody.innerHTML=r.map(v=>{
-    const w=Math.round(((v.overall_score||0)/10)*54)+6;
-    return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" tabindex="0" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer">
+let sortK='rank',sortAsc=true,vExpanded=false;
+var VPREVIEW=25;
+function vcardHTML(v){
+  var w=Math.round(((v.overall_score||0)/10)*54)+6;
+  return '<div class="vcard'+(v.hidden_gem?' gem':'')+'" data-v="'+esc(v.name)+'" role="button" tabindex="0" aria-label="View company detail for '+esc(v.name)+'">'+
+    '<div class="vcard-top"><span class="vcard-rank">#'+v.rank+'</span><span class="vcard-name">'+esc(v.name)+homeLink(v)+'</span><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></div>'+
+    '<div class="vcard-meta"><span class="tag tNi">'+esc(fmt(v.niche))+'</span> · booth '+esc(fmt(v.booth))+' · '+esc(fmt(v.category))+'</div>'+
+    '<div class="vcard-score"><span class="ovrbar" style="width:'+w+'px;background:'+tierColor(v.tier)+'"></span><b>'+fmt(v.overall_score)+'</b> <span>/ 10'+(v.company_type?(' · '+esc(v.company_type)):'')+'</span></div>'+
+    '</div>';
+}
+function rowHTML(v){
+  const w=Math.round(((v.overall_score||0)/10)*54)+6;
+  return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" tabindex="0" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer">
       <td class="num">${v.rank}</td><td class="name">${esc(v.name)}${homeLink(v)}</td><td>${fmt(v.booth)}</td>
       <td><span class="tag tNi">${esc(fmt(v.niche))}</span></td><td>${esc(fmt(v.category))}</td><td>${esc(fmt(v.company_type))}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
       <td class="num">${fmt(v.retail_score)}</td><td class="num">${fmt(v.ipo_score)}</td><td class="num">${fmt(v.bryan_score)}</td>
       <td class="num"><span class="ovrbar" style="width:${w}px;background:${tierColor(v.tier)}"></span><b>${fmt(v.overall_score)}</b></td>
-      <td><span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span></td></tr>`;}).join('');
+      <td><span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span></td></tr>`;
+}
+function draw(){
+  const q=document.getElementById('search').value.toLowerCase(),nz=nicheSel.value,cf=catSel.value,tf=tierSel.value,yf=typeSel.value;
+  const filtering=!!(q||nz||cf||tf||yf);
+  let r=DATA.vendors.filter(v=>(!q||v.name.toLowerCase().includes(q)||(v.category||'').toLowerCase().includes(q)||(v.niche||'').toLowerCase().includes(q))
+    &&(!nz||v.niche===nz)&&(!cf||v.category===cf)&&(!tf||v.tier===tf)&&(!yf||v.company_type===yf));
+  r.sort((a,b)=>{let x=a[sortK],y=b[sortK];if(typeof x==='string'){x=x.toLowerCase();y=(y||'').toLowerCase();}
+    if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
+  // Scanning the page = a compact preview (top VPREVIEW) with NO inner scrollbar, so
+  // a scroll gesture flows past the table to the rest of the page. Engaging it
+  // (searching/filtering, or tapping "Show all") expands to the full set inside a
+  // contained 560px scroll box. Same cap applies to the mobile card list.
+  const showAll=filtering||vExpanded, total=r.length;
+  const shown=showAll?r:r.slice(0,VPREVIEW);
+  const hit=document.getElementById('searchhit');
+  if(hit) hit.textContent = filtering ? `${total} of ${DATA.vendors.length} match` : (showAll?`${DATA.vendors.length} vendors`:`Top ${Math.min(VPREVIEW,total)} · ${DATA.vendors.length} total`);
+  var sc=document.querySelector('.scroll');
+  if(sc){sc.style.maxHeight=showAll?'560px':'none';sc.style.overflowY=showAll?'auto':'visible';}
+  if(IS_MOBILE){
+    var vc=document.getElementById('vcards');
+    if(vc) vc.innerHTML=shown.map(vcardHTML).join('');
+  } else {
+    tbody.innerHTML=shown.map(rowHTML).join('');
+  }
+  var more=document.getElementById('vmore');
+  if(more){
+    if(!filtering && total>VPREVIEW){
+      more.innerHTML='<button type="button" class="vmore-btn" aria-expanded="'+(vExpanded?'true':'false')+'" aria-controls="vtable" style="width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px">'+(vExpanded?('▴ Show top '+VPREVIEW+' only'):('▾ Show all '+total+' partners'))+'</button>';
+    } else { more.innerHTML=''; }
+  }
 }
 function syncSortAria(){document.querySelectorAll('#vtable thead tr:first-child th[data-k]').forEach(function(th){th.setAttribute('aria-sort', th.dataset.k===sortK?(sortAsc?'ascending':'descending'):'none');});}
 document.querySelectorAll('#vtable thead tr:first-child th').forEach(function(th){
@@ -1164,6 +1200,7 @@ document.querySelectorAll('#vtable thead tr:first-child th').forEach(function(th
 });
 syncSortAria();
 ['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);typeSel.addEventListener(e,draw);});
+(function(){var m=document.getElementById('vmore');if(m)m.addEventListener('click',function(e){var b=e.target.closest('.vmore-btn');if(!b)return;vExpanded=!vExpanded;draw();if(!vExpanded){var h=document.getElementById('allpartners');if(h)h.scrollIntoView({block:'start'});}});})();
 draw();
 
 // Summit News feed (news-only view, ?view=news). Category buckets + relevance /
@@ -1271,10 +1308,11 @@ draw();
   const legend=document.getElementById('mqLegend'), crumb=document.getElementById('mqCrumb'),
         back=document.getElementById('mqBack'), caveat=document.getElementById('mqCaveat');
   // Quadrant filter chips — show/hide each quadrant's dots (same cross; a visual
-  // filter, NOT a re-quadrant). Niche Players hidden by default for a cleaner view.
+  // filter, NOT a re-quadrant). All four segments — Leaders, Challengers,
+  // Visionaries, Niche Players — are enabled by default; chips toggle each off.
   const QUADS=['Leaders','Challengers','Visionaries','Niche Players'];
   const qDot={'Leaders':'#34d399','Challengers':'#29b5e8','Visionaries':'#a78bfa','Niche Players':'#64748b'};
-  let visQ=new Set(['Leaders','Challengers','Visionaries']);
+  let visQ=new Set(['Leaders','Challengers','Visionaries','Niche Players']);
   const chipsEl=document.getElementById('mqQuadChips');
   function renderChips(cc){
     chipsEl.innerHTML=QUADS.map(function(q){var on=visQ.has(q);return '<button type="button" data-q="'+q+'" title="Show/hide '+q+'" style="display:inline-flex;align-items:center;gap:6px;background:'+(on?'var(--panel2)':'transparent')+';border:1px solid '+(on?qDot[q]:'var(--border)')+';color:'+(on?'var(--text)':'var(--muted)')+';border-radius:14px;padding:4px 11px;font-size:12px;cursor:pointer;opacity:'+(on?'1':'.55')+'"><span style="width:9px;height:9px;border-radius:50%;background:'+qDot[q]+';display:inline-block"></span>'+q+' <b style="color:'+(on?'var(--text)':'var(--muted)')+'">'+(cc[q]||0)+'</b></button>';}).join('');
@@ -1565,6 +1603,28 @@ draw();
   }
   function close(){m.classList.remove('on'); document.body.style.overflow=''; if(lastFocus&&lastFocus.focus){try{lastFocus.focus();}catch(_){}} lastFocus=null;}
   window.summitOpenVendor=open; // let the Magic-Quadrant dots (and other views) open the detail sheet
+  // KPI tile pop-ups: reuse this overlay + focus-trap to show a filtered partner table.
+  function openList(fk){
+    var V=DATA.vendors||[];
+    var list = fk==='all'?V.slice()
+      : fk==='tierA'?V.filter(function(v){return v.tier==='A';})
+      : fk==='tierAB'?V.filter(function(v){return v.tier==='A'||v.tier==='B';})
+      : fk==='public'?V.filter(function(v){return /public/i.test(v.company_type||'');})
+      : fk==='private'?V.filter(function(v){return !/public/i.test(v.company_type||'');})
+      : V.slice();
+    var titles={all:'All Partner Vendors',tierA:'Must-See — Tier A',tierAB:'Priority — Tier A + B',public:'Public Companies',private:'Private / Other'};
+    list.sort(function(a,b){return (a.rank||1e9)-(b.rank||1e9);});
+    var rows=list.map(function(v){
+      return '<tr><td class="num">'+v.rank+'</td><td class="name">'+esc(v.name)+'</td>'+
+        '<td class="col-opt"><span class="tag tNi">'+esc(fmt(v.niche))+'</span></td><td class="col-opt">'+esc(fmt(v.booth))+'</td>'+
+        '<td class="num"><b>'+fmt(v.overall_score)+'</b></td><td><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></td></tr>';
+    }).join('');
+    body.innerHTML='<h2 id="vModalTitle">'+esc(titles[fk]||'Partners')+'</h2> <span class="tag tNi">'+list.length+' partners</span>'+
+      '<div style="max-height:60vh;overflow:auto;margin-top:13px;border:1px solid var(--border);border-radius:10px">'+
+      '<table><thead><tr><th class="num">#</th><th>Partner</th><th class="col-opt">Niche</th><th class="col-opt">Booth</th><th class="num">Overall</th><th>Tier</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    lastFocus=document.activeElement; m.classList.add('on'); document.body.style.overflow='hidden'; var xb=m.querySelector('.x'); (xb||sheet).focus();
+  }
+  window.summitOpenList=openList;
   m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('x'))close();});
   document.addEventListener('keydown',function(e){
     if(!m.classList.contains('on'))return;
