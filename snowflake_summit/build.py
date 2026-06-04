@@ -639,6 +639,33 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     body.compact h1{font-size:1.02rem}
     body.compact .logo{width:28px;height:28px}
   }
+  /* ---------- P3 · highlight re-layout (declutter) ---------- */
+  @media (max-width:640px){
+    /* Slim 2-up highlight cards: drop the per-dimension breakout chips (tap a card
+       for the full breakdown), keep name / tier / niche / overall. */
+    #mustsee,#gems,#bestfit{grid-template-columns:repeat(2,1fr);gap:8px}
+    .card2 .scores{display:none}
+    .card2{padding:11px 12px}
+    .card2 .nm{font-size:12.5px;padding-right:22px}
+    .card2 .ct{font-size:9.5px}
+    .card2 .rk{font-size:17px;top:6px;right:9px}
+    .card2 .ovr{margin-top:4px}
+    .card2 .ovr b{font-size:17px}
+    /* Collapsible Must-See / Hidden Gems — email-folder disclosure with a count. */
+    details.msec{border:1px solid var(--border);border-radius:12px;background:var(--panel);margin:16px 0}
+    details.msec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;
+      padding:14px 15px;font-size:14.5px;font-weight:700;color:var(--text);min-height:48px}
+    details.msec>summary::-webkit-details-marker{display:none}
+    details.msec>summary::before{content:"▸";color:var(--accent);font-size:13px;transition:transform .15s ease}
+    details.msec[open]>summary::before{transform:rotate(90deg)}
+    .msec-n{margin-left:auto;color:var(--muted);font-weight:600;font-size:12px;
+      background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:2px 11px}
+    details.msec>.cards{padding:0 12px 14px}
+    /* Floor Map: the spatial Floor plan is the only mobile view — drop the toggle
+       and the Zone-columns list entirely. */
+    .maptoggle{display:none!important}
+    #mapColsWrap,#mapColsNav{display:none!important}
+  }
 </style>
 </head>
 <body>
@@ -922,6 +949,29 @@ function card(v){
 document.getElementById('mustsee').innerHTML = DATA.must_see.map(card).join('');
 document.getElementById('gems').innerHTML = DATA.gems.length?DATA.gems.map(card).join(''):'<div class="sub">None above threshold.</div>';
 document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
+
+// ===== MOBILE highlight re-layout (desktop DOM untouched) =====
+// Bryan's Recommendation -> renamed + moved to the top (shown 2-up, slim cards);
+// Must-See and Hidden Gems collapse under a tap-to-expand disclosure with a count.
+if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){(function(){
+  var dash=document.getElementById('dashwrap'); if(!dash) return;
+  var bf=document.getElementById('bestfit'), bfh=bf&&bf.previousElementSibling;
+  if(bf&&bfh){
+    bfh.innerHTML='🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span>';
+    var tb=dash.querySelector('.topbar');
+    if(tb&&tb.after) tb.after(bfh, bf);   // move heading + cards to the top
+  }
+  function collapse(id,label){
+    var g=document.getElementById(id), h=g&&g.previousElementSibling; if(!g||!h) return;
+    var n=g.querySelectorAll('.card2').length;
+    var d=document.createElement('details'); d.className='msec';
+    var s=document.createElement('summary'); s.className='msec-sum';
+    s.innerHTML=label+' <span class="msec-n">'+n+'</span>';
+    h.parentNode.insertBefore(d,h); h.remove(); d.appendChild(s); d.appendChild(g);
+  }
+  collapse('mustsee','⭐ Must-See Vendors');
+  collapse('gems','💎 Hidden Gems');
+})();}
 
 const C={grid:'#243352',tick:'#8da2c8'};
 if(window.Chart){Chart.defaults.font.family='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';Chart.defaults.color=C.tick;}
@@ -1397,8 +1447,9 @@ draw();
   }
   if(tabPlan) tabPlan.addEventListener('click',function(){show(true);});
   if(tabCols) tabCols.addEventListener('click',function(){show(false);});
-  // Mobile defaults to the readable Zone-columns list; desktop keeps the spatial plan.
-  show(isMob ? false : !!(plan && REG.length));
+  // Mobile shows ONLY the spatial Floor plan (Zone columns is removed on phones);
+  // desktop keeps both, defaulting to the plan when one exists.
+  show(isMob ? true : !!(plan && REG.length));
 })();
 
 // Download / print to PDF — the @media print stylesheet restyles the page; the
