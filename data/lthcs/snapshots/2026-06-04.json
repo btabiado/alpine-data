@@ -710,8 +710,8 @@
     },
     {
       "ticker": "ARM",
-      "lthcs_score": 51.6,
-      "band": "weakening",
+      "lthcs_score": 48.8,
+      "band": "review",
       "drift_1d": -2.1,
       "drift_7d": -0.7,
       "drift_30d": -3.9,
@@ -722,7 +722,7 @@
         "adoption_momentum": 32.1,
         "institutional_confidence": 93.5,
         "financial_evolution": 34.1,
-        "thesis_integrity": 67.8,
+        "thesis_integrity": 54.0,
         "des": 45.8
       },
       "modifiers": {
@@ -750,7 +750,7 @@
         8.025,
         18.7,
         5.115,
-        13.56,
+        10.8,
         9.16
       ],
       "sector": "Technology"
@@ -804,7 +804,7 @@
     },
     {
       "ticker": "AVGO",
-      "lthcs_score": 78.1,
+      "lthcs_score": 78.7,
       "band": "constructive",
       "drift_1d": 0.1,
       "drift_7d": 1.7,
@@ -816,7 +816,7 @@
         "adoption_momentum": 93.0,
         "institutional_confidence": 85.8,
         "financial_evolution": 84.8,
-        "thesis_integrity": 78.1,
+        "thesis_integrity": 80.8,
         "des": 49.0
       },
       "modifiers": {
@@ -844,7 +844,7 @@
         18.6,
         17.16,
         16.96,
-        15.62,
+        16.16,
         9.8
       ],
       "sector": "Technology"
@@ -1983,7 +1983,7 @@
     },
     {
       "ticker": "CRWD",
-      "lthcs_score": 64.8,
+      "lthcs_score": 64.7,
       "band": "monitor",
       "drift_1d": 3.3,
       "drift_7d": 3.4,
@@ -1997,7 +1997,7 @@
         "adoption_momentum": 65.0,
         "institutional_confidence": 90.0,
         "financial_evolution": 50.0,
-        "thesis_integrity": 73.4,
+        "thesis_integrity": 72.6,
         "des": 45.8
       },
       "modifiers": {
@@ -2025,7 +2025,7 @@
         13.0,
         18.0,
         10.0,
-        14.680000000000001,
+        14.52,
         9.16
       ],
       "sector": "Technology"
@@ -2314,7 +2314,7 @@
     },
     {
       "ticker": "DASH",
-      "lthcs_score": 41.1,
+      "lthcs_score": 41.9,
       "band": "review",
       "drift_1d": -2.0,
       "drift_7d": 0.5,
@@ -2326,7 +2326,7 @@
         "adoption_momentum": 37.0,
         "institutional_confidence": -1.9,
         "financial_evolution": 57.0,
-        "thesis_integrity": 74.8,
+        "thesis_integrity": 78.6,
         "des": 43.8
       },
       "modifiers": {
@@ -2354,7 +2354,7 @@
         9.25,
         -0.38,
         8.549999999999999,
-        14.96,
+        15.719999999999999,
         8.76
       ],
       "sector": "Consumer Discretionary"
@@ -2643,7 +2643,7 @@
     },
     {
       "ticker": "EA",
-      "lthcs_score": 40.1,
+      "lthcs_score": 43.6,
       "band": "review",
       "drift_1d": 0.6,
       "drift_7d": 1.3,
@@ -2655,7 +2655,7 @@
         "adoption_momentum": 34.5,
         "institutional_confidence": 37.5,
         "financial_evolution": 32.0,
-        "thesis_integrity": 49.0,
+        "thesis_integrity": 66.5,
         "des": 46.8
       },
       "modifiers": {
@@ -2683,7 +2683,7 @@
         8.625,
         7.5,
         4.8,
-        9.8,
+        13.3,
         9.36
       ],
       "sector": "Communication Services"
@@ -6472,7 +6472,7 @@
         "adoption_momentum": 19.8,
         "institutional_confidence": 16.2,
         "financial_evolution": 54.6,
-        "thesis_integrity": 59.0,
+        "thesis_integrity": 72.8,
         "des": 44.1
       },
       "modifiers": {
@@ -7339,7 +7339,7 @@
         "adoption_momentum": 5.0,
         "institutional_confidence": 29.8,
         "financial_evolution": 38.3,
-        "thesis_integrity": 50.3,
+        "thesis_integrity": 67.8,
         "des": 50.4
       },
       "modifiers": {
@@ -9634,7 +9634,7 @@
         "adoption_momentum": 37.9,
         "institutional_confidence": 60.2,
         "financial_evolution": 38.6,
-        "thesis_integrity": 57.3,
+        "thesis_integrity": 62.3,
         "des": 49.2
       },
       "modifiers": {
