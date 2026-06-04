@@ -258,7 +258,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>Snowflake Summit 2026 — Partner Scouting Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
@@ -508,6 +508,137 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .vsheet{padding:18px 16px}
     .nitem .nh{font-size:15px}
   }
+  /* =======================================================================
+     MOBILE-ONLY REDESIGN  (max-width:640px) — additive, must NOT affect desktop.
+     Native pinch-zoom + a real responsive layout replace the old text-zoom
+     "magnifier". Every rule here is scoped to phones; the >=641px render is
+     untouched. Built up in phases: P0 universal · P1 charts/floor-map/MQ · P2 polish.
+     ======================================================================= */
+  /* ---------- P0 · universal ---------- */
+  @media (max-width:640px){
+    /* Kill the in-page zoom control — native pinch-zoom replaces it. This is the
+       #1 reason every screen looked like a shrunk desktop. */
+    .zoomctl{display:none !important}
+    /* Safe-area insets — clear the iOS status bar (top) and the Safari toolbar
+       (bottom) now that viewport-fit=cover lets content run under them. */
+    header{padding-top:max(16px,env(safe-area-inset-top))}
+    .wrap,.mapwrap{padding-bottom:max(28px,env(safe-area-inset-bottom))}
+    /* Comfortable tap targets (>=44px) with breathing room. */
+    .dl,.infobtn{min-height:44px;display:inline-flex;align-items:center;gap:5px}
+    .navbtns{gap:8px}
+    .bchip{min-height:40px;display:inline-flex;align-items:center}
+    /* Never let a stray element force a horizontal scrollbar on the page. */
+    .wrap,.mapwrap{max-width:100%;overflow-x:clip}
+  }
+  /* Tools menu + bottom sheet are hidden entirely on desktop; revealed on phones. */
+  .toolsbtn,.toolsheet,.toolsheet-backdrop{display:none}
+  /* ---------- P0 · header collapse ---------- */
+  @media (max-width:640px){
+    h1{font-size:clamp(1.05rem,4.6vw,1.4rem);line-height:1.2}
+    .sub{font-size:11.5px;margin-top:3px}
+    header{padding-left:14px;padding-right:14px;padding-bottom:12px}
+    .brand{gap:10px}
+    /* Collapse the 6-action cluster → 2 chips (Magic Quadrant, Floor Map) + Tools ▾. */
+    .navbtns{width:100%;margin-left:0;gap:8px;justify-content:flex-start}
+    .navbtns>#scoreInfoBtn,
+    .navbtns>a[href="?view=news"],
+    .navbtns>a[download],
+    .navbtns>#pdfBtn{display:none}
+    .navbtns>a[href="?view=mq"],
+    .navbtns>a[href="?view=map"]{flex:1 1 auto;justify-content:center;font-size:12.5px;padding:10px 6px;white-space:nowrap}
+    .toolsbtn{display:inline-flex;align-items:center;gap:5px;min-height:44px;background:var(--panel2);
+      border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px 12px;font-size:12.5px;
+      font-family:inherit;cursor:pointer;white-space:nowrap}
+    .toolsbtn[aria-expanded=true]{border-color:var(--accent);color:#dff3ff}
+    /* The bottom sheet itself (slide-up). */
+    .toolsheet-backdrop.open{display:block;position:fixed;inset:0;background:rgba(6,12,24,.5);z-index:300}
+    .toolsheet.open{display:flex;flex-direction:column;position:fixed;left:0;right:0;bottom:0;z-index:310;
+      background:linear-gradient(180deg,#15233f,#0f1830);border-top:1px solid var(--accent2);
+      border-radius:18px 18px 0 0;padding:8px 14px max(18px,env(safe-area-inset-bottom));
+      box-shadow:0 -16px 40px rgba(0,0,0,.5)}
+    .toolsheet-grip{display:block;width:42px;height:4px;border-radius:3px;background:var(--border);margin:4px auto 8px}
+    .toolsheet-item{display:flex;align-items:center;gap:11px;min-height:48px;padding:12px 8px;
+      border:none;border-bottom:1px solid var(--border);background:none;color:var(--text);
+      font:inherit;font-size:15px;text-decoration:none;text-align:left;width:100%;cursor:pointer}
+    .toolsheet-item:last-child{border-bottom:none}
+    .toolsheet-item:active{background:var(--panel2)}
+  }
+  /* ---------- P1 · charts ---------- */
+  @media (max-width:640px){
+    /* Let the taller mobile aspect-ratios render fully — the global 300px canvas
+       cap (and valChart's inline 380px) would otherwise clip the plot. */
+    #topChart,#nicheChart,#profChart,#valChart{max-height:none!important}
+  }
+  /* ---------- P1 · floor map ---------- */
+  .planfit,.planhint{display:none}
+  @media (max-width:640px){
+    /* Zone columns → full-width vertical sections; no horizontal scroll or slider. */
+    #mapColsWrap{overflow-x:hidden;padding:12px}
+    #mapColsWrap .maprow{flex-direction:column;gap:22px;min-width:0}
+    #mapColsWrap .zonecol{width:100%}
+    #mapColsNav{display:none!important}
+    .zonehd{text-align:left;font-size:13px}
+    .booth{padding:10px 12px}
+    .booth .bnm{font-size:14px}
+    .booth .bn{font-size:11px}
+    .mapsearch{width:100%}
+    .maptoggle{display:flex;width:100%;margin-bottom:12px}
+    .maptoggle button{flex:1;min-height:44px;font-size:13px}
+    /* Floor plan → a pinch-zoom / pannable canvas with a Fit button. */
+    #mapPlanWrap{position:relative;overflow:hidden;touch-action:none;border:1px solid var(--border);
+      border-radius:14px;background:linear-gradient(180deg,#0e1730,#0c1426)}
+    #mapPlanWrap .planbox{height:460px;border:none;border-radius:0;background:none}
+    #mapPlan{transform-origin:0 0}
+    .planfit{display:inline-flex;align-items:center;gap:5px;position:absolute;top:10px;right:10px;z-index:6;
+      background:rgba(15,24,48,.94);border:1px solid var(--accent);color:#dff3ff;border-radius:10px;
+      padding:9px 12px;font:inherit;font-size:13px;font-weight:600;min-height:40px;cursor:pointer}
+    .planhint{display:block;position:absolute;left:10px;bottom:10px;z-index:6;pointer-events:none;
+      background:rgba(11,16,32,.78);color:var(--muted);border-radius:8px;padding:5px 9px;font-size:11px}
+  }
+  /* ---------- P1 · magic quadrant ---------- */
+  @media (max-width:640px){
+    /* Square plot fitting screen width (was a fixed 560px-tall portrait box). */
+    #mqBox{height:auto!important;aspect-ratio:1}
+    #mqChart{max-height:none!important}
+    /* Full-width "drill into niche" control + comfortable chips. */
+    #mqSegSel{flex:1 1 100%;width:100%;min-height:40px;font-size:13px}
+    #mqQuadChips{gap:8px}
+    #mqBack{min-height:40px}
+  }
+  /* ---------- P2 · table -> cards, bottom-sheet detail, sticky header ---------- */
+  .vcards,.vfilters-m{display:none}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+  @media (max-width:640px){
+    /* All Partner Vendors: the 13-column table -> full-width stacked cards, with
+       the column filters surfaced as a full-width bar above them. */
+    .scroll{display:none}
+    .sorthint{display:none}
+    .vfilters-m{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+    .vfilters-m select{width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);
+      border-radius:9px;padding:10px;font-size:13px;min-height:44px}
+    .vcards{display:flex;flex-direction:column;gap:10px}
+    .vcard{background:linear-gradient(160deg,#15233f,#101a30);border:1px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer}
+    .vcard:active{border-color:var(--accent)}
+    .vcard.gem .vcard-name::after{content:" 💎";font-size:11px}
+    .vcard-top{display:flex;align-items:center;gap:8px}
+    .vcard-rank{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;min-width:34px}
+    .vcard-name{font-weight:700;font-size:15px;flex:1;min-width:0}
+    .vcard-meta{font-size:12px;color:var(--muted);margin-top:7px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .vcard-score{margin-top:9px;font-size:13px;color:var(--muted)}
+    .vcard-score b{color:var(--text);font-size:17px}
+    /* Vendor detail -> slide-up bottom sheet (was a centered modal). */
+    .vmodal{align-items:flex-end;padding:0}
+    .vsheet{max-width:none;width:100%;border-radius:18px 18px 0 0;
+      padding:16px 18px max(20px,env(safe-area-inset-bottom));max-height:92dvh;overflow:auto;animation:sheetUp .22s ease}
+    .vsheet::before{content:"";display:block;width:42px;height:4px;border-radius:3px;background:var(--border);margin:0 auto 12px}
+    .vsheet .x{top:14px;right:16px;font-size:26px}
+    /* Sticky, compacting header (chips / Back stay reachable; safe-area aware). */
+    header{position:sticky;top:0;z-index:50}
+    body.compact header .sub{display:none}
+    body.compact header{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:8px}
+    body.compact h1{font-size:1.02rem}
+    body.compact .logo{width:28px;height:28px}
+  }
 </style>
 </head>
 <body>
@@ -524,11 +655,22 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
       <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
-      <button class="dl no-print" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
+      <button class="dl no-print pdfBtn" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
       <span class="zoomctl" title="Zoom"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
+      <button type="button" class="toolsbtn no-print" id="toolsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="toolsSheet">⚙ Tools ▾</button>
     </div>
   </div>
 </header>
+<!-- Mobile-only "Tools ▾" bottom sheet (hidden on desktop) — holds the actions
+     pulled out of the header so the phone landing is just 2 chips + Tools. -->
+<div class="toolsheet-backdrop no-print" id="toolsBackdrop"></div>
+<div class="toolsheet no-print" id="toolsSheet" role="menu" aria-label="More tools" aria-hidden="true">
+  <div class="toolsheet-grip" aria-hidden="true"></div>
+  <button type="button" class="toolsheet-item scoreInfoTrigger" role="menuitem" aria-haspopup="dialog" aria-controls="scorePop">ⓘ <span>Scoring — how the scores work</span></button>
+  <a class="toolsheet-item" role="menuitem" href="?view=news" target="_blank" rel="noopener">📰 <span>Summit News</span></a>
+  <a class="toolsheet-item" role="menuitem" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download source spreadsheet</span></a>
+  <button type="button" class="toolsheet-item pdfBtn" role="menuitem">⬇ <span>Download PDF</span></button>
+</div>
 <div class="scorepop no-print" id="scorePop" role="dialog" aria-modal="false" aria-label="How the scores are calculated" hidden>
   <button class="x" type="button" id="scorePopX" aria-label="Close">&times;</button>
   <h3>How the scores work</h3>
@@ -557,14 +699,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="cards" id="mustsee"></div>
 
   <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top 15 by Overall Score</h4><canvas id="topChart"></canvas></div>
+    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart"></canvas></div>
     <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart"></canvas></div>
   </div>
   <div class="grid">
     <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart"></canvas></div>
     <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart"></canvas></div>
   </div>
-  <div class="panel" style="margin-bottom:16px"><h4>💰 Top 15 by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px"></canvas></div>
+  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px"></canvas></div>
 
   <h3 class="sec">💎 Hidden Gems <span class="hint">— Overall ≥ 7 but not Tier A</span></h3>
   <div class="cards" id="gems"></div>
@@ -572,8 +714,9 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <h3 class="sec">🤝 Best Bryan Recommend <span class="hint">— top career / networking fit</span></h3>
   <div class="cards" id="bestfit"></div>
 
-  <h3 class="sec">All Partner Vendors <span class="hint">— click a column to sort · 💎 = hidden gem</span></h3>
+  <h3 class="sec">All Partner Vendors <span class="hint">— <span class="sorthint">click a column to sort · </span>💎 = hidden gem</span></h3>
   <div class="panel">
+    <div class="vfilters-m no-print" id="vFiltersM"></div>
     <div class="scroll">
     <table id="vtable">
       <thead>
@@ -596,6 +739,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <tbody></tbody>
     </table>
     </div>
+    <div class="vcards" id="vcards"></div>
   </div>
 
   <div class="note" id="note"></div>
@@ -657,7 +801,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       </div>
       <div id="mqLegend" class="sub" style="margin-bottom:8px"></div>
       <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
-      <div style="height:560px;position:relative">
+      <div id="mqBox" style="height:560px;position:relative">
         <canvas id="mqChart" style="max-height:560px"></canvas>
       </div>
       <div id="mqCaveat" class="sub" style="margin-top:12px;line-height:1.5;color:#cfe0ff"></div>
@@ -689,7 +833,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <button type="button" id="tabCols" aria-pressed="false">▦ Zone columns</button>
     </div>
     <div class="maplegend" id="mapLegend"></div>
-    <div id="mapPlanWrap"><div class="planbox" id="mapPlan" role="region" aria-label="Basecamp floor plan"></div></div>
+    <div id="mapPlanWrap"><div class="planbox" id="mapPlan" role="region" aria-label="Basecamp floor plan"></div><button type="button" class="planfit no-print" id="planFit" aria-label="Fit floor plan to screen">⤢ Fit</button><span class="planhint" aria-hidden="true">pinch to zoom · drag to pan</span></div>
     <div id="mapColsNav" style="display:none">
       <div class="mapcols-hint">◀ slide to pan across all zones ▶</div>
       <input type="range" id="mapColsSlider" class="mapcols-slider" min="0" max="1000" value="0" aria-label="Scroll the floor map left and right">
@@ -727,16 +871,39 @@ if(_view==='news'){
 }
 
 // A-/A+ text zoom — scales the page via CSS zoom; persists across visits + views.
+// MOBILE (<=640px): the control is hidden and native pinch-zoom replaces it, so we
+// never apply a persisted shrink (the old "80%" that made phones look like tiny
+// desktop). Desktop path is unchanged.
 (function(){
+  var isMobile = window.matchMedia && window.matchMedia('(max-width:640px)').matches;
   var z=parseFloat(localStorage.getItem('summitZoom')); if(!z||isNaN(z)) z=1;
+  if(isMobile) z=1;
   function apply(){document.documentElement.style.zoom=z;document.querySelectorAll('.zlevel').forEach(function(e){e.textContent=Math.round(z*100)+'%';});}
   function step(d){z=Math.min(1.6,Math.max(0.8,Math.round((z+d)*100)/100));localStorage.setItem('summitZoom',String(z));apply();}
   document.querySelectorAll('.zbtn').forEach(function(b){b.addEventListener('click',function(){step(b.getAttribute('data-zoom')==='in'?0.1:-0.1);});});
-  apply();
+  if(!isMobile) apply();
 })();
 
-document.getElementById('subhead').textContent =
-  `${DATA.vendors.length} partners · ${DATA.meta.event||''} · scoring by ${DATA.meta.owner||'owner'} · source: ${DATA.source}`;
+// Mobile "Tools ▾" bottom sheet — opens the actions pulled out of the phone header
+// (Scoring / Summit News / spreadsheet / PDF). No-op on desktop (the trigger is hidden).
+(function(){
+  var btn=document.getElementById('toolsBtn'), sheet=document.getElementById('toolsSheet'), back=document.getElementById('toolsBackdrop');
+  if(!btn||!sheet) return;
+  function open(){sheet.classList.add('open');if(back)back.classList.add('open');btn.setAttribute('aria-expanded','true');sheet.setAttribute('aria-hidden','false');}
+  function close(){sheet.classList.remove('open');if(back)back.classList.remove('open');btn.setAttribute('aria-expanded','false');sheet.setAttribute('aria-hidden','true');}
+  btn.addEventListener('click',function(e){e.stopPropagation();sheet.classList.contains('open')?close():open();});
+  if(back) back.addEventListener('click',close);
+  sheet.querySelectorAll('.toolsheet-item').forEach(function(it){it.addEventListener('click',function(){setTimeout(close,0);});});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sheet.classList.contains('open'))close();});
+})();
+
+(function(){
+  var sh=document.getElementById('subhead'); if(!sh) return;
+  var base=`${DATA.vendors.length} partners · ${DATA.meta.event||''} · scoring by ${DATA.meta.owner||'owner'}`;
+  // Drop the "· source: …" tail on phones to keep the header subtitle to one tidy line.
+  var isMobile = window.matchMedia && window.matchMedia('(max-width:640px)').matches;
+  sh.textContent = isMobile ? base : (base + ` · source: ${DATA.source}`);
+})();
 
 document.getElementById('kpis').innerHTML = DATA.kpis.map(k=>
   `<div class="kpi"><div class="v">${k.value}</div><div class="l">${k.label}</div><div class="s">${k.sub}</div></div>`).join('');
@@ -758,6 +925,12 @@ document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
 
 const C={grid:'#243352',tick:'#8da2c8'};
 if(window.Chart){Chart.defaults.font.family='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';Chart.defaults.color=C.tick;}
+// Phones: fewer bars + a taller plot + bigger ticks so the bar labels stop
+// colliding. Desktop keeps the default 15 bars / aspectRatio 2 (unchanged).
+var IS_MOBILE=!!(window.matchMedia&&window.matchMedia('(max-width:640px)').matches);
+var BARN=IS_MOBILE?10:15;
+// Keep the "Top N" chart headings honest when we trim to 10 bars on phones.
+if(IS_MOBILE) document.querySelectorAll('.barNum').forEach(function(e){e.textContent=BARN;});
 const tierColor=t=>({A:'#34d399',B:'#fbbf24',C:'#60a5fa',D:'#3b82f6'})[t]||'#60a5fa';
 // Inline plugin: print the value on each bar / doughnut slice (numbers on charts).
 const valueLabels={id:'valueLabels',afterDatasetsDraw(chart){
@@ -774,40 +947,46 @@ const valueLabels={id:'valueLabels',afterDatasetsDraw(chart){
   ctx.restore();
 }};
 
+var topData=DATA.top15.slice(0,BARN);
 new Chart(document.getElementById('topChart'),{type:'bar',plugins:[valueLabels],
-  data:{labels:DATA.top15.map(v=>v.name),
-    datasets:[{data:DATA.top15.map(v=>v.overall_score),backgroundColor:'#29b5e8',borderRadius:4}]},
-  options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:c=>'Tier '+DATA.top15[c.dataIndex].tier}}},
-    scales:{x:{min:0,max:10,ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:11}},grid:{display:false}}}}});
+  data:{labels:topData.map(v=>v.name),
+    datasets:[{data:topData.map(v=>v.overall_score),backgroundColor:'#29b5e8',borderRadius:4}]},
+  options:{indexAxis:'y',maintainAspectRatio:true,aspectRatio:IS_MOBILE?0.92:2,plugins:{legend:{display:false},tooltip:{callbacks:{afterLabel:c=>'Tier '+topData[c.dataIndex].tier}}},
+    scales:{x:{min:0,max:10,ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:IS_MOBILE?12:11}},grid:{display:false}}}}});
 
 new Chart(document.getElementById('tierChart'),{type:'doughnut',plugins:[valueLabels],
   data:{labels:Object.keys(DATA.by_tier).map(t=>'Tier '+t),
     datasets:[{data:Object.values(DATA.by_tier),backgroundColor:Object.keys(DATA.by_tier).map(tierColor)}]},
   options:{plugins:{legend:{position:'right',labels:{color:C.tick}}}}});
 
-const niches=Object.entries(DATA.by_niche);
+var niches=Object.entries(DATA.by_niche);
+if(IS_MOBILE) niches=niches.slice().sort((a,b)=>b[1]-a[1]).slice(0,BARN);
 new Chart(document.getElementById('nicheChart'),{type:'bar',plugins:[valueLabels],
   data:{labels:niches.map(c=>c[0]),datasets:[{data:niches.map(c=>c[1]),backgroundColor:'#29b5e8'}]},
-  options:{indexAxis:'y',plugins:{legend:{display:false}},onClick:(e,els)=>{if(els.length){nicheSel.value=niches[els[0].index][0];draw();document.getElementById('vtable').scrollIntoView({behavior:'smooth'});}},
-    scales:{x:{ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:10.5}},grid:{display:false}}}}});
+  options:{indexAxis:'y',maintainAspectRatio:true,aspectRatio:IS_MOBILE?0.92:2,plugins:{legend:{display:false}},onClick:(e,els)=>{if(els.length){nicheSel.value=niches[els[0].index][0];draw();document.getElementById('vtable').scrollIntoView({behavior:'smooth'});}},
+    scales:{x:{ticks:{color:C.tick},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:IS_MOBILE?11.5:10.5}},grid:{display:false}}}}});
 
+var profOpts={plugins:{legend:{labels:{color:C.tick}}},
+    scales:{r:{min:0,max:10,angleLines:{color:C.grid},grid:{color:C.grid},pointLabels:{color:C.tick,font:{size:IS_MOBILE?9.5:11}},ticks:{display:false}}}};
+// Phones: make the radar a square that fits the column, with padding so the
+// point labels (Bryan/Snow/AI/Retail/IPO) don't clip at the edges.
+if(IS_MOBILE){profOpts.maintainAspectRatio=true;profOpts.aspectRatio=1;profOpts.layout={padding:10};}
 new Chart(document.getElementById('profChart'),{type:'radar',
   data:{labels:DATA.score_labels,datasets:[
     {label:'Tier A',data:DATA.profile_a,borderColor:'#34d399',backgroundColor:'rgba(52,211,153,.15)',pointBackgroundColor:'#34d399'},
     {label:'All partners',data:DATA.profile_all,borderColor:'#29b5e8',backgroundColor:'rgba(41,181,232,.12)',pointBackgroundColor:'#29b5e8'}]},
-  options:{plugins:{legend:{labels:{color:C.tick}}},
-    scales:{r:{min:0,max:10,angleLines:{color:C.grid},grid:{color:C.grid},pointLabels:{color:C.tick,font:{size:11}},ticks:{display:false}}}}});
+  options:profOpts});
 
 // Top valuations — parse the $ figures from valuation/market_cap and chart the top 15.
 (function(){
   var cv=document.getElementById('valChart'); if(!cv) return;
   function pv(s){if(!s)return null;var m=String(s).match(/\$\s*([\d.]+)\s*([BMT])/i);if(!m)return null;var n=parseFloat(m[1]);var u=m[2].toUpperCase();return u==='T'?n*1000000:u==='B'?n*1000:n;}
   function fb(n){return n>=1000000?('$'+(n/1000000).toFixed(n%1000000?2:0)+'T'):n>=1000?('$'+(n/1000).toFixed(n%1000?1:0)+'B'):('$'+Math.round(n)+'M');}
-  var rows=(DATA.vendors||[]).map(function(v){return {name:v.name,tier:v.tier,num:pv(v.market_cap),raw:v.market_cap};}).filter(function(r){return r.num;}).sort(function(a,b){return b.num-a.num;}).slice(0,15);
+  var rows=(DATA.vendors||[]).map(function(v){return {name:v.name,tier:v.tier,num:pv(v.market_cap),raw:v.market_cap};}).filter(function(r){return r.num;}).sort(function(a,b){return b.num-a.num;}).slice(0,BARN);
   if(!rows.length) return;
   new Chart(cv,{type:'bar',
     data:{labels:rows.map(function(r){return r.name;}),datasets:[{data:rows.map(function(r){return r.num;}),backgroundColor:rows.map(function(r){return tierColor(r.tier);})}]},
-    options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fb(c.raw)+(rows[c.dataIndex].raw?(' · '+rows[c.dataIndex].raw):'');}}}},
+    options:{indexAxis:'y',maintainAspectRatio:true,aspectRatio:IS_MOBILE?0.95:2,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return fb(c.raw)+(rows[c.dataIndex].raw?(' · '+rows[c.dataIndex].raw):'');}}}},
       scales:{x:{ticks:{color:C.tick,callback:function(v){return fb(v);}},grid:{color:C.grid}},y:{ticks:{color:C.tick,font:{size:11}},grid:{display:false}}}},
     plugins:[{id:'vlab',afterDatasetsDraw:function(ch){var ctx=ch.ctx,a=ch.chartArea;ctx.save();ctx.font='700 11px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='middle';ch.getDatasetMeta(0).data.forEach(function(el,i){var t=fb(rows[i].num),w=ctx.measureText(t).width;if(el.x+6+w<=a.right){ctx.fillStyle='#e8eeff';ctx.textAlign='left';ctx.fillText(t,el.x+6,el.y);}else{ctx.fillStyle='#06121f';ctx.textAlign='right';ctx.fillText(t,el.x-6,el.y);}});ctx.restore();}}]
   });
@@ -820,6 +999,10 @@ Object.keys(DATA.by_niche).forEach(nz=>nicheSel.add(new Option(`${nz} (${DATA.by
 [...new Set(DATA.vendors.map(v=>v.category))].sort().forEach(c=>catSel.add(new Option(c,c)));
 [...new Set(DATA.vendors.map(v=>v.company_type).filter(Boolean))].sort().forEach(t=>typeSel.add(new Option(t,t)));
 ['A','B','C'].forEach(t=>tierSel.add(new Option('Tier '+t,t)));
+// Phones: surface the column filters as a full-width bar above the cards (the
+// table that normally hosts them is hidden). Moving the elements keeps their
+// change-listeners intact; desktop leaves them in the table columns.
+if(IS_MOBILE){var fbar=document.getElementById('vFiltersM');if(fbar){[nicheSel,catSel,typeSel,tierSel].forEach(function(s){fbar.appendChild(s);});}}
 let sortK='rank',sortAsc=true;
 function draw(){
   const q=document.getElementById('search').value.toLowerCase(),nz=nicheSel.value,cf=catSel.value,tf=tierSel.value,yf=typeSel.value;
@@ -829,6 +1012,20 @@ function draw(){
   if(hit) hit.textContent = (q||nz||cf||tf||yf) ? `${r.length} of ${DATA.vendors.length} match` : `${DATA.vendors.length} vendors`;
   r.sort((a,b)=>{let x=a[sortK],y=b[sortK];if(typeof x==='string'){x=x.toLowerCase();y=(y||'').toLowerCase();}
     if(x===null||x===undefined)x=-1;if(y===null||y===undefined)y=-1;return (x>y?1:x<y?-1:0)*(sortAsc?1:-1);});
+  if(IS_MOBILE){
+    // Phones: a 13-column table can't fit — render stacked cards (Partner / Booth /
+    // Niche / score) instead, reusing the card aesthetic. Tap a card for full detail.
+    var vc=document.getElementById('vcards');
+    if(vc) vc.innerHTML=r.map(function(v){
+      var w=Math.round(((v.overall_score||0)/10)*54)+6;
+      return '<div class="vcard'+(v.hidden_gem?' gem':'')+'" data-v="'+esc(v.name)+'" role="button" tabindex="0" aria-label="View company detail for '+esc(v.name)+'">'+
+        '<div class="vcard-top"><span class="vcard-rank">#'+v.rank+'</span><span class="vcard-name">'+esc(v.name)+'</span><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></div>'+
+        '<div class="vcard-meta"><span class="tag tNi">'+esc(fmt(v.niche))+'</span> · booth '+esc(fmt(v.booth))+' · '+esc(fmt(v.category))+'</div>'+
+        '<div class="vcard-score"><span class="ovrbar" style="width:'+w+'px;background:'+tierColor(v.tier)+'"></span><b>'+fmt(v.overall_score)+'</b> <span>/ 10'+(v.company_type?(' · '+esc(v.company_type)):'')+'</span></div>'+
+        '</div>';
+    }).join('');
+    return;
+  }
   tbody.innerHTML=r.map(v=>{
     const w=Math.round(((v.overall_score||0)/10)*54)+6;
     return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" tabindex="0" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer">
@@ -978,19 +1175,37 @@ draw();
       ctx.strokeStyle='#2c3e60';ctx.lineWidth=1;ctx.setLineDash([5,4]);
       ctx.beginPath();ctx.moveTo(cx,a.top);ctx.lineTo(cx,a.bottom);ctx.moveTo(a.left,cy);ctx.lineTo(a.right,cy);ctx.stroke();
       ctx.setLineDash([]);
-      ctx.font='800 12px -apple-system,BlinkMacSystemFont,sans-serif';
-      ctx.fillStyle='rgba(52,211,153,.85)'; ctx.textAlign='right';ctx.textBaseline='top';   ctx.fillText('LEADERS',a.right-10,a.top+8);
-      ctx.fillStyle='rgba(41,181,232,.85)'; ctx.textAlign='left'; ctx.textBaseline='top';    ctx.fillText('CHALLENGERS',a.left+10,a.top+8);
-      ctx.fillStyle='rgba(167,139,250,.9)'; ctx.textAlign='right';ctx.textBaseline='bottom'; ctx.fillText('VISIONARIES',a.right-10,a.bottom-8);
-      ctx.fillStyle='rgba(148,163,184,.95)';ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillText('NICHE PLAYERS',a.left+10,a.bottom-8);
+      // Phones: pin the quadrant corner labels tighter, smaller and fainter so
+      // they recede behind the dots. Desktop keeps 12px / full opacity / 10-8 inset.
+      var cf=IS_MOBILE?9:12, ca=IS_MOBILE?0.45:1, ci=IS_MOBILE?4:10, cj=IS_MOBILE?4:8;
+      ctx.font='800 '+cf+'px -apple-system,BlinkMacSystemFont,sans-serif';
+      ctx.fillStyle='rgba(52,211,153,'+(0.85*ca)+')'; ctx.textAlign='right';ctx.textBaseline='top';   ctx.fillText('LEADERS',a.right-ci,a.top+cj);
+      ctx.fillStyle='rgba(41,181,232,'+(0.85*ca)+')'; ctx.textAlign='left'; ctx.textBaseline='top';    ctx.fillText('CHALLENGERS',a.left+ci,a.top+cj);
+      ctx.fillStyle='rgba(167,139,250,'+(0.9*ca)+')'; ctx.textAlign='right';ctx.textBaseline='bottom'; ctx.fillText('VISIONARIES',a.right-ci,a.bottom-cj);
+      ctx.fillStyle='rgba(148,163,184,'+(0.95*ca)+')';ctx.textAlign='left'; ctx.textBaseline='bottom'; ctx.fillText('NICHE PLAYERS',a.left+ci,a.bottom-cj);
       ctx.restore();
     },
     afterDatasetsDraw(ch){
-      const ctx=ch.ctx, x=ch.scales.x, y=ch.scales.y;
-      ctx.save();ctx.font='600 10px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle='rgba(232,238,255,.92)';ctx.textAlign='left';ctx.textBaseline='middle';
+      const ctx=ch.ctx, x=ch.scales.x, y=ch.scales.y, a=ch.chartArea;
+      ctx.save();ctx.font='600 '+(IS_MOBILE?9:10)+'px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle='rgba(232,238,255,.92)';ctx.textBaseline='middle';
       let lab=vendorsIn(active).filter(v=>v.tier==='A' && visQ.has(quadOf(v,active)));
       if(!active.all && lab.length===0) lab=vendorsIn(active).filter(v=>visQ.has(quadOf(v,active))).sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).slice(0,3);
-      lab.forEach(v=>ctx.fillText(' '+v.name, x.getPixelForValue(v.mq_x)+5, y.getPixelForValue(v.mq_y)));
+      if(IS_MOBILE){
+        // Collision-avoid: draw highest-overall first and skip any label that would
+        // overlap one already placed (right-edge labels flip left so they can't clip).
+        // Unlabeled dots stay tappable for their detail — keeps the Leaders cluster legible.
+        var drawn=[], lh=11;
+        lab.slice().sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).forEach(function(v){
+          var px=x.getPixelForValue(v.mq_x),py=y.getPixelForValue(v.mq_y),w=ctx.measureText(v.name).width;
+          var left=!!(a&&px+6+w>a.right), rx=left?px-6-w:px+6, ry=py-lh/2, k;
+          for(k=0;k<drawn.length;k++){var d=drawn[k];if(rx<d.x+d.w+3&&rx+w+3>d.x&&ry<d.y+d.h+2&&ry+lh+2>d.y)return;}
+          drawn.push({x:rx,y:ry,w:w,h:lh});
+          ctx.textAlign=left?'right':'left';ctx.fillText(left?(v.name+' '):(' '+v.name),left?px-6:px+6,py);
+        });
+      } else {
+        ctx.textAlign='left';
+        lab.forEach(v=>ctx.fillText(' '+v.name, x.getPixelForValue(v.mq_x)+5, y.getPixelForValue(v.mq_y)));
+      }
       ctx.restore();
     }
   };
@@ -1004,6 +1219,10 @@ draw();
   var mqLo=Math.max(0,Math.floor(Math.min.apply(null,mqVals.length?mqVals:[3])));
   const chart=new Chart(document.getElementById('mqChart'),{type:'scatter',data:{datasets:datasetsFor(ALL)},
     options:{maintainAspectRatio:false,animation:false,
+      // Phones: tap a dot to open its full detail sheet (labels are sparse on
+      // mobile, so this is how you identify an unlabeled dot). Desktop unchanged.
+      onClick:IS_MOBILE?function(e,els,ch){if(els&&els.length){var d=ch.data.datasets[els[0].datasetIndex].data[els[0].index];if(d&&d.name&&window.summitOpenVendor)window.summitOpenVendor(d.name);}}:undefined,
+      layout:{padding:{right:IS_MOBILE?12:0}},
       plugins:{legend:{labels:{color:C.tick,usePointStyle:true}},
         tooltip:{displayColors:false,padding:16,titleFont:{size:18,weight:'700'},bodyFont:{size:16},bodySpacing:7,callbacks:{
           title:c=>c[0].raw.name,
@@ -1137,31 +1356,66 @@ draw();
   var tabPlan=document.getElementById('tabPlan'), tabCols=document.getElementById('tabCols'),
       planWrap=document.getElementById('mapPlanWrap'), colsWrap=document.getElementById('mapColsWrap'),
       colsNav=document.getElementById('mapColsNav'), slider=document.getElementById('mapColsSlider');
+  var isMob=!!(window.matchMedia&&window.matchMedia('(max-width:640px)').matches);
   function syncSlider(){if(!slider||!colsWrap)return;var max=colsWrap.scrollWidth-colsWrap.clientWidth;slider.value=max>0?Math.round(colsWrap.scrollLeft/max*1000):0;}
   if(slider&&colsWrap){
     slider.addEventListener('input',function(){var max=colsWrap.scrollWidth-colsWrap.clientWidth;colsWrap.scrollLeft=max*(slider.value/1000);});
     colsWrap.addEventListener('scroll',syncSlider,{passive:true});
     colsWrap.addEventListener('wheel',function(e){if(Math.abs(e.deltaY)>Math.abs(e.deltaX)){colsWrap.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
   }
+  // MOBILE: the spatial floor plan becomes a pinch-zoom + pannable canvas (a CSS
+  // transform on #mapPlan, clipped by #mapPlanWrap) with a Fit button. The booths
+  // are tiny when the whole floor is fit to a phone, so zoom-in is the point.
+  // Desktop keeps the original static plan untouched.
+  var planReset=function(){};
+  if(isMob && plan && planWrap){
+    var pz={s:1,tx:0,ty:0}, pts=new Map(), last=null, pinch=null, moved=false;
+    function applyT(){plan.style.transform='translate('+pz.tx+'px,'+pz.ty+'px) scale('+pz.s+')';}
+    function rel(e){var r=planWrap.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
+    function zoomTo(ns,cx,cy){ns=Math.min(6,Math.max(1,ns));var cX=(cx-pz.tx)/pz.s,cY=(cy-pz.ty)/pz.s;pz.s=ns;pz.tx=cx-cX*ns;pz.ty=cy-cY*ns;applyT();}
+    planReset=function(){pz.s=1;pz.tx=0;pz.ty=0;applyT();};
+    planWrap.addEventListener('pointerdown',function(e){pts.set(e.pointerId,rel(e));try{planWrap.setPointerCapture(e.pointerId);}catch(_){}moved=false;
+      if(pts.size===1){last=rel(e);} else if(pts.size===2){var a=[...pts.values()];pinch={d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y),s:pz.s};}});
+    planWrap.addEventListener('pointermove',function(e){if(!pts.has(e.pointerId))return;var p=rel(e);pts.set(e.pointerId,p);
+      if(pts.size>=2&&pinch){var a=[...pts.values()];var d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);if(pinch.d>0){zoomTo(pinch.s*d/pinch.d,(a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2);moved=true;}}
+      else if(pts.size===1&&last&&pz.s>1){pz.tx+=p.x-last.x;pz.ty+=p.y-last.y;last=p;moved=true;applyT();}
+      else if(pts.size===1){last=p;}});
+    function up(e){pts.delete(e.pointerId);if(pts.size<2)pinch=null;last=pts.size?[...pts.values()][0]:null;}
+    planWrap.addEventListener('pointerup',up);planWrap.addEventListener('pointercancel',up);
+    // A drag / pinch must not also fire the booth-detail click.
+    plan.addEventListener('click',function(e){if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
+    var pf=document.getElementById('planFit'); if(pf) pf.addEventListener('click',planReset);
+  }
   function show(p){
     if(planWrap) planWrap.style.display=p?'block':'none';
     if(colsWrap) colsWrap.style.display=p?'none':'block';
-    if(colsNav) colsNav.style.display=p?'none':'block';
+    if(colsNav) colsNav.style.display=(p||isMob)?'none':'block';
     if(tabPlan){tabPlan.classList.toggle('on',p);tabPlan.setAttribute('aria-pressed',String(p));}
     if(tabCols){tabCols.classList.toggle('on',!p);tabCols.setAttribute('aria-pressed',String(!p));}
-    if(!p) setTimeout(syncSlider,30);
+    if(p&&isMob) planReset();
+    if(!p&&!isMob) setTimeout(syncSlider,30);
   }
   if(tabPlan) tabPlan.addEventListener('click',function(){show(true);});
   if(tabCols) tabCols.addEventListener('click',function(){show(false);});
-  show(!!(plan && REG.length));
+  // Mobile defaults to the readable Zone-columns list; desktop keeps the spatial plan.
+  show(isMob ? false : !!(plan && REG.length));
 })();
 
 // Download / print to PDF — the @media print stylesheet restyles the page; the
 // browser print dialog saves the whole dashboard (all sections + current MQ view).
-(function(){var b=document.getElementById('pdfBtn');if(b)b.addEventListener('click',function(){window.print();});})();
+(function(){document.querySelectorAll('.pdfBtn').forEach(function(b){b.addEventListener('click',function(){window.print();});});})();
 (function(){var t=document.getElementById('toTop');if(!t)return;t.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
   var onScroll=function(){t.classList.toggle('show',(window.scrollY||document.documentElement.scrollTop)>320);};
   window.addEventListener('scroll',onScroll,{passive:true});onScroll();})();
+
+// Phones: the sticky header compacts (subtitle hides, bar slims) once you scroll,
+// so it stays out of the way while keeping the chips / Back link reachable.
+(function(){
+  if(!(window.matchMedia&&window.matchMedia('(max-width:640px)').matches))return;
+  var ticking=false;
+  function on(){document.body.classList.toggle('compact',(window.scrollY||document.documentElement.scrollTop)>80);ticking=false;}
+  window.addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(on);}},{passive:true});on();
+})();
 
 // Vendor detail — click any vendor card or table row for full company info.
 (function(){
@@ -1187,6 +1441,7 @@ draw();
     lastFocus=document.activeElement; m.classList.add('on'); document.body.style.overflow='hidden'; var xb=m.querySelector('.x'); (xb||sheet).focus();
   }
   function close(){m.classList.remove('on'); document.body.style.overflow=''; if(lastFocus&&lastFocus.focus){try{lastFocus.focus();}catch(_){}} lastFocus=null;}
+  window.summitOpenVendor=open; // let the Magic-Quadrant dots (and other views) open the detail sheet
   m.addEventListener('click',function(e){if(e.target===m||e.target.classList.contains('x'))close();});
   document.addEventListener('keydown',function(e){
     if(!m.classList.contains('on'))return;
