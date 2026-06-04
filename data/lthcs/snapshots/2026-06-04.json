@@ -240,8 +240,8 @@
     },
     {
       "ticker": "ADBE",
-      "lthcs_score": 49.8,
-      "band": "review",
+      "lthcs_score": 50.1,
+      "band": "weakening",
       "drift_1d": -1.8,
       "drift_7d": 1.5,
       "drift_30d": 1.2,
@@ -252,7 +252,7 @@
         "adoption_momentum": 51.8,
         "institutional_confidence": 15.4,
         "financial_evolution": 72.2,
-        "thesis_integrity": 63.9,
+        "thesis_integrity": 65.4,
         "des": 45.8
       },
       "modifiers": {
@@ -280,7 +280,7 @@
         10.36,
         3.08,
         14.440000000000001,
-        12.780000000000001,
+        13.080000000000002,
         9.16
       ],
       "sector": "Technology"
@@ -428,7 +428,7 @@
     },
     {
       "ticker": "AEP",
-      "lthcs_score": 54.7,
+      "lthcs_score": 55.0,
       "band": "weakening",
       "drift_1d": 0.9,
       "drift_7d": 0.5,
@@ -440,7 +440,7 @@
         "adoption_momentum": 44.3,
         "institutional_confidence": 64.4,
         "financial_evolution": 65.0,
-        "thesis_integrity": 66.8,
+        "thesis_integrity": 68.2,
         "des": 38.2
       },
       "modifiers": {
@@ -468,7 +468,7 @@
         11.075,
         12.880000000000003,
         9.75,
-        13.36,
+        13.64,
         7.640000000000001
       ],
       "sector": "Utilities"
@@ -710,8 +710,8 @@
     },
     {
       "ticker": "ARM",
-      "lthcs_score": 48.8,
-      "band": "review",
+      "lthcs_score": 51.6,
+      "band": "weakening",
       "drift_1d": -2.1,
       "drift_7d": -0.7,
       "drift_30d": -3.9,
@@ -722,7 +722,7 @@
         "adoption_momentum": 32.1,
         "institutional_confidence": 93.5,
         "financial_evolution": 34.1,
-        "thesis_integrity": 54.0,
+        "thesis_integrity": 67.8,
         "des": 45.8
       },
       "modifiers": {
@@ -750,7 +750,7 @@
         8.025,
         18.7,
         5.115,
-        10.8,
+        13.56,
         9.16
       ],
       "sector": "Technology"
@@ -1701,7 +1701,7 @@
     },
     {
       "ticker": "CL",
-      "lthcs_score": 43.4,
+      "lthcs_score": 44.1,
       "band": "review",
       "drift_1d": -3.0,
       "drift_7d": -6.3,
@@ -1713,7 +1713,7 @@
         "adoption_momentum": 34.6,
         "institutional_confidence": 38.2,
         "financial_evolution": 43.2,
-        "thesis_integrity": 59.0,
+        "thesis_integrity": 62.4,
         "des": 44.2
       },
       "modifiers": {
@@ -1741,7 +1741,7 @@
         8.65,
         7.640000000000001,
         6.48,
-        11.8,
+        12.48,
         8.840000000000002
       ],
       "sector": "Consumer Staples"
@@ -2643,7 +2643,7 @@
     },
     {
       "ticker": "EA",
-      "lthcs_score": 43.6,
+      "lthcs_score": 40.1,
       "band": "review",
       "drift_1d": 0.6,
       "drift_7d": 1.3,
@@ -2655,7 +2655,7 @@
         "adoption_momentum": 34.5,
         "institutional_confidence": 37.5,
         "financial_evolution": 32.0,
-        "thesis_integrity": 66.5,
+        "thesis_integrity": 49.0,
         "des": 46.8
       },
       "modifiers": {
@@ -2683,14 +2683,14 @@
         8.625,
         7.5,
         4.8,
-        13.3,
+        9.8,
         9.36
       ],
       "sector": "Communication Services"
     },
     {
       "ticker": "EMR",
-      "lthcs_score": 47.6,
+      "lthcs_score": 45.6,
       "band": "review",
       "drift_1d": 2.2,
       "drift_7d": 1.1,
@@ -2702,7 +2702,7 @@
         "adoption_momentum": 42.1,
         "institutional_confidence": 33.5,
         "financial_evolution": 43.9,
-        "thesis_integrity": 69.9,
+        "thesis_integrity": 59.9,
         "des": 49.2
       },
       "modifiers": {
@@ -2730,7 +2730,7 @@
         10.525,
         6.7,
         6.585,
-        13.980000000000002,
+        11.98,
         9.840000000000002
       ],
       "sector": "Industrials"
@@ -3206,7 +3206,7 @@
         "adoption_momentum": 22.1,
         "institutional_confidence": 33.1,
         "financial_evolution": 56.2,
-        "thesis_integrity": 75.7,
+        "thesis_integrity": 77.6,
         "des": 44.1
       },
       "modifiers": {
@@ -4533,7 +4533,7 @@
         "adoption_momentum": 75.6,
         "institutional_confidence": 23.4,
         "financial_evolution": 81.7,
-        "thesis_integrity": 78.9,
+        "thesis_integrity": 76.7,
         "des": 66.2
       },
       "modifiers": {
@@ -4788,7 +4788,7 @@
         "adoption_momentum": 51.4,
         "institutional_confidence": 54.9,
         "financial_evolution": 49.0,
-        "thesis_integrity": 75.3,
+        "thesis_integrity": 57.8,
         "des": 44.2
       },
       "modifiers": {
@@ -4992,7 +4992,7 @@
         "adoption_momentum": 93.7,
         "institutional_confidence": 35.2,
         "financial_evolution": 84.1,
-        "thesis_integrity": 77.1,
+        "thesis_integrity": 80.9,
         "des": 48.2
       },
       "modifiers": {
@@ -6472,7 +6472,7 @@
         "adoption_momentum": 19.8,
         "institutional_confidence": 16.2,
         "financial_evolution": 54.6,
-        "thesis_integrity": 59.0,
+        "thesis_integrity": 72.8,
         "des": 44.1
       },
       "modifiers": {
@@ -6880,7 +6880,7 @@
         "adoption_momentum": 48.9,
         "institutional_confidence": 42.1,
         "financial_evolution": 53.8,
-        "thesis_integrity": 71.3,
+        "thesis_integrity": 64.4,
         "des": 45.8
       },
       "modifiers": {
@@ -6982,7 +6982,7 @@
         "adoption_momentum": 47.8,
         "institutional_confidence": 75.1,
         "financial_evolution": 58.9,
-        "thesis_integrity": 68.7,
+        "thesis_integrity": 55.0,
         "des": 39.9
       },
       "modifiers": {
@@ -7339,7 +7339,7 @@
         "adoption_momentum": 5.0,
         "institutional_confidence": 29.8,
         "financial_evolution": 38.3,
-        "thesis_integrity": 50.3,
+        "thesis_integrity": 67.8,
         "des": 50.4
       },
       "modifiers": {
@@ -7390,7 +7390,7 @@
         "adoption_momentum": 69.2,
         "institutional_confidence": -1.1,
         "financial_evolution": 76.9,
-        "thesis_integrity": 53.7,
+        "thesis_integrity": 50.0,
         "des": 46.8
       },
       "modifiers": {
@@ -7951,7 +7951,7 @@
         "adoption_momentum": 16.9,
         "institutional_confidence": 30.3,
         "financial_evolution": 16.4,
-        "thesis_integrity": 42.8,
+        "thesis_integrity": 42.7,
         "des": 46.8
       },
       "modifiers": {
@@ -8359,7 +8359,7 @@
         "adoption_momentum": 93.0,
         "institutional_confidence": 35.8,
         "financial_evolution": 74.7,
-        "thesis_integrity": 66.2,
+        "thesis_integrity": 74.9,
         "des": 45.8
       },
       "modifiers": {
@@ -9634,7 +9634,7 @@
         "adoption_momentum": 37.9,
         "institutional_confidence": 60.2,
         "financial_evolution": 38.6,
-        "thesis_integrity": 57.3,
+        "thesis_integrity": 62.3,
         "des": 49.2
       },
       "modifiers": {
@@ -10298,7 +10298,7 @@
         "adoption_momentum": 99.4,
         "institutional_confidence": 63.4,
         "financial_evolution": 84.1,
-        "thesis_integrity": 75.2,
+        "thesis_integrity": 73.3,
         "des": 39.9
       },
       "modifiers": {
