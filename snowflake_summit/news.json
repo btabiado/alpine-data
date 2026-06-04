@@ -508,7 +508,7 @@
   {
    "vendor": "Braze",
    "headline": "Braze named Snowflake 2026 APJ Product Growth Partner of the Year; launches user profile streaming for Snowflake",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.braze.com/resources/articles/braze-snowflake-customer-intelligence",
    "source": "Braze",
    "summary": "Braze won a 2026 Snowflake Partner Award and introduced real-time user profile streaming to Snowflake for a 360-degree customer view.",
@@ -517,7 +517,7 @@
   {
    "vendor": "Capgemini",
    "headline": "Capgemini named 2026 EMEA Snowflake Services Innovation Partner of the Year",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.snowflake.com/en/blog/2026-summit-partner-awards/",
    "source": "Snowflake",
    "summary": "At Summit 2026 Snowflake named Capgemini EMEA Services Innovation Partner of the Year; its kipi.ai unit won Telecom Services Partner of the Year.",
@@ -526,7 +526,7 @@
   {
    "vendor": "Prefect Technologies",
    "headline": "Prefect Launches Workflow Orchestration Offering on Snowflake Marketplace",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.tipranks.com/news/private-companies/prefect-launches-workflow-orchestration-offering-on-snowflake-marketplace",
    "source": "BigDATAwire",
    "summary": "Prefect partnered with Snowflake, listing its workflow orchestration on Snowflake Marketplace and connecting AI agents to Snowflake via FastMCP and Horizon MCP Gateway.",
@@ -535,7 +535,7 @@
   {
    "vendor": "Sifflet",
    "headline": "Sifflet brings end-to-end data observability and AI agents to Snowflake Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.siffletdata.com/webinars-and-replays/meet-us-at-the-snowflake-summit-2026",
    "source": "Sifflet",
    "summary": "Sifflet exhibits at Booth #1507, highlighting column-level lineage and three AI observability agents acting as a control plane for Snowflake data.",
@@ -544,7 +544,7 @@
   {
    "vendor": "Snowplow",
    "headline": "Snowplow named a Leader in Snowflake's 2026 Modern Marketing Data Stack Report",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://snowplow.io/blog/snowflake-2026-modern-marketing-data-stack-report",
    "source": "Snowplow",
    "summary": "Snowplow named a Leader in Snowflake's 2026 Modern Marketing Data Stack Report for a second year; partnership expanded via Snowplow Signals on Snowflake.",
@@ -553,7 +553,7 @@
   {
    "vendor": "7Rivers",
    "headline": "7Rivers at Snowflake Summit 2026 with live Snowflake Intelligence demos and June 2 networking reception",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://7riversinc.com/events-and-webinars/snowflake-summit-2026/",
    "source": "7Rivers",
    "summary": "Snowflake data consultancy 7Rivers exhibits at Summit 2026 showing Snowflake Intelligence and data agents, plus a June 2 happy-hour reception for data leaders.",
@@ -562,7 +562,7 @@
   {
    "vendor": "Acceldata",
    "headline": "Acceldata showcases data observability for Snowflake at Summit 2026 (booth #1607)",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.acceldata.io/events/snowflake-summit-2026",
    "source": "Acceldata",
    "summary": "Acceldata exhibits its multidimensional data observability platform for Snowflake at Summit 2026 booth #1607, covering anomaly detection, reliability and spend forecasting.",
@@ -571,7 +571,7 @@
   {
    "vendor": "Acxiom",
    "headline": "Acxiom named customer partner for Snowflake Horizon Catalog AI security at Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.snowflake.com/en/news/press-releases/snowflake-advances-trusted-ai-with-snowflake-horizon-catalog-centralizing-governance-context-and-security-across-the-enterprise/",
    "source": "Snowflake",
    "summary": "Acxiom highlighted alongside NewDay and Thomson Reuters in Snowflake's Summit 2026 Horizon Catalog launch, exploring new AI security and governance for agentic systems.",
@@ -580,7 +580,7 @@
   {
    "vendor": "Airbyte",
    "headline": "Airbyte named Integration leader in Snowflake's Modern Marketing Data Stack 2026, partner at Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://finance.yahoo.com/news/airbyte-recognized-leader-snowflake-modern-170000552.html",
    "source": "Yahoo Finance",
    "summary": "Airbyte recognized as an Integration leader in Snowflake's Modern Marketing Data Stack 2026 report and participates as a partner at Snowflake Summit 2026.",
@@ -589,7 +589,7 @@
   {
    "vendor": "Altimate AI",
    "headline": "Altimate AI CEO speaks at Snowflake Summit 2026 on why production AI agents fall short",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.altimate.ai/",
    "source": "Altimate AI",
    "summary": "Co-founder/CEO Pradnesh Patil presents at Snowflake Summit 2026 on context, governance and infrastructure gaps; Altimate's agentic data-engineering platform supports Snowflake.",
@@ -598,7 +598,7 @@
   {
    "vendor": "Amperity",
    "headline": "Amperity at Snowflake Summit 2026 (booth #1317) on unified customer data for AI",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://amperity.com/events/snowflake-summit-2026",
    "source": "Amperity",
    "summary": "Amperity exhibits at Snowflake Summit 2026 booth #1317, showing how unified customer data on Snowflake powers AI, analytics and personalized engagement.",
@@ -607,7 +607,7 @@
   {
    "vendor": "Astronomer",
    "headline": "Astronomer at Snowflake Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.astronomer.io/events/snowflake-summit-2026/",
    "source": "Astronomer",
    "summary": "Astronomer presents Summit 2026 sessions on Apache Airflow unifying data pipelines and AI workflows, plus runtime governance and a networking takeover event.",
@@ -616,7 +616,7 @@
   {
    "vendor": "Atlan",
    "headline": "Join Atlan at Snowflake Summit 2026 | Booth #1612",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://atlan.com/event/snowflake-summit/",
    "source": "Atlan",
    "summary": "Atlan showcases its open context layer at Summit 2026 booth #1612, giving AI agents and Snowflake Cortex governed business context for production use.",
@@ -625,7 +625,7 @@
   {
    "vendor": "CARTO",
    "headline": "CARTO brings agentic GIS to Snowflake using Cortex Code",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://carto.com/blog/agentic-gis-snowflake-cortex-code-carto/",
    "source": "CARTO",
    "summary": "CARTO details agentic geospatial analysis in Snowflake via Cortex Code, extending its Snowflake Native App spatial analytics around Summit 2026.",
@@ -634,7 +634,7 @@
   {
    "vendor": "CData",
    "headline": "CData at Snowflake Summit 2026 (booth #2738) showcasing Sync and Connect AI for Cortex agents",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.cdata.com/blog/snowflake-summit-2026-guide",
    "source": "CData",
    "summary": "CData exhibits at Summit 2026, demoing CData Sync into Snowflake and Connect AI giving Cortex agents live, governed access to external sources.",
@@ -643,7 +643,7 @@
   {
    "vendor": "Chalk",
    "headline": "Chalk makes Snowflake Summit 2026 debut with real-time feature store deep dive",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://chalk.ai/events/snowflake-summit-2026",
    "source": "Chalk",
    "summary": "Chalk's first Summit appearance (booth #2611); co-founder Elliot Marx presents building a real-time feature store with sub-5ms inference in Snowflake.",
@@ -652,7 +652,7 @@
   {
    "vendor": "Domo",
    "headline": "Domo showcases Snowflake Native App and Cortex-powered Marketing Mix Modeling at Snowflake Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.domo.com/events/attend-snowflake-summit-26-with-domo---booth-1610",
    "source": "Domo",
    "summary": "At Summit 2026 (booth #1610) Domo demoed a production Marketing Mix Modeling solution with a Snowflake Native App fully integrated into Cortex AI.",
@@ -661,7 +661,7 @@
   {
    "vendor": "DQLabs",
    "headline": "Meet DQLabs at Snowflake Summit 2026, Booth #2739 - See PRIZM Live",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.dqlabs.ai/events/snowflake-summit-2026/",
    "source": "DQLabs",
    "summary": "DQLabs presents PRIZM, its AI-native data quality and observability platform on Snowflake, at Summit 2026 booth #2739, demoing anomaly detection and automated remediation.",
@@ -670,7 +670,7 @@
   {
    "vendor": "Honeydew",
    "headline": "Honeydew integrates its semantic layer with Snowflake Semantic Views; Snowflake Native App at Summit 2026 Booth #2412",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://honeydew.ai/blog/honeydew-and-snowflake-semantic-views/",
    "source": "Honeydew",
    "summary": "Honeydew extends its semantic layer onto Snowflake's new Semantic Views (Cortex semantic models), available as a Snowflake Native App; exhibiting at Summit 2026.",
@@ -679,7 +679,7 @@
   {
    "vendor": "Infosys",
    "headline": "Infosys Topaz at Snowflake Summit 2026 (Booth #1315)",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.infosys.com/newsroom/events/2026/snowflake-summit-2026.html",
    "source": "Infosys",
    "summary": "Infosys showcases Topaz AI offerings and agentic AI solutions built on Snowflake at Summit 2026 via sessions and booth presence.",
@@ -688,7 +688,7 @@
   {
    "vendor": "Mastek",
    "headline": "Mastek showcases Snowflake-native Galaxy Suite at Snowflake Summit 2026 (Booth 2614)",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.mastek.com/events/snowflake-summit-2026/",
    "source": "Mastek",
    "summary": "Mastek exhibits at Summit 26 booth 2614, showcasing its Snowflake-native Galaxy Suite for data modernization, Cortex analytics, and enterprise AI products.",
@@ -697,7 +697,7 @@
   {
    "vendor": "Pantomath",
    "headline": "Pantomath deepens Snowflake AI Data Cloud integration, exhibits at Snowflake Summit 2026 (Booth 2307)",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.pantomath.com/",
    "source": "Pantomath",
    "summary": "Data observability vendor at Summit 26 booth 2307, deepening Snowflake AI Data Cloud integration alongside a Snowflake Ventures investment and AI DRE Agent.",
@@ -706,7 +706,7 @@
   {
    "vendor": "PointFive",
    "headline": "PointFive brings DeepWaste detection and Warehouse Optimization for Snowflake to Snowflake Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.pointfive.co/events/snowflake-summit",
    "source": "PointFive",
    "summary": "Cloud-efficiency vendor at Summit 26 showcasing DeepWaste for Data Platforms and Snowflake Warehouse Optimization with agentic remediation of cost issues.",
@@ -715,7 +715,7 @@
   {
    "vendor": "Precisely",
    "headline": "Precisely at Snowflake Summit 26: Closing the Agentic AI Data Integrity Gap",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.precisely.com/blog/data-integrity/precisely-at-snowflake-summit-26-closing-the-agentic-ai-data-integrity-gap/",
    "source": "Precisely",
    "summary": "Data-integrity vendor at Summit 26 booth 1212 with a June 2 session on preparing Snowflake data for agentic AI ROI via accuracy, enrichment, and governance.",
@@ -724,7 +724,7 @@
   {
    "vendor": "Wipro Limited",
    "headline": "Meet Wipro at Snowflake Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.wipro.com/events/meet-wipro-at-snowflake-summit-2026/",
    "source": "Wipro",
    "summary": "Wipro sponsored Summit 26, showcasing agentic AI via WEGA and Snowflake Cortex AI plus client use cases across supply chain, financial services and healthcare.",
@@ -733,7 +733,7 @@
   {
    "vendor": "Alation",
    "headline": "Alation at Snowflake Summit 2026 (booth #1303) with attendee session guide",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.alation.com/blog/snowflake-summit-2026-guide/",
    "source": "Alation",
    "summary": "Alation exhibits at Snowflake Summit 2026 booth #1303 and publishes a guide to dates, keynotes and sessions for the governed agentic-AI theme.",
@@ -742,7 +742,7 @@
   {
    "vendor": "Alteryx",
    "headline": "Alteryx at Snowflake Summit 2026 showing in-Snowflake analytics with built-in governance",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.alteryx.com/events",
    "source": "Alteryx",
    "summary": "Alteryx joins Snowflake Summit 2026 to demonstrate AI-driven analytics running directly inside Snowflake without moving data, with governance built in.",
@@ -751,7 +751,7 @@
   {
    "vendor": "DataOps.live",
    "headline": "DataOps.live hosts partner event at Snowflake Summit 2026",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.snowflake.com/en/summit/partner-events/",
    "source": "Snowflake",
    "summary": "DataOps.live is a partner-hosted event sponsor at Snowflake Summit 2026 (drinks/food at The Chieftain Irish Pub); ongoing Snowflake Native App and Cortex partnership.",
@@ -760,7 +760,7 @@
   {
    "vendor": "Reltio",
    "headline": "Reltio at Snowflake Summit 2026 (sponsor/booth presence)",
-   "date": "2026-06",
+   "date": "2026-06-02",
    "url": "https://www.reltio.com/resources/events/snowflake-summit/",
    "source": "Reltio",
    "summary": "Reltio is a Snowflake Summit 26 sponsor (June 1-4, San Francisco), showcasing Reltio Data Cloud for unifying data/metadata into trusted 360 views for AI agents. No product launch.",
@@ -877,7 +877,7 @@
   {
    "vendor": "Boomi",
    "headline": "Boomi Agent Control Tower adds Snowflake Cortex provider; Unified Server Catalog ingests Snowflake MCP servers",
-   "date": "2026-05",
+   "date": "2026-05-15",
    "url": "https://boomi.com/blog/boomi-innovations-may-2026/",
    "source": "Boomi",
    "summary": "Boomi, a Snowflake Elite Partner at Summit 2026, adds Snowflake Cortex as an Agent Control Tower provider and surfaces Snowflake MCP servers in its catalog.",
@@ -886,7 +886,7 @@
   {
    "vendor": "Tealium",
    "headline": "Tealium recognized in Snowflake's 2026 Modern Marketing Data Stack for powering real-time engagement via bi-directional data flows",
-   "date": "2026-05",
+   "date": "2026-05-15",
    "url": "https://tealium.com/press-releases/2026-modern-marketing-data-stack/",
    "source": "Tealium",
    "summary": "Tealium named to Snowflake's 2026 Modern Marketing Data Stack report for enabling real-time, bi-directional customer data flows with Snowflake.",
@@ -913,7 +913,7 @@
   {
    "vendor": "Sparq",
    "headline": "Sparq achieves Snowflake Elite Partner status for AI Data Cloud Services",
-   "date": "2026-04",
+   "date": "2026-04-15",
    "url": "https://www.teamsparq.com/insights/sparq-achieves-snowflake-elite-status/",
    "source": "Sparq",
    "summary": "Sparq reached Snowflake's Elite Partner tier in 2026, building workloads inside Cortex, Native Apps and ML; also launched Sparq Intelligence Studio in February.",
@@ -922,7 +922,7 @@
   {
    "vendor": "Sundial",
    "headline": "Sundial Joins Snowflake & Industry Leaders to Support Data + AI Interoperability Through the Open Semantic Interchange",
-   "date": "2026-04",
+   "date": "2026-04-15",
    "url": "https://salestechstar.com/partner-management-channel-enablement/sundial-joins-snowflake-industry-leaders-to-support-data-ai-interoperability-through-the-open-semantic-interchange/",
    "source": "SalesTechStar",
    "summary": "Sundial joins Snowflake-led Open Semantic Interchange (OSI), an open, vendor-neutral semantic-model spec standardizing data definitions across BI, AI and governance tools.",
@@ -1269,15 +1269,6 @@
    "source": "Coastal Cloud",
    "summary": "Coastal Cloud announced its acquisition by TCS, a global IT services firm operating across 46 countries, while retaining its brand and culture established since 2012. Coastal brought over 600 North American professionals with 3,091 certifications including 442 across Agentforce, AI, and Snowflake, serving approximately 1,700 customers.",
    "relevance": "high"
-  },
-  {
-   "vendor": "Coastal",
-   "headline": "Coastal Joins Tata Consultancy Services (TCS) to Accelerate Salesforce-Led Transformation at Global Scale",
-   "date": "2026-01-14",
-   "url": "https://www.globenewswire.com/news-release/2026/01/14/3218914/0/en/Coastal-Joins-Tata-Consultancy-Services-TCS-to-Accelerate-Salesforce-Led-Transformation-at-Global-Scale.html",
-   "source": "GlobeNewswire",
-   "summary": "GlobeNewswire carried the official press release announcing Coastal Cloud's acquisition by TCS on January 14, 2026. The deal advances TCS's goal of becoming an AI-led technology services company, with Coastal continuing to operate under its own brand while bringing 600+ professionals, 3,091 certifications, and approximately 1,700 customers.",
-   "relevance": "medium"
   },
   {
    "vendor": "Contentsquare",

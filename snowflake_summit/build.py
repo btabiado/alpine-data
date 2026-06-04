@@ -327,10 +327,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .kpi .s{font-size:11px;color:var(--accent);margin-top:3px}
   .kpi-click{cursor:pointer;transition:border-color .12s ease,transform .08s ease}
   .kpi-click:hover{border-color:var(--accent);transform:translateY(-1px)}
-  .kpi-click:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-  .kpi-sub-link{color:inherit;text-decoration:none;border-bottom:1px dashed currentColor;cursor:pointer}
+  .kpi-click:focus-within,.kpi-click:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  /* The main number/label is its own button on tiles that also have a sub-link
+     (keeps the two controls as siblings, never nested). It fills the tile so the
+     whole top area stays clickable. */
+  .kpi-main-link{display:block;color:inherit;text-decoration:none;cursor:pointer}
+  .kpi-main-link:focus{outline:none}
+  .kpi-sub-link{display:inline-flex;align-items:center;min-height:24px;padding:5px 2px;color:inherit;text-decoration:none;border-bottom:1px dashed currentColor;cursor:pointer}
   .kpi-sub-link:hover{opacity:.8}
-  @media(max-width:640px){#vModal .col-opt{display:none}}
+  @media(max-width:640px){#vModal .col-opt{display:none}
+    /* The KPI pop-up table must fit the phone width — let the Partner name wrap
+       so it can't force the Tier column off-screen behind a horizontal scroll.
+       (Scoped to #vModal; the desktop main table keeps its nowrap.) */
+    #vModal th,#vModal td{white-space:normal}
+    #vModal td.name{word-break:break-word}}
   h3.sec{margin:22px 0 12px;font-size:15px}
   h3.sec .hint{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
@@ -679,7 +689,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   @media (max-width:640px){
     /* Slim 2-up highlight cards: drop the per-dimension breakout chips (tap a card
        for the full breakdown), keep name / tier / niche / overall. */
-    #mustsee,#gems,#bestfit{grid-template-columns:repeat(2,1fr);gap:8px}
+    #bestfit{grid-template-columns:repeat(2,1fr);gap:8px}
     .card2 .scores{display:none}
     .card2{padding:11px 12px}
     .card2 .nm{font-size:12.5px;padding-right:22px}
@@ -687,16 +697,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .card2 .rk{font-size:17px;top:6px;right:9px}
     .card2 .ovr{margin-top:4px}
     .card2 .ovr b{font-size:17px}
-    /* Collapsible Must-See / Hidden Gems — email-folder disclosure with a count. */
-    details.msec{border:1px solid var(--border);border-radius:12px;background:var(--panel);margin:16px 0}
-    details.msec>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;
-      padding:14px 15px;font-size:14.5px;font-weight:700;color:var(--text);min-height:48px}
-    details.msec>summary::-webkit-details-marker{display:none}
-    details.msec>summary::before{content:"▸";color:var(--accent);font-size:13px;transition:transform .15s ease}
-    details.msec[open]>summary::before{transform:rotate(90deg)}
-    .msec-n{margin-left:auto;color:var(--muted);font-weight:600;font-size:12px;
-      background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:2px 11px}
-    details.msec>.cards{padding:0 12px 14px}
     /* Floor Map: the spatial Floor plan is the only mobile view — drop the toggle
        and the Zone-columns list entirely. */
     .maptoggle{display:none!important}
@@ -711,13 +711,15 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   }
   @media (max-width:640px){
     /* Visible keyboard focus on the new interactive elements. */
-    details.msec>summary:focus-visible,.vcard:focus-visible,.toolsbtn:focus-visible,
+    .vcard:focus-visible,.toolsbtn:focus-visible,
     .toolsheet-item:focus-visible,.planfit:focus-visible,
     .navbtns>a[href="?view=mq"]:focus-visible,.navbtns>a[href="?view=map"]:focus-visible{
       outline:2px solid #cfe8ff;outline-offset:2px}
     /* >=44px tap targets across the mobile controls. */
     .planfit,.bchip,#mqQuadChips button,#mqSegSel,#mqBack,
     .navbtns>a[href="?view=mq"],.navbtns>a[href="?view=map"]{min-height:44px}
+    .kpi-sub-link{min-height:44px;padding:6px 2px}
+    #search{min-height:44px}
     /* Signal that the slim highlight cards reveal the full score breakdown on tap. */
     .card2{padding-bottom:26px}
     .card2::after{content:"tap for scores ›";position:absolute;right:12px;bottom:9px;
@@ -773,7 +775,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <div class="wrap" id="dashwrap">
   <div class="kpis" id="kpis"></div>
 
-  <h3 class="sec">🤝 Best Bryan Recommend <span class="hint">— top career / networking fit</span></h3>
+  <h3 class="sec">🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span></h3>
   <div class="cards" id="bestfit"></div>
 
   <div class="grid" style="margin-top:22px">
@@ -1011,14 +1013,21 @@ if(_view==='news'){
 
 document.getElementById('kpis').innerHTML = DATA.kpis.map(k=>{
   const clickable=!!k.filter;
-  const sub = k.subFilter
-    ? `<a href="#" class="kpi-sub-link" data-filter="${k.subFilter}" role="button" tabindex="0" title="Show these" aria-label="Show ${k.sub}">${k.sub}</a>`
-    : k.sub;
-  return `<div class="kpi${clickable?' kpi-click':''}"${clickable?` data-filter="${k.filter}" role="button" tabindex="0" title="Show all ${k.value} ${k.label}" aria-label="Show all ${k.value} ${k.label}"`:''}><div class="v">${k.value}</div><div class="l">${k.label}</div><div class="s">${sub}</div></div>`;
+  const body=`<div class="v">${k.value}</div><div class="l">${k.label}</div>`;
+  // A tile with a subFilter holds TWO buttons (main + sub). To avoid nesting one
+  // role=button inside another (an a11y violation), the outer .kpi is a plain
+  // container in that case and the main number/label is its own button sibling
+  // of the sub-link. Tiles without a subFilter stay a single button.
+  if(clickable && k.subFilter){
+    return `<div class="kpi kpi-click">`+
+      `<a href="#" class="kpi-main-link" data-filter="${k.filter}" role="button" tabindex="0" aria-haspopup="dialog" title="Show all ${k.value} ${k.label}" aria-label="Show all ${k.value} ${k.label}">${body}</a>`+
+      `<div class="s"><a href="#" class="kpi-sub-link" data-filter="${k.subFilter}" role="button" tabindex="0" aria-haspopup="dialog" title="Show these" aria-label="Show ${k.sub}">${k.sub}</a></div></div>`;
+  }
+  return `<div class="kpi${clickable?' kpi-click':''}"${clickable?` data-filter="${k.filter}" role="button" tabindex="0" aria-haspopup="dialog" title="Show all ${k.value} ${k.label}" aria-label="Show all ${k.value} ${k.label}"`:''}>${body}<div class="s">${k.sub}</div></div>`;
 }).join('');
 (function(){
   var kp=document.getElementById('kpis'); if(!kp) return;
-  function pick(t){var s=t.closest&&t.closest('.kpi-sub-link'); if(s) return s.getAttribute('data-filter'); var c=t.closest&&t.closest('.kpi-click'); if(c) return c.getAttribute('data-filter'); return null;}
+  function pick(t){var el=t.closest&&t.closest('[data-filter]'); return el?el.getAttribute('data-filter'):null;}
   kp.addEventListener('click',function(e){var f=pick(e.target); if(f){e.preventDefault(); if(window.summitOpenList) window.summitOpenList(f);}});
   kp.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){var f=pick(e.target); if(f){e.preventDefault(); if(window.summitOpenList) window.summitOpenList(f);}}});
 })();
@@ -1030,35 +1039,16 @@ function scoreChips(v){
 function card(v){
   return `<div class="card2" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
     <div class="nm">${esc(v.name)}${homeLink(v)} <span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
-    <div class="ct">${esc(v.category)} · booth ${fmt(v.booth)}</div>
+    <div class="ct">${esc(v.category)} · booth ${esc(fmt(v.booth))}</div>
     <div class="scores">${scoreChips(v)}</div>
     <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+esc(v.company_type)):''}</span></div></div>`;
 }
 document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
 
-// ===== MOBILE highlight re-layout (desktop DOM untouched) =====
-// Bryan's Recommendation -> renamed + moved to the top (shown 2-up, slim cards);
-// Must-See and Hidden Gems collapse under a tap-to-expand disclosure with a count.
-if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){(function(){
-  var dash=document.getElementById('dashwrap'); if(!dash) return;
-  var bf=document.getElementById('bestfit'), bfh=bf&&bf.previousElementSibling;
-  if(bf&&bfh){
-    // Heading rename only. The desktop DOM now orders Bryan → analytics → search →
-    // table, and mobile follows that same order, so Bryan no longer needs to be
-    // repositioned relative to the search bar (which has moved down by the table).
-    bfh.innerHTML='🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span>';
-  }
-  function collapse(id,label){
-    var g=document.getElementById(id), h=g&&g.previousElementSibling; if(!g||!h) return;
-    var n=g.querySelectorAll('.card2').length;
-    var d=document.createElement('details'); d.className='msec';
-    var s=document.createElement('summary'); s.className='msec-sum';
-    s.innerHTML=label+' <span class="msec-n" aria-label="'+n+' vendors">'+n+'</span>';
-    h.parentNode.insertBefore(d,h); h.remove(); d.appendChild(s); d.appendChild(g);
-  }
-  collapse('mustsee','⭐ Must-See Vendors');
-  collapse('gems','💎 Hidden Gems');
-})();}
+// The desktop DOM now orders Bryan → analytics → search → table, and mobile
+// follows that same order, so no mobile-only re-layout is needed here. (The
+// Bryan heading is identical on both breakpoints; the old Must-See / Hidden
+// Gems disclosure sections were removed in the reorg.)
 
 const C={grid:'#243352',tick:'#8da2c8'};
 if(window.Chart){Chart.defaults.font.family='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';Chart.defaults.color=C.tick;}
@@ -1153,7 +1143,7 @@ function vcardHTML(v){
 function rowHTML(v){
   const w=Math.round(((v.overall_score||0)/10)*54)+6;
   return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" tabindex="0" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer">
-      <td class="num">${v.rank}</td><td class="name">${esc(v.name)}${homeLink(v)}</td><td>${fmt(v.booth)}</td>
+      <td class="num">${v.rank}</td><td class="name">${esc(v.name)}${homeLink(v)}</td><td>${esc(fmt(v.booth))}</td>
       <td><span class="tag tNi">${esc(fmt(v.niche))}</span></td><td>${esc(fmt(v.category))}</td><td>${esc(fmt(v.company_type))}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
       <td class="num">${fmt(v.retail_score)}</td><td class="num">${fmt(v.ipo_score)}</td><td class="num">${fmt(v.bryan_score)}</td>
@@ -1175,8 +1165,12 @@ function draw(){
   const shown=showAll?r:r.slice(0,VPREVIEW);
   const hit=document.getElementById('searchhit');
   if(hit) hit.textContent = filtering ? `${total} of ${DATA.vendors.length} match` : (showAll?`${DATA.vendors.length} vendors`:`Top ${Math.min(VPREVIEW,total)} · ${DATA.vendors.length} total`);
-  var sc=document.querySelector('.scroll');
-  if(sc){sc.style.maxHeight=showAll?'560px':'none';sc.style.overflowY=showAll?'auto':'visible';}
+  // Contain the expanded list in a 560px scroll box (matches the design); when
+  // showing the preview, leave it uncapped so a scroll gesture flows past it.
+  // On mobile the table (.scroll) is hidden and the cards (#vcards) are the live
+  // surface, so the cap has to target #vcards there.
+  var cap=document.querySelector(IS_MOBILE?'#vcards':'.scroll');
+  if(cap){cap.style.maxHeight=showAll?'560px':'none';cap.style.overflowY=showAll?'auto':'visible';}
   if(IS_MOBILE){
     var vc=document.getElementById('vcards');
     if(vc) vc.innerHTML=shown.map(vcardHTML).join('');
@@ -1186,7 +1180,7 @@ function draw(){
   var more=document.getElementById('vmore');
   if(more){
     if(!filtering && total>VPREVIEW){
-      more.innerHTML='<button type="button" class="vmore-btn" aria-expanded="'+(vExpanded?'true':'false')+'" aria-controls="vtable" style="width:100%;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px">'+(vExpanded?('▴ Show top '+VPREVIEW+' only'):('▾ Show all '+total+' partners'))+'</button>';
+      more.innerHTML='<button type="button" class="vmore-btn" aria-expanded="'+(vExpanded?'true':'false')+'" aria-controls="'+(IS_MOBILE?'vcards':'vtable')+'" style="width:100%;min-height:44px;background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px">'+(vExpanded?('▴ Show top '+VPREVIEW+' only'):('▾ Show all '+total+' partners'))+'</button>';
     } else { more.innerHTML=''; }
   }
 }
@@ -1202,6 +1196,13 @@ syncSortAria();
 ['input','change'].forEach(e=>{document.getElementById('search').addEventListener(e,draw);nicheSel.addEventListener(e,draw);catSel.addEventListener(e,draw);tierSel.addEventListener(e,draw);typeSel.addEventListener(e,draw);});
 (function(){var m=document.getElementById('vmore');if(m)m.addEventListener('click',function(e){var b=e.target.closest('.vmore-btn');if(!b)return;vExpanded=!vExpanded;draw();if(!vExpanded){var h=document.getElementById('allpartners');if(h)h.scrollIntoView({block:'start'});}});})();
 draw();
+// Print / Save-as-PDF: temporarily render the FULL partner list (table + cards)
+// so the PDF captures all partners, not just the top-VPREVIEW preview. Restore
+// the on-screen expand state afterward.
+(function(){var wasExp;function expand(){wasExp=vExpanded;vExpanded=true;draw();}function restore(){vExpanded=wasExp;draw();}
+  window.addEventListener('beforeprint',expand);window.addEventListener('afterprint',restore);
+  if(window.matchMedia){var mq=window.matchMedia('print');var h=function(e){if(e.matches)expand();else restore();};if(mq.addEventListener)mq.addEventListener('change',h);else if(mq.addListener)mq.addListener(h);}
+})();
 
 // Summit News feed (news-only view, ?view=news). Category buckets + relevance /
 // vendor filters. Newest first. Every field esc()-escaped; URLs http(s)-only.
@@ -1615,7 +1616,9 @@ draw();
     var titles={all:'All Partner Vendors',tierA:'Must-See — Tier A',tierAB:'Priority — Tier A + B',public:'Public Companies',private:'Private / Other'};
     list.sort(function(a,b){return (a.rank||1e9)-(b.rank||1e9);});
     var rows=list.map(function(v){
-      return '<tr><td class="num">'+v.rank+'</td><td class="name">'+esc(v.name)+'</td>'+
+      // Rows are clickable (data-v) so a tap opens the full detail sheet — that's
+      // the only way to recover Niche/Booth on phones, where .col-opt is hidden.
+      return '<tr data-v="'+esc(v.name)+'" role="button" tabindex="0" style="cursor:pointer" aria-label="View company detail for '+esc(v.name)+'"><td class="num">'+v.rank+'</td><td class="name">'+esc(v.name)+'</td>'+
         '<td class="col-opt"><span class="tag tNi">'+esc(fmt(v.niche))+'</span></td><td class="col-opt">'+esc(fmt(v.booth))+'</td>'+
         '<td class="num"><b>'+fmt(v.overall_score)+'</b></td><td><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></td></tr>';
     }).join('');
