@@ -1031,8 +1031,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .chat-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .chat-head h2{margin:0;font-size:14px}
 .chat-head .sub{font-size:11px;color:var(--muted);margin-top:2px}
-.chat-msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
-.msg{padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.4;max-width:90%;white-space:pre-wrap;word-wrap:break-word}
+.chat-msgs{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+/* max-width:90% keeps a gutter on the opposite side; overflow-wrap:anywhere
+   (stronger than word-wrap:break-word) guarantees even an unbroken token —
+   a long URL/key the user pastes — wraps instead of forcing the bubble past
+   the dock's right edge (the mobile chat-dock crowding fix). */
+.msg{padding:8px 12px;border-radius:10px;font-size:13px;line-height:1.4;max-width:90%;min-width:0;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
 .msg.user{background:#1f2533;align-self:flex-end;border:1px solid var(--border)}
 .msg.bot{background:#10151f;align-self:flex-start;border:1px solid var(--border);border-left:3px solid #a78bfa}
 .msg.err{background:#3b1414;align-self:flex-start;border:1px solid #6b1f1f;color:#fca5a5}
@@ -1072,7 +1076,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      860 since the dashboard itself collapses to mobile layout at 860 — a 380px
      floating sidebar on a 720-860px window was inconsistent with the rest of
      the mobile-mode UI). */
-  #chatDock{width:100%}
+  /* Full-width dock on mobile. max-width:100vw + the global box-sizing keep
+     the 1px border-left from nudging content a hair past the viewport, which
+     is what made the intro message look clipped at the right edge. */
+  #chatDock{width:100%;max-width:100vw}
   #overviewMacroRow{grid-template-columns:1fr !important}
   .grid2{grid-template-columns:1fr !important}
   .grid3{grid-template-columns:1fr !important}

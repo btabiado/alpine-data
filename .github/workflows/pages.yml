@@ -126,6 +126,22 @@ jobs:
         run: python scripts/build_health_status.py || echo "[health] generator failed; continuing"
         continue-on-error: true
 
+      - name: Probe upstream API reachability (live snapshot)
+        # Hits each upstream data-source endpoint and writes
+        # data/health/api_status.json — the snapshot the static /health/apis.html
+        # page falls back to when there's no live server to probe through.
+        # Keyed sources report auth_required (live, gated) when the secret is
+        # absent, so this stays useful without every key configured. Pure
+        # stdlib, ~25 cheap requests. Must NOT break the deploy.
+        env:
+          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
+          ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
+          COINMETRICS_API_KEY: ${{ secrets.COINMETRICS_API_KEY }}
+          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python api_status.py || echo "[api-status] probe failed; continuing"
+        continue-on-error: true
+
       - name: Generate V2 dashboard (parallel build, reads same data/)
         # V2 is a UX-cleanup spin of the same payload — reuses the cached
         # market.json / whale.json / ETF CSVs already fetched above so no

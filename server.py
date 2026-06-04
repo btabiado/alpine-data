@@ -9,6 +9,8 @@ Endpoints:
     GET  /api/data               JSON payload for in-page hot reload
     POST /api/refresh            re-fetches market + whale data, returns fresh payload
     GET  /healthz                liveness probe
+    GET  /api/status             live upstream-API reachability snapshot (TTL-cached)
+    GET  /status                 human-readable live API-status page
 
 Background:
     A daemon thread refreshes market + whale data every REFRESH_MINUTES
@@ -38,6 +40,7 @@ from typing import Any
 
 from flask import Flask, Response, jsonify, request
 
+import api_status
 import app as dash
 import fetch_live
 import fetch_market
@@ -68,7 +71,10 @@ AUTH_ENABLED = bool(DASH_USER and DASH_PASS)
 
 # Endpoints that bypass auth (so the bookmarklet from Farside still works
 # cross-origin, and so the health probe stays usable for monitoring).
-_AUTH_BYPASS = {"/healthz"}
+# /status + /api/status join /healthz here: they're read-only observability
+# surfaces that probe a fixed allowlist of upstreams (no SSRF), and external
+# monitors need to reach them without credentials.
+_AUTH_BYPASS = {"/healthz", "/status", "/api/status"}
 
 # Endpoints that share-token holders are explicitly allowed to hit. Anything
 # that mutates server state (refresh, CSV upload, ETF seed, share admin) is
@@ -1072,6 +1078,30 @@ def health() -> Response:
         "fetching": _state["fetching"],
         "last_fetch_error": _state["last_fetch_error"],
     })
+
+
+@flask_app.route("/api/status")
+def api_status_json() -> Response:
+    """Live upstream-API reachability snapshot (TTL-cached ~60s).
+
+    Probes the fixed allowlist in api_status.TARGETS in parallel and reports
+    up / auth-gated / rate-limited / blocked / down per source. Distinct from
+    /healthz (this server) and /health/ (cached-data freshness)."""
+    snap = api_status.get_status(ttl=60.0)
+    return jsonify(snap)
+
+
+@flask_app.route("/status")
+def api_status_page() -> Response:
+    """Serve the live API-status page (health/apis.html). Same HTML also runs
+    on the static GitHub-Pages mirror, where it falls back to the snapshot
+    JSON when /api/status isn't reachable."""
+    page = os.path.join(os.path.dirname(os.path.abspath(__file__)), "health", "apis.html")
+    try:
+        with open(page, "r", encoding="utf-8") as f:
+            return Response(f.read(), mimetype="text/html")
+    except OSError:
+        return Response("api status page not found", status=404, mimetype="text/plain")
 
 
 def main() -> int:
