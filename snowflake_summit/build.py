@@ -549,7 +549,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .navbtns>#scoreInfoBtn,
     .navbtns>a[href="?view=news"],
     .navbtns>a[download],
-    .navbtns>#pdfBtn{display:none}
+    .navbtns>a[href="#allpartners"]{display:none}
     .navbtns>a[href="?view=mq"],
     .navbtns>a[href="?view=map"]{flex:1 1 auto;justify-content:center;font-size:12.5px;padding:10px 6px;white-space:nowrap}
     .toolsbtn{display:inline-flex;align-items:center;gap:5px;min-height:44px;background:var(--panel2);
@@ -708,9 +708,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
-      <a class="dl" href="https://reg.snowflake.com/flow/snowflake/summit26/partner/page/catalog" target="_blank" rel="noopener" title="Snowflake's official Summit 2026 partner catalog — all 190+ partners (opens on snowflake.com)">🤝 All Partner Vendors ↗</a>
-      <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
-      <button class="dl no-print pdfBtn" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
+      <a class="dl" href="#allpartners" title="Jump to the full partner table">🤝 All Partner Vendors</a>
+      <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download title="Download the source spreadsheet (.xlsx)">⬇ Download</a>
       <span class="zoomctl" title="Zoom"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
       <button type="button" class="toolsbtn no-print" id="toolsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="toolsSheet">⚙ Tools ▾</button>
     </div>
@@ -723,9 +722,8 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="toolsheet-grip" aria-hidden="true"></div>
   <button type="button" class="toolsheet-item scoreInfoTrigger" aria-haspopup="dialog" aria-controls="scorePop">ⓘ <span>Scoring — how the scores work</span></button>
   <a class="toolsheet-item" href="?view=news" target="_blank" rel="noopener">📰 <span>Summit News</span></a>
-  <a class="toolsheet-item" href="https://reg.snowflake.com/flow/snowflake/summit26/partner/page/catalog" target="_blank" rel="noopener">🤝 <span>All Partner Vendors</span></a>
-  <a class="toolsheet-item" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download source spreadsheet</span></a>
-  <button type="button" class="toolsheet-item pdfBtn">⬇ <span>Download PDF</span></button>
+  <a class="toolsheet-item" href="#allpartners">🤝 <span>All Partner Vendors</span></a>
+  <a class="toolsheet-item" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download</span></a>
 </div>
 <div class="scorepop no-print" id="scorePop" role="dialog" aria-modal="false" aria-label="How the scores are calculated" hidden>
   <button class="x" type="button" id="scorePopX" aria-label="Close">&times;</button>
@@ -751,26 +749,10 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <span class="hit" id="searchhit"></span>
   </div>
 
-  <h3 class="sec">⭐ Must-See Vendors <span class="hint">— Priority Tier A, ranked by Overall Score</span></h3>
-  <div class="cards" id="mustsee"></div>
-
-  <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
-    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
-  </div>
-  <div class="grid">
-    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
-    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
-  </div>
-  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
-
-  <h3 class="sec">💎 Hidden Gems <span class="hint">— Overall ≥ 7 but not Tier A</span></h3>
-  <div class="cards" id="gems"></div>
-
   <h3 class="sec">🤝 Best Bryan Recommend <span class="hint">— top career / networking fit</span></h3>
   <div class="cards" id="bestfit"></div>
 
-  <h3 class="sec">All Partner Vendors <span class="hint">— <span class="sorthint">click a column to sort · </span>💎 = hidden gem</span></h3>
+  <h3 class="sec" id="allpartners">All Partner Vendors <span class="hint">— <span class="sorthint">click a column to sort · </span>💎 = hidden gem</span></h3>
   <div class="panel">
     <div class="vfilters-m no-print" id="vFiltersM"></div>
     <div class="scroll">
@@ -797,6 +779,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     </div>
     <div class="vcards" id="vcards"></div>
   </div>
+
+  <div class="grid" style="margin-top:22px">
+    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
+    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
+  </div>
+  <div class="grid">
+    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
+    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
+  </div>
+  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
 
   <div class="note" id="note"></div>
   <button id="toTop" type="button" class="totop no-print" aria-label="Back to top" title="Back to top">↑</button>
@@ -999,8 +991,6 @@ function card(v){
     <div class="scores">${scoreChips(v)}</div>
     <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+esc(v.company_type)):''}</span></div></div>`;
 }
-document.getElementById('mustsee').innerHTML = DATA.must_see.map(card).join('');
-document.getElementById('gems').innerHTML = DATA.gems.length?DATA.gems.map(card).join(''):'<div class="sub">None above threshold.</div>';
 document.getElementById('bestfit').innerHTML = DATA.best_fit.map(card).join('');
 
 // ===== MOBILE highlight re-layout (desktop DOM untouched) =====
