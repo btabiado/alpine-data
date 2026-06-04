@@ -666,6 +666,27 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .maptoggle{display:none!important}
     #mapColsWrap,#mapColsNav{display:none!important}
   }
+  /* ---------- P4 · audit fixes (accessibility) ---------- */
+  /* Honor reduced-motion everywhere — kills the slide-up sheet, the disclosure
+     rotate, chart load animation, and smooth-scroll for users who ask for it. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
+      transition-duration:.01ms!important;scroll-behavior:auto!important}
+  }
+  @media (max-width:640px){
+    /* Visible keyboard focus on the new interactive elements. */
+    details.msec>summary:focus-visible,.vcard:focus-visible,.toolsbtn:focus-visible,
+    .toolsheet-item:focus-visible,.planfit:focus-visible,
+    .navbtns>a[href="?view=mq"]:focus-visible,.navbtns>a[href="?view=map"]:focus-visible{
+      outline:2px solid #cfe8ff;outline-offset:2px}
+    /* >=44px tap targets across the mobile controls. */
+    .planfit,.bchip,#mqQuadChips button,#mqSegSel,#mqBack,
+    .navbtns>a[href="?view=mq"],.navbtns>a[href="?view=map"]{min-height:44px}
+    /* Signal that the slim highlight cards reveal the full score breakdown on tap. */
+    .card2{padding-bottom:26px}
+    .card2::after{content:"tap for scores ›";position:absolute;right:12px;bottom:9px;
+      font-size:9px;color:var(--accent);opacity:.8;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+  }
 </style>
 </head>
 <body>
@@ -691,12 +712,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <!-- Mobile-only "Tools ▾" bottom sheet (hidden on desktop) — holds the actions
      pulled out of the header so the phone landing is just 2 chips + Tools. -->
 <div class="toolsheet-backdrop no-print" id="toolsBackdrop"></div>
-<div class="toolsheet no-print" id="toolsSheet" role="menu" aria-label="More tools" aria-hidden="true">
+<div class="toolsheet no-print" id="toolsSheet" role="dialog" aria-modal="true" aria-label="More tools" aria-hidden="true">
   <div class="toolsheet-grip" aria-hidden="true"></div>
-  <button type="button" class="toolsheet-item scoreInfoTrigger" role="menuitem" aria-haspopup="dialog" aria-controls="scorePop">ⓘ <span>Scoring — how the scores work</span></button>
-  <a class="toolsheet-item" role="menuitem" href="?view=news" target="_blank" rel="noopener">📰 <span>Summit News</span></a>
-  <a class="toolsheet-item" role="menuitem" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download source spreadsheet</span></a>
-  <button type="button" class="toolsheet-item pdfBtn" role="menuitem">⬇ <span>Download PDF</span></button>
+  <button type="button" class="toolsheet-item scoreInfoTrigger" aria-haspopup="dialog" aria-controls="scorePop">ⓘ <span>Scoring — how the scores work</span></button>
+  <a class="toolsheet-item" href="?view=news" target="_blank" rel="noopener">📰 <span>Summit News</span></a>
+  <a class="toolsheet-item" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download source spreadsheet</span></a>
+  <button type="button" class="toolsheet-item pdfBtn">⬇ <span>Download PDF</span></button>
 </div>
 <div class="scorepop no-print" id="scorePop" role="dialog" aria-modal="false" aria-label="How the scores are calculated" hidden>
   <button class="x" type="button" id="scorePopX" aria-label="Close">&times;</button>
@@ -916,13 +937,29 @@ if(_view==='news'){
 (function(){
   var btn=document.getElementById('toolsBtn'), sheet=document.getElementById('toolsSheet'), back=document.getElementById('toolsBackdrop');
   if(!btn||!sheet) return;
-  function open(){sheet.classList.add('open');if(back)back.classList.add('open');btn.setAttribute('aria-expanded','true');sheet.setAttribute('aria-hidden','false');}
-  function close(){sheet.classList.remove('open');if(back)back.classList.remove('open');btn.setAttribute('aria-expanded','false');sheet.setAttribute('aria-hidden','true');}
+  var lastFocus=null;
+  function items(){return Array.prototype.filter.call(sheet.querySelectorAll('button,[href],[tabindex]:not([tabindex="-1"])'),function(el){return el.offsetParent!==null&&!el.disabled;});}
+  function open(){lastFocus=document.activeElement;sheet.classList.add('open');if(back)back.classList.add('open');btn.setAttribute('aria-expanded','true');sheet.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';var f=items();if(f.length)f[0].focus();}
+  function close(restore){sheet.classList.remove('open');if(back)back.classList.remove('open');btn.setAttribute('aria-expanded','false');sheet.setAttribute('aria-hidden','true');document.body.style.overflow='';if(restore!==false&&lastFocus&&lastFocus.focus){try{lastFocus.focus();}catch(_){}}lastFocus=null;}
   btn.addEventListener('click',function(e){e.stopPropagation();sheet.classList.contains('open')?close():open();});
-  if(back) back.addEventListener('click',close);
-  sheet.querySelectorAll('.toolsheet-item').forEach(function(it){it.addEventListener('click',function(){setTimeout(close,0);});});
-  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&sheet.classList.contains('open'))close();});
+  if(back) back.addEventListener('click',function(){close();});
+  // item navigates / opens scorePop itself, so close without stealing focus back
+  sheet.querySelectorAll('.toolsheet-item').forEach(function(it){it.addEventListener('click',function(){setTimeout(function(){close(false);},0);});});
+  document.addEventListener('keydown',function(e){
+    if(!sheet.classList.contains('open'))return;
+    if(e.key==='Escape'){close();return;}
+    if(e.key==='Tab'){var f=items();if(!f.length){e.preventDefault();return;}var first=f[0],last=f[f.length-1];
+      if(!sheet.contains(document.activeElement)){first.focus();e.preventDefault();}
+      else if(e.shiftKey&&document.activeElement===first){last.focus();e.preventDefault();}
+      else if(!e.shiftKey&&document.activeElement===last){first.focus();e.preventDefault();}}
+  });
 })();
+
+// Re-run all the load-time mobile/desktop branching cleanly when the viewport
+// crosses the 640px breakpoint (e.g. a phone rotated to landscape) — otherwise the
+// CSS flips but the JS-built layout (card list, section order) would not.
+(function(){var mq=window.matchMedia&&window.matchMedia('(max-width:640px)');
+  if(mq&&mq.addEventListener)mq.addEventListener('change',function(){location.reload();});})();
 
 (function(){
   var sh=document.getElementById('subhead'); if(!sh) return;
@@ -966,7 +1003,7 @@ if(window.matchMedia && window.matchMedia('(max-width:640px)').matches){(functio
     var n=g.querySelectorAll('.card2').length;
     var d=document.createElement('details'); d.className='msec';
     var s=document.createElement('summary'); s.className='msec-sum';
-    s.innerHTML=label+' <span class="msec-n">'+n+'</span>';
+    s.innerHTML=label+' <span class="msec-n" aria-label="'+n+' vendors">'+n+'</span>';
     h.parentNode.insertBefore(d,h); h.remove(); d.appendChild(s); d.appendChild(g);
   }
   collapse('mustsee','⭐ Must-See Vendors');
