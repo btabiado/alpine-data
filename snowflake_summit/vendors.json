@@ -38,7 +38,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
-   "round": "Series A"
+   "round": "Series A",
+   "website": "https://7riversinc.com"
   },
   {
    "name": "Acceldata",
@@ -61,7 +62,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series C (incl. Oct 2023 $10M extension)",
-   "employees": "~270"
+   "employees": "~270",
+   "website": "https://www.acceldata.io"
   },
   {
    "name": "Acxiom",
@@ -84,7 +86,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Acquired by Interpublic Group (IPG), 2018",
-   "employees": "~2,100 (at acquisition)"
+   "employees": "~2,100 (at acquisition)",
+   "website": "https://www.acxiom.com"
   },
   {
    "name": "Airbyte",
@@ -107,7 +110,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series B",
-   "employees": "~130-155"
+   "employees": "~130-155",
+   "website": "https://airbyte.com"
   },
   {
    "name": "Alation",
@@ -130,7 +134,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
    "round": "Series E",
-   "employees": "~700"
+   "employees": "~700",
+   "website": "https://www.alation.com"
   },
   {
    "name": "Alteryx",
@@ -152,7 +157,8 @@
    "notes": "Taken private in 2024.",
    "source": "https://clearlake.com/news/clearlake-capitalgroup-and-insight-partners-complete-acquisition-of-alteryx/",
    "niche": "Dashboard",
-   "round": "Public (NYSE: AYX) -> Acquired by Clearlake Capital & Insight Partners, Mar 2024"
+   "round": "Public (NYSE: AYX) -> Acquired by Clearlake Capital & Insight Partners, Mar 2024",
+   "website": "https://www.alteryx.com"
   },
   {
    "name": "Altimate AI",
@@ -174,7 +180,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
-   "round": "Seed (convertible note, 2022)"
+   "round": "Seed (convertible note, 2022)",
+   "website": "https://www.altimate.ai"
   },
   {
    "name": "Amperity",
@@ -197,7 +204,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Series D",
-   "employees": "~306"
+   "employees": "~306",
+   "website": "https://amperity.com"
   },
   {
    "name": "Anomalo",
@@ -220,7 +228,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
    "round": "Series B (Jan 2024)",
-   "employees": "~90-100"
+   "employees": "~90-100",
+   "website": "https://www.anomalo.com"
   },
   {
    "name": "Arango",
@@ -243,7 +252,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Series B (2021)",
-   "employees": "~98"
+   "employees": "~98",
+   "website": "https://arango.ai"
   },
   {
    "name": "Archetype",
@@ -265,7 +275,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series A (Nov 2025)"
+   "round": "Series A (Nov 2025)",
+   "website": "https://archetypeconsulting.com"
   },
   {
    "name": "Artie Technologies",
@@ -287,7 +298,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series A (Jan 2026)"
+   "round": "Series A (Jan 2026)",
+   "website": "https://www.artie.com"
   },
   {
    "name": "Astrato Analytics",
@@ -310,7 +322,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Acquired by insightsoftware (Apr 2025)",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://www.astrato.io"
   },
   {
    "name": "Astronomer",
@@ -333,7 +346,8 @@
    "source": "https://www.astronomer.io/press-releases/astronomer-secures-93-million-series-d-funding/",
    "niche": "ETL",
    "round": "Series D ($93M, May 2025)",
-   "employees": "500-1000"
+   "employees": "500-1000",
+   "website": "https://www.astronomer.io"
   },
   {
    "name": "Ataccama",
@@ -356,7 +370,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Growth/Series A ($150M, Jun 2022); + Snowflake Ventures strategic (Dec 2025)",
-   "employees": "500-1000"
+   "employees": "500-1000",
+   "website": "https://www.ataccama.com"
   },
   {
    "name": "Atlan",
@@ -379,7 +394,8 @@
    "source": "https://atlan.com/atlan-raises-105m-funding/ ; Reuters May 2024",
    "niche": "Governance",
    "round": "Series C ($105M, May 2024)",
-   "employees": "500-600"
+   "employees": "500-600",
+   "website": "https://atlan.com"
   },
   {
    "name": "Atrium",
@@ -402,7 +418,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Private (Snowflake/Salesforce consultancy; NMS Capital-backed)",
-   "employees": "201-500"
+   "employees": "201-500",
+   "website": "https://atrium.ai"
   },
   {
    "name": "AtScale",
@@ -425,7 +442,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Strategic round led by Snowflake Ventures (Dec 2025)",
-   "employees": "100-150"
+   "employees": "100-150",
+   "website": "https://www.atscale.com"
   },
   {
    "name": "Avaap",
@@ -448,7 +466,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "PE-backed (NMS Capital portfolio)",
-   "employees": "375"
+   "employees": "375",
+   "website": "https://avaap.com"
   },
   {
    "name": "AVEVA",
@@ -471,7 +490,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Acquired by Schneider Electric (~$11B / £9.5B, Jan 2023)",
-   "employees": "6400+"
+   "employees": "6400+",
+   "website": "https://www.aveva.com"
   },
   {
    "name": "AWS",
@@ -493,7 +513,8 @@
    "notes": "Core cloud infrastructure.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
-   "round": "Public (segment of Amazon, NASDAQ: AMZN)"
+   "round": "Public (segment of Amazon, NASDAQ: AMZN)",
+   "website": "https://aws.amazon.com"
   },
   {
    "name": "Bigeye",
@@ -516,7 +537,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
    "round": "Series B ($45M, Sep 2021)",
-   "employees": "50-100"
+   "employees": "50-100",
+   "website": "https://www.bigeye.com"
   },
   {
    "name": "Blend360",
@@ -539,7 +561,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Private Equity ($100M, 2022, Recognize)",
-   "employees": "700-1000"
+   "employees": "700-1000",
+   "website": "https://www.blend360.com"
   },
   {
    "name": "BlueCloud",
@@ -562,7 +585,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Private (Snowflake Elite consulting partner)",
-   "employees": "~500"
+   "employees": "~500",
+   "website": "https://www.blue.cloud"
   },
   {
    "name": "Boomi",
@@ -585,7 +609,8 @@
    "source": "https://www.franciscopartners.com/media/francisco-partners-and-tpg-to-acquire-boomi-from-dell-technologies",
    "niche": "ETL",
    "round": "Acquired by Francisco Partners & TPG (2021)",
-   "employees": "~2,888"
+   "employees": "~2,888",
+   "website": "https://boomi.com"
   },
   {
    "name": "Braze",
@@ -608,7 +633,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Public (BRZE)",
-   "employees": "~1,988"
+   "employees": "~1,988",
+   "website": "https://www.braze.com"
   },
   {
    "name": "Brilliant Enterprise Magic",
@@ -630,7 +656,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Seed"
+   "round": "Seed",
+   "website": "https://www.bem.ai"
   },
   {
    "name": "Bruin",
@@ -653,7 +680,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Pre-Seed",
-   "employees": "~13"
+   "employees": "~13",
+   "website": "https://getbruin.com"
   },
   {
    "name": "Brooklyn Data",
@@ -675,7 +703,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
-   "round": "Acquired by Velir (2023, terms undisclosed)"
+   "round": "Acquired by Velir (2023, terms undisclosed)",
+   "website": "https://www.brooklyndata.co"
   },
   {
    "name": "Capgemini",
@@ -698,7 +727,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (CAP.PA)",
-   "employees": "~340,000+"
+   "employees": "~340,000+",
+   "website": "https://www.capgemini.com"
   },
   {
    "name": "Capital One Software",
@@ -720,7 +750,8 @@
    "notes": "Enterprise software from Capital One.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Cost Savings",
-   "round": "Business unit of Capital One Financial (NYSE: COF)"
+   "round": "Business unit of Capital One Financial (NYSE: COF)",
+   "website": "https://www.capitalone.com/software"
   },
   {
    "name": "CARTO",
@@ -742,7 +773,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series C (Dec 2021)"
+   "round": "Series C (Dec 2021)",
+   "website": "https://carto.com"
   },
   {
    "name": "CData",
@@ -765,7 +797,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series C (Jun 2024)",
-   "employees": "~500"
+   "employees": "~500",
+   "website": "https://www.cdata.com"
   },
   {
    "name": "CDW",
@@ -788,7 +821,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (CDW)",
-   "employees": "~15,100"
+   "employees": "~15,100",
+   "website": "https://www.cdw.com"
   },
   {
    "name": "Chalk",
@@ -810,7 +844,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series A (May 2025)"
+   "round": "Series A (May 2025)",
+   "website": "https://chalk.ai"
   },
   {
    "name": "Cloudera",
@@ -833,7 +868,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Acquired by CD&R & KKR (2021)",
-   "employees": "~4,100"
+   "employees": "~4,100",
+   "website": "https://www.cloudera.com"
   },
   {
    "name": "Coalesce",
@@ -856,7 +892,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series B ($50M, Apr 2024)",
-   "employees": "~141"
+   "employees": "~141",
+   "website": "https://coalesce.io"
   },
   {
    "name": "Coastal",
@@ -879,7 +916,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Acquired by Tata Consultancy Services (TCS), Jan 2026",
-   "employees": "~500-615"
+   "employees": "~500-615",
+   "website": "https://coastalcloud.us"
   },
   {
    "name": "Cognizant",
@@ -902,7 +940,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NASDAQ: CTSH)",
-   "employees": "~349,800 (Sep 2025)"
+   "employees": "~349,800 (Sep 2025)",
+   "website": "https://www.cognizant.com"
   },
   {
    "name": "Collibra",
@@ -924,7 +963,8 @@
    "notes": "Large enterprise governance incumbent.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
-   "round": "Series G ($250M, Nov 2021)"
+   "round": "Series G ($250M, Nov 2021)",
+   "website": "https://www.collibra.com"
   },
   {
    "name": "Contentsquare",
@@ -947,7 +987,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Series F ($400M equity + $200M debt, Jul 2022)",
-   "employees": "~1,800"
+   "employees": "~1,800",
+   "website": "https://contentsquare.com"
   },
   {
    "name": "Crunchbase",
@@ -970,7 +1011,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Marketplace",
    "round": "Series D ($50M, Jul 2022)",
-   "employees": "~249"
+   "employees": "~249",
+   "website": "https://www.crunchbase.com"
   },
   {
    "name": "Cyera",
@@ -992,7 +1034,8 @@
    "notes": "Hot data security / DSPM.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Security",
-   "round": "Series F ($400M, Jan 2026)"
+   "round": "Series F ($400M, Jan 2026)",
+   "website": "https://www.cyera.com"
   },
   {
    "name": "Dagster Labs",
@@ -1015,7 +1058,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series B ($33M, May 2023)",
-   "employees": "~85-88"
+   "employees": "~85-88",
+   "website": "https://dagster.io"
   },
   {
    "name": "DAS42",
@@ -1037,7 +1081,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
-   "employees": "~50-60"
+   "employees": "~50-60",
+   "website": "https://das42.com"
   },
   {
    "name": "Datacove",
@@ -1080,7 +1125,8 @@
    "notes": "Data diffs and quality for analytics engineering.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
-   "round": "Series A ($20M, Nov 2021)"
+   "round": "Series A ($20M, Nov 2021)",
+   "website": "https://www.datafold.com"
   },
   {
    "name": "DataHub",
@@ -1102,7 +1148,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
-   "round": "Series B ($35M, 2025)"
+   "round": "Series B ($35M, 2025)",
+   "website": "https://datahub.com"
   },
   {
    "name": "Dataiku",
@@ -1125,7 +1172,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Series F (last private round); IPO in progress (Morgan Stanley, Citigroup bookrunners)",
-   "employees": "~1,600"
+   "employees": "~1,600",
+   "website": "https://www.dataiku.com"
   },
   {
    "name": "DataOps.live",
@@ -1147,7 +1195,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
-   "round": "Strategic investment from Snowflake Ventures (Mar 2025); prior $17.5M (May 2023)"
+   "round": "Strategic investment from Snowflake Ventures (Mar 2025); prior $17.5M (May 2023)",
+   "website": "https://www.dataops.live"
   },
   {
    "name": "DataRadar",
@@ -1169,7 +1218,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Seed (single round, amount undisclosed)"
+   "round": "Seed (single round, amount undisclosed)",
+   "website": "https://www.dataradar.io"
   },
   {
    "name": "dbt Labs",
@@ -1191,7 +1241,8 @@
    "notes": "Transformation standard; merged with Fivetran.",
    "source": "https://www.fivetran.com/press/fivetran-and-dbt-labs-unite-to-set-the-standard-for-open-data-infrastructure-2025",
    "niche": "ETL",
-   "round": "Series D"
+   "round": "Series D",
+   "website": "https://www.getdbt.com"
   },
   {
    "name": "dltHub",
@@ -1199,7 +1250,7 @@
    "category": "Data Engineering / ELT",
    "company_type": "Private / Unknown",
    "ticker_parent": null,
-   "market_cap": "~$16-21M (Dec 2023, early estimate)",
+   "market_cap": "~$16M-21M (Dec 2023, early estimate)",
    "funding": "~$14.2M total over 3 rounds",
    "revenue": null,
    "investors": "Bessemer Venture Partners; Foundation Capital; Dig Ventures; AAL Management; Angel Invest",
@@ -1213,7 +1264,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
-   "round": "Seed ($8M, Aug 2025)"
+   "round": "Seed ($8M, Aug 2025)",
+   "website": "https://dlthub.com"
   },
   {
    "name": "Domo",
@@ -1236,7 +1288,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Public (DOMO)",
-   "employees": "~876"
+   "employees": "~876",
+   "website": "https://www.domo.com"
   },
   {
    "name": "DQLabs",
@@ -1258,7 +1311,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
-   "round": "Early-stage (Seed/Series A)"
+   "round": "Early-stage (Seed/Series A)",
+   "website": "https://www.dqlabs.ai"
   },
   {
    "name": "Dremio",
@@ -1281,7 +1335,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Acquired by SAP (announced May 4, 2026, expected close Q3 2026, terms undisclosed); last private round Series E",
-   "employees": "~378"
+   "employees": "~378",
+   "website": "https://www.dremio.com"
   },
   {
    "name": "Dun & Bradstreet",
@@ -1304,7 +1359,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Acquired by Clearlake Capital (2025); formerly Public (NYSE: DNB)",
-   "employees": "~6,247"
+   "employees": "~6,247",
+   "website": "https://www.dnb.com"
   },
   {
    "name": "edata",
@@ -1348,7 +1404,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series B (led by Lightspeed, late 2025); strategic investment from Snowflake Ventures (Sep 2025)",
-   "employees": "~85"
+   "employees": "~85",
+   "website": "https://www.elementum.ai"
   },
   {
    "name": "EPAM",
@@ -1371,7 +1428,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (EPAM)",
-   "employees": "~61,200"
+   "employees": "~61,200",
+   "website": "https://www.epam.com"
   },
   {
    "name": "Espresso AI",
@@ -1394,7 +1452,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Cost Savings",
    "round": "Seed",
-   "employees": "1-50"
+   "employees": "1-50",
+   "website": "https://espresso.ai"
   },
   {
    "name": "Estuary",
@@ -1417,7 +1476,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series A",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://estuary.dev"
   },
   {
    "name": "Etleap",
@@ -1440,7 +1500,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Seed",
-   "employees": "~22"
+   "employees": "~22",
+   "website": "https://etleap.com"
   },
   {
    "name": "Euno",
@@ -1463,7 +1524,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Seed",
-   "employees": "1-50"
+   "employees": "1-50",
+   "website": "https://euno.ai"
   },
   {
    "name": "evolv Consulting",
@@ -1486,7 +1548,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Private (bootstrapped/services firm)",
-   "employees": "~280-300"
+   "employees": "~280-300",
+   "website": "https://evolv.consulting/"
   },
   {
    "name": "FactSet",
@@ -1509,7 +1572,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Marketplace",
    "round": "Public (NYSE: FDS)",
-   "employees": "~12,840"
+   "employees": "~12,840",
+   "website": "https://www.factset.com/"
   },
   {
    "name": "FalkorDB",
@@ -1532,7 +1596,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Seed",
-   "employees": "1-50"
+   "employees": "1-50",
+   "website": "https://www.falkordb.com/"
   },
   {
    "name": "Fivetran",
@@ -1555,7 +1620,8 @@
    "source": "https://www.fivetran.com/press/fivetran-and-dbt-labs-unite-to-set-the-standard-for-open-data-infrastructure-2025",
    "niche": "ETL",
    "round": "Series D",
-   "employees": "~1,797"
+   "employees": "~1,797",
+   "website": "https://www.fivetran.com"
   },
   {
    "name": "Flexor",
@@ -1578,7 +1644,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed",
-   "employees": "~39"
+   "employees": "~39",
+   "website": "https://flexor.ai"
   },
   {
    "name": "Foundational",
@@ -1601,7 +1668,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed",
-   "employees": "1-50"
+   "employees": "1-50",
+   "website": "https://www.foundational.io"
   },
   {
    "name": "FreedomPay",
@@ -1624,7 +1692,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Private equity (TPG-backed)",
-   "employees": "~560"
+   "employees": "~560",
+   "website": "https://corporate.freedompay.com/"
   },
   {
    "name": "Genesis Computing",
@@ -1647,7 +1716,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed",
-   "employees": "1-50"
+   "employees": "1-50",
+   "website": "https://genesiscomputing.com"
   },
   {
    "name": "Genpact",
@@ -1670,7 +1740,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NYSE: G)",
-   "employees": "~140,000"
+   "employees": "~140,000",
+   "website": "https://www.genpact.com/"
   },
   {
    "name": "Glean Technologies",
@@ -1693,7 +1764,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series F",
-   "employees": "~1,300-1,600"
+   "employees": "~1,300-1,600",
+   "website": "https://www.glean.com"
   },
   {
    "name": "Google Cloud",
@@ -1715,7 +1787,8 @@
    "notes": "Gemini / BigQuery / Vertex alignment.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
-   "round": "Division of Alphabet (NASDAQ: GOOGL)"
+   "round": "Division of Alphabet (NASDAQ: GOOGL)",
+   "website": "https://cloud.google.com"
   },
   {
    "name": "Gray Swan",
@@ -1737,7 +1810,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
-   "round": "Series A ($40M, 2026)"
+   "round": "Series A ($40M, 2026)",
+   "website": "https://www.grayswan.ai/"
   },
   {
    "name": "Greybeam",
@@ -1759,7 +1833,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
-   "round": "Seed"
+   "round": "Seed",
+   "website": "https://www.greybeam.ai/"
   },
   {
    "name": "GrowthArc",
@@ -1780,7 +1855,8 @@
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
-   "niche": "Customer Data"
+   "niche": "Customer Data",
+   "website": "https://www.growtharc.com/"
   },
   {
    "name": "GrowthLoop",
@@ -1803,7 +1879,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Growth equity (The Jordan Company; follow-on Jan 2026)",
-   "employees": "~81-91"
+   "employees": "~81-91",
+   "website": "https://www.growthloop.com/"
   },
   {
    "name": "Hakkoda (an IBM Company)",
@@ -1826,7 +1903,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Acquired by IBM (April 2025, terms undisclosed)",
-   "employees": "hundreds (pre-acquisition; founded 2021)"
+   "employees": "hundreds (pre-acquisition; founded 2021)",
+   "website": "https://hakkoda.io"
   },
   {
    "name": "Hevo Data",
@@ -1849,7 +1927,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series B ($30M, Dec 2021)",
-   "employees": "~242"
+   "employees": "~242",
+   "website": "https://hevodata.com"
   },
   {
    "name": "Hex",
@@ -1872,7 +1951,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Series C ($70M)",
-   "employees": "~167"
+   "employees": "~167",
+   "website": "https://hex.tech"
   },
   {
    "name": "Hexaware",
@@ -1895,7 +1975,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NSE/BSE: HEXT); Carlyle-backed",
-   "employees": "~33,844"
+   "employees": "~33,844",
+   "website": "https://hexaware.com"
   },
   {
    "name": "Hightouch",
@@ -1918,7 +1999,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Series D ($150M)",
-   "employees": "~558"
+   "employees": "~558",
+   "website": "https://hightouch.com"
   },
   {
    "name": "Honeydew",
@@ -1941,7 +2023,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed",
-   "employees": "1-10"
+   "employees": "1-10",
+   "website": "https://honeydew.ai"
   },
   {
    "name": "IBM",
@@ -1964,7 +2047,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NYSE: IBM)",
-   "employees": "~264,300"
+   "employees": "~264,300",
+   "website": "https://www.ibm.com"
   },
   {
    "name": "Immuta",
@@ -1987,7 +2071,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
    "round": "Series E",
-   "employees": "500-1000"
+   "employees": "500-1000",
+   "website": "https://www.immuta.com"
   },
   {
    "name": "Informatica",
@@ -2009,7 +2094,8 @@
    "notes": "Now Salesforce-owned.",
    "source": "https://www.salesforce.com/news/press-releases/2025/11/18/salesforce-completes-acquisition-of-informatica/",
    "niche": "Governance",
-   "round": "Acquired by Salesforce (closed Nov 2025; was NYSE: INFA)"
+   "round": "Acquired by Salesforce (closed Nov 2025; was NYSE: INFA)",
+   "website": "https://www.informatica.com"
   },
   {
    "name": "Infosys",
@@ -2032,7 +2118,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NYSE: INFY)",
-   "employees": "328,594"
+   "employees": "328,594",
+   "website": "https://www.infosys.com"
   },
   {
    "name": "Insider One",
@@ -2055,7 +2142,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series E",
-   "employees": "1000-1500"
+   "employees": "1000-1500",
+   "website": "https://insiderone.com"
   },
   {
    "name": "insightsoftware",
@@ -2078,7 +2166,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Private equity (PE-backed)",
-   "employees": "~2,262"
+   "employees": "~2,262",
+   "website": "https://insightsoftware.com"
   },
   {
    "name": "Integrated Quantum Technologies",
@@ -2099,7 +2188,8 @@
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
-   "niche": "Data Ecosystem"
+   "niche": "Data Ecosystem",
+   "website": "https://integratedquantum.com"
   },
   {
    "name": "Keebo",
@@ -2122,7 +2212,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Cost Savings",
    "round": "Series A",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://keebo.ai"
   },
   {
    "name": "Kipi.ai",
@@ -2145,7 +2236,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Acquired by WNS (March 2025)",
-   "employees": "~725"
+   "employees": "~725",
+   "website": "https://www.kipi.ai"
   },
   {
    "name": "Kloudgen",
@@ -2168,7 +2260,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Bootstrapped",
-   "employees": "~8"
+   "employees": "~8",
+   "website": "https://www.kloudgen.com"
   },
   {
    "name": "KPMG",
@@ -2191,7 +2284,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Private (global partnership)",
-   "employees": "276,030"
+   "employees": "276,030",
+   "website": "https://kpmg.com"
   },
   {
    "name": "Kumo",
@@ -2214,7 +2308,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series B",
-   "employees": "51-100"
+   "employees": "51-100",
+   "website": "https://kumo.ai"
   },
   {
    "name": "LandingAI",
@@ -2237,7 +2332,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Series B",
-   "employees": "100-250"
+   "employees": "100-250",
+   "website": "https://landing.ai"
   },
   {
    "name": "LlamaIndex",
@@ -2260,7 +2356,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Series A",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://www.llamaindex.ai"
   },
   {
    "name": "LTM",
@@ -2283,7 +2380,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Public (NSE: LTM)",
-   "employees": "~84,000"
+   "employees": "~84,000",
+   "website": "https://www.ltm.com"
   },
   {
    "name": "Mastech Digital",
@@ -2306,7 +2404,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NYSE American: MHH)",
-   "employees": "~1,288"
+   "employees": "~1,288",
+   "website": "https://www.mastechdigital.com"
   },
   {
    "name": "Mastek",
@@ -2329,7 +2428,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NSE: MASTEK; BSE: 523704)",
-   "employees": "~4,800-5,000"
+   "employees": "~4,800-5,000",
+   "website": "https://www.mastek.com"
   },
   {
    "name": "MathCo",
@@ -2352,7 +2452,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Growth equity (Brighton Park Capital, 2022)",
-   "employees": "~1,150-1,600"
+   "employees": "~1,150-1,600",
+   "website": "https://mathco.com"
   },
   {
    "name": "Matia",
@@ -2375,7 +2476,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series A",
-   "employees": "~20-50"
+   "employees": "~20-50",
+   "website": "https://www.matia.io"
   },
   {
    "name": "Matillion",
@@ -2398,7 +2500,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series E",
-   "employees": "500-1000"
+   "employees": "500-1000",
+   "website": "https://www.matillion.com"
   },
   {
    "name": "Maxa",
@@ -2421,7 +2524,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series A",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://www.maxa.ai"
   },
   {
    "name": "MaxMyCloud AI",
@@ -2442,7 +2546,8 @@
    "tier": "C",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
-   "niche": "Agents"
+   "niche": "Agents",
+   "website": "https://www.maxmycloud.com"
   },
   {
    "name": "Mendix (a Siemens Business)",
@@ -2465,7 +2570,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "API",
    "round": "Acquired by Siemens (2018)",
-   "employees": "~1,200-1,300"
+   "employees": "~1,200-1,300",
+   "website": "https://www.mendix.com"
   },
   {
    "name": "Merkle",
@@ -2488,7 +2594,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Acquired by Dentsu",
-   "employees": "~16,000"
+   "employees": "~16,000",
+   "website": "https://www.merkle.com"
   },
   {
    "name": "MessageGears",
@@ -2511,7 +2618,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Series D",
-   "employees": "~135"
+   "employees": "~135",
+   "website": "https://messagegears.com"
   },
   {
    "name": "Meta Integration",
@@ -2533,7 +2641,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Bootstrapped (private, 100% employee-owned)"
+   "round": "Bootstrapped (private, 100% employee-owned)",
+   "website": "https://metaintegration.com"
   },
   {
    "name": "Metric Insights",
@@ -2556,7 +2665,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Seed (last round 2017)",
-   "employees": "~47-60"
+   "employees": "~47-60",
+   "website": "https://www.metricinsights.com/"
   },
   {
    "name": "Microsoft",
@@ -2579,7 +2689,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Public (NASDAQ: MSFT)",
-   "employees": "~228,000"
+   "employees": "~228,000",
+   "website": "https://www.microsoft.com"
   },
   {
    "name": "Monte Carlo",
@@ -2602,7 +2713,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
    "round": "Series D",
-   "employees": "~546"
+   "employees": "~546",
+   "website": "https://montecarlo.ai"
   },
   {
    "name": "Neo4j",
@@ -2625,7 +2737,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Series F/G",
-   "employees": "~1,006"
+   "employees": "~1,006",
+   "website": "https://neo4j.com"
   },
   {
    "name": "NICE",
@@ -2648,7 +2761,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Public (NASDAQ: NICE)",
-   "employees": "~9,626"
+   "employees": "~9,626",
+   "website": "https://www.nice.com/"
   },
   {
    "name": "NTT DATA",
@@ -2671,7 +2785,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Subsidiary of NTT (delisted from TSE 2025)",
-   "employees": "~197,800"
+   "employees": "~197,800",
+   "website": "https://www.nttdata.com/global/en/"
   },
   {
    "name": "Omni Analytics",
@@ -2693,7 +2808,8 @@
    "notes": "Next-gen BI platform.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
-   "round": "Series C"
+   "round": "Series C",
+   "website": "https://omni.co"
   },
   {
    "name": "OneSix",
@@ -2716,7 +2832,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Seed (2022)",
-   "employees": "~25-60"
+   "employees": "~25-60",
+   "website": "https://www.onesix.ai/"
   },
   {
    "name": "OneTrust",
@@ -2739,7 +2856,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Security",
    "round": "Series C (latest extension/raise 2023)",
-   "employees": "~2,489"
+   "employees": "~2,489",
+   "website": "https://www.onetrust.com/"
   },
   {
    "name": "OpenAI",
@@ -2761,7 +2879,8 @@
    "notes": "Strategic AI platform stop.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
-   "round": "Series G"
+   "round": "Series G",
+   "website": "https://openai.com"
   },
   {
    "name": "Openlayer",
@@ -2783,7 +2902,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series A ($14.5M, May 2025)"
+   "round": "Series A ($14.5M, May 2025)",
+   "website": "https://www.openlayer.com"
   },
   {
    "name": "Pantomath",
@@ -2806,7 +2926,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
    "round": "Series B ($30M, Aug 2025, led by General Catalyst)",
-   "employees": "~48"
+   "employees": "~48",
+   "website": "https://www.pantomath.com/"
   },
   {
    "name": "paradime.io",
@@ -2828,7 +2949,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Seed"
+   "round": "Seed",
+   "website": "https://www.paradime.io/"
   },
   {
    "name": "Perficient",
@@ -2850,7 +2972,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
-   "round": "Acquired by EQT (BPEA Private Equity Fund VIII); formerly NASDAQ: PRFT"
+   "round": "Acquired by EQT (BPEA Private Equity Fund VIII); formerly NASDAQ: PRFT",
+   "website": "https://www.perficient.com/"
   },
   {
    "name": "phData",
@@ -2873,7 +2996,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Acquired by Gryphon Investors",
-   "employees": "~782"
+   "employees": "~782",
+   "website": "https://www.phdata.io/"
   },
   {
    "name": "PointFive",
@@ -2895,7 +3019,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series A ($20M, led by Salesforce Ventures)"
+   "round": "Series A ($20M, led by Salesforce Ventures)",
+   "website": "https://www.pointfive.co"
   },
   {
    "name": "Polytomic",
@@ -2918,7 +3043,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed",
-   "employees": "~7-10"
+   "employees": "~7-10",
+   "website": "https://www.polytomic.com"
   },
   {
    "name": "Posit",
@@ -2941,7 +3067,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Bootstrapped / PBC",
-   "employees": "~405"
+   "employees": "~405",
+   "website": "https://posit.co"
   },
   {
    "name": "Precisely",
@@ -2964,7 +3091,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "PE-owned (Clearlake Capital & TA Associates, 2021)",
-   "employees": "2,000+"
+   "employees": "2,000+",
+   "website": "https://www.precisely.com"
   },
   {
    "name": "Precog",
@@ -2986,7 +3114,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Early-stage / Seed"
+   "round": "Early-stage / Seed",
+   "website": "https://precog.com"
   },
   {
    "name": "Prefect Technologies",
@@ -3009,7 +3138,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
    "round": "Series B ($32M, Jun 2021, led by Tiger Global)",
-   "employees": "~144"
+   "employees": "~144",
+   "website": "https://www.prefect.io"
   },
   {
    "name": "Promethium",
@@ -3032,7 +3162,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series A (Feb 2022, $26M)",
-   "employees": "~50"
+   "employees": "~50",
+   "website": "https://www.promethium.ai"
   },
   {
    "name": "Prophecy",
@@ -3054,7 +3185,8 @@
    "notes": "Low-code data engineering.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ETL",
-   "round": "Series B extension/B1 (Jan 2025, $47M, led by Smith Point Capital)"
+   "round": "Series B extension/B1 (Jan 2025, $47M, led by Smith Point Capital)",
+   "website": "https://www.prophecy.ai"
   },
   {
    "name": "Qlik",
@@ -3077,7 +3209,8 @@
    "source": "https://www.thomabravo.com/press-releases/qlik-announces-close-of-significant-investment-led-by-adia-and-thoma-bravo",
    "niche": "Dashboard",
    "round": "Public (NASDAQ: QLIK), IPO ~Dec 2025; majority-owned by Thoma Bravo",
-   "employees": "~4,586"
+   "employees": "~4,586",
+   "website": "https://www.qlik.com"
   },
   {
    "name": "Qualytics",
@@ -3099,7 +3232,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
-   "round": "Series A (June 2025, $10M, led by BMW i Ventures)"
+   "round": "Series A (June 2025, $10M, led by BMW i Ventures)",
+   "website": "https://qualytics.ai"
   },
   {
    "name": "Quest",
@@ -3122,7 +3256,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Private (Clearlake Capital owned)",
-   "employees": "~2,000-3,850 (varies by source)"
+   "employees": "~2,000-3,850 (varies by source)",
+   "website": "https://www.quest.com"
   },
   {
    "name": "RecordPoint",
@@ -3145,7 +3280,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series B",
-   "employees": "~130"
+   "employees": "~130",
+   "website": "https://www.recordpoint.com"
   },
   {
    "name": "Redpanda",
@@ -3168,7 +3304,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Series D (April 2025, $100M, led by GV)",
-   "employees": "~188"
+   "employees": "~188",
+   "website": "https://www.redpanda.com"
   },
   {
    "name": "Reducto",
@@ -3190,7 +3327,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Series B (Oct 2025, $75M, led by a16z)"
+   "round": "Series B (Oct 2025, $75M, led by a16z)",
+   "website": "https://reducto.ai"
   },
   {
    "name": "Reflex",
@@ -3212,7 +3350,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Seed (Aug 2023, $5M, led by Lux Capital); formerly Pynecone, YC W23"
+   "round": "Seed (Aug 2023, $5M, led by Lux Capital); formerly Pynecone, YC W23",
+   "website": "https://reflex.dev"
   },
   {
    "name": "RelationalAI",
@@ -3234,7 +3373,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
-   "round": "Series B (April 2022, $75M, led by Tiger Global)"
+   "round": "Series B (April 2022, $75M, led by Tiger Global)",
+   "website": "https://www.relational.ai"
   },
   {
    "name": "Reltio",
@@ -3257,7 +3397,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
    "round": "Acquired by SAP (completed May 7, 2026, terms undisclosed); prior round Series E ($120M, 2021)",
-   "employees": "~612"
+   "employees": "~612",
+   "website": "https://www.reltio.com"
   },
   {
    "name": "Remix",
@@ -3279,7 +3420,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "employees": "~17"
+   "employees": "~17",
+   "website": "https://remixlabs.com"
   },
   {
    "name": "Replit",
@@ -3301,7 +3443,8 @@
    "notes": "AI software building platform.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
-   "round": "Series D ($400M, Mar 2026, led by Georgian)"
+   "round": "Series D ($400M, Mar 2026, led by Georgian)",
+   "website": "https://replit.com"
   },
   {
    "name": "Retool",
@@ -3324,7 +3467,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Series C ($200M; earlier $45M Series C tranche in 2022)",
-   "employees": "400+"
+   "employees": "400+",
+   "website": "https://retool.com"
   },
   {
    "name": "Revefi",
@@ -3346,7 +3490,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
-   "round": "Series A (Sep 2024); $10.5M Seed in Sep 2023"
+   "round": "Series A (Sep 2024); $10.5M Seed in Sep 2023",
+   "website": "https://www.revefi.com"
   },
   {
    "name": "Row Zero",
@@ -3368,7 +3513,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
-   "round": "Seed ($10M, May 2025)"
+   "round": "Seed ($10M, May 2025)",
+   "website": "https://rowzero.com"
   },
   {
    "name": "RudderStack",
@@ -3391,7 +3537,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Series B ($56M, Feb 2022)",
-   "employees": "~140-150"
+   "employees": "~140-150",
+   "website": "https://www.rudderstack.com"
   },
   {
    "name": "S&P Global",
@@ -3414,7 +3561,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Marketplace",
    "round": "Public (NYSE: SPGI)",
-   "employees": "~44,500"
+   "employees": "~44,500",
+   "website": "https://www.spglobal.com"
   },
   {
    "name": "Safe Software",
@@ -3437,7 +3585,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Growth equity (JMI Equity, Oct 2025)",
-   "employees": "200+"
+   "employees": "200+",
+   "website": "https://www.safe.com"
   },
   {
    "name": "Salesforce",
@@ -3460,7 +3609,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Public (NYSE: CRM)",
-   "employees": "~76,000 (FY2026; sources range ~73,000-83,000)"
+   "employees": "~76,000 (FY2026; sources range ~73,000-83,000)",
+   "website": "https://www.salesforce.com"
   },
   {
    "name": "SAP",
@@ -3483,7 +3633,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "ERP",
    "round": "Public (NYSE: SAP; also Frankfurt/XETRA)",
-   "employees": "~110,000"
+   "employees": "~110,000",
+   "website": "https://www.sap.com"
   },
   {
    "name": "Seemore Data",
@@ -3506,7 +3657,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Cost Savings",
    "round": "Seed",
-   "employees": "~20"
+   "employees": "~20",
+   "website": "https://seemoredata.io"
   },
   {
    "name": "SELECT",
@@ -3528,7 +3680,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Cost Savings",
-   "round": "Acquired by DoiT (Dec 15, 2025); prior Seed round"
+   "round": "Acquired by DoiT (Dec 15, 2025); prior Seed round",
+   "website": "https://select.dev"
   },
   {
    "name": "Sema4.ai",
@@ -3550,7 +3703,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
-   "round": "Series A extension ($25M, Jun 2025; $30.5M initial Series A)"
+   "round": "Series A extension ($25M, Jun 2025; $30.5M initial Series A)",
+   "website": "https://sema4.ai"
   },
   {
    "name": "Semarchy",
@@ -3573,7 +3727,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
    "round": "Growth equity (Providence Strategic Growth)",
-   "employees": "~187"
+   "employees": "~187",
+   "website": "https://semarchy.com"
   },
   {
    "name": "ServiceNow",
@@ -3596,7 +3751,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Public (NYSE: NOW)",
-   "employees": "~29,000"
+   "employees": "~29,000",
+   "website": "https://www.servicenow.com"
   },
   {
    "name": "Sifflet",
@@ -3619,7 +3775,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Security",
    "round": "Series B (Jun 2025)",
-   "employees": "~50-100"
+   "employees": "~50-100",
+   "website": "https://www.siffletdata.com"
   },
   {
    "name": "Sigma",
@@ -3642,7 +3799,8 @@
    "source": "https://www.sigmacomputing.com/resources/announcements/series-e",
    "niche": "Dashboard",
    "round": "Series E",
-   "employees": "~1,400"
+   "employees": "~1,400",
+   "website": "https://www.sigmacomputing.com"
   },
   {
    "name": "Skyflow",
@@ -3664,7 +3822,8 @@
    "notes": "Privacy vault.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Security",
-   "round": "Series B (incl. $30M extension, Mar 2024)"
+   "round": "Series B (incl. $30M extension, Mar 2024)",
+   "website": "https://www.skyflow.com"
   },
   {
    "name": "Slalom",
@@ -3687,7 +3846,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Private (employee/founder-owned)",
-   "employees": "~12,000"
+   "employees": "~12,000",
+   "website": "https://www.slalom.com"
   },
   {
    "name": "Snowplow",
@@ -3710,7 +3870,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series B ($40M, Jun 2022)",
-   "employees": "~153"
+   "employees": "~153",
+   "website": "https://snowplow.io"
   },
   {
    "name": "Solid Data",
@@ -3732,7 +3893,8 @@
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
-   "round": "Seed"
+   "round": "Seed",
+   "website": "https://www.getsolid.ai"
   },
   {
    "name": "Sparq",
@@ -3755,7 +3917,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "PE-backed (Harvest Partners Ascend majority, 2023; Bain Capital Double Impact since 2019)",
-   "employees": "~700-800"
+   "employees": "~700-800",
+   "website": "https://www.teamsparq.com/"
   },
   {
    "name": "Spaulding Ridge",
@@ -3778,7 +3941,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Private",
-   "employees": "~600-650"
+   "employees": "~600-650",
+   "website": "https://www.spauldingridge.com/"
   },
   {
    "name": "SqlDBM",
@@ -3801,7 +3965,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Strategic / growth (Headline-led, 2024)",
-   "employees": "~47-50"
+   "employees": "~47-50",
+   "website": "https://sqldbm.com"
   },
   {
    "name": "Starburst",
@@ -3824,7 +3989,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Series D ($250M, Feb 2022)",
-   "employees": "~500"
+   "employees": "~500",
+   "website": "https://www.starburst.io"
   },
   {
    "name": "Steep",
@@ -3847,7 +4013,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed (Jul 2024, €4M)",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://steep.app/"
   },
   {
    "name": "Sundial",
@@ -3870,7 +4037,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series A (Jul 2025, $16M)",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://sundial.ai"
   },
   {
    "name": "Superblocks",
@@ -3893,7 +4061,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Series A (May 2025, $23M)",
-   "employees": "50-100"
+   "employees": "50-100",
+   "website": "https://www.superblocks.com"
   },
   {
    "name": "Syncari",
@@ -3916,7 +4085,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series B",
-   "employees": "~52-62"
+   "employees": "~52-62",
+   "website": "https://syncari.com"
   },
   {
    "name": "Tamr",
@@ -3939,7 +4109,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Governance",
    "round": "Strategic / Series E (2023, Alteryx)",
-   "employees": "100-250"
+   "employees": "100-250",
+   "website": "https://www.tamr.com"
   },
   {
    "name": "tavily",
@@ -3962,7 +4133,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Acquired by Nebius (~$275M, up to $400M; Feb 2026)",
-   "employees": "~28"
+   "employees": "~28",
+   "website": "https://www.tavily.com"
   },
   {
    "name": "Tealium",
@@ -3985,7 +4157,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Series G (Feb 2021, $96M)",
-   "employees": "~566"
+   "employees": "~566",
+   "website": "https://tealium.com"
   },
   {
    "name": "TEKSystems Global Services",
@@ -4008,7 +4181,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Subsidiary of Allegis Group (private)",
-   "employees": "~80,000 (TEKsystems overall)"
+   "employees": "~80,000 (TEKsystems overall)",
+   "website": "https://www.teksystems.com/en/"
   },
   {
    "name": "TextQL",
@@ -4031,7 +4205,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Strategic (Apr 2026, $17M)",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://textql.com"
   },
   {
    "name": "The Trade Desk",
@@ -4054,7 +4229,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Customer Data",
    "round": "Public (NASDAQ: TTD)",
-   "employees": "~3,843"
+   "employees": "~3,843",
+   "website": "https://www.thetradedesk.com"
   },
   {
    "name": "Theom",
@@ -4077,7 +4253,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Security",
    "round": "Series A (2025, $20M)",
-   "employees": "11-50"
+   "employees": "11-50",
+   "website": "https://www.theom.ai/"
   },
   {
    "name": "ThoughtSpot",
@@ -4100,7 +4277,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Dashboard",
    "round": "Series F (Nov 2021, $100M)",
-   "employees": "~900-1,700"
+   "employees": "~900-1,700",
+   "website": "https://www.thoughtspot.com"
   },
   {
    "name": "Timbrai",
@@ -4123,7 +4301,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Seed (bootstrapped/grant-backed)",
-   "employees": "~10-30"
+   "employees": "~10-30",
+   "website": "https://timbr.ai/"
   },
   {
    "name": "TransUnion",
@@ -4146,7 +4325,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Marketplace",
    "round": "Public (NYSE: TRU)",
-   "employees": "~13,500"
+   "employees": "~13,500",
+   "website": "https://www.transunion.com/"
   },
   {
    "name": "Treasure AI",
@@ -4169,7 +4349,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agent Platform",
    "round": "Subsidiary of SoftBank (rebrand of Treasure Data, Apr 2026); last round $234M (2021, SoftBank)",
-   "employees": "~550"
+   "employees": "~550",
+   "website": "https://www.treasure.ai"
   },
   {
    "name": "Tredence",
@@ -4192,7 +4373,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Series B ($175M, Dec 2022)",
-   "employees": "~4,200"
+   "employees": "~4,200",
+   "website": "https://www.tredence.com/"
   },
   {
    "name": "Truility",
@@ -4236,7 +4418,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Security",
    "round": "Seed-2 (Jan 2025)",
-   "employees": "~20-50"
+   "employees": "~20-50",
+   "website": "https://www.trustlogix.ai"
   },
   {
    "name": "Turgon",
@@ -4259,7 +4442,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Seed / Early-stage VC (Jan 2025)",
-   "employees": "~7"
+   "employees": "~7",
+   "website": "https://www.turgon.ai"
   },
   {
    "name": "Unravel Data",
@@ -4282,7 +4466,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Cost Savings",
    "round": "Series D ($50M, Sep 2022)",
-   "employees": "~100-300"
+   "employees": "~100-300",
+   "website": "https://www.unraveldata.com"
   },
   {
    "name": "Uriver",
@@ -4328,7 +4513,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Observability",
    "round": "Series A ($30M, Mar 2026)",
-   "employees": "~38"
+   "employees": "~38",
+   "website": "https://validio.io"
   },
   {
    "name": "VaultSpeed",
@@ -4351,7 +4537,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Series A (€15.1M/$15.9M, Nov 2023)",
-   "employees": "~50-100"
+   "employees": "~50-100",
+   "website": "https://www.vaultspeed.com"
   },
   {
    "name": "Wipro Limited",
@@ -4374,7 +4561,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Consulting",
    "round": "Public (NYSE: WIT)",
-   "employees": "~230,000+"
+   "employees": "~230,000+",
+   "website": "https://www.wipro.com"
   },
   {
    "name": "WisdomAI",
@@ -4397,7 +4585,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Agents",
    "round": "Series A ($50M, Nov 2025)",
-   "employees": "~107"
+   "employees": "~107",
+   "website": "https://www.wisdom.ai"
   },
   {
    "name": "Workato",
@@ -4420,7 +4609,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "API",
    "round": "Series E ($200M, Nov 2021)",
-   "employees": "~850-1,350"
+   "employees": "~850-1,350",
+   "website": "https://www.workato.com"
   },
   {
    "name": "Yuki",
@@ -4443,7 +4633,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Data Ecosystem",
    "round": "Acquired by Visma (Aug 2020, undisclosed)",
-   "employees": "~256"
+   "employees": "~256",
+   "website": "https://yukidata.com"
   },
   {
    "name": "ZeroError",
@@ -4464,7 +4655,8 @@
    "tier": "B",
    "notes": "Needs deeper funding validation; included from partner directory photo.",
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
-   "niche": "Data Ecosystem"
+   "niche": "Data Ecosystem",
+   "website": "https://www.zeroerror.ai"
   },
   {
    "name": "Zilliz",
@@ -4487,7 +4679,8 @@
    "source": "https://www.snowflake.com/en/summit/ ; company website / Crunchbase / PitchBook / public filings as applicable",
    "niche": "Database",
    "round": "Series B Extension ($60M, Aug 2022)",
-   "employees": "~130"
+   "employees": "~130",
+   "website": "https://zilliz.com"
   }
  ]
 }

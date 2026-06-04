@@ -121,8 +121,8 @@ def magic_quadrant_segments(vendors, min_n=5, var_floor=1.0):
     workbook's own `niche` taxonomy. Niches below min_n fold into 'Other' so the
     selector has no degenerate quadrants. Each niche gets its OWN cohort-mean
     cross (segment-relative). `drillable` is false when the cohort is too flat
-    (var < var_floor) — e.g. the ~57-vendor 'Data Ecosystem' bucket whose
-    template scores give ~0 variance — so the UI caveats it as a ranked list."""
+    (var < var_floor) — e.g. a large template-scored niche bucket whose scores
+    give ~0 variance — so the UI caveats it as a ranked list."""
     import statistics as _st
     from collections import Counter
     for v in vendors:
@@ -205,7 +205,7 @@ def render(meta, vendors, src_path):
         "profile_a": profile(tierA),
         "top15": vendors[:15],
         "must_see": tierA,
-        "gems": [v for v in vendors if v["hidden_gem"] and v.get("tier") != "A"][:6],
+        "gems": [v for v in vendors if v["hidden_gem"]][:6],
         "best_fit": sorted(vendors, key=lambda v: -(v.get("bryan_score") or 0))[:6],
         "mq": mq,
         "mq_segments": mq_segments,
@@ -288,6 +288,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   h1{font-size:24px;font-weight:800;margin:0;letter-spacing:.01em}
   .sub{color:var(--muted);font-size:12.5px;margin-top:4px}
   .dl{background:var(--accent2);border:1px solid var(--accent);color:#dff3ff;padding:8px 13px;border-radius:9px;font-size:12.5px;text-decoration:none;white-space:nowrap}
+  /* Per-vendor homepage link (↗) rendered next to each partner name + in the detail sheet. */
+  .homelink{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:2px;color:var(--muted);text-decoration:none;font-size:12px;font-weight:700;line-height:1;border-radius:5px;vertical-align:baseline;opacity:1;transition:color .15s,background .15s}
+  .homelink:hover,.homelink:focus{color:var(--accent);background:rgba(41,181,232,.12)}
+  .homelink:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+  .homedl{font-size:12.5px}
+  @media(max-width:640px){.homelink{width:26px;height:26px;font-size:14px}}
   .dl:hover{background:#176a9c}
   .wrap{max-width:1320px;margin:0 auto;padding:20px 24px 60px}
   .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:6px 0 24px}
@@ -309,7 +315,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   .ovr b{font-size:22px;color:var(--text)}.ovr span{font-size:10.5px;color:var(--muted)}
   .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
   .tA{background:rgba(52,211,153,.16);color:var(--A)}.tB{background:rgba(251,191,36,.16);color:var(--B)}
-  .tC{background:rgba(96,165,250,.18);color:#93c5fd}.tD{background:rgba(96,165,250,.18);color:#93c5fd}
+  .tC{background:rgba(96,165,250,.18);color:#93c5fd}.tD{background:rgba(59,130,246,.2);color:#3b82f6}
   .tNi{background:rgba(41,181,232,.16);color:#7fd6f5;border:1px solid rgba(41,181,232,.3)}
   /* Print / Save-as-PDF: keep the dark theme (so the canvas charts render as on
      screen), hide interactive controls, and expand the table so the WHOLE
@@ -319,7 +325,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     @page{margin:9mm}
     html,body{background:#0b1020 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     html{zoom:.55 !important}
-    .no-print,.dl,.controls,#search,#mqBack,#mqSegSel{display:none !important}
+    .no-print,.dl,.homelink,.controls,#search,#mqBack,#mqSegSel{display:none !important}
     .wrap{width:1320px;max-width:none;padding:6px}
     .panel,.card2,.kpi,canvas,.nitem{break-inside:avoid;page-break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     h3.sec{break-after:avoid;page-break-after:avoid}
@@ -702,6 +708,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
+      <a class="dl" href="https://reg.snowflake.com/flow/snowflake/summit26/partner/page/catalog" target="_blank" rel="noopener" title="Snowflake's official Summit 2026 partner catalog — all 190+ partners (opens on snowflake.com)">🤝 All Partner Vendors ↗</a>
       <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ Download source spreadsheet</a>
       <button class="dl no-print pdfBtn" id="pdfBtn" type="button" style="cursor:pointer" title="Print the whole dashboard or save it as a PDF">⬇ Download PDF</button>
       <span class="zoomctl" title="Zoom"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
@@ -716,6 +723,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="toolsheet-grip" aria-hidden="true"></div>
   <button type="button" class="toolsheet-item scoreInfoTrigger" aria-haspopup="dialog" aria-controls="scorePop">ⓘ <span>Scoring — how the scores work</span></button>
   <a class="toolsheet-item" href="?view=news" target="_blank" rel="noopener">📰 <span>Summit News</span></a>
+  <a class="toolsheet-item" href="https://reg.snowflake.com/flow/snowflake/summit26/partner/page/catalog" target="_blank" rel="noopener">🤝 <span>All Partner Vendors</span></a>
   <a class="toolsheet-item" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download source spreadsheet</span></a>
   <button type="button" class="toolsheet-item pdfBtn">⬇ <span>Download PDF</span></button>
 </div>
@@ -747,14 +755,14 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="cards" id="mustsee"></div>
 
   <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart"></canvas></div>
-    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart"></canvas></div>
+    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
+    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
   </div>
   <div class="grid">
-    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart"></canvas></div>
-    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart"></canvas></div>
+    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
+    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
   </div>
-  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px"></canvas></div>
+  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
 
   <h3 class="sec">💎 Hidden Gems <span class="hint">— Overall ≥ 7 but not Tier A</span></h3>
   <div class="cards" id="gems"></div>
@@ -831,7 +839,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div class="logo">📊</div>
       <div>
         <h1>Snowflake Summit 2026 — Magic Quadrant</h1>
-        <div class="sub">All 197 partners, or drill into a niche · its own window</div>
+        <div class="sub" id="mqsub">drill into a niche · its own window</div>
       </div>
       <span class="zoomctl" title="Zoom" style="margin-left:auto"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
       <button type="button" class="infobtn no-print scoreInfoTrigger" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated" style="margin-left:14px">ⓘ Scoring</button>
@@ -850,7 +858,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div id="mqLegend" class="sub" style="margin-bottom:8px"></div>
       <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
       <div id="mqBox" style="height:560px;position:relative">
-        <canvas id="mqChart" style="max-height:560px"></canvas>
+        <canvas id="mqChart" style="max-height:560px" role="img" aria-label="Magic Quadrant scatter plot: partners positioned by Ability to Execute (vertical) and Completeness of Vision (horizontal), split into Leaders, Challengers, Visionaries, and Niche Players."></canvas>
       </div>
       <div id="mqCaveat" class="sub" style="margin-top:12px;line-height:1.5;color:#cfe0ff"></div>
       <div class="sub" style="margin-top:10px;line-height:1.55">
@@ -903,6 +911,12 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 const DATA = /*__DATA__*/;
 const fmt = n => (n===null||n===undefined||n==='')?"—":n;
 const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+// Per-vendor homepage. Real curated URL (Tier A/B) when v.website is set; else a
+// DuckDuckGo "!ducky" I'm-Feeling-Lucky redirect to the top result (Tier C fallback),
+// so every partner name links through to a site. homeLink()'s stopPropagation keeps
+// the click from also firing the card/row -> detail-modal delegation (see vModal).
+function homeUrl(v){var w=(v&&v.website)?String(v.website).trim():'';return /^https?:\/\//i.test(w)?w:'https://duckduckgo.com/?q='+encodeURIComponent('!ducky '+((v&&v.name)||''));}
+function homeLink(v){var w=(v&&v.website)?String(v.website).trim():'',real=/^https?:\/\//i.test(w),u=homeUrl(v),nm=esc((v&&v.name)||'');return '<a class="homelink" href="'+esc(u)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()" title="'+(real?'Visit homepage':'Search for homepage')+' ↗" aria-label="'+(real?'Visit '+nm+' homepage':'Search the web for '+nm)+' (opens in a new tab)">↗</a>';}
 const tierClass = t => ({A:'tA',B:'tB',C:'tC',D:'tD'})[t]||'tC';
 
 // View router: ?view=news opens the news-only view (in its own window).
@@ -913,6 +927,8 @@ if(_view==='news'){
 }else if(_view==='mq'){
   document.body.classList.add('mqmode');
   document.title='Magic Quadrant — Snowflake Summit 2026';
+  var _mqsub=document.getElementById('mqsub');
+  if(_mqsub) _mqsub.textContent=`All ${DATA.vendors.length} partners, or drill into a niche · its own window`;
 }else if(_view==='map'){
   document.body.classList.add('mapmode');
   document.title='Basecamp Floor Map — Snowflake Summit 2026';
@@ -977,8 +993,8 @@ function scoreChips(v){
   return items.map(([l,x])=>`<span class="schip">${l} <b>${fmt(x)}</b></span>`).join('');
 }
 function card(v){
-  return `<div class="card2 ${v.hidden_gem?'':''}" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
-    <div class="nm">${esc(v.name)} <span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
+  return `<div class="card2" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
+    <div class="nm">${esc(v.name)}${homeLink(v)} <span class="tag ${tierClass(v.tier)}">${esc(v.tier)}</span> <span class="tag tNi">${esc(fmt(v.niche))}</span></div>
     <div class="ct">${esc(v.category)} · booth ${fmt(v.booth)}</div>
     <div class="scores">${scoreChips(v)}</div>
     <div class="ovr"><b>${fmt(v.overall_score)}</b><span>/ 10 overall${v.company_type?(' · '+esc(v.company_type)):''}</span></div></div>`;
@@ -1106,7 +1122,7 @@ function draw(){
     if(vc) vc.innerHTML=r.map(function(v){
       var w=Math.round(((v.overall_score||0)/10)*54)+6;
       return '<div class="vcard'+(v.hidden_gem?' gem':'')+'" data-v="'+esc(v.name)+'" role="button" tabindex="0" aria-label="View company detail for '+esc(v.name)+'">'+
-        '<div class="vcard-top"><span class="vcard-rank">#'+v.rank+'</span><span class="vcard-name">'+esc(v.name)+'</span><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></div>'+
+        '<div class="vcard-top"><span class="vcard-rank">#'+v.rank+'</span><span class="vcard-name">'+esc(v.name)+homeLink(v)+'</span><span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span></div>'+
         '<div class="vcard-meta"><span class="tag tNi">'+esc(fmt(v.niche))+'</span> · booth '+esc(fmt(v.booth))+' · '+esc(fmt(v.category))+'</div>'+
         '<div class="vcard-score"><span class="ovrbar" style="width:'+w+'px;background:'+tierColor(v.tier)+'"></span><b>'+fmt(v.overall_score)+'</b> <span>/ 10'+(v.company_type?(' · '+esc(v.company_type)):'')+'</span></div>'+
         '</div>';
@@ -1116,7 +1132,7 @@ function draw(){
   tbody.innerHTML=r.map(v=>{
     const w=Math.round(((v.overall_score||0)/10)*54)+6;
     return `<tr class="${v.hidden_gem?'gem-row':''}" data-v="${esc(v.name)}" tabindex="0" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer">
-      <td class="num">${v.rank}</td><td class="name">${esc(v.name)}</td><td>${fmt(v.booth)}</td>
+      <td class="num">${v.rank}</td><td class="name">${esc(v.name)}${homeLink(v)}</td><td>${fmt(v.booth)}</td>
       <td><span class="tag tNi">${esc(fmt(v.niche))}</span></td><td>${esc(fmt(v.category))}</td><td>${esc(fmt(v.company_type))}</td>
       <td class="num">${fmt(v.snowflake_score)}</td><td class="num">${fmt(v.ai_score)}</td>
       <td class="num">${fmt(v.retail_score)}</td><td class="num">${fmt(v.ipo_score)}</td><td class="num">${fmt(v.bryan_score)}</td>
@@ -1201,7 +1217,6 @@ draw();
   function close(){box.classList.remove('on');box.innerHTML='';items=[];act=-1;}
   function pick(v){var set=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value').set;set.call(inp,v.name);inp.dispatchEvent(new Event('input',{bubbles:true}));close();var t=document.getElementById('vtable');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
   function hi(){[].forEach.call(box.querySelectorAll('.sug[data-i]'),function(el){var on=(+el.dataset.i===act);el.classList.toggle('act',on);if(on)el.scrollIntoView({block:'nearest'});});}
-  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function build(){
     var q=inp.value.trim().toLowerCase();
     if(!q){close();return;}
@@ -1522,6 +1537,7 @@ draw();
       +'<div class="vrow"><span class="k">Overall</span><span class="vv">'+fmt(v.overall_score)+' / 10</span></div>';
     body.innerHTML='<h2 id="vModalTitle">'+esc(v.name)+'</h2> <span class="tag '+tierClass(v.tier)+'">'+esc(v.tier)+'</span> <span class="tag tNi">'+esc(fmt(v.niche))+'</span>'+
       '<div class="sub" style="margin-top:5px">'+esc(fmt(v.category))+' · booth '+esc(fmt(v.booth))+(v.company_type?(' · '+esc(v.company_type)):'')+'</div>'+
+      '<div style="margin-top:11px"><a class="dl homedl" href="'+esc(homeUrl(v))+'" target="_blank" rel="noopener noreferrer" aria-label="'+(v.website?'Visit homepage':'Search the web for homepage')+', opens in a new tab">'+(v.website?'🌐 Visit homepage':'🔎 Find homepage')+' ↗</a></div>'+
       '<div class="vsec">Company</div>'+(company||'<div class="sub" style="padding:6px 0">No funding / valuation data on file yet.</div>')+
       '<div class="vsec">Scores</div>'+scores+
       (v.notes?('<div class="vsec">Notes</div><div class="vrow" style="border:none"><span class="vv" style="font-weight:400;line-height:1.55">'+esc(v.notes)+'</span></div>'):'')+
@@ -1548,7 +1564,7 @@ draw();
     if(m.classList.contains('on'))return;
     if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){
       var a=document.activeElement, el=a&&a.closest&&a.closest('[data-v]');
-      if(el){var n=el.getAttribute('data-v');if(n&&byName[n]){e.preventDefault();open(n);}}
+      if(el&&el===a){var n=el.getAttribute('data-v');if(n&&byName[n]){e.preventDefault();open(n);}}
     }
   });
 })();

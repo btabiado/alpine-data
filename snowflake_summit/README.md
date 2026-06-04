@@ -29,10 +29,13 @@ serves the bundled `.xlsx`.
 - **6 KPIs** — total partners, Must-See (Tier A) count, Priority (A+B), avg Overall score, avg AI score, public-company count.
 - **⭐ Must-See** — the 24 Tier-A partners, ranked by Overall Score (Sigma, Atlan, Hightouch, dbt, Fivetran, …).
 - **💎 Hidden Gems** — Overall ≥ 7 but not Tier A.
-- **🤝 Best Bryan-Fit** — top career/networking-fit partners.
-- **Charts** — Top 15 by Overall, Priority-Tier mix, Partners by Category, and a radar of the average
-  score profile (Tier A vs all).
+- **🤝 Best Bryan Recommend** — top career / networking-fit partners.
+- **Charts** — Top 15 by Overall, Priority-Tier mix, Partners by Niche, a radar of the average
+  score profile (Tier A vs all), and Top 15 by Valuation.
 - **Sortable / filterable table** of all 197 partners with every score column.
+- **Pop-out views** (each opens in its own window): **📰 Summit News** (partner announcements from
+  `news.json`), **📊 Magic Quadrant** (all partners + per-niche drill-down), and **🗺 Floor Map**
+  (interactive Basecamp floor map from `floorplan.json`).
 
 ## The scoring (0–10, Bryan's directional ratings)
 
@@ -52,5 +55,6 @@ serves the bundled `.xlsx`.
 ## Updating the data
 
 Edit `vendors.json` (or replace it with a fresh export using the same field names) and re-run
-`python build.py`. To regenerate the downloadable spreadsheet from the JSON, the builder logic for that
-lives alongside the parse step; the simplest path is to edit `vendors.json` as the source of truth.
+`python3 build.py`. `vendors.json` is the source of truth. The bundled `.xlsx` is a static download
+artifact served next to the page — `build.py` only links it for download; it does **not** regenerate
+the workbook from the JSON.
