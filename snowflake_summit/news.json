@@ -1,5 +1,5 @@
 {
- "generated": "2026-06-03",
+ "generated": "2026-06-04",
  "items": [
   {
    "vendor": "Semarchy",
@@ -971,6 +971,2148 @@
    "url": "https://www.snowflake.com/en/news/press-releases/snowflake-enables-enterprise-ready-ai-by-bringing-google-s-gemini-3-to-snowflake-cortex-ai/",
    "source": "Snowflake",
    "summary": "Gemini 3 natively available in Snowflake Cortex AI; expanded go-to-market alignment, co-sell, and Google Cloud Marketplace transactability.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Anomalo",
+   "headline": "Snowflake Ventures Invests in Anomalo for Advanced Data Quality Monitoring in the AI Data Cloud",
+   "date": "2025-03-12",
+   "url": "https://www.snowflake.com/en/blog/investing-anomalo-advanced-data-quality/",
+   "source": "Snowflake Blog",
+   "summary": "Snowflake Ventures announced a strategic investment in Anomalo, deepening a partnership that includes integrating Snowflake Data Metric Functions, Snowflake Cortex AI, and Snowpark Container Services into Anomalo's platform. Over 60% of Anomalo's customers already operate on Snowflake, including Discover Financial Solutions and Block.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Anomalo",
+   "headline": "Anomalo Named Launch Partner for Databricks Unity Catalog Metrics, Ensuring Confidence in Every Metric",
+   "date": "2025-06-12",
+   "url": "https://www.anomalo.com/blog/anomalo-named-launch-partner-for-databricks-unity-catalog-metrics-ensuring-confidence-in-every-metric/",
+   "source": "Anomalo Blog",
+   "summary": "Anomalo was named a launch partner for Databricks Unity Catalog Metrics, announced at the Databricks Data + AI Summit. The integration allows Anomalo to monitor critical business metrics for anomalies, drift, and data quality issues, with monitoring results automatically synchronized back into Unity Catalog for governed visibility.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Anomalo",
+   "headline": "Anomalo Named in the Forrester Wave and Why That Matters for AI-Driven Data Quality",
+   "date": "2026-01-28",
+   "url": "https://www.anomalo.com/blog/anomalo-named-in-the-forrester-wave-and-why-that-matters-for-ai-driven-data-quality/",
+   "source": "Anomalo Blog",
+   "summary": "Anomalo was named a Contender in the Forrester Wave for Data Quality Solutions and a Strong Performer in the 2025 Gartner Peer Insights Voice of the Customer for Augmented Data Quality Solutions. It was the only vendor in the Forrester Wave assessment to receive an above-average score for customer feedback.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Archetype",
+   "headline": "Archetype Acquires Winterface, Launches Innovation Group with Max Gomez and Farris Jaber",
+   "date": "2025-03-24",
+   "url": "https://www.prweb.com/releases/archetype-acquires-winterface-launches-innovation-group-with-max-gomez-and-farris-jaber-302408754.html",
+   "source": "PRWeb",
+   "summary": "Archetype acquired Winterface, a Snowflake-native platform that lets users create and edit tables without SQL via a spreadsheet-style interface. Winterface founder Farris Jaber joined co-founder Max Gomez to lead a new Innovation Group developing industry-specific solutions for Snowflake and OneStream partner ecosystems.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Artie Technologies",
+   "headline": "Artie Announces Series A to Make Real-Time Data the Default for AI Systems",
+   "date": "2026-01-22",
+   "url": "https://finance.yahoo.com/news/artie-announces-series-real-time-150000636.html",
+   "source": "Yahoo Finance / Business Wire",
+   "summary": "Artie secured $12 million in Series A funding led by Standard Capital (Dalton Caldwell) to help companies deliver fresh data to AI systems without building streaming infrastructure. The platform processes over 700 billion rows of data annually for clients including ClickUp, Substack, and Alloy.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Artie Technologies",
+   "headline": "Artie Technologies Listed as Snowflake AI Data Cloud Select Services Partner",
+   "date": "2026-06-04",
+   "url": "https://www.snowflake.com/en/why-snowflake/partners/all-partners/artie-technologies-inc/",
+   "source": "Snowflake",
+   "summary": "Artie Technologies holds Snowflake AI Data Cloud Select Services Partner status, specializing in Data Engineering workloads. The company is described as the modern data infrastructure layer for the AI era, providing a fully managed real-time data streaming platform that keeps production data continuously in sync with Snowflake.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Artie Technologies",
+   "headline": "Introducing the Artie Terraform Provider",
+   "date": "2025-03-18",
+   "url": "https://www.artie.com/blogs/artie-terraform-provider",
+   "source": "Artie Blog",
+   "summary": "Artie released an official Terraform provider in the Terraform registry, enabling customers to manage Artie deployments through infrastructure-as-code. The provider supports consistent deployment configurations, credential management, change review, and Git-backed audit trails.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "Astrato Analytics",
+   "headline": "Astrato Lands $5M to Replace Outdated BI Tools with Next-Gen, AI-Native Cloud Analytics",
+   "date": "2025-04-29",
+   "url": "https://techfundingnews.com/astrato-lands-5m-to-replace-outdated-bi-tools-with-next-gen-ai-native-cloud-analytics/",
+   "source": "Tech Funding News",
+   "summary": "Astrato raised a $5 million seed round led by Big Pi Ventures to build a cloud-native BI platform that runs live queries directly on Snowflake, Databricks, BigQuery, and ClickHouse without moving data. The London-based company, founded by the team behind Vizlib, was showing 5x year-over-year revenue growth at the time of the raise.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Astrato Analytics",
+   "headline": "Snowflake Cortex is Now Live in Astrato",
+   "date": "2025-05-20",
+   "url": "https://www.astrato.io/blog/snowflake-cortex-is-now-live-in-astrato",
+   "source": "Astrato Blog",
+   "summary": "Astrato launched native integration with Snowflake Cortex LLM, giving users access to models from Meta, Claude, DeepSeek, and Mistral directly within the platform with no data movement. The company holds Snowflake Technology Ready Validated status and differentiates through its semantic layer for context-aware, enterprise-grade text-to-SQL generation.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Astrato Analytics",
+   "headline": "Astrato and Propelling Tech Partner to Simplify and Scale Cloud Analytics",
+   "date": "2025-06-10",
+   "url": "https://www.astrato.io/blog/propelling-tech-and-astrato-partner-to-simplify-and-scale-cloud-analytics",
+   "source": "Astrato Blog",
+   "summary": "Astrato formed a strategic alliance with Propelling Tech to deliver real-time, self-service analytics on live cloud data across healthcare, financial services, retail, and SaaS. The partnership is positioned as a natural upgrade path for Qlik and Vizlib users, given Astrato was built by the team behind Vizlib, the most widely adopted value-added solution for Qlik Sense.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Atrium",
+   "headline": "Snowflake Summit: The After Hours Edit \u2014 Atrium Hosts Networking Happy Hour at Summit 2026",
+   "date": "2026-06-02",
+   "url": "https://atrium.ai/events/snowflake-summit-2026-happy-hour/",
+   "source": "Atrium (atrium.ai)",
+   "summary": "Atrium hosted an exclusive happy hour networking event on June 2, 2026 during Snowflake Summit 2026 at Next Chapter Cocktails & Tapas Lounge (142 Minna St, San Francisco). The event brought together data and AI professionals from 6\u20138 pm PT, with Retool as sponsor, reinforcing Atrium's active presence as a Snowflake consulting partner at the summit.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Atrium",
+   "headline": "Atrium Surpasses $1 Billion Customer ROI Goal, Driven by Industry-Leading AI-Assisted Delivery",
+   "date": "2026-02-17",
+   "url": "https://finance.yahoo.com/news/atrium-surpasses-1-billion-customer-134500173.html",
+   "source": "Yahoo Finance",
+   "summary": "Atrium, the AI-native Salesforce and Snowflake consulting firm, announced it has surpassed $1 billion in documented customer impact tracked via its Customer Impact Dashboard. The milestone was driven by Andi, Atrium's autonomous AI consultant, which the company claims enables solution deployment up to 98% faster than traditional consulting methods.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Atrium",
+   "headline": "Atrium Named to Inc.'s 2026 Best Workplaces List for the Fifth Time",
+   "date": "2026-06-02",
+   "url": "https://atrium.ai/news/atrium-named-to-inc-2026-best-workplaces-list/",
+   "source": "Atrium (atrium.ai)",
+   "summary": "Atrium was recognized on Inc. magazine's 2026 Best Workplaces list for the fifth consecutive time, selected from 507 honorees based on Quantum Workplace employee surveys covering management effectiveness, perks, professional development, and culture. CEO Chris Heineken cited the company's founding belief that great outcomes start with great people as central to the recognition.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "Avaap",
+   "headline": "Snowflake Summit 2026 Sessions for Higher Education and Government",
+   "date": "2026-05-18",
+   "url": "https://avaap.com/snowflake-summit-2026-sessions-higher-ed-government/",
+   "source": "Avaap",
+   "summary": "Avaap, a Snowflake Premier Partner, promoted its curated sessions at Snowflake Summit 2026 (June 1-4, Moscone Center) aimed at higher education and government organizations. Featured sessions included Ohio Department of Taxation's AI-powered call center transcript analytics using Snowflake Cortex, a Sigma AI workflow demonstration for unstructured data pipelines, and a session on data and AI governance innovations.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Avaap",
+   "headline": "Avaap Named Snowflake Premier Partner",
+   "date": "2026-02-02",
+   "url": "https://www.globenewswire.com/news-release/2026/02/02/3230191/16678/en/avaap-named-snowflake-premier-partner.html",
+   "source": "GlobeNewswire",
+   "summary": "Avaap announced it achieved Snowflake Premier Partner status, recognizing its expertise in delivering scalable, secure, AI-ready data solutions for state and local government, higher education, and nonprofit sectors. The designation builds on Avaap's Workday Services Partner capabilities, enabling integrated Workday-Snowflake analytics and early access to Snowflake Cortex and Intelligence features.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Avaap",
+   "headline": "Unlocking Snowflake's Full Potential with Avaap",
+   "date": "2026-05-04",
+   "url": "https://avaap.com/blog-avaap-snowflake-capabilities/",
+   "source": "Avaap",
+   "summary": "Avaap published a detailed overview of its Snowflake practice, covering three core areas: building secure governed data foundations, integrating Workday operational data with Snowflake for enterprise analytics across finance and HR, and delivering practical AI solutions for public sector organizations. The post positions Avaap as a specialized partner for higher education, government, and nonprofit clients moving from data consolidation to AI-driven insights.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Bigeye",
+   "headline": "Bigeye Announces AI Guardian to Give Enterprises Control Over Agent Data Access",
+   "date": "2025-12-10",
+   "url": "https://www.einpresswire.com/article/873986338/bigeye-announces-ai-guardian-to-give-enterprises-control-over-agent-data-access",
+   "source": "EIN Presswire",
+   "summary": "Bigeye launched AI Guardian, a runtime enforcement control plane that evaluates every AI agent request against organizational data policies, operating in monitoring, advising, or steering modes. The product is part of Bigeye's AI Trust Platform and was released in private preview for enterprise customers including USAA, Zoom, Hertz, Cisco, and Freedom Mortgage.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Bigeye",
+   "headline": "Bigeye Introduces the First Platform for Governing AI Data Usage",
+   "date": "2025-06-04",
+   "url": "https://www.einpresswire.com/article/818382267/bigeye-introduces-the-first-platform-for-governing-ai-data-usage",
+   "source": "EIN Presswire",
+   "summary": "Bigeye announced the AI Trust Platform, described as the industry's first solution unifying data governance, observability, and enforcement to control how AI agents access and use enterprise data. The company also announced plans to host its inaugural AI Trust Summit in early 2026 for data and AI leaders.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Bigeye",
+   "headline": "Bigeye Launches Bigeye Dependency Driven Monitoring to Ensure Reliable Analytics",
+   "date": "2024-03-25",
+   "url": "https://www.prnewswire.com/news-releases/bigeye-launches-bigeye-dependency-driven-monitoring-to-ensure-reliable-analytics-302098283.html",
+   "source": "PR Newswire",
+   "summary": "Bigeye launched Dependency Driven Monitoring, positioning itself as the first data observability platform to connect analytics dashboards to column-level data lineage across both modern and legacy data sources. The solution targets Fortune 500 enterprises with hybrid infrastructure and integrates with Snowflake, Databricks, BigQuery, and Redshift among 50+ connectors.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Brilliant Enterprise Magic",
+   "headline": "bem raises seed round to end manual data integration",
+   "date": "2024-06-06",
+   "url": "https://blog.bem.ai/p/bem-raises-seed",
+   "source": "bem Blog",
+   "summary": "Brilliant Enterprise Magic (bem) raised $3.7 million in seed funding led by Uncork Capital, with participation from Kevin Mahaffey, Roar Ventures, and Garry Tan. The company's AI platform converts unstructured data \u2014 invoices, emails, PDFs, spreadsheets \u2014 into structured, schema-valid JSON via a REST API, targeting supply chain, logistics, healthcare, insurance, and financial services sectors.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Brilliant Enterprise Magic",
+   "headline": "Investing in bem: The Infrastructure Making AI Reliable",
+   "date": "2026-02-12",
+   "url": "https://www.buentrip.vc/blog/investing-in-bem-the-infrastructure-making-ai-reliable",
+   "source": "BuenTrip Ventures",
+   "summary": "BuenTrip Ventures announced an investment in bem.ai, citing the company's 99.999% precision claims for transforming unstructured data (PDFs, emails, audio, video) into structured, auditable formats as foundational AI infrastructure. The firm highlighted bem's focus on reliability for enterprise AI agent deployments \u2014 particularly in finance, logistics, and customer service \u2014 as a key differentiator. Co-founders Antonio Bustamante and Upal Saha are also named.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Brilliant Enterprise Magic",
+   "headline": "Brilliant Enterprise Magic \u2014 welcome Bem!",
+   "date": "2024-06-10",
+   "url": "https://medium.com/uncorkcapital/brilliant-enterprise-magic-welcome-bem-583802db017e",
+   "source": "Uncork Capital / Medium",
+   "summary": "Uncork Capital Managing Partner Andy McLoughlin published a blog post welcoming Brilliant Enterprise Magic (bem) to their portfolio after leading the company's $3.7 million seed round. The post describes bem's mission to deliver 'structured data as-a-service' \u2014 eliminating manual data integration by transforming messy inputs into structured knowledge for engineering teams building in supply chain, logistics, healthcare, insurance, and financial services.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Bruin",
+   "headline": "Migrating from Python to Go: ingestr v1",
+   "date": "2026-06-01",
+   "url": "https://getbruin.com/blog/worlds-fastest-ingestion-tool",
+   "source": "Bruin Blog",
+   "summary": "Bruin launched ingestr v1, a complete rewrite of its open-source data ingestion CLI from Python to Go. The rewrite delivers significantly faster performance through aggressive concurrency and Apache Arrow integration, addressing bottlenecks and distribution issues that arose after the original version reached 3.5k GitHub stars and adoption by hundreds of organizations.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Bruin",
+   "headline": "Meet Bruin's AI data analyst in Slack, Teams, and browser",
+   "date": "2026-03-03",
+   "url": "https://getbruin.com/blog/meet-bruin-ai-data-analyst",
+   "source": "Bruin Blog",
+   "summary": "Bruin launched an AI-powered data analyst interface that lets teams ask natural language questions about company data directly within Slack, Microsoft Teams, and the browser. The product returns answers grounded in inspectable SQL queries, with enterprise security features including role-based access controls, SSO, and GDPR-aligned data residency.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Bruin",
+   "headline": "Introducing Bruin MCP: Your AI Agent's Data Toolkit",
+   "date": "2025-11-13",
+   "url": "https://getbruin.com/blog/bruin-mcp-launch",
+   "source": "Bruin Blog",
+   "summary": "Bruin launched Model Context Protocol (MCP) support, enabling AI agents in editors like Cursor and Claude Code to interact with data workflows through natural language. The free, open-source integration allows agents to ingest data from 60+ sources, run pipelines, and compare tables across environments conversationally.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Brooklyn Data",
+   "headline": "Velir x Brooklyn Data Named Sigma Premier Partner",
+   "date": "2026-05-15",
+   "url": "https://www.brooklyndata.co/news/2026/05/15/brooklyn-data-named-sigma-premier-partner",
+   "source": "Brooklyn Data",
+   "summary": "Brooklyn Data (operating as Velir x Brooklyn Data) was recognized as a Premier Partner in Sigma Computing's SI Partner Program, based on product expertise, certifications, growth, and specializations. The company brings over four years and 20+ Sigma engagements, including serving as a launch partner for Sigma AI Apps and creating three featured demo applications in Sigma's library.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Brooklyn Data",
+   "headline": "Brooklyn Data, a Velir Company, Reaches Elite Partner Status with Snowflake",
+   "date": "2024-05-14",
+   "url": "https://www.brooklyndata.co/news/2024/05/14/brooklyn-data-achieves-elite-partner-status-with-snowflake",
+   "source": "Brooklyn Data",
+   "summary": "Brooklyn Data achieved Elite tier partnership status with Snowflake \u2014 the highest recognition level in Snowflake's partner ecosystem \u2014 following a six-year partnership history demonstrating strong execution across Financial Services, Healthcare, and Retail sectors. Snowflake's Director of Global Partner Development noted that Brooklyn Data's acquisition by Velir expanded capabilities by combining data expertise with digital and marketing competencies.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Brooklyn Data",
+   "headline": "Domo Partners with Brooklyn Data to Simplify the AI and Data Journey for Businesses",
+   "date": "2024-09-05",
+   "url": "https://www.stocktitan.net/news/DOMO/domo-partners-with-brooklyn-data-to-simplify-the-ai-and-data-journey-0x3inou4k4pl.html",
+   "source": "StockTitan / BusinessWire",
+   "summary": "Domo (NASDAQ: DOMO) announced a partnership with Brooklyn Data Co. to help joint customers streamline data management by combining Domo's platform with Snowflake's AI Data Cloud. The collaboration focuses on simplifying data integration and leveraging advanced analytics to enhance enterprise decision-making.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera Adopts Apache Polaris to Advance Open, Governed Data Access for Enterprise AI Anywhere",
+   "date": "2026-06-04",
+   "url": "https://www.manilatimes.net/2026/06/04/tmt-newswire/globenewswire/cloudera-adopts-apache-polaris-to-advance-open-governed-data-access-for-enterprise-ai-anywhere/2358828",
+   "source": "The Manila Times (GlobeNewswire)",
+   "summary": "Announced at Snowflake Summit 2026, Cloudera adopted Apache Polaris as part of its open data lakehouse architecture powered by Apache Iceberg, contributing a new Apache Ranger authorizer plugin in Apache Polaris 1.5. The move improves interoperability and governed data access across hybrid and multicloud environments for enterprise AI, with Cloudera CPO Leo Brunnick noting that 79% of organizations struggle to access all their data across environments.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera Achieves the AWS AI Competency",
+   "date": "2026-04-23",
+   "url": "https://www.cloudera.com/about/news-and-blogs/press-releases/2026-04-23-cloudera-achieves-the-aws-ai-competency.html",
+   "source": "Cloudera",
+   "summary": "Cloudera earned the AWS AI Competency designation, recognizing its technical proficiency in implementing generative and autonomous AI technologies for enterprises. The certification validates Cloudera's AI Anywhere strategy, enabling deployment on-premises or on AWS with Amazon Bedrock integration, maintaining governance and security for regulated industries.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Cloudera",
+   "headline": "Cloudera Launches Workflow Data Fabric Zero Copy Connector for ServiceNow",
+   "date": "2026-05-05",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/cloudera-launches-workflow-data-fabric-150000789.html",
+   "source": "Yahoo Finance",
+   "summary": "Cloudera announced a new Workflow Data Fabric Zero Copy Connector for ServiceNow at the Knowledge26 conference, enabling enterprises to query data in place without costly data movement pipelines. The integration supports compliance with regulations including the EU AI Act, DORA, and HIPAA while enabling production-scale agentic AI deployment.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Coastal",
+   "headline": "The Local's Guide to Snowflake Summit 2026",
+   "date": "2026-05-01",
+   "url": "https://coastalcloud.us/resources/the-locals-guide-to-snowflake-summit/",
+   "source": "Coastal Cloud",
+   "summary": "Coastal Cloud, a data/AI/cloud and Snowflake consulting firm, published a comprehensive attendee guide to Snowflake Summit 2026 (June 1\u20134, Moscone Center, San Francisco). The guide covers event planning tips, Bay Area neighborhood recommendations, dining options near Moscone, local transportation, and safety information for visiting professionals.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Coastal",
+   "headline": "Coastal Joins Tata Consultancy Services (TCS) to Accelerate Salesforce-Led Transformation at Global Scale",
+   "date": "2026-01-14",
+   "url": "https://coastalcloud.us/resources/coastal-joins-tata-consultancy-services-tcs-to-accelerate-salesforce-led-transformation-at-global-scale/",
+   "source": "Coastal Cloud",
+   "summary": "Coastal Cloud announced its acquisition by TCS, a global IT services firm operating across 46 countries, while retaining its brand and culture established since 2012. Coastal brought over 600 North American professionals with 3,091 certifications including 442 across Agentforce, AI, and Snowflake, serving approximately 1,700 customers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Coastal",
+   "headline": "Coastal Joins Tata Consultancy Services (TCS) to Accelerate Salesforce-Led Transformation at Global Scale",
+   "date": "2026-01-14",
+   "url": "https://www.globenewswire.com/news-release/2026/01/14/3218914/0/en/Coastal-Joins-Tata-Consultancy-Services-TCS-to-Accelerate-Salesforce-Led-Transformation-at-Global-Scale.html",
+   "source": "GlobeNewswire",
+   "summary": "GlobeNewswire carried the official press release announcing Coastal Cloud's acquisition by TCS on January 14, 2026. The deal advances TCS's goal of becoming an AI-led technology services company, with Coastal continuing to operate under its own brand while bringing 600+ professionals, 3,091 certifications, and approximately 1,700 customers.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Contentsquare",
+   "headline": "Contentsquare Completes Acquisition of Loris AI",
+   "date": "2025-10-22",
+   "url": "https://contentsquare.com/press/contentsquare-completes-acquisition-of-loris-ai/",
+   "source": "Contentsquare Press",
+   "summary": "Contentsquare finalized its acquisition of Loris, a conversation intelligence platform that analyzes customer support interactions using AI to identify sentiment, intent, and quality signals. The deal combines digital experience analytics with conversation intelligence to give brands a unified view of the complete customer journey, from digital click to support conversation.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Contentsquare",
+   "headline": "New Shopify-Contentsquare Deal Targets Major Conversion Leaks",
+   "date": "2025-12-18",
+   "url": "https://www.cxtoday.com/customer-analytics-intelligence/shopify-contentsquare-partnership-ai-customer-journey/",
+   "source": "CX Today",
+   "summary": "Contentsquare announced a partnership with Shopify to integrate AI-driven behavioral analytics across the full e-commerce customer journey, extending from initial site entry through checkout completion across more than 175 countries. The integration requires no tagging or engineering setup and is available via a new Shopify Partner app.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Contentsquare",
+   "headline": "Contentsquare Strengthens Executive Leadership Team to Fuel Future Growth",
+   "date": "2026-03-10",
+   "url": "https://contentsquare.com/press/leadership-updates-march-2026/",
+   "source": "Contentsquare Press",
+   "summary": "Contentsquare announced three senior executive appointments: Costa Harbilas as President of Go-to-Market, Patrice Attia as Chief Revenue Officer, and Rachel Obstler as Chief Product Officer. All three join the Executive Committee as the company accelerates growth of its digital experience analytics platform.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Crunchbase",
+   "headline": "Crunchbase Introduces Market Insights with 5,100+ Micro-Industry Segments and AI-Powered Competitor Intelligence",
+   "date": "2026-06-02",
+   "url": "https://about.crunchbase.com/blog/market-insights",
+   "source": "Crunchbase Blog",
+   "summary": "Crunchbase launched Market Insights, introducing over 5,100 granular market segments organized by what companies actually build, an improved competitor intelligence model delivering 90% precision on each company's top three competitors, and a market momentum signal that classifies segments as emerging, growing, or declining.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Crunchbase",
+   "headline": "Crunchbase Uses AI to Predict Startup Success with 95% Accuracy",
+   "date": "2025-02-20",
+   "url": "https://www.aibase.com/news/15534",
+   "source": "AIBase",
+   "summary": "Crunchbase announced a strategic pivot from historical data provider to an AI-driven predictive engine, claiming 95% accuracy in backtesting for predicting funding rounds, acquisitions, and growth trajectories using data from 80 million active users. CEO Jagg McConnell stated traditional data companies face a survival crisis within five years if they cannot offer predictive capabilities.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dagster Labs",
+   "headline": "Snowflake Runs Your Data: Dagster Runs Everything Else",
+   "date": "2026-05-28",
+   "url": "https://dagster.io/blog/snowflake-runs-your-data-dagster-runs-everything-else",
+   "source": "Dagster Blog",
+   "summary": "Dagster published a pre-Summit post explaining how it complements Snowflake's native capabilities \u2014 covering SQL-first orchestration, Dynamic Tables integration, and cost attribution via Dagster+ Insights. The post coincided with Dagster's presence at Snowflake Summit 2026 (booth 1222) in San Francisco.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Dagster Labs",
+   "headline": "Introducing Compass: Data-driven decisions right in Slack",
+   "date": "2025-09-10",
+   "url": "https://dagster.io/blog/introducing-compass",
+   "source": "Dagster Blog",
+   "summary": "Dagster Labs CEO Pete Hunt announced Compass, an AI data analyst that lets non-technical users ask natural-language questions about company data directly in Slack, without writing SQL. Compass incorporates institutional knowledge and supports conversational follow-up questions, positioning Dagster beyond pipeline orchestration into AI-powered analytics.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Dagster Labs",
+   "headline": "Dagster+ Now Available in the EU",
+   "date": "2025-09-19",
+   "url": "https://dagster.io/blog/dagster-plus-now-available-in-the-eu",
+   "source": "Dagster Blog",
+   "summary": "Dagster Labs launched Dagster+ in European data centers (eu-north-1), initially with Hybrid deployments to meet EU data residency and compliance requirements; a December 2025 update expanded support to fully managed Serverless deployments. The launch addressed growing demand from European organizations needing the orchestration control plane within EU boundaries.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Datacove",
+   "headline": "Datacove Wins Business of the Year (Up to \u00a31m Turnover) at 2025 Gatwick Diamond Business Awards",
+   "date": "2025-03-20",
+   "url": "https://www.gatwickdiamondbusinessawards.com/year/2025-awards/2024-business-oty-up-to-1m",
+   "source": "Gatwick Diamond Business Awards",
+   "summary": "Datacove was named Business of the Year (Up to \u00a31m Turnover) at the 2025 Gatwick Diamond Business Awards. The award celebrates high-performing and innovative small businesses that do the right thing for their clients, people, and the Gatwick Diamond community.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Datacove",
+   "headline": "Datacove Organises EARL 2026 Data Intelligence Conference in Brighton",
+   "date": "2026-01-01",
+   "url": "https://earl-conference.com/",
+   "source": "EARL Conference",
+   "summary": "Datacove is organising EARL 2026, a cross-sector International Data Intelligence conference scheduled for October 6-8, 2026 in Brighton, England. The event covers a broad range of languages and techniques including R, Python, SQL, Rust, and modern AI/ML tooling, with emphasis on real-world commercial impact.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Datafold",
+   "headline": "Translating the Untranslatable: Datafold Migration Agent Now Supports All Major ETL Tools",
+   "date": "2025-05-28",
+   "url": "https://www.datafold.com/blog/datafold-migration-agent-now-supports-all-major-etl-tools",
+   "source": "Datafold Blog",
+   "summary": "Datafold expanded its AI-powered Migration Agent to support all major legacy ETL platforms including Informatica, Talend, IBM DataStage, SSIS, Matillion, and Alteryx, enabling automated code translation and refactoring to modern cloud-native targets like Snowflake, Databricks, BigQuery, and dbt. The agent guarantees data accuracy validation, reducing migration timelines from months or years to weeks.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Datafold",
+   "headline": "Datafold Introduces AI-Powered Code Review in CI: Automated PR Summaries, Root Cause Analysis, and Context-Aware Chat",
+   "date": "2025-01-29",
+   "url": "https://www.datafold.com/blog/introducing-ai-in-ci",
+   "source": "Datafold Blog",
+   "summary": "Datafold launched three AI-powered capabilities for CI pipelines in private beta: automated pull request summaries explaining what and why data changed, root cause analysis linking data changes to specific code lines, and a context-aware chat interface for querying PR changes using lineage data. The features are grounded in Datafold's core data validation technology.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Datafold",
+   "headline": "Data Migrations Reimagined: Introducing the AI-Powered Datafold Migration Agent",
+   "date": "2024-10-30",
+   "url": "https://www.datafold.com/blog/data-migrations-reimagined-introducing-the-ai-powered-datafold-migration-agent/",
+   "source": "Datafold Blog",
+   "summary": "Datafold announced its AI-powered Migration Agent, capable of translating SQL across any dialect and integrating with orchestration tools like Airflow, dbt, and GUI-based platforms. The agent combines AI code translation with cross-database data diffing and iterative validation, achieving 5-10x faster migrations and compressing timelines from months or years to weeks.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dremio",
+   "headline": "SAP to Acquire Dremio to Unify SAP and Non-SAP Data for Agentic AI",
+   "date": "2026-05-04",
+   "url": "https://www.ciodive.com/news/sap-buys-dremio-prior-labs/819263/",
+   "source": "CIO Dive",
+   "summary": "SAP announced plans to acquire Dremio, a data lakehouse platform, alongside AI startup Prior Labs, to strengthen its Business Data Cloud with federation capabilities across SAP and non-SAP data sources. The deal is expected to close in Q3 2026 pending regulatory approval.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Dremio",
+   "headline": "Dremio Cloud: An autonomous lakehouse powered by AI agents",
+   "date": "2025-11-13",
+   "url": "https://www.techtarget.com/searchdatamanagement/news/366634167/Dremio-Cloud-An-autonomous-lakehouse-powered-by-AI-agents",
+   "source": "TechTarget",
+   "summary": "Dremio launched Dremio Cloud as an agentic lakehouse platform that autonomously learns, adapts, and optimizes performance to reduce manual data engineering tasks. The platform includes native Model Context Protocol support, an open catalog for governed data access, and an automatically generated semantic layer for AI agent accuracy.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dremio",
+   "headline": "Dremio Named Data Breakthrough Awards' Data Analytics Solution of the Year",
+   "date": "2026-04-17",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/dremio-named-data-breakthrough-awards-162200377.html",
+   "source": "Yahoo Finance / GlobeNewswire",
+   "summary": "Dremio won the 7th annual Data Breakthrough 'Data Analytics Solution of the Year' award, its third time earning the distinction (also winning in 2024 and 2020), recognizing its Agentic Lakehouse platform built on Apache Iceberg. The program received over 3,500 nominations, with Amazon cited as achieving 10x faster query performance and a 90% reduction in project completion times.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Dun & Bradstreet",
+   "headline": "Dun & Bradstreet and OpenAI Collaborate to Power Finance Workflows for Enterprises and Small Businesses",
+   "date": "2026-06-03",
+   "url": "https://www.prnewswire.com/news-releases/dun--bradstreet-and-openai-collaborate-to-power-finance-workflows-for-enterprises-and-small-businesses-302790245.html",
+   "source": "PR Newswire",
+   "summary": "Dun & Bradstreet integrated its D&B Commercial Graph into ChatGPT and Codex via Model Context Protocol servers, enabling financial professionals to access verified business identity, ownership, credit, and risk data directly within OpenAI platforms. Use cases include due diligence, credit origination, and financial reporting, with timelines potentially reduced from months to minutes.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Dun & Bradstreet",
+   "headline": "Dun & Bradstreet Brings Verified Business Data into Microsoft 365 Copilot",
+   "date": "2026-06-02",
+   "url": "https://www.prnewswire.com/news-releases/dun--bradstreet-brings-verified-business-data-into-microsoft-365-copilot-302789275.html",
+   "source": "PR Newswire",
+   "summary": "Dun & Bradstreet launched a Graph Connector in Microsoft 365 Copilot, providing enterprises with no-cost access to a curated sample of verified business data on tens of thousands of global companies. The connector supports AI-powered workflows for sales, market research, and supplier discovery across Microsoft 365 apps.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Dun & Bradstreet",
+   "headline": "Dun & Bradstreet Partners With Anthropic to Automate Business Onboarding",
+   "date": "2026-05-07",
+   "url": "https://www.pymnts.com/artificial-intelligence-2/2026/dun-bradstreet-partners-with-anthropic-to-automate-business-onboarding/",
+   "source": "PYMNTS.com",
+   "summary": "Dun & Bradstreet integrated its Commercial Graph database with Anthropic's Claude AI platform via a Model Context Protocol server to streamline know-your-customer and know-your-business workflows for regulated industries. The partnership enables financial institutions to accelerate corporate onboarding and compliance by automating verification, risk assessment, and audit-ready documentation.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "EPAM",
+   "headline": "EPAM and Anthropic Team Up to Build the Future of Enterprise Transformation with Safe, Applied AI",
+   "date": "2026-05-06",
+   "url": "https://www.prnewswire.com/news-releases/epam--anthropic-team-up-to-build-the-future-of-enterprise-transformation-with-safe-applied-ai-302763463.html",
+   "source": "PR Newswire",
+   "summary": "EPAM Systems announced a multi-year strategic partnership with Anthropic to deliver enterprise-grade AI solutions, combining EPAM's engineering expertise with Anthropic's Claude models, Claude Code, and Claude Agent SDK. The partnership includes a CEO-mandated initiative to certify over 10,000 Claude architects, with 1,300 already certified at announcement and 5,000 targeted by end of Q3 2026.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "EPAM",
+   "headline": "EPAM and Cursor Announce Strategic Partnership to Build and Scale AI-Native Teams for Global Enterprises",
+   "date": "2026-01-08",
+   "url": "https://www.prnewswire.com/news-releases/epam-and-cursor-announce-strategic-partnership-to-build-and-scale-ai-native-teams-for-global-enterprises-302655387.html",
+   "source": "PR Newswire",
+   "summary": "EPAM Systems and Cursor formed a strategic partnership combining Cursor's AI-native IDE with EPAM's engineering expertise and 50,000+ engineers to help global enterprises scale generative AI development beyond pilots. The collaboration focuses on deploying AI-native workflows across thousands of developers with measurable gains in productivity and software quality.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Espresso AI",
+   "headline": "Espresso AI Launches Agentic Lakehouse for Databricks",
+   "date": "2025-11-12",
+   "url": "https://www.biia.com/espresso-ai-launches-agentic-lakehouse-for-databricks/",
+   "source": "BIIA.com",
+   "summary": "Espresso AI unveiled a solution that transforms Databricks into an agentic lakehouse via three specialized agents \u2014 Autoscaling, Scheduling, and Query \u2014 designed to reduce Databricks infrastructure costs by roughly 50%. The company, founded by three ex-Googlers, completed a six-month beta with enterprises including Booz Allen Hamilton and Comcast before the launch.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Espresso AI",
+   "headline": "Espresso AI Raises $11M to Cut Cloud Costs with Generative AI",
+   "date": "2024-05-07",
+   "url": "https://www.maginative.com/article/espresso-ai-raises-11m-to-cut-cloud-costs-with-generative-ai/",
+   "source": "Maginative",
+   "summary": "Espresso AI emerged from stealth with over $11 million in seed and pre-seed funding \u2014 seed led by Daniel Gross and Nat Friedman, pre-seed led by Matt Turck at FirstMark \u2014 to build an AI-powered platform that automatically optimizes SQL queries and reduces cloud data warehouse costs by up to 80%. The company's initial product targets Snowflake workloads with setup taking under 10 minutes.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Etleap",
+   "headline": "Etleap Launches Iceberg Pipeline Platform to Simplify Enterprise Adoption of Apache Iceberg",
+   "date": "2026-02-03",
+   "url": "https://www.infoq.com/news/2026/02/etleap-iceberg-pipeline-platform/",
+   "source": "InfoQ",
+   "summary": "Etleap introduced a managed pipeline system that unifies ingestion, transformation, orchestration, and Apache Iceberg table operations into a single system running inside customers' Virtual Private Cloud environments. CEO Christian Romming stated the platform enables data teams to adopt Iceberg without building and operating a custom pipeline stack.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Etleap",
+   "headline": "Etleap unveils unified Iceberg data pipeline platform",
+   "date": "2026-01-31",
+   "url": "https://itbrief.asia/story/etleap-unveils-unified-iceberg-data-pipeline-platform",
+   "source": "IT Brief Asia",
+   "summary": "Etleap launched a unified pipeline platform for Apache Iceberg that consolidates ingestion, transformation, orchestration, and table management into one managed system operating within customers' VPCs. IDC analyst Marlanna Bozicevich noted that solutions like Etleap's that unify pipeline management and Iceberg operations can help teams meet performance and scalability demands while maintaining architectural openness.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Etleap",
+   "headline": "Etleap Introduces a New Managed Pipeline Layer Created for Apache Iceberg",
+   "date": "2026-01-30",
+   "url": "https://www.dbta.com/Editorial/News-Flashes/Etleap-Introduces-a-New-Managed-Pipeline-Layer-Created-for-Apache-Iceberg-173317.aspx",
+   "source": "Database Trends and Applications",
+   "summary": "Etleap introduced its Iceberg pipeline platform described as the missing pipeline layer that Iceberg itself lacks, consolidating ingestion, transformation, orchestration, and table operations into a single managed system running within customers' VPCs. The platform supports downstream analytics, AI, and data sharing use cases and is currently in use by customers running Iceberg pipelines at scale.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Euno",
+   "headline": "Snowflake Startup Spotlight: Euno",
+   "date": "2025-12-01",
+   "url": "https://www.snowflake.com/en/blog/startup-spotlight-euno/",
+   "source": "Snowflake Blog",
+   "summary": "Snowflake featured Euno CEO Sarah Levy in its Startup Spotlight series, highlighting how the company's metadata intelligence platform provides governance automation and automated context for AI agents \u2014 including those powering Snowflake Intelligence. Euno uses column-level lineage and certified dataset signals to give AI systems the context needed for reliable, explainable, enterprise-scale analytics.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Euno",
+   "headline": "Euno is officially live on Cyera's integrations",
+   "date": "2026-04-20",
+   "url": "https://euno.ai/blog/euno-is-officially-live-on-cyeras-integrations",
+   "source": "Euno Blog",
+   "summary": "Euno announced its integration with Cyera, a Data Security Posture Management (DSPM) platform, propagating PII and PCI classifications from warehouse columns through to BI fields, reports, and dashboards. The partnership gives security teams visibility into who accesses sensitive data across the BI layer and enables automatic access revocation when policies are violated.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Euno",
+   "headline": "This Omni x Euno integration is a big one",
+   "date": "2026-04-20",
+   "url": "https://euno.ai/blog/this-omni-x-euno-integration-is-a-big-one",
+   "source": "Euno Blog",
+   "summary": "Euno announced a major integration with Omni, the AI analytics platform, embedding Omni's built-in analytical logic into Euno's column-level lineage so AI agents can query enterprise data with governed semantics. CEO Sarah Levy said the integration helps organizations deploy enterprise AI workloads on a trusted foundation in weeks rather than months.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "FactSet",
+   "headline": "FactSet Accelerates Innovation in Banking with Launch of a New AI-Native Solution in Partnership with Finster AI",
+   "date": "2026-03-30",
+   "url": "https://www.stocktitan.net/news/FDS/fact-set-accelerates-innovation-in-banking-with-launch-of-a-new-ai-mxmm94j34vm8.html",
+   "source": "StockTitan / FactSet Press Release",
+   "summary": "FactSet launched FactSet AI for Banking, an agentic AI-powered workflow automation platform for investment banking teams, built in partnership with Finster AI (in which FactSet also made a strategic investment). The solution automates pitch materials, research memos, and buyer/seller analysis with full traceability, integrating with FactSet Workstation and Microsoft Office; currently in alpha with broader rollout planned through 2026.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "FactSet",
+   "headline": "FactSet Integrates Advanced AI Financial Crime Risk Management Tools into Workstation for Corporate Banks",
+   "date": "2026-03-03",
+   "url": "https://www.stocktitan.net/news/FDS/fact-set-integrates-advanced-ai-financial-crime-risk-management-0q0sdp85kn75.html",
+   "source": "StockTitan / FactSet Press Release",
+   "summary": "FactSet launched integrated AI-driven KYC, AML, and sanctions-screening capabilities within FactSet Workstation, built in partnership with ComplyAdvantage. The solution automates up to 80% of compliance review steps, cuts onboarding times by up to 50%, and decreases compliance alert errors by up to 70% for mid-market and regional corporate banks.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "FactSet",
+   "headline": "FactSet Meets Demand for AI-Ready Data, First to Announce MCP Sans Intermediary",
+   "date": "2025-12-16",
+   "url": "https://www.stocktitan.net/news/FDS/fact-set-meets-demand-for-ai-ready-data-first-to-announce-mcp-sans-cg0hxqvudtyk.html",
+   "source": "StockTitan / FactSet Press Release",
+   "summary": "FactSet launched what it described as the industry's first production-grade Model Context Protocol (MCP) server, giving AI systems direct real-time access to nine curated financial datasets including Fundamentals, Consensus Estimates, Ownership, and Global M&A Intelligence. The server emerged from a beta used by 45 firms and over 800 institutional users, and is aimed at enterprise AI teams building agentic financial workflows.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Foundational",
+   "headline": "Foundational Launches Foundational IQ, Bringing Deterministic Code Analysis to Agent Deployment for Enterprise Data and AI Governance",
+   "date": "2026-05-05",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/foundational-launches-foundational-iq-bringing-140000811.html",
+   "source": "Business Wire / Yahoo Finance",
+   "summary": "Foundational launched Foundational IQ, a conversational and agentic governance interface that analyzes code across SQL, Python, Java, Scala, COBOL, and other languages to map data flows from source to consumption. The product automates compliance tasks such as PII classification and lineage audits, operating within enterprise LLM environments including Snowflake, Databricks, and AWS without moving data outside customer infrastructure.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Foundational",
+   "headline": "Foundational Now Available on Snowflake Marketplace",
+   "date": "2026-03-30",
+   "url": "https://www.foundational.io/blog/foundational-now-available-on-snowflake-marketplace",
+   "source": "Foundational Blog",
+   "summary": "Foundational (Foundational Data, Inc.) listed its data and AI governance platform on the Snowflake Marketplace, giving Snowflake customers streamlined procurement of cross-platform lineage and governance capabilities. The listing provides coverage for SQL and non-SQL frameworks including Spark, Kafka, and Flink, and integrates with Snowflake Cortex Code for AI workloads.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Foundational",
+   "headline": "Foundational Secures $8M to Bring AI Agents into Data Engineering",
+   "date": "2024-03-25",
+   "url": "https://www.foundational.io/blog/foundational-is-announcing-general-availability",
+   "source": "Foundational Blog",
+   "summary": "Foundational announced general availability and an $8M seed round led by Viola Ventures and Gradient Ventures. The platform integrates with git to analyze pull requests in SQL, Python, and Scala, helping data teams at companies like Lemonade, Ramp, and Lightricks identify and prevent data issues before code is deployed.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Genesis Computing",
+   "headline": "Genesis Computing at Snowflake Summit 2026: Meet the Team",
+   "date": "2026-06-02",
+   "url": "https://genesiscomputing.com/events/snowflake-summit-meeting",
+   "source": "Genesis Computing",
+   "summary": "Genesis Computing is participating at Snowflake Summit 2026, inviting attendees to book time with their team to discuss data, AI, infrastructure, and product strategy. The company offers pre-trained AI agents designed to accelerate enterprise data engineering on Snowflake, Databricks, AWS, and Azure.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Genesis Computing",
+   "headline": "Genesis Computing Recognised in Gartner's \"Data Engineering 2.0\" Research",
+   "date": "2026-05-28",
+   "url": "https://www.prnewswire.com/news-releases/genesis-computing-recognised-in-gartners-data-engineering-2-0-research-302783835.html",
+   "source": "PR Newswire",
+   "summary": "Genesis Computing was recognized in Gartner's \"Data Engineering 2.0\" report as the only agentic platform purpose-built to automate enterprise data engineering. The company's Context Graph technology provides agents with contextual awareness of enterprise systems, and the platform claims to reduce data migrations and onboarding from months to days.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Genesis Computing",
+   "headline": "Snowflake invests in Genesis Computing, bringing chatbot assistants to the AI Data Cloud",
+   "date": "2025-02-26",
+   "url": "https://www.snowflake.com/en/blog/genesis-computing-investment-chatbot-assistants/",
+   "source": "Snowflake",
+   "summary": "Snowflake Ventures invested in Genesis Computing, whose platform is natively built on Snowflake and allows users to create autonomous data agents called \"Genbots\" that automate data-centric tasks for business analysts, data engineers, and data ops teams. Genesis was founded by former Snowflake executives Matt Glickman and Justin Langseth, and its applications are available through the Snowflake Marketplace.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Genpact",
+   "headline": "Genpact and Google Cloud Expand Alliance to Bring Agentic Solutions to the Office of the CFO",
+   "date": "2026-05-07",
+   "url": "https://www.prnewswire.com/news-releases/genpact-and-google-cloud-expand-alliance-to-bring-agentic-solutions-to-the-office-of-the-cfo-302765266.html",
+   "source": "PR Newswire",
+   "summary": "Genpact and Google Cloud announced an expanded alliance to develop and scale agentic AI-led solutions for enterprise finance operations, with the first product \u2014 Genpact Finance One: Revenue Lens Agents \u2014 now available on Google Cloud's Agent Marketplace. The collaboration targets Fortune 500 companies seeking to modernize CFO functions including revenue forecasting, accounts payable, and financial planning.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Genpact",
+   "headline": "Genpact Acquires XponentL Data to Accelerate AI-Led Innovation",
+   "date": "2025-06-05",
+   "url": "https://www.prnewswire.com/news-releases/genpact-acquires-xponentl-data-to-accelerate-ai-led-innovation-302474752.html",
+   "source": "PR Newswire",
+   "summary": "Genpact (NYSE: G) acquired XponentL Data, a data products and AI solutions provider headquartered in Pennsylvania, to bolster its AI Gigafactory and Service-as-Agentic-Solutions offerings. XponentL brings domain expertise in Life Sciences and Healthcare, plus partnerships with Databricks, AWS, and Microsoft; all employees joined Genpact and Tom Johnstone continues to lead the unit.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Genpact",
+   "headline": "Genpact Named a Leader in ISG Provider Lens 2026 ServiceNow Ecosystem Partners",
+   "date": "2026-04-28",
+   "url": "https://www.prnewswire.com/news-releases/genpact-named-a-leader-in-isg-provider-lens-2026-servicenow-ecosystem-partners-302755844.html",
+   "source": "PR Newswire",
+   "summary": "Information Services Group named Genpact a Leader in two quadrants of the ISG Provider Lens 2026 ServiceNow Ecosystem Partners report \u2014 ServiceNow Consulting and Implementation Services, and Innovation on ServiceNow \u2014 citing its blend of agentic AI, process intelligence, and governed human-in-the-loop delivery. The recognition highlights Genpact's ability to scale AI from pilots to production within ServiceNow-enabled workflows across IT, finance, and supply chain.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Greybeam",
+   "headline": "Greybeam Launches Cost Observability Tool on Snowflake Marketplace",
+   "date": "2026-06-03",
+   "url": "https://www.prnewswire.com/news-releases/greybeam-launches-cost-observability-tool-on-snowflake-marketplace-302790119.html",
+   "source": "PR Newswire",
+   "summary": "Greybeam announced at Snowflake Summit 2026 the launch of its Cost Observability Tool as a free Snowflake Native App, enabling data teams to monitor, analyze, and break down their Snowflake compute costs at the warehouse and query level. The tool helps organizations identify cost optimization opportunities directly within their Snowflake environment without requiring data movement.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "GrowthLoop",
+   "headline": "GrowthLoop Compound Marketing Engine Now Powered by Snowflake Cortex AI",
+   "date": "2025-06-03",
+   "url": "https://www.prnewswire.com/news-releases/growthloop-compound-marketing-engine-now-powered-by-snowflake-cortex-ai-302469835.html",
+   "source": "PR Newswire",
+   "summary": "GrowthLoop announced at Snowflake Summit 2025 a deeper integration enabling its Compound Marketing Engine to leverage Snowflake Cortex AI, allowing marketing teams to activate AI Growth Agents \u2014 generating audiences, suggesting journeys, and orchestrating omnichannel campaigns \u2014 without moving data outside the Snowflake platform.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "GrowthLoop",
+   "headline": "TJC Deepens Financial Partnership with GrowthLoop as Enterprises Modernize Marketing with Agentic AI and Composable Data Infrastructure",
+   "date": "2026-01-13",
+   "url": "https://finance.yahoo.com/news/tjc-deepens-financial-partnership-growthloop-194300155.html",
+   "source": "Yahoo Finance",
+   "summary": "Private equity firm TJC made a follow-on investment in GrowthLoop, deepening its commitment since an initial 2022 stake; capital will support product development and go-to-market expansion in retail and media, as well as deeper integrations with cloud partners including Snowflake and Google Cloud. Enterprise clients on the platform include Costco, Ford, Google, Albertsons, Fanatics, and Allegro.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "GrowthLoop",
+   "headline": "River Pines Capital Announces Strategic Equity Investment in GrowthLoop",
+   "date": "2025-10-21",
+   "url": "https://www.prnewswire.com/news-releases/river-pines-capital-announces-strategic-equity-investment-in-growthloop-302590271.html",
+   "source": "PR Newswire",
+   "summary": "River Pines Capital made a strategic equity investment in GrowthLoop to support the company's expansion and innovation. GrowthLoop's Compound Marketing Engine sits atop enterprise data warehouses to activate first-party data across omnichannel campaigns, including a tailored version for Commerce Media Networks. GrowthLoop was also recognized as 'One to Watch' in Snowflake's 2026 Modern Marketing Data Stack Report.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "insightsoftware",
+   "headline": "Insightsoftware launches AI analytics platform Simba Intelligence",
+   "date": "2026-03-03",
+   "url": "https://www.accountingtoday.com/news/insightsoftwares-new-ai-can-be-deployed-in-cloud-on-premises-or-hybrid",
+   "source": "Accounting Today",
+   "summary": "insightsoftware made its Simba Intelligence AI analytics platform generally available, offering cloud, on-premises, or hybrid deployment. The platform uses a zero-data-movement architecture and produces deterministic (not generative) outputs with full audit trails, designed to deliver trustworthy enterprise AI for finance teams.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "insightsoftware",
+   "headline": "Insightsoftware unifies semantic layer, governance to aid AI",
+   "date": "2026-03-04",
+   "url": "https://www.techtarget.com/searchdatamanagement/news/366639743/Insightsoftware-unifies-semantic-layer-governance-to-aid-AI",
+   "source": "TechTarget / SearchDataManagement",
+   "summary": "insightsoftware launched Simba Intelligence, a feature set pairing a semantic layer with automated governance and security policies to help enterprises build AI applications on trustworthy, business-contextual data. The announcement targets the common enterprise AI failure mode where models hallucinate against poorly organized data.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "insightsoftware",
+   "headline": "insightsoftware Acquires JustPerform to Deliver Unified, No-Code, Cloud-Native Enterprise Performance Management",
+   "date": "2025-01-15",
+   "url": "https://www.globenewswire.com/news-release/2025/01/15/3009811/0/en/insightsoftware-Acquires-JustPerform-to-Deliver-Unified-No-Code-Cloud-Native-Enterprise-Performance-Management.html",
+   "source": "GlobeNewswire",
+   "summary": "insightsoftware acquired JustPerform, a cloud-native EPM platform for planning, consolidation, and financial reporting, marking the company's 29th acquisition. The deal adds AI-driven predictive analytics and automated insights to insightsoftware's CFO-office portfolio.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Launches VEIL on Snowflake AI Data Cloud",
+   "date": "2026-06-03",
+   "url": "https://www.newsfilecorp.com/release/299966/Integrated-Quantum-Technologies-Launches-VEIL-on-Snowflake-AI-Data-Cloud",
+   "source": "Newsfile Corp",
+   "summary": "Integrated Cyber Solutions Inc. (dba Integrated Quantum Technologies) unveiled VEIL, a privacy-preserving data security solution, at Snowflake Summit 26. VEIL removes personally identifiable information from datasets before they enter machine learning pipelines, and is now accessible through the Snowflake AI Data Cloud.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "The Company Trying to Make Your AI Data Worthless to Hackers",
+   "date": "2026-06-03",
+   "url": "https://www.globenewswire.com/news-release/2026/06/03/3306331/0/en/The-Company-Trying-to-Make-Your-AI-Data-Worthless-to-Hackers.html",
+   "source": "GlobeNewswire",
+   "summary": "A sponsored profile of Integrated Quantum Technologies and its VEIL product, which uses a security-by-subtraction approach to strip PII from AI training data before models see it. The piece contextualizes two threat vectors: AI-automated cyberattacks and the harvest-now, decrypt-later post-quantum decryption risk. Note: publisher discloses share ownership and compensation for coverage.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Integrated Quantum Technologies",
+   "headline": "Integrated Quantum Technologies Announces Refiling of MD&A",
+   "date": "2026-05-21",
+   "url": "https://www.barchart.com/story/news/2074240/integrated-quantum-technologies-announces-refiling-of-mda",
+   "source": "Barchart",
+   "summary": "Integrated Cyber Solutions Inc. resubmitted its management's discussion and analysis for fiscal year 2025 following a continuous disclosure review by the BC Securities Commission. The revised MD&A adds clarifying disclosure on the company's validation and testing activities for its AIQu and VEIL products and related expenditures.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "Keebo",
+   "headline": "Keebo Appoints Eric Shoemaker as Chief Executive Officer",
+   "date": "2026-03-02",
+   "url": "https://www.prnewswire.com/news-releases/keebo-appoints-eric-shoemaker-as-chief-executive-officer-302699650.html",
+   "source": "PR Newswire",
+   "summary": "Keebo, Inc. named Eric Shoemaker as its new CEO; Shoemaker previously served as Chief Revenue Officer at Device42 before its $230M acquisition by Freshworks. Co-founder Barzan Mozafari transitioned to board duties, while Shoemaker leads go-to-market expansion and enterprise adoption of Keebo's autonomous Snowflake and Databricks optimization platform.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Keebo",
+   "headline": "Keebo Launches Workload Intelligence \u2013 Public Edition on Snowflake Marketplace",
+   "date": "2025-06-03",
+   "url": "https://www.prweb.com/releases/keebo-launches-workload-intelligence---public-edition-on-snowflake-marketplace-302462730.html",
+   "source": "PR Newswire / PRWeb",
+   "summary": "Keebo announced the Workload Intelligence Public Edition, a Snowflake Native App that autonomously adjusts warehouse settings and routes queries to reduce over-provisioning and cut costs. The launch was timed to Snowflake Summit 2025 and includes a customer case study from Costco Travel citing a 50% cost reduction.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Kloudgen",
+   "headline": "Kloudgen Advances Enterprise AI with Semantiqa: Automated Semantic and Agent Layers Now on Snowflake Marketplace",
+   "date": "2026-06-04",
+   "url": "https://www.pr.com/press-release/970209",
+   "source": "PR.com",
+   "summary": "Kloudgen announced the expanded availability of Semantiqa on Snowflake Marketplace at Snowflake Summit 26, positioning the tool as a way to automate semantic layer creation and activate enterprise data for AI within a single day. CEO Yash Gupta stated the solution drastically reduces the time from raw data to actionable, interactive discovery by operating natively within Snowflake customer accounts.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "KPMG",
+   "headline": "KPMG Returns as Sponsor of Snowflake Summit 2026",
+   "date": "2026-06-01",
+   "url": "https://kpmg.com/us/en/events/kpmg-at-snowflake-summit.html",
+   "source": "KPMG",
+   "summary": "KPMG is a returning sponsor at Snowflake Summit 2026, held June 1\u20134 at the Moscone Center in San Francisco. The firm highlights how it guides clients through data-driven, cloud-based business transformations using the Snowflake platform to deliver speed, scale, and lower costs.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "KPMG",
+   "headline": "KPMG and Anthropic Sign Global Alliance and Launch Digital Gateway Powered by Claude",
+   "date": "2026-05-19",
+   "url": "https://kpmg.com/xx/en/media/press-releases/2026/05/kpmg-and-anthropic-sign-global-alliance-and-launch-digital-gateway-powered-by-claude.html",
+   "source": "KPMG",
+   "summary": "KPMG and Anthropic announced a global alliance embedding Claude AI into KPMG's Digital Gateway platform, accessible to all 276,000 KPMG employees worldwide. The partnership includes KPMG becoming a preferred consultant for deploying Anthropic capabilities to private equity clients and launching KPMG Blaze for IT modernization.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "KPMG",
+   "headline": "KPMG Named 2026 Google Cloud Partner of the Year for Global Industry Solutions: Breakthrough",
+   "date": "2026-04-21",
+   "url": "https://kpmg.com/xx/en/media/press-releases/2026/04/kpmg-named-2026-google-cloud-partner-of-the-year-for-global-industry-solutions-breakthrough.html",
+   "source": "KPMG",
+   "summary": "KPMG received the 2026 Google Cloud Partner of the Year award for deploying Gemini Enterprise at enterprise scale, with over 90% of KPMG US professionals actively using the platform within two weeks of launch. The firm has built over 150 AI agents for clients globally and established Google Cloud Experience Centers across multiple countries.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LandingAI",
+   "headline": "ABB Robotics Invests in LandingAI to Accelerate Vision AI",
+   "date": "2025-09-17",
+   "url": "https://www.therobotreport.com/abb-robotics-invests-in-landingai-to-accelerate-vision-ai/",
+   "source": "The Robot Report",
+   "summary": "ABB Robotics made a strategic investment in LandingAI through its venture arm to integrate LandingAI's visual AI software into ABB's robotics platform, with the goal of reducing robot vision AI training and deployment time by up to 80%. The partnership targets applications in item-picking, sorting, depalletizing, and quality inspection across logistics, healthcare, and food and beverage sectors.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LandingAI",
+   "headline": "LandingAI Expands Agentic Document Intelligence with A Document Pre-trained Transformer",
+   "date": "2025-09-30",
+   "url": "https://www.prnewswire.com/news-releases/landingai-expands-agentic-document-intelligence-with-a-document-pre-trained-transformer-302570770.html",
+   "source": "PR Newswire",
+   "summary": "LandingAI launched DPT-2, an upgraded Document Pre-trained Transformer model powering its Agentic Document Extraction (ADE) platform, adding capabilities such as complex table parsing without gridlines, figure and logo identification, and recognition of signatures, checkboxes, and barcodes. The company also launched a Builder Program giving developers priority support, early feature access, and higher rate limits for building document-processing applications.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LandingAI",
+   "headline": "LandingAI Launches Agentic Document Extraction for Unlocking Insights from Complex Documents",
+   "date": "2025-05-28",
+   "url": "https://www.prnewswire.com/news-releases/landingai-launches-agentic-document-extraction-for-unlocking-insights-from-complex-documents-302466589.html",
+   "source": "PR Newswire",
+   "summary": "LandingAI announced major upgrades to its Agentic Document Extraction (ADE) platform, achieving a 17x speed improvement (from 135 seconds to 8 seconds median processing time) and enabling hundreds to thousands of pages per minute. Healthcare platform Eolas Medical deployed ADE to process over 100,000 clinical PDFs supporting 1.2 million monthly queries from medical professionals.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "LlamaIndex Secures $19 Million Series A to Power Enterprise-Grade Knowledge Agents",
+   "date": "2025-03-04",
+   "url": "https://www.prnewswire.com/news-releases/llamaindex-secures-19-million-series-a-to-power-enterprise-grade-knowledge-agents-302390936.html",
+   "source": "PR Newswire",
+   "summary": "LlamaIndex raised a $19 million Series A led by Norwest Venture Partners with participation from Greylock, bringing total funding to $27.5 million. The round coincided with the general availability launch of LlamaCloud, a commercial knowledge management platform for building production-grade AI agents over unstructured data, with customers including Rakuten, Carlyle, and Salesforce.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "LlamaIndex Releases LiteParse: A CLI and TypeScript-Native Library for Spatial PDF Parsing in AI Agent Workflows",
+   "date": "2026-03-19",
+   "url": "https://www.marktechpost.com/2026/03/19/llamaindex-releases-liteparse-a-cli-and-typescript-native-library-for-spatial-pdf-parsing-in-ai-agent-workflows/",
+   "source": "MarkTechPost",
+   "summary": "LlamaIndex open-sourced LiteParse, a TypeScript-native document parser built on PDF.js and Tesseract.js that runs entirely locally with zero cloud dependencies. It uses spatial text parsing to preserve document layout for AI agent workflows, positioning itself as a privacy-focused local alternative to LlamaIndex's managed LlamaParse service.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LlamaIndex",
+   "headline": "Introducing ParseBench: The First Document Parsing Benchmark for AI Agents",
+   "date": "2026-04-13",
+   "url": "https://www.llamaindex.ai/blog/parsebench",
+   "source": "LlamaIndex Blog",
+   "summary": "LlamaIndex launched ParseBench, an open evaluation framework of approximately 2,000 human-verified enterprise document pages with over 167,000 test rules across five capability dimensions including tables, charts, and visual grounding. LlamaIndex's own LlamaParse Agentic scored highest among 14 evaluated methods at 84.9% overall accuracy.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "LTM",
+   "headline": "LTM at Snowflake Summit 2026 \u2014 Booth 1102, San Francisco",
+   "date": "2026-06-01",
+   "url": "https://www.ltm.com/news-events/events/2026/outcreate-with-intelligence-at-scale",
+   "source": "LTM (LTIMindtree) Official Site",
+   "summary": "LTIMindtree exhibited at Snowflake Summit 2026 (June 1\u20134, San Francisco) at Booth 1102, showcasing AI-ready Snowflake ecosystem solutions under the theme 'Outcreate with Intelligence at Scale.' Two speaker sessions covered AI strategy and AI engineering with Snowflake Cortex, featuring LTM leaders including the Head of their Snowflake Practice.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "LTM",
+   "headline": "LTM Makes Offer to Acquire Randstad's Technology and Consulting Services Business for ~\u20ac469M",
+   "date": "2026-05-22",
+   "url": "https://www.ltm.com/news-events/press-releases/2026/ltm-acquire-randstad-tech-consulting-services-business",
+   "source": "LTM (LTIMindtree) Official Site",
+   "summary": "LTIMindtree announced a USD 500M+ offer to acquire Randstad's Technology and Consulting Services operations in France, Germany, Belgium, Luxembourg, and Australia, targeting aerospace, automotive, utilities, and BFSI sectors. CEO Venu Lambu described the deal as aligned with the company's five-year strategy to build a more resilient, diversified portfolio, with a five-year IT services partnership also included.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "LTM",
+   "headline": "LTM Launches BlueVerse M.A.X AI Marketing Assistant on Salesforce Agentforce",
+   "date": "2026-05-13",
+   "url": "https://letsdatascience.com/news/ltm-launches-blueverse-max-ai-marketing-assistant-ebff3862",
+   "source": "Let's Data Science",
+   "summary": "LTIMindtree launched BlueVerse M.A.X, an AI Marketing Assist solution built on Salesforce's Agentforce platform that combines autonomous AI agents with human oversight for enterprise campaign creation, personalization, and optimization. The product extends LTM's BlueVerse agentic AI ecosystem into the marketing operations domain for global enterprises.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Mastech Digital",
+   "headline": "Mastech Digital Strengthens Strategic Partnership with Informatica to Accelerate AI-Led IT Transformation Solutions",
+   "date": "2025-05-13",
+   "url": "https://www.prnewswire.com/news-releases/mastech-digital-strengthens-strategic-partnership-with-informatica-to-accelerate-ai-led-it-transformation-solutions-302453292.html",
+   "source": "PR Newswire",
+   "summary": "Mastech Digital (NYSE: MHH) expanded its strategic alliance with Informatica to co-develop AI-powered data management solutions targeting healthcare, BFSI, and manufacturing sectors within a $50 billion addressable market. The partnership includes a co-branded AI and Data Outcomes Lab and 30-day proof-of-concept delivery blueprints.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Mastech Digital",
+   "headline": "Mastech Digital Reports First Quarter 2026 Results, Highlights Bookings Growth and EDGE Initiative Progress",
+   "date": "2026-05-15",
+   "url": "https://www.prnewswire.com/news-releases/mastech-digital-reports-first-quarter-2026-results-302772975.html",
+   "source": "PR Newswire",
+   "summary": "Mastech Digital reported Q1 2026 revenues of $41.1 million with new bookings doubling year-over-year to $7.0 million TCV, as the company restructured into two segments \u2014 Talent and Data & AI \u2014 to reflect its AI-first strategy. CEO Nirav Patel noted the EDGE cost-transformation initiative is executing ahead of expectations, with $54.9 million in liquidity and no bank debt.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Maxa",
+   "headline": "Maxa at Snowflake Summit June 1\u20134, 2026",
+   "date": "2026-05-26",
+   "url": "https://www.maxa.ai/blog/maxa-at-snowflake-summit-june-1-4-2026",
+   "source": "Maxa (company blog)",
+   "summary": "Maxa confirmed its presence at Snowflake Summit 2026 in San Francisco, showcasing deterministic dbt pipelines, ERP/finance/ops data harmonization, and AI readiness at Booth 2711. The company invited attendees to book limited demo slots during the June 1\u20134 event.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Maxa",
+   "headline": "Introducing Maxa Autopilot: The Agentic Way to Build and Maintain Data Pipelines",
+   "date": "2026-05-29",
+   "url": "https://www.maxa.ai/blog/introducing-maxa-autopilot-agentic-way-build-maintain-data-pipelines",
+   "source": "Maxa (company blog)",
+   "summary": "Maxa launched Autopilot, an agentic platform that converts business context, requirements, and source system data into production-ready dbt pipelines. The platform extracts requirements from workshop materials, harmonizes source data, and validates outputs against real business metrics, producing standard dbt code deployable on Snowflake, Databricks, or Microsoft Fabric with no proprietary runtime lock-in.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Maxa",
+   "headline": "Maxa Closes Series A Funding as Part of US$21 Million Round, Wins North America Data Drivers Award",
+   "date": "2024-05-30",
+   "url": "https://finance.yahoo.com/news/maxa-closes-series-funding-part-120000526.html",
+   "source": "Yahoo Finance / AccessNewswire",
+   "summary": "Maxa closed an oversubscribed US$21 million Series A round led by FRAMEWORK, with BDC Capital as co-lead and new investors including Snowflake Ventures, Amiral Ventures, and NAventures (National Bank of Canada). Simultaneously, Maxa won the 2024 North America Data Drivers Award for most innovative data-driven application on Snowflake.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Mendix (a Siemens Business)",
+   "headline": "Siemens powers the next phase of industrial AI with Intelligence Center X",
+   "date": "2026-06-01",
+   "url": "https://www.prnewswire.com/news-releases/siemens-powers-the-next-phase-of-industrial-ai-with-intelligence-center-x-302787786.html",
+   "source": "PR Newswire",
+   "summary": "Siemens unveiled Intelligence Center X at its Realize Live conference, an industrial AI orchestration platform that combines the Mendix low-code platform with Siemens' Graph Studio and AI Studio software. The platform integrates with Snowflake Semantic Views and Cortex AI as part of its ecosystem partner network.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Mendix (a Siemens Business)",
+   "headline": "Vivix Vidros Planos achieves 4x faster quality resolution by scaling agentic AI with Mendix and Snowflake",
+   "date": "2026-06-02",
+   "url": "https://www.mendix.com/press/vivix-vidros-planos-achieves-4x-faster-quality-resolution-by-scaling-agentic-ai-with-mendix-and-snowflake/",
+   "source": "Mendix",
+   "summary": "Mendix announced that Brazilian glass manufacturer Vivix Vidros Planos deployed over 30 Mendix applications integrated with Snowflake Cortex AI, reducing customer quality complaint resolution from 10 days to 2.5 days via a 'Virtual Engineer' AI agent. The case study was published at Snowflake Summit 2026.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Mendix (a Siemens Business)",
+   "headline": "Mendix Continues Collaboration with Snowflake to Drive Superior Customer Value and Transform Development in the Automotive Industry",
+   "date": "2025-09-09",
+   "url": "https://www.mendix.com/press/mendix-continues-collaboration-with-snowflake-to-drive-superior-customer-value-and-transform-development-in-the-automotive-industry/",
+   "source": "Mendix",
+   "summary": "Mendix became a Snowflake Data Cloud Product partner in Snowflake's Automotive Solutions launch, combining low-code application development with Snowflake's Cortex AI to help automotive enterprises accelerate digital transformation. Customer examples include deployments at Siemens Energy spanning 100+ applications and 200+ deployments.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Metric Insights",
+   "headline": "Metric Insights Listed as Attendee at Snowflake Summit 2026",
+   "date": "2026-06-01",
+   "url": "https://www.metricinsights.com/events/",
+   "source": "Metric Insights",
+   "summary": "Metric Insights' official events page confirms the company is attending Snowflake Summit 2026 (June 1-4, Moscone Center, San Francisco), along with other major 2026 data conferences including the Databricks Data + AI Summit (June 15-18, San Francisco).",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Metric Insights",
+   "headline": "Metric Insights Releases Version 7.1.0 with Concierge AI Assistant and Analytics Marketplace",
+   "date": "2025-04-24",
+   "url": "https://help.metricinsights.com/m/Release_Notes/l/1933507-release-7-1-0",
+   "source": "Metric Insights Help & Documentation",
+   "summary": "Version 7.1.0, released April 24, 2025, introduces a fully integrated Concierge AI Assistant with intention-aware search, a new Analytics Marketplace for cross-catalog discovery across Atlan, Alation, Collibra, and Purview, and an App Builder (Alpha) for creating custom BI portal applications.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Metric Insights",
+   "headline": "Why Enterprises Stumble on AI for BI",
+   "date": "2026-05-27",
+   "url": "https://www.metricinsights.com/blog/why-enterprises-stumble-on-ai-for-bi/",
+   "source": "Metric Insights Blog",
+   "summary": "Metric Insights founder and CEO Marius Moscovici outlines four obstacles enterprises face when deploying AI for BI: technology selection paralysis, inadequate business context in AI tools, the prototype-to-production gap, and an expectations mismatch between users and passive chatbot interfaces.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Neo4j Acquires GraphAware to Launch Intelligence Analysis Alternative to Palantir Gotham",
+   "date": "2026-06-03",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/neo4j-acquires-graphaware-launch-intelligence-070000791.html",
+   "source": "Yahoo Finance / BusinessWire",
+   "summary": "Neo4j announced an agreement to acquire GraphAware, an intelligence analysis software company serving government agencies, to create an open-standards alternative to Palantir Gotham. The combined platform (GraphAware Hume) will serve existing clients including the U.S. Department of Defense, Western Australia Police Force, and European Commission, with the deal advancing Neo4j's $100M AI investment roadmap.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Neo4j Invests $100 Million in GenAI and Launches Key Agentic AI Innovations",
+   "date": "2025-10-01",
+   "url": "https://neo4j.com/blog/genai/neo4j-invests-100-million-genai-agentic/",
+   "source": "Neo4j Blog",
+   "summary": "Neo4j announced a $100 million investment to accelerate its role as the default knowledge layer for agentic AI systems, along with the launch of Neo4j Aura Agent (a no/low-code platform for deploying AI agents) and an open-source Model Context Protocol Server for graph-based retrieval. The company also launched a startup program targeting over 1,000 AI-native companies within 12 months.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Neo4j",
+   "headline": "Integrating Snowflake and Neo4j: Practical Graph Analytics for Your Data",
+   "date": "2026-05-05",
+   "url": "https://www.snowflake.com/en/developers/guides/practical-graph-analytics-neo4j-snowflake/",
+   "source": "Snowflake Developer Guide",
+   "summary": "Snowflake published a developer guide detailing how Neo4j Graph Analytics for Snowflake enables users to run 65+ graph algorithms directly on Snowflake data without ETL, using standard SQL. The guide covers algorithms including PageRank, Betweenness Centrality, FastRP embeddings, and Louvain community detection for use cases like manufacturing workflow analysis.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "NiCE World 2026: Where Agentic AI Meets Enterprise Scale",
+   "date": "2026-06-01",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/nice-world-2026-where-agentic-120000602.html",
+   "source": "Yahoo Finance / BusinessWire",
+   "summary": "NICE announced its flagship user conference NiCE World 2026, scheduled June 8-10 at Walt Disney World Swan and Dolphin in Orlando, FL, bringing together CX and technology leaders including customers from Citi, Hyatt, Aetna, and Geico, plus partners including Accenture, AWS, and Deloitte. The event will showcase advances to the CXone platform and NICE's agentic AI portfolio, with 150+ sessions and an AI Agent Factory where attendees can build and certify a functional AI agent.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "NiCE to Acquire Cognigy - Advancing the Leading CX AI Platform to Accelerate AI-First Customer Experience",
+   "date": "2025-07-28",
+   "url": "https://www.nice.com/press-releases/nice-to-acquire-cognigy-advancing-the-leading-cx-ai-platform-to-accelerate-ai-first-customer-experience",
+   "source": "NICE Press Release",
+   "summary": "NICE announced the acquisition of Cognigy, a global leader in conversational and agentic AI, for approximately $955 million in cash, expected to close in Q4 2025. The deal integrates Cognigy's AI capabilities with the CXone platform to combine human-assisted engagement, autonomous self-service, and agentic orchestration on a single data foundation; Cognigy counts Mercedes-Benz, Nestle, and Lufthansa Group among its customers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "NICE",
+   "headline": "NiCE Launches Agentic AI Innovation that Turns Enterprise Interaction Data into Ready-to-Deploy AI Agents",
+   "date": "2026-03-10",
+   "url": "https://finance.yahoo.com/news/nice-launches-agentic-ai-innovation-120000403.html",
+   "source": "Yahoo Finance / NICE Press Release",
+   "summary": "Unveiled at Enterprise Connect 2026, NICE launched an agentic AI capability that analyzes enterprise interaction data across voice, chat, and digital channels to automatically identify automation opportunities and deploy production-ready AI agents under governance guardrails, reducing deployment timelines from months to hours within the CXone platform.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Omni Analytics",
+   "headline": "Omni Raises Series C at $1.5B Valuation, Building the AI Analytics Platform for the Enterprise",
+   "date": "2026-04-23",
+   "url": "https://fortune.com/2026/04/23/exclusive-omni-raises-120-million-ai-iconiq-lookr-unicorn-semantic-layer/",
+   "source": "Fortune",
+   "summary": "Omni raised $120 million in Series C funding led by ICONIQ at a $1.51 billion valuation, more than doubling its previous $650 million valuation. The round came after the company achieved nearly 4x year-over-year ARR growth and first-time monthly profitability, with the platform enabling governed semantic-layer analytics across dashboards, spreadsheets, and AI queries.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Omni Analytics",
+   "headline": "Omni Skills for Cortex Code: A Full Data Stack Workflow in One CLI",
+   "date": "2026-05-21",
+   "url": "https://omni.co/blog/omni-skills-for-cortex-code",
+   "source": "Omni Analytics Blog",
+   "summary": "Omni released nine open-source Agent Skills for Snowflake's Cortex Code CLI, enabling complete analytics workflows from data generation through modeling to dashboard creation in a single terminal session. The announcement includes a reverse-sync capability translating Omni Topics into Snowflake Semantic Views, and Omni will have a booth (#2204) at Snowflake Summit 2026.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Omni Analytics",
+   "headline": "Omni Acquires Explo to Expand into Embedded Analytics",
+   "date": "2025-10-22",
+   "url": "https://omni.co/blog/omni-acquires-explo",
+   "source": "Omni Analytics Blog",
+   "summary": "Omni Analytics acquired Explo, an embedded analytics platform that helps product teams deliver analytics to end users, extending Omni's reach into customer-facing analytics use cases. The Explo product will continue operating as-is during a 12-month transition period as its customer base migrates to the Omni platform.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Openlayer",
+   "headline": "Openlayer Raises $14.5 Million Series A to Help Enterprises Scale AI with Confidence",
+   "date": "2025-05-14",
+   "url": "https://www.prnewswire.com/news-releases/openlayer-raises-14-5-million-series-a-to-help-enterprises-scale-ai-with-confidence-302454943.html",
+   "source": "PR Newswire",
+   "summary": "Openlayer closed a $14.5 million Series A round led by Race Capital, with participation from NXTP, KPN Ventures, Mindset, Y Combinator, Quiet Capital, and Telefonica. The company reported nearly 5x growth in 2024 and will use the funding to expand its unified AI evaluation and governance platform for enterprise customers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Openlayer",
+   "headline": "Openlayer Recognized in the 2026 Gartner\u00ae Market Guide for AI Evaluation and Observability Platforms",
+   "date": "2026-02-19",
+   "url": "https://www.prnewswire.com/news-releases/openlayer-recognized-in-the-2026-gartner-market-guide-for-ai-evaluation-and-observability-platforms-302692100.html",
+   "source": "PR Newswire",
+   "summary": "Openlayer was named a Representative Vendor in the Gartner 2026 Market Guide for AI Evaluation and Observability Platforms, which examines tools helping organizations evaluate and monitor AI systems in development and production. CEO Gabriel Bayomi said the recognition validates the company's approach to providing a comprehensive control plane for the AI lifecycle.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Openlayer",
+   "headline": "Openlayer Partners with Telef\u00f3nica Tech to Deliver AI Governance and Observability Across Europe and Latin America",
+   "date": "2026-03-26",
+   "url": "https://www.prnewswire.com/news-releases/openlayer-partners-with-telefonica-tech-to-deliver-ai-governance-and-observability-across-europe-and-latin-america-302726408.html",
+   "source": "PR Newswire",
+   "summary": "Openlayer announced a commercial partnership with Telef\u00f3nica Tech, the digital unit of Telef\u00f3nica Group, to integrate Openlayer's AI governance platform into Telef\u00f3nica Tech's enterprise services across Europe and Latin America. The solution covers pre-deployment testing for hallucinations and bias, production monitoring, and compliance mapping aligned with the EU AI Act and ISO 42001.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "paradime.io",
+   "headline": "Introducing DinoAI v3.0: The First End-to-End Data Engineering Agent",
+   "date": "2026-04-09",
+   "url": "https://medium.com/paradime-labs/introducing-dinoai-v3-0-the-first-end-to-end-data-engineering-agent-da0372ac5e1f",
+   "source": "Medium / paradime.io",
+   "summary": "Paradime launched DinoAI v3.0 as a fully autonomous background data engineering agent that can be invoked from Slack and other platforms to compress tasks traditionally taking 10-20 days into minutes. The release marks a shift from a copilot model to a true agentic operating system for data engineering, achieving a ~94% acceptance rate on data tasks.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "paradime.io",
+   "headline": "Paradime MCP Server: DinoAI Context Graph, Anywhere You Work",
+   "date": "2026-05-07",
+   "url": "https://www.paradime.io/blog/paradime-mcp-server-dinoai-context-graph-anywhere-you-work",
+   "source": "paradime.io Blog",
+   "summary": "Paradime announced the general availability of its MCP Server, providing a single authenticated endpoint that brings DinoAI's full context graph to any MCP-compatible client with 17 integrated tools covering code, warehouse, catalog, and orchestration. The server replaces multiple single-purpose MCP connectors while maintaining Paradime's existing access controls and governance.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "paradime.io",
+   "headline": "Introducing DinoAI Programmable Agents: Data Engineering Agents as Code",
+   "date": "2026-06-04",
+   "url": "https://www.paradime.io/blog/introducing-dinoai-programmable-agents",
+   "source": "paradime.io Blog",
+   "summary": "Paradime launched DinoAI Programmable Agents, enabling teams to define AI agents as YAML in their repository and trigger them from CI/CD pipelines, DAGs, or any external system via GraphQL API or Python SDK. The launch extends DinoAI's agentic capabilities beyond interactive Slack use to fully automated, code-invoked data engineering workflows with multi-agent orchestration support.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Polytomic",
+   "headline": "Announcing Polytomic Connect: An API for Two-Way ETL and Data Syncs",
+   "date": "2024-04-30",
+   "url": "https://www.polytomic.com/blog-posts/announcing-polytomic-connect",
+   "source": "Polytomic Blog",
+   "summary": "Polytomic launched its second product, Connect, an embeddable API enabling developers to add two-way data syncing capabilities to their own products. The platform handles authentication, type conversions, rate limits, and scaling, supporting data warehouses, databases with CDC streaming, cloud apps, spreadsheets, and APIs, with native client libraries and real-time event streaming.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Polytomic",
+   "headline": "Using PredictLeads + Polytomic to Power GTM Execution in HubSpot and Salesforce",
+   "date": "2025-06-13",
+   "url": "https://blog.predictleads.com/2025/06/13/using-predictleads-polytomic-to-power-gtm-execution-in-hubspot-and-salesforce",
+   "source": "PredictLeads Blog",
+   "summary": "PredictLeads announced an integration with Polytomic enabling GTM teams to ingest hiring and business signal datasets and push enriched company profiles directly into HubSpot and Salesforce without engineering involvement. The partnership allows filtering by department, location, and job title to automate workflows like lead scoring, shortening the time from signal to action.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Polytomic",
+   "headline": "Polytomic Release 2025.05.28: New Connectors and Sync Improvements",
+   "date": "2025-05-28",
+   "url": "https://docs.polytomic.com/changelog/release-20250528",
+   "source": "Polytomic Docs Changelog",
+   "summary": "Polytomic shipped new support for syncing HeyReach data and campaign/lead lists, email address identity mapping for Harmonic list syncs, and email address syncing from Affinity for Person fields. The release also fixed long-running Snowflake sync failures, Force Reconnect authentication issues, and Google Sheets record count discrepancies.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "Precog",
+   "headline": "Precog Secures Investment from Venture Guides to Accelerate Growth and Market Expansion",
+   "date": "2025-01-21",
+   "url": "https://precog.com/blog/a-bold-new-chapter-in-precogs-journey",
+   "source": "Precog Blog",
+   "summary": "Precog closed an investment round led by Boston-based Venture Guides, with Ben Holzman joining the Board of Directors. The round followed a banner year in which Precog added support for more than 1,500 SaaS ETL integrations and grew its enterprise customer base.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Precog",
+   "headline": "Introducing Precog Automated Semantic Modeling: The Missing Link in Operational AI",
+   "date": "2026-01-22",
+   "url": "https://precog.com/blog/introducing-precog-automated-semantic-modeling-the-missing-link-in-operational-ai",
+   "source": "Precog Blog",
+   "summary": "Precog launched Automated Semantic Modeling, a capability that combines AI-driven data ingestion with auto-generated semantic models to bridge the 'Context Gap' preventing enterprises from getting business value from AI. The system lets users state a business goal in plain language and automatically produces normalized data plus semantic models linking dimensions and metrics to that objective.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Promethium",
+   "headline": "Promethium at Snowflake Summit 2025 \u2014 Booth 1305 & Self-Service Data Session",
+   "date": "2025-06-02",
+   "url": "https://promethium.ai/events/snowflake-summit/",
+   "source": "Promethium.ai",
+   "summary": "Promethium sponsored Snowflake Summit 2025 (June 2-5, San Francisco) at booth 1305, presenting a session titled 'Delivering Self-Service Data for AI Scale on Snowflake' on June 2 at 4 pm at Basecamp North Theater 2. The company showcased how its agentic data fabric platform enables self-service data access and AI-driven insights across Snowflake environments.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Promethium",
+   "headline": "Promethium Introduces First Agentic Platform Purpose-Built to Deliver Self-Service Data at AI Scale",
+   "date": "2025-07-15",
+   "url": "https://www.prnewswire.com/news-releases/promethium-introduces-first-agentic-platform-purpose-built-to-deliver-self-service-data-at-ai-scale-302504965.html",
+   "source": "PR Newswire",
+   "summary": "Promethium announced an updated Instant Data Fabric platform and Mantra, a new Data Answer Agent (in private preview) that lets data teams query distributed enterprise data using natural language to receive instant, trusted insights without ETL pipelines. The company was also recognized as a Gartner Cool Vendor in Data Management for GenAI disruption of traditional technologies.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Promethium",
+   "headline": "Promethium and NTT DATA Win Data & Analytics Partnership of the Year at Corinium Awards Gala",
+   "date": "2024-10-16",
+   "url": "https://promethium.ai/news/promethium-and-ntt-data-win-data-analytics-partnership-of-the-year/",
+   "source": "Promethium.ai",
+   "summary": "Promethium and NTT DATA received the Data & Analytics Partnership of the Year award at the Corinium Data & Analytics Awards Gala held October 16, 2024 in Boston. The partnership centers on Promethium's Instant Data Fabric, enabling organizations to access and analyze enterprise data without duplication and deliver insights 100x faster than traditional methods.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Prophecy",
+   "headline": "Prophecy at Snowflake Summit 2026 \u2014 Booth #1006, Moscone Center",
+   "date": "2026-06-01",
+   "url": "https://www.prophecy.ai/events",
+   "source": "Prophecy.ai",
+   "summary": "Prophecy exhibited at Snowflake Summit 2026 (June 1-4, Moscone Center, San Francisco) at Booth #1006, showcasing its AI-driven visual data workflows for Snowflake. The company's platform enables governed, scalable data preparation using AI agents on Snowflake's cloud data platform.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Prophecy",
+   "headline": "Prophecy Launches v4: AI Agents for Visual Data Prep & Analysis",
+   "date": "2026-02-24",
+   "url": "https://www.prnewswire.com/news-releases/prophecy-launches-v4-ai-agents-for-visual-data-prep--analysis-302695972.html",
+   "source": "PR Newswire",
+   "summary": "Prophecy announced v4, featuring AI agents that allow business users to create visual data workflows executing natively on Databricks, Snowflake, and BigQuery. The platform generates production-grade, inspection-ready code stored in Git, with CEO Raj Bains noting the same AI power now available to code-free business data users.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Prophecy",
+   "headline": "Prophecy Takes in $47M Led by Smith Point Capital",
+   "date": "2025-01-16",
+   "url": "https://www.prnewswire.com/news-releases/prophecy-takes-in-47m-led-by-smith-point-capital-302352647.html",
+   "source": "PR Newswire",
+   "summary": "Prophecy raised a $47M Series B extension led by Smith Point Capital, with HSBC joining as a new investor alongside existing backers including Insight Partners, JPMorgan Chase, and SignalFire. The funding came on the back of 3.5x revenue growth in FY2024 with 160% net revenue retention, as Fortune 500 clients modernized legacy data pipelines using Prophecy's AI-powered visual designer.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Qlik Helps Build Trusted Enterprise Context into Snowflake and Cortex Workflows",
+   "date": "2026-06-03",
+   "url": "https://markets.financialcontent.com/stocks/article/bizwire-2026-6-3-qlik-helps-build-trusted-enterprise-context-into-snowflake-and-cortex-workflows",
+   "source": "BusinessWire (via FinancialContent)",
+   "summary": "At Snowflake Summit 26, Qlik announced expanded capabilities enabling Snowflake customers to integrate real-time enterprise data from SAP, mainframes, and SaaS systems into Snowflake, and introduced a Snowflake Native App for its Model Context Protocol Server so Cortex Agents can access Qlik-governed data and analytics assets directly from Snowflake workflows.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Qlik and ServiceNow Partner to Bridge Enterprise Data and AI Workflows",
+   "date": "2026-04-14",
+   "url": "https://techintelpro.com/news/ai/agentic-ai/qlik-and-servicenow-partner-to-bridge-enterprise-data-and-ai-workflows",
+   "source": "TechIntelPro",
+   "summary": "Qlik and ServiceNow announced a strategic partnership at Qlik Connect 2026 to embed trusted enterprise data and AI-driven insights into operational workflows, connecting the ServiceNow Workflow Data Fabric with external ERP, CRM, and supply chain systems. New Qlik metadata collectors enhance the ServiceNow Data Catalog for improved data discovery and governance.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Qlik",
+   "headline": "Qlik Acquires Upsolver to Deliver Low-Latency Ingestion and Optimization for Apache Iceberg",
+   "date": "2025-01-14",
+   "url": "https://www.thomabravo.com/press-releases/qlik-acquires-upsolver-to-deliver-low-latency-ingestion-and-optimization-for-apache-iceberg",
+   "source": "Thoma Bravo",
+   "summary": "Qlik acquired Upsolver, a specialist in real-time data streaming and Apache Iceberg optimization, to strengthen its end-to-end data integration platform for open lakehouses. Upsolver's Adaptive Iceberg Optimizer can reduce storage costs and improve query performance by up to 5x, with integrations spanning Snowflake, Databricks, and Athena.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Qualytics",
+   "headline": "Qualytics Launches Data Control Layer to Govern Context for AI Systems",
+   "date": "2026-04-13",
+   "url": "https://www.prweb.com/releases/qualytics-launches-data-control-layer-to-govern-context-for-ai-systems-302740093.html",
+   "source": "PRWeb",
+   "summary": "Qualytics launched a Data Control Layer introducing a validate-at-use model that evaluates data quality at the moment AI systems reason and act, rather than only in downstream pipelines. The platform runs over 20,000 rules in production on average, with 95% inferred by AI, and integrates with external copilots via Model Context Protocol.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Qualytics",
+   "headline": "Qualytics Announces Technology Partnership With Databricks to Deliver Proactive Data Quality for AI and Analytics",
+   "date": "2026-01-07",
+   "url": "https://www.prweb.com/releases/qualytics-announces-technology-partnership-with-databricks-to-deliver-proactive-data-quality-for-ai-and-analytics-on-the-databricks-data-intelligence-platform-302653968.html",
+   "source": "PRWeb",
+   "summary": "Qualytics announced a native integration with the Databricks Data Intelligence Platform, enabling automated rule creation (95% auto-generated), adaptive anomaly detection, and row-level data quality management without requiring data to leave the Databricks environment. The integration supports Delta Lake, Lakeflow Jobs, Databricks SQL, and Unity Catalog.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Qualytics",
+   "headline": "Qualytics Raises $10M Series A led by BMW i Ventures to Meet Surging Demand for Augmented Data Quality",
+   "date": "2025-06-23",
+   "url": "https://www.prnewswire.com/news-releases/qualytics-raises-10m-series-a-led-by-bmw-i-ventures-to-meet-surging-demand-for-augmented-data-quality-302487533.html",
+   "source": "PR Newswire",
+   "summary": "Qualytics raised a $10M Series A led by BMW i Ventures, with participation from Conductive Ventures and The Hill Fund by Firebrand Ventures, citing 5x revenue growth over the prior year. The funding is earmarked to scale product, engineering, and customer success teams to meet growing enterprise demand for AI-augmented data quality.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Quest",
+   "headline": "Quest Software Extends Data and AI Leadership with Quest Data Modeler and Quest Data Intelligence, Enhancing its Trusted Data Management Platform",
+   "date": "2026-05-13",
+   "url": "https://www.globenewswire.com/news-release/2026/05/13/3293777/0/en/Quest-Software-Extends-Data-and-AI-Leadership-with-Quest-Data-Modeler-and-Quest-Data-Intelligence-Enhancing-its-Trusted-Data-Management-Platform.html",
+   "source": "GlobeNewswire",
+   "summary": "Quest Software announced Quest Data Modeler, a cloud-native data architecture tool with AI-assisted modeling and real-time collaboration that reduces modeling cycles from weeks to hours, and Quest Data Intelligence, which expands its AI assistant library for governance, lineage, compliance, and natural-language data access. The releases extend Quest's Trusted Data Management Platform to address fragmented data environments while meeting EU AI Act, NIST AI Risk Management Framework, and GDPR requirements.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Quest",
+   "headline": "Quest Software Introduces the Quest Trusted Data Management Platform Featuring the Automated Data Product Factory",
+   "date": "2026-02-17",
+   "url": "https://www.quest.com/news/press-releases/quest-trusted-data-management-platform-featuring-the-automated-data-product-factory/",
+   "source": "Quest Software",
+   "summary": "Quest launched its Trusted Data Management Platform, unifying data modeling, cataloging, governance, quality, and a marketplace in a SaaS-native solution built for AI-ready data. The platform's Automated Data Product Factory uses AI to convert natural language requests into production-ready governed data products, delivering data products 54% faster, reducing costs by up to 40%, and improving reuse by up to 50%.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Quest",
+   "headline": "Quest Brings AI-Ready Governance and Performance Optimization to Snowflake",
+   "date": "2025-06-04",
+   "url": "https://www.quest.com/news/press-releases/quest-brings-ai-ready-governance-and-performance-optimization-to-snowflake-2/",
+   "source": "Quest Software",
+   "summary": "Quest Software announced at Snowflake Summit 2025 an integration of Foglight for Cloud Cost Optimization and erwin 15 AI-Ready Governance with Snowflake's AI Data Cloud, giving data teams unified visibility into governance and cloud spending. Pilot customers achieved 15-30% cost savings on Snowflake credit consumption through Foglight's warehouse utilization analysis.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "RecordPoint",
+   "headline": "RecordPoint at Snowflake Summit 2026",
+   "date": "2026-06-01",
+   "url": "https://www.recordpoint.com/events/snowflake-summit-2026",
+   "source": "RecordPoint",
+   "summary": "RecordPoint exhibited at Snowflake Summit 2026 (June 1\u20134, Moscone Center, San Francisco), with CEO Anthony Woodward and other executives on-site to discuss data governance and AI within the Snowflake ecosystem. The company highlighted secure data sharing, AI-powered analytics, and intelligent automation as core focus areas at the event.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "RecordPoint",
+   "headline": "RecordPoint Named in 2026 Responsible AI Solutions Overview",
+   "date": "2026-05-05",
+   "url": "https://www.prnewswire.com/news-releases/recordpoint-named-in-2026-responsible-ai-solutions-overview-302762557.html",
+   "source": "PR Newswire",
+   "summary": "Forrester Research included RecordPoint in its The Responsible AI Solutions Landscape, Q2 2026 report, recognizing the company's data-trust platform as a key solution for regulated organizations governing AI systems. RecordPoint processes over 15 million data transactions daily and serves major clients including the City of New York and Westpac.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "RecordPoint",
+   "headline": "RecordPoint Acquires Redactive to Boost AI Data Security Focus",
+   "date": "2025-10-23",
+   "url": "https://securitybrief.asia/story/recordpoint-acquires-redactive-to-boost-ai-data-security-focus",
+   "source": "SecurityBrief Asia",
+   "summary": "RecordPoint acquired Australian AI startup Redactive, which specializes in sensitive data discovery and classification, to strengthen its AI governance and data security capabilities for regulated industries. Redactive, backed by Blackbird and Felicis, had secured clients such as superfund HESTA and PEXA before the acquisition.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Redpanda",
+   "headline": "Redpanda at Snowflake Summit 2026",
+   "date": "2026-05-31",
+   "url": "https://www.redpanda.com/events/snowflake-summit-2",
+   "source": "Redpanda",
+   "summary": "Redpanda participated as a booth exhibitor at Snowflake Summit 2026 (May 31, San Francisco), showcasing its real-time streaming data platform. The page highlights enterprise customers including Akamai, Cisco, NYSE, and Vodafone.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Redpanda",
+   "headline": "Redpanda Reports Record Q1, Delivering 70% Year-Over-Year Growth",
+   "date": "2026-05-14",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/redpanda-reports-record-q1-delivering-150000306.html",
+   "source": "BusinessWire / Yahoo Finance",
+   "summary": "Redpanda reported record Q1 fiscal 2027 results with 70% ARR growth year-over-year, closing the most seven-figure deals in a single quarter in company history. The company appointed a new CFO, CMO, and VP of Product, and highlighted its Agentic Data Plane alongside new connectors for Oracle CDC, Amazon DynamoDB, and Salesforce.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Redpanda",
+   "headline": "Redpanda Streaming 26.1 Introduces Industry's First Adaptable Streaming Engine",
+   "date": "2026-03-31",
+   "url": "https://www.redpanda.com/press/redpanda-streaming-26-1-introduces-industrys-first-adaptable-streaming-engine",
+   "source": "Redpanda",
+   "summary": "Redpanda launched Streaming 26.1 featuring the R1 engine, billed as the industry's first adaptable streaming engine capable of unifying mission-critical apps, agentic AI workloads, and data lakes on a single platform. Key capabilities include Write Caching for ultra-low latency, Iceberg Topics for zero-ETL streaming to Apache Iceberg tables, and Cloud Topics (now GA) delivering over 90% savings in cross-AZ networking fees.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Reducto",
+   "headline": "Reducto Raises $75M Series B to Define the Future of AI Document Intelligence",
+   "date": "2025-10-14",
+   "url": "https://www.prnewswire.com/news-releases/reducto-raises-75m-series-b-to-define-the-future-of-ai-document-intelligence-302581462.html",
+   "source": "PR Newswire",
+   "summary": "Reducto secured $75M in Series B funding led by Andreessen Horowitz, bringing total funding to over $108M. The company's platform processes nearly one billion pages of data for clients including Fortune 10 enterprises and AI startups like Harvey and Scale AI.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Reducto",
+   "headline": "Reducto acquires Opennote",
+   "date": "2026-05-07",
+   "url": "https://reducto.ai/blog/reducto-acquires-opennote",
+   "source": "Reducto Blog",
+   "summary": "Reducto acquired Opennote, an AI notebook tool for helping users understand and navigate dense, unstructured information. The acquisition strengthens Reducto's document intelligence capabilities by adding expertise in building intuitive experiences on top of complex unstructured data.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Reducto",
+   "headline": "Reducto Announces $108M in Funding to Define the Future of AI Document Intelligence",
+   "date": "2025-10-14",
+   "url": "https://reducto.ai/blog/reducto-series-b-funding",
+   "source": "Reducto Blog",
+   "summary": "Reducto's official announcement of its combined $108M funding details plans to expand its Agentic OCR framework with improved chart extraction and document review features, and introduces Reducto Studio for interactive document pipeline workflows. Monthly processing volume has grown 6x since the Series A, with over one billion pages processed.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Reflex",
+   "headline": "Reflex x Databricks: Python-Powered Vibe Coding for Enterprises",
+   "date": "2025-06-30",
+   "url": "https://reflex.dev/blog/2025-06-30-reflex-databricks-partnership/",
+   "source": "Reflex Blog",
+   "summary": "Reflex and Databricks announced a partnership integrating Reflex AI Builder with Databricks Apps, enabling Python teams to build and deploy full internal applications directly on Databricks data using prompts or code. Applications stay within Databricks infrastructure with Unity Catalog security controls, removing the need for separate frontend development.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Reflex",
+   "headline": "Reflex Build: On Prem",
+   "date": "2025-12-05",
+   "url": "https://reflex.dev/blog/2025-12-05-on-premises-deployment/",
+   "source": "Reflex Blog",
+   "summary": "Reflex launched an enterprise on-premises deployment option for Reflex Build, an AI-powered app builder that runs inside customer infrastructure, enabling teams to build full-stack Python web applications using natural language while maintaining full data sovereignty and compliance with HIPAA, SOC 2, and GDPR requirements.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit Raises $400M Series D at $9B Valuation, Launches Agent 4",
+   "date": "2026-03-11",
+   "url": "https://replit.com/blog/replit-raises-400-million-dollars",
+   "source": "Replit Blog",
+   "summary": "Replit closed a $400 million Series D round with Georgian among notable investors, tripling its valuation to $9 billion in six months. The announcement coincided with the launch of Agent 4, which Replit says ships production-ready software 10x faster than its predecessor.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Replit Expands Enterprise Leadership with Visa Investment and Partnership, Payments Expansion, and Solution Partner Program",
+   "date": "2026-05-28",
+   "url": "https://www.prnewswire.com/news-releases/replit-expands-enterprise-leadership-with-visa-investment-and-partnership-payments-expansion-and-solution-partner-program-302784366.html",
+   "source": "PR Newswire",
+   "summary": "Visa invested in Replit and partnered to integrate Visa Intelligent Commerce payment capabilities into the platform, enabling developers to build applications and agents that initiate secure transactions. Over 1,000 Visa employees already use Replit for internal development.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Replit",
+   "headline": "Introducing Replit Agent 4: Built for Creativity",
+   "date": "2026-03-11",
+   "url": "https://replit.com/blog/introducing-agent-4-built-for-creativity",
+   "source": "Replit Blog",
+   "summary": "Replit launched Agent 4, its fastest and most versatile AI coding agent, featuring parallel task execution, an infinite design canvas, and unified build-and-ship capabilities in a single workspace. The agent handles web apps, mobile apps, pitch decks, and more, and uses specialized sub-agents to resolve merge conflicts automatically.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Row Zero",
+   "headline": "AWS Rolls Out Row Zero to Expand Self-Serve Analytics",
+   "date": "2026-03-05",
+   "url": "https://www.prnewswire.com/news-releases/aws-rolls-out-row-zero-to-expand-self-serve-analytics-302704426.html",
+   "source": "PR Newswire",
+   "summary": "AWS adopted Row Zero as its enterprise cloud spreadsheet platform, enabling teams to work with billion-row datasets in Amazon Redshift and S3 while keeping data within governed cloud environments. Teams reported time savings of 6-7 hours per day on large dataset workflows.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Row Zero",
+   "headline": "Row Zero Raises $10M to Accelerate Development of Its Spreadsheet for Big Data",
+   "date": "2025-05-15",
+   "url": "https://www.prnewswire.com/news-releases/row-zero-raises-10m-to-accelerate-development-of-its-spreadsheet-for-big-data-302456202.html",
+   "source": "PR Newswire",
+   "summary": "Row Zero closed a $10M seed round led by IA Ventures, with participation from Trilogy Equity Partners, Founder's Co-op, Ludlow Ventures, K9 Ventures, Functional Capital, and Wes McKinney, bringing total funding to $13M. The company plans to use the capital to expand connectors for ERPs and CRMs, integrate AI features, and enhance Python workflow support.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Row Zero",
+   "headline": "New Updates for 2025: Row Zero Launches Remove Duplicates, Version History, Shared Data Sources, and Conditional Formatting",
+   "date": "2025-01-13",
+   "url": "https://rowzero.com/blog/new-for-2025",
+   "source": "Row Zero Blog",
+   "summary": "Row Zero shipped seven new features at the start of 2025, including remove duplicates, version history, shared data sources, conditional formatting, graph formatting improvements, a redesigned account home, and the SUBTOTAL function. The updates target data teams working with large enterprise datasets connected to warehouses like Snowflake and Databricks.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "S&P Global",
+   "headline": "S&P Global and Snowflake bring AI-driven financial analysis to investment research",
+   "date": "2026-06-03",
+   "url": "https://siliconangle.com/2026/06/03/ai-driven-financial-analysis-transforms-research-snowflakesummit/",
+   "source": "SiliconANGLE",
+   "summary": "S&P Global's Global Head of New Product Development Liam Hynes presented at Snowflake Summit 2026, demonstrating a framework built on Snowflake's Cortex and CoWork tools that uses large language models to scan the entire S&P 500 for newly disclosed risks in SEC filings in approximately ten minutes. The collaboration highlights how S&P Global is deploying AI-driven financial analysis that compresses days of human research effort into minutes.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "S&P Global",
+   "headline": "S&P Global Brings AI-Powered Energy Insights to S&P Capital IQ Pro",
+   "date": "2026-05-13",
+   "url": "https://www.prnewswire.com/news-releases/sp-global-brings-ai-powered-energy-insights-to-sp-capital-iq-pro-302770819.html",
+   "source": "PR Newswire",
+   "summary": "S&P Global integrated energy market intelligence from S&P Global Energy into S&P Capital IQ Pro, covering 12+ industries across the energy ecosystem and enabling AI-powered analysis via tools including Document Intelligence and ChatIQ. The integration connects energy market dynamics with broader financial analysis within a single workflow platform.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "S&P Global",
+   "headline": "S&P Global Acquires Enertel AI Corporation to Enhance Power Market Offering",
+   "date": "2026-03-18",
+   "url": "https://www.prnewswire.com/news-releases/sp-global-acquires-enertel-ai-corporation-to-enhance-power-market-offering-302717338.html",
+   "source": "PR Newswire",
+   "summary": "S&P Global completed its acquisition of Enertel AI Corporation, an Ontario-based company specializing in AI and machine learning for short-term power price forecasting in North American electricity markets. Enertel's proprietary Graph Neural Network models deliver probabilistic nodal price forecasts across major ISOs, expanding S&P Global Energy's real-time market intelligence capabilities.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Safe Software",
+   "headline": "Safe Software Exhibiting as Snow Row Sponsor at Snowflake Summit 2026, Booth #1407",
+   "date": "2026-06-01",
+   "url": "https://www.safe.com/company-updates/events/2026-upcoming-events/",
+   "source": "Safe Software",
+   "summary": "Safe Software is a Snow Row sponsor at Snowflake Summit 2026 (June 1\u20134), exhibiting at Booth #1407 to showcase FME's data integration capabilities within the Snowflake ecosystem.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Safe Software",
+   "headline": "FME by Safe Software Now Runs Inside Snowflake, Delivering Faster, Safer, In-Database Data Integration",
+   "date": "2025-12-10",
+   "url": "https://www.safe.com/press-releases/fme-by-safe-software-now-runs-inside-snowflake-delivering-faster-safer-in-database-data-integration/",
+   "source": "Safe Software",
+   "summary": "Safe Software announced that its FME Remote Engines Service is now available on Snowflake Marketplace, enabling FME's high-performance engine to run directly within Snowpark Container Services and reducing processing times by up to 30%. The integration supports 1,000+ data systems and formats.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Safe Software",
+   "headline": "Safe Software Expands its FME Platform with MCP",
+   "date": "2026-03-02",
+   "url": "https://finance.yahoo.com/news/safe-software-expands-fme-platform-140000148.html",
+   "source": "Yahoo Finance / BusinessWire",
+   "summary": "Safe Software announced Model Context Protocol (MCP) capabilities coming to the FME Platform, including a new MCPCaller transformer and MCP Server capabilities for FME Flow with OAuth 2.0 support. The expansion advances Safe Software's 'All-Data, Any-AI' mission by letting organizations expose FME workflows as governed MCP tools that AI models can securely call.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SELECT",
+   "headline": "SELECT is joining DoiT to scale our mission of eliminating data platform waste",
+   "date": "2026-01-07",
+   "url": "https://select.dev/posts/select-joins-doit",
+   "source": "select.dev",
+   "summary": "SELECT, the Snowflake cost optimization platform, announced its acquisition by DoiT, a global FinOps and CloudOps company. The deal keeps SELECT as an independent product with its full team intact, while expanding its roadmap beyond Snowflake to Databricks, BigQuery, and Microsoft Fabric.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "SELECT",
+   "headline": "SELECT Announces Automated BigQuery Cost Optimization Early Access Program",
+   "date": "2026-04-16",
+   "url": "https://select.dev/posts/select-announces-automated-bigquery-cost-optimization-early-access-program",
+   "source": "select.dev",
+   "summary": "SELECT by DoiT launched an early access program for an automated BigQuery cost optimization platform, announced at Google Cloud Next 2026 in Las Vegas. The solution includes a Storage Optimizer, Reservations Manager, and Query Router, building on SELECT's automation engine refined across Snowflake deployments, with general availability targeted for Q3 2026.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Sema4.ai",
+   "headline": "Sema4.ai Raises $25M in Funding for Its AI Agent Platform",
+   "date": "2025-06-04",
+   "url": "https://siliconangle.com/2025/06/04/sema4-ai-raises-25m-funding-ai-agent-platform/",
+   "source": "SiliconANGLE",
+   "summary": "Sema4.ai closed a $25 million Series A extension with participation from Benchmark, Mayfield Fund, Snowflake Ventures, Rocketship VC, MVP Ventures, and Cox Enterprises. The company simultaneously launched Sema4.ai Team Edition, which integrates its AI agent platform natively with Snowflake via one-click deployment using Snowpark Container Services.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Sema4.ai",
+   "headline": "Sema4.ai's Agentic AI Comes to the AI Data Cloud with Snowflake Ventures Investment",
+   "date": "2025-06-04",
+   "url": "https://www.snowflake.com/en/blog/sema4-ai-agentic-ai-snowflake-investment/",
+   "source": "Snowflake Blog",
+   "summary": "Snowflake Ventures announced its investment in Sema4.ai and the launch of Sema4.ai Team Edition as a Snowflake Native App on Snowflake Marketplace, enabling one-click deployment of AI agents within Snowflake environments. The integration allows customers to orchestrate Cortex AI services including Cortex Search, Cortex Analyst, and Document AI across enterprise data sources.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Sema4.ai",
+   "headline": "Sema4.ai Announces Semantic Layer Capabilities at the Gartner Data & Analytics Summit 2026",
+   "date": "2026-03-13",
+   "url": "https://aithority.com/machine-learning/sema4-ai-announces-semantic-layer-capabilities-at-the-gartner-data-analytics-summit-2026/",
+   "source": "AIThority",
+   "summary": "Sema4.ai unveiled its Semantic Layer at the Gartner Data & Analytics Summit 2026, enabling business users to query databases, documents, and spreadsheets in natural language without SQL expertise, with support for Snowflake, Postgres, and Redshift. Early adopters reported significant efficiency gains, including manufacturers reducing invoice reconciliation from 3 hours to 2 minutes and financial services teams boosting cash matching accuracy from 20% to over 80%.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "ServiceNow Launches Autonomous Workforce Across Every Major Business Function at Knowledge 2026",
+   "date": "2026-05-05",
+   "url": "https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-brings-Autonomous-Workforce-to-every-major-business-function/default.aspx",
+   "source": "ServiceNow Newsroom",
+   "summary": "ServiceNow unveiled a major expansion of its Autonomous Workforce at its Knowledge 2026 conference, introducing AI specialists that autonomously complete end-to-end processes across IT, CRM, HR, finance, security, and risk functions. Early results cited include an internal L1 IT service desk AI specialist resolving cases 99% faster than human agents.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "ServiceNow Opens Its Full System of Action to Every AI Agent in the Enterprise via Action Fabric",
+   "date": "2026-05-05",
+   "url": "https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-opens-its-full-system-of-action-to-every-AI-Agent-in-the-enterprise/default.aspx",
+   "source": "ServiceNow Newsroom",
+   "summary": "ServiceNow announced Action Fabric, a platform that allows any AI agent \u2014 built on Claude, Copilot, or custom tools \u2014 to execute governed enterprise workflows through an open Model Context Protocol (MCP) Server. Anthropic was named the first design partner, connecting Claude directly to ServiceNow's system of action.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "ServiceNow",
+   "headline": "ServiceNow and Accenture Launch Forward Deployed Engineering Program to Scale Agentic AI Across the Enterprise",
+   "date": "2026-05-06",
+   "url": "https://newsroom.servicenow.com/press-releases/details/2026/ServiceNow-and-Accenture-launch-forward-deployed-engineering-program-to-scale-agentic-AI-across-the-enterprise/default.aspx",
+   "source": "ServiceNow Newsroom",
+   "summary": "ServiceNow and Accenture launched a joint Forward Deployed Engineering program that embeds combined teams inside mutual customer environments to bring agentic AI workflows from pilot to production. The program gives clients access to 300+ pre-built AI agent skills on the ServiceNow AI Platform, governed through ServiceNow's AI Control Tower.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Skyflow",
+   "headline": "Skyflow at Snowflake Summit 2026: Securing PII in Agentic AI Workflows",
+   "date": "2026-06-01",
+   "url": "https://www.skyflow.com/events/join-skyflow-at-snowflake-data-cloud-summit",
+   "source": "Skyflow",
+   "summary": "Skyflow exhibited at Snowflake Summit 2026 (June 1-4, San Francisco), where the company discussed how enterprises can secure personally identifiable information in agentic AI workflows. The event page confirms Skyflow's presence at the summit to help Snowflake customers protect sensitive data in AI-driven pipelines.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Skyflow",
+   "headline": "Coralogix and Skyflow Partner for Privacy-Focused Observability in AI Era",
+   "date": "2026-03-23",
+   "url": "https://www.verdict.co.uk/coralogix-skyflow-partner-privacy-observability/",
+   "source": "Verdict",
+   "summary": "Coralogix and Skyflow announced a strategic partnership to help organizations protect sensitive customer data in logs while maintaining full operational visibility. Rather than stripping sensitive values, Skyflow's vault replaces them with consistent tokens, keeping logs searchable and auditable while satisfying data residency and compliance requirements.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Skyflow",
+   "headline": "Skyflow Delivers Runtime AI Data Security for Protecting Sensitive Data in Agentic Workflows",
+   "date": "2025-12-02",
+   "url": "https://www.helpnetsecurity.com/2025/12/02/skyflow-runtime-ai-data-security-platform-aws/",
+   "source": "Help Net Security",
+   "summary": "Skyflow launched its Runtime AI Data Security platform integrated with Amazon Bedrock AgentCore and Amazon Quick Suite, providing real-time de-identification and fine-grained rehydration of PII, PHI, and PCI data in agentic AI workflows. The platform enables AI agents to work with sensitive data compliantly at production scale, with context-aware governance and field-level audit logging.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Solid Data",
+   "headline": "Solid Launches With $20 Million in Seed Funding to Make Enterprise AI Reliable at Scale",
+   "date": "2026-02-19",
+   "url": "https://www.prnewswire.com/news-releases/solid-launches-with-20-million-in-seed-funding-to-make-enterprise-ai-reliable-at-scale-302689895.html",
+   "source": "PR Newswire",
+   "summary": "Solid Data (getsolid.ai) emerged from stealth with a $20 million seed round led by Team8 and SignalFire, launching a platform that automates the creation and maintenance of semantic context graphs to make enterprise AI reliable at scale. The company's product works with Snowflake, Databricks, and BigQuery, and counts SurveyMonkey among its early customers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Solid Data",
+   "headline": "With $20M in funding, Solid Data has a solid plan to improve the reliability of AI agents",
+   "date": "2026-02-18",
+   "url": "https://siliconangle.com/2026/02/18/20m-funding-solid-solid-foundation-tackle-ais-reliability-challenge/",
+   "source": "SiliconAngle",
+   "summary": "SiliconAngle reported on Solid Data's $20M seed raise and the company's approach to fixing AI agent unreliability by building semantic models that help AI understand enterprise business context. Deployments have reportedly improved AI accuracy from 20-30% to over 85% while reducing manual maintenance work by 50-70%.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Solid Data",
+   "headline": "Making Enterprise AI Actually Work: Why We Invested in Solid",
+   "date": "2026-02-18",
+   "url": "https://team8.vc/making-enterprise-ai-actually-work-why-we-invested-in-solid/",
+   "source": "Team8",
+   "summary": "Lead investor Team8 published its investment thesis for Solid Data, describing the company's solution to the gap where AI systems fail not from lack of intelligence but from lacking business context. The post details how Solid automatically generates, tests, and deploys semantic models that keep AI aligned with evolving business metrics.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SqlDBM",
+   "headline": "SqlDBM Announces MCP Server Release and Growing Databricks Partnership Live at Data + AI Summit 2025",
+   "date": "2025-06-10",
+   "url": "https://finance.yahoo.com/news/sqldbm-announces-mcp-server-release-140000878.html",
+   "source": "Yahoo Finance / BusinessWire",
+   "summary": "SqlDBM unveiled its Model Context Protocol (MCP) Server at Databricks' Data + AI Summit 2025, enabling data teams to expose structured data models and metadata to large language models and generative AI platforms. The release coincided with SqlDBM achieving Validated Partner status with Databricks, deepening a multi-year collaboration focused on enterprise-scale analytics and AI.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SqlDBM",
+   "headline": "SqlDBM Unveils First All-in-One Relational and Transformational Modeling Platform, Following Investment from Headline",
+   "date": "2024-06-04",
+   "url": "https://headline.com/blog-latest/article-latest/data-modeling-made-easy-investing-in-sqldbm",
+   "source": "Headline VC",
+   "summary": "SqlDBM launched its Transformational Modeling product at Snowflake Data Cloud Summit 2024, becoming the first platform to combine relational and transformational modeling in a single tool. The launch followed a new funding round led by Headline VC, with the platform serving over 400,000 users including DocuSign, SurveyMonkey, and DirecTV.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "SqlDBM",
+   "headline": "SqlDBM Named \"Database Modeling Solution of the Year\" in 2024 Data Breakthrough Awards Program",
+   "date": "2024-04-11",
+   "url": "https://www.globenewswire.com/news-release/2024/04/11/2861624/0/en/SqlDBM-Named-Database-Modeling-Solution-of-the-Year-in-2024-Data-Breakthrough-Awards-Program.html",
+   "source": "GlobeNewswire",
+   "summary": "SqlDBM was recognized as \"Database Modeling Solution of the Year\" in the 5th annual Data Breakthrough Awards, honoring its collaborative cloud-based data modeling platform for the enterprise. The San Diego-based company was cited for making database modeling accessible without requiring code, with an intuitive UI serving enterprise clients including DocuSign, SurveyMonkey, and DirecTV.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "Starburst",
+   "headline": "Starburst Unveils Enterprise Intelligence Platform at AI & Datanova, Giving Enterprises a Faster Path to Trusted AI",
+   "date": "2026-05-28",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/starburst-unveils-enterprise-intelligence-platform-120000887.html",
+   "source": "Yahoo Finance (via BusinessWire)",
+   "summary": "Starburst launched its Enterprise Intelligence Platform featuring AIDA (AI Data Assistant, now generally available), enabling enterprises to run AI directly on governed, distributed data without moving or replatforming it. The platform includes AI-Ready Data Products, Managed Icehouse for Apache Iceberg, BYOC deployment, and up to 2x faster Trino performance.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Starburst",
+   "headline": "Starburst Crosses $100M ARR as their Enterprise AI Solution Takes Aim at BI",
+   "date": "2026-02-18",
+   "url": "https://www.starburst.io/press-releases/starburst-crosses-100m-arr-as-enterprises-move-from-bi-to-ai/",
+   "source": "Starburst",
+   "summary": "Starburst announced surpassing $100M in annual recurring revenue with nearly 40% year-over-year growth and a $20M AI annual run rate, signaling what the company called \"the end of the dashboard era.\" The company secured multiple eight-figure enterprise deals and reported 85% growth in financial services and 130% net dollar retention.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Starburst",
+   "headline": "Starburst Teams Up with Snowflake and Industry Leaders to Drive Open Data and AI Interoperability Through the Open Semantic Interchange",
+   "date": "2025-11-11",
+   "url": "https://www.starburst.io/press-releases/starburst-teams-up-with-snowflake-and-industry-leaders-to-drive-open-data-and-ai-interoperability-through-the-open-semantic-interchange/",
+   "source": "Starburst",
+   "summary": "Starburst joined the Open Semantic Interchange (OSI), an open-source initiative led by Snowflake to create a universal, vendor-neutral specification for standardizing semantic data definitions across tools and platforms. The partnership aims to simplify data operations and accelerate AI adoption by enabling consistent metric definitions across dashboards, notebooks, and machine learning models.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Steep",
+   "headline": "Meet Steep at Snowflake Summit 2026",
+   "date": "2026-06-01",
+   "url": "https://steep.app/blog",
+   "source": "Steep Blog",
+   "summary": "Steep participated at Snowflake Summit 2026 in San Francisco (June 1-4), showcasing how its platform helps data teams deliver AI analytics built on governed metrics. The company demonstrated Steep AI, its conversational analytics interface grounded in the semantic layer defined by data teams.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Steep",
+   "headline": "Introducing Steep AI",
+   "date": "2026-03-31",
+   "url": "https://steep.app/blog/introducing-steep-ai",
+   "source": "Steep Blog",
+   "summary": "Steep launched Steep AI, a conversational analytics agent built on semantic models that lets users move from question to answer in plain language. The feature is available at no additional cost on all paid plans (Pro, Business, Enterprise), with usage-based pricing planned later in 2026.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Steep",
+   "headline": "The next chapter for Steep: \u20ac4M seed funding to make data useful for everyone",
+   "date": "2024-07-03",
+   "url": "https://steep.app/blog/steep-next-chapter",
+   "source": "Steep Blog",
+   "summary": "Steep raised \u20ac4 million in seed funding led by Connect Ventures, with participation from Inventure, Alliance VC, Antler, and Greens. The capital will support product development, team expansion, and international growth.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Superblocks",
+   "headline": "Superblocks on Snowflake: Building the App Layer on a Governed AI Foundation",
+   "date": "2026-04-13",
+   "url": "https://www.superblocks.com/blog/superblocks-on-snowflake-governed-ai-foundation",
+   "source": "Superblocks Blog",
+   "summary": "Superblocks announced a deepened partnership with Snowflake, enabling business teams to build production-grade internal apps directly on their Snowflake data foundation with full IT governance. A Snowflake executive stated: \"With Superblocks on Snowflake any business team can safely build AI applications governed on their Snowflake data.\" A Virgin Voyages case study showed 8 production apps built in 30 days by 10 semi-technical builders with zero traditional developers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Superblocks",
+   "headline": "Announcing $60m for Clark: the first AI agent to build internal enterprise apps",
+   "date": "2025-05-27",
+   "url": "https://www.superblocks.com/blog/announcing-clark-ai",
+   "source": "Superblocks Blog",
+   "summary": "Superblocks raised $60 million total (including $23 million Series A extension from Spark Capital, Kleiner Perkins, Meritech Capital, and Greenoaks) and launched Clark, an AI agent that lets non-technical employees build production-grade internal enterprise applications with enterprise governance and security controls. Clark uses a multi-agent architecture with specialist agents for design, IT, engineering, security, and QA.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Superblocks",
+   "headline": "Superblocks Raises $60M for AI Agent That Builds Enterprise Applications",
+   "date": "2025-05-28",
+   "url": "https://aimmediahouse.com/ai-startups/superblocks-raises-60m-for-ai-agent-that-builds-enterprise-applications",
+   "source": "AIM Media House",
+   "summary": "Superblocks secured $23 million in Series A extension funding bringing its total to $60 million, backed by Greenoaks Capital, Meritech Capital, Spark Capital, and Kleiner Perkins. The company launched Clark, an AI agent that generates production-grade internal enterprise applications using natural language prompts while enforcing enterprise security and governance standards.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Syncari",
+   "headline": "Syncari Launches Business Studio for Agentic MDM Platform",
+   "date": "2026-03-10",
+   "url": "https://www.prweb.com/releases/syncari-launches-business-studio-for-agentic-mdm-platform-302707812.html",
+   "source": "PRWeb",
+   "summary": "Syncari launched Business Studio, a new module for its Agentic Master Data Management platform that gives business users and data stewards a dedicated interface for reviewing, validating, and updating unified 360-degree records within autonomous data environments. The module features configurable risk-based review thresholds, role-based access with audit tracking, and real-time multi-directional synchronization across CRM, ERP, analytics, and AI systems.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Syncari",
+   "headline": "Syncari Series B Raised For Enterprise Data Platform",
+   "date": "2025-09-10",
+   "url": "https://pulse2.com/syncari-series-b-raised-for-enterprise-data-platform/",
+   "source": "Pulse 2.0",
+   "summary": "Syncari closed a $20 million Series B funding round led by Escape Venture Investing, with James Scapa (founder and former CEO of Altair) leading the investment. The funding followed significant adoption from Fortune 1000 companies including Monotype, Trimble, Yardi, and Antech Diagnostics for its Agentic MDM platform, which has processed over two trillion governed data operations.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Syncari",
+   "headline": "Syncari Adds Model Context Protocol (MCP) Server to its Agentic MDM to Power Autonomous Multi-Agent Systems",
+   "date": "2025-05-27",
+   "url": "https://www.prweb.com/releases/syncari-adds-model-context-protocol-mcp-server-to-its-agentic-mdm-to-power-autonomous-multi-agent-systems-302465319.html",
+   "source": "PRWeb",
+   "summary": "Syncari announced general availability of its MCP Server as part of the Agentic MDM platform, enabling AI agents from Claude, Gemini, OpenAI, and custom systems to access governed, real-time enterprise data across Salesforce, NetSuite, Snowflake, and other platforms without point-to-point integrations. The server provides zero-code orchestration, structured audit logging, and positions Syncari as a semantic control plane for enterprise AI.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Tamr",
+   "headline": "Tamr Reports Strong FY26 Growth, Powering Enterprise AI",
+   "date": "2026-03-05",
+   "url": "https://www.tamr.com/press-releases/tamr-reports-strong-fy26-growth-powering-enterprise-ai",
+   "source": "Tamr Press Releases",
+   "summary": "Tamr reported 102% year-over-year growth in direct SaaS revenue for FY26, with a 49% expansion in its SaaS customer base, 70% growth in new customer additions, and 97% gross revenue retention. CEO Anthony Deighton highlighted that enterprises are moving from AI pilots to production, driving demand for unified, accurate data foundations.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Tamr",
+   "headline": "Tamr Unveils Curator Hub to Solve the Hardest Part of Data Quality and Curation",
+   "date": "2025-11-19",
+   "url": "https://www.tamr.com/press-releases/tamr-unveils-curator-hub-to-solve-the-hardest-part-of-data-quality-and-curation",
+   "source": "Tamr Press Releases",
+   "summary": "Tamr launched Curator Hub, a module blending AI agents with human-in-the-loop oversight to address the roughly 5% of data quality edge cases that resist automated resolution. The module provides prioritized issue queues, golden record refinement, and transparent curation history for audit and governance purposes.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Tamr",
+   "headline": "Tamr Launches Tamr RealTime for its AI-Native Data Management Platform",
+   "date": "2024-07-30",
+   "url": "https://www.tamr.com/press-releases/tamr-launches-tamr-realtime-for-its-ai-native-data-management-platform",
+   "source": "Tamr Press Releases",
+   "summary": "Tamr introduced Tamr RealTime, enabling real-time entity resolution and duplicate detection at the point of data entry, replacing batch processing with continuous AI-powered data accuracy. The launch targets CRM deduplication and cross-system customer consolidation, with Old Mutual cited as an early customer building their foundational data strategy on the platform.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "tavily",
+   "headline": "Nebius Announces Agreement to Acquire Tavily to Add Agentic Search to Its AI Cloud Platform",
+   "date": "2026-02-10",
+   "url": "https://nebius.com/newsroom/nebius-announces-agreement-to-acquire-tavily-to-add-agentic-search-to-its-ai-cloud-platform",
+   "source": "Nebius Newsroom",
+   "summary": "Nebius announced an agreement to acquire Tavily, a real-time agentic search provider, with the transaction value undisclosed in the press release. Tavily will continue operating under its own brand and leadership while integrating its search infrastructure \u2014 spanning search, extract, crawl, and map capabilities \u2014 into Nebius's AI cloud platform, serving a developer community of over one million users including IBM, Cohere, and Groq.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "tavily",
+   "headline": "Tavily Raises $25M to Connect AI Agents to the Web",
+   "date": "2025-08-06",
+   "url": "https://techcrunch.com/2025/08/06/tavily-raises-25m-to-connect-ai-agents-to-the-web/",
+   "source": "TechCrunch",
+   "summary": "Tavily raised $25 million in total funding, including a $20 million Series A led by Insight Partners, to expand its purpose-built real-time search engine for AI agents. The company, founded by Rotem Weiss and evolved from his open-source GPT Researcher project, enables AI agents to search, crawl, and extract structured insights while adhering to enterprise compliance policies, serving clients including Groq, Cohere, MongoDB, and Writer.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "tavily",
+   "headline": "AI Infrastructure Giant Nebius Buys Agentic Search Startup Tavily",
+   "date": "2026-02-10",
+   "url": "https://siliconangle.com/2026/02/10/ai-infrastructure-giant-nebius-buys-agentic-search-startup-tavily/",
+   "source": "SiliconANGLE",
+   "summary": "SiliconANGLE covered Nebius's acquisition of Tavily, reporting the deal at $275 million upfront with potential earn-out payments up to $400 million per Calcalist \u2014 a rapid exit for a startup founded in 2024 that grew to over one million developers and three million monthly SDK downloads. The acquisition positions Nebius to combine high-performance GPU inference with real-time web grounding, addressing a core gap in agentic AI stacks.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "TextQL",
+   "headline": "TextQL Raises $17M in Funding Led by Blackstone Innovations Investments",
+   "date": "2026-05-04",
+   "url": "https://www.thesaasnews.com/news/textql-raises-17m-in-funding",
+   "source": "The SaaS News",
+   "summary": "TextQL, an enterprise AI analytics company, closed a $17 million strategic funding round led by Blackstone Innovations Investments in April 2026, with participation from HOF Capital, Neo, Unshackled Ventures, and Dropbox. The capital will be used to scale infrastructure, accelerate product development, and expand deployment across enterprise environments; the platform is already in production at Amazon and Dropbox.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "TextQL",
+   "headline": "TextQL Launches into Healthcare Vertical",
+   "date": "2025-10-09",
+   "url": "https://textql.com/blog/launching-healthcare",
+   "source": "TextQL Blog",
+   "summary": "TextQL announced an expansion into healthcare with purpose-built AI agents for payers, providers, and health systems, featuring Integration, Analytics, and Reconciliation agents that operate across fragmented clinical and claims data. The launch includes a partnership with Lumeris connecting TextQL's platform to their care management infrastructure, with SOC 2 Type II and HIPAA compliance baked in.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "TextQL",
+   "headline": "TextQL Raises $4.1M in Funding to Use AI to Automate the Data Science Lifecycle",
+   "date": "2024-01-25",
+   "url": "https://www.prnewswire.com/news-releases/textql-raises-4-1m-in-funding-to-use-ai-to-automate-the-data-science-lifecycle-302044132.html",
+   "source": "PR Newswire",
+   "summary": "TextQL raised $4.1 million in pre-seed and seed funding co-led by Neo and DCM to build an AI analyst called Ana that integrates with BI tools, semantic layers, and documentation to automate data workflows. The company connects to Tableau, Looker, PowerBI, dbt, and Cube, and was already working across media, life sciences, manufacturing, and financial services.",
+   "relevance": "low"
+  },
+  {
+   "vendor": "The Trade Desk",
+   "headline": "The Trade Desk Introduces A Native App On Snowflake For Retail Conversion Data",
+   "date": "2025-06-12",
+   "url": "https://www.adexchanger.com/online-advertising/the-trade-desk-introduces-a-native-app-on-snowflake-for-retail-conversion-data/",
+   "source": "AdExchanger",
+   "summary": "The Trade Desk launched its Connector App on Snowflake, enabling retailers to share live conversion data at the SKU level directly from their Snowflake account \u2014 without data ever leaving the warehouse \u2014 for campaign optimization on TTD's platform. The launch was accompanied by new partnerships with Instacart and Ocado to expand SKU-level retail data access for self-serve advertisers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "The Trade Desk",
+   "headline": "The Trade Desk Announces Major Overhaul of Digital Advertising Data Marketplace",
+   "date": "2025-09-29",
+   "url": "https://investors.thetradedesk.com/news-and-events/news/news-details/2025/The-Trade-Desk-Announces-Major-Overhaul-of-Digital-Advertising-Data-Marketplace/default.aspx",
+   "source": "The Trade Desk Investor Relations",
+   "summary": "The Trade Desk introduced Audience Unlimited, an AI-powered platform that automatically scores and recommends third-party data segments by relevance, paired with a simplified pricing model to reduce advertisers' reliance on costly \u00e0 la carte data fees. The company also unveiled Koa Adaptive Trading Modes, offering buyers a choice between full AI-driven optimization (Performance Mode) and manual oversight (Control Mode).",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "The Trade Desk",
+   "headline": "The Trade Desk partners with VIDAA, Nexxen on CTV-focused Ventura Ecosystem",
+   "date": "2026-02-24",
+   "url": "https://thedesk.net/2026/02/the-trade-desk-ventura-ecosystem-v-nexxen/",
+   "source": "The Desk",
+   "summary": "The Trade Desk launched the Ventura Ecosystem, a collaborative CTV advertising platform with founding partners V (formerly VIDAA, operating 50M+ connected devices) and Nexxen, integrating TV operating systems with programmatic ad tech across Hisense and Toshiba devices. The ecosystem brings together TTD's OpenPath, Unified ID 2.0, and OpenAds tools to create a more transparent connected TV marketplace.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Theom",
+   "headline": "Simplifying Data Access Governance: Snowflake Invests in Theom to Automate Data Protection",
+   "date": "2025-05-09",
+   "url": "https://www.snowflake.com/en/blog/investment-theom-data-security-governance/",
+   "source": "Snowflake Blog",
+   "summary": "Snowflake Ventures announced a strategic investment in Theom, an AI-driven data governance and security platform, with a native application available on Snowflake Marketplace. The partnership includes native integrations with Snowflake governance features such as auto-classification, data quality monitoring, object tags, and masking policies.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Theom",
+   "headline": "Theom Raises $20M Series A to Redefine Data Governance & Security for the Gen AI Era",
+   "date": "2025-05-12",
+   "url": "https://www.prweb.com/releases/theom-raises-20m-series-a-to-redefine-data-governance--security-for-the-gen-ai-era-302452796.html",
+   "source": "PRWeb",
+   "summary": "Theom closed a $20 million Series A round led by Wing VC, with participation from Snowflake, Databricks, and SentinelOne. The AI-native Data Operations Center platform automates data governance and security across cloud, SaaS, and generative AI environments, with enterprise customers including FiServ, Grammarly, TradeWeb, and JetBlue.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Theom",
+   "headline": "Data Governance and Security for the AI Era: Databricks Ventures Invests in Theom",
+   "date": "2025-05-12",
+   "url": "https://www.databricks.com/blog/data-governance-and-security-ai-era-databricks-ventures-invests-theom",
+   "source": "Databricks Blog",
+   "summary": "Databricks Ventures invested in Theom as part of its $20M Series A, citing Theom's AI-native approach that examines user identity, actions, and intent rather than static data posture. The platform extends Databricks Unity Catalog governance capabilities to non-Databricks environments including SaaS and generative AI systems.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Timbrai",
+   "headline": "Announcing: Context Graph Capabilities for Snowflake Cortex AI",
+   "date": "2026-06-04",
+   "url": "https://timbr.ai/news/timbr-brings-context-graph-capabilities-to-snowflake-cortex-for-enterprise-ai/",
+   "source": "Timbr.ai",
+   "summary": "Timbr announced an integration that layers semantic context onto Snowflake Cortex AI via an ontology-based approach, mapping enterprise data into governed business concepts, relationships, and metrics. The combined solution enables AI agents to build more accurate and context-aware applications on Snowflake data.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Timbrai",
+   "headline": "Announcing: Ontology-driven Data Agents for Databricks",
+   "date": "2026-05-05",
+   "url": "https://timbr.ai/news/announcing-ontology-driven-data-agents-for-databricks/",
+   "source": "Timbr.ai",
+   "summary": "Timbr introduced data agents for the Databricks platform that integrate Timbr's SQL knowledge graph to give AI agents governed business context and relationships. The integration enables production-ready agents that generate queries reflecting actual business meaning rather than raw database schemas.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Timbrai",
+   "headline": "Introducing: Ontology-Based Semantics for Snowflake",
+   "date": "2026-01-26",
+   "url": "https://timbr.ai/news/introducing-ontology-based-semantics-for-snowflake/",
+   "source": "Timbr.ai",
+   "summary": "Timbr launched ontology-based semantic modeling for Snowflake environments, addressing inconsistent metrics, scattered SQL logic, and trust gaps in AI-driven analytics. The capability adds governed business meaning to Snowflake data without requiring changes to the underlying data architecture.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Treasure AI",
+   "headline": "Treasure Data\u00ae Becomes Treasure AI\u2122, Delivering 10x Value to Marketers in 10 Minutes with Its Agentic Experience Platform",
+   "date": "2026-04-20",
+   "url": "https://finance.yahoo.com/sectors/technology/articles/treasure-data-becomes-treasure-ai-120000734.html",
+   "source": "Yahoo Finance / Business Wire",
+   "summary": "Treasure Data rebranded to Treasure AI and launched its Agentic Experience Platform, including Treasure AI Studio \u2014 a conversational workspace enabling marketing teams to build segments, journeys, and campaigns via natural language. Early adopters Michaels and Nestl\u00e9 Mexico report measurable growth and cost reductions of up to 50%.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Treasure AI",
+   "headline": "So Long, Treasure Data. Welcome, Treasure AI",
+   "date": "2026-04-20",
+   "url": "https://www.cmswire.com/customer-data-platforms/so-long-treasure-data-welcome-treasure-ai/",
+   "source": "CMSWire",
+   "summary": "CMSWire analyzes Treasure Data's pivot to Treasure AI, formalizing a year-long transition that included launching the AI Marketing Cloud in October 2025, the Marketing Super Agent in January 2026, and Treasure Code in February 2026. CEO Kaz Ohta framed the shift as moving from software humans operate to outcomes that governed AI agents execute.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Treasure AI",
+   "headline": "Treasure Data Unveils Treasure Code, Bringing Agentic AI to Customer Data Operations",
+   "date": "2026-02-23",
+   "url": "https://finance.yahoo.com/news/treasure-data-unveils-treasure-code-130000311.html",
+   "source": "Yahoo Finance / Business Wire",
+   "summary": "Treasure Data announced general availability of Treasure Code, an AI-native command-line interface that lets teams manage CDP operations using natural language instead of complex SQL, with DevOps-style version control and automated deployment. Roughly one-quarter of Treasure Data's customer base had already adopted the tool at launch.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Turgon",
+   "headline": "DynPro and Turgon AI Announce Strategic Partnership to Transform Enterprise IT Modernization with AI-Native Platform & Solutions",
+   "date": "2026-02-19",
+   "url": "https://www.prnewswire.com/news-releases/dynpro-and-turgon-ai-announce-strategic-partnership-to-transform-enterprise-it-modernization-with-ai-native-platform--solutions-302692253.html",
+   "source": "PR Newswire",
+   "summary": "DynPro and Turgon AI announced a strategic alliance combining DynPro's 30 years of enterprise IT expertise with Turgon's AI agent technology to accelerate legacy system modernization. The partnership targets complex infrastructure projects that traditionally take 12-18 months, completing them in 6-12 weeks, with AI agents handling up to 90% of technical work and reported cost reductions of 40-70% compared to conventional methods.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Validio AB",
+   "headline": "Validio raises $30M Series A to fix enterprise data quality for the AI era",
+   "date": "2026-03-05",
+   "url": "https://validio.io/blog/validio-raises-30m-series-a",
+   "source": "Validio Blog",
+   "summary": "Validio AB, the Stockholm-founded agentic data management platform, raised a $30M Series A led by Plural, bringing total funding to $47M. The round follows 800% annual recurring revenue growth and will fund US/Europe go-to-market expansion and continued product development.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Validio AB",
+   "headline": "Data quality automation startup Validio raises $30M",
+   "date": "2026-03-05",
+   "url": "https://siliconangle.com/2026/03/05/data-quality-automation-startup-validio-raises-30m/",
+   "source": "SiliconANGLE",
+   "summary": "SiliconANGLE covered Validio AB's $30M Series A led by Plural, noting its focus on automating data quality and observability across financial services and telecom. Investors include Lakestar, J12, and angels Kevin Ryan (MongoDB), Denise Persson (Snowflake CMO), and Emil Eifrem (Neo4j CEO). The company reported 800% ARR growth and claims 95% faster issue detection.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Validio AB",
+   "headline": "What the 2026 Gartner\u00ae Market Guide for Data Observability tells us about where the market is heading \u2014 and where it still needs to go",
+   "date": "2026-03-24",
+   "url": "https://validio.io/blog/what-the-2026-gartner-market-guide-for-data-observability-tells-us",
+   "source": "Validio Blog",
+   "summary": "Validio was named a Representative Vendor in Gartner's February 2026 Market Guide for Data Observability Tools, recognized for coverage across all five observation categories: data content, pipeline, infrastructure, lineage, and cost allocation. The post argues the market is moving toward AI-powered automated remediation, not just alerting.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "VaultSpeed",
+   "headline": "VaultSpeed Launches Agentic Framework for Data Vault Automation",
+   "date": "2026-05-27",
+   "url": "https://www.vaultspeed.com/webinar-vaultspeed-agentic-framework",
+   "source": "VaultSpeed",
+   "summary": "VaultSpeed introduced its new agentic framework in a live webinar led by CEO Patrick Van Deven and VP Solutions Engineering Jonas De Keuster, targeting specialist data work surrounding raw vault implementation \u2014 source profiling, entity mapping, and semantic layer design. The AI agents propose changes grounded in enterprise integration knowledge while keeping production code fully deterministic, with humans reviewing and approving each step.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "VaultSpeed",
+   "headline": "Automate Your Data Vault on Snowflake, Natively \u2014 VaultSpeed Now on Snowflake Marketplace",
+   "date": "2026-03-05",
+   "url": "https://vaultspeed.com/blog/data-vault-automation-on-snowflake-marketplace",
+   "source": "VaultSpeed",
+   "summary": "VaultSpeed announced availability as a native app on the Snowflake Marketplace, built on the Snowflake Native App Framework, requiring no separate infrastructure or VPN. The platform generates Snowflake-native SQL, Tasks, and Dynamic Tables from metadata and handles CDC patterns, schema drift detection, and lineage tracking automatically.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "VaultSpeed",
+   "headline": "VaultSpeed Secures $15.9 Million in Series A Funding to Accelerate Growth",
+   "date": "2023-11-16",
+   "url": "https://www.fortino.vc/news/vaultspeed-secures-159-million-series-funding-accelerate-growth-its-automated-data",
+   "source": "Fortino Ventures",
+   "summary": "VaultSpeed raised $15.9 million (EUR 15.1 million) in a Series A round led by Octopus Ventures, with participation from Fortino Capital, PMV, and BNP Paribas Fortis Private Equity. The Belgian data vault automation company aimed to triple revenue by 2025 and expand its platform partnerships with Snowflake, Microsoft, and Databricks.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "WisdomAI Launches Analytics Agents That Reason Across the Enterprise Data Stack and Act Autonomously with Context",
+   "date": "2026-05-20",
+   "url": "https://www.prnewswire.com/news-releases/wisdomai-launches-analytics-agents-that-reason-across-the-enterprise-data-stack-and-act-autonomously-with-context-302777703.html",
+   "source": "PR Newswire",
+   "summary": "WisdomAI launched Analytics Agents, a platform enabling enterprise data teams to design, test, and deploy AI-powered agents with 200+ native integrations that reason and act autonomously across the data stack. Early adopters include Trumid and PropertyFinder, with agents capable of self-correcting workflows and transforming insights into automated actions.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "WisdomAI Launches Embedded Agentic Analytics That Lets Product Companies Ship Modern AI Analytics to Customers in Weeks",
+   "date": "2026-05-27",
+   "url": "https://www.prnewswire.com/news-releases/wisdomai-launches-embedded-agentic-analytics-that-lets-product-companies-ship-modern-ai-analytics-to-customers-in-weeks-302783111.html",
+   "source": "PR Newswire",
+   "summary": "WisdomAI announced Embedded Agentic Analytics, a white-labeled platform combining Conversational BI, AI-powered Dashboards, and Analytics Agents deployable via iFrame, React SDK, or GraphQL API. Notable early customers include Blend (digital lending), ServiceChannel, and Cloverleaf Analytics, with SOC 2 Type II, HIPAA, and GDPR compliance.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "WisdomAI",
+   "headline": "AI Data Startup WisdomAI Has Raised Another $50M, Led by Kleiner, Nvidia",
+   "date": "2025-11-12",
+   "url": "https://techcrunch.com/2025/11/12/ai-data-startup-wisdomai-has-raised-another-50m-led-by-kleiner-nvidia/",
+   "source": "TechCrunch",
+   "summary": "WisdomAI raised a $50 million Series A round led by Kleiner Perkins and NVentures (NVIDIA's venture capital arm), bringing total capital raised to $73 million less than a year after launch. The company, founded by Rubrik co-founder Soham Mazumdar, had grown to approximately 40 enterprise customers including Cisco, ConocoPhillips, and Descope.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Yuki",
+   "headline": "Yuki and Integrate.io Partner to Deliver Fully Predictable, End-to-End Data Cost Optimization",
+   "date": "2026-05-28",
+   "url": "https://www.globenewswire.com/news-release/2026/05/28/3303282/0/en/Yuki-and-Integrate-io-Partner-to-Deliver-Fully-Predictable-End-to-End-Data-Cost-Optimization.html",
+   "source": "GlobeNewswire",
+   "summary": "Yuki and Integrate.io announced a strategic technology partnership combining Integrate.io's flat-fee unlimited data pipelines with Yuki's automated warehouse cost optimization to deliver end-to-end cost predictability. The no-code integration targets joint Snowflake customers seeking to eliminate unpredictable spending across both pipeline and compute layers.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Yuki",
+   "headline": "As AI Breaks the One-Size-Fits-All Data Stack, Yuki Raises $6M to Become the AI Data Control Layer",
+   "date": "2026-01-22",
+   "url": "https://www.prnewswire.com/news-releases/as-ai-breaks-the-one-size-fits-all-data-stack-yuki-raises-6m-to-become-the-ai-data-control-layer-302668073.html",
+   "source": "PR Newswire",
+   "summary": "Yuki emerged from stealth with a $6 million seed round led by Hyperwise Ventures to build an AI-powered data cost control layer for Snowflake, BigQuery, and Iceberg-based data lakes. The platform's Yuki Fabric model continuously learns workload behavior and automates cost-performance optimization, with early customers including Tenable and Angel Studios reporting average savings of 42.6% on data costs.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Yuki",
+   "headline": "Yuki Launches Yuki Optimization Platform, a Snowflake Native App, on Snowflake Marketplace",
+   "date": "2025-09-01",
+   "url": "https://www.globenewswire.com/news-release/2025/09/01/3142027/0/en/Yuki-Launches-Yuki-Optimization-Platform-a-Snowflake-Native-App-on-Snowflake-Marketplace.html",
+   "source": "GlobeNewswire",
+   "summary": "Yuki launched its Optimization Platform as a Snowflake Native App on Snowflake Marketplace, enabling automated warehouse scaling and real-time compute optimization within customers' existing Snowflake environments with no data movement. The launch came as part of Yuki's participation in Snowflake's startup program, positioning the platform to support Cortex AI workloads without resource bottlenecks.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "ZeroError",
+   "headline": "ZeroError Launches Advanced Analytics Capabilities to Support Supply Chain Use Cases on Snowflake AI Data Cloud",
+   "date": "2025-06-03",
+   "url": "https://www.zeroerror.ai/snowflake-and-zeroerror-press-release-2/",
+   "source": "BusinessWire / ZeroError",
+   "summary": "Announced at Snowflake Summit 2025 in San Francisco, ZeroError unveiled new advanced analytics for supply chain optimization integrated with Snowflake's AI Data Cloud, covering master data management, BOM, MRP planning, inventory, carbon footprint, and tariff analysis. Snowflake VP Kieran Kennedy noted the launch demonstrates ZeroError's commitment to Snowflake's data and AI mission.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "ZeroError",
+   "headline": "ZeroError Native App Launches on Snowflake AI Data Cloud",
+   "date": "2026-01-04",
+   "url": "https://www.zeroerror.ai/nativeapp/",
+   "source": "ZeroError",
+   "summary": "ZeroError launched a Native App directly within the Snowflake environment, enabling its AI data-cleansing models to run inside Snowflake so that customer data never moves, ensuring security and performance. The app provides a fully integrated UI positioned as a surgical data cleansing engine for enterprise data quality.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "ZeroError",
+   "headline": "ZeroError Co-Founder Interviewed at Manifest 2026: The Future of Supply Chain & Logistics",
+   "date": "2026-02-11",
+   "url": "https://www.zeroerror.ai/manifest-2026/",
+   "source": "ZeroError / ISCEA-Media",
+   "summary": "Co-founder Victor Gelpi was interviewed at the Manifest Supply Chain & Logistics conference in Las Vegas, discussing ZeroError's AI-driven platform for detecting data errors in large enterprises, powered by Snowflake. The appearance underscored the company's growing presence in supply chain data quality.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Zilliz",
+   "headline": "Zilliz Announces General Availability of Milvus 2.6.x on Zilliz Cloud, Powering Billion-Scale Vector Search at Even Lower Cost",
+   "date": "2026-01-20",
+   "url": "https://www.prnewswire.com/news-releases/zilliz-announces-general-availability-of-milvus-2-6-x-on-zilliz-cloud-powering-billion-scale-vector-search-at-even-lower-cost-302665829.html",
+   "source": "PR Newswire",
+   "summary": "Zilliz launched Milvus 2.6.x on its fully managed Zilliz Cloud platform, delivering billion-scale vector search at up to 87% lower storage costs and 100x faster JSON-based metadata filtering. The release also introduced hybrid full-text and vector search performance up to 7x faster than Elasticsearch on selected datasets.",
+   "relevance": "high"
+  },
+  {
+   "vendor": "Zilliz",
+   "headline": "Milvus Surpasses 40,000 GitHub Stars, Reinforcing Leadership in Open-Source Vector Databases",
+   "date": "2025-12-18",
+   "url": "https://finance.yahoo.com/news/milvus-surpasses-40-000-github-010000562.html",
+   "source": "Yahoo Finance",
+   "summary": "Zilliz announced that Milvus, its open-source vector database, reached 40,000 GitHub stars with over 10,000 enterprise teams deploying it in production, including NVIDIA, Salesforce, eBay, Airbnb, and DoorDash. The milestone came alongside Milvus 2.6 improvements offering 50% cost reduction via tiered storage and 72% memory reduction via RaBitQ quantization.",
+   "relevance": "medium"
+  },
+  {
+   "vendor": "Zilliz",
+   "headline": "Zilliz Cloud Delivers Major Cost Savings, Higher Performance, and Strengthened Security for Enterprise AI",
+   "date": "2025-10-21",
+   "url": "https://www.prnewswire.com/news-releases/zilliz-cloud-delivers-major-cost-savings-higher-performance-and-strengthened-security-for-enterprise-ai-302590558.html",
+   "source": "PR Newswire",
+   "summary": "Zilliz introduced a rebuilt tiered storage system cutting storage costs by 87% (from $0.30 to $0.04 per GB/month) and a new Business Critical Plan with HIPAA readiness and multi-region replication for regulated industries. Simplified unified pricing across AWS, Azure, and Google Cloud took effect January 1, 2026.",
    "relevance": "medium"
   }
  ]
