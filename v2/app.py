@@ -521,41 +521,18 @@ def main() -> int:
                   f"prior data-metals.json preserved.", file=sys.stderr)
     except Exception as e:
         print(f"[fetch-metals] failed: {e}", file=sys.stderr)
-    # UAP / NUFORC sightings sidecar — refreshes v2/data-mufon.json with
-    # the state x year sightings aggregate (latest updates + document
-    # library are static, baked into HTML_TEMPLATE). Same isolation as
-    # advisories: a probe miss (the canonical Renner mirror is DVC-backed
-    # and usually 404s, so we lean on the planetsig mirror) must not abort
-    # the V2 build. The fetcher itself preserves the prior on-disk JSON
-    # when every CSV candidate fails.
-    try:
-        import fetch_mufon
-        rc = fetch_mufon.main(["--out", str(ROOT / "data-mufon.json")])
-        if rc != 0:
-            print(f"[fetch-mufon] non-zero exit ({rc}); "
-                  f"prior data-mufon.json preserved.", file=sys.stderr)
-    except Exception as e:
-        print(f"[fetch-mufon] failed: {e}", file=sys.stderr)
-    # Stock per-ticker hourly price sidecar — refreshes
-    # v2/data-stock-prices.json with 7d/1h Yahoo Finance closes for the
-    # top-50 most-active US stocks (drawn from data/market.json's
-    # stocks_signals[].symbol so the list auto-tracks fetch_market.py).
-    # Feeds the price sparkline at the top of the per-ticker modal
-    # (openTickerModal). Same isolation pattern as the other sidecar
-    # fetchers: per-ticker try/except + total-fail stale fallback so the
-    # V2 build never dies on a transient Yahoo outage. ~200ms inter-call
-    # delay (50 tickers => ~10s) keeps us well below Yahoo's rate limits.
-    try:
-        import fetch_stock_prices
-        rc = fetch_stock_prices.main([
-            "--out", str(ROOT / "data-stock-prices.json"),
-            "--market-json", str(DATA_DIR / "market.json"),
-        ])
-        if rc != 0:
-            print(f"[fetch-stock-prices] non-zero exit ({rc}); "
-                  f"prior data-stock-prices.json preserved.", file=sys.stderr)
-    except Exception as e:
-        print(f"[fetch-stock-prices] failed: {e}", file=sys.stderr)
+    # NOTE: the slow / hang-prone sidecar fetches — fetch_mufon (NUFORC) and
+    # fetch_stock_prices (Yahoo, 50 tickers) — are deliberately moved to AFTER
+    # the dashboard.html write below. The V2 build step has a hard
+    # timeout-minutes:4 in pages.yml; if one of those fetches hangs past the
+    # budget the step gets killed, and if the kill happens BEFORE we write
+    # dashboard.html the staging step (gated on `[ -f v2/dashboard.html ]`)
+    # skips V2 entirely and /v2/ 404s. Writing the HTML first guarantees /v2/
+    # deploys even when a slow fetch is killed. Their sidecars are gated by
+    # .exists() in the manifest, and the CI actions/cache preserves prior
+    # data-mufon.json / data-stock-prices.json across runs, so the manifest
+    # still references them after the first successful build (one-time
+    # cold-start regression at worst).
 
     print("Building payload...")
     payload = build_payload()
@@ -628,6 +605,48 @@ def main() -> int:
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
+    # /v2/ is now guaranteed to deploy regardless of what the slow sidecar
+    # fetches below do (hang, fail, get killed by timeout-minutes).
+
+    # UAP / NUFORC sightings sidecar — refreshes v2/data-mufon.json with
+    # the state x year sightings aggregate (latest updates + document
+    # library are static, baked into HTML_TEMPLATE). The fetcher itself
+    # preserves the prior on-disk JSON when every CSV candidate fails.
+    # MOVED AFTER write_text: the NUFORC source fetches months one-at-a-time
+    # and routinely takes >4 minutes, exceeding the V2 step's timeout-minutes
+    # budget. The fetched data is sidecar-only (client lazy-loads on tab
+    # open) — the manifest just needs the file to exist on disk at HTML
+    # render time, which the CI cache supplies from the prior successful
+    # build's run.
+    try:
+        import fetch_mufon
+        rc = fetch_mufon.main(["--out", str(ROOT / "data-mufon.json")])
+        if rc != 0:
+            print(f"[fetch-mufon] non-zero exit ({rc}); "
+                  f"prior data-mufon.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-mufon] failed: {e}", file=sys.stderr)
+    # Stock per-ticker hourly price sidecar — refreshes
+    # v2/data-stock-prices.json with 7d/1h Yahoo Finance closes for the
+    # top-50 most-active US stocks (drawn from data/market.json's
+    # stocks_signals[].symbol so the list auto-tracks fetch_market.py).
+    # Feeds the price sparkline at the top of the per-ticker modal
+    # (openTickerModal). Per-ticker try/except + total-fail stale fallback
+    # so any individual ticker outage is absorbed. ~200ms inter-call delay
+    # (50 tickers => ~10s) keeps us well below Yahoo's rate limits.
+    # MOVED AFTER write_text alongside fetch_mufon for the same reason —
+    # so a slow upstream can't block /v2/ from deploying.
+    try:
+        import fetch_stock_prices
+        rc = fetch_stock_prices.main([
+            "--out", str(ROOT / "data-stock-prices.json"),
+            "--market-json", str(DATA_DIR / "market.json"),
+        ])
+        if rc != 0:
+            print(f"[fetch-stock-prices] non-zero exit ({rc}); "
+                  f"prior data-stock-prices.json preserved.", file=sys.stderr)
+    except Exception as e:
+        print(f"[fetch-stock-prices] failed: {e}", file=sys.stderr)
 
     print(f"Done. {OUT}")
     if not args.no_open:
