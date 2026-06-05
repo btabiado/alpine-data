@@ -256,12 +256,73 @@ def streak_calc(values: list[float]) -> dict:
     return {"direction": direction, "length": length}
 
 
+def _fred_is_usable(fred) -> bool:
+    """A FRED block is usable for the Macro snapshot/overlay iff it's a dict
+    flagged ``available`` AND at least one macro series actually has points.
+    The renderers (renderMacro / renderOverviewMacro) gate on
+    ``fred.available`` and then read dxy/sp500/gold/treasury_10y — an
+    ``available: true`` block with all-empty series would still draw an empty
+    chart, so we treat that as not-usable too."""
+    if not isinstance(fred, dict) or not fred.get("available"):
+        return False
+    return any((fred.get(k) or []) for k in
+               ("dxy", "sp500", "gold", "treasury_10y", "m2"))
+
+
+def _fred_stale_keep(market: dict) -> None:
+    """Stale-keep for the Macro snapshot overlay (FRED macro block).
+
+    V2 does NOT re-fetch the FRED macro overlay — it embeds whatever
+    ``data/market.json["fred"]`` the V1 build wrote moments earlier. When that
+    on-disk ``fred`` block is missing / ``available: false`` / all-empty (a
+    cache-restored ``market.json`` from a keyless or FRED-flaky run, or a V1
+    fetch where FRED returned partial data), the Macro snapshot blanks to
+    "Macro overlay disabled — set FRED_API_KEY" even though the key IS set and
+    a good value was fetched on a prior run.
+
+    Fix at the data layer, mirroring fetch_cpi.py's stale-fallback idiom:
+    restore the last-good FRED response from the SAME on-disk cache V1 already
+    maintains — ``data/.stale/fetch_fred.json`` — written by
+    ``fetch_market.fetch_fred()`` via ``_stale_save`` on every successful
+    fetch. Pure disk read, no network, so it can't hang and survives the
+    V2 step's ``timeout-minutes`` bound. No-op (leaves the existing block /
+    empty state) when no good current block AND no good cache exist.
+
+    Mutates ``market`` in place. Never raises — a stale-keep miss must never
+    break the V2 build."""
+    if not isinstance(market, dict):
+        return
+    if _fred_is_usable(market.get("fred")):
+        return  # current block is good; nothing to restore
+    try:
+        import fetch_market as _fm
+        cached = _fm._stale_load("fetch_fred")  # tagged {stale, stale_age_sec}
+    except Exception as e:  # pragma: no cover - defensive
+        print(f"  [v2][fred] stale-keep load failed: {e}", file=sys.stderr)
+        return
+    if _fred_is_usable(cached):
+        market["fred"] = cached
+        age = cached.get("stale_age_sec")
+        print(f"  [v2][fred] macro block unavailable on disk; restored "
+              f"last-good FRED from data/.stale/fetch_fred.json "
+              f"(age {age}s)", file=sys.stderr)
+    else:
+        print("  [v2][fred] macro block unavailable and no usable stale "
+              "cache; leaving empty state.", file=sys.stderr)
+
+
 def build_payload() -> dict:
     """Read CSVs + JSON caches and return the full dashboard payload."""
     btc_df = ensure_total(load_csv(DATA_DIR / "btc_flows.csv"))
     eth_df = ensure_total(load_csv(DATA_DIR / "eth_flows.csv"))
     market = load_json(DATA_DIR / "market.json")
     whale = load_json(DATA_DIR / "whale.json")
+    # Stale-keep the FRED macro overlay: V2 embeds market.json["fred"] as-is
+    # (no re-fetch). If that block is missing/unavailable/empty, restore the
+    # last-good one from data/.stale/fetch_fred.json so the Macro snapshot
+    # doesn't blank to "disabled" while V1 (which fetched fine) shows it. See
+    # _fred_stale_keep for the full rationale.
+    _fred_stale_keep(market)
     # Defensive cap on fear_greed history (see FEAR_GREED_MAX_DAYS docstring).
     # Done here instead of (only) at fetch so stale on-disk caches that
     # pre-date the fetcher's slice still get trimmed in the inlined payload.
