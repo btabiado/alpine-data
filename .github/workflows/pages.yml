@@ -49,6 +49,7 @@ jobs:
           path: |
             data/market.json
             data/whale.json
+            snowflake_summit/.enrich_cache.json
           key: fetched-data-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
             fetched-data-
@@ -140,6 +141,19 @@ jobs:
           GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
         run: python api_status.py || echo "[api-status] probe failed; continuing"
+        continue-on-error: true
+
+      - name: Enrich + rebuild Summit dashboard
+        # Pull live vendor news (GDELT) + company facts (Wikidata) — both
+        # keyless — then rebuild snowflake_summit/dashboard.html so /summit/
+        # ships fresh data each deploy. Cached via .enrich_cache.json (restored
+        # above) so most runs are cheap; a fetch failure keeps the prior data
+        # (stale-keep) and the committed dashboard.html is the final fallback.
+        # Non-fatal: production at `/` and `/summit/` must deploy regardless.
+        if: hashFiles('snowflake_summit/build.py') != ''
+        run: |
+          python snowflake_summit/enrich_vendors.py || echo "[summit] enrich failed; using existing data"
+          python snowflake_summit/build.py || echo "[summit] rebuild failed; using committed dashboard.html"
         continue-on-error: true
 
       - name: Generate V2 dashboard (parallel build, reads same data/)

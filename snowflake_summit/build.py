@@ -177,6 +177,20 @@ def load_news():
     return {"items": items if isinstance(items, list) else [], "generated": data.get("generated", "")}
 
 
+def load_enrichment():
+    """Load Wikidata vendor facts (enrichment.json) if present. Produced by
+    enrich_vendors.py. Returns {vendor_name: {founded, headquarters, employees,
+    industry, website, wikidata_url, ...}}; never raises."""
+    p = os.path.join(HERE, "enrichment.json")
+    try:
+        with open(p, encoding="utf-8") as f:
+            data = json.load(f)
+        by = data.get("by_vendor", {}) if isinstance(data, dict) else {}
+        return by if isinstance(by, dict) else {}
+    except Exception:
+        return {}
+
+
 def render(meta, vendors, src_path):
     mq = magic_quadrant(vendors)
     mq_segments = magic_quadrant_segments(vendors)
@@ -190,6 +204,16 @@ def render(meta, vendors, src_path):
         return [avg([v.get(k) for v in subset]) for k, _ in SCORE_KEYS]
     tierA = [v for v in vendors if v.get("tier") == "A"]
     _news = load_news()
+    # Merge Wikidata company facts onto each vendor (founded / HQ / industry /
+    # employees). Backfill the existing Employees field when the directory
+    # didn't have one. Missing enrichment.json is a no-op.
+    _enrich = load_enrichment()
+    for _v in vendors:
+        _wd = _enrich.get(_v.get("name")) or {}
+        if _wd:
+            _v["wd"] = _wd
+            if not _v.get("employees") and _wd.get("employees"):
+                _v["employees"] = _wd["employees"]
 
     payload = {
         "meta": meta,
@@ -1522,6 +1546,9 @@ draw();
   function open(name){
     var v=byName[name]; if(!v) return;
     var company=row('Valuation / Market cap',v.market_cap)+row('Funding raised',v.funding)+row('Round',v.round)+row('Revenue / ARR',v.revenue)+row('Employees',v.employees)+row('Key investors / owner',v.investors)+row('Ticker / parent',v.ticker_parent);
+    var wd=v.wd||{};
+    var wdrows=row('Founded',wd.founded)+row('Headquarters',wd.headquarters)+row('Industry',wd.industry);
+    var wdlink=wd.wikidata_url?('<div class="vrow" style="border:none"><span class="vv" style="font-weight:400"><a class="dl" href="'+esc(wd.wikidata_url)+'" target="_blank" rel="noopener noreferrer">📚 View on Wikidata ↗</a></span></div>'):'';
     var scores=[['Bryan Recommend',v.bryan_score],['Snowflake',v.snowflake_score],['AI',v.ai_score],['Retail / Customer',v.retail_score],['IPO / Upside',v.ipo_score]]
       .map(function(s){return '<div class="vrow"><span class="k">'+s[0]+'</span><span class="vv">'+fmt(s[1])+' / 10</span></div>';}).join('')
       +'<div class="vrow"><span class="k">Overall</span><span class="vv">'+fmt(v.overall_score)+' / 10</span></div>';
@@ -1529,6 +1556,7 @@ draw();
       '<div class="sub" style="margin-top:5px">'+esc(fmt(v.category))+' · booth '+esc(fmt(v.booth))+(v.company_type?(' · '+esc(v.company_type)):'')+'</div>'+
       '<div style="margin-top:11px"><a class="dl homedl" href="'+esc(homeUrl(v))+'" target="_blank" rel="noopener noreferrer" aria-label="'+(v.website?'Visit homepage':'Search the web for homepage')+', opens in a new tab">'+(v.website?'🌐 Visit homepage':'🔎 Find homepage')+' ↗</a></div>'+
       '<div class="vsec">Company</div>'+(company||'<div class="sub" style="padding:6px 0">No funding / valuation data on file yet.</div>')+
+      ((wdrows||wdlink)?('<div class="vsec">Company facts <span class="sub" style="font-weight:400;font-size:11px">· via Wikidata</span></div>'+wdrows+wdlink):'')+
       '<div class="vsec">Scores</div>'+scores+
       (v.notes?('<div class="vsec">Notes</div><div class="vrow" style="border:none"><span class="vv" style="font-weight:400;line-height:1.55">'+esc(v.notes)+'</span></div>'):'')+
       (v.source?('<div class="sub" style="margin-top:12px;font-size:11px;word-break:break-word">Source: '+esc(v.source)+'</div>'):'');
