@@ -588,20 +588,19 @@ def main() -> int:
     metals_path = ROOT / "data-metals.json"
     if metals_path.exists():
         manifest["metals"] = "data-metals.json"
-    # UAP/MUFON sidecar — written by fetch_mufon above. Same gating as
-    # the other lazy-load tabs: only register in the manifest when the
-    # file actually exists on disk so the client loader doesn't 404 on
-    # a missing seed (e.g. first build with no network).
-    mufon_path = ROOT / "data-mufon.json"
-    if mufon_path.exists():
-        manifest["mufon"] = "data-mufon.json"
-    # Stock per-ticker hourly prices sidecar — written above by
-    # fetch_stock_prices. Powers the price sparkline at the top of the
-    # per-ticker modal (openTickerModal) on the Stocks tab. Same gating
-    # as the other tabs so a missing seed doesn't 404 the client loader.
-    stock_prices_path = ROOT / "data-stock-prices.json"
-    if stock_prices_path.exists():
-        manifest["stockprices"] = "data-stock-prices.json"
+    # UAP/MUFON + Stock-prices sidecars — written by fetch_mufon and
+    # fetch_stock_prices AFTER OUT.write_text (see the comment on the moved
+    # blocks below). At HTML render time these files may not yet exist, so
+    # the prior `.exists()` gates would leave the keys out of the manifest
+    # and the SIDECARS↔SIDECAR_FOR_TAB coverage validator (added 2026-05-27)
+    # would hard-fail the deploy — the EXACT bug `travel` already solves by
+    # declaring unconditionally (see line ~579). Mirror that pattern here:
+    # the client `loadSidecar` handles a 404 gracefully (logs a warning,
+    # renders the empty state). CI's actions/cache preserves these sidecars
+    # between runs so a normal hit serves real data; on a cold first build,
+    # the tabs show an empty state until the next build's fetch lands.
+    manifest["mufon"] = "data-mufon.json"
+    manifest["stockprices"] = "data-stock-prices.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
