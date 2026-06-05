@@ -182,6 +182,12 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: python v2/app.py --no-open || echo "[v2] build failed; production deploy continues"
         continue-on-error: true
+        # continue-on-error + `|| echo` catch a FAILURE (non-zero exit) but NOT a
+        # HANG. A V2-side fetcher (FRED/EIA/metals/etc.) with no socket timeout can
+        # hang on a slow/down API and, with no step timeout, stall the ENTIRE Pages
+        # deploy (V1 at / and /summit/ included) indefinitely. Bound it so a hung V2
+        # build fails fast and the V1 + Summit publish proceeds (V2 keeps last-good).
+        timeout-minutes: 4
 
       - name: Validate V2 dashboard JS structure
         # Structural lint of the freshly-built v2/dashboard.html inline
