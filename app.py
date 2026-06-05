@@ -876,7 +876,7 @@ HTML_TEMPLATE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>BDT Dashboards</title>
+<title>BDT Dashboards — Crypto, Markets &amp; Macro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 <style>
@@ -889,6 +889,10 @@ HTML_TEMPLATE = r"""<!doctype html>
 body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif}
 header{padding:14px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 header h1{font-size:17px;margin:0;font-weight:600}
+/* One-line tagline under the wordmark — "BDT Dashboards" is a brand, not a
+   self-describing name, so this restores the context the old literal name
+   carried, across the full collage of tabs (markets, macro, on-chain, more). */
+header .tagline{color:var(--muted);font-size:11px;margin-top:2px;line-height:1.3}
 header .meta{color:var(--muted);font-size:12px}
 .tabs{display:flex;flex-wrap:wrap;gap:2px;padding:0 24px;border-bottom:1px solid var(--border);background:var(--panel);position:relative}
 .tab{padding:11px 18px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;border-bottom:2px solid transparent;letter-spacing:.02em;white-space:nowrap}
@@ -1150,6 +1154,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
   header > div:first-child{min-width:0;flex:1 1 auto}
   header h1{font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Keep the tagline on mobile (it's the only context cue once .meta is
+     hidden), but truncate it like the h1 so it can't blow out the header. */
+  header .tagline{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   header .meta{display:none}
   /* Header button row: asset toggles + share/refresh, single line, no wrap */
   header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
@@ -1579,6 +1586,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 <header>
   <div>
     <h1>BDT Dashboards</h1>
+    <div class="tagline">A collage of live dashboards — crypto, markets, macro &amp; beyond</div>
     <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span></div>
   </div>
   <div class="controls" style="border:0;padding:0">
@@ -1604,6 +1612,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
     <a class="btn" href="summit/" title="Snowflake Summit 2026 partner scouting dashboard">❄ Summit</a>
+    <a class="btn" href="health/apis.html" title="Live upstream API reachability + data freshness">◉ Status</a>
   </div>
 </header>
 

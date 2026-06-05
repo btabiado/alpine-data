@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Live API Status · BTC/ETH ETF</title>
+  <title>Live API Status · BDT Dashboards</title>
   <style>
     :root {
       --bg: #0b0e14;
@@ -67,6 +67,14 @@
     .keytag.set { color: var(--up); border-color: rgba(16,185,129,0.4); }
     .keytag.missing { color: var(--warn); border-color: rgba(245,158,11,0.4); }
 
+    /* Horizontal-scroll wrapper so the 5-col table scrolls cleanly on a phone
+       instead of crushing cells / overflowing .wrap (matches the aviation-tab
+       pattern). min-width keeps columns legible while scrolling. */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+    .table-wrap table { min-width: 560px; }
+    /* The note cell is the diagnostic payload — let it wrap so the full reason
+       is readable on touch (no hover tooltip on phones). */
+    .note-cell { font-size: 11px; color: var(--text-faint); margin-top: 2px; max-width: 320px; overflow-wrap: anywhere; }
     .empty { color: var(--text-faint); font-style: italic; padding: 16px; }
     .error { color: var(--down); padding: 14px 16px; background: rgba(239,68,68,0.05); border: 1px solid var(--down); border-radius: 8px; margin-top: 12px; }
     .banner { padding: 12px 16px; border-radius: 8px; margin: 16px 0; font-size: 13px; border: 1px solid var(--border); background: var(--bg-elev); }
@@ -90,8 +98,8 @@
     <p class="note">
       Reachability of each upstream the dashboard pulls from, probed live.
       <b>up</b> = serving · <b>auth&nbsp;required</b> = endpoint live, needs a key ·
-      <b>rate&nbsp;limited</b> = live but throttling · <b>degraded</b> = erroring ·
-      <b>blocked</b> = 401/403 on a keyless source (geo/WAF/egress proxy) · <b>down</b> = no response.
+      <b>rate&nbsp;limited</b> = live but throttling us · <b>degraded</b> = reachable but erroring ·
+      <b>blocked</b> = the source refused our request (region/firewall) · <b>down</b> = no response at all.
       Distinct from the <a href="./">data-freshness page</a> (are the cached files recent?).
     </p>
 
@@ -144,7 +152,7 @@
       const el = document.getElementById('table');
       if (!sources || !sources.length) { el.innerHTML = '<div class="empty">No sources.</div>'; return; }
       el.innerHTML = `
-        <table>
+        <div class="table-wrap"><table>
           <thead><tr>
             <th>Source</th><th>Host</th><th>Status</th>
             <th style="text-align:right">HTTP</th><th style="text-align:right">Latency</th>
@@ -154,12 +162,12 @@
               <tr>
                 <td><span class="label">${escapeHtml(s.label)}</span>${keyTag(s)}<div class="cat">${escapeHtml(s.category)}</div></td>
                 <td class="mono">${escapeHtml(s.host)}</td>
-                <td><span class="pill ${s.verdict}">${VERDICT_LABEL[s.verdict] || s.verdict}</span>${s.note ? `<div class="cat" title="${escapeHtml(s.note)}">${escapeHtml(s.note.slice(0,40))}</div>` : ''}</td>
+                <td><span class="pill ${s.verdict}">${VERDICT_LABEL[s.verdict] || s.verdict}</span>${s.note ? `<div class="note-cell">${escapeHtml(s.note)}</div>` : ''}</td>
                 <td class="num">${s.status == null ? '—' : s.status}</td>
                 <td class="num">${s.latency_ms}ms</td>
               </tr>`).join('')}
           </tbody>
-        </table>`;
+        </table></div>`;
     }
 
     function renderModeBanner(live) {
@@ -171,9 +179,20 @@
           + 'Run <span class="source-tag">python server.py</span> and open <span class="source-tag">/status</span> for live probing.';
     }
 
-    async function load() {
+    let lastGenerated = null;
+
+    async function load(opts) {
+      const auto = opts && opts.auto;
       const btn = document.getElementById('refreshBtn');
       btn.disabled = true;
+      // Probing placeholder on first paint / manual refresh (the live sweep can
+      // take a few seconds). Skipped on silent auto-refresh so it never wipes
+      // what's already on screen.
+      if (!auto) {
+        const tbl = document.getElementById('table');
+        if (!tbl.querySelector('table')) tbl.innerHTML = '<div class="empty">Probing upstreams…</div>';
+        document.getElementById('generated').textContent = 'probing…';
+      }
       try {
         let live = true, data = null;
         try {
@@ -186,11 +205,16 @@
           if (!r2.ok) throw new Error(`snapshot HTTP ${r2.status}`);
           data = await r2.json();
         }
+        // On silent auto-refresh, skip the DOM rebuild when nothing changed —
+        // avoids yanking the table out from under a mid-scroll/read user.
+        if (auto && data.generated_at === lastGenerated) return;
+        lastGenerated = data.generated_at;
         renderModeBanner(live);
         document.getElementById('generated').textContent = `as of ${formatTime(data.generated_at)}`;
         renderSummary(data.summary);
         renderTable(data.sources);
       } catch (e) {
+        document.getElementById('generated').textContent = 'error';
         document.getElementById('table').innerHTML =
           `<div class="error">Failed to load status: ${escapeHtml(e.message)}.<br>` +
           `Neither the live endpoint (<span class="source-tag">/api/status</span>) nor the snapshot ` +
@@ -200,10 +224,12 @@
       }
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', load);
+    document.getElementById('refreshBtn').addEventListener('click', () => load());
     load();
-    // Light auto-refresh so a left-open tab stays current without hammering.
-    setInterval(load, 90 * 1000);
+    // Light auto-refresh: pause while the tab is hidden, and (inside load) only
+    // re-render when the snapshot actually changed — so it never hammers
+    // upstreams or disrupts a mid-read user.
+    setInterval(() => { if (!document.hidden) load({ auto: true }); }, 90 * 1000);
   </script>
 </body>
 </html>
