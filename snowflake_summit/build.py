@@ -355,16 +355,20 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     #vModal td.name{word-break:break-word}}
   h3.sec{margin:22px 0 12px;font-size:15px}
   h3.sec .hint{color:var(--muted);font-weight:400;font-size:12px;margin-left:6px}
-  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .card2{background:linear-gradient(160deg,#15233f,#101a30);border:1px solid var(--border);border-radius:12px;padding:13px 14px;position:relative;overflow:hidden}
-  .card2 .rk{position:absolute;top:8px;right:11px;font-size:26px;font-weight:900;color:rgba(41,181,232,.16)}
-  .card2 .nm{font-size:14.5px;font-weight:700;padding-right:30px}
-  .card2 .ct{font-size:10.5px;color:var(--accent);text-transform:uppercase;letter-spacing:.04em;margin:2px 0 7px}
-  .scores{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0 4px}
-  .schip{font-size:10px;padding:2px 6px;border-radius:6px;background:var(--panel2);border:1px solid var(--border);color:var(--muted)}
-  .schip b{color:var(--text)}
-  .ovr{display:flex;align-items:baseline;gap:7px;margin-top:6px}
-  .ovr b{font-size:22px;color:var(--text)}.ovr span{font-size:10.5px;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .card2{background:linear-gradient(157deg,#17274a,#0f1830 70%);border:1px solid var(--border);border-radius:14px;padding:15px 16px 14px;position:relative;overflow:hidden;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease}
+  .card2::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);opacity:.6}
+  .card2:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:0 12px 28px rgba(0,0,0,.4)}
+  .card2:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .card2 .rk{position:absolute;top:9px;right:13px;font-size:30px;font-weight:900;color:rgba(41,181,232,.13);line-height:1}
+  .card2 .nm{font-size:15px;font-weight:700;letter-spacing:-.01em;padding-right:34px}
+  .card2 .ct{font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin:3px 0 9px;opacity:.85}
+  .scores{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 6px}
+  .schip{font-size:10px;padding:3px 8px;border-radius:7px;background:rgba(148,178,222,.05);border:1px solid var(--border);color:var(--muted);font-weight:600}
+  .schip b{color:var(--text);font-weight:800}
+  .schip.lead{background:rgba(41,181,232,.13);border-color:var(--accent2);color:#bfe6fb}
+  .ovr{display:flex;align-items:baseline;gap:8px;margin-top:9px}
+  .ovr b{font-size:24px;font-weight:800;color:var(--text);line-height:1}.ovr span{font-size:10.5px;color:var(--muted)}
   .tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700}
   .tA{background:rgba(52,211,153,.16);color:var(--A)}.tB{background:rgba(251,191,36,.16);color:var(--B)}
   .tC{background:rgba(96,165,250,.18);color:#93c5fd}.tD{background:rgba(59,130,246,.2);color:#3b82f6}
@@ -1050,7 +1054,7 @@ document.getElementById('kpis').innerHTML = DATA.kpis.map(k=>{
 
 function scoreChips(v){
   const items=[['Bryan',v.bryan_score],['Snow',v.snowflake_score],['AI',v.ai_score],['Retail',v.retail_score],['IPO',v.ipo_score]];
-  return items.map(([l,x])=>`<span class="schip">${l} <b>${fmt(x)}</b></span>`).join('');
+  return items.map(([l,x],i)=>`<span class="schip${i===0?' lead':''}">${l} <b>${fmt(x)}</b></span>`).join('');
 }
 function card(v){
   return `<div class="card2" data-v="${esc(v.name)}" tabindex="0" role="button" aria-label="View company detail for ${esc(v.name)}" style="cursor:pointer" title="Click for full company detail"><div class="rk">${v.rank}</div>
