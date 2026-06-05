@@ -12309,12 +12309,19 @@ document.querySelectorAll('.tabgroup-btn').forEach(btn=>{
 document.addEventListener('click', e=>{ if(!e.target.closest('.tabgroup')) closeTabMenus(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTabMenus(); });
 syncTabGroups();
+// The Summit tab opens the standalone Snowflake Summit dashboard directly
+// (/summit/) instead of the in-dashboard gateway card. Everything else does
+// the normal in-page tab switch.
+function handleTabActivate(t){
+  if (t === 'summit') { window.location.href = 'summit/'; return; }
+  selectTab(t);
+}
 document.querySelectorAll('.tab').forEach(b => {
-  b.addEventListener('click', () => selectTab(b.dataset.tab));
+  b.addEventListener('click', () => handleTabActivate(b.dataset.tab));
   b.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      selectTab(b.dataset.tab);
+      handleTabActivate(b.dataset.tab);
     }
   });
 });
