@@ -1611,7 +1611,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </form>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
-    <a class="btn" href="summit/" title="Snowflake Summit 2026 partner scouting dashboard">❄ Summit</a>
     <a class="btn" href="health/apis.html" title="All data sources + live API status">◉ Data Sources</a>
   </div>
 </header>
@@ -1656,8 +1655,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="tab" data-tab="mufon" role="tab" tabindex="0" aria-selected="false">UAP</div>
     <div class="tab" data-tab="city" role="tab" tabindex="0" aria-selected="false">City</div>
     <div class="tab" data-tab="aviation" role="tab" tabindex="0" aria-selected="false">Aviation</div>
-    <div class="tab" data-tab="summit" role="tab" tabindex="0" aria-selected="false">Summit</div>
     </div>
+  </div>
+  <div class="tabgroup tabgroup--solo">
+    <div class="tab tab--solo" data-tab="summit" role="tab" tabindex="0" aria-selected="false">Summit</div>
   </div>
 </div>
 
