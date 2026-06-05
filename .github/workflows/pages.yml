@@ -467,6 +467,13 @@ jobs:
               mkdir -p _site/data/health
               cp data/health/status.json _site/data/health/status.json
             fi
+            # Publish the live-API-status snapshot too, so /health/apis.html has
+            # a real file to fall back on (no live server on the static mirror).
+            # Guarded by -f since the probe step is continue-on-error.
+            if [ -f data/health/api_status.json ]; then
+              mkdir -p _site/data/health
+              cp data/health/api_status.json _site/data/health/api_status.json
+            fi
           fi
           # Stage the Snowflake Summit partner-scouting dashboard under /summit/.
           # The page at snowflake_summit/dashboard.html is fully self-contained
