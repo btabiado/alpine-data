@@ -73,7 +73,7 @@ _SENTIMENT_LABELS: Tuple[str, ...] = (
 # Polite UA — federal sites in particular tend to 403 default urllib/requests UAs.
 _DEFAULT_HEADERS = {
     "User-Agent": (
-        "LTHCS-Dashboard/1.0 (+https://github.com/bryantabiadon/alpine-data) "
+        "LTHCS-Dashboard/1.0 (+https://github.com/btabiado/alpine-data) "
         "Python-requests"
     ),
     "Accept": "application/rss+xml, application/xml;q=0.9, */*;q=0.5",

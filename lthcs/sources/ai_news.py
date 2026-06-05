@@ -51,7 +51,7 @@ _RSS_CACHE_TTL = 60 * 60          # 1h — RSS feed payloads (shared across tick
 # Polite User-Agent so RSS hosts don't 403 us on default python-requests UA.
 _DEFAULT_HEADERS = {
     "User-Agent": (
-        "LTHCS-Dashboard/1.0 (+https://github.com/bryantabiadon/alpine-data) "
+        "LTHCS-Dashboard/1.0 (+https://github.com/btabiado/alpine-data) "
         "Python-requests"
     ),
     "Accept": "application/json, application/rss+xml, application/xml;q=0.9, */*;q=0.5",
