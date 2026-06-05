@@ -788,6 +788,11 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <h3 class="sec">🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span></h3>
   <div class="cards" id="bestfit"></div>
 
+  <div class="grid" style="margin-top:22px">
+    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
+    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
+  </div>
+
   <div class="topbar">
     <div class="searchwrap">
       <input id="search" placeholder="Search all vendors — name, category, niche…" autocomplete="off"/>
@@ -825,10 +830,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   </div>
 
   <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
-    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
-  </div>
-  <div class="grid">
     <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
     <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
   </div>
