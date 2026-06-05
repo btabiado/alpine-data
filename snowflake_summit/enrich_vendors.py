@@ -49,8 +49,14 @@ WD_TTL = 30 * 24 * 3600
 GDELT_MAX = 4            # articles kept per vendor
 NEWS_TIMESPAN = "60days"
 NEWS_MIN_TO_WRITE = 8    # don't overwrite curated news.json with a near-empty fetch
-MAX_WORKERS = 5
-HTTP_TIMEOUT = 15.0
+MAX_WORKERS = 6
+HTTP_TIMEOUT = 8.0
+# Hard wall-clock budget for the whole enrichment pass. Once exceeded, remaining
+# vendors short-circuit to cached data (no network) so the CI build never
+# stalls. The cache persists across runs, so a cold first pass that only gets
+# partway through is finished by the next run(s) — every vendor lands within a
+# few builds without any single build dragging.
+ENRICH_BUDGET = 240.0
 
 # Wikidata property ids we read.
 P_INCEPTION = "P571"
@@ -61,26 +67,17 @@ P_WEBSITE = "P856"
 
 
 # ---------------------------------------------------------------- http helpers
-def _get_json(url: str, timeout: float = HTTP_TIMEOUT, retries: int = 1):
-    """GET → parsed JSON, or None on any failure (with one polite backoff retry
-    on rate-limit / 5xx). Never raises."""
-    for attempt in range(retries + 1):
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
-            with urllib.request.urlopen(req, timeout=timeout) as r:
-                raw = r.read()
-            return json.loads(raw.decode("utf-8", "replace"))
-        except urllib.error.HTTPError as e:
-            if e.code in (429, 500, 502, 503, 504) and attempt < retries:
-                time.sleep(2 * (attempt + 1))
-                continue
-            return None
-        except Exception:
-            if attempt < retries:
-                time.sleep(1.0)
-                continue
-            return None
-    return None
+def _get_json(url: str, timeout: float = HTTP_TIMEOUT):
+    """GET → parsed JSON, or None on any failure. Fail-fast (no retry/backoff):
+    a rate-limited or slow upstream is left for the next run rather than blocking
+    the build with sleeps. Never raises."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": _UA, "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            raw = r.read()
+        return json.loads(raw.decode("utf-8", "replace"))
+    except Exception:
+        return None
 
 
 # ------------------------------------------------------------------- gdelt news
@@ -242,15 +239,18 @@ def _fresh(entry: dict, ttl: float, now: float) -> bool:
     return bool(entry) and (now - entry.get("ts", 0)) < ttl
 
 
-def enrich_one(vendor: dict, cache: dict, now: float) -> tuple[list[dict], dict]:
-    """Return (news_items, wd_facts) for one vendor, using cache where fresh."""
+def enrich_one(vendor: dict, cache: dict, now: float, deadline: float) -> tuple[list[dict], dict]:
+    """Return (news_items, wd_facts) for one vendor, using cache where fresh.
+    Past ``deadline`` we skip all network and just return cached data, so the
+    pool drains quickly instead of the build hanging on the long tail."""
     name = (vendor.get("name") or "").strip()
     if not name:
         return [], {}
     ent = cache.get(name) or {}
+    over_budget = time.time() > deadline
 
     news_entry = ent.get("news") or {}
-    if _fresh(news_entry, NEWS_TTL, now):
+    if _fresh(news_entry, NEWS_TTL, now) or over_budget:
         news = news_entry.get("items") or []
     else:
         news = gdelt_news(name)
@@ -260,7 +260,7 @@ def enrich_one(vendor: dict, cache: dict, now: float) -> tuple[list[dict], dict]
             news = news_entry.get("items") or []  # stale-keep
 
     wd_entry = ent.get("wd") or {}
-    if _fresh(wd_entry, WD_TTL, now):
+    if _fresh(wd_entry, WD_TTL, now) or over_budget:
         wd = wd_entry.get("facts") or {}
     else:
         wd = wikidata_facts(name)
@@ -282,13 +282,14 @@ def main() -> int:
 
     cache = _load_json(CACHE_PATH, {})
     now = time.time()
+    deadline = now + ENRICH_BUDGET
 
     all_news: list[dict] = []
     enrichment: dict[str, dict] = {}
     ok_news = ok_wd = 0
 
     with cf.ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
-        futs = {ex.submit(enrich_one, v, cache, now): v for v in vendors}
+        futs = {ex.submit(enrich_one, v, cache, now, deadline): v for v in vendors}
         for fut in cf.as_completed(futs):
             name = (futs[fut].get("name") or "").strip()
             try:
