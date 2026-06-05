@@ -101,10 +101,20 @@ def magic_quadrant(vendors):
         vi = avg([v.get("ai_score"), v.get("ipo_score")])
         v["mq_execute"] = ex
         v["mq_vision"] = vi
-        v["mq_x"] = max(0.0, min(10.0, round(vi + _jitter(v.get("name"), "x"), 3)))
-        v["mq_y"] = max(0.0, min(10.0, round(ex + _jitter(v.get("name"), "y"), 3)))
     tx = round(sum(v["mq_vision"] for v in vendors) / len(vendors), 2) if vendors else 5.0
     ty = round(sum(v["mq_execute"] for v in vendors) / len(vendors), 2) if vendors else 5.0
+
+    # Jitter the plot coords off the coarse score grid, but clamp each dot to stay
+    # on its TRUE quadrant side of the cross so a near-cross dot never crosses the
+    # line and looks misclassified relative to its tier colour / tooltip quadrant.
+    def _plot(true, cross, salt, name):
+        p = true + _jitter(name, salt)
+        p = max(cross + 0.03, p) if true >= cross else min(cross - 0.03, p)
+        return max(0.0, min(10.0, round(p, 3)))
+
+    for v in vendors:
+        v["mq_x"] = _plot(v["mq_vision"], tx, "x", v.get("name"))
+        v["mq_y"] = _plot(v["mq_execute"], ty, "y", v.get("name"))
     counts = {"Leaders": 0, "Challengers": 0, "Visionaries": 0, "Niche Players": 0}
     for v in vendors:
         hi_e = v["mq_execute"] >= ty
@@ -648,7 +658,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     #mqChart{max-height:none!important}
     /* Full-width "drill into niche" control + comfortable chips. */
     #mqSegSel{flex:1 1 100%;width:100%;min-height:40px;font-size:13px}
-    #mqQuadChips{gap:8px}
+    #mqQuadChips,#mqTierChips{gap:8px}
     #mqBack{min-height:40px}
   }
   /* ---------- P2 · table -> cards, bottom-sheet detail, sticky header ---------- */
@@ -716,7 +726,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     .navbtns>a[href="?view=mq"]:focus-visible,.navbtns>a[href="?view=map"]:focus-visible{
       outline:2px solid #cfe8ff;outline-offset:2px}
     /* >=44px tap targets across the mobile controls. */
-    .planfit,.bchip,#mqQuadChips button,#mqSegSel,#mqBack,
+    .planfit,.bchip,#mqQuadChips button,#mqTierChips button,#mqSegSel,#mqBack,
     .navbtns>a[href="?view=mq"],.navbtns>a[href="?view=map"]{min-height:44px}
     .kpi-sub-link{min-height:44px;padding:6px 2px}
     #search{min-height:44px}
@@ -778,16 +788,6 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <h3 class="sec">🤝 Bryan’s Recommendation <span class="hint">— top career / networking fit</span></h3>
   <div class="cards" id="bestfit"></div>
 
-  <div class="grid" style="margin-top:22px">
-    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
-    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
-  </div>
-  <div class="grid">
-    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
-    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
-  </div>
-  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
-
   <div class="topbar">
     <div class="searchwrap">
       <input id="search" placeholder="Search all vendors — name, category, niche…" autocomplete="off"/>
@@ -823,6 +823,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
     <div class="vcards" id="vcards"></div>
     <div id="vmore" class="no-print"></div>
   </div>
+
+  <div class="grid" style="margin-top:22px">
+    <div class="panel"><h4>Top <span class="barNum">15</span> by Overall Score</h4><canvas id="topChart" role="img" aria-label="Bar chart: the 15 highest-scoring partners by overall score (0–10)."></canvas></div>
+    <div class="panel"><h4>Priority Tier mix</h4><canvas id="tierChart" role="img" aria-label="Doughnut chart: partner counts by priority tier (A, B, C)."></canvas></div>
+  </div>
+  <div class="grid">
+    <div class="panel"><h4>Partners by Niche</h4><canvas id="nicheChart" role="img" aria-label="Bar chart: partner counts grouped by value niche."></canvas></div>
+    <div class="panel"><h4>Avg score profile — Tier A vs all</h4><canvas id="profChart" role="img" aria-label="Radar chart: average score profile across the five dimensions, Tier A versus all partners."></canvas></div>
+  </div>
+  <div class="panel" style="margin-bottom:16px"><h4>💰 Top <span class="barNum">15</span> by Valuation <span class="hint" style="font-weight:400;color:var(--muted)">— parsed from reported valuation / market cap; hover for detail</span></h4><canvas id="valChart" style="max-height:380px" role="img" aria-label="Bar chart: the 15 partners with the highest reported valuation or market cap."></canvas></div>
 
   <div class="note" id="note"></div>
   <button id="toTop" type="button" class="totop no-print" aria-label="Back to top" title="Back to top">↑</button>
@@ -882,13 +892,16 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
         <span id="mqCrumb" class="sub" style="align-self:center"></span>
       </div>
       <div id="mqLegend" class="sub" style="margin-bottom:8px"></div>
-      <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div class="sub" style="margin:2px 0 3px">Quadrant <span style="color:var(--muted)">— where a partner sits</span></div>
+      <div id="mqQuadChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
+      <div class="sub" style="margin:4px 0 3px">Tier <span style="color:var(--muted)">— Bryan's scouting priority (= dot colour)</span></div>
+      <div id="mqTierChips" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"></div>
       <div id="mqBox" style="height:560px;position:relative">
         <canvas id="mqChart" style="max-height:560px" role="img" aria-label="Magic Quadrant scatter plot: partners positioned by Ability to Execute (vertical) and Completeness of Vision (horizontal), split into Leaders, Challengers, Visionaries, and Niche Players."></canvas>
       </div>
       <div id="mqCaveat" class="sub" style="margin-top:12px;line-height:1.5;color:#cfe0ff"></div>
       <div class="sub" style="margin-top:10px;line-height:1.55">
-        <b style="color:var(--text)">How to read:</b> <b style="color:var(--text)">Ability to Execute</b> (vertical) = mean of Snowflake &amp; Retail/Customer scores · <b style="color:var(--text)">Completeness of Vision</b> (horizontal) = mean of AI &amp; IPO/Upside scores — both on the 0–10 scale. The cross sits at the cohort <i>average</i>: <b style="color:var(--A)">Leaders</b> (execute + vision), <b style="color:var(--accent)">Challengers</b> (execute), <b style="color:var(--gem)">Visionaries</b> (vision), <b style="color:#94a3b8">Niche Players</b> (neither). Tier-A must-sees are labelled; hover any dot for exact scores. <b style="color:var(--text)">Drill-down:</b> pick a niche to see its own quadrant, re-centred on that niche's cohort average. <b>This is Bryan's directional scouting, not an official Gartner Magic Quadrant</b> — small or template-scored niches (flagged) are exploratory only.
+        <b style="color:var(--text)">How to read:</b> <b style="color:var(--text)">Ability to Execute</b> (vertical) = mean of Snowflake &amp; Retail/Customer scores · <b style="color:var(--text)">Completeness of Vision</b> (horizontal) = mean of AI &amp; IPO/Upside scores — both on the 0–10 scale. <b style="color:var(--text)">A dot's colour is its scouting tier</b> (<b style="color:var(--A)">A</b> / <b style="color:#fbbf24">B</b> / <b style="color:#60a5fa">C</b>) — independent of which quadrant it lands in. The cross sits at the cohort <i>average</i>: <b style="color:var(--A)">Leaders</b> (execute + vision), <b style="color:var(--accent)">Challengers</b> (execute), <b style="color:var(--gem)">Visionaries</b> (vision), <b style="color:#94a3b8">Niche Players</b> (neither). Tier-A must-sees are labelled; hover any dot for exact scores. <b style="color:var(--text)">Drill-down:</b> pick a niche to see its own quadrant, re-centred on that niche's cohort average. <b>This is Bryan's directional scouting, not an official Gartner Magic Quadrant</b> — small or template-scored niches (flagged) are exploratory only.
       </div>
     </div>
   </div>
@@ -1315,10 +1328,16 @@ draw();
   const qDot={'Leaders':'#34d399','Challengers':'#29b5e8','Visionaries':'#a78bfa','Niche Players':'#64748b'};
   let visQ=new Set(['Leaders','Challengers','Visionaries','Niche Players']);
   const chipsEl=document.getElementById('mqQuadChips');
+  // Tier filter chips — a SECOND, independent row. Quadrant = where a partner
+  // sits; Tier = the dot's colour (Bryan's scouting priority). Data has no 'D'.
+  const TIERS=['A','B','C'];
+  let visT=new Set(['A','B','C']);
+  const tierChipsEl=document.getElementById('mqTierChips');
   function renderChips(cc){
-    chipsEl.innerHTML=QUADS.map(function(q){var on=visQ.has(q);return '<button type="button" data-q="'+q+'" title="Show/hide '+q+'" style="display:inline-flex;align-items:center;gap:6px;background:'+(on?'var(--panel2)':'transparent')+';border:1px solid '+(on?qDot[q]:'var(--border)')+';color:'+(on?'var(--text)':'var(--muted)')+';border-radius:14px;padding:4px 11px;font-size:12px;cursor:pointer;opacity:'+(on?'1':'.55')+'"><span style="width:9px;height:9px;border-radius:50%;background:'+qDot[q]+';display:inline-block"></span>'+q+' <b style="color:'+(on?'var(--text)':'var(--muted)')+'">'+(cc[q]||0)+'</b></button>';}).join('');
+    chipsEl.innerHTML=QUADS.map(function(q){var on=visQ.has(q);return '<button type="button" data-q="'+q+'" title="Show/hide the '+q+' quadrant (does not change dot colour/tier)" style="display:inline-flex;align-items:center;gap:6px;background:'+(on?'var(--panel2)':'transparent')+';border:1px solid '+(on?qDot[q]:'var(--border)')+';color:'+(on?'var(--text)':'var(--muted)')+';border-radius:14px;padding:4px 11px;font-size:12px;cursor:pointer;opacity:'+(on?'1':'.55')+'"><span style="width:11px;height:9px;border-radius:2px;background:'+qDot[q]+'33;border:1px solid '+qDot[q]+';display:inline-block"></span>'+q+' <b style="color:'+(on?'var(--text)':'var(--muted)')+'">'+(cc[q]||0)+'</b></button>';}).join('');
     chipsEl.querySelectorAll('button').forEach(function(b){b.onclick=function(){var q=this.dataset.q; if(visQ.has(q))visQ.delete(q); else visQ.add(q); render(active);};});
   }
+  function renderTierChips(tc){tierChipsEl.innerHTML=TIERS.map(function(t){var on=visT.has(t);var col=tierColor(t);return '<button type="button" data-t="'+t+'" title="Show/hide Tier '+t+' partners (their dot colour)" style="display:inline-flex;align-items:center;gap:6px;background:'+(on?'var(--panel2)':'transparent')+';border:1px solid '+(on?col:'var(--border)')+';color:'+(on?'var(--text)':'var(--muted)')+';border-radius:14px;padding:4px 11px;font-size:12px;cursor:pointer;opacity:'+(on?'1':'.55')+'"><span style="width:9px;height:9px;border-radius:50%;background:'+col+';display:inline-block"></span>Tier '+t+' <b style="color:'+(on?'var(--text)':'var(--muted)')+'">'+(tc[t]||0)+'</b></button>';}).join('');tierChipsEl.querySelectorAll('button').forEach(function(b){b.onclick=function(){var t=this.dataset.t;if(visT.has(t))visT.delete(t);else visT.add(t);render(active);};});}
   const mqPlugin={id:'mqQuad',
     beforeDraw(ch){
       const a=ch.chartArea, x=ch.scales.x, y=ch.scales.y; if(!a)return;
@@ -1344,8 +1363,8 @@ draw();
     afterDatasetsDraw(ch){
       const ctx=ch.ctx, x=ch.scales.x, y=ch.scales.y, a=ch.chartArea;
       ctx.save();ctx.font='600 '+(IS_MOBILE?9:10)+'px -apple-system,BlinkMacSystemFont,sans-serif';ctx.fillStyle='rgba(232,238,255,.92)';ctx.textBaseline='middle';
-      let lab=vendorsIn(active).filter(v=>v.tier==='A' && visQ.has(quadOf(v,active)));
-      if(!active.all && lab.length===0) lab=vendorsIn(active).filter(v=>visQ.has(quadOf(v,active))).sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).slice(0,3);
+      let lab=vendorsIn(active).filter(v=>v.tier==='A' && visT.has(v.tier) && visQ.has(quadOf(v,active)));
+      if(!active.all && lab.length===0) lab=vendorsIn(active).filter(v=>visT.has(v.tier) && visQ.has(quadOf(v,active))).sort((p,q)=>(q.overall_score||0)-(p.overall_score||0)).slice(0,3);
       if(IS_MOBILE){
         // Collision-avoid: draw highest-overall first and skip any label that would
         // overlap one already placed (right-edge labels flip left so they can't clip).
@@ -1368,7 +1387,7 @@ draw();
   function datasetsFor(s){
     const vs=vendorsIn(s);
     return ['A','B','C','D'].map(t=>({label:'Tier '+t,
-      data:vs.filter(v=>v.tier===t && visQ.has(quadOf(v,s))).map(v=>({x:v.mq_x,y:v.mq_y,name:v.name,tier:v.tier,ov:v.overall_score,cat:v.category,ex:v.mq_execute,vi:v.mq_vision,q:quadOf(v,s)})),
+      data:vs.filter(v=>v.tier===t && visT.has(v.tier) && visQ.has(quadOf(v,s))).map(v=>({x:v.mq_x,y:v.mq_y,name:v.name,tier:v.tier,ov:v.overall_score,cat:v.category,ex:v.mq_execute,vi:v.mq_vision,q:quadOf(v,s)})),
       backgroundColor:tierColor(t)+'cc',borderColor:tierColor(t),borderWidth:1,pointRadius:t==='A'?6:3.5,pointHoverRadius:8})).filter(d=>d.data.length);
   }
   var mqVals=[]; V.forEach(function(v){mqVals.push(v.mq_x,v.mq_y);});
@@ -1390,11 +1409,11 @@ draw();
   function render(s){
     active=s; mqCross={tx:s.tx,ty:s.ty};
     chart.data.datasets=datasetsFor(s); chart.update();
-    const vs=vendorsIn(s), cc={Leaders:0,Challengers:0,Visionaries:0,'Niche Players':0};
-    vs.forEach(v=>cc[quadOf(v,s)]++);
-    renderChips(cc);
+    const vs=vendorsIn(s); const cc={Leaders:0,Challengers:0,Visionaries:0,'Niche Players':0}, tc={A:0,B:0,C:0};
+    vs.forEach(function(v){var q=quadOf(v,s); if(visT.has(v.tier))cc[q]++; if(visQ.has(q))tc[v.tier]=(tc[v.tier]||0)+1;});
+    renderChips(cc); renderTierChips(tc);
     legend.innerHTML=(s.all?'All '+V.length+' partners':s.n+' partners in '+esc(s.label))+
-      ' · cross at '+(s.all?'fleet':'niche')+' avg — Vision <b style="color:var(--text)">'+s.tx+'</b> · Execute <b style="color:var(--text)">'+s.ty+'</b> &nbsp;·&nbsp; <span style="color:var(--muted)">click a quadrant chip to show/hide it</span>';
+      ' · cross at '+(s.all?'fleet':'niche')+' avg — Vision <b style="color:var(--text)">'+s.tx+'</b> · Execute <b style="color:var(--text)">'+s.ty+'</b> &nbsp;·&nbsp; <span style="color:var(--muted)"><b style="color:var(--text)">Position</b> = quadrant — where a partner sits. <b style="color:var(--text)">Dot colour</b> = scouting tier (<b style="color:'+tierColor('A')+'">A</b>/<b style="color:'+tierColor('B')+'">B</b>/<b style="color:'+tierColor('C')+'">C</b>). Toggle a <b>Tier</b> chip to hide a colour (e.g. hide Tier B to drop the yellow dots); toggle a <b>Quadrant</b> chip to hide a region. They are independent — many Leaders are Tier B.</span>';
     crumb.innerHTML = s.all?'' : '&nbsp; All Partners › <b style="color:var(--text)">'+esc(s.label)+'</b>';
     back.style.display = s.all?'none':'';
     caveat.innerHTML = s.all ? '' : (s.drillable
