@@ -83,7 +83,7 @@ TARGETS: list[dict] = [
     # ---- news / social / research ----
     {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": None},
     {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": "SANTIMENT_API_KEY"},
-    {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None},
+    {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact via github.com/btabiado/alpine-data)", "Accept": "application/json"}},
 ]
 
 
@@ -116,7 +116,13 @@ def _probe_one(target: dict, timeout: float) -> dict:
     status: int | None = None
     note = ""
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": _UA}, method="GET")
+        # Default UA for all probes; a target may override/extend via "headers"
+        # (e.g. SEC EDGAR requires a polite contact UA + Accept:application/json
+        # per SEC fair-access rules, mirroring fetch_market.py's SEC_HEADERS —
+        # without it EDGAR returns 403/500).
+        headers = {"User-Agent": _UA}
+        headers.update(target.get("headers") or {})
+        req = urllib.request.Request(url, headers=headers, method="GET")
         with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
             status = r.status
             # Drain a little so keep-alive sockets close cleanly; ignore body.
