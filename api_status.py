@@ -84,9 +84,12 @@ TARGETS: list[dict] = [
     {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
     {"label": "SoSoValue",            "category": "ETF Flows",     "url": "https://api.sosovalue.com/openapi/v2/etf/historicalInflowChart",                                 "key_env": "SOSOVALUE_API_KEY"},
     # ---- news / social / research ----
-    {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
+    # Reddit hard-blocks datacenter IPs on the keyless public API; the dashboard
+    # reaches it via OAuth (REDDIT_CLIENT_ID/SECRET), so a 403 here means
+    # "needs credentials from this host", i.e. auth_required rather than down.
+    {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": "REDDIT_CLIENT_ID", "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": "SANTIMENT_API_KEY"},
-    {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact via github.com/btabiado/alpine-data)", "Accept": "application/json"}},
+    {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact@bdt-dashboards.local)", "Accept": "application/json"}},
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----
     {"label": "Summit dashboard",     "category": "Summit",        "url": "https://btabiado.github.io/alpine-data/summit/",                                                 "key_env": None},
