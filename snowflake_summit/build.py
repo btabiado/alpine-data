@@ -66,12 +66,14 @@ def kpis(vendors):
     b = sum(1 for v in vendors if v.get("tier") == "B")
     pub = sum(1 for v in vendors if is_public(v))
     cats = {v.get("category") for v in vendors}
+    bryan_elite = sum(1 for v in vendors if isinstance(v.get("bryan_score"), (int, float)) and v["bryan_score"] >= 9)
+    ai_strong = sum(1 for v in vendors if isinstance(v.get("ai_score"), (int, float)) and v["ai_score"] >= 9)
     return [
         {"label": "Partner Vendors", "value": n, "sub": f"{len(cats)} categories", "filter": "all"},
         {"label": "Must-See (Tier A)", "value": a, "sub": "top priority", "filter": "tierA"},
         {"label": "Priority (Tier A+B)", "value": a + b, "sub": f"{round(100*(a+b)/n) if n else 0}% of floor", "filter": "tierAB"},
-        {"label": "Avg Overall Score", "value": avg([v.get("overall_score") for v in vendors]), "sub": "out of 10"},
-        {"label": "Avg AI Score", "value": avg([v.get("ai_score") for v in vendors]), "sub": "the Summit's hot theme"},
+        {"label": "Bryan's A-list", "value": bryan_elite, "sub": "Bryan-fit 9+", "filter": "bryanElite"},
+        {"label": "AI Heavyweights", "value": ai_strong, "sub": "AI score 9+", "filter": "aiStrong"},
         {"label": "Public Companies", "value": pub, "sub": f"{n-pub} private/other", "filter": "public", "subFilter": "private"},
     ]
 
@@ -1632,8 +1634,10 @@ draw();
       : fk==='tierAB'?V.filter(function(v){return v.tier==='A'||v.tier==='B';})
       : fk==='public'?V.filter(function(v){return /public/i.test(v.company_type||'');})
       : fk==='private'?V.filter(function(v){return !/public/i.test(v.company_type||'');})
+      : fk==='bryanElite'?V.filter(function(v){return (v.bryan_score||0)>=9;})
+      : fk==='aiStrong'?V.filter(function(v){return (v.ai_score||0)>=9;})
       : V.slice();
-    var titles={all:'All Partner Vendors',tierA:'Must-See — Tier A',tierAB:'Priority — Tier A + B',public:'Public Companies',private:'Private / Other'};
+    var titles={all:'All Partner Vendors',tierA:'Must-See — Tier A',tierAB:'Priority — Tier A + B',public:'Public Companies',private:'Private / Other',bryanElite:"Bryan's A-list — Bryan-fit 9+",aiStrong:'AI Heavyweights — AI score 9+'};
     list.sort(function(a,b){return (a.rank||1e9)-(b.rank||1e9);});
     var rows=list.map(function(v){
       // Rows are clickable (data-v) so a tap opens the full detail sheet — that's
