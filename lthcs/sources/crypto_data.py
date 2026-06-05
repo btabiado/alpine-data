@@ -283,7 +283,7 @@ def _http_get(url: str, *, timeout: float = _HTTP_TIMEOUT) -> Optional[bytes]:
     req = Request(
         url,
         headers={
-            "User-Agent": "lthcs-crypto/1.0 (+https://github.com/btc-eth-etf-dashboard)",
+            "User-Agent": "lthcs-crypto/1.0 (+https://github.com/alpine-data)",
             "Accept": "application/json",
         },
     )

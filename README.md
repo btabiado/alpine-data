@@ -1,6 +1,6 @@
-# Crypto Trading Dashboard
+# BDT Dashboards
 
-[![tests](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/btc-eth-etf-dashboard/actions/workflows/tests.yml)
+[![tests](https://github.com/btabiado/alpine-data/actions/workflows/tests.yml/badge.svg)](https://github.com/btabiado/alpine-data/actions/workflows/tests.yml)
 
 Local, live web dashboard for actively monitoring BTC, ETH, LINK, and the broader crypto market. Ten tabs (left → right):
 
@@ -53,7 +53,7 @@ For a stable public share-link host (your own subdomain over a named Cloudflare 
 ## Quickstart
 
 ```bash
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 python3 -m venv .venv
 .venv/bin/pip install pandas requests lxml beautifulsoup4 flask
 .venv/bin/python server.py
@@ -310,8 +310,8 @@ cat > ~/Library/LaunchAgents/com.user.etfdash.plist <<'PLIST'
 <key>Label</key><string>com.user.etfdash</string>
 <key>ProgramArguments</key>
   <array>
-    <string>/Users/bryantabiadon/btc-eth-etf-dashboard/.venv/bin/python</string>
-    <string>/Users/bryantabiadon/btc-eth-etf-dashboard/server.py</string>
+    <string>/Users/bryantabiadon/alpine-data/.venv/bin/python</string>
+    <string>/Users/bryantabiadon/alpine-data/server.py</string>
   </array>
 <key>RunAtLoad</key><true/>
 <key>KeepAlive</key><true/>

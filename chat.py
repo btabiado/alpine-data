@@ -149,7 +149,7 @@ def _client():
             "console.anthropic.com -> API Keys, then run "
             "`export ANTHROPIC_API_KEY=sk-ant-...` before starting the server. "
             "Restart with: lsof -ti:8765 | xargs kill && "
-            "cd ~/btc-eth-etf-dashboard && HOST=0.0.0.0 .venv/bin/python server.py"
+            "cd ~/alpine-data && HOST=0.0.0.0 .venv/bin/python server.py"
         )
     import anthropic
     return anthropic.Anthropic(api_key=api_key)

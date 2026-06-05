@@ -21,12 +21,12 @@ File-by-file inventory (paths absolute):
 
 | Path | LOC | Role |
 |---|---|---|
-| `/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/lthcs_mcp/__init__.py` | 39 | Re-exports the 10 data-layer functions and `DEFAULT_DATA_ROOT`. `__version__ = "0.1.0"`. |
-| `/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/lthcs_mcp/data.py` | 598 | Pure-Python data-access layer. JSON readers for `data/lthcs/{snapshots,index,insider,holdings,variable_detail,history/by_ticker,macro,universe.json}`. Defensive `_err()` envelopes, future-date rejection, latest-snapshot resolution, fuzzy ticker search with prefix/contains rank. |
-| `/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/lthcs_mcp/server.py` | 341 | FastMCP wrapper. Pydantic input models with `extra="forbid"`, ten `@mcp.tool` definitions, `argparse` entry point supporting `--http --port 8000` (streamable HTTP) and default stdio. Import-guard message if `mcp` SDK missing. |
-| `/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/lthcs_mcp/README.md` | 142 | Install, launch (stdio + HTTP), Claude Desktop / Claude Code JSON config, full tool table with example invocations and return shapes. |
+| `/Users/bryantabiadon/Documents/alpine-data/lthcs_mcp/__init__.py` | 39 | Re-exports the 10 data-layer functions and `DEFAULT_DATA_ROOT`. `__version__ = "0.1.0"`. |
+| `/Users/bryantabiadon/Documents/alpine-data/lthcs_mcp/data.py` | 598 | Pure-Python data-access layer. JSON readers for `data/lthcs/{snapshots,index,insider,holdings,variable_detail,history/by_ticker,macro,universe.json}`. Defensive `_err()` envelopes, future-date rejection, latest-snapshot resolution, fuzzy ticker search with prefix/contains rank. |
+| `/Users/bryantabiadon/Documents/alpine-data/lthcs_mcp/server.py` | 341 | FastMCP wrapper. Pydantic input models with `extra="forbid"`, ten `@mcp.tool` definitions, `argparse` entry point supporting `--http --port 8000` (streamable HTTP) and default stdio. Import-guard message if `mcp` SDK missing. |
+| `/Users/bryantabiadon/Documents/alpine-data/lthcs_mcp/README.md` | 142 | Install, launch (stdio + HTTP), Claude Desktop / Claude Code JSON config, full tool table with example invocations and return shapes. |
 
-**Tests** (read-only): `/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/tests/lthcs/test_mcp_server.py` — 521 lines, **31 passing** as of survey, with a `fake_root` fixture that builds a synthetic `data/lthcs/` tree under `tmp_path` plus two `skipif`-guarded smoke tests against real repo data (2026-05-17 snapshot).
+**Tests** (read-only): `/Users/bryantabiadon/Documents/alpine-data/tests/lthcs/test_mcp_server.py` — 521 lines, **31 passing** as of survey, with a `fake_root` fixture that builds a synthetic `data/lthcs/` tree under `tmp_path` plus two `skipif`-guarded smoke tests against real repo data (2026-05-17 snapshot).
 
 **Dependencies**:
 - `requirements.txt` line 12: `pydantic>=2.5` ✓ (used by `server.py` Pydantic v2 `ConfigDict`).

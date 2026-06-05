@@ -34,7 +34,7 @@ This tool does **not** modify any state. It is strictly read-only.
 From repo root:
 
 ```bash
-cd ~/Documents/btc-eth-etf-dashboard
+cd ~/Documents/alpine-data
 source .venv/bin/activate
 python scripts/lthcs_diagnose.py AAPL INTC NVDA
 ```

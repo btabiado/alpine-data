@@ -130,8 +130,8 @@ from pathlib import Path
 from typing import Any
 
 
-UA = ("Mozilla/5.0 (compatible; btc-eth-etf-dashboard/1.0 "
-      "+https://btabiado.github.io/btc-eth-etf-dashboard/)")
+UA = ("Mozilla/5.0 (compatible; alpine-data/1.0 "
+      "+https://btabiado.github.io/alpine-data/)")
 ROOT = Path(__file__).parent
 DEFAULT_OUT = ROOT / "v2" / "data-mufon.json"
 

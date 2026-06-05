@@ -1,7 +1,7 @@
 # Handoff — Real Estate tab work (2026-05-23)
 
 Context for a fresh Claude Code session picking up the Real Estate dashboard work.
-Repo: `btabiado/btc-eth-etf-dashboard`. Live site: `https://btabiado.github.io/btc-eth-etf-dashboard/`.
+Repo: `btabiado/alpine-data`. Live site: `https://btabiado.github.io/alpine-data/`.
 
 ## What shipped today (both MERGED to `main`, deployed live)
 
@@ -95,4 +95,4 @@ Repo: `btabiado/btc-eth-etf-dashboard`. Live site: `https://btabiado.github.io/b
   `btabiado.github.io` — you can't run the live fetcher or load the site from the
   sandbox. CI/GitHub Actions has full network access; rely on it for data refresh.
 - GitHub access is via `mcp__github__*` MCP tools only (no `gh` CLI). Repo scope is
-  restricted to `btabiado/btc-eth-etf-dashboard`.
+  restricted to `btabiado/alpine-data`.

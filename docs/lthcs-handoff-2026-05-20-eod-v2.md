@@ -8,15 +8,15 @@ Paste this whole document into the next Claude Code session.
 
 - **LTHCS** (Long-Term Hold Confidence Score) — daily scoring across 169
   US-equity tickers + 10-coin crypto universe.
-- **Repo on GitHub**: `btabiado/btc-eth-etf-dashboard` (deployed to GitHub
+- **Repo on GitHub**: `btabiado/alpine-data` (deployed to GitHub
   Pages on every push to `main`).
 - **Two local clones** on disk — pick one as canonical, treat the other
   as scratch:
 
   | Path | HEAD | Notes |
   | --- | --- | --- |
-  | `~/btc-eth-etf-dashboard/` | current `main` | **TCC-clean** (outside `~/Documents/`). The launchd-managed Flask server reads from here. Recommended canonical. |
-  | `~/Documents/btc-eth-etf-dashboard/` | current `main` | Where today's 32 commits originated. Has an active scaletest run going (see "open work"). |
+  | `~/alpine-data/` | current `main` | **TCC-clean** (outside `~/Documents/`). The launchd-managed Flask server reads from here. Recommended canonical. |
+  | `~/Documents/alpine-data/` | current `main` | Where today's 32 commits originated. Has an active scaletest run going (see "open work"). |
 
 ---
 
@@ -141,7 +141,7 @@ Plus 5 mockup routes (revamp-A / revamp-B / revamp-C / qa-audit-desktop
   tail -f ~/.config/lthcs/server.log                                    # tail logs
   ```
 
-- **Reads from**: `~/btc-eth-etf-dashboard/` (NOT `~/Documents/...`).
+- **Reads from**: `~/alpine-data/` (NOT `~/Documents/...`).
   This was the fix for the launchd TCC block — files inside `~/Documents/`
   are denied to launchd-spawned processes by default.
 
@@ -168,7 +168,7 @@ Plus 5 mockup routes (revamp-A / revamp-B / revamp-C / qa-audit-desktop
 
 ### 🟡 Universe expansion (Wave A, +50 tickers) — IN FLIGHT
 
-- **Scaletest #2 running right now** in `~/Documents/btc-eth-etf-dashboard/`
+- **Scaletest #2 running right now** in `~/Documents/alpine-data/`
   with `--skip-thesis` (the fix — mirrors production cron, sidesteps
   the Finnhub /news-sentiment 403 retry storm that caused the first
   scaletest to NO-GO).
@@ -178,7 +178,7 @@ Plus 5 mockup routes (revamp-A / revamp-B / revamp-C / qa-audit-desktop
   ```bash
   ps aux | grep lthcs_universe_scaletest | grep -v grep    # still running?
   tail -10 /tmp/scaletest2.log                              # progress
-  cat ~/Documents/btc-eth-etf-dashboard/data/lthcs/scaletest/2026-05-20_scaletest_report.md
+  cat ~/Documents/alpine-data/data/lthcs/scaletest/2026-05-20_scaletest_report.md
   ```
 - **If verdict = GO**: run `scripts/lthcs_universe_expand.py` to ship
   Wave A (~+50 tickers, bringing universe to ~219). Commit to
@@ -206,7 +206,7 @@ Plus 5 mockup routes (revamp-A / revamp-B / revamp-C / qa-audit-desktop
 
 ### 🟢 Stash to drop in canonical clone
 
-- `~/btc-eth-etf-dashboard/` has `stash@{0}: stale-edits-before-2026-05-20-sync`
+- `~/alpine-data/` has `stash@{0}: stale-edits-before-2026-05-20-sync`
   from earlier sync. 3 files: `lthcs_tab/index.html`,
   `lthcs_tab/lthcs-index.js`, `lthcs_tab/lthcs.css`. Likely pre-empted
   by today's main-branch work. Recoverable with `git stash show -p`.
@@ -248,7 +248,7 @@ Plus 5 mockup routes (revamp-A / revamp-B / revamp-C / qa-audit-desktop
 
 ```bash
 # 1. Land in the TCC-free clone
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 git log --oneline -5
 git status --short
 
@@ -258,10 +258,10 @@ curl -s -o /dev/null -w "HTTP %{http_code}\n" http://127.0.0.1:8765/   # → 401
 
 # 3. Check scaletest #2 result
 ps aux | grep lthcs_universe_scaletest | grep -v grep                  # → empty = done
-cat ~/Documents/btc-eth-etf-dashboard/data/lthcs/scaletest/2026-05-20_scaletest_report.md
+cat ~/Documents/alpine-data/data/lthcs/scaletest/2026-05-20_scaletest_report.md
 
 # 4. If GO and you want to ship Wave A:
-cd ~/Documents/btc-eth-etf-dashboard
+cd ~/Documents/alpine-data
 .venv/bin/python scripts/lthcs_universe_expand.py --wave A
 # (review the universe.json diff, then commit + push)
 ```

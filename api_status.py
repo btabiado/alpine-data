@@ -39,7 +39,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent
 OUT_PATH = REPO_ROOT / "data" / "health" / "api_status.json"
 
-_UA = "Mozilla/5.0 (btc-eth-etf-dashboard api-status probe)"
+_UA = "Mozilla/5.0 (alpine-data api-status probe)"
 _SSL_CTX = ssl.create_default_context()
 DEFAULT_TIMEOUT = 8.0
 

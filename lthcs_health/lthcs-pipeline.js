@@ -37,7 +37,7 @@
    ========================================================================= */
 
 const DATA_ROOT = '../data/lthcs';
-const REPO_BASE = 'https://github.com/btabiado/btc-eth-etf-dashboard';
+const REPO_BASE = 'https://github.com/btabiado/alpine-data';
 const WORKFLOWS_BASE = `${REPO_BASE}/actions/workflows`;
 const WORKFLOWS_BLOB = `${REPO_BASE}/blob/main/.github/workflows`;
 

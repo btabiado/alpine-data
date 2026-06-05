@@ -190,8 +190,8 @@ function buildModal() {
         <h3>Methodology source</h3>
         <p>
           Implementation specifications live in the repo:
-          <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/PHASE_1_BUILD_SPEC.md" target="_blank" rel="noopener">PHASE_1_BUILD_SPEC.md</a>
-          and <a href="https://github.com/btabiado/btc-eth-etf-dashboard/blob/main/README_LTHCS.md" target="_blank" rel="noopener">README_LTHCS.md</a>.
+          <a href="https://github.com/btabiado/alpine-data/blob/main/PHASE_1_BUILD_SPEC.md" target="_blank" rel="noopener">PHASE_1_BUILD_SPEC.md</a>
+          and <a href="https://github.com/btabiado/alpine-data/blob/main/README_LTHCS.md" target="_blank" rel="noopener">README_LTHCS.md</a>.
         </p>
 
         <p class="lthcs-about-disclaimer">

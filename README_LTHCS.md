@@ -1,8 +1,8 @@
 # LTHCS Phase 1 / V1 — README
 
-**Long-Term Hold Confidence Score** — a sibling page on the `btc-eth-etf-dashboard` GitHub Pages site, with a daily Python pipeline that computes scores for 74 active US-listed tickers and persists them as JSON files in the repo.
+**Long-Term Hold Confidence Score** — a sibling page on the `alpine-data` GitHub Pages site, with a daily Python pipeline that computes scores for 74 active US-listed tickers and persists them as JSON files in the repo.
 
-🌐 **Live URL:** https://btabiado.github.io/btc-eth-etf-dashboard/lthcs/
+🌐 **Live URL:** https://btabiado.github.io/alpine-data/lthcs/
 
 This README is for Bryan to set the project up the first time and run it daily after that. The full build specification for Claude Code is in [`PHASE_1_BUILD_SPEC.md`](PHASE_1_BUILD_SPEC.md). The project conventions Claude Code reads on every session are in [`SKILL.md`](SKILL.md).
 
@@ -90,8 +90,8 @@ CI now sets `LTHCS_LLM_SENTIMENT_ENABLED=1` + `LTHCS_LLM_NARRATIVES_ENABLED=1` i
 
 ```bash
 cd ~/Documents          # or wherever you keep code
-git clone https://github.com/btabiado/btc-eth-etf-dashboard.git
-cd btc-eth-etf-dashboard
+git clone https://github.com/btabiado/alpine-data.git
+cd alpine-data
 ```
 
 ### 2. Get free API keys (10 minutes total)
@@ -167,14 +167,14 @@ git commit -m "lthcs: initial 3-ticker snapshot"
 git push
 ```
 
-Within ~1 minute, the new tab will be live at `https://btabiado.github.io/btc-eth-etf-dashboard/`.
+Within ~1 minute, the new tab will be live at `https://btabiado.github.io/alpine-data/`.
 
 ---
 
 ## Daily workflow (after V1 is live)
 
 ```bash
-cd ~/Documents/btc-eth-etf-dashboard
+cd ~/Documents/alpine-data
 source .venv/bin/activate
 python lthcs_daily.py                       # Full run, all 75 tickers, ~45-60 sec
 git add data/lthcs/
@@ -223,7 +223,7 @@ The hourly news-only path keeps Thesis sub-scores and the composite band fresh o
 ## What goes where on your laptop
 
 ```
-~/Documents/btc-eth-etf-dashboard/        ← The repo (everything lives here)
+~/Documents/alpine-data/        ← The repo (everything lives here)
 ├── .env                                   ← Your API keys (gitignored)
 ├── .cache/lthcs/                          ← Raw API responses (gitignored)
 └── data/lthcs/                            ← The LTHCS data (COMMITTED to git)

@@ -46,7 +46,7 @@ CACHE_DIR = DATA_DIR / ".cache" / "real_estate"
 # We cache the unpacked TSV (not the .zip) so re-runs skip the unzip step.
 CACHE_PATH = CACHE_DIR / "census_cbsa_gazetteer.txt"
 
-USER_AGENT = "btc-eth-etf-dashboard/metro-coords-fetcher (+https://github.com/)"
+USER_AGENT = "alpine-data/metro-coords-fetcher (+https://github.com/)"
 HTTP_TIMEOUT = 120
 
 # Census publishes the CBSA gazetteer as a .zip wrapping a single .txt.

@@ -650,7 +650,7 @@ def bookmarklet_page() -> Response:
 
 <div class="step">
   <strong>2.</strong> Make sure the dashboard server is running:
-  <code>cd ~/btc-eth-etf-dashboard &amp;&amp; .venv/bin/python server.py</code>
+  <code>cd ~/alpine-data &amp;&amp; .venv/bin/python server.py</code>
 </div>
 
 <div class="step">

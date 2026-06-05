@@ -3,7 +3,7 @@
 **Date:** 2026-05-20
 **Scope:** Audit-only; no code changes.
 **Trigger:** P0 security pass follow-on (after `e679ad4` + `f57b20e`: pin tightening, SECURITY.md, manifest audit, dependabot).
-**Repo:** `btc-eth-etf-dashboard` (public).
+**Repo:** `alpine-data` (public).
 
 ---
 

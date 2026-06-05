@@ -14,7 +14,7 @@ picking up the project cold and to anchor quarterly security reviews.
 
 LTHCS (Long-Term Holder Conviction Score) is a single-user, public, read-only
 market dashboard tab served from GitHub Pages at
-`https://btabiado.github.io/btc-eth-etf-dashboard/lthcs/`. A daily GitHub
+`https://btabiado.github.io/alpine-data/lthcs/`. A daily GitHub
 Actions pipeline pulls public market and macro data (Yahoo Finance, Finnhub,
 SEC EDGAR, FRED, and similar) on a schedule, scores it against an in-tree
 model, writes JSON snapshots and a static HTML/JS frontend, and pushes the

@@ -34,7 +34,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:8765/healthz
 ### 2. Start the server (only if step 1 said dead)
 
 ```bash
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 source ~/.zprofile
 HOST=0.0.0.0 .venv/bin/python server.py
 ```

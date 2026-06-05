@@ -876,7 +876,7 @@ HTML_TEMPLATE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Crypto Trading Dashboard</title>
+<title>BDT Dashboards</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 <style>
@@ -1578,7 +1578,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 <body>
 <header>
   <div>
-    <h1>Crypto Trading Dashboard</h1>
+    <h1>BDT Dashboards</h1>
     <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span></div>
   </div>
   <div class="controls" style="border:0;padding:0">
@@ -2428,7 +2428,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- Discoverability gateway for the standalone LTHCS dashboard. Renders
        the same composite-index summary the Stocks tab carries plus an
        Insights row + corner CTA to the full LTHCS dashboard. The full
-       dashboard lives at /btc-eth-etf-dashboard/lthcs/ (staged by
+       dashboard lives at /alpine-data/lthcs/ (staged by
        .github/workflows/pages.yml from the committed lthcs_tab/ dir).
        Layout (refined from b18e180):
          Row 1: Insights row + corner "Open full LTHCS →" button

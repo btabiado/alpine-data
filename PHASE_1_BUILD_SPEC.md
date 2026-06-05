@@ -1,6 +1,6 @@
 # LTHCS Phase 1 / V1 — Build Specification
 
-**Project:** Long-Term Hold Confidence Score, integrated as a new tab on the existing `btc-eth-etf-dashboard` GitHub Pages site.
+**Project:** Long-Term Hold Confidence Score, integrated as a new tab on the existing `alpine-data` GitHub Pages site.
 **Build target:** End-to-end working V1 in 8–10 weeks of part-time effort, executed by Claude Code on Bryan's laptop.
 **Status:** Greenfield. No prior LTHCS code exists in the repo.
 
@@ -81,7 +81,7 @@ Note: LCID is added deliberately as a Pre-Profit Growth test case (see §5.5 of 
 - `narratives/YYYY-MM-DD.json` — templated narratives per ticker
 - `history/by_ticker/<TICKER>.json` — rolling 365-day history, rebuilt daily from snapshots
 
-These are committed to git and served as static assets at `btabiado.github.io/btc-eth-etf-dashboard/data/lthcs/...`.
+These are committed to git and served as static assets at `btabiado.github.io/alpine-data/data/lthcs/...`.
 
 **Layer 2 — Browser localStorage** (per user):
 - `lthcs.starred` — array of ticker symbols the user starred
@@ -559,7 +559,7 @@ Each milestone produces a working, testable artifact. Don't skip ahead.
 - "About LTHCS" info modal added (links to white paper, explains methodology)
 - Disclaimer footer ("Not investment advice")
 - Final visual polish; test on mobile / Safari / Firefox
-- First production commit + push; verify the tab works on `btabiado.github.io/btc-eth-etf-dashboard`
+- First production commit + push; verify the tab works on `btabiado.github.io/alpine-data`
 
 **Done when:** The tab is live, works on the public URL, and a fresh git clone + `python lthcs_daily.py` produces today's snapshot end-to-end.
 
@@ -570,7 +570,7 @@ Each milestone produces a working, testable artifact. Don't skip ahead.
 Once V1 is live, the daily workflow is:
 
 ```bash
-cd ~/Documents/btc-eth-etf-dashboard         # or wherever the repo lives
+cd ~/Documents/alpine-data         # or wherever the repo lives
 python lthcs_daily.py                         # ~45-60 seconds
 git add data/lthcs/                           # stage new snapshot files
 git commit -m "lthcs: daily snapshot 2026-05-16"
@@ -585,7 +585,7 @@ If Bryan wants this automated, Week 11 (out of scope for V1) can add a `launchd`
 
 ## 13. What success looks like at the end of Phase 1
 
-1. **`btabiado.github.io/btc-eth-etf-dashboard` has a new "LTHCS" tab** that loads instantly and shows 75 scored tickers.
+1. **`btabiado.github.io/alpine-data` has a new "LTHCS" tab** that loads instantly and shows 75 scored tickers.
 2. **`data/lthcs/snapshots/` has 60+ daily files**, one per business day since launch.
 3. **Click any ticker → modal with pillar breakdown, history, narrative, variables** — matches Figure 8.
 4. **Three teaching cases work correctly**: AAPL in High Confidence, LCID in Monitor/Weakening with Pre-Profit weighting flagged, INTC in Review with Recovery weighting + thesis-break flags.

@@ -57,9 +57,9 @@ Add this entry to `~/.claude/mcp.json` (Claude Code) or
 {
   "mcpServers": {
     "lthcs": {
-      "command": "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.venv/bin/python",
+      "command": "/Users/bryantabiadon/Documents/alpine-data/.venv/bin/python",
       "args": ["-m", "lthcs_mcp.server"],
-      "cwd": "/Users/bryantabiadon/Documents/btc-eth-etf-dashboard"
+      "cwd": "/Users/bryantabiadon/Documents/alpine-data"
     }
   }
 }

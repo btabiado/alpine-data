@@ -33,7 +33,7 @@ API = "https://opensky-network.org/api/states/all"
 TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
 OUT = os.path.join(os.path.dirname(__file__), "data-opensky.json")
 OUT_POS = os.path.join(os.path.dirname(__file__), "data-opensky-positions.json")
-UA = "btc-eth-etf-dashboard/aviation-tab (non-commercial)"
+UA = "alpine-data/aviation-tab (non-commercial)"
 MAX_POINTS = 2000
 STR_CAP = 24  # max chars for any external string in positions output
 

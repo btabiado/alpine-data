@@ -38,7 +38,7 @@ DATA_DIR = REPO_ROOT / "data"
 OUT_PATH = DATA_DIR / "real_estate.json"
 CACHE_DIR = DATA_DIR / ".cache" / "real_estate"
 
-USER_AGENT = "btc-eth-etf-dashboard/real-estate-fetcher (+https://github.com/)"
+USER_AGENT = "alpine-data/real-estate-fetcher (+https://github.com/)"
 HTTP_TIMEOUT = 60
 
 ZILLOW_BASE = "https://files.zillowstatic.com/research/public_csvs/"

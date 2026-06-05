@@ -1681,7 +1681,7 @@ def reddit_crypto_stats() -> dict:
         ("litecoin",       "LTC"),
         ("defi",           "DeFi"),
     ]
-    ua = ("btc-eth-etf-dashboard/1.0 (+https://github.com/btabiado/btc-eth-etf-dashboard) "
+    ua = ("alpine-data/1.0 (+https://github.com/btabiado/alpine-data) "
           "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 "
           "(KHTML, like Gecko) Version/18.0 Safari/605.1.15")
     token = _reddit_oauth_token(ua)

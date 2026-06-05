@@ -1,13 +1,13 @@
 ---
 name: lthcs-phase1
-description: Use when working on the LTHCS (Long-Term Hold Confidence Score) Phase 1 build for the btc-eth-etf-dashboard. Covers daily score calculation in Python, JSON snapshot persistence, and the client-side LTHCS tab integration. Trigger whenever the user references LTHCS, the conviction score, the daily pipeline, the new tab on the dashboard, or any file under data/lthcs/ or scripts named lthcs_*.
+description: Use when working on the LTHCS (Long-Term Hold Confidence Score) Phase 1 build for the alpine-data. Covers daily score calculation in Python, JSON snapshot persistence, and the client-side LTHCS tab integration. Trigger whenever the user references LTHCS, the conviction score, the daily pipeline, the new tab on the dashboard, or any file under data/lthcs/ or scripts named lthcs_*.
 ---
 
 # LTHCS Phase 1 — Project conventions for Claude Code
 
 ## What this project is
 
-A new LTHCS (Long-Term Hold Confidence Score) tab for an existing static GitHub Pages dashboard at `btabiado.github.io/btc-eth-etf-dashboard`. Two parts:
+A new LTHCS (Long-Term Hold Confidence Score) tab for an existing static GitHub Pages dashboard at `btabiado.github.io/alpine-data`. Two parts:
 
 1. **Python daily fetcher/calculator** that runs on the user's laptop, pulls free-tier financial data, computes V1 scores per the LTHCS framework, and writes JSON snapshots to `data/lthcs/`.
 2. **Client-side LTHCS tab** (HTML + vanilla JS + CSS) added to the existing dashboard. Reads the JSON snapshots as static assets, renders score cards, search, filters, and detail modals.
@@ -17,7 +17,7 @@ Both parts are **standalone** — they do not touch the existing crypto/ETF/whal
 ## Repo layout (assume working in repo root)
 
 ```
-btc-eth-etf-dashboard/
+alpine-data/
 ├── index.html                          ← existing dashboard; ADD new tab here
 ├── app.py                              ← existing fetcher; DO NOT modify
 ├── lthcs_daily.py                      ← NEW: daily calculator

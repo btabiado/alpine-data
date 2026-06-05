@@ -578,7 +578,7 @@ HTML_TEMPLATE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Crypto Trading Dashboard</title>
+<title>BDT Dashboards</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 <style>
@@ -1435,7 +1435,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 <header>
   <div>
-    <h1>Crypto Trading Dashboard <span class="v2-chip v2-chip--ai" style="margin-left:8px;vertical-align:middle">V2</span></h1>
+    <h1>BDT Dashboards <span class="v2-chip v2-chip--ai" style="margin-left:8px;vertical-align:middle">V2</span></h1>
     <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span></div>
   </div>
   <div class="controls" style="border:0;padding:0">

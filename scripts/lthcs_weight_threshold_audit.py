@@ -58,7 +58,7 @@ def _resolve_price_cache() -> Path:
     candidates = [
         REPO / ".cache" / "lthcs" / "backtest" / "prices",
         REPO.parent / ".cache" / "lthcs" / "backtest" / "prices",
-        Path("/Users/bryantabiadon/Documents/btc-eth-etf-dashboard/.cache/lthcs/backtest/prices"),
+        Path("/Users/bryantabiadon/Documents/alpine-data/.cache/lthcs/backtest/prices"),
     ]
     for c in candidates:
         if c.exists():

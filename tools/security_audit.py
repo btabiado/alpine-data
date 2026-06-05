@@ -51,8 +51,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Any
 
-DEFAULT_REPO = "btabiado/btc-eth-etf-dashboard"
-DEFAULT_PAGES_URL = "https://btabiado.github.io/btc-eth-etf-dashboard/"
+DEFAULT_REPO = "btabiado/alpine-data"
+DEFAULT_PAGES_URL = "https://btabiado.github.io/alpine-data/"
 SENSITIVE_PATHS = [
     ".env",
     ".git/config",

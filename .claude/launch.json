@@ -10,7 +10,7 @@
     {
       "name": "health",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8802", "--directory", "/Users/bryantabiadon/btc-eth-etf-dashboard"],
+      "runtimeArgs": ["-m", "http.server", "8802", "--directory", "/Users/bryantabiadon/alpine-data"],
       "port": 8802
     }
   ]

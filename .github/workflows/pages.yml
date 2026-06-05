@@ -485,7 +485,7 @@ jobs:
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
           BTC/ETH/LINK Trading Dashboard — static snapshot
-          Source: https://github.com/btabiado/btc-eth-etf-dashboard
+          Source: https://github.com/btabiado/alpine-data
           Generated: $(date -u)
           EOF
 

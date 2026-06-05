@@ -21,7 +21,7 @@ source ~/.zprofile
 
 # Restart the server so it picks up the new env:
 lsof -ti:8765 | xargs kill -9
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 HOST=0.0.0.0 .venv/bin/python server.py
 ```
 
@@ -75,7 +75,7 @@ echo $ANTHROPIC_API_KEY | head -c 12   # should print sk-ant-...
 
 # Restart the dashboard server so it picks up the env var:
 lsof -ti:8765 | xargs kill -9
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 HOST=0.0.0.0 .venv/bin/python server.py
 ```
 
@@ -135,14 +135,14 @@ A workflow at `.github/workflows/pages.yml` builds and deploys a static
 snapshot of `dashboard.html` on every push to `main`. To enable it:
 
 ### One-time setup
-1. Visit https://github.com/btabiado/btc-eth-etf-dashboard/settings/pages
+1. Visit https://github.com/btabiado/alpine-data/settings/pages
 2. Under **Build and deployment**, set **Source = GitHub Actions**
 3. Save
 
 ### Push to deploy
 The workflow runs on every `git push origin main`. After ~60 sec:
-- Check https://github.com/btabiado/btc-eth-etf-dashboard/actions → "pages" workflow → green ✓
-- Your dashboard is live at: **https://btabiado.github.io/btc-eth-etf-dashboard/**
+- Check https://github.com/btabiado/alpine-data/actions → "pages" workflow → green ✓
+- Your dashboard is live at: **https://btabiado.github.io/alpine-data/**
 
 ### Important caveats
 - The Pages version is a **static snapshot** — no live `/api/refresh`,
@@ -150,7 +150,7 @@ The workflow runs on every `git push origin main`. After ~60 sec:
   signal scores reflect the moment of generation.
 - To publish with **live market data**, run locally before pushing:
   ```bash
-  cd ~/btc-eth-etf-dashboard
+  cd ~/alpine-data
   HOST=0.0.0.0 .venv/bin/python app.py --fetch-market --no-open
   git add data/market.json data/whale.json
   git commit -m "Refresh data snapshot"
@@ -158,7 +158,7 @@ The workflow runs on every `git push origin main`. After ~60 sec:
   ```
 - The repo is currently **private**, which means Pages will require a
   GitHub Pro subscription to host. Either flip the repo to public on
-  https://github.com/btabiado/btc-eth-etf-dashboard/settings (scroll to
+  https://github.com/btabiado/alpine-data/settings (scroll to
   bottom → Change visibility), or upgrade to Pro.
 
 ### Disable
@@ -194,7 +194,7 @@ expiry. They cannot trigger refreshes, upload data, or use the chat dock
 
 ### Mint a share (CLI)
 ```bash
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 .venv/bin/python share.py --days 3 --label "for J." \
   --host https://dashboard.your-cf-host.com
 # prints: https://dashboard.your-cf-host.com/share/<24-char-token>
@@ -330,7 +330,7 @@ echo $FRED_API_KEY | head -c 8   # should print 8 chars of your key
 
 # Restart the dashboard server so it picks up the env var:
 lsof -ti:8765 | xargs kill -9
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 HOST=0.0.0.0 .venv/bin/python server.py
 ```
 
@@ -389,7 +389,7 @@ echo $GLASSNODE_API_KEY | head -c 12
 
 # Restart the dashboard server so it picks up the env var:
 lsof -ti:8765 | xargs kill -9
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 HOST=0.0.0.0 .venv/bin/python server.py
 ```
 
@@ -447,7 +447,7 @@ echo $LUNARCRUSH_API_KEY | head -c 12
 
 # Restart the dashboard server so it picks up the env var:
 lsof -ti:8765 | xargs kill -9
-cd ~/btc-eth-etf-dashboard
+cd ~/alpine-data
 HOST=0.0.0.0 .venv/bin/python server.py
 ```
 

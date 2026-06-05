@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 If you discover a security issue, please report it privately via GitHub
-Security Advisory at https://github.com/btabiado/btc-eth-etf-dashboard/security/advisories/new
+Security Advisory at https://github.com/btabiado/alpine-data/security/advisories/new
 or email btabiado@gmail.com (replace with the actual repo owner email if different).
 
 Please include:

@@ -8,7 +8,7 @@ MISSING and emitting a diagnosis of whether a surprising score is driven by
 (a) real signal, (b) calibration, or (c) missing data.
 
 Usage:
-    cd ~/Documents/btc-eth-etf-dashboard
+    cd ~/Documents/alpine-data
     source .venv/bin/activate
     python scripts/lthcs_diagnose.py AAPL INTC NVDA
 
