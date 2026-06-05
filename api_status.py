@@ -78,10 +78,13 @@ TARGETS: list[dict] = [
     {"label": "Yahoo Finance",        "category": "Stocks",        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1d&interval=1d",                 "key_env": None},
     {"label": "FRED",                 "category": "Macro",         "url": "https://api.stlouisfed.org/fred/releases",                                                       "key_env": "FRED_API_KEY"},
     # ---- ETF flows ----
-    {"label": "Farside",              "category": "ETF Flows",     "url": "https://farside.co.uk/btc/",                                                                     "key_env": None},
-    {"label": "SoSoValue",            "category": "ETF Flows",     "url": "https://api.sosovalue.com/openapi/v1/etf/historicalInflowChart",                                 "key_env": "SOSOVALUE_API_KEY"},
+    # Farside blocks automated requests (Cloudflare 403); the dashboard
+    # actually sources BTC ETF flows from a keyless GitHub mirror CSV (see
+    # fetch_live.MIRROR_BTC_CSV), so probe that real data path instead.
+    {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
+    {"label": "SoSoValue",            "category": "ETF Flows",     "url": "https://api.sosovalue.com/openapi/v2/etf/historicalInflowChart",                                 "key_env": "SOSOVALUE_API_KEY"},
     # ---- news / social / research ----
-    {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": None},
+    {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": "SANTIMENT_API_KEY"},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact via github.com/btabiado/alpine-data)", "Accept": "application/json"}},
 ]
@@ -103,8 +106,13 @@ def _verdict(status: int | None, needs_key: bool) -> str:
         return "up"
     if status == 429:
         return "rate_limited"
+    # Key-gated sources commonly answer a *keyless* probe with 400 (missing
+    # api_key/params), 401, or 403 — all mean "alive, just needs a key", so
+    # surface them as auth_required rather than blocked/degraded.
+    if needs_key and status in (400, 401, 403):
+        return "auth_required"
     if status in (401, 403):
-        return "auth_required" if needs_key else "blocked"
+        return "blocked"
     return "degraded"
 
 
