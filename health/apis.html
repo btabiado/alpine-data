@@ -80,6 +80,13 @@
     .banner { padding: 12px 16px; border-radius: 8px; margin: 16px 0; font-size: 13px; border: 1px solid var(--border); background: var(--bg-elev); }
     .banner.live { border-color: rgba(16,185,129,0.4); }
     .banner.snapshot { border-color: rgba(245,158,11,0.4); }
+
+    /* At-a-glance health headline under the h1 — "N of M sources up" colored
+       by the worst bucket present (green all-up / amber any-warn / red any-down). */
+    .headline { font-size: 14px; font-weight: 600; margin-top: 6px; }
+    .headline.up { color: var(--up); }
+    .headline.warn { color: var(--warn); }
+    .headline.down { color: var(--down); }
   </style>
 </head>
 <body>
@@ -88,6 +95,7 @@
       <div>
         <div class="breadcrumb"><a href="../">← Dashboard</a> · <a href="./">Data freshness</a></div>
         <h1>Live API Status</h1>
+        <div id="headline" class="headline"></div>
       </div>
       <div class="meta">
         <span id="generated">loading…</span>
@@ -129,6 +137,18 @@
       if (isNaN(d)) return iso;
       const pad = n => String(n).padStart(2, '0');
       return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}Z`;
+    }
+
+    function renderHeadline(s) {
+      const warn = (s.auth_required || 0) + (s.rate_limited || 0) + (s.degraded || 0);
+      const down = (s.blocked || 0) + (s.down || 0);
+      const cls = down ? 'down' : (warn ? 'warn' : 'up');
+      const parts = [`${s.up} of ${s.total} sources up`];
+      if (warn) parts.push(`${warn} warn`);
+      if (down) parts.push(`${down} down`);
+      const el = document.getElementById('headline');
+      el.className = 'headline ' + cls;
+      el.textContent = (down ? '🔴 ' : warn ? '🟡 ' : '🟢 ') + parts.join(' · ');
     }
 
     function renderSummary(s) {
@@ -211,6 +231,7 @@
         lastGenerated = data.generated_at;
         renderModeBanner(live);
         document.getElementById('generated').textContent = `as of ${formatTime(data.generated_at)}`;
+        renderHeadline(data.summary);
         renderSummary(data.summary);
         renderTable(data.sources);
       } catch (e) {
