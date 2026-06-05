@@ -18,6 +18,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
 STALE_DIR = DATA_DIR / ".stale"
+SUMMIT_DIR = REPO_ROOT / "snowflake_summit"
 OUT_PATH = DATA_DIR / "health" / "status.json"
 
 
@@ -61,6 +62,10 @@ THRESHOLDS: dict[str, Threshold] = {
     "prewarm_status.json": Threshold(26, 48),
     "13f_institutions.json": Threshold(720, 2160),  # quarterly
     "13f_cusip_map.json": Threshold(720, 2160),  # quarterly
+    # Snowflake Summit curated data (committed, refreshed manually/occasionally)
+    "vendors.json": Threshold(720, 2160),  # vendor roster — rarely changes
+    "news.json": Threshold(168, 336),      # curated vendor news — ~weekly
+    "floorplan.json": Threshold(720, 2160),
 }
 
 # Maps each rendered data file to the V1 tab(s) that consume it. Drives the
@@ -79,6 +84,7 @@ TAB_INPUTS: dict[str, list[str]] = {
     "Stocks": ["market.json"],
     "LTHCS": ["lthcs/universe.json"],
     "Insights": ["insights_history.json"],
+    "Summit": ["snowflake_summit/vendors.json", "snowflake_summit/news.json"],
 }
 
 
@@ -163,6 +169,38 @@ def collect_stale() -> list[dict]:
     return scan(STALE_DIR, REPO_ROOT)
 
 
+def collect_summit() -> list[dict]:
+    """Snowflake Summit curated data files (committed under snowflake_summit/).
+    The Summit dashboard is built offline from these — no live API — so this is
+    the right place to see whether its vendor/news data is current."""
+    rows: list[dict] = []
+    if not SUMMIT_DIR.exists():
+        return rows
+    now = datetime.now(timezone.utc).timestamp()
+    for name in ("vendors.json", "news.json", "floorplan.json"):
+        p = SUMMIT_DIR / name
+        if not p.exists():
+            continue
+        try:
+            mtime = p.stat().st_mtime
+        except OSError:
+            continue
+        age_h = (now - mtime) / 3600.0
+        t = THRESHOLDS.get(name, DEFAULT)
+        rows.append({
+            "name": f"snowflake_summit/{name}",
+            "path": f"snowflake_summit/{name}",
+            "size_bytes": p.stat().st_size,
+            "mtime_iso": datetime.fromtimestamp(mtime, timezone.utc).isoformat(),
+            "age_h": round(age_h, 2),
+            "age_human": humanize_age(age_h),
+            "status": classify(age_h, t),
+            "fresh_h": t.fresh_h,
+            "stale_h": t.stale_h,
+        })
+    return rows
+
+
 def collect_lthcs() -> list[dict]:
     """data/lthcs/ has its own pipeline — snapshot top-level files first, then
     a sample of nested files. Top-level always wins so the LTHCS tab card's
@@ -225,7 +263,7 @@ def build_tab_view(rendered: list[dict], lthcs: list[dict]) -> list[dict]:
 
 
 def main() -> int:
-    rendered = collect_rendered()
+    rendered = collect_rendered() + collect_summit()
     stale = collect_stale()
     lthcs = collect_lthcs()
     tabs = build_tab_view(rendered, lthcs)

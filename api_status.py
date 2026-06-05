@@ -87,6 +87,9 @@ TARGETS: list[dict] = [
     {"label": "Reddit",               "category": "Research",      "url": "https://www.reddit.com/r/CryptoCurrency/about.json",                                            "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     {"label": "Santiment",            "category": "Research",      "url": "https://api.santiment.net/graphql",                                                             "key_env": "SANTIMENT_API_KEY"},
     {"label": "SEC EDGAR",            "category": "AI News",       "url": "https://efts.sec.gov/LATEST/search-index?q=ai",                                                 "key_env": None, "headers": {"User-Agent": "BDT-Dashboards/1.0 (open-source dashboard; contact via github.com/btabiado/alpine-data)", "Accept": "application/json"}},
+    # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
+    # no live upstream API; we probe the deployed page itself for "is it up") ----
+    {"label": "Summit dashboard",     "category": "Summit",        "url": "https://btabiado.github.io/alpine-data/summit/",                                                 "key_env": None},
 ]
 
 
