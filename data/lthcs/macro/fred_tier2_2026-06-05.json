@@ -1,0 +1,21 @@
+{
+  "as_of": "2026-06-06",
+  "brent_crude": null,
+  "consumer_sentiment": null,
+  "data_quality": {
+    "failed_sources": [
+      "brent_crude",
+      "gasoline_retail",
+      "ism_pmi_proxy",
+      "housing_starts",
+      "consumer_sentiment",
+      "u6_unemployment"
+    ],
+    "sources_failed": 6,
+    "sources_ok": 0
+  },
+  "gasoline_retail": null,
+  "housing_starts": null,
+  "ism_pmi_proxy": null,
+  "u6_unemployment": null
+}
