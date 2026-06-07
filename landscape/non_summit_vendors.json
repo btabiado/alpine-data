@@ -18,7 +18,8 @@
     ],
     "caveat": "First-pass competitive-landscape map. Funding/valuation/HQ are best-effort from public sources and need validation before external use.",
     "enriched": "2026-06-07: added segment(normalized)/relationship/tier_notability/geo/company_type/at_summit",
-    "audited": "2026-06-07: 14-agent audit \u2014 applied relationship/tier corrections; pruned hallucinated-scratch rows + absorbed/defunct vendors"
+    "audited": "2026-06-07: 14-agent audit \u2014 applied relationship/tier corrections; pruned hallucinated-scratch rows + absorbed/defunct vendors",
+    "mq_scored": "2026-06-07: Vision\u00d7Execution (0-10) added via 16-agent Gartner-style scoring swarm"
   },
   "vendors": [
     {
@@ -37,7 +38,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 9.6,
+      "mq_execute": 9.4
     },
     {
       "name": "Google BigQuery",
@@ -55,7 +58,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.7,
+      "mq_execute": 9.7
     },
     {
       "name": "Amazon Redshift",
@@ -73,7 +78,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 9.6
     },
     {
       "name": "Microsoft Fabric / Azure Synapse",
@@ -91,7 +98,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.2,
+      "mq_execute": 9.6
     },
     {
       "name": "ClickHouse",
@@ -109,7 +118,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.3,
+      "mq_execute": 7.4
     },
     {
       "name": "Firebolt",
@@ -127,7 +138,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 5.2
     },
     {
       "name": "MotherDuck",
@@ -145,7 +158,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.4,
+      "mq_execute": 4.8
     },
     {
       "name": "DuckDB Labs",
@@ -163,7 +178,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 4.5
     },
     {
       "name": "SingleStore",
@@ -181,7 +198,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 6.2
     },
     {
       "name": "Teradata",
@@ -199,7 +218,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 7.6
     },
     {
       "name": "Vertica (OpenText)",
@@ -217,7 +238,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.3,
+      "mq_execute": 6.4
     },
     {
       "name": "Yellowbrick Data",
@@ -235,7 +258,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 4.6
     },
     {
       "name": "Ocient",
@@ -253,7 +278,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.9
     },
     {
       "name": "Exasol",
@@ -271,7 +298,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 5.0
     },
     {
       "name": "StarTree",
@@ -289,7 +318,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Imply Data",
@@ -307,7 +338,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.4
     },
     {
       "name": "Tinybird",
@@ -325,7 +358,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 4.2
     },
     {
       "name": "Greenplum (Broadcom/VMware)",
@@ -343,7 +378,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 6.0
     },
     {
       "name": "Onehouse",
@@ -361,7 +398,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.7,
+      "mq_execute": 4.0
     },
     {
       "name": "CelerData (StarRocks)",
@@ -379,7 +418,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 3.9
     },
     {
       "name": "VeloDB (Apache Doris)",
@@ -397,7 +438,9 @@
       "tier_notability": 2,
       "geo": "China",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.7
     },
     {
       "name": "Databend (Datafuse Labs)",
@@ -415,7 +458,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 2.9
     },
     {
       "name": "Materialize",
@@ -433,7 +478,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 4.3
     },
     {
       "name": "RisingWave",
@@ -451,7 +498,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 3.6
     },
     {
       "name": "e6data",
@@ -469,7 +518,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 2.8
     },
     {
       "name": "Kinetica",
@@ -487,7 +538,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.8
     },
     {
       "name": "TileDB",
@@ -505,7 +558,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.4
     },
     {
       "name": "MariaDB (ColumnStore / SkySQL)",
@@ -523,7 +578,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.6,
+      "mq_execute": 4.6
     },
     {
       "name": "SAP HANA Cloud",
@@ -541,7 +598,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 8.4
     },
     {
       "name": "Striim",
@@ -559,7 +618,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.8
     },
     {
       "name": "SnapLogic",
@@ -577,7 +638,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 6.2
     },
     {
       "name": "Jitterbit",
@@ -595,7 +658,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.4
     },
     {
       "name": "Nexla",
@@ -613,7 +678,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.0
     },
     {
       "name": "Keboola",
@@ -631,7 +698,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.6
     },
     {
       "name": "CloverDX",
@@ -649,7 +718,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 3.4
     },
     {
       "name": "Integrate.io",
@@ -667,7 +738,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 3.6
     },
     {
       "name": "Skyvia",
@@ -685,7 +758,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.6,
+      "mq_execute": 3.4
     },
     {
       "name": "Dataddo",
@@ -703,7 +778,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 2.9
     },
     {
       "name": "Hitachi Vantara (Pentaho)",
@@ -721,7 +798,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.6,
+      "mq_execute": 6.2
     },
     {
       "name": "Confluent",
@@ -739,7 +818,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 8.2
     },
     {
       "name": "StreamSets (an IBM company)",
@@ -757,7 +838,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 6.0
     },
     {
       "name": "Upsolver",
@@ -775,7 +858,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.8
     },
     {
       "name": "Streamkap",
@@ -793,7 +878,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.4
     },
     {
       "name": "Goldsky",
@@ -811,7 +898,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "TapData",
@@ -829,7 +918,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 2.8
     },
     {
       "name": "Adverity",
@@ -847,7 +938,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.2
     },
     {
       "name": "Funnel",
@@ -865,7 +958,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 5.0
     },
     {
       "name": "Improvado",
@@ -883,7 +978,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 4.0
     },
     {
       "name": "Saras Analytics (Daton)",
@@ -901,7 +998,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 3.4
     },
     {
       "name": "Omnata",
@@ -919,7 +1018,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.6
     },
     {
       "name": "Weld",
@@ -937,7 +1038,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.8
     },
     {
       "name": "Y42",
@@ -955,7 +1058,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 4.0
     },
     {
       "name": "Peliqan",
@@ -973,7 +1078,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.3,
+      "mq_execute": 3.0
     },
     {
       "name": "Lyftrondata",
@@ -991,7 +1098,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 3.0
     },
     {
       "name": "Datazoom",
@@ -1009,7 +1118,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.8
     },
     {
       "name": "Datacoves",
@@ -1027,7 +1138,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 3.2
     },
     {
       "name": "Twilio Segment",
@@ -1045,7 +1158,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 8.3
     },
     {
       "name": "mParticle",
@@ -1063,7 +1178,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 6.3
     },
     {
       "name": "ActionIQ",
@@ -1081,7 +1198,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.8
     },
     {
       "name": "Simon Data",
@@ -1099,7 +1218,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.0
     },
     {
       "name": "Blueshift",
@@ -1117,7 +1238,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 4.8
     },
     {
       "name": "Lytics",
@@ -1135,7 +1258,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 4.8
     },
     {
       "name": "Treasure Data",
@@ -1153,7 +1278,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.7,
+      "mq_execute": 6.6
     },
     {
       "name": "DinMo",
@@ -1171,7 +1298,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 2.8
     },
     {
       "name": "Multiwoven",
@@ -1189,7 +1318,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.5
     },
     {
       "name": "Bloomreach",
@@ -1207,7 +1338,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 7.0
     },
     {
       "name": "BlueConic",
@@ -1225,7 +1358,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 5.5
     },
     {
       "name": "Optimove",
@@ -1243,7 +1378,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.4
     },
     {
       "name": "Insider",
@@ -1261,7 +1398,9 @@
       "tier_notability": 1,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 6.6
     },
     {
       "name": "Zeotap",
@@ -1279,7 +1418,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.0
     },
     {
       "name": "Optimizely Data Platform (Zaius)",
@@ -1297,7 +1438,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 5.8
     },
     {
       "name": "Acquia (Acquia CDP / AgilOne)",
@@ -1315,7 +1458,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.5
     },
     {
       "name": "SAP Engagement Cloud (Emarsys)",
@@ -1333,7 +1478,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 7.5
     },
     {
       "name": "Pega Customer Decision Hub",
@@ -1351,7 +1498,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.3,
+      "mq_execute": 7.6
     },
     {
       "name": "Adobe Real-Time CDP",
@@ -1369,7 +1518,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.5,
+      "mq_execute": 9.0
     },
     {
       "name": "Microsoft Dynamics 365 Customer Insights",
@@ -1387,7 +1538,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 9.2
     },
     {
       "name": "Lexer",
@@ -1405,7 +1558,9 @@
       "tier_notability": 2,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.8
     },
     {
       "name": "SALESmanago",
@@ -1423,7 +1578,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 5.0
     },
     {
       "name": "Voyado",
@@ -1441,7 +1598,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.8
     },
     {
       "name": "Ometria",
@@ -1459,7 +1618,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.5
     },
     {
       "name": "Apteco",
@@ -1477,7 +1638,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.3,
+      "mq_execute": 4.5
     },
     {
       "name": "MoEngage",
@@ -1495,7 +1658,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 6.2
     },
     {
       "name": "CleverTap",
@@ -1513,7 +1678,9 @@
       "tier_notability": 2,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 6.3
     },
     {
       "name": "Klaviyo",
@@ -1531,7 +1698,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 8.2
     },
     {
       "name": "Iterable",
@@ -1549,7 +1718,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 6.5
     },
     {
       "name": "NextRoll (RollWorks/AdRoll)",
@@ -1567,7 +1738,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.5
     },
     {
       "name": "Castled Data",
@@ -1585,7 +1758,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 2.5
     },
     {
       "name": "Temporal Technologies",
@@ -1603,7 +1778,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 7.0
     },
     {
       "name": "Kestra",
@@ -1621,7 +1798,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 4.3
     },
     {
       "name": "Union.ai",
@@ -1639,7 +1818,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 4.5
     },
     {
       "name": "Mage AI",
@@ -1657,7 +1838,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.5
     },
     {
       "name": "Shipyard",
@@ -1675,7 +1858,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.3,
+      "mq_execute": 3.0
     },
     {
       "name": "Orchestra",
@@ -1693,7 +1878,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 2.8
     },
     {
       "name": "Orkes",
@@ -1711,7 +1898,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.0
     },
     {
       "name": "Inngest",
@@ -1729,7 +1918,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 4.3
     },
     {
       "name": "Restate",
@@ -1747,7 +1938,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.0
     },
     {
       "name": "DBOS",
@@ -1765,7 +1958,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 3.2
     },
     {
       "name": "Windmill",
@@ -1783,7 +1978,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.3
     },
     {
       "name": "Hatchet",
@@ -1801,7 +1998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 2.6
     },
     {
       "name": "WhaleOps",
@@ -1819,7 +2018,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.3
     },
     {
       "name": "Pipekit",
@@ -1837,7 +2038,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 2.2
     },
     {
       "name": "Akuity",
@@ -1855,7 +2058,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.8
     },
     {
       "name": "Ascend.io",
@@ -1873,7 +2078,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.2
     },
     {
       "name": "Cube (Cube Dev)",
@@ -1891,7 +2098,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.4
     },
     {
       "name": "GoodData",
@@ -1909,7 +2118,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.7
     },
     {
       "name": "Kyligence",
@@ -1927,7 +2138,9 @@
       "tier_notability": 2,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 5.3
     },
     {
       "name": "Kyvos Insights",
@@ -1945,7 +2158,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.8
     },
     {
       "name": "Holistics",
@@ -1963,7 +2178,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.0
     },
     {
       "name": "Lightdash",
@@ -1981,7 +2198,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.3
     },
     {
       "name": "Zenlytic",
@@ -1999,7 +2218,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 3.6
     },
     {
       "name": "Coginiti",
@@ -2017,7 +2238,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 3.8
     },
     {
       "name": "Mozart Data",
@@ -2035,7 +2258,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.2
     },
     {
       "name": "Turntable",
@@ -2053,7 +2278,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 2.8
     },
     {
       "name": "Recce (DataRecce)",
@@ -2071,7 +2298,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 2.6
     },
     {
       "name": "Definite",
@@ -2089,7 +2318,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.2
     },
     {
       "name": "5X",
@@ -2107,7 +2338,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 3.0
     },
     {
       "name": "Mitzu",
@@ -2125,7 +2358,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 2.2
     },
     {
       "name": "Sling Data",
@@ -2143,7 +2378,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.8
     },
     {
       "name": "MicroStrategy (Strategy)",
@@ -2161,7 +2398,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 7.5
     },
     {
       "name": "Soda",
@@ -2179,7 +2418,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 5.0
     },
     {
       "name": "Great Expectations (GX)",
@@ -2197,7 +2438,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.6
     },
     {
       "name": "Lightup",
@@ -2215,7 +2458,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.2
     },
     {
       "name": "Telmai",
@@ -2233,7 +2478,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.6
     },
     {
       "name": "Decube",
@@ -2251,7 +2498,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "Elementary",
@@ -2269,7 +2518,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.0
     },
     {
       "name": "iceDQ",
@@ -2287,7 +2538,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 3.4
     },
     {
       "name": "FirstEigen (DataBuck)",
@@ -2305,7 +2558,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.6
     },
     {
       "name": "RightData",
@@ -2323,7 +2578,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 3.8
     },
     {
       "name": "Kensu",
@@ -2341,7 +2598,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 2.8
     },
     {
       "name": "Evidently AI",
@@ -2359,7 +2618,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.6
     },
     {
       "name": "DQOps",
@@ -2377,7 +2638,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.6
     },
     {
       "name": "Masthead Data",
@@ -2395,7 +2658,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.8
     },
     {
       "name": "Datactics",
@@ -2413,7 +2678,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 3.6
     },
     {
       "name": "Validatar",
@@ -2431,7 +2698,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 3.0
     },
     {
       "name": "Timeseer.AI",
@@ -2449,7 +2718,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "Collate",
@@ -2467,7 +2738,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.8
     },
     {
       "name": "Rakuten SixthSense",
@@ -2485,7 +2758,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.6
     },
     {
       "name": "OvalEdge",
@@ -2503,7 +2778,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Experian Aperture Data Studio",
@@ -2521,7 +2798,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 7.6
     },
     {
       "name": "Melissa",
@@ -2539,7 +2818,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.6,
+      "mq_execute": 5.4
     },
     {
       "name": "SAS Data Quality (DataFlux)",
@@ -2557,7 +2838,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 7.2
     },
     {
       "name": "Oracle Enterprise Data Quality (EDQ)",
@@ -2575,7 +2858,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 7.8
     },
     {
       "name": "Secoda",
@@ -2593,7 +2878,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.4
     },
     {
       "name": "Stibo Systems",
@@ -2611,7 +2898,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 6.8
     },
     {
       "name": "Profisee",
@@ -2629,7 +2918,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 5.8
     },
     {
       "name": "Cloud Software Group (TIBCO EBX)",
@@ -2647,7 +2938,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 6.4
     },
     {
       "name": "CluedIn",
@@ -2665,7 +2958,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.2
     },
     {
       "name": "K2view",
@@ -2683,7 +2978,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Verato",
@@ -2701,7 +2998,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 5.2
     },
     {
       "name": "Pimcore",
@@ -2719,7 +3018,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.6
     },
     {
       "name": "Syndigo",
@@ -2737,7 +3038,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 6.6
     },
     {
       "name": "Akeneo",
@@ -2755,7 +3058,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 6.2
     },
     {
       "name": "Verdantis",
@@ -2773,7 +3078,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.2
     },
     {
       "name": "Solidatus",
@@ -2791,7 +3098,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.2
     },
     {
       "name": "Actian (HCLSoftware)",
@@ -2809,7 +3118,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 6.8
     },
     {
       "name": "DataGalaxy",
@@ -2827,7 +3138,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.9
     },
     {
       "name": "Alex Solutions",
@@ -2845,7 +3158,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.6
     },
     {
       "name": "Graphwise (Ontotext + PoolParty)",
@@ -2863,7 +3178,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.3
     },
     {
       "name": "Amundsen",
@@ -2881,7 +3198,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 3.2
     },
     {
       "name": "Avo",
@@ -2899,7 +3218,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 3.0
     },
     {
       "name": "Strategy (formerly MicroStrategy)",
@@ -2917,7 +3238,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 7.0
     },
     {
       "name": "Spotfire",
@@ -2935,7 +3258,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 6.2
     },
     {
       "name": "SAS",
@@ -2953,7 +3278,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 8.2
     },
     {
       "name": "Oracle Analytics",
@@ -2971,7 +3298,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 9.0
     },
     {
       "name": "IBM Cognos Analytics",
@@ -2989,7 +3318,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 8.4
     },
     {
       "name": "Metabase",
@@ -3007,7 +3338,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.6
     },
     {
       "name": "Pyramid Analytics",
@@ -3025,7 +3358,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 5.8
     },
     {
       "name": "Zoho Analytics",
@@ -3043,7 +3378,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 7.0
     },
     {
       "name": "Preset",
@@ -3061,7 +3398,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     {
       "name": "Luzmo (formerly Cumul.io)",
@@ -3079,7 +3418,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.8
     },
     {
       "name": "Sisense",
@@ -3097,7 +3438,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 5.9
     },
     {
       "name": "Yellowfin",
@@ -3115,7 +3458,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.6
     },
     {
       "name": "Jedox",
@@ -3133,7 +3478,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 5.7
     },
     {
       "name": "Board International",
@@ -3151,7 +3498,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 6.4
     },
     {
       "name": "Qrvey",
@@ -3169,7 +3518,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.9
     },
     {
       "name": "Reveal (Infragistics)",
@@ -3187,7 +3538,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 4.3
     },
     {
       "name": "Tellius",
@@ -3205,7 +3558,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.2
     },
     {
       "name": "Evidence",
@@ -3223,7 +3578,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.6
     },
     {
       "name": "Rill Data",
@@ -3241,7 +3598,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.0
     },
     {
       "name": "Count",
@@ -3259,7 +3618,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.8
     },
     {
       "name": "Embeddable",
@@ -3277,7 +3638,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.2
     },
     {
       "name": "Pinecone",
@@ -3295,7 +3658,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.6,
+      "mq_execute": 7.0
     },
     {
       "name": "Weaviate",
@@ -3313,7 +3678,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 5.8
     },
     {
       "name": "Qdrant",
@@ -3331,7 +3698,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 5.6
     },
     {
       "name": "Chroma",
@@ -3349,7 +3718,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 5.0
     },
     {
       "name": "Vespa.ai",
@@ -3367,7 +3738,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.0
     },
     {
       "name": "LanceDB",
@@ -3385,7 +3758,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.8
     },
     {
       "name": "Marqo",
@@ -3403,7 +3778,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.8
     },
     {
       "name": "Turbopuffer",
@@ -3421,7 +3798,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Activeloop",
@@ -3439,7 +3818,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.8
     },
     {
       "name": "MyScale",
@@ -3457,7 +3838,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.2
     },
     {
       "name": "KX (KDB.AI)",
@@ -3475,7 +3858,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 6.2
     },
     {
       "name": "TensorChord",
@@ -3493,7 +3878,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.2
     },
     {
       "name": "Epsilla",
@@ -3511,7 +3898,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.3
     },
     {
       "name": "Vald",
@@ -3529,7 +3918,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "Superlinked",
@@ -3547,7 +3938,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.6
     },
     {
       "name": "Mixedbread",
@@ -3565,7 +3958,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 3.4
     },
     {
       "name": "Vectara",
@@ -3583,7 +3978,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.2
     },
     {
       "name": "Contextual AI",
@@ -3601,7 +3998,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 5.0
     },
     {
       "name": "Vectorize",
@@ -3619,7 +4018,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.0
     },
     {
       "name": "Ragie",
@@ -3637,7 +4038,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.2
     },
     {
       "name": "Needle",
@@ -3655,7 +4058,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.5
     },
     {
       "name": "Supabase",
@@ -3673,7 +4078,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 8.0
     },
     {
       "name": "MongoDB",
@@ -3691,7 +4098,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.5,
+      "mq_execute": 8.8
     },
     {
       "name": "Elastic",
@@ -3709,7 +4118,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 8.2
     },
     {
       "name": "Redis",
@@ -3727,7 +4138,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 7.6
     },
     {
       "name": "Couchbase",
@@ -3745,7 +4158,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 6.8
     },
     {
       "name": "Oracle",
@@ -3763,7 +4178,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 9.5
     },
     {
       "name": "Anthropic",
@@ -3781,7 +4198,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 9.7,
+      "mq_execute": 9.0
     },
     {
       "name": "Google DeepMind (Gemini)",
@@ -3799,7 +4218,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 9.6,
+      "mq_execute": 9.7
     },
     {
       "name": "Cohere",
@@ -3817,7 +4238,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 6.5
     },
     {
       "name": "Mistral AI",
@@ -3835,7 +4258,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.2,
+      "mq_execute": 6.8
     },
     {
       "name": "xAI",
@@ -3853,7 +4278,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 7.8
     },
     {
       "name": "Meta (Llama)",
@@ -3871,7 +4298,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.5,
+      "mq_execute": 9.6
     },
     {
       "name": "Together AI",
@@ -3889,7 +4318,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 6.5
     },
     {
       "name": "Fireworks AI",
@@ -3907,7 +4338,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 6.6
     },
     {
       "name": "DeepSeek",
@@ -3925,7 +4358,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.8,
+      "mq_execute": 7.2
     },
     {
       "name": "Aleph Alpha",
@@ -3943,7 +4378,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.8
     },
     {
       "name": "Reka AI",
@@ -3961,7 +4398,9 @@
       "tier_notability": 1,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 4.5
     },
     {
       "name": "Stability AI",
@@ -3979,7 +4418,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.3
     },
     {
       "name": "Hugging Face",
@@ -3997,7 +4438,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.3,
+      "mq_execute": 7.5
     },
     {
       "name": "Perplexity AI",
@@ -4015,7 +4458,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 7.4
     },
     {
       "name": "AI21 Labs",
@@ -4033,7 +4478,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Safe Superintelligence (SSI)",
@@ -4051,7 +4498,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 5.5
     },
     {
       "name": "Thinking Machines Lab",
@@ -4069,7 +4518,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.3,
+      "mq_execute": 5.2
     },
     {
       "name": "Reflection AI",
@@ -4087,7 +4538,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.4
     },
     {
       "name": "Liquid AI",
@@ -4105,7 +4558,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 4.4
     },
     {
       "name": "Writer",
@@ -4123,7 +4578,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 6.0
     },
     {
       "name": "Inflection AI",
@@ -4141,7 +4598,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Zhipu AI (Z.ai)",
@@ -4159,7 +4618,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 6.5
     },
     {
       "name": "Moonshot AI",
@@ -4177,7 +4638,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 6.6
     },
     {
       "name": "MiniMax",
@@ -4195,7 +4658,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 6.4
     },
     {
       "name": "StepFun",
@@ -4213,7 +4678,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.0
     },
     {
       "name": "Baichuan Intelligence",
@@ -4231,7 +4698,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.8
     },
     {
       "name": "01.AI",
@@ -4249,7 +4718,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.5
     },
     {
       "name": "Alibaba (Qwen)",
@@ -4267,7 +4738,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.7,
+      "mq_execute": 9.2
     },
     {
       "name": "Technology Innovation Institute (Falcon)",
@@ -4285,7 +4758,9 @@
       "tier_notability": 1,
       "geo": "Other",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.8
     },
     {
       "name": "Allen Institute for AI (Ai2)",
@@ -4303,7 +4778,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Sarvam AI",
@@ -4321,7 +4798,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 4.2
     },
     {
       "name": "Black Forest Labs",
@@ -4339,7 +4818,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.4,
+      "mq_execute": 5.6
     },
     {
       "name": "Krutrim",
@@ -4357,7 +4838,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 4.2
     },
     {
       "name": "DataRobot",
@@ -4375,7 +4858,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 6.5
     },
     {
       "name": "H2O.ai",
@@ -4393,7 +4878,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 6.0
     },
     {
       "name": "Domino Data Lab",
@@ -4411,7 +4898,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 5.6
     },
     {
       "name": "Weights & Biases",
@@ -4429,7 +4918,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 6.8
     },
     {
       "name": "Comet",
@@ -4447,7 +4938,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     {
       "name": "ClearML",
@@ -4465,7 +4958,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.2
     },
     {
       "name": "Hopsworks",
@@ -4483,7 +4978,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.0
     },
     {
       "name": "Featureform",
@@ -4501,7 +4998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.2
     },
     {
       "name": "Feast",
@@ -4519,7 +5018,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.5
     },
     {
       "name": "Tecton",
@@ -4537,7 +5038,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.4
     },
     {
       "name": "Seldon",
@@ -4555,7 +5058,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.4
     },
     {
       "name": "BentoML",
@@ -4573,7 +5078,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.2
     },
     {
       "name": "Valohai",
@@ -4591,7 +5098,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 3.4
     },
     {
       "name": "Anyscale",
@@ -4609,7 +5118,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 6.2
     },
     {
       "name": "Baseten",
@@ -4627,7 +5138,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 6.2
     },
     {
       "name": "Modal",
@@ -4645,7 +5158,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.8
     },
     {
       "name": "Replicate",
@@ -4663,7 +5178,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.2
     },
     {
       "name": "TrueFoundry",
@@ -4681,7 +5198,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 4.3
     },
     {
       "name": "JFrog ML (formerly Qwak)",
@@ -4699,7 +5218,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 6.0
     },
     {
       "name": "ZenML",
@@ -4717,7 +5238,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.6
     },
     {
       "name": "Lightning AI",
@@ -4735,7 +5258,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 5.5
     },
     {
       "name": "UbiOps",
@@ -4753,7 +5278,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 3.2
     },
     {
       "name": "Deepchecks",
@@ -4771,7 +5298,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.8
     },
     {
       "name": "Aporia",
@@ -4789,7 +5318,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.2
     },
     {
       "name": "Superwise",
@@ -4807,7 +5338,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.5
     },
     {
       "name": "Arize AI",
@@ -4825,7 +5358,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.4,
+      "mq_execute": 6.0
     },
     {
       "name": "Pecan AI",
@@ -4843,7 +5378,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.6
     },
     {
       "name": "Abacus.AI",
@@ -4861,7 +5398,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.0
     },
     {
       "name": "Inferless",
@@ -4879,7 +5418,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.8
     },
     {
       "name": "Aible",
@@ -4897,7 +5438,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 2.9
     },
     {
       "name": "cnvrg.io",
@@ -4915,7 +5458,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Pachyderm",
@@ -4933,7 +5478,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.4
     },
     {
       "name": "DagsHub",
@@ -4951,7 +5498,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 3.2
     },
     {
       "name": "DataChain (iterative.ai)",
@@ -4969,7 +5518,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.0
     },
     {
       "name": "OpenMetal / KServe (community)",
@@ -4987,7 +5538,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.8
     },
     {
       "name": "Predibase",
@@ -5005,7 +5558,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.6
     },
     {
       "name": "LangChain",
@@ -5023,7 +5578,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 6.6
     },
     {
       "name": "CrewAI",
@@ -5041,7 +5598,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 4.6
     },
     {
       "name": "AG2 (AG2AI)",
@@ -5059,7 +5618,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 2.8
     },
     {
       "name": "deepset (Haystack)",
@@ -5077,7 +5638,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.6
     },
     {
       "name": "Dust",
@@ -5095,7 +5658,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.8
     },
     {
       "name": "Lindy",
@@ -5113,7 +5678,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.4
     },
     {
       "name": "Relevance AI",
@@ -5131,7 +5698,9 @@
       "tier_notability": 2,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.4
     },
     {
       "name": "Vellum",
@@ -5149,7 +5718,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.2
     },
     {
       "name": "n8n",
@@ -5167,7 +5738,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 6.4
     },
     {
       "name": "Sierra",
@@ -5185,7 +5758,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.2,
+      "mq_execute": 6.8
     },
     {
       "name": "Pydantic",
@@ -5203,7 +5778,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.2
     },
     {
       "name": "Flowise",
@@ -5221,7 +5798,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.4
     },
     {
       "name": "Agno (formerly Phidata)",
@@ -5239,7 +5818,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.2
     },
     {
       "name": "Mastra",
@@ -5257,7 +5838,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.8
     },
     {
       "name": "Letta",
@@ -5275,7 +5858,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 3.6
     },
     {
       "name": "Dify",
@@ -5293,7 +5878,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.6
     },
     {
       "name": "Gumloop",
@@ -5311,7 +5898,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.2
     },
     {
       "name": "Botpress",
@@ -5329,7 +5918,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     {
       "name": "Voiceflow",
@@ -5347,7 +5938,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.6
     },
     {
       "name": "Kore.ai",
@@ -5365,7 +5958,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 6.2
     },
     {
       "name": "Beam AI",
@@ -5383,7 +5978,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "Lyzr AI",
@@ -5401,7 +5998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.4
     },
     {
       "name": "MindStudio",
@@ -5419,7 +6018,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.8
     },
     {
       "name": "SuperAGI",
@@ -5437,7 +6038,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.2
     },
     {
       "name": "Composio",
@@ -5455,7 +6058,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Arcade.dev",
@@ -5473,7 +6078,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.6
     },
     {
       "name": "Portkey",
@@ -5491,7 +6098,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.0
     },
     {
       "name": "LiteLLM (BerriAI)",
@@ -5509,7 +6118,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.2
     },
     {
       "name": "Braintrust",
@@ -5527,7 +6138,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.0
     },
     {
       "name": "Galileo AI",
@@ -5545,7 +6158,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.6
     },
     {
       "name": "Patronus AI",
@@ -5563,7 +6178,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.3
     },
     {
       "name": "Maxim AI",
@@ -5581,7 +6198,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "Vapi",
@@ -5599,7 +6218,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.8
     },
     {
       "name": "Retell AI",
@@ -5617,7 +6238,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 4.7
     },
     {
       "name": "CopilotKit",
@@ -5635,7 +6258,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.6
     },
     {
       "name": "Decagon",
@@ -5653,7 +6278,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 6.6
     },
     {
       "name": "Aiven",
@@ -5671,7 +6298,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 7.0
     },
     {
       "name": "Decodable",
@@ -5689,7 +6318,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.5
     },
     {
       "name": "StreamNative",
@@ -5707,7 +6338,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 4.6
     },
     {
       "name": "WarpStream",
@@ -5725,7 +6358,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.3,
+      "mq_execute": 5.2
     },
     {
       "name": "AutoMQ",
@@ -5743,7 +6378,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.0
     },
     {
       "name": "Buf (Bufstream)",
@@ -5761,7 +6398,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.0
     },
     {
       "name": "Ververica",
@@ -5779,7 +6418,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.6
     },
     {
       "name": "DeltaStream",
@@ -5797,7 +6438,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 4.0
     },
     {
       "name": "Imply",
@@ -5815,7 +6458,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 6.2
     },
     {
       "name": "Timeplus",
@@ -5833,7 +6478,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.4
     },
     {
       "name": "Conduktor",
@@ -5851,7 +6498,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     {
       "name": "Solace",
@@ -5869,7 +6518,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.9,
+      "mq_execute": 6.0
     },
     {
       "name": "Hazelcast",
@@ -5887,7 +6538,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 5.7
     },
     {
       "name": "Ably",
@@ -5905,7 +6558,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.4
     },
     {
       "name": "Pathway",
@@ -5923,7 +6578,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.6
     },
     {
       "name": "Feldera",
@@ -5941,7 +6598,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 3.2
     },
     {
       "name": "Responsive",
@@ -5959,7 +6618,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 2.9
     },
     {
       "name": "Lenses.io",
@@ -5977,7 +6638,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.4
     },
     {
       "name": "Instaclustr (NetApp)",
@@ -5995,7 +6658,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 6.3
     },
     {
       "name": "Superstream",
@@ -6013,7 +6678,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 2.8
     },
     {
       "name": "Epsio",
@@ -6031,7 +6698,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.0
     },
     {
       "name": "GlassFlow",
@@ -6049,7 +6718,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 2.7
     },
     {
       "name": "BigID",
@@ -6067,7 +6738,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.4,
+      "mq_execute": 7.0
     },
     {
       "name": "Privacera",
@@ -6085,7 +6758,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.0
     },
     {
       "name": "Velotix",
@@ -6103,7 +6778,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 3.4
     },
     {
       "name": "ALTR",
@@ -6121,7 +6798,9 @@
       "tier_notability": 2,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.6
     },
     {
       "name": "Sentra",
@@ -6139,7 +6818,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.6
     },
     {
       "name": "Symmetry Systems",
@@ -6157,7 +6838,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.9,
+      "mq_execute": 4.0
     },
     {
       "name": "Concentric AI",
@@ -6175,7 +6858,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.7
     },
     {
       "name": "Cyberhaven",
@@ -6193,7 +6878,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 6.0
     },
     {
       "name": "Bedrock Security",
@@ -6211,7 +6898,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.1,
+      "mq_execute": 4.0
     },
     {
       "name": "Securiti",
@@ -6229,7 +6918,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 6.6
     },
     {
       "name": "Protegrity",
@@ -6247,7 +6938,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 6.0
     },
     {
       "name": "Baffle",
@@ -6265,7 +6958,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.2
     },
     {
       "name": "comforte AG",
@@ -6283,7 +6978,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.2
     },
     {
       "name": "Sotero",
@@ -6301,7 +6998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "LightBeam.ai",
@@ -6319,7 +7018,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.7,
+      "mq_execute": 3.8
     },
     {
       "name": "Metomic",
@@ -6337,7 +7038,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.2
     },
     {
       "name": "Transcend",
@@ -6355,7 +7058,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.4
     },
     {
       "name": "DataGrail",
@@ -6373,7 +7078,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Ketch",
@@ -6391,7 +7098,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.8
     },
     {
       "name": "Relyance AI",
@@ -6409,7 +7118,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 4.7
     },
     {
       "name": "Osano",
@@ -6427,7 +7138,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.8
     },
     {
       "name": "Privado.ai",
@@ -6445,7 +7158,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.0
     },
     {
       "name": "Mine (MineOS)",
@@ -6463,7 +7178,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.8
     },
     {
       "name": "TrustArc",
@@ -6481,7 +7198,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.3,
+      "mq_execute": 5.5
     },
     {
       "name": "Enzuzo",
@@ -6499,7 +7218,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 3.0
     },
     {
       "name": "Varonis Systems",
@@ -6517,7 +7238,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 7.8
     },
     {
       "name": "Rubrik",
@@ -6535,7 +7258,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 8.0
     },
     {
       "name": "Scale AI",
@@ -6553,7 +7278,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.2,
+      "mq_execute": 8.6
     },
     {
       "name": "Surge AI",
@@ -6571,7 +7298,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.4,
+      "mq_execute": 7.0
     },
     {
       "name": "Mercor",
@@ -6589,7 +7318,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 7.2
     },
     {
       "name": "Labelbox",
@@ -6607,7 +7338,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 6.2
     },
     {
       "name": "Snorkel AI",
@@ -6625,7 +7358,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 6.0
     },
     {
       "name": "Toloka AI",
@@ -6643,7 +7378,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 5.6
     },
     {
       "name": "SuperAnnotate",
@@ -6661,7 +7398,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Encord",
@@ -6679,7 +7418,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 5.0
     },
     {
       "name": "Datasaur",
@@ -6697,7 +7438,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.4
     },
     {
       "name": "MOSTLY AI",
@@ -6715,7 +7458,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 4.8
     },
     {
       "name": "Tonic.ai",
@@ -6733,7 +7478,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.0
     },
     {
       "name": "Handshake AI",
@@ -6751,7 +7498,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.8
     },
     {
       "name": "Micro1",
@@ -6769,7 +7518,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 5.4
     },
     {
       "name": "Invisible Technologies",
@@ -6787,7 +7538,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 6.2
     },
     {
       "name": "Turing",
@@ -6805,7 +7558,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 6.6
     },
     {
       "name": "iMerit",
@@ -6823,7 +7578,9 @@
       "tier_notability": 2,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Sama",
@@ -6841,7 +7598,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 5.4
     },
     {
       "name": "Appen",
@@ -6859,7 +7618,9 @@
       "tier_notability": 1,
       "geo": "APAC",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 5.0
     },
     {
       "name": "TELUS Digital (TELUS International)",
@@ -6877,7 +7638,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 6.8
     },
     {
       "name": "Innodata",
@@ -6895,7 +7658,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 5.6
     },
     {
       "name": "Shaip",
@@ -6913,7 +7678,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 4.0
     },
     {
       "name": "CloudFactory",
@@ -6931,7 +7698,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 5.0
     },
     {
       "name": "V7",
@@ -6949,7 +7718,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.6
     },
     {
       "name": "Roboflow",
@@ -6967,7 +7738,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.6
     },
     {
       "name": "Kili Technology",
@@ -6985,7 +7758,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Kognic",
@@ -7003,7 +7778,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.0
     },
     {
       "name": "Labellerr",
@@ -7021,7 +7798,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 2.8
     },
     {
       "name": "Lightly",
@@ -7039,7 +7818,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.0
     },
     {
       "name": "Voxel51",
@@ -7057,7 +7838,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.8
     },
     {
       "name": "DatologyAI",
@@ -7075,7 +7858,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.4
     },
     {
       "name": "YData",
@@ -7093,7 +7878,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.6
     },
     {
       "name": "Syntho",
@@ -7111,7 +7898,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.4
     },
     {
       "name": "Synthesized",
@@ -7129,7 +7918,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.6
     },
     {
       "name": "Aindo",
@@ -7147,7 +7938,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.8
     },
     {
       "name": "Betterdata",
@@ -7165,7 +7958,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.6
     },
     {
       "name": "GenRocket",
@@ -7183,7 +7978,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 3.2
     },
     {
       "name": "MDClone",
@@ -7201,7 +7998,9 @@
       "tier_notability": 2,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 5.4
     },
     {
       "name": "Syntegra",
@@ -7219,7 +8018,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.6
     },
     {
       "name": "Parallel Domain",
@@ -7237,7 +8038,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.4
     },
     {
       "name": "Sapien",
@@ -7255,7 +8058,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.8
     },
     {
       "name": "Defined.ai",
@@ -7273,7 +8078,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Supervisely",
@@ -7291,7 +8098,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.2
     },
     {
       "name": "BasicAI",
@@ -7309,7 +8118,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 3.6
     },
     {
       "name": "Prolific",
@@ -7327,7 +8138,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.2
     },
     {
       "name": "CoreWeave",
@@ -7345,7 +8158,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 8.6
     },
     {
       "name": "Lambda",
@@ -7363,7 +8178,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 7.4
     },
     {
       "name": "Nebius",
@@ -7381,7 +8198,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 7.8
     },
     {
       "name": "Crusoe",
@@ -7399,7 +8218,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 7.6
     },
     {
       "name": "RunPod",
@@ -7417,7 +8238,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Fal",
@@ -7435,7 +8258,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.3,
+      "mq_execute": 6.2
     },
     {
       "name": "Groq",
@@ -7453,7 +8278,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.5,
+      "mq_execute": 7.4
     },
     {
       "name": "Cerebras Systems",
@@ -7471,7 +8298,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.4,
+      "mq_execute": 7.6
     },
     {
       "name": "SambaNova Systems",
@@ -7489,7 +8318,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.4,
+      "mq_execute": 6.4
     },
     {
       "name": "Tenstorrent",
@@ -7507,7 +8338,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 5.8
     },
     {
       "name": "d-Matrix",
@@ -7525,7 +8358,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.2
     },
     {
       "name": "Etched",
@@ -7543,7 +8378,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 4.6
     },
     {
       "name": "Positron AI",
@@ -7561,7 +8398,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Nscale",
@@ -7579,7 +8418,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 6.6
     },
     {
       "name": "Fluidstack",
@@ -7597,7 +8438,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.4
     },
     {
       "name": "Voltage Park",
@@ -7615,7 +8458,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 5.4
     },
     {
       "name": "Vultr",
@@ -7633,7 +8478,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 6.6
     },
     {
       "name": "DeepInfra",
@@ -7651,7 +8498,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 5.2
     },
     {
       "name": "Hyperbolic",
@@ -7669,7 +8518,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.6
     },
     {
       "name": "Novita AI",
@@ -7687,7 +8538,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.6
     },
     {
       "name": "Scaleway",
@@ -7705,7 +8558,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 6.2
     },
     {
       "name": "OVHcloud",
@@ -7723,7 +8578,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 7.0
     },
     {
       "name": "Mistral Compute",
@@ -7741,7 +8598,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.6
     },
     {
       "name": "Genesis Cloud",
@@ -7759,7 +8618,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Vast.ai",
@@ -7777,7 +8638,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.6
     },
     {
       "name": "Beam (beam.cloud)",
@@ -7795,7 +8658,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.2
     },
     {
       "name": "Northflank",
@@ -7813,7 +8678,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.8
     },
     {
       "name": "Koyeb",
@@ -7831,7 +8698,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.4
     },
     {
       "name": "Yotta Data Services (Shakti Cloud)",
@@ -7849,7 +8718,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 5.2
     },
     {
       "name": "E2E Networks",
@@ -7867,7 +8738,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.2
     },
     {
       "name": "NeevCloud",
@@ -7885,7 +8758,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 3.4
     },
     {
       "name": "Galileo",
@@ -7903,7 +8778,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.6
     },
     {
       "name": "Fiddler AI",
@@ -7921,7 +8798,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 5.6
     },
     {
       "name": "WhyLabs",
@@ -7939,7 +8818,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.4
     },
     {
       "name": "Guardrails AI",
@@ -7957,7 +8838,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.2
     },
     {
       "name": "HoneyHive",
@@ -7975,7 +8858,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.6
     },
     {
       "name": "Langfuse",
@@ -7993,7 +8878,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.0
     },
     {
       "name": "Arthur AI",
@@ -8011,7 +8898,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 5.2
     },
     {
       "name": "Vellum AI",
@@ -8029,7 +8918,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.6
     },
     {
       "name": "PromptLayer",
@@ -8047,7 +8938,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.8
     },
     {
       "name": "Confident AI (DeepEval)",
@@ -8065,7 +8958,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.0
     },
     {
       "name": "Athina AI",
@@ -8083,7 +8978,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.4
     },
     {
       "name": "Freeplay",
@@ -8101,7 +8998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.6
     },
     {
       "name": "Okareo",
@@ -8119,7 +9018,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.0
     },
     {
       "name": "Giskard",
@@ -8137,7 +9038,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.8
     },
     {
       "name": "HiddenLayer",
@@ -8155,7 +9058,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.4
     },
     {
       "name": "Enkrypt AI",
@@ -8173,7 +9078,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Dynamo AI",
@@ -8191,7 +9098,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.0
     },
     {
       "name": "Future AGI",
@@ -8209,7 +9118,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.2
     },
     {
       "name": "Coval",
@@ -8227,7 +9138,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.0
     },
     {
       "name": "Orq.ai",
@@ -8245,7 +9158,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.6
     },
     {
       "name": "Latitude",
@@ -8263,7 +9178,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.2
     },
     {
       "name": "Adaline",
@@ -8281,7 +9198,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.8
     },
     {
       "name": "PromptArmor",
@@ -8299,7 +9218,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 2.6
     },
     {
       "name": "Exploding Gradients (Ragas)",
@@ -8317,7 +9238,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 3.6
     },
     {
       "name": "Reveal BI",
@@ -8335,7 +9258,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 4.2
     },
     {
       "name": "Bold BI",
@@ -8353,7 +9278,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 4.6
     },
     {
       "name": "Deepnote",
@@ -8371,7 +9298,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 4.4
     },
     {
       "name": "Observable",
@@ -8389,7 +9318,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.8
     },
     {
       "name": "Plotly",
@@ -8407,7 +9338,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.4
     },
     {
       "name": "marimo",
@@ -8425,7 +9358,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 3.6
     },
     {
       "name": "Appsmith",
@@ -8443,7 +9378,9 @@
       "tier_notability": 2,
       "geo": "India",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 5.2
     },
     {
       "name": "Budibase",
@@ -8461,7 +9398,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.2
     },
     {
       "name": "ToolJet",
@@ -8479,7 +9418,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 3.8
     },
     {
       "name": "DronaHQ",
@@ -8497,7 +9438,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 3.6
     },
     {
       "name": "UI Bakery",
@@ -8515,7 +9458,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 3.2
     },
     {
       "name": "Glide",
@@ -8533,7 +9478,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.8
     },
     {
       "name": "Softr",
@@ -8551,7 +9498,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.4
     },
     {
       "name": "Noloco",
@@ -8569,7 +9518,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.3,
+      "mq_execute": 3.4
     },
     {
       "name": "WeWeb",
@@ -8587,7 +9538,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.9,
+      "mq_execute": 3.6
     },
     {
       "name": "Anvil",
@@ -8605,7 +9558,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 3.4
     },
     {
       "name": "Stacker",
@@ -8623,7 +9578,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 3.6
     },
     {
       "name": "McKinsey QuantumBlack (AI by McKinsey)",
@@ -8641,7 +9598,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 8.8
     },
     {
       "name": "BCG X",
@@ -8659,7 +9618,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.6,
+      "mq_execute": 8.6
     },
     {
       "name": "Bain & Company (Advanced Analytics / Bain AI)",
@@ -8677,7 +9638,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 8.4
     },
     {
       "name": "Deloitte (AI & Data / Deloitte AI Institute)",
@@ -8695,7 +9658,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 9.0
     },
     {
       "name": "PwC (AI & Analytics)",
@@ -8713,7 +9678,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 8.7
     },
     {
       "name": "EY (Data & AI)",
@@ -8731,7 +9698,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 8.5
     },
     {
       "name": "Thoughtworks",
@@ -8749,7 +9718,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.3,
+      "mq_execute": 6.6
     },
     {
       "name": "DXC Technology",
@@ -8767,7 +9738,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 7.2
     },
     {
       "name": "Mphasis",
@@ -8785,7 +9758,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 6.6
     },
     {
       "name": "Persistent Systems",
@@ -8803,7 +9778,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 7.0
     },
     {
       "name": "Brillio",
@@ -8821,7 +9798,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 5.8
     },
     {
       "name": "Fractal Analytics (Fractal.ai)",
@@ -8839,7 +9818,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 7.0
     },
     {
       "name": "Tiger Analytics",
@@ -8857,7 +9838,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.8
     },
     {
       "name": "Quantiphi",
@@ -8875,7 +9858,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.6
     },
     {
       "name": "LatentView Analytics",
@@ -8893,7 +9878,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 5.6
     },
     {
       "name": "ZS Associates",
@@ -8911,7 +9898,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 6.8
     },
     {
       "name": "Mu Sigma",
@@ -8929,7 +9918,9 @@
       "tier_notability": 2,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 5.4
     },
     {
       "name": "ExlService (EXL)",
@@ -8947,7 +9938,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 6.8
     },
     {
       "name": "C5i (Course5 Intelligence)",
@@ -8965,7 +9958,9 @@
       "tier_notability": 2,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.6
     },
     {
       "name": "Straive",
@@ -8983,7 +9978,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 5.0
     },
     {
       "name": "Sigmoid",
@@ -9001,7 +9998,9 @@
       "tier_notability": 2,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.4
     },
     {
       "name": "Affine",
@@ -9019,7 +10018,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 4.0
     },
     {
       "name": "Eucloid",
@@ -9037,7 +10038,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 3.0
     },
     {
       "name": "Reply S.p.A.",
@@ -9055,7 +10058,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 7.2
     },
     {
       "name": "Devoteam",
@@ -9073,7 +10078,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 6.4
     },
     {
       "name": "synvert",
@@ -9091,7 +10098,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 4.2
     },
     {
       "name": "Datatonic",
@@ -9109,7 +10118,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.8
     },
     {
       "name": "Onix",
@@ -9127,7 +10138,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.4,
+      "mq_execute": 4.2
     },
     {
       "name": "Aimpoint Digital",
@@ -9145,7 +10158,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Analytics8",
@@ -9163,7 +10178,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 4.0
     },
     {
       "name": "Lovelytics",
@@ -9181,7 +10198,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Cleartelligence",
@@ -9199,7 +10218,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 3.4
     },
     {
       "name": "ProCogia",
@@ -9217,7 +10238,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.5,
+      "mq_execute": 3.8
     },
     {
       "name": "SunnyData",
@@ -9235,7 +10258,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 3.2
     },
     {
       "name": "Thorogood",
@@ -9253,7 +10278,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 3.8,
+      "mq_execute": 4.2
     },
     {
       "name": "Tribe AI",
@@ -9271,7 +10298,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Voyage AI",
@@ -9289,7 +10318,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 6.5
     },
     {
       "name": "Jina AI",
@@ -9307,7 +10338,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.2
     },
     {
       "name": "Nomic AI",
@@ -9325,7 +10358,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 4.8
     },
     {
       "name": "Unstructured",
@@ -9343,7 +10378,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.8
     },
     {
       "name": "Hebbia",
@@ -9361,7 +10398,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 6.0
     },
     {
       "name": "AlphaSense",
@@ -9379,7 +10418,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 8.0
     },
     {
       "name": "Onyx",
@@ -9397,7 +10438,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Sana",
@@ -9415,7 +10458,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.8
     },
     {
       "name": "OpenRouter",
@@ -9433,7 +10478,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 6.2
     },
     {
       "name": "Lamini",
@@ -9451,7 +10498,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 4.2
     },
     {
       "name": "OpenPipe",
@@ -9469,7 +10518,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.8
     },
     {
       "name": "Unsloth AI",
@@ -9487,7 +10538,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.5
     },
     {
       "name": "Sakana AI",
@@ -9505,7 +10558,9 @@
       "tier_notability": 1,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 5.5
     },
     {
       "name": "Upstage",
@@ -9523,7 +10578,9 @@
       "tier_notability": 2,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.5
     },
     {
       "name": "Naver (HyperCLOVA X)",
@@ -9541,7 +10598,9 @@
       "tier_notability": 1,
       "geo": "APAC",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 8.0
     },
     {
       "name": "LG AI Research (EXAONE)",
@@ -9559,7 +10618,9 @@
       "tier_notability": 2,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 7.5
     },
     {
       "name": "World Labs",
@@ -9577,7 +10638,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.2,
+      "mq_execute": 5.5
     },
     {
       "name": "Runway",
@@ -9595,7 +10658,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.0,
+      "mq_execute": 6.8
     },
     {
       "name": "Luma AI",
@@ -9613,7 +10678,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 6.5
     },
     {
       "name": "Suno",
@@ -9631,7 +10698,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 6.2
     },
     {
       "name": "ElevenLabs",
@@ -9649,7 +10718,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.3,
+      "mq_execute": 7.5
     },
     {
       "name": "Decart",
@@ -9667,7 +10738,9 @@
       "tier_notability": 1,
       "geo": "Israel",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.8
     },
     {
       "name": "PolyAI",
@@ -9685,7 +10758,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 6.0
     },
     {
       "name": "Parloa",
@@ -9703,7 +10778,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 6.0
     },
     {
       "name": "Cresta",
@@ -9721,7 +10798,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 6.5
     },
     {
       "name": "Bland AI",
@@ -9739,7 +10818,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.0
     },
     {
       "name": "Inworld AI",
@@ -9757,7 +10838,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 5.8
     },
     {
       "name": "Helicone",
@@ -9775,7 +10858,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Traceloop",
@@ -9793,7 +10878,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.8
     },
     {
       "name": "LangWatch",
@@ -9811,7 +10898,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 3.2
     },
     {
       "name": "Lunary",
@@ -9829,7 +10918,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 2.8
     },
     {
       "name": "Quantexa",
@@ -9847,7 +10938,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 7.0
     },
     {
       "name": "Faculty",
@@ -9865,7 +10958,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.5
     },
     {
       "name": "DataSentics",
@@ -9883,7 +10978,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.5,
+      "mq_execute": 4.2
     },
     {
       "name": "ParadeDB",
@@ -9901,7 +10998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.8
     },
     {
       "name": "Neon",
@@ -9919,7 +11018,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 6.5
     },
     {
       "name": "Hasura",
@@ -9937,7 +11038,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 5.8
     },
     {
       "name": "PuppyGraph",
@@ -9955,7 +11058,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 3.5
     },
     {
       "name": "Dune",
@@ -9973,7 +11078,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 5.5
     },
     {
       "name": "PostHog",
@@ -9991,7 +11098,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.5,
+      "mq_execute": 6.8
     },
     {
       "name": "Statsig",
@@ -10009,7 +11118,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 6.5
     },
     {
       "name": "Amplitude",
@@ -10027,7 +11138,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 7.5
     },
     {
       "name": "Mixpanel",
@@ -10045,7 +11158,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 6.5
     },
     {
       "name": "Census",
@@ -10063,7 +11178,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.5,
+      "mq_execute": 6.0
     },
     {
       "name": "GrowthBook",
@@ -10081,7 +11198,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.5
     },
     {
       "name": "Debezium",
@@ -10099,7 +11218,9 @@
       "tier_notability": 3,
       "geo": "Other",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 6.5
     },
     {
       "name": "Redpanda Data",
@@ -10117,7 +11238,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 6.5
     },
     {
       "name": "Bytewax",
@@ -10135,7 +11258,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.2
     },
     {
       "name": "Quix",
@@ -10153,7 +11278,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.5,
+      "mq_execute": 3.6
     },
     {
       "name": "Modular",
@@ -10171,7 +11298,9 @@
       "tier_notability": 1,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 5.8
     },
     {
       "name": "Inception Labs",
@@ -10189,7 +11318,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.8,
+      "mq_execute": 3.8
     },
     {
       "name": "Z.ai (Zhipu)",
@@ -10207,7 +11338,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 8.2,
+      "mq_execute": 6.8
     },
     {
       "name": "Bauplan",
@@ -10225,7 +11358,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 2.8
     },
     {
       "name": "Portable",
@@ -10243,7 +11378,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 3.0
     },
     {
       "name": "Sequin",
@@ -10261,7 +11398,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.8
     },
     {
       "name": "Distyl AI",
@@ -10279,7 +11418,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Poolside",
@@ -10297,7 +11438,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 5.2
     },
     {
       "name": "H Company",
@@ -10315,7 +11458,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Quesma",
@@ -10333,7 +11478,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.4
     },
     {
       "name": "Distributional",
@@ -10351,7 +11498,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.2,
+      "mq_execute": 3.8
     },
     {
       "name": "Lakera",
@@ -10369,7 +11518,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.2
     },
     {
       "name": "Prompt Security",
@@ -10387,7 +11538,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 4.8
     },
     {
       "name": "Eureka Security",
@@ -10405,7 +11558,9 @@
       "tier_notability": 3,
       "geo": "Israel",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.0
     },
     {
       "name": "Dasera",
@@ -10423,7 +11578,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 4.0
     },
     {
       "name": "SurrealDB",
@@ -10441,7 +11598,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Objective",
@@ -10459,7 +11618,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.2
     },
     {
       "name": "SiliconFlow",
@@ -10477,7 +11638,9 @@
       "tier_notability": 2,
       "geo": "China",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.0,
+      "mq_execute": 4.6
     },
     {
       "name": "Inference.net",
@@ -10495,7 +11658,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 3.2
     },
     {
       "name": "GMI Cloud",
@@ -10513,7 +11678,9 @@
       "tier_notability": 2,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 5.0
     },
     {
       "name": "Shadeform",
@@ -10531,7 +11698,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.0
     },
     {
       "name": "Mirascope",
@@ -10549,7 +11718,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 2.6
     },
     {
       "name": "Inkeep",
@@ -10567,7 +11738,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.4
     },
     {
       "name": "Stack AI",
@@ -10585,7 +11758,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Langtrace",
@@ -10603,7 +11778,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 2.8
     },
     {
       "name": "Atla",
@@ -10621,7 +11798,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 2.8
     },
     {
       "name": "Cerebrium",
@@ -10639,7 +11818,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.4
     },
     {
       "name": "Rendered.ai",
@@ -10657,7 +11838,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.0
     },
     {
       "name": "Propel",
@@ -10675,7 +11858,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.2,
+      "mq_execute": 3.2
     },
     {
       "name": "Zerve",
@@ -10693,7 +11878,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.0
     },
     {
       "name": "Nous Research",
@@ -10711,7 +11898,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Silo AI",
@@ -10729,7 +11918,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 5.8
     },
     {
       "name": "AI Singapore (SEA-LION)",
@@ -10747,7 +11938,9 @@
       "tier_notability": 3,
       "geo": "APAC",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.8,
+      "mq_execute": 4.0
     },
     {
       "name": "Centific",
@@ -10765,7 +11958,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 4.8
     },
     {
       "name": "Zeenea",
@@ -10783,7 +11978,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 4.0
     },
     {
       "name": "Datagaps",
@@ -10801,7 +11998,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 4.0
     },
     {
       "name": "Arroyo",
@@ -10819,7 +12018,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 6.4,
+      "mq_execute": 3.6
     },
     {
       "name": "DAGWorks (Hamilton)",
@@ -10837,7 +12038,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 2.6
     },
     {
       "name": "Commanders Act",
@@ -10855,7 +12058,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.8,
+      "mq_execute": 4.2
     },
     {
       "name": "Two AI",
@@ -10873,7 +12078,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 3.0
     },
     {
       "name": "CoRover",
@@ -10891,7 +12098,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 3.6
     },
     {
       "name": "GreptimeDB",
@@ -10909,7 +12118,9 @@
       "tier_notability": 3,
       "geo": "China",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.4
     },
     {
       "name": "Lantern",
@@ -10927,7 +12138,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 3.0
     },
     {
       "name": "Databrain",
@@ -10945,7 +12158,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.6,
+      "mq_execute": 2.8
     },
     {
       "name": "E2B",
@@ -10963,7 +12178,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 4.2
     },
     {
       "name": "Browserbase",
@@ -10981,7 +12198,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 4.8
     },
     {
       "name": "Didomi",
@@ -10999,7 +12218,9 @@
       "tier_notability": 2,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 5.0
     },
     {
       "name": "Northern Data Group",
@@ -11017,7 +12238,9 @@
       "tier_notability": 1,
       "geo": "Europe",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.4,
+      "mq_execute": 5.6
     },
     {
       "name": "Krutrim Cloud",
@@ -11035,7 +12258,9 @@
       "tier_notability": 1,
       "geo": "India",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.6,
+      "mq_execute": 4.4
     },
     {
       "name": "Gramener",
@@ -11053,7 +12278,9 @@
       "tier_notability": 3,
       "geo": "India",
       "company_type": "Acquired",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.2,
+      "mq_execute": 4.5
     },
     {
       "name": "Recordly",
@@ -11071,7 +12298,9 @@
       "tier_notability": 3,
       "geo": "Europe",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 4.0,
+      "mq_execute": 3.5
     },
     {
       "name": "Pika",
@@ -11089,7 +12318,9 @@
       "tier_notability": 2,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.2,
+      "mq_execute": 5.2
     },
     {
       "name": "Tencent Hunyuan",
@@ -11107,7 +12338,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.8,
+      "mq_execute": 8.8
     },
     {
       "name": "iFlytek",
@@ -11125,7 +12358,9 @@
       "tier_notability": 1,
       "geo": "China",
       "company_type": "Public",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 7.0,
+      "mq_execute": 7.8
     },
     {
       "name": "Chunkr",
@@ -11143,7 +12378,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private (OSS-led)",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.0,
+      "mq_execute": 2.6
     },
     {
       "name": "Extend",
@@ -11161,7 +12398,9 @@
       "tier_notability": 3,
       "geo": "North America",
       "company_type": "Private",
-      "at_summit": false
+      "at_summit": false,
+      "mq_vision": 5.3,
+      "mq_execute": 3.8
     }
   ]
 }

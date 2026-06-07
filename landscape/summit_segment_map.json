@@ -2,796 +2,1191 @@
   "_meta": {
     "purpose": "Non-destructive overlay mapping the 197 Snowflake Summit 2026 partners onto the shared 19-segment taxonomy + relationship axis. Source vendors.json is unmodified.",
     "generated": "2026-06-07",
-    "count": 197
+    "count": 197,
+    "mq_scored": "2026-06-07: Vision\u00d7Execution added (overlay; summit vendors.json untouched)"
   },
   "map": {
     "7Rivers": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.2,
+      "mq_execute": 3.0
     },
     "Acceldata": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 5.5
     },
     "Acxiom": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 7.2
     },
     "Airbyte": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 6.2
     },
     "Alation": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 7.0
     },
     "Alteryx": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 7.3
     },
     "Altimate AI": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 2.8
     },
     "Amperity": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.3,
+      "mq_execute": 6.4
     },
     "Anomalo": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.2,
+      "mq_execute": 5.0
     },
     "Arango": {
       "segment": "Vector Databases & RAG / Retrieval Infra",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     "Archetype": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.6,
+      "mq_execute": 4.3
     },
     "Artie Technologies": {
       "segment": "Real-time & Streaming Data",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.3,
+      "mq_execute": 3.6
     },
     "Astrato Analytics": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 3.4
     },
     "Astronomer": {
       "segment": "Data Orchestration & Workflow Engines",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.9,
+      "mq_execute": 6.5
     },
     "Ataccama": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 6.5
     },
     "Atlan": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.6,
+      "mq_execute": 6.6
     },
     "Atrium": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.5,
+      "mq_execute": 3.2
     },
     "AtScale": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 5.0
     },
     "Avaap": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.4,
+      "mq_execute": 4.0
     },
     "AVEVA": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.6,
+      "mq_execute": 8.0
     },
     "AWS": {
       "segment": "Cloud Data Warehouses & Lakehouses",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 9.0,
+      "mq_execute": 9.8
     },
     "Bigeye": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     "Blend360": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.4,
+      "mq_execute": 5.2
     },
     "BlueCloud": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.6,
+      "mq_execute": 4.0
     },
     "Boomi": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 7.4
     },
     "Braze": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 7.6
     },
     "Brilliant Enterprise Magic": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 2.6
     },
     "Bruin": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 2.0
     },
     "Brooklyn Data": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.8,
+      "mq_execute": 3.6
     },
     "Capgemini": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 6.2,
+      "mq_execute": 8.8
     },
     "Capital One Software": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 7.0
     },
     "CARTO": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.4,
+      "mq_execute": 5.6
     },
     "CData": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.6,
+      "mq_execute": 6.4
     },
     "CDW": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.8,
+      "mq_execute": 8.2
     },
     "Chalk": {
       "segment": "MLOps, ML Platforms & Feature Stores",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.6,
+      "mq_execute": 5.8
     },
     "Cloudera": {
       "segment": "Cloud Data Warehouses & Lakehouses",
-      "relationship": "substitute"
+      "relationship": "substitute",
+      "mq_vision": 5.2,
+      "mq_execute": 7.0
     },
     "Coalesce": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.4,
+      "mq_execute": 5.4
     },
     "Coastal": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.6,
+      "mq_execute": 4.2
     },
     "Cognizant": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.8,
+      "mq_execute": 8.6
     },
     "Collibra": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.0,
+      "mq_execute": 7.6
     },
     "Contentsquare": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.6,
+      "mq_execute": 7.4
     },
     "Crunchbase": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 6.0
     },
     "Cyera": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.8,
+      "mq_execute": 7.0
     },
     "Dagster Labs": {
       "segment": "Data Orchestration & Workflow Engines",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.9,
+      "mq_execute": 6.0
     },
     "DAS42": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.8,
+      "mq_execute": 3.5
     },
     "Datacove": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.0,
+      "mq_execute": 2.8
     },
     "Datafold": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.2,
+      "mq_execute": 4.8
     },
     "DataHub": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 5.2
     },
     "Dataiku": {
       "segment": "MLOps, ML Platforms & Feature Stores",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 8.0,
+      "mq_execute": 7.8
     },
     "DataOps.live": {
       "segment": "Data Orchestration & Workflow Engines",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 4.0
     },
     "DataRadar": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.2,
+      "mq_execute": 2.3
     },
     "dbt Labs": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 8.2,
+      "mq_execute": 7.5
     },
     "dltHub": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 3.8
     },
     "Domo": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 5.2
     },
     "DQLabs": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.2,
+      "mq_execute": 3.0
     },
     "Dremio": {
       "segment": "Cloud Data Warehouses & Lakehouses",
-      "relationship": "substitute"
+      "relationship": "substitute",
+      "mq_vision": 7.0,
+      "mq_execute": 6.5
     },
     "Dun & Bradstreet": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 7.8
     },
     "edata": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 2.0,
+      "mq_execute": 1.8
     },
     "Elementum": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.0,
+      "mq_execute": 4.2
     },
     "EPAM": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.5,
+      "mq_execute": 8.0
     },
     "Espresso AI": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 3.2
     },
     "Estuary": {
       "segment": "Real-time & Streaming Data",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 4.3
     },
     "Etleap": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.2,
+      "mq_execute": 3.2
     },
     "Euno": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 3.0
     },
     "evolv Consulting": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.0,
+      "mq_execute": 3.0
     },
     "FactSet": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 8.5
     },
     "FalkorDB": {
       "segment": "Vector Databases & RAG / Retrieval Infra",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 2.8
     },
     "Fivetran": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.8,
+      "mq_execute": 8.0
     },
     "Flexor": {
       "segment": "Data Labeling, Synthetic Data & Data-for-AI",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.5,
+      "mq_execute": 3.0
     },
     "Foundational": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.5,
+      "mq_execute": 3.2
     },
     "FreedomPay": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.8,
+      "mq_execute": 5.5
     },
     "Genesis Computing": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.0,
+      "mq_execute": 2.8
     },
     "Genpact": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.2,
+      "mq_execute": 8.0
     },
     "Glean Technologies": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 8.0,
+      "mq_execute": 7.2
     },
     "Google Cloud": {
       "segment": "Cloud Data Warehouses & Lakehouses",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 9.5,
+      "mq_execute": 9.7
     },
     "Gray Swan": {
       "segment": "LLM Observability, Evaluation & Guardrails",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 4.0
     },
     "Greybeam": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.0,
+      "mq_execute": 2.3
     },
     "GrowthArc": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 2.8,
+      "mq_execute": 2.0
     },
     "GrowthLoop": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 4.8
     },
     "Hakkoda (an IBM Company)": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.0,
+      "mq_execute": 6.0
     },
     "Hevo Data": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 4.5
     },
     "Hex": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.2,
+      "mq_execute": 5.8
     },
     "Hexaware": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.8,
+      "mq_execute": 7.2
     },
     "Hightouch": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.0,
+      "mq_execute": 6.0
     },
     "Honeydew": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.5,
+      "mq_execute": 2.8
     },
     "IBM": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 7.0,
+      "mq_execute": 9.3
     },
     "Immuta": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 6.2
     },
     "Informatica": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 8.3
     },
     "Infosys": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.5,
+      "mq_execute": 9.0
     },
     "Insider One": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 6.5
     },
     "insightsoftware": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.5,
+      "mq_execute": 6.8
     },
     "Integrated Quantum Technologies": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.0,
+      "mq_execute": 1.8
     },
     "Keebo": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 3.5
     },
     "Kipi.ai": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.0,
+      "mq_execute": 4.0
     },
     "Kloudgen": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 2.8,
+      "mq_execute": 2.3
     },
     "KPMG": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 6.5,
+      "mq_execute": 9.3
     },
     "Kumo": {
       "segment": "MLOps, ML Platforms & Feature Stores",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 4.3
     },
     "LandingAI": {
       "segment": "Data Labeling, Synthetic Data & Data-for-AI",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 4.8
     },
     "LlamaIndex": {
       "segment": "Vector Databases & RAG / Retrieval Infra",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.5,
+      "mq_execute": 5.2
     },
     "LTM": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.5,
+      "mq_execute": 8.2
     },
     "Mastech Digital": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.8,
+      "mq_execute": 5.0
     },
     "Mastek": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.2,
+      "mq_execute": 5.8
     },
     "MathCo": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.0,
+      "mq_execute": 5.0
     },
     "Matia": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 4.0
     },
     "Matillion": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 6.8
     },
     "Maxa": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 3.6
     },
     "MaxMyCloud AI": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 2.5,
+      "mq_execute": 1.8
     },
     "Mendix (a Siemens Business)": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 7.0
     },
     "Merkle": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.2,
+      "mq_execute": 7.5
     },
     "MessageGears": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 4.8
     },
     "Meta Integration": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.0,
+      "mq_execute": 4.2
     },
     "Metric Insights": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.0,
+      "mq_execute": 3.6
     },
     "Microsoft": {
       "segment": "Cloud Data Warehouses & Lakehouses",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 9.4,
+      "mq_execute": 9.9
     },
     "Monte Carlo": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.8,
+      "mq_execute": 6.8
     },
     "Neo4j": {
       "segment": "Vector Databases & RAG / Retrieval Infra",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.2,
+      "mq_execute": 7.0
     },
     "NICE": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 8.0
     },
     "NTT DATA": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.8,
+      "mq_execute": 8.8
     },
     "Omni Analytics": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 5.0
     },
     "OneSix": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.2,
+      "mq_execute": 4.2
     },
     "OneTrust": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 7.2
     },
     "OpenAI": {
       "segment": "Foundation Models & LLM Providers",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 9.7,
+      "mq_execute": 9.2
     },
     "Openlayer": {
       "segment": "LLM Observability, Evaluation & Guardrails",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 3.6
     },
     "Pantomath": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 4.2
     },
     "paradime.io": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 2.8
     },
     "Perficient": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.0,
+      "mq_execute": 7.5
     },
     "phData": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.5,
+      "mq_execute": 5.5
     },
     "PointFive": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 3.8
     },
     "Polytomic": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 3.2
     },
     "Posit": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 6.2
     },
     "Precisely": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 7.5
     },
     "Precog": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 3.4
     },
     "Prefect Technologies": {
       "segment": "Data Orchestration & Workflow Engines",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 5.0
     },
     "Promethium": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 3.8
     },
     "Prophecy": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.5,
+      "mq_execute": 5.5
     },
     "Qlik": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 7.5
     },
     "Qualytics": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 3.4
     },
     "Quest": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.5,
+      "mq_execute": 7.2
     },
     "RecordPoint": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.5,
+      "mq_execute": 3.8
     },
     "Redpanda": {
       "segment": "Real-time & Streaming Data",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.0,
+      "mq_execute": 6.0
     },
     "Reducto": {
       "segment": "Data Labeling, Synthetic Data & Data-for-AI",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.0,
+      "mq_execute": 5.2
     },
     "Reflex": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 3.4
     },
     "RelationalAI": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 5.0
     },
     "Reltio": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 6.2
     },
     "Remix": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.5,
+      "mq_execute": 2.5
     },
     "Replit": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.8,
+      "mq_execute": 6.5
     },
     "Retool": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.2,
+      "mq_execute": 6.8
     },
     "Revefi": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 3.4
     },
     "Row Zero": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.6,
+      "mq_execute": 2.9
     },
     "RudderStack": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.4,
+      "mq_execute": 5.6
     },
     "S&P Global": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.5,
+      "mq_execute": 9.0
     },
     "Safe Software": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.6,
+      "mq_execute": 6.6
     },
     "Salesforce": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 8.6,
+      "mq_execute": 9.5
     },
     "SAP": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 9.5
     },
     "Seemore Data": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.3,
+      "mq_execute": 2.7
     },
     "SELECT": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 3.2
     },
     "Sema4.ai": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.3,
+      "mq_execute": 4.5
     },
     "Semarchy": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.4,
+      "mq_execute": 6.0
     },
     "ServiceNow": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 8.4,
+      "mq_execute": 9.4
     },
     "Sifflet": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.6,
+      "mq_execute": 4.0
     },
     "Sigma": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.2,
+      "mq_execute": 6.8
     },
     "Skyflow": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 5.8
     },
     "Slalom": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.2,
+      "mq_execute": 7.4
     },
     "Snowplow": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 5.0
     },
     "Solid Data": {
       "segment": "Data Labeling, Synthetic Data & Data-for-AI",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.6,
+      "mq_execute": 3.0
     },
     "Sparq": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 3.8,
+      "mq_execute": 4.6
     },
     "Spaulding Ridge": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.0,
+      "mq_execute": 5.0
     },
     "SqlDBM": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 4.2
     },
     "Starburst": {
       "segment": "Cloud Data Warehouses & Lakehouses",
-      "relationship": "substitute"
+      "relationship": "substitute",
+      "mq_vision": 7.6,
+      "mq_execute": 6.8
     },
     "Steep": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.6,
+      "mq_execute": 3.0
     },
     "Sundial": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 3.6
     },
     "Superblocks": {
       "segment": "Embedded Analytics, Data Apps & Notebooks",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.6,
+      "mq_execute": 5.4
     },
     "Syncari": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 4.2
     },
     "Tamr": {
       "segment": "Data Catalog, Governance, Lineage & MDM",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 5.6
     },
     "tavily": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.8,
+      "mq_execute": 3.8
     },
     "Tealium": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 6.8
     },
     "TEKSystems Global Services": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 4.6,
+      "mq_execute": 7.8
     },
     "TextQL": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.0,
+      "mq_execute": 4.0
     },
     "The Trade Desk": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.4,
+      "mq_execute": 8.4
     },
     "Theom": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 3.6
     },
     "ThoughtSpot": {
       "segment": "BI, Analytics & Dashboards",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.4,
+      "mq_execute": 6.8
     },
     "Timbrai": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.8,
+      "mq_execute": 2.8
     },
     "TransUnion": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 8.6
     },
     "Treasure AI": {
       "segment": "Reverse ETL, Data Activation & CDP",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 3.0
     },
     "Tredence": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 5.4,
+      "mq_execute": 6.4
     },
     "Truility": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.0,
+      "mq_execute": 2.2
     },
     "TrustLogix": {
       "segment": "Data Security, Privacy & Access Governance",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.0,
+      "mq_execute": 3.4
     },
     "Turgon": {
       "segment": "Data Transformation, Semantic & Metrics Layer",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.6,
+      "mq_execute": 2.2
     },
     "Unravel Data": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.6,
+      "mq_execute": 5.4
     },
     "Uriver": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 4.4,
+      "mq_execute": 2.6
     },
     "Validio AB": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.8,
+      "mq_execute": 4.4
     },
     "VaultSpeed": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 5.2,
+      "mq_execute": 4.8
     },
     "Wipro Limited": {
       "segment": "Data & AI Consulting / SI",
-      "relationship": "different-orbit"
+      "relationship": "different-orbit",
+      "mq_vision": 6.0,
+      "mq_execute": 8.8
     },
     "WisdomAI": {
       "segment": "AI Agent Frameworks & Agent Tooling",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 6.2,
+      "mq_execute": 4.6
     },
     "Workato": {
       "segment": "ETL / ELT / Data Ingestion & Integration",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.2,
+      "mq_execute": 7.4
     },
     "Yuki": {
       "segment": "Other",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.4,
+      "mq_execute": 2.4
     },
     "ZeroError": {
       "segment": "Data Quality & Observability",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 3.6,
+      "mq_execute": 2.2
     },
     "Zilliz": {
       "segment": "Vector Databases & RAG / Retrieval Infra",
-      "relationship": "adjacent"
+      "relationship": "adjacent",
+      "mq_vision": 7.8,
+      "mq_execute": 6.2
     }
   }
 }

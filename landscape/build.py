@@ -77,6 +77,8 @@ def load_ns():
             "investors": v.get("notable_investors", ""),
             "why": v.get("why_notable", ""),
             "website": v.get("website", ""),
+            "vision": v.get("mq_vision"),
+            "execution": v.get("mq_execute"),
             "at_summit": False,
         })
     return out
@@ -112,6 +114,8 @@ def load_summit():
             "desc": v.get("niche", "") or v.get("category", ""),
             "booth": v.get("booth", ""),
             "website": v.get("website", ""),
+            "vision": ov.get("mq_vision"),
+            "execution": ov.get("mq_execute"),
             "at_summit": True,
         })
     return out, bool(overlay)
@@ -298,6 +302,7 @@ tbody tr[role="button"]{cursor:pointer}
 <div class="tabs" role="tablist" aria-label="Views">
   <button class="tab" id="tab-ls" role="tab" aria-selected="true" aria-controls="view-ls">Landscape <span class="muted">· __NS_TOTAL__ absent</span></button>
   <button class="tab" id="tab-mm" role="tab" aria-selected="false" aria-controls="view-mm" tabindex="-1">Market Map <span class="muted">· all __ALL_TOTAL__</span></button>
+  <button class="tab" id="tab-mq" role="tab" aria-selected="false" aria-controls="view-mq" tabindex="-1">Magic Quadrant <span class="muted">· vision × execution</span></button>
 </div>
 
 <main id="main" class="wrap">
@@ -378,6 +383,33 @@ tbody tr[role="button"]{cursor:pointer}
   </div>
 </section>
 
+<!-- ===================== MAGIC QUADRANT VIEW ===================== -->
+<section class="view" id="view-mq" role="tabpanel" aria-labelledby="tab-mq" hidden>
+  <div class="panel">
+    <h2>Magic Quadrant <span class="hint">Completeness of Vision × Ability to Execute · click a dot for details · crosshair = fleet means</span></h2>
+    <div class="filters">
+      <label class="muted" for="mqMode" style="font-size:13px">Dataset</label>
+      <select id="mqMode" aria-label="Dataset">
+        <option value="ns">Non-Summit only (__NS_TOTAL__)</option>
+        <option value="all">All vendors (__ALL_TOTAL__)</option>
+      </select>
+      <span style="width:8px"></span>
+      <button class="chip" data-qrel="" aria-pressed="true">All relationships</button>
+      <button class="chip sub" data-qrel="substitute" aria-pressed="false">Substitutes</button>
+      <button class="chip adj" data-qrel="adjacent" aria-pressed="false">Adjacent</button>
+      <button class="chip orb" data-qrel="different-orbit" aria-pressed="false">Different-orbit</button>
+    </div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--sub)"></span>Substitute</span>
+      <span><span class="sw" style="background:var(--adj)"></span>Adjacent</span>
+      <span><span class="sw" style="background:var(--orb)"></span>Different-orbit</span>
+      <span class="muted" id="mqRingNote">· in “All”, ◯ ringed dots = at Summit</span>
+    </div>
+    <div style="position:relative;height:560px"><canvas id="mqChart"></canvas></div>
+    <div class="muted" id="mqFoot" style="font-size:12px;margin-top:10px;line-height:1.5"></div>
+  </div>
+</section>
+
 <div class="foot">
   First-pass competitive-landscape map · generated 2026-06-07 · __NS_TOTAL__ absent vendors researched via a 19-segment agent swarm, audited for accuracy, and cross-checked against the 197 Snowflake Summit 2026 partners.<br>
   Funding / valuation / HQ are best-effort from public sources — validate before external use. The Summit directory (<code>vendors.json</code>) is unmodified.
@@ -417,12 +449,13 @@ const SHORT={
 };
 
 /* ---------- tabs ---------- */
-const tabs=[document.getElementById('tab-ls'),document.getElementById('tab-mm')];
-const views={'tab-ls':'view-ls','tab-mm':'view-mm'};
+const tabs=[document.getElementById('tab-ls'),document.getElementById('tab-mm'),document.getElementById('tab-mq')];
+const views={'tab-ls':'view-ls','tab-mm':'view-mm','tab-mq':'view-mq'};
 function selectTab(t){
   tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;
     const v=document.getElementById(views[x.id]);v.classList.toggle('active',on);v.hidden=!on;});
   if(t.id==='tab-mm'){renderMekko();drawMM();}
+  if(t.id==='tab-mq'){drawMQ();}
 }
 tabs.forEach((t,i)=>{
   t.addEventListener('click',()=>selectTab(t));
@@ -724,6 +757,87 @@ function renderMekko(){
   });
   const foot=document.getElementById('mekkoFoot'), o=DATA.meta.other_summit||0;
   if(foot)foot.innerHTML=`Click any column to drill into that layer. Shows the 19 shared stack layers; ${o} summit-only tools (Snowflake FinOps / cost optimization, market-data bureaus, off-taxonomy enterprise apps) sit outside this taxonomy and are excluded from the chart — still searchable in the table below.`;
+}
+
+/* ---------- MAGIC QUADRANT ---------- */
+let mqChart,mqInit=false,mqMode='ns',mqQRel='';
+const mqQuadPlugin={id:'mqquad',afterDraw(chart){
+  const a=chart.chartArea; if(!a||chart.$mx==null)return;
+  const sx=chart.scales.x,sy=chart.scales.y,ctx=chart.ctx;
+  const mx=sx.getPixelForValue(chart.$mx),my=sy.getPixelForValue(chart.$my);
+  ctx.save();
+  ctx.strokeStyle='rgba(141,162,200,.4)';ctx.setLineDash([6,5]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(mx,a.top);ctx.lineTo(mx,a.bottom);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(a.left,my);ctx.lineTo(a.right,my);ctx.stroke();
+  ctx.setLineDash([]);ctx.fillStyle='rgba(141,162,200,.5)';ctx.font='bold 12px -apple-system,system-ui,sans-serif';
+  ctx.textAlign='right';ctx.textBaseline='top';ctx.fillText('LEADERS',a.right-10,a.top+8);
+  ctx.textAlign='left';ctx.fillText('CHALLENGERS',a.left+10,a.top+8);
+  ctx.textAlign='right';ctx.textBaseline='bottom';ctx.fillText('VISIONARIES',a.right-10,a.bottom-8);
+  ctx.textAlign='left';ctx.fillText('NICHE PLAYERS',a.left+10,a.bottom-8);
+  ctx.restore();
+}};
+const mqLabelPlugin={id:'mqlabel',afterDatasetsDraw(chart){
+  const a=chart.chartArea; if(!a)return; const ctx=chart.ctx;
+  let pts=[];
+  chart.data.datasets.forEach((ds,di)=>{const meta=chart.getDatasetMeta(di);if(meta.hidden)return;
+    ds.data.forEach((pt,pi)=>{const el=meta.data[pi];if(el)pts.push({px:el.x,py:el.y,score:pt.x+pt.y,name:pt.v.name});});});
+  pts.sort((p,q)=>q.score-p.score);
+  ctx.save();ctx.font='11px -apple-system,system-ui,sans-serif';ctx.textBaseline='middle';
+  const drawn=[]; let count=0;
+  for(const p of pts){
+    if(count>=22)break;
+    const w=ctx.measureText(p.name).width;
+    const rightSide=p.px>a.left+(a.right-a.left)*0.72;     // flip to left of dot near right edge
+    const x=rightSide?p.px-7-w:p.px+7, y=p.py;
+    const box={l:x-2,r:x+w+2,t:y-7,b:y+7};
+    if(box.l<a.left||box.r>a.right){count++;continue;}      // would clip the frame -> skip
+    if(drawn.some(d=>!(box.l>d.r||box.r<d.l||box.t>d.b||box.b<d.t)))continue; // overlaps a drawn label -> skip
+    drawn.push(box);
+    ctx.fillStyle='rgba(11,16,32,.62)';ctx.fillRect(box.l,box.t,box.r-box.l,box.b-box.t);
+    ctx.fillStyle='#e8eeff';ctx.textAlign='left';ctx.fillText(p.name,x,y);
+    count++;
+  }
+  ctx.restore();
+}};
+function mqVisible(){
+  const set=(mqMode==='all')?DATA.ns.concat(DATA.summit):DATA.ns;
+  return set.filter(v=>typeof v.vision==='number'&&typeof v.execution==='number');
+}
+function mqRebuild(){
+  const all=mqVisible(), n=all.length||1;
+  const mx=all.reduce((s,v)=>s+v.vision,0)/n, my=all.reduce((s,v)=>s+v.execution,0)/n;
+  let pts=all; if(mqQRel)pts=pts.filter(p=>p.relationship===mqQRel);
+  const ring=(mqMode==='all');
+  mqChart.data.datasets=RELK.map(rel=>{
+    const dp=pts.filter(p=>p.relationship===rel);
+    return {label:REL_LABEL[rel],data:dp.map(p=>({x:p.vision,y:p.execution,v:p})),
+      backgroundColor:REL_COLORS[rel],pointRadius:ring?3.4:4.2,pointHoverRadius:7,
+      pointBorderColor:dp.map(p=>(ring&&p.at_summit)?'#e8eeff':'rgba(0,0,0,0)'),
+      pointBorderWidth:dp.map(p=>(ring&&p.at_summit)?1.3:0)};
+  });
+  mqChart.$mx=mx; mqChart.$my=my; mqChart.update();
+  const inLeaders=pts.filter(p=>p.vision>=mx&&p.execution>=my).length;
+  const foot=document.getElementById('mqFoot');
+  if(foot)foot.textContent=`${pts.length} vendors plotted · ${inLeaders} in the Leaders quadrant · crosshair at fleet means (Vision ${mx.toFixed(1)}, Execution ${my.toFixed(1)}). ${ring?'Ringed dots were at Snowflake Summit 2026.':'Non-summit vendors only.'} Top 16 by combined score are labelled.`;
+}
+function drawMQ(){
+  if(mqInit){mqRebuild();return;} mqInit=true;
+  const Cdef=Chart.defaults; Cdef.color='#8da2c8'; Cdef.font.family=getComputedStyle(document.body).fontFamily;
+  mqChart=new Chart(document.getElementById('mqChart'),{type:'scatter',data:{datasets:[]},
+    options:{maintainAspectRatio:false,animation:false,onHover:_pt,
+      onClick:(e,els)=>{if(els.length){const el=els[0];const pt=mqChart.data.datasets[el.datasetIndex].data[el.index];if(pt&&pt.v)openVendor(pt.v);}},
+      plugins:{legend:{position:'top'},
+        tooltip:{callbacks:{label:(ctx)=>`${ctx.raw.v.name} — Vision ${ctx.raw.x}, Exec ${ctx.raw.y}`,
+          afterLabel:(ctx)=>ctx.raw.v.segment+(ctx.raw.v.at_summit?' · at Summit':'')}}},
+      scales:{x:{min:0,max:10,title:{display:true,text:'Completeness of Vision →'},grid:{color:'rgba(36,51,82,.55)'}},
+        y:{min:0,max:10,title:{display:true,text:'Ability to Execute →'},grid:{color:'rgba(36,51,82,.55)'}}}},
+    plugins:[mqQuadPlugin,mqLabelPlugin]});
+  document.getElementById('mqMode').addEventListener('change',e=>{mqMode=e.target.value;mqRebuild();});
+  document.querySelectorAll('#view-mq .chip[data-qrel]').forEach(c=>c.addEventListener('click',()=>{
+    mqQRel=c.dataset.qrel;
+    document.querySelectorAll('#view-mq .chip[data-qrel]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.qrel===mqQRel)));
+    mqRebuild();}));
+  mqRebuild();
 }
 
 /* modal close wiring */
