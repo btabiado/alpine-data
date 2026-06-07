@@ -19,6 +19,8 @@ Thumbs.db
 dashboard.html
 # ...but the Snowflake Summit dashboard ships its built HTML as the deliverable.
 !snowflake_summit/dashboard.html
+# ...and the Competitive Landscape sibling ships its built HTML the same way.
+!landscape/dashboard.html
 # Local convenience copy of the built dashboard. Some setups copy/symlink
 # dashboard.html -> index.html to preview at file://.../index.html. The
 # PUBLIC site never uses a tracked root index.html: pages.yml regenerates

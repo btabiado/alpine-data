@@ -757,6 +757,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>
       <a class="dl" href="?view=map" target="_blank" rel="noopener" title="Opens the interactive Basecamp floor map in its own window">🗺 Floor Map ↗</a>
+      <a class="dl" href="../landscape/" target="_blank" rel="noopener" title="The inverse directory: 691 AI &amp; data vendors NOT at the summit, with a stack-layer market map">🔭 Competitive Landscape ↗</a>
       <a class="dl" href="#allpartners" title="Jump to the full partner table">🤝 All Partner Vendors</a>
       <a class="dl" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download title="Download the source spreadsheet (.xlsx)">⬇ Download</a>
       <span class="zoomctl" title="Zoom"><button type="button" class="zbtn" data-zoom="out" aria-label="Zoom out">🔍−</button><span class="zlevel">100%</span><button type="button" class="zbtn" data-zoom="in" aria-label="Zoom in">🔍+</button></span>
@@ -771,6 +772,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
   <div class="toolsheet-grip" aria-hidden="true"></div>
   <button type="button" class="toolsheet-item scoreInfoTrigger" aria-haspopup="dialog" aria-controls="scorePop">ⓘ <span>Scoring — how the scores work</span></button>
   <a class="toolsheet-item" href="?view=news" target="_blank" rel="noopener">📰 <span>Summit News</span></a>
+  <a class="toolsheet-item" href="../landscape/" target="_blank" rel="noopener">🔭 <span>Competitive Landscape</span></a>
   <a class="toolsheet-item" href="#allpartners">🤝 <span>All Partner Vendors</span></a>
   <a class="toolsheet-item" href="Snowflake_Summit_2026_Master_Partner_Scouting.xlsx" download>⬇ <span>Download</span></a>
 </div>

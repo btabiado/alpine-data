@@ -1,0 +1,797 @@
+{
+  "_meta": {
+    "purpose": "Non-destructive overlay mapping the 197 Snowflake Summit 2026 partners onto the shared 19-segment taxonomy + relationship axis. Source vendors.json is unmodified.",
+    "generated": "2026-06-07",
+    "count": 197
+  },
+  "map": {
+    "7Rivers": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Acceldata": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Acxiom": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Airbyte": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Alation": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Alteryx": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Altimate AI": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Amperity": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Anomalo": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Arango": {
+      "segment": "Vector Databases & RAG / Retrieval Infra",
+      "relationship": "adjacent"
+    },
+    "Archetype": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Artie Technologies": {
+      "segment": "Real-time & Streaming Data",
+      "relationship": "adjacent"
+    },
+    "Astrato Analytics": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Astronomer": {
+      "segment": "Data Orchestration & Workflow Engines",
+      "relationship": "adjacent"
+    },
+    "Ataccama": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Atlan": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Atrium": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "AtScale": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "Avaap": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "AVEVA": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "AWS": {
+      "segment": "Cloud Data Warehouses & Lakehouses",
+      "relationship": "adjacent"
+    },
+    "Bigeye": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Blend360": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "BlueCloud": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Boomi": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Braze": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Brilliant Enterprise Magic": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Bruin": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Brooklyn Data": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Capgemini": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Capital One Software": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "CARTO": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "CData": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "CDW": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Chalk": {
+      "segment": "MLOps, ML Platforms & Feature Stores",
+      "relationship": "adjacent"
+    },
+    "Cloudera": {
+      "segment": "Cloud Data Warehouses & Lakehouses",
+      "relationship": "substitute"
+    },
+    "Coalesce": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "Coastal": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Cognizant": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Collibra": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Contentsquare": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Crunchbase": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Cyera": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "Dagster Labs": {
+      "segment": "Data Orchestration & Workflow Engines",
+      "relationship": "adjacent"
+    },
+    "DAS42": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Datacove": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Datafold": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "DataHub": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Dataiku": {
+      "segment": "MLOps, ML Platforms & Feature Stores",
+      "relationship": "adjacent"
+    },
+    "DataOps.live": {
+      "segment": "Data Orchestration & Workflow Engines",
+      "relationship": "adjacent"
+    },
+    "DataRadar": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "dbt Labs": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "dltHub": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Domo": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "DQLabs": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Dremio": {
+      "segment": "Cloud Data Warehouses & Lakehouses",
+      "relationship": "substitute"
+    },
+    "Dun & Bradstreet": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "edata": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Elementum": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "EPAM": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Espresso AI": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Estuary": {
+      "segment": "Real-time & Streaming Data",
+      "relationship": "adjacent"
+    },
+    "Etleap": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Euno": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "evolv Consulting": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "FactSet": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "FalkorDB": {
+      "segment": "Vector Databases & RAG / Retrieval Infra",
+      "relationship": "adjacent"
+    },
+    "Fivetran": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Flexor": {
+      "segment": "Data Labeling, Synthetic Data & Data-for-AI",
+      "relationship": "adjacent"
+    },
+    "Foundational": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "FreedomPay": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Genesis Computing": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Genpact": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Glean Technologies": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Google Cloud": {
+      "segment": "Cloud Data Warehouses & Lakehouses",
+      "relationship": "adjacent"
+    },
+    "Gray Swan": {
+      "segment": "LLM Observability, Evaluation & Guardrails",
+      "relationship": "adjacent"
+    },
+    "Greybeam": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "GrowthArc": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "GrowthLoop": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Hakkoda (an IBM Company)": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Hevo Data": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Hex": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Hexaware": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Hightouch": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Honeydew": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "IBM": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Immuta": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "Informatica": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Infosys": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Insider One": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "insightsoftware": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Integrated Quantum Technologies": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Keebo": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Kipi.ai": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Kloudgen": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "KPMG": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Kumo": {
+      "segment": "MLOps, ML Platforms & Feature Stores",
+      "relationship": "adjacent"
+    },
+    "LandingAI": {
+      "segment": "Data Labeling, Synthetic Data & Data-for-AI",
+      "relationship": "adjacent"
+    },
+    "LlamaIndex": {
+      "segment": "Vector Databases & RAG / Retrieval Infra",
+      "relationship": "adjacent"
+    },
+    "LTM": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Mastech Digital": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Mastek": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "MathCo": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Matia": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Matillion": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Maxa": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "MaxMyCloud AI": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Mendix (a Siemens Business)": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Merkle": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "MessageGears": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Meta Integration": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Metric Insights": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Microsoft": {
+      "segment": "Cloud Data Warehouses & Lakehouses",
+      "relationship": "adjacent"
+    },
+    "Monte Carlo": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Neo4j": {
+      "segment": "Vector Databases & RAG / Retrieval Infra",
+      "relationship": "adjacent"
+    },
+    "NICE": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "NTT DATA": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Omni Analytics": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "OneSix": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "OneTrust": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "OpenAI": {
+      "segment": "Foundation Models & LLM Providers",
+      "relationship": "different-orbit"
+    },
+    "Openlayer": {
+      "segment": "LLM Observability, Evaluation & Guardrails",
+      "relationship": "adjacent"
+    },
+    "Pantomath": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "paradime.io": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "Perficient": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "phData": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "PointFive": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Polytomic": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Posit": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Precisely": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Precog": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Prefect Technologies": {
+      "segment": "Data Orchestration & Workflow Engines",
+      "relationship": "adjacent"
+    },
+    "Promethium": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "Prophecy": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Qlik": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Qualytics": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Quest": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "RecordPoint": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "Redpanda": {
+      "segment": "Real-time & Streaming Data",
+      "relationship": "adjacent"
+    },
+    "Reducto": {
+      "segment": "Data Labeling, Synthetic Data & Data-for-AI",
+      "relationship": "adjacent"
+    },
+    "Reflex": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "RelationalAI": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Reltio": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Remix": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Replit": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Retool": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Revefi": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Row Zero": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "RudderStack": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "S&P Global": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Safe Software": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Salesforce": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "SAP": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Seemore Data": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "SELECT": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Sema4.ai": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Semarchy": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "ServiceNow": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Sifflet": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Sigma": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Skyflow": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "Slalom": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Snowplow": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Solid Data": {
+      "segment": "Data Labeling, Synthetic Data & Data-for-AI",
+      "relationship": "adjacent"
+    },
+    "Sparq": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Spaulding Ridge": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "SqlDBM": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Starburst": {
+      "segment": "Cloud Data Warehouses & Lakehouses",
+      "relationship": "substitute"
+    },
+    "Steep": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Sundial": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Superblocks": {
+      "segment": "Embedded Analytics, Data Apps & Notebooks",
+      "relationship": "adjacent"
+    },
+    "Syncari": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "Tamr": {
+      "segment": "Data Catalog, Governance, Lineage & MDM",
+      "relationship": "adjacent"
+    },
+    "tavily": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Tealium": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "TEKSystems Global Services": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "TextQL": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "The Trade Desk": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Theom": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "ThoughtSpot": {
+      "segment": "BI, Analytics & Dashboards",
+      "relationship": "adjacent"
+    },
+    "Timbrai": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "TransUnion": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "Treasure AI": {
+      "segment": "Reverse ETL, Data Activation & CDP",
+      "relationship": "adjacent"
+    },
+    "Tredence": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "Truility": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "TrustLogix": {
+      "segment": "Data Security, Privacy & Access Governance",
+      "relationship": "adjacent"
+    },
+    "Turgon": {
+      "segment": "Data Transformation, Semantic & Metrics Layer",
+      "relationship": "adjacent"
+    },
+    "Unravel Data": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Uriver": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Validio AB": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "VaultSpeed": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Wipro Limited": {
+      "segment": "Data & AI Consulting / SI",
+      "relationship": "different-orbit"
+    },
+    "WisdomAI": {
+      "segment": "AI Agent Frameworks & Agent Tooling",
+      "relationship": "adjacent"
+    },
+    "Workato": {
+      "segment": "ETL / ELT / Data Ingestion & Integration",
+      "relationship": "adjacent"
+    },
+    "Yuki": {
+      "segment": "Other",
+      "relationship": "adjacent"
+    },
+    "ZeroError": {
+      "segment": "Data Quality & Observability",
+      "relationship": "adjacent"
+    },
+    "Zilliz": {
+      "segment": "Vector Databases & RAG / Retrieval Infra",
+      "relationship": "adjacent"
+    }
+  }
+}

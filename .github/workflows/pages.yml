@@ -158,6 +158,16 @@ jobs:
           python snowflake_summit/build.py || echo "[summit] rebuild failed; using committed dashboard.html"
         continue-on-error: true
 
+      - name: Rebuild Competitive Landscape dashboard
+        # Rebuild landscape/dashboard.html from the committed non_summit_vendors.json
+        # + summit overlay so /landscape/ ships fresh. No network — a pure transform
+        # of committed data. Non-fatal: the committed dashboard.html is the fallback,
+        # and /summit/ + production at `/` must deploy regardless.
+        if: hashFiles('landscape/build.py') != ''
+        run: |
+          python landscape/build.py || echo "[landscape] rebuild failed; using committed dashboard.html"
+        continue-on-error: true
+
       - name: Generate V2 dashboard (parallel build, reads same data/)
         # V2 is a UX-cleanup spin of the same payload — reuses the cached
         # market.json / whale.json / ETF CSVs already fetched above so no
@@ -510,6 +520,15 @@ jobs:
             if [ -f snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx ]; then
               cp snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx _site/summit/
             fi
+          fi
+          # Stage the Competitive Landscape dashboard under /landscape/. Like
+          # /summit/, the page is fully self-contained (Chart.js inline, data baked
+          # in at build time). It reads the committed Summit vendors.json read-only,
+          # so Summit's files are unchanged. V1 (`/`), V2 (`/v2/`), /summit/,
+          # /lthcs/*, and /health/ are all untouched — /landscape/ is a sibling route.
+          if [ -f landscape/dashboard.html ]; then
+            mkdir -p _site/landscape
+            cp landscape/dashboard.html _site/landscape/index.html
           fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
