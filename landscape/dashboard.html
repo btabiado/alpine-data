@@ -228,6 +228,12 @@ tbody tr[role="button"]{cursor:pointer}
         <option value="ns">Non-Summit only (619)</option>
         <option value="all">All vendors (816)</option>
       </select>
+      <label class="muted" for="mqColor" style="font-size:13px;margin-left:6px">Color</label>
+      <select id="mqColor" aria-label="Color by">
+        <option value="relationship">Relationship</option>
+        <option value="tier">Notability tier</option>
+        <option value="presence">Presence (at summit?)</option>
+      </select>
       <span style="width:8px"></span>
       <button class="chip" data-qrel="" aria-pressed="true">All relationships</button>
       <button class="chip sub" data-qrel="substitute" aria-pressed="false">Substitutes</button>
@@ -235,9 +241,7 @@ tbody tr[role="button"]{cursor:pointer}
       <button class="chip orb" data-qrel="different-orbit" aria-pressed="false">Different-orbit</button>
     </div>
     <div class="legend">
-      <span><span class="sw" style="background:var(--sub)"></span>Substitute</span>
-      <span><span class="sw" style="background:var(--adj)"></span>Adjacent</span>
-      <span><span class="sw" style="background:var(--orb)"></span>Different-orbit</span>
+      <span class="muted">Colour follows the legend above the chart.</span>
       <span class="muted" id="mqRingNote">· in “All”, ◯ ringed dots = at Summit</span>
     </div>
     <div style="position:relative;height:560px"><canvas id="mqChart"></canvas></div>
@@ -595,7 +599,23 @@ function renderMekko(){
 }
 
 /* ---------- MAGIC QUADRANT ---------- */
-let mqChart,mqInit=false,mqMode='ns',mqQRel='';
+let mqChart,mqInit=false,mqMode='ns',mqQRel='',mqColorBy='relationship';
+const MQ_COLORMODES={
+  relationship:{cats:[
+    {k:'substitute',label:'Substitute',color:'#f87171'},
+    {k:'adjacent',label:'Adjacent',color:'#34d399'},
+    {k:'different-orbit',label:'Different-orbit',color:'#a78bfa'}],
+    of:v=>v.relationship},
+  tier:{cats:[
+    {k:'1',label:'Tier 1 (marquee)',color:'#34d399'},
+    {k:'2',label:'Tier 2',color:'#fbbf24'},
+    {k:'3',label:'Tier 3',color:'#64748b'}],
+    of:v=>v.at_summit?({A:'1',B:'2',C:'3',D:'3'}[String(v.tier||'').trim().toUpperCase().charAt(0)]||'3'):String(v.tier)},
+  presence:{cats:[
+    {k:'present',label:'At Summit',color:'#29b5e8'},
+    {k:'absent',label:'Absent',color:'#fbbf24'}],
+    of:v=>v.at_summit?'present':'absent'},
+};
 const mqQuadPlugin={id:'mqquad',afterDraw(chart){
   const a=chart.chartArea; if(!a||chart.$mx==null)return;
   const sx=chart.scales.x,sy=chart.scales.y,ctx=chart.ctx;
@@ -642,15 +662,16 @@ function mqRebuild(){
   const all=mqVisible(), n=all.length||1;
   const mx=all.reduce((s,v)=>s+v.vision,0)/n, my=all.reduce((s,v)=>s+v.execution,0)/n;
   let pts=all; if(mqQRel)pts=pts.filter(p=>p.relationship===mqQRel);
-  const ring=(mqMode==='all');
-  mqChart.data.datasets=RELK.map(rel=>{
-    const dp=pts.filter(p=>p.relationship===rel);
-    return {label:REL_LABEL[rel],data:dp.map(p=>({x:p.vision,y:p.execution,v:p})),
-      backgroundColor:REL_COLORS[rel],pointRadius:ring?3.4:4.2,pointHoverRadius:7,
+  const ring=(mqMode==='all'), mode=MQ_COLORMODES[mqColorBy];
+  mqChart.data.datasets=mode.cats.map(cat=>{
+    const dp=pts.filter(p=>mode.of(p)===cat.k);
+    return {label:cat.label,data:dp.map(p=>({x:p.vision,y:p.execution,v:p})),
+      backgroundColor:cat.color,pointRadius:ring?3.4:4.2,pointHoverRadius:7,
       pointBorderColor:dp.map(p=>(ring&&p.at_summit)?'#e8eeff':'rgba(0,0,0,0)'),
       pointBorderWidth:dp.map(p=>(ring&&p.at_summit)?1.3:0)};
   });
   mqChart.$mx=mx; mqChart.$my=my; mqChart.update();
+  const rn=document.getElementById('mqRingNote'); if(rn)rn.style.display=ring?'':'none';
   const inLeaders=pts.filter(p=>p.vision>=mx&&p.execution>=my).length;
   const foot=document.getElementById('mqFoot');
   if(foot)foot.textContent=`${pts.length} vendors plotted · ${inLeaders} in the Leaders quadrant · crosshair at fleet means (Vision ${mx.toFixed(1)}, Execution ${my.toFixed(1)}). ${ring?'Ringed dots were at Snowflake Summit 2026.':'Non-summit vendors only.'} Top 16 by combined score are labelled.`;
@@ -668,6 +689,7 @@ function drawMQ(){
         y:{min:0,max:10,title:{display:true,text:'Ability to Execute →'},grid:{color:'rgba(36,51,82,.55)'}}}},
     plugins:[mqQuadPlugin,mqLabelPlugin]});
   document.getElementById('mqMode').addEventListener('change',e=>{mqMode=e.target.value;mqRebuild();});
+  document.getElementById('mqColor').addEventListener('change',e=>{mqColorBy=e.target.value;mqRebuild();});
   document.querySelectorAll('#view-mq .chip[data-qrel]').forEach(c=>c.addEventListener('click',()=>{
     mqQRel=c.dataset.qrel;
     document.querySelectorAll('#view-mq .chip[data-qrel]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.qrel===mqQRel)));
