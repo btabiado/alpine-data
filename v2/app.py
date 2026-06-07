@@ -4066,8 +4066,18 @@ function renderEtfFundTable(){
   tb.innerHTML = d.by_fund.map(f => `<tr><td>${escapeHtml(f.fund)}</td><td class="${f.total>=0?'green':'red'}">${fmtSigned(f.total)}</td><td class="${f.last_30d>=0?'green':'red'}">${fmtSigned(f.last_30d)}</td></tr>`).join('');
 }
 
+function etfSeries(d){
+  // For YTD, rebuild from the in-year DAILY rows so weekly/monthly buckets at the
+  // Jan-1 boundary count only in-year days — both the flow bars and the cumulative
+  // then reconcile exactly to the server ytd scalar (a W-MON week straddling Jan-1
+  // would otherwise be dropped by the >=Jan-1 filter, losing its in-year flows).
+  if (state.range !== 'ytd') return applyRange(d[state.period]);
+  const yd = applyRange(d.daily || []);
+  let cum = 0;
+  return resample(yd, state.period, {flow:'sum'}).map(r => ({date:r.date, flow:(r.flow||0), cumulative:(cum += (r.flow||0))}));
+}
 function renderFlow(){
-  const d = etfData(); const series = applyRange(d[state.period]);
+  const d = etfData(); const series = etfSeries(d);
   destroy('flow');
   charts.flow = new Chart(document.getElementById('flowChart'), {
     type:'bar',
@@ -4076,15 +4086,11 @@ function renderFlow(){
   });
 }
 function renderCum(){
-  const d = etfData(); const series = applyRange(d[state.period]); const c = accentFor(etfAsset());
-  // Under a YTD range, re-base the all-time cumulative line so it starts at 0 on
-  // Jan-1 (reconciles to the server ytd scalar = sum of current-year flows).
-  // Other ranges keep the true all-time cumulative ("cumulative-as-of").
-  const base = (state.range === 'ytd' && series.length) ? (series[0].cumulative - series[0].flow) : 0;
+  const d = etfData(); const series = etfSeries(d); const c = accentFor(etfAsset());
   destroy('cum');
   charts.cum = new Chart(document.getElementById('cumChart'), {
     type:'line',
-    data:{labels:series.map(r=>r.date), datasets:[{data:series.map(r=>r.cumulative - base), borderColor:c, backgroundColor:c+'33', fill:true, tension:0.2, pointRadius:0, borderWidth:2}]},
+    data:{labels:series.map(r=>r.date), datasets:[{data:series.map(r=>r.cumulative), borderColor:c, backgroundColor:c+'33', fill:true, tension:0.2, pointRadius:0, borderWidth:2}]},
     options: baseOpts({yLabel:'Cumulative ($M)', tooltipFmt:v=>fmtSigned(v)}),
   });
 }
@@ -12785,14 +12791,14 @@ function renderRedditCards(){
     const posts = (s.top_posts || []).slice(0, 3).map(p => `
       <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
         <span style="color:var(--muted)">▲ ${fmtNumShort(p.score)} · 💬 ${fmtNumShort(p.comments)}</span>
-        <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
+        <span style="display:block;color:var(--text);line-height:1.3">${escapeHtml(p.title||'')}</span>
       </a>
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
     const trending = (s.trending || []).slice(0, 3).map(p => `
       <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
         <span style="color:var(--v2-warn)">🔥 ${fmtNumShort(p.score)}</span>
         <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
-        <span style="display:block;color:var(--text);line-height:1.3">${(p.title||'').replace(/</g,'&lt;')}</span>
+        <span style="display:block;color:var(--text);line-height:1.3">${escapeHtml(p.title||'')}</span>
       </a>
     `).join('');
     const trendingBlock = trending
