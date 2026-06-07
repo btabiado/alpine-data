@@ -728,6 +728,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
       <div class="sub" id="subhead"></div>
     </div>
     <div class="navbtns">
+      <a class="dl" href="../#summit" title="Return to the main dashboard (Summit tab)">← Back to dashboard</a>
       <button type="button" class="infobtn no-print scoreInfoTrigger" id="scoreInfoBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="scorePop" title="How the scores are calculated">ⓘ Scoring</button>
       <a class="dl" href="?view=news" target="_blank" rel="noopener" title="Opens the partner news feed in its own window">📰 Summit News ↗</a>
       <a class="dl" href="?view=mq" target="_blank" rel="noopener" title="Opens the Magic Quadrant in its own window">📊 Magic Quadrant ↗</a>

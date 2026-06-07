@@ -11734,6 +11734,19 @@ function avBootAviation(DATA){
 
 function selectTab(t){
   state.tab = t;
+  // Keep the URL hash in sync so every tab is deep-linkable & shareable
+  // (e.g. .../#summit lands straight on the Summit tab). Overview is the
+  // default → clean hash-less URL; every other tab → #<tab>. replaceState
+  // (not location.hash=) avoids a history entry per click AND a re-entrant
+  // hashchange→selectTab loop (replaceState does not fire hashchange).
+  try {
+    const _curHash = (location.hash || '').replace(/^#/, '');
+    const _wantHash = (t === 'overview') ? '' : t;
+    if (_curHash !== _wantHash) {
+      history.replaceState(null, '',
+        _wantHash ? '#' + _wantHash : location.pathname + location.search);
+    }
+  } catch (_) {}
   // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
   // renderAll() below runs immediately with an empty subtree (the
   // tab's empty-state handles that), then re-runs once the fetch lands.
@@ -17102,7 +17115,23 @@ function renderTravelListV1(advisories, sub, counts){
 })();
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
-selectTab('overview');
+// Deep-link support: open the tab named in the URL hash (#summit, #city, …)
+// on load, falling back to Overview; then react to later hash changes
+// (browser back/forward, manual edits, or an inbound link while already open).
+function _tabFromHash(){
+  let h = (location.hash || '').replace(/^#/, '');
+  try { h = decodeURIComponent(h); } catch (_) {}
+  if (!h) return null;
+  return Array.prototype.some.call(
+    document.querySelectorAll('.tab[data-tab]'),
+    el => el.dataset.tab === h
+  ) ? h : null;
+}
+selectTab(_tabFromHash() || 'overview');
+window.addEventListener('hashchange', () => {
+  const h = _tabFromHash();
+  if (h && h !== state.tab) selectTab(h);
+});
 renderAll();
 </script>
 </body>
