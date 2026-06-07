@@ -2134,7 +2134,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
     <div id="etfContent">
       <div class="row" id="etfKpis"></div>
-      <div class="controls" style="border:0;padding:0 0 10px">
+      <div class="controls" style="border:0;padding:0 0 10px;position:relative;z-index:40">
         <span class="lbl">Period</span>
         <button class="btn active" data-period="daily">Daily</button>
         <button class="btn" data-period="weekly">Weekly</button>
@@ -2251,7 +2251,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <button class="btn" data-futuresasset="ltc">LTC</button>
       </div>
       <div class="row" id="tradingKpis"></div>
-      <div class="controls" style="border:0;padding:0 0 10px">
+      <div class="controls" style="border:0;padding:0 0 10px;position:relative;z-index:40">
         <span class="lbl">Period</span>
         <button class="btn active" data-period="daily">Daily</button>
         <button class="btn" data-period="weekly">Weekly</button>
