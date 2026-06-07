@@ -320,28 +320,31 @@ def main() -> int:
     # MERGE fresh GDELT items into the existing (curated) feed rather than
     # REPLACING it. Curated items carry summaries that GDELT's ArtList lacks, so
     # a blind overwrite silently degraded the hand-curated feed on every deploy.
-    # Keep every existing item, append only GDELT URLs not already present,
-    # newest-first, bounded so the feed can't grow without limit.
+    # Preserve EVERY existing item in its curated order; append only GDELT URLs
+    # not already present; the 500-cap applies ONLY to the fresh additions, so a
+    # heavy fetch can never evict curated content or reorder it.
     if len(all_news) >= NEWS_MIN_TO_WRITE:
         try:
-            existing = json.loads(NEWS_PATH.read_text()).get("items", [])
+            _data = json.loads(NEWS_PATH.read_text())
+            existing = _data.get("items") if isinstance(_data, dict) else None
         except Exception:
+            existing = None
+        if not isinstance(existing, list):
             existing = []
-        seen = {(it.get("url") or it.get("title") or "").strip() for it in existing}
-        added = 0
-        merged = list(existing)
+        seen = {(it.get("url") or it.get("headline") or "").strip() for it in existing}
+        fresh = []
         for it in all_news:
-            k = (it.get("url") or it.get("title") or "").strip()
+            k = (it.get("url") or it.get("headline") or "").strip()
             if k and k not in seen:
-                merged.append(it)
+                fresh.append(it)
                 seen.add(k)
-                added += 1
-        merged.sort(key=lambda n: n.get("date", ""), reverse=True)
-        merged = merged[:500]
+        fresh.sort(key=lambda n: n.get("date", ""), reverse=True)
+        room = max(0, 500 - len(existing))
+        merged = list(existing) + fresh[:room]
         NEWS_PATH.write_text(json.dumps(
             {"generated": generated, "items": merged}, ensure_ascii=False, indent=1))
-        news_status = (f"merged news.json (+{added} new from {ok_news} vendors, "
-                       f"{len(merged)} total)")
+        news_status = (f"merged news.json (+{min(len(fresh), room)} new from "
+                       f"{ok_news} vendors, {len(merged)} total)")
     else:
         news_status = (f"kept existing news.json (only {len(all_news)} fresh items "
                        f"gathered — below threshold {NEWS_MIN_TO_WRITE})")

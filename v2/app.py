@@ -3735,7 +3735,7 @@ const fmtNum = (n, d=2) => n==null?'—':n.toLocaleString(undefined,{maximumFrac
 // file:, and any non-http(s) scheme. Pass '' as fallback for img src.
 const sanitizeUrl = (u, fallback='#') =>
   (typeof u === 'string' && /^https?:\/\//i.test(u))
-    ? u.replace(/["'<>`\s]/g, encodeURIComponent) : fallback;
+    ? u.replace(/["'<>`\s]/g, c => '%' + c.charCodeAt(0).toString(16).toUpperCase().padStart(2,'0')) : fallback;
 
 const colorFor = n => n >= 0 ? '#22c55e' : '#ef4444';
 const ACCENTS = {btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'};
