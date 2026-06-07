@@ -249,6 +249,11 @@ tbody tr[role="button"]{cursor:pointer}
       <span class="muted">Colour follows the legend above the chart.</span>
       <span class="muted" id="mqRingNote">· in “All”, ◯ ringed dots = at Summit</span>
     </div>
+    <div class="muted" id="mqRelKey" style="font-size:12px;line-height:2;margin-top:4px">
+      <span style="white-space:nowrap"><span class="pill sub">Substitute</span> = competes with Snowflake</span> ·
+      <span style="white-space:nowrap"><span class="pill adj">Adjacent</span> = complements / integrates</span> ·
+      <span style="white-space:nowrap"><span class="pill orb">Different-orbit</span> = a different layer (AI, models, GPU clouds)</span>
+    </div>
     <div style="position:relative;height:560px"><canvas id="mqChart"></canvas></div>
     <div class="muted" id="mqFoot" style="font-size:12px;margin-top:10px;line-height:1.5"></div>
   </div>
@@ -745,6 +750,7 @@ function mqRebuild(){
   });
   mqChart.$mx=mx; mqChart.$my=my; mqChart.update();
   const rn=document.getElementById('mqRingNote'); if(rn)rn.style.display=ring?'':'none';
+  const rk=document.getElementById('mqRelKey'); if(rk)rk.style.display=(mqColorBy==='relationship')?'':'none';
   const inLeaders=pts.filter(p=>p.vision>=mx&&p.execution>=my).length;
   const foot=document.getElementById('mqFoot');
   if(foot)foot.textContent=`${pts.length} vendors plotted · ${inLeaders} in the Leaders quadrant · crosshair at fleet means (Vision ${mx.toFixed(1)}, Execution ${my.toFixed(1)}). ${mqMode==='all'?'Ringed dots were at Snowflake Summit 2026.':mqMode==='summit'?'Snowflake Summit 2026 partners only.':'Non-summit vendors only.'} Top 16 by combined score are labelled.`;
