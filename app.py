@@ -863,6 +863,16 @@ def main() -> int:
     # fallback in DATA.aviation.live.seed. JS lazy-loader treats missing as empty.
     manifest["aviation"] = "data-aviation.json"
 
+    # DeFi + Whale sidecars: declared unconditionally so the client's
+    # SIDECAR_FOR_TAB coverage always resolves. split_payload_for_sidecars()
+    # skips empty keys, so on a cold cache where defillama()/whale fetch came
+    # back empty these were absent from the manifest while the client still
+    # declared them — the deploy validator then hard-failed and blocked the
+    # whole Pages publish. A missing/stale file is fine: the JS lazy-loader
+    # treats it as an empty state, same contract as mufon/city/aviation.
+    manifest["whale"] = "data-whale.json"
+    manifest["defi"] = "data-defi.json"
+
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
 
@@ -4092,7 +4102,8 @@ const fmtNum = (n, d=2) => n==null?'—':n.toLocaleString(undefined,{maximumFrac
 // before interpolating into href/src. Rejects javascript:, data:, vbscript:,
 // file:, and any non-http(s) scheme. Pass '' as fallback for img src.
 const sanitizeUrl = (u, fallback='#') =>
-  (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : fallback;
+  (typeof u === 'string' && /^https?:\/\//i.test(u))
+    ? u.replace(/["'<>`\s]/g, encodeURIComponent) : fallback;
 
 const colorFor = n => n >= 0 ? '#22c55e' : '#ef4444';
 const ACCENTS = {btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'};

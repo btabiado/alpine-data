@@ -69,6 +69,7 @@ jobs:
           fi
 
       - name: Fetch live data + generate dashboard.html
+        timeout-minutes: 8   # heaviest network step — cap it so a hung upstream can't stall the deploy
         # app.py runs fetch_market.fetch_all() then renders dashboard.html
         # in one invocation. fetch_all handles per-source failures internally
         # (logs "[skip] <url>" and continues); app.py wraps the call in
@@ -144,6 +145,7 @@ jobs:
         continue-on-error: true
 
       - name: Enrich + rebuild Summit dashboard
+        timeout-minutes: 6   # bound the GDELT/Wikidata enrich + rebuild (continue-on-error already set)
         # Pull live vendor news (GDELT) + company facts (Wikidata) — both
         # keyless — then rebuild snowflake_summit/dashboard.html so /summit/
         # ships fresh data each deploy. Cached via .enrich_cache.json (restored

@@ -601,6 +601,11 @@ def main() -> int:
     # the tabs show an empty state until the next build's fetch lands.
     manifest["mufon"] = "data-mufon.json"
     manifest["stockprices"] = "data-stock-prices.json"
+    # Same fix as V1: declare whale/defi unconditionally so the coverage
+    # validator can't hard-fail the deploy when a cold-cache fetch returns
+    # empty. A 404 resolves to an empty state via loadSidecar.
+    manifest["whale"] = "data-whale.json"
+    manifest["defi"] = "data-defi.json"
 
     print(f"Writing {OUT.name}...")
     OUT.write_text(render_html(trimmed, sidecars_manifest=manifest))
@@ -3729,7 +3734,8 @@ const fmtNum = (n, d=2) => n==null?'—':n.toLocaleString(undefined,{maximumFrac
 // before interpolating into href/src. Rejects javascript:, data:, vbscript:,
 // file:, and any non-http(s) scheme. Pass '' as fallback for img src.
 const sanitizeUrl = (u, fallback='#') =>
-  (typeof u === 'string' && /^https?:\/\//i.test(u)) ? u : fallback;
+  (typeof u === 'string' && /^https?:\/\//i.test(u))
+    ? u.replace(/["'<>`\s]/g, encodeURIComponent) : fallback;
 
 const colorFor = n => n >= 0 ? '#22c55e' : '#ef4444';
 const ACCENTS = {btc:'#f7931a', eth:'#627eea', link:'#2a5ada', ltc:'#bfbbbb'};

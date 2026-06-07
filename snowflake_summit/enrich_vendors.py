@@ -303,9 +303,8 @@ def main() -> int:
                 enrichment[name] = wd
                 ok_wd += 1
 
-    # Sort news newest-first; cap the feed.
+    # Sort fresh GDELT news newest-first.
     all_news.sort(key=lambda n: n.get("date", ""), reverse=True)
-    all_news = all_news[:300]
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     # Persist cache (best effort).
@@ -318,12 +317,31 @@ def main() -> int:
     ENRICH_PATH.write_text(json.dumps(
         {"generated": generated, "by_vendor": enrichment}, ensure_ascii=False, indent=1))
 
-    # Only overwrite the (curated) news feed when GDELT actually returned a
-    # meaningful set — otherwise keep whatever is already there.
+    # MERGE fresh GDELT items into the existing (curated) feed rather than
+    # REPLACING it. Curated items carry summaries that GDELT's ArtList lacks, so
+    # a blind overwrite silently degraded the hand-curated feed on every deploy.
+    # Keep every existing item, append only GDELT URLs not already present,
+    # newest-first, bounded so the feed can't grow without limit.
     if len(all_news) >= NEWS_MIN_TO_WRITE:
+        try:
+            existing = json.loads(NEWS_PATH.read_text()).get("items", [])
+        except Exception:
+            existing = []
+        seen = {(it.get("url") or it.get("title") or "").strip() for it in existing}
+        added = 0
+        merged = list(existing)
+        for it in all_news:
+            k = (it.get("url") or it.get("title") or "").strip()
+            if k and k not in seen:
+                merged.append(it)
+                seen.add(k)
+                added += 1
+        merged.sort(key=lambda n: n.get("date", ""), reverse=True)
+        merged = merged[:500]
         NEWS_PATH.write_text(json.dumps(
-            {"generated": generated, "items": all_news}, ensure_ascii=False, indent=1))
-        news_status = f"wrote news.json ({len(all_news)} items from {ok_news} vendors)"
+            {"generated": generated, "items": merged}, ensure_ascii=False, indent=1))
+        news_status = (f"merged news.json (+{added} new from {ok_news} vendors, "
+                       f"{len(merged)} total)")
     else:
         news_status = (f"kept existing news.json (only {len(all_news)} fresh items "
                        f"gathered — below threshold {NEWS_MIN_TO_WRITE})")
