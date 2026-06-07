@@ -20,7 +20,7 @@ yfinance==1.4.1
 # LTHCS Phase 1 (Week 3: Adoption pillar — Google Trends)
 pytrends==4.9.2
 # LTHCS Phase 5 (Tier 5 #26: MCP server)
-mcp[cli]==1.27.1
+mcp[cli]==1.27.2
 
 # V2 dashboard CI guard — used by tools/validate_v2_dashboard.py to actually
 # parse the inline app JS via embedded V8 instead of regex-only heuristics.
