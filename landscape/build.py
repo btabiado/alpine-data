@@ -258,7 +258,8 @@ tbody tr:hover{background:var(--panel2)}
 .legend .sw{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 /* marimekko */
 .mekko{display:flex;align-items:stretch;gap:3px;height:360px;overflow-x:auto;padding-bottom:6px}
-.mcol{display:flex;flex-direction:column;min-width:34px;cursor:default}
+.mcol{display:flex;flex-direction:column;min-width:34px;cursor:pointer}
+.mcol:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .mcol .bars{flex:1;display:flex;flex-direction:column;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
 .mcol .b-abs{background:linear-gradient(180deg,#fbbf24,#d99e1e);color:#3a2c05;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
 .mcol .b-pre{background:linear-gradient(180deg,#29b5e8,#1c87b0);color:#04222e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px}
@@ -349,7 +350,7 @@ tbody tr[role="button"]{cursor:pointer}
     <div class="statstrip" id="mmStats"></div>
   </div>
   <div class="panel">
-    <h2>Stack layer × presence <span class="hint">column width ∝ vendors in that layer · amber = absent from summit, blue = present</span></h2>
+    <h2>Stack layer × presence <span class="hint">column width ∝ vendors in that layer · amber = absent, blue = present · click a column to drill in</span></h2>
     <div class="legend">
       <span><span class="sw" style="background:var(--absent)"></span>Not at Summit (absent)</span>
       <span><span class="sw" style="background:var(--present)"></span>At Summit (present)</span>
@@ -371,7 +372,7 @@ tbody tr[role="button"]{cursor:pointer}
       <button class="chip adj" data-mrel="adjacent" aria-pressed="false">Adjacent</button>
       <button class="chip orb" data-mrel="different-orbit" aria-pressed="false">Different-orbit</button>
     </div>
-    <h2><span id="mmCount">0</span> vendors</h2>
+    <h2><span id="mmCount">0</span> vendors <span class="hint">· click a row for details</span></h2>
     <div class="scroll"><table id="mmTable"><thead></thead><tbody></tbody></table></div>
     <div class="showall"><button class="btn" id="mmShowAll" hidden>Show all</button></div>
   </div>
@@ -474,18 +475,33 @@ function renderRows(tableEl, rows, limit){
 let _vmLastFocus=null;
 function openVendor(v){
   _vmLastFocus=document.activeElement;
-  const rows=[['Segment',v.segment],['Relationship',REL_LABEL[v.relationship]||v.relationship],
-    ['Notability','Tier '+v.tier],['Type',v.type],['HQ',v.hq||v.geo||''],
-    ['Stage',v.stage||''],['Funding',v.funding||''],['Investors',v.investors||'']];
+  const relPill=`<span class="pill ${REL_CLASS[v.relationship]||'adj'}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
+  let rows;
+  if(v.at_summit){
+    rows=[['Presence','✓ At Snowflake Summit 2026'+(v.booth?' · booth '+v.booth:'')],
+      ['Segment',v.segment],['Relationship',REL_LABEL[v.relationship]||v.relationship],
+      ['Partner tier',v.tier?('Tier '+v.tier):''],['Type',v.type]];
+  } else {
+    rows=[['Presence','✗ Not at Summit'],['Segment',v.segment],
+      ['Relationship',REL_LABEL[v.relationship]||v.relationship],
+      ['Notability','Tier '+v.tier],['Type',v.type],['HQ',v.hq||v.geo||''],
+      ['Stage',v.stage||''],['Funding',v.funding||''],['Investors',v.investors||'']];
+  }
   const site=v.website?`<div style="margin:2px 0 4px"><a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website.replace(/^https?:\/\//,''))} ↗</a></div>`:'';
   document.getElementById('vmBody').innerHTML=
-    `<h3 id="vmTitle">${esc(v.name)}</h3> <span class="pill ${REL_CLASS[v.relationship]}">${esc(REL_LABEL[v.relationship]||v.relationship)}</span>`+
+    `<h3 id="vmTitle">${esc(v.name)}</h3> ${relPill}`+
     site+`<div style="margin-top:6px;color:var(--muted)">${esc(v.desc||'')}</div>`+
     rows.filter(r=>r[1]).map(r=>`<div class="vm-row"><span class="k">${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join('')+
     (v.why?`<div class="vm-why"><b>Why notable:</b> ${esc(v.why)}</div>`:'');
   document.getElementById('vModal').hidden=false;
   document.getElementById('vModalBack').hidden=false;
   document.getElementById('vmClose').focus();
+}
+function drillSegment(seg){
+  mmState.seg=seg; mmState.limit=150;
+  const sel=document.getElementById('mmSeg'); if(sel)sel.value=seg;
+  MM_TABLE._render();
+  const p=document.getElementById('mmTable').closest('.panel'); if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closeVendor(){
   document.getElementById('vModal').hidden=true;
@@ -614,7 +630,7 @@ const mmCols=[
   {k:'type',t:'Type',cell:v=>esc(v.type||'—')},
   {k:'desc',t:'Note',cell:v=>esc(v.desc||'')},
 ];
-makeTable(MM_TABLE,mmCols);
+makeTable(MM_TABLE,mmCols,{onRow:openVendor});
 function mmFiltered(){
   const q=mmState.q.toLowerCase();
   return ALL.filter(v=>{
@@ -664,7 +680,7 @@ function renderMekko(){
   document.getElementById('mekko').innerHTML=segs.map(s=>{
     const absPct=s.total?Math.round(s.absent/s.total*100):0, prePct=100-absPct;
     const lab=SHORT[s.segment]||s.segment;
-    return `<div class="mcol" style="flex:${s.total}" tabindex="0" title="${esc(s.segment)} — ${s.absent} absent / ${s.present} present (${s.total} total)">
+    return `<div class="mcol" style="flex:${s.total}" tabindex="0" role="button" data-seg="${esc(s.segment)}" aria-label="${esc(s.segment)}: ${s.absent} absent, ${s.present} present — click to drill in" title="${esc(s.segment)} — ${s.absent} absent / ${s.present} present (${s.total} total) · click to drill in">
       <div class="bars">
         <div class="b-abs" style="height:${absPct}%">${s.absent>3?s.absent:''}</div>
         <div class="b-pre" style="height:${prePct}%">${s.present>3?s.present:''}</div>
@@ -672,8 +688,13 @@ function renderMekko(){
       <div class="mlabel">${esc(lab)}<br><span style="opacity:.6">${s.total}</span></div>
     </div>`;
   }).join('');
+  document.querySelectorAll('#mekko .mcol').forEach(el=>{
+    const seg=el.dataset.seg;
+    el.addEventListener('click',()=>drillSegment(seg));
+    el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();drillSegment(seg);}});
+  });
   const foot=document.getElementById('mekkoFoot'), o=DATA.meta.other_summit||0;
-  if(foot)foot.innerHTML=`Shows the 19 shared stack layers. ${o} summit-only tools (Snowflake FinOps / cost optimization, market-data bureaus, off-taxonomy enterprise apps) sit outside this taxonomy and are excluded from the chart — still searchable in the table below.`;
+  if(foot)foot.innerHTML=`Click any column to drill into that layer. Shows the 19 shared stack layers; ${o} summit-only tools (Snowflake FinOps / cost optimization, market-data bureaus, off-taxonomy enterprise apps) sit outside this taxonomy and are excluded from the chart — still searchable in the table below.`;
 }
 
 /* modal close wiring */
