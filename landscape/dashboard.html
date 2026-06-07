@@ -173,7 +173,7 @@ tbody tr[role="button"]{cursor:pointer}
   </div>
 
   <div class="panel">
-    <h2><span id="lsCount">0</span> vendors <span class="hint">· click a row for details</span> <span class="hint" id="lsHint"></span></h2>
+    <h2><span id="lsCount">0</span> vendors <button class="chip" id="lsClear" hidden style="margin-left:8px;padding:4px 10px">✕ Clear filters</button> <span class="hint">· click a row, chart bar, or tile to drill in</span> <span class="hint" id="lsHint"></span></h2>
     <div class="scroll"><table id="lsTable"><thead></thead><tbody></tbody></table></div>
     <div class="showall"><button class="btn" id="lsShowAll" hidden>Show all</button></div>
   </div>
@@ -385,6 +385,9 @@ LS_TABLE._render=()=>{
   document.getElementById('lsHint').textContent=lsState.limit<total?`showing first ${lsState.limit} — sorted; use filters or “Show all”`:'';
   renderRows(LS_TABLE,rows,lsState.limit);
   document.getElementById('lsShowAll').hidden=!(lsState.limit<total);
+  updateLSCharts(rows);
+  const active=!!(lsState.rel||lsState.tier||lsState.seg||lsState.geo||lsState.type||lsState.q||lsState.kpi);
+  const cl=document.getElementById('lsClear'); if(cl)cl.hidden=!active;
 };
 function lsKpis(){
   const r=DATA.relCounts, exus=NS.filter(v=>v.geo!=='North America'&&v.geo!=='Unknown').length;
@@ -415,26 +418,44 @@ function syncRelChips(){
 }
 function fillSelect(sel,vals){sel.innerHTML=sel.children[0].outerHTML+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
 
-/* charts */
-let segChart,relChart,geoChart;
+/* charts — reactive to the current filter set + clickable to drill in */
+let segChart,relChart,geoChart,curSeg=[],curGeo=[];
 const REL_COLORS={substitute:'#f87171',adjacent:'#34d399','different-orbit':'#a78bfa'};
+const RELK=['substitute','adjacent','different-orbit'];
+function clearKpiOn(){document.querySelectorAll('#lsKpis .kpi').forEach(x=>x.classList.remove('on'));}
+function applyLS(scroll){lsState.limit=120;LS_TABLE._render();if(scroll){const p=document.getElementById('lsTable').closest('.panel');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}}
+function lsChartData(rows){
+  const segC={},geoC={},relC={substitute:0,adjacent:0,'different-orbit':0};
+  rows.forEach(v=>{segC[v.segment]=(segC[v.segment]||0)+1;geoC[v.geo]=(geoC[v.geo]||0)+1;relC[v.relationship]=(relC[v.relationship]||0)+1;});
+  return {segArr:Object.entries(segC).sort((a,b)=>b[1]-a[1]),geoArr:Object.entries(geoC).sort((a,b)=>b[1]-a[1]),relC};
+}
+const _pt=(e,els)=>{if(e.native&&e.native.target)e.native.target.style.cursor=els.length?'pointer':'default';};
 function drawLSCharts(){
-  const segs=DATA.segments.slice().sort((a,b)=>b.absent-a.absent);
-  const segLabels=segs.map(s=>s.segment), segVals=segs.map(s=>s.absent);
-  const rc=DATA.relCounts, gc=DATA.geoCounts;
   const Cdef=Chart.defaults; Cdef.color='#8da2c8'; Cdef.font.family=getComputedStyle(document.body).fontFamily;
   segChart=new Chart(document.getElementById('segChart'),{type:'bar',
-    data:{labels:segLabels,datasets:[{label:'Absent',data:segVals,backgroundColor:'#fbbf24'}]},
-    options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:'Absent vendors by stack layer'}},
+    data:{labels:[],datasets:[{label:'Vendors',data:[],backgroundColor:'#fbbf24'}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,onHover:_pt,
+      onClick:(e,els)=>{if(els.length){const s=curSeg[els[0].index];lsState.seg=(lsState.seg===s?'':s);document.getElementById('lsSeg').value=lsState.seg;applyLS(true);}},
+      plugins:{legend:{display:false},title:{display:true,text:'By stack layer — click to filter'}},
       scales:{y:{ticks:{font:{size:10},autoSkip:false}}}}});
-  const relK=['substitute','adjacent','different-orbit'];
   relChart=new Chart(document.getElementById('relChart'),{type:'doughnut',
-    data:{labels:relK.map(k=>REL_LABEL[k]),datasets:[{data:relK.map(k=>rc[k]||0),backgroundColor:relK.map(k=>REL_COLORS[k])}]},
-    options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom'},title:{display:true,text:'Relationship to Snowflake'}}}});
-  const geoOrder=Object.entries(gc).sort((a,b)=>b[1]-a[1]);
+    data:{labels:RELK.map(k=>REL_LABEL[k]),datasets:[{data:[0,0,0],backgroundColor:RELK.map(k=>REL_COLORS[k])}]},
+    options:{maintainAspectRatio:false,onHover:_pt,
+      onClick:(e,els)=>{if(els.length){const r=RELK[els[0].index];lsState.rel=(lsState.rel===r?'':r);lsState.kpi='';syncRelChips();clearKpiOn();applyLS(true);}},
+      plugins:{legend:{position:'bottom'},title:{display:true,text:'Relationship — click to filter'}}}});
   geoChart=new Chart(document.getElementById('geoChart'),{type:'bar',
-    data:{labels:geoOrder.map(g=>g[0]),datasets:[{label:'Vendors',data:geoOrder.map(g=>g[1]),backgroundColor:'#29b5e8'}]},
-    options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:'HQ geography'}}}});
+    data:{labels:[],datasets:[{label:'Vendors',data:[],backgroundColor:'#29b5e8'}]},
+    options:{indexAxis:'y',maintainAspectRatio:false,onHover:_pt,
+      onClick:(e,els)=>{if(els.length){const g=curGeo[els[0].index];lsState.geo=(lsState.geo===g?'':g);document.getElementById('lsGeo').value=lsState.geo;applyLS(true);}},
+      plugins:{legend:{display:false},title:{display:true,text:'HQ geography — click to filter'}}}});
+}
+function updateLSCharts(rows){
+  if(!segChart)return;
+  const {segArr,geoArr,relC}=lsChartData(rows);
+  curSeg=segArr.map(x=>x[0]); curGeo=geoArr.map(x=>x[0]);
+  segChart.data.labels=curSeg; segChart.data.datasets[0].data=segArr.map(x=>x[1]); segChart.update();
+  geoChart.data.labels=curGeo; geoChart.data.datasets[0].data=geoArr.map(x=>x[1]); geoChart.update();
+  relChart.data.datasets[0].data=RELK.map(k=>relC[k]); relChart.update();
 }
 
 /* wire landscape filters */
@@ -455,6 +476,14 @@ function initLandscape(){
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier===lsState.tier)));
     lsState.limit=120;LS_TABLE._render();}));
   document.getElementById('lsShowAll').addEventListener('click',()=>{lsState.limit=99999;LS_TABLE._render();});
+  document.getElementById('lsClear').addEventListener('click',()=>{
+    lsState.rel='';lsState.tier='';lsState.seg='';lsState.geo='';lsState.type='';lsState.q='';lsState.kpi='';lsState.limit=120;
+    document.getElementById('lsSearch').value='';document.getElementById('lsSeg').value='';
+    document.getElementById('lsGeo').value='';document.getElementById('lsType').value='';
+    syncRelChips();clearKpiOn();
+    document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier==='')));
+    LS_TABLE._render();
+  });
   LS_TABLE._render();
 }
 
