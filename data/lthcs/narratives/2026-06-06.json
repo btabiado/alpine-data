@@ -1,0 +1,1678 @@
+{
+  "calc_date": "2026-06-06",
+  "model_version": "v1.1.0",
+  "narratives": [
+    {
+      "ticker": "AAPL",
+      "todays_take": "AAPL is showing Weakening at 58.6 (+4.3 over 30 days), supported by Institutional Confidence at 76.2.",
+      "why_changed": "Score is at 58.6 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ABBV",
+      "todays_take": "ABBV requires Structural Review at 46.4 (-11.0 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 46.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 36.5 is well below the universe median, and Institutional Confidence at 49.1 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ABNB",
+      "todays_take": "ABNB requires Structural Review at 44.9 (-10.7 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 44.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 35.4 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ABT",
+      "todays_take": "ABT requires Structural Review at 39.3 (-8.4 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 39.3 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 25.1 is well below the universe median, and Adoption Momentum at 35.8 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ACN",
+      "todays_take": "ACN requires Structural Review at 36.1 (-5.8 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 36.1 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 3.7 is well below the universe median, and Adoption Momentum at 42.7 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ADBE",
+      "todays_take": "ADBE requires Structural Review at 40.9 (-7.9 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 40.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 13.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ADI",
+      "todays_take": "ADI is showing Weakening at 54.6 (-21.9 over 30 days), supported by Institutional Confidence at 82.6.",
+      "why_changed": "Score is at 54.6 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 38.8 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 29, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ADP",
+      "todays_take": "ADP requires Structural Review at 41.7 (-12.6 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 41.7 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 29.2 is well below the universe median, and Adoption Momentum at 37.7 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ADSK",
+      "todays_take": "ADSK requires Structural Review at 42.4 (-19.3 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 42.4 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 21.4 is well below the universe median, and Adoption Momentum at 48.5 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AEP",
+      "todays_take": "AEP requires Structural Review at 49.2 (-12.8 over 30 days), supported by Institutional Confidence at 63.9.",
+      "why_changed": "Score is at 49.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 36.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AMAT",
+      "todays_take": "AMAT is showing Weakening at 56.4 (-0.3 over 30 days), supported by Institutional Confidence at 86.4.",
+      "why_changed": "Score is at 56.4 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 39.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 29, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AMD",
+      "todays_take": "AMD is showing Weakening at 59.9 (-4.2 over 30 days), supported by Institutional Confidence at 93.8.",
+      "why_changed": "Score is at 59.9 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AMGN",
+      "todays_take": "AMGN requires Structural Review at 43.9 (-10.5 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 43.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 35.0 is well below the universe median, and Institutional Confidence at 44.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AMT",
+      "todays_take": "AMT is showing Weakening at 51.6 (-12.3 over 30 days), supported by Institutional Confidence at 64.7.",
+      "why_changed": "Score is at 51.6 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 43.5 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 34, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AMZN",
+      "todays_take": "AMZN is showing Weakening at 51.2 (-19.5 over 30 days), supported by Adoption Momentum at 59.2.",
+      "why_changed": "Score is at 51.2 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 45.8 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Institutional Confidence below 36, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ARM",
+      "todays_take": "ARM is showing Weakening at 55.5 (-0.2 over 30 days), supported by Institutional Confidence at 93.5.",
+      "why_changed": "Score is at 55.5 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 41.2 is well below the universe median, and Adoption Momentum at 42.3 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Thesis Integrity below 31, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ASML",
+      "todays_take": "ASML is showing Weakening at 53.5 (-20.0 over 30 days), supported by Institutional Confidence at 71.3.",
+      "why_changed": "Score is at 53.5 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 44.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 34, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AVGO",
+      "todays_take": "AVGO is showing Weakening at 55.0 (-23.8 over 30 days), supported by Institutional Confidence at 70.1.",
+      "why_changed": "Score is at 55.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AXP",
+      "todays_take": "AXP requires Structural Review at 41.4 (-16.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 41.4 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 14.8 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "AZN",
+      "todays_take": "AZN requires Structural Review at 47.2 (-6.2 over 30 days), supported by Adoption Momentum at 51.2.",
+      "why_changed": "Score is at 47.2 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 37.3 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BA",
+      "todays_take": "BA requires Structural Review at 45.9 (-15.7 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 45.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 28.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BAC",
+      "todays_take": "BAC requires Structural Review at 49.4 (-4.6 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 49.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 48.8 is well below the universe median, and Institutional Confidence at 48.9 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BIIB",
+      "todays_take": "BIIB is showing Weakening at 58.0 (+8.9 over 30 days), supported by Institutional Confidence at 68.1.",
+      "why_changed": "Score is at 58.0 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Thesis Integrity at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BK",
+      "todays_take": "BK is showing Weakening at 55.2 (-12.3 over 30 days), supported by Institutional Confidence at 77.6.",
+      "why_changed": "Score is at 55.2 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 44.6 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 35, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BKNG",
+      "todays_take": "BKNG requires Structural Review at 39.9 (-14.7 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 39.9 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 9.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BKR",
+      "todays_take": "BKR is showing Weakening at 52.2 (-5.0 over 30 days), supported by Institutional Confidence at 66.7.",
+      "why_changed": "Score is at 52.2 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 43.8 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 34, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BLK",
+      "todays_take": "BLK requires Structural Review at 42.7 (-27.1 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 42.7 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 24.2 is well below the universe median, and Adoption Momentum at 47.3 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BMY",
+      "todays_take": "BMY is showing Weakening at 53.4 (+7.9 over 30 days), supported by Adoption Momentum at 59.6.",
+      "why_changed": "Score is at 53.4 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BRK.B",
+      "todays_take": "BRK.B requires Structural Review at 46.9 (+6.6 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 46.9 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 41.2 is well below the universe median, and Institutional Confidence at 46.5 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "C",
+      "todays_take": "C is showing Weakening at 52.4 (-8.5 over 30 days), supported by Institutional Confidence at 68.5.",
+      "why_changed": "Score is at 52.4 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 41.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 31, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CAT",
+      "todays_take": "CAT is showing Weakening at 56.2 (-0.6 over 30 days), supported by Institutional Confidence at 87.2.",
+      "why_changed": "Score is at 56.2 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 40.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 30, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CCEP",
+      "todays_take": "CCEP requires Structural Review at 48.0 (-1.2 over 30 days), supported by Institutional Confidence at 55.1.",
+      "why_changed": "Score is at 48.0 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 39.6 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CDNS",
+      "todays_take": "CDNS sits in Monitor at 60.9 (-5.6 over 30 days), supported by Institutional Confidence at 77.3.",
+      "why_changed": "Score is at 60.9 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 77.3, though Financial Evolution at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CDW",
+      "todays_take": "CDW requires Structural Review at 47.8 (+9.3 over 30 days), supported by Institutional Confidence at 61.9.",
+      "why_changed": "Score is at 47.8 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 43.1 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CEG",
+      "todays_take": "CEG requires Structural Review at 47.4 (-7.0 over 30 days), supported by Adoption Momentum at 62.3.",
+      "why_changed": "Score is at 47.4 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 24.1 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CHTR",
+      "todays_take": "CHTR requires Structural Review at 39.8 (+6.4 over 30 days), supported by Adoption Momentum at 55.0.",
+      "why_changed": "Score is at 39.8 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 15.1 is well below the universe median, and Thesis Integrity at 45.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CL",
+      "todays_take": "CL requires Structural Review at 46.5 (-6.3 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 46.5 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 40.4 is well below the universe median, and Institutional Confidence at 47.9 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CMCSA",
+      "todays_take": "CMCSA requires Structural Review at 42.9 (-4.9 over 30 days), supported by Adoption Momentum at 55.4.",
+      "why_changed": "Score is at 42.9 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 14.7 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "COF",
+      "todays_take": "COF requires Structural Review at 42.6 (-19.5 over 30 days), supported by Adoption Momentum at 53.5.",
+      "why_changed": "Score is at 42.6 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 16.2 is well below the universe median, and Thesis Integrity at 45.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "COP",
+      "todays_take": "COP is showing Weakening at 55.5 (-9.2 over 30 days), supported by Institutional Confidence at 74.7.",
+      "why_changed": "Score is at 55.5 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 47.7 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 38, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "COST",
+      "todays_take": "COST requires Structural Review at 44.9 (-21.6 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 44.9 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 37.3 is well below the universe median, and Institutional Confidence at 42.4 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CRM",
+      "todays_take": "CRM requires Structural Review at 42.1 (-5.9 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 42.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 18.4 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CRWD",
+      "todays_take": "CRWD sits in Monitor at 62.6 (+7.3 over 30 days), supported by Institutional Confidence at 86.3.",
+      "why_changed": "Score is at 62.6 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 86.3, though Financial Evolution at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CSCO",
+      "todays_take": "CSCO sits in Monitor at 64.5 (+9.0 over 30 days), supported by Institutional Confidence at 94.4.",
+      "why_changed": "Score is at 64.5 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 94.4, though Financial Evolution at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CSGP",
+      "todays_take": "CSGP requires Structural Review at 39.5 (-19.0 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 39.5 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 7.5 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CTAS",
+      "todays_take": "CTAS requires Structural Review at 45.1 (-6.2 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 45.1 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 30.8 is well below the universe median, and Adoption Momentum at 49.6 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CTSH",
+      "todays_take": "CTSH requires Structural Review at 40.6 (+0.4 over 30 days), supported by Adoption Momentum at 57.3.",
+      "why_changed": "Score is at 40.6 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 3.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CVS",
+      "todays_take": "CVS is showing Weakening at 57.4 (-4.5 over 30 days), supported by Institutional Confidence at 84.5.",
+      "why_changed": "Score is at 57.4 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 46.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 36, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CVX",
+      "todays_take": "CVX is showing Weakening at 56.4 (+2.5 over 30 days), supported by Institutional Confidence at 67.4.",
+      "why_changed": "Score is at 56.4 (drift over 1d -0.7); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DASH",
+      "todays_take": "DASH requires Structural Review at 34.7 (-5.9 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 34.7 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at -0.1 is well below the universe median, and Adoption Momentum at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DDOG",
+      "todays_take": "DDOG is showing Weakening at 59.0 (-6.1 over 30 days), supported by Institutional Confidence at 92.8.",
+      "why_changed": "Score is at 59.0 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DE",
+      "todays_take": "DE is showing Weakening at 50.4 (+4.7 over 30 days), supported by Institutional Confidence at 66.5.",
+      "why_changed": "Score is at 50.4 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 38.1 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 28, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DHR",
+      "todays_take": "DHR requires Structural Review at 39.0 (-5.4 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 39.0 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 3.8 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DIS",
+      "todays_take": "DIS requires Structural Review at 44.0 (-1.2 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 44.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 25.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DUK",
+      "todays_take": "DUK is showing Weakening at 52.5 (-16.9 over 30 days), supported by Adoption Momentum at 57.7.",
+      "why_changed": "Score is at 52.5 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "DXCM",
+      "todays_take": "DXCM requires Structural Review at 48.9 (-14.8 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 48.9 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 41.7 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "EA",
+      "todays_take": "EA requires Structural Review at 42.4 (+3.4 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 42.4 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 36.1 is well below the universe median, and Adoption Momentum at 36.9 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "EMR",
+      "todays_take": "EMR requires Structural Review at 43.6 (-7.4 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 43.6 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 28.9 is well below the universe median, and Adoption Momentum at 46.5 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "EXC",
+      "todays_take": "EXC requires Structural Review at 49.2 (-2.6 over 30 days), supported by Institutional Confidence at 50.5.",
+      "why_changed": "Score is at 49.2 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 46.9 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "F",
+      "todays_take": "F is showing Weakening at 54.1 (+18.7 over 30 days), supported by Institutional Confidence at 63.0.",
+      "why_changed": "Score is at 54.1 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "FANG",
+      "todays_take": "FANG is showing Weakening at 55.2 (-23.4 over 30 days), supported by Institutional Confidence at 77.0.",
+      "why_changed": "Score is at 55.2 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 45.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 35, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "FAST",
+      "todays_take": "FAST requires Structural Review at 48.3 (-13.1 over 30 days), supported by Institutional Confidence at 57.4.",
+      "why_changed": "Score is at 48.3 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 38.5 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Adoption Momentum, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "FTNT",
+      "todays_take": "FTNT is showing Weakening at 59.0 (-6.9 over 30 days), supported by Institutional Confidence at 96.3.",
+      "why_changed": "Score is at 59.0 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GD",
+      "todays_take": "GD requires Structural Review at 43.8 (-16.0 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 43.8 (drift over 1d -0.4); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 30.3 is well below the universe median, and Adoption Momentum at 45.8 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GE",
+      "todays_take": "GE is showing Weakening at 55.6 (+0.5 over 30 days), supported by Institutional Confidence at 65.3.",
+      "why_changed": "Score is at 55.6 (drift over 1d -0.7); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GEHC",
+      "todays_take": "GEHC requires Structural Review at 43.5 (+5.1 over 30 days), supported by Adoption Momentum at 53.8.",
+      "why_changed": "Score is at 43.5 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 19.1 is well below the universe median, and Thesis Integrity at 45.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GFS",
+      "todays_take": "GFS sits in Monitor at 62.2 (+1.1 over 30 days), supported by Institutional Confidence at 96.9.",
+      "why_changed": "Score is at 62.2 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 96.9, though Financial Evolution at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GILD",
+      "todays_take": "GILD requires Structural Review at 45.6 (-0.1 over 30 days), supported by Adoption Momentum at 54.6.",
+      "why_changed": "Score is at 45.6 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 26.6 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GM",
+      "todays_take": "GM requires Structural Review at 44.8 (+16.9 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 44.8 (drift over 1d -0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 31.7 is well below the universe median, and Adoption Momentum at 48.1 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GOOG",
+      "todays_take": "GOOG is showing Weakening at 54.8 (-17.0 over 30 days), supported by Adoption Momentum at 60.2.",
+      "why_changed": "Score is at 54.8 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GOOGL",
+      "todays_take": "GOOGL is showing Weakening at 55.5 (-16.5 over 30 days), supported by Institutional Confidence at 61.8.",
+      "why_changed": "Score is at 55.5 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GS",
+      "todays_take": "GS is showing Weakening at 56.0 (+2.8 over 30 days), supported by Institutional Confidence at 65.4.",
+      "why_changed": "Score is at 56.0 (drift over 1d -0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "HD",
+      "todays_take": "HD requires Structural Review at 40.2 (+9.9 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 40.2 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 15.3 is well below the universe median, and Adoption Momentum at 45.4 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "HON",
+      "todays_take": "HON is showing Weakening at 50.6 (-4.1 over 30 days), supported by Adoption Momentum at 61.5.",
+      "why_changed": "Score is at 50.6 (drift over 1d +3.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 38.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Institutional Confidence below 28, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "IBM",
+      "todays_take": "IBM is showing Weakening at 50.4 (+13.0 over 30 days), supported by Adoption Momentum at 65.0.",
+      "why_changed": "Score is at 50.4 (drift over 1d +3.7); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 36.4 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Institutional Confidence below 26, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "IDXX",
+      "todays_take": "IDXX requires Structural Review at 40.5 (-12.3 over 30 days), supported by Financial Evolution at 50.0.",
+      "why_changed": "Score is at 40.5 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 13.0 is well below the universe median, and Adoption Momentum at 49.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ILMN",
+      "todays_take": "ILMN is showing Weakening at 54.6 (+17.9 over 30 days), supported by Adoption Momentum at 61.9.",
+      "why_changed": "Score is at 54.6 (drift over 1d +3.7); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "INTC",
+      "todays_take": "INTC is showing Weakening at 56.0 (+15.4 over 30 days), supported by Institutional Confidence at 95.6.",
+      "why_changed": "Score is at 56.0 (drift over 1d +0.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "INTU",
+      "todays_take": "INTU requires Structural Review at 39.2 (-13.8 over 30 days), supported by Adoption Momentum at 64.6.",
+      "why_changed": "Score is at 39.2 (drift over 1d +3.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 4.4 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ISRG",
+      "todays_take": "ISRG requires Structural Review at 43.6 (-14.1 over 30 days), supported by Adoption Momentum at 63.8.",
+      "why_changed": "Score is at 43.6 (drift over 1d +3.5); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 10.6 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "JNJ",
+      "todays_take": "JNJ is showing Weakening at 50.9 (-1.7 over 30 days), supported by Institutional Confidence at 53.7.",
+      "why_changed": "Score is at 50.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "JPM",
+      "todays_take": "JPM is showing Weakening at 50.0 (+6.7 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 50.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "KDP",
+      "todays_take": "KDP is showing Weakening at 51.7 (-3.1 over 30 days), supported by Institutional Confidence at 67.1.",
+      "why_changed": "Score is at 51.7 (drift over 1d -2.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 41.9 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 32, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "KHC",
+      "todays_take": "KHC is showing Weakening at 51.1 (+13.4 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 51.1 (drift over 1d +3.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 46.2 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Institutional Confidence below 36, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "KLAC",
+      "todays_take": "KLAC sits in Monitor at 60.6 (+3.1 over 30 days), supported by Institutional Confidence at 76.6.",
+      "why_changed": "Score is at 60.6 (drift over 1d +4.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 76.6, though Financial Evolution at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "KO",
+      "todays_take": "KO is showing Weakening at 53.8 (+8.9 over 30 days), supported by Adoption Momentum at 58.8.",
+      "why_changed": "Score is at 53.8 (drift over 1d +2.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Financial Evolution at 50.0 is well below the universe median, and Demand Environment at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Financial Evolution below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LCID",
+      "todays_take": "LCID requires Structural Review at 35.7 (-4.8 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 35.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 5.0 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LIN",
+      "todays_take": "LIN is showing Weakening at 54.2 (-1.4 over 30 days), supported by Institutional Confidence at 66.9.",
+      "why_changed": "Score is at 54.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LLY",
+      "todays_take": "LLY is showing Weakening at 52.0 (+2.3 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 52.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LMT",
+      "todays_take": "LMT requires Structural Review at 43.8 (-6.2 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 43.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 25.0 is well below the universe median, and Thesis Integrity at 45.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LOW",
+      "todays_take": "LOW requires Structural Review at 39.6 (+0.1 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 39.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 8.3 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LRCX",
+      "todays_take": "LRCX is showing Weakening at 57.0 (+0.0 over 30 days), supported by Institutional Confidence at 77.8.",
+      "why_changed": "Score is at 57.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "LULU",
+      "todays_take": "LULU requires Structural Review at 39.1 (+2.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 39.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 6.3 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MA",
+      "todays_take": "MA requires Structural Review at 45.1 (-18.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 45.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 30.3 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MAR",
+      "todays_take": "MAR is showing Weakening at 56.7 (+1.9 over 30 days), supported by Institutional Confidence at 76.9.",
+      "why_changed": "Score is at 56.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MCD",
+      "todays_take": "MCD requires Structural Review at 44.2 (-2.3 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 44.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 26.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MCHP",
+      "todays_take": "MCHP is showing Weakening at 56.3 (+6.0 over 30 days), supported by Institutional Confidence at 75.2.",
+      "why_changed": "Score is at 56.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MDB",
+      "todays_take": "MDB requires Structural Review at 39.1 (+14.3 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 39.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 18.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MDLZ",
+      "todays_take": "MDLZ is showing Weakening at 50.8 (-3.6 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 50.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MDT",
+      "todays_take": "MDT requires Structural Review at 41.0 (+3.9 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 41.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 13.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MELI",
+      "todays_take": "MELI requires Structural Review at 39.9 (-19.2 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 39.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 9.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MET",
+      "todays_take": "MET is showing Weakening at 53.6 (-5.5 over 30 days), supported by Institutional Confidence at 64.6.",
+      "why_changed": "Score is at 53.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "META",
+      "todays_take": "META requires Structural Review at 43.4 (-21.4 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 43.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 23.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MMM",
+      "todays_take": "MMM requires Structural Review at 47.5 (+18.5 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 47.5 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 39.8 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MNST",
+      "todays_take": "MNST is showing Weakening at 52.6 (-9.4 over 30 days), supported by Institutional Confidence at 60.4.",
+      "why_changed": "Score is at 52.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MO",
+      "todays_take": "MO is showing Weakening at 55.0 (+12.5 over 30 days), supported by Institutional Confidence at 70.1.",
+      "why_changed": "Score is at 55.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MRK",
+      "todays_take": "MRK is showing Weakening at 54.8 (+14.9 over 30 days), supported by Institutional Confidence at 69.0.",
+      "why_changed": "Score is at 54.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MRVL",
+      "todays_take": "MRVL is showing Weakening at 58.8 (-9.1 over 30 days), supported by Institutional Confidence at 97.0.",
+      "why_changed": "Score is at 58.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MS",
+      "todays_take": "MS is showing Weakening at 56.0 (-2.2 over 30 days), supported by Institutional Confidence at 73.9.",
+      "why_changed": "Score is at 56.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MSFT",
+      "todays_take": "MSFT requires Structural Review at 42.0 (-12.8 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 42.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 17.8 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MU",
+      "todays_take": "MU is showing Weakening at 58.3 (-22.3 over 30 days), supported by Institutional Confidence at 95.1.",
+      "why_changed": "Score is at 58.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NEE",
+      "todays_take": "NEE requires Structural Review at 48.6 (-1.7 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 48.6 (drift over 1d +0.6); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 44.4 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NFLX",
+      "todays_take": "NFLX requires Structural Review at 45.4 (-16.6 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 45.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 31.6 is well below the universe median, and Thesis Integrity at 45.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NKE",
+      "todays_take": "NKE requires Structural Review at 38.5 (+16.1 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 38.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 4.2 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NOW",
+      "todays_take": "NOW requires Structural Review at 38.5 (-13.2 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 38.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 16.0 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NVDA",
+      "todays_take": "NVDA is showing Weakening at 51.3 (-25.6 over 30 days), supported by Institutional Confidence at 55.2.",
+      "why_changed": "Score is at 51.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NXPI",
+      "todays_take": "NXPI is showing Weakening at 55.8 (+8.1 over 30 days), supported by Institutional Confidence at 85.2.",
+      "why_changed": "Score is at 55.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ODFL",
+      "todays_take": "ODFL is showing Weakening at 59.2 (+0.9 over 30 days), supported by Institutional Confidence at 86.8.",
+      "why_changed": "Score is at 59.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ON",
+      "todays_take": "ON is showing Weakening at 57.3 (+7.8 over 30 days), supported by Institutional Confidence at 91.2.",
+      "why_changed": "Score is at 57.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 41.2 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Thesis Integrity below 31, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ORCL",
+      "todays_take": "ORCL is showing Weakening at 54.9 (+5.7 over 30 days), supported by Institutional Confidence at 81.5.",
+      "why_changed": "Score is at 54.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ORLY",
+      "todays_take": "ORLY requires Structural Review at 42.9 (-11.5 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 42.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 21.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PANW",
+      "todays_take": "PANW sits in Monitor at 62.6 (+0.6 over 30 days), supported by Institutional Confidence at 100.5.",
+      "why_changed": "Score is at 62.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 100.5, though Adoption Momentum at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PAYX",
+      "todays_take": "PAYX requires Structural Review at 46.4 (-0.9 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 46.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 35.4 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PCAR",
+      "todays_take": "PCAR requires Structural Review at 46.6 (+11.3 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 46.6 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 36.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PDD",
+      "todays_take": "PDD requires Structural Review at 39.3 (-24.5 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 39.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 7.2 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PEP",
+      "todays_take": "PEP requires Structural Review at 46.8 (+3.8 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 46.8 (drift over 1d +0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 37.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PFE",
+      "todays_take": "PFE requires Structural Review at 48.4 (+13.8 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 48.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 43.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PG",
+      "todays_take": "PG requires Structural Review at 48.1 (+12.3 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 48.1 (drift over 1d -0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 42.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PM",
+      "todays_take": "PM requires Structural Review at 49.1 (-0.7 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 49.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 41.2 is well below the universe median, and Institutional Confidence at 46.3 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Thesis Integrity, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PYPL",
+      "todays_take": "PYPL requires Structural Review at 39.1 (-0.4 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 39.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 6.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "QCOM",
+      "todays_take": "QCOM is showing Weakening at 57.5 (+1.0 over 30 days), supported by Institutional Confidence at 92.1.",
+      "why_changed": "Score is at 57.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "REGN",
+      "todays_take": "REGN requires Structural Review at 41.2 (+6.4 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 41.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 14.8 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ROP",
+      "todays_take": "ROP requires Structural Review at 44.1 (-11.9 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 44.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 26.4 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ROST",
+      "todays_take": "ROST is showing Weakening at 57.1 (-5.6 over 30 days), supported by Institutional Confidence at 78.4.",
+      "why_changed": "Score is at 57.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "RTX",
+      "todays_take": "RTX requires Structural Review at 44.3 (-7.0 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 44.3 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 27.3 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SBUX",
+      "todays_take": "SBUX requires Structural Review at 48.7 (-3.7 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 48.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 44.8 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SCHW",
+      "todays_take": "SCHW requires Structural Review at 41.7 (-22.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 41.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 16.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SHW",
+      "todays_take": "SHW requires Structural Review at 43.1 (+5.4 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 43.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 22.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SMCI",
+      "todays_take": "SMCI is showing Weakening at 56.2 (-5.9 over 30 days), supported by Institutional Confidence at 87.0.",
+      "why_changed": "Score is at 56.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SNPS",
+      "todays_take": "SNPS requires Structural Review at 45.0 (-15.8 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 45.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 30.1 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SO",
+      "todays_take": "SO is showing Weakening at 50.6 (-9.2 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 50.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SPG",
+      "todays_take": "SPG is showing Weakening at 57.7 (-1.6 over 30 days), supported by Institutional Confidence at 80.7.",
+      "why_changed": "Score is at 57.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "T",
+      "todays_take": "T requires Structural Review at 48.0 (-1.2 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 48.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 41.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TEAM",
+      "todays_take": "TEAM requires Structural Review at 35.0 (-19.4 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 35.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 2.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TGT",
+      "todays_take": "TGT is showing Weakening at 56.8 (+9.6 over 30 days), supported by Institutional Confidence at 77.1.",
+      "why_changed": "Score is at 56.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TMO",
+      "todays_take": "TMO requires Structural Review at 39.4 (+0.4 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 39.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 7.4 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TMUS",
+      "todays_take": "TMUS requires Structural Review at 46.1 (-13.6 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 46.1 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 34.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TRV",
+      "todays_take": "TRV is showing Weakening at 51.2 (+0.5 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 51.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TSLA",
+      "todays_take": "TSLA requires Structural Review at 43.4 (+16.2 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 43.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 23.8 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TTD",
+      "todays_take": "TTD requires Structural Review at 37.4 (-14.3 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 37.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at -0.2 is well below the universe median, and Thesis Integrity at 45.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TTWO",
+      "todays_take": "TTWO requires Structural Review at 42.0 (+1.7 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 42.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 18.2 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TXN",
+      "todays_take": "TXN is showing Weakening at 59.8 (-6.4 over 30 days), supported by Institutional Confidence at 89.1.",
+      "why_changed": "Score is at 59.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "UNH",
+      "todays_take": "UNH is showing Weakening at 59.4 (-5.7 over 30 days), supported by Institutional Confidence at 87.7.",
+      "why_changed": "Score is at 59.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "UNP",
+      "todays_take": "UNP is showing Weakening at 56.0 (+6.0 over 30 days), supported by Institutional Confidence at 73.8.",
+      "why_changed": "Score is at 56.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "UPS",
+      "todays_take": "UPS is showing Weakening at 50.7 (+13.2 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 50.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "USB",
+      "todays_take": "USB requires Structural Review at 47.5 (+2.2 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 47.5 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 40.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "V",
+      "todays_take": "V requires Structural Review at 47.5 (-16.5 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 47.5 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 40.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "VRSK",
+      "todays_take": "VRSK requires Structural Review at 41.0 (-4.5 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 41.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 14.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "VRTX",
+      "todays_take": "VRTX requires Structural Review at 45.6 (-6.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 45.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 32.4 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "VZ",
+      "todays_take": "VZ is showing Weakening at 55.9 (+8.4 over 30 days), supported by Institutional Confidence at 73.4.",
+      "why_changed": "Score is at 55.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WBD",
+      "todays_take": "WBD requires Structural Review at 44.5 (+17.1 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 44.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 27.9 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WDAY",
+      "todays_take": "WDAY requires Structural Review at 39.5 (-2.8 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 39.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 7.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WFC",
+      "todays_take": "WFC requires Structural Review at 44.6 (+12.7 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 44.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 28.5 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WMT",
+      "todays_take": "WMT requires Structural Review at 48.9 (-8.4 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 48.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 45.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "XEL",
+      "todays_take": "XEL is showing Weakening at 50.6 (-3.5 over 30 days), supported by Institutional Confidence at 52.3.",
+      "why_changed": "Score is at 50.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "XOM",
+      "todays_take": "XOM is showing Weakening at 53.3 (+5.7 over 30 days), supported by Institutional Confidence at 63.2.",
+      "why_changed": "Score is at 53.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ZS",
+      "todays_take": "ZS requires Structural Review at 34.0 (+7.4 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 34.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at -2.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ANET",
+      "todays_take": "ANET is showing Weakening at 51.1 (+0.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 51.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "APH",
+      "todays_take": "APH requires Structural Review at 40.4 (+0.0 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 40.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 11.7 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "BSX",
+      "todays_take": "BSX requires Structural Review at 39.7 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 39.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 8.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CI",
+      "todays_take": "CI is showing Weakening at 51.3 (+0.0 over 30 days), supported by Institutional Confidence at 55.3.",
+      "why_changed": "Score is at 51.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CMI",
+      "todays_take": "CMI is showing Weakening at 54.8 (+0.0 over 30 days), supported by Institutional Confidence at 69.2.",
+      "why_changed": "Score is at 54.8 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "CSX",
+      "todays_take": "CSX sits in Monitor at 60.1 (+0.0 over 30 days), supported by Institutional Confidence at 90.3.",
+      "why_changed": "Score is at 60.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 90.3, though Adoption Momentum at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ECL",
+      "todays_take": "ECL requires Structural Review at 45.9 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 45.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 33.7 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ELV",
+      "todays_take": "ELV is showing Weakening at 57.2 (+0.0 over 30 days), supported by Institutional Confidence at 78.7.",
+      "why_changed": "Score is at 57.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "EOG",
+      "todays_take": "EOG is showing Weakening at 57.6 (+0.0 over 30 days), supported by Institutional Confidence at 80.3.",
+      "why_changed": "Score is at 57.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "EQIX",
+      "todays_take": "EQIX is showing Weakening at 58.9 (+0.0 over 30 days), supported by Institutional Confidence at 85.4.",
+      "why_changed": "Score is at 58.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 45.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Thesis Integrity below 35, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ETN",
+      "todays_take": "ETN is showing Weakening at 55.5 (+0.0 over 30 days), supported by Institutional Confidence at 72.0.",
+      "why_changed": "Score is at 55.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "FCX",
+      "todays_take": "FCX requires Structural Review at 49.5 (+0.0 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 49.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 48.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "FDX",
+      "todays_take": "FDX is showing Weakening at 58.1 (+0.0 over 30 days), supported by Institutional Confidence at 82.6.",
+      "why_changed": "Score is at 58.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GEV",
+      "todays_take": "GEV is showing Weakening at 58.5 (+0.0 over 30 days), supported by Institutional Confidence at 84.0.",
+      "why_changed": "Score is at 58.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "GLW",
+      "todays_take": "GLW is showing Weakening at 57.4 (+0.0 over 30 days), supported by Institutional Confidence at 91.4.",
+      "why_changed": "Score is at 57.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "HCA",
+      "todays_take": "HCA requires Structural Review at 38.9 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 38.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 5.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "HLT",
+      "todays_take": "HLT is showing Weakening at 55.9 (+0.0 over 30 days), supported by Institutional Confidence at 73.6.",
+      "why_changed": "Score is at 55.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "HWM",
+      "todays_take": "HWM is showing Weakening at 55.6 (+0.0 over 30 days), supported by Institutional Confidence at 72.5.",
+      "why_changed": "Score is at 55.6 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "ITW",
+      "todays_take": "ITW requires Structural Review at 47.7 (+0.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 47.7 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 40.7 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "JCI",
+      "todays_take": "JCI is showing Weakening at 57.2 (+0.0 over 30 days), supported by Institutional Confidence at 78.9.",
+      "why_changed": "Score is at 57.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "KMI",
+      "todays_take": "KMI is showing Weakening at 52.6 (+0.0 over 30 days), supported by Institutional Confidence at 60.6.",
+      "why_changed": "Score is at 52.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MCK",
+      "todays_take": "MCK requires Structural Review at 44.5 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 44.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 28.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MPC",
+      "todays_take": "MPC sits in Monitor at 60.2 (+0.0 over 30 days), supported by Institutional Confidence at 91.0.",
+      "why_changed": "Score is at 60.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 91.0, though Adoption Momentum at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "MPWR",
+      "todays_take": "MPWR is showing Weakening at 58.7 (+0.0 over 30 days), supported by Institutional Confidence at 84.9.",
+      "why_changed": "Score is at 58.7 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NEM",
+      "todays_take": "NEM requires Structural Review at 39.1 (+0.0 over 30 days), supported by Thesis Integrity at 58.8.",
+      "why_changed": "Score is at 39.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 6.3 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NOC",
+      "todays_take": "NOC requires Structural Review at 40.4 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 40.4 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 11.6 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "NSC",
+      "todays_take": "NSC is showing Weakening at 53.1 (+0.0 over 30 days), supported by Institutional Confidence at 62.5.",
+      "why_changed": "Score is at 53.1 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 45.0 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Thesis Integrity below 35, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PH",
+      "todays_take": "PH requires Structural Review at 46.3 (+0.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 46.3 (drift over 1d -0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 35.2 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PLD",
+      "todays_take": "PLD is showing Weakening at 55.2 (+0.0 over 30 days), supported by Institutional Confidence at 70.8.",
+      "why_changed": "Score is at 55.2 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PSX",
+      "todays_take": "PSX is showing Weakening at 58.0 (+0.0 over 30 days), supported by Institutional Confidence at 82.1.",
+      "why_changed": "Score is at 58.0 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "PWR",
+      "todays_take": "PWR is showing Weakening at 59.6 (+0.0 over 30 days), supported by Institutional Confidence at 88.6.",
+      "why_changed": "Score is at 59.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SLB",
+      "todays_take": "SLB is showing Weakening at 52.6 (+0.0 over 30 days), supported by Institutional Confidence at 60.4.",
+      "why_changed": "Score is at 52.6 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "STX",
+      "todays_take": "STX sits in Monitor at 61.3 (+0.0 over 30 days), supported by Institutional Confidence at 95.1.",
+      "why_changed": "Score is at 61.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Position warrants closer attention but isn't broken: Institutional Confidence still leads at 95.1, though Adoption Momentum at 50.0 is dragging the composite. Watch for confirmation in the next 30 days.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Weakening composite move below 60, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "SYK",
+      "todays_take": "SYK requires Structural Review at 41.9 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
+      "why_changed": "Score is at 41.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 17.4 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TJX",
+      "todays_take": "TJX is showing Weakening at 52.9 (+0.0 over 30 days), supported by Institutional Confidence at 61.6.",
+      "why_changed": "Score is at 52.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "TT",
+      "todays_take": "TT is showing Weakening at 55.7 (+0.0 over 30 days), supported by Institutional Confidence at 72.9.",
+      "why_changed": "Score is at 55.7 (drift over 1d +0.1); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "UBER",
+      "todays_take": "UBER requires Structural Review at 41.3 (+0.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 41.3 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 15.3 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "VLO",
+      "todays_take": "VLO is showing Weakening at 59.4 (+0.0 over 30 days), supported by Institutional Confidence at 87.7.",
+      "why_changed": "Score is at 59.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WDC",
+      "todays_take": "WDC is showing Weakening at 58.4 (+0.0 over 30 days), supported by Institutional Confidence at 94.7.",
+      "why_changed": "Score is at 58.4 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WELL",
+      "todays_take": "WELL is showing Weakening at 55.5 (+0.0 over 30 days), supported by Institutional Confidence at 71.8.",
+      "why_changed": "Score is at 55.5 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WM",
+      "todays_take": "WM requires Structural Review at 46.5 (+0.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "why_changed": "Score is at 46.5 (drift over 1d +0.2); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 36.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "confidence_level": "medium"
+    },
+    {
+      "ticker": "WMB",
+      "todays_take": "WMB is showing Weakening at 52.9 (+0.0 over 30 days), supported by Institutional Confidence at 61.7.",
+      "why_changed": "Score is at 52.9 (drift over 1d +0.0); no prior snapshot available for component-delta analysis.",
+      "why_not_to_sell": "Structural concerns: Adoption Momentum at 50.0 is well below the universe median, and Financial Evolution at 50.0 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Adoption Momentum below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "confidence_level": "medium"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "as_of": "2026-06-07",
+  "broad_dollar": null,
+  "data_quality": {
+    "sources_failed": 4,
+    "sources_ok": 0
+  },
+  "hy_oas": null,
+  "ig_oas": null,
+  "regime_flags": {
+    "curve_inverted": false,
+    "dollar_strong": false,
+    "hy_stress": false
+  },
+  "yield_curve_2s10s": null
+}
