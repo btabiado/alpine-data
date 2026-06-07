@@ -1,7 +1,7 @@
 # Minimum supported Python: 3.10
 anthropic==0.105.2
 numpy==2.4.6
-pandas==2.3.3
+pandas==3.0.3
 # pytest 9.0.3 patches GHSA-6w46-j5rx-g56g (local-privesc via predictable
 # /tmp/pytest-of-{user} tmpdir on UNIX). All earlier 8.x/9.x affected.
 pytest==9.0.3
