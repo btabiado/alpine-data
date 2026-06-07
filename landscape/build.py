@@ -4,9 +4,9 @@
 The inverse companion to the Snowflake Summit partner dashboard (/summit/):
 it catalogs the AI & data vendors that were NOT at Snowflake Summit 2026.
 
-  * Landscape view  — the 691 non-summit vendors alone, cross-filtered by
+  * Landscape view  — the non-summit vendors alone, cross-filtered by
     stack-layer (segment) x relationship-to-Snowflake x geo x type x tier.
-  * Market Map view — all 888 vendors together (197 present + 691 absent),
+  * Market Map view — all vendors together (197 present + the absent set),
     anchored by a stack-layer x presence marimekko.
 
 Data sources (all read-only except this dashboard's own output):
@@ -32,6 +32,23 @@ OUT_PATH = HERE / "dashboard.html"
 
 # Canonical 19-segment order is computed from the data (by total count desc).
 CONSULTING = "Data & AI Consulting / SI"
+
+# The 19 shared-taxonomy layers. Summit-only overflow (FinOps/cost tools,
+# market-data bureaus, off-taxonomy enterprise apps) lands in "Other" and is
+# kept OUT of the marimekko (it isn't one of the shared layers) but surfaced
+# as a footnote + still searchable in the combined table.
+CANON = {
+    "Cloud Data Warehouses & Lakehouses", "ETL / ELT / Data Ingestion & Integration",
+    "Reverse ETL, Data Activation & CDP", "Data Orchestration & Workflow Engines",
+    "Data Transformation, Semantic & Metrics Layer", "Data Quality & Observability",
+    "Data Catalog, Governance, Lineage & MDM", "BI, Analytics & Dashboards",
+    "Vector Databases & RAG / Retrieval Infra", "Foundation Models & LLM Providers",
+    "MLOps, ML Platforms & Feature Stores", "AI Agent Frameworks & Agent Tooling",
+    "Real-time & Streaming Data", "Data Security, Privacy & Access Governance",
+    "Data Labeling, Synthetic Data & Data-for-AI", "AI Infrastructure: Inference, GPU & Model Serving",
+    "LLM Observability, Evaluation & Guardrails", "Embedded Analytics, Data Apps & Notebooks",
+    CONSULTING,
+}
 
 
 def norm_segment(c: str) -> str:
@@ -107,7 +124,7 @@ def build_segments(ns, summit):
     rows = []
     for s in segs:
         p, a = present.get(s, 0), absent.get(s, 0)
-        rows.append({"segment": s, "present": p, "absent": a, "total": p + a})
+        rows.append({"segment": s, "present": p, "absent": a, "total": p + a, "canonical": s in CANON})
     rows.sort(key=lambda r: (-r["total"], r["segment"]))
     return rows
 
@@ -128,8 +145,9 @@ def render():
             "summit_total": len(summit),
             "all_total": len(ns) + len(summit),
             "have_overlay": have_overlay,
-            "n_segments": len(segments),
-            "absent_gt_present": sum(1 for s in segments if s["absent"] > s["present"]),
+            "n_segments": sum(1 for s in segments if s["canonical"]),
+            "absent_gt_present": sum(1 for s in segments if s["canonical"] and s["absent"] > s["present"]),
+            "other_summit": sum(s["present"] for s in segments if not s["canonical"]),
         },
         "ns": ns,
         "summit": summit,
@@ -143,6 +161,7 @@ def render():
     data_json = data_json.replace("</", "<\\/").replace(" ", "\\u2028").replace(" ", "\\u2029")
 
     html = HTML_TEMPLATE.replace("/*__DATA__*/", data_json)
+    html = html.replace("__NS_TOTAL__", str(len(ns))).replace("__ALL_TOTAL__", str(len(ns) + len(summit)))
 
     chartjs = ""
     if CHARTJS_PATH.exists():
@@ -251,6 +270,14 @@ tbody tr:hover{background:var(--panel2)}
 .foot{color:var(--muted);font-size:12px;padding:18px 4px 30px;text-align:center;line-height:1.6}
 .skip{position:absolute;left:-999px}
 .skip:focus{left:8px;top:8px;position:fixed;background:var(--accent);color:#04222e;padding:8px 12px;border-radius:8px;z-index:50}
+tbody tr[role="button"]{cursor:pointer}
+.vmodal-back{position:fixed;inset:0;background:rgba(2,6,16,.66);z-index:40}
+.vmodal{position:fixed;z-index:41;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,92vw);max-height:86vh;overflow:auto;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.vmclose{position:absolute;right:12px;top:12px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:14px}
+.vmodal h3{margin:0 8px 2px 0;font-size:20px;display:inline}
+.vm-row{display:flex;gap:10px;margin:9px 0;font-size:13.5px}
+.vm-row .k{color:var(--muted);min-width:92px;flex-shrink:0}
+.vm-why{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:14px;font-size:13.5px;line-height:1.5}
 @media (max-width:820px){.grid2,.grid3{grid-template-columns:1fr}.wrap{padding:10px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -268,8 +295,8 @@ tbody tr:hover{background:var(--panel2)}
 </header>
 
 <div class="tabs" role="tablist" aria-label="Views">
-  <button class="tab" id="tab-ls" role="tab" aria-selected="true" aria-controls="view-ls">Landscape <span class="muted">· 691 absent</span></button>
-  <button class="tab" id="tab-mm" role="tab" aria-selected="false" aria-controls="view-mm" tabindex="-1">Market Map <span class="muted">· all 888</span></button>
+  <button class="tab" id="tab-ls" role="tab" aria-selected="true" aria-controls="view-ls">Landscape <span class="muted">· __NS_TOTAL__ absent</span></button>
+  <button class="tab" id="tab-mm" role="tab" aria-selected="false" aria-controls="view-mm" tabindex="-1">Market Map <span class="muted">· all __ALL_TOTAL__</span></button>
 </div>
 
 <main id="main" class="wrap">
@@ -277,7 +304,7 @@ tbody tr:hover{background:var(--panel2)}
 <!-- ===================== LANDSCAPE VIEW ===================== -->
 <section class="view active" id="view-ls" role="tabpanel" aria-labelledby="tab-ls">
   <div class="panel">
-    <h2>The 691 absent vendors <span class="hint">click a tile to filter · the inverse of who showed up at /summit/</span></h2>
+    <h2>The __NS_TOTAL__ absent vendors <span class="hint">click a tile to filter · the inverse of who showed up at /summit/</span></h2>
     <div class="kpis" id="lsKpis"></div>
   </div>
 
@@ -306,7 +333,7 @@ tbody tr:hover{background:var(--panel2)}
   </div>
 
   <div class="panel">
-    <h2><span id="lsCount">0</span> vendors <span class="hint" id="lsHint"></span></h2>
+    <h2><span id="lsCount">0</span> vendors <span class="hint">· click a row for details</span> <span class="hint" id="lsHint"></span></h2>
     <div class="scroll"><table id="lsTable"><thead></thead><tbody></tbody></table></div>
     <div class="showall"><button class="btn" id="lsShowAll" hidden>Show all</button></div>
   </div>
@@ -328,10 +355,11 @@ tbody tr:hover{background:var(--panel2)}
       <span><span class="sw" style="background:var(--present)"></span>At Summit (present)</span>
     </div>
     <div class="mekko" id="mekko" role="img" aria-label="Marimekko of vendors by stack layer and summit presence"></div>
+    <div class="muted" id="mekkoFoot" style="font-size:12px;margin-top:10px;line-height:1.5"></div>
   </div>
   <div class="panel">
     <div class="filters" id="mmFilters">
-      <input id="mmSearch" type="search" placeholder="Search all 888…" aria-label="Search all vendors">
+      <input id="mmSearch" type="search" placeholder="Search all __ALL_TOTAL__…" aria-label="Search all vendors">
       <select id="mmSeg" aria-label="Segment"><option value="">All segments</option></select>
       <span style="width:8px"></span>
       <button class="chip" data-pres="" aria-pressed="true">All</button>
@@ -350,8 +378,14 @@ tbody tr:hover{background:var(--panel2)}
 </section>
 
 <div class="foot">
-  First-pass competitive-landscape map · generated 2026-06-07 · 691 absent vendors researched via a 19-segment agent swarm, cross-checked against the 197 Snowflake Summit 2026 partners.<br>
+  First-pass competitive-landscape map · generated 2026-06-07 · __NS_TOTAL__ absent vendors researched via a 19-segment agent swarm, audited for accuracy, and cross-checked against the 197 Snowflake Summit 2026 partners.<br>
   Funding / valuation / HQ are best-effort from public sources — validate before external use. The Summit directory (<code>vendors.json</code>) is unmodified.
+</div>
+
+<div class="vmodal-back" id="vModalBack" hidden></div>
+<div class="vmodal" id="vModal" role="dialog" aria-modal="true" aria-labelledby="vmTitle" hidden>
+  <button class="vmclose" id="vmClose" aria-label="Close details">✕</button>
+  <div id="vmBody"></div>
 </div>
 
 <script>
@@ -359,6 +393,27 @@ const DATA = /*__DATA__*/;
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const REL_LABEL={substitute:'Substitute',adjacent:'Adjacent','different-orbit':'Different-orbit'};
 const REL_CLASS={substitute:'sub',adjacent:'adj','different-orbit':'orb'};
+const SHORT={
+ "Cloud Data Warehouses & Lakehouses":"Warehouses & Lakehouses",
+ "ETL / ELT / Data Ingestion & Integration":"ETL / ELT / Ingestion",
+ "Reverse ETL, Data Activation & CDP":"Reverse-ETL / CDP",
+ "Data Orchestration & Workflow Engines":"Orchestration",
+ "Data Transformation, Semantic & Metrics Layer":"Transform / Semantic",
+ "Data Quality & Observability":"Quality & Observability",
+ "Data Catalog, Governance, Lineage & MDM":"Catalog / Gov / MDM",
+ "BI, Analytics & Dashboards":"BI & Analytics",
+ "Vector Databases & RAG / Retrieval Infra":"Vector DBs / RAG",
+ "Foundation Models & LLM Providers":"Foundation Models",
+ "MLOps, ML Platforms & Feature Stores":"MLOps / Feature Stores",
+ "AI Agent Frameworks & Agent Tooling":"Agent Frameworks",
+ "Real-time & Streaming Data":"Streaming",
+ "Data Security, Privacy & Access Governance":"Data Security / DSPM",
+ "Data Labeling, Synthetic Data & Data-for-AI":"Data-for-AI / Labeling",
+ "AI Infrastructure: Inference, GPU & Model Serving":"AI Infra / GPU",
+ "LLM Observability, Evaluation & Guardrails":"LLM Obs / Eval",
+ "Embedded Analytics, Data Apps & Notebooks":"Data Apps / Notebooks",
+ "Data & AI Consulting / SI":"Consulting / SI",
+};
 
 /* ---------- tabs ---------- */
 const tabs=[document.getElementById('tab-ls'),document.getElementById('tab-mm')];
@@ -377,7 +432,7 @@ tabs.forEach((t,i)=>{
 });
 
 /* ---------- shared table renderer ---------- */
-function makeTable(tableEl, cols){
+function makeTable(tableEl, cols, opts){
   const thead=tableEl.querySelector('thead'), tbody=tableEl.querySelector('tbody');
   let sortKey=null, sortDir=1;
   thead.innerHTML='<tr>'+cols.map(c=>`<th data-k="${c.k}">${esc(c.t)}</th>`).join('')+'</tr>';
@@ -392,6 +447,11 @@ function makeTable(tableEl, cols){
     th.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
   });
   tableEl._cols=cols;
+  tableEl._onRow=opts&&opts.onRow;
+  if(tableEl._onRow){
+    tbody.addEventListener('click',e=>{if(e.target.closest('a'))return;const tr=e.target.closest('tr[data-ri]');if(!tr)return;const v=tableEl._shown&&tableEl._shown[+tr.dataset.ri];if(v)tableEl._onRow(v);});
+    tbody.addEventListener('keydown',e=>{const tr=e.target.closest&&e.target.closest('tr[data-ri]');if(tr&&(e.key==='Enter'||e.key===' ')){e.preventDefault();const v=tableEl._shown&&tableEl._shown[+tr.dataset.ri];if(v)tableEl._onRow(v);}});
+  }
   tableEl._sort=(rows)=>{
     if(!sortKey)return rows;
     const c=cols.find(x=>x.k===sortKey);
@@ -406,8 +466,31 @@ function makeTable(tableEl, cols){
 function renderRows(tableEl, rows, limit){
   const cols=tableEl._cols;
   const shown=limit?rows.slice(0,limit):rows;
-  tableEl.querySelector('tbody').innerHTML=shown.map(v=>'<tr>'+cols.map(c=>`<td>${c.cell(v)}</td>`).join('')+'</tr>').join('');
+  tableEl._shown=shown;
+  const ia=tableEl._onRow?' tabindex="0" role="button"':'';
+  tableEl.querySelector('tbody').innerHTML=shown.map((v,ri)=>`<tr data-ri="${ri}"${ia}>`+cols.map(c=>`<td>${c.cell(v)}</td>`).join('')+'</tr>').join('');
   return rows.length;
+}
+let _vmLastFocus=null;
+function openVendor(v){
+  _vmLastFocus=document.activeElement;
+  const rows=[['Segment',v.segment],['Relationship',REL_LABEL[v.relationship]||v.relationship],
+    ['Notability','Tier '+v.tier],['Type',v.type],['HQ',v.hq||v.geo||''],
+    ['Stage',v.stage||''],['Funding',v.funding||''],['Investors',v.investors||'']];
+  const site=v.website?`<div style="margin:2px 0 4px"><a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website.replace(/^https?:\/\//,''))} ↗</a></div>`:'';
+  document.getElementById('vmBody').innerHTML=
+    `<h3 id="vmTitle">${esc(v.name)}</h3> <span class="pill ${REL_CLASS[v.relationship]}">${esc(REL_LABEL[v.relationship]||v.relationship)}</span>`+
+    site+`<div style="margin-top:6px;color:var(--muted)">${esc(v.desc||'')}</div>`+
+    rows.filter(r=>r[1]).map(r=>`<div class="vm-row"><span class="k">${esc(r[0])}</span><span>${esc(r[1])}</span></div>`).join('')+
+    (v.why?`<div class="vm-why"><b>Why notable:</b> ${esc(v.why)}</div>`:'');
+  document.getElementById('vModal').hidden=false;
+  document.getElementById('vModalBack').hidden=false;
+  document.getElementById('vmClose').focus();
+}
+function closeVendor(){
+  document.getElementById('vModal').hidden=true;
+  document.getElementById('vModalBack').hidden=true;
+  if(_vmLastFocus&&_vmLastFocus.focus)_vmLastFocus.focus();
 }
 
 /* ---------- LANDSCAPE ---------- */
@@ -423,7 +506,7 @@ const lsCols=[
   {k:'geo',t:'HQ',cell:v=>`${esc(v.hq||v.geo||'—')}`,sort:v=>v.geo},
   {k:'tier',t:'Tier',cell:v=>`<span class="pill t${v.tier}">T${v.tier}</span>`,sort:v=>v.tier},
 ];
-makeTable(LS_TABLE,lsCols);
+makeTable(LS_TABLE,lsCols,{onRow:openVendor});
 
 function lsFiltered(){
   const q=lsState.q.toLowerCase();
@@ -577,20 +660,26 @@ function drawMM(){
 let mekkoDone=false;
 function renderMekko(){
   if(mekkoDone)return; mekkoDone=true;
-  const segs=DATA.segments;
-  const maxTotal=Math.max(...segs.map(s=>s.total));
+  const segs=DATA.segments.filter(s=>s.canonical);
   document.getElementById('mekko').innerHTML=segs.map(s=>{
     const absPct=s.total?Math.round(s.absent/s.total*100):0, prePct=100-absPct;
-    const short=s.segment.replace(/ & /g,' & ').replace(/, /g,', ');
-    return `<div class="mcol" style="flex:${s.total}" title="${esc(s.segment)} — ${s.absent} absent / ${s.present} present (${s.total} total)">
+    const lab=SHORT[s.segment]||s.segment;
+    return `<div class="mcol" style="flex:${s.total}" tabindex="0" title="${esc(s.segment)} — ${s.absent} absent / ${s.present} present (${s.total} total)">
       <div class="bars">
         <div class="b-abs" style="height:${absPct}%">${s.absent>3?s.absent:''}</div>
         <div class="b-pre" style="height:${prePct}%">${s.present>3?s.present:''}</div>
       </div>
-      <div class="mlabel">${esc(short)}<br><span style="opacity:.7">${s.total}</span></div>
+      <div class="mlabel">${esc(lab)}<br><span style="opacity:.6">${s.total}</span></div>
     </div>`;
   }).join('');
+  const foot=document.getElementById('mekkoFoot'), o=DATA.meta.other_summit||0;
+  if(foot)foot.innerHTML=`Shows the 19 shared stack layers. ${o} summit-only tools (Snowflake FinOps / cost optimization, market-data bureaus, off-taxonomy enterprise apps) sit outside this taxonomy and are excluded from the chart — still searchable in the table below.`;
 }
+
+/* modal close wiring */
+document.getElementById('vmClose').addEventListener('click',closeVendor);
+document.getElementById('vModalBack').addEventListener('click',closeVendor);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('vModal').hidden)closeVendor();});
 
 /* ---------- boot ---------- */
 initLandscape();
