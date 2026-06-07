@@ -104,6 +104,45 @@ def humanize_age(age_h: float) -> str:
     return f"{age_h / 24:.1f}d"
 
 
+def _content_age_h(path: Path, now_ts: float) -> "float | None":
+    """Best-effort age (hours) from a file's INTERNAL freshness signal — the last
+    data row's date for CSVs, or a generated_at/last_date/as_of/... field for JSON.
+    Returns None if no signal. Catches the mtime false-green where a stateless CI
+    run rewrites a file with stale CONTENT (e.g. committed btc_flows.csv) so its
+    mtime looks fresh while the data inside is weeks old."""
+    try:
+        if path.suffix == ".csv":
+            lines = [ln for ln in path.read_text().splitlines() if ln.strip()]
+            if len(lines) < 2:
+                return None
+            ds = lines[-1].split(",")[0].strip()[:10]
+            dt = datetime.strptime(ds, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            return max(0.0, (now_ts - dt.timestamp()) / 3600.0)
+        if path.suffix == ".json":
+            data = json.loads(path.read_text())
+            if not isinstance(data, dict):
+                return None
+            for k in ("generated_at", "last_date", "as_of", "generated",
+                      "fetched_at", "updated_at", "saved_at"):
+                v = data.get(k)
+                if not isinstance(v, str) or not v.strip():
+                    continue
+                s = v.strip().replace("Z", "+00:00")
+                try:
+                    dt = datetime.fromisoformat(s)
+                except ValueError:
+                    try:
+                        dt = datetime.strptime(s[:10], "%Y-%m-%d")
+                    except ValueError:
+                        continue
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return max(0.0, (now_ts - dt.timestamp()) / 3600.0)
+    except Exception:
+        return None
+    return None
+
+
 def scan(path: Path, rel_to: Path, threshold_key_fn=None) -> list[dict]:
     """Return one entry per regular file under `path`. mtime → age_h → status."""
     rows: list[dict] = []
@@ -122,6 +161,9 @@ def scan(path: Path, rel_to: Path, threshold_key_fn=None) -> list[dict]:
         except OSError:
             continue
         age_h = (now - mtime) / 3600.0
+        _ca = _content_age_h(entry, now)
+        if _ca is not None:
+            age_h = max(age_h, _ca)  # content-age beats mtime (CI rewrites stale content)
         key = threshold_key_fn(entry) if threshold_key_fn else entry.name
         t = THRESHOLDS.get(key, DEFAULT)
         rows.append({
@@ -149,6 +191,9 @@ def collect_rendered() -> list[dict]:
             continue
         mtime = p.stat().st_mtime
         age_h = (now - mtime) / 3600.0
+        _ca = _content_age_h(p, now)
+        if _ca is not None:
+            age_h = max(age_h, _ca)  # content-age beats mtime
         t = THRESHOLDS.get(name, DEFAULT)
         rows.append({
             "name": name,
@@ -186,6 +231,9 @@ def collect_summit() -> list[dict]:
         except OSError:
             continue
         age_h = (now - mtime) / 3600.0
+        _ca = _content_age_h(p, now)
+        if _ca is not None:
+            age_h = max(age_h, _ca)  # content-age beats mtime
         t = THRESHOLDS.get(name, DEFAULT)
         rows.append({
             "name": f"snowflake_summit/{name}",

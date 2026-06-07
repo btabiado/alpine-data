@@ -2019,6 +2019,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            Populated by renderEtfSpotlight(); empty until first ETF render. -->
       <div id="etfSpotlight" style="margin-bottom:10px"></div>
       <div class="row" id="etfKpis"></div>
+      <div class="sub" id="etfAsOf" style="margin:0 0 8px;font-size:12px"></div>
       <div class="controls" style="border:0;padding:0 0 10px;position:relative;z-index:40">
         <span class="lbl">Period</span>
         <button class="btn active" data-period="daily">Daily</button>
@@ -3936,6 +3937,18 @@ function renderEtfKpis(){
   document.getElementById('etfKpis').innerHTML = items.map(i =>
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls}">${i.val}</div></div>`
   ).join('');
+  // Staleness chip: flows come from committed CSV (Farside is Cloudflare-blocked),
+  // refreshed manually — surface an amber warning when the latest flow is >7d old.
+  const asOf = document.getElementById('etfAsOf');
+  if (asOf){
+    const ld = s.last_date;
+    if (!ld){ asOf.textContent = ''; asOf.style.color = ''; }
+    else {
+      const ageDays = Math.floor((Date.now() - new Date(ld).getTime()) / 86400000);
+      asOf.textContent = `flows as of ${ld} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})${ageDays > 7 ? ' ⚠ stale' : ''}`;
+      asOf.style.color = ageDays > 7 ? '#f59e0b' : '';
+    }
+  }
 }
 
 // ---------- Fund detail (new By-Fund section) ----------
