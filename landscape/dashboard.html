@@ -270,6 +270,20 @@ const DATA = {"meta": {"generated": "2026-06-07", "ns_total": 619, "summit_total
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const REL_LABEL={substitute:'Substitute',adjacent:'Adjacent','different-orbit':'Different-orbit'};
 const REL_CLASS={substitute:'sub',adjacent:'adj','different-orbit':'orb'};
+// hover-tooltip copy: what each relationship-to-Snowflake means
+const REL_DESC={
+  substitute:'Competes with Snowflake — a rival data platform a customer could buy instead of it (e.g. Databricks, BigQuery, Redshift).',
+  adjacent:'Complements Snowflake — integrates or runs alongside it; a potential partner (e.g. dbt, Tinybird, Materialize).',
+  'different-orbit':'A different layer of the stack — frontier AI, models and GPU clouds circling the same buyers (e.g. Anthropic, Mistral, Cohere).'
+};
+const REL_DESC_ALL='Every vendor, regardless of how it relates to Snowflake.';
+function applyRelTooltips(){
+  document.querySelectorAll('.chip[data-rel],.chip[data-mrel],.chip[data-qrel]').forEach(el=>{
+    const v=el.dataset.rel ?? el.dataset.mrel ?? el.dataset.qrel;
+    el.title = v ? (REL_DESC[v]||'') : REL_DESC_ALL;
+  });
+  document.querySelectorAll('#lsKpis .kpi[data-rel]').forEach(el=>{ if(el.dataset.rel&&REL_DESC[el.dataset.rel]) el.title=REL_DESC[el.dataset.rel]; });
+}
 const SHORT={
  "Cloud Data Warehouses & Lakehouses":"Warehouses & Lakehouses",
  "ETL / ELT / Data Ingestion & Integration":"ETL / ELT / Ingestion",
@@ -357,7 +371,7 @@ function renderRows(tableEl, rows, limit){
 let _vmLastFocus=null;
 function openVendor(v){
   _vmLastFocus=document.activeElement;
-  const relPill=`<span class="pill ${REL_CLASS[v.relationship]||'adj'}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
+  const relPill=`<span class="pill ${REL_CLASS[v.relationship]||'adj'}" title="${esc(REL_DESC[v.relationship]||'')}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
   const mqPos=(typeof v.vision==='number')?`Vision ${v.vision} · Execution ${v.execution}`:'';
   let rows;
   if(v.at_summit){
@@ -403,7 +417,7 @@ const ALL=DATA.ns.concat(DATA.summit);
 const lsState={pres:'',rel:'',tier:'',seg:'',geo:'',type:'',q:'',kpi:'',limit:120};
 const LS_TABLE=document.getElementById('lsTable');
 const _nameCell=v=>`<b>${esc(v.name)}</b>${v.website?` <a href="${esc(v.website)}" target="_blank" rel="noopener" aria-label="${esc(v.name)} website">↗</a>`:''}<div class="seg">${esc(v.segment)}</div>`;
-const _relCell=v=>`<span class="pill ${REL_CLASS[v.relationship]||'adj'}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
+const _relCell=v=>`<span class="pill ${REL_CLASS[v.relationship]||'adj'}" title="${esc(REL_DESC[v.relationship]||'')}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
 const _presCell=v=>v.at_summit?'<span class="pill present">At Summit</span>':'<span class="pill absent">Absent</span>';
 const _num=x=>(x==null||x==='')?'—':x;
 const _ns=x=>(x==null||x==='')?-1:(+x);   // numeric sort key, missing sorts last on desc
@@ -586,7 +600,7 @@ const MM_TABLE=document.getElementById('mmTable');
 const mmCols=[
   {k:'name',t:'Vendor',cell:v=>`<b>${esc(v.name)}</b>${v.website?` <a href="${esc(v.website)}" target="_blank" rel="noopener">↗</a>`:''}<div class="seg">${esc(v.segment)}</div>`},
   {k:'at_summit',t:'Presence',cell:v=>v.at_summit?'<span class="pill present">At Summit</span>':'<span class="pill absent">Absent</span>',sort:v=>v.at_summit?1:0},
-  {k:'relationship',t:'Rel.',cell:v=>`<span class="pill ${REL_CLASS[v.relationship]}">${esc(REL_LABEL[v.relationship]||v.relationship)}</span>`},
+  {k:'relationship',t:'Rel.',cell:v=>`<span class="pill ${REL_CLASS[v.relationship]}" title="${esc(REL_DESC[v.relationship]||'')}">${esc(REL_LABEL[v.relationship]||v.relationship)}</span>`},
   {k:'type',t:'Type',cell:v=>esc(v.type||'—')},
   {k:'desc',t:'Note',cell:v=>esc(v.desc||'')},
 ];
@@ -763,6 +777,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElemen
 
 /* ---------- boot ---------- */
 initLandscape();
+applyRelTooltips();
 </script>
 </body>
 </html>
