@@ -3470,6 +3470,20 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <div class="v2-card__body" id="mufonDocsBody" style="padding:14px"></div>
     </div>
 
+    <!-- Section B2: Recent sighting activity — short-horizon velocity KPIs
+         derived client-side from the data-mufon.json sidecar's precomputed
+         `velocity` block (see fetch_mufon.py aggregate()). Anchored to the
+         newest day ON FILE, not today, because the NUFORC feed lags ~1-2 wks;
+         the as-of chip + caption make that explicit so the small tail numbers
+         aren't misread as a drop-off. -->
+    <div class="v2-card" id="mufonVelocityCard" style="margin-bottom:14px">
+      <div class="v2-card__head">
+        <div><h2 class="v2-card__title">Recent sighting activity</h2><div class="v2-card__subtitle">New NUFORC reports &amp; year-over-year change</div></div>
+        <div><span class="v2-chip v2-chip--info" id="mufonVelocityAsOf">● —</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonVelocityBody" style="padding:14px"></div>
+    </div>
+
     <!-- Section C: Sightings trend signal (derived client-side from the
          data-mufon.json sidecar; no extra fetch). -->
     <div id="mufonTrendLoading" class="hidden" style="text-align:center;padding:24px;color:var(--muted);font-size:13px">Loading sightings trend…</div>
@@ -14314,6 +14328,7 @@ const MUFON_STATE_NAMES = {
 function renderMufon(){
   renderMufonUpdates();
   renderMufonDocs();
+  renderMufonVelocity();
   // Trend + Map are both gated on the data-mufon.json sidecar — if not yet
   // loaded, the loading placeholders elsewhere handle the empty state.
   renderMufonTrend();
@@ -14359,6 +14374,80 @@ function renderMufonDocs(){
     +   '<div style="font-size:10px;color:var(--muted);font-family:monospace;word-break:break-all;opacity:.7">'+d.url.replace(/^https?:\/\//,'')+'</div>'
     + '</a>').join('');
   el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(220px, 1fr));gap:10px">' + cards + '</div>';
+}
+
+// ─── UAP RECENT SIGHTING ACTIVITY (velocity KPIs) ─────────────────────────
+// Renders the short-horizon "pulse" strip from m.velocity (precomputed in
+// fetch_mufon.py — see aggregate()). ALL windows are anchored to the newest
+// day ON FILE (m.velocity.anchor), not today: the NUFORC feed lags ~1-2 wks,
+// so a "today" anchor would read near-zero. Deltas are neutral/directional
+// (▲ amber = more reports, ▼ blue = fewer) — NOT green/red P&L semantics,
+// since "more UAP reports" isn't inherently good or bad.
+function renderMufonVelocity(){
+  const m = DATA.mufon;
+  const body = document.getElementById('mufonVelocityBody');
+  const asOf = document.getElementById('mufonVelocityAsOf');
+  if (!body) return;
+  if (!m){
+    if (asOf) asOf.textContent = '● —';
+    body.innerHTML = '<div style="text-align:center;padding:18px;color:var(--muted);font-size:12px">Loading recent activity…</div>';
+    return;
+  }
+  const v = m.velocity;
+  if (!v || !v.windows){
+    if (asOf) asOf.textContent = '● unavailable';
+    body.innerHTML = V2.empty({icon:'🛸', title:'Recent activity pending',
+      sub:'Populates on the next data refresh (this sidecar predates the feature).'});
+    return;
+  }
+  const anchor = v.anchor || (m.date_range && m.date_range[1]) || '—';
+  if (asOf) asOf.textContent = '● through ' + anchor;
+
+  const fmt = n => (n == null ? '—' : Number(n).toLocaleString('en-US'));
+  // Neutral, direction-only delta — amber up / blue down, never green/red.
+  function delta(dp){
+    if (dp == null) return '<span style="color:var(--muted);font-size:11px">— no yr-ago data</span>';
+    if (dp === 0)   return '<span style="color:var(--muted);font-size:11px;font-weight:600">→ 0.0% vs yr ago</span>';
+    const up = dp > 0;
+    const col = up ? '#f5a623' : '#56a3d9';
+    return '<span style="color:'+col+';font-size:11px;font-weight:600">' + (up ? '▲ +' : '▼ ') + dp + '% vs yr ago</span>';
+  }
+  function tile(label, value, deltaHtml, sub){
+    return '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px 14px;min-width:0">'
+      + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+label+'</div>'
+      + '<div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">'+value+'</div>'
+      + '<div style="margin-top:7px;line-height:1.3">'+deltaHtml+'</div>'
+      + (sub ? '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+sub+'</div>' : '')
+      + '</div>';
+  }
+  const w = v.windows;
+  const tiles = [
+    tile('Latest day',   fmt(w.yesterday.count), delta(w.yesterday.delta_pct), 'yr ago: '+fmt(w.yesterday.prev_year)),
+    tile('Last 7 days',  fmt(w['7d'].count),     delta(w['7d'].delta_pct),     'yr ago: '+fmt(w['7d'].prev_year)),
+    tile('Last 30 days', fmt(w['30d'].count),    delta(w['30d'].delta_pct),    'yr ago: '+fmt(w['30d'].prev_year)),
+    tile('Last 90 days', fmt(w['90d'].count),    delta(w['90d'].delta_pct),    'yr ago: '+fmt(w['90d'].prev_year)),
+  ];
+  // 12-mo YoY tile — the value IS the % change; raw counts go in the sub.
+  const y = v.yoy_12mo || {};
+  let yoyVal = '—', yoyCol = 'var(--text)';
+  if (y.delta_pct != null){
+    const up = y.delta_pct > 0, flat = y.delta_pct === 0;
+    yoyCol = flat ? 'var(--text)' : (up ? '#f5a623' : '#56a3d9');
+    yoyVal = (up ? '+' : '') + y.delta_pct + '%';
+  }
+  tiles.push(
+    '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px 14px;min-width:0">'
+    + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">12-mo YoY</div>'
+    + '<div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:'+yoyCol+'">'+yoyVal+'</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-top:7px">trailing '+fmt(y.trailing)+' vs prior '+fmt(y.prior)+'</div>'
+    + '</div>'
+  );
+
+  body.innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px">' + tiles.join('') + '</div>'
+    + '<div style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5">'
+    +   'Windows anchored to the newest day on file (<strong>'+anchor+'</strong>), <em>not</em> today — NUFORC reports lag ~1–2 weeks, so the latest-day and 7-day tiles run low until reports catch up. YoY compares each window to the same window one year earlier. Counts are <strong>reports</strong>, not verified events.'
+    + '</div>';
 }
 
 // ─── UAP SIGHTINGS TREND SIGNAL ───────────────────────────────────────────

@@ -443,6 +443,68 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
                 if dt >= thr:
                     slot[k] += 1
 
+    # Recent-activity velocity — the short-horizon "pulse" behind the UAP tab's
+    # KPI strip. ALWAYS anchored to the dataset's newest day (``max_dt``), never
+    # to today: the NUFORC feed lags ~1-2 weeks, so anchoring to today would make
+    # every window read near-zero and look like a crash. Each window carries its
+    # count plus the SAME window ending exactly 365 days earlier, for a YoY delta.
+    # Computed here (not in the V1/V2 client JS) so both dashboards just render
+    # fields — no duplicated, drift-prone date math. "yesterday" is the single
+    # newest day on file; widths are symmetric current-vs-prior so deltas compare
+    # like-for-like.
+    velocity: dict[str, Any] | None = None
+    if max_dt is not None:
+        anchor = max_dt
+        anchor_day = anchor.date()
+        prev_day = (anchor - timedelta(days=365)).date()
+        wins = {"7d": 7, "30d": 30, "90d": 90}
+        cur = {k: 0 for k in wins}
+        prev = {k: 0 for k in wins}
+        cur_thr = {k: anchor - timedelta(days=d) for k, d in wins.items()}
+        prev_hi = anchor - timedelta(days=365)
+        prev_lo = {k: anchor - timedelta(days=365 + d) for k, d in wins.items()}
+        yest_cur = yest_prev = 0
+        y12_cur = y12_prev = 0
+        a365 = anchor - timedelta(days=365)
+        a730 = anchor - timedelta(days=730)
+        for r in rows:
+            dt = r["dt"]
+            d = dt.date()
+            if d == anchor_day:
+                yest_cur += 1
+            if d == prev_day:
+                yest_prev += 1
+            for k in wins:
+                if dt >= cur_thr[k]:
+                    cur[k] += 1
+                if prev_lo[k] <= dt <= prev_hi:
+                    prev[k] += 1
+            if dt >= a365:
+                y12_cur += 1
+            elif a730 <= dt < a365:
+                y12_prev += 1
+
+        def _delta(c: int, p: int) -> float | None:
+            # None when there's no year-ago baseline — renderer shows "n/a"
+            # instead of dividing by zero.
+            return round((c - p) / p * 100, 1) if p else None
+
+        velocity = {
+            "anchor": anchor_day.isoformat(),
+            "windows": {
+                "yesterday": {"count": yest_cur, "prev_year": yest_prev,
+                              "delta_pct": _delta(yest_cur, yest_prev)},
+                "7d": {"count": cur["7d"], "prev_year": prev["7d"],
+                       "delta_pct": _delta(cur["7d"], prev["7d"])},
+                "30d": {"count": cur["30d"], "prev_year": prev["30d"],
+                        "delta_pct": _delta(cur["30d"], prev["30d"])},
+                "90d": {"count": cur["90d"], "prev_year": prev["90d"],
+                        "delta_pct": _delta(cur["90d"], prev["90d"])},
+            },
+            "yoy_12mo": {"trailing": y12_cur, "prior": y12_prev,
+                         "delta_pct": _delta(y12_cur, y12_prev)},
+        }
+
     # Compact the shape view to keep the sidecar small. Keep the top ~15
     # named shapes; everything outside that set rolls into "other". Both
     # "unknown" (blanks) and "other" (NUFORC's literal classification) are
@@ -536,6 +598,7 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
         "shape_by_year": shape_by_year,
         "totals_by_month": totals_by_month,
         "shape_by_month": shape_by_month,
+        "velocity": velocity,
     }
     return payload
 
