@@ -38,7 +38,7 @@ def _sanitize(name: str) -> str:
 
 def _hash_key(key: str) -> str:
     """Stable short hash for long / unsafe keys."""
-    return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha256(key.encode("utf-8"), usedforsecurity=False).hexdigest()[:16]
 
 
 @dataclass(frozen=True)

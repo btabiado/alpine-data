@@ -1488,7 +1488,10 @@ _STALE_DIR = CACHE / ".stale"
 
 
 def _stale_path(funcname: str) -> Path:
-    return _STALE_DIR / f"{funcname}.json"
+    # A few cache keys embed upstream API symbols/ids (e.g. CoinGecko 'symbol'/'id'),
+    # so strip path separators + traversal before joining (CodeQL py/path-injection).
+    safe = "".join(c if (c.isalnum() or c in "_.-") else "_" for c in Path(str(funcname)).name)
+    return _STALE_DIR / f"{safe}.json"
 
 
 def _stale_save(funcname: str, value) -> None:
