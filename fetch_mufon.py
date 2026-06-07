@@ -481,7 +481,7 @@ def aggregate(rows: list[dict], anchor_dt: datetime | None = None) -> dict:
                     prev[k] += 1
             if dt >= a365:
                 y12_cur += 1
-            elif a730 <= dt < a365:
+            elif dt >= a730:  # dt < a365 already guaranteed by the if-branch above
                 y12_prev += 1
 
         def _delta(c: int, p: int) -> float | None:

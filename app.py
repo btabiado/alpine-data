@@ -15122,7 +15122,7 @@ function renderMufonShapesMonths(m, monthKeys, totals, byMonth, activeRange, ran
     polygons.push(
       '<polygon points="' + pts + '" fill="' + color + '" '
       + 'fill-opacity="0.82" stroke="none">'
-      +   '<title>' + sh + ' — ' + (ranked[idx] ? ranked[idx].count.toLocaleString() : '?') + ' all-time</title>'
+      +   '<title>' + escapeHtml(sh) + ' — ' + (ranked[idx] ? ranked[idx].count.toLocaleString() : '?') + ' all-time</title>'
       + '</polygon>'
     );
   });
@@ -15369,7 +15369,7 @@ function renderMufonShapes(){
           '<rect x="' + (d.x - d.w / 2) + '" y="' + (d.y - d.h / 2) + '" '
           + 'width="' + d.w + '" height="' + d.h + '" '
           + 'fill="' + color + '" fill-opacity="0.82" stroke="none">'
-          +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+          +   '<title>' + escapeHtml(sh) + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
           + '</rect>'
         );
       });
@@ -15378,7 +15378,7 @@ function renderMufonShapes(){
       polygons.push(
         '<polygon points="' + pts + '" fill="' + color + '" '
         + 'fill-opacity="0.82" stroke="none">'
-        +   '<title>' + sh + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
+        +   '<title>' + escapeHtml(sh) + ' — ' + (ranked[i] ? ranked[i].count.toLocaleString() : '?') + ' all-time</title>'
         + '</polygon>'
       );
     }
