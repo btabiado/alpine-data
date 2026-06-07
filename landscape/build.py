@@ -109,11 +109,17 @@ def load_summit():
             "segment": norm_segment(seg),
             "relationship": rel,
             "tier": v.get("tier", ""),          # A/B/C partner tier (kept distinct)
-            "geo": "",
+            "geo": "Unknown",                    # Summit data carries no HQ geo
             "type": ctype,
             "desc": v.get("niche", "") or v.get("category", ""),
             "booth": v.get("booth", ""),
             "website": v.get("website", ""),
+            "overall_score": v.get("overall_score"),
+            "bryan_score": v.get("bryan_score"),
+            "ai_score": v.get("ai_score"),
+            "snowflake_score": v.get("snowflake_score"),
+            "funding": v.get("funding", ""),
+            "investors": v.get("investors", ""),
             "vision": ov.get("mq_vision"),
             "execution": ov.get("mq_execute"),
             "at_summit": True,
@@ -184,7 +190,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Competitive Landscape — AI & Data Vendors NOT at Snowflake Summit 2026</title>
+<title>Vendor Directory — Snowflake Summit 2026 Partners + the Competitive Landscape</title>
 <!--__CHARTJS__-->
 <style>
 :root{
@@ -292,7 +298,7 @@ tbody tr[role="button"]{cursor:pointer}
 <header class="top">
   <div>
     <h1>🔭 Competitive Landscape</h1>
-    <div class="sub">AI &amp; data vendors <b>not</b> at Snowflake Summit 2026 — the inverse of the 197-partner directory</div>
+    <div class="sub">Every AI &amp; data vendor in one place — the <b>197</b> Snowflake Summit 2026 partners + the <b>619</b>-vendor competitive field · filter by presence</div>
   </div>
   <div class="spacer"></div>
   <a class="navlink" href="../summit/">← Summit partners</a>
@@ -300,7 +306,7 @@ tbody tr[role="button"]{cursor:pointer}
 </header>
 
 <div class="tabs" role="tablist" aria-label="Views">
-  <button class="tab" id="tab-ls" role="tab" aria-selected="true" aria-controls="view-ls">Landscape <span class="muted">· __NS_TOTAL__ absent</span></button>
+  <button class="tab" id="tab-ls" role="tab" aria-selected="true" aria-controls="view-ls">Directory <span class="muted">· all __ALL_TOTAL__</span></button>
   <button class="tab" id="tab-mm" role="tab" aria-selected="false" aria-controls="view-mm" tabindex="-1">Market Map <span class="muted">· all __ALL_TOTAL__</span></button>
   <button class="tab" id="tab-mq" role="tab" aria-selected="false" aria-controls="view-mq" tabindex="-1">Magic Quadrant <span class="muted">· vision × execution</span></button>
 </div>
@@ -310,7 +316,7 @@ tbody tr[role="button"]{cursor:pointer}
 <!-- ===================== LANDSCAPE VIEW ===================== -->
 <section class="view active" id="view-ls" role="tabpanel" aria-labelledby="tab-ls">
   <div class="panel">
-    <h2>The __NS_TOTAL__ absent vendors <span class="hint">click a tile to filter · the inverse of who showed up at /summit/</span></h2>
+    <h2>All __ALL_TOTAL__ vendors <span class="hint">Summit partners + the competitive landscape · filter by presence, then click a tile, chart, or row to drill in</span></h2>
     <div class="kpis" id="lsKpis"></div>
   </div>
 
@@ -320,6 +326,10 @@ tbody tr[role="button"]{cursor:pointer}
       <select id="lsSeg" aria-label="Segment"><option value="">All segments</option></select>
       <select id="lsGeo" aria-label="Geography"><option value="">All geographies</option></select>
       <select id="lsType" aria-label="Company type"><option value="">All types</option></select>
+      <span style="width:8px"></span>
+      <button class="chip" data-pres="" aria-pressed="true">All vendors</button>
+      <button class="chip" data-pres="present" aria-pressed="false">At Summit</button>
+      <button class="chip" data-pres="absent" aria-pressed="false">Not at Summit</button>
       <span style="width:8px"></span>
       <button class="chip" data-rel="" aria-pressed="true">All relationships</button>
       <button class="chip sub" data-rel="substitute" aria-pressed="false">Substitutes</button>
@@ -473,18 +483,22 @@ tabs.forEach((t,i)=>{
 function makeTable(tableEl, cols, opts){
   const thead=tableEl.querySelector('thead'), tbody=tableEl.querySelector('tbody');
   let sortKey=null, sortDir=1;
-  thead.innerHTML='<tr>'+cols.map(c=>`<th data-k="${c.k}">${esc(c.t)}</th>`).join('')+'</tr>';
-  thead.querySelectorAll('th').forEach(th=>{
-    th.tabIndex=0; th.setAttribute('role','button');
-    const go=()=>{const k=th.dataset.k;
-      if(sortKey===k)sortDir*=-1; else {sortKey=k;sortDir=1;}
-      thead.querySelectorAll('th').forEach(x=>x.removeAttribute('aria-sort'));
-      th.setAttribute('aria-sort',sortDir>0?'ascending':'descending');
-      tableEl._render();};
-    th.addEventListener('click',go);
-    th.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
-  });
-  tableEl._cols=cols;
+  const _bindHead=()=>{
+    thead.innerHTML='<tr>'+tableEl._cols.map(c=>`<th data-k="${c.k}">${esc(c.t)}</th>`).join('')+'</tr>';
+    thead.querySelectorAll('th').forEach(th=>{
+      th.tabIndex=0; th.setAttribute('role','button');
+      const go=()=>{const k=th.dataset.k;
+        if(sortKey===k)sortDir*=-1; else {sortKey=k;sortDir=1;}
+        thead.querySelectorAll('th').forEach(x=>x.removeAttribute('aria-sort'));
+        th.setAttribute('aria-sort',sortDir>0?'ascending':'descending');
+        tableEl._render();};
+      th.addEventListener('click',go);
+      th.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+    });
+  };
+  // swap the visible column set without re-binding the (delegated) tbody listeners
+  tableEl._setCols=(c)=>{tableEl._cols=c; sortKey=null; sortDir=1; _bindHead();};
+  tableEl._setCols(cols);
   tableEl._onRow=opts&&opts.onRow;
   if(tableEl._onRow){
     tbody.addEventListener('click',e=>{if(e.target.closest('a'))return;const tr=e.target.closest('tr[data-ri]');if(!tr)return;const v=tableEl._shown&&tableEl._shown[+tr.dataset.ri];if(v)tableEl._onRow(v);});
@@ -492,7 +506,8 @@ function makeTable(tableEl, cols, opts){
   }
   tableEl._sort=(rows)=>{
     if(!sortKey)return rows;
-    const c=cols.find(x=>x.k===sortKey);
+    const c=tableEl._cols.find(x=>x.k===sortKey);
+    if(!c)return rows;
     return rows.slice().sort((a,b)=>{
       let va=(c.sort?c.sort(a):a[sortKey]), vb=(c.sort?c.sort(b):b[sortKey]);
       if(typeof va==='number'&&typeof vb==='number')return (va-vb)*sortDir;
@@ -548,22 +563,51 @@ function closeVendor(){
 
 /* ---------- LANDSCAPE ---------- */
 const NS=DATA.ns;
-const lsState={rel:'',tier:'',seg:'',geo:'',type:'',q:'',kpi:'',limit:120};
+const ALL=DATA.ns.concat(DATA.summit);
+const lsState={pres:'',rel:'',tier:'',seg:'',geo:'',type:'',q:'',kpi:'',limit:120};
 const LS_TABLE=document.getElementById('lsTable');
-const lsCols=[
-  {k:'name',t:'Vendor',cell:v=>`<b>${esc(v.name)}</b>${v.website?` <a href="${esc(v.website)}" target="_blank" rel="noopener" aria-label="${esc(v.name)} website">↗</a>`:''}<div class="seg">${esc(v.segment)}</div>`},
-  {k:'relationship',t:'Rel.',cell:v=>`<span class="pill ${REL_CLASS[v.relationship]}">${esc(REL_LABEL[v.relationship]||v.relationship)}</span>`},
+const _nameCell=v=>`<b>${esc(v.name)}</b>${v.website?` <a href="${esc(v.website)}" target="_blank" rel="noopener" aria-label="${esc(v.name)} website">↗</a>`:''}<div class="seg">${esc(v.segment)}</div>`;
+const _relCell=v=>`<span class="pill ${REL_CLASS[v.relationship]||'adj'}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
+const _presCell=v=>v.at_summit?'<span class="pill present">At Summit</span>':'<span class="pill absent">Absent</span>';
+const _num=x=>(x==null||x==='')?'—':x;
+const _ns=x=>(x==null||x==='')?-1:(+x);   // numeric sort key, missing sorts last on desc
+// All (default): the common subset that exists for both populations
+const LS_COMMON=[
+  {k:'name',t:'Vendor',cell:_nameCell},
+  {k:'at_summit',t:'Presence',cell:_presCell,sort:v=>v.at_summit?1:0},
+  {k:'segment',t:'Segment',cell:v=>esc(v.segment)},
+  {k:'relationship',t:'Rel.',cell:_relCell},
+  {k:'type',t:'Type',cell:v=>esc(v.type||'—')},
+  {k:'geo',t:'HQ',cell:v=>esc(v.hq||v.geo||'—'),sort:v=>v.geo},
+];
+// At Summit: partner scoring + booth (filter-aware columns)
+const LS_SUMMIT=[
+  {k:'name',t:'Vendor',cell:_nameCell},
+  {k:'tier',t:'Partner tier',cell:v=>v.tier?`<span class="pill">Tier ${esc(v.tier)}</span>`:'—',sort:v=>v.tier||''},
+  {k:'overall_score',t:'Overall',cell:v=>_num(v.overall_score),sort:v=>_ns(v.overall_score)},
+  {k:'bryan_score',t:'Bryan',cell:v=>_num(v.bryan_score),sort:v=>_ns(v.bryan_score)},
+  {k:'ai_score',t:'AI',cell:v=>_num(v.ai_score),sort:v=>_ns(v.ai_score)},
+  {k:'relationship',t:'Rel.',cell:_relCell},
+  {k:'booth',t:'Booth',cell:v=>esc(v.booth||'—')},
+];
+// Not at Summit: competitive positioning (filter-aware columns)
+const LS_NON=[
+  {k:'name',t:'Vendor',cell:_nameCell},
+  {k:'relationship',t:'Rel.',cell:_relCell},
   {k:'desc',t:'What they do',cell:v=>esc(v.desc)},
   {k:'stage',t:'Stage',cell:v=>esc(v.stage||'—')},
   {k:'funding',t:'Funding',cell:v=>esc(v.funding||'—')},
-  {k:'geo',t:'HQ',cell:v=>`${esc(v.hq||v.geo||'—')}`,sort:v=>v.geo},
-  {k:'tier',t:'Tier',cell:v=>`<span class="pill t${v.tier}">T${v.tier}</span>`,sort:v=>v.tier},
+  {k:'geo',t:'HQ',cell:v=>esc(v.hq||v.geo||'—'),sort:v=>v.geo},
+  {k:'tier',t:'Tier',cell:v=>v.tier?`<span class="pill t${v.tier}">T${v.tier}</span>`:'—',sort:v=>v.tier},
 ];
-makeTable(LS_TABLE,lsCols,{onRow:openVendor});
+const lsPickCols=()=>lsState.pres==='present'?LS_SUMMIT:lsState.pres==='absent'?LS_NON:LS_COMMON;
+makeTable(LS_TABLE,lsPickCols(),{onRow:openVendor});
 
 function lsFiltered(){
   const q=lsState.q.toLowerCase();
-  return NS.filter(v=>{
+  return ALL.filter(v=>{
+    if(lsState.pres==='present'&&!v.at_summit)return false;
+    if(lsState.pres==='absent'&&v.at_summit)return false;
     if(lsState.rel&&v.relationship!==lsState.rel)return false;
     if(lsState.tier&&String(v.tier)!==lsState.tier)return false;
     if(lsState.seg&&v.segment!==lsState.seg)return false;
@@ -584,35 +628,46 @@ LS_TABLE._render=()=>{
   renderRows(LS_TABLE,rows,lsState.limit);
   document.getElementById('lsShowAll').hidden=!(lsState.limit<total);
   updateLSCharts(rows);
-  const active=!!(lsState.rel||lsState.tier||lsState.seg||lsState.geo||lsState.type||lsState.q||lsState.kpi);
+  const active=!!(lsState.pres||lsState.rel||lsState.tier||lsState.seg||lsState.geo||lsState.type||lsState.q||lsState.kpi);
   const cl=document.getElementById('lsClear'); if(cl)cl.hidden=!active;
 };
 function lsKpis(){
-  const r=DATA.relCounts, exus=NS.filter(v=>v.geo!=='North America'&&v.geo!=='Unknown').length;
-  const t1=(DATA.tierCounts['1']||0), pub=NS.filter(v=>v.type==='Public').length;
+  const relC={substitute:0,adjacent:0,'different-orbit':0}; let atS=0,pub=0;
+  ALL.forEach(v=>{if(relC[v.relationship]!=null)relC[v.relationship]++;if(v.at_summit)atS++;if(v.type==='Public')pub++;});
   const tiles=[
-    {n:NS.length,l:'Absent vendors',kpi:''},
-    {n:r['substitute']||0,l:'Substitutes (compete)',kpi:'',rel:'substitute'},
-    {n:r['adjacent']||0,l:'Adjacent (could partner)',kpi:'',rel:'adjacent'},
-    {n:r['different-orbit']||0,l:'Different-orbit',kpi:'',rel:'different-orbit'},
-    {n:t1,l:'Tier-1 marquee',kpi:'t1'},
+    {n:ALL.length,l:'All vendors',pres:''},
+    {n:atS,l:'At Summit 2026',pres:'present'},
+    {n:ALL.length-atS,l:'Not at Summit',pres:'absent'},
+    {n:relC['substitute'],l:'Substitutes (compete)',rel:'substitute'},
+    {n:relC['adjacent'],l:'Adjacent (partner?)',rel:'adjacent'},
+    {n:relC['different-orbit'],l:'Different-orbit',rel:'different-orbit'},
     {n:pub,l:'Public companies',kpi:'public'},
-    {n:exus,l:'HQ outside North America',kpi:'exus'},
   ];
-  document.getElementById('lsKpis').innerHTML=tiles.map((t,i)=>
-    `<button class="kpi" data-i="${i}" data-rel="${t.rel||''}" data-kpi="${t.kpi}"><div class="n">${t.n}</div><div class="l">${esc(t.l)}</div></button>`).join('');
+  document.getElementById('lsKpis').innerHTML=tiles.map((t,i)=>{
+    const hp=t.pres!==undefined;
+    return `<button class="kpi" data-i="${i}" data-haspres="${hp?1:0}" data-pres="${hp?t.pres:''}" data-rel="${t.rel||''}" data-kpi="${t.kpi||''}"><div class="n">${t.n}</div><div class="l">${esc(t.l)}</div></button>`;
+  }).join('');
   document.querySelectorAll('#lsKpis .kpi').forEach(b=>b.addEventListener('click',()=>{
+    if(b.dataset.haspres==='1'){const p=b.dataset.pres; setPres(lsState.pres===p?'':p); return;}
     const rel=b.dataset.rel, kpi=b.dataset.kpi;
-    // toggle off if same
     if(rel){lsState.rel=(lsState.rel===rel?'':rel);lsState.kpi='';syncRelChips();}
     else {lsState.kpi=(lsState.kpi===kpi?'':kpi);lsState.rel='';syncRelChips();}
-    document.querySelectorAll('#lsKpis .kpi').forEach(x=>x.classList.remove('on'));
+    document.querySelectorAll('#lsKpis .kpi:not([data-haspres="1"])').forEach(x=>x.classList.remove('on'));
     if((rel&&lsState.rel)||(!rel&&lsState.kpi))b.classList.add('on');
     lsState.limit=120;LS_TABLE._render();
   }));
 }
 function syncRelChips(){
   document.querySelectorAll('#lsFilters .chip[data-rel]').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.rel===lsState.rel)));
+}
+function syncPresChips(){
+  document.querySelectorAll('#lsFilters .chip[data-pres]').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.pres===lsState.pres)));
+  document.querySelectorAll('#lsKpis .kpi[data-haspres="1"]').forEach(x=>x.classList.toggle('on',x.dataset.pres===lsState.pres&&lsState.pres!==''));
+}
+function setPres(p){
+  lsState.pres=p; syncPresChips();
+  LS_TABLE._setCols(lsPickCols());
+  lsState.limit=120; LS_TABLE._render();
 }
 function fillSelect(sel,vals){sel.innerHTML=sel.children[0].outerHTML+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
 
@@ -624,7 +679,7 @@ function clearKpiOn(){document.querySelectorAll('#lsKpis .kpi').forEach(x=>x.cla
 function applyLS(scroll){lsState.limit=120;LS_TABLE._render();if(scroll){const p=document.getElementById('lsTable').closest('.panel');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}}
 function lsChartData(rows){
   const segC={},geoC={},relC={substitute:0,adjacent:0,'different-orbit':0};
-  rows.forEach(v=>{segC[v.segment]=(segC[v.segment]||0)+1;geoC[v.geo]=(geoC[v.geo]||0)+1;relC[v.relationship]=(relC[v.relationship]||0)+1;});
+  rows.forEach(v=>{segC[v.segment]=(segC[v.segment]||0)+1;geoC[v.geo||'Unknown']=(geoC[v.geo||'Unknown']||0)+1;if(relC[v.relationship]!=null)relC[v.relationship]++;});
   return {segArr:Object.entries(segC).sort((a,b)=>b[1]-a[1]),geoArr:Object.entries(geoC).sort((a,b)=>b[1]-a[1]),relC};
 }
 const _pt=(e,els)=>{if(e.native&&e.native.target)e.native.target.style.cursor=els.length?'pointer':'default';};
@@ -661,7 +716,7 @@ function initLandscape(){
   lsKpis(); drawLSCharts();
   fillSelect(document.getElementById('lsSeg'),DATA.segments.map(s=>s.segment));
   fillSelect(document.getElementById('lsGeo'),Object.keys(DATA.geoCounts).sort());
-  fillSelect(document.getElementById('lsType'),[...new Set(NS.map(v=>v.type))].sort());
+  fillSelect(document.getElementById('lsType'),[...new Set(ALL.map(v=>v.type).filter(Boolean))].sort());
   document.getElementById('lsSearch').addEventListener('input',e=>{lsState.q=e.target.value;lsState.limit=120;LS_TABLE._render();});
   document.getElementById('lsSeg').addEventListener('change',e=>{lsState.seg=e.target.value;lsState.limit=120;LS_TABLE._render();});
   document.getElementById('lsGeo').addEventListener('change',e=>{lsState.geo=e.target.value;lsState.limit=120;LS_TABLE._render();});
@@ -673,20 +728,23 @@ function initLandscape(){
     lsState.tier=c.dataset.tier;
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier===lsState.tier)));
     lsState.limit=120;LS_TABLE._render();}));
+  document.querySelectorAll('#lsFilters .chip[data-pres]').forEach(c=>c.addEventListener('click',()=>setPres(c.dataset.pres)));
   document.getElementById('lsShowAll').addEventListener('click',()=>{lsState.limit=99999;LS_TABLE._render();});
   document.getElementById('lsClear').addEventListener('click',()=>{
-    lsState.rel='';lsState.tier='';lsState.seg='';lsState.geo='';lsState.type='';lsState.q='';lsState.kpi='';lsState.limit=120;
+    lsState.pres='';lsState.rel='';lsState.tier='';lsState.seg='';lsState.geo='';lsState.type='';lsState.q='';lsState.kpi='';lsState.limit=120;
     document.getElementById('lsSearch').value='';document.getElementById('lsSeg').value='';
     document.getElementById('lsGeo').value='';document.getElementById('lsType').value='';
-    syncRelChips();clearKpiOn();
+    syncRelChips();syncPresChips();clearKpiOn();LS_TABLE._setCols(lsPickCols());
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier==='')));
     LS_TABLE._render();
   });
+  // deep-link: /landscape/?pres=present|absent opens the directory pre-filtered
+  try{const pp=new URLSearchParams(location.search).get('pres');if(pp==='present'||pp==='absent')lsState.pres=pp;}catch(e){}
+  syncPresChips();LS_TABLE._setCols(lsPickCols());
   LS_TABLE._render();
 }
 
 /* ---------- MARKET MAP ---------- */
-const ALL=DATA.ns.concat(DATA.summit);
 const mmState={pres:'',rel:'',seg:'',q:'',limit:150};
 const MM_TABLE=document.getElementById('mmTable');
 const mmCols=[
