@@ -335,11 +335,13 @@ tbody tr[role="button"]{cursor:pointer}
       <button class="chip sub" data-rel="substitute" aria-pressed="false">Substitutes</button>
       <button class="chip adj" data-rel="adjacent" aria-pressed="false">Adjacent</button>
       <button class="chip orb" data-rel="different-orbit" aria-pressed="false">Different-orbit</button>
-      <span style="width:8px"></span>
-      <button class="chip" data-tier="" aria-pressed="true">All tiers</button>
-      <button class="chip" data-tier="1" aria-pressed="false">Tier 1</button>
-      <button class="chip" data-tier="2" aria-pressed="false">Tier 2</button>
-      <button class="chip" data-tier="3" aria-pressed="false">Tier 3</button>
+      <span class="tiergrp" id="lsTierGroup" style="display:none;gap:8px;align-items:center">
+        <span class="muted" style="font-size:12px;margin-right:2px">Notability</span>
+        <button class="chip" data-tier="" aria-pressed="true">All</button>
+        <button class="chip" data-tier="1" aria-pressed="false">Tier 1</button>
+        <button class="chip" data-tier="2" aria-pressed="false">Tier 2</button>
+        <button class="chip" data-tier="3" aria-pressed="false">Tier 3</button>
+      </span>
     </div>
     <div class="grid3">
       <div><div class="chartbox tall"><canvas id="segChart"></canvas></div></div>
@@ -690,8 +692,18 @@ function syncPresChips(){
   document.querySelectorAll('#lsFilters .chip[data-pres]').forEach(c=>c.setAttribute('aria-pressed',String(c.dataset.pres===lsState.pres)));
   document.querySelectorAll('#lsKpis .kpi[data-haspres="1"]').forEach(x=>x.classList.toggle('on',x.dataset.pres===lsState.pres&&lsState.pres!==''));
 }
+function syncTierGroup(){
+  // Notability tier (1/2/3) is a non-summit concept — show its chips only when
+  // filtering the absent set, and reset the filter when hiding so it can't
+  // silently exclude all Summit partners from "All vendors".
+  const tg=document.getElementById('lsTierGroup'); if(!tg)return;
+  const show=(lsState.pres==='absent');
+  tg.style.display=show?'inline-flex':'none';
+  if(!show&&lsState.tier){lsState.tier='';
+    document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier==='')));}
+}
 function setPres(p){
-  lsState.pres=p; syncPresChips();
+  lsState.pres=p; syncPresChips(); syncTierGroup();
   LS_TABLE._setCols(lsPickCols());
   lsState.limit=120; LS_TABLE._render();
 }
@@ -760,13 +772,13 @@ function initLandscape(){
     lsState.pres='';lsState.rel='';lsState.tier='';lsState.seg='';lsState.geo='';lsState.type='';lsState.q='';lsState.kpi='';lsState.limit=120;
     document.getElementById('lsSearch').value='';document.getElementById('lsSeg').value='';
     document.getElementById('lsGeo').value='';document.getElementById('lsType').value='';
-    syncRelChips();syncPresChips();clearKpiOn();LS_TABLE._setCols(lsPickCols());
+    syncRelChips();syncPresChips();syncTierGroup();clearKpiOn();LS_TABLE._setCols(lsPickCols());
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier==='')));
     LS_TABLE._render();
   });
   // deep-link: /landscape/?pres=present|absent opens the directory pre-filtered
   try{const pp=new URLSearchParams(location.search).get('pres');if(pp==='present'||pp==='absent')lsState.pres=pp;}catch(e){}
-  syncPresChips();LS_TABLE._setCols(lsPickCols());
+  syncPresChips();syncTierGroup();LS_TABLE._setCols(lsPickCols());
   LS_TABLE._render();
 }
 
