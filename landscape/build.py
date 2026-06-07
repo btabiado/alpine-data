@@ -171,7 +171,7 @@ def render():
     data_json = data_json.replace("</", "<\\/").replace(" ", "\\u2028").replace(" ", "\\u2029")
 
     html = HTML_TEMPLATE.replace("/*__DATA__*/", data_json)
-    html = html.replace("__NS_TOTAL__", str(len(ns))).replace("__ALL_TOTAL__", str(len(ns) + len(summit)))
+    html = html.replace("__NS_TOTAL__", str(len(ns))).replace("__ALL_TOTAL__", str(len(ns) + len(summit))).replace("__SUMMIT_TOTAL__", str(len(summit)))
 
     chartjs = ""
     if CHARTJS_PATH.exists():
@@ -401,6 +401,7 @@ tbody tr[role="button"]{cursor:pointer}
       <label class="muted" for="mqMode" style="font-size:13px">Dataset</label>
       <select id="mqMode" aria-label="Dataset">
         <option value="ns">Non-Summit only (__NS_TOTAL__)</option>
+        <option value="summit">Summit only (__SUMMIT_TOTAL__)</option>
         <option value="all">All vendors (__ALL_TOTAL__)</option>
       </select>
       <label class="muted" for="mqColor" style="font-size:13px;margin-left:6px">Color</label>
@@ -528,16 +529,22 @@ let _vmLastFocus=null;
 function openVendor(v){
   _vmLastFocus=document.activeElement;
   const relPill=`<span class="pill ${REL_CLASS[v.relationship]||'adj'}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
+  const mqPos=(typeof v.vision==='number')?`Vision ${v.vision} · Execution ${v.execution}`:'';
   let rows;
   if(v.at_summit){
+    const sc=[['Overall',v.overall_score],['AI',v.ai_score],['Snowflake',v.snowflake_score],['Bryan',v.bryan_score]]
+      .filter(x=>x[1]!=null&&x[1]!=='').map(x=>`${x[0]} ${x[1]}`).join(' · ');
     rows=[['Presence','✓ At Snowflake Summit 2026'+(v.booth?' · booth '+v.booth:'')],
       ['Segment',v.segment],['Relationship',REL_LABEL[v.relationship]||v.relationship],
-      ['Partner tier',v.tier?('Tier '+v.tier):''],['Type',v.type]];
+      ['Partner tier',v.tier?('Tier '+v.tier):''],['Type',v.type],
+      ['Funding',v.funding||''],['Investors',v.investors||''],
+      ['Summit scores',sc],['MQ position',mqPos]];
   } else {
     rows=[['Presence','✗ Not at Summit'],['Segment',v.segment],
       ['Relationship',REL_LABEL[v.relationship]||v.relationship],
       ['Notability','Tier '+v.tier],['Type',v.type],['HQ',v.hq||v.geo||''],
-      ['Stage',v.stage||''],['Funding',v.funding||''],['Investors',v.investors||'']];
+      ['Stage',v.stage||''],['Funding',v.funding||''],['Investors',v.investors||''],
+      ['MQ position',mqPos]];
   }
   const site=v.website?`<div style="margin:2px 0 4px"><a href="${esc(v.website)}" target="_blank" rel="noopener">${esc(v.website.replace(/^https?:\/\//,''))} ↗</a></div>`:'';
   document.getElementById('vmBody').innerHTML=
@@ -878,7 +885,7 @@ const mqLabelPlugin={id:'mqlabel',afterDatasetsDraw(chart){
   ctx.restore();
 }};
 function mqVisible(){
-  const set=(mqMode==='all')?DATA.ns.concat(DATA.summit):DATA.ns;
+  const set=(mqMode==='all')?DATA.ns.concat(DATA.summit):(mqMode==='summit')?DATA.summit:DATA.ns;
   return set.filter(v=>typeof v.vision==='number'&&typeof v.execution==='number');
 }
 function mqRebuild(){
@@ -897,7 +904,7 @@ function mqRebuild(){
   const rn=document.getElementById('mqRingNote'); if(rn)rn.style.display=ring?'':'none';
   const inLeaders=pts.filter(p=>p.vision>=mx&&p.execution>=my).length;
   const foot=document.getElementById('mqFoot');
-  if(foot)foot.textContent=`${pts.length} vendors plotted · ${inLeaders} in the Leaders quadrant · crosshair at fleet means (Vision ${mx.toFixed(1)}, Execution ${my.toFixed(1)}). ${ring?'Ringed dots were at Snowflake Summit 2026.':'Non-summit vendors only.'} Top 16 by combined score are labelled.`;
+  if(foot)foot.textContent=`${pts.length} vendors plotted · ${inLeaders} in the Leaders quadrant · crosshair at fleet means (Vision ${mx.toFixed(1)}, Execution ${my.toFixed(1)}). ${mqMode==='all'?'Ringed dots were at Snowflake Summit 2026.':mqMode==='summit'?'Snowflake Summit 2026 partners only.':'Non-summit vendors only.'} Top 16 by combined score are labelled.`;
 }
 function drawMQ(){
   if(mqInit){mqRebuild();return;} mqInit=true;
