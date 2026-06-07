@@ -2019,6 +2019,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
            Populated by renderEtfSpotlight(); empty until first ETF render. -->
       <div id="etfSpotlight" style="margin-bottom:10px"></div>
       <div class="row" id="etfKpis"></div>
+      <div class="controls" style="border:0;padding:0 0 10px">
+        <span class="lbl">Period</span>
+        <button class="btn active" data-period="daily">Daily</button>
+        <button class="btn" data-period="weekly">Weekly</button>
+        <button class="btn" data-period="monthly">Monthly</button>
+        <button class="btn" data-period="yearly">Yearly</button>
+        <span class="lbl" style="margin-left:14px">Timeframe</span>
+        <button class="btn" data-range="ytd">YTD</button>
+        <button class="btn" data-range="1y">1Y</button>
+        <button class="btn active" data-range="all">All</button>
+      </div>
       <div class="grid2">
         <div class="v2-card">
           <div class="v2-card__head"><div style="min-width:0"><h2 class="v2-card__title"><span class="v2-tip-anchor" data-v2-tip="Net inflow (positive) or outflow (negative) into spot ETFs in USD millions, from Farside Investors.">Net flow</span> <span class="tag" id="tagAsset1">BTC</span></h2><div class="v2-card__subtitle">USD millions, negative = outflow</div></div></div>
@@ -2129,6 +2140,17 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <button class="btn" data-futuresasset="ltc">LTC</button>
       </div>
       <div class="row" id="tradingKpis"></div>
+      <div class="controls" style="border:0;padding:0 0 10px">
+        <span class="lbl">Period</span>
+        <button class="btn active" data-period="daily">Daily</button>
+        <button class="btn" data-period="weekly">Weekly</button>
+        <button class="btn" data-period="monthly">Monthly</button>
+        <button class="btn" data-period="yearly">Yearly</button>
+        <span class="lbl" style="margin-left:14px">Timeframe</span>
+        <button class="btn" data-range="ytd">YTD</button>
+        <button class="btn" data-range="1y">1Y</button>
+        <button class="btn active" data-range="all">All</button>
+      </div>
       <div class="grid2">
         <div class="v2-card">
           <div class="v2-card__head" style="align-items:center;gap:10px;flex-wrap:wrap">
@@ -3747,6 +3769,10 @@ function rangeStartFor(rows){
   const last = new Date(rows[rows.length-1].date);
   const map = {'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095};
   if (state.range === 'all') return null;
+  if (state.range === 'ytd'){
+    // YTD = since Jan-1 of the latest data year (mirrors the server ytd calc).
+    return new Date(last.getFullYear(), 0, 1).getTime();
+  }
   const days = map[state.range] || 0;
   const s = new Date(last); s.setDate(s.getDate()-days);
   return s.getTime();
@@ -4051,10 +4077,14 @@ function renderFlow(){
 }
 function renderCum(){
   const d = etfData(); const series = applyRange(d[state.period]); const c = accentFor(etfAsset());
+  // Under a YTD range, re-base the all-time cumulative line so it starts at 0 on
+  // Jan-1 (reconciles to the server ytd scalar = sum of current-year flows).
+  // Other ranges keep the true all-time cumulative ("cumulative-as-of").
+  const base = (state.range === 'ytd' && series.length) ? (series[0].cumulative - series[0].flow) : 0;
   destroy('cum');
   charts.cum = new Chart(document.getElementById('cumChart'), {
     type:'line',
-    data:{labels:series.map(r=>r.date), datasets:[{data:series.map(r=>r.cumulative), borderColor:c, backgroundColor:c+'33', fill:true, tension:0.2, pointRadius:0, borderWidth:2}]},
+    data:{labels:series.map(r=>r.date), datasets:[{data:series.map(r=>r.cumulative - base), borderColor:c, backgroundColor:c+'33', fill:true, tension:0.2, pointRadius:0, borderWidth:2}]},
     options: baseOpts({yLabel:'Cumulative ($M)', tooltipFmt:v=>fmtSigned(v)}),
   });
 }
@@ -6139,6 +6169,10 @@ function renderMultichainWhale(){
 function _whaleRangeFilter(rows){
   if (!rows || !rows.length) return rows || [];
   const range = state.range;
+  if (range === 'ytd'){
+    const yr = new Date(rows[rows.length-1].date).getFullYear();
+    return rows.filter(r => new Date(r.date).getFullYear() === yr);
+  }
   const days = {'3m':90,'6m':180,'1y':365,'2y':730,'3y':1095}[range] || null;
   if (!days) return rows;
   return rows.slice(-days);
@@ -12746,7 +12780,7 @@ function renderRedditCards(){
     const s = subs[name];
     const accent = labelAccent[name] || 'var(--v2-ai)';
     if (!s || !s.ok){
-      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${s?.sub || name}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
+      return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${escapeHtml(s?.sub || name)}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
     }
     const posts = (s.top_posts || []).slice(0, 3).map(p => `
       <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
@@ -12772,7 +12806,7 @@ function renderRedditCards(){
       : '';
     return `<div class="card" style="border-left:4px solid ${accent}">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
-        <h3 style="font-size:13px;color:var(--text)">/r/${s.sub}</h3>
+        <h3 style="font-size:13px;color:var(--text)">/r/${escapeHtml(s.sub)}</h3>
         <span class="sub" style="color:var(--muted);font-size:11px">${s.label || ''}</span>
       </div>
       <div style="display:flex;gap:14px;margin-top:8px">
@@ -14087,7 +14121,7 @@ function selectTab(t){
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
   // monthly/yearly resampling toggle on per-fund flow tables and stacks.
-  const showPeriod = (t === 'etf');
+  const showPeriod = (t === 'etf' || t === 'trading');
   document.querySelectorAll('.btn[data-period]').forEach(b => b.style.display = showPeriod ? '' : 'none');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'PERIOD') b.style.display = showPeriod ? '' : 'none'; });
   // Overview + Social are multi-asset snapshots; hide asset toggle there.
