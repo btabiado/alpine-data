@@ -41,6 +41,7 @@ import os
 import random
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -164,8 +165,11 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
     when many workers fire at once.
     """
     time.sleep(random.uniform(_JITTER_MIN, _JITTER_MAX))
+    # URL-encode the path segment — tickers from the universe carry dots
+    # (BRK.B) and the encode also defends against any odd symbol.
+    safe_ticker = urllib.parse.quote(ticker, safe="")
     url = (
-        f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}"
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{safe_ticker}"
         "?range=6mo&interval=1d"
     )
     req = urllib.request.Request(url, headers={"User-Agent": _USER_AGENT})

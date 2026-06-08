@@ -286,6 +286,12 @@ def _component_z(today: Any, trailing: Any) -> Optional[float]:
     series = [x for x in (_f(t) for t in trailing) if x is not None]
     if len(series) < 2:
         return None
+    # Zero-dispersion history (all points identical) makes z_score return 0.0 by
+    # design — but that's a degenerate, info-free distribution, not a genuine
+    # "neutral today". Treat it as missing so the component DROPS and the
+    # headline renormalises, consistent with the <2-points case.
+    if len(set(series)) < 2:
+        return None
     z = z_score(val, series)
     # z_score returns NaN only when value is NaN (already guarded) — but be safe.
     if z != z:
