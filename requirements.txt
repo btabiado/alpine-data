@@ -1,5 +1,5 @@
 # Minimum supported Python: 3.11
-anthropic==0.105.2
+anthropic==0.107.1
 numpy==2.4.6
 pandas==3.0.3
 # pytest 9.0.3 patches GHSA-6w46-j5rx-g56g (local-privesc via predictable
