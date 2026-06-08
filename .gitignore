@@ -48,6 +48,10 @@ data-*.json
 # daily by city-daily.yml (mirrors data/real_estate.json's committed-data model)
 # so the V1 build always has city data even on a cold CI checkout.
 !data-city.json
+# Carve-out: data-stock-money-flow.json IS committed — the Stock Flows tab's
+# sidecar (per-stock MFI/CMF money-flow scores), refreshed daily by
+# stock-money-flow-daily.yml so the V1 build always has it on a cold checkout.
+!data-stock-money-flow.json
 # Carve-out: data-aviation.json IS committed — the Aviation tab's static sidecar
 # (FAA airman/registry data, used-market snapshot, live seed). Refreshed by hand.
 !data-aviation.json
