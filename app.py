@@ -12463,6 +12463,8 @@ function selectTab(t){
   document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
   document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
   document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
+  document.getElementById('tab-money_flow').classList.toggle('hidden', t!=='money_flow');
+  document.getElementById('tab-stockflow').classList.toggle('hidden', t!=='stockflow');
   document.getElementById('tab-lthcs').classList.toggle('hidden', t!=='lthcs');
   document.getElementById('tab-real_estate').classList.toggle('hidden', t!=='real_estate');
   document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
