@@ -4385,6 +4385,16 @@ async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
                 # None for tickers with <30d of bars (recent IPOs, etc.); the
                 # frontend falls back to the empty-state card in that case.
                 poc = compute_stock_poc(hist)
+                # Money-flow indicators off the SAME bars (no extra fetch) — feed
+                # the Stock Flows tab reliably (avoids a second Yahoo fan-out that
+                # gets IP-throttled). hist already carries OHLC after the
+                # yahoo_chart_history widening.
+                try:
+                    import money_flow as _mf
+                    mfi_v = _mf.mfi(hist, 14)
+                    cmf_v = _mf.cmf(hist, 20)
+                except Exception:
+                    mfi_v = cmf_v = None
                 return {
                     "symbol":     sym,
                     "name":       m["name"],
@@ -4396,6 +4406,8 @@ async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
                     "components": sig["components"],
                     "history":    sig["history"],
                     "poc":        poc,
+                    "mfi":        mfi_v,
+                    "cmf":        cmf_v,
                 }
             try:
                 return await asyncio.to_thread(_work)
@@ -4654,6 +4666,18 @@ async def _fetch_trading_async() -> dict:
     print(f"    -> {len(ai_curated.get('top_funded_companies', []))} companies, "
           f"{len(ai_curated.get('investment_kpis', []))} inv KPIs, "
           f"{len(ai_curated.get('whitepaper_kpis', []))} wp KPIs")
+
+    # ---- Stock Flows sidecar (piggybacks on the stocks_signals fetch above) --
+    # Reliable path: score the most-active index members from the MFI/CMF already
+    # computed during the (working) stocks_signals fetch — no extra Yahoo calls,
+    # so it isn't subject to the IP throttling that zeroed the standalone fetch.
+    # Last-good preserving: a thin/empty result never clobbers a populated sidecar.
+    try:
+        import fetch_stock_money_flow as _sf
+        _sfx = _sf.build_from_signals(stocks_signals, write=True)
+        print(f"  Stock Flows: scored {_sfx.get('scored_count', 0)} most-active index members")
+    except Exception as e:
+        print(f"  [stock-flows] sidecar build failed: {e}", file=sys.stderr)
 
     # ---- Stale-keep for top_markets (was inline in the sequential version) --
     top_markets = top_markets_raw

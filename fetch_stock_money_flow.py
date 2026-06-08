@@ -222,26 +222,22 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
 # Per-stock scoring
 # ---------------------------------------------------------------------------
 
-def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    """Score one stock from its OHLCV bars, or ``None`` when unscoreable.
+def _score_from_mfi_cmf(rec: Dict[str, Any], m: Optional[float], cm: Optional[float]) -> Optional[Dict[str, Any]]:
+    """Build a scored stock dict from a precomputed MFI / CMF pair.
 
-    ``None`` is returned when neither MFI nor CMF can be computed (insufficient
-    bars / bad data) — the caller counts that as a failure rather than emitting a
-    misleading neutral.
+    Shared by both data paths: the standalone fetch (``_score_stock``) and the
+    pages-build piggyback (``build_from_signals``), which reuses the MFI/CMF
+    already computed during the reliable ``stocks_signals`` fetch. Returns
+    ``None`` when neither indicator is available (not scoreable).
     """
-    m = mfi(bars, 14)
-    cm = cmf(bars, 20)
-
     if m is not None and cm is not None:
         raw = 0.6 * ((m - 50.0) * 2.0) + 0.4 * (cm * 200.0)
     elif m is not None:
         raw = (m - 50.0) * 2.0
     else:
-        # Neither indicator available -> not scoreable.
         return None
 
     score = float(_clip(round(raw, 1), -100.0, 100.0))
-
     return {
         "symbol": rec.get("ticker"),
         "name": rec.get("name"),
@@ -252,6 +248,11 @@ def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Di
         "indices": _scope_indices(rec),
         "sector": rec.get("sector"),
     }
+
+
+def _score_stock(rec: Dict[str, Any], bars: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Score one stock from its OHLCV bars, or ``None`` when unscoreable."""
+    return _score_from_mfi_cmf(rec, mfi(bars, 14), cmf(bars, 20))
 
 
 # ---------------------------------------------------------------------------
@@ -325,30 +326,73 @@ def build_stock_money_flow(limit: Optional[int] = None, write: bool = True) -> D
         "stocks": stocks,
     }
 
-    if write:
-        # LAST-GOOD PRESERVATION: Yahoo throttles GitHub Actions IPs
-        # unpredictably (a run can score 0 purely from a banned runner IP, or
-        # from the pages build having already spent the per-IP burst budget on
-        # the trading fetch). NEVER overwrite an existing populated sidecar with
-        # an empty result — keep the last-good so one successful run sticks and
-        # keeps deploying until a future run refreshes it.
-        if not stocks:
-            try:
-                with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
-                    prev = json.load(fh)
-                if int(prev.get("scored_count", 0)) > 0:
-                    print(f"Stock Flows: scored 0 — preserving last-good ({prev.get('scored_count')} from {prev.get('as_of')}).")
-                    return prev
-            except (OSError, ValueError):
-                pass  # no readable previous file -> fall through and write the empty shell
-        try:
-            with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
-                json.dump(payload, fh, indent=2)
-                fh.write("\n")
-        except OSError:
-            pass
+    return _write_sidecar(payload) if write else payload
 
+
+def _write_sidecar(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Write the sidecar with LAST-GOOD PRESERVATION.
+
+    Yahoo throttles GitHub Actions IPs unpredictably (a run can score 0 from a
+    banned runner IP, or because the pages build already spent the per-IP burst
+    budget on the trading fetch). NEVER overwrite an existing populated sidecar
+    with an empty result — keep the last-good so one successful run sticks and
+    keeps deploying until a future run refreshes it. Returns whatever payload is
+    effectively in force (the new one, or the preserved previous one).
+    """
+    if not payload.get("stocks"):
+        try:
+            with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
+                prev = json.load(fh)
+            if int(prev.get("scored_count", 0)) > 0:
+                print(f"Stock Flows: scored 0 — preserving last-good ({prev.get('scored_count')} from {prev.get('as_of')}).")
+                return prev
+        except (OSError, ValueError):
+            pass  # no readable previous file -> fall through and write the empty shell
+    try:
+        with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2)
+            fh.write("\n")
+    except OSError:
+        pass
     return payload
+
+
+def build_from_signals(signals: Any, write: bool = True) -> Dict[str, Any]:
+    """Build the sidecar from the pages build's already-fetched stocks_signals.
+
+    The reliable path: ``stocks_signals`` (top ~50 most-active) is fetched every
+    pages build via the working Yahoo session and each row carries a precomputed
+    ``mfi`` / ``cmf`` (attached in fetch_market). Here we score those names —
+    zero extra Yahoo calls — keeping only the ones that are members of the Dow /
+    Nasdaq-100 / S&P 500 (cross-referenced against data/lthcs/universe.json).
+    Trades universe breadth (most-active index members, not all 219 constituents)
+    for 100% reliability vs Yahoo's GitHub-Actions IP throttling.
+    """
+    rows = list(signals or [])
+    by_ticker = {
+        rec.get("ticker"): rec
+        for rec in _load_universe()
+        if rec.get("ticker") and _in_scope(rec)
+    }
+    stocks: List[Dict[str, Any]] = []
+    for s in rows:
+        if not isinstance(s, dict):
+            continue
+        rec = by_ticker.get(s.get("symbol"))
+        if rec is None:
+            continue  # not an in-scope index constituent
+        scored = _score_from_mfi_cmf(rec, s.get("mfi"), s.get("cmf"))
+        if scored is not None:
+            stocks.append(scored)
+    stocks.sort(key=lambda x: x["score"], reverse=True)
+    payload: Dict[str, Any] = {
+        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "universe_count": len(by_ticker),
+        "scored_count": len(stocks),
+        "source": "stocks_signals (most-active index members)",
+        "stocks": stocks,
+    }
+    return _write_sidecar(payload) if write else payload
 
 
 def main() -> None:
