@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Live reachability probe for the crypto dashboard's upstream data-source APIs.
+"""Live reachability probe for the dashboard's upstream data-source APIs.
+
+Covers every domain the dashboard fetches: crypto/whale/DeFi/ETF, equities &
+macro, plus the City, Aviation, Real-Estate, Metals, Supplies, UAP and Travel
+tabs. (Some macro hosts — FRED, Yahoo — are shared across tabs and probed once.)
 
 This is the *liveness* counterpart to ``scripts/build_health_status.py``: that
 script classifies cached ``data/`` files by mtime (is the data fresh?), whereas
@@ -71,9 +75,13 @@ TARGETS: list[dict] = [
     {"label": "Etherscan v2",         "category": "Whale",         "url": "https://api.etherscan.io/v2/api?chainid=1&module=stats&action=ethprice",                         "key_env": "ETHERSCAN_API_KEY"},
     {"label": "CoinMetrics",          "category": "Whale",         "url": "https://community-api.coinmetrics.io/v4/catalog/assets?assets=btc",                              "key_env": "COINMETRICS_API_KEY"},
     {"label": "Glassnode",            "category": "Whale",         "url": "https://api.glassnode.com/v1/metrics/market/price_usd_close",                                     "key_env": "GLASSNODE_API_KEY"},
+    {"label": "bitinfocharts",        "category": "Whale",         "url": "https://bitinfocharts.com/bitcoin-distribution-history.html",                                     "key_env": None},
     # ---- defi ----
     {"label": "DeFiLlama TVL",        "category": "DeFi",          "url": "https://api.llama.fi/v2/chains",                                                                 "key_env": None},
     {"label": "DeFiLlama yields",     "category": "DeFi",          "url": "https://yields.llama.fi/pools",                                                                  "key_env": None},
+    {"label": "DeFiLlama prices",     "category": "DeFi",          "url": "https://coins.llama.fi/prices/current/coingecko:bitcoin",                                        "key_env": None},
+    {"label": "DeFiLlama stablecoins","category": "DeFi",          "url": "https://stablecoins.llama.fi/stablecoins?includePrices=false",                                   "key_env": None},
+    {"label": "DeFiLlama bridges",    "category": "DeFi",          "url": "https://bridges.llama.fi/bridges",                                                               "key_env": None},
     # ---- equities / macro ----
     {"label": "Yahoo Finance",        "category": "Stocks",        "url": "https://query1.finance.yahoo.com/v8/finance/chart/BTC-USD?range=1d&interval=1d",                 "key_env": None},
     {"label": "FRED",                 "category": "Macro",         "url": "https://api.stlouisfed.org/fred/releases",                                                       "key_env": "FRED_API_KEY"},
@@ -83,6 +91,7 @@ TARGETS: list[dict] = [
     # fetch_live.MIRROR_BTC_CSV), so probe that real data path instead.
     {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
     {"label": "SoSoValue",            "category": "ETF Flows",     "url": "https://api.sosovalue.com/openapi/v2/etf/historicalInflowChart",                                 "key_env": "SOSOVALUE_API_KEY"},
+    {"label": "CoinGlass (ETF flows)","category": "ETF Flows",     "url": "https://open-api-v4.coinglass.com/api/etf/bitcoin/flow-history",                                 "key_env": "COINGLASS_API_KEY"},
     # ---- news / social / research ----
     # Reddit hard-blocks datacenter IPs on the keyless public API; the dashboard
     # reaches it via OAuth (REDDIT_CLIENT_ID/SECRET), so a 403 here means
@@ -93,6 +102,46 @@ TARGETS: list[dict] = [
     # ---- summit (the standalone Snowflake Summit dashboard is static/baked —
     # no live upstream API; we probe the deployed page itself for "is it up") ----
     {"label": "Summit dashboard",     "category": "Summit",        "url": "https://btabiado.github.io/alpine-data/summit/",                                                 "key_env": None},
+    # ---- city pulse (the City tab): Socrata 311/permits/crime per city, plus
+    # Miami via ArcGIS + FBI CDE, and Census/BLS/AirNow context. Socrata's
+    # keyless catalog endpoint is a cheap per-portal ping; SOCRATA_APP_TOKEN
+    # only raises rate limits, so it's an optional key (200 keyless → "up").
+    {"label": "Socrata · Chicago",    "category": "City",          "url": "https://data.cityofchicago.org/api/catalog/v1?limit=1",                                          "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Los Angeles","category": "City",          "url": "https://data.lacity.org/api/catalog/v1?limit=1",                                                 "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · Seattle",    "category": "City",          "url": "https://data.seattle.gov/api/catalog/v1?limit=1",                                                "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · San Francisco","category": "City",        "url": "https://data.sfgov.org/api/catalog/v1?limit=1",                                                  "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/api/catalog/v1?limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
+    {"label": "ArcGIS (Miami)",       "category": "City",          "url": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0?f=json", "key_env": None},
+    {"label": "FBI Crime Data Explorer","category": "City",        "url": "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL",                                          "key_env": "FBI_CDE_API_KEY"},
+    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data.json",                                                               "key_env": "CENSUS_API_KEY"},
+    {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LNS14000000",                                   "key_env": "BLS_API_KEY"},
+    {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY"},
+    # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
+    # OPENSKY_CLIENT_ID only raises limits. Tiny bbox keeps the probe cheap.
+    {"label": "OpenSky Network",      "category": "Aviation",      "url": "https://opensky-network.org/api/states/all?lamin=45.8&lomin=5.9&lamax=46.0&lomax=6.1",            "key_env": "OPENSKY_CLIENT_ID"},
+    # ---- real estate: Zillow + Redfin keyless CSVs, Census gazetteer for metro
+    # coords. These are large files; the probe GET reads one byte then closes.
+    {"label": "Zillow Research",      "category": "Real Estate",   "url": "https://files.zillowstatic.com/research/public_csvs/zhvi/Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv", "key_env": None},
+    {"label": "Redfin Data Center",   "category": "Real Estate",   "url": "https://redfin-public-data.s3.us-west-2.amazonaws.com/redfin_market_tracker/redfin_metro_market_tracker.tsv000.gz", "key_env": None},
+    {"label": "Census Gazetteer",     "category": "Real Estate",   "url": "https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2024_Gazetteer/2024_Gaz_cbsa_national.zip", "key_env": None},
+    # ---- metals (FRED + Yahoo are shared with crypto/macro and probed above):
+    # IMF SDMX central-bank gold holdings, USGS ScienceBase mine production.
+    {"label": "IMF SDMX",             "category": "Metals",        "url": "https://api.imf.org/external/sdmx/2.1/dataflow/IMF.STA/IRFCL",                                   "key_env": None},
+    # ScienceBase is finicky — send a browser UA + Accept. (It periodically drops
+    # connections host-wide; a "down" here usually means the metals USGS fetch
+    # is failing too, not that this probe is misconfigured.)
+    {"label": "USGS ScienceBase",     "category": "Metals",        "url": "https://www.sciencebase.gov/catalog/item/65b7d7b2d34e36a39045b4c8?format=json",                  "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15", "Accept": "application/json"}},
+    # ---- supplies: Port of L.A. TEU scrape, NY Fed GSCPI csv (FRED above).
+    # Probe a fixed historical-year page (permanent once published) rather than
+    # the current year, whose page may not exist yet early in a new year.
+    {"label": "Port of Los Angeles",  "category": "Supplies",      "url": "https://portoflosangeles.org/business/statistics/container-statistics/historical-teu-statistics-2024", "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
+    {"label": "NY Fed GSCPI",         "category": "Supplies",      "url": "https://www.newyorkfed.org/medialibrary/research/interactives/data/gscpi/gscpi_interactive_data.csv", "key_env": None},
+    # ---- UAP / MUFON: NUFORC sightings scrape. The historical mirror lives on
+    # raw.githubusercontent.com, already covered via the ETF-mirror host above.
+    {"label": "NUFORC",               "category": "UAP",           "url": "https://nuforc.org/subndx/",                                                                     "key_env": None},
+    # ---- travel: State Dept advisories — probe the RSS feed (lighter than the
+    # HTML table). Akamai-fronted, so send a browser UA to avoid a bot 403.
+    {"label": "State Dept advisories","category": "Travel",        "url": "https://travel.state.gov/_res/rss/TAsTWs.xml",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
 ]
 
 
@@ -191,7 +240,7 @@ def probe_all(timeout: float = DEFAULT_TIMEOUT, max_workers: int = 12) -> dict:
 
 
 # ---- TTL cache for the server endpoint ----------------------------------
-# Probing 25 hosts on every page load would be slow and rude to upstreams, so
+# Probing every target host on every page load would be slow and rude to upstreams, so
 # server.py reuses one snapshot for `ttl` seconds. A lock serializes the
 # refresh so a burst of concurrent requests triggers at most one probe sweep.
 _cache: dict = {"snapshot": None, "at": 0.0}
