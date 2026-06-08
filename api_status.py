@@ -90,7 +90,10 @@ TARGETS: list[dict] = [
     # actually sources BTC ETF flows from a keyless GitHub mirror CSV (see
     # fetch_live.MIRROR_BTC_CSV), so probe that real data path instead.
     {"label": "Farside (ETF mirror)", "category": "ETF Flows",     "url": "https://raw.githubusercontent.com/canadiancode/btc-etf-flows/main/Bitcoin-ETF-Flow-Data/data/BTC_ETF_INFLOWS_OUTFLOWS.csv", "key_env": None},
-    {"label": "SoSoValue",            "category": "ETF Flows",     "url": "https://api.sosovalue.com/openapi/v2/etf/historicalInflowChart",                                 "key_env": "SOSOVALUE_API_KEY"},
+    # SoSoValue dropped: api.sosovalue.com no longer resolves (DNS NXDOMAIN — the
+    # API subdomain was decommissioned). ETF flows already come from the Farside
+    # mirror above + the CoinGlass fallback below. fetch_live.py still carries a
+    # (now dead) SoSoValue path, harmlessly skipped when SOSOVALUE_API_KEY is unset.
     {"label": "CoinGlass (ETF flows)","category": "ETF Flows",     "url": "https://open-api-v4.coinglass.com/api/etf/bitcoin/flow-history",                                 "key_env": "COINGLASS_API_KEY"},
     # ---- news / social / research ----
     # Reddit hard-blocks datacenter IPs on the keyless public API; the dashboard
@@ -113,7 +116,10 @@ TARGETS: list[dict] = [
     {"label": "Socrata · New York",   "category": "City",          "url": "https://data.cityofnewyork.us/api/catalog/v1?limit=1",                                           "key_env": "SOCRATA_APP_TOKEN"},
     {"label": "ArcGIS (Miami)",       "category": "City",          "url": "https://services.arcgis.com/8Pc9XBTAsYuxx9Ny/arcgis/rest/services/BuildingPermit_gdb/FeatureServer/0?f=json", "key_env": None},
     {"label": "FBI Crime Data Explorer","category": "City",        "url": "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL",                                          "key_env": "FBI_CDE_API_KEY"},
-    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data.json",                                                               "key_env": "CENSUS_API_KEY"},
+    # Probe the median-income variable metadata (the exact ACS field the City
+    # context fetcher pulls) — small + keyless + fast. The /data.json discovery
+    # doc is huge and trips the 8s timeout whenever Census is sluggish.
+    {"label": "Census ACS",           "category": "City",          "url": "https://api.census.gov/data/2023/acs/acs5/variables/B19013_001E.json",                           "key_env": "CENSUS_API_KEY"},
     {"label": "BLS",                  "category": "City",          "url": "https://api.bls.gov/publicAPI/v2/timeseries/data/LNS14000000",                                   "key_env": "BLS_API_KEY"},
     {"label": "EPA AirNow",           "category": "City",          "url": "https://www.airnowapi.org/aq/observation/latLong/current/?format=application/json&latitude=40&longitude=-74&distance=25&API_KEY=", "key_env": "AIRNOW_API_KEY"},
     # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
