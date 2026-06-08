@@ -3724,6 +3724,10 @@ def _fetch_fred_impl() -> dict:
         "gold":         "GOLDPMGBD228NLBM",
         "treasury_10y": "DGS10",
         "m2":           "M2SL",
+        # Retail money-market fund assets (weekly, NSA, $B) — the "cash on the
+        # sidelines" confirmer for the Money Flow Index. WRMFNS is active; the
+        # SA/institutional variants (WRMFSL/WIMFSL/IMFSL) were discontinued 2021.
+        "retail_mmf":   "WRMFNS",
     }
     start = (datetime.now(timezone.utc).date() - timedelta(days=1095)).isoformat()
     end = "2026-12-31"
@@ -3955,9 +3959,11 @@ def yahoo_most_active(limit: int = 50) -> list[dict]:
 def yahoo_chart_history(symbol: str, range_: str = "6mo") -> list[dict]:
     """Daily OHLCV history for a single ticker via Yahoo's chart API.
 
-    Returns a list of {date, close, volume} for each valid daily bar.
-    Yahoo includes None values for missing days; those are filtered out.
-    Empty list on failure.
+    Returns a list of {date, open, high, low, close, volume} for each valid
+    daily bar. Yahoo includes None values for missing days; those are filtered
+    out. open/high/low fall back to close when Yahoo omits them so downstream
+    money-flow math (MFI/CMF, which need H/L) never sees None. Empty list on
+    failure.
     """
     j = _get(
         f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}",
@@ -3969,6 +3975,9 @@ def yahoo_chart_history(symbol: str, range_: str = "6mo") -> list[dict]:
         result = (j.get("chart") or {}).get("result", [])[0]
         timestamps = result.get("timestamp") or []
         quote = ((result.get("indicators") or {}).get("quote") or [{}])[0]
+        opens = quote.get("open") or []
+        highs = quote.get("high") or []
+        lows = quote.get("low") or []
         closes = quote.get("close") or []
         volumes = quote.get("volume") or []
     except (IndexError, AttributeError, TypeError):
@@ -3981,12 +3990,119 @@ def yahoo_chart_history(symbol: str, range_: str = "6mo") -> list[dict]:
         v = volumes[i] if i < len(volumes) else None
         if c is None:
             continue
+        c = float(c)
+        o = opens[i] if i < len(opens) else None
+        h = highs[i] if i < len(highs) else None
+        l = lows[i] if i < len(lows) else None
         out.append({
             "date":   datetime.fromtimestamp(int(ts), tz=timezone.utc).strftime("%Y-%m-%d"),
-            "close":  float(c),
+            "open":   float(o) if o is not None else c,
+            "high":   float(h) if h is not None else c,
+            "low":    float(l) if l is not None else c,
+            "close":  c,
             "volume": int(v) if v is not None else 0,
         })
     return out
+
+
+# Index ETFs that proxy the 3 major US equity indices for the Money Flow Index.
+MFX_ETFS = ("SPY", "QQQ", "DIA")
+
+
+def build_money_flow_payload() -> dict:
+    """Assemble + score the Money Flow Index (MFX).
+
+    Combines four legs into a -100..+100 composite (per-index + market-wide):
+      * per-index ETF flow  — ΔSharesOutstanding × NAV for SPY/QQQ/DIA
+        (``fetch_equity_etf_flows``; warms up over ~1 trading day)
+      * per-index buy/sell  — MFI + Chaikin Money Flow on each ETF's OHLCV
+      * market-wide cash     — ICI weekly money-market-fund WoW change (inverted)
+      * market-wide MF flow  — ICI weekly equity mutual-fund net flow
+
+    Returns ``money_flow.build_money_flow_index`` output plus a ``sources`` block
+    (raw ICI + ETF-flow data for the UI's stacked-flow bar / staleness chips).
+    Never raises — any failed leg degrades that component to neutral so the
+    gauge (and the build) survive.
+    """
+    import money_flow as _mf
+
+    # --- per-index buy/sell (MFI / CMF) from OHLCV ---------------------------
+    legs: dict[str, dict] = {}
+    for tk in MFX_ETFS:
+        try:
+            bars = yahoo_chart_history(tk, "6mo")
+        except Exception:
+            bars = []
+        mfi_hist: list[float] = []
+        if bars:
+            # rolling MFI(14): one value per day once enough bars exist —
+            # the trailing distribution the composite z-scores against.
+            for k in range(15, len(bars) + 1):
+                v = _mf.mfi(bars[:k], 14)
+                if v is not None:
+                    mfi_hist.append(round(v, 4))
+        last = bars[-1] if bars else None
+        legs[tk] = {
+            "etf_flow": None,
+            "etf_flow_hist": [],
+            "mfi": _mf.mfi(bars, 14) if bars else None,
+            "mfi_hist": mfi_hist,
+            "cmf": _mf.cmf(bars, 20) if bars else None,
+            "dollar_volume": (last["close"] * last["volume"]) if last else 0.0,
+        }
+
+    # --- per-index ETF flow (ΔSO × NAV) -------------------------------------
+    etf_block: dict = {}
+    try:
+        import fetch_equity_etf_flows as _eef
+        etf_block = _eef.main(write=True) or {}
+        for tk in MFX_ETFS:
+            t = (etf_block.get("tickers") or {}).get(tk) or {}
+            legs[tk]["etf_flow"] = t.get("net_flow_musd")
+            legs[tk]["etf_flow_hist"] = [
+                h.get("net_flow_musd") for h in (t.get("history") or [])
+                if h.get("net_flow_musd") is not None
+            ]
+    except Exception as e:
+        print(f"  [money_flow] equity ETF flows failed: {e}", file=sys.stderr)
+
+    # --- market-wide ICI MMF + mutual-fund flows ----------------------------
+    mmf_block: dict = {"weekly": []}
+    mf_flows_block: dict = {"weekly": []}
+    try:
+        import fetch_money_flows as _fmf
+        mf = _fmf.fetch_all(write=True) or {}
+        mmf_block = mf.get("mmf") or {"weekly": []}
+        mf_flows_block = mf.get("mf_flows") or {"weekly": []}
+    except Exception as e:
+        print(f"  [money_flow] ICI flows failed: {e}", file=sys.stderr)
+
+    mmf_totals = [w.get("total") for w in (mmf_block.get("weekly") or []) if w.get("total") is not None]
+    mmf_wow_hist = [round(mmf_totals[i] - mmf_totals[i - 1], 2) for i in range(1, len(mmf_totals))]
+
+    ici_eq_hist = [
+        w.get("total_equity") for w in (mf_flows_block.get("weekly") or [])
+        if w.get("total_equity") is not None
+    ]
+
+    market: dict = dict(legs)
+    market["ici_equity_flow"] = ici_eq_hist[-1] if ici_eq_hist else None
+    market["ici_equity_flow_hist"] = ici_eq_hist
+    market["mmf_wow_change"] = mmf_wow_hist[-1] if mmf_wow_hist else None
+    market["mmf_wow_change_hist"] = mmf_wow_hist
+
+    try:
+        mfx = _mf.build_money_flow_index({"market": market})
+    except Exception as e:
+        print(f"  [money_flow] composite failed: {e}", file=sys.stderr)
+        mfx = {"headline": {"score": 0, "label": "Neutral", "components": []}, "per_index": []}
+
+    mfx["sources"] = {
+        "mmf": mmf_block,
+        "mf_flows": mf_flows_block,
+        "equity_etf_flows": etf_block,
+    }
+    return mfx
 
 
 def _score_components_from_series(closes: list[float], volumes: list[float]) -> tuple[list[dict], int]:
@@ -4481,6 +4597,7 @@ async def _fetch_trading_async() -> dict:
         tvl_eth, tvl_sol, tvl_arb, tvl_base,           # DeFiLlama historical × 4
         news, ai_news, ai_funding, ai_curated,         # news × 4
         cadli, yahoo_idx, stocks_signals, fng,         # cadli, yahoo × 2, F&G
+        money_flow_block,                              # Money Flow Index (MFX)
     ) = await asyncio.gather(
         _timed("coingecko_market(btc)",   _cg_call(coingecko_market, "bitcoin")),
         _timed("coingecko_market(eth)",   _cg_call(coingecko_market, "ethereum")),
@@ -4530,6 +4647,7 @@ async def _fetch_trading_async() -> dict:
         _timed("yahoo_indices",           _bg_call(yahoo_indices)),
         _timed("fetch_stocks_signals",    _bg_call(fetch_stocks_signals, 50)),
         _timed("fear_greed",              _bg_call(fear_greed)),
+        _timed("build_money_flow",        _bg_call(build_money_flow_payload)),
     )
     if fred.get("available"):
         print("  FRED macro (DXY/SPX/Gold/10Y/M2) available")
@@ -4660,6 +4778,7 @@ async def _fetch_trading_async() -> dict:
         "cadli_btc": cadli,
         "yahoo_indices": yahoo_idx,
         "stocks_signals": stocks_signals,
+        "money_flow": money_flow_block,
         "fear_greed": fng,
         "ethbtc": ethbtc,
         "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),

@@ -1,0 +1,74 @@
+name: money-flow-daily
+
+# Daily refresh for the Money Flow Index (Markets → Money Flow tab).
+#
+# Two jobs of work, both committed back so history accumulates across builds:
+#   * fetch_equity_etf_flows.py — snapshots SPY/QQQ/DIA shares-outstanding +
+#     price/NAV and appends one row per ticker to data/equity_etf_flows.csv.
+#     The ETF money-flow leg is delta(SharesOutstanding) x NAV, so it NEEDS the
+#     committed prior-day row to compute today's flow — a CI pages build alone
+#     is ephemeral and would never accumulate. This cron is what persists it.
+#   * fetch_money_flows.py — downloads ICI's weekly money-market-fund and
+#     mutual-fund-flow .xls (each self-contains multiple weeks, so no
+#     accumulation needed, but committing keeps an offline fallback fresh).
+#
+# The composite itself is recomputed at deploy time inside fetch_market.fetch_all()
+# (python app.py --fetch-market in pages.yml), reading these committed files.
+#
+# 08:30 UTC — offset from real-estate-daily (06:00) and city-daily (07:00) so
+# the data-refresh bots don't race the same commit. [skip ci] keeps the push
+# from retriggering pages.yml; its own hourly cron picks up the new data.
+on:
+  schedule:
+    - cron: "30 8 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: money-flow-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Install deps
+        # equity-etf flows' only third-party import is requests (stdlib otherwise).
+        run: pip install requests
+
+      - name: Fetch equity ETF flows (delta-SO x NAV; accumulates history)
+        # The one file that must persist ACROSS builds: data/equity_etf_flows.csv.
+        # ETF money flow = delta(SharesOutstanding) x NAV, so today's flow needs
+        # the committed prior-day row — a CI pages build alone is ephemeral. The
+        # ICI money-market + mutual-fund .xls legs carry their own multi-week
+        # history and are re-fetched fresh inside the pages build, so they are
+        # NOT accumulated here. Non-fatal: the Yahoo crumb path is IP-rate-limited
+        # on some runners, but the keyless Nasdaq MarketCap fallback is reliable;
+        # if both fail we keep the last-good CSV rather than break the run.
+        run: python fetch_equity_etf_flows.py || echo "[money-flow] equity ETF flow fetch failed; keeping last-good"
+
+      - name: Commit ETF-flow history via signed API commit
+        # Mirrors city-daily.yml: API-based commit so the bot commit is
+        # GitHub-signed (Verified). api-commit.sh retries on rebase conflict.
+        # Only the CSV is tracked; data-*.json sidecars are gitignored and
+        # regenerated each deploy.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: money-flow-bot
+          AUTHOR_EMAIL: money-flow-bot@users.noreply.github.com
+        run: |
+          git add data/equity_etf_flows.csv
+          .github/scripts/api-commit.sh \
+            "money-flow: ETF-flow snapshot $(date -u +%Y-%m-%d) [skip ci]"

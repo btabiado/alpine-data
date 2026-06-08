@@ -1642,6 +1642,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <button class="tabgroup-btn" type="button" aria-haspopup="true" aria-expanded="false">Markets<span class="caret" aria-hidden="true">&#9662;</span></button>
     <div class="tabgroup-menu" role="group" aria-label="Markets views">
     <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
+    <div class="tab" data-tab="money_flow" role="tab" tabindex="0" aria-selected="false">Money Flow</div>
     <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
     <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
     </div>
@@ -2463,6 +2464,37 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <button class="btn" data-stocksfilter="strong_sell">STRONG SELL</button>
         </div>
         <div id="stocksGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MONEY FLOW TAB ============ -->
+  <!-- Money Flow Index — money into / out of the 3 major US equity indices.
+       Combines ETF creation·redemption flow, buy/sell pressure (MFI / CMF),
+       money-market-fund cash, and equity mutual-fund flows into a single
+       -100…+100 read. Filled by renderMoneyFlowTab() from
+       DATA.market.money_flow (computed server-side by money_flow.py). All
+       sub-cards degrade gracefully when fields are null/empty. -->
+  <div id="tab-money_flow" class="hidden">
+    <div class="container">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <h2 style="margin:0;font-size:20px">💵 Money Flow Index</h2>
+          <div class="sub" style="font-size:12px;color:var(--muted);max-width:760px;margin-top:4px">
+            Money into / out of the 3 major US equity indices — ETF creation·redemption flow,
+            buy/sell pressure (MFI/CMF), money-market cash, and mutual-fund flows. Scale -100…+100.
+          </div>
+        </div>
+        <div id="mfxAsOfChip" style="font-size:11px;color:var(--muted);white-space:nowrap;padding:4px 8px;border:1px solid #1f2533;border-radius:6px;background:var(--card)">—</div>
+      </div>
+      <!-- Headline ±100 gauge (large). -->
+      <div class="chart-card" id="mfxHeadlineCard" style="margin-bottom:12px"></div>
+      <!-- Per-index sub-gauges (DIA / SPY / QQQ) — wraps on mobile. -->
+      <div id="mfxPerIndex" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:12px"></div>
+      <!-- Component contributions + raw sources, side-by-side on desktop. -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+        <div class="chart-card" id="mfxComponents"></div>
+        <div class="chart-card" id="mfxSources"></div>
       </div>
     </div>
   </div>
@@ -5665,6 +5697,322 @@ function renderLthcsCompositePanel(host){
     ${moversRow}
     <div style="margin-top:10px;text-align:right">${link}</div>
   `;
+}
+
+// ---------- Money Flow tab ----------
+// Maps a -100…+100 Money-Flow score to a band color (matches the band-label
+// table: Heavy Outflow red → Heavy Inflow green, Neutral grey/amber).
+function mfxBandColor(score){
+  const s = Number(score);
+  if (!isFinite(s)) return '#94a3b8';
+  if (s <= -60) return '#ef4444';   // Heavy Outflow
+  if (s <= -30) return '#fb923c';   // Outflow
+  if (s <   30) return '#f59e0b';   // Neutral (amber)
+  if (s <  60)  return '#4ade80';   // Inflow (light green)
+  return '#16a34a';                 // Heavy Inflow
+}
+
+// Derive a band label from the score when the server didn't supply one.
+function mfxBandLabel(score){
+  const s = Number(score);
+  if (!isFinite(s)) return 'No data';
+  if (s <= -60) return 'Heavy Outflow';
+  if (s <= -30) return 'Outflow';
+  if (s <   30) return 'Neutral';
+  if (s <  60)  return 'Inflow';
+  return 'Heavy Inflow';
+}
+
+// Format a score to 0-1 decimal places with explicit sign.
+function mfxFmtScore(score){
+  const s = Number(score);
+  if (!isFinite(s)) return '—';
+  return (s >= 0 ? '+' : '') + s.toFixed(1);
+}
+
+// Reusable -100…+100 gauge HTML (visual idiom borrowed from the LTHCS
+// composite panel: a banded horizontal track with a marker at the score,
+// a big number, and a band label). opts.compact shrinks fonts for the
+// per-index cards; opts.label overrides the derived band label.
+function mfxGauge(score, label, opts){
+  opts = opts || {};
+  const compact = !!opts.compact;
+  const s = Number(score);
+  const has = isFinite(s);
+  const clamped = has ? Math.max(-100, Math.min(100, s)) : 0;
+  const pct = ((clamped + 100) / 200) * 100;
+  const color = has ? mfxBandColor(s) : '#94a3b8';
+  const lbl = escapeHtml(label || mfxBandLabel(score));
+  const num = has ? mfxFmtScore(s) : '—';
+  const numFont = compact ? 26 : 40;
+  const lblFont = compact ? 13 : 18;
+  const track = `
+    <div style="height:${compact?8:12}px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 20%,#fb923c 30%,#f59e0b 50%,#4ade80 70%,#16a34a 100%);border-radius:6px;position:relative;margin:${compact?'6px 0 2px':'10px 0 4px'}">
+      <div style="position:absolute;top:-3px;left:calc(${pct.toFixed(1)}% - 4px);width:8px;height:${compact?14:18}px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted)">
+      <span>-100</span><span>0</span><span>+100</span>
+    </div>`;
+  return `
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+      <span style="font-size:${numFont}px;font-weight:700;line-height:1;color:${color}">${num}</span>
+      <span style="font-size:${lblFont}px;font-weight:700;letter-spacing:.04em;color:${color}">${lbl}</span>
+    </div>
+    ${track}`;
+}
+
+// Entry point dispatched from renderAll() when state.tab === 'money_flow'.
+// Reads DATA.market.money_flow and fills the headline gauge, per-index
+// sub-gauges, component contributions, and raw sources. Every field is
+// guarded — missing data degrades to muted placeholders, never throws.
+function renderMoneyFlowTab(){
+  const mfx = (DATA.market || {}).money_flow || null;
+  const headline = document.getElementById('mfxHeadlineCard');
+  const perIndex = document.getElementById('mfxPerIndex');
+  const comps    = document.getElementById('mfxComponents');
+  const sources  = document.getElementById('mfxSources');
+  const chip     = document.getElementById('mfxAsOfChip');
+
+  // Empty-state: no money_flow blob at all.
+  if (!mfx){
+    if (chip) chip.textContent = 'not computed';
+    if (headline){
+      headline.innerHTML = `
+        <div class="head"><h2 style="font-size:15px">💵 Money Flow Index</h2></div>
+        <div class="empty" style="padding:14px">Money Flow Index not yet computed — run <code>python app.py --fetch-market</code></div>`;
+    }
+    if (perIndex) perIndex.innerHTML = '';
+    if (comps) comps.innerHTML = '';
+    if (sources) sources.innerHTML = '';
+    return;
+  }
+
+  // As-of staleness chip.
+  if (chip){
+    const asOf = mfx.as_of || null;
+    if (asOf){
+      let txt = `as of ${asOf}`;
+      const t = Date.parse(asOf + 'T00:00:00Z');
+      if (isFinite(t)){
+        const ageDays = Math.floor((Date.now() - t) / 86400000);
+        txt += ` (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})${ageDays > 7 ? ' ⚠ stale' : ''}`;
+      }
+      chip.textContent = txt;
+    } else {
+      chip.textContent = 'as of —';
+    }
+  }
+
+  // ---- Headline gauge (large) ----
+  if (headline){
+    const h = mfx.headline || {};
+    const score = h.score;
+    const label = h.label || mfxBandLabel(score);
+    headline.innerHTML = `
+      <div class="head" style="align-items:flex-start">
+        <div>
+          <h2 style="font-size:15px">💵 Overall Money Flow</h2>
+          <div class="desc">Composite money-flow read across the Dow, S&amp;P 500 and Nasdaq</div>
+        </div>
+      </div>
+      <div style="padding:6px 2px 2px">${mfxGauge(score, label, {})}</div>`;
+  }
+
+  // ---- Per-index sub-gauges (DIA / SPY / QQQ) ----
+  if (perIndex){
+    const rows = Array.isArray(mfx.per_index) ? mfx.per_index : [];
+    if (!rows.length){
+      perIndex.innerHTML = '<div class="empty" style="padding:12px">Per-index money flow not yet available.</div>';
+    } else {
+      perIndex.innerHTML = rows.map(r => {
+        const idxName = escapeHtml(r.index || '—');
+        const etf = escapeHtml(r.etf || '');
+        const score = r.score;
+        const label = r.label || mfxBandLabel(score);
+        const accent = mfxBandColor(score);
+        const mfi = (r.mfi == null || !isFinite(Number(r.mfi))) ? '—' : Number(r.mfi).toFixed(1);
+        const cmfV = Number(r.cmf);
+        const cmf = (r.cmf == null || !isFinite(cmfV)) ? '—' : (cmfV >= 0 ? '+' : '') + cmfV.toFixed(2);
+        const cmfCls = (r.cmf == null || !isFinite(cmfV)) ? 'var(--muted)' : (cmfV >= 0 ? '#22c55e' : '#ef4444');
+        let flowHtml;
+        if (r.etf_flow == null || !isFinite(Number(r.etf_flow))){
+          flowHtml = `<span style="color:var(--muted);font-style:italic">flow warming up</span>`;
+        } else {
+          const f = Number(r.etf_flow);
+          const fCol = f >= 0 ? '#22c55e' : '#ef4444';
+          flowHtml = `<span style="color:${fCol};font-weight:600">${fmtSigned(f)}</span>`;
+        }
+        return `
+          <div class="chart-card" style="padding:14px 16px;border-left:4px solid ${accent}">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:2px">
+              <span style="font-size:15px;font-weight:700">${idxName}</span>
+              <span style="font-size:12px;font-weight:600;color:var(--muted)">${etf}</span>
+            </div>
+            ${mfxGauge(score, label, {compact:true})}
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px;font-size:12px">
+              <div>
+                <div style="color:var(--muted);font-size:10px;letter-spacing:.04em">MFI</div>
+                <div style="font-weight:600">${mfi}</div>
+              </div>
+              <div>
+                <div style="color:var(--muted);font-size:10px;letter-spacing:.04em">CMF</div>
+                <div style="font-weight:600;color:${cmfCls}">${cmf}</div>
+              </div>
+              <div>
+                <div style="color:var(--muted);font-size:10px;letter-spacing:.04em">ETF FLOW</div>
+                <div>${flowHtml}</div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  }
+
+  // ---- Component contributions sidebar ----
+  if (comps){
+    const list = (mfx.headline && Array.isArray(mfx.headline.components)) ? mfx.headline.components : [];
+    if (!list.length){
+      comps.innerHTML = `
+        <div class="head"><h2 style="font-size:15px">Component contributions</h2></div>
+        <div class="empty" style="padding:12px">No component breakdown available.</div>`;
+    } else {
+      const rowsHtml = list.map(c => {
+        const name = escapeHtml(c.name || '—');
+        const explain = escapeHtml(c.explain || '');
+        const contrib = Number(c.contribution);
+        const has = isFinite(contrib);
+        const col = !has ? 'var(--muted)' : (contrib > 0 ? '#22c55e' : (contrib < 0 ? '#ef4444' : '#f59e0b'));
+        const contribStr = has ? mfxFmtScore(contrib) : '—';
+        // Bar: width proportional to |contribution| (cap 100), sided by sign.
+        const w = has ? Math.min(100, Math.abs(contrib)) : 0;
+        const side = (has && contrib < 0) ? 'right:50%' : 'left:50%';
+        const zStr = (c.z == null || !isFinite(Number(c.z))) ? '' :
+          `<span style="font-size:10px;color:var(--muted);margin-left:6px">z ${Number(c.z).toFixed(2)}</span>`;
+        return `
+          <div style="padding:8px 0;border-top:1px solid #1f2533" title="${explain}">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+              <span style="font-size:13px;font-weight:600">${name}${zStr}</span>
+              <span style="font-size:13px;font-weight:700;color:${col}">${contribStr}</span>
+            </div>
+            <div style="position:relative;height:6px;background:#1f2533;border-radius:3px;margin-top:5px">
+              <div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:#3a4254"></div>
+              <div style="position:absolute;top:0;bottom:0;${side};width:${w/2}%;background:${col};border-radius:3px"></div>
+            </div>
+            ${explain ? `<div class="sub" style="font-size:11px;color:var(--muted);margin-top:4px">${explain}</div>` : ''}
+          </div>`;
+      }).join('');
+      comps.innerHTML = `
+        <div class="head" style="align-items:flex-start">
+          <div>
+            <h2 style="font-size:15px">Component contributions</h2>
+            <div class="desc">How each input pushes the headline score (±100)</div>
+          </div>
+        </div>
+        <div style="margin-top:4px">${rowsHtml}</div>`;
+    }
+  }
+
+  // ---- Raw sources ----
+  if (sources){
+    const src = mfx.sources || {};
+    const blocks = [];
+
+    // Money-market funds (cash on the sidelines).
+    const mmf = src.mmf || null;
+    if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
+      const latest = mmf.weekly[mmf.weekly.length - 1] || {};
+      const unit = escapeHtml(mmf.unit || 'USD billions');
+      const fmtB = v => (v == null || !isFinite(Number(v))) ? '—' : '$' + Number(v).toLocaleString(undefined, {maximumFractionDigits:1}) + 'B';
+      const wow = mmf.wow_change;
+      let wowHtml = '';
+      if (wow != null && isFinite(Number(wow))){
+        const w = Number(wow);
+        const wCol = w >= 0 ? '#fb923c' : '#22c55e'; // ↑ cash = risk-off
+        const note = w >= 0 ? '↑ cash → risk-off' : '↓ cash → risk-on';
+        wowHtml = `<div style="font-size:11px;color:${wCol};margin-top:2px">${(w>=0?'+':'')}${w.toFixed(1)}B WoW · ${note}</div>`;
+      }
+      blocks.push(`
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">MONEY-MARKET FUNDS <span style="font-weight:400">(${unit})</span></div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;font-size:12px">
+            <span>Total <strong>${fmtB(latest.total)}</strong></span>
+            <span>Retail <strong>${fmtB(latest.retail)}</strong></span>
+            <span>Institutional <strong>${fmtB(latest.institutional)}</strong></span>
+          </div>
+          ${wowHtml}
+          <div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">week of ${escapeHtml(latest.date || mmf.as_of || '—')}</div>
+        </div>`);
+    }
+
+    // Equity mutual-fund flows.
+    const mf = src.mf_flows || null;
+    if (mf && Array.isArray(mf.weekly) && mf.weekly.length){
+      const latest = mf.weekly[mf.weekly.length - 1] || {};
+      const unit = escapeHtml(mf.unit || 'USD billions');
+      const fmtB = v => {
+        if (v == null || !isFinite(Number(v))) return '—';
+        const n = Number(v);
+        return (n >= 0 ? '+' : '') + '$' + n.toLocaleString(undefined, {maximumFractionDigits:1}) + 'B';
+      };
+      const col = v => (v == null || !isFinite(Number(v))) ? 'inherit' : (Number(v) >= 0 ? '#22c55e' : '#ef4444');
+      blocks.push(`
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">EQUITY MUTUAL-FUND FLOWS <span style="font-weight:400">(${unit})</span></div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;font-size:12px">
+            <span>Total equity <strong style="color:${col(latest.total_equity)}">${fmtB(latest.total_equity)}</strong></span>
+            <span>Domestic <strong style="color:${col(latest.domestic_equity)}">${fmtB(latest.domestic_equity)}</strong></span>
+            <span>World <strong style="color:${col(latest.world_equity)}">${fmtB(latest.world_equity)}</strong></span>
+          </div>
+          <div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">week of ${escapeHtml(latest.date || mf.as_of || '—')}</div>
+        </div>`);
+    }
+
+    // Equity ETF flows per ticker (shares outstanding + latest net flow).
+    const etf = src.equity_etf_flows || null;
+    if (etf && etf.tickers && typeof etf.tickers === 'object'){
+      const order = ['SPY', 'QQQ', 'DIA'];
+      const keys = order.filter(k => etf.tickers[k]).concat(
+        Object.keys(etf.tickers).filter(k => order.indexOf(k) === -1));
+      const rows = keys.map(k => {
+        const t = etf.tickers[k] || {};
+        const so = (t.shares_out == null || !isFinite(Number(t.shares_out))) ? '—'
+          : Number(t.shares_out).toLocaleString(undefined, {maximumFractionDigits:0});
+        const price = (t.price == null || !isFinite(Number(t.price))) ? '—' : '$' + Number(t.price).toFixed(2);
+        let flowHtml;
+        if (t.net_flow_musd == null || !isFinite(Number(t.net_flow_musd))){
+          flowHtml = '<span style="color:var(--muted)">—</span>';
+        } else {
+          const f = Number(t.net_flow_musd);
+          flowHtml = `<span style="color:${f>=0?'#22c55e':'#ef4444'};font-weight:600">${fmtSigned(f)}</span>`;
+        }
+        return `<tr>
+          <td style="font-weight:600">${escapeHtml(k)}</td>
+          <td style="text-align:right">${so}</td>
+          <td style="text-align:right">${price}</td>
+          <td style="text-align:right">${flowHtml}</td>
+        </tr>`;
+      }).join('');
+      const td = etf.trade_date ? ` · ${escapeHtml(etf.trade_date)}` : '';
+      const srcName = etf.source ? ` · ${escapeHtml(etf.source)}` : '';
+      blocks.push(`
+        <div style="padding:8px 0;border-top:1px solid #1f2533">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em">EQUITY ETF FLOWS${td}${srcName}</div>
+          <table style="margin-top:4px;width:100%;font-size:12px">
+            <thead><tr>
+              <th style="text-align:left">Ticker</th>
+              <th style="text-align:right">Shares out</th>
+              <th style="text-align:right">Price</th>
+              <th style="text-align:right">Net flow</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`);
+    }
+
+    sources.innerHTML = `
+      <div class="head"><h2 style="font-size:15px">Underlying sources</h2></div>
+      ${blocks.length ? blocks.join('') : '<div class="empty" style="padding:12px">No source detail available.</div>'}`;
+  }
 }
 
 // LTHCS-band → CSS color. Maps the 5 LTHCS band slugs from the daily
@@ -11398,6 +11746,9 @@ function renderAll(){
   }
   if (state.tab === 'stocks'){
     renderStocksTab();
+  }
+  if (state.tab === 'money_flow'){
+    renderMoneyFlowTab();
   }
   if (state.tab === 'lthcs'){
     renderLthcsTab();
