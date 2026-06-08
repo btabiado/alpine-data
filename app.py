@@ -2518,28 +2518,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </div>
   </div>
 
-  <!-- ============ SUMMIT (Snowflake Summit 2026) TAB ============ -->
-  <!-- Gateway for the standalone Snowflake Summit 2026 partner-scouting
-       dashboard at /summit/ (built by snowflake_summit/build.py, staged into
-       _site/summit/ by pages.yml). Pure static link card — no data fetch, no
-       sidecar, no render fn — mirrors the Real Estate gateway, so it adds
-       nothing to the SIDECAR_FOR_TAB coverage the validator checks. -->
-  <div id="tab-summit" class="hidden">
-    <div class="container">
-      <div class="chart-card" id="summitCard">
-        <div class="head">
-          <h2>Snowflake Summit 2026 <span class="tag">Partner Scouting</span></h2>
-          <span class="desc">197 partner vendors scored across five dimensions &middot; ranked Must-See list &middot; KPIs &amp; charts &middot; full view at <a href="summit/" style="color:var(--accent)">/summit/</a></span>
-        </div>
-        <div style="padding:12px 14px;color:var(--muted);font-size:13px;line-height:1.55">
-          Self-contained scouting dashboard built from Bryan&rsquo;s Master Partner Scouting workbook &mdash; 6 KPIs, a ranked Tier-A &ldquo;Must-See&rdquo; shortlist, score charts, and a downloadable source spreadsheet. Decide which Summit booths to hit first.
-        </div>
-        <div style="padding:4px 14px 14px 14px">
-          <a href="summit/" class="btn" style="display:inline-block;padding:10px 16px;border-radius:6px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600">Open Summit Dashboard &rarr;</a>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- ============ SUMMIT TAB ============ -->
+  <!-- The "Summit" nav tab is a pure launcher: clicking it (or loading the
+       dashboard with the #summit hash, e.g. the /summit/ "back" link) redirects
+       straight to the standalone /summit/ dashboard. There is no in-hub gateway
+       card — see handleTabActivate() and the #summit redirect in the bootstrap. -->
 
   <!-- ============ AI NEWS TAB ============ -->
   <div id="tab-ainews" class="hidden">
@@ -11887,7 +11870,6 @@ function selectTab(t){
   document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
   document.getElementById('tab-city').classList.toggle('hidden', t!=='city');
   document.getElementById('tab-aviation').classList.toggle('hidden', t!=='aviation');
-  document.getElementById('tab-summit').classList.toggle('hidden', t!=='summit');
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
@@ -17280,9 +17262,16 @@ function _tabFromHash(){
     el => el.dataset.tab === h
   ) ? h : null;
 }
-selectTab(_tabFromHash() || 'overview');
+// Summit is a launcher, not an in-hub tab: a #summit hash (an inbound link, or
+// the /summit/ "back" link) redirects straight to the standalone dashboard.
+(function(){
+  const h0 = _tabFromHash();
+  if (h0 === 'summit') { window.location.replace('summit/'); return; }
+  selectTab(h0 || 'overview');
+})();
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();
+  if (h === 'summit') { window.location.replace('summit/'); return; }
   if (h && h !== state.tab) selectTab(h);
 });
 renderAll();
