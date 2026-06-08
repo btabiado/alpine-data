@@ -55,11 +55,20 @@ jobs:
       - name: Commit sidecar via signed API commit
         # Mirrors city-daily.yml: API-based commit so the bot commit is
         # GitHub-signed (Verified). api-commit.sh retries on rebase conflict.
+        # GUARD: only commit when the run actually scored stocks — Yahoo
+        # throttles cold cron runners (scored 0), and committing an empty
+        # sidecar would pollute history. The pages build is the primary
+        # generator; this cron is a best-effort durable fallback.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           AUTHOR_NAME: stock-money-flow-bot
           AUTHOR_EMAIL: stock-money-flow-bot@users.noreply.github.com
         run: |
-          git add data-stock-money-flow.json
-          .github/scripts/api-commit.sh \
-            "stock-money-flow: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
+          scored=$(python3 -c "import json;print(json.load(open('data-stock-money-flow.json')).get('scored_count',0))" 2>/dev/null || echo 0)
+          if [ "$scored" -gt 0 ]; then
+            git add data-stock-money-flow.json
+            .github/scripts/api-commit.sh \
+              "stock-money-flow: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
+          else
+            echo "[stock-money-flow] scored 0 (Yahoo throttled this runner) — skipping commit"
+          fi

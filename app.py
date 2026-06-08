@@ -5960,7 +5960,14 @@ function renderMoneyFlowTab(){
     if (mmf && Array.isArray(mmf.weekly) && mmf.weekly.length){
       const latest = mmf.weekly[mmf.weekly.length - 1] || {};
       const unit = escapeHtml(mmf.unit || 'USD billions');
-      const fmtB = v => (v == null || !isFinite(Number(v))) ? '—' : '$' + Number(v).toLocaleString(undefined, {maximumFractionDigits:1}) + 'B';
+      // MMF balances are trillions-scale — roll >=$1,000B up to $T for readability.
+      const fmtB = v => {
+        if (v == null || !isFinite(Number(v))) return '—';
+        const n = Number(v);
+        return Math.abs(n) >= 1000
+          ? '$' + (n / 1000).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + 'T'
+          : '$' + n.toLocaleString(undefined, {maximumFractionDigits: 1}) + 'B';
+      };
       const wow = mmf.wow_change;
       let wowHtml = '';
       if (wow != null && isFinite(Number(wow))){
@@ -6105,11 +6112,15 @@ function stockflowRow(st, rank){
   const cmf = (st.cmf == null || !isFinite(cmfV)) ? '—' : (cmfV >= 0 ? '+' : '') + cmfV.toFixed(2);
   const cmfCls = (st.cmf == null || !isFinite(cmfV)) ? 'var(--muted)' : (cmfV >= 0 ? '#22c55e' : '#ef4444');
   const sector = st.sector ? escapeHtml(String(st.sector)) : '';
+  // Index-membership tags — make it explicit that a name shown under multiple
+  // index groups is a shared constituent, not double-counted.
+  const idxMap = {'DJIA':'Dow','NASDAQ-100':'NDX','S&P 500':'SPX'};
+  const idxStr = escapeHtml((Array.isArray(st.indices) ? st.indices : []).map(i => idxMap[i]).filter(Boolean).join(' · '));
   return `
     <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1f2533">
       <span style="font-size:11px;color:var(--muted);text-align:right">${rank}</span>
       <div style="min-width:0">
-        <div style="font-size:13px;font-weight:700">${sym}</div>
+        <div style="font-size:13px;font-weight:700">${sym}${idxStr ? ` <span style="font-size:9px;font-weight:500;color:var(--muted)" title="Index membership">${idxStr}</span>` : ''}</div>
         <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"${sector?` title="${sector}"`:''}>${nm}</div>
       </div>
       <div title="${label}">

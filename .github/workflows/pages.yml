@@ -106,6 +106,20 @@ jobs:
         if: hashFiles('dashboard.html') == ''
         run: python app.py --no-open
 
+      - name: Generate Stock Flows sidecar (per-stock money flow)
+        # Runs HERE on the pages runner so it shares the working Yahoo access
+        # that the fetch-market step uses for stocks_signals — a separate daily
+        # cron gets its own cold runner whose IP Yahoo hard-throttles (observed:
+        # 0/219 scored). Capped to 40 mega-caps (SMF_MAX) to stay well under
+        # Yahoo's ~200/hr per-IP budget alongside the trading fetch. Non-fatal:
+        # a throttled run just leaves the Stock Flows tab in its graceful
+        # empty-state. Writes data-stock-money-flow.json, deployed by the
+        # data-*.json copy step below.
+        env:
+          SMF_MAX: "40"
+        run: python fetch_stock_money_flow.py || echo "[stock-flows] fetch failed; tab shows empty-state"
+        continue-on-error: true
+
       - name: Validate V1 dashboard JS structure
         # Structural lint of the freshly-built dashboard.html inline <script>,
         # including the SIDECARS↔SIDECAR_FOR_TAB coverage check that caught
