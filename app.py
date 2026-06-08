@@ -856,6 +856,14 @@ def main() -> int:
     # the JS lazy-loader treats a missing file as an empty state. City is V1-only.
     manifest["city"] = "data-city.json"
 
+    # Stock Flows sidecar (data-stock-money-flow.json at repo root): per-stock
+    # money-flow scores (MFI + Chaikin Money Flow) for the constituents of the
+    # Dow / Nasdaq-100 / S&P 500, written out-of-band by the stock-money-flow
+    # compute step and committed via a .gitignore carve-out. Declared in the
+    # manifest unconditionally — same rationale as city/aviation/mufon: the JS
+    # lazy-loader treats a missing/empty file as an empty state. V1-only.
+    manifest["stockflow"] = "data-stock-money-flow.json"
+
     # Aviation tab sidecar (data-aviation.json at repo root): static FAA airman/
     # registry + global-fleet + used-market payload, committed via a .gitignore
     # carve-out. The Live Traffic sub-view separately fetches data-opensky.json
@@ -1643,6 +1651,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="tabgroup-menu" role="group" aria-label="Markets views">
     <div class="tab" data-tab="stocks" role="tab" tabindex="0" aria-selected="false">Stocks</div>
     <div class="tab" data-tab="money_flow" role="tab" tabindex="0" aria-selected="false">Money Flow</div>
+    <div class="tab" data-tab="stockflow" role="tab" tabindex="0" aria-selected="false">Stock Flows</div>
     <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
     <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
     </div>
@@ -2496,6 +2505,35 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div class="chart-card" id="mfxComponents"></div>
         <div class="chart-card" id="mfxSources"></div>
       </div>
+    </div>
+  </div>
+
+  <!-- ============ STOCK FLOWS TAB ============ -->
+  <!-- Per-stock money flow (accumulation vs distribution) for the constituents
+       of the Dow / Nasdaq-100 / S&P 500. Each stock scored on the SAME
+       MFI + Chaikin Money Flow lens as the index-level Money Flow tab, then
+       grouped by index and ranked by score desc. Sidecar-loaded via
+       SIDECAR_FOR_TAB.stockflow from /data-stock-money-flow.json (committed
+       payload written by the stock-money-flow compute step). renderStockFlowTab()
+       is a NO-OP until the sidecar lands — the loading placeholder covers that
+       window. Reuses the Money Flow band colours (mfxBandColor/mfxBandLabel). -->
+  <div id="tab-stockflow" class="hidden">
+    <div class="container">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <h2 style="margin:0;font-size:20px">💸 Stock Money Flow</h2>
+          <div class="sub" style="font-size:12px;color:var(--muted);max-width:760px;margin-top:4px">
+            Accumulation vs distribution for the constituents of the Dow, Nasdaq-100 and S&amp;P 500 — money-flow score (MFI + Chaikin Money Flow) per stock. Scale -100…+100.
+          </div>
+        </div>
+        <div id="sfxAsOfChip" style="font-size:11px;color:var(--muted);white-space:nowrap;padding:4px 8px;border:1px solid #1f2533;border-radius:6px;background:var(--card)">—</div>
+      </div>
+      <!-- Index filter chips: All / Dow / Nasdaq / S&P 500. -->
+      <div id="stockflowFilters" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+      <!-- Loading state while data-stock-money-flow.json is in flight. -->
+      <div id="stockflowLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading Stock Flows…</div>
+      <!-- Three index-grouped cards, each ranked by score desc. -->
+      <div id="stockflowGroups"></div>
     </div>
   </div>
 
@@ -4062,7 +4100,7 @@ const SIDECAR_FOR_TAB = {
   whale: 'whale', defi: 'defi',
   cpi: 'cpi', supplies: 'supplies', metals: 'metals',
   travel: 'travel', mufon: 'mufon', city: 'city',
-  aviation: 'aviation',
+  aviation: 'aviation', stockflow: 'stockflow',
 };
 
 // In share mode, transparently append ?share=<token> to all /api/* and
@@ -6013,6 +6051,206 @@ function renderMoneyFlowTab(){
       <div class="head"><h2 style="font-size:15px">Underlying sources</h2></div>
       ${blocks.length ? blocks.join('') : '<div class="empty" style="padding:12px">No source detail available.</div>'}`;
   }
+}
+
+// ============================================================================
+// STOCK FLOWS TAB — per-stock money flow for index constituents
+// ============================================================================
+// Sidecar-loaded via SIDECAR_FOR_TAB.stockflow from /data-stock-money-flow.json.
+// renderStockFlowTab() is a NO-OP until the sidecar lands (DATA.stockflow is
+// undefined on first paint). Scores INDIVIDUAL stocks (the constituents of the
+// 3 major indexes) on the SAME accumulation/distribution lens as the index-level
+// Money Flow tab (MFI + Chaikin Money Flow), grouped by index and ranked by
+// score desc. Reuses the Money Flow band colours (mfxBandColor/mfxBandLabel) so
+// the palette is identical to the index gauge. escapeHtml on ALL dynamic strings.
+
+// The three index buckets, in display order. `mem` is the exact value that
+// appears in a stock's `indices` array; `chip` is the filter-chip value.
+const STOCKFLOW_GROUPS = [
+  { chip: 'dow',     mem: 'DJIA',        title: 'Dow (DJIA)' },
+  { chip: 'nasdaq',  mem: 'NASDAQ-100',  title: 'Nasdaq-100' },
+  { chip: 'sp500',   mem: 'S&P 500',     title: 'S&P 500' },
+];
+
+// Active index filter: 'all' | 'dow' | 'nasdaq' | 'sp500'. In-memory only.
+let _stockflowFilter = 'all';
+// Per-group "show all" toggle state, keyed by chip. Default false = top-N only.
+const _stockflowShowAll = { dow: false, nasdaq: false, sp500: false };
+// Cap each group to this many rows before the "show all" toggle kicks in.
+const STOCKFLOW_TOP_N = 40;
+
+// Compact -100…+100 bar for a single stock row: a banded track with a marker at
+// the (clamped) score. Mirrors mfxGauge's track but inline-sized for a list row.
+function stockflowBar(score){
+  const s = Number(score);
+  const has = isFinite(s);
+  const clamped = has ? Math.max(-100, Math.min(100, s)) : 0;
+  const pct = ((clamped + 100) / 200) * 100;
+  return `
+    <div style="height:8px;background:linear-gradient(to right,#b91c1c 0%,#ef4444 20%,#fb923c 30%,#f59e0b 50%,#4ade80 70%,#16a34a 100%);border-radius:5px;position:relative">
+      <div style="position:absolute;top:-2px;left:calc(${pct.toFixed(1)}% - 3px);width:6px;height:12px;background:${has?'#fff':'#94a3b8'};border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>
+    </div>`;
+}
+
+// One stock row: rank + symbol/name + compact bar + score + MFI + CMF.
+function stockflowRow(st, rank){
+  const sym = escapeHtml(String(st.symbol || '—'));
+  const nm = escapeHtml(String(st.name || ''));
+  const score = st.score;
+  const accent = mfxBandColor(score);
+  const label = escapeHtml(String(st.label || mfxBandLabel(score)));
+  const scoreStr = mfxFmtScore(score);
+  const mfi = (st.mfi == null || !isFinite(Number(st.mfi))) ? '—' : Number(st.mfi).toFixed(1);
+  const cmfV = Number(st.cmf);
+  const cmf = (st.cmf == null || !isFinite(cmfV)) ? '—' : (cmfV >= 0 ? '+' : '') + cmfV.toFixed(2);
+  const cmfCls = (st.cmf == null || !isFinite(cmfV)) ? 'var(--muted)' : (cmfV >= 0 ? '#22c55e' : '#ef4444');
+  const sector = st.sector ? escapeHtml(String(st.sector)) : '';
+  return `
+    <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #1f2533">
+      <span style="font-size:11px;color:var(--muted);text-align:right">${rank}</span>
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:700">${sym}</div>
+        <div class="sub" style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"${sector?` title="${sector}"`:''}>${nm}</div>
+      </div>
+      <div title="${label}">
+        ${stockflowBar(score)}
+        <div style="font-size:9px;color:${accent};font-weight:600;letter-spacing:.03em;margin-top:3px">${label}</div>
+      </div>
+      <span style="font-size:14px;font-weight:700;color:${accent};text-align:right">${scoreStr}</span>
+      <span style="font-size:12px;text-align:right" title="Money Flow Index"><span style="font-size:9px;color:var(--muted)">MFI </span>${mfi}</span>
+      <span style="font-size:12px;text-align:right;color:${cmfCls}" title="Chaikin Money Flow"><span style="font-size:9px;color:var(--muted)">CMF </span>${cmf}</span>
+    </div>`;
+}
+
+// Render the All / Dow / Nasdaq / S&P 500 filter chips.
+function renderStockFlowFilters(){
+  const host = document.getElementById('stockflowFilters');
+  if (!host) return;
+  const chips = [{ chip: 'all', title: 'All' }].concat(
+    STOCKFLOW_GROUPS.map(g => ({ chip: g.chip, title: g.title })));
+  host.innerHTML = chips.map(c => {
+    const on = _stockflowFilter === c.chip;
+    return `<button type="button" data-sfx-filter="${escapeHtml(c.chip)}"
+      style="padding:4px 12px;font-size:12px;font-weight:600;border-radius:14px;cursor:pointer;border:1px solid ${on?'#3b82f6':'#252b3a'};background:${on?'rgba(59,130,246,.18)':'var(--panel2)'};color:${on?'#fff':'var(--muted)'}">${escapeHtml(c.title)}</button>`;
+  }).join('');
+  host.querySelectorAll('[data-sfx-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _stockflowFilter = btn.getAttribute('data-sfx-filter') || 'all';
+      renderStockFlowTab();
+    });
+  });
+}
+
+// Entry point dispatched from renderAll() when state.tab === 'stockflow'.
+function renderStockFlowTab(){
+  const loading = document.getElementById('stockflowLoading');
+  const groupsEl = document.getElementById('stockflowGroups');
+  const chip = document.getElementById('sfxAsOfChip');
+  const data = DATA.stockflow || null;
+
+  // Loading window: sidecar in flight, nothing inlined yet (mirrors city/metals).
+  if (!data && state.tab === 'stockflow' && SIDECAR_STATE.stockflow === 'loading'){
+    if (loading) loading.classList.remove('hidden');
+    if (groupsEl) groupsEl.innerHTML = '';
+    if (chip) chip.textContent = 'loading…';
+    return;
+  }
+  if (loading) loading.classList.add('hidden');
+
+  renderStockFlowFilters();
+
+  const stocks = (data && Array.isArray(data.stocks)) ? data.stocks : [];
+
+  // As-of staleness chip.
+  if (chip){
+    if (!data){
+      chip.textContent = SIDECAR_STATE.stockflow === 'error' ? 'load failed' : 'not computed';
+    } else {
+      const asOf = data.as_of || null;
+      const scored = (data.scored_count != null && isFinite(Number(data.scored_count)))
+        ? Number(data.scored_count) : stocks.length;
+      let txt = asOf ? `as of ${asOf}` : 'as of —';
+      if (asOf){
+        const t = Date.parse(asOf + 'T00:00:00Z');
+        if (isFinite(t)){
+          const ageDays = Math.floor((Date.now() - t) / 86400000);
+          txt += ` (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})${ageDays > 7 ? ' ⚠ stale' : ''}`;
+        }
+      }
+      txt += ` · ${scored} scored`;
+      chip.textContent = txt;
+    }
+  }
+
+  if (!groupsEl) return;
+
+  // Empty-state: no sidecar / no stocks.
+  if (!data || !stocks.length){
+    const msg = SIDECAR_STATE.stockflow === 'error'
+      ? 'Stock Flows data failed to load — check data-stock-money-flow.json.'
+      : 'Stock-level money flow not yet computed.';
+    groupsEl.innerHTML = `<div class="empty" style="padding:24px 12px">${msg}</div>`;
+    return;
+  }
+
+  // Render the three index-grouped cards (filtered by the active chip).
+  const visibleGroups = STOCKFLOW_GROUPS.filter(g =>
+    _stockflowFilter === 'all' || _stockflowFilter === g.chip);
+
+  const cards = visibleGroups.map(g => {
+    // A stock belongs to this group if its `indices` array contains g.mem.
+    const inGroup = stocks.filter(st =>
+      Array.isArray(st.indices) && st.indices.indexOf(g.mem) !== -1);
+    // Source is already score-desc; keep that order (stable re-sort for safety).
+    inGroup.sort((a, b) => (Number(b.score) || -Infinity) - (Number(a.score) || -Infinity));
+
+    const total = inGroup.length;
+    const showAll = !!_stockflowShowAll[g.chip];
+    const shown = showAll ? inGroup : inGroup.slice(0, STOCKFLOW_TOP_N);
+
+    let body;
+    if (!total){
+      body = '<div class="empty" style="padding:12px">No scored constituents in this index.</div>';
+    } else {
+      const rowsHtml = shown.map((st, i) => stockflowRow(st, i + 1)).join('');
+      const moreBtn = (total > STOCKFLOW_TOP_N)
+        ? `<div style="margin-top:10px;text-align:center">
+             <button type="button" data-sfx-toggle="${escapeHtml(g.chip)}"
+               style="padding:5px 14px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid #252b3a;background:var(--panel2);color:var(--link)">
+               ${showAll ? 'Show top ' + STOCKFLOW_TOP_N : 'Show all ' + total}</button>
+           </div>`
+        : '';
+      body = `
+        <div style="display:grid;grid-template-columns:28px minmax(120px,1.6fr) minmax(90px,1.4fr) 64px 52px 56px;gap:10px;padding:0 0 4px;font-size:9px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase">
+          <span style="text-align:right">#</span><span>Stock</span><span>Flow</span><span style="text-align:right">Score</span><span style="text-align:right">MFI</span><span style="text-align:right">CMF</span>
+        </div>
+        ${rowsHtml}
+        ${moreBtn}`;
+    }
+
+    const shownCount = Math.min(shown.length, total);
+    return `
+      <div class="chart-card" style="margin-bottom:14px">
+        <div class="head" style="align-items:flex-start">
+          <div>
+            <h2 style="font-size:15px">${escapeHtml(g.title)}</h2>
+            <div class="desc">${total} scored constituent${total === 1 ? '' : 's'}${total ? ' · ranked by money-flow score' : ''}${(total > STOCKFLOW_TOP_N && !showAll) ? ' · showing top ' + shownCount : ''}</div>
+          </div>
+        </div>
+        <div style="margin-top:6px">${body}</div>
+      </div>`;
+  }).join('');
+
+  groupsEl.innerHTML = cards || '<div class="empty" style="padding:24px 12px">No index selected.</div>';
+
+  // Wire the per-group "show all" toggles.
+  groupsEl.querySelectorAll('[data-sfx-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const k = btn.getAttribute('data-sfx-toggle');
+      if (k) _stockflowShowAll[k] = !_stockflowShowAll[k];
+      renderStockFlowTab();
+    });
+  });
 }
 
 // LTHCS-band → CSS color. Maps the 5 LTHCS band slugs from the daily
@@ -11749,6 +11987,9 @@ function renderAll(){
   }
   if (state.tab === 'money_flow'){
     renderMoneyFlowTab();
+  }
+  if (state.tab === 'stockflow'){
+    renderStockFlowTab();
   }
   if (state.tab === 'lthcs'){
     renderLthcsTab();
