@@ -69,11 +69,22 @@ KEEP_INDICES = ("DJIA", "NASDAQ-100", "S&P 500", "S&P 100")
 # IP is being rate-limited by Yahoo (lets verification run at lower concurrency
 # without changing the shipped default).
 try:
-    _MAX_WORKERS = max(1, int(os.environ.get("SMF_WORKERS", "8")))
+    _MAX_WORKERS = max(1, int(os.environ.get("SMF_WORKERS", "6")))
 except ValueError:
-    _MAX_WORKERS = 8
+    _MAX_WORKERS = 6
+# Universe cap (env-overridable). Yahoo's chart API allows ~200 req/hr per IP
+# with generous burst; the full 219-name universe + ANY retry amplification
+# blows past that and gets the IP hard-throttled (observed: 219x5-retries ->
+# 0 scored). Cap under 200 so a single run's call count stays within budget.
+try:
+    _MAX_UNIVERSE = max(1, int(os.environ.get("SMF_MAX", "180")))
+except ValueError:
+    _MAX_UNIVERSE = 180
 _FETCH_TIMEOUT = 25
-_MAX_RETRIES = 5  # retry transient throttling (HTTP 429) with backoff
+# CRITICAL: do NOT retry on HTTP 429. Retrying a rate-limit just multiplies the
+# call count and deepens the ban (that's what zeroed the first run). Retry only
+# genuine transient infra errors (5xx / timeout), and only twice.
+_MAX_RETRIES = 2
 _JITTER_MIN = 0.10  # per-request startup jitter (seconds) to de-burst the pool
 _JITTER_MAX = 0.60
 _USER_AGENT = (
@@ -166,9 +177,12 @@ def _fetch_ohlcv(ticker: str) -> List[Dict[str, Any]]:
                 payload = json.load(resp)
             break
         except urllib.error.HTTPError as exc:
-            # 429 (rate limit) / 5xx are transient: back off and retry. Other
-            # HTTP errors (404 delisted, etc.) are permanent -> give up.
-            if exc.code in (429, 500, 502, 503, 504) and attempt < _MAX_RETRIES - 1:
+            # 429 (rate limit): give up IMMEDIATELY — retrying a rate-limit only
+            # amplifies the call count and deepens the IP ban. Skip the ticker;
+            # the next hourly run (fresh budget) picks it up. Only genuine
+            # transient infra errors (5xx) get a single backoff+retry. 404
+            # (delisted) and everything else are permanent -> give up.
+            if exc.code in (500, 502, 503, 504) and attempt < _MAX_RETRIES - 1:
                 time.sleep((2.0 ** attempt) + random.uniform(0.5, 1.5))
                 continue
             return []
@@ -261,8 +275,13 @@ def build_stock_money_flow(limit: Optional[int] = None, write: bool = True) -> D
     universe_count = len(universe)
 
     in_scope = [rec for rec in universe if _in_scope(rec) and rec.get("ticker")]
-    if limit is not None:
-        in_scope = in_scope[:limit]
+    # Prioritise the biggest, most-relevant names: a ticker in more of the index
+    # lists (DJIA ∩ NASDAQ-100 ∩ S&P 100 ∩ S&P 500) is a mega-cap. Keeps Dow +
+    # Nasdaq-100 + the largest S&P names; drops S&P-500-only mid-caps when the
+    # cap bites. Stable secondary sort on ticker.
+    in_scope.sort(key=lambda r: (-len(r.get("index_membership") or []), r.get("ticker", "")))
+    cap = limit if limit is not None else _MAX_UNIVERSE
+    in_scope = in_scope[:cap]
 
     # Fetch all in-scope tickers concurrently (polite: 8 workers + jitter + UA).
     bars_by_ticker: Dict[str, List[Dict[str, Any]]] = {}
