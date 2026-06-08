@@ -45,7 +45,8 @@ OUT_PATH = REPO_ROOT / "data" / "health" / "api_status.json"
 
 _UA = "Mozilla/5.0 (alpine-data api-status probe)"
 _SSL_CTX = ssl.create_default_context()
-DEFAULT_TIMEOUT = 8.0
+DEFAULT_TIMEOUT = 12.0  # above the ~8-9s TLS-handshake window CI runners hit
+PROBE_ATTEMPTS = 2       # 1 retry: gov/city hosts give transient timeouts from CI
 
 # Canonical list of the data sources the dashboard depends on. Each probe URL
 # is a real, cheap, keyless endpoint on that host (a ping / single-row query)
@@ -177,30 +178,41 @@ def _verdict(status: int | None, needs_key: bool) -> str:
     return "degraded"
 
 
-def _probe_one(target: dict, timeout: float) -> dict:
+def _probe_one(target: dict, timeout: float, attempts: int = PROBE_ATTEMPTS) -> dict:
     url = target["url"]
     key_env = target.get("key_env")
     needs_key = bool(key_env)
+    # Default UA for all probes; a target may override/extend via "headers"
+    # (e.g. SEC EDGAR requires a polite contact UA + Accept:application/json
+    # per SEC fair-access rules, mirroring fetch_market.py's SEC_HEADERS —
+    # without it EDGAR returns 403/500).
+    headers = {"User-Agent": _UA}
+    headers.update(target.get("headers") or {})
     t0 = time.monotonic()
     status: int | None = None
     note = ""
-    try:
-        # Default UA for all probes; a target may override/extend via "headers"
-        # (e.g. SEC EDGAR requires a polite contact UA + Accept:application/json
-        # per SEC fair-access rules, mirroring fetch_market.py's SEC_HEADERS —
-        # without it EDGAR returns 403/500).
-        headers = {"User-Agent": _UA}
-        headers.update(target.get("headers") or {})
-        req = urllib.request.Request(url, headers=headers, method="GET")
-        with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
-            status = r.status
-            # Drain a little so keep-alive sockets close cleanly; ignore body.
-            r.read(1)
-    except urllib.error.HTTPError as e:
-        status = e.code
-        note = (e.reason or "")[:80]
-    except Exception as e:  # URLError, timeout, ssl, etc.
-        note = f"{type(e).__name__}: {e}"[:120]
+    retried = 0
+    # Probe with one retry. GitHub Actions runners intermittently get slow DNS /
+    # TLS handshakes (and the odd connection reset) to gov/city hosts, producing
+    # transient timeouts that aren't real outages — the "down" cast rotates run to
+    # run. Retry only connection-level failures (no HTTP response); an HTTPError
+    # is a genuine server reply, so take it as-is and stop.
+    for attempt in range(attempts):
+        try:
+            req = urllib.request.Request(url, headers=headers, method="GET")
+            with urllib.request.urlopen(req, timeout=timeout, context=_SSL_CTX) as r:
+                status = r.status
+                # Drain a little so keep-alive sockets close cleanly; ignore body.
+                r.read(1)
+            note = ""
+            break
+        except urllib.error.HTTPError as e:
+            status = e.code
+            note = (e.reason or "")[:80]
+            break
+        except Exception as e:  # URLError, timeout, ssl, etc. — transient, retry
+            note = f"{type(e).__name__}: {e}"[:120]
+            retried = attempt + 1
     latency_ms = int((time.monotonic() - t0) * 1000)
     verdict = _verdict(status, needs_key)
     return {
@@ -214,6 +226,7 @@ def _probe_one(target: dict, timeout: float) -> dict:
         "reachable": verdict in ("up", "auth_required", "rate_limited"),
         "needs_key": needs_key,
         "key_present": bool(os.environ.get(key_env)) if key_env else None,
+        "retries": retried,
         "note": note,
     }
 
