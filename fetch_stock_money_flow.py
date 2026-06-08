@@ -326,6 +326,21 @@ def build_stock_money_flow(limit: Optional[int] = None, write: bool = True) -> D
     }
 
     if write:
+        # LAST-GOOD PRESERVATION: Yahoo throttles GitHub Actions IPs
+        # unpredictably (a run can score 0 purely from a banned runner IP, or
+        # from the pages build having already spent the per-IP burst budget on
+        # the trading fetch). NEVER overwrite an existing populated sidecar with
+        # an empty result — keep the last-good so one successful run sticks and
+        # keeps deploying until a future run refreshes it.
+        if not stocks:
+            try:
+                with open(OUTPUT_PATH, "r", encoding="utf-8") as fh:
+                    prev = json.load(fh)
+                if int(prev.get("scored_count", 0)) > 0:
+                    print(f"Stock Flows: scored 0 — preserving last-good ({prev.get('scored_count')} from {prev.get('as_of')}).")
+                    return prev
+            except (OSError, ValueError):
+                pass  # no readable previous file -> fall through and write the empty shell
         try:
             with open(OUTPUT_PATH, "w", encoding="utf-8") as fh:
                 json.dump(payload, fh, indent=2)
