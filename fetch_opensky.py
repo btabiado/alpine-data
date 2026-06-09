@@ -20,8 +20,8 @@ LICENSE NOTE: OpenSky data is free for research / non-commercial use only.
 
 State-vector index reference (used by positions() and app.py renderer):
   s[0]  icao24        s[1]  callsign       s[2]  origin_country
-  s[3]  time_position s[4]  last_contact   s[5]  latitude
-  s[6]  longitude     s[7]  baro_altitude  s[8]  on_ground
+  s[3]  time_position s[4]  last_contact   s[5]  longitude
+  s[6]  latitude      s[7]  baro_altitude  s[8]  on_ground
   s[9]  velocity      s[10] true_track (heading)
   s[11] vertical_rate s[12] sensors        s[13] geo_altitude
   s[14] squawk        s[15] spi            s[16] position_source
@@ -114,7 +114,7 @@ def positions(d):
     Each point is:  [lat, lon, alt_ft_or_null, heading_or_null, callsign, origin_country]
 
     State-vector indices used:
-      s[5]  latitude        s[6]  longitude       s[7]  baro_altitude (metres)
+      s[5]  longitude       s[6]  latitude         s[7]  baro_altitude (metres)
       s[8]  on_ground       s[10] true_track       s[1]  callsign
       s[2]  origin_country
 
@@ -129,7 +129,10 @@ def positions(d):
         # Only airborne aircraft with valid lat/lon
         if s[8] is not False:
             continue
-        lat, lon = s[5], s[6]
+        # OpenSky state vectors order position as s[5]=longitude, s[6]=latitude
+        # (longitude first — a well-known OpenSky gotcha). Unpack accordingly so
+        # the emitted [lat, lon] rows are geographically correct on the map.
+        lon, lat = s[5], s[6]
         if lat is None or lon is None:
             continue
 
