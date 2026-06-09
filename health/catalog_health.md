@@ -1,0 +1,98 @@
+# Catalog link health — 2026-06-09T13:47:32+00:00
+
+- **Total URLs:** 2192
+- ✅ ok: 1975  ·  🔒 gated (exists, auth/bot-walled): 127  ·  ❌ dead (404/410): 4  ·  ⚠️ unreachable (timeout/5xx): 86
+
+## ❌ Dead (404/410) — review/remove
+- `404` https://crates.io/data-access — crates.io API, crates.io API
+- `404` https://purplebooksearch.fda.gov/ — FDA Purple Book (licensed biologics, biosimilars, interchangeability)
+- `404` https://purplebooksearch.fda.gov/downloads — FDA Purple Book (Licensed Biological Products) Data Download
+- `404` https://www.accessdata.fda.gov/scripts/opdlisting/oopd/ — FDA Orphan Drug Designations & Approvals (OOPD database)
+
+## ⚠️ Unreachable (timeout/5xx/000) — often transient or bot-blocked
+- `None` http://www.openthesis.org/ — OpenThesis.org
+- `None` https://api-ccte.epa.gov/docs — EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)
+- `None` https://api.adsb.lol/docs — ADSB.lol API
+- `None` https://api.fatcat.wiki/ — Fatcat / IA Scholar
+- `None` https://api.fatcat.wiki/redoc — Fatcat / Internet Archive Scholar API
+- `None` https://api.pharmgkb.org/swagger/ — PharmGKB REST API
+- `None` https://assignment-api.uspto.gov/ — USPTO Patent Assignment Search API
+- `None` https://bcl.nrel.gov/api/ — NREL/NLR Building Component Library API
+- `None` https://collection.britishmuseum.org/ — British Museum Collection (SPARQL/LOD)
+- `None` https://cris.nih.go.kr/ — CRiS (Korea Clinical Research Information Service)
+- `None` https://data.fs.usda.gov/geodata/edw/ — USFS FSGeodata / EDW ArcGIS REST Services
+- `None` https://developer.freightos.com/apis — Freightos Terminal / FBX API
+- `None` https://developer.nrel.gov/docs/ — NREL Developer Network (PVWatts, Utility Rates, OpenEI), NREL Developer Network APIs (PVWatts, solar, electricity)
+- `None` https://developer.nrel.gov/docs/energy-optimization/reopt/ — NREL REopt API
+- `None` https://developer.nrel.gov/docs/solar/nsrdb/ — NREL NSRDB (National Solar Radiation Database) API
+- `None` https://developer.nrel.gov/docs/solar/pvwatts/v8/ — PVWatts (NREL Developer Network)
+- `None` https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/ — NREL Alternative Fuel Stations API
+- `None` https://developer.nrel.gov/docs/wind/wind-toolkit/ — NREL WIND Toolkit (HSDS)
+- `None` https://docs.aleph.occrp.org/developers/ — OCCRP Aleph API
+- `None` https://docs.aviationapi.com/ — AviationAPI
+- `None` https://docs.helicone.ai/ — Helicone, Helicone, Helicone
+- `None` https://docs.wild-card.ai/agentsjson/introduction — agents.json (Wildcard AI)
+- `503` https://drks.de/ — DRKS (German Clinical Trials Register)
+- `503` https://drks.de/search/en — DRKS - German Clinical Trials Register
+- `None` https://elexicon.wustl.edu/ — English Lexicon Project (ELP)
+- `None` https://en.wikichip.org/ — WikiChip
+- `None` https://fatcat.wiki/ — Internet Archive Scholar / Fatcat API
+- `503` https://gazetteer.dainst.org/ — iDAI.gazetteer / iDAI.world (DAI)
+- `None` https://getbible.net/docs — GetBible.net API v2
+- `None` https://gutendex.com/ — Gutendex (Project Gutenberg metadata API), Gutendex (Project Gutenberg)
+- `None` https://jrct.niph.go.jp/ — jRCT / JPRN (Japan Registry of Clinical Trials)
+- `None` https://latinwordnet.exeter.ac.uk/api — Latin WordNet API (Univ. of Exeter)
+- `None` https://libretranslate.com/ — LibreTranslate
+- `None` https://lpdaac.usgs.gov/products/nasadem_hgtv001/ — NASA SRTM / NASADEM (LP DAAC)
+- `None` https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer — BTS / NTAD Military Bases (USDOT ArcGIS MapServer)
+- `None` https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer/0 — BTS / NTAD Military Bases (USDOT ArcGIS REST)
+- `None` https://matmatch.com/ — Matmatch
+- `None` https://mymarketnews.ams.usda.gov/mars-api/getting-started — USDA AMS My Market News (MARS API)
+- `None` https://notams.aim.faa.gov/notamSearch/ — FAA Federal NOTAM System / SWIM FNS
+- `None` https://numverify.com/ — numverify (apilayer)
+- `None` https://openkim.org/ — OpenKIM (Knowledgebase of Interatomic Models)
+- `None` https://openweathermap.org/api — OpenWeatherMap (One Call / Current)
+- `None` https://openweathermap.org/api/air-pollution — OpenWeatherMap Air Pollution API
+- `None` https://platform.docs.opentargets.org/data-access/graphql-api — Open Targets Platform GraphQL API
+- `None` https://play.ht/ — PlayHT (Play.ht) TTS API
+- `502` https://population.un.org/dataportalapi/index.html — UN DESA Population Division Data Portal API (WPP)
+- `None` https://prime-numbers-api.com/ — Prime Numbers API (prime-numbers-api.com)
+- `None` https://rctportal.niph.go.jp/en — JPRN / NIPH Clinical Trials Search Portal (Japan)
+- `502` https://replicate.com/collections/language-models — Replicate
+- `None` https://roar.eprints.org/ — ROAR (Registry of Open Access Repositories)
+- `None` https://sanskritwordnet.chs.harvard.edu/api — Sanskrit WordNet API (CHS Harvard)
+- `None` https://schema.oasf.agntcy.org/ — AGNTCY — Open Agentic Schema Framework (OASF)
+- `None` https://search.patentsview.org/docs/ — PatentsView PatentSearch API
+- `500` https://si-digital-framework.org/ — BIPM / Open Metrology (SI units & metadata)
+- `None` https://splatalogue.online/ — Splatalogue (NRAO Spectral Line Catalog)
+- `None` https://stats.nba.com/ — NBA Stats (stats.nba.com)
+- `None` https://stats.un.org/SDGAPI/swagger/ — SDMX Global Registry / UNdata2 (added in verify)
+- `None` https://talkbank.org/ — TalkBank
+- `None` https://trialstreamer.robotreviewer.net/ — Trialstreamer
+- `None` https://water.weather.gov/ahps/ — NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)
+- `None` https://web.plant.id/plant-identification-api/ — Plant.id (Kindwise)
+- `None` https://www.2dmatpedia.org/ — 2DMatPedia
+- `None` https://www.atmo-france.org/article/les-donnees-air-disponibles — Atmo France / Atmo Data
+- `None` https://www.bfarm.de/EN/BfArM/Tasks/German-Clinical-Trials-Register/_node.html — DRKS (German Clinical Trials Register, BfArM)
+- `None` https://www.bgee.org/ — Bgee Gene Expression API
+- `None` https://www.bgee.org/support/api — Bgee Gene Expression API
+- `None` https://www.brocade.io/ — Brocade.io
+- `None` https://www.courtlistener.com/help/api/rest/ — CourtListener (Free Law Project)
+- `None` https://www.courtlistener.com/help/api/rest/citation-lookup/ — CourtListener Citation Lookup & Verification API
+- `None` https://www.courtlistener.com/help/api/rest/financial-disclosures/ — CourtListener Judge & Financial Disclosures APIs, CourtListener Financial Disclosures API
+- `None` https://www.courtlistener.com/help/api/rest/recap/ — RECAP Archive / PACER Data APIs (CourtListener), CourtListener RECAP APIs (PACER data)
+- `None` https://www.courtlistener.com/help/api/rest/v4/ — CourtListener REST API v4 (Free Law Project)
+- `None` https://www.fcc.gov/BroadbandData — FCC National Broadband Map / Broadband Data Collection (BDC) Public Data API
+- `None` https://www.fcc.gov/ecfs/help/public_api — FCC ECFS Public API (Electronic Comment Filing System)
+- `None` https://www.fcc.gov/licensing-databases/search-fcc-databases — FCC Universal Licensing System (ULS) data
+- `None` https://www.fcc.gov/reports-research/developers/license-view-api — FCC License View API
+- `None` https://www.fcc.gov/reports-research/developers/spectrum-dashboard-api — FCC Spectrum Dashboard API
+- `None` https://www.followthemoney.org/our-data/apis — FollowTheMoney.org API (Institute / OpenSecrets), FollowTheMoney.org API (NIMP / OpenSecrets), FollowTheMoney.org API (state campaign finance)
+- `None` https://www.learningregistry.org/ — Learning Registry
+- `None` https://www.mouser.com/api-home/ — Mouser Search API
+- `None` https://www.mouser.com/api-hub/ — Mouser API, Mouser Electronics Search API
+- `500` https://www.ncbi.nlm.nih.gov/books/NBK25501/ — NCBI E-utilities, NCBI E-utilities, NCBI Entrez E-utilities, NCBI E-utilities (Entrez), PubMed / NCBI E-utilities (Entrez)
+- `500` https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/ — ClinVar (via NCBI E-utilities / VCV)
+- `None` https://www.swpc.noaa.gov/content/data-access — NOAA SWPC JSON, NOAA SWPC Data Service (space weather - affects space assets)
+- `None` https://www.transitland.org/documentation/ — Transitland (Interline)
+- `None` https://yeastmine.yeastgenome.org/yeastmine/ — Saccharomyces Genome Database (YeastMine)

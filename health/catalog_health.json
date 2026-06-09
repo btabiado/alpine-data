@@ -1,0 +1,659 @@
+{
+  "checked_at": "2026-06-09T13:47:32+00:00",
+  "total_urls": 2192,
+  "counts": {
+    "ok": 1975,
+    "gated": 127,
+    "dead": 4,
+    "unreachable": 86
+  },
+  "dead": [
+    {
+      "url": "https://crates.io/data-access",
+      "code": 404,
+      "services": [
+        "crates.io API",
+        "crates.io API"
+      ]
+    },
+    {
+      "url": "https://purplebooksearch.fda.gov/",
+      "code": 404,
+      "services": [
+        "FDA Purple Book (licensed biologics, biosimilars, interchangeability)"
+      ]
+    },
+    {
+      "url": "https://purplebooksearch.fda.gov/downloads",
+      "code": 404,
+      "services": [
+        "FDA Purple Book (Licensed Biological Products) Data Download"
+      ]
+    },
+    {
+      "url": "https://www.accessdata.fda.gov/scripts/opdlisting/oopd/",
+      "code": 404,
+      "services": [
+        "FDA Orphan Drug Designations & Approvals (OOPD database)"
+      ]
+    }
+  ],
+  "unreachable": [
+    {
+      "url": "http://www.openthesis.org/",
+      "code": null,
+      "services": [
+        "OpenThesis.org"
+      ]
+    },
+    {
+      "url": "https://api-ccte.epa.gov/docs",
+      "code": null,
+      "services": [
+        "EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)"
+      ]
+    },
+    {
+      "url": "https://api.adsb.lol/docs",
+      "code": null,
+      "services": [
+        "ADSB.lol API"
+      ]
+    },
+    {
+      "url": "https://api.fatcat.wiki/",
+      "code": null,
+      "services": [
+        "Fatcat / IA Scholar"
+      ]
+    },
+    {
+      "url": "https://api.fatcat.wiki/redoc",
+      "code": null,
+      "services": [
+        "Fatcat / Internet Archive Scholar API"
+      ]
+    },
+    {
+      "url": "https://api.pharmgkb.org/swagger/",
+      "code": null,
+      "services": [
+        "PharmGKB REST API"
+      ]
+    },
+    {
+      "url": "https://assignment-api.uspto.gov/",
+      "code": null,
+      "services": [
+        "USPTO Patent Assignment Search API"
+      ]
+    },
+    {
+      "url": "https://bcl.nrel.gov/api/",
+      "code": null,
+      "services": [
+        "NREL/NLR Building Component Library API"
+      ]
+    },
+    {
+      "url": "https://collection.britishmuseum.org/",
+      "code": null,
+      "services": [
+        "British Museum Collection (SPARQL/LOD)"
+      ]
+    },
+    {
+      "url": "https://cris.nih.go.kr/",
+      "code": null,
+      "services": [
+        "CRiS (Korea Clinical Research Information Service)"
+      ]
+    },
+    {
+      "url": "https://data.fs.usda.gov/geodata/edw/",
+      "code": null,
+      "services": [
+        "USFS FSGeodata / EDW ArcGIS REST Services"
+      ]
+    },
+    {
+      "url": "https://developer.freightos.com/apis",
+      "code": null,
+      "services": [
+        "Freightos Terminal / FBX API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/",
+      "code": null,
+      "services": [
+        "NREL Developer Network (PVWatts, Utility Rates, OpenEI)",
+        "NREL Developer Network APIs (PVWatts, solar, electricity)"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/energy-optimization/reopt/",
+      "code": null,
+      "services": [
+        "NREL REopt API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/solar/nsrdb/",
+      "code": null,
+      "services": [
+        "NREL NSRDB (National Solar Radiation Database) API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/solar/pvwatts/v8/",
+      "code": null,
+      "services": [
+        "PVWatts (NREL Developer Network)"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/transportation/alt-fuel-stations-v1/",
+      "code": null,
+      "services": [
+        "NREL Alternative Fuel Stations API"
+      ]
+    },
+    {
+      "url": "https://developer.nrel.gov/docs/wind/wind-toolkit/",
+      "code": null,
+      "services": [
+        "NREL WIND Toolkit (HSDS)"
+      ]
+    },
+    {
+      "url": "https://docs.aleph.occrp.org/developers/",
+      "code": null,
+      "services": [
+        "OCCRP Aleph API"
+      ]
+    },
+    {
+      "url": "https://docs.aviationapi.com/",
+      "code": null,
+      "services": [
+        "AviationAPI"
+      ]
+    },
+    {
+      "url": "https://docs.helicone.ai/",
+      "code": null,
+      "services": [
+        "Helicone",
+        "Helicone",
+        "Helicone"
+      ]
+    },
+    {
+      "url": "https://docs.wild-card.ai/agentsjson/introduction",
+      "code": null,
+      "services": [
+        "agents.json (Wildcard AI)"
+      ]
+    },
+    {
+      "url": "https://drks.de/",
+      "code": 503,
+      "services": [
+        "DRKS (German Clinical Trials Register)"
+      ]
+    },
+    {
+      "url": "https://drks.de/search/en",
+      "code": 503,
+      "services": [
+        "DRKS - German Clinical Trials Register"
+      ]
+    },
+    {
+      "url": "https://elexicon.wustl.edu/",
+      "code": null,
+      "services": [
+        "English Lexicon Project (ELP)"
+      ]
+    },
+    {
+      "url": "https://en.wikichip.org/",
+      "code": null,
+      "services": [
+        "WikiChip"
+      ]
+    },
+    {
+      "url": "https://fatcat.wiki/",
+      "code": null,
+      "services": [
+        "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://gazetteer.dainst.org/",
+      "code": 503,
+      "services": [
+        "iDAI.gazetteer / iDAI.world (DAI)"
+      ]
+    },
+    {
+      "url": "https://getbible.net/docs",
+      "code": null,
+      "services": [
+        "GetBible.net API v2"
+      ]
+    },
+    {
+      "url": "https://gutendex.com/",
+      "code": null,
+      "services": [
+        "Gutendex (Project Gutenberg metadata API)",
+        "Gutendex (Project Gutenberg)"
+      ]
+    },
+    {
+      "url": "https://jrct.niph.go.jp/",
+      "code": null,
+      "services": [
+        "jRCT / JPRN (Japan Registry of Clinical Trials)"
+      ]
+    },
+    {
+      "url": "https://latinwordnet.exeter.ac.uk/api",
+      "code": null,
+      "services": [
+        "Latin WordNet API (Univ. of Exeter)"
+      ]
+    },
+    {
+      "url": "https://libretranslate.com/",
+      "code": null,
+      "services": [
+        "LibreTranslate"
+      ]
+    },
+    {
+      "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/",
+      "code": null,
+      "services": [
+        "NASA SRTM / NASADEM (LP DAAC)"
+      ]
+    },
+    {
+      "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer",
+      "code": null,
+      "services": [
+        "BTS / NTAD Military Bases (USDOT ArcGIS MapServer)"
+      ]
+    },
+    {
+      "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer/0",
+      "code": null,
+      "services": [
+        "BTS / NTAD Military Bases (USDOT ArcGIS REST)"
+      ]
+    },
+    {
+      "url": "https://matmatch.com/",
+      "code": null,
+      "services": [
+        "Matmatch"
+      ]
+    },
+    {
+      "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
+      "code": null,
+      "services": [
+        "USDA AMS My Market News (MARS API)"
+      ]
+    },
+    {
+      "url": "https://notams.aim.faa.gov/notamSearch/",
+      "code": null,
+      "services": [
+        "FAA Federal NOTAM System / SWIM FNS"
+      ]
+    },
+    {
+      "url": "https://numverify.com/",
+      "code": null,
+      "services": [
+        "numverify (apilayer)"
+      ]
+    },
+    {
+      "url": "https://openkim.org/",
+      "code": null,
+      "services": [
+        "OpenKIM (Knowledgebase of Interatomic Models)"
+      ]
+    },
+    {
+      "url": "https://openweathermap.org/api",
+      "code": null,
+      "services": [
+        "OpenWeatherMap (One Call / Current)"
+      ]
+    },
+    {
+      "url": "https://openweathermap.org/api/air-pollution",
+      "code": null,
+      "services": [
+        "OpenWeatherMap Air Pollution API"
+      ]
+    },
+    {
+      "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
+      "code": null,
+      "services": [
+        "Open Targets Platform GraphQL API"
+      ]
+    },
+    {
+      "url": "https://play.ht/",
+      "code": null,
+      "services": [
+        "PlayHT (Play.ht) TTS API"
+      ]
+    },
+    {
+      "url": "https://population.un.org/dataportalapi/index.html",
+      "code": 502,
+      "services": [
+        "UN DESA Population Division Data Portal API (WPP)"
+      ]
+    },
+    {
+      "url": "https://prime-numbers-api.com/",
+      "code": null,
+      "services": [
+        "Prime Numbers API (prime-numbers-api.com)"
+      ]
+    },
+    {
+      "url": "https://rctportal.niph.go.jp/en",
+      "code": null,
+      "services": [
+        "JPRN / NIPH Clinical Trials Search Portal (Japan)"
+      ]
+    },
+    {
+      "url": "https://replicate.com/collections/language-models",
+      "code": 502,
+      "services": [
+        "Replicate"
+      ]
+    },
+    {
+      "url": "https://roar.eprints.org/",
+      "code": null,
+      "services": [
+        "ROAR (Registry of Open Access Repositories)"
+      ]
+    },
+    {
+      "url": "https://sanskritwordnet.chs.harvard.edu/api",
+      "code": null,
+      "services": [
+        "Sanskrit WordNet API (CHS Harvard)"
+      ]
+    },
+    {
+      "url": "https://schema.oasf.agntcy.org/",
+      "code": null,
+      "services": [
+        "AGNTCY — Open Agentic Schema Framework (OASF)"
+      ]
+    },
+    {
+      "url": "https://search.patentsview.org/docs/",
+      "code": null,
+      "services": [
+        "PatentsView PatentSearch API"
+      ]
+    },
+    {
+      "url": "https://si-digital-framework.org/",
+      "code": 500,
+      "services": [
+        "BIPM / Open Metrology (SI units & metadata)"
+      ]
+    },
+    {
+      "url": "https://splatalogue.online/",
+      "code": null,
+      "services": [
+        "Splatalogue (NRAO Spectral Line Catalog)"
+      ]
+    },
+    {
+      "url": "https://stats.nba.com/",
+      "code": null,
+      "services": [
+        "NBA Stats (stats.nba.com)"
+      ]
+    },
+    {
+      "url": "https://stats.un.org/SDGAPI/swagger/",
+      "code": null,
+      "services": [
+        "SDMX Global Registry / UNdata2 (added in verify)"
+      ]
+    },
+    {
+      "url": "https://talkbank.org/",
+      "code": null,
+      "services": [
+        "TalkBank"
+      ]
+    },
+    {
+      "url": "https://trialstreamer.robotreviewer.net/",
+      "code": null,
+      "services": [
+        "Trialstreamer"
+      ]
+    },
+    {
+      "url": "https://water.weather.gov/ahps/",
+      "code": null,
+      "services": [
+        "NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)"
+      ]
+    },
+    {
+      "url": "https://web.plant.id/plant-identification-api/",
+      "code": null,
+      "services": [
+        "Plant.id (Kindwise)"
+      ]
+    },
+    {
+      "url": "https://www.2dmatpedia.org/",
+      "code": null,
+      "services": [
+        "2DMatPedia"
+      ]
+    },
+    {
+      "url": "https://www.atmo-france.org/article/les-donnees-air-disponibles",
+      "code": null,
+      "services": [
+        "Atmo France / Atmo Data"
+      ]
+    },
+    {
+      "url": "https://www.bfarm.de/EN/BfArM/Tasks/German-Clinical-Trials-Register/_node.html",
+      "code": null,
+      "services": [
+        "DRKS (German Clinical Trials Register, BfArM)"
+      ]
+    },
+    {
+      "url": "https://www.bgee.org/",
+      "code": null,
+      "services": [
+        "Bgee Gene Expression API"
+      ]
+    },
+    {
+      "url": "https://www.bgee.org/support/api",
+      "code": null,
+      "services": [
+        "Bgee Gene Expression API"
+      ]
+    },
+    {
+      "url": "https://www.brocade.io/",
+      "code": null,
+      "services": [
+        "Brocade.io"
+      ]
+    },
+    {
+      "url": "https://www.courtlistener.com/help/api/rest/",
+      "code": null,
+      "services": [
+        "CourtListener (Free Law Project)"
+      ]
+    },
+    {
+      "url": "https://www.courtlistener.com/help/api/rest/citation-lookup/",
+      "code": null,
+      "services": [
+        "CourtListener Citation Lookup & Verification API"
+      ]
+    },
+    {
+      "url": "https://www.courtlistener.com/help/api/rest/financial-disclosures/",
+      "code": null,
+      "services": [
+        "CourtListener Judge & Financial Disclosures APIs",
+        "CourtListener Financial Disclosures API"
+      ]
+    },
+    {
+      "url": "https://www.courtlistener.com/help/api/rest/recap/",
+      "code": null,
+      "services": [
+        "RECAP Archive / PACER Data APIs (CourtListener)",
+        "CourtListener RECAP APIs (PACER data)"
+      ]
+    },
+    {
+      "url": "https://www.courtlistener.com/help/api/rest/v4/",
+      "code": null,
+      "services": [
+        "CourtListener REST API v4 (Free Law Project)"
+      ]
+    },
+    {
+      "url": "https://www.fcc.gov/BroadbandData",
+      "code": null,
+      "services": [
+        "FCC National Broadband Map / Broadband Data Collection (BDC) Public Data API"
+      ]
+    },
+    {
+      "url": "https://www.fcc.gov/ecfs/help/public_api",
+      "code": null,
+      "services": [
+        "FCC ECFS Public API (Electronic Comment Filing System)"
+      ]
+    },
+    {
+      "url": "https://www.fcc.gov/licensing-databases/search-fcc-databases",
+      "code": null,
+      "services": [
+        "FCC Universal Licensing System (ULS) data"
+      ]
+    },
+    {
+      "url": "https://www.fcc.gov/reports-research/developers/license-view-api",
+      "code": null,
+      "services": [
+        "FCC License View API"
+      ]
+    },
+    {
+      "url": "https://www.fcc.gov/reports-research/developers/spectrum-dashboard-api",
+      "code": null,
+      "services": [
+        "FCC Spectrum Dashboard API"
+      ]
+    },
+    {
+      "url": "https://www.followthemoney.org/our-data/apis",
+      "code": null,
+      "services": [
+        "FollowTheMoney.org API (Institute / OpenSecrets)",
+        "FollowTheMoney.org API (NIMP / OpenSecrets)",
+        "FollowTheMoney.org API (state campaign finance)"
+      ]
+    },
+    {
+      "url": "https://www.learningregistry.org/",
+      "code": null,
+      "services": [
+        "Learning Registry"
+      ]
+    },
+    {
+      "url": "https://www.mouser.com/api-home/",
+      "code": null,
+      "services": [
+        "Mouser Search API"
+      ]
+    },
+    {
+      "url": "https://www.mouser.com/api-hub/",
+      "code": null,
+      "services": [
+        "Mouser API",
+        "Mouser Electronics Search API"
+      ]
+    },
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
+      "code": 500,
+      "services": [
+        "NCBI E-utilities",
+        "NCBI E-utilities",
+        "NCBI Entrez E-utilities",
+        "NCBI E-utilities (Entrez)",
+        "PubMed / NCBI E-utilities (Entrez)"
+      ]
+    },
+    {
+      "url": "https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/",
+      "code": 500,
+      "services": [
+        "ClinVar (via NCBI E-utilities / VCV)"
+      ]
+    },
+    {
+      "url": "https://www.swpc.noaa.gov/content/data-access",
+      "code": null,
+      "services": [
+        "NOAA SWPC JSON",
+        "NOAA SWPC Data Service (space weather - affects space assets)"
+      ]
+    },
+    {
+      "url": "https://www.transitland.org/documentation/",
+      "code": null,
+      "services": [
+        "Transitland (Interline)"
+      ]
+    },
+    {
+      "url": "https://yeastmine.yeastgenome.org/yeastmine/",
+      "code": null,
+      "services": [
+        "Saccharomyces Genome Database (YeastMine)"
+      ]
+    }
+  ]
+}
