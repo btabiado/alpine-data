@@ -233,6 +233,9 @@ header.top .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
 .filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 12px}
 .filters select,.filters input{background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px}
 .filters input{min-width:180px}
+.bigsearch{width:100%;box-sizing:border-box;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:15px;margin-bottom:14px}
+.bigsearch::placeholder{color:var(--muted)}
+.bigsearch:focus{outline:none;border-color:var(--accent)}
 .chip{appearance:none;background:var(--panel2);color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;font-weight:600}
 .chip[aria-pressed="true"]{color:#0b1020;background:var(--accent);border-color:var(--accent)}
 .chip.sub[aria-pressed="true"]{background:var(--sub);border-color:var(--sub)}
@@ -351,6 +354,7 @@ tbody tr[role="button"]{cursor:pointer}
   </div>
 
   <div class="panel">
+    <input id="lsSearch2" class="bigsearch" type="search" placeholder="Search all __ALL_TOTAL__ vendors — name, segment, description…" aria-label="Search vendors">
     <h2><span id="lsCount">0</span> vendors <button class="chip" id="lsClear" hidden style="margin-left:8px;padding:4px 10px">✕ Clear filters</button> <span class="hint">· click a row, chart bar, or tile to drill in</span> <span class="hint" id="lsHint"></span></h2>
     <div class="scroll"><table id="lsTable"><thead></thead><tbody></tbody></table></div>
     <div class="showall"><button class="btn" id="lsShowAll" hidden>Show all</button></div>
@@ -771,7 +775,13 @@ function initLandscape(){
   fillSelect(document.getElementById('lsSeg'),DATA.segments.map(s=>s.segment));
   fillSelect(document.getElementById('lsGeo'),Object.keys(DATA.geoCounts).sort());
   fillSelect(document.getElementById('lsType'),[...new Set(ALL.map(v=>v.type).filter(Boolean))].sort());
-  document.getElementById('lsSearch').addEventListener('input',e=>{lsState.q=e.target.value;lsState.limit=120;LS_TABLE._render();});
+  // Two search inputs (one in the filter row, one above the results list) kept
+  // in sync — typing in either filters the table and mirrors to the other.
+  function lsSearchInput(e){lsState.q=e.target.value;lsState.limit=120;
+    const other=e.target.id==='lsSearch'?'lsSearch2':'lsSearch';document.getElementById(other).value=e.target.value;
+    LS_TABLE._render();}
+  document.getElementById('lsSearch').addEventListener('input',lsSearchInput);
+  document.getElementById('lsSearch2').addEventListener('input',lsSearchInput);
   document.getElementById('lsSeg').addEventListener('change',e=>{lsState.seg=e.target.value;lsState.limit=120;LS_TABLE._render();});
   document.getElementById('lsGeo').addEventListener('change',e=>{lsState.geo=e.target.value;lsState.limit=120;LS_TABLE._render();});
   document.getElementById('lsType').addEventListener('change',e=>{lsState.type=e.target.value;lsState.limit=120;LS_TABLE._render();});
@@ -786,7 +796,7 @@ function initLandscape(){
   document.getElementById('lsShowAll').addEventListener('click',()=>{lsState.limit=99999;LS_TABLE._render();});
   document.getElementById('lsClear').addEventListener('click',()=>{
     lsState.pres='';lsState.rel='';lsState.tier='';lsState.seg='';lsState.geo='';lsState.type='';lsState.q='';lsState.kpi='';lsState.limit=120;
-    document.getElementById('lsSearch').value='';document.getElementById('lsSeg').value='';
+    document.getElementById('lsSearch').value='';document.getElementById('lsSearch2').value='';document.getElementById('lsSeg').value='';
     document.getElementById('lsGeo').value='';document.getElementById('lsType').value='';
     syncRelChips();syncPresChips();syncTierGroup();clearKpiOn();LS_TABLE._setCols(lsPickCols());
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier==='')));
