@@ -981,6 +981,43 @@ header .meta{color:var(--muted);font-size:12px}
 .v2-chip{display:inline-block;padding:3px 8px;border-radius:999px;font-size:11px;border:1px solid var(--border);color:var(--muted)}
 .v2-chip--info{color:var(--btc);border-color:var(--btc)}
 .btn--small{padding:4px 9px;font-size:11px}
+/* ── UAP / MUFON tab — "Observatory" theme ──────────────────────────────
+   SCOPED to descendants of #tab-mufon ONLY. We redefine token VALUES here
+   (NOT global :root), so the Crypto/Markets/Macro tabs are untouched. The
+   ported markup already references --btc / --bg2 / --bd / --panel / --border
+   / --muted and the --v2-* map-ramp + shape tokens, so overriding them re-skins
+   the whole tab with no per-element edits. Concept: a deep night-sky archive
+   console — bitcoin-orange becomes sky-cyan; the US map + shapes chart become a
+   single-hue cyan luminance ramp ("sensor scope"). */
+#tab-mufon{
+  --panel:#0c1626; --panel2:#11203a; --border:#203450;
+  --bg2:#0a1322; --bd:#203450;
+  --text:#dde6f6; --muted:#8ea6c6;
+  --btc:#4cc9e0;                       /* accent: sky-cyan replaces orange */
+  --v2-good:#1d5566; --v2-warn:#2a86a0; --v2-orange:#3aa9c4; --v2-bad:#58d3dd;
+  --v2-info:#67d6ee; --v2-ai:#8fb6e0;  /* map luminance ramp + cool shapes */
+  color:var(--text);
+  background:
+    radial-gradient(1100px 360px at 50% -60px, rgba(56,150,180,.10), transparent 70%),
+    radial-gradient(1px 1px at 16% 22%, rgba(150,212,236,.22), transparent),
+    radial-gradient(1px 1px at 72% 34%, rgba(150,212,236,.16), transparent),
+    radial-gradient(1px 1px at 43% 66%, rgba(150,212,236,.13), transparent),
+    radial-gradient(1px 1px at 88% 58%, rgba(150,212,236,.15), transparent),
+    radial-gradient(1px 1px at 28% 86%, rgba(150,212,236,.10), transparent),
+    radial-gradient(1px 1px at 61% 92%, rgba(150,212,236,.12), transparent),
+    #070d18;
+}
+#tab-mufon .v2-card{border-radius:12px}
+#tab-mufon .v2-card__title{font-size:15px;letter-spacing:.01em}
+#tab-mufon .v2-card__subtitle{font-size:12px}
+#tab-mufon .v2-chip--info{background:rgba(76,201,224,.10)}
+/* hero scale strip (rendered into the activity card by renderMufonVelocity) */
+#tab-mufon .mu-hero{display:flex;flex-wrap:wrap;align-items:flex-end;gap:14px 26px;padding:2px 2px 15px;border-bottom:1px solid var(--border);margin-bottom:15px}
+#tab-mufon .mu-hero__kicker{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+#tab-mufon .mu-hero__num{font-size:42px;font-weight:800;line-height:.92;color:var(--btc);font-variant-numeric:tabular-nums;letter-spacing:-.015em}
+#tab-mufon .mu-hero__sub{font-size:12px;color:var(--muted);margin-top:7px}
+#tab-mufon .mu-stat{font-size:12.5px;color:var(--text);white-space:nowrap}
+#tab-mufon .mu-stat b{color:var(--btc);font-variant-numeric:tabular-nums;font-weight:700}
 /* Top-15 news-sentiment grid (Research tab). Three columns on desktop,
    two on mid-width tablets, one full-width column on phones (≤480px). */
 .top-news-sentiment-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -3526,7 +3563,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
          make that explicit so the small tail numbers aren't misread as a drop-off. -->
     <div class="v2-card" id="mufonVelocityCard" style="margin-bottom:14px">
       <div class="v2-card__head">
-        <div><h2 class="v2-card__title">Recent sighting activity</h2><div class="v2-card__subtitle">New NUFORC reports &amp; year-over-year change</div></div>
+        <div><h2 class="v2-card__title">Sighting activity</h2><div class="v2-card__subtitle">NUFORC archive scale &amp; recent reporting windows</div></div>
         <div><span class="v2-chip v2-chip--info" id="mufonVelocityAsOf">● —</span></div>
       </div>
       <div class="v2-card__body" id="mufonVelocityBody" style="padding:14px"></div>
@@ -15110,19 +15147,64 @@ function renderMufonVelocity(){
   if (asOf) asOf.textContent = '● through ' + anchor;
 
   const fmt = n => (n == null ? '—' : Number(n).toLocaleString('en-US'));
-  // Neutral, direction-only delta — amber up / blue down, never green/red.
+
+  // ── Hero scale strip: surfaces the dataset's size up front so the small,
+  //    lag-suppressed recent windows below read as a "recent slice" of a deep
+  //    archive, not a decline. All-time figures come from the same sidecar. ──
+  function heroSpark(tby){
+    const ys = Object.keys(tby||{}).map(Number).filter(isFinite).sort((a,b)=>a-b);
+    if (ys.length < 4) return '';
+    const vals = ys.map(yr => Number(tby[yr]) || 0);
+    const W = 300, H = 50, pad = 2, mx = Math.max.apply(null, vals) || 1;
+    const X = i => pad + i * (W - 2*pad) / (ys.length - 1);
+    const Y = val => H - pad - val * (H - 2*pad) / mx;
+    let line = 'M' + X(0).toFixed(1) + ' ' + Y(vals[0]).toFixed(1);
+    for (let i = 1; i < ys.length; i++) line += ' L' + X(i).toFixed(1) + ' ' + Y(vals[i]).toFixed(1);
+    const area = line + ' L' + X(ys.length-1).toFixed(1) + ' ' + (H-pad) + ' L' + X(0).toFixed(1) + ' ' + (H-pad) + ' Z';
+    const pk = vals.indexOf(mx);
+    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" role="img" '
+      + 'aria-label="Annual NUFORC reports '+ys[0]+'–'+ys[ys.length-1]+'" '
+      + 'style="width:min(300px,42vw);height:50px;display:block">'
+      + '<defs><linearGradient id="muHeroGrad" x1="0" y1="0" x2="0" y2="1">'
+      +   '<stop offset="0" stop-color="var(--btc)" stop-opacity=".34"/>'
+      +   '<stop offset="1" stop-color="var(--btc)" stop-opacity="0"/></linearGradient></defs>'
+      + '<path d="'+area+'" fill="url(#muHeroGrad)"/>'
+      + '<path d="'+line+'" fill="none" stroke="var(--btc)" stroke-width="1.5" stroke-linejoin="round"/>'
+      + '<circle cx="'+X(pk).toFixed(1)+'" cy="'+Y(mx).toFixed(1)+'" r="2.6" fill="var(--btc)"/></svg>';
+  }
+  const tby = m.totals_by_year || {};
+  const pkYear = Object.keys(tby).map(Number).filter(isFinite)
+    .reduce((a,b) => ((Number(tby[b])||0) > (Number(tby[a])||0) ? b : a), Object.keys(tby)[0]);
+  const dr = m.date_range || [];
+  const heroHtml =
+    '<div class="mu-hero">'
+    + '<div style="flex:0 0 auto">'
+    +   '<div class="mu-hero__kicker">NUFORC sighting archive</div>'
+    +   '<div class="mu-hero__num">' + fmt(m.total_records) + '</div>'
+    +   '<div class="mu-hero__sub">reports logged · ' + String(dr[0]||'').slice(0,4) + '–' + String(dr[1]||'').slice(0,4) + '</div>'
+    + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:9px 20px;align-items:center;flex:1 1 200px;min-width:0">'
+    +   (pkYear ? '<span class="mu-stat">Peak <b>'+pkYear+'</b> · <b>'+fmt(tby[pkYear])+'</b></span>' : '')
+    +   '<span class="mu-stat"><b>'+((m.shape_totals||[]).length)+'</b> shape classes</span>'
+    +   '<span class="mu-stat"><b>'+(Object.keys(m.by_state_year||{}).length)+'</b> regions</span>'
+    + '</div>'
+    + '<div style="flex:0 0 auto;margin-left:auto">' + heroSpark(tby) + '</div>'
+    + '</div>';
+
+  // Neutral, direction-only delta — cyan = more reports, slate = fewer. NOT
+  // green/red P&L semantics: "more UAP reports" isn't inherently good or bad.
   function delta(dp){
     if (dp == null) return '<span style="color:var(--muted);font-size:11px">— no yr-ago data</span>';
     if (dp === 0)   return '<span style="color:var(--muted);font-size:11px;font-weight:600">→ 0.0% vs yr ago</span>';
     const up = dp > 0;
-    const col = up ? '#f5a623' : '#56a3d9';
+    const col = up ? '#56d6c0' : '#8ea6c6';
     return '<span style="color:'+col+';font-size:11px;font-weight:600">' + (up ? '▲ +' : '▼ ') + dp + '% vs yr ago</span>';
   }
   function tile(label, value, deltaHtml, sub){
-    return '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px 14px;min-width:0">'
-      + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">'+label+'</div>'
-      + '<div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1">'+value+'</div>'
-      + '<div style="margin-top:7px;line-height:1.3">'+deltaHtml+'</div>'
+    return '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:9px;padding:14px 16px;min-width:0;box-shadow:inset 0 2px 0 rgba(76,201,224,.28)">'
+      + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">'+label+'</div>'
+      + '<div style="font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.01em">'+value+'</div>'
+      + '<div style="margin-top:8px;line-height:1.3">'+deltaHtml+'</div>'
       + (sub ? '<div style="font-size:10px;color:var(--muted);margin-top:3px">'+sub+'</div>' : '')
       + '</div>';
   }
@@ -15138,21 +15220,22 @@ function renderMufonVelocity(){
   let yoyVal = '—', yoyCol = 'var(--text)';
   if (y.delta_pct != null){
     const up = y.delta_pct > 0, flat = y.delta_pct === 0;
-    yoyCol = flat ? 'var(--text)' : (up ? '#f5a623' : '#56a3d9');
+    yoyCol = flat ? 'var(--text)' : (up ? '#56d6c0' : '#8ea6c6');
     yoyVal = (up ? '+' : '') + y.delta_pct + '%';
   }
   tiles.push(
-    '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:8px;padding:12px 14px;min-width:0">'
-    + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">12-mo YoY</div>'
-    + '<div style="font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;color:'+yoyCol+'">'+yoyVal+'</div>'
-    + '<div style="font-size:10px;color:var(--muted);margin-top:7px">trailing '+fmt(y.trailing)+' vs prior '+fmt(y.prior)+'</div>'
+    '<div style="background:var(--bg2,#0f1419);border:1px solid var(--bd,#27313d);border-radius:9px;padding:14px 16px;min-width:0;box-shadow:inset 0 2px 0 rgba(76,201,224,.28)">'
+    + '<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">12-mo YoY</div>'
+    + '<div style="font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1;letter-spacing:-.01em;color:'+yoyCol+'">'+yoyVal+'</div>'
+    + '<div style="font-size:10px;color:var(--muted);margin-top:8px">trailing '+fmt(y.trailing)+' vs prior '+fmt(y.prior)+'</div>'
     + '</div>'
   );
 
   body.innerHTML =
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));gap:10px">' + tiles.join('') + '</div>'
-    + '<div style="font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5">'
-    +   'Windows anchored to the newest day on file (<strong>'+anchor+'</strong>), <em>not</em> today — NUFORC reports lag ~1–2 weeks, so the latest-day and 7-day tiles run low until reports catch up. YoY compares each window to the same window one year earlier. Counts are <strong>reports</strong>, not verified events.'
+    heroHtml
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(162px, 1fr));gap:12px">' + tiles.join('') + '</div>'
+    + '<div style="font-size:11px;color:var(--muted);margin-top:13px;line-height:1.5">'
+    +   'Recent windows are anchored to the newest day on file (<strong>'+anchor+'</strong>), <em>not</em> today — NUFORC reports lag ~1–2 weeks, so the latest-day and 7-day tiles run low until reports catch up. YoY compares each window to the same window one year earlier. Counts are <strong>reports</strong>, not verified events.'
     + '</div>';
 }
 
@@ -15470,7 +15553,7 @@ function renderMufonTrend(){
     +     '<div style="font-size:11px;color:var(--muted);margin-top:2px">of &plusmn;100</div>'
     +   '</div>'
     + '</div>'
-    + '<div style="height:10px;background:linear-gradient(to right,#b91c1c 0%,var(--v2-bad) 25%,var(--v2-warn) 50%,var(--v2-good) 75%,#16a34a 100%);border-radius:5px;position:relative;margin-bottom:14px">'
+    + '<div style="height:10px;background:linear-gradient(to right,#2a4258 0%,#2a86a0 50%,#58d3dd 100%);border-radius:5px;position:relative;margin-bottom:14px">'
     +   '<div style="position:absolute;top:-3px;left:calc(' + markerPct.toFixed(1) + '% - 3px);width:6px;height:16px;background:#fff;border-radius:2px;box-shadow:0 0 0 2px #0b0d12"></div>'
     + '</div>'
     + '<div style="margin-bottom:14px">'
@@ -15712,8 +15795,8 @@ const MUFON_SHAPE_COLORS = [
   'var(--v2-bad, #ef4444)',      // 3
   'var(--v2-ai, #a78bfa)',       // 4
   'var(--v2-orange, #cc7a2b)',   // 5
-  '#0ea5e9',                     // 6 (sky — derived from info)
-  '#84cc16',                     // 7 (lime — derived from good)
+  '#4a9fd0',                     // 6 (steel blue — cooled for the UAP theme)
+  '#7fb0cc',                     // 7 (muted teal-blue — cooled for the UAP theme)
 ];
 const MUFON_SHAPE_COLOR_FALLBACK = 'rgba(148,163,184,0.55)'; // slate
 
