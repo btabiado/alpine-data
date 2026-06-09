@@ -190,7 +190,7 @@ HTML_TEMPLATE = r"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Vendor Directory — Snowflake Summit 2026 Partners + the Competitive Landscape</title>
+<title>AI Data Vendors · Competitive Landscape</title>
 <!--__CHARTJS__-->
 <style>
 :root{
@@ -210,8 +210,19 @@ a{color:var(--accent);text-decoration:none}
 a:hover{text-decoration:underline}
 .wrap{max-width:1280px;margin:0 auto;padding:16px}
 header.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(11,16,32,.92);backdrop-filter:blur(8px);z-index:20}
-header.top h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
-header.top .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+header.top h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px}
+header.top .sub{color:var(--muted);font-size:12.5px;margin-top:5px}
+/* Header: a gradient accent bar on the left + a gradient wordmark + glowing
+   live-count chips (816 all · 197 Summit · 619 field). */
+.lhead{border-left:3px solid transparent;border-image:linear-gradient(180deg,var(--accent),var(--adj) 55%,var(--orb)) 1;padding-left:14px}
+.brandword{background:linear-gradient(90deg,var(--accent),var(--adj) 52%,var(--orb));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.brandsub{color:var(--text);opacity:.9;font-weight:600}
+.hchips{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap}
+.hchip{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.03);color:var(--text);white-space:nowrap}
+.hchip b{font-weight:800}
+.hchip--all{border-color:rgba(167,139,250,.5);color:#c4b5fd;box-shadow:0 0 11px rgba(167,139,250,.22)}
+.hchip--sum{border-color:rgba(41,181,232,.55);color:#7dd3fc;box-shadow:0 0 11px rgba(41,181,232,.25)}
+.hchip--field{border-color:rgba(251,191,36,.5);color:#fcd34d;box-shadow:0 0 11px rgba(251,191,36,.22)}
 .spacer{flex:1}
 .tabs{display:flex;gap:6px;padding:12px 16px 0;max-width:1280px;margin:0 auto;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .tab{appearance:none;background:var(--panel);color:var(--muted);border:1px solid var(--border);border-bottom:none;
@@ -299,9 +310,14 @@ tbody tr[role="button"]{cursor:pointer}
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="top">
-  <div>
-    <h1>🔭 Competitive Landscape</h1>
-    <div class="sub">Every AI &amp; data vendor in one place — the <b>197</b> Snowflake Summit 2026 partners + the <b>619</b>-vendor competitive field · filter by presence</div>
+  <div class="lhead">
+    <h1>🔭 <span class="brandword">AI Data Vendors</span> <span class="brandsub">· Competitive Landscape</span></h1>
+    <div class="hchips">
+      <span class="hchip hchip--all"><b>__ALL_TOTAL__</b> all</span>
+      <span class="hchip hchip--sum"><b>__SUMMIT_TOTAL__</b> Summit</span>
+      <span class="hchip hchip--field"><b>__NS_TOTAL__</b> field</span>
+    </div>
+    <div class="sub">Every AI &amp; data vendor in one place · Snowflake Summit 2026 partners + the competitive field · filter by presence</div>
   </div>
 </header>
 
