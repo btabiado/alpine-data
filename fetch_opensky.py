@@ -34,7 +34,7 @@ TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protoc
 OUT = os.path.join(os.path.dirname(__file__), "data-opensky.json")
 OUT_POS = os.path.join(os.path.dirname(__file__), "data-opensky-positions.json")
 UA = "alpine-data/aviation-tab (non-commercial)"
-MAX_POINTS = 2000
+MAX_POINTS = 4000
 STR_CAP = 24  # max chars for any external string in positions output
 
 
@@ -118,7 +118,7 @@ def positions(d):
       s[8]  on_ground       s[10] true_track       s[1]  callsign
       s[2]  origin_country
 
-    Caps output at MAX_POINTS (2000) and sanitizes external strings to STR_CAP chars.
+    Caps output at MAX_POINTS (4000) and sanitizes external strings to STR_CAP chars.
     """
     sv = [s for s in (d.get("states") or []) if s and len(s) > 10]
     ts = d.get("time") or int(time.time())
