@@ -12289,7 +12289,7 @@ function avBootAviation(DATA){
         kpi($("#kpi-map"),[
           {label:"Aircraft on map",val:n,delta:"this snapshot",dir:"up"},
           {label:"Snapshot time",val:(d.tstr||"—"),delta:"OpenSky",dir:"flat",raw:true},
-          {label:"Reported total",val:(typeof d.count==="number"?d.count:n),delta:"before 4k cap",dir:"flat"}
+          {label:"Reported total",val:(typeof d.airborne==="number"?d.airborne:(typeof d.count==="number"?d.count:n)),delta:(typeof d.airborne==="number"&&d.airborne>n)?(fmt(n)+" plotted (cap)"):"airborne now",dir:"flat"}
         ]);
         setTimeout(()=>{ if(_avmap) _avmap.invalidateSize(); },60);
       };
@@ -12580,14 +12580,7 @@ function selectTab(t){
   const usesRange = (t === 'etf' || t === 'trading' || t === 'whale');
   document.querySelectorAll('.btn[data-range]').forEach(b => b.style.display = usesRange ? '' : 'none');
   document.querySelectorAll('.lbl').forEach(b => { if (b.textContent.toUpperCase() === 'TIMEFRAME') b.style.display = usesRange ? '' : 'none'; });
-  const insightsBar = document.getElementById('insightsBar');
-  // Overview has its own "Top insights" card; AI News tab has its own inline
-  // insights card next to the sentiment summary — hide the global bar in
-  // both cases to avoid showing the same insights twice. Real Estate likewise
-  // has its own insight surface (heat-index 30d/1y delta chips + the
-  // "Hottest states" leaderboard), and no insight is tagged `real_estate`, so
-  // the generic bar would only ever read "none right now" — hide it there too.
-  if (insightsBar) insightsBar.style.display = (isOverview || t === 'ainews' || t === 'real_estate' || t === 'summit') ? 'none' : '';
+  // (Global Insights bar removed — its per-tab show/hide line was dropped too.)
   renderAll();
 }
 

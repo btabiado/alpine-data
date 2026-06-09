@@ -155,12 +155,21 @@ def positions(d):
         points.append([round(lat, 2), round(lon, 2), alt_ft, heading, callsign, origin_country])
 
         if len(points) >= MAX_POINTS:
-            break  # hard cap — already have 2000 points
+            break  # hard cap — already have MAX_POINTS points
+
+    # True count of plottable airborne aircraft in this snapshot, BEFORE the
+    # MAX_POINTS cap — so the map can show the real total alongside how many it
+    # actually plotted (`count`). Same predicate as the append loop above.
+    airborne_total = sum(
+        1 for s in sv
+        if s[8] is False and s[5] is not None and s[6] is not None
+    )
 
     return {
         "ts": ts,
         "tstr": tstr,
-        "count": len(points),
+        "count": len(points),       # how many points are plotted (≤ MAX_POINTS)
+        "airborne": airborne_total,  # true plottable airborne total (pre-cap)
         "points": points,
     }
 
