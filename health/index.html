@@ -57,7 +57,7 @@
     .unified.warn { color: var(--warn); }
     .unified.down { color: var(--down); }
 
-    /* ---- sub-tab nav (two pills, one pane visible at a time) -------------- */
+    /* ---- sub-tab nav (three pills, one pane visible at a time) ------------ */
     .subtabs { display: flex; gap: 8px; margin: 22px 0 24px; flex-wrap: wrap; }
     .subtab {
       background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border);
@@ -66,7 +66,75 @@
     }
     .subtab:hover { color: var(--text); border-color: var(--accent); }
     .subtab[aria-selected="true"] { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+    /* Touch: guarantee a 44px tap target on all three pills (coarse pointers
+       only, so desktop pixel chrome is unchanged). */
+    @media (pointer: coarse) { .subtab { min-height: 44px; } }
     .pane[hidden] { display: none; }
+
+    /* ---- Data Sources Catalog pane --------------------------------------- */
+    .cat-intro { color: var(--text-dim); font-size: 12.5px; margin: 8px 0 14px; }
+    .cat-pdf { color: var(--accent); text-decoration: none; white-space: nowrap; }
+    .cat-pdf:hover { text-decoration: underline; }
+    .cat-toolbar {
+      position: sticky; top: 0; z-index: 5; background: var(--bg);
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      padding: 10px 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 14px;
+    }
+    .cat-toolbar input[type="search"], .cat-toolbar select {
+      background: var(--bg-elev); color: var(--text); border: 1px solid var(--border);
+      border-radius: 6px; padding: 9px 10px; font-size: 13px; font-family: var(--sans);
+    }
+    .cat-toolbar input[type="search"] { flex: 1 1 220px; min-width: 0; }
+    /* min-width:0 + max-width lets the <select> shrink instead of forcing
+       page-wide overflow from its long option text on a phone. */
+    .cat-toolbar select { flex: 1 1 150px; min-width: 0; max-width: 100%; }
+    .cat-toolbar input:focus, .cat-toolbar select:focus { outline: none; border-color: var(--accent); }
+    .cat-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); cursor: pointer; user-select: none; min-height: 44px; }
+    .cat-count { margin-left: auto; font-size: 12px; color: var(--text-faint); font-family: var(--mono); white-space: nowrap; }
+    .cat-btn { background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; font-family: var(--sans); min-height: 44px; }
+    .cat-btn:hover { color: var(--text); border-color: var(--accent); }
+    .cat-toolbar input[list] { flex: 1 1 150px; min-width: 0; max-width: 100%; }
+    /* Collapsible category group (no more "Part" layer) */
+    .cat-grp { border-top: 1px solid var(--border); }
+    .cat-grp:first-child { border-top: none; }
+    .cat-grp-h { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; background: none; border: none; cursor: pointer; color: var(--text); font-family: var(--sans); font-size: 13.5px; font-weight: 600; padding: 12px 4px; min-height: 44px; }
+    .cat-grp-h:hover { color: var(--accent); }
+    .cat-chev { color: var(--text-faint); font-size: 11px; display: inline-block; width: 10px; }
+    .cat-grp-name { flex: 1 1 auto; }
+    .cat-grp-n { color: var(--text-faint); font-weight: 400; font-size: 11px; font-family: var(--mono); }
+    .cat-grp-body { padding: 0 0 14px; }
+    /* Scroll-safety wrapper: if a table is ever wider than the viewport it
+       scrolls within this box instead of pushing the whole page sideways. */
+    .cat-tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+    .cat-table { width: 100%; border-collapse: collapse; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    /* overflow-wrap lets long URLs/tokens in the tier cells break so a single
+       cell can't blow the table out to ~1000px on a phone. */
+    .cat-table th, .cat-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); font-size: 12.5px; vertical-align: top; overflow-wrap: anywhere; }
+    /* Sortable headers */
+    .cat-table th { background: var(--bg-elev-2); font-size: 10.5px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); font-weight: 600; white-space: nowrap; user-select: none; padding: 0; }
+    .th-sort { display: block; width: 100%; text-align: left; background: none; border: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; padding: 7px 10px; }
+    .th-sort:hover { color: var(--text); }
+    .th-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .cat-table th .arr { color: var(--accent); font-size: 9px; margin-left: 3px; }
+    .cat-table tr:last-child td { border-bottom: none; }
+    .cat-table .svc { font-weight: 600; }
+    .cat-table .svc a { color: var(--accent); text-decoration: none; }
+    .cat-table .svc a:hover { text-decoration: underline; }
+    .cat-table .cat-co { color: var(--text-dim); white-space: nowrap; }
+    .cat-badge { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+    .cat-badge.inuse { background: rgba(16,185,129,.15); color: var(--up); }
+    .cat-badge.avail { background: rgba(96,165,250,.15); color: var(--accent); }
+    .cat-tag { font-size: 9.5px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); color: var(--text-faint); margin-left: 6px; white-space: nowrap; }
+    .cat-tag.free { color: var(--up); border-color: rgba(16,185,129,.4); }
+    .cat-hidden { display: none !important; }
+    .cat-empty { color: var(--text-faint); font-size: 12.5px; padding: 16px 0; }
+    /* Link-health hint, populated from catalog_health.json (monthly workflow). */
+    .cat-health { font-size: 12px; color: var(--stale); margin: 0 0 12px; }
+    /* Phones: drop the Paid + Company columns (both still searchable/filterable). */
+    @media (max-width: 560px) {
+      .cat-table .pcol, .cat-table .cocol { display: none; }
+      .cat-toolbar { position: static; padding: 8px 0 10px; }
+    }
 
     .note { color: var(--text-dim); font-size: 12.5px; margin: 8px 0 20px; }
     .source-tag { font-family: var(--mono); color: var(--text-faint); }
@@ -180,10 +248,13 @@
       </div>
     </header>
 
-    <!-- sub-tab nav -->
+    <!-- sub-tab nav. The catalog is now a real tab (its own pane), so it sits
+         inside the tablist as a proper role="tab" — no ARIA owned-children
+         issue. The PDF download moved into the catalog pane's intro line. -->
     <div class="subtabs" role="tablist" aria-label="Status views">
       <button class="subtab" id="tab-sources" role="tab" aria-controls="paneSources" aria-selected="true" data-pane="sources">Upstream Sources</button>
       <button class="subtab" id="tab-freshness" role="tab" aria-controls="paneFreshness" aria-selected="false" data-pane="freshness">Data Freshness</button>
+      <button class="subtab" id="tab-catalog" role="tab" aria-controls="paneCatalog" aria-selected="false" data-pane="catalog">Data Sources Catalog</button>
     </div>
 
     <!-- ===================== PANE A · UPSTREAM SOURCES ==================== -->
@@ -226,6 +297,37 @@
         <div id="freshUpstream"></div>
       </details>
     </section>
+
+    <!-- ===================== PANE C · DATA SOURCES CATALOG =============== -->
+    <!-- Browsable view of the v2 expansion catalog. Data is lazy-loaded from
+         ./api_catalog.json the first time this tab is opened (it's ~800 KB,
+         so we don't fetch it on page load). All filtering is client-side. -->
+    <section class="pane" id="paneCatalog" role="tabpanel" aria-labelledby="tab-catalog" hidden>
+      <p class="cat-intro">
+        Browsable map of public API &amp; data services &mdash; <b>2,773</b> verified entries across
+        industries, college fields of study, research &amp; publishing, open AI agents, and a
+        pharma / clinical-trials / U.S.-government / military deep-dive. Free/keyless first;
+        <b>In&nbsp;use</b> = already wired into a dashboard, <b>Available</b> = net-new.
+        <a class="cat-pdf" href="./api-catalog.pdf" target="_blank" rel="noopener noreferrer" data-source="catalog">&darr; original PDF</a>
+      </p>
+      <div class="cat-toolbar">
+        <input type="search" id="catSearch" placeholder="Search services, companies, notes&hellip;" aria-label="Search the catalog" autocomplete="off" />
+        <select id="catCat" aria-label="Filter by category"><option value="">All categories</option></select>
+        <input id="catCo" list="catCoList" placeholder="Any company" aria-label="Filter by company" autocomplete="off" />
+        <datalist id="catCoList"></datalist>
+        <select id="catStatus" aria-label="Filter by status">
+          <option value="all">All status</option>
+          <option value="avail">Available (net-new)</option>
+          <option value="inuse">In use</option>
+        </select>
+        <label class="cat-check"><input type="checkbox" id="catFree" /> Free/keyless only</label>
+        <button type="button" class="cat-btn" id="catToggleAll" aria-expanded="false">Expand all</button>
+        <span class="cat-count" id="catCount" role="status" aria-live="polite" aria-atomic="true">loading&hellip;</span>
+      </div>
+      <div id="catHealth" class="cat-health cat-hidden" role="status"></div>
+      <div id="catBody" class="cat-empty">Loading catalog&hellip;</div>
+      <div id="catEmpty" class="cat-empty cat-hidden">No services match your filters.</div>
+    </section>
   </div>
 
   <script>
@@ -234,6 +336,21 @@
     // ===================================================================
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+    // Only allow http/https hrefs; anything else (javascript:, data:, …) renders as plain text.
+    function safeHref(u) {
+      try {
+        const url = new URL(u, location.href);
+        return (url.protocol === 'http:' || url.protocol === 'https:') ? url.href : null;
+      } catch (_) { return null; }
+    }
+    // Single source of truth for the Expand-all button + module flag (avoids label/aria drift).
+    function setExpandUI(open) {
+      catAllExpanded = open;
+      const btn = document.getElementById('catToggleAll');
+      if (!btn) return;
+      btn.textContent = open ? 'Collapse all' : 'Expand all';
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
     function formatTime(iso) {
       if (!iso) return '—';
@@ -286,11 +403,13 @@
     const PANES = {
       sources:   { tab: 'tab-sources',   pane: 'paneSources',   hash: '#sources' },
       freshness: { tab: 'tab-freshness', pane: 'paneFreshness', hash: '#freshness' },
+      catalog:   { tab: 'tab-catalog',   pane: 'paneCatalog',   hash: '#catalog' },
     };
 
     function paneFromHash() {
       const h = (location.hash || '').toLowerCase();
       if (h === '#freshness' || h === '#health') return 'freshness';
+      if (h === '#catalog') return 'catalog';
       if (h === '#sources') return 'sources';
       return 'sources'; // default
     }
@@ -306,9 +425,13 @@
         // replaceState keeps the back button from filling with toggle steps.
         history.replaceState(null, '', PANES[name].hash);
       }
+      // Lazy-load the (large) catalog dataset the first time its tab opens.
+      if (name === 'catalog') ensureCatalog();
     }
 
-    document.querySelectorAll('.subtab').forEach(btn => {
+    // Every subtab owns a pane (data-pane present), so the toggle handler
+    // attaches to all of them — including the catalog tab.
+    document.querySelectorAll('.subtab[data-pane]').forEach(btn => {
       btn.addEventListener('click', () => showPane(btn.dataset.pane, true));
     });
     window.addEventListener('hashchange', () => showPane(paneFromHash(), false));
@@ -525,6 +648,241 @@
     // and (inside loadSources) only re-render when the snapshot actually
     // changed — so it never hammers upstreams or disrupts a mid-read user.
     setInterval(() => { if (!document.hidden) loadSources({ auto: true }); }, 90 * 1000);
+
+    // ===================================================================
+    // Data Sources Catalog — lazy-loaded, client-side search/filter/sort.
+    //   Dataset (./api_catalog.json, grouped by category) is fetched once on
+    //   first open. Services group into collapsible CATEGORY accordions
+    //   (default collapsed). Columns sort within each group; filters toggle
+    //   row visibility and auto-expand groups with matches. var (not let/const)
+    //   so the hoisted showPane() can call ensureCatalog() at init without a
+    //   temporal-dead-zone error.
+    // ===================================================================
+    var catalogLoaded = false;
+    var CAT_TOTAL = 0;
+    var catSort = { key: null, dir: 1 };   // key in n/co/f/p/b/s; dir 1=asc, -1=desc
+    var catAllExpanded = false;
+    var catAutoExpanded = false;   // true while groups are auto-expanded by an active filter
+    var SORT_ATTR = { n: 'sn', co: 'co', f: 'sf', p: 'sp', b: 'sb', s: 'ss' };
+
+    async function ensureCatalog() {
+      if (catalogLoaded) return;
+      catalogLoaded = true;
+      const body = document.getElementById('catBody');
+      try {
+        const r = await fetch('./api_catalog.json', { cache: 'no-store' });
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        renderCatalog(await r.json());
+        loadCatalogHealth();
+      } catch (e) {
+        catalogLoaded = false; // allow a retry next time the tab opens
+        body.className = 'cat-empty';
+        body.innerHTML = 'Couldn’t load the catalog (' + escapeHtml(String(e.message || e)) +
+          '). <a class="cat-pdf" href="./api-catalog.pdf" target="_blank" rel="noopener noreferrer">Open the PDF instead</a>.';
+        document.getElementById('catCount').textContent = '';
+      }
+    }
+
+    // Surface the monthly link-health report (committed by catalog-health.yml).
+    // Silent if the file is absent or reports no dead links.
+    function loadCatalogHealth() {
+      fetch('./catalog_health.json', { cache: 'no-store' })
+        .then(r => (r.ok ? r.json() : null))
+        .then(h => {
+          const dead = h && h.counts && h.counts.dead;
+          if (!dead) return;
+          const el = document.getElementById('catHealth');
+          const when = (h.checked_at || '').slice(0, 10);
+          el.textContent = '⚠ ' + dead + ' link' + (dead === 1 ? '' : 's') +
+            ' flagged for review' + (when ? ' · checked ' + when : '');
+          el.classList.remove('cat-hidden');
+        })
+        .catch(() => {});
+    }
+
+    function renderCatalog(data) {
+      CAT_TOTAL = (data.meta && data.meta.total) || 0;
+      // Category filter options (from meta).
+      const catSel = document.getElementById('catCat');
+      ((data.meta && data.meta.categories) || []).forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.name; o.textContent = c.name + ' (' + c.count + ')';
+        catSel.appendChild(o);
+      });
+      // Company typeahead options (datalist).
+      const coList = document.getElementById('catCoList');
+      ((data.meta && data.meta.companies) || []).forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.name; o.label = c.name + ' (' + c.count + ')';
+        coList.appendChild(o);
+      });
+      // Build collapsible category groups once as an HTML string.
+      const TH = '<thead><tr>' +
+        '<th scope="col" aria-sort="none"><button type="button" class="th-sort" data-key="n">Service<span class="arr" aria-hidden="true"></span></button></th>' +
+        '<th scope="col" aria-sort="none" class="cocol"><button type="button" class="th-sort" data-key="co">Company<span class="arr" aria-hidden="true"></span></button></th>' +
+        '<th scope="col" aria-sort="none"><button type="button" class="th-sort" data-key="f">Free tier<span class="arr" aria-hidden="true"></span></button></th>' +
+        '<th scope="col" aria-sort="none" class="pcol"><button type="button" class="th-sort" data-key="p">Paid<span class="arr" aria-hidden="true"></span></button></th>' +
+        '<th scope="col" aria-sort="none"><button type="button" class="th-sort" data-key="b">Best for<span class="arr" aria-hidden="true"></span></button></th>' +
+        '<th scope="col" aria-sort="none"><button type="button" class="th-sort" data-key="s">Status<span class="arr" aria-hidden="true"></span></button></th></tr></thead>';
+      const out = [];
+      (data.categories || []).forEach(c => {
+        out.push('<div class="cat-grp" data-cat="' + escapeHtml(c.category) + '" aria-expanded="false">');
+        out.push('<button type="button" class="cat-grp-h" aria-expanded="false"><span class="cat-chev" aria-hidden="true">&#9656;</span><span class="cat-grp-name">' + escapeHtml(c.category) + '</span><span class="cat-grp-n">' + c.count + '</span></button>');
+        out.push('<div class="cat-grp-body" hidden><div class="cat-tablewrap"><table class="cat-table">' + TH + '<tbody>');
+        (c.entries || []).forEach(e => {
+          const coLow = (e.co || '').toLowerCase();
+          const href = safeHref(e.u);
+          const svc = href
+            ? '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(e.n) + '</a>'
+            : escapeHtml(e.n || '');
+          const inUse = e.s === 'In use';
+          const badge = inUse ? '<span class="cat-badge inuse">In use</span>' : '<span class="cat-badge avail">Available</span>';
+          const tag = e.fr ? '<span class="cat-tag free">' + (e.kl ? 'keyless' : 'free') + '</span>' : '';
+          out.push('<tr class="cat-row" data-free="' + (e.fr ? 1 : 0) + '" data-status="' + (inUse ? 'inuse' : 'avail') + '"' +
+            ' data-co="' + escapeHtml(coLow) + '" data-sn="' + escapeHtml((e.n || '').toLowerCase()) + '"' +
+            ' data-sf="' + (e.fr ? 0 : 1) + escapeHtml((e.f || '').toLowerCase()) + '" data-sp="' + escapeHtml((e.p || '').toLowerCase()) + '"' +
+            ' data-sb="' + escapeHtml((e.b || '').toLowerCase()) + '" data-ss="' + (inUse ? 0 : 1) + '">' +
+            '<td class="svc">' + svc + tag + '</td>' +
+            '<td class="cocol cat-co">' + escapeHtml(e.co || '—') + '</td>' +
+            '<td>' + escapeHtml(e.f || '—') + '</td>' +
+            '<td class="pcol">' + escapeHtml(e.p || '—') + '</td>' +
+            '<td>' + escapeHtml(e.b || '—') + '</td>' +
+            '<td>' + badge + '</td></tr>');
+        });
+        out.push('</tbody></table></div></div></div>');
+      });
+      const body = document.getElementById('catBody');
+      body.className = '';
+      body.innerHTML = out.join('');
+      // One delegated click handler for both the column-sort buttons and the group toggles.
+      body.addEventListener('click', ev => {
+        const sortBtn = ev.target.closest('.th-sort[data-key]');
+        if (sortBtn && body.contains(sortBtn)) { onSortClick(sortBtn.dataset.key); return; }
+        const grpH = ev.target.closest('.cat-grp-h');
+        if (grpH && body.contains(grpH)) toggleGroup(grpH.parentElement);
+      });
+      filterCatalog();
+    }
+
+    function toggleGroup(grp, force) {
+      const cur = grp.getAttribute('aria-expanded') === 'true';
+      const open = force !== undefined ? force : !cur;
+      if (open === cur) return;
+      grp.setAttribute('aria-expanded', open ? 'true' : 'false');
+      grp.querySelector('.cat-grp-h').setAttribute('aria-expanded', open ? 'true' : 'false');
+      grp.querySelector('.cat-grp-body').hidden = !open;
+      grp.querySelector('.cat-chev').innerHTML = open ? '&#9662;' : '&#9656;';
+    }
+
+    function onSortClick(key) {
+      if (catSort.key === key) catSort.dir = -catSort.dir;
+      else { catSort.key = key; catSort.dir = 1; }
+      applySort();
+    }
+
+    function applySort() {
+      const attr = SORT_ATTR[catSort.key];
+      if (!attr) return;
+      const dir = catSort.dir;
+      document.querySelectorAll('#catBody .cat-table tbody').forEach(tb => {
+        const rows = Array.prototype.slice.call(tb.children);
+        rows.sort((a, b) => {
+          const x = a.dataset[attr] || '', y = b.dataset[attr] || '';
+          return x < y ? -dir : x > y ? dir : 0;
+        });
+        rows.forEach(r => tb.appendChild(r));
+      });
+      document.querySelectorAll('#catBody .cat-table th .th-sort[data-key]').forEach(btn => {
+        const active = btn.dataset.key === catSort.key;
+        const th = btn.closest('th');
+        if (th) th.setAttribute('aria-sort', active ? (dir > 0 ? 'ascending' : 'descending') : 'none');
+        const arr = btn.querySelector('.arr');
+        if (arr) arr.textContent = active ? (dir > 0 ? ' ▲' : ' ▼') : '';
+      });
+    }
+
+    function filterCatalog() {
+      const q = (document.getElementById('catSearch').value || '').toLowerCase().trim();
+      const cat = document.getElementById('catCat').value;
+      const co = (document.getElementById('catCo').value || '').toLowerCase().trim();
+      const status = document.getElementById('catStatus').value;   // all | inuse | avail
+      const freeOnly = document.getElementById('catFree').checked;
+      const terms = q ? q.split(/\s+/) : [];
+      const anyFilter = !!(q || cat || co || status !== 'all' || freeOnly);
+      let shown = 0;
+      document.querySelectorAll('#catBody .cat-grp').forEach(grp => {
+        const catMatch = !cat || grp.dataset.cat === cat;
+        let grpShown = 0;
+        grp.querySelectorAll('.cat-row').forEach(row => {
+          let ok = catMatch;
+          if (ok && freeOnly) ok = row.dataset.free === '1';
+          if (ok && status !== 'all') ok = row.dataset.status === status;
+          if (ok && co) ok = (row.dataset.co || '').indexOf(co) !== -1;
+          if (ok && terms.length) {
+            const h = row.dataset.sn + ' ' + row.dataset.co + ' ' + row.dataset.sb + ' ' + grp.dataset.cat.toLowerCase();
+            ok = terms.every(t => h.indexOf(t) !== -1);
+          }
+          row.classList.toggle('cat-hidden', !ok);
+          if (ok) grpShown++;
+        });
+        grp.classList.toggle('cat-hidden', grpShown === 0);
+        // When any filter is active, auto-expand groups that have matches so
+        // results are visible without manual clicking; otherwise leave collapse
+        // state as the user set it.
+        if (grpShown > 0 && anyFilter) toggleGroup(grp, true);
+        shown += grpShown;
+      });
+      // Clearing the last filter restores the collapsed default (unless the
+      // user has "Expand all" on) so the page doesn't stay fully expanded.
+      if (anyFilter) { catAutoExpanded = true; setExpandUI(true); }
+      else if (catAutoExpanded && !catAllExpanded) {
+        document.querySelectorAll('#catBody .cat-grp').forEach(g => toggleGroup(g, false));
+        catAutoExpanded = false; setExpandUI(false);
+      }
+      document.getElementById('catCount').textContent = shown.toLocaleString() + ' of ' + CAT_TOTAL.toLocaleString() + ' shown';
+      document.getElementById('catEmpty').classList.toggle('cat-hidden', shown !== 0);
+    }
+
+    function toggleAllGroups() {
+      const open = !catAllExpanded;
+      document.querySelectorAll('#catBody .cat-grp').forEach(g => {
+        if (!g.classList.contains('cat-hidden')) toggleGroup(g, open);
+      });
+      setExpandUI(open);
+    }
+
+    // Wire catalog controls (elements exist in static markup; handlers are
+    // no-ops until the dataset is rendered). Search + company are debounced.
+    (function wireCatalogControls() {
+      let t = null;
+      const onType = () => { clearTimeout(t); t = setTimeout(filterCatalog, 180); };
+      ['catSearch', 'catCo'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', onType); });
+      ['catCat', 'catStatus', 'catFree'].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('change', filterCatalog); });
+      const ta = document.getElementById('catToggleAll'); if (ta) ta.addEventListener('click', toggleAllGroups);
+    })();
+
+    // ===================================================================
+    // Source-registry resolver — integration point for future rotating URLs.
+    //   Today this is a no-op: sources.json's catalog.href matches the
+    //   inline href on the only [data-source] anchor, so the setAttribute
+    //   rewrites the value to itself. Kept as the documented wire-up for
+    //   future [data-source=KEY] anchors whose URL may rotate per-environment
+    //   (signed S3 URLs, staging vs prod endpoints, etc.); add new sources
+    //   to sources.json rather than hardcoding hrefs in new markup.
+    //   Failure (fetch error, parse error, missing key) is silent — the
+    //   inline href on each anchor is the authoritative fallback.
+    // ===================================================================
+    (async function resolveSourceLinks() {
+      try {
+        const r = await fetch('./sources.json', { cache: 'no-store' });
+        if (!r.ok) return;
+        const reg = await r.json();
+        document.querySelectorAll('a[data-source]').forEach(a => {
+          const entry = reg[a.dataset.source];
+          if (entry && entry.href) a.setAttribute('href', entry.href);
+        });
+      } catch (_) { /* fallback: inline href on the anchor */ }
+    })();
   </script>
 </body>
 </html>

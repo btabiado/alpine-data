@@ -1,0 +1,9 @@
+{
+  "_comment": "Source-registry seed for the /health/ page. Decorates [data-source=...] elements via the inline resolver at the bottom of index.html. Keep entries flat — add new sources here instead of hardcoding hrefs in the markup.",
+  "catalog": {
+    "href": "./api-catalog.pdf",
+    "label": "Data Sources — full catalog",
+    "format": "PDF",
+    "note": "Public API & Data Services Catalog — 50+ categories, ~9 parts, landscape."
+  }
+}
