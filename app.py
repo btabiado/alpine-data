@@ -2590,9 +2590,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <!-- ============ SUMMIT TAB ============ -->
   <!-- The "Summit" nav tab is a pure launcher: clicking it (or loading the
-       dashboard with the #summit hash, e.g. the /summit/ "back" link) redirects
-       straight to the standalone /summit/ dashboard. There is no in-hub gateway
-       card — see handleTabActivate() and the #summit redirect in the bootstrap. -->
+       dashboard with the #summit hash) redirects to the Competitive Landscape
+       (landscape/?pres=absent), where the Summit dashboard now lives as
+       integrated tabs. There is no in-hub gateway card — see handleTabActivate()
+       and the #summit redirect in the bootstrap. -->
 
   <!-- ============ AI NEWS TAB ============ -->
   <div id="tab-ainews" class="hidden">
@@ -12987,11 +12988,11 @@ document.querySelectorAll('.tabgroup-btn').forEach(btn=>{
 document.addEventListener('click', e=>{ if(!e.target.closest('.tabgroup')) closeTabMenus(); });
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeTabMenus(); });
 syncTabGroups();
-// The Summit tab opens the standalone Snowflake Summit dashboard directly
-// (/summit/) instead of the in-dashboard gateway card. Everything else does
-// the normal in-page tab switch.
+// The Summit tab opens the Competitive Landscape (Summit is now integrated
+// there as tabs) instead of the standalone /summit/ or an in-dashboard gateway
+// card. Everything else does the normal in-page tab switch.
 function handleTabActivate(t){
-  if (t === 'summit') { window.location.href = 'summit/'; return; }
+  if (t === 'summit') { window.location.href = 'landscape/?pres=absent'; return; }
   selectTab(t);
 }
 document.querySelectorAll('.tab').forEach(b => {
@@ -17868,15 +17869,16 @@ function _tabFromHash(){
   ) ? h : null;
 }
 // Summit is a launcher, not an in-hub tab: a #summit hash (an inbound link, or
-// the /summit/ "back" link) redirects straight to the standalone dashboard.
+// the /summit/ "back" link) redirects to the Competitive Landscape, where the
+// Summit dashboard now lives as integrated tabs.
 (function(){
   const h0 = _tabFromHash();
-  if (h0 === 'summit') { window.location.replace('summit/'); return; }
+  if (h0 === 'summit') { window.location.replace('landscape/?pres=absent'); return; }
   selectTab(h0 || 'overview');
 })();
 window.addEventListener('hashchange', () => {
   const h = _tabFromHash();
-  if (h === 'summit') { window.location.replace('summit/'); return; }
+  if (h === 'summit') { window.location.replace('landscape/?pres=absent'); return; }
   if (h && h !== state.tab) selectTab(h);
 });
 renderAll();
