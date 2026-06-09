@@ -126,6 +126,18 @@ TARGETS: list[dict] = [
     # ---- aviation: OpenSky live ADS-B. Anonymous access works (rate-limited);
     # OPENSKY_CLIENT_ID only raises limits. Tiny bbox keeps the probe cheap.
     {"label": "OpenSky Network",      "category": "Aviation",      "url": "https://opensky-network.org/api/states/all?lamin=45.8&lomin=5.9&lamax=46.0&lomax=6.1",            "key_env": "OPENSKY_CLIENT_ID"},
+    # TSA daily throughput (powers the TSA Throughput sub-view via fetch_tsa.py).
+    # tsa.gov 403s a non-browser UA, so send a real browser UA like the scraper.
+    {"label": "TSA passenger volumes","category": "Aviation",      "url": "https://www.tsa.gov/travel/passenger-volumes",                                                   "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
+    # FRED ENPLANE — the air-travel enplanements series behind the Air Travel
+    # sub-view. Use the FRED *API* host (api.stlouisfed.org, same reliable host
+    # as the Macro FRED probe) rather than the web fredgraph.csv endpoint, which
+    # Akamai tarpits for non-curl clients from CI. Keyed on FRED_API_KEY:
+    # auth_required without a key, up in CI where the secret is set.
+    {"label": "FRED ENPLANE (air travel)","category": "Aviation",  "url": "https://api.stlouisfed.org/fred/series/observations?series_id=ENPLANE&file_type=json&limit=1",     "key_env": "FRED_API_KEY"},
+    # AOPA Air Safety Institute (McSpadden Report) — the GA accident/rate source
+    # behind the Safety sub-view. Browser UA; annual data, probed for reachability.
+    {"label": "AOPA ASI (GA safety)",  "category": "Aviation",      "url": "https://www.aopa.org/training-and-safety/air-safety-institute/accident-analysis/richard-g-mcspadden-report", "key_env": None, "headers": {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"}},
     # ---- real estate: Zillow + Redfin keyless CSVs, Census gazetteer for metro
     # coords. These are large files; the probe GET reads one byte then closes.
     {"label": "Zillow Research",      "category": "Real Estate",   "url": "https://files.zillowstatic.com/research/public_csvs/zhvi/Metro_zhvi_uc_sfrcondo_tier_0.33_0.67_sm_sa_month.csv", "key_env": None},
