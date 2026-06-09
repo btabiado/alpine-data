@@ -289,6 +289,7 @@ def test_fetch_stocks_signals_happy_path():
     expected_keys = {
         "symbol", "name", "last_price", "change_pct", "volume",
         "score", "label", "components", "history", "poc",
+        "mfi", "cmf",
     }
     for entry in out:
         assert set(entry.keys()) == expected_keys
