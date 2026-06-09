@@ -105,6 +105,23 @@ def main():
         "series": [{"d": d, "v": n} for d, n in series],
         "src": "TSA checkpoint travel numbers — tsa.gov/travel/passenger-volumes",
     }
+
+    # Skip the rewrite when nothing substantive changed (TSA posts on weekdays;
+    # on a no-new-day run the table is identical). The `generated` timestamp is
+    # not part of this comparison — rewriting it every run would defeat the
+    # workflow's `git diff --quiet` skip-if-unchanged guard and churn a daily
+    # signed commit. `generated` is only consumed by the client as a truthiness
+    # flag, so preserving the prior value on a no-op run is fine.
+    substantive = ("latest", "avg7", "series", "src")
+    try:
+        with open(OUT) as f:
+            prev = json.load(f)
+        if all(prev.get(k) == payload[k] for k in substantive):
+            print(f"fetch_tsa: {OUT} unchanged (latest {latest_d}) — not rewriting")
+            return 0
+    except (FileNotFoundError, ValueError):
+        pass  # no prior file / corrupt — fall through and write fresh
+
     with open(OUT, "w") as f:
         json.dump(payload, f, indent=1)
     print(f"fetch_tsa: wrote {OUT} — latest {latest_d} = {latest_v:,} "

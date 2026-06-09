@@ -12387,8 +12387,10 @@ function avBootAviation(DATA){
       chartTable("c-at-recovery",["Year","Index (2019=100)"],yrs.map((y,i)=>[y,rec[i]]));
       new Chart($("#c-at-annual"),{type:"bar",data:{labels:yrs,datasets:[{data:vals,backgroundColor:yrs.map(y=>y==="2024"?C.amber:y==="2020"?C.red:"rgba(54,217,210,.6)"),borderColor:C.cyan,borderWidth:1,borderRadius:4}]},
         options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+"M enplanements"}}},scales:{x:{ticks:{color:C.ink,font:{family:"IBM Plex Mono",size:10}},grid:{display:false}},y:axes(0,0,null,v=>v+"M").y}})});
-      new Chart($("#c-at-recovery"),{type:"line",data:{labels:yrs,datasets:[{data:rec,borderColor:C.green,backgroundColor:"rgba(61,220,132,.12)",fill:true,tension:.25,pointBackgroundColor:rec.map(v=>v>=100?C.green:C.red),pointRadius:4,borderWidth:2}]},
-        options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+" (2019=100)"}}},scales:{x:{ticks:{color:C.dim,font:{family:"IBM Plex Mono",size:10}},grid:{display:false}},y:axes(0,0,null,v=>v).y}})});}
+      new Chart($("#c-at-recovery"),{type:"line",data:{labels:yrs,datasets:[
+          {label:"Recovery index",data:rec,borderColor:C.green,backgroundColor:"rgba(61,220,132,.12)",fill:true,tension:.25,pointBackgroundColor:rec.map(v=>v>=100?C.green:C.red),pointRadius:4,borderWidth:2},
+          {label:"pre-COVID (2019)",data:yrs.map(()=>100),borderColor:C.dim,borderDash:[5,4],borderWidth:1.5,pointRadius:0,fill:false,tension:0}]},
+        options:base({plugins:{legend:{display:true,labels:{color:C.dim,font:FM,boxWidth:12}},tooltip:{filter:i=>i.datasetIndex===0,callbacks:{label:c=>c.raw+" (2019=100)"}}},scales:{x:{ticks:{color:C.dim,font:{family:"IBM Plex Mono",size:10}},grid:{display:false}},y:axes(0,0,null,v=>v).y}})});}
 
     function safety(){if(drawn.safety)return;drawn.safety=1;const s=D.safety;
       kpi($("#kpi-safety"),s.kpis); $("#src-safety").innerHTML=s.src;
@@ -12414,6 +12416,12 @@ function avBootAviation(DATA){
         ].concat(t.kpis);
         kpi($("#kpi-tsa"),head);
         const labels=series.map(p=>String(p.d).replace(/\/20\d\d$/,"")), vals=series.map(p=>p.v);
+        // Rebuild the Show-data/Copy-CSV companion to match the series actually
+        // drawn. tsa() renders twice (synchronous seed, then live fetch) and
+        // chartTable() bails if a .cdata sibling already exists — so drop the
+        // stale one first, else the table/CSV would stay frozen on the seed.
+        const _tw=$("#c-tsa-series").closest(".chart-wrap");
+        if(_tw && _tw.nextElementSibling && _tw.nextElementSibling.classList.contains("cdata")) _tw.nextElementSibling.remove();
         chartTable("c-tsa-series",["Date","Passengers screened"],series.map(p=>[p.d,p.v]));
         if(window._tsaChart){window._tsaChart.destroy();}
         window._tsaChart=new Chart($("#c-tsa-series"),{type:"line",data:{labels:labels,datasets:[{data:vals,borderColor:C.cyan,backgroundColor:"rgba(54,217,210,.10)",fill:true,tension:.2,pointRadius:2,borderWidth:2}]},
