@@ -50,7 +50,7 @@
     button.refresh:disabled { opacity: 0.5; cursor: progress; }
 
     /* Unified one-line headline that fuses both feeds once they load
-       (e.g. "42/50 sources up · 95/100 files fresh · 3 critical"). Colored
+       (e.g. "42/50 sources up · 95/100 fact containers fresh · 3 critical"). Colored
        by the worst bucket present across either feed. */
     .unified { font-size: 14px; font-weight: 600; margin: 10px 0 4px; }
     .unified.up { color: var(--up); }
@@ -195,7 +195,7 @@
         <b>up</b> = serving · <b>auth&nbsp;required</b> = endpoint live, needs a key ·
         <b>rate&nbsp;limited</b> = live but throttling us · <b>degraded</b> = reachable but erroring ·
         <b>blocked</b> = the source refused our request (region/firewall) · <b>down</b> = no response at all.
-        Distinct from <b>Data Freshness</b> (are the cached files recent?).
+        Distinct from <b>Data Freshness</b> (are the cached Data Fact Containers recent?).
       </p>
 
       <div id="modeBanner"></div>
@@ -206,7 +206,7 @@
     <!-- ===================== PANE B · DATA FRESHNESS ===================== -->
     <section class="pane" id="paneFreshness" role="tabpanel" aria-labelledby="tab-freshness" hidden>
       <p class="note">
-        Freshness of every cached file the dashboard depends on (are they recent?).
+        Freshness of every cached Data Fact Container the dashboard depends on (are they recent?).
         Distinct from <b>Upstream Sources</b> (are the APIs live right now?).
       </p>
 
@@ -215,10 +215,10 @@
       <h2>Per-Tab Status</h2>
       <div class="tab-grid" id="freshTabs"></div>
 
-      <h2>Rendered Data Files <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">(baked into dashboard.html each build)</span></h2>
+      <h2>Rendered Data Fact Containers <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">(baked into dashboard.html each build)</span></h2>
       <div id="freshRendered"></div>
 
-      <h2>LTHCS Pipeline Files</h2>
+      <h2>LTHCS Pipeline Fact Containers</h2>
       <div id="freshLthcs"></div>
 
       <details>
@@ -268,7 +268,7 @@
       }
       const f = unifiedState.freshness;
       if (f) {
-        parts.push(`${f.fresh}/${f.total} files fresh`);
+        parts.push(`${f.fresh}/${f.total} fact containers fresh`);
         if (f.critical) { parts.push(`${f.critical} critical`); bump('down'); }
         else if (f.stale) { bump('warn'); }
       }
@@ -444,7 +444,7 @@
         <div class="chip fresh"><span class="num">${s.fresh}</span><span class="lbl">Fresh</span></div>
         <div class="chip stale"><span class="num">${s.stale}</span><span class="lbl">Stale</span></div>
         <div class="chip critical"><span class="num">${s.critical}</span><span class="lbl">Critical</span></div>
-        <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total Files</span></div>
+        <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total Fact Containers</span></div>
       `;
     }
 
@@ -473,7 +473,7 @@
         <table>
           <thead>
             <tr>
-              <th>File</th>
+              <th>Fact Container</th>
               <th>Status</th>
               <th style="text-align:right">Age</th>
               <th style="text-align:right">Size</th>
