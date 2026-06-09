@@ -1869,18 +1869,8 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <div class="container">
-  <!-- ============ INSIGHTS BAR (always visible) ============ -->
-  <div id="insightsBar" class="card" style="padding:10px 14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:14px">⚡</span>
-        <strong style="font-size:13px;letter-spacing:.03em">Insights</strong>
-        <span class="sub" id="insightsCount" style="color:var(--muted);font-size:11px"></span>
-      </div>
-      <button class="btn" id="insightsToggle" style="font-size:11px;padding:3px 8px">Hide</button>
-    </div>
-    <div id="insightsList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
+  <!-- Global Insights bar removed per request — the Overview tab keeps its own
+       "Top insights" card and the AI News tab its own inline insights card. -->
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
@@ -8086,24 +8076,29 @@ function renderInsights(){
   // if the user returned to Overview with the bar shown via the toggle.
   const headerStrong = host?.parentElement?.querySelector('strong');
   if (headerStrong) headerStrong.textContent = (tab === 'overview') ? 'Insights' : label;
-  if (!list.length){
-    const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
-    host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
-    return;
+  // The global Insights bar was removed; this block is a no-op unless the bar
+  // host is present (kept null-safe so the bar could be reinstated). The inline
+  // AI News insights card below always renders.
+  if (host) {
+    if (!list.length){
+      const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
+      host.innerHTML = '<div class="sub" style="color:var(--muted)">' + empty + '</div>';
+    } else {
+      const cardHTML = (i) => {
+        const c = severityColor(i.severity);
+        const ic = severityIcon(i.severity, i.kind);
+        const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:1px">${escapeHtml(i.detail)}</div>` : '';
+        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};border-radius:8px;max-width:360px;flex:1 1 280px">
+          <span style="font-size:13px;line-height:1.2">${ic}</span>
+          <div style="line-height:1.25">
+            <div style="font-size:12px;color:var(--text)">${escapeHtml(i.headline)}</div>
+            ${detail}
+          </div>
+        </div>`;
+      };
+      host.innerHTML = list.map(cardHTML).join('');
+    }
   }
-  const cardHTML = (i) => {
-    const c = severityColor(i.severity);
-    const ic = severityIcon(i.severity, i.kind);
-    const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:1px">${escapeHtml(i.detail)}</div>` : '';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};border-radius:8px;max-width:360px;flex:1 1 280px">
-      <span style="font-size:13px;line-height:1.2">${ic}</span>
-      <div style="line-height:1.25">
-        <div style="font-size:12px;color:var(--text)">${escapeHtml(i.headline)}</div>
-        ${detail}
-      </div>
-    </div>`;
-  };
-  host.innerHTML = list.map(cardHTML).join('');
 
   // Also populate the AI News tab's inline insights card (when present).
   // Use the TIGHT card style from renderOverviewInsights() — the global-bar
@@ -13028,16 +13023,7 @@ chatForm?.addEventListener('submit', (e) => {
   streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
 });
 
-// Insights show/hide
-document.getElementById('insightsToggle')?.addEventListener('click', () => {
-  const list = document.getElementById('insightsList');
-  const btn = document.getElementById('insightsToggle');
-  if (list.style.display === 'none') {
-    list.style.display = 'flex'; btn.textContent = 'Hide';
-  } else {
-    list.style.display = 'none'; btn.textContent = 'Show';
-  }
-});
+// (Global Insights bar removed — its show/hide toggle handler was dropped too.)
 // ----- Grouped tab nav: dropdown open/close + active-group highlight -----
 function closeTabMenus(){
   document.querySelectorAll('.tabgroup.open').forEach(g=>{
