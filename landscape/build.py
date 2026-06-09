@@ -213,6 +213,8 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:
 header.top h1{font-size:17px;margin:0;font-weight:700;letter-spacing:.2px}
 header.top .sub{color:var(--muted);font-size:12.5px;margin-top:2px}
 .spacer{flex:1}
+.navlink{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 11px;white-space:nowrap}
+.navlink:hover{color:var(--text);border-color:var(--accent);text-decoration:none}
 .tabs{display:flex;gap:6px;padding:12px 16px 0;max-width:1280px;margin:0 auto}
 .tab{appearance:none;background:var(--panel);color:var(--muted);border:1px solid var(--border);border-bottom:none;
   border-radius:10px 10px 0 0;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer}
@@ -299,6 +301,7 @@ tbody tr[role="button"]{cursor:pointer}
     <div class="sub">Every AI &amp; data vendor in one place — the <b>197</b> Snowflake Summit 2026 partners + the <b>619</b>-vendor competitive field · filter by presence</div>
   </div>
   <div class="spacer"></div>
+  <a class="navlink" href="../summit-share/">🤝 Summit partners</a>
 </header>
 
 <div class="tabs" role="tablist" aria-label="Views">

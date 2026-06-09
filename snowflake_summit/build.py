@@ -287,6 +287,23 @@ def render(meta, vendors, src_path):
     out_path = os.path.join(HERE, "dashboard.html")
     with open(out_path, "w") as f:
         f.write(html)
+    # Standalone "share" build (-> dashboard_standalone.html, deployed at
+    # /summit-share/): identical page with the ONLY escape hatch to the main BDT
+    # dashboard — the desktop "← Back to dashboard" link — removed, so the share
+    # is a sealed Landscape⇄Summit cluster that exposes nothing else. The in-app
+    # "← Back to dashboard" links (href="?") stay: they only return to this
+    # page's own Summit landing, not the main dashboard.
+    BACK_TO_DASH = ('<a class="dl" href="../#overview" '
+                    'title="Return to the main dashboard (Crypto · Overview)">'
+                    '← Back to dashboard</a>')
+    if BACK_TO_DASH not in html:
+        raise SystemExit(
+            "[summit] standalone build: 'Back to dashboard' anchor not found — "
+            "the template changed; update BACK_TO_DASH in build.py so the "
+            "/summit-share/ build stays sealed.")
+    standalone_path = os.path.join(HERE, "dashboard_standalone.html")
+    with open(standalone_path, "w") as f:
+        f.write(html.replace(BACK_TO_DASH, ""))
     return out_path
 
 

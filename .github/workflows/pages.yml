@@ -529,6 +529,18 @@ jobs:
               cp snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx _site/summit/
             fi
           fi
+          # Standalone "share" copy of the Summit dashboard at /summit-share/: the
+          # build emits dashboard_standalone.html (identical, minus the "← Back to
+          # dashboard" escape link). Paired with /landscape/ it forms a sealed,
+          # shareable Landscape⇄Summit cluster that exposes no other dashboard.
+          # /summit/ (linked from the main dashboard) is untouched.
+          if [ -f snowflake_summit/dashboard_standalone.html ]; then
+            mkdir -p _site/summit-share
+            cp snowflake_summit/dashboard_standalone.html _site/summit-share/index.html
+            if [ -f snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx ]; then
+              cp snowflake_summit/Snowflake_Summit_2026_Master_Partner_Scouting.xlsx _site/summit-share/
+            fi
+          fi
           # Stage the Competitive Landscape dashboard under /landscape/. Like
           # /summit/, the page is fully self-contained (Chart.js inline, data baked
           # in at build time). It reads the committed Summit vendors.json read-only,
