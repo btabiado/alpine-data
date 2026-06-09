@@ -406,9 +406,9 @@ tbody tr[role="button"]{cursor:pointer}
     <div class="filters">
       <label class="muted" for="mqMode" style="font-size:13px">Dataset</label>
       <select id="mqMode" aria-label="Dataset">
+        <option value="all" selected>All vendors (__ALL_TOTAL__)</option>
         <option value="ns">Non-Summit only (__NS_TOTAL__)</option>
         <option value="summit">Summit only (__SUMMIT_TOTAL__)</option>
-        <option value="all">All vendors (__ALL_TOTAL__)</option>
       </select>
       <label class="muted" for="mqColor" style="font-size:13px;margin-left:6px">Color</label>
       <select id="mqColor" aria-label="Color by">
@@ -888,7 +888,7 @@ function renderMekko(){
 }
 
 /* ---------- MAGIC QUADRANT ---------- */
-let mqChart,mqInit=false,mqMode='ns',mqQRel='',mqColorBy='relationship';
+let mqChart,mqInit=false,mqMode='all',mqQRel='',mqColorBy='relationship';
 const MQ_COLORMODES={
   relationship:{cats:[
     {k:'substitute',label:'Substitute',color:'#f87171'},
