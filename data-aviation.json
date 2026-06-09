@@ -23,28 +23,26 @@
    },
    {
     "label": "Commercial",
-    "val": 118000,
+    "val": 118314,
     "delta": "+7.8% YoY",
-    "dir": "up",
-    "approx": true
+    "dir": "up"
    },
    {
     "label": "Airline transport",
-    "val": 181000,
+    "val": 181742,
     "delta": "+1.4% YoY",
-    "dir": "up",
-    "approx": true
+    "dir": "up"
    },
    {
     "label": "Sport pilot",
     "val": 7450,
-    "delta": "slow steady growth",
-    "dir": "flat"
+    "delta": "+1.9% YoY",
+    "dir": "up"
    },
    {
     "label": "Flight instructors",
     "val": 145538,
-    "delta": "+13.3% YoY",
+    "delta": "+5.4% YoY",
     "dir": "up"
    },
    {
@@ -65,11 +63,11 @@
    },
    {
     "name": "ATP",
-    "n": 181000
+    "n": 181742
    },
    {
     "name": "Commercial",
-    "n": 118000
+    "n": 118314
    },
    {
     "name": "Rotorcraft",
@@ -221,7 +219,7 @@
     61000
    ]
   },
-  "src": "<b>Sources:</b> FAA MOSAIC final rule (faa.gov/aircraft/MOSAIC), AOPA, EAA, General Aviation News. 'Sport-flyable' fleet estimated as ~70% of the ~204k active GA fleet per FAA/industry analysis of the 59-kt stall threshold. LSA fleet ~8,800 (S-LSA factory-built + E-LSA kit) per industry registry tracking; standard-category aircraft meeting the LSA definition (J-3, Champ, Taylorcraft) are additional."
+  "src": "<b>Sources:</b> FAA MOSAIC final rule (faa.gov/aircraft/MOSAIC), AOPA, EAA, General Aviation News. 'Sport-flyable' fleet estimated as ~70% of the ~214k active GA fleet per FAA/industry analysis of the 59-kt stall threshold. LSA fleet ~8,800 (S-LSA factory-built + E-LSA kit) per industry registry tracking; standard-category aircraft meeting the LSA definition (J-3, Champ, Taylorcraft) are additional."
  },
  "fleet": {
   "kpis": [
@@ -233,8 +231,8 @@
    },
    {
     "label": "Active GA aircraft",
-    "val": 204000,
-    "delta": "FAA Aerospace Forecast est.",
+    "val": 213756,
+    "delta": "FAA 2024 GA Survey / FY26-46 forecast",
     "dir": "flat",
     "approx": true
    },
@@ -251,15 +249,15 @@
     "dir": "flat"
    },
    {
-    "label": "New GA airplanes 2024",
-    "val": 3162,
-    "delta": "piston+TP+jet \u00b7 \u221282% vs '78",
-    "dir": "down"
+    "label": "New GA airplanes 2025",
+    "val": 3230,
+    "delta": "piston+TP+jet \u00b7 +2.2% YoY",
+    "dir": "up"
    },
    {
-    "label": "GA billings 2024",
-    "val": "$26.4B",
-    "delta": "+14.3% YoY",
+    "label": "GA billings 2025",
+    "val": "$31.0B",
+    "delta": "+16.1% YoY",
     "dir": "up",
     "raw": true
    }
@@ -685,7 +683,8 @@
     "1981",
     "2007",
     "2010",
-    "2024"
+    "2024",
+    "2025"
    ],
    "units": [
     17811,
@@ -693,7 +692,8 @@
     9457,
     3279,
     1334,
-    3162
+    3162,
+    3230
    ]
   },
   "activeFleet": {
@@ -702,7 +702,7 @@
     "Air carrier"
    ],
    "vals": [
-    204000,
+    213756,
     7400
    ]
   },
@@ -724,7 +724,7 @@
     8225
    ]
   },
-  "src": "<b>Sources:</b> Aircraft counts & build-years \u2014 FAA Releasable Aircraft Database (valid registrations, snapshot late May 2026). Build-year line is fixed-wing only (drones/UAS now in the registry excluded). Active GA estimate \u2014 FAA Aerospace Forecast. Air-carrier series \u2014 BTS NTS Table 1-13. New shipments \u2014 GAMA annual reports (1978 peak 17,811; 2024 airplanes 3,162, $26.4B, +14.3%)."
+  "src": "<b>Sources:</b> Aircraft counts & build-years \u2014 FAA Releasable Aircraft Database (valid registrations, snapshot late May 2026). Build-year line is fixed-wing only (drones/UAS now in the registry excluded). Active GA estimate \u2014 FAA Aerospace Forecast. Air-carrier series \u2014 BTS NTS Table 1-13. New shipments \u2014 GAMA annual reports (1978 peak 17,811; 2024 airplanes 3,162, $26.4B, +14.3%). New-shipment & billings figures: GAMA 2025 Year-End Aircraft Shipment Report (Feb 18 2026). Active-GA-fleet estimate: FAA Aerospace Forecast FY2026\u20132046 / 2024 GA Survey (213,756)."
  },
  "models": {
   "makes": [
@@ -1080,6 +1080,30 @@
    "Accidents by make/model/phase",
    "Free",
    "available"
+  ],
+  [
+   "AOPA Air Safety Institute (McSpadden Report)",
+   "GA accidents, fatal accidents, rates per 100k hrs",
+   "Free",
+   "\u2713 used"
+  ],
+  [
+   "BTS / FRED air traffic (ENPLANE)",
+   "US passenger enplanements, monthly & annual",
+   "Free",
+   "\u2713 used"
+  ],
+  [
+   "TSA checkpoint travel numbers",
+   "Daily passengers screened at US checkpoints",
+   "Free",
+   "\u2713 used"
+  ],
+  [
+   "NTSB CAROL / accident database",
+   "Full accident records + monthly safety dashboard",
+   "Free",
+   "available"
   ]
  ],
  "macro": {
@@ -1319,5 +1343,241 @@
    }
   ],
   "src": "<b>Source:</b> OpenSky Network live API (free, research/non-commercial). Browser CORS is restricted to OpenSky's origin, so the tile reads <code>data/opensky_snapshot.json</code> written by <code>fetch_opensky.py</code> on a cron (opensky.yml). Values are a global ADS-B sample (densest over US/Europe), not the full ~10\u201320k aircraft typically airborne worldwide at peak. A seed snapshot is baked in so the tile renders before the first cron run."
+ },
+ "safety": {
+  "kpis": [
+   {
+    "label": "GA accidents \u00b7 2023",
+    "val": 1097,
+    "delta": "\u22124.8% vs 2022",
+    "dir": "flat"
+   },
+   {
+    "label": "GA fatal accidents \u00b7 2023",
+    "val": 186,
+    "delta": "of 1,097 total",
+    "dir": "flat"
+   },
+   {
+    "label": "GA accident rate",
+    "val": "3.86",
+    "delta": "per 100k flight hrs",
+    "dir": "flat",
+    "raw": true
+   },
+   {
+    "label": "GA fatal rate",
+    "val": "0.65",
+    "delta": "per 100k hrs \u00b7 record low",
+    "dir": "flat",
+    "raw": true
+   },
+   {
+    "label": "Airline (Part 121) pax deaths",
+    "val": "\u22480",
+    "delta": "7 of last 10 yrs zero",
+    "dir": "flat",
+    "raw": true
+   }
+  ],
+  "trend": [
+   {
+    "y": 2018,
+    "acc": 1224,
+    "fatal": 199,
+    "rate": 4.56,
+    "fatalRate": 0.74
+   },
+   {
+    "y": 2019,
+    "acc": 1169,
+    "fatal": 212,
+    "rate": 4.88,
+    "fatalRate": 0.88
+   },
+   {
+    "y": 2020,
+    "acc": 1051,
+    "fatal": 187,
+    "rate": 4.69,
+    "fatalRate": 0.83
+   },
+   {
+    "y": 2021,
+    "acc": 1124,
+    "fatal": 202,
+    "rate": 4.28,
+    "fatalRate": 0.77
+   },
+   {
+    "y": 2022,
+    "acc": 1152,
+    "fatal": 181,
+    "rate": 4.3,
+    "fatalRate": 0.68
+   },
+   {
+    "y": 2023,
+    "acc": 1097,
+    "fatal": 186,
+    "rate": 3.86,
+    "fatalRate": 0.65
+   }
+  ],
+  "src": "<b>Sources:</b> U.S. general-aviation accident counts, fatal accidents and rates per 100,000 flight hours from the <b>AOPA Air Safety Institute Richard G. McSpadden Report</b> (formerly the Nall Report), figure view, 2018\u20132023 (latest years preliminary; NTSB finalizes probable cause ~2 yrs out). Part 121 airline-safety note from NTSB press releases \u2014 7 of the last 10 years had zero scheduled-airline passenger fatalities. NTSB publishes a parallel GA fatal-accident rate (~1.0/100k) on a different flight-hours base."
+ },
+ "airtravel": {
+  "kpis": [
+   {
+    "label": "US enplanements \u00b7 2024",
+    "val": "982.7M",
+    "delta": "record year",
+    "dir": "up",
+    "raw": true
+   },
+   {
+    "label": "US enplanements \u00b7 2025",
+    "val": "971.9M",
+    "delta": "\u22121.1% YoY",
+    "dir": "down",
+    "raw": true
+   },
+   {
+    "label": "Latest month \u00b7 Feb 2026",
+    "val": "68.2M",
+    "delta": "enplanements",
+    "dir": "flat",
+    "raw": true
+   },
+   {
+    "label": "Monthly record \u00b7 Jun 2024",
+    "val": "89.7M",
+    "delta": "all-time high",
+    "dir": "flat",
+    "raw": true
+   },
+   {
+    "label": "COVID trough \u00b7 2020",
+    "val": "371.7M",
+    "delta": "\u221260% vs 2019",
+    "dir": "down",
+    "raw": true
+   }
+  ],
+  "annual": {
+   "labels": [
+    "2015",
+    "2016",
+    "2017",
+    "2018",
+    "2019",
+    "2020",
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025"
+   ],
+   "vals": [
+    798.2,
+    824.0,
+    849.4,
+    889.0,
+    926.7,
+    371.7,
+    666.2,
+    852.9,
+    941.6,
+    982.7,
+    971.9
+   ]
+  },
+  "baseline2019": 926.7,
+  "src": "<b>Source:</b> U.S. air revenue passenger enplanements \u2014 FRED series <code>ENPLANE</code> (provider: U.S. DOT / BTS), monthly summed to calendar years, data through Feb 2026. The recovery index rebases each year to 2019 = 100. Enplanements (every boarding) run a few percent above the narrower 'scheduled passengers' metric, so this panel stays on one consistent ENPLANE denominator."
+ },
+ "tsa": {
+  "kpis": [
+   {
+    "label": "Screened \u00b7 2025",
+    "val": "906.7M",
+    "delta": "full year",
+    "dir": "up",
+    "raw": true
+   },
+   {
+    "label": "Screened \u00b7 2024",
+    "val": "904.0M",
+    "delta": "+5% vs 2023",
+    "dir": "up",
+    "raw": true
+   },
+   {
+    "label": "Single-day record",
+    "val": "3,096,293",
+    "delta": "Sun Jun 22 2025",
+    "dir": "flat",
+    "raw": true
+   },
+   {
+    "label": "Labor Day wknd \u00b7 2025",
+    "val": "10.4M",
+    "delta": "record holiday",
+    "dir": "flat",
+    "raw": true
+   }
+  ],
+  "seed": {
+   "date": "6/7/2026",
+   "vol": 2865564,
+   "avg7": 2571680,
+   "series": [
+    {
+     "d": "5/28/2026",
+     "v": 2661047
+    },
+    {
+     "d": "5/29/2026",
+     "v": 2689872
+    },
+    {
+     "d": "5/30/2026",
+     "v": 2307047
+    },
+    {
+     "d": "5/31/2026",
+     "v": 2818994
+    },
+    {
+     "d": "6/1/2026",
+     "v": 2674187
+    },
+    {
+     "d": "6/2/2026",
+     "v": 2218178
+    },
+    {
+     "d": "6/3/2026",
+     "v": 2400663
+    },
+    {
+     "d": "6/4/2026",
+     "v": 2773608
+    },
+    {
+     "d": "6/5/2026",
+     "v": 2710489
+    },
+    {
+     "d": "6/6/2026",
+     "v": 2359070
+    },
+    {
+     "d": "6/7/2026",
+     "v": 2865564
+    }
+   ],
+   "note": "baked-in fallback snapshot (real, pulled Jun 8 2026); the live file data-tsa.json overrides this hourly"
+  },
+  "src": "<b>Source:</b> TSA checkpoint travel numbers \u2014 <code>tsa.gov/travel/passenger-volumes</code> (daily passengers screened at all U.S. TSA checkpoints; updated each weekday). Annual totals & record days from TSA press releases / year-in-review. Live daily series refreshed by a cron-committed snapshot (data-tsa.json) with this seed as fallback."
  }
 }

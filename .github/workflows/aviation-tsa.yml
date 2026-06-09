@@ -1,0 +1,65 @@
+name: aviation-tsa
+
+# Daily refresh for the Aviation tab's "TSA Throughput" sub-view.
+# fetch_tsa.py writes data-tsa.json (stdlib-only: urllib/re/json).
+#
+# Cadence rationale:
+#   TSA publishes its checkpoint table on weekdays, typically by ~9am ET, and the
+#   figures are daily (one new row per day). The public Pages site at / only
+#   re-stages data-tsa.json when pages.yml rebuilds (hourly cron), and the client
+#   reads /data-tsa.json at runtime with a baked-in seed fallback
+#   (DATA.aviation.tsa.seed) — so a once-a-day pull is the right cadence; more
+#   often would just produce wasted commits between TSA's daily updates.
+#
+# Runs at 14:10 UTC (~10:10am ET) to land after TSA's morning table update, and
+# is offset from pages.yml's top-of-hour build and the hourly OpenSky run (:25)
+# to avoid simultaneous pushes to main. [skip ci] keeps the push from
+# retriggering pages.yml — its own hourly cron picks up the new file next tick.
+on:
+  schedule:
+    - cron: "10 14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Solo concurrency group — keep manual dispatch from overlapping a run.
+concurrency:
+  group: aviation-tsa-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch TSA throughput snapshot
+        # fetch_tsa.py uses only the Python standard library (urllib/re/json) —
+        # no pip install step needed. On a fetch/parse failure it exits non-zero
+        # WITHOUT writing, so the prior good data-tsa.json is preserved.
+        run: python fetch_tsa.py
+
+      - name: Commit data changes via signed API commit
+        # No AUTHOR_NAME / AUTHOR_EMAIL: omitting them is the exact condition
+        # under which the GitHub Git Data API auto-signs the commit with
+        # GitHub's key, producing the Verified badge. See api-commit.sh.
+        # Skip the commit cleanly when fetch_tsa.py left the file unchanged
+        # (e.g. TSA hasn't posted a new day, or the fetch failed).
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git diff --quiet -- data-tsa.json; then
+            echo "data-tsa.json unchanged — nothing to commit."
+            exit 0
+          fi
+          git add data-tsa.json
+          .github/scripts/api-commit.sh "aviation: refresh TSA throughput $(date -u +%Y-%m-%dT%H:%MZ) [skip ci]"

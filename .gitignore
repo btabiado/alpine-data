@@ -55,6 +55,10 @@ data-*.json
 # Carve-out: data-aviation.json IS committed — the Aviation tab's static sidecar
 # (FAA airman/registry data, used-market snapshot, live seed). Refreshed by hand.
 !data-aviation.json
+# Carve-out: data-tsa.json IS committed — the Aviation tab's TSA Throughput
+# sub-view sidecar, refreshed daily by aviation-tsa.yml (fetch_tsa.py). The
+# client falls back to the baked-in seed (DATA.aviation.tsa.seed) if absent.
+!data-tsa.json
 # Carve-out: data-opensky.json IS committed — the Aviation tab's live OpenSky
 # "airborne now" snapshot, refreshed hourly by aviation-opensky.yml.
 !data-opensky.json

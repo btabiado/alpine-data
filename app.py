@@ -3850,6 +3850,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <button data-view="fleet">Fleet</button>
   <button data-view="models">Make / Model</button>
   <button data-view="macro">Global / Macro</button>
+  <button data-view="airtravel">Air Travel</button>
+  <button data-view="safety">Safety</button>
+  <button data-view="tsa">TSA Throughput</button>
   <button data-view="live">Live Traffic</button>
   <button data-view="map">Live Map</button>
   <button data-view="used">Used Market</button>
@@ -3873,7 +3876,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div class="tl" id="tl-sport"></div>
   <div class="grid2">
     <div class="panel"><h3>What changed under MOSAIC</h3><div class="ph-note">Sport-pilot privileges effective Oct 22 2025; new LSA certification (Part 22) effective Jul 24 2026.</div><table id="t-changed"><thead><tr><th>Dimension</th><th style="text-align:left">Before</th><th style="text-align:left">After MOSAIC</th></tr></thead><tbody></tbody></table></div>
-    <div class="panel"><h3>GA fleet a sport pilot can now fly</h3><div class="ph-note">Estimated share of the ~204k active GA fleet meeting the 59-kt stall threshold.</div><div class="chart-wrap"><canvas id="c-flyable"></canvas></div></div>
+    <div class="panel"><h3>GA fleet a sport pilot can now fly</h3><div class="ph-note">Estimated share of the ~214k active GA fleet meeting the 59-kt stall threshold.</div><div class="chart-wrap"><canvas id="c-flyable"></canvas></div></div>
   </div>
   <div class="src" id="src-sport"></div>
 </div>
@@ -3887,7 +3890,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="panel"><h3>New GA airplane shipments &mdash; the long decline</h3><div class="ph-note">GAMA, selected years. 1978 peak vs today.</div><div class="chart-wrap"><canvas id="c-ship"></canvas></div></div>
   </div>
   <div class="grid2">
-    <div class="panel"><h3>Active fleet: GA vs commercial</h3><div class="ph-note">Log scale. GA ~204k vs air-carrier in the thousands.</div><div class="chart-wrap"><canvas id="c-fleetcmp"></canvas></div></div>
+    <div class="panel"><h3>Active fleet: GA vs commercial</h3><div class="ph-note">Log scale. GA ~214k vs air-carrier in the thousands.</div><div class="chart-wrap"><canvas id="c-fleetcmp"></canvas></div></div>
     <div class="panel"><h3>Air-carrier fleet growth (1965&ndash;2005)</h3><div class="ph-note">Active US air-carrier aircraft, Part 121/135 (BTS).</div><div class="chart-wrap"><canvas id="c-carrier"></canvas></div></div>
   </div>
   <div class="src" id="src-fleet"></div>
@@ -3914,6 +3917,33 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
   <div class="panel"><h3>Busiest airports worldwide (2024)</h3><div class="ph-note">Total passengers, millions. ACI World. ATL has led 26 of the last 27 years.</div><div class="chart-wrap tall"><canvas id="c-airports"></canvas></div></div>
   <div class="src" id="src-macro"></div>
+</div>
+
+<div class="av-view" id="view-airtravel">
+  <div class="takeaway"><span aria-hidden="true">&#128371;</span><div><b>US flying is back above its pre-COVID peak.</b> Passenger enplanements cratered ~60% in 2020, fully recovered by 2023, and set an all-time record in 2024 (~983M boardings). 2025 eased back ~1%. Every figure here uses one consistent denominator &mdash; FRED's <code>ENPLANE</code> series from BTS.</div></div>
+  <div class="kpis" id="kpi-airtravel"></div>
+  <div class="grid2">
+    <div class="panel"><h3>US passenger enplanements by year</h3><div class="ph-note">Millions of revenue passenger boardings, 2015&ndash;2025. The 2020 COVID collapse and the record 2024 are both unmistakable.</div><div class="chart-wrap tall"><canvas id="c-at-annual"></canvas></div></div>
+    <div class="panel"><h3>Recovery vs 2019 (=100)</h3><div class="ph-note">Each year indexed to 2019. Above 100 = more flying than pre-pandemic.</div><div class="chart-wrap tall"><canvas id="c-at-recovery"></canvas></div></div>
+  </div>
+  <div class="src" id="src-airtravel"></div>
+</div>
+
+<div class="av-view" id="view-safety">
+  <div class="takeaway"><span aria-hidden="true">&#9888;</span><div><b>General aviation keeps getting safer; airlines are exceptionally safe.</b> The GA accident rate has fallen to ~3.86 per 100,000 flight hours and the fatal rate to a record-low 0.65. Scheduled US airlines (Part 121) have had zero passenger fatalities in 7 of the last 10 years.</div></div>
+  <div class="kpis" id="kpi-safety"></div>
+  <div class="grid2">
+    <div class="panel"><h3>US GA accidents &amp; fatal accidents</h3><div class="ph-note">Total vs fatal accidents per year, 2018&ndash;2023. Recent years are preliminary (NTSB finalizes ~2 yrs out).</div><div class="chart-wrap"><canvas id="c-safety-acc"></canvas></div></div>
+    <div class="panel"><h3>GA accident rate per 100k flight hours</h3><div class="ph-note">Total and fatal accident rates &mdash; both trending down.</div><div class="chart-wrap"><canvas id="c-safety-rate"></canvas></div></div>
+  </div>
+  <div class="src" id="src-safety"></div>
+</div>
+
+<div class="av-view" id="view-tsa">
+  <div class="takeaway"><span aria-hidden="true">&#128737;</span><div><b>How many people the TSA screened, day by day.</b> A near-real-time pulse of US air-travel demand &mdash; over 900 million passengers screened in 2025, with single days topping 3 million. The daily series below refreshes from a cron-committed snapshot of the TSA checkpoint numbers.</div></div>
+  <div class="kpis" id="kpi-tsa" aria-live="polite" aria-atomic="false"></div>
+  <div class="panel"><h3>Daily passengers screened &mdash; recent weeks</h3><div class="ph-note">Passengers through all US TSA checkpoints, most recent ~30 days. Weekly travel rhythm (Sunday/Thursday peaks, Tuesday/Saturday troughs) is clearly visible.</div><div class="chart-wrap tall"><canvas id="c-tsa-series"></canvas></div></div>
+  <div class="src" id="src-tsa"></div>
 </div>
 
 <div class="av-view" id="view-live">
@@ -12349,6 +12379,49 @@ function avBootAviation(DATA){
         const used=/used/i.test(r[3]); const pill=used?'<span class="pill used">in use</span>':'<span class="pill avail">available</span>';
         return `<tr><td>${r[0]}</td><td style="text-align:left;color:var(--ink-dim)">${r[1]}</td><td style="text-align:left;font-family:IBM Plex Mono;font-size:11px;color:var(--ink-faint)">${r[2]}</td><td style="text-align:left">${pill}</td></tr>`;}).join("");}
 
+    function airtravel(){if(drawn.airtravel)return;drawn.airtravel=1;const a=D.airtravel;
+      kpi($("#kpi-airtravel"),a.kpis); $("#src-airtravel").innerHTML=a.src;
+      const yrs=a.annual.labels, vals=a.annual.vals;
+      const rec=vals.map(v=>+(v/a.baseline2019*100).toFixed(1));
+      chartTable("c-at-annual",["Year","Enplanements (millions)"],yrs.map((y,i)=>[y,vals[i]]));
+      chartTable("c-at-recovery",["Year","Index (2019=100)"],yrs.map((y,i)=>[y,rec[i]]));
+      new Chart($("#c-at-annual"),{type:"bar",data:{labels:yrs,datasets:[{data:vals,backgroundColor:yrs.map(y=>y==="2024"?C.amber:y==="2020"?C.red:"rgba(54,217,210,.6)"),borderColor:C.cyan,borderWidth:1,borderRadius:4}]},
+        options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+"M enplanements"}}},scales:{x:{ticks:{color:C.ink,font:{family:"IBM Plex Mono",size:10}},grid:{display:false}},y:axes(0,0,null,v=>v+"M").y}})});
+      new Chart($("#c-at-recovery"),{type:"line",data:{labels:yrs,datasets:[{data:rec,borderColor:C.green,backgroundColor:"rgba(61,220,132,.12)",fill:true,tension:.25,pointBackgroundColor:rec.map(v=>v>=100?C.green:C.red),pointRadius:4,borderWidth:2}]},
+        options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+" (2019=100)"}}},scales:{x:{ticks:{color:C.dim,font:{family:"IBM Plex Mono",size:10}},grid:{display:false}},y:axes(0,0,null,v=>v).y}})});}
+
+    function safety(){if(drawn.safety)return;drawn.safety=1;const s=D.safety;
+      kpi($("#kpi-safety"),s.kpis); $("#src-safety").innerHTML=s.src;
+      const yrs=s.trend.map(t=>t.y);
+      chartTable("c-safety-acc",["Year","Total accidents","Fatal accidents"],s.trend.map(t=>[t.y,t.acc,t.fatal]));
+      chartTable("c-safety-rate",["Year","Accident rate","Fatal rate"],s.trend.map(t=>[t.y,t.rate,t.fatalRate]));
+      new Chart($("#c-safety-acc"),{type:"bar",data:{labels:yrs,datasets:[{label:"Total",data:s.trend.map(t=>t.acc),backgroundColor:"rgba(54,217,210,.55)",borderColor:C.cyan,borderWidth:1,borderRadius:4},{label:"Fatal",data:s.trend.map(t=>t.fatal),backgroundColor:C.red,borderRadius:4}]},
+        options:base({plugins:{legend:{display:true,labels:{color:C.dim,font:FM,boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+": "+fmt(c.raw)}}},scales:{x:{ticks:{color:C.ink,font:FM},grid:{display:false}},y:axes(0,0,null,v=>fmt(v)).y}})});
+      new Chart($("#c-safety-rate"),{type:"line",data:{labels:yrs,datasets:[{label:"All accidents",data:s.trend.map(t=>t.rate),borderColor:C.amber,backgroundColor:"rgba(255,181,71,.12)",fill:true,tension:.25,pointRadius:4,pointBackgroundColor:C.amber,borderWidth:2},{label:"Fatal",data:s.trend.map(t=>t.fatalRate),borderColor:C.violet,backgroundColor:"transparent",tension:.25,pointRadius:4,pointBackgroundColor:C.violet,borderWidth:2}]},
+        options:base({plugins:{legend:{display:true,labels:{color:C.dim,font:FM,boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+": "+c.raw+"/100k hrs"}}},scales:{x:{ticks:{color:C.dim,font:FM},grid:{display:false}},y:{beginAtZero:true,ticks:{color:C.dim,font:FM},grid:{color:C.grid}}}})});}
+
+    function tsa(){if(drawn.tsa)return;drawn.tsa=1;const t=D.tsa;
+      $("#src-tsa").innerHTML=t.src;
+      const apply=(live)=>{
+        const series=(live&&live.series&&live.series.length)?live.series:t.seed.series;
+        const latestD=(live&&live.latest)?live.latest.date:t.seed.date;
+        const latestV=(live&&live.latest)?live.latest.vol:t.seed.vol;
+        const avg7=(live&&live.avg7)?live.avg7:t.seed.avg7;
+        const ageNote=(live&&live.generated)?"":" · seed";
+        const head=[
+          {label:"Latest day",val:fmt(latestV),delta:latestD+" · TSA"+ageNote,dir:"up",raw:true},
+          {label:"7-day average",val:fmt(avg7),delta:"trailing week",dir:"flat",raw:true}
+        ].concat(t.kpis);
+        kpi($("#kpi-tsa"),head);
+        const labels=series.map(p=>String(p.d).replace(/\/20\d\d$/,"")), vals=series.map(p=>p.v);
+        chartTable("c-tsa-series",["Date","Passengers screened"],series.map(p=>[p.d,p.v]));
+        if(window._tsaChart){window._tsaChart.destroy();}
+        window._tsaChart=new Chart($("#c-tsa-series"),{type:"line",data:{labels:labels,datasets:[{data:vals,borderColor:C.cyan,backgroundColor:"rgba(54,217,210,.10)",fill:true,tension:.2,pointRadius:2,borderWidth:2}]},
+          options:base({plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>series[c[0].dataIndex].d,label:c=>fmt(c.raw)+" screened"}}},scales:{x:{ticks:{color:C.dim,font:{family:"IBM Plex Mono",size:9},maxTicksLimit:12},grid:{display:false}},y:axes(0,0,null,v=>(v/1e6).toFixed(1)+"M").y}})});
+      };
+      apply(null);
+      fetch("data-tsa.json",{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(apply).catch(()=>{});}
+
     function go(v){ // activate a view by name (shared by nav + summary tiles)
       document.querySelectorAll("#aviation-tab .av-nav button").forEach(x=>{const on=x.dataset.view===v;x.classList.toggle("active",on);x.setAttribute("aria-current",on?"true":"false");x.setAttribute("aria-selected",on?"true":"false");x.tabIndex=on?0:-1;});
       document.querySelectorAll("#aviation-tab .av-view").forEach(x=>x.classList.remove("active"));
@@ -12362,6 +12435,9 @@ function avBootAviation(DATA){
         {v:"fleet",t:"Fleet",val:fmt(D.registryTotal),s:"aircraft registered"},
         {v:"models",t:"Top make",val:D.models.makes[0][0]+" "+fmt(D.models.makes[0][1]),s:"most registered"},
         {v:"macro",t:"World fleet",val:fmt(D.macro.globalFleet.vals[0]+D.macro.globalFleet.vals[1]),s:"~103k flights/day"},
+        {v:"airtravel",t:"Air travel",val:(D.airtravel?D.airtravel.kpis[0].val:"—"),s:"2024 enplanements"},
+        {v:"safety",t:"GA safety",val:(D.safety?String(D.safety.kpis[2].val):"—"),s:"accidents / 100k hrs"},
+        {v:"tsa",t:"TSA screened",val:(D.tsa?D.tsa.kpis[0].val:"—"),s:"passengers · 2025"},
         {v:"live",t:"Airborne now",val:fmt(D.live.seed.airborne),s:"live OpenSky sample"},
         {v:"used",t:"Used market",val:fmt(u),s:"listings sampled"},
         {v:"calc",t:"Cost to own",val:"$/hr",s:"model your true cost"},
@@ -12372,7 +12448,7 @@ function avBootAviation(DATA){
       document.querySelectorAll("#aviation-tab .scard").forEach(c=>{const g=()=>go(c.dataset.go);c.addEventListener("click",g);c.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();g();}});});
     }
 
-    const V={pilots,sport,fleet,models,macro,live,map,used,calc,sources};
+    const V={pilots,sport,fleet,models,macro,airtravel,safety,tsa,live,map,used,calc,sources};
     const _avNav=document.querySelector("#aviation-tab .av-nav");
     if(_avNav){ _avNav.setAttribute("role","tablist"); _avNav.setAttribute("aria-label","Aviation sub-views"); }
     const _avBtns=Array.prototype.slice.call(document.querySelectorAll("#aviation-tab .av-nav button"));
