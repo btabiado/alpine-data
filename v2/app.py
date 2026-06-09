@@ -1764,18 +1764,11 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 </div>
 
 <div class="container">
-  <!-- ============ INSIGHTS BAR (always visible) ============ -->
-  <div id="insightsBar" class="card" style="padding:10px 14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:14px">⚡</span>
-        <strong style="font-size:13px;letter-spacing:.03em">Insights</strong>
-        <span class="sub" id="insightsCount" style="color:var(--muted);font-size:11px"></span>
-      </div>
-      <button class="btn" id="insightsToggle" style="font-size:11px;padding:3px 8px">Hide</button>
-    </div>
-    <div id="insightsList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-  </div>
+  <!-- Global Insights bar removed per request — it sat empty ("none right now")
+       on most tabs. The Overview tab keeps its own "Top insights" card and the
+       AI News tab its own inline insights card (renderInsightsFor); per-tab
+       insight surfaces are unaffected. renderInsights() below is null-safe so
+       it skips the (now absent) bar. -->
 
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
@@ -6537,12 +6530,17 @@ function renderInsights(){
   // after returning to Overview with the bar shown via the toggle.
   const headerStrong = host?.parentElement?.querySelector('strong');
   if (headerStrong) headerStrong.textContent = (tab === 'overview') ? 'Insights' : label;
-  if (!list.length){
-    const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
-    host.innerHTML = V2.empty({ icon: '📡', title: 'Insights warming up', sub: empty, warm: true });
-    return;
+  // The global Insights bar was removed; #insightsList may be absent. Guard so
+  // the call is a harmless no-op when the host is gone (the AI News tab and
+  // Overview keep their own inline insight surfaces via renderInsightsFor()).
+  if (host) {
+    if (!list.length){
+      const empty = TAB_EMPTY[tab] || 'Nothing unusual right now. Load more data or wait for the next refresh.';
+      host.innerHTML = V2.empty({ icon: '📡', title: 'Insights warming up', sub: empty, warm: true });
+    } else {
+      host.innerHTML = list.map(i => V2.insightCard(i)).join('');
+    }
   }
-  host.innerHTML = list.map(i => V2.insightCard(i)).join('');
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -14579,16 +14577,7 @@ chatForm?.addEventListener('submit', (e) => {
   streamChat(q).finally(() => { chatSend.disabled = false; chatInput.focus(); });
 });
 
-// Insights show/hide
-document.getElementById('insightsToggle')?.addEventListener('click', () => {
-  const list = document.getElementById('insightsList');
-  const btn = document.getElementById('insightsToggle');
-  if (list.style.display === 'none') {
-    list.style.display = 'flex'; btn.textContent = 'Hide';
-  } else {
-    list.style.display = 'none'; btn.textContent = 'Show';
-  }
-});
+// (Global Insights bar removed — its show/hide toggle handler was dropped too.)
 document.querySelectorAll('.tab').forEach(b => {
   b.addEventListener('click', () => selectTab(b.dataset.tab));
   b.addEventListener('keydown', (e) => {

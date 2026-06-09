@@ -1653,7 +1653,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <div class="tab" data-tab="money_flow" role="tab" tabindex="0" aria-selected="false">Money Flow</div>
     <div class="tab" data-tab="stockflow" role="tab" tabindex="0" aria-selected="false">Stock Flows</div>
     <div class="tab" data-tab="social" role="tab" tabindex="0" aria-selected="false">Research</div>
-    <div class="tab" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
     </div>
   </div>
   <div class="tabgroup" data-group="macro">
@@ -1679,6 +1678,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   </div>
   <div class="tabgroup tabgroup--solo">
     <div class="tab tab--solo" data-tab="summit" role="tab" tabindex="0" aria-selected="false">Summit</div>
+  </div>
+  <div class="tabgroup tabgroup--solo">
+    <div class="tab tab--solo" data-tab="ainews" role="tab" tabindex="0" aria-selected="false">AI News</div>
   </div>
 </div>
 
@@ -3516,6 +3518,20 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-mufon" class="hidden">
     <div class="container">
 
+    <!-- Lead section: Recent sighting activity — moved to the top of the UAP
+         tab per request. Short-horizon velocity KPIs derived client-side from
+         the data-mufon.json sidecar's precomputed `velocity` block (see
+         fetch_mufon.py aggregate()). Anchored to the newest day ON FILE, not
+         today, because the NUFORC feed lags ~1-2 wks; the as-of chip + caption
+         make that explicit so the small tail numbers aren't misread as a drop-off. -->
+    <div class="v2-card" id="mufonVelocityCard" style="margin-bottom:14px">
+      <div class="v2-card__head">
+        <div><h2 class="v2-card__title">Recent sighting activity</h2><div class="v2-card__subtitle">New NUFORC reports &amp; year-over-year change</div></div>
+        <div><span class="v2-chip v2-chip--info" id="mufonVelocityAsOf">● —</span></div>
+      </div>
+      <div class="v2-card__body" id="mufonVelocityBody" style="padding:14px"></div>
+    </div>
+
     <!-- Section A: Latest Updates -->
     <div class="v2-card" id="mufonUpdatesCard" style="margin-bottom:14px">
       <div class="v2-card__head">
@@ -3535,20 +3551,6 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div><span class="v2-chip v2-chip--info">● external</span></div>
       </div>
       <div class="v2-card__body" id="mufonDocsBody" style="padding:14px"></div>
-    </div>
-
-    <!-- Section B2: Recent sighting activity — short-horizon velocity KPIs
-         derived client-side from the data-mufon.json sidecar's precomputed
-         `velocity` block (see fetch_mufon.py aggregate()). Anchored to the
-         newest day ON FILE, not today, because the NUFORC feed lags ~1-2 wks;
-         the as-of chip + caption make that explicit so the small tail numbers
-         aren't misread as a drop-off. -->
-    <div class="v2-card" id="mufonVelocityCard" style="margin-bottom:14px">
-      <div class="v2-card__head">
-        <div><h2 class="v2-card__title">Recent sighting activity</h2><div class="v2-card__subtitle">New NUFORC reports &amp; year-over-year change</div></div>
-        <div><span class="v2-chip v2-chip--info" id="mufonVelocityAsOf">● —</span></div>
-      </div>
-      <div class="v2-card__body" id="mufonVelocityBody" style="padding:14px"></div>
     </div>
 
     <!-- Section C: Sightings trend signal (derived client-side from the
