@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dashboard Health · BDT Dashboards</title>
+  <title>Status · BDT Dashboards</title>
   <style>
     :root {
       --bg: #0b0e14;
@@ -13,10 +13,17 @@
       --text: #e6e8ee;
       --text-dim: #9aa3b2;
       --text-faint: #6b7280;
+      /* freshness buckets */
       --fresh: #10b981;
       --stale: #f59e0b;
       --critical: #ef4444;
       --missing: #6b7280;
+      /* upstream-reachability buckets (share hues w/ freshness, kept distinct
+         so each pane's render code reads its own vocabulary unchanged) */
+      --up: #10b981;
+      --warn: #f59e0b;
+      --down: #ef4444;
+      --muted: #6b7280;
       --accent: #60a5fa;
       --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -36,21 +43,54 @@
     .breadcrumb { color: var(--text-dim); font-size: 13px; }
     .breadcrumb a { color: var(--accent); text-decoration: none; }
     .breadcrumb a:hover { text-decoration: underline; }
+    .meta { color: var(--text-faint); font-size: 12px; font-family: var(--mono); display: flex; align-items: center; gap: 12px; }
     .generated { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+    button.refresh { background: var(--bg-elev-2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-family: var(--sans); }
+    button.refresh:hover { border-color: var(--accent); color: var(--accent); }
+    button.refresh:disabled { opacity: 0.5; cursor: progress; }
 
+    /* Unified one-line headline that fuses both feeds once they load
+       (e.g. "42/50 sources up · 95/100 files fresh · 3 critical"). Colored
+       by the worst bucket present across either feed. */
+    .unified { font-size: 14px; font-weight: 600; margin: 10px 0 4px; }
+    .unified.up { color: var(--up); }
+    .unified.warn { color: var(--warn); }
+    .unified.down { color: var(--down); }
+
+    /* ---- sub-tab nav (two pills, one pane visible at a time) -------------- */
+    .subtabs { display: flex; gap: 8px; margin: 22px 0 24px; flex-wrap: wrap; }
+    .subtab {
+      background: var(--bg-elev); color: var(--text-dim); border: 1px solid var(--border);
+      border-radius: 999px; padding: 8px 18px; font-size: 13px; font-weight: 600;
+      cursor: pointer; font-family: var(--sans); transition: color .12s, border-color .12s, background .12s;
+    }
+    .subtab:hover { color: var(--text); border-color: var(--accent); }
+    .subtab[aria-selected="true"] { color: var(--bg); background: var(--accent); border-color: var(--accent); }
+    .pane[hidden] { display: none; }
+
+    .note { color: var(--text-dim); font-size: 12.5px; margin: 8px 0 20px; }
+    .source-tag { font-family: var(--mono); color: var(--text-faint); }
+
+    /* ---- summary chips (shared shell; per-pane sizing tweaks below) ------- */
     .summary { display: flex; gap: 12px; margin: 24px 0 32px; flex-wrap: wrap; }
     .chip { padding: 10px 16px; border-radius: 8px; background: var(--bg-elev); border: 1px solid var(--border); }
     .chip .num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
     .chip .lbl { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-left: 8px; }
-    .chip.fresh { border-color: var(--fresh); }
-    .chip.fresh .num { color: var(--fresh); }
-    .chip.stale { border-color: var(--stale); }
-    .chip.stale .num { color: var(--stale); }
-    .chip.critical { border-color: var(--critical); }
-    .chip.critical .num { color: var(--critical); }
+    .chip.fresh { border-color: var(--fresh); } .chip.fresh .num { color: var(--fresh); }
+    .chip.stale { border-color: var(--stale); } .chip.stale .num { color: var(--stale); }
+    .chip.critical { border-color: var(--critical); } .chip.critical .num { color: var(--critical); }
+    .chip.up { border-color: var(--up); } .chip.up .num { color: var(--up); }
+    .chip.warn { border-color: var(--warn); } .chip.warn .num { color: var(--warn); }
+    .chip.down { border-color: var(--down); } .chip.down .num { color: var(--down); }
+    /* Sources pane chips were slightly tighter on the original page. */
+    #paneSources .summary { gap: 10px; margin: 20px 0 28px; }
+    #paneSources .chip { padding: 9px 14px; }
+    #paneSources .chip .num { font-size: 20px; }
 
     h2 { font-size: 14px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 32px 0 12px; font-weight: 600; }
+    #paneSources h2 { margin: 28px 0 10px; }
 
+    /* ---- per-tab freshness grid ----------------------------------------- */
     .tab-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
     .tab-card { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; border-left-width: 4px; }
     .tab-card.fresh { border-left-color: var(--fresh); }
@@ -65,65 +105,342 @@
     .tab-card .input.critical .age { color: var(--critical); }
     .tab-card .input.missing .age { color: var(--missing); }
 
+    /* ---- tables (shared) ------------------------------------------------- */
     table { width: 100%; border-collapse: collapse; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
     th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); }
     th { background: var(--bg-elev-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); font-weight: 600; }
     tr:last-child td { border-bottom: none; }
     td.mono { font-family: var(--mono); font-size: 12px; }
     td.num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 12px; }
+    /* Sources table mono cells were dimmed; scope so freshness file names stay bright. */
+    #paneSources td, #paneSources th { padding: 9px 12px; }
+    #paneSources td.mono { color: var(--text-dim); }
+    #paneSources td .label { font-weight: 600; color: var(--text); }
+    .cat { font-size: 11px; color: var(--text-dim); }
+
+    /* freshness status pills */
     .status-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
     .status-pill.fresh { background: rgba(16, 185, 129, 0.15); color: var(--fresh); }
     .status-pill.stale { background: rgba(245, 158, 11, 0.15); color: var(--stale); }
     .status-pill.critical { background: rgba(239, 68, 68, 0.15); color: var(--critical); }
     .status-pill.missing { background: rgba(107, 114, 128, 0.15); color: var(--missing); }
 
+    /* sources verdict pills */
+    .pill { display: inline-block; padding: 2px 9px; border-radius: 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; white-space: nowrap; }
+    .pill.up { background: rgba(16,185,129,0.15); color: var(--up); }
+    .pill.auth_required { background: rgba(96,165,250,0.15); color: var(--accent); }
+    .pill.rate_limited { background: rgba(245,158,11,0.15); color: var(--warn); }
+    .pill.degraded { background: rgba(245,158,11,0.15); color: var(--warn); }
+    .pill.blocked { background: rgba(239,68,68,0.15); color: var(--down); }
+    .pill.down { background: rgba(239,68,68,0.15); color: var(--down); }
+    .keytag { font-size: 10px; font-family: var(--mono); padding: 1px 5px; border-radius: 3px; margin-left: 6px; border: 1px solid var(--border); color: var(--text-faint); }
+    .keytag.set { color: var(--up); border-color: rgba(16,185,129,0.4); }
+    .keytag.missing { color: var(--warn); border-color: rgba(245,158,11,0.4); }
+
+    /* Horizontal-scroll wrapper so the 5-col sources table scrolls cleanly on
+       a phone instead of crushing cells / overflowing .wrap. */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; }
+    .table-wrap table { min-width: 560px; }
+    /* The note cell is the diagnostic payload — let it wrap so the full reason
+       is readable on touch (no hover tooltip on phones). */
+    .note-cell { font-size: 11px; color: var(--text-dim); margin-top: 2px; max-width: 320px; overflow-wrap: anywhere; }
+
+    /* ---- details (upstream caches) -------------------------------------- */
     details { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 8px; padding: 0; margin-top: 12px; }
     details > summary { padding: 12px 16px; cursor: pointer; font-weight: 600; user-select: none; }
     details > summary:hover { color: var(--accent); }
     details[open] > summary { border-bottom: 1px solid var(--border); }
-    details > table { border: none; border-radius: 0; }
+    details > table, details > div > table { border: none; border-radius: 0; }
 
+    /* ---- shared empty/error/banner ------------------------------------- */
     .empty { color: var(--text-faint); font-style: italic; padding: 16px; }
-    .error { color: var(--critical); padding: 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid var(--critical); border-radius: 8px; }
+    .error { color: var(--critical); padding: 16px; background: rgba(239, 68, 68, 0.05); border: 1px solid var(--critical); border-radius: 8px; margin-top: 12px; }
+    .banner { padding: 12px 16px; border-radius: 8px; margin: 16px 0; font-size: 13px; border: 1px solid var(--border); background: var(--bg-elev); }
+    .banner.live { border-color: rgba(16,185,129,0.4); }
+    .banner.snapshot { border-color: rgba(245,158,11,0.4); }
+
+    /* At-a-glance per-pane sources headline — "N of M sources up". */
+    .headline { font-size: 14px; font-weight: 600; margin-top: 6px; }
+    .headline.up { color: var(--up); }
+    .headline.warn { color: var(--warn); }
+    .headline.down { color: var(--down); }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div>
-        <div class="breadcrumb"><a href="../">← Dashboard</a> · <a href="apis.html">Data Sources</a></div>
-        <h1>Dashboard Health</h1>
+        <div class="breadcrumb"><a href="../">← Dashboard</a></div>
+        <h1>Status</h1>
+        <div id="unified" class="unified"></div>
       </div>
-      <div class="generated" id="generated">loading…</div>
+      <div class="meta">
+        <span id="generated">loading…</span>
+        <button class="refresh" id="refreshBtn" title="Re-probe upstream sources">↻ Refresh</button>
+      </div>
     </header>
 
-    <div class="summary" id="summary"></div>
+    <!-- sub-tab nav -->
+    <div class="subtabs" role="tablist" aria-label="Status views">
+      <button class="subtab" id="tab-sources" role="tab" aria-controls="paneSources" aria-selected="true" data-pane="sources">Upstream Sources</button>
+      <button class="subtab" id="tab-freshness" role="tab" aria-controls="paneFreshness" aria-selected="false" data-pane="freshness">Data Freshness</button>
+    </div>
 
-    <h2>Per-Tab Status</h2>
-    <div class="tab-grid" id="tabs"></div>
+    <!-- ===================== PANE A · UPSTREAM SOURCES ==================== -->
+    <section class="pane" id="paneSources" role="tabpanel" aria-labelledby="tab-sources">
+      <div id="srcHeadline" class="headline"></div>
 
-    <h2>Rendered Data Files <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">(baked into dashboard.html each build)</span></h2>
-    <div id="rendered"></div>
+      <p class="note">
+        Reachability of each upstream the dashboard pulls from, probed live.
+        <b>up</b> = serving · <b>auth&nbsp;required</b> = endpoint live, needs a key ·
+        <b>rate&nbsp;limited</b> = live but throttling us · <b>degraded</b> = reachable but erroring ·
+        <b>blocked</b> = the source refused our request (region/firewall) · <b>down</b> = no response at all.
+        Distinct from <b>Data Freshness</b> (are the cached files recent?).
+      </p>
 
-    <h2>LTHCS Pipeline Files</h2>
-    <div id="lthcs"></div>
+      <div id="modeBanner"></div>
+      <div class="summary" id="srcSummary"></div>
+      <div id="srcTable"></div>
+    </section>
 
-    <details>
-      <summary>Upstream Source Caches <span style="color:var(--text-faint);font-weight:400" id="upstream-count"></span></summary>
-      <div id="upstream"></div>
-    </details>
+    <!-- ===================== PANE B · DATA FRESHNESS ===================== -->
+    <section class="pane" id="paneFreshness" role="tabpanel" aria-labelledby="tab-freshness" hidden>
+      <p class="note">
+        Freshness of every cached file the dashboard depends on (are they recent?).
+        Distinct from <b>Upstream Sources</b> (are the APIs live right now?).
+      </p>
+
+      <div class="summary" id="freshSummary"></div>
+
+      <h2>Per-Tab Status</h2>
+      <div class="tab-grid" id="freshTabs"></div>
+
+      <h2>Rendered Data Files <span style="color:var(--text-faint);font-weight:400;text-transform:none;letter-spacing:0">(baked into dashboard.html each build)</span></h2>
+      <div id="freshRendered"></div>
+
+      <h2>LTHCS Pipeline Files</h2>
+      <div id="freshLthcs"></div>
+
+      <details>
+        <summary>Upstream Source Caches <span style="color:var(--text-faint);font-weight:400" id="freshUpstreamCount"></span></summary>
+        <div id="freshUpstream"></div>
+      </details>
+    </section>
   </div>
 
   <script>
-    const STATUS = ['fresh', 'stale', 'critical', 'missing'];
-
+    // ===================================================================
+    // Shared helpers
+    // ===================================================================
     function escapeHtml(s) {
       return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     }
+    function formatTime(iso) {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (isNaN(d)) return iso;
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}Z`;
+    }
+    function formatBytes(n) {
+      if (!n && n !== 0) return '—';
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+      return (n / (1024 * 1024)).toFixed(2) + ' MB';
+    }
 
-    function renderSummary(s) {
-      const el = document.getElementById('summary');
+    // Latest summary numbers from each feed, folded into the unified headline.
+    // null = that feed hasn't loaded (yet) / failed — render only the half we have.
+    const unifiedState = { sources: null, freshness: null };
+
+    function renderUnified() {
+      const el = document.getElementById('unified');
+      const parts = [];
+      let worst = 'up'; // up < warn < down (worst wins)
+      const bump = c => { if (c === 'down') worst = 'down'; else if (c === 'warn' && worst !== 'down') worst = 'warn'; };
+
+      const s = unifiedState.sources;
+      if (s) {
+        const warn = (s.auth_required || 0) + (s.rate_limited || 0) + (s.degraded || 0);
+        const down = (s.blocked || 0) + (s.down || 0);
+        parts.push(`${s.up}/${s.total} sources up`);
+        if (down) bump('down'); else if (warn) bump('warn');
+      }
+      const f = unifiedState.freshness;
+      if (f) {
+        parts.push(`${f.fresh}/${f.total} files fresh`);
+        if (f.critical) { parts.push(`${f.critical} critical`); bump('down'); }
+        else if (f.stale) { bump('warn'); }
+      }
+      if (!parts.length) { el.textContent = ''; el.className = 'unified'; return; }
+      const dot = worst === 'down' ? '🔴 ' : worst === 'warn' ? '🟡 ' : '🟢 ';
+      el.className = 'unified ' + worst;
+      el.textContent = dot + parts.join(' · ');
+    }
+
+    // ===================================================================
+    // Sub-tab toggle + hash deep-linking
+    //   #sources   → Upstream Sources   (also the default, no hash)
+    //   #freshness → Data Freshness     (#health accepted as an alias)
+    // ===================================================================
+    const PANES = {
+      sources:   { tab: 'tab-sources',   pane: 'paneSources',   hash: '#sources' },
+      freshness: { tab: 'tab-freshness', pane: 'paneFreshness', hash: '#freshness' },
+    };
+
+    function paneFromHash() {
+      const h = (location.hash || '').toLowerCase();
+      if (h === '#freshness' || h === '#health') return 'freshness';
+      if (h === '#sources') return 'sources';
+      return 'sources'; // default
+    }
+
+    function showPane(name, updateHash) {
+      if (!PANES[name]) name = 'sources';
+      for (const [key, cfg] of Object.entries(PANES)) {
+        const active = key === name;
+        document.getElementById(cfg.tab).setAttribute('aria-selected', active ? 'true' : 'false');
+        document.getElementById(cfg.pane).hidden = !active;
+      }
+      if (updateHash) {
+        // replaceState keeps the back button from filling with toggle steps.
+        history.replaceState(null, '', PANES[name].hash);
+      }
+    }
+
+    document.querySelectorAll('.subtab').forEach(btn => {
+      btn.addEventListener('click', () => showPane(btn.dataset.pane, true));
+    });
+    window.addEventListener('hashchange', () => showPane(paneFromHash(), false));
+    // Initial pane from the hash (header "Data Sources" button lands on #sources).
+    showPane(paneFromHash(), false);
+
+    // ===================================================================
+    // PANE A · Upstream Sources — fetch api_status.json (or live /api/status)
+    // ===================================================================
+    const LIVE_ENDPOINT = '/api/status';
+    const SNAPSHOT = '../data/health/api_status.json';
+
+    const VERDICT_LABEL = {
+      up: 'up', auth_required: 'auth required', rate_limited: 'rate limited',
+      degraded: 'degraded', blocked: 'blocked', down: 'down',
+    };
+
+    function renderSrcHeadline(s) {
+      const warn = (s.auth_required || 0) + (s.rate_limited || 0) + (s.degraded || 0);
+      const down = (s.blocked || 0) + (s.down || 0);
+      const cls = down ? 'down' : (warn ? 'warn' : 'up');
+      const parts = [`${s.up} of ${s.total} sources up`];
+      if (warn) parts.push(`${warn} warn`);
+      if (down) parts.push(`${down} down`);
+      const el = document.getElementById('srcHeadline');
+      el.className = 'headline ' + cls;
+      el.textContent = (down ? '🔴 ' : warn ? '🟡 ' : '🟢 ') + parts.join(' · ');
+    }
+
+    function renderSrcSummary(s) {
+      const warn = (s.auth_required || 0) + (s.rate_limited || 0) + (s.degraded || 0);
+      const down = (s.blocked || 0) + (s.down || 0);
+      document.getElementById('srcSummary').innerHTML = `
+        <div class="chip up"><span class="num">${s.up}</span><span class="lbl">Up</span></div>
+        <div class="chip warn"><span class="num">${warn}</span><span class="lbl">Warn</span></div>
+        <div class="chip down"><span class="num">${down}</span><span class="lbl">Down</span></div>
+        <div class="chip"><span class="num">${s.total}</span><span class="lbl">Total</span></div>`;
+    }
+
+    function keyTag(src) {
+      if (!src.needs_key) return '';
+      return src.key_present
+        ? '<span class="keytag set" title="API key configured">key set</span>'
+        : '<span class="keytag missing" title="No API key in this environment">no key</span>';
+    }
+
+    function renderSrcTable(sources) {
+      const el = document.getElementById('srcTable');
+      if (!sources || !sources.length) { el.innerHTML = '<div class="empty">No sources.</div>'; return; }
       el.innerHTML = `
+        <div class="table-wrap"><table>
+          <thead><tr>
+            <th>Source</th><th>Host</th><th>Status</th>
+            <th style="text-align:right">HTTP</th><th style="text-align:right">Latency</th>
+          </tr></thead>
+          <tbody>
+            ${sources.map(s => `
+              <tr>
+                <td><span class="label">${escapeHtml(s.label)}</span>${keyTag(s)}<div class="cat">${escapeHtml(s.category)}</div></td>
+                <td class="mono">${escapeHtml(s.host)}</td>
+                <td><span class="pill ${s.verdict}">${VERDICT_LABEL[s.verdict] || s.verdict}</span>${s.note ? `<div class="note-cell">${escapeHtml(s.note)}</div>` : ''}</td>
+                <td class="num">${s.status == null ? '—' : s.status}</td>
+                <td class="num">${s.latency_ms}ms</td>
+              </tr>`).join('')}
+          </tbody>
+        </table></div>`;
+    }
+
+    function renderModeBanner(live) {
+      const el = document.getElementById('modeBanner');
+      el.className = 'banner ' + (live ? 'live' : 'snapshot');
+      el.innerHTML = live
+        ? '🟢 <b>Live</b> — probed in real time by this server (cached ~60s).'
+        : '🟡 <b>Snapshot</b> — no live server to probe through; showing the last CI snapshot. '
+          + 'Run <span class="source-tag">python server.py</span> and open <span class="source-tag">/status</span> for live probing.';
+    }
+
+    let srcLastGenerated = null;
+
+    async function loadSources(opts) {
+      const auto = opts && opts.auto;
+      const btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      // Probing placeholder on first paint / manual refresh (the live sweep can
+      // take a few seconds). Skipped on silent auto-refresh so it never wipes
+      // what's already on screen.
+      if (!auto) {
+        const tbl = document.getElementById('srcTable');
+        if (!tbl.querySelector('table')) tbl.innerHTML = '<div class="empty">Probing upstreams…</div>';
+        document.getElementById('generated').textContent = 'probing…';
+      }
+      try {
+        let live = true, data = null;
+        try {
+          const r = await fetch(LIVE_ENDPOINT, { cache: 'no-store' });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          data = await r.json();
+        } catch (_) {
+          live = false;
+          const r2 = await fetch(SNAPSHOT, { cache: 'no-store' });
+          if (!r2.ok) throw new Error(`snapshot HTTP ${r2.status}`);
+          data = await r2.json();
+        }
+        // On silent auto-refresh, skip the DOM rebuild when nothing changed —
+        // avoids yanking the table out from under a mid-scroll/read user.
+        if (auto && data.generated_at === srcLastGenerated) return;
+        srcLastGenerated = data.generated_at;
+        renderModeBanner(live);
+        document.getElementById('generated').textContent = `as of ${formatTime(data.generated_at)}`;
+        renderSrcHeadline(data.summary);
+        renderSrcSummary(data.summary);
+        renderSrcTable(data.sources);
+        unifiedState.sources = data.summary;
+        renderUnified();
+      } catch (e) {
+        document.getElementById('generated').textContent = 'error';
+        document.getElementById('srcTable').innerHTML =
+          `<div class="error">Failed to load status: ${escapeHtml(e.message)}.<br>` +
+          `Neither the live endpoint (<span class="source-tag">/api/status</span>) nor the snapshot ` +
+          `(<span class="source-tag">data/health/api_status.json</span>) was reachable.</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => loadSources());
+
+    // ===================================================================
+    // PANE B · Data Freshness — fetch status.json
+    // ===================================================================
+    function renderFreshSummary(s) {
+      document.getElementById('freshSummary').innerHTML = `
         <div class="chip fresh"><span class="num">${s.fresh}</span><span class="lbl">Fresh</span></div>
         <div class="chip stale"><span class="num">${s.stale}</span><span class="lbl">Stale</span></div>
         <div class="chip critical"><span class="num">${s.critical}</span><span class="lbl">Critical</span></div>
@@ -131,8 +448,8 @@
       `;
     }
 
-    function renderTabs(tabs) {
-      const el = document.getElementById('tabs');
+    function renderFreshTabs(tabs) {
+      const el = document.getElementById('freshTabs');
       el.innerHTML = tabs.map(t => `
         <div class="tab-card ${t.status}">
           <div class="tab-name">${escapeHtml(t.tab)}</div>
@@ -146,7 +463,7 @@
       `).join('');
     }
 
-    function renderTable(rows, mountId) {
+    function renderFreshTable(rows, mountId) {
       const el = document.getElementById(mountId);
       if (!rows.length) {
         el.innerHTML = '<div class="empty">No files found.</div>';
@@ -178,41 +495,36 @@
       `;
     }
 
-    function formatBytes(n) {
-      if (!n && n !== 0) return '—';
-      if (n < 1024) return n + ' B';
-      if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
-      return (n / (1024 * 1024)).toFixed(2) + ' MB';
-    }
-
-    function formatTime(iso) {
-      if (!iso) return '—';
-      const d = new Date(iso);
-      if (isNaN(d)) return iso;
-      // YYYY-MM-DD HH:MM UTC
-      const pad = n => String(n).padStart(2, '0');
-      return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}Z`;
-    }
-
-    async function load() {
+    async function loadFreshness() {
       try {
         const r = await fetch('../data/health/status.json', { cache: 'no-store' });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const data = await r.json();
-        document.getElementById('generated').textContent = `generated ${formatTime(data.generated_at)}`;
-        renderSummary(data.summary);
-        renderTabs(data.tabs);
-        renderTable(data.rendered, 'rendered');
-        renderTable(data.lthcs, 'lthcs');
-        renderTable(data.upstream, 'upstream');
-        document.getElementById('upstream-count').textContent = ` (${data.upstream.length})`;
+        renderFreshSummary(data.summary);
+        renderFreshTabs(data.tabs);
+        renderFreshTable(data.rendered, 'freshRendered');
+        renderFreshTable(data.lthcs, 'freshLthcs');
+        renderFreshTable(data.upstream, 'freshUpstream');
+        document.getElementById('freshUpstreamCount').textContent = ` (${data.upstream.length})`;
+        unifiedState.freshness = data.summary;
+        renderUnified();
       } catch (e) {
-        document.querySelector('.wrap').insertAdjacentHTML('beforeend',
+        document.getElementById('paneFreshness').insertAdjacentHTML('beforeend',
           `<div class="error">Failed to load status.json: ${escapeHtml(e.message)}</div>`);
       }
     }
 
-    load();
+    // ===================================================================
+    // Boot: load BOTH feeds on page load so the unified summary + both panes
+    // are ready regardless of which sub-tab is showing. Each fails alone.
+    // ===================================================================
+    loadSources();
+    loadFreshness();
+
+    // Light auto-refresh for the upstream probe: pause while the tab is hidden,
+    // and (inside loadSources) only re-render when the snapshot actually
+    // changed — so it never hammers upstreams or disrupts a mid-read user.
+    setInterval(() => { if (!document.hidden) loadSources({ auto: true }); }, 90 * 1000);
   </script>
 </body>
 </html>

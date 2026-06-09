@@ -1093,15 +1093,18 @@ def api_status_json() -> Response:
 
 @flask_app.route("/status")
 def api_status_page() -> Response:
-    """Serve the live API-status page (health/apis.html). Same HTML also runs
-    on the static GitHub-Pages mirror, where it falls back to the snapshot
-    JSON when /api/status isn't reachable."""
-    page = os.path.join(os.path.dirname(os.path.abspath(__file__)), "health", "apis.html")
+    """Serve the Status hub (health/index.html → Upstream Sources sub-tab).
+
+    The Sources + Data-Freshness pages were merged into one sub-tabbed hub;
+    apis.html is now just a redirect, so /status serves the hub directly. Its
+    default sub-tab is Upstream Sources, which live-probes /api/status here and
+    falls back to the cached snapshot JSON on the static GitHub-Pages mirror."""
+    page = os.path.join(os.path.dirname(os.path.abspath(__file__)), "health", "index.html")
     try:
         with open(page, "r", encoding="utf-8") as f:
             return Response(f.read(), mimetype="text/html")
     except OSError:
-        return Response("api status page not found", status=404, mimetype="text/plain")
+        return Response("status page not found", status=404, mimetype="text/plain")
 
 
 def main() -> int:
