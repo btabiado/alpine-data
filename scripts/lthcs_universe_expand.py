@@ -233,10 +233,16 @@ def _yahoo_smoke_fetch(ticker: str) -> Tuple[bool, str]:
     request to Yahoo's chart endpoint so the script remains useful in
     environments without yfinance installed.
     """
+    # Yahoo's native symbology uses hyphens for class shares (BRK-B);
+    # candidates arrive in canonical dot form (BRK.B), which 404s on
+    # Yahoo. Probe the hyphen form — mirrors
+    # ``lthcs/sources/yahoo.py:_yahoo_symbol_variants`` (this script
+    # intentionally avoids importing lthcs.*).
+    yahoo_symbol = ticker.replace(".", "-")
     try:
         import yfinance as yf  # type: ignore
         try:
-            df = yf.Ticker(ticker).history(period="5d")
+            df = yf.Ticker(yahoo_symbol).history(period="5d")
             if df is None or len(df) == 0:
                 return False, "yfinance returned empty history"
             return True, "yfinance ok (%d rows)" % len(df)
@@ -250,7 +256,7 @@ def _yahoo_smoke_fetch(ticker: str) -> Tuple[bool, str]:
         import requests
         url = (
             "https://query1.finance.yahoo.com/v8/finance/chart/"
-            f"{ticker}?range=5d&interval=1d"
+            f"{yahoo_symbol}?range=5d&interval=1d"
         )
         resp = requests.get(url, timeout=15, headers={"User-Agent": "lthcs-prep/1.0"})
         if resp.status_code != 200:

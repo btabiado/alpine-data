@@ -232,7 +232,8 @@
       "industry": "Engineering Software",
       "tech_sub_bucket": "Software",
       "maturity_stage": "standard_compounder",
-      "active": true
+      "active": false,
+      "inactive_reason": "Acquired by Synopsys (2025); ticker delisted, no longer trades or files with SEC."
     },
     {
       "ticker": "ARM",

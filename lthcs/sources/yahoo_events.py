@@ -128,13 +128,16 @@ def _yahoo_symbol_variants(ticker: str) -> List[str]:
 
     Yahoo uses ``BRK-B`` (hyphen) for class shares; many upstream
     datasets (S&P, our universe.json) use ``BRK.B`` (dot). When a ticker
-    contains a ``.`` we yield the original first and the
-    hyphen-substituted form as a fallback. Tickers without a dot return
-    a single-element list (no fallback attempted).
+    contains a ``.`` we yield the hyphen-substituted form first (Yahoo's
+    native convention — the dot form 404s on every endpoint) and the
+    original dot form as a fallback. Tickers without a dot return a
+    single-element list (no fallback attempted). Only the outbound Yahoo
+    symbol changes — cache keys and output rows keep the canonical dot
+    ticker.
     """
     if "." not in ticker:
         return [ticker]
-    return [ticker, ticker.replace(".", "-")]
+    return [ticker.replace(".", "-"), ticker]
 
 
 def _today_iso() -> str:
