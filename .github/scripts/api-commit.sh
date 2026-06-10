@@ -97,6 +97,55 @@ done
 
 echo "api-commit: ${#UPSERT_PATHS[@]} upsert, ${#DELETE_PATHS[@]} delete on $REPO@$BRANCH"
 
+# Rate-limit hardening. GitHub's SECONDARY rate limit caps content-generating
+# POSTs (~80/min per its abuse guidance); the old back-to-back blob loop ran
+# ~240/min on the ~170-file lthcs history commit and tripped HTTP 403
+# "secondary rate limit" daily (run 27243888112) — and with set -e, ONE failed
+# POST killed the whole script. Two defenses:
+#   * BLOB_THROTTLE   inter-blob sleep (default 0.8s ≈ 75/min, under the cap)
+#   * API_RETRY_DELAYS backoff schedule for every content-creating POST;
+#     secondary limits typically clear in <=60s, so 30/90/180 covers it.
+# Both env-overridable (handy for local harnesses / CI debugging).
+BLOB_THROTTLE="${BLOB_THROTTLE:-0.8}"
+API_RETRY_DELAYS="${API_RETRY_DELAYS:-30 90 180}"
+
+# _retryable <err-file>: true when the failure is worth waiting out —
+# rate limits (403/429) and transient server/network errors. Permanent
+# errors (401 bad token, 404, 422 validation) fail fast instead of
+# burning the full 5-minute schedule before the same abort.
+_retryable() {
+  grep -qiE 'HTTP (403|429|5[0-9][0-9])|rate limit|timed? ?out|connection' "$1"
+}
+
+# _api_post <git-data-endpoint>: POST stdin payload, echo .sha.
+# Buffers the payload to a temp file so it can be replayed across retries
+# (stdin is consumed on the first attempt). Returns 1 on a non-retryable
+# error or once the schedule is exhausted; callers run under set -e so
+# that still aborts the script, but only after backoff instead of on the
+# first 403.
+_api_post() {
+  local endpoint="$1" tmp sha delay
+  tmp="$(mktemp)"
+  cat > "$tmp"
+  : > "$tmp.err"
+  for delay in 0 $API_RETRY_DELAYS; do
+    if [ "$delay" -gt 0 ]; then
+      echo "api-commit:   POST $endpoint failed ($(tail -1 "$tmp.err" 2>/dev/null | cut -c1-120)); retrying in ${delay}s..." >&2
+      sleep "$delay"
+    fi
+    if sha="$(gh api -X POST "repos/$REPO/$endpoint" --input "$tmp" --jq '.sha' 2>"$tmp.err")"; then
+      rm -f "$tmp" "$tmp.err"
+      printf '%s' "$sha"
+      return 0
+    fi
+    _retryable "$tmp.err" || break
+  done
+  echo "api-commit: POST $endpoint failed (non-retryable or retries exhausted):" >&2
+  tail -3 "$tmp.err" >&2 || true
+  rm -f "$tmp" "$tmp.err"
+  return 1
+}
+
 # Upload blobs once (content-addressed — re-uploading the same blob across
 # retries is harmless and returns the same SHA).
 declare -a UPSERT_SHAS=()
@@ -111,9 +160,10 @@ for path in "${UPSERT_PATHS[@]}"; do
 import base64, json, sys
 with open(sys.argv[1], "rb") as fh:
     sys.stdout.write(json.dumps({"content": base64.b64encode(fh.read()).decode("ascii"), "encoding": "base64"}))
-' "$path" | gh api -X POST "repos/$REPO/git/blobs" --input - --jq '.sha')"
+' "$path" | _api_post git/blobs)"
   UPSERT_SHAS+=("$sha")
   echo "  blob $sha  $path"
+  sleep "$BLOB_THROTTLE"
 done
 
 attempt=0
@@ -149,7 +199,7 @@ while : ; do
   done
   tree_json+=']}'
 
-  new_tree="$(printf '%s' "$tree_json" | gh api -X POST "repos/$REPO/git/trees" --input - --jq '.sha')"
+  new_tree="$(printf '%s' "$tree_json" | _api_post git/trees)"
   echo "api-commit:   new tree $new_tree"
 
   # Create the commit with ONLY message/tree/parents — deliberately no
@@ -171,19 +221,33 @@ print(json.dumps({
 }))
 ')
 
-  new_commit="$(printf '%s' "$commit_payload" | gh api -X POST "repos/$REPO/git/commits" --input - --jq '.sha')"
+  new_commit="$(printf '%s' "$commit_payload" | _api_post git/commits)"
   echo "api-commit:   new commit $new_commit"
 
   # Fast-forward update only — if main moved under us between
   # base-sha read and ref update, this returns 422 and we retry. We
   # intentionally DO NOT use force=true; that would clobber concurrent
   # pushes from other bots / devs.
+  # The PATCH is also a content-modifying call, fired exactly when the
+  # secondary-rate-limit budget is most depleted (right after the blob
+  # loop) — so distinguish a rate-limit 403 (back off 60s; the lockout
+  # window is >=60s, a 2s retry would just burn the attempts) from a real
+  # fast-forward conflict (quick retry against the fresh tip).
+  patch_err="$(mktemp)"
   if gh api -X PATCH "repos/$REPO/git/refs/heads/$BRANCH" \
-      -f sha="$new_commit" -F force=false >/dev/null 2>&1; then
+      -f sha="$new_commit" -F force=false >/dev/null 2>"$patch_err"; then
+    rm -f "$patch_err"
     echo "api-commit: ref updated to $new_commit (signed by GitHub)"
     echo "api-commit: verify with: gh api repos/$REPO/commits/$new_commit --jq '.commit.verification'"
     exit 0
   fi
-  echo "api-commit: ref update rejected (likely fast-forward conflict); retrying..."
-  sleep 2
+  if _retryable "$patch_err"; then
+    echo "api-commit: ref update rate-limited ($(tail -1 "$patch_err" | cut -c1-120)); backing off 60s..." >&2
+    rm -f "$patch_err"
+    sleep 60
+  else
+    echo "api-commit: ref update rejected ($(tail -1 "$patch_err" | cut -c1-120)); retrying against fresh tip..." >&2
+    rm -f "$patch_err"
+    sleep 2
+  fi
 done
