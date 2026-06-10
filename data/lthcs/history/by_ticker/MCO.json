@@ -1,0 +1,11 @@
+{
+  "ticker": "MCO",
+  "model_version": "v1.1.0",
+  "history": [
+    {
+      "date": "2026-06-10",
+      "score": 47.2,
+      "band": "review"
+    }
+  ]
+}
