@@ -12573,27 +12573,14 @@ function selectTab(t){
   });
   syncTabGroups();
   closeTabMenus();
-  document.getElementById('tab-overview').classList.toggle('hidden', t!=='overview');
-  document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
-  document.getElementById('tab-trading').classList.toggle('hidden', t!=='trading');
-  document.getElementById('tab-signals').classList.toggle('hidden', t!=='signals');
-  document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
-  document.getElementById('tab-social').classList.toggle('hidden', t!=='social');
-  document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
-  document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
-  document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
-  document.getElementById('tab-money_flow').classList.toggle('hidden', t!=='money_flow');
-  document.getElementById('tab-stockflow').classList.toggle('hidden', t!=='stockflow');
-  document.getElementById('tab-lthcs').classList.toggle('hidden', t!=='lthcs');
-  document.getElementById('tab-real_estate').classList.toggle('hidden', t!=='real_estate');
-  document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
-  document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
-  document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
-  document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
-  document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
-  document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
-  document.getElementById('tab-city').classList.toggle('hidden', t!=='city');
-  document.getElementById('tab-aviation').classList.toggle('hidden', t!=='aviation');
+  // Data-driven panel toggle: derive panels from the tab buttons themselves so
+  // a new tab can never silently render blank (the old hardcoded list was the
+  // 'blank tab' vector). The if(p) guard skips launcher buttons with no panel
+  // (e.g. the Summit tab, which redirects via handleTabActivate instead).
+  document.querySelectorAll('.tab[data-tab]').forEach(function(btn){
+    var p = document.getElementById('tab-' + btn.dataset.tab);
+    if (p) { p.classList.toggle('hidden', btn.dataset.tab !== t); }
+  });
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/

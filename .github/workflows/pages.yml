@@ -207,7 +207,20 @@ jobs:
         # hang on a slow/down API and, with no step timeout, stall the ENTIRE Pages
         # deploy (V1 at / and /summit/ included) indefinitely. Bound it so a hung V2
         # build fails fast and the V1 + Summit publish proceeds (V2 keeps last-good).
-        timeout-minutes: 4
+        timeout-minutes: 6
+
+      - name: Fallback generate V2 if dashboard.html missing
+        # Mirror of V1's "Fallback generate if dashboard.html missing" step.
+        # If the Generate V2 step above crashed (or was killed mid-fetch) before
+        # writing v2/dashboard.html, the staging branch gated on
+        # `[ -f v2/dashboard.html ]` would skip V2 entirely and /v2/ would 404
+        # for this deploy. Re-run the generator once more — now fast and safe
+        # because the committed NUFORC subndx caches mean fetch_mufon only
+        # refreshes 2 months, so the heavy backfill no longer dominates the run.
+        if: hashFiles('v2/app.py') != '' && hashFiles('v2/dashboard.html') == ''
+        run: python v2/app.py --no-open || echo "[v2] fallback build failed; production deploy continues"
+        continue-on-error: true
+        timeout-minutes: 6
 
       - name: Validate V2 dashboard JS structure
         # Structural lint of the freshly-built v2/dashboard.html inline
@@ -249,6 +262,16 @@ jobs:
           # exist. V1's manifest points at the root "data-mufon.json".
           if [ -f v2/data-mufon.json ]; then
             cp v2/data-mufon.json _site/data-mufon.json
+          fi
+          # Stock-prices sparkline sidecar is written by fetch_stock_prices to
+          # v2/data-stock-prices.json (ROOT = the v2/ dir in v2/app.py). The
+          # V2 page fetches it relative to its own URL, so _site/v2/... is
+          # already produced by the `for f in v2/data-*.json` glob inside the
+          # v2/dashboard.html gate above. Also serve a root copy here — like
+          # data-mufon.json — so it's published independently of whether the V2
+          # *page* HTML built, mirroring the mufon resilience pattern.
+          if [ -f v2/data-stock-prices.json ]; then
+            cp v2/data-stock-prices.json _site/data-stock-prices.json
           fi
           # Stage the LTHCS standalone tab under /lthcs/ when present.
           # The page is committed under lthcs_tab/ and reads its data from

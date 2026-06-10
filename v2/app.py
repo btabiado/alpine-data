@@ -14068,6 +14068,19 @@ function renderAll(){
 
 function selectTab(t){
   state.tab = t;
+  // Keep the URL hash in sync so every tab is deep-linkable & shareable
+  // (e.g. .../#etf lands straight on the ETF Flows tab). Overview is the
+  // default → clean hash-less URL; every other tab → #<tab>. replaceState
+  // (not location.hash=) avoids a history entry per click AND a re-entrant
+  // hashchange→selectTab loop (replaceState does not fire hashchange).
+  try {
+    const _curHash = (location.hash || '').replace(/^#/, '');
+    const _wantHash = (t === 'overview') ? '' : t;
+    if (_curHash !== _wantHash) {
+      history.replaceState(null, '',
+        _wantHash ? '#' + _wantHash : location.pathname + location.search);
+    }
+  } catch (_) {}
   // Kick off lazy load of any sidecar this tab needs. Fire-and-forget —
   // renderAll() below runs immediately with an empty subtree (the
   // tab's empty-state handles that), then re-runs once the fetch lands.
@@ -14119,21 +14132,13 @@ function selectTab(t){
     el.classList.toggle('eth',  state.asset === 'eth');
     el.classList.toggle('link', state.asset === 'link');
   });
-  document.getElementById('tab-overview').classList.toggle('hidden', t!=='overview');
-  document.getElementById('tab-etf').classList.toggle('hidden', t!=='etf');
-  document.getElementById('tab-trading').classList.toggle('hidden', t!=='trading');
-  document.getElementById('tab-signals').classList.toggle('hidden', t!=='signals');
-  document.getElementById('tab-defi').classList.toggle('hidden', t!=='defi');
-  document.getElementById('tab-social').classList.toggle('hidden', t!=='social');
-  document.getElementById('tab-whale').classList.toggle('hidden', t!=='whale');
-  document.getElementById('tab-poc').classList.toggle('hidden', t!=='poc');
-  document.getElementById('tab-stocks').classList.toggle('hidden', t!=='stocks');
-  document.getElementById('tab-ainews').classList.toggle('hidden', t!=='ainews');
-  document.getElementById('tab-travel').classList.toggle('hidden', t!=='travel');
-  document.getElementById('tab-cpi').classList.toggle('hidden', t!=='cpi');
-  document.getElementById('tab-supplies').classList.toggle('hidden', t!=='supplies');
-  document.getElementById('tab-metals').classList.toggle('hidden', t!=='metals');
-  document.getElementById('tab-mufon').classList.toggle('hidden', t!=='mufon');
+  // Toggle each tab PANEL from the tab BUTTONS so there is a single source of
+  // truth (the .tab[data-tab] strip) — adding a tab no longer needs a matching
+  // hand-written toggle line here (the old vector for "click tab → blank page").
+  document.querySelectorAll('.tab[data-tab]').forEach(function(btn){
+    var p = document.getElementById('tab-' + btn.dataset.tab);
+    if (p) { p.classList.toggle('hidden', btn.dataset.tab !== t); }
+  });
   // Period selector now ETF-only. Trading and Whale tabs had it but it was
   // confusing (overlap with Timeframe / Range buttons); their charts are
   // daily by default. ETF Flows still needs Period for the daily/weekly/
@@ -16467,7 +16472,23 @@ function _setSymbolSuggestActive(box, idx){
 })();
 
 document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
-selectTab('overview');
+// Deep-link support: open the tab named in the URL hash (#etf, #cpi, …) on
+// load, falling back to Overview; then react to later hash changes (browser
+// back/forward, manual edits, or an inbound link while already open).
+function _tabFromHash(){
+  let h = (location.hash || '').replace(/^#/, '');
+  try { h = decodeURIComponent(h); } catch (_) {}
+  if (!h) return null;
+  return Array.prototype.some.call(
+    document.querySelectorAll('.tab[data-tab]'),
+    el => el.dataset.tab === h
+  ) ? h : null;
+}
+selectTab(_tabFromHash() || 'overview');
+window.addEventListener('hashchange', () => {
+  const h = _tabFromHash();
+  if (h && h !== state.tab) selectTab(h);
+});
 renderAll();
 </script>
 </body>

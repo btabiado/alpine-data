@@ -32,18 +32,31 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run pytest
-        run: |
-          python -m pytest tests/ -v --tb=short
-
-      - name: Smoke-test the static HTML generator
+      - name: Build the static dashboard.html (before pytest)
         run: |
           # Aggregator should produce a working dashboard.html from a
           # minimal one-row CSV (proves the full read -> aggregate -> render
-          # pipeline works end-to-end in CI).
+          # pipeline works end-to-end in CI). This MUST run BEFORE pytest so
+          # the blank-tab integrity test (which reads the built dashboard.html)
+          # actually executes instead of silently skipping on a missing file.
           mkdir -p data
           printf 'date,Total\n2024-01-11,100\n' > data/btc_flows.csv
           printf 'date,Total\n2024-07-23,50\n' > data/eth_flows.csv
           python app.py --no-open
           test -f dashboard.html
           echo "dashboard.html generated ($(wc -c < dashboard.html) bytes)"
+
+      - name: Validate V1 dashboard JS structure
+        # Run the same structural gate that guards the deploy (pages.yml) on
+        # every PR, right after the build, so a tab-routing / sidecar-coverage
+        # regression is caught here too.
+        run: python tools/validate_dashboard.py dashboard.html
+
+      - name: Run pytest
+        env:
+          # Hard-fail flag wired up by the validators/tests lane: with the
+          # build now guaranteed to run first, a missing dashboard.html can no
+          # longer silently skip the blank-tab integrity test.
+          REQUIRE_DASHBOARD: "1"
+        run: |
+          python -m pytest tests/ -v --tb=short

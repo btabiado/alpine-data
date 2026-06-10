@@ -442,7 +442,16 @@ def test_run_daily_batch_resumes_from_progress(
     _write_universe(tmp_path / "universe.json", ["AAPL", "MSFT", "NVDA"])
     args = _make_args(tmp_path, batch_size=10, sleep_base=0.0, max_backoff=0.0)
 
-    today = _dt.date.today().isoformat()
+    # Pin the run's clock to a fixed reference instant and derive the
+    # progress-fixture date from that SAME instant. run_daily_batch keys
+    # "today" off ``now.date()`` (UTC), so the progress file's date must be
+    # built from the same UTC reference — otherwise on machines whose local
+    # date != UTC date (e.g. evening at UTC-4) the stored date wouldn't match
+    # the run's computed today, read_progress would reset, AAPL would no
+    # longer be "completed", and it would be (re)fetched. Injecting ``now``
+    # makes the resume assertion hold every calendar day.
+    now = _dt.datetime(2026, 5, 19, 12, 0, 0, tzinfo=_dt.timezone.utc)
+    today = now.date().isoformat()
     args.progress_path.parent.mkdir(parents=True, exist_ok=True)
     args.progress_path.write_text(json.dumps({
         "date": today, "completed": ["AAPL"], "failures": [],
@@ -469,6 +478,7 @@ def test_run_daily_batch_resumes_from_progress(
     ):
         snapshot = daily.run_daily_batch(
             args, trend_req_factory=_factory_with_log, sleeper=_silent_sleeper,
+            now=now,
         )
 
     # AAPL's term must NEVER have appeared on the wire.
