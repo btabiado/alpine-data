@@ -110,11 +110,18 @@ BLOB_THROTTLE="${BLOB_THROTTLE:-0.8}"
 API_RETRY_DELAYS="${API_RETRY_DELAYS:-30 90 180}"
 
 # _retryable <err-file>: true when the failure is worth waiting out —
-# rate limits (403/429) and transient server/network errors. Permanent
-# errors (401 bad token, 404, 422 validation) fail fast instead of
-# burning the full 5-minute schedule before the same abort.
+# rate limits (403/429), transient server/network errors, AND 401s.
+# 401 is included deliberately: GitHub's API intermittently returns
+# 401 "Requires authentication" to perfectly valid tokens during brief
+# auth-service blips (observed 2026-06-10 ~15:09Z — the same minute it
+# 401'd a fresh Actions GITHUB_TOKEN in run 27285292084 it also 401'd
+# an interactive keyring token locally, recovering within minutes, with
+# githubstatus.com all-green throughout). A genuinely dead token just
+# burns the bounded schedule (~5 min) before the same abort; a blip no
+# longer kills a daily data commit. Truly permanent errors (404, 422
+# validation) still fail fast.
 _retryable() {
-  grep -qiE 'HTTP (403|429|5[0-9][0-9])|rate limit|timed? ?out|connection' "$1"
+  grep -qiE 'HTTP (401|403|429|5[0-9][0-9])|rate limit|timed? ?out|connection' "$1"
 }
 
 # _api_post <git-data-endpoint>: POST stdin payload, echo .sha.
