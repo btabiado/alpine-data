@@ -280,7 +280,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 4.8,
         "financial_evolution": 50.0,
-        "thesis_integrity": 50.0,
+        "thesis_integrity": 55.0,
         "des": 43.8
       },
       "modifiers": {
@@ -800,7 +800,7 @@
         "adoption_momentum": 47.5,
         "institutional_confidence": 93.5,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 55.0,
         "des": 43.8
       },
       "modifiers": {
@@ -1892,7 +1892,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 38.2,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 50.0,
         "des": 44.1
       },
       "modifiers": {
@@ -2932,7 +2932,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 36.1,
         "financial_evolution": 50.0,
-        "thesis_integrity": 58.8,
+        "thesis_integrity": 41.2,
         "des": 45.8
       },
       "modifiers": {
@@ -4856,7 +4856,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 23.4,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 50.0,
         "des": 67.2
       },
       "modifiers": {
@@ -5116,7 +5116,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 64.1,
         "financial_evolution": 50.0,
-        "thesis_integrity": 58.8,
+        "thesis_integrity": 41.2,
         "des": 44.1
       },
       "modifiers": {
@@ -6676,7 +6676,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 45.8,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 41.2,
         "des": 44.1
       },
       "modifiers": {
@@ -6832,7 +6832,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 12.5,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 41.2,
         "des": 43.6
       },
       "modifiers": {
@@ -7352,7 +7352,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 81.1,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 55.0,
         "des": 38.8
       },
       "modifiers": {
@@ -10368,7 +10368,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 61.1,
         "financial_evolution": 50.0,
-        "thesis_integrity": 45.0,
+        "thesis_integrity": 55.0,
         "des": 47.9
       },
       "modifiers": {
