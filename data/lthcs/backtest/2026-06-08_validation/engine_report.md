@@ -1,6 +1,6 @@
 # LTHCS Backtest Engine Report
 
-Window: **2026-02-17 -> 2026-06-08** (78 trading days)
+Window: **2026-02-17 -> 2026-06-09** (79 trading days)
 Universe: **209 tickers** | long bands: ['constructive', 'elite', 'high_confidence'] | cost: 5.0 bps/side | delay: 1 td
 
 ## Headline P&L (non-overlapping)
@@ -8,13 +8,13 @@ Universe: **209 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 | Metric | Value |
 |:-------|------:|
 | Total return | +0.1902 |
-| Annualized return | +0.7679 |
-| Annualized Sharpe | +2.163 (95% CI: -0.88 ... +5.93) |
-| Annualized Sortino | +1.974 (95% CI: -0.80 ... +5.78) |
+| Annualized return | +0.7551 |
+| Annualized Sharpe | +2.149 (95% CI: -0.99 ... +5.40) |
+| Annualized Sortino | +1.949 (95% CI: -0.88 ... +5.48) |
 | Max drawdown | -0.1058 |
-| Hit rate (daily) | 0.603 |
+| Hit rate (daily) | 0.595 |
 | Avg hold days | 12.6 |
-| Avg turnover / day | 0.2020 |
+| Avg turnover / day | 0.1995 |
 | Total trades | 68 |
 | Unique tickers | 28 |
 
@@ -27,13 +27,13 @@ Universe: **209 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 | elite | +0.0000 |
 | high_confidence | +0.3950 |
 | constructive | +0.1378 |
-| monitor | +0.0731 |
-| weakening | +0.0849 |
-| review | +0.0111 |
+| monitor | +0.0487 |
+| weakening | +0.0835 |
+| review | +0.0197 |
 
 ## Benchmark
 
-Benchmark total return: **+0.0855**
+Benchmark total return: **+0.0823**
 
 ## Run metadata
 
@@ -62,15 +62,15 @@ Benchmark total return: **+0.0855**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "d647e8348370fe72",
+  "price_hash": "469a8f633f4be319",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
   "top_k": 0,
   "universe_size": 209,
   "window": {
-    "end": "2026-06-08",
-    "n_trading_days": 78,
+    "end": "2026-06-09",
+    "n_trading_days": 79,
     "start": "2026-02-17"
   }
 }
