@@ -173,6 +173,7 @@ jobs:
         # and /summit/ + production at `/` must deploy regardless.
         if: hashFiles('landscape/build.py') != ''
         run: |
+          python landscape/make_icons.py || echo "[landscape] icon gen failed; using committed icons (if any)"
           python landscape/build.py || echo "[landscape] rebuild failed; using committed dashboard.html"
         continue-on-error: true
 
@@ -572,6 +573,14 @@ jobs:
           if [ -f landscape/dashboard.html ]; then
             mkdir -p _site/landscape
             cp landscape/dashboard.html _site/landscape/index.html
+            # PWA bits for "Add to Home Screen": manifest + icons sit next to the
+            # page (relative hrefs in <head>), so stage them into the same dir.
+            if [ -f landscape/manifest.webmanifest ]; then
+              cp landscape/manifest.webmanifest _site/landscape/
+            fi
+            if [ -d landscape/icons ]; then
+              cp -R landscape/icons _site/landscape/
+            fi
           fi
           # Include a tiny "about" so the page works even if dashboard.html breaks
           cat > _site/README.txt <<EOF
