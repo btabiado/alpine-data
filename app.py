@@ -944,6 +944,13 @@ header .meta{color:var(--muted);font-size:12px}
 .btn.active{background:var(--btc);color:#000;border-color:var(--btc)}
 .btn.active.eth{background:var(--eth);color:#fff;border-color:var(--eth)}
 .btn.active.link{background:var(--link);color:#fff;border-color:var(--link)}
+/* textBtn starts with the hidden ATTRIBUTE (JS reveals it on mobile UAs).
+   The ≤860px mobile block sets display:inline-flex on .controls .btn and
+   button.btn, and ANY author display declaration beats the UA stylesheet's
+   [hidden]{display:none} — so without this guard a desktop window ≤860px
+   wide shows the (useless) sms: button. Global + !important so the
+   attribute wins at every width against present and future display rules. */
+#textBtn[hidden]{display:none !important}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
@@ -1044,6 +1051,12 @@ header .meta{color:var(--muted);font-size:12px}
      inner padding the content area is only ~291px wide. Tight for POC-detail
      tables and share-link URL row. */
   .modal-bg{padding:8px !important}
+  /* Header .hbl labels (Web-Share/Text buttons + the Data Sources link) go
+     icon-only on very narrow screens — their aria-label/title carry the
+     name. (.hbl spans hold the text.) The header controls row is nowrap on
+     mobile, so this width reclaim is what keeps the row inside a 360-393px
+     phone viewport after the two 44px-wide share buttons were added. */
+  header .controls .hbl{display:none}
 }
 .chart-wrap{position:relative;height:300px}
 .chart-wrap.tall{height:380px}
@@ -1217,6 +1230,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
   header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px}
   header .controls > span{width:6px !important}
+  /* Web-Share/Text buttons (webShareBtn/textBtn): 44px-wide tap floor on
+     mobile only — the 44px height already comes from the .btn rules above.
+     display:inline-flex is set here too (the base .btn rule sets no display)
+     so the centering actually applies; the global #textBtn[hidden] !important
+     guard still wins over this when the Text button is hidden. */
+  #webShareBtn,#textBtn{min-width:44px;display:inline-flex;align-items:center;justify-content:center}
 
   /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */
   /* Grouped nav has few top-level items, so no horizontal scroll is needed;
@@ -1666,7 +1685,15 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     </form>
     <button class="btn" id="shareBtn" title="Mint a read-only share link (default 3-day expiry)">🔗 Share</button>
     <button class="btn" id="refreshBtn" title="Re-fetch market + whale data (server only)">↻ Refresh</button>
-    <a class="btn" href="health/apis.html" title="All data sources + live API status">◉ Data Sources</a>
+    <!-- Native Web-Share + sms: buttons. Client-only (no server round-trip), so
+         they work on the static GitHub Pages mirror where shareBtn/refreshBtn
+         get hidden. Distinct from shareBtn (which MINTS expiring tokens) — these
+         just share the current URL, tab hash included. textBtn starts hidden;
+         JS reveals it on mobile UAs only. ≤480px the .hbl labels collapse to
+         icon-only (aria-labels keep them accessible). -->
+    <button class="btn" id="webShareBtn" type="button" title="Share this page" aria-label="Share this page">↗<span class="hbl"> Share</span></button>
+    <button class="btn" id="textBtn" type="button" hidden title="Text a link to this page" aria-label="Text a link to this page">💬<span class="hbl"> Text</span></button>
+    <a class="btn" href="health/apis.html" title="All data sources + live API status" aria-label="All data sources and live API status">◉<span class="hbl"> Data Sources</span></a>
   </div>
 </header>
 
@@ -13466,6 +13493,63 @@ if (IS_SHARE) {
   const container = document.querySelector('.container');
   if (container) container.insertBefore(banner, container.firstChild);
 }
+
+// ---------- Native share / text-a-link (header webShareBtn + textBtn) ----------
+// Unlike the mint-share modal above (server-backed /api/share, owner-only,
+// hidden on the static mirror), these two buttons are pure client-side: they
+// share the CURRENT URL. location.href already carries the active tab's
+// #<tab> hash (selectTab syncs it via history.replaceState), so no extra
+// URL-state plumbing is needed. Works in static-mirror, local Flask and
+// /share/<token> viewer modes alike.
+(function(){
+  const sb = document.getElementById('webShareBtn');
+  const tb = document.getElementById('textBtn');
+  if (!sb || !tb) return;
+  const sbHTML = sb.innerHTML;
+  let sbT = null;
+  const copied = () => {
+    // " Link copied" sits in an .hbl span so the ≤480px icon-only mode swaps
+    // ↗ → ✓ without widening the 44px button (the nowrap header row has no
+    // slack on phones); wider screens show the full "✓ Link copied".
+    sb.innerHTML = '✓<span class="hbl"> Link copied</span>';
+    clearTimeout(sbT);
+    sbT = setTimeout(() => { sb.innerHTML = sbHTML; }, 2000);
+  };
+  const taCopy = u => {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = u;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;left:-999px;top:0';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      ta.remove();
+      return ok;
+    } catch (e) { return false; }
+  };
+  sb.addEventListener('click', () => {
+    const url = location.href; // captured at tap time — includes the #<tab> hash
+    // Feature-detect Web Share (no UA sniffing); must run synchronously
+    // inside the gesture or iOS/Android drop the share sheet.
+    if (navigator.share) {
+      navigator.share({title:'BDT Dashboards', text:'Live dashboards — crypto, markets, macro & beyond', url}).catch(() => {});
+      return;
+    }
+    // Fallback chain: async Clipboard API → hidden-textarea execCommand →
+    // prompt() (last resort when clipboard is denied AND execCommand fails).
+    const manual = u => { try { prompt('Copy this link:', u); } catch (e) {} };
+    try { navigator.clipboard.writeText(url).then(copied, () => { if (taCopy(url)) copied(); else manual(url); }); }
+    catch (e) { if (taCopy(url)) copied(); else manual(url); }
+  });
+  // Text via sms: — reveal on mobile only (desktop has no SMS handler);
+  // iOS wants "sms:&body=", Android "sms:?body=".
+  if ((navigator.userAgentData && navigator.userAgentData.mobile) || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) tb.hidden = false;
+  tb.addEventListener('click', () => {
+    const sep = /Android/i.test(navigator.userAgent) ? '?' : '&';
+    location.href = 'sms:' + sep + 'body=' + encodeURIComponent('Check out this dashboard: ' + location.href);
+  });
+})();
 
 // ============ UNIVERSAL SYMBOL SEARCH (header → consolidated modal) ============
 // Searches: stocks_signals, signals_top20, poc_top, news, cc_news sentiment.
