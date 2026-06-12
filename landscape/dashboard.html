@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>AI Data Vendors · Competitive Landscape</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <script>
 /*!
  * Chart.js v4.4.1
@@ -81,6 +86,9 @@ header.top .sub{color:var(--muted);font-size:12.5px;margin-top:5px}
 .chip.sub[aria-pressed="true"]{background:var(--sub);border-color:var(--sub)}
 .chip.adj[aria-pressed="true"]{background:var(--adj);border-color:var(--adj)}
 .chip.orb[aria-pressed="true"]{background:var(--orb);border-color:var(--orb)}
+.hbtn{white-space:nowrap;color:var(--text)}
+@media (max-width:820px){.hbtn{min-height:44px;min-width:44px;padding:10px 14px}}
+@media (max-width:420px){.hbtn{padding:10px 12px}.hbtn .hbl{display:none}}
 .grid2{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .chartbox{position:relative;height:260px}
@@ -148,6 +156,9 @@ tbody tr[role="button"]{cursor:pointer}
     </div>
     <div class="sub">Every AI &amp; data vendor in one place · Snowflake Summit 2026 partners + the competitive field · filter by presence</div>
   </div>
+  <div class="spacer"></div>
+  <button class="chip hbtn" id="shareBtn" type="button" aria-label="Share this page">↗<span class="hbl"> Share</span></button>
+  <button class="chip hbtn" id="textBtn" type="button" hidden aria-label="Text a link to this page">💬<span class="hbl"> Text</span></button>
 </header>
 
 <div class="tabs" role="tablist" aria-label="Views">
@@ -458,6 +469,12 @@ function closeVendor(){
 const NS=DATA.ns;
 const ALL=DATA.ns.concat(DATA.summit);
 const lsState={pres:'',rel:'',tier:'',seg:'',geo:'',type:'',q:'',kpi:'',limit:120};
+const LS_URL_KEYS=['pres','rel','tier','seg','geo','type','q'];
+// mirror the directory filters into the query string (replaceState — no history entries; empty params omitted)
+let _suT=null;
+function syncURL(){clearTimeout(_suT);try{const p=new URLSearchParams();LS_URL_KEYS.forEach(k=>{if(lsState[k])p.set(k,lsState[k]);});const qs=p.toString();history.replaceState(null,'',location.pathname+(qs?'?'+qs:'')+location.hash);}catch(e){}}
+// debounced variant for per-keystroke callers — Safari rate-limits replaceState (~100/30s)
+function syncURLSoon(){clearTimeout(_suT);_suT=setTimeout(syncURL,250);}
 const LS_TABLE=document.getElementById('lsTable');
 const _nameCell=v=>`<b>${esc(v.name)}</b>${v.website?` <a href="${esc(v.website)}" target="_blank" rel="noopener" aria-label="${esc(v.name)} website">↗</a>`:''}<div class="seg">${esc(v.segment)}</div>`;
 const _relCell=v=>`<span class="pill ${REL_CLASS[v.relationship]||'adj'}" title="${esc(REL_DESC[v.relationship]||'')}">${esc(REL_LABEL[v.relationship]||v.relationship||'')}</span>`;
@@ -547,7 +564,7 @@ function lsKpis(){
     else {lsState.kpi=(lsState.kpi===kpi?'':kpi);lsState.rel='';syncRelChips();}
     document.querySelectorAll('#lsKpis .kpi:not([data-haspres="1"])').forEach(x=>x.classList.remove('on'));
     if((rel&&lsState.rel)||(!rel&&lsState.kpi))b.classList.add('on');
-    lsState.limit=120;LS_TABLE._render();
+    lsState.limit=120;LS_TABLE._render();syncURL();
   }));
 }
 function syncRelChips(){
@@ -570,7 +587,7 @@ function syncTierGroup(){
 function setPres(p){
   lsState.pres=p; syncPresChips(); syncTierGroup();
   LS_TABLE._setCols(lsPickCols());
-  lsState.limit=120; LS_TABLE._render();
+  lsState.limit=120; LS_TABLE._render(); syncURL();
 }
 function fillSelect(sel,vals){sel.innerHTML=sel.children[0].outerHTML+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');}
 
@@ -579,7 +596,7 @@ let segChart,relChart,geoChart,curSeg=[],curGeo=[];
 const REL_COLORS={substitute:'#f87171',adjacent:'#34d399','different-orbit':'#a78bfa'};
 const RELK=['substitute','adjacent','different-orbit'];
 function clearKpiOn(){document.querySelectorAll('#lsKpis .kpi').forEach(x=>x.classList.remove('on'));}
-function applyLS(scroll){lsState.limit=120;LS_TABLE._render();if(scroll){const p=document.getElementById('lsTable').closest('.panel');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}}
+function applyLS(scroll){lsState.limit=120;LS_TABLE._render();syncURL();if(scroll){const p=document.getElementById('lsTable').closest('.panel');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});}}
 function lsChartData(rows){
   const segC={},geoC={},relC={substitute:0,adjacent:0,'different-orbit':0};
   rows.forEach(v=>{segC[v.segment]=(segC[v.segment]||0)+1;geoC[v.geo||'Unknown']=(geoC[v.geo||'Unknown']||0)+1;if(relC[v.relationship]!=null)relC[v.relationship]++;});
@@ -624,19 +641,19 @@ function initLandscape(){
   // in sync — typing in either filters the table and mirrors to the other.
   function lsSearchInput(e){lsState.q=e.target.value;lsState.limit=120;
     const other=e.target.id==='lsSearch'?'lsSearch2':'lsSearch';document.getElementById(other).value=e.target.value;
-    LS_TABLE._render();}
+    LS_TABLE._render();syncURLSoon();}
   document.getElementById('lsSearch').addEventListener('input',lsSearchInput);
   document.getElementById('lsSearch2').addEventListener('input',lsSearchInput);
-  document.getElementById('lsSeg').addEventListener('change',e=>{lsState.seg=e.target.value;lsState.limit=120;LS_TABLE._render();});
-  document.getElementById('lsGeo').addEventListener('change',e=>{lsState.geo=e.target.value;lsState.limit=120;LS_TABLE._render();});
-  document.getElementById('lsType').addEventListener('change',e=>{lsState.type=e.target.value;lsState.limit=120;LS_TABLE._render();});
+  document.getElementById('lsSeg').addEventListener('change',e=>{lsState.seg=e.target.value;lsState.limit=120;LS_TABLE._render();syncURL();});
+  document.getElementById('lsGeo').addEventListener('change',e=>{lsState.geo=e.target.value;lsState.limit=120;LS_TABLE._render();syncURL();});
+  document.getElementById('lsType').addEventListener('change',e=>{lsState.type=e.target.value;lsState.limit=120;LS_TABLE._render();syncURL();});
   document.querySelectorAll('#lsFilters .chip[data-rel]').forEach(c=>c.addEventListener('click',()=>{
     lsState.rel=c.dataset.rel;lsState.kpi='';syncRelChips();
-    document.querySelectorAll('#lsKpis .kpi').forEach(x=>x.classList.remove('on'));lsState.limit=120;LS_TABLE._render();}));
+    document.querySelectorAll('#lsKpis .kpi').forEach(x=>x.classList.remove('on'));lsState.limit=120;LS_TABLE._render();syncURL();}));
   document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(c=>c.addEventListener('click',()=>{
     lsState.tier=c.dataset.tier;
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier===lsState.tier)));
-    lsState.limit=120;LS_TABLE._render();}));
+    lsState.limit=120;LS_TABLE._render();syncURL();}));
   document.querySelectorAll('#lsFilters .chip[data-pres]').forEach(c=>c.addEventListener('click',()=>setPres(c.dataset.pres)));
   document.getElementById('lsShowAll').addEventListener('click',()=>{lsState.limit=99999;LS_TABLE._render();});
   document.getElementById('lsClear').addEventListener('click',()=>{
@@ -645,13 +662,25 @@ function initLandscape(){
     document.getElementById('lsGeo').value='';document.getElementById('lsType').value='';
     syncRelChips();syncPresChips();syncTierGroup();clearKpiOn();LS_TABLE._setCols(lsPickCols());
     document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier==='')));
-    LS_TABLE._render();
+    LS_TABLE._render();syncURL();
   });
-  // The directory always opens on the full 816-vendor view (lsState.pres='').
-  // The ?pres=present|absent deep-link is intentionally NOT honoured on load —
-  // every entry point (incl. the Summit dashboard's "Competitive Landscape" /
-  // "All Partner Vendors" buttons) lands on all 816; visitors filter from there.
-  syncPresChips();syncTierGroup();LS_TABLE._setCols(lsPickCols());
+  // deep-link: /landscape/?pres=&rel=&tier=&seg=&geo=&type=&q= opens the directory pre-filtered
+  // (unknown values ignored). Required by the header Share/Text buttons: shared URLs carry the
+  // live filter state so the recipient lands on the same view; the Summit dashboard's
+  // "?pres=absent" entry links also promise the filtered field in their labels.
+  try{
+    const sp=new URLSearchParams(location.search);
+    const pp=sp.get('pres');if(pp==='present'||pp==='absent')lsState.pres=pp;
+    const rr=sp.get('rel');if(rr&&RELK.includes(rr))lsState.rel=rr;
+    const tt=sp.get('tier');if(tt&&['1','2','3'].includes(tt)&&lsState.pres==='absent')lsState.tier=tt; // tier only applies to the absent set (syncTierGroup would clear it anyway)
+    [['seg','lsSeg'],['geo','lsGeo'],['type','lsType']].forEach(([k,id])=>{
+      const v=sp.get(k),sel=document.getElementById(id);
+      if(v&&[...sel.options].some(o=>o.value===v)){sel.value=v;lsState[k]=v;}});
+    const qq=sp.get('q');if(qq){lsState.q=qq;document.getElementById('lsSearch').value=qq;document.getElementById('lsSearch2').value=qq;}
+  }catch(e){}
+  syncPresChips();syncRelChips();syncTierGroup();
+  document.querySelectorAll('#lsFilters .chip[data-tier]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.tier===lsState.tier)));
+  LS_TABLE._setCols(lsPickCols());
   LS_TABLE._render();
 }
 
@@ -836,6 +865,27 @@ function drawMQ(){
 document.getElementById('vmClose').addEventListener('click',closeVendor);
 document.getElementById('vModalBack').addEventListener('click',closeVendor);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.getElementById('vModal').hidden)closeVendor();});
+
+/* ---------- share / text ---------- */
+(function(){
+  const sb=document.getElementById('shareBtn'),tb=document.getElementById('textBtn');
+  const sbHTML=sb.innerHTML; let sbT=null;
+  const copied=()=>{sb.innerHTML='✓ Link copied';clearTimeout(sbT);sbT=setTimeout(()=>{sb.innerHTML=sbHTML;},2000);};
+  const taCopy=u=>{try{const ta=document.createElement('textarea');ta.value=u;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-999px;top:0';document.body.appendChild(ta);ta.select();const ok=document.execCommand('copy');ta.remove();return ok;}catch(e){return false;}};
+  sb.addEventListener('click',()=>{
+    const url=location.href;
+    if(navigator.share){navigator.share({title:'AI Data Vendors · Competitive Landscape',text:'Competitive landscape — 816 AI & data vendors',url}).catch(()=>{});return;}
+    const manual=u=>{try{prompt('Copy this link:',u);}catch(e){}}; // last resort: clipboard denied + execCommand failed
+    try{navigator.clipboard.writeText(url).then(copied,()=>{if(taCopy(url))copied();else manual(url);});}
+    catch(e){if(taCopy(url))copied();else manual(url);}
+  });
+  // Text via sms: — mobile only (desktop stays clean); iOS wants "sms:&body=", Android "sms:?body="
+  if((navigator.userAgentData&&navigator.userAgentData.mobile)||/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))tb.hidden=false;
+  tb.addEventListener('click',()=>{
+    const sep=/Android/i.test(navigator.userAgent)?'?':'&';
+    location.href='sms:'+sep+'body='+encodeURIComponent('Check out this vendor landscape: '+location.href);
+  });
+})();
 
 /* ---------- boot ---------- */
 initLandscape();
