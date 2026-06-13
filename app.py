@@ -1694,6 +1694,7 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <button class="btn" id="webShareBtn" type="button" title="Share this page" aria-label="Share this page">↗<span class="hbl"> Share</span></button>
     <button class="btn" id="textBtn" type="button" hidden title="Text a link to this page" aria-label="Text a link to this page">💬<span class="hbl"> Text</span></button>
     <a class="btn" href="health/apis.html" title="All data sources + live API status" aria-label="All data sources and live API status">◉<span class="hbl"> Data Sources</span></a>
+    <a class="btn" href="https://btabiado.github.io/BDT_Codex_projects_2026/Sharktank/" title="Shark Tank Intelligence — investor, deal &amp; outcome analytics" aria-label="Shark Tank Intelligence dashboard">🦈<span class="hbl"> Shark Tank</span></a>
   </div>
 </header>
 
