@@ -1,9 +1,9 @@
 {
-  "as_of": "2026-06-13",
+  "as_of": "2026-06-14",
   "broad_dollar": {
     "change_30d_pct": 0.016807,
     "current": 120.0831,
-    "percentile_2y": 0.25252525252525254
+    "percentile_2y": 0.25303643724696356
   },
   "data_quality": {
     "sources_failed": 0,
@@ -12,12 +12,12 @@
   "hy_oas": {
     "change_30d_bp": 2.0,
     "current": 2.78,
-    "percentile_2y": 0.21714285714285714
+    "percentile_2y": 0.21755725190839695
   },
   "ig_oas": {
     "change_30d_bp": -1.0,
     "current": 0.75,
-    "percentile_2y": 0.09732824427480916
+    "percentile_2y": 0.09751434034416825
   },
   "regime_flags": {
     "curve_inverted": false,

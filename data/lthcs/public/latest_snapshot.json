@@ -5,19 +5,19 @@
   "scores": [
     {
       "ticker": "AAPL",
-      "lthcs_score": 53.9,
+      "lthcs_score": 54.0,
       "band": "weakening",
-      "drift_1d": -0.2,
-      "drift_7d": -4.7,
-      "drift_30d": -1.7,
-      "drift_90d": 0.2,
+      "drift_1d": -0.1,
+      "drift_7d": -4.6,
+      "drift_30d": -1.6,
+      "drift_90d": 0.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 61.0,
+        "adoption_momentum": 61.2,
         "institutional_confidence": 59.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -47,7 +47,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.25,
+        15.3,
         14.75,
         12.5,
         0.0,
@@ -57,19 +57,19 @@
     },
     {
       "ticker": "ABBV",
-      "lthcs_score": 45.1,
+      "lthcs_score": 44.9,
       "band": "review",
-      "drift_1d": -0.1,
-      "drift_7d": -1.3,
-      "drift_30d": -11.6,
-      "drift_90d": -17.3,
+      "drift_1d": -0.3,
+      "drift_7d": -1.5,
+      "drift_30d": -11.8,
+      "drift_90d": -17.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 40.3,
+        "adoption_momentum": 39.3,
         "institutional_confidence": 44.9,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -99,7 +99,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.075,
+        9.825,
         11.225,
         12.5,
         0.0,
@@ -109,19 +109,19 @@
     },
     {
       "ticker": "ABNB",
-      "lthcs_score": 49.5,
+      "lthcs_score": 49.2,
       "band": "review",
-      "drift_1d": 5.7,
-      "drift_7d": 4.6,
-      "drift_30d": -4.1,
-      "drift_90d": -12.7,
+      "drift_1d": 5.4,
+      "drift_7d": 4.3,
+      "drift_30d": -4.4,
+      "drift_90d": -13.0,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 39.7,
+        "adoption_momentum": 38.8,
         "institutional_confidence": 63.4,
         "financial_evolution": 50.0,
         "thesis_integrity": 41.2,
@@ -151,7 +151,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.40625,
+        12.125,
         15.85,
         9.374999999999998,
         0.0,
@@ -173,7 +173,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 35.7,
+        "adoption_momentum": 35.5,
         "institutional_confidence": 16.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -203,7 +203,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.15625,
+        11.09375,
         4.175,
         9.374999999999998,
         0.0,
@@ -213,19 +213,19 @@
     },
     {
       "ticker": "ACN",
-      "lthcs_score": 33.2,
+      "lthcs_score": 33.1,
       "band": "review",
-      "drift_1d": 0.6,
-      "drift_7d": -2.9,
-      "drift_30d": -8.4,
-      "drift_90d": -13.3,
+      "drift_1d": 0.5,
+      "drift_7d": -3.0,
+      "drift_30d": -8.5,
+      "drift_90d": -13.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 36.3,
+        "adoption_momentum": 36.1,
         "institutional_confidence": 4.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -255,7 +255,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.34375,
+        11.28125,
         1.05,
         9.374999999999998,
         0.0,
@@ -317,19 +317,19 @@
     },
     {
       "ticker": "ADI",
-      "lthcs_score": 53.6,
+      "lthcs_score": 53.4,
       "band": "weakening",
-      "drift_1d": 0.6,
-      "drift_7d": -1.0,
-      "drift_30d": -22.9,
-      "drift_90d": -22.7,
+      "drift_1d": 0.4,
+      "drift_7d": -1.2,
+      "drift_30d": -23.1,
+      "drift_90d": -22.9,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 37.7,
+        "adoption_momentum": 37.1,
         "institutional_confidence": 84.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -359,7 +359,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.78125,
+        11.59375,
         21.0,
         9.374999999999998,
         0.0,
@@ -369,20 +369,20 @@
     },
     {
       "ticker": "ADP",
-      "lthcs_score": 44.8,
+      "lthcs_score": 45.0,
       "band": "review",
-      "drift_1d": 2.2,
-      "drift_7d": 3.1,
-      "drift_30d": -9.8,
-      "drift_90d": -7.2,
+      "drift_1d": 2.4,
+      "drift_7d": 3.3,
+      "drift_30d": -9.6,
+      "drift_90d": -7.0,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 43.7,
-        "institutional_confidence": 35.6,
+        "adoption_momentum": 43.6,
+        "institutional_confidence": 36.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
         "des": 49.7
@@ -411,8 +411,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.925,
-        8.9,
+        10.9,
+        9.15,
         12.5,
         0.0,
         12.425
@@ -421,19 +421,19 @@
     },
     {
       "ticker": "ADSK",
-      "lthcs_score": 38.4,
+      "lthcs_score": 38.2,
       "band": "review",
-      "drift_1d": -0.1,
-      "drift_7d": -4.0,
-      "drift_30d": -23.3,
-      "drift_90d": -23.2,
+      "drift_1d": -0.3,
+      "drift_7d": -4.2,
+      "drift_30d": -23.5,
+      "drift_90d": -23.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 46.3,
+        "adoption_momentum": 45.7,
         "institutional_confidence": 12.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -463,7 +463,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.46875,
+        14.28125,
         3.15,
         9.374999999999998,
         0.0,
@@ -473,19 +473,19 @@
     },
     {
       "ticker": "AEP",
-      "lthcs_score": 47.5,
+      "lthcs_score": 47.4,
       "band": "review",
-      "drift_1d": 0.0,
-      "drift_7d": -1.7,
-      "drift_30d": -13.0,
-      "drift_90d": -17.4,
+      "drift_1d": -0.1,
+      "drift_7d": -1.8,
+      "drift_30d": -13.1,
+      "drift_90d": -17.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 37.0,
+        "adoption_momentum": 36.6,
         "institutional_confidence": 64.8,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -515,7 +515,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.5625,
+        11.4375,
         16.2,
         9.374999999999998,
         0.0,
@@ -577,19 +577,19 @@
     },
     {
       "ticker": "AMD",
-      "lthcs_score": 61.7,
+      "lthcs_score": 61.9,
       "band": "monitor",
-      "drift_1d": 0.3,
-      "drift_7d": 1.8,
-      "drift_30d": -2.5,
-      "drift_90d": 15.5,
+      "drift_1d": 0.5,
+      "drift_7d": 2.0,
+      "drift_30d": -2.3,
+      "drift_90d": 15.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 62.3,
+        "adoption_momentum": 62.9,
         "institutional_confidence": 95.1,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -619,7 +619,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        19.46875,
+        19.65625,
         23.775,
         9.374999999999998,
         0.0,
@@ -629,20 +629,20 @@
     },
     {
       "ticker": "AMGN",
-      "lthcs_score": 49.9,
+      "lthcs_score": 49.6,
       "band": "review",
-      "drift_1d": 1.8,
-      "drift_7d": 6.0,
-      "drift_30d": -6.6,
-      "drift_90d": -17.6,
+      "drift_1d": 1.5,
+      "drift_7d": 5.7,
+      "drift_30d": -6.9,
+      "drift_90d": -17.9,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 48.3,
-        "institutional_confidence": 56.3,
+        "adoption_momentum": 47.9,
+        "institutional_confidence": 55.8,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
         "des": 45.3
@@ -671,8 +671,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.09375,
-        14.075,
+        14.96875,
+        13.95,
         9.374999999999998,
         0.0,
         11.325
@@ -681,20 +681,20 @@
     },
     {
       "ticker": "AMT",
-      "lthcs_score": 51.0,
+      "lthcs_score": 51.1,
       "band": "weakening",
-      "drift_1d": 0.6,
-      "drift_7d": -0.6,
-      "drift_30d": -9.7,
-      "drift_90d": -15.6,
+      "drift_1d": 0.7,
+      "drift_7d": -0.5,
+      "drift_30d": -9.6,
+      "drift_90d": -15.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 41.7,
-        "institutional_confidence": 70.3,
+        "adoption_momentum": 40.9,
+        "institutional_confidence": 71.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 44.0
@@ -723,8 +723,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        13.03125,
-        17.575,
+        12.78125,
+        17.925,
         9.374999999999998,
         0.0,
         11.0
@@ -745,7 +745,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 63.7,
+        "adoption_momentum": 63.9,
         "institutional_confidence": 41.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -775,7 +775,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.925,
+        15.975,
         10.3,
         12.5,
         0.0,
@@ -785,22 +785,22 @@
     },
     {
       "ticker": "ARM",
-      "lthcs_score": 55.5,
+      "lthcs_score": 55.3,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": 0.0,
-      "drift_30d": 0.4,
-      "drift_90d": 12.8,
+      "drift_1d": -0.3,
+      "drift_7d": -0.2,
+      "drift_30d": 0.2,
+      "drift_90d": 12.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 45.7,
+        "adoption_momentum": 45.2,
         "institutional_confidence": 93.5,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 55.0,
         "des": 45.7
       },
       "modifiers": {
@@ -827,7 +827,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.28125,
+        14.125,
         23.375,
         9.374999999999998,
         0.0,
@@ -837,19 +837,19 @@
     },
     {
       "ticker": "ASML",
-      "lthcs_score": 58.1,
+      "lthcs_score": 57.8,
       "band": "weakening",
-      "drift_1d": 0.0,
-      "drift_7d": 4.6,
-      "drift_30d": -14.1,
-      "drift_90d": -14.6,
+      "drift_1d": -0.3,
+      "drift_7d": 4.3,
+      "drift_30d": -14.4,
+      "drift_90d": -14.9,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 49.7,
+        "adoption_momentum": 48.9,
         "institutional_confidence": 87.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -879,7 +879,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.53125,
+        15.28125,
         21.75,
         9.374999999999998,
         0.0,
@@ -941,19 +941,19 @@
     },
     {
       "ticker": "AXP",
-      "lthcs_score": 47.4,
+      "lthcs_score": 47.2,
       "band": "review",
-      "drift_1d": -0.8,
-      "drift_7d": 6.0,
-      "drift_30d": -10.7,
-      "drift_90d": -9.4,
+      "drift_1d": -1.0,
+      "drift_7d": 5.8,
+      "drift_30d": -10.9,
+      "drift_90d": -9.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 58.3,
+        "adoption_momentum": 57.5,
         "institutional_confidence": 19.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -983,7 +983,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.575,
+        14.375,
         4.75,
         12.5,
         0.0,
@@ -993,19 +993,19 @@
     },
     {
       "ticker": "AZN",
-      "lthcs_score": 46.8,
+      "lthcs_score": 46.7,
       "band": "review",
-      "drift_1d": -0.6,
-      "drift_7d": -0.4,
-      "drift_30d": -7.9,
-      "drift_90d": -13.2,
+      "drift_1d": -0.7,
+      "drift_7d": -0.5,
+      "drift_30d": -8.0,
+      "drift_90d": -13.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 56.3,
+        "adoption_momentum": 55.9,
         "institutional_confidence": 34.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -1035,7 +1035,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.59375,
+        17.46875,
         8.5,
         9.374999999999998,
         0.0,
@@ -1097,19 +1097,19 @@
     },
     {
       "ticker": "BAC",
-      "lthcs_score": 53.5,
+      "lthcs_score": 53.4,
       "band": "weakening",
-      "drift_1d": -0.6,
-      "drift_7d": 4.1,
-      "drift_30d": 0.9,
-      "drift_90d": 1.2,
+      "drift_1d": -0.7,
+      "drift_7d": 4.0,
+      "drift_30d": 0.8,
+      "drift_90d": 1.1,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 55.0,
+        "adoption_momentum": 54.8,
         "institutional_confidence": 46.5,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -1139,7 +1139,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        13.75,
+        13.7,
         11.625,
         12.5,
         0.0,
@@ -1149,22 +1149,22 @@
     },
     {
       "ticker": "BIIB",
-      "lthcs_score": 54.0,
+      "lthcs_score": 53.8,
       "band": "weakening",
-      "drift_1d": -0.4,
-      "drift_7d": -4.0,
-      "drift_30d": 5.4,
-      "drift_90d": 5.6,
+      "drift_1d": -0.6,
+      "drift_7d": -4.2,
+      "drift_30d": 5.2,
+      "drift_90d": 5.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 51.7,
+        "adoption_momentum": 51.1,
         "institutional_confidence": 68.5,
         "financial_evolution": 50.0,
-        "thesis_integrity": 58.8,
+        "thesis_integrity": 50.0,
         "des": 45.3
       },
       "modifiers": {
@@ -1191,7 +1191,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.15625,
+        15.96875,
         17.125,
         9.374999999999998,
         0.0,
@@ -1201,19 +1201,19 @@
     },
     {
       "ticker": "BK",
-      "lthcs_score": 58.5,
+      "lthcs_score": 58.4,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": 3.3,
-      "drift_30d": -8.3,
-      "drift_90d": -5.6,
+      "drift_1d": -0.2,
+      "drift_7d": 3.2,
+      "drift_30d": -8.4,
+      "drift_90d": -5.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 45.0,
+        "adoption_momentum": 44.6,
         "institutional_confidence": 78.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -1243,7 +1243,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.0625,
+        13.9375,
         19.5,
         9.374999999999998,
         0.0,
@@ -1253,19 +1253,19 @@
     },
     {
       "ticker": "BKNG",
-      "lthcs_score": 42.5,
+      "lthcs_score": 42.4,
       "band": "review",
-      "drift_1d": 2.9,
-      "drift_7d": 2.6,
-      "drift_30d": -10.8,
-      "drift_90d": -21.1,
+      "drift_1d": 2.8,
+      "drift_7d": 2.5,
+      "drift_30d": -10.9,
+      "drift_90d": -21.2,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 54.3,
+        "adoption_momentum": 53.8,
         "institutional_confidence": 17.4,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -1295,7 +1295,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.96875,
+        16.8125,
         4.35,
         9.374999999999998,
         0.0,
@@ -1305,20 +1305,20 @@
     },
     {
       "ticker": "BKR",
-      "lthcs_score": 54.5,
+      "lthcs_score": 54.2,
       "band": "weakening",
-      "drift_1d": -1.8,
-      "drift_7d": 2.3,
-      "drift_30d": -2.6,
-      "drift_90d": -0.3,
+      "drift_1d": -2.1,
+      "drift_7d": 2.0,
+      "drift_30d": -2.9,
+      "drift_90d": -0.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 49.0,
-        "institutional_confidence": 66.2,
+        "adoption_momentum": 48.4,
+        "institutional_confidence": 65.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 53.0
@@ -1347,8 +1347,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.3125,
-        16.55,
+        15.125,
+        16.425,
         9.374999999999998,
         0.0,
         13.25
@@ -1357,20 +1357,20 @@
     },
     {
       "ticker": "BLK",
-      "lthcs_score": 48.8,
+      "lthcs_score": 48.5,
       "band": "review",
-      "drift_1d": 1.5,
-      "drift_7d": 6.1,
-      "drift_30d": -22.0,
-      "drift_90d": -17.3,
+      "drift_1d": 1.2,
+      "drift_7d": 5.8,
+      "drift_30d": -22.3,
+      "drift_90d": -17.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.3,
-        "institutional_confidence": 32.6,
+        "adoption_momentum": 49.5,
+        "institutional_confidence": 32.1,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
         "des": 62.4
@@ -1399,8 +1399,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.71875,
-        8.15,
+        15.46875,
+        8.025,
         9.374999999999998,
         0.0,
         15.6
@@ -1409,19 +1409,19 @@
     },
     {
       "ticker": "BMY",
-      "lthcs_score": 52.3,
+      "lthcs_score": 52.4,
       "band": "weakening",
-      "drift_1d": 0.1,
-      "drift_7d": -1.1,
-      "drift_30d": 6.5,
-      "drift_90d": 0.8,
+      "drift_1d": 0.2,
+      "drift_7d": -1.0,
+      "drift_30d": 6.6,
+      "drift_90d": 0.9,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 63.0,
+        "adoption_momentum": 63.4,
         "institutional_confidence": 47.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -1451,7 +1451,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        19.6875,
+        19.8125,
         11.925,
         9.374999999999998,
         0.0,
@@ -1461,19 +1461,19 @@
     },
     {
       "ticker": "BRK.B",
-      "lthcs_score": 50.1,
+      "lthcs_score": 50.0,
       "band": "weakening",
-      "drift_1d": -1.9,
-      "drift_7d": 3.2,
-      "drift_30d": 8.8,
-      "drift_90d": 7.4,
+      "drift_1d": -2.0,
+      "drift_7d": 3.1,
+      "drift_30d": 8.7,
+      "drift_90d": 7.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 51.7,
+        "adoption_momentum": 51.1,
         "institutional_confidence": 36.4,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -1503,7 +1503,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        12.925,
+        12.775,
         9.1,
         12.5,
         0.0,
@@ -1513,19 +1513,19 @@
     },
     {
       "ticker": "C",
-      "lthcs_score": 56.5,
+      "lthcs_score": 56.4,
       "band": "weakening",
-      "drift_1d": -1.1,
-      "drift_7d": 4.1,
-      "drift_30d": -1.7,
-      "drift_90d": 0.8,
+      "drift_1d": -1.2,
+      "drift_7d": 4.0,
+      "drift_30d": -1.8,
+      "drift_90d": 0.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 41.0,
+        "adoption_momentum": 40.4,
         "institutional_confidence": 72.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -1555,7 +1555,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.25,
+        10.1,
         18.175,
         12.5,
         0.0,
@@ -1577,7 +1577,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 44.3,
+        "adoption_momentum": 44.1,
         "institutional_confidence": 81.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -1607,7 +1607,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        13.84375,
+        13.78125,
         20.3,
         9.374999999999998,
         0.0,
@@ -1617,19 +1617,19 @@
     },
     {
       "ticker": "CCEP",
-      "lthcs_score": 55.4,
+      "lthcs_score": 55.0,
       "band": "weakening",
-      "drift_1d": 1.8,
-      "drift_7d": 7.4,
-      "drift_30d": 4.9,
-      "drift_90d": 0.1,
+      "drift_1d": 1.4,
+      "drift_7d": 7.0,
+      "drift_30d": 4.5,
+      "drift_90d": -0.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 59.0,
+        "adoption_momentum": 58.0,
         "institutional_confidence": 64.4,
         "financial_evolution": 50.0,
         "thesis_integrity": 41.2,
@@ -1659,7 +1659,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.4375,
+        18.125,
         16.1,
         9.374999999999998,
         0.0,
@@ -1721,19 +1721,19 @@
     },
     {
       "ticker": "CDW",
-      "lthcs_score": 44.9,
+      "lthcs_score": 44.7,
       "band": "review",
-      "drift_1d": 1.9,
-      "drift_7d": -2.9,
-      "drift_30d": 6.2,
-      "drift_90d": 5.5,
+      "drift_1d": 1.7,
+      "drift_7d": -3.1,
+      "drift_30d": 6.0,
+      "drift_90d": 5.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 38.3,
+        "adoption_momentum": 37.7,
         "institutional_confidence": 60.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -1763,7 +1763,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        11.96875,
+        11.78125,
         15.15,
         9.374999999999998,
         0.0,
@@ -1773,19 +1773,19 @@
     },
     {
       "ticker": "CEG",
-      "lthcs_score": 44.9,
+      "lthcs_score": 44.7,
       "band": "review",
-      "drift_1d": 1.0,
-      "drift_7d": -2.5,
-      "drift_30d": -15.1,
-      "drift_90d": -8.0,
+      "drift_1d": 0.8,
+      "drift_7d": -2.7,
+      "drift_30d": -15.3,
+      "drift_90d": -8.2,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 57.0,
+        "adoption_momentum": 56.4,
         "institutional_confidence": 29.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -1815,7 +1815,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.8125,
+        17.625,
         7.3,
         9.374999999999998,
         0.0,
@@ -1825,19 +1825,19 @@
     },
     {
       "ticker": "CHTR",
-      "lthcs_score": 41.0,
+      "lthcs_score": 40.8,
       "band": "review",
-      "drift_1d": -0.3,
-      "drift_7d": 1.2,
-      "drift_30d": 11.0,
-      "drift_90d": -2.3,
+      "drift_1d": -0.5,
+      "drift_7d": 1.0,
+      "drift_30d": 10.8,
+      "drift_90d": -2.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 53.7,
+        "adoption_momentum": 53.2,
         "institutional_confidence": 11.9,
         "financial_evolution": 50.0,
         "thesis_integrity": 45.0,
@@ -1867,7 +1867,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.78125,
+        16.625,
         2.975,
         9.374999999999998,
         0.0,
@@ -1877,22 +1877,22 @@
     },
     {
       "ticker": "CL",
-      "lthcs_score": 42.0,
+      "lthcs_score": 41.9,
       "band": "review",
-      "drift_1d": -1.5,
-      "drift_7d": -4.5,
-      "drift_30d": -11.3,
-      "drift_90d": -11.4,
+      "drift_1d": -1.6,
+      "drift_7d": -4.6,
+      "drift_30d": -11.4,
+      "drift_90d": -11.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 42.3,
+        "adoption_momentum": 42.0,
         "institutional_confidence": 31.7,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 50.0,
         "des": 45.8
       },
       "modifiers": {
@@ -1919,7 +1919,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        13.21875,
+        13.125,
         7.925,
         9.374999999999998,
         0.0,
@@ -1929,19 +1929,19 @@
     },
     {
       "ticker": "CMCSA",
-      "lthcs_score": 42.5,
+      "lthcs_score": 42.7,
       "band": "review",
-      "drift_1d": -0.3,
-      "drift_7d": -0.4,
-      "drift_30d": -0.5,
-      "drift_90d": -15.2,
+      "drift_1d": -0.1,
+      "drift_7d": -0.2,
+      "drift_30d": -0.3,
+      "drift_90d": -15.0,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 60.3,
+        "adoption_momentum": 60.7,
         "institutional_confidence": 10.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -1971,7 +1971,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.84375,
+        18.96875,
         2.5,
         9.374999999999998,
         0.0,
@@ -1981,19 +1981,19 @@
     },
     {
       "ticker": "COF",
-      "lthcs_score": 46.3,
+      "lthcs_score": 46.0,
       "band": "review",
-      "drift_1d": 1.5,
-      "drift_7d": 3.7,
-      "drift_30d": -16.5,
-      "drift_90d": -21.5,
+      "drift_1d": 1.2,
+      "drift_7d": 3.4,
+      "drift_30d": -16.8,
+      "drift_90d": -21.8,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 57.7,
+        "adoption_momentum": 57.0,
         "institutional_confidence": 13.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 45.0,
@@ -2023,7 +2023,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.03125,
+        17.8125,
         3.25,
         9.374999999999998,
         0.0,
@@ -2033,19 +2033,19 @@
     },
     {
       "ticker": "COP",
-      "lthcs_score": 55.4,
+      "lthcs_score": 55.3,
       "band": "weakening",
-      "drift_1d": -0.5,
-      "drift_7d": -0.1,
-      "drift_30d": -8.6,
-      "drift_90d": -10.2,
+      "drift_1d": -0.6,
+      "drift_7d": -0.2,
+      "drift_30d": -8.7,
+      "drift_90d": -10.3,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 53.0,
+        "adoption_momentum": 52.7,
         "institutional_confidence": 65.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -2075,7 +2075,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.5625,
+        16.46875,
         16.25,
         9.374999999999998,
         0.0,
@@ -2085,19 +2085,19 @@
     },
     {
       "ticker": "COST",
-      "lthcs_score": 43.6,
+      "lthcs_score": 43.4,
       "band": "review",
-      "drift_1d": -3.3,
-      "drift_7d": -1.3,
-      "drift_30d": -22.9,
-      "drift_90d": -21.4,
+      "drift_1d": -3.5,
+      "drift_7d": -1.5,
+      "drift_30d": -23.1,
+      "drift_90d": -21.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 39.0,
+        "adoption_momentum": 38.2,
         "institutional_confidence": 39.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -2127,7 +2127,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        9.75,
+        9.55,
         9.9,
         12.5,
         0.0,
@@ -2201,7 +2201,7 @@
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 64.3,
+        "adoption_momentum": 64.5,
         "institutional_confidence": 89.5,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -2231,7 +2231,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.075,
+        16.125,
         22.375,
         12.5,
         0.0,
@@ -2241,19 +2241,19 @@
     },
     {
       "ticker": "CSCO",
-      "lthcs_score": 57.7,
+      "lthcs_score": 57.6,
       "band": "weakening",
-      "drift_1d": -1.3,
-      "drift_7d": -6.8,
-      "drift_30d": 0.0,
-      "drift_90d": 6.3,
+      "drift_1d": -1.4,
+      "drift_7d": -6.9,
+      "drift_30d": -0.1,
+      "drift_90d": 6.2,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 43.0,
+        "adoption_momentum": 42.5,
         "institutional_confidence": 92.1,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -2283,7 +2283,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        10.75,
+        10.625,
         23.025,
         12.5,
         0.0,
@@ -2293,19 +2293,19 @@
     },
     {
       "ticker": "CSGP",
-      "lthcs_score": 38.5,
+      "lthcs_score": 38.4,
       "band": "review",
-      "drift_1d": -0.5,
-      "drift_7d": -1.0,
-      "drift_30d": -20.1,
-      "drift_90d": -17.8,
+      "drift_1d": -0.6,
+      "drift_7d": -1.1,
+      "drift_30d": -20.2,
+      "drift_90d": -17.9,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 47.0,
+        "adoption_momentum": 46.8,
         "institutional_confidence": 7.9,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -2335,7 +2335,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.6875,
+        14.625,
         1.975,
         9.374999999999998,
         0.0,
@@ -2345,19 +2345,19 @@
     },
     {
       "ticker": "CTAS",
-      "lthcs_score": 44.4,
+      "lthcs_score": 44.3,
       "band": "review",
-      "drift_1d": -0.4,
-      "drift_7d": -0.7,
-      "drift_30d": -6.9,
-      "drift_90d": -13.3,
+      "drift_1d": -0.5,
+      "drift_7d": -0.8,
+      "drift_30d": -7.0,
+      "drift_90d": -13.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 55.7,
+        "adoption_momentum": 55.4,
         "institutional_confidence": 20.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -2387,7 +2387,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        17.40625,
+        17.3125,
         5.15,
         9.374999999999998,
         0.0,
@@ -2397,19 +2397,19 @@
     },
     {
       "ticker": "CTSH",
-      "lthcs_score": 40.3,
+      "lthcs_score": 40.1,
       "band": "review",
-      "drift_1d": 3.8,
-      "drift_7d": -0.3,
-      "drift_30d": 0.5,
-      "drift_90d": -4.2,
+      "drift_1d": 3.6,
+      "drift_7d": -0.5,
+      "drift_30d": 0.3,
+      "drift_90d": -4.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 59.7,
+        "adoption_momentum": 59.1,
         "institutional_confidence": 3.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -2439,7 +2439,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        18.65625,
+        18.46875,
         0.8,
         9.374999999999998,
         0.0,
@@ -2449,19 +2449,19 @@
     },
     {
       "ticker": "CVS",
-      "lthcs_score": 57.9,
+      "lthcs_score": 57.7,
       "band": "weakening",
-      "drift_1d": 0.0,
-      "drift_7d": 0.5,
-      "drift_30d": -5.8,
-      "drift_90d": -0.3,
+      "drift_1d": -0.2,
+      "drift_7d": 0.3,
+      "drift_30d": -6.0,
+      "drift_90d": -0.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 51.7,
+        "adoption_momentum": 51.1,
         "institutional_confidence": 83.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -2491,7 +2491,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        16.15625,
+        15.96875,
         20.9,
         9.374999999999998,
         0.0,
@@ -2501,19 +2501,19 @@
     },
     {
       "ticker": "CVX",
-      "lthcs_score": 56.4,
+      "lthcs_score": 56.6,
       "band": "weakening",
-      "drift_1d": 3.4,
-      "drift_7d": 0.0,
-      "drift_30d": 3.8,
-      "drift_90d": -0.9,
+      "drift_1d": 3.6,
+      "drift_7d": 0.2,
+      "drift_30d": 4.0,
+      "drift_90d": -0.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 61.7,
+        "adoption_momentum": 62.3,
         "institutional_confidence": 58.1,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -2543,7 +2543,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        19.28125,
+        19.46875,
         14.525,
         9.374999999999998,
         0.0,
@@ -2553,19 +2553,19 @@
     },
     {
       "ticker": "DASH",
-      "lthcs_score": 35.5,
+      "lthcs_score": 35.4,
       "band": "review",
-      "drift_1d": -0.2,
-      "drift_7d": 0.8,
-      "drift_30d": -4.0,
-      "drift_90d": -2.0,
+      "drift_1d": -0.3,
+      "drift_7d": 0.7,
+      "drift_30d": -4.1,
+      "drift_90d": -2.1,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 47.7,
+        "adoption_momentum": 47.3,
         "institutional_confidence": -2.4,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -2595,7 +2595,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        14.90625,
+        14.78125,
         -0.6,
         9.374999999999998,
         0.0,
@@ -2605,19 +2605,19 @@
     },
     {
       "ticker": "DDOG",
-      "lthcs_score": 56.6,
+      "lthcs_score": 57.3,
       "band": "weakening",
-      "drift_1d": 0.4,
-      "drift_7d": -2.4,
-      "drift_30d": -8.7,
-      "drift_90d": 10.1,
+      "drift_1d": 1.1,
+      "drift_7d": -1.7,
+      "drift_30d": -8.0,
+      "drift_90d": 10.8,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 52.1,
         "institutional_confidence": 92.8,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -2647,7 +2647,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        16.28125,
         23.2,
         9.374999999999998,
         0.0,
@@ -2657,20 +2657,20 @@
     },
     {
       "ticker": "DE",
-      "lthcs_score": 51.5,
-      "band": "weakening",
-      "drift_1d": 0.6,
-      "drift_7d": 1.1,
-      "drift_30d": 6.7,
-      "drift_90d": 5.5,
+      "lthcs_score": 49.2,
+      "band": "review",
+      "drift_1d": -1.7,
+      "drift_7d": -1.2,
+      "drift_30d": 4.4,
+      "drift_90d": 3.2,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
-        "institutional_confidence": 56.3,
+        "adoption_momentum": 43.0,
+        "institutional_confidence": 55.9,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 49.7
@@ -2699,8 +2699,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
-        14.075,
+        13.4375,
+        13.975,
         9.374999999999998,
         0.0,
         12.425
@@ -2709,19 +2709,19 @@
     },
     {
       "ticker": "DHR",
-      "lthcs_score": 38.2,
+      "lthcs_score": 41.2,
       "band": "review",
-      "drift_1d": 0.3,
-      "drift_7d": -0.8,
-      "drift_30d": -5.5,
-      "drift_90d": -11.7,
+      "drift_1d": 3.3,
+      "drift_7d": 2.2,
+      "drift_30d": -2.5,
+      "drift_90d": -8.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 59.6,
         "institutional_confidence": 7.5,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -2751,7 +2751,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        18.625,
         1.875,
         9.374999999999998,
         0.0,
@@ -2813,19 +2813,19 @@
     },
     {
       "ticker": "DUK",
-      "lthcs_score": 47.0,
-      "band": "review",
-      "drift_1d": -0.6,
-      "drift_7d": -5.5,
-      "drift_30d": -21.1,
-      "drift_90d": -21.5,
+      "lthcs_score": 50.7,
+      "band": "weakening",
+      "drift_1d": 3.1,
+      "drift_7d": -1.8,
+      "drift_30d": -17.4,
+      "drift_90d": -17.8,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 61.8,
         "institutional_confidence": 46.5,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
@@ -2855,7 +2855,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        19.3125,
         11.625,
         9.374999999999998,
         0.0,
@@ -2865,20 +2865,20 @@
     },
     {
       "ticker": "DXCM",
-      "lthcs_score": 49.6,
-      "band": "review",
-      "drift_1d": 0.9,
-      "drift_7d": 0.7,
-      "drift_30d": -13.1,
-      "drift_90d": -20.9,
+      "lthcs_score": 52.7,
+      "band": "weakening",
+      "drift_1d": 4.0,
+      "drift_7d": 3.8,
+      "drift_30d": -10.0,
+      "drift_90d": -17.8,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
-        "institutional_confidence": 53.2,
+        "adoption_momentum": 60.2,
+        "institutional_confidence": 52.8,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 45.3
@@ -2907,8 +2907,8 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
-        13.3,
+        18.8125,
+        13.2,
         9.374999999999998,
         0.0,
         11.325
@@ -2917,22 +2917,22 @@
     },
     {
       "ticker": "EA",
-      "lthcs_score": 46.3,
+      "lthcs_score": 43.6,
       "band": "review",
-      "drift_1d": 0.2,
-      "drift_7d": 3.9,
-      "drift_30d": 1.5,
-      "drift_90d": 6.1,
+      "drift_1d": -2.5,
+      "drift_7d": 1.2,
+      "drift_30d": -1.2,
+      "drift_90d": 3.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 41.4,
         "institutional_confidence": 38.0,
         "financial_evolution": 50.0,
-        "thesis_integrity": 58.8,
+        "thesis_integrity": 41.2,
         "des": 47.3
       },
       "modifiers": {
@@ -2959,7 +2959,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        12.9375,
         9.5,
         9.374999999999998,
         0.0,
@@ -2969,19 +2969,19 @@
     },
     {
       "ticker": "EMR",
-      "lthcs_score": 43.8,
+      "lthcs_score": 42.6,
       "band": "review",
-      "drift_1d": -1.2,
-      "drift_7d": 0.2,
-      "drift_30d": -3.7,
-      "drift_90d": -0.8,
+      "drift_1d": -2.4,
+      "drift_7d": -1.0,
+      "drift_30d": -4.9,
+      "drift_90d": -2.0,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 46.2,
         "institutional_confidence": 25.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -3011,7 +3011,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        14.4375,
         6.4,
         9.374999999999998,
         0.0,
@@ -3073,19 +3073,19 @@
     },
     {
       "ticker": "F",
-      "lthcs_score": 53.6,
+      "lthcs_score": 56.3,
       "band": "weakening",
-      "drift_1d": 1.6,
-      "drift_7d": -0.5,
-      "drift_30d": 10.6,
-      "drift_90d": 13.7,
+      "drift_1d": 4.3,
+      "drift_7d": 2.2,
+      "drift_30d": 13.3,
+      "drift_90d": 16.4,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 58.6,
         "institutional_confidence": 67.1,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -3115,7 +3115,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        18.3125,
         16.775,
         9.374999999999998,
         0.0,
@@ -3125,19 +3125,19 @@
     },
     {
       "ticker": "FANG",
-      "lthcs_score": 56.8,
+      "lthcs_score": 58.1,
       "band": "weakening",
-      "drift_1d": -0.7,
-      "drift_7d": 1.6,
-      "drift_30d": -22.8,
-      "drift_90d": -24.5,
+      "drift_1d": 0.6,
+      "drift_7d": 2.9,
+      "drift_30d": -21.5,
+      "drift_90d": -23.2,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 54.3,
         "institutional_confidence": 74.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
@@ -3167,7 +3167,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        16.96875,
         18.55,
         9.374999999999998,
         0.0,
@@ -3177,19 +3177,19 @@
     },
     {
       "ticker": "FAST",
-      "lthcs_score": 48.2,
+      "lthcs_score": 45.0,
       "band": "review",
-      "drift_1d": -1.7,
-      "drift_7d": -0.1,
-      "drift_30d": -11.7,
-      "drift_90d": -13.5,
+      "drift_1d": -4.9,
+      "drift_7d": -3.3,
+      "drift_30d": -14.9,
+      "drift_90d": -16.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
         "thesis_unavailable"
       ],
       "subscores": {
-        "adoption_momentum": 50.0,
+        "adoption_momentum": 39.8,
         "institutional_confidence": 43.1,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
@@ -3219,7 +3219,7 @@
         "thesis_integrity"
       ],
       "weighted_components": [
-        15.625,
+        12.4375,
         10.775,
         9.374999999999998,
         0.0,
@@ -3593,12 +3593,12 @@
     },
     {
       "ticker": "GOOG",
-      "lthcs_score": 49.8,
+      "lthcs_score": 49.7,
       "band": "review",
-      "drift_1d": 1.4,
-      "drift_7d": -5.0,
-      "drift_30d": -21.1,
-      "drift_90d": -14.4,
+      "drift_1d": 1.3,
+      "drift_7d": -5.1,
+      "drift_30d": -21.2,
+      "drift_90d": -14.5,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -3606,7 +3606,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 50.7,
+        "institutional_confidence": 50.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 48.5
@@ -3636,7 +3636,7 @@
       ],
       "weighted_components": [
         12.5,
-        12.675,
+        12.55,
         12.5,
         0.0,
         12.125
@@ -3645,12 +3645,12 @@
     },
     {
       "ticker": "GOOGL",
-      "lthcs_score": 50.7,
+      "lthcs_score": 50.6,
       "band": "weakening",
-      "drift_1d": 1.5,
-      "drift_7d": -4.8,
-      "drift_30d": -20.5,
-      "drift_90d": -13.6,
+      "drift_1d": 1.4,
+      "drift_7d": -4.9,
+      "drift_30d": -20.6,
+      "drift_90d": -13.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -3658,7 +3658,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 54.4,
+        "institutional_confidence": 53.9,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 48.5
@@ -3688,7 +3688,7 @@
       ],
       "weighted_components": [
         12.5,
-        13.6,
+        13.475,
         12.5,
         0.0,
         12.125
@@ -4856,7 +4856,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 16.9,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 50.0,
         "des": 62.4
       },
       "modifiers": {
@@ -5116,7 +5116,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 57.2,
         "financial_evolution": 50.0,
-        "thesis_integrity": 58.8,
+        "thesis_integrity": 41.2,
         "des": 45.8
       },
       "modifiers": {
@@ -6609,12 +6609,12 @@
     },
     {
       "ticker": "PG",
-      "lthcs_score": 45.5,
+      "lthcs_score": 45.3,
       "band": "review",
-      "drift_1d": -0.3,
-      "drift_7d": -2.6,
-      "drift_30d": 8.7,
-      "drift_90d": 7.4,
+      "drift_1d": -0.5,
+      "drift_7d": -2.8,
+      "drift_30d": 8.5,
+      "drift_90d": 7.2,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -6622,7 +6622,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 36.1,
+        "institutional_confidence": 35.6,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
         "des": 45.8
@@ -6652,7 +6652,7 @@
       ],
       "weighted_components": [
         12.5,
-        9.025,
+        8.9,
         12.5,
         0.0,
         11.45
@@ -6661,12 +6661,12 @@
     },
     {
       "ticker": "PM",
-      "lthcs_score": 49.5,
+      "lthcs_score": 49.4,
       "band": "review",
-      "drift_1d": 1.7,
-      "drift_7d": 0.4,
-      "drift_30d": -4.2,
-      "drift_90d": -11.6,
+      "drift_1d": 1.6,
+      "drift_7d": 0.3,
+      "drift_30d": -4.3,
+      "drift_90d": -11.7,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -6674,9 +6674,9 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 52.3,
+        "institutional_confidence": 51.9,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 41.2,
         "des": 45.8
       },
       "modifiers": {
@@ -6704,7 +6704,7 @@
       ],
       "weighted_components": [
         15.625,
-        13.075,
+        12.975,
         9.374999999999998,
         0.0,
         11.45
@@ -6832,7 +6832,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 8.8,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 41.2,
         "des": 45.3
       },
       "modifiers": {
@@ -7285,12 +7285,12 @@
     },
     {
       "ticker": "SO",
-      "lthcs_score": 48.8,
+      "lthcs_score": 48.6,
       "band": "review",
-      "drift_1d": -0.2,
-      "drift_7d": -1.8,
-      "drift_30d": -10.4,
-      "drift_90d": -12.4,
+      "drift_1d": -0.4,
+      "drift_7d": -2.0,
+      "drift_30d": -10.6,
+      "drift_90d": -12.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -7298,7 +7298,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 53.5,
+        "institutional_confidence": 53.0,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
         "des": 41.5
@@ -7328,7 +7328,7 @@
       ],
       "weighted_components": [
         15.625,
-        13.375,
+        13.25,
         9.374999999999998,
         0.0,
         10.375
@@ -7352,7 +7352,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 84.9,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 55.0,
         "des": 44.0
       },
       "modifiers": {
@@ -7649,12 +7649,12 @@
     },
     {
       "ticker": "TRV",
-      "lthcs_score": 54.8,
+      "lthcs_score": 54.7,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": 3.6,
-      "drift_30d": 2.6,
-      "drift_90d": -2.5,
+      "drift_1d": -0.2,
+      "drift_7d": 3.5,
+      "drift_30d": 2.5,
+      "drift_90d": -2.6,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -7662,7 +7662,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 56.7,
+        "institutional_confidence": 56.3,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
         "des": 62.4
@@ -7692,7 +7692,7 @@
       ],
       "weighted_components": [
         12.5,
-        14.175,
+        14.075,
         12.5,
         0.0,
         15.6
@@ -8533,12 +8533,12 @@
     },
     {
       "ticker": "XEL",
-      "lthcs_score": 48.6,
+      "lthcs_score": 48.4,
       "band": "review",
-      "drift_1d": -0.2,
-      "drift_7d": -2.0,
-      "drift_30d": -3.6,
-      "drift_90d": -2.6,
+      "drift_1d": -0.4,
+      "drift_7d": -2.2,
+      "drift_30d": -3.8,
+      "drift_90d": -2.8,
       "confidence_level": "medium",
       "data_quality_flags": [
         "sec_unavailable",
@@ -8546,7 +8546,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 52.8,
+        "institutional_confidence": 52.3,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
         "des": 41.5
@@ -8576,7 +8576,7 @@
       ],
       "weighted_components": [
         15.625,
-        13.2,
+        13.075,
         9.374999999999998,
         0.0,
         10.375
@@ -8897,9 +8897,9 @@
     },
     {
       "ticker": "CB",
-      "lthcs_score": 52.8,
+      "lthcs_score": 53.3,
       "band": "weakening",
-      "drift_1d": -1.1,
+      "drift_1d": -0.6,
       "drift_7d": 0.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
@@ -8910,7 +8910,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 48.9,
+        "institutional_confidence": 50.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
         "des": 62.4
@@ -8940,7 +8940,7 @@
       ],
       "weighted_components": [
         9.374999999999998,
-        12.225,
+        12.675,
         15.625,
         0.0,
         15.6
@@ -8949,10 +8949,10 @@
     },
     {
       "ticker": "CI",
-      "lthcs_score": 52.0,
+      "lthcs_score": 51.9,
       "band": "weakening",
-      "drift_1d": 0.5,
-      "drift_7d": 0.7,
+      "drift_1d": 0.4,
+      "drift_7d": 0.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "confidence_level": "medium",
@@ -8962,7 +8962,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 62.7,
+        "institutional_confidence": 62.3,
         "financial_evolution": 50.0,
         "thesis_integrity": 50.0,
         "des": 45.3
@@ -8992,7 +8992,7 @@
       ],
       "weighted_components": [
         12.5,
-        15.675,
+        15.575,
         12.5,
         0.0,
         11.325
@@ -9053,10 +9053,10 @@
     },
     {
       "ticker": "CMI",
-      "lthcs_score": 53.3,
+      "lthcs_score": 53.2,
       "band": "weakening",
-      "drift_1d": 0.1,
-      "drift_7d": -1.5,
+      "drift_1d": 0.0,
+      "drift_7d": -1.6,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "confidence_level": "medium",
@@ -9066,7 +9066,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 63.7,
+        "institutional_confidence": 63.2,
         "financial_evolution": 50.0,
         "thesis_integrity": 55.0,
         "des": 49.7
@@ -9096,7 +9096,7 @@
       ],
       "weighted_components": [
         15.625,
-        15.925,
+        15.8,
         9.374999999999998,
         0.0,
         12.425
@@ -9417,10 +9417,10 @@
     },
     {
       "ticker": "FCX",
-      "lthcs_score": 52.6,
+      "lthcs_score": 52.5,
       "band": "weakening",
-      "drift_1d": -1.4,
-      "drift_7d": 3.1,
+      "drift_1d": -1.5,
+      "drift_7d": 3.0,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "confidence_level": "medium",
@@ -9430,7 +9430,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 56.9,
+        "institutional_confidence": 56.5,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 53.6
@@ -9460,7 +9460,7 @@
       ],
       "weighted_components": [
         15.625,
-        14.225,
+        14.125,
         9.374999999999998,
         0.0,
         13.4
@@ -9989,10 +9989,10 @@
     },
     {
       "ticker": "KMI",
-      "lthcs_score": 52.9,
+      "lthcs_score": 52.8,
       "band": "weakening",
-      "drift_1d": 0.5,
-      "drift_7d": 0.3,
+      "drift_1d": 0.4,
+      "drift_7d": 0.2,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "confidence_level": "medium",
@@ -10002,7 +10002,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 58.8,
+        "institutional_confidence": 58.3,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 53.0
@@ -10032,7 +10032,7 @@
       ],
       "weighted_components": [
         15.625,
-        14.7,
+        14.575,
         9.374999999999998,
         0.0,
         13.25
@@ -10353,10 +10353,10 @@
     },
     {
       "ticker": "NSC",
-      "lthcs_score": 51.9,
+      "lthcs_score": 51.8,
       "band": "weakening",
-      "drift_1d": -0.1,
-      "drift_7d": -1.2,
+      "drift_1d": -0.2,
+      "drift_7d": -1.3,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "confidence_level": "medium",
@@ -10366,9 +10366,9 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 57.9,
+        "institutional_confidence": 57.4,
         "financial_evolution": 50.0,
-        "thesis_integrity": 45.0,
+        "thesis_integrity": 55.0,
         "des": 49.7
       },
       "modifiers": {
@@ -10396,7 +10396,7 @@
       ],
       "weighted_components": [
         12.5,
-        14.475,
+        14.35,
         12.5,
         0.0,
         12.425
@@ -11237,10 +11237,10 @@
     },
     {
       "ticker": "WMB",
-      "lthcs_score": 51.2,
+      "lthcs_score": 52.2,
       "band": "weakening",
-      "drift_1d": -1.3,
-      "drift_7d": -1.7,
+      "drift_1d": -0.3,
+      "drift_7d": -0.7,
       "drift_30d": 0.0,
       "drift_90d": 0.0,
       "confidence_level": "medium",
@@ -11250,7 +11250,7 @@
       ],
       "subscores": {
         "adoption_momentum": 50.0,
-        "institutional_confidence": 52.0,
+        "institutional_confidence": 55.7,
         "financial_evolution": 50.0,
         "thesis_integrity": 58.8,
         "des": 53.0
@@ -11280,7 +11280,7 @@
       ],
       "weighted_components": [
         15.625,
-        13.0,
+        13.925,
         9.374999999999998,
         0.0,
         13.25
