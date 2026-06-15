@@ -2,10 +2,10 @@
   "checked_at": "2026-06-09T13:47:32+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1975,
-    "gated": 127,
+    "ok": 2006,
+    "gated": 129,
     "dead": 4,
-    "unreachable": 86
+    "unreachable": 53
   },
   "dead": [
     {
@@ -54,13 +54,6 @@
       ]
     },
     {
-      "url": "https://api.adsb.lol/docs",
-      "code": null,
-      "services": [
-        "ADSB.lol API"
-      ]
-    },
-    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -72,13 +65,6 @@
       "code": null,
       "services": [
         "Fatcat / Internet Archive Scholar API"
-      ]
-    },
-    {
-      "url": "https://api.pharmgkb.org/swagger/",
-      "code": null,
-      "services": [
-        "PharmGKB REST API"
       ]
     },
     {
@@ -100,20 +86,6 @@
       "code": null,
       "services": [
         "British Museum Collection (SPARQL/LOD)"
-      ]
-    },
-    {
-      "url": "https://cris.nih.go.kr/",
-      "code": null,
-      "services": [
-        "CRiS (Korea Clinical Research Information Service)"
-      ]
-    },
-    {
-      "url": "https://data.fs.usda.gov/geodata/edw/",
-      "code": null,
-      "services": [
-        "USFS FSGeodata / EDW ArcGIS REST Services"
       ]
     },
     {
@@ -181,33 +153,10 @@
       ]
     },
     {
-      "url": "https://docs.helicone.ai/",
-      "code": null,
-      "services": [
-        "Helicone",
-        "Helicone",
-        "Helicone"
-      ]
-    },
-    {
       "url": "https://docs.wild-card.ai/agentsjson/introduction",
       "code": null,
       "services": [
         "agents.json (Wildcard AI)"
-      ]
-    },
-    {
-      "url": "https://drks.de/",
-      "code": 503,
-      "services": [
-        "DRKS (German Clinical Trials Register)"
-      ]
-    },
-    {
-      "url": "https://drks.de/search/en",
-      "code": 503,
-      "services": [
-        "DRKS - German Clinical Trials Register"
       ]
     },
     {
@@ -239,13 +188,6 @@
       ]
     },
     {
-      "url": "https://getbible.net/docs",
-      "code": null,
-      "services": [
-        "GetBible.net API v2"
-      ]
-    },
-    {
       "url": "https://gutendex.com/",
       "code": null,
       "services": [
@@ -265,20 +207,6 @@
       "code": null,
       "services": [
         "Latin WordNet API (Univ. of Exeter)"
-      ]
-    },
-    {
-      "url": "https://libretranslate.com/",
-      "code": null,
-      "services": [
-        "LibreTranslate"
-      ]
-    },
-    {
-      "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/",
-      "code": null,
-      "services": [
-        "NASA SRTM / NASADEM (LP DAAC)"
       ]
     },
     {
@@ -310,41 +238,6 @@
       ]
     },
     {
-      "url": "https://notams.aim.faa.gov/notamSearch/",
-      "code": null,
-      "services": [
-        "FAA Federal NOTAM System / SWIM FNS"
-      ]
-    },
-    {
-      "url": "https://numverify.com/",
-      "code": null,
-      "services": [
-        "numverify (apilayer)"
-      ]
-    },
-    {
-      "url": "https://openkim.org/",
-      "code": null,
-      "services": [
-        "OpenKIM (Knowledgebase of Interatomic Models)"
-      ]
-    },
-    {
-      "url": "https://openweathermap.org/api",
-      "code": null,
-      "services": [
-        "OpenWeatherMap (One Call / Current)"
-      ]
-    },
-    {
-      "url": "https://openweathermap.org/api/air-pollution",
-      "code": null,
-      "services": [
-        "OpenWeatherMap Air Pollution API"
-      ]
-    },
-    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -359,13 +252,6 @@
       ]
     },
     {
-      "url": "https://population.un.org/dataportalapi/index.html",
-      "code": 502,
-      "services": [
-        "UN DESA Population Division Data Portal API (WPP)"
-      ]
-    },
-    {
       "url": "https://prime-numbers-api.com/",
       "code": null,
       "services": [
@@ -377,13 +263,6 @@
       "code": null,
       "services": [
         "JPRN / NIPH Clinical Trials Search Portal (Japan)"
-      ]
-    },
-    {
-      "url": "https://replicate.com/collections/language-models",
-      "code": 502,
-      "services": [
-        "Replicate"
       ]
     },
     {
@@ -429,24 +308,10 @@
       ]
     },
     {
-      "url": "https://stats.nba.com/",
-      "code": null,
-      "services": [
-        "NBA Stats (stats.nba.com)"
-      ]
-    },
-    {
       "url": "https://stats.un.org/SDGAPI/swagger/",
       "code": null,
       "services": [
         "SDMX Global Registry / UNdata2 (added in verify)"
-      ]
-    },
-    {
-      "url": "https://talkbank.org/",
-      "code": null,
-      "services": [
-        "TalkBank"
       ]
     },
     {
@@ -485,68 +350,10 @@
       ]
     },
     {
-      "url": "https://www.bfarm.de/EN/BfArM/Tasks/German-Clinical-Trials-Register/_node.html",
-      "code": null,
-      "services": [
-        "DRKS (German Clinical Trials Register, BfArM)"
-      ]
-    },
-    {
-      "url": "https://www.bgee.org/",
-      "code": null,
-      "services": [
-        "Bgee Gene Expression API"
-      ]
-    },
-    {
-      "url": "https://www.bgee.org/support/api",
-      "code": null,
-      "services": [
-        "Bgee Gene Expression API"
-      ]
-    },
-    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
         "Brocade.io"
-      ]
-    },
-    {
-      "url": "https://www.courtlistener.com/help/api/rest/",
-      "code": null,
-      "services": [
-        "CourtListener (Free Law Project)"
-      ]
-    },
-    {
-      "url": "https://www.courtlistener.com/help/api/rest/citation-lookup/",
-      "code": null,
-      "services": [
-        "CourtListener Citation Lookup & Verification API"
-      ]
-    },
-    {
-      "url": "https://www.courtlistener.com/help/api/rest/financial-disclosures/",
-      "code": null,
-      "services": [
-        "CourtListener Judge & Financial Disclosures APIs",
-        "CourtListener Financial Disclosures API"
-      ]
-    },
-    {
-      "url": "https://www.courtlistener.com/help/api/rest/recap/",
-      "code": null,
-      "services": [
-        "RECAP Archive / PACER Data APIs (CourtListener)",
-        "CourtListener RECAP APIs (PACER data)"
-      ]
-    },
-    {
-      "url": "https://www.courtlistener.com/help/api/rest/v4/",
-      "code": null,
-      "services": [
-        "CourtListener REST API v4 (Free Law Project)"
       ]
     },
     {
@@ -585,60 +392,10 @@
       ]
     },
     {
-      "url": "https://www.followthemoney.org/our-data/apis",
-      "code": null,
-      "services": [
-        "FollowTheMoney.org API (Institute / OpenSecrets)",
-        "FollowTheMoney.org API (NIMP / OpenSecrets)",
-        "FollowTheMoney.org API (state campaign finance)"
-      ]
-    },
-    {
       "url": "https://www.learningregistry.org/",
       "code": null,
       "services": [
         "Learning Registry"
-      ]
-    },
-    {
-      "url": "https://www.mouser.com/api-home/",
-      "code": null,
-      "services": [
-        "Mouser Search API"
-      ]
-    },
-    {
-      "url": "https://www.mouser.com/api-hub/",
-      "code": null,
-      "services": [
-        "Mouser API",
-        "Mouser Electronics Search API"
-      ]
-    },
-    {
-      "url": "https://www.ncbi.nlm.nih.gov/books/NBK25501/",
-      "code": 500,
-      "services": [
-        "NCBI E-utilities",
-        "NCBI E-utilities",
-        "NCBI Entrez E-utilities",
-        "NCBI E-utilities (Entrez)",
-        "PubMed / NCBI E-utilities (Entrez)"
-      ]
-    },
-    {
-      "url": "https://www.ncbi.nlm.nih.gov/clinvar/docs/maintenance_use/",
-      "code": 500,
-      "services": [
-        "ClinVar (via NCBI E-utilities / VCV)"
-      ]
-    },
-    {
-      "url": "https://www.swpc.noaa.gov/content/data-access",
-      "code": null,
-      "services": [
-        "NOAA SWPC JSON",
-        "NOAA SWPC Data Service (space weather - affects space assets)"
       ]
     },
     {
@@ -655,5 +412,6 @@
         "Saccharomyces Genome Database (YeastMine)"
       ]
     }
-  ]
+  ],
+  "_reverified_note": "Unreachable list re-verified 2026-06-15 with a desktop-browser User-Agent: 33 URLs that responded (2xx/3xx/403) were reclassified out of 'unreachable'. The remaining 53 gave no response from the re-check vantage point (often datacenter-IP bot walls or genuine downtime) and are kept flagged for review."
 }

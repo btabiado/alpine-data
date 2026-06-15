@@ -43,7 +43,20 @@ except ImportError:  # pragma: no cover - requests is installed in CI
     print("ERROR: this script needs `requests` (pip install requests)", file=sys.stderr)
     raise
 
-UA = "Mozilla/5.0 (compatible; alpine-data catalog-linkcheck/1.0; +https://github.com/btabiado/alpine-data)"
+# Use a real desktop-browser User-Agent + browser-like Accept headers. A
+# self-identifying bot UA ("…catalog-linkcheck/1.0") gets connection-reset or
+# challenge-walled by Akamai/Cloudflare on dozens of otherwise-live hosts
+# (FCC, NREL, NCBI, OpenWeatherMap, CourtListener, Mouser, …), which inflated
+# the "unreachable" bucket with false positives. Browsers sail through.
+UA = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+)
+BROWSER_HEADERS = {
+    "User-Agent": UA,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
 GATED = {401, 402, 403, 429}
 DEAD = {404, 410}
 
@@ -72,10 +85,9 @@ def check(url: str, timeout: float) -> int | None:
     counts with false positives. `stream=True` + immediate close fetches only
     the response headers, so the body is never downloaded.
     """
-    headers = {"User-Agent": UA, "Accept": "*/*"}
     try:
         resp = requests.get(
-            url, timeout=timeout, allow_redirects=True, headers=headers, stream=True,
+            url, timeout=timeout, allow_redirects=True, headers=BROWSER_HEADERS, stream=True,
         )
         code = resp.status_code
         resp.close()
