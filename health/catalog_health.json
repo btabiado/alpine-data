@@ -1,40 +1,97 @@
 {
-  "checked_at": "2026-06-09T13:47:32+00:00",
+  "checked_at": "2026-06-15T13:47:56+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 2006,
-    "gated": 129,
-    "dead": 4,
-    "unreachable": 53
+    "ok": 1960,
+    "gated": 145,
+    "dead": 12,
+    "unreachable": 75
   },
   "dead": [
     {
-      "url": "https://crates.io/data-access",
+      "url": "https://cds.climate.copernicus.eu/how-to-api",
       "code": 404,
       "services": [
-        "crates.io API",
-        "crates.io API"
+        "Copernicus Climate Data Store (CDS) API"
       ]
     },
     {
-      "url": "https://purplebooksearch.fda.gov/",
+      "url": "https://docs.stratz.com/",
       "code": 404,
       "services": [
-        "FDA Purple Book (licensed biologics, biosimilars, interchangeability)"
+        "STRATZ (Dota 2)"
       ]
     },
     {
-      "url": "https://purplebooksearch.fda.gov/downloads",
+      "url": "https://spothero.com/developers",
       "code": 404,
       "services": [
-        "FDA Purple Book (Licensed Biological Products) Data Download"
+        "SpotHero Developer Platform"
       ]
     },
     {
-      "url": "https://www.accessdata.fda.gov/scripts/opdlisting/oopd/",
+      "url": "https://support.travelpayouts.com/hc/en-us/articles/115000150945-Hotel-data-API",
       "code": 404,
       "services": [
-        "FDA Orphan Drug Designations & Approvals (OOPD database)"
+        "Hotellook / Travelpayouts Hotel Data API"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/drug-approvals-and-databases/orange-book-data-files",
+      "code": 404,
+      "services": [
+        "FDA Orange Book Data Files (Approved Drug Products + patents/exclusivity)",
+        "FDA Orange Book Data Files (Approved Drug Products w/ TE Evaluations)",
+        "FDA Orange Book Data Files"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/faers-quarterly-data-files-documentation",
+      "code": 404,
+      "services": [
+        "FDA FAERS/AEMS Quarterly Data Files (bulk download)"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/fda-adverse-event-monitoring-system-aems/fda-adverse-event-monitoring-system-aems-public-dashboard",
+      "code": 404,
+      "services": [
+        "FDA FAERS/AEMS Public Dashboard"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/fdas-adverse-event-reporting-system-faers/faers-quarterly-data-files-documentation",
+      "code": 404,
+      "services": [
+        "FDA FAERS Quarterly Data Files (bulk download)"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-public-dashboard",
+      "code": 404,
+      "services": [
+        "FDA FAERS / AEMS Public Dashboard"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/drugs/risk-evaluation-and-mitigation-strategies-rems/risk-evaluation-and-mitigation-strategy-rems-public-dashboard",
+      "code": 404,
+      "services": [
+        "FDA REMS Public Dashboard (Risk Evaluation & Mitigation Strategies)"
+      ]
+    },
+    {
+      "url": "https://www.fda.gov/tobacco-products/market-and-distribute-tobacco-product/tobacco-product-applications-metrics-reporting",
+      "code": 404,
+      "services": [
+        "FDA Center for Tobacco Products - Application Metrics & Reporting"
+      ]
+    },
+    {
+      "url": "https://www.langtrace.ai/",
+      "code": 404,
+      "services": [
+        "Langtrace"
       ]
     }
   ],
@@ -82,10 +139,32 @@
       ]
     },
     {
+      "url": "https://biolincc.nhlbi.nih.gov/",
+      "code": 502,
+      "services": [
+        "NHLBI BioLINCC (Biologic Specimen and Data Repository)"
+      ]
+    },
+    {
+      "url": "https://clinical-information.canada.ca/",
+      "code": null,
+      "services": [
+        "Health Canada Clinical Information Portal (Public Release of Clinical Information, PRCI)",
+        "Health Canada Public Release of Clinical Information (PRCI) portal"
+      ]
+    },
+    {
       "url": "https://collection.britishmuseum.org/",
       "code": null,
       "services": [
         "British Museum Collection (SPARQL/LOD)"
+      ]
+    },
+    {
+      "url": "https://correlatesofwar.org/data-sets/",
+      "code": null,
+      "services": [
+        "Correlates of War (COW) Project datasets"
       ]
     },
     {
@@ -160,6 +239,13 @@
       ]
     },
     {
+      "url": "https://ecos.fws.gov/ecp/services",
+      "code": null,
+      "services": [
+        "USFWS ECOS Data Services (Environmental Conservation Online System)"
+      ]
+    },
+    {
       "url": "https://elexicon.wustl.edu/",
       "code": null,
       "services": [
@@ -181,6 +267,36 @@
       ]
     },
     {
+      "url": "https://fred.stlouisfed.org/categories/32217",
+      "code": null,
+      "services": [
+        "FRED (commodity & metals price series)"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/docs/api/fred/",
+      "code": null,
+      "services": [
+        "FRED — Federal Reserve Economic Data API",
+        "FRED (Federal Reserve Bank of St. Louis)",
+        "FRED API (manufacturing/IP indicators)"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/series/WPU03",
+      "code": null,
+      "services": [
+        "FRED Textile & Apparel Price Indexes"
+      ]
+    },
+    {
+      "url": "https://fred.stlouisfed.org/series/WPU081",
+      "code": null,
+      "services": [
+        "FRED - Lumber & Wood Products PPI (St. Louis Fed)"
+      ]
+    },
+    {
       "url": "https://gazetteer.dainst.org/",
       "code": 503,
       "services": [
@@ -188,11 +304,24 @@
       ]
     },
     {
-      "url": "https://gutendex.com/",
+      "url": "https://gea.esac.esa.int/archive/",
       "code": null,
       "services": [
-        "Gutendex (Project Gutenberg metadata API)",
-        "Gutendex (Project Gutenberg)"
+        "Gaia ESA Archive (TAP+)"
+      ]
+    },
+    {
+      "url": "https://getbible.net/docs",
+      "code": null,
+      "services": [
+        "GetBible.net API v2"
+      ]
+    },
+    {
+      "url": "https://hemp.ams.usda.gov/s/PublicSearchTool",
+      "code": null,
+      "services": [
+        "USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool"
       ]
     },
     {
@@ -231,10 +360,46 @@
       ]
     },
     {
+      "url": "https://minorplanetcenter.net/web_service/",
+      "code": null,
+      "services": [
+        "IAU Minor Planet Center Web Service"
+      ]
+    },
+    {
+      "url": "https://mrdata.usgs.gov/",
+      "code": null,
+      "services": [
+        "USGS Mineral Resources Online Spatial Data"
+      ]
+    },
+    {
+      "url": "https://mrdata.usgs.gov/mrds/",
+      "code": null,
+      "services": [
+        "USGS Mineral Resources Data System (MRDS)"
+      ]
+    },
+    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
         "USDA AMS My Market News (MARS API)"
+      ]
+    },
+    {
+      "url": "https://nassgeodata.gmu.edu/CropScape/",
+      "code": null,
+      "services": [
+        "USDA CropScape / Cropland Data Layer"
+      ]
+    },
+    {
+      "url": "https://neuroquery.org/",
+      "code": null,
+      "services": [
+        "NeuroQuery API",
+        "NeuroQuery"
       ]
     },
     {
@@ -266,13 +431,6 @@
       ]
     },
     {
-      "url": "https://roar.eprints.org/",
-      "code": null,
-      "services": [
-        "ROAR (Registry of Open Access Repositories)"
-      ]
-    },
-    {
       "url": "https://sanskritwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -287,24 +445,17 @@
       ]
     },
     {
+      "url": "https://scholia.toolforge.org/",
+      "code": 503,
+      "services": [
+        "Scholia"
+      ]
+    },
+    {
       "url": "https://search.patentsview.org/docs/",
       "code": null,
       "services": [
         "PatentsView PatentSearch API"
-      ]
-    },
-    {
-      "url": "https://si-digital-framework.org/",
-      "code": 500,
-      "services": [
-        "BIPM / Open Metrology (SI units & metadata)"
-      ]
-    },
-    {
-      "url": "https://splatalogue.online/",
-      "code": null,
-      "services": [
-        "Splatalogue (NRAO Spectral Line Catalog)"
       ]
     },
     {
@@ -322,6 +473,20 @@
       ]
     },
     {
+      "url": "https://v2.sherpa.ac.uk/opendoar/",
+      "code": null,
+      "services": [
+        "OpenDOAR (Directory of Open Access Repositories)"
+      ]
+    },
+    {
+      "url": "https://vizhub.healthdata.org/gbd-results/",
+      "code": 500,
+      "services": [
+        "GBD Results Tool (IHME, Global Burden of Disease)"
+      ]
+    },
+    {
       "url": "https://water.weather.gov/ahps/",
       "code": null,
       "services": [
@@ -336,10 +501,33 @@
       ]
     },
     {
+      "url": "https://wiki.crystallography.net/RESTful_API/",
+      "code": null,
+      "services": [
+        "Crystallography Open Database (COD)",
+        "Crystallography Open Database (COD) REST API",
+        "Crystallography Open Database (COD)"
+      ]
+    },
+    {
+      "url": "https://wordbank.stanford.edu/",
+      "code": null,
+      "services": [
+        "Wordbank (wordbankr)"
+      ]
+    },
+    {
       "url": "https://www.2dmatpedia.org/",
       "code": null,
       "services": [
         "2DMatPedia"
+      ]
+    },
+    {
+      "url": "https://www.acq.osd.mil/eie/imr/rpid/library.html",
+      "code": null,
+      "services": [
+        "DoD RPID / Base Structure Report (real-property footprint)"
       ]
     },
     {
@@ -354,6 +542,15 @@
       "code": null,
       "services": [
         "Brocade.io"
+      ]
+    },
+    {
+      "url": "https://www.ebi.ac.uk/chembl/api/data/docs",
+      "code": null,
+      "services": [
+        "ChEMBL Web Services",
+        "ChEMBL Data Web Services (EMBL-EBI)",
+        "ChEMBL Web Services (EMBL-EBI)"
       ]
     },
     {
@@ -399,10 +596,31 @@
       ]
     },
     {
+      "url": "https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey",
+      "code": null,
+      "services": [
+        "USDA NRCS Web Soil Survey / spatial WMS-WFS"
+      ]
+    },
+    {
+      "url": "https://www.nvr.navy.mil/",
+      "code": null,
+      "services": [
+        "Naval Vessel Register (NVR)"
+      ]
+    },
+    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
         "Transitland (Interline)"
+      ]
+    },
+    {
+      "url": "https://www.understandingsociety.ac.uk/documentation/access-data/",
+      "code": 520,
+      "services": [
+        "Understanding Society (UK Household Longitudinal Study)"
       ]
     },
     {
@@ -412,6 +630,5 @@
         "Saccharomyces Genome Database (YeastMine)"
       ]
     }
-  ],
-  "_reverified_note": "Unreachable list re-verified 2026-06-15 with a desktop-browser User-Agent: 33 URLs that responded (2xx/3xx/403) were reclassified out of 'unreachable'. The remaining 53 gave no response from the re-check vantage point (often datacenter-IP bot walls or genuine downtime) and are kept flagged for review."
+  ]
 }
