@@ -1,10 +1,10 @@
 # Minimum supported Python: 3.11
-anthropic==0.105.2
+anthropic==0.109.1
 numpy==2.4.6
 pandas==3.0.3
 # pytest 9.0.3 patches GHSA-6w46-j5rx-g56g (local-privesc via predictable
 # /tmp/pytest-of-{user} tmpdir on UNIX). All earlier 8.x/9.x affected.
-pytest==9.0.3
+pytest==9.1.0
 python-dateutil==2.9.0.post0
 # requests 2.33.0 preserves the GHSA-gc5v-m9x4-r6x2 security bump (commit 3e8d026).
 requests==2.34.2
