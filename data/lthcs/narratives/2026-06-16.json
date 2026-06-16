@@ -1148,7 +1148,7 @@
     },
     {
       "ticker": "TEAM",
-      "todays_take": "TEAM requires Structural Review at 36.5 (-15.6 over 30 days), supported by Thesis Integrity at 58.8.",
+      "todays_take": "TEAM requires Structural Review at 36.5 (-15.6 over 30 days), supported by Adoption Momentum at 50.0.",
       "why_changed": "Score is at 36.5 (drift over 1d +0.7); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 12.2 is well below the universe median, and Demand Environment at 45.8 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
