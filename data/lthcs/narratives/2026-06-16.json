@@ -452,10 +452,10 @@
     },
     {
       "ticker": "EA",
-      "todays_take": "EA requires Structural Review at 48.4 (+5.1 over 30 days), supported by Adoption Momentum at 50.0.",
+      "todays_take": "EA requires Structural Review at 48.4 (+5.1 over 30 days), supported by Thesis Integrity at 58.8.",
       "why_changed": "Score is at 48.4 (drift over 1d +4.2); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Thesis Integrity at 41.2 is well below the universe median, and Institutional Confidence at 46.3 is not compensating. Position should be reassessed against the original thesis.",
-      "what_would_break": "Score is already in structural review territory. A move below 30 on Thesis Integrity, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 46.3 is well below the universe median, and Demand Environment at 47.5 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
       "confidence_level": "medium"
     },
     {
@@ -902,8 +902,8 @@
       "ticker": "NFLX",
       "todays_take": "NFLX requires Structural Review at 48.2 (-13.5 over 30 days), supported by Adoption Momentum at 50.0.",
       "why_changed": "Score is at 48.2 (drift over 1d +1.9); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Thesis Integrity at 45.0 is well below the universe median, and Institutional Confidence at 45.5 is not compensating. Position should be reassessed against the original thesis.",
-      "what_would_break": "Score is already in structural review territory. A move below 30 on Thesis Integrity, combined with a continued drift below 40 in the composite, would force a position exit decision.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 45.5 is well below the universe median, and Demand Environment at 47.5 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
       "confidence_level": "medium"
     },
     {
@@ -1398,8 +1398,8 @@
       "ticker": "CMI",
       "todays_take": "CMI is showing Weakening at 54.8 (+0.0 over 30 days), supported by Institutional Confidence at 69.2.",
       "why_changed": "Score is at 54.8 (drift over 1d +1.6); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Demand Environment at 49.9 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
-      "what_would_break": "A sustained drop in Demand Environment below 40, or a Structural Review composite move below 50, would force a structural review.",
+      "why_not_to_sell": "Structural concerns: Thesis Integrity at 41.2 is well below the universe median, and Demand Environment at 49.9 is not compensating. Position should be reassessed against the original thesis.",
+      "what_would_break": "A sustained drop in Thesis Integrity below 31, or a Structural Review composite move below 50, would force a structural review.",
       "confidence_level": "medium"
     },
     {
@@ -1692,9 +1692,9 @@
     },
     {
       "ticker": "UBER",
-      "todays_take": "UBER requires Structural Review at 46.5 (+0.0 over 30 days), supported by Thesis Integrity at 55.0.",
+      "todays_take": "UBER requires Structural Review at 46.5 (+0.0 over 30 days), supported by Adoption Momentum at 50.0.",
       "why_changed": "Score is at 46.5 (drift over 1d +6.2); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Institutional Confidence at 36.1 is well below the universe median, and Demand Environment at 49.9 is not compensating. Position should be reassessed against the original thesis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 36.1 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
       "confidence_level": "medium"
     },
