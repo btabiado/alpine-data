@@ -2568,7 +2568,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 17.5,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 58.8,
         "des": 46.7
       },
       "modifiers": {
@@ -2932,7 +2932,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 48.6,
         "financial_evolution": 50.0,
-        "thesis_integrity": 41.2,
+        "thesis_integrity": 58.8,
         "des": 47.2
       },
       "modifiers": {
@@ -5324,7 +5324,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 16.7,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 58.8,
         "des": 48.4
       },
       "modifiers": {
@@ -5844,7 +5844,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 26.1,
         "financial_evolution": 50.0,
-        "thesis_integrity": 45.0,
+        "thesis_integrity": 50.0,
         "des": 47.2
       },
       "modifiers": {
@@ -9068,7 +9068,7 @@
         "adoption_momentum": 50.0,
         "institutional_confidence": 80.8,
         "financial_evolution": 50.0,
-        "thesis_integrity": 55.0,
+        "thesis_integrity": 41.2,
         "des": 49.1
       },
       "modifiers": {
