@@ -36,7 +36,7 @@
     },
     {
       "ticker": "ACN",
-      "todays_take": "ACN requires Structural Review at 33.1 (-5.3 over 30 days), supported by Thesis Integrity at 55.0.",
+      "todays_take": "ACN requires Structural Review at 33.1 (-5.3 over 30 days), supported by Financial Evolution at 50.0.",
       "why_changed": "Score is at 33.1 (drift over 1d -0.3); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 3.2 is well below the universe median, and Adoption Momentum at 37.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
