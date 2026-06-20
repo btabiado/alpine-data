@@ -1,9 +1,9 @@
 {
-  "as_of": "2026-06-19",
+  "as_of": "2026-06-20",
   "brent_crude": {
     "change_3m_pct": -0.221699,
     "current": 84.36,
-    "percentile_2y": 0.8190854870775348
+    "percentile_2y": 0.8207171314741036
   },
   "consumer_sentiment": {
     "change_3m_pct": -0.117021,
