@@ -200,3 +200,16 @@ jobs:
           print(f"[backfill] restored HEAD to {orig_ref[:10]}")
           print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days")
           PYEOF
+
+      - name: Regenerate coverage dashboard JSON
+        # Rescan R2 after backfill so /health/r2-coverage.html reflects new
+        # historical cells. Skipped only on hard failure of backfill loop.
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          python3 health/build_r2_coverage.py
+          echo "Coverage JSON regenerated. View at https://btabiado.github.io/alpine-data/health/r2-coverage.html (refreshes on next pages.yml run)."
+        continue-on-error: true

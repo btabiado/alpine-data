@@ -1,0 +1,15 @@
+{
+  "generated_utc": "2026-06-23T11:28:28Z",
+  "bucket": "",
+  "earliest_date": null,
+  "latest_date": null,
+  "dates": [],
+  "categories": {},
+  "totals": {
+    "sources": 0,
+    "dates": 0,
+    "cells_present": 0,
+    "coverage_pct": 0.0
+  },
+  "empty_reason": "R2_BUCKET_NAME unset"
+}

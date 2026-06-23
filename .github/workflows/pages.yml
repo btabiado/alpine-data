@@ -605,6 +605,19 @@ jobs:
           python upload_to_r2.py
         continue-on-error: true
 
+      - name: Build R2 coverage dashboard
+        # Scans R2 bucket, generates health/r2-coverage.json for the heatmap
+        # at /health/r2-coverage.html. Runs RIGHT AFTER the upload so today's
+        # snapshot is reflected. continue-on-error: true — never breaks build.
+        if: github.event_name != 'pull_request'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          python3 health/build_r2_coverage.py
+        continue-on-error: true
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:

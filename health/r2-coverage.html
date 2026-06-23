@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>R2 Backfill Coverage — BDT Dashboards</title>
+  <meta name="description" content="What's archived in ADW R2 warehouse: source × date heatmap." />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-elev: #131c2e;
+      --bg-elev-2: #1a2440;
+      --border: #243049;
+      --text: #e2e8f0;
+      --text-dim: #94a3b8;
+      --text-faint: #64748b;
+      --accent: #60a5fa;
+      --present: #10b981;   /* green */
+      --present-recent: #34d399;
+      --missing: #243049;   /* dim — same as border */
+      --label-bg: #1a2440;
+      --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: var(--sans); font-size: 14px; line-height: 1.5;
+    }
+    .wrap { max-width: 1400px; margin: 0 auto; padding: 32px 24px 64px; }
+    header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 8px; }
+    h1 { font-size: 22px; margin: 0; font-weight: 600; }
+    .breadcrumb { color: var(--text-dim); font-size: 13px; }
+    .breadcrumb a { color: var(--accent); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .meta { color: var(--text-faint); font-size: 12px; font-family: var(--mono); }
+
+    .summary {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px; margin: 20px 0 32px;
+    }
+    .stat {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .stat .label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat .value { color: var(--text); font-size: 22px; font-weight: 600; margin-top: 4px; font-family: var(--mono); }
+    .stat .sub { color: var(--text-faint); font-size: 11px; margin-top: 2px; font-family: var(--mono); }
+
+    .legend { display: flex; gap: 16px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+    .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+    .legend-swatch.present { background: var(--present); }
+    .legend-swatch.missing { background: var(--missing); border: 1px solid #2a3550; }
+
+    .category {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 20px; overflow: hidden;
+    }
+    .category-header {
+      padding: 12px 16px; background: var(--bg-elev-2); border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .category-name { font-weight: 600; font-size: 14px; }
+    .category-count { color: var(--text-faint); font-size: 11px; font-family: var(--mono); }
+
+    .source-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .source-row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .source-row:last-child { border-bottom: none; }
+    .source-name {
+      padding: 10px 16px; font-family: var(--mono); font-size: 12px;
+      color: var(--text); background: var(--label-bg);
+      border-right: 1px solid var(--border);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .source-coverage {
+      padding: 6px 16px; font-size: 11px; color: var(--text-faint);
+      font-family: var(--mono);
+    }
+    .heatmap {
+      display: flex; flex-wrap: wrap; gap: 2px; padding: 8px 16px;
+    }
+    .cell {
+      width: 10px; height: 10px; border-radius: 2px;
+      background: var(--missing);
+      cursor: pointer;
+    }
+    .cell.present { background: var(--present); }
+    .cell.present:hover, .cell.missing:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+    .empty-state {
+      background: var(--bg-elev); border: 1px solid var(--border);
+      border-radius: 8px; padding: 32px; text-align: center; color: var(--text-dim);
+    }
+    .empty-state h2 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
+    .empty-state code { background: var(--bg-elev-2); padding: 2px 6px; border-radius: 3px; font-family: var(--mono); }
+
+    footer { margin-top: 32px; color: var(--text-faint); font-size: 11px; text-align: center; font-family: var(--mono); }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    /* Tooltip */
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+      background: var(--bg-elev-2); color: var(--text); border: 1px solid var(--border);
+      padding: 4px 8px; border-radius: 4px; font-size: 11px; font-family: var(--mono);
+      white-space: nowrap; pointer-events: none; z-index: 10;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="breadcrumb"><a href="./">← Health</a> / R2 Backfill Coverage</div>
+        <h1>R2 Backfill Coverage</h1>
+      </div>
+      <div class="meta" id="generated">loading…</div>
+    </header>
+
+    <div class="summary" id="summary"></div>
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch present"></span> Snapshot in R2</div>
+      <div class="legend-item"><span class="legend-swatch missing"></span> Missing</div>
+      <div class="legend-item" style="margin-left: auto; color: var(--text-faint);">
+        Each cell = one date · hover for date · oldest left, newest right
+      </div>
+    </div>
+
+    <div id="content">
+      <div class="empty-state">
+        <h2>Loading coverage data…</h2>
+      </div>
+    </div>
+
+    <footer>
+      Regenerated by <code>health/build_r2_coverage.py</code> on each CI run · bucket scanned via R2 list API
+      · Source: <a href="https://github.com/btabiado/alpine-data/blob/main/health/build_r2_coverage.py">github</a>
+    </footer>
+  </div>
+
+  <script>
+    async function load() {
+      const r = await fetch('r2-coverage.json?_=' + Date.now());
+      const data = await r.json();
+      document.getElementById('generated').textContent = 'updated: ' + data.generated_utc;
+
+      const sum = document.getElementById('summary');
+      if (data.totals.sources === 0) {
+        sum.innerHTML = '';
+        document.getElementById('content').innerHTML = `
+          <div class="empty-state">
+            <h2>R2 bucket is empty</h2>
+            <p>${data.empty_reason || 'No snapshots yet — run the forward archive cron or trigger r2-backfill.yml.'}</p>
+            <p style="margin-top: 16px;">
+              <a href="https://github.com/btabiado/alpine-data/actions/workflows/r2-backfill.yml" style="color: var(--accent);">→ Run backfill workflow</a>
+            </p>
+          </div>`;
+        return;
+      }
+
+      sum.innerHTML = `
+        <div class="stat"><div class="label">Bucket</div><div class="value" style="font-size:14px;">${data.bucket}</div></div>
+        <div class="stat"><div class="label">Sources</div><div class="value">${data.totals.sources}</div></div>
+        <div class="stat"><div class="label">Dates archived</div><div class="value">${data.totals.dates}</div><div class="sub">${data.earliest_date} → ${data.latest_date}</div></div>
+        <div class="stat"><div class="label">Cells filled</div><div class="value">${data.totals.cells_present.toLocaleString()}</div><div class="sub">of ${(data.totals.sources * data.totals.dates).toLocaleString()} possible</div></div>
+        <div class="stat"><div class="label">Coverage</div><div class="value">${data.totals.coverage_pct}%</div></div>
+      `;
+
+      const dates = data.dates;
+      const out = [];
+      for (const [catName, sources] of Object.entries(data.categories)) {
+        const totalCells = sources.length * dates.length;
+        const presentCells = sources.reduce((acc, s) => acc + Object.keys(s.present).length, 0);
+        const catPct = totalCells ? (100 * presentCells / totalCells).toFixed(1) : '0.0';
+
+        let rows = '';
+        for (const src of sources) {
+          const cellPresent = Object.keys(src.present).length;
+          const cellPct = dates.length ? (100 * cellPresent / dates.length).toFixed(0) : '0';
+          let cells = '';
+          for (const d of dates) {
+            const has = !!src.present[d];
+            cells += `<div class="cell ${has ? 'present' : 'missing'}" data-tip="${d} — ${has ? '✓ present' : 'missing'}"></div>`;
+          }
+          rows += `
+            <div class="source-row">
+              <div class="source-name" title="${src.file}">${src.file}</div>
+              <div>
+                <div class="source-coverage">${cellPresent} / ${dates.length} days (${cellPct}%)</div>
+                <div class="heatmap">${cells}</div>
+              </div>
+            </div>`;
+        }
+        out.push(`
+          <section class="category">
+            <div class="category-header">
+              <div class="category-name">${catName}</div>
+              <div class="category-count">${sources.length} source${sources.length === 1 ? '' : 's'} · ${catPct}% filled</div>
+            </div>
+            <div class="source-table">${rows}</div>
+          </section>`);
+      }
+      document.getElementById('content').innerHTML = out.join('');
+    }
+
+    load().catch(e => {
+      document.getElementById('content').innerHTML = `
+        <div class="empty-state">
+          <h2>Failed to load coverage data</h2>
+          <p>Could not fetch <code>r2-coverage.json</code> — it may not be generated yet.</p>
+          <pre style="text-align:left; font-size:11px; color:var(--text-faint);">${e.message}</pre>
+        </div>`;
+    });
+  </script>
+</body>
+</html>
