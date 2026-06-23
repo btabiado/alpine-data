@@ -589,6 +589,22 @@ jobs:
           Generated: $(date -u)
           EOF
 
+      - name: Upload daily snapshot to ADW R2 archive
+        # Archives all data-*.json sidecars to ADW R2 warehouse for future
+        # ClickHouse ingestion (Phase 2.5). Key pattern:
+        #   raw/alpine-data/{YYYY-MM-DD}/{rel_path}
+        # Runs AFTER data-*.json files are final, BEFORE gh-pages deploy.
+        # continue-on-error: true — R2 outages must NEVER break the dashboard.
+        if: github.event_name != 'pull_request'
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          pip install -q boto3
+          python upload_to_r2.py
+        continue-on-error: true
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
