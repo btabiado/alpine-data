@@ -1,0 +1,158 @@
+name: r2-backfill
+
+# One-off historical backfill — walks git history one calendar day at a time and
+# uploads each day's last commit's data-*.json snapshots to R2 under the true
+# historical date (not today). Useful after the first time alpine-data → R2
+# bridge ships, to seed R2 with prior history.
+#
+# Companion to .github/workflows/pages.yml (forward-only). This walks BACKWARD.
+#
+# Usage: GitHub UI → Actions → "r2-backfill" → "Run workflow"
+#   start_date: earliest day to backfill (YYYY-MM-DD), default 30 days ago
+#   end_date:   latest day to backfill (YYYY-MM-DD), default yesterday
+#   max_days:   safety cap — won't process more than this many days, default 200
+#
+# For each calendar day in [start_date, end_date]:
+#   1. Find latest commit on/before 23:59:59 UTC of that day
+#   2. git checkout that commit (detached HEAD)
+#   3. Run upload_to_r2.py with R2_OVERRIDE_DATE={that day} env
+#   4. Restore main HEAD
+#
+# Idempotent: R2 PUT overwrites — re-running just overwrites the same keys.
+# Safe to abort: each day is independent.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Start date (YYYY-MM-DD). Default = 30 days ago."
+        required: false
+        type: string
+      end_date:
+        description: "End date (YYYY-MM-DD). Default = yesterday UTC."
+        required: false
+        type: string
+      max_days:
+        description: "Safety cap on # days to process."
+        required: false
+        type: string
+        default: "200"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350   # 5h50m — under GH's 6h job cap
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout (full history needed for git log walk)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install boto3
+        run: pip install -q boto3
+
+      - name: Run backfill
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          INPUT_START: ${{ inputs.start_date }}
+          INPUT_END: ${{ inputs.end_date }}
+          INPUT_MAX_DAYS: ${{ inputs.max_days }}
+        run: |
+          python3 - <<'PYEOF'
+          import os, subprocess, sys
+          from datetime import date, datetime, timedelta, timezone
+
+          def resolve_default_range():
+              today = datetime.now(timezone.utc).date()
+              return (today - timedelta(days=30), today - timedelta(days=1))
+
+          raw_start = os.environ.get("INPUT_START", "").strip()
+          raw_end   = os.environ.get("INPUT_END", "").strip()
+          max_days  = int(os.environ.get("INPUT_MAX_DAYS", "200") or "200")
+
+          default_start, default_end = resolve_default_range()
+          start = datetime.strptime(raw_start, "%Y-%m-%d").date() if raw_start else default_start
+          end   = datetime.strptime(raw_end,   "%Y-%m-%d").date() if raw_end   else default_end
+
+          if end < start:
+              print(f"::error::end_date {end} < start_date {start}")
+              sys.exit(1)
+
+          total_days = (end - start).days + 1
+          if total_days > max_days:
+              print(f"::warning::range {total_days} days exceeds max_days {max_days} — trimming to last {max_days} days of range.")
+              start = end - timedelta(days=max_days - 1)
+              total_days = max_days
+
+          print(f"[backfill] range: {start} → {end} ({total_days} days)")
+          processed, skipped, failed = 0, 0, 0
+
+          # Original HEAD so we restore at the end
+          orig_ref = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+          print(f"[backfill] original HEAD: {orig_ref[:10]}")
+
+          cur = start
+          while cur <= end:
+              # Find latest commit on/before this day's end (23:59:59 UTC)
+              cutoff = f"{cur.isoformat()}T23:59:59"
+              try:
+                  sha = subprocess.check_output(
+                      ["git", "log", "-1", "--format=%H", f"--before={cutoff}"],
+                      text=True,
+                  ).strip()
+              except subprocess.CalledProcessError:
+                  sha = ""
+
+              if not sha:
+                  print(f"[backfill] {cur} — no commit on/before {cutoff}, skipping")
+                  skipped += 1
+                  cur += timedelta(days=1)
+                  continue
+
+              print(f"[backfill] {cur} — checking out {sha[:10]}")
+              try:
+                  subprocess.run(["git", "checkout", "--quiet", sha], check=True)
+              except subprocess.CalledProcessError as e:
+                  print(f"::warning::{cur} — git checkout failed: {e}")
+                  failed += 1
+                  cur += timedelta(days=1)
+                  continue
+
+              # upload_to_r2.py might not exist in older commits — guard
+              if not os.path.exists("upload_to_r2.py"):
+                  print(f"[backfill] {cur} — upload_to_r2.py absent in this commit, skipping")
+                  skipped += 1
+                  cur += timedelta(days=1)
+                  continue
+
+              env = os.environ.copy()
+              env["R2_OVERRIDE_DATE"] = cur.isoformat()
+              r = subprocess.run(
+                  ["python3", "upload_to_r2.py"],
+                  env=env, capture_output=True, text=True
+              )
+              # Echo the upload script's last 6 lines of stdout per day for trail
+              for line in (r.stdout or "").strip().splitlines()[-6:]:
+                  print(f"  | {line}")
+              if r.returncode != 0:
+                  print(f"::warning::{cur} — upload_to_r2.py exited {r.returncode}")
+                  failed += 1
+              else:
+                  processed += 1
+
+              cur += timedelta(days=1)
+
+          # Restore original HEAD
+          subprocess.run(["git", "checkout", "--quiet", orig_ref], check=False)
+          print(f"[backfill] restored HEAD to {orig_ref[:10]}")
+          print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days")
+          PYEOF

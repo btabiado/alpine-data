@@ -47,7 +47,19 @@ def main():
         region_name="auto",
     )
 
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Backfill support: r2-backfill.yml workflow sets R2_OVERRIDE_DATE per historical
+    # commit so the same script can be reused to walk git history and stash each
+    # day's snapshot under its true date instead of today's.
+    override_date = os.environ.get("R2_OVERRIDE_DATE", "").strip()
+    if override_date:
+        # Basic shape check — workflow guarantees YYYY-MM-DD
+        if len(override_date) != 10 or override_date[4] != "-" or override_date[7] != "-":
+            print(f"[r2] ERROR: invalid R2_OVERRIDE_DATE '{override_date}' — must be YYYY-MM-DD.")
+            sys.exit(0)
+        today = override_date
+        print(f"[r2] backfill mode: using override date {today}")
+    else:
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     date_prefix = f"raw/alpine-data/{today}"
 
     # Collect files — preserve relative path for key construction.
