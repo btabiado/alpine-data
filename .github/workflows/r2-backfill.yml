@@ -95,7 +95,7 @@ jobs:
           INPUT_MAX_DAYS: ${{ inputs.max_days }}
         run: |
           python3 - <<'PYEOF'
-          import os, subprocess, sys
+          import os, subprocess, sys, json
           from datetime import date, datetime, timedelta, timezone
 
           # Preset → days-back lookup. Labels match the dropdown options exactly.
