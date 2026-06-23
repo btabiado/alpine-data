@@ -24,19 +24,35 @@ name: r2-backfill
 on:
   workflow_dispatch:
     inputs:
+      preset:
+        description: "Preset range (overrides start_date below). Estimates assume ~5 sec/day."
+        required: true
+        type: choice
+        default: "30 days  (~3 min)"
+        options:
+          - "30 days  (~3 min)"
+          - "60 days  (~5 min)"
+          - "90 days  (~8 min)"
+          - "180 days (~15 min)"
+          - "360 days (~30 min)"
+          - "2 years  (~60 min)"
+          - "3 years  (~90 min)"
+          - "4 years  (~120 min)"
+          - "5 years  (~150 min)"
+          - "custom (use start_date/end_date below)"
       start_date:
-        description: "Start date (YYYY-MM-DD). Default = 30 days ago."
+        description: "Custom start date (YYYY-MM-DD). ONLY used when preset = custom."
         required: false
         type: string
       end_date:
-        description: "End date (YYYY-MM-DD). Default = yesterday UTC."
+        description: "End date (YYYY-MM-DD). Default = yesterday UTC. Applies to all presets."
         required: false
         type: string
       max_days:
-        description: "Safety cap on # days to process."
+        description: "Safety cap on # days. Auto-raised for multi-year presets."
         required: false
         type: string
-        default: "200"
+        default: "2000"
 
 jobs:
   backfill:
@@ -64,6 +80,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          INPUT_PRESET: ${{ inputs.preset }}
           INPUT_START: ${{ inputs.start_date }}
           INPUT_END: ${{ inputs.end_date }}
           INPUT_MAX_DAYS: ${{ inputs.max_days }}
@@ -72,17 +89,43 @@ jobs:
           import os, subprocess, sys
           from datetime import date, datetime, timedelta, timezone
 
-          def resolve_default_range():
-              today = datetime.now(timezone.utc).date()
-              return (today - timedelta(days=30), today - timedelta(days=1))
+          # Preset → days-back lookup. Labels match the dropdown options exactly.
+          PRESET_DAYS = {
+              "30 days":  30,
+              "60 days":  60,
+              "90 days":  90,
+              "180 days": 180,
+              "360 days": 360,
+              "2 years":  730,
+              "3 years":  1095,
+              "4 years":  1460,
+              "5 years":  1825,
+          }
 
-          raw_start = os.environ.get("INPUT_START", "").strip()
-          raw_end   = os.environ.get("INPUT_END", "").strip()
-          max_days  = int(os.environ.get("INPUT_MAX_DAYS", "200") or "200")
+          raw_preset = os.environ.get("INPUT_PRESET", "").strip()
+          raw_start  = os.environ.get("INPUT_START", "").strip()
+          raw_end    = os.environ.get("INPUT_END", "").strip()
+          max_days   = int(os.environ.get("INPUT_MAX_DAYS", "2000") or "2000")
 
-          default_start, default_end = resolve_default_range()
-          start = datetime.strptime(raw_start, "%Y-%m-%d").date() if raw_start else default_start
-          end   = datetime.strptime(raw_end,   "%Y-%m-%d").date() if raw_end   else default_end
+          today = datetime.now(timezone.utc).date()
+          end = datetime.strptime(raw_end, "%Y-%m-%d").date() if raw_end else (today - timedelta(days=1))
+
+          # Resolve start: preset wins unless "custom"; custom requires start_date input.
+          preset_key = next((k for k in PRESET_DAYS if raw_preset.startswith(k)), None)
+          if preset_key:
+              days_back = PRESET_DAYS[preset_key]
+              start = end - timedelta(days=days_back - 1)
+              print(f"[backfill] preset='{preset_key}' → {days_back} days back from end")
+          elif "custom" in raw_preset.lower():
+              if not raw_start:
+                  print("::error::preset=custom requires start_date input.")
+                  sys.exit(1)
+              start = datetime.strptime(raw_start, "%Y-%m-%d").date()
+              print(f"[backfill] custom range from start_date input")
+          else:
+              # Fallback (shouldn't happen given choice input is required)
+              start = end - timedelta(days=29)
+              print(f"[backfill] no preset matched — defaulting to 30 days")
 
           if end < start:
               print(f"::error::end_date {end} < start_date {start}")
