@@ -168,11 +168,18 @@ jobs:
 
           cur = start
           while cur <= end:
-              # Find latest commit on/before this day's end (23:59:59 UTC)
+              # Find latest commit on/before this day's end (23:59:59 UTC).
+              # CRITICAL: query against orig_ref (full main history), NOT the
+              # implicit HEAD. After the first checkout HEAD is DETACHED on an old
+              # commit, so a bare `git log --before=X` only sees that commit's
+              # ancestors — it can't look forward to newer commits that actually
+              # have the data files. Result: every day resolved to an early
+              # data-less commit → processed=0 skipped=ALL. Anchoring to orig_ref
+              # (captured before any detach) walks the true main history every time.
               cutoff = f"{cur.isoformat()}T23:59:59"
               try:
                   sha = subprocess.check_output(
-                      ["git", "log", "-1", "--format=%H", f"--before={cutoff}"],
+                      ["git", "log", "-1", "--format=%H", f"--before={cutoff}", orig_ref],
                       text=True,
                   ).strip()
               except subprocess.CalledProcessError:
