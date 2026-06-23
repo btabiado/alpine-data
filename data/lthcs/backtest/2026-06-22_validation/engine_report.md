@@ -1,6 +1,6 @@
 # LTHCS Backtest Engine Report
 
-Window: **2026-02-17 -> 2026-06-18** (86 trading days)
+Window: **2026-02-17 -> 2026-06-22** (87 trading days)
 Universe: **217 tickers** | long bands: ['constructive', 'elite', 'high_confidence'] | cost: 5.0 bps/side | delay: 1 td
 
 ## Headline P&L (non-overlapping)
@@ -8,13 +8,13 @@ Universe: **217 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 | Metric | Value |
 |:-------|------:|
 | Total return | +0.1902 |
-| Annualized return | +0.6756 |
-| Annualized Sharpe | +2.059 (95% CI: -1.31 ... +5.87) |
-| Annualized Sortino | +1.790 (95% CI: -1.12 ... +5.56) |
+| Annualized return | +0.6656 |
+| Annualized Sharpe | +2.047 (95% CI: -1.13 ... +5.68) |
+| Annualized Sortino | +1.770 (95% CI: -0.99 ... +5.76) |
 | Max drawdown | -0.1058 |
-| Hit rate (daily) | 0.547 |
+| Hit rate (daily) | 0.540 |
 | Avg hold days | 12.6 |
-| Avg turnover / day | 0.1832 |
+| Avg turnover / day | 0.1811 |
 | Total trades | 68 |
 | Unique tickers | 28 |
 
@@ -27,19 +27,19 @@ Universe: **217 tickers** | long bands: ['constructive', 'elite', 'high_confiden
 | elite | +0.0000 |
 | high_confidence | +0.3950 |
 | constructive | +0.1378 |
-| monitor | +0.0788 |
-| weakening | +0.1114 |
-| review | +0.0021 |
+| monitor | +0.0935 |
+| weakening | +0.1212 |
+| review | -0.0046 |
 
 ## Benchmark
 
-Benchmark total return: **+0.0994**
+Benchmark total return: **+0.0959**
 
 ## Run metadata
 
 ```json
 {
-  "band_hash": "3408e09136e9b31f",
+  "band_hash": "fb14bda8b1e3bc3d",
   "engine_version": "1.0.0",
   "long_set": [
     "constructive",
@@ -62,15 +62,15 @@ Benchmark total return: **+0.0994**
     "top_k": 0
   },
   "params_hash": "49269b2e937d327d",
-  "price_hash": "586d3ee936675a18",
+  "price_hash": "888bb16e0a16d4bb",
   "profile_name": "long_only_buy",
   "short_bottom_quintile": false,
   "short_set": [],
   "top_k": 0,
   "universe_size": 217,
   "window": {
-    "end": "2026-06-18",
-    "n_trading_days": 86,
+    "end": "2026-06-22",
+    "n_trading_days": 87,
     "start": "2026-02-17"
   }
 }
