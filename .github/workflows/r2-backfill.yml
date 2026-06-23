@@ -153,6 +153,19 @@ jobs:
           orig_ref = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
           print(f"[backfill] original HEAD: {orig_ref[:10]}")
 
+          # Stash CURRENT upload_to_r2.py to /tmp so we run today's script against
+          # historical data (the script is recent — June 2026 — but the data files
+          # have been generated for over a year). Without this, every historical
+          # commit would skip with "script absent" because upload_to_r2.py didn't
+          # exist back then.
+          import shutil
+          STASHED_SCRIPT = "/tmp/upload_to_r2_stashed.py"
+          if not os.path.exists("upload_to_r2.py"):
+              print("::error::upload_to_r2.py missing from current HEAD — cannot backfill")
+              sys.exit(1)
+          shutil.copy("upload_to_r2.py", STASHED_SCRIPT)
+          print(f"[backfill] stashed current upload_to_r2.py to {STASHED_SCRIPT}")
+
           cur = start
           while cur <= end:
               # Find latest commit on/before this day's end (23:59:59 UTC)
@@ -180,9 +193,16 @@ jobs:
                   cur += timedelta(days=1)
                   continue
 
-              # upload_to_r2.py might not exist in older commits — guard
-              if not os.path.exists("upload_to_r2.py"):
-                  print(f"[backfill] {cur} — upload_to_r2.py absent in this commit, skipping")
+              # Restore the stashed upload_to_r2.py on top of the historical commit.
+              # This means we always run TODAY's script (with delta/mode support,
+              # R2_OVERRIDE_DATE handling, etc.) against the historical data files.
+              shutil.copy(STASHED_SCRIPT, "upload_to_r2.py")
+
+              # Check the historical commit actually has data files to upload.
+              # Skip days that have no data-*.json at all (very early repo state).
+              import glob
+              if not glob.glob("data-*.json") and not glob.glob("v2/data-*.json"):
+                  print(f"[backfill] {cur} — no data-*.json files in this commit, skipping")
                   skipped += 1
                   cur += timedelta(days=1)
                   continue
