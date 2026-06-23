@@ -76,13 +76,35 @@ def main():
         print("[r2] No data-*.json files found — nothing to upload.")
         return
 
+    # Delta mode: skip files already present in R2 for this date.
+    # r2-backfill.yml sets R2_SKIP_IF_PRESENT=true when mode=delta (default).
+    # mode=refresh leaves it unset → blast-upload as before.
+    # pages.yml NEVER sets it — today's data is re-generated every cron run
+    # and we want each new snapshot to overwrite.
+    skip_if_present = os.environ.get("R2_SKIP_IF_PRESENT", "").lower() in ("true", "1", "yes")
+    existing_keys = set()
+    if skip_if_present:
+        try:
+            paginator = s3.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=bucket_name, Prefix=f"{date_prefix}/"):
+                for obj in page.get("Contents", []):
+                    existing_keys.add(obj["Key"])
+            print(f"[r2] delta mode: {len(existing_keys)} keys already present under {date_prefix}/ — will skip those")
+        except (BotoCoreError, ClientError) as exc:
+            print(f"[r2] WARN: delta-mode listing failed ({exc}) — falling back to full upload")
+            existing_keys = set()  # safest fallback: upload everything
+
     total = len(files_to_upload)
     uploaded = 0
+    skipped = 0
     total_bytes = 0
     manifest_entries = []
 
     for rel_path in files_to_upload:
         r2_key = f"{date_prefix}/{rel_path}"
+        if skip_if_present and r2_key in existing_keys:
+            skipped += 1
+            continue
         try:
             size = os.path.getsize(rel_path)
             digest = sha256_of(rel_path)
@@ -101,28 +123,33 @@ def main():
         except (BotoCoreError, ClientError, OSError) as exc:
             print(f"[r2] WARN: failed to upload {r2_key}: {exc}")
 
-    # Upload MANIFEST.json
-    manifest_key = f"{date_prefix}/MANIFEST.json"
-    manifest_payload = {
-        "date": today,
-        "generated_utc": datetime.now(timezone.utc).isoformat(),
-        "files": manifest_entries,
-        "uploaded": uploaded,
-        "total": total,
-    }
-    try:
-        s3.put_object(
-            Bucket=bucket_name,
-            Key=manifest_key,
-            Body=json.dumps(manifest_payload, indent=2).encode(),
-            ContentType="application/json",
-        )
-        print(f"[r2] uploaded {manifest_key}")
-    except (BotoCoreError, ClientError) as exc:
-        print(f"[r2] WARN: failed to upload manifest: {exc}")
+    # Upload MANIFEST.json (skip if delta mode AND nothing was uploaded this run —
+    # the existing per-day MANIFEST stays authoritative).
+    if uploaded > 0 or not skip_if_present:
+        manifest_key = f"{date_prefix}/MANIFEST.json"
+        manifest_payload = {
+            "date": today,
+            "generated_utc": datetime.now(timezone.utc).isoformat(),
+            "mode": "delta" if skip_if_present else "refresh",
+            "files": manifest_entries,
+            "uploaded": uploaded,
+            "skipped": skipped,
+            "total": total,
+        }
+        try:
+            s3.put_object(
+                Bucket=bucket_name,
+                Key=manifest_key,
+                Body=json.dumps(manifest_payload, indent=2).encode(),
+                ContentType="application/json",
+            )
+            print(f"[r2] uploaded {manifest_key}")
+        except (BotoCoreError, ClientError) as exc:
+            print(f"[r2] WARN: failed to upload manifest: {exc}")
 
     total_kb = total_bytes / 1024.0
-    print(f"[r2] uploaded {uploaded}/{total} files ({total_kb:.0f} KB total)")
+    mode_str = "delta" if skip_if_present else "refresh"
+    print(f"[r2] {mode_str} mode: uploaded {uploaded}/{total} files, skipped {skipped} ({total_kb:.0f} KB written)")
 
 
 if __name__ == "__main__":

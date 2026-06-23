@@ -24,8 +24,16 @@ name: r2-backfill
 on:
   workflow_dispatch:
     inputs:
+      mode:
+        description: "Mode — DELTA fills gaps only (safe to re-run, cheap). REFRESH overwrites everything in range (use after data corruption or schema change)."
+        required: true
+        type: choice
+        default: "delta (only upload missing files — fast on re-runs)"
+        options:
+          - "delta (only upload missing files — fast on re-runs)"
+          - "refresh (full overwrite — re-uploads every file in range)"
       preset:
-        description: "Preset range (overrides start_date below). Estimates assume ~5 sec/day."
+        description: "Preset range (overrides start_date below). Estimates assume ~5 sec/day for refresh; delta is much faster on subsequent runs."
         required: true
         type: choice
         default: "30 days  (~3 min)"
@@ -80,6 +88,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          INPUT_MODE: ${{ inputs.mode }}
           INPUT_PRESET: ${{ inputs.preset }}
           INPUT_START: ${{ inputs.start_date }}
           INPUT_END: ${{ inputs.end_date }}
@@ -180,6 +189,10 @@ jobs:
 
               env = os.environ.copy()
               env["R2_OVERRIDE_DATE"] = cur.isoformat()
+              # Mode flag: delta sets R2_SKIP_IF_PRESENT, refresh leaves it unset.
+              raw_mode = os.environ.get("INPUT_MODE", "").lower()
+              if raw_mode.startswith("delta"):
+                  env["R2_SKIP_IF_PRESENT"] = "true"
               r = subprocess.run(
                   ["python3", "upload_to_r2.py"],
                   env=env, capture_output=True, text=True
