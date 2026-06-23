@@ -122,12 +122,15 @@ def main():
     file_dates = defaultdict(set)
     all_dates = set()
     seen = 0
+    total_bytes = 0
+    file_bytes = defaultdict(int)   # filename → cumulative bytes across all dates
 
     try:
         paginator = client.get_paginator("list_objects_v2")
         for page in paginator.paginate(Bucket=bucket, Prefix=PREFIX):
             for obj in page.get("Contents", []):
                 key = obj["Key"]
+                size = obj.get("Size", 0)
                 # Strip prefix: raw/alpine-data/{date}/{rest}
                 rest = key[len(PREFIX):]
                 if "/" not in rest:
@@ -141,6 +144,8 @@ def main():
                     continue
                 file_dates[file_part].add(date_part)
                 all_dates.add(date_part)
+                file_bytes[file_part] += size
+                total_bytes += size
                 seen += 1
     except (BotoCoreError, ClientError) as e:
         print(f"[coverage] R2 scan failed: {e}; writing empty payload.")
@@ -163,12 +168,32 @@ def main():
     sorted_dates = sorted(all_dates)
     earliest, latest = sorted_dates[0], sorted_dates[-1]
 
-    # Group by category
+    # Calendar span between earliest and latest (inclusive). This is the
+    # "should-have" denominator — if backfill is complete, every source has a
+    # snapshot for every calendar day in this span.
+    from datetime import date as _date
+    def _parse(d):
+        return _date.fromisoformat(d)
+    span_days = (_parse(latest) - _parse(earliest)).days + 1
+
+    # Group by category, with per-source stats
     by_category = defaultdict(list)
     for fname in sorted(file_dates.keys()):
         cat = categorise(fname)
+        sdates = sorted(file_dates[fname])
+        s_earliest, s_latest = sdates[0], sdates[-1]
+        s_span = (_parse(s_latest) - _parse(s_earliest)).days + 1
         present = {d: True for d in file_dates[fname]}
-        by_category[cat].append({"file": fname, "present": present})
+        by_category[cat].append({
+            "file": fname,
+            "present": present,
+            "days_stored": len(sdates),         # how many days we actually have
+            "earliest": s_earliest,             # oldest date this source goes back to
+            "latest": s_latest,                 # newest date
+            "span_days": s_span,                # calendar range of this source
+            "completeness_pct": round(100.0 * len(sdates) / s_span, 1) if s_span else 0.0,
+            "bytes": file_bytes[fname],
+        })
 
     # Ordered output — preserve CATEGORIES order, then Other last
     ordered_categories = {}
@@ -180,21 +205,28 @@ def main():
             ordered_categories[cat] = by_category[cat]
 
     cells_present = sum(len(s["present"]) for sources in ordered_categories.values() for s in sources)
-    total_cells = len(file_dates) * len(all_dates)
-    coverage_pct = round(100.0 * cells_present / total_cells, 1) if total_cells else 0.0
+    # "Records stored %" = actual cells / (sources × full calendar span).
+    # This is the real backfill-completeness number the founder asked for.
+    total_possible_cells = len(file_dates) * span_days
+    coverage_pct = round(100.0 * cells_present / total_possible_cells, 1) if total_possible_cells else 0.0
 
     payload = {
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "bucket": bucket,
         "earliest_date": earliest,
         "latest_date": latest,
+        "span_days": span_days,
         "dates": sorted_dates,
         "categories": ordered_categories,
         "totals": {
             "sources": len(file_dates),
-            "dates": len(all_dates),
-            "cells_present": cells_present,
-            "coverage_pct": coverage_pct,
+            "dates": len(all_dates),               # distinct days we have ANY data
+            "span_days": span_days,                # calendar range earliest→latest
+            "cells_present": cells_present,         # total source×date records stored
+            "total_possible_cells": total_possible_cells,
+            "coverage_pct": coverage_pct,          # % of the full grid that's filled
+            "total_bytes": total_bytes,
+            "total_mb": round(total_bytes / 1024 / 1024, 1),
         },
     }
 

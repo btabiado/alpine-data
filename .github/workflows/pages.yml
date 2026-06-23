@@ -14,6 +14,7 @@ permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history
 
 concurrency:
   group: pages
@@ -619,13 +620,18 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+          # build_backfill_jobs.py queries the r2-backfill workflow run history.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python3 health/build_r2_coverage.py
-          if [ -f health/r2-coverage.json ]; then
-            mkdir -p _site/health
-            cp health/r2-coverage.json _site/health/r2-coverage.json
-            echo "[coverage] mirrored health/r2-coverage.json → _site/health/"
-          fi
+          python3 health/build_backfill_jobs.py
+          mkdir -p _site/health
+          # Mirror BOTH generated JSONs into the deploy artifact — the earlier
+          # `cp -R health/*` step ran before these scripts, so the fresh output
+          # must be copied again or the live site serves stale/empty data.
+          [ -f health/r2-coverage.json ] && cp health/r2-coverage.json _site/health/r2-coverage.json
+          [ -f health/r2-backfill-jobs.json ] && cp health/r2-backfill-jobs.json _site/health/r2-backfill-jobs.json
+          echo "[coverage] mirrored coverage + jobs JSON → _site/health/"
         continue-on-error: true
 
       - name: Upload Pages artifact
