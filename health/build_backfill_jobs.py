@@ -75,6 +75,29 @@ def main():
         write(empty(f"GitHub API error: {type(e).__name__}"))
         sys.exit(0)
 
+    # Load per-run summaries from R2 (_backfill_meta/{run_id}.json) to enrich
+    # each run with records-pulled + days-processed. Optional — wrapped so a
+    # missing dep/creds never breaks the job list.
+    run_meta = {}
+    try:
+        import boto3
+        acct = "d486b561a8eacd568dd8edf9c749ee47"
+        bucket = os.environ.get("R2_BUCKET_NAME")
+        if bucket:
+            s3 = boto3.client("s3", endpoint_url=f"https://{acct}.r2.cloudflarestorage.com", region_name="auto")
+            paginator = s3.get_paginator("list_objects_v2")
+            for page in paginator.paginate(Bucket=bucket, Prefix="_backfill_meta/"):
+                for obj in page.get("Contents", []):
+                    try:
+                        body = s3.get_object(Bucket=bucket, Key=obj["Key"])["Body"].read()
+                        m = json.loads(body)
+                        run_meta[int(m["run_id"])] = m
+                    except Exception:
+                        pass
+            print(f"[jobs] loaded {len(run_meta)} run summaries from R2")
+    except Exception as e:
+        print(f"[jobs] R2 summary load skipped: {e}")
+
     runs = data.get("workflow_runs", [])
     jobs = []
     for run in runs:
@@ -87,6 +110,7 @@ def main():
             duration_s = int((t1 - t0).total_seconds())
         except Exception:
             pass
+        meta = run_meta.get(run.get("id"), {})
         jobs.append({
             "id": run.get("id"),
             "conclusion": run.get("conclusion") or run.get("status") or "unknown",
@@ -96,6 +120,11 @@ def main():
             "actor": (run.get("actor") or {}).get("login", "?"),
             "event": run.get("event", ""),
             "run_url": run.get("html_url", ""),
+            # Enriched from the R2 per-run summary (records pulled this run):
+            "files_uploaded": meta.get("files_uploaded"),
+            "days_processed": meta.get("processed_days"),
+            "days_skipped": meta.get("skipped_days"),
+            "mode": meta.get("mode"),
         })
 
     payload = {

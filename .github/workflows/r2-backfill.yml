@@ -147,7 +147,21 @@ jobs:
               total_days = max_days
 
           print(f"[backfill] range: {start} → {end} ({total_days} days)")
-          processed, skipped, failed = 0, 0, 0
+          processed, skipped, failed, files_uploaded = 0, 0, 0, 0
+          raw_mode = os.environ.get("INPUT_MODE", "").lower()
+
+          # boto3 client for writing the per-run summary to R2 (records-pulled
+          # tracking for the dashboard job-history table). Optional — wrapped so
+          # a missing dep never breaks the backfill.
+          try:
+              import boto3
+              _ACCOUNT_ID = "d486b561a8eacd568dd8edf9c749ee47"
+              s3 = boto3.client("s3", endpoint_url=f"https://{_ACCOUNT_ID}.r2.cloudflarestorage.com", region_name="auto")
+              bucket_name = os.environ.get("R2_BUCKET_NAME")
+          except Exception:
+              boto3 = None
+              s3 = None
+              bucket_name = None
 
           # Original HEAD so we restore at the end
           orig_ref = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
@@ -234,6 +248,11 @@ jobs:
               # Echo the upload script's last 6 lines of stdout per day for trail
               for line in (r.stdout or "").strip().splitlines()[-6:]:
                   print(f"  | {line}")
+              # Parse "uploaded X/Y files" to total the records pulled this run.
+              import re as _re
+              mm = _re.search(r"uploaded (\d+)/\d+ files", r.stdout or "")
+              if mm:
+                  files_uploaded += int(mm.group(1))
               if r.returncode != 0:
                   print(f"::warning::{cur} — upload_to_r2.py exited {r.returncode}")
                   failed += 1
@@ -249,7 +268,34 @@ jobs:
           subprocess.run(["git", "checkout", "-f", "--quiet", orig_ref], check=False)
           subprocess.run(["git", "clean", "-fdq"], check=False)
           print(f"[backfill] restored HEAD to {orig_ref[:10]}")
-          print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days")
+          print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days, files_uploaded={files_uploaded}")
+
+          # Write a per-run summary to R2 so the dashboard's job-history table can
+          # show records-pulled per run (GH API only gives runtime/conclusion).
+          # Keyed by GITHUB_RUN_ID; build_backfill_jobs.py reads these back.
+          run_id = os.environ.get("GITHUB_RUN_ID", "").strip()
+          if run_id and boto3:
+              try:
+                  summary = {
+                      "run_id": int(run_id),
+                      "processed_days": processed,
+                      "skipped_days": skipped,
+                      "failed_days": failed,
+                      "total_days": total_days,
+                      "files_uploaded": files_uploaded,
+                      "mode": "delta" if raw_mode.startswith("delta") else "refresh",
+                      "range_start": start.isoformat(),
+                      "range_end": end.isoformat(),
+                  }
+                  s3.put_object(
+                      Bucket=bucket_name,
+                      Key=f"_backfill_meta/{run_id}.json",
+                      Body=json.dumps(summary).encode(),
+                      ContentType="application/json",
+                  )
+                  print(f"[backfill] wrote run summary to _backfill_meta/{run_id}.json")
+              except Exception as e:
+                  print(f"[backfill] WARN: could not write run summary: {e}")
           PYEOF
 
       - name: Regenerate coverage dashboard JSON
