@@ -186,7 +186,14 @@ jobs:
 
               print(f"[backfill] {cur} — checking out {sha[:10]}")
               try:
-                  subprocess.run(["git", "checkout", "--quiet", sha], check=True)
+                  # -f (force) + clean BEFORE checkout: the previous iteration
+                  # copied the stashed upload_to_r2.py into the working tree, and
+                  # newer commits added health/ scripts that don't exist in old
+                  # commits. Plain `git checkout` aborts with "untracked working
+                  # tree files would be overwritten" → every day skipped (the
+                  # processed=0 skipped=730 bug). Force + clean clears the path.
+                  subprocess.run(["git", "checkout", "-f", "--quiet", sha], check=True)
+                  subprocess.run(["git", "clean", "-fdq"], check=False)
               except subprocess.CalledProcessError as e:
                   print(f"::warning::{cur} — git checkout failed: {e}")
                   failed += 1
@@ -228,8 +235,12 @@ jobs:
 
               cur += timedelta(days=1)
 
-          # Restore original HEAD
-          subprocess.run(["git", "checkout", "--quiet", orig_ref], check=False)
+          # Restore original HEAD (force + clean — same reason as per-iteration
+          # checkout: stashed/restored files must not block the restore, or the
+          # downstream "Regenerate coverage" step runs on a detached old commit
+          # without the health/ scripts → exit code 2).
+          subprocess.run(["git", "checkout", "-f", "--quiet", orig_ref], check=False)
+          subprocess.run(["git", "clean", "-fdq"], check=False)
           print(f"[backfill] restored HEAD to {orig_ref[:10]}")
           print(f"[backfill] DONE — processed={processed} skipped={skipped} failed={failed} of {total_days} days")
           PYEOF
