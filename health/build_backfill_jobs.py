@@ -122,6 +122,7 @@ def main():
             "run_url": run.get("html_url", ""),
             # Enriched from the R2 per-run summary (records pulled this run):
             "files_uploaded": meta.get("files_uploaded"),
+            "files_present": meta.get("files_present"),
             "days_processed": meta.get("processed_days"),
             "days_skipped": meta.get("skipped_days"),
             "mode": meta.get("mode"),

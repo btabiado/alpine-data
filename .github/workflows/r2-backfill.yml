@@ -147,7 +147,7 @@ jobs:
               total_days = max_days
 
           print(f"[backfill] range: {start} → {end} ({total_days} days)")
-          processed, skipped, failed, files_uploaded = 0, 0, 0, 0
+          processed, skipped, failed, files_uploaded, files_present = 0, 0, 0, 0, 0
           raw_mode = os.environ.get("INPUT_MODE", "").lower()
 
           # boto3 client for writing the per-run summary to R2 (records-pulled
@@ -248,11 +248,15 @@ jobs:
               # Echo the upload script's last 6 lines of stdout per day for trail
               for line in (r.stdout or "").strip().splitlines()[-6:]:
                   print(f"  | {line}")
-              # Parse "uploaded X/Y files" to total the records pulled this run.
+              # Parse "uploaded X/Y files, skipped Z" — track new uploads AND
+              # already-present (skipped) so the dashboard can show "X new · total
+              # present". In delta mode a re-run shows 0 new but full present count
+              # (= the records ARE there, just not re-pulled).
               import re as _re
-              mm = _re.search(r"uploaded (\d+)/\d+ files", r.stdout or "")
+              mm = _re.search(r"uploaded (\d+)/\d+ files, skipped (\d+)", r.stdout or "")
               if mm:
                   files_uploaded += int(mm.group(1))
+                  files_present += int(mm.group(1)) + int(mm.group(2))
               if r.returncode != 0:
                   print(f"::warning::{cur} — upload_to_r2.py exited {r.returncode}")
                   failed += 1
@@ -283,6 +287,7 @@ jobs:
                       "failed_days": failed,
                       "total_days": total_days,
                       "files_uploaded": files_uploaded,
+                      "files_present": files_present,
                       "mode": "delta" if raw_mode.startswith("delta") else "refresh",
                       "range_start": start.isoformat(),
                       "range_end": end.isoformat(),
