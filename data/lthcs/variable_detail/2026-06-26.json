@@ -9916,12 +9916,12 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
-      "sub_score": 55.0,
+      "sub_score": 58.8,
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
@@ -11279,12 +11279,12 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": -0.7,
-        "events_score_raw": 15.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
-      "sub_score": 41.2,
+      "sub_score": 58.8,
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
@@ -20253,12 +20253,12 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": 0.7,
+        "events_score_raw": 85.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
-      "sub_score": 55.0,
+      "sub_score": 58.8,
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
@@ -22211,14 +22211,14 @@
         "sentiment_subscore_raw": 50.0,
         "confidence_blend": 0.0,
         "has_sec_8k": false,
-        "has_yahoo_earnings": true,
+        "has_yahoo_earnings": false,
         "sec_8k_score": null,
-        "yahoo_earnings_score": -0.4,
-        "events_score_raw": 30.0,
+        "yahoo_earnings_score": null,
+        "events_score_raw": null,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
-      "sub_score": 45.0,
+      "sub_score": 50.0,
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
@@ -22226,10 +22226,6 @@
         "days_since_scored": null,
         "last_scored": null,
         "source": "finnhub_recommendation",
-        "has_events_refinement": true,
-        "events_refinement_sources": [
-          "yahoo_earnings"
-        ],
         "has_sector_rss": false
       }
     },
@@ -34291,12 +34287,12 @@
         "has_sec_8k": false,
         "has_yahoo_earnings": true,
         "sec_8k_score": null,
-        "yahoo_earnings_score": 0.4,
-        "events_score_raw": 70.0,
+        "yahoo_earnings_score": -0.7,
+        "events_score_raw": 15.0,
         "events_weight": 0.25,
         "base_sub_score": 50.0
       },
-      "sub_score": 55.0,
+      "sub_score": 41.2,
       "data_quality": {
         "has_sentiment": false,
         "article_count_sufficient": false,
