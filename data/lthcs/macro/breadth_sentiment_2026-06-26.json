@@ -9,7 +9,7 @@
     "week_ending": "2026-06-24"
   },
   "as_of": "2026-06-26",
-  "composite_regime": "cautious",
+  "composite_regime": "neutral",
   "data_quality": {
     "failed_sources": [],
     "sources_failed": 0,
@@ -23,11 +23,11 @@
     "week_ending": "2026-06-24"
   },
   "put_call": {
-    "last_updated": "2026-06-24",
-    "latest": 1.02,
+    "last_updated": "2026-06-25",
+    "latest": 0.99,
     "mean_30d": null,
     "percentile_1y": null,
-    "regime": "elevated_hedging",
+    "regime": "normal",
     "source": "cboe_daily_html"
   }
 }

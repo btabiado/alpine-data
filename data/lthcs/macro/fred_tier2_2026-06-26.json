@@ -6,9 +6,9 @@
     "percentile_2y": 0.6719681908548708
   },
   "consumer_sentiment": {
-    "change_3m_pct": -0.117021,
-    "current": 49.8,
-    "percentile_2y": 0.045454545454545456
+    "change_3m_pct": -0.205674,
+    "current": 44.8,
+    "percentile_2y": 0.043478260869565216
   },
   "data_quality": {
     "failed_sources": [],

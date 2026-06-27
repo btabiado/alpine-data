@@ -7,7 +7,7 @@
       "delta": -29,
       "name": "Band lean (bullish % minus bearish %)",
       "read": "universe distributing",
-      "value": "-97.7%"
+      "value": "-95.9%"
     },
     {
       "delta": 0,
@@ -31,13 +31,13 @@
       "delta": 1,
       "name": "Thesis pillar avg",
       "read": "narrative mixed",
-      "value": 54.1
+      "value": 54.2
     },
     {
       "delta": 0,
       "name": "DES (demand environment) avg",
       "read": "macro neutral",
-      "value": 48.6
+      "value": 48.7
     },
     {
       "delta": 10,
