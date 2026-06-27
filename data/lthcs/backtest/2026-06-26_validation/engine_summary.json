@@ -1,16 +1,16 @@
 {
   "summary": {
-    "total_return": 0.1901868365413535,
-    "ann_return": 0.6371983670879584,
-    "max_drawdown": -0.10577630997777032,
-    "sharpe": 2.012847078756134,
-    "sortino": 1.7108440531164033,
-    "hit_rate": 0.5222222222222223,
+    "total_return": 0.19018682054049574,
+    "ann_return": 0.6282548599135784,
+    "max_drawdown": -0.10577629567282332,
+    "sharpe": 2.0017015107641374,
+    "sortino": 1.6920433844828808,
+    "hit_rate": 0.5164835164835165,
     "avg_hold_days": 12.573529411764707,
-    "turnover": 0.17509811176477844,
+    "turnover": 0.1731739566904402,
     "n_trades": 68,
     "n_unique_tkr": 28,
-    "n_trading_days": 90,
+    "n_trading_days": 91,
     "params": {
       "bands_long": [
         "elite",
@@ -26,14 +26,14 @@
       "top_k": 0,
       "profile_name": "long_only_buy"
     },
-    "sharpe_ci_lower": -0.9942339126465747,
-    "sharpe_ci_upper": 5.520104805287348,
-    "sortino_ci_lower": -0.8684674183119878,
-    "sortino_ci_upper": 5.412048266848809,
+    "sharpe_ci_lower": -0.9062901641331962,
+    "sharpe_ci_upper": 5.482916239990195,
+    "sortino_ci_lower": -0.7305730762143766,
+    "sortino_ci_upper": 5.112205982982332,
     "rolling_sharpe_latest": {
       "5d": 7.099295739719549,
-      "21d": 0.392188950991908,
-      "63d": 3.1097636255295686
+      "21d": 0.7525173569435749,
+      "63d": 3.494131627009876
     }
   },
   "run_meta": {
@@ -54,12 +54,12 @@
       "profile_name": "long_only_buy"
     },
     "params_hash": "49269b2e937d327d",
-    "band_hash": "f00c4e4fc9deec59",
-    "price_hash": "039b83c7a4e3c8cb",
+    "band_hash": "944b4b5dcbc0e07c",
+    "price_hash": "f80c823a05a58df8",
     "window": {
       "start": "2026-02-17",
-      "end": "2026-06-25",
-      "n_trading_days": 90
+      "end": "2026-06-26",
+      "n_trading_days": 91
     },
     "universe_size": 217,
     "long_set": [
@@ -162,7 +162,8 @@
     "2026-06-22": 0.0,
     "2026-06-23": 0.0,
     "2026-06-24": 0.0,
-    "2026-06-25": 0.0
+    "2026-06-25": 0.0,
+    "2026-06-26": 0.0
   },
   "turnover_per_day": {
     "2026-02-17": 0.0,
@@ -254,6 +255,7 @@
     "2026-06-22": 0.0,
     "2026-06-23": 0.0,
     "2026-06-24": 0.0,
-    "2026-06-25": 0.0
+    "2026-06-25": 0.0,
+    "2026-06-26": 0.0
   }
 }
