@@ -1,25 +1,25 @@
 {
-  "checked_at": "2026-06-15T13:47:56+00:00",
+  "checked_at": "2026-07-01T11:32:29+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1960,
-    "gated": 145,
-    "dead": 12,
-    "unreachable": 75
+    "ok": 1961,
+    "gated": 144,
+    "dead": 14,
+    "unreachable": 73
   },
   "dead": [
-    {
-      "url": "https://cds.climate.copernicus.eu/how-to-api",
-      "code": 404,
-      "services": [
-        "Copernicus Climate Data Store (CDS) API"
-      ]
-    },
     {
       "url": "https://docs.stratz.com/",
       "code": 404,
       "services": [
         "STRATZ (Dota 2)"
+      ]
+    },
+    {
+      "url": "https://scholia.toolforge.org/",
+      "code": 404,
+      "services": [
+        "Scholia"
       ]
     },
     {
@@ -34,6 +34,20 @@
       "code": 404,
       "services": [
         "Hotellook / Travelpayouts Hotel Data API"
+      ]
+    },
+    {
+      "url": "https://websites.psychology.uwa.edu.au/school/mrcdatabase/uwa_mrc.htm",
+      "code": 404,
+      "services": [
+        "MRC Psycholinguistic Database"
+      ]
+    },
+    {
+      "url": "https://www.anaconda.com/docs/reference/api/main",
+      "code": 404,
+      "services": [
+        "Anaconda.org (conda) API"
       ]
     },
     {
@@ -146,6 +160,21 @@
       ]
     },
     {
+      "url": "https://cactus.nci.nih.gov/chemical/structure",
+      "code": 503,
+      "services": [
+        "NCI/CADD Chemical Identifier Resolver (Cactus)",
+        "NCI/CADD Chemical Identifier Resolver (Cactus)"
+      ]
+    },
+    {
+      "url": "https://cartblanche.docking.org/",
+      "code": null,
+      "services": [
+        "ZINC (CartBlanche) API"
+      ]
+    },
+    {
       "url": "https://clinical-information.canada.ca/",
       "code": null,
       "services": [
@@ -165,6 +194,13 @@
       "code": null,
       "services": [
         "Correlates of War (COW) Project datasets"
+      ]
+    },
+    {
+      "url": "https://data.bts.gov/",
+      "code": null,
+      "services": [
+        "BTS Open Data Platform (USDOT)"
       ]
     },
     {
@@ -215,13 +251,6 @@
       "code": null,
       "services": [
         "NREL WIND Toolkit (HSDS)"
-      ]
-    },
-    {
-      "url": "https://docs.aleph.occrp.org/developers/",
-      "code": null,
-      "services": [
-        "OCCRP Aleph API"
       ]
     },
     {
@@ -304,17 +333,18 @@
       ]
     },
     {
-      "url": "https://gea.esac.esa.int/archive/",
-      "code": null,
-      "services": [
-        "Gaia ESA Archive (TAP+)"
-      ]
-    },
-    {
       "url": "https://getbible.net/docs",
       "code": null,
       "services": [
         "GetBible.net API v2"
+      ]
+    },
+    {
+      "url": "https://gssdataexplorer.norc.org/",
+      "code": null,
+      "services": [
+        "GSS Data Explorer (NORC General Social Survey)",
+        "GSS Data Explorer (NORC, General Social Survey)"
       ]
     },
     {
@@ -367,20 +397,6 @@
       ]
     },
     {
-      "url": "https://mrdata.usgs.gov/",
-      "code": null,
-      "services": [
-        "USGS Mineral Resources Online Spatial Data"
-      ]
-    },
-    {
-      "url": "https://mrdata.usgs.gov/mrds/",
-      "code": null,
-      "services": [
-        "USGS Mineral Resources Data System (MRDS)"
-      ]
-    },
-    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -417,6 +433,13 @@
       ]
     },
     {
+      "url": "https://podaac.jpl.nasa.gov/",
+      "code": null,
+      "services": [
+        "NASA PO.DAAC Earthdata"
+      ]
+    },
+    {
       "url": "https://prime-numbers-api.com/",
       "code": null,
       "services": [
@@ -431,6 +454,20 @@
       ]
     },
     {
+      "url": "https://rest.rgd.mcw.edu/rgdws/",
+      "code": null,
+      "services": [
+        "Rat Genome Database (RGD) REST API"
+      ]
+    },
+    {
+      "url": "https://roar.eprints.org/",
+      "code": null,
+      "services": [
+        "ROAR (Registry of Open Access Repositories)"
+      ]
+    },
+    {
       "url": "https://sanskritwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -442,13 +479,6 @@
       "code": null,
       "services": [
         "AGNTCY — Open Agentic Schema Framework (OASF)"
-      ]
-    },
-    {
-      "url": "https://scholia.toolforge.org/",
-      "code": 503,
-      "services": [
-        "Scholia"
       ]
     },
     {
@@ -480,13 +510,6 @@
       ]
     },
     {
-      "url": "https://vizhub.healthdata.org/gbd-results/",
-      "code": 500,
-      "services": [
-        "GBD Results Tool (IHME, Global Burden of Disease)"
-      ]
-    },
-    {
       "url": "https://water.weather.gov/ahps/",
       "code": null,
       "services": [
@@ -498,15 +521,6 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
-      ]
-    },
-    {
-      "url": "https://wiki.crystallography.net/RESTful_API/",
-      "code": null,
-      "services": [
-        "Crystallography Open Database (COD)",
-        "Crystallography Open Database (COD) REST API",
-        "Crystallography Open Database (COD)"
       ]
     },
     {
@@ -531,26 +545,10 @@
       ]
     },
     {
-      "url": "https://www.atmo-france.org/article/les-donnees-air-disponibles",
-      "code": null,
-      "services": [
-        "Atmo France / Atmo Data"
-      ]
-    },
-    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
         "Brocade.io"
-      ]
-    },
-    {
-      "url": "https://www.ebi.ac.uk/chembl/api/data/docs",
-      "code": null,
-      "services": [
-        "ChEMBL Web Services",
-        "ChEMBL Data Web Services (EMBL-EBI)",
-        "ChEMBL Web Services (EMBL-EBI)"
       ]
     },
     {
@@ -589,10 +587,10 @@
       ]
     },
     {
-      "url": "https://www.learningregistry.org/",
+      "url": "https://www.mousemine.org/mousemine/",
       "code": null,
       "services": [
-        "Learning Registry"
+        "Mouse Genome Informatics (MGI / MouseMine)"
       ]
     },
     {
