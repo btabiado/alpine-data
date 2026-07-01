@@ -1,0 +1,64 @@
+{
+  "mode": "walk_forward",
+  "result": {
+    "train_weights": {
+      "adoption_momentum": 0.07906591574586617,
+      "institutional_confidence": 0.13159600726402368,
+      "financial_evolution": 0.13374857879320382,
+      "thesis_integrity": 0.2504870875286348,
+      "des": 0.40510241066827146
+    },
+    "train_ic": 0.10132906985042679,
+    "test_ic": 0.07290754511637895,
+    "overfit_gap": 0.02842152473404784,
+    "train_dates": [
+      "2026-02-17",
+      "2026-05-02"
+    ],
+    "test_dates": [
+      "2026-05-03",
+      "2026-06-30"
+    ],
+    "test_dates_after_ffill_reject": [
+      "2026-05-04",
+      "2026-05-29"
+    ],
+    "n_train_obs": 8851,
+    "n_test_obs": 17,
+    "n_rejected_ffill": 11937,
+    "recommendation": "hold",
+    "recommendation_reason": "test_ic=0.0729 passes but only n_test_obs=17 real cross-sections (<20). OOS estimate is too noisy on this sample size to ship; collect more history first.",
+    "ridge_alpha": 0.5,
+    "ridge_alpha_effective_train": 4425.5,
+    "horizon_days": 21,
+    "train_fraction": 0.6,
+    "prior_weights": [
+      0.2,
+      0.2,
+      0.2,
+      0.2,
+      0.2
+    ],
+    "pillar_sigmas_train": {
+      "adoption_momentum": 25.150037281400135,
+      "institutional_confidence": 29.044211601365724,
+      "financial_evolution": 17.613903894451244,
+      "thesis_integrity": 10.870810383966575,
+      "des": 6.268409396547389
+    },
+    "trained_at": "2026-07-01T10:44:47Z"
+  },
+  "config": {
+    "horizon_days": 21,
+    "ridge_alpha": 0.5,
+    "train_fraction": 0.6,
+    "universe_subset": null,
+    "offline": false
+  },
+  "data_window": {
+    "start": "2026-02-17",
+    "end": "2026-06-30",
+    "n_dates": 125
+  },
+  "n_tickers": 217
+}
