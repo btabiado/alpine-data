@@ -164,7 +164,7 @@
     },
     {
       "ticker": "BA",
-      "todays_take": "BA requires Structural Review at 47.2 (-7.5 over 30 days), supported by Thesis Integrity at 58.8.",
+      "todays_take": "BA requires Structural Review at 47.2 (-7.5 over 30 days), supported by Demand Environment at 50.2.",
       "why_changed": "Score is at 47.2 (drift over 1d +0.9); no prior snapshot available for component-delta analysis.",
       "why_not_to_sell": "Structural concerns: Institutional Confidence at 35.1 is well below the universe median, and Adoption Momentum at 50.0 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
@@ -694,7 +694,7 @@
       "ticker": "LCID",
       "todays_take": "LCID requires Structural Review at 36.1 (-1.4 over 30 days), supported by Adoption Momentum at 50.0.",
       "why_changed": "Score is at 36.1 (drift over 1d +0.1); no prior snapshot available for component-delta analysis.",
-      "why_not_to_sell": "Structural concerns: Institutional Confidence at 8.2 is well below the universe median, and Thesis Integrity at 41.2 is not compensating. Position should be reassessed against the original thesis.",
+      "why_not_to_sell": "Structural concerns: Institutional Confidence at 8.2 is well below the universe median, and Demand Environment at 47.8 is not compensating. Position should be reassessed against the original thesis.",
       "what_would_break": "Score is already in structural review territory. A move below 30 on Institutional Confidence, combined with a continued drift below 40 in the composite, would force a position exit decision.",
       "confidence_level": "medium"
     },
