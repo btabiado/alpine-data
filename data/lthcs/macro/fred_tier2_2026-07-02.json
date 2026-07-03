@@ -33,8 +33,8 @@
     "regime": "expansion"
   },
   "u6_unemployment": {
-    "change_3m_bp": 0.0,
-    "current": 8.1,
-    "percentile_2y": 0.8571428571428571
+    "change_3m_bp": -10.0,
+    "current": 7.9,
+    "percentile_2y": 0.5909090909090909
   }
 }
