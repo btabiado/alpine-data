@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-05T09:33:58Z",
+  "generated_at": "2026-07-06T11:22:27Z",
   "methodology_version": "1.1",
   "as_of": "2026-04",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.15857764616700107,
+        "composite_c": -0.15891103557505382,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.3376354776418273,
+            "score_d": 0.3366353094176691,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -209,13 +209,13 @@
                 "complete_through": "2026-03",
                 "note": "excludes last ~7 days; latest complete month lags to prior month",
                 "status": "ok",
-                "recent": 19028,
+                "recent": 19030,
                 "recent_period": "2026-03",
-                "baseline_mean": 19650.583333333332,
-                "baseline_std": 1843.9511679332027,
-                "z": -0.3376354776418273,
-                "yoy_pct": -3.8552877570612902,
-                "d": 0.3376354776418273,
+                "baseline_mean": 19650.833333333332,
+                "baseline_std": 1844.231178266133,
+                "z": -0.3366353094176691,
+                "yoy_pct": -3.845182153504118,
+                "d": 0.3366353094176691,
                 "series": [
                   {
                     "month": "2023-04",
@@ -287,7 +287,7 @@
                   },
                   {
                     "month": "2024-09",
-                    "n": 22989
+                    "n": 22990
                   },
                   {
                     "month": "2024-10",
@@ -319,7 +319,7 @@
                   },
                   {
                     "month": "2025-05",
-                    "n": 20513
+                    "n": 20512
                   },
                   {
                     "month": "2025-06",
@@ -327,7 +327,7 @@
                   },
                   {
                     "month": "2025-07",
-                    "n": 22671
+                    "n": 22672
                   },
                   {
                     "month": "2025-08",
@@ -339,7 +339,7 @@
                   },
                   {
                     "month": "2025-10",
-                    "n": 20995
+                    "n": 20998
                   },
                   {
                     "month": "2025-11",
@@ -359,7 +359,7 @@
                   },
                   {
                     "month": "2026-03",
-                    "n": 19028
+                    "n": 19030
                   }
                 ]
               }
@@ -883,7 +883,7 @@
           "complete_through": "2026-04",
           "note": "CONFIRMED live (max tow_date 2026-05-31) BUT this is a ROLLING ~90-day inventory snapshot, not a historical series: min(tow_date)=2026-03-03, max=2026-05-31, total ~4.7k rows. CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 583,
+          "recent": 544,
           "recent_period": "2026-04",
           "baseline_mean": null,
           "baseline_std": null,
