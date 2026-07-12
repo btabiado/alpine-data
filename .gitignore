@@ -55,6 +55,11 @@ data-*.json
 # Carve-out: data-aviation.json IS committed — the Aviation tab's static sidecar
 # (FAA airman/registry data, used-market snapshot, live seed). Refreshed by hand.
 !data-aviation.json
+# Carve-out: data-cfpb.json IS committed — the CFPB complaint feed refreshed daily
+# by cfpb-daily.yml. Consumed by the ADW Worker (ADW-397) via fetchAlpineFeed('cfpb')
+# because the CFPB API blocks Cloudflare datacenter IPs; GitHub Actions has clean
+# egress. Committed so the feed exists on a cold checkout / first publish.
+!data-cfpb.json
 # Carve-out: data-tsa.json IS committed — the Aviation tab's TSA Throughput
 # sub-view sidecar, refreshed daily by aviation-tsa.yml (fetch_tsa.py). The
 # client falls back to the baked-in seed (DATA.aviation.tsa.seed) if absent.
