@@ -13,15 +13,19 @@ name: catalog-health
 # (health/api-catalog.xlsx) so its Freshness/Health column stays in sync with
 # the JSON. The original landscape PDF (health/api-catalog.pdf) is NOT touched.
 #
-# Runs at 08:00 UTC on the 1st of each month — offset from the daily data
+# Runs at 08:00 UTC every Monday (weekly) — offset from the daily data
 # bots (real-estate 06:00, city 07:00) so they don't race the same commit.
+# Weekly cadence (was monthly `0 8 1 * *`, 2026-07-13): keeps catalog_health.json
+# fresh for the ADW discovery agent, which grounds its metric hunt on the
+# status=OK (reachable, free/keyless) sources. API availability rarely changes
+# day-to-day, so weekly captures ~all the signal without hammering 2,192 endpoints.
 # The probe uses a desktop-browser User-Agent; on CI's clean network +
 # modern TLS that recovers most of the bot-walled false-positives a
 # self-identifying UA used to collect. [skip ci] keeps the push from
 # retriggering pages.yml — its hourly cron deploys the refreshed files.
 on:
   schedule:
-    - cron: "0 8 1 * *"
+    - cron: "0 8 * * 1"
   workflow_dispatch:
 
 permissions:
