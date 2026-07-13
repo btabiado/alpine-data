@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-07-01T11:32:29+00:00",
+  "checked_at": "2026-07-13T12:25:25+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1961,
-    "gated": 144,
-    "dead": 14,
-    "unreachable": 73
+    "ok": 1921,
+    "gated": 156,
+    "dead": 17,
+    "unreachable": 98
   },
   "dead": [
     {
@@ -16,10 +16,10 @@
       ]
     },
     {
-      "url": "https://scholia.toolforge.org/",
+      "url": "https://openrouter.ai/docs/api/api-reference/models/get-models",
       "code": 404,
       "services": [
-        "Scholia"
+        "OpenRouter Models API"
       ]
     },
     {
@@ -102,10 +102,31 @@
       ]
     },
     {
+      "url": "https://www.globaldata.com/marketplace/dataset/pipeline-marketed-drugs/",
+      "code": 404,
+      "services": [
+        "GlobalData Pharmaceutical Intelligence (Pipeline & Marketed Drugs)"
+      ]
+    },
+    {
+      "url": "https://www.gmicloud.ai/en/models",
+      "code": 404,
+      "services": [
+        "GMI Cloud Inference Engine"
+      ]
+    },
+    {
       "url": "https://www.langtrace.ai/",
       "code": 404,
       "services": [
         "Langtrace"
+      ]
+    },
+    {
+      "url": "https://www.latinobarometro.org/online-analysis",
+      "code": 404,
+      "services": [
+        "Latinobarometro Online Analysis Platform"
       ]
     }
   ],
@@ -139,6 +160,20 @@
       ]
     },
     {
+      "url": "https://api.monarchinitiative.org/api/",
+      "code": 502,
+      "services": [
+        "Monarch Initiative BioLink API"
+      ]
+    },
+    {
+      "url": "https://armstransfers.sipri.org/",
+      "code": null,
+      "services": [
+        "SIPRI Arms Transfers Database"
+      ]
+    },
+    {
       "url": "https://assignment-api.uspto.gov/",
       "code": null,
       "services": [
@@ -157,21 +192,6 @@
       "code": 502,
       "services": [
         "NHLBI BioLINCC (Biologic Specimen and Data Repository)"
-      ]
-    },
-    {
-      "url": "https://cactus.nci.nih.gov/chemical/structure",
-      "code": 503,
-      "services": [
-        "NCI/CADD Chemical Identifier Resolver (Cactus)",
-        "NCI/CADD Chemical Identifier Resolver (Cactus)"
-      ]
-    },
-    {
-      "url": "https://cartblanche.docking.org/",
-      "code": null,
-      "services": [
-        "ZINC (CartBlanche) API"
       ]
     },
     {
@@ -197,10 +217,17 @@
       ]
     },
     {
-      "url": "https://data.bts.gov/",
+      "url": "https://cris.nih.go.kr/",
       "code": null,
       "services": [
-        "BTS Open Data Platform (USDOT)"
+        "CRiS (Korea Clinical Research Information Service)"
+      ]
+    },
+    {
+      "url": "https://developer.boeing.com/apis/notams-3/",
+      "code": null,
+      "services": [
+        "DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API"
       ]
     },
     {
@@ -268,6 +295,13 @@
       ]
     },
     {
+      "url": "https://drugs.ncats.io/",
+      "code": 502,
+      "services": [
+        "NCATS Inxight Drugs API"
+      ]
+    },
+    {
       "url": "https://ecos.fws.gov/ecp/services",
       "code": null,
       "services": [
@@ -289,10 +323,25 @@
       ]
     },
     {
+      "url": "https://fairsharing.org/API_doc",
+      "code": null,
+      "services": [
+        "FAIRsharing API"
+      ]
+    },
+    {
       "url": "https://fatcat.wiki/",
       "code": null,
       "services": [
         "Internet Archive Scholar / Fatcat API"
+      ]
+    },
+    {
+      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
+      "code": null,
+      "services": [
+        "NASA FIRMS (Fire Information for Resource Management)",
+        "NASA FIRMS Active Fire API"
       ]
     },
     {
@@ -333,18 +382,18 @@
       ]
     },
     {
-      "url": "https://getbible.net/docs",
-      "code": null,
-      "services": [
-        "GetBible.net API v2"
-      ]
-    },
-    {
       "url": "https://gssdataexplorer.norc.org/",
       "code": null,
       "services": [
         "GSS Data Explorer (NORC General Social Survey)",
         "GSS Data Explorer (NORC, General Social Survey)"
+      ]
+    },
+    {
+      "url": "https://hapi.fhir.org/",
+      "code": null,
+      "services": [
+        "HAPI FHIR public test server"
       ]
     },
     {
@@ -369,6 +418,13 @@
       ]
     },
     {
+      "url": "https://llama.developer.meta.com/",
+      "code": 500,
+      "services": [
+        "Meta Llama API (llama.developer.meta.com)"
+      ]
+    },
+    {
       "url": "https://maps.bts.dot.gov/services/rest/services/NTAD/MilitaryBases/MapServer",
       "code": null,
       "services": [
@@ -390,17 +446,17 @@
       ]
     },
     {
-      "url": "https://minorplanetcenter.net/web_service/",
-      "code": null,
-      "services": [
-        "IAU Minor Planet Center Web Service"
-      ]
-    },
-    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
         "USDA AMS My Market News (MARS API)"
+      ]
+    },
+    {
+      "url": "https://nada.ihsn.org/",
+      "code": null,
+      "services": [
+        "NADA (National Data Archive) REST API / IHSN catalogs"
       ]
     },
     {
@@ -419,6 +475,56 @@
       ]
     },
     {
+      "url": "https://nmrshiftdb.nmr.uni-koeln.de/",
+      "code": null,
+      "services": [
+        "nmrshiftdb2"
+      ]
+    },
+    {
+      "url": "https://nomad-lab.eu/prod/v1/api/v1/",
+      "code": null,
+      "services": [
+        "NOMAD (FAIRmat)"
+      ]
+    },
+    {
+      "url": "https://optimade.materialscloud.org/",
+      "code": null,
+      "services": [
+        "Materials Cloud (incl. MC3D)"
+      ]
+    },
+    {
+      "url": "https://optimade.openmaterialsdb.se/",
+      "code": null,
+      "services": [
+        "Open Materials Database (OMDB)"
+      ]
+    },
+    {
+      "url": "https://opus.nlpl.eu/",
+      "code": null,
+      "services": [
+        "OPUS Open Parallel Corpus"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/api/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database) API",
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
       "url": "https://platform.docs.opentargets.org/data-access/graphql-api",
       "code": null,
       "services": [
@@ -433,10 +539,10 @@
       ]
     },
     {
-      "url": "https://podaac.jpl.nasa.gov/",
+      "url": "https://portal.vamdc.eu/",
       "code": null,
       "services": [
-        "NASA PO.DAAC Earthdata"
+        "VAMDC (Virtual Atomic and Molecular Data Centre)"
       ]
     },
     {
@@ -447,6 +553,13 @@
       ]
     },
     {
+      "url": "https://projectpq.ai/patent-search-api-by-pqai/",
+      "code": null,
+      "services": [
+        "PQAI Patent Search API"
+      ]
+    },
+    {
       "url": "https://rctportal.niph.go.jp/en",
       "code": null,
       "services": [
@@ -454,17 +567,10 @@
       ]
     },
     {
-      "url": "https://rest.rgd.mcw.edu/rgdws/",
+      "url": "https://reg.clinicalgenome.org/",
       "code": null,
       "services": [
-        "Rat Genome Database (RGD) REST API"
-      ]
-    },
-    {
-      "url": "https://roar.eprints.org/",
-      "code": null,
-      "services": [
-        "ROAR (Registry of Open Access Repositories)"
+        "ClinGen Allele Registry (CAR)"
       ]
     },
     {
@@ -482,6 +588,13 @@
       ]
     },
     {
+      "url": "https://scholia.toolforge.org/",
+      "code": 503,
+      "services": [
+        "Scholia"
+      ]
+    },
+    {
       "url": "https://search.patentsview.org/docs/",
       "code": null,
       "services": [
@@ -496,6 +609,21 @@
       ]
     },
     {
+      "url": "https://tle.ivanstanojevic.me/",
+      "code": null,
+      "services": [
+        "TLE API (tle.ivanstanojevic.me / api.nasa.gov mirror)",
+        "TLE API (tle.ivanstanojevic.me, also fronted via api.nasa.gov)"
+      ]
+    },
+    {
+      "url": "https://tle.ivanstanojevic.me/api/tle/",
+      "code": null,
+      "services": [
+        "TLE API (tle.ivanstanojevic.me)"
+      ]
+    },
+    {
       "url": "https://trialstreamer.robotreviewer.net/",
       "code": null,
       "services": [
@@ -503,10 +631,11 @@
       ]
     },
     {
-      "url": "https://v2.sherpa.ac.uk/opendoar/",
+      "url": "https://ucdp.uu.se/apidocs/",
       "code": null,
       "services": [
-        "OpenDOAR (Directory of Open Access Repositories)"
+        "UCDP (Uppsala Conflict Data Program) API",
+        "UCDP (Uppsala Conflict Data Program) API"
       ]
     },
     {
@@ -521,6 +650,13 @@
       "code": null,
       "services": [
         "Plant.id (Kindwise)"
+      ]
+    },
+    {
+      "url": "https://wheretheiss.at/w/developer",
+      "code": null,
+      "services": [
+        "Where the ISS at? (wheretheiss.at)"
       ]
     },
     {
@@ -549,6 +685,13 @@
       "code": null,
       "services": [
         "Brocade.io"
+      ]
+    },
+    {
+      "url": "https://www.diva-portal.org/",
+      "code": null,
+      "services": [
+        "DiVA Portal (Sweden/Scandinavia) OAI-PMH"
       ]
     },
     {
@@ -587,10 +730,10 @@
       ]
     },
     {
-      "url": "https://www.mousemine.org/mousemine/",
+      "url": "https://www.imsglobal.org/spec/lti/v1p3",
       "code": null,
       "services": [
-        "Mouse Genome Informatics (MGI / MouseMine)"
+        "Learning Tools Interoperability (LTI 1.3) / 1EdTech"
       ]
     },
     {
@@ -608,10 +751,69 @@
       ]
     },
     {
+      "url": "https://www.pantone.com/products/digital-apps/pantone-api",
+      "code": null,
+      "services": [
+        "Pantone Connect / Pantone API"
+      ]
+    },
+    {
+      "url": "https://www.parlgov.org/",
+      "code": null,
+      "services": [
+        "ParlGov Database"
+      ]
+    },
+    {
+      "url": "https://www.probes-drugs.org/",
+      "code": null,
+      "services": [
+        "Probes & Drugs Portal"
+      ]
+    },
+    {
+      "url": "https://www.rcaap.pt/",
+      "code": null,
+      "services": [
+        "RCAAP — Repositório Científico de Acesso Aberto de Portugal"
+      ]
+    },
+    {
+      "url": "https://www.sipri.org/databases/armsindustry",
+      "code": null,
+      "services": [
+        "SIPRI Arms Industry Database (Top 100)"
+      ]
+    },
+    {
+      "url": "https://www.sipri.org/databases/armstransfers",
+      "code": null,
+      "services": [
+        "SIPRI Arms Transfers Database"
+      ]
+    },
+    {
+      "url": "https://www.sipri.org/databases/milex",
+      "code": null,
+      "services": [
+        "SIPRI Military Expenditure Database",
+        "SIPRI Military Expenditure Database",
+        "SIPRI Military Expenditure Database (MILEX)",
+        "SIPRI Military Expenditure Database"
+      ]
+    },
+    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
         "Transitland (Interline)"
+      ]
+    },
+    {
+      "url": "https://www.ucs.org/resources/satellite-database",
+      "code": 520,
+      "services": [
+        "UCS Satellite Database"
       ]
     },
     {
