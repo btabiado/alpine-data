@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-12T08:58:27Z",
+  "generated_at": "2026-07-13T10:17:20Z",
   "methodology_version": "1.1",
   "as_of": "2026-04",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.16084015288457046,
+        "composite_c": -0.16081938099138246,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.33287506031619074,
+            "score_d": 0.33293737599575485,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -211,11 +211,11 @@
                 "status": "ok",
                 "recent": 19041,
                 "recent_period": "2026-03",
-                "baseline_mean": 19654.583333333332,
-                "baseline_std": 1843.2841822108953,
-                "z": -0.33287506031619074,
+                "baseline_mean": 19654.75,
+                "baseline_std": 1843.439770510553,
+                "z": -0.33293737599575485,
                 "yoy_pct": -3.78960133393967,
-                "d": 0.33287506031619074,
+                "d": 0.33293737599575485,
                 "series": [
                   {
                     "month": "2023-04",
@@ -243,7 +243,7 @@
                   },
                   {
                     "month": "2023-10",
-                    "n": 23109
+                    "n": 23110
                   },
                   {
                     "month": "2023-11",
@@ -303,11 +303,11 @@
                   },
                   {
                     "month": "2025-01",
-                    "n": 18522
+                    "n": 18523
                   },
                   {
                     "month": "2025-02",
-                    "n": 16548
+                    "n": 16549
                   },
                   {
                     "month": "2025-03",
@@ -315,7 +315,7 @@
                   },
                   {
                     "month": "2025-04",
-                    "n": 19672
+                    "n": 19673
                   },
                   {
                     "month": "2025-05",
@@ -323,7 +323,7 @@
                   },
                   {
                     "month": "2025-06",
-                    "n": 21133
+                    "n": 21134
                   },
                   {
                     "month": "2025-07",
@@ -343,7 +343,7 @@
                   },
                   {
                     "month": "2025-11",
-                    "n": 18429
+                    "n": 18430
                   },
                   {
                     "month": "2025-12",
@@ -355,7 +355,7 @@
                   },
                   {
                     "month": "2026-02",
-                    "n": 16485
+                    "n": 16484
                   },
                   {
                     "month": "2026-03",
@@ -883,7 +883,7 @@
           "complete_through": "2026-04",
           "note": "CONFIRMED live (max tow_date 2026-05-31) BUT this is a ROLLING ~90-day inventory snapshot, not a historical series: min(tow_date)=2026-03-03, max=2026-05-31, total ~4.7k rows. CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 392,
+          "recent": 373,
           "recent_period": "2026-04",
           "baseline_mean": null,
           "baseline_std": null,
@@ -901,11 +901,11 @@
           "status": "ok",
           "recent": 2274,
           "recent_period": "2026-04",
-          "baseline_mean": 2553.3333333333335,
-          "baseline_std": 337.2166300103771,
-          "z": -0.8283498157393293,
+          "baseline_mean": 2553.4166666666665,
+          "baseline_std": 337.07849193062174,
+          "z": -0.8289365039765774,
           "yoy_pct": -19.44739638682253,
-          "d": -0.8283498157393293,
+          "d": -0.8289365039765774,
           "series": [
             {
               "month": "2023-05",
@@ -1045,7 +1045,7 @@
             },
             {
               "month": "2026-03",
-              "n": 1994
+              "n": 1995
             },
             {
               "month": "2026-04",
@@ -3080,7 +3080,7 @@
         "label": "On baseline",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.04428391141256505,
+        "composite_c": -0.04420236179351552,
         "pillars": [
           {
             "key": "city_services",
@@ -3253,7 +3253,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.5715052576165707,
+            "score_d": 0.5717499064737194,
             "feeds": [
               {
                 "label": "Police Incident Reports",
@@ -3264,11 +3264,11 @@
                 "status": "ok",
                 "recent": 7457,
                 "recent_period": "2026-04",
-                "baseline_mean": 7705.166666666667,
-                "baseline_std": 434.233392185457,
-                "z": -0.5715052576165707,
+                "baseline_mean": 7705.25,
+                "baseline_std": 434.1933373126155,
+                "z": -0.5717499064737194,
                 "yoy_pct": -4.163989204472433,
-                "d": 0.5715052576165707,
+                "d": 0.5717499064737194,
                 "series": [
                   {
                     "month": "2023-05",
@@ -3344,11 +3344,11 @@
                   },
                   {
                     "month": "2024-11",
-                    "n": 8036
+                    "n": 8038
                   },
                   {
                     "month": "2024-12",
-                    "n": 8103
+                    "n": 8104
                   },
                   {
                     "month": "2025-01",
@@ -3396,7 +3396,7 @@
                   },
                   {
                     "month": "2025-12",
-                    "n": 7496
+                    "n": 7497
                   },
                   {
                     "month": "2026-01",
@@ -3652,7 +3652,7 @@
             },
             {
               "month": "2023-12",
-              "n": 678
+              "n": 680
             },
             {
               "month": "2024-01",
