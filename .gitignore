@@ -60,6 +60,12 @@ data-*.json
 # because the CFPB API blocks Cloudflare datacenter IPs; GitHub Actions has clean
 # egress. Committed so the feed exists on a cold checkout / first publish.
 !data-cfpb.json
+# Carve-out: data-usaspending.json IS committed — the USAspending obligation feed
+# refreshed daily by usaspending-daily.yml. Consumed by the ADW Worker (ADW-441 and
+# ADW-444) via fetchAlpineFeed('usaspending') because the USAspending API blocks
+# Cloudflare datacenter IPs; GitHub Actions has clean egress. Committed so the feed
+# exists on a cold checkout / first publish.
+!data-usaspending.json
 # Carve-out: data-tsa.json IS committed — the Aviation tab's TSA Throughput
 # sub-view sidecar, refreshed daily by aviation-tsa.yml (fetch_tsa.py). The
 # client falls back to the baked-in seed (DATA.aviation.tsa.seed) if absent.

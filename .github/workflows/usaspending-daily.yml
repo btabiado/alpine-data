@@ -1,0 +1,53 @@
+name: usaspending-daily
+
+# Daily refresh for the USAspending obligation feed (data-usaspending.json),
+# consumed by ADW-441 (Federal Grant Liquidity Monitor) and ADW-444 (Defense
+# Contract Award Lag Index). The USAspending API blocks/525s Cloudflare datacenter
+# IPs, so the ADW Worker cannot fetch it directly — GitHub Actions runners have
+# clean egress, so we fetch here and publish the raw monthly series as a keyless
+# JSON feed. The Worker reads it via fetchAlpineFeed('usaspending') and scores it.
+#
+# Commit carries [skip ci] so the push doesn't retrigger pages.yml's push build;
+# pages.yml's own hourly cron picks up the new data-*.json on its next tick.
+on:
+  schedule:
+    # 07:30 UTC = 02:30 ET — offset from cfpb-daily (07:00) so the two feed jobs
+    # don't collide. USAspending obligations post on a rolling daily basis.
+    - cron: "30 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: usaspending-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch USAspending obligation series
+        # Pure-stdlib fetcher — no pip install. Non-zero exit fails the workflow
+        # on purpose so a dead fetcher is visible in the Actions UI.
+        run: python scripts/fetch_usaspending.py
+
+      - name: Commit data changes via signed API commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: usaspending-bot
+          AUTHOR_EMAIL: usaspending-bot@users.noreply.github.com
+        run: |
+          git add data-usaspending.json
+          .github/scripts/api-commit.sh \
+            "usaspending: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
