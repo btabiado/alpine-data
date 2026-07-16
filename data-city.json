@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-15T09:04:44Z",
+  "generated_at": "2026-07-16T09:08:09Z",
   "methodology_version": "1.1",
   "as_of": "2026-04",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.16104179910963826,
+        "composite_c": -0.1609324047969014,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.3322701216409873,
+            "score_d": 0.3325983045791979,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -211,11 +211,11 @@
                 "status": "ok",
                 "recent": 19043,
                 "recent_period": "2026-03",
-                "baseline_mean": 19655.5,
-                "baseline_std": 1843.3797085787833,
-                "z": -0.3322701216409873,
+                "baseline_mean": 19656.0,
+                "baseline_std": 1843.0641153615177,
+                "z": -0.3325983045791979,
                 "yoy_pct": -3.784357316087308,
-                "d": 0.3322701216409873,
+                "d": 0.3325983045791979,
                 "series": [
                   {
                     "month": "2023-04",
@@ -247,7 +247,7 @@
                   },
                   {
                     "month": "2023-11",
-                    "n": 21441
+                    "n": 21442
                   },
                   {
                     "month": "2023-12",
@@ -315,7 +315,7 @@
                   },
                   {
                     "month": "2025-04",
-                    "n": 19674
+                    "n": 19675
                   },
                   {
                     "month": "2025-05",
@@ -339,11 +339,11 @@
                   },
                   {
                     "month": "2025-10",
-                    "n": 21005
+                    "n": 21006
                   },
                   {
                     "month": "2025-11",
-                    "n": 18431
+                    "n": 18433
                   },
                   {
                     "month": "2025-12",
@@ -351,11 +351,11 @@
                   },
                   {
                     "month": "2026-01",
-                    "n": 16925
+                    "n": 16926
                   },
                   {
                     "month": "2026-02",
-                    "n": 16484
+                    "n": 16485
                   },
                   {
                     "month": "2026-03",
@@ -883,7 +883,7 @@
           "complete_through": "2026-04",
           "note": "CONFIRMED live (max tow_date 2026-05-31) BUT this is a ROLLING ~90-day inventory snapshot, not a historical series: min(tow_date)=2026-03-03, max=2026-05-31, total ~4.7k rows. CANNOT support a 12-month baseline or YoY \u2014 render as a recent-volume tile only (status insufficient_history in scorer output); do NOT z-score. Polarity 0: tow counts reflect enforcement/relocation activity, not safety or wellbeing. pillar_hint context.",
           "status": "insufficient_history",
-          "recent": 321,
+          "recent": 288,
           "recent_period": "2026-04",
           "baseline_mean": null,
           "baseline_std": null,
@@ -899,13 +899,13 @@
           "complete_through": "2026-04",
           "note": "CONFIRMED live. license_start_date gives a clean recent flow (~2.0-2.3k/mo) ONCE future-dated rows are filtered: raw agg returns a large NULL bucket (~2.7k) plus forward-dated noise (2026-08/09/11), so filter `license_start_date IS NOT NULL AND license_start_date < <next-month>` before bucketing. date_issued is an even cleaner alternative (~2.3-2.7k/mo, no future noise, max 2026-05-29) and mirrors the backbone Building-Permits issue_date framing \u2014 use it if the future-date filter on license_start_date proves fragile. Polarity +1: new/renewed licenses up-is-favorable. pillar_hint development_economy. Latest complete month 2026-04.",
           "status": "ok",
-          "recent": 2277,
+          "recent": 2278,
           "recent_period": "2026-04",
-          "baseline_mean": 2553.9166666666665,
-          "baseline_std": 337.15240330680655,
-          "z": -0.8213397382034204,
-          "yoy_pct": -19.341126461211477,
-          "d": -0.8213397382034204,
+          "baseline_mean": 2554.25,
+          "baseline_std": 337.08285949698876,
+          "z": -0.8195314363128209,
+          "yoy_pct": -19.334277620396602,
+          "d": -0.8195314363128209,
           "series": [
             {
               "month": "2023-05",
@@ -933,7 +933,7 @@
             },
             {
               "month": "2023-11",
-              "n": 2776
+              "n": 2777
             },
             {
               "month": "2023-12",
@@ -969,7 +969,7 @@
             },
             {
               "month": "2024-08",
-              "n": 2711
+              "n": 2712
             },
             {
               "month": "2024-09",
@@ -1001,7 +1001,7 @@
             },
             {
               "month": "2025-04",
-              "n": 2823
+              "n": 2824
             },
             {
               "month": "2025-05",
@@ -1017,7 +1017,7 @@
             },
             {
               "month": "2025-08",
-              "n": 2433
+              "n": 2435
             },
             {
               "month": "2025-09",
@@ -1033,7 +1033,7 @@
             },
             {
               "month": "2025-12",
-              "n": 2243
+              "n": 2244
             },
             {
               "month": "2026-01",
@@ -1049,7 +1049,7 @@
             },
             {
               "month": "2026-04",
-              "n": 2277
+              "n": 2278
             }
           ]
         }
@@ -1065,12 +1065,12 @@
         "label": "Improving",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.7454591886136684,
+        "composite_c": 0.7454594667624765,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": 0.6514720267694202,
+            "score_d": 0.6514728612158444,
             "feeds": [
               {
                 "label": "311 (2010-present)",
@@ -1081,11 +1081,11 @@
                 "status": "ok",
                 "recent": 302189,
                 "recent_period": "2026-04",
-                "baseline_mean": 316321.25,
-                "baseline_std": 21692.796343198817,
-                "z": -0.6514720267694202,
+                "baseline_mean": 316321.3333333333,
+                "baseline_std": 21692.89647301367,
+                "z": -0.6514728612158444,
                 "yoy_pct": 10.874701889561548,
-                "d": 0.6514720267694202,
+                "d": 0.6514728612158444,
                 "series": [
                   {
                     "month": "2023-05",
@@ -1225,7 +1225,7 @@
                   },
                   {
                     "month": "2026-03",
-                    "n": 342386
+                    "n": 342387
                   },
                   {
                     "month": "2026-04",
@@ -1601,29 +1601,29 @@
           "complete_through": "2026-04",
           "note": "CONFIRMED live (~6.5-9.3k/mo, dense). MUST filter placeholder rows: ~3,434 records carry inspection_date='1900-01-01' (never-inspected / new establishments) \u2014 filter `inspection_date > '1901-01-01'` before bucketing or date_trunc_ym buries a huge 1900 bucket. Polarity 0: inspection VOLUME is workload, not outcome (signal = critical_flag / score, not count). pillar_hint context. Latest complete month 2026-04.",
           "status": "ok",
-          "recent": 9211,
+          "recent": 9210,
           "recent_period": "2026-04",
-          "baseline_mean": 7591.666666666667,
-          "baseline_std": 865.8909990421555,
-          "z": 1.8701353116323323,
-          "yoy_pct": 18.92834086507424,
+          "baseline_mean": 7588.083333333333,
+          "baseline_std": 865.9571254141601,
+          "z": 1.8729757156175082,
+          "yoy_pct": 19.053774560496382,
           "d": null,
           "series": [
             {
               "month": "2023-05",
-              "n": 5792
+              "n": 5777
             },
             {
               "month": "2023-06",
-              "n": 4911
+              "n": 4895
             },
             {
               "month": "2023-07",
-              "n": 3344
+              "n": 3342
             },
             {
               "month": "2023-08",
-              "n": 4438
+              "n": 4434
             },
             {
               "month": "2023-09",
@@ -1639,27 +1639,27 @@
             },
             {
               "month": "2023-12",
-              "n": 4641
+              "n": 4634
             },
             {
               "month": "2024-01",
-              "n": 5352
+              "n": 5343
             },
             {
               "month": "2024-02",
-              "n": 4641
+              "n": 4634
             },
             {
               "month": "2024-03",
-              "n": 6295
+              "n": 6283
             },
             {
               "month": "2024-04",
-              "n": 6305
+              "n": 6304
             },
             {
               "month": "2024-05",
-              "n": 7554
+              "n": 7553
             },
             {
               "month": "2024-06",
@@ -1671,15 +1671,15 @@
             },
             {
               "month": "2024-08",
-              "n": 6484
+              "n": 6482
             },
             {
               "month": "2024-09",
-              "n": 6684
+              "n": 6680
             },
             {
               "month": "2024-10",
-              "n": 8877
+              "n": 8871
             },
             {
               "month": "2024-11",
@@ -1691,19 +1691,19 @@
             },
             {
               "month": "2025-01",
-              "n": 7412
+              "n": 7402
             },
             {
               "month": "2025-02",
-              "n": 5984
+              "n": 5982
             },
             {
               "month": "2025-03",
-              "n": 7292
+              "n": 7287
             },
             {
               "month": "2025-04",
-              "n": 7745
+              "n": 7736
             },
             {
               "month": "2025-05",
@@ -1711,11 +1711,11 @@
             },
             {
               "month": "2025-06",
-              "n": 6234
+              "n": 6228
             },
             {
               "month": "2025-07",
-              "n": 8031
+              "n": 8029
             },
             {
               "month": "2025-08",
@@ -1723,27 +1723,27 @@
             },
             {
               "month": "2025-09",
-              "n": 7606
+              "n": 7604
             },
             {
               "month": "2025-10",
-              "n": 8342
+              "n": 8339
             },
             {
               "month": "2025-11",
-              "n": 7091
+              "n": 7079
             },
             {
               "month": "2025-12",
-              "n": 9519
+              "n": 9513
             },
             {
               "month": "2026-01",
-              "n": 6914
+              "n": 6912
             },
             {
               "month": "2026-02",
-              "n": 6394
+              "n": 6393
             },
             {
               "month": "2026-03",
@@ -1751,7 +1751,7 @@
             },
             {
               "month": "2026-04",
-              "n": 9211
+              "n": 9210
             }
           ]
         },
@@ -2590,11 +2590,11 @@
                   },
                   {
                     "month": "2023-10",
-                    "n": 7536
+                    "n": 7541
                   },
                   {
                     "month": "2023-11",
-                    "n": 6881
+                    "n": 6883
                   },
                   {
                     "month": "2023-12",
@@ -3080,7 +3080,7 @@
         "label": "On baseline",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.04395064917834013,
+        "composite_c": -0.04690643215246467,
         "pillars": [
           {
             "key": "city_services",
@@ -3253,7 +3253,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.5726671748427925,
+            "score_d": 0.572104371324678,
             "feeds": [
               {
                 "label": "Police Incident Reports",
@@ -3262,13 +3262,13 @@
                 "complete_through": "2026-04",
                 "note": "2018 portal/system migration = continuity breakpoint",
                 "status": "ok",
-                "recent": 7458,
+                "recent": 7459,
                 "recent_period": "2026-04",
-                "baseline_mean": 7706.5,
-                "baseline_std": 433.9344228490445,
-                "z": -0.5726671748427925,
-                "yoy_pct": -4.15113738594011,
-                "d": 0.5726671748427925,
+                "baseline_mean": 7707.083333333333,
+                "baseline_std": 433.6329973478597,
+                "z": -0.572104371324678,
+                "yoy_pct": -4.138285567407788,
+                "d": 0.572104371324678,
                 "series": [
                   {
                     "month": "2023-05",
@@ -3388,11 +3388,11 @@
                   },
                   {
                     "month": "2025-10",
-                    "n": 8213
+                    "n": 8215
                   },
                   {
                     "month": "2025-11",
-                    "n": 7815
+                    "n": 7816
                   },
                   {
                     "month": "2025-12",
@@ -3400,19 +3400,19 @@
                   },
                   {
                     "month": "2026-01",
-                    "n": 7290
+                    "n": 7291
                   },
                   {
                     "month": "2026-02",
-                    "n": 6671
+                    "n": 6673
                   },
                   {
                     "month": "2026-03",
-                    "n": 7500
+                    "n": 7501
                   },
                   {
                     "month": "2026-04",
-                    "n": 7458
+                    "n": 7459
                   }
                 ]
               }
@@ -3421,7 +3421,7 @@
           {
             "key": "development_economy",
             "name": "Development & Economy",
-            "score_d": -1.2170643476292309,
+            "score_d": -1.2253688930334898,
             "feeds": [
               {
                 "label": "Building Permits",
@@ -3430,13 +3430,13 @@
                 "complete_through": "2026-04",
                 "note": null,
                 "status": "ok",
-                "recent": 1981,
+                "recent": 1979,
                 "recent_period": "2026-04",
-                "baseline_mean": 2207.9166666666665,
-                "baseline_std": 186.44590740718576,
-                "z": -1.2170643476292309,
-                "yoy_pct": -12.306330234617088,
-                "d": -1.2170643476292309,
+                "baseline_mean": 2207.75,
+                "baseline_std": 186.6784780489349,
+                "z": -1.2253688930334898,
+                "yoy_pct": -12.39486498450642,
+                "d": -1.2253688930334898,
                 "series": [
                   {
                     "month": "2023-05",
@@ -3572,15 +3572,15 @@
                   },
                   {
                     "month": "2026-02",
-                    "n": 1901
+                    "n": 1900
                   },
                   {
                     "month": "2026-03",
-                    "n": 1995
+                    "n": 1994
                   },
                   {
                     "month": "2026-04",
-                    "n": 1981
+                    "n": 1979
                   }
                 ]
               }
@@ -3614,13 +3614,13 @@
           "complete_through": "2026-04",
           "note": "CONFIRMED live (data_as_of 2026-05-30; max dba_start_date 2026-05-29). dba_start_date gives a clean dense flow of new business registrations (~0.75-1.5k/mo) when filtered to a recent window. location_start_date is the alternative (original location open date; slightly more back-loaded). Polarity +1: new business registrations up-is-favorable. pillar_hint development_economy. Latest complete month 2026-04.",
           "status": "ok",
-          "recent": 1078,
+          "recent": 1079,
           "recent_period": "2026-04",
-          "baseline_mean": 1007.0,
-          "baseline_std": 200.49397330925768,
-          "z": 0.3541253576260071,
-          "yoy_pct": -6.179286335944299,
-          "d": 0.3541253576260071,
+          "baseline_mean": 1007.25,
+          "baseline_std": 200.38925661488608,
+          "z": 0.35805312725866956,
+          "yoy_pct": -6.092254134029591,
+          "d": 0.35805312725866956,
           "series": [
             {
               "month": "2023-05",
@@ -3656,7 +3656,7 @@
             },
             {
               "month": "2024-01",
-              "n": 1825
+              "n": 1826
             },
             {
               "month": "2024-02",
@@ -3696,7 +3696,7 @@
             },
             {
               "month": "2024-11",
-              "n": 830
+              "n": 832
             },
             {
               "month": "2024-12",
@@ -3704,7 +3704,7 @@
             },
             {
               "month": "2025-01",
-              "n": 1787
+              "n": 1785
             },
             {
               "month": "2025-02",
@@ -3712,7 +3712,7 @@
             },
             {
               "month": "2025-03",
-              "n": 1063
+              "n": 1064
             },
             {
               "month": "2025-04",
@@ -3744,7 +3744,7 @@
             },
             {
               "month": "2025-11",
-              "n": 753
+              "n": 754
             },
             {
               "month": "2025-12",
@@ -3756,7 +3756,7 @@
             },
             {
               "month": "2026-02",
-              "n": 1007
+              "n": 1009
             },
             {
               "month": "2026-03",
@@ -3764,7 +3764,7 @@
             },
             {
               "month": "2026-04",
-              "n": 1078
+              "n": 1079
             }
           ]
         }
