@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-07-19T05:24:04+00:00",
+  "checked_at": "2026-07-20T11:10:22+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1943,
-    "gated": 152,
-    "dead": 15,
-    "unreachable": 82
+    "ok": 1946,
+    "gated": 153,
+    "dead": 16,
+    "unreachable": 77
   },
   "dead": [
     {
@@ -102,6 +102,13 @@
       ]
     },
     {
+      "url": "https://www.globaldata.com/marketplace/dataset/pipeline-marketed-drugs/",
+      "code": 404,
+      "services": [
+        "GlobalData Pharmaceutical Intelligence (Pipeline & Marketed Drugs)"
+      ]
+    },
+    {
       "url": "https://www.gmicloud.ai/en/models",
       "code": 404,
       "services": [
@@ -125,6 +132,13 @@
       ]
     },
     {
+      "url": "https://ads.atmosphere.copernicus.eu/",
+      "code": null,
+      "services": [
+        "Copernicus Atmosphere Monitoring Service (CAMS / ADS)"
+      ]
+    },
+    {
       "url": "https://api-ccte.epa.gov/docs",
       "code": null,
       "services": [
@@ -132,24 +146,10 @@
       ]
     },
     {
-      "url": "https://api.archives-ouvertes.fr/docs",
+      "url": "https://api.acaps.org/",
       "code": null,
       "services": [
-        "HAL API (Archives Ouvertes)"
-      ]
-    },
-    {
-      "url": "https://api.archives-ouvertes.fr/docs/search",
-      "code": null,
-      "services": [
-        "HAL Theses API (CCSD/CNRS)"
-      ]
-    },
-    {
-      "url": "https://api.clearlydefined.io/api-docs/",
-      "code": null,
-      "services": [
-        "ClearlyDefined API"
+        "ACAPS API (INFORM Severity, Humanitarian Access)"
       ]
     },
     {
@@ -164,28 +164,6 @@
       "code": null,
       "services": [
         "Fatcat / Internet Archive Scholar API"
-      ]
-    },
-    {
-      "url": "https://archive.org/developers/",
-      "code": 503,
-      "services": [
-        "Internet Archive (Advanced Search / Metadata / Wayback APIs)",
-        "Internet Archive APIs (archive.org)"
-      ]
-    },
-    {
-      "url": "https://archive.org/developers/metadata.html",
-      "code": 503,
-      "services": [
-        "Internet Archive Metadata API"
-      ]
-    },
-    {
-      "url": "https://archive.org/help/wayback_api.php",
-      "code": 503,
-      "services": [
-        "Wayback Machine APIs (CDX + Memento, Internet Archive)"
       ]
     },
     {
@@ -210,11 +188,10 @@
       ]
     },
     {
-      "url": "https://cactus.nci.nih.gov/chemical/structure",
-      "code": 503,
+      "url": "https://cds.climate.copernicus.eu/how-to-api",
+      "code": null,
       "services": [
-        "NCI/CADD Chemical Identifier Resolver (Cactus)",
-        "NCI/CADD Chemical Identifier Resolver (Cactus)"
+        "Copernicus Climate Data Store (CDS) API"
       ]
     },
     {
@@ -244,14 +221,6 @@
       "code": null,
       "services": [
         "CRiS (Korea Clinical Research Information Service)"
-      ]
-    },
-    {
-      "url": "https://dblp.org/faq/13501473.html",
-      "code": 503,
-      "services": [
-        "DBLP",
-        "DBLP Computer Science Bibliography"
       ]
     },
     {
@@ -414,13 +383,6 @@
       ]
     },
     {
-      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
-      "code": null,
-      "services": [
-        "Digital Bodleian / Oxford IIIF (added in verify)"
-      ]
-    },
-    {
       "url": "https://jrct.niph.go.jp/",
       "code": null,
       "services": [
@@ -484,18 +446,26 @@
       ]
     },
     {
-      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
-      "code": null,
-      "services": [
-        "NDLTD Global ETD Search"
-      ]
-    },
-    {
       "url": "https://neuroquery.org/",
       "code": null,
       "services": [
         "NeuroQuery API",
         "NeuroQuery"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database)"
+      ]
+    },
+    {
+      "url": "https://oqmd.org/api/",
+      "code": 502,
+      "services": [
+        "OQMD (Open Quantum Materials Database) API",
+        "OQMD (Open Quantum Materials Database)"
       ]
     },
     {
@@ -527,13 +497,6 @@
       ]
     },
     {
-      "url": "https://reg.clinicalgenome.org/",
-      "code": 502,
-      "services": [
-        "ClinGen Allele Registry (CAR)"
-      ]
-    },
-    {
       "url": "https://sanskritwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -552,13 +515,6 @@
       "code": null,
       "services": [
         "PatentsView PatentSearch API"
-      ]
-    },
-    {
-      "url": "https://splatalogue.online/",
-      "code": null,
-      "services": [
-        "Splatalogue (NRAO Spectral Line Catalog)"
       ]
     },
     {
@@ -660,6 +616,20 @@
       ]
     },
     {
+      "url": "https://www.gdacs.org/gdacsapi/swagger/index.html",
+      "code": 500,
+      "services": [
+        "GDACS (Global Disaster Alert & Coordination System)"
+      ]
+    },
+    {
+      "url": "https://www.mrlc.gov/data-services-page",
+      "code": 503,
+      "services": [
+        "USGS Annual NLCD / MRLC Land Cover Services"
+      ]
+    },
+    {
       "url": "https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey",
       "code": null,
       "services": [
@@ -674,13 +644,6 @@
       ]
     },
     {
-      "url": "https://www.rcaap.pt/",
-      "code": null,
-      "services": [
-        "RCAAP — Repositório Científico de Acesso Aberto de Portugal"
-      ]
-    },
-    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
@@ -692,6 +655,13 @@
       "code": 520,
       "services": [
         "Understanding Society (UK Household Longitudinal Study)"
+      ]
+    },
+    {
+      "url": "https://www.westmetall.com/en/markdaten.php",
+      "code": null,
+      "services": [
+        "Westmetall LME Market Data"
       ]
     },
     {

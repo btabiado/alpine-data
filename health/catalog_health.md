@@ -1,7 +1,7 @@
-# Catalog link health — 2026-07-19T05:24:04+00:00
+# Catalog link health — 2026-07-20T11:10:22+00:00
 
 - **Total URLs:** 2192
-- ✅ ok: 1943  ·  🔒 gated (exists, auth/bot-walled): 152  ·  ❌ dead (404/410): 15  ·  ⚠️ unreachable (timeout/5xx): 82
+- ✅ ok: 1946  ·  🔒 gated (exists, auth/bot-walled): 153  ·  ❌ dead (404/410): 16  ·  ⚠️ unreachable (timeout/5xx): 77
 
 ## ❌ Dead (404/410) — review/remove
 - `404` https://docs.stratz.com/ — STRATZ (Dota 2)
@@ -17,29 +17,25 @@
 - `404` https://www.fda.gov/drugs/questions-and-answers-fdas-adverse-event-reporting-system-faers/fda-adverse-event-reporting-system-faers-public-dashboard — FDA FAERS / AEMS Public Dashboard
 - `404` https://www.fda.gov/drugs/risk-evaluation-and-mitigation-strategies-rems/risk-evaluation-and-mitigation-strategy-rems-public-dashboard — FDA REMS Public Dashboard (Risk Evaluation & Mitigation Strategies)
 - `404` https://www.fda.gov/tobacco-products/market-and-distribute-tobacco-product/tobacco-product-applications-metrics-reporting — FDA Center for Tobacco Products - Application Metrics & Reporting
+- `404` https://www.globaldata.com/marketplace/dataset/pipeline-marketed-drugs/ — GlobalData Pharmaceutical Intelligence (Pipeline & Marketed Drugs)
 - `404` https://www.gmicloud.ai/en/models — GMI Cloud Inference Engine
 - `404` https://www.langtrace.ai/ — Langtrace
 
 ## ⚠️ Unreachable (timeout/5xx/000) — often transient or bot-blocked
 - `None` http://www.openthesis.org/ — OpenThesis.org
+- `None` https://ads.atmosphere.copernicus.eu/ — Copernicus Atmosphere Monitoring Service (CAMS / ADS)
 - `None` https://api-ccte.epa.gov/docs — EPA CompTox / Computational Toxicology & Exposure APIs (CTX/CCTE)
-- `None` https://api.archives-ouvertes.fr/docs — HAL API (Archives Ouvertes)
-- `None` https://api.archives-ouvertes.fr/docs/search — HAL Theses API (CCSD/CNRS)
-- `None` https://api.clearlydefined.io/api-docs/ — ClearlyDefined API
+- `None` https://api.acaps.org/ — ACAPS API (INFORM Severity, Humanitarian Access)
 - `None` https://api.fatcat.wiki/ — Fatcat / IA Scholar
 - `None` https://api.fatcat.wiki/redoc — Fatcat / Internet Archive Scholar API
-- `503` https://archive.org/developers/ — Internet Archive (Advanced Search / Metadata / Wayback APIs), Internet Archive APIs (archive.org)
-- `503` https://archive.org/developers/metadata.html — Internet Archive Metadata API
-- `503` https://archive.org/help/wayback_api.php — Wayback Machine APIs (CDX + Memento, Internet Archive)
 - `None` https://assignment-api.uspto.gov/ — USPTO Patent Assignment Search API
 - `None` https://bcl.nrel.gov/api/ — NREL/NLR Building Component Library API
 - `502` https://biolincc.nhlbi.nih.gov/ — NHLBI BioLINCC (Biologic Specimen and Data Repository)
-- `503` https://cactus.nci.nih.gov/chemical/structure — NCI/CADD Chemical Identifier Resolver (Cactus), NCI/CADD Chemical Identifier Resolver (Cactus)
+- `None` https://cds.climate.copernicus.eu/how-to-api — Copernicus Climate Data Store (CDS) API
 - `None` https://clinical-information.canada.ca/ — Health Canada Clinical Information Portal (Public Release of Clinical Information, PRCI), Health Canada Public Release of Clinical Information (PRCI) portal
 - `None` https://collection.britishmuseum.org/ — British Museum Collection (SPARQL/LOD)
 - `None` https://correlatesofwar.org/data-sets/ — Correlates of War (COW) Project datasets
 - `None` https://cris.nih.go.kr/ — CRiS (Korea Clinical Research Information Service)
-- `503` https://dblp.org/faq/13501473.html — DBLP, DBLP Computer Science Bibliography
 - `None` https://developer.boeing.com/apis/notams-3/ — DTN NOTAMs API / Boeing (Jeppesen) NOTAMs API
 - `None` https://developer.freightos.com/apis — Freightos Terminal / FBX API
 - `None` https://developer.nrel.gov/docs/ — NREL Developer Network (PVWatts, Utility Rates, OpenEI), NREL Developer Network APIs (PVWatts, solar, electricity)
@@ -62,7 +58,6 @@
 - `503` https://gazetteer.dainst.org/ — iDAI.gazetteer / iDAI.world (DAI)
 - `None` https://gssdataexplorer.norc.org/ — GSS Data Explorer (NORC General Social Survey), GSS Data Explorer (NORC, General Social Survey)
 - `None` https://hemp.ams.usda.gov/s/PublicSearchTool — USDA Hemp eManagement Platform (HeMP) Public/LE Search Tool
-- `None` https://iiif.bodleian.ox.ac.uk/iiif/ — Digital Bodleian / Oxford IIIF (added in verify)
 - `None` https://jrct.niph.go.jp/ — jRCT / JPRN (Japan Registry of Clinical Trials)
 - `None` https://latinwordnet.exeter.ac.uk/api — Latin WordNet API (Univ. of Exeter)
 - `500` https://llama.developer.meta.com/ — Meta Llama API (llama.developer.meta.com)
@@ -72,17 +67,16 @@
 - `504` https://mobile.fmcsa.dot.gov/QCDevsite/docs/qcApi — FMCSA QCMobile API
 - `None` https://mymarketnews.ams.usda.gov/mars-api/getting-started — USDA AMS My Market News (MARS API)
 - `None` https://nassgeodata.gmu.edu/CropScape/ — USDA CropScape / Cropland Data Layer
-- `None` https://ndltd.org/thesis-resources/global-etd-search/ — NDLTD Global ETD Search
 - `None` https://neuroquery.org/ — NeuroQuery API, NeuroQuery
+- `502` https://oqmd.org/ — OQMD (Open Quantum Materials Database)
+- `502` https://oqmd.org/api/ — OQMD (Open Quantum Materials Database) API, OQMD (Open Quantum Materials Database)
 - `None` https://platform.docs.opentargets.org/data-access/graphql-api — Open Targets Platform GraphQL API
 - `None` https://play.ht/ — PlayHT (Play.ht) TTS API
 - `None` https://prime-numbers-api.com/ — Prime Numbers API (prime-numbers-api.com)
 - `None` https://rctportal.niph.go.jp/en — JPRN / NIPH Clinical Trials Search Portal (Japan)
-- `502` https://reg.clinicalgenome.org/ — ClinGen Allele Registry (CAR)
 - `None` https://sanskritwordnet.chs.harvard.edu/api — Sanskrit WordNet API (CHS Harvard)
 - `None` https://schema.oasf.agntcy.org/ — AGNTCY — Open Agentic Schema Framework (OASF)
 - `None` https://search.patentsview.org/docs/ — PatentsView PatentSearch API
-- `None` https://splatalogue.online/ — Splatalogue (NRAO Spectral Line Catalog)
 - `None` https://stats.un.org/SDGAPI/swagger/ — SDMX Global Registry / UNdata2 (added in verify)
 - `None` https://trialstreamer.robotreviewer.net/ — Trialstreamer
 - `None` https://water.weather.gov/ahps/ — NWS / NOAA Advanced Hydrologic Prediction Service (AHPS)
@@ -97,9 +91,11 @@
 - `None` https://www.fcc.gov/licensing-databases/search-fcc-databases — FCC Universal Licensing System (ULS) data
 - `None` https://www.fcc.gov/reports-research/developers/license-view-api — FCC License View API
 - `None` https://www.fcc.gov/reports-research/developers/spectrum-dashboard-api — FCC Spectrum Dashboard API
+- `500` https://www.gdacs.org/gdacsapi/swagger/index.html — GDACS (Global Disaster Alert & Coordination System)
+- `503` https://www.mrlc.gov/data-services-page — USGS Annual NLCD / MRLC Land Cover Services
 - `None` https://www.nrcs.usda.gov/resources/data-and-reports/web-soil-survey — USDA NRCS Web Soil Survey / spatial WMS-WFS
 - `None` https://www.nvr.navy.mil/ — Naval Vessel Register (NVR)
-- `None` https://www.rcaap.pt/ — RCAAP — Repositório Científico de Acesso Aberto de Portugal
 - `None` https://www.transitland.org/documentation/ — Transitland (Interline)
 - `520` https://www.understandingsociety.ac.uk/documentation/access-data/ — Understanding Society (UK Household Longitudinal Study)
+- `None` https://www.westmetall.com/en/markdaten.php — Westmetall LME Market Data
 - `None` https://yeastmine.yeastgenome.org/yeastmine/ — Saccharomyces Genome Database (YeastMine)
