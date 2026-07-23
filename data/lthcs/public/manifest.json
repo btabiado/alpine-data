@@ -11,12 +11,12 @@
   "data_endpoints": [
     {
       "description": "Full-universe LTHCS scores for the given trading day (equity universe \u2014 DJIA + NDX + S&P 100, deduped).",
-      "endpoint": "/data/lthcs/snapshots/2026-07-21.json",
+      "endpoint": "/data/lthcs/snapshots/2026-07-22.json",
       "shape": "{ calc_date, model_version, scores: [{ ticker, lthcs_score, band, subscores, modifiers, ... }] }"
     },
     {
       "description": "Crypto-universe LTHCS scores for the given day (BTC, ETH, SOL, ADA, AVAX, DOT, LINK, POL, XRP, DOGE).",
-      "endpoint": "/data/lthcs/snapshots_crypto/2026-07-21.json",
+      "endpoint": "/data/lthcs/snapshots_crypto/2026-07-22.json",
       "shape": "{ calc_date, model_version, scores: [{ ticker, lthcs_score, band, subscores, ... }] }"
     },
     {
@@ -26,17 +26,17 @@
     },
     {
       "description": "Templated per-ticker narrative blurbs for the given day (always available \u2014 no LLM required).",
-      "endpoint": "/data/lthcs/narratives/2026-07-21.json",
+      "endpoint": "/data/lthcs/narratives/2026-07-22.json",
       "shape": "{ calc_date, model_version, narratives: [{ ticker, text, ... }] }"
     },
     {
       "description": "LLM-authored narratives for the given day. Gated \u2014 only present on days the LLM SHADOW path ran successfully.",
-      "endpoint": "/data/lthcs/narratives_llm/2026-07-21.json",
+      "endpoint": "/data/lthcs/narratives_llm/2026-07-22.json",
       "shape": "{ calc_date, model_version, narratives: [{ ticker, text, ... }] }"
     },
     {
       "description": "Per-(ticker, pillar) breakdown of sub-scores + raw component values for the given day.",
-      "endpoint": "/data/lthcs/variable_detail/2026-07-21.json",
+      "endpoint": "/data/lthcs/variable_detail/2026-07-22.json",
       "shape": "{ calc_date, model_version, rows: [{ ticker, pillar, sub_score, components, data_quality }] }"
     },
     {
@@ -55,8 +55,8 @@
       "shape": "header: ticker, calc_date, lthcs_score, band, confidence_level, adoption_momentum, institutional_confidence, financial_evolution, thesis_integrity, des, dropped_pillars, data_quality_flags, drift_1d, drift_7d, drift_30d, drift_90d, sector, maturity_stage"
     }
   ],
-  "generated_at": "2026-07-21T23:58:21Z",
-  "latest_snapshot_date": "2026-07-21",
+  "generated_at": "2026-07-23T00:05:16Z",
+  "latest_snapshot_date": "2026-07-22",
   "license": "Read-only public mirror. Data is for informational use only \u2014 not investment advice.",
   "pillars": [
     "adoption_momentum",
