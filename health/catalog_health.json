@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-07-20T11:10:22+00:00",
+  "checked_at": "2026-07-27T11:34:33+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1946,
-    "gated": 153,
-    "dead": 16,
-    "unreachable": 77
+    "ok": 1942,
+    "gated": 160,
+    "dead": 17,
+    "unreachable": 73
   },
   "dead": [
     {
@@ -102,13 +102,6 @@
       ]
     },
     {
-      "url": "https://www.globaldata.com/marketplace/dataset/pipeline-marketed-drugs/",
-      "code": 404,
-      "services": [
-        "GlobalData Pharmaceutical Intelligence (Pipeline & Marketed Drugs)"
-      ]
-    },
-    {
       "url": "https://www.gmicloud.ai/en/models",
       "code": 404,
       "services": [
@@ -121,6 +114,20 @@
       "services": [
         "Langtrace"
       ]
+    },
+    {
+      "url": "https://www.memobase.io/",
+      "code": 404,
+      "services": [
+        "Memobase"
+      ]
+    },
+    {
+      "url": "https://www.pantone.com/products/digital-apps/pantone-api",
+      "code": 404,
+      "services": [
+        "Pantone Connect / Pantone API"
+      ]
     }
   ],
   "unreachable": [
@@ -129,13 +136,6 @@
       "code": null,
       "services": [
         "OpenThesis.org"
-      ]
-    },
-    {
-      "url": "https://ads.atmosphere.copernicus.eu/",
-      "code": null,
-      "services": [
-        "Copernicus Atmosphere Monitoring Service (CAMS / ADS)"
       ]
     },
     {
@@ -153,6 +153,13 @@
       ]
     },
     {
+      "url": "https://api.clearlydefined.io/api-docs/",
+      "code": null,
+      "services": [
+        "ClearlyDefined API"
+      ]
+    },
+    {
       "url": "https://api.fatcat.wiki/",
       "code": null,
       "services": [
@@ -164,6 +171,29 @@
       "code": null,
       "services": [
         "Fatcat / Internet Archive Scholar API"
+      ]
+    },
+    {
+      "url": "https://api.pharmgkb.org/swagger/",
+      "code": null,
+      "services": [
+        "PharmGKB REST API"
+      ]
+    },
+    {
+      "url": "https://api.protectedplanet.net/",
+      "code": null,
+      "services": [
+        "Protected Planet / WDPA API"
+      ]
+    },
+    {
+      "url": "https://api.protectedplanet.net/documentation",
+      "code": null,
+      "services": [
+        "Protected Planet API (WDPA, UNEP-WCMC)",
+        "Protected Planet WDPA API",
+        "Protected Planet API (WDPA/WDPCA, UNEP-WCMC & IUCN)"
       ]
     },
     {
@@ -185,13 +215,6 @@
       "code": 502,
       "services": [
         "NHLBI BioLINCC (Biologic Specimen and Data Repository)"
-      ]
-    },
-    {
-      "url": "https://cds.climate.copernicus.eu/how-to-api",
-      "code": null,
-      "services": [
-        "Copernicus Climate Data Store (CDS) API"
       ]
     },
     {
@@ -217,10 +240,10 @@
       ]
     },
     {
-      "url": "https://cris.nih.go.kr/",
-      "code": null,
+      "url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation",
+      "code": 502,
       "services": [
-        "CRiS (Korea Clinical Research Information Service)"
+        "World Bank Indicators API (v2)"
       ]
     },
     {
@@ -323,14 +346,6 @@
       ]
     },
     {
-      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
-      "code": null,
-      "services": [
-        "NASA FIRMS (Fire Information for Resource Management)",
-        "NASA FIRMS Active Fire API"
-      ]
-    },
-    {
       "url": "https://fred.stlouisfed.org/categories/32217",
       "code": null,
       "services": [
@@ -390,13 +405,6 @@
       ]
     },
     {
-      "url": "https://latinwordnet.exeter.ac.uk/api",
-      "code": null,
-      "services": [
-        "Latin WordNet API (Univ. of Exeter)"
-      ]
-    },
-    {
       "url": "https://llama.developer.meta.com/",
       "code": 500,
       "services": [
@@ -425,13 +433,6 @@
       ]
     },
     {
-      "url": "https://mobile.fmcsa.dot.gov/QCDevsite/docs/qcApi",
-      "code": 504,
-      "services": [
-        "FMCSA QCMobile API"
-      ]
-    },
-    {
       "url": "https://mymarketnews.ams.usda.gov/mars-api/getting-started",
       "code": null,
       "services": [
@@ -454,18 +455,10 @@
       ]
     },
     {
-      "url": "https://oqmd.org/",
-      "code": 502,
+      "url": "https://nmrshiftdb.nmr.uni-koeln.de/",
+      "code": null,
       "services": [
-        "OQMD (Open Quantum Materials Database)"
-      ]
-    },
-    {
-      "url": "https://oqmd.org/api/",
-      "code": 502,
-      "services": [
-        "OQMD (Open Quantum Materials Database) API",
-        "OQMD (Open Quantum Materials Database)"
+        "nmrshiftdb2"
       ]
     },
     {
@@ -497,6 +490,13 @@
       ]
     },
     {
+      "url": "https://roar.eprints.org/",
+      "code": null,
+      "services": [
+        "ROAR (Registry of Open Access Repositories)"
+      ]
+    },
+    {
       "url": "https://sanskritwordnet.chs.harvard.edu/api",
       "code": null,
       "services": [
@@ -515,6 +515,13 @@
       "code": null,
       "services": [
         "PatentsView PatentSearch API"
+      ]
+    },
+    {
+      "url": "https://snowstorm-training.snomedtools.org/fhir/metadata",
+      "code": null,
+      "services": [
+        "SNOMED CT Snowstorm public training FHIR API"
       ]
     },
     {
@@ -546,13 +553,6 @@
       ]
     },
     {
-      "url": "https://wheretheiss.at/w/developer",
-      "code": null,
-      "services": [
-        "Where the ISS at? (wheretheiss.at)"
-      ]
-    },
-    {
       "url": "https://wordbank.stanford.edu/",
       "code": null,
       "services": [
@@ -574,6 +574,13 @@
       ]
     },
     {
+      "url": "https://www.bailii.org/",
+      "code": null,
+      "services": [
+        "BAILII (British and Irish Legal Information Institute)"
+      ]
+    },
+    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
@@ -581,52 +588,24 @@
       ]
     },
     {
-      "url": "https://www.fcc.gov/BroadbandData",
+      "url": "https://www.buycott.com/api",
       "code": null,
       "services": [
-        "FCC National Broadband Map / Broadband Data Collection (BDC) Public Data API"
+        "Buycott UPC/Barcode API"
       ]
     },
     {
-      "url": "https://www.fcc.gov/ecfs/help/public_api",
+      "url": "https://www.colourlovers.com/api",
       "code": null,
       "services": [
-        "FCC ECFS Public API (Electronic Comment Filing System)"
+        "COLOURlovers API"
       ]
     },
     {
-      "url": "https://www.fcc.gov/licensing-databases/search-fcc-databases",
+      "url": "https://www.crystallography.net/",
       "code": null,
       "services": [
-        "FCC Universal Licensing System (ULS) data"
-      ]
-    },
-    {
-      "url": "https://www.fcc.gov/reports-research/developers/license-view-api",
-      "code": null,
-      "services": [
-        "FCC License View API"
-      ]
-    },
-    {
-      "url": "https://www.fcc.gov/reports-research/developers/spectrum-dashboard-api",
-      "code": null,
-      "services": [
-        "FCC Spectrum Dashboard API"
-      ]
-    },
-    {
-      "url": "https://www.gdacs.org/gdacsapi/swagger/index.html",
-      "code": 500,
-      "services": [
-        "GDACS (Global Disaster Alert & Coordination System)"
-      ]
-    },
-    {
-      "url": "https://www.mrlc.gov/data-services-page",
-      "code": 503,
-      "services": [
-        "USGS Annual NLCD / MRLC Land Cover Services"
+        "Crystallography Open Database (COD)"
       ]
     },
     {
@@ -644,6 +623,13 @@
       ]
     },
     {
+      "url": "https://www.rcaap.pt/",
+      "code": null,
+      "services": [
+        "RCAAP — Repositório Científico de Acesso Aberto de Portugal"
+      ]
+    },
+    {
       "url": "https://www.transitland.org/documentation/",
       "code": null,
       "services": [
@@ -655,13 +641,6 @@
       "code": 520,
       "services": [
         "Understanding Society (UK Household Longitudinal Study)"
-      ]
-    },
-    {
-      "url": "https://www.westmetall.com/en/markdaten.php",
-      "code": null,
-      "services": [
-        "Westmetall LME Market Data"
       ]
     },
     {
