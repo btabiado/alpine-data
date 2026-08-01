@@ -1,0 +1,32 @@
+{
+  "as_of": "2026-07-31",
+  "broad_dollar": {
+    "change_30d_pct": -0.005778,
+    "current": 120.7105,
+    "percentile_2y": 0.43548387096774194
+  },
+  "data_quality": {
+    "sources_failed": 0,
+    "sources_ok": 4
+  },
+  "hy_oas": {
+    "change_30d_bp": 10.0,
+    "current": 2.84,
+    "percentile_2y": 0.4057142857142857
+  },
+  "ig_oas": {
+    "change_30d_bp": 4.0,
+    "current": 0.8,
+    "percentile_2y": 0.4179389312977099
+  },
+  "regime_flags": {
+    "curve_inverted": false,
+    "dollar_strong": false,
+    "hy_stress": false
+  },
+  "yield_curve_2s10s": {
+    "change_30d_bp": 16.0,
+    "current": 0.47,
+    "inverted": false
+  }
+}
