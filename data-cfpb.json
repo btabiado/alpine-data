@@ -1,5 +1,5 @@
 {
- "generated_utc": "2026-07-31T09:38:59.661006+00:00",
+ "generated_utc": "2026-08-01T09:01:52.414364+00:00",
  "source": "CFPB Consumer Complaint Database",
  "note": "Published from GitHub Actions (clean egress) because the CFPB API blocks Cloudflare datacenter IPs. Consumed by ADW-397.",
  "windows": {
@@ -9,28 +9,28 @@
  "products": {
   "student_loan": {
    "product": "Student loan",
-   "complaints_recent_3mo": 4313,
-   "complaints_trailing_12mo": 18919,
+   "complaints_recent_3mo": 4450,
+   "complaints_trailing_12mo": 19011,
    "window_recent": [
-    "2026-05-02",
-    "2026-07-31"
+    "2026-05-03",
+    "2026-08-01"
    ],
    "window_baseline": [
-    "2025-07-31",
-    "2026-07-31"
+    "2025-08-01",
+    "2026-08-01"
    ]
   },
   "mortgage": {
    "product": "Mortgage",
-   "complaints_recent_3mo": 7253,
-   "complaints_trailing_12mo": 29967,
+   "complaints_recent_3mo": 7361,
+   "complaints_trailing_12mo": 30042,
    "window_recent": [
-    "2026-05-02",
-    "2026-07-31"
+    "2026-05-03",
+    "2026-08-01"
    ],
    "window_baseline": [
-    "2025-07-31",
-    "2026-07-31"
+    "2025-08-01",
+    "2026-08-01"
    ]
   },
   "credit_card": {
@@ -38,12 +38,12 @@
    "complaints_recent_3mo": 0,
    "complaints_trailing_12mo": 0,
    "window_recent": [
-    "2026-05-02",
-    "2026-07-31"
+    "2026-05-03",
+    "2026-08-01"
    ],
    "window_baseline": [
-    "2025-07-31",
-    "2026-07-31"
+    "2025-08-01",
+    "2026-08-01"
    ]
   }
  }
