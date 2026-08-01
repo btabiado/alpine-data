@@ -1,0 +1,44 @@
+[
+  {
+    "pillar": "composite",
+    "ic_mean": -0.1120090093987137,
+    "ic_std": 0.13912188370062079,
+    "ic_sharpe": -12.78079230606495,
+    "n_obs": 80
+  },
+  {
+    "pillar": "des",
+    "ic_mean": 0.09240068817706441,
+    "ic_std": 0.07099466639606238,
+    "ic_sharpe": 20.660924626977142,
+    "n_obs": 78
+  },
+  {
+    "pillar": "thesis_integrity",
+    "ic_mean": -0.006239769176722828,
+    "ic_std": 0.061147365515030895,
+    "ic_sharpe": -1.6199105888867829,
+    "n_obs": 80
+  },
+  {
+    "pillar": "adoption_momentum",
+    "ic_mean": -0.021751309834091792,
+    "ic_std": 0.06648005730589947,
+    "ic_sharpe": -5.193908565341769,
+    "n_obs": 80
+  },
+  {
+    "pillar": "financial_evolution",
+    "ic_mean": -0.07866416193886194,
+    "ic_std": 0.05689970772633765,
+    "ic_sharpe": -21.94659528845393,
+    "n_obs": 30
+  },
+  {
+    "pillar": "institutional_confidence",
+    "ic_mean": -0.12016901617907441,
+    "ic_std": 0.22352193452993308,
+    "ic_sharpe": -8.534392817610962,
+    "n_obs": 80
+  }
+]
