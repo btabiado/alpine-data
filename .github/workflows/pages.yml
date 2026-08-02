@@ -11,7 +11,10 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  # `write` (was `read`) so the composite-index snapshot can be committed back
+  # and actually accumulate into a time series. Nothing else in this workflow
+  # writes to the repo.
+  contents: write
   pages: write
   id-token: write
   actions: read   # build_backfill_jobs.py reads r2-backfill workflow run history
@@ -135,6 +138,42 @@ jobs:
         # Failure must NOT break the deploy: production at `/` is the source
         # of truth; /health/ is observability-only.
         run: python scripts/build_health_status.py || echo "[health] generator failed; continuing"
+        continue-on-error: true
+
+      - name: Snapshot composite indexes (daily time series)
+        # Persists Whale Sentiment (BTC+ETH), Money Flow Index, Crypto Signal
+        # Sentiment and POC breadth to data/composites/<date>.json, mirroring
+        # what data/lthcs/index/ already does for LTHCS. Until now every one of
+        # these composites was computed at render time and discarded, so the
+        # site could show today's number but never how it got there.
+        #
+        # MUST run here rather than in its own cron: these are derived from
+        # data/market.json and data/whale.json, which are cache-restored into
+        # this job and never committed, so no other workflow can see them.
+        #
+        # Idempotent — it only rewrites today's file when an index actually
+        # moved, so the hourly schedule doesn't produce 24 no-op commits.
+        run: python scripts/snapshot_composites.py || echo "[composites] snapshot failed; continuing"
+        continue-on-error: true
+
+      - name: Commit composite-index snapshot
+        # The whole point is accumulation, so this one must be committed back.
+        # [skip ci] keeps it from retriggering this workflow; the hourly cron
+        # picks up any change on its next tick.
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: composites-bot
+          AUTHOR_EMAIL: composites-bot@users.noreply.github.com
+        run: |
+          if [ -n "$(git status --porcelain data/composites)" ]; then
+            git add data/composites
+            .github/scripts/api-commit.sh \
+              "composites: index snapshot $(date -u +%Y-%m-%d) [skip ci]" \
+              || echo "[composites] commit failed; continuing"
+          else
+            echo "[composites] no change to commit"
+          fi
         continue-on-error: true
 
       - name: Probe upstream API reachability (live snapshot)

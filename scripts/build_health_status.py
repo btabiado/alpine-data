@@ -45,6 +45,20 @@ THRESHOLDS: dict[str, Threshold] = {
     "eth_flows.csv": Threshold(30, 48),
     "insights_history.json": Threshold(26, 48),
     "shares.json": Threshold(168, 720),  # rarely changes
+    # --- feeds that were red on /health/ for reasons that are NOT rot ---
+    # A status page that cries wolf gets ignored, which is how a genuinely
+    # dead feed (TSA) sat unnoticed for 45 days. These three were falling
+    # through to DEFAULT (6h/24h), which does not describe their cadence:
+    #
+    # equity ETF flows only move on TRADING days, so Friday's row is already
+    # ~3 days old by Monday morning and ~4 across a Monday holiday.
+    "equity_etf_flows.csv": Threshold(96, 168),
+    # real_estate.json is a once-a-day cron; 12h old is normal, not "stale".
+    "real_estate.json": Threshold(30, 48),
+    # metro_coords.json is STATIC reference data — Census CBSA gazetteer
+    # centroids, refreshed manually when Census publishes a new annual file.
+    # It is supposed to be months old.
+    "metro_coords.json": Threshold(8760, 17520),  # ~1y / ~2y
     # root-level v2 artifacts
     "data-defi.json": Threshold(8, 24),
     "data-whale.json": Threshold(2, 6),

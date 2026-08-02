@@ -1,0 +1,70 @@
+name: etf-flows-daily
+
+# Daily refresh for the CRYPTO spot-ETF flow CSVs (data/btc_flows.csv,
+# data/eth_flows.csv) that drive the ETF Flows tab.
+#
+# WHY THIS DID NOT EXIST BEFORE (and why the tab went 82 days stale):
+# money-flow-daily.yml refreshes data/equity_etf_flows.csv — the *equity*
+# index ETFs (SPY/QQQ/DIA). Nothing refreshed the crypto ones. They were
+# updated by hand, by pasting a Farside table into parse_farside.py, and the
+# last paste was 2026-05-12. The keyless mirror wired into fetch_live.py is
+# not a substitute: it is abandoned (last row 2025-05-02, a year older than
+# the committed data) and Total-only, so it would both regress the dates and
+# destroy the per-fund columns.
+#
+# So we fetch the canonical free source (Farside Investors) from a GitHub
+# Actions runner. That is the same clean-egress pattern cfpb-daily.yml and
+# usaspending-daily.yml already use for upstreams that block datacenter IPs.
+#
+# The fetcher REFUSES to write a partial or regressing parse (see
+# scripts/fetch_etf_flows.py) — on any doubt it preserves the existing CSV and
+# exits non-zero, so a Farside markup change turns this workflow red instead
+# of silently shredding history. That red is the point: the whole reason these
+# feeds rotted for three months is that every failure in this repo was silent.
+#
+# Commit carries [skip ci] so the push doesn't retrigger pages.yml's push
+# build; pages.yml's own hourly cron picks up the new CSVs on its next tick.
+
+on:
+  schedule:
+    # 09:15 UTC. Farside posts the prior US trading day's flows overnight ET;
+    # this also lands after money-flow-daily (08:30 UTC) so the two ETF-flow
+    # jobs don't race each other's commits.
+    - cron: "15 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: etf-flows-daily-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch BTC + ETH spot-ETF flows
+        # Pure-stdlib fetcher — no pip install. Non-zero exit fails the
+        # workflow on purpose: a dead scraper must be visible, not absorbed.
+        run: python scripts/fetch_etf_flows.py
+
+      - name: Commit data changes via signed API commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AUTHOR_NAME: etf-flows-bot
+          AUTHOR_EMAIL: etf-flows-bot@users.noreply.github.com
+        run: |
+          git add data/btc_flows.csv data/eth_flows.csv
+          .github/scripts/api-commit.sh \
+            "etf-flows: daily refresh $(date -u +%Y-%m-%d) [skip ci]"
