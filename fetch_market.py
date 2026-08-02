@@ -2460,11 +2460,22 @@ def _cryptocompare_market_impl(symbol: str, days: int = 180) -> dict:
             timeout=15, headers=headers,
         )
         if r.status_code != 200:
+            # Say WHY. This used to return empty silently, and three layers of
+            # stale-keep sit on top of it, so a persistent failure surfaced
+            # only as a chart frozen months in the past — the top-50 signal
+            # breadth sat at 2026-06-09 for eight weeks — with no way to tell
+            # whether it was rate limiting, auth, or a schema change.
+            print(f"  [cryptocompare] {sym}: HTTP {r.status_code}", file=sys.stderr)
             return {"price": [], "volume": []}
         j = r.json()
-    except Exception:
+    except Exception as e:
+        print(f"  [cryptocompare] {sym}: {type(e).__name__}: {e}", file=sys.stderr)
         return {"price": [], "volume": []}
     if not isinstance(j, dict) or j.get("Response") != "Success":
+        resp = j.get("Response") if isinstance(j, dict) else "<non-dict>"
+        msg = j.get("Message") if isinstance(j, dict) else None
+        print(f"  [cryptocompare] {sym}: Response={resp!r}"
+              f"{' — ' + str(msg) if msg else ''}", file=sys.stderr)
         return {"price": [], "volume": []}
     rows = (j.get("Data") or {}).get("Data") or []
     prices, volumes = [], []
@@ -2532,15 +2543,55 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
     out: list[dict] = []
     coins = top_markets[:n]
     LOOKBACKS = (("d30", 30, 60), ("d90", 90, 80), ("d180", 180, 100))
-    # Build a stale-keep map from the previous market.json so any coin we
-    # fail to fetch this run keeps its last good POC entry.
+    # Build a stale-keep map from the previous market.json so any coin we fail
+    # to fetch this run keeps its last good POC entry.
+    #
+    # BOUNDED, deliberately. This used to carry an entry forward forever, and
+    # because market.json is never committed — it is restored from the Actions
+    # cache on every run — a coin that stopped fetching was re-served from that
+    # cache indefinitely. The top-50 signal-breadth chart sat frozen at
+    # 2026-06-09 for eight weeks looking completely current, because the UI
+    # renders signal_history and never checks the `stale` flag set below.
+    #
+    # Riding out a transient blip is the point of stale-keep; pretending a
+    # two-month outage is live data is not. Past STALE_KEEP_MAX_DAYS we drop
+    # the coin so it disappears from the chart — a visible gap beats a
+    # confident lie, and the chart's own "last 90 days" window then shrinks
+    # honestly instead of flat-lining.
+    STALE_KEEP_MAX_DAYS = 7
+
+    def _entry_age_days(entry: dict) -> float | None:
+        hist = entry.get("signal_history") or []
+        if not isinstance(hist, list) or not hist:
+            return None
+        last = hist[-1]
+        if not isinstance(last, dict) or not isinstance(last.get("date"), str):
+            return None
+        try:
+            d = datetime.strptime(last["date"][:10], "%Y-%m-%d").replace(
+                tzinfo=timezone.utc)
+        except ValueError:
+            return None
+        return (datetime.now(timezone.utc) - d).total_seconds() / 86400.0
+
     stale_map: dict[str, dict] = {}
     try:
         prev = json.loads((CACHE / "market.json").read_text())
+        expired = 0
         for e in (prev.get("poc_top") or []):
             cid = e.get("coin_id")
-            if cid:
-                stale_map[cid] = e
+            if not cid:
+                continue
+            age = _entry_age_days(e)
+            if age is not None and age > STALE_KEEP_MAX_DAYS:
+                expired += 1
+                continue
+            stale_map[cid] = e
+        if expired:
+            print(f"  [stale-keep] dropped {expired} poc_top entr"
+                  f"{'y' if expired == 1 else 'ies'} older than "
+                  f"{STALE_KEEP_MAX_DAYS}d — refusing to re-serve them as live",
+                  file=sys.stderr)
     except Exception as e:
         print(f"  [stale-keep] poc_top stale map suppressed: {type(e).__name__}", file=sys.stderr)
     for c in coins:
