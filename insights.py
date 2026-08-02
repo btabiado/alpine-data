@@ -250,10 +250,17 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # Freshness guard: if the latest ETF row is more than 14 days old, do not
     # emit "fresh" insights — but keep cumulative milestones, which describe
     # the cumulative total (still meaningful even if the last row is stale).
+    #
+    # Gates rules 1-4 and 6-8 (all of which make a present-tense claim about
+    # "today"/"last 7d"/"a streak"); rule 5 (cumulative milestones) stays
+    # ungated by design. This flag was previously computed but only applied to
+    # rule 8, so a stale feed still surfaced headlines like "BTC ETF outflow of
+    # $115.2M on 2026-05-12" as current news months after the CSV stopped
+    # updating — the last row is simply the newest one on file, not news.
     fresh = _is_fresh(last_date, max_age_days=14)
 
     # 1. Last day directional flow
-    if last_flow != 0:
+    if fresh and last_flow != 0:
         cls = "good" if last_flow > 0 else "bad"
         out.append({
             "kind": "etf",
@@ -266,13 +273,13 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # 2. Streak
     pos = _streak(flows, "pos")
     neg = _streak(flows, "neg")
-    if pos >= 5:
+    if fresh and pos >= 5:
         out.append({
             "kind": "trend", "asset": asset, "severity": "good",
             "headline": f"{asset.upper()} ETF on {pos}-day inflow streak",
             "detail": f"Sum over the streak: {_fmt_usd(sum(flows[-pos:]))}",
         })
-    elif neg >= 5:
+    elif fresh and neg >= 5:
         out.append({
             "kind": "trend", "asset": asset, "severity": "bad",
             "headline": f"{asset.upper()} ETF on {neg}-day outflow streak",
@@ -280,7 +287,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
         })
 
     # 3. Largest day in last 30 / 90
-    if abs(last_flow) >= 1 and _largest_in_window([abs(f) for f in flows], 30):
+    if fresh and abs(last_flow) >= 1 and _largest_in_window([abs(f) for f in flows], 30):
         out.append({
             "kind": "milestone", "asset": asset,
             "severity": "good" if last_flow > 0 else "bad",
@@ -290,7 +297,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
 
     # 4. Z-score anomaly vs 30d
     z = _zscore(flows, 30)
-    if z is not None and abs(z) >= SIGMA_20:
+    if fresh and z is not None and abs(z) >= SIGMA_20:
         cls = "good" if z > 0 else "bad"
         out.append({
             "kind": "anomaly", "asset": asset, "severity": cls,
@@ -314,7 +321,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
     # 6. 7-day and 30-day rollups
     sum7 = sum(flows[-7:])
     sum30 = sum(flows[-30:])
-    if abs(sum7) >= 500:
+    if fresh and abs(sum7) >= 500:
         out.append({
             "kind": "etf", "asset": asset,
             "severity": "good" if sum7 > 0 else "bad",
@@ -324,7 +331,7 @@ def _etf_insights(payload: dict, asset: str) -> list[dict]:
 
     # 7. Top-fund driver for the day (if per-fund data exists)
     by_fund_daily = a.get("by_fund_daily") or {}
-    if by_fund_daily:
+    if fresh and by_fund_daily:
         last_per_fund = []
         for fund, series in by_fund_daily.items():
             if series and series[-1].get("date") == last_date:

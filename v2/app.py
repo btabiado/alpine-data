@@ -1119,7 +1119,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   header .meta{display:none}
   /* Header button row: asset toggles + share/refresh, single line, no wrap */
   header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
-  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px}
+  /* 44px on BOTH axes — min-height alone left the 🔍 submit button at 32px
+     wide, under the touch-target floor. V2's header is otherwise fine on
+     mobile (few buttons, title not truncated), so this stays a one-line fix
+     rather than the two-row restructure V1 needed. */
+  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px;min-width:44px;
+                        display:inline-flex;align-items:center;justify-content:center}
   header .controls > span{width:6px !important}
 
   /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */
@@ -5444,7 +5449,9 @@ function renderWhaleKpisV2(){
     const cur = arr.length ? arr[arr.length-1] : null;
     const prev30 = arr.length >= 31 ? arr[arr.length-31] : null;
     const pct = (prev30 && cur) ? (cur - prev30) / prev30 * 100 : null;
-    items.push({label:'Hash rate 30d', val: cur ? (cur / 1e18).toFixed(1) + ' EH/s' : '—',
+    // blockchain.info /charts/hash-rate returns TH/s (raw ≈ 5e8 today).
+    // 1 EH/s = 1e6 TH/s, so TH/s → EH/s is ÷1e6 (NOT ÷1e18, which read as ~0.0).
+    items.push({label:'Hash rate 30d', val: cur ? (cur / 1e6).toFixed(1) + ' EH/s' : '—',
                 cls: colorFor(pct, 2), sub:`30d ${fmtPct(pct, 1)}`});
   }
 
@@ -5549,13 +5556,13 @@ function renderWhaleKpis(){
       sub: `1d ${deltaStr(d)}`,
     });
   }
-  // Hash rate (EH/s) — series is in TH/s but blockchain.info "hash_rate" is GH/s.
-  // Existing chart treats it as TH/s; convert /1e9 from raw → EH/s here as
-  // specified, which matches the order-of-magnitude expected by the UI.
+  // Hash rate (EH/s) — blockchain.info "hash_rate" series is in TH/s. The chart
+  // shows it as TH/s; here we convert to EH/s for the KPI. 1 EH/s = 1e6 TH/s,
+  // so the divisor is 1e6 (NOT 1e9 — that read ~1000× low, e.g. 0.5 vs 500 EH/s).
   {
     const cur = last(w.hash_rate);
     const d = delta1d(w.hash_rate);
-    const eh = cur ? cur.value / 1e9 : null;
+    const eh = cur ? cur.value / 1e6 : null;
     items.push({
       label: '<span class="v2-tip-anchor" data-v2-tip="Total computational power securing the BTC network (EH/s). Rising = stronger miner confidence and security; falling = miner stress.">Hash rate</span>',
       val: eh != null ? fmtNum(eh, 0) + ' EH/s' : '—',
@@ -5591,14 +5598,16 @@ function renderWhaleKpis(){
     });
   }
 
-  // 8. Miner profitability = miners_revenue_usd / (hash_rate / 1e9)  → $/EH/s.
+  // 8. Miner profitability = miners_revenue_usd / (hash_rate in EH/s) → $/EH/s.
+  // hash_rate is TH/s, and 1 EH/s = 1e6 TH/s, so the EH/s denominator is
+  // hash_rate / 1e6 (NOT / 1e9 — that inflated $/EH/s ~1000×).
   {
     const revCur = at(w.miners_revenue_usd, 0);
     const hashCur = at(w.hash_rate, 0);
     const revPrev = at(w.miners_revenue_usd, 1);
     const hashPrev = at(w.hash_rate, 1);
-    const cur = (revCur != null && hashCur && hashCur !== 0) ? revCur / (hashCur / 1e9) : null;
-    const prev = (revPrev != null && hashPrev && hashPrev !== 0) ? revPrev / (hashPrev / 1e9) : null;
+    const cur = (revCur != null && hashCur && hashCur !== 0) ? revCur / (hashCur / 1e6) : null;
+    const prev = (revPrev != null && hashPrev && hashPrev !== 0) ? revPrev / (hashPrev / 1e6) : null;
     const d = (cur != null && prev != null && prev !== 0) ? (cur - prev) / Math.abs(prev) * 100 : null;
     items.push({
       label: 'Miner profitability',
@@ -6368,8 +6377,8 @@ function renderWhaleTracker(){
     // reasonable proxy for whale-cohort activity in BTC units.
     { label: 'BTC moved on-chain', series: w.output_volume_btc, fmt: v => fmtNum(v, 0) + ' BTC' },
     { label: 'Miner revenue',    series: w.miners_revenue_usd,  fmt: v => fmtUSD(v, 'auto') },
-    // hash_rate raw is GH/s in blockchain.info; divide by 1e9 → EH/s for display.
-    { label: 'Hash rate',        series: w.hash_rate,           fmt: v => fmtNum(v / 1e9, 0) + ' EH/s' },
+    // hash_rate raw is TH/s in blockchain.info; 1 EH/s = 1e6 TH/s, so ÷1e6 → EH/s.
+    { label: 'Hash rate',        series: w.hash_rate,           fmt: v => fmtNum(v / 1e6, 0) + ' EH/s' },
   ];
 
   const dCell = (series, days) => {

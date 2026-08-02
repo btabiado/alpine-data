@@ -1,0 +1,55 @@
+name: data-freshness-check
+
+# Push-based staleness alarm for the committed data feeds.
+#
+# Why: on 2026-08-02 the TSA feed was found 45 days stale. Its cron had failed
+# on 30+ consecutive days with an upstream 403 and nothing surfaced it — the
+# run just went red in a tab nobody opens. Travel advisories (68 days) and the
+# crypto ETF CSVs (82 days) had rotted the same quiet way. /health/ already
+# showed all of this, but a dashboard only helps if someone looks at it.
+#
+# This job is the push half: it fails, which means GitHub emails the repo
+# owner on the *first* day a feed regresses instead of the ninetieth.
+#
+# It is intentionally read-only — no fetching, no committing. It reads the
+# committed files' CONTENT dates (not mtimes, which a stateless checkout
+# always makes look fresh) and compares them to the same thresholds
+# build_health_status.py uses, so the alarm and the health page cannot
+# disagree about what "stale" means.
+#
+# Feeds with a known, non-code blocker (TSA's IP block, the ETF CSVs' missing
+# API key) are listed in KNOWN_BLOCKED in the script: still reported every
+# run, but they do NOT fail the job. A permanently-red alarm is one everyone
+# learns to ignore, which is the exact failure this is meant to prevent.
+# Clear a blocker -> delete its entry -> that feed is hard-enforced again.
+
+on:
+  schedule:
+    # 15:00 UTC — after the daily fetch crons (06:00-14:10 UTC) have all run,
+    # so a same-day failure is caught the same day rather than a day late.
+    - cron: "0 15 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: data-freshness-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Check data freshness
+        # Pure stdlib, no pip install. Exits non-zero on unexpected staleness
+        # and writes a rendered summary to the run page, so the failure email
+        # links somewhere that explains itself.
+        run: python scripts/check_data_freshness.py
