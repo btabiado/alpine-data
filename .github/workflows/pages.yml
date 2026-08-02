@@ -241,13 +241,20 @@ jobs:
           EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
           ALPHA_VANTAGE_API_KEY: ${{ secrets.ALPHA_VANTAGE_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
-        run: python v2/app.py --no-open || echo "[v2] build failed; production deploy continues"
+        id: v2build
+        # NOTE: deliberately NO `|| echo` here any more. `continue-on-error: true`
+        # below already guarantees the deploy proceeds, so the `|| echo` bought
+        # nothing — it only forced exit 0, which erased the step's `outcome` and
+        # made a broken V2 build indistinguishable from a healthy one. Letting the
+        # real exit code through lets the "Report V2 build outcome" step below see
+        # `steps.v2build.outcome == 'failure'` and shout about it.
+        run: python v2/app.py --no-open
         continue-on-error: true
-        # continue-on-error + `|| echo` catch a FAILURE (non-zero exit) but NOT a
-        # HANG. A V2-side fetcher (FRED/EIA/metals/etc.) with no socket timeout can
-        # hang on a slow/down API and, with no step timeout, stall the ENTIRE Pages
-        # deploy (V1 at / and /summit/ included) indefinitely. Bound it so a hung V2
-        # build fails fast and the V1 + Summit publish proceeds (V2 keeps last-good).
+        # A step timeout catches the HANG case: a V2-side fetcher (FRED/EIA/metals)
+        # with no socket timeout can hang on a slow/down API and, with no step cap,
+        # stall the ENTIRE Pages deploy (V1 at / and /summit/ included) indefinitely.
+        # Bound it so a hung V2 build fails fast and the V1 + Summit publish proceeds
+        # (V2 keeps last-good). A kill also registers as outcome == 'failure'.
         timeout-minutes: 6
 
       - name: Fallback generate V2 if dashboard.html missing
@@ -259,9 +266,78 @@ jobs:
         # because the committed NUFORC subndx caches mean fetch_mufon only
         # refreshes 2 months, so the heavy backfill no longer dominates the run.
         if: hashFiles('v2/app.py') != '' && hashFiles('v2/dashboard.html') == ''
-        run: python v2/app.py --no-open || echo "[v2] fallback build failed; production deploy continues"
+        id: v2fallback
+        run: python v2/app.py --no-open
         continue-on-error: true
         timeout-minutes: 6
+
+      - name: Report V2 build outcome
+        # THE ALARM. Both V2 build steps are continue-on-error, which is correct
+        # (production at `/` must ship regardless) but means a 6-minute timeout
+        # kill or an outright crash both render as a green run. That is precisely
+        # how the NUFORC full-backfill regression sat unnoticed while it ate the
+        # step budget and starved fetch_stock_prices of its turn.
+        #
+        # `continue-on-error` sets conclusion=success but leaves outcome=failure,
+        # so outcome is the honest signal. This step never fails the job — it only
+        # emits a ::warning annotation (visible on the run summary even for
+        # soft-failed steps) plus a greppable marker line.
+        if: always() && hashFiles('v2/app.py') != ''
+        env:
+          V2_OUTCOME: ${{ steps.v2build.outcome }}
+          V2_FALLBACK_OUTCOME: ${{ steps.v2fallback.outcome }}
+        run: |
+          set -u
+          if [ "${V2_OUTCOME}" = "failure" ] || [ "${V2_FALLBACK_OUTCOME}" = "failure" ]; then
+            DETAIL="V2 build did not complete cleanly (build=${V2_OUTCOME}, fallback=${V2_FALLBACK_OUTCOME:-skipped})."
+            if [ ! -f v2/dashboard.html ]; then
+              DETAIL="${DETAIL} v2/dashboard.html is MISSING — /v2/ will serve the last deployed copy or 404."
+            else
+              DETAIL="${DETAIL} v2/dashboard.html exists, but sidecars written after the failure point are stale."
+            fi
+            DETAIL="${DETAIL} Most likely a 6-min timeout kill; check whether fetch_mufon did a full backfill (grep the log for MUFON-DEGRADED)."
+            echo "::warning title=V2 build degraded::${DETAIL}"
+            echo "[V2-DEGRADED] ${DETAIL}"
+            if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              echo "**V2 build degraded** — ${DETAIL}" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "[v2] build completed cleanly (outcome=${V2_OUTCOME})"
+          fi
+        continue-on-error: true
+
+      - name: Commit NUFORC month cache
+        # R1 — the cache must be committed BACK, not just committed once.
+        #
+        # fetch_mufon walks a ROLLING 144-month window anchored to today, but the
+        # tracked data/.stale/nuforc_subndx_*.json snapshot is fixed. Every calendar
+        # month, one more in-window month has no cached file and becomes a permanent
+        # extra network fetch — silently re-growing the exact backfill that blew this
+        # step's timeout, at roughly +1 month/month. Committing the cache back keeps
+        # the uncached-in-window set pinned at {today, prior}.
+        #
+        # api-commit.sh reads the staged index, so newly-cached months round-trip.
+        # fetch_mufon deliberately never DELETES an out-of-window month (see the
+        # long comment where a prune would otherwise live in fetch_mufon.py):
+        # nothing can ever refetch one, so this step should only add files.
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Quoted so git (not the shell) expands the pathspec, which is what
+          # makes it match newly-written untracked months.
+          # `|| true` covers the no-match case, which git treats as an error.
+          git add -A -- 'data/.stale/nuforc_subndx_*.json' 2>/dev/null || true
+          if [ -n "$(git diff --cached --name-only -- data/.stale)" ]; then
+            echo "[nuforc-cache] staging $(git diff --cached --name-only -- data/.stale | wc -l) changed month file(s)"
+            .github/scripts/api-commit.sh \
+              "nuforc: refresh month cache $(date -u +%Y-%m-%d) [skip ci]" \
+              || echo "[nuforc-cache] commit failed; continuing"
+          else
+            echo "[nuforc-cache] no change to commit"
+          fi
+        continue-on-error: true
 
       - name: Validate V2 dashboard JS structure
         # Structural lint of the freshly-built v2/dashboard.html inline

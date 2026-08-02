@@ -119,6 +119,7 @@ import csv
 import html
 import io
 import json
+import os
 import re
 import sys
 import time
@@ -143,9 +144,26 @@ NUFORC_BASE = "https://nuforc.org"
 NUFORC_MONTH_PAGE = f"{NUFORC_BASE}/subndx/?id=e"  # + YYYYMM
 NUFORC_AJAX_URL = f"{NUFORC_BASE}/wp-admin/admin-ajax.php"
 NUFORC_REQUEST_DELAY_SEC = 2.0      # polite floor between requests
-NUFORC_WALL_CLOCK_CAP_SEC = 900     # 15 min total (cold-start no-cache needs ~9min; raised from 300s after partial-pull in CI on 2026-05-25)
+# Must stay UNDER the `timeout-minutes` of the V2 build step in
+# .github/workflows/pages.yml (currently 6 min = 360s), otherwise this graceful
+# cap can never fire: GitHub SIGKILLs the step first and we lose the partial
+# payload AND the stopped_reason diagnostic. 240s leaves ~2 min of headroom for
+# the rest of v2/app.py (notably fetch_stock_prices, ~10s for 50 tickers).
+#
+# Was 900s, justified by a ~9min cold start with no cache. That justification
+# is obsolete: data/.stale/nuforc_subndx_*.json is committed to the repo (see
+# the carve-out in .gitignore), so a CI run refreshes only {today, prior} and
+# finishes in ~10s. A run that somehow needs more than 240s is a broken run,
+# and truncating it with diagnostics beats being killed without any.
+NUFORC_WALL_CLOCK_CAP_SEC = 240
 NUFORC_404_STREAK_CAP = 3           # stop after this many consecutive misses
 NUFORC_CACHE_DIR = ROOT / "data" / ".stale"
+# A healthy cached CI run pulls only {today_ym, prior_ym}. Anything above this
+# means the committed month cache is not being seen (carve-out broken, cache
+# not committed back, or the rolling window has drifted past it) and the run is
+# on its way back to the multi-minute backfill that used to blow the V2 build's
+# step timeout. Surfaced as a CI annotation rather than silently absorbed.
+NUFORC_BACKFILL_ALERT_MONTHS = 6
 
 # Probed in order. First one that yields >1000 sane rows wins. The historical
 # planetsig mirror is the load-bearing fallback; the Renner candidates are
@@ -736,6 +754,28 @@ def _months_back_iter(n: int) -> list[str]:
     return out
 
 
+# DELIBERATELY NOT IMPLEMENTED: pruning cached months that fall out of the
+# rolling window.
+#
+# It is tempting — the window slides forward one month per calendar month, so
+# the committed cache grows ~120KB/month forever while the oldest files are
+# never re-read by the scrape loop. But deleting them is DATA LOSS, not
+# housekeeping, because nothing can ever put those rows back:
+#
+#   * the live scrape only ever walks the window, so a pruned month is never
+#     re-fetched;
+#   * the planetsig historical mirror stops at 2014-05-08, so it cannot backfill
+#     any month the cache drops (the cache floor is already 2014-07).
+#
+# fetch_all() merges "planetsig below live_cover_min" + "live rows", so raising
+# the cache floor by one month simply punches a permanent, widening hole between
+# 2014-05-08 and the new floor — silently, ~500-900 sightings at a time. With the
+# cache now committed back by pages.yml, a prune would commit those deletions too,
+# making the loss irreversible in git history terms as well.
+#
+# ~1.2MB/year of repo growth is a fine price for a dataset that stays whole.
+
+
 def _fetch_nuforc_live(months_back: int = 144,
                        wall_clock_cap_sec: float = NUFORC_WALL_CLOCK_CAP_SEC,
                        cache_dir: Path = NUFORC_CACHE_DIR) -> dict:
@@ -765,11 +805,21 @@ def _fetch_nuforc_live(months_back: int = 144,
     months_404 = 0
     months_cached = 0
     consecutive_misses = 0
+    months_skipped_offline = 0
     stopped_reason: str | None = None
 
-    nonce: str | None = None  # lazy-fetch on first network request
+    window = _months_back_iter(months_back)
 
-    for ym in _months_back_iter(months_back):
+    nonce: str | None = None  # lazy-fetch on first network request
+    # Set once the network proves unusable (bootstrap page unreachable, or
+    # reachable but nonce-less). We then stop *attempting* network months but
+    # keep walking the window so every cached month still lands in the payload.
+    # Previously this was a `break`, which threw away ~142 perfectly good
+    # cached months because the newest month — always first, always in
+    # always_refresh, therefore always a network call — happened to fail.
+    network_disabled = False
+
+    for ym in window:
         elapsed = time.monotonic() - start
         if elapsed > wall_clock_cap_sec:
             stopped_reason = f"wall_clock_cap ({wall_clock_cap_sec}s)"
@@ -778,7 +828,11 @@ def _fetch_nuforc_live(months_back: int = 144,
         cache_path = cache_dir / f"nuforc_subndx_{ym}.json"
 
         # Cache hit (and not in the always-refresh window)?
-        if cache_path.exists() and ym not in always_refresh:
+        #
+        # Once the network is known-down we also accept a cached copy of the
+        # always-refresh months: a current month that is a day or two stale is
+        # strictly better than serving nothing for it.
+        if cache_path.exists() and (ym not in always_refresh or network_disabled):
             try:
                 cached = json.loads(cache_path.read_text())
                 month_rows = _nuforc_parse_data_rows(cached.get("data", []))
@@ -792,6 +846,14 @@ def _fetch_nuforc_live(months_back: int = 144,
                 # Corrupt cache — fall through to refetch.
                 pass
 
+        # Everything below this point needs the network. If an earlier
+        # iteration already proved it unusable, don't keep re-proving it once
+        # per month — skip straight on so the remaining cached months are
+        # still collected.
+        if network_disabled:
+            months_skipped_offline += 1
+            continue
+
         # First network call — bootstrap the wdtNonce. The nonce only
         # appears on /subndx/ pages where the wpDataTables instance is
         # rendered (NOT on /ndx/?id=event), so we use the very same page
@@ -802,8 +864,13 @@ def _fetch_nuforc_live(months_back: int = 144,
             except Exception:
                 bootstrap_html = None
             if not bootstrap_html:
-                stopped_reason = "could_not_load_bootstrap_page"
-                break
+                # Degrade to cache-only rather than abandoning the backfill.
+                network_disabled = True
+                months_skipped_offline += 1
+                stopped_reason = ("could_not_load_bootstrap_page "
+                                  "(degraded to cache-only for remaining months)")
+                print(f"  NUFORC: {stopped_reason}", file=sys.stderr)
+                continue
             nonce = _nuforc_extract_nonce(bootstrap_html)
             if not nonce:
                 # Diagnostic dump — surface enough context in CI logs that a
@@ -811,13 +878,16 @@ def _fetch_nuforc_live(months_back: int = 144,
                 has_wdt = "wdtNonce" in bootstrap_html
                 has_input = '<input' in bootstrap_html
                 size = len(bootstrap_html)
+                network_disabled = True
+                months_skipped_offline += 1
                 stopped_reason = (
                     f"could_not_extract_nonce "
                     f"(bootstrap={size}B, has_wdtNonce_token={has_wdt}, "
-                    f"has_input_tag={has_input}, url={NUFORC_MONTH_PAGE}{ym})"
+                    f"has_input_tag={has_input}, url={NUFORC_MONTH_PAGE}{ym}) "
+                    f"(degraded to cache-only for remaining months)"
                 )
                 print(f"  NUFORC: {stopped_reason}", file=sys.stderr)
-                break
+                continue
 
         # Polite delay between actual network requests. Skip on the very
         # first network call so we don't pay it for nothing.
@@ -840,16 +910,22 @@ def _fetch_nuforc_live(months_back: int = 144,
             continue
 
         data = payload.get("data", []) or []
-        # A "no rows" response IS a valid response (NUFORC has zero reports
-        # for that month in some 1700s/1800s archives). Distinguish it from a
-        # real failure by treating it as zero-but-cached.
-        try:
-            cache_path.write_text(json.dumps(payload))
-        except OSError:
-            pass  # cache write failure isn't fatal
-
         month_rows = _nuforc_parse_data_rows(data)
+
+        # Only cache a month that actually produced rows.
+        #
+        # Every month inside the rolling window is 2014-or-later and NUFORC has
+        # hundreds of reports for all of them, so "HTTP 200 with an empty data
+        # array" is never legitimate here — it is what wpDataTables returns when
+        # the wdtNonce is stale/rejected. Caching that would pin the month at
+        # zero rows forever (only {today, prior} are ever re-fetched), and now
+        # that pages.yml commits the cache back, the poisoned month would be
+        # committed too. Leaving it uncached costs one retry next run.
         if month_rows:
+            try:
+                cache_path.write_text(json.dumps(payload))
+            except OSError:
+                pass  # cache write failure isn't fatal
             rows.extend(month_rows)
             months_pulled += 1
             consecutive_misses = 0
@@ -874,6 +950,8 @@ def _fetch_nuforc_live(months_back: int = 144,
         "months_pulled": months_pulled,
         "months_404": months_404,
         "months_cached": months_cached,
+        "months_skipped_offline": months_skipped_offline,
+        "network_disabled": network_disabled,
         "wall_clock_sec": round(wall_clock_sec, 1),
         "stopped_reason": stopped_reason,
     }
@@ -925,7 +1003,9 @@ def fetch_all(months_back: int = 144,
 
     live_rows: list[dict] = []
     live_meta: dict = {"months_pulled": 0, "months_404": 0,
-                       "months_cached": 0, "wall_clock_sec": 0.0,
+                       "months_cached": 0,
+                       "months_skipped_offline": 0,
+                       "network_disabled": False, "wall_clock_sec": 0.0,
                        "stopped_reason": "skipped"}
     if live_scrape:
         try:
@@ -1239,8 +1319,62 @@ def main(argv: list[str] | None = None) -> int:
         m = payload["_nuforc_live_meta"]
         print(f"  NUFORC live: {m['months_pulled']} months fetched, "
               f"{m['months_cached']} cached, {m['months_404']} failed, "
+              f"{m['months_skipped_offline']} skipped-offline, "
               f"{m['wall_clock_sec']}s ({m['stopped_reason']})")
+        _emit_nuforc_health_marker(m)
     return 0
+
+
+def _emit_nuforc_health_marker(m: dict) -> str | None:
+    """Emit a CI-visible marker when the NUFORC scrape ran in a degraded mode.
+
+    This step runs under ``continue-on-error: true`` inside pages.yml, so an
+    exit code cannot surface anything — a degraded run is indistinguishable
+    from a healthy one in the run summary. A GitHub Actions ``::warning``
+    annotation shows up on the run page even for a soft-failed step, which is
+    the whole point: the month cache silently ceasing to work is exactly how
+    this fetcher crept back up to a multi-minute backfill and blew the V2
+    build's step timeout, starving fetch_stock_prices, for two weeks.
+
+    Returns the reason string when a marker was emitted, else None (so the
+    condition is unit-testable without scraping stdout).
+    """
+    reasons: list[str] = []
+    if m.get("network_disabled"):
+        reasons.append(
+            f"NUFORC unreachable — served {m.get('months_cached', 0)} months "
+            f"from the committed cache and skipped "
+            f"{m.get('months_skipped_offline', 0)} live months")
+    if m.get("months_pulled", 0) > NUFORC_BACKFILL_ALERT_MONTHS:
+        reasons.append(
+            f"full-backfill mode: {m['months_pulled']} months fetched over the "
+            f"network (healthy cached runs fetch 2). The committed "
+            f"data/.stale/nuforc_subndx_*.json cache is not being used — check "
+            f"the .gitignore carve-out and that CI commits the cache back")
+    if str(m.get("stopped_reason", "")).startswith("wall_clock_cap"):
+        reasons.append(
+            f"hit the {NUFORC_WALL_CLOCK_CAP_SEC}s internal wall-clock cap "
+            f"after {m.get('wall_clock_sec')}s — payload is TRUNCATED")
+    if not reasons:
+        return None
+
+    detail = "; ".join(reasons)
+    # Annotation first (survives continue-on-error), then a plain marker line
+    # so `grep MUFON-DEGRADED` works in raw logs too.
+    print(f"::warning title=MUFON/NUFORC feed degraded::{detail}")
+    print(f"[MUFON-DEGRADED] {detail}", file=sys.stderr)
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        try:
+            with open(summary, "a", encoding="utf-8") as fh:
+                fh.write(f"\n**MUFON/NUFORC feed degraded** — {detail}\n")
+        except OSError:
+            # Best-effort cosmetics. The ::warning above and the
+            # [MUFON-DEGRADED] stderr line already carry the alarm, so a
+            # summary file that is absent, read-only or full must not take
+            # down a fetch that otherwise succeeded.
+            pass
+    return detail
 
 
 if __name__ == "__main__":
