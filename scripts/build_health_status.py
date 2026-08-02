@@ -122,8 +122,16 @@ def _content_age_h(path: Path, now_ts: float) -> "float | None":
             data = json.loads(path.read_text())
             if not isinstance(data, dict):
                 return None
+            # `generated_utc` (cfpb, usaspending) and `tstr` (opensky) were
+            # missing here, so those three feeds fell through to the mtime
+            # path — which a stateless CI checkout always makes look fresh.
+            # They now resolve from content like everything else. `tstr` is
+            # "YYYY-MM-DD HH:MM UTC", which fails fromisoformat and lands on
+            # the date-only fallback below; day granularity is fine for a
+            # freshness check.
             for k in ("generated_at", "last_date", "as_of", "generated",
-                      "fetched_at", "updated_at", "saved_at"):
+                      "generated_utc", "fetched_at", "updated_at", "saved_at",
+                      "tstr"):
                 v = data.get(k)
                 if not isinstance(v, str) or not v.strip():
                     continue
