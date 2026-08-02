@@ -146,7 +146,12 @@ def _get_json(url: str, timeout: float = HTTP_TIMEOUT, tag: str = "http", retrie
             body = ""
             try:
                 body = (e.read() or b"").decode("utf-8", "replace")
-            except Exception:
+            except OSError:
+                # The body is a diagnostic nicety — GDELT's error text usually
+                # says *why* (rate limit vs bad query). If the stream is
+                # already consumed or the socket died, we still have e.code,
+                # which is the part that drives retry/reporting. Never let
+                # reading the explanation mask the error being explained.
                 pass
             last_reason, last_detail = f"http_{e.code}", body
             if e.code in (403, 408, 429, 500, 502, 503, 504) and attempt < retries:
@@ -429,7 +434,11 @@ def _annotate(level: str, title: str, message: str) -> None:
         try:
             with open(path, "a", encoding="utf-8") as f:
                 f.write(f"- **{level.upper()}** {title}: {one}\n")
-        except Exception:
+        except OSError:
+            # Best-effort cosmetics. The ::warning/::error workflow command and
+            # the [enrich] line above already carry the alarm, so a summary
+            # file that is absent, read-only or full must not raise out of the
+            # ALARM path itself and swallow the signal it exists to emit.
             pass
 
 
@@ -499,7 +508,10 @@ def main() -> int:
     # Persist cache (best effort).
     try:
         CACHE_PATH.write_text(json.dumps(cache))
-    except Exception:
+    except OSError:
+        # The cache only saves work on the NEXT run; everything needed for
+        # THIS run is already in memory. A read-only or full disk should cost
+        # us a slow rebuild next time, not this run's enrichment output.
         pass
 
     # Write enrichment.json (always — accumulates across runs).

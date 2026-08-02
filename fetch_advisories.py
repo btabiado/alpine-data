@@ -1103,7 +1103,12 @@ def _annotate(level: str, title: str, message: str) -> None:
         try:
             with open(path, "a", encoding="utf-8") as f:
                 f.write(f"- **{level.upper()}** {title}: {one}\n")
-        except Exception:
+        except OSError:
+            # Best-effort cosmetics. The ::error/::warning workflow command and
+            # the stderr line above already carry the alarm, so a summary file
+            # that is absent, read-only or full must not raise out of the
+            # ALARM path itself — that would swallow the very signal this
+            # function exists to emit.
             pass
 
 

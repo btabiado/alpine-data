@@ -1369,6 +1369,10 @@ def _emit_nuforc_health_marker(m: dict) -> str | None:
             with open(summary, "a", encoding="utf-8") as fh:
                 fh.write(f"\n**MUFON/NUFORC feed degraded** — {detail}\n")
         except OSError:
+            # Best-effort cosmetics. The ::warning above and the
+            # [MUFON-DEGRADED] stderr line already carry the alarm, so a
+            # summary file that is absent, read-only or full must not take
+            # down a fetch that otherwise succeeded.
             pass
     return detail
 
