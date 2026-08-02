@@ -1,7 +1,19 @@
 """Tests for the rule-based insights engine and its per-tab tagging."""
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 import insights
+
+
+def _recent(days_ago: int) -> str:
+    """YYYY-MM-DD `days_ago` days before today (UTC).
+
+    ETF rules are gated behind a 14-day freshness check, so fixtures that want
+    those rules to fire must use dates relative to *now* — a hard-coded date
+    silently rots past the cutoff and the rule stops firing.
+    """
+    return (datetime.utcnow() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
 
 
 # ---------- per-tab tagging ----------
@@ -11,8 +23,8 @@ def test_etf_insights_tagged_etf():
     payload = {
         "btc": {
             "daily": [
-                {"date": "2024-01-10", "flow": 100.0, "cumulative": 100.0},
-                {"date": "2024-01-11", "flow": -50.0, "cumulative": 50.0},
+                {"date": _recent(2), "flow": 100.0, "cumulative": 100.0},
+                {"date": _recent(1), "flow": -50.0, "cumulative": 50.0},
             ],
             "stats": {"all_time": 50.0},
             "by_fund_daily": {},
@@ -26,6 +38,58 @@ def test_etf_insights_tagged_etf():
     assert etf, "expected at least one ETF-flow insight"
     for i in etf:
         assert i["tab"] == "etf", f"expected tab=etf but got {i.get('tab')!r} for {i.get('headline')!r}"
+
+
+def test_etf_insights_suppressed_when_feed_is_stale():
+    """A stale ETF feed must not surface present-tense 'today' headlines.
+
+    Regression guard: `_etf_insights` computed a `fresh` flag but only applied
+    it to the flow-pace rule, so a CSV that stopped updating months ago still
+    produced "BTC ETF outflow of $X on <old date>" as a current insight — the
+    last row is just the newest one on file, not news.
+    """
+    stale_payload = {
+        "btc": {
+            "daily": [
+                {"date": "2026-05-11", "flow": 100.0, "cumulative": 100.0},
+                {"date": "2026-05-12", "flow": -115.2, "cumulative": -15.2},
+            ],
+            "stats": {"all_time": -15.2},
+            "by_fund_daily": {},
+        },
+        "eth": {}, "market": {}, "signals": {},
+    }
+    out = insights.build_insights(stale_payload)
+    offenders = [
+        i for i in out
+        if "ETF outflow" in i.get("headline", "")
+        or "ETF inflow" in i.get("headline", "")
+        or "top mover today" in i.get("headline", "")
+        or "last 7d" in i.get("headline", "")
+    ]
+    assert not offenders, f"stale ETF feed still emitted current-sounding insights: {offenders}"
+
+
+def test_etf_cumulative_milestone_survives_a_stale_feed():
+    """Cumulative milestones are deliberately NOT gated on freshness.
+
+    They describe an all-time total, which stays true even when the last row
+    is old — so the staleness guard must not suppress them.
+    """
+    payload = {
+        "btc": {
+            "daily": [
+                {"date": "2026-05-11", "flow": 100.0, "cumulative": 9_950.0},
+                {"date": "2026-05-12", "flow": 100.0, "cumulative": 10_050.0},
+            ],
+            "stats": {"all_time": 10_050.0},
+            "by_fund_daily": {},
+        },
+        "eth": {}, "market": {}, "signals": {},
+    }
+    out = insights.build_insights(payload)
+    milestones = [i for i in out if "cumulative inflows" in i.get("headline", "")]
+    assert milestones, "cumulative milestone should still fire on a stale feed"
 
 
 def test_signal_insights_tagged_signals():

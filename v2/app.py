@@ -1119,7 +1119,12 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   header .meta{display:none}
   /* Header button row: asset toggles + share/refresh, single line, no wrap */
   header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
-  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px}
+  /* 44px on BOTH axes — min-height alone left the 🔍 submit button at 32px
+     wide, under the touch-target floor. V2's header is otherwise fine on
+     mobile (few buttons, title not truncated), so this stays a one-line fix
+     rather than the two-row restructure V1 needed. */
+  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px;min-width:44px;
+                        display:inline-flex;align-items:center;justify-content:center}
   header .controls > span{width:6px !important}
 
   /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */

@@ -1051,12 +1051,15 @@ header .meta{color:var(--muted);font-size:12px}
      inner padding the content area is only ~291px wide. Tight for POC-detail
      tables and share-link URL row. */
   .modal-bg{padding:8px !important}
-  /* Header .hbl labels (Web-Share/Text buttons + the Data Sources link) go
-     icon-only on very narrow screens — their aria-label/title carry the
-     name. (.hbl spans hold the text.) The header controls row is nowrap on
-     mobile, so this width reclaim is what keeps the row inside a 360-393px
-     phone viewport after the two 44px-wide share buttons were added. */
-  header .controls .hbl{display:none}
+  /* Header .hbl labels USED to be hidden here to buy width for a single
+     nowrap controls row. That backfired: the row still needed 352px of a
+     390px viewport, which starved the <h1> down to ~8px ("BD…") and left a
+     row of unlabelled glyphs (↗ 💬 ◉ 🦈) with no on-screen meaning.
+     The controls now get their own full-width wrapping row (see the
+     max-width:480px header block further down), so the labels fit again and
+     every button says what it does. Kept as an explicit rule so the intent
+     is obvious rather than relying on the absence of a hide. */
+  header .controls .hbl{display:inline}
 }
 .chart-wrap{position:relative;height:300px}
 .chart-wrap.tall{height:380px}
@@ -1218,24 +1221,41 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
      control to keep the modal header clean on phones. */
   .poc-vol-fullscreen-btn{display:none !important}
 
-  /* --- Compact mobile header (was ~200px tall, now ~104px) --- */
-  header{padding:8px 12px;gap:6px;flex-wrap:nowrap;align-items:center}
-  header > div:first-child{min-width:0;flex:1 1 auto}
+  /* --- Mobile header: TWO stacked rows (title, then controls) ---
+     Previously this was one nowrap row: title + a ~352px controls cluster on
+     a 390px viewport. Flex resolved that by crushing the title box to ~8px,
+     so the wordmark rendered as "BD…" and the tagline as "A coll…" while the
+     buttons still ran to the screen edge. Letting the header wrap and giving
+     each child a full-width row fixes the squeeze at the source: the title
+     gets the whole line, and the buttons get enough room to carry their text
+     labels and meet the 44px touch target on both axes. The header is not
+     sticky, so the extra row costs nothing but initial scroll. */
+  header{padding:8px 12px;gap:5px;flex-wrap:wrap;align-items:flex-start}
+  header > div:first-child{min-width:0;flex:1 1 100%}
   header h1{font-size:15px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  /* Keep the tagline on mobile (it's the only context cue once .meta is
-     hidden), but truncate it like the h1 so it can't blow out the header. */
-  header .tagline{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Tagline can now use the full width, so let it wrap to a second line
+     instead of truncating to "A coll…". */
+  header .tagline{font-size:10px;line-height:1.3}
   header .meta{display:none}
-  /* Header button row: asset toggles + share/refresh, single line, no wrap */
-  header .controls{flex-wrap:nowrap;gap:4px;flex:0 0 auto}
-  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px}
+  /* Header button row: its own full-width line, wrapping as needed. */
+  header .controls{flex:1 1 100%;flex-wrap:wrap;gap:5px;padding:0}
+  /* 44px on BOTH axes (min-height alone left 🔍/◉/🦈 at 28-32px wide).
+     Padding/font kept tight so the labelled buttons still pack into two
+     short rows rather than four. */
+  header .controls .btn{padding:5px 8px;font-size:11px;min-height:44px;min-width:44px;
+                        display:inline-flex;align-items:center;justify-content:center;gap:2px}
   header .controls > span{width:6px !important}
-  /* Web-Share/Text buttons (webShareBtn/textBtn): 44px-wide tap floor on
-     mobile only — the 44px height already comes from the .btn rules above.
-     display:inline-flex is set here too (the base .btn rule sets no display)
-     so the centering actually applies; the global #textBtn[hidden] !important
-     guard still wins over this when the Text button is hidden. */
-  #webShareBtn,#textBtn{min-width:44px;display:inline-flex;align-items:center;justify-content:center}
+  /* Symbol input: fluid instead of the fixed 160px that forced the overflow.
+     The form takes a flexible ~200px basis rather than a whole row, so the
+     first button or two can sit beside it and the controls settle into two
+     short rows instead of three. */
+  #symbolSearchInput{width:auto !important;flex:1 1 auto;min-width:92px;min-height:44px}
+  #symbolSearchForm{flex:1 1 200px;min-width:0}
+  /* Recent-symbol chips (MU ×, SMCI ×, NEAR ×) were absolutely positioned
+     under the form, which on mobile floated them on top of the tab bar.
+     Put them back in normal flow so they push layout instead of overlapping. */
+  #symbolRecentChips:not(.hidden){position:static !important;max-width:100% !important;
+                                  margin-top:4px;flex-wrap:wrap !important}
 
   /* --- Tab bar: horizontal scroll strip (was wrapping to 2 lines + cut) --- */
   /* Grouped nav has few top-level items, so no horizontal scroll is needed;
