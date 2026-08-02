@@ -7280,7 +7280,9 @@ function renderWhaleKpisV2(){
     const cur = arr.length ? arr[arr.length-1] : null;
     const prev30 = arr.length >= 31 ? arr[arr.length-31] : null;
     const pct = (prev30 && cur) ? (cur - prev30) / prev30 * 100 : null;
-    items.push({label:'Hash rate 30d', val: cur ? (cur / 1e18).toFixed(1) + ' EH/s' : '—',
+    // blockchain.info /charts/hash-rate returns TH/s (raw ≈ 5e8 today).
+    // 1 EH/s = 1e6 TH/s, so TH/s → EH/s is ÷1e6 (NOT ÷1e18, which read as ~0.0).
+    items.push({label:'Hash rate 30d', val: cur ? (cur / 1e6).toFixed(1) + ' EH/s' : '—',
                 cls: colorFor(pct, 2), sub:`30d ${fmtPct(pct, 1)}`});
   }
 
@@ -7995,8 +7997,8 @@ function renderWhaleTracker(){
     // reasonable proxy for whale-cohort activity in BTC units.
     { label: 'BTC moved on-chain', series: w.output_volume_btc, fmt: v => fmtNum(v, 0) + ' BTC' },
     { label: 'Miner revenue',    series: w.miners_revenue_usd,  fmt: v => fmtUSD(v, 'auto') },
-    // hash_rate raw is GH/s in blockchain.info; divide by 1e9 → EH/s for display.
-    { label: 'Hash rate',        series: w.hash_rate,           fmt: v => fmtNum(v / 1e9, 0) + ' EH/s' },
+    // hash_rate raw is TH/s in blockchain.info; 1 EH/s = 1e6 TH/s, so ÷1e6 → EH/s.
+    { label: 'Hash rate',        series: w.hash_rate,           fmt: v => fmtNum(v / 1e6, 0) + ' EH/s' },
   ];
 
   const dCell = (series, days) => {
