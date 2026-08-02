@@ -1,6 +1,6 @@
 {
   "as_of": "2026-08-02",
-  "generated_at": "2026-08-02T20:37:03Z",
+  "generated_at": "2026-08-02T21:14:09Z",
   "indexes": {
     "crypto_signal_sentiment": null,
     "lthcs_composite": {
@@ -10,7 +10,13 @@
       "score": -33,
       "stale": false
     },
-    "money_flow_index": null,
+    "money_flow_index": {
+      "as_of": "2026-08-02",
+      "label": "Neutral",
+      "note": null,
+      "score": -0.32,
+      "stale": false
+    },
     "poc_signal_breadth": null,
     "whale_sentiment_btc": null,
     "whale_sentiment_eth": null
