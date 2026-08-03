@@ -40,6 +40,7 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import html
 import json
 import os
 import re
@@ -122,6 +123,30 @@ class FetchResult(NamedTuple):
         return bit
 
 
+def _decode_response(r) -> str:
+    """Body text decoded with the charset the upstream actually used.
+
+    `requests` follows RFC 2616 and falls back to ISO-8859-1 for ANY `text/*`
+    response that omits a charset parameter. The State Dept RSS is served as
+    `text/xml` with no charset, so every multi-byte UTF-8 sequence in it came
+    back decoded one byte at a time: NBSP (C2 A0) became "Â\xa0" and the curly
+    apostrophe (E2 80 99) became "â\x80\x99". That is why the committed
+    data-travel.json contains "Reconsider travel due toÂ terrorism" — the
+    mojibake is baked into the stored strings, not introduced at render time.
+
+    The body's own XML/HTML declaration says UTF-8, so try that first and only
+    fall back to requests' header-derived guess if the bytes genuinely are not
+    UTF-8. `utf-8-sig` so a BOM is consumed rather than left as a stray \\ufeff
+    in front of the XML declaration (ElementTree rejects that).
+    """
+    if "charset=" not in (r.headers.get("Content-Type") or "").lower():
+        try:
+            return (r.content or b"").decode("utf-8-sig")
+        except (UnicodeDecodeError, AttributeError):
+            pass  # not UTF-8 after all — let requests decide below
+    return r.text or ""
+
+
 def _get(url: str, timeout: int = 25, retries: int = HTTP_RETRIES) -> FetchResult:
     """GET with a browser UA. NEVER raises; always returns a FetchResult.
 
@@ -137,7 +162,7 @@ def _get(url: str, timeout: int = 25, retries: int = HTTP_RETRIES) -> FetchResul
         try:
             r = requests.get(url, headers=H, timeout=timeout)
             status = r.status_code
-            body = r.text or ""
+            body = _decode_response(r)
             nbytes = len(body)
             snippet = " ".join(body.split())[:200]
             if status == 200:
@@ -225,7 +250,11 @@ def slugify_country(name: str) -> str:
     ascii_ = "".join(c for c in nfkd if not unicodedata.combining(c))
     # Drop apostrophes entirely (Côte d'Ivoire-style); replace everything
     # else non-alphanumeric with hyphens.
-    no_apos = ascii_.replace("'", "").replace("'", "")
+    # The second replace was a duplicate of the first (both plain ASCII), so
+    # the curly apostrophe it was clearly meant to catch fell through. That
+    # never showed while RSS country names arrived as "d&#8217;Ivoire"; now
+    # that entities are decoded, U+2019 reaches this function for real.
+    no_apos = ascii_.replace("'", "").replace("\u2019", "")
     slug = re.sub(r"[^A-Za-z0-9]+", "-", no_apos).strip("-").lower()
     return slug
 
@@ -622,6 +651,109 @@ def _parse_pubdate(pub: str) -> tuple[str, int]:
     return "", 0
 
 
+# ----- entity decoding -------------------------------------------------------
+#
+# The State Dept RSS carries its bodies DOUBLE-encoded. A <description> holds
+# an HTML fragment, and that fragment is itself XML-escaped inside the feed, so
+# the raw bytes look like:
+#
+#     &lt;p&gt;The &amp;#8220;Unrest&amp;#8221; risk indicator was removed.&lt;/p&gt;
+#
+# ElementTree undoes the XML layer — that is what parsing XML means — leaving
+# an ordinary HTML fragment:
+#
+#     <p>The &#8220;Unrest&#8221; risk indicator was removed.</p>
+#
+# The old parser stripped the tags and stored whatever was left VERBATIM, so
+# `&#8220;Unrest&#8221;` and `risk of&nbsp;crime` went into data-travel.json as
+# literal entity text. The dashboard then HTML-escapes every string it renders
+# (correctly — it must, or the feed could inject markup), which escapes the
+# ampersand a second time and puts the entity source on screen.
+#
+# The fix is one — EXACTLY one — html.unescape() here, at parse time, so the
+# stored text is real characters and the renderer's escaping is a no-op.
+#
+# EXACTLY ONE, never "unescape until it stops changing": text that is meant to
+# display the four characters "&lt;" arrives from the feed as "&amp;amp;lt;",
+# becomes "&amp;lt;" after ElementTree, and must end up as "&lt;". A second
+# pass would eat it into "<" — corrupting the text and handing the renderer a
+# tag opener. `_decode_entities` is the only place that calls html.unescape;
+# do not stack another one on top of it.
+
+_TAG_RE = re.compile(r"<[^>]+>")
+
+# Block-level tags mark a BOUNDARY between two runs of text; inline tags do
+# not. Deleting both with no separator fuses the words either side, which is
+# how the committed feed ended up saying "Do not travelto Lebanon" and
+# "Reconsider traveldue to terrorism" — State Dept writes the advisory verb
+# and its object in adjacent <p> blocks.
+#
+# Inline tags (<b>, <em>, <a>, <span>...) must still vanish WITHOUT a
+# separator, or "<b>tra</b>vel" would come apart into "tra vel". So the two
+# classes are handled separately rather than with one blanket substitution.
+_BLOCK_TAG_RE = re.compile(
+    r"</?(?:p|div|br|li|ul|ol|h[1-6]|tr|td|th|table|thead|tbody|section"
+    r"|article|header|footer|aside|nav|blockquote|hr|dl|dt|dd|pre|figure"
+    r"|figcaption|form|fieldset|address|main)\b[^>]*>",
+    re.IGNORECASE,
+)
+
+# Space characters the feed emits, as entities (&nbsp;, &#8239;) or raw. They
+# are real characters, but unlike an ordinary space they do NOT collapse when
+# rendered, so the feed's habit of padding a heading with eighteen consecutive
+# NBSPs would land on screen as an eighteen-space hole. Fold them to a space.
+# Spelled as escapes, not literals, so they stay visible to the next reader:
+# U+00A0 NBSP, U+2007 figure space, U+2009 thin space, U+202F narrow NBSP.
+_NBSP_RE = re.compile("[\u00a0\u2007\u2009\u202f]")
+
+
+def _decode_entities(s: str) -> str:
+    """Decode HTML entities exactly once, then fold NBSP-family spaces.
+
+    See the block comment above for why this is once and only once.
+    """
+    if not s:
+        return ""
+    return _NBSP_RE.sub(" ", html.unescape(s))
+
+
+def _plain_text(s: str) -> str:
+    """Tidy a NON-markup RSS field (e.g. <title>): entities, spaces, strip.
+
+    Deliberately does not strip tags — a "<" in a title is a "<", not the
+    start of markup we should delete.
+    """
+    return re.sub(r"[ \t]+", " ", _decode_entities(s)).strip()
+
+
+def _html_fragment_to_text(fragment: str, limit: int | None = None) -> str:
+    """Turn the HTML fragment inside an RSS <description> into plain text.
+
+    Order matters: tags are stripped FIRST and entities decoded SECOND. The
+    other way round would turn a legitimate "&lt;p&gt;" in the visible text
+    into a real <p> and then delete it.
+
+    `limit` is applied last, after decoding, so the cap is a count of the
+    characters a reader actually sees and can never slice an entity in half.
+    """
+    if not fragment:
+        return ""
+    # Block tags become a newline BEFORE the blanket strip, so the words they
+    # separated stay separated. Inline tags then vanish with no separator.
+    stripped = _TAG_RE.sub("", _BLOCK_TAG_RE.sub("\n", fragment))
+    text = _decode_entities(stripped)
+    # Collapse horizontal whitespace per line but keep the newlines: after the
+    # tags are gone, paragraph breaks are the only structure the body has left.
+    text = "\n".join(re.sub(r"[ \t]+", " ", ln).strip() for ln in text.split("\n"))
+    # Collapse newline RUNS to a single break. Nested blocks (<div><p>) and a
+    # literal newline already followed by a <p> both emit two, and the reader
+    # means one break in each case. Single-newline paragraphs also matter on a
+    # phone, where a blank line between every paragraph is wasted height.
+    text = re.sub(r"\n{2,}", "\n", text)
+    text = text.strip()
+    return text[:limit] if limit is not None else text
+
+
 def advisories_from_rss(xml_str: str) -> list[dict]:
     """Fallback: derive the per-country advisory list from the RSS feed.
 
@@ -649,7 +781,10 @@ def advisories_from_rss(xml_str: str) -> list[dict]:
     out: list[dict] = []
     seen: set[str] = set()
     for it in root.findall(".//item"):
-        title = (it.findtext("title") or "").strip()
+        # Entity-decoded before the regex: an accented country name arrives
+        # from this feed as "C&#244;te d&#8217;Ivoire" and must be a real name
+        # before it reaches slugify_country() and the dashboard.
+        title = _plain_text(it.findtext("title") or "")
         m = title_re.match(title)
         if not m:
             continue
@@ -691,12 +826,14 @@ def parse_advisory_rss(xml_str: str) -> list[dict]:
     out: list[dict] = []
     seen_titles: set[str] = set()
     for it in root.findall(".//item"):
-        title = (it.findtext("title") or "").strip()
+        title = _plain_text(it.findtext("title") or "")
         link = (it.findtext("link") or "").strip()
         pub = (it.findtext("pubDate") or "").strip()
         desc = (it.findtext("description") or "").strip()
-        # Strip HTML from description for the body field.
-        body = re.sub(r"<[^>]+>", "", desc).strip()[:600]
+        # Strip HTML from the description, then decode its entities ONCE, so
+        # the stored body is the text a reader is meant to see rather than
+        # "&#8220;Unrest&#8221;" / "risk of&nbsp;crime". See _decode_entities.
+        body = _html_fragment_to_text(desc, limit=600)
         if not title and not link:
             continue
         # Filter to bulletin-worthy items only.
@@ -990,6 +1127,44 @@ def _self_test() -> int:
          "_is_bulletin should reject minor-edits reissue"),
         (not _is_bulletin("X - Level 2", "There are no changes to the advisory level or risk indicators."),
          "_is_bulletin should reject no-changes notice"),
+
+        # --- entity decoding (bulletins shipped literal "&#8220;Unrest&#8221;") ---
+        # Post-ElementTree the description is an HTML fragment; one unescape
+        # turns it into the text a reader is meant to see.
+        (_html_fragment_to_text("<p>The &#8220;Unrest&#8221; indicator</p>")
+         == "The “Unrest” indicator",
+         f"curly-quote entities not decoded: "
+         f"{_html_fragment_to_text('<p>The &#8220;Unrest&#8221; indicator</p>')!r}"),
+        (_html_fragment_to_text("risk of&nbsp;crime,&nbsp;terrorism")
+         == "risk of crime, terrorism",
+         f"&nbsp; not folded: "
+         f"{_html_fragment_to_text('risk of&nbsp;crime,&nbsp;terrorism')!r}"),
+        (_html_fragment_to_text("travel&#8239;to Cyprus") == "travel to Cyprus",
+         "&#8239; (narrow NBSP) not folded"),
+        # ONCE, not until-stable: "&amp;lt;" is text that must render as
+        # "&lt;". A second unescape would corrupt it into "<".
+        (_html_fragment_to_text("Use &amp;lt;brackets&amp;gt; here")
+         == "Use &lt;brackets&gt; here",
+         f"double-unescaped: "
+         f"{_html_fragment_to_text('Use &amp;lt;brackets&amp;gt; here')!r}"),
+        (_plain_text("Turks &amp; Caicos") == "Turks & Caicos",
+         "&amp; in a title should decode once to &"),
+        (_plain_text("C&#244;te d&#8217;Ivoire") == "Côte d’Ivoire",
+         "accented country name in an RSS title not decoded"),
+        # Tags are stripped BEFORE decoding, so escaped markup in the visible
+        # text survives instead of being decoded into a tag and deleted.
+        (_html_fragment_to_text("<b>keep</b> &amp;lt;p&amp;gt;") == "keep &lt;p&gt;",
+         "escaped markup in body text was eaten as a tag"),
+        # The 600-char cap counts characters a reader sees, and is applied
+        # after decoding so it can never slice an entity in half.
+        (_html_fragment_to_text("&#8220;" * 50, limit=10) == "“" * 10,
+         "limit applied before decoding — can bisect an entity"),
+        # Whole-fixture lock: nothing entity-shaped may reach the payload.
+        (not [b for b in bulletins if re.search(r"&[#a-zA-Z0-9]{1,10};", b["body"])],
+         f"bulletins still carrying entity text: "
+         f"{[b['tag'] for b in bulletins if re.search(r'&[#a-zA-Z0-9]{1,10};', b['body'])]}"),
+        (not [a for a in rss_advisories if re.search(r"&[#a-zA-Z0-9]{1,10};", a["name"])],
+         "RSS-fallback advisory names still carrying entity text"),
 
         # --- USWDS layout (the branch that runs against the live page) ---
         (len(uswds_rows) == 2, f"USWDS: expected 2 rows, got {len(uswds_rows)}"),

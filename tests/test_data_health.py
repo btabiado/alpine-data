@@ -630,25 +630,97 @@ def test_secrets_check_workflow_maps_every_audited_key(secrets_mod):
         assert f"{name}:" in text, f"{name} is audited but never mapped into env"
 
 
+def _workflows_wiring(name: str) -> set[str]:
+    """Workflow stems that actually WIRE ``name``, ignoring prose about it.
+
+    The naive version of this — `name in wf.read_text()` — cannot tell a live
+    `FOO: ${{ secrets.FOO }}` mapping from a comment explaining why FOO was
+    retired. That matters, because the comment explaining a removal is the most
+    valuable thing on a removed key, and a check that forbids writing one
+    pressures the next person to delete the explanation instead of the key.
+    Full-line comments are stripped; secrets-check.yml is excluded because it
+    maps every audited key by definition.
+    """
+    out = set()
+    for wf in WORKFLOWS.glob("*.yml"):
+        if wf.stem == "secrets-check":
+            continue
+        code = "\n".join(ln for ln in wf.read_text().splitlines()
+                         if not ln.lstrip().startswith("#"))
+        if name in code:
+            out.add(wf.stem)
+    return out
+
+
+def test_wiring_scan_ignores_comments_but_not_code():
+    """The helper above is load-bearing for the annotation test; prove it can
+    still SEE a real mapping, or the annotation test passes vacuously."""
+    assert "pages" in _workflows_wiring("FRED_API_KEY")
+    # And a key named only in prose is not counted as wired.
+    assert _workflows_wiring("COINGECKO_API_KEY") == set()
+
+
 def test_secret_workflow_annotations_match_reality(secrets_mod):
     """Re-derives the 'expected by' column from the workflow files.
 
-    The column's only value is being true. '(not yet wired)' must mean the key
-    appears in no workflow except secrets-check.yml itself; anything else must
-    name workflows that really reference it.
+    The column's only value is being true. An UNWIRED_PREFIXES annotation —
+    '(not yet wired…)' or '(retired…)' — must mean the key appears in no
+    workflow except secrets-check.yml itself; anything else must name workflows
+    that really reference it.
+
+    Reads the prefixes from the module rather than hard-coding them, so adding a
+    new annotation class cannot leave this check silently matching nothing.
     """
     for name, _, where in secrets_mod.KEYS:
-        users = {wf.stem for wf in WORKFLOWS.glob("*.yml")
-                 if name in wf.read_text() and wf.stem != "secrets-check"}
-        if where.startswith("(not yet wired"):
+        users = _workflows_wiring(name)
+        if secrets_mod._is_unwired(where):
             assert not users, (
-                f"{name} is annotated '(not yet wired)' but {sorted(users)} "
-                f"reference it")
+                f"{name} is annotated {where!r} but {sorted(users)} reference "
+                f"it — either re-wire the annotation or drop the reference")
         else:
             claimed = {w.strip() for w in where.split(",")}
             assert claimed <= users, (
                 f"{name} claims {sorted(claimed - users)}, which do not "
                 f"reference it. Real users: {sorted(users)}")
+
+
+def test_retired_keys_are_labelled_retired_not_pending(secrets_mod):
+    """'(not yet wired)' and '(retired)' are different promises.
+
+    The first says "wait, this is coming". The second says "stop waiting". Three
+    keys — COINGECKO, COINGLASS, SOSOVALUE — sat in the first category for
+    months while being, in fact, in the second: COINGECKO was passed by
+    lthcs-crypto-daily.yml to code that reads no env var at all, and the two ETF
+    keys point at a fallback path and a decommissioned host. Mislabelling a dead
+    key as pending is how a user keeps a useless secret rotated for years.
+    """
+    for name in ("COINGECKO_API_KEY", "COINGLASS_API_KEY", "SOSOVALUE_API_KEY"):
+        where = next(w for n, _, w in secrets_mod.KEYS if n == name)
+        assert where.startswith("(retired"), (
+            f"{name} is a dead key and must be annotated '(retired…)', not "
+            f"{where!r}")
+
+
+def test_the_documented_false_alarms_stay_documented(secrets_mod):
+    """These three ARE set and DO work; they just arrive under another name.
+
+    Renaming a secret or 'fixing' the workflow to pass the literal name the code
+    appears to want would break a working upload / a working audit in order to
+    quiet a report that was never describing a real problem. The alias note is
+    the only thing standing between a reader and that mistake, so it is a test,
+    not a comment.
+    """
+    for name in ("R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET_NAME",
+                 "SECURITY_AUDIT_TOKEN"):
+        assert name in secrets_mod.ALIASES, (
+            f"{name} reaches its consumer under a different env name; without "
+            f"an ALIASES note a MISSING row sends the reader to re-paste a "
+            f"secret that was never the problem")
+    assert "AWS_SECRET_ACCESS_KEY" in secrets_mod.ALIASES["R2_SECRET_ACCESS_KEY"]
+    assert "GH_TOKEN" in secrets_mod.ALIASES["SECURITY_AUDIT_TOKEN"]
+    # And the reasoning lives in the file, where someone about to "fix" it looks.
+    src = (SCRIPTS / "check_secrets_present.py").read_text()
+    assert "FALSE ALARMS" in src
 
 
 def test_secret_values_are_never_printed(secrets_mod, capsys, monkeypatch,

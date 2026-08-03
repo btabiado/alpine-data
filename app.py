@@ -970,6 +970,68 @@ def load_json(path: Path) -> dict:
         return {}
 
 
+# Top-level sidecar keys that move on EVERY fetch even when not one observation
+# changed: the build/fetch stamp, and the fetcher's own per-run bookkeeping
+# (how many months it pulled, how long it took, whether the network was up).
+#
+# By rule 1 of the honesty contract the age the page reports comes from the
+# DATA — the UAP tab's freshness is mufonFreshness(), which reads
+# `date_range[1]`, the newest SIGHTING, and never `generated_at`. So a payload
+# whose only difference is one of these fields is the same data seen again, and
+# rewriting a git-tracked file for it is pure churn.
+SIDECAR_VOLATILE_KEYS = ("generated_at", "fetched_at", "_nuforc_live_meta")
+
+
+def _sidecar_substance(path: Path):
+    """The sidecar's payload minus per-run bookkeeping, or ``None`` if it can't
+    be read as JSON at all (missing file, truncated write, HTML error page)."""
+    try:
+        obj = json.loads(path.read_text())
+    except Exception:
+        return None
+    if not isinstance(obj, dict):
+        return obj
+    return {k: v for k, v in obj.items() if k not in SIDECAR_VOLATILE_KEYS}
+
+
+def copy_sidecar_if_changed(src: Path, dst: Path, label: str) -> bool:
+    """Copy ``src`` over ``dst`` only when the DATA differs. Returns whether it
+    copied.
+
+    ``dst`` here is a git-TRACKED file (see the data-mufon.json carve-out in
+    .gitignore) and ``src`` is a build product regenerated on every run. An
+    unconditional ``shutil.copyfile`` therefore left the working tree dirty
+    after every single local build, which is how a previous round committed
+    data churn through ``git add -A``.
+
+    Three cases, in order:
+
+    * ``src`` is unreadable as JSON — refuse to clobber a readable ``dst``. A
+      truncated or half-written fetch must not destroy the committed
+      stale-keep fallback the carve-out exists to provide.
+    * substance identical (only ``SIDECAR_VOLATILE_KEYS`` moved) — skip. The
+      served file keeps its older stamp, which is honest: the observations
+      behind it really are the same ones.
+    * anything else — copy, because the deployed page needs the current data.
+    """
+    src_sub = _sidecar_substance(src)
+    if src_sub is None:
+        if dst.exists() and _sidecar_substance(dst) is not None:
+            print(f"  [{label}] {src.name} is not readable JSON — kept the "
+                  f"existing {dst.name} rather than overwriting it with it",
+                  file=sys.stderr)
+            return False
+        shutil.copyfile(src, dst)
+        return True
+    if dst.exists() and _sidecar_substance(dst) == src_sub:
+        print(f"  [{label}] {dst.name} already holds this data "
+              f"(only the build stamp differs) — not rewritten")
+        return False
+    shutil.copyfile(src, dst)
+    print(f"  [{label}] {dst.name} updated from {src.parent.name}/{src.name}")
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-open", action="store_true", help="don't open the browser")
@@ -1062,10 +1124,19 @@ def main() -> int:
     # file across (best-effort, no network); in CI the workflow stages the
     # freshly-built v2/data-mufon.json to the root after the V2 step. The JS
     # lazy-loader treats a missing file as an empty state.
+    #
+    # DIRECTION: v2/ is authoritative for CONTENT (it owns the fetch) but the
+    # ROOT file is the one git tracks — a committed stale-keep fallback, see the
+    # .gitignore carve-out. So the copy is v2 -> root, guarded, never the other
+    # way. It used to run unconditionally, which meant every local build
+    # rewrote a tracked file with nothing but a new `generated_at`; one
+    # accidental `git add -A` then committed pure data churn (it has happened).
+    # copy_if_changed() compares the SUBSTANCE and leaves the tracked file
+    # byte-identical when only the build stamp moved.
     _mufon_src = ROOT / "v2" / "data-mufon.json"
     if _mufon_src.exists():
         try:
-            shutil.copyfile(_mufon_src, ROOT / "data-mufon.json")
+            copy_sidecar_if_changed(_mufon_src, ROOT / "data-mufon.json", "mufon")
         except OSError as e:
             print(f"  [mufon] could not copy {_mufon_src} -> root: {e}", file=sys.stderr)
     manifest["mufon"] = "data-mufon.json"
@@ -1229,7 +1300,21 @@ header .meta{color:var(--muted);font-size:12px}
    and V1's two fixed-minimum grids have no V2 analogue. */
 .container > *{min-width:0}
 .travel-bullet__title,.travel-bullet__excerpt,.travel-bullet__top,
-.tag,.v2-fresh,.v2-chip{overflow-wrap:anywhere}
+.tag,.v2-fresh,.v2-chip,.feedrow,.chart-card .desc{overflow-wrap:anywhere}
+/* .feedrow — every article / post / insight row whose text comes from upstream:
+   #aiNewsTop5, #aiNewsFeed, #overviewNews, #newsFeed, #researchNewsHost, the
+   Reddit top / trending post lists, the insight cards, the per-symbol news
+   modal. One underscore-joined slug in a headline is a single unbreakable
+   token; measured on a 360px viewport it took ainews to 1284px, overview to
+   1355, social to 1355, stocks and lthcs to 1274. #aiNewsFeed has
+   overflow-y:auto (so overflow-x computes to auto too) and quietly CONTAINED
+   its own spill — the headline was still unreadable, cut off mid-token —
+   while #aiNewsTop5, which V2 does not have, is a plain block and leaked the
+   full 1284px into the document. Wrapping is the fix; containment was not.
+   overflow-wrap is inherited, so one class on the row element covers the
+   headline, the body and the source chip, and `anywhere` (not `break-word`)
+   also lowers min-content so the enclosing grid track shrinks with it.
+   Identical rule in v2/app.py. */
 /* Rule 2 lives on the .metals-grid2 / .supplies-grid declarations themselves,
    further down this stylesheet — an override up here would lose the cascade
    to the later same-specificity rule. */
@@ -8128,7 +8213,7 @@ function renderLthcsInsightsRow(host){
     const detail = i.detail
       ? `<div class="sub" style="font-size:11px;color:var(--muted);margin-top:2px;line-height:1.3">${escapeHtml(i.detail)}</div>`
       : '';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;
+    return `<div class="feedrow" style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;
       background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};
       border-radius:8px;max-width:420px;flex:1 1 280px;min-height:40px">
       <span style="font-size:13px;line-height:1.2">${escapeHtml(ic)}</span>
@@ -9790,7 +9875,7 @@ function renderInsights(){
         const c = severityColor(i.severity);
         const ic = severityIcon(i.severity, i.kind);
         const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:1px">${escapeHtml(i.detail)}</div>` : '';
-        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};border-radius:8px;max-width:360px;flex:1 1 280px">
+        return `<div class="feedrow" style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;background:#0e1118;border:1px solid var(--border);border-left:3px solid ${c};border-radius:8px;max-width:360px;flex:1 1 280px">
           <span style="font-size:13px;line-height:1.2">${ic}</span>
           <div style="line-height:1.25">
             <div style="font-size:12px;color:var(--text)">${escapeHtml(i.headline)}</div>
@@ -9817,7 +9902,7 @@ function renderInsights(){
         const c = severityColor(i.severity);
         const ic = severityIcon(i.severity, i.kind);
         const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
-        return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
+        return `<div class="feedrow" style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
           <span style="font-size:13px">${ic}</span>
           <div style="flex:1;line-height:1.3">
             <div style="font-size:12px">${escapeHtml(i.headline)}</div>
@@ -10106,7 +10191,7 @@ function renderNews(){
     return;
   }
   host.innerHTML = news.slice(0, 25).map(n =>
-    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+    `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
       <div style="font-size:12px;color:var(--muted);margin-bottom:3px">
         <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
       </div>
@@ -10846,7 +10931,7 @@ function renderOverviewNews(){
       host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No data available.</div>';
     } else {
       host.innerHTML = news.slice(0,3).map(n =>
-        `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+        `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="font-size:11px;color:var(--muted);margin-bottom:2px">
             <span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span> · ${escapeHtml(n.date||'')}
           </div>
@@ -10867,7 +10952,7 @@ function renderOverviewNews(){
       return;
     }
     bottom.innerHTML = more.map(n =>
-      `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+      `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
         <div style="font-weight:600;font-size:13px">${escapeHtml(n.title)}</div>
         <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source)} · ${escapeHtml(n.date)}</div>
       </a>`
@@ -10893,7 +10978,7 @@ function renderOverviewInsights(){
     const c = severityColor(i.severity);
     const ic = severityIcon(i.severity, i.kind);
     const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
-    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
+    return `<div class="feedrow" style="display:flex;align-items:flex-start;gap:8px;padding:8px 12px;background:#10151f;border:1px solid var(--border);border-left:3px solid ${c};border-radius:6px">
       <span style="font-size:13px">${ic}</span>
       <div style="flex:1;line-height:1.3">
         <div style="font-size:12px">${escapeHtml(i.headline)}</div>
@@ -11479,7 +11564,7 @@ function renderAiNewsTab(){
   const articleRow = (n) => {
     const sc = AI_SENT_COLOR[n.sentiment] || 'var(--muted)';
     const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};vertical-align:middle;margin-right:6px;flex-shrink:0"></span>`;
-    return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
+    return `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:10px 12px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text);transition:background .1s" onmouseover="this.style.background='#10151f'" onmouseout="this.style.background=''">
       <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
         ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source||'')}</span>
         <span>· ${escapeHtml(n.date||'')}</span>
@@ -12390,6 +12475,11 @@ function hideSentimentCard(prefix){
 //     hole asserts continuity that was never observed.
 //  5. Snapshots that recorded a score with no observation date are UNPLOTTED
 //     and disclosed by count, rather than being dated from the filename.
+//  6. A PER-ASSET card charts the asset its toggle is on, resolved live from
+//     `assets` + `assetOf` below. The archive also writes bare
+//     `etf_flow_sentiment` / `futures_sentiment` aliases holding the DEFAULT
+//     asset; charting an alias would put BTC's past under an ETH card, so the
+//     aliases are never plotted and the modal names the asset it is showing.
 //
 // Deliberately hand-rolled inline SVG rather than Chart.js: this page's chart
 // library is a CDN dependency behind an SRI pin, and the whole point of the
@@ -12405,37 +12495,56 @@ function hideSentimentCard(prefix){
 // Mirrors v2/app.py's block one-for-one (same card set, same thresholds, same
 // stale marker, same copy). Change one, change both.
 const COMPOSITE_HISTORY_CARDS = [
-  { card: 'cryptoSignalsSentimentCard', key: 'crypto_signal_sentiment',
+  { card: 'cryptoSignalsSentimentCard', key: 'crypto_signal_sentiment', archived: true,
     title: 'Crypto Signal Sentiment',
     what: 'Top-50 buy/sell breadth: ((BUY+STRONG BUY) − (SELL+STRONG SELL)) / scored coins × 100, stablecoins excluded.' },
-  { card: 'pocSentimentCard', key: 'poc_signal_breadth',
+  { card: 'pocSentimentCard', key: 'poc_signal_breadth', archived: true,
     title: 'POC Signal Breadth',
     what: 'Mean of the latest per-coin signal score across the top-25 Point-of-Control universe.' },
-  { card: 'whaleSentimentCard', key: 'whale_sentiment_btc',
+  { card: 'whaleSentimentCard', key: 'whale_sentiment_btc', archived: true,
     title: 'BTC Whale Sentiment Index',
     what: '±100 composite of the BTC on-chain proxies (hash rate, miner revenue, average tx value, output volume, active addresses, tx volume).' },
-  { card: 'whaleEthSentimentCard', key: 'whale_sentiment_eth',
+  { card: 'whaleEthSentimentCard', key: 'whale_sentiment_eth', archived: true,
     title: 'ETH Whale Sentiment Index',
     what: '±100 composite of the ETH on-chain proxies (Coin Metrics active addresses / tx count, Etherscan daily series).' },
-  // --- Cards the daily snapshot does NOT record yet -------------------------
-  // These four are computed in the browser from DATA at render time and thrown
-  // away, exactly as the archived ones were before PR #23. They are listed
-  // here on purpose: the affordance renders muted and the modal names the file
-  // that would have to change, instead of the card silently pretending it has
-  // no past.
-  { card: 'overviewSentimentCard', key: 'overview_sentiment',
+  // --- The five PR #25 made clickable and the composites lane then archived --
+  // These were computed in the browser and thrown away, exactly as the four
+  // above were before PR #23. scripts/snapshot_composites.py now records all
+  // five.
+  //
+  // `archived: true` means EXACTLY ONE THING: snapshot_composites.py emits
+  // this key. It is what lets the "no history" modal say "recording has
+  // started, the archive has not captured it yet" instead of the (now false)
+  // "this index is not persisted at all" — two genuinely different states.
+  // A card added here WITHOUT a writer entry must be left un-archived so it
+  // keeps the honest copy; tests/test_v1_composite_history.py asserts the
+  // flag and the writer agree in BOTH directions.
+  { card: 'overviewSentimentCard', key: 'overview_sentiment', archived: true,
     title: 'Crypto Market Sentiment',
     what: 'Mean of Fear & Greed, the top-50 signal average and average perp funding.' },
-  { card: 'defiSentimentCard', key: 'defi_sentiment',
+  { card: 'defiSentimentCard', key: 'defi_sentiment', archived: true,
     title: 'DeFi Sentiment',
     what: 'TVL-weighted 7d chain momentum plus stablecoin market-cap 7d change.' },
-  { card: 'etfFlowSentimentCard', key: 'etf_flow_sentiment',
+  // PER-ASSET. These two cards do not show one number — they show the number
+  // for the asset their toggle is on, and the archive stores one key per asset
+  // (etf_flow_sentiment_btc/_eth, futures_sentiment_btc/_eth/_link/_ltc)
+  // precisely because the series diverge. `assets` + `assetOf` resolve the
+  // archive key from the LIVE toggle, so the chart under an ETH card is ETH's
+  // own history. The bare `etf_flow_sentiment` / `futures_sentiment` keys the
+  // writer also emits are duplicates of the _btc series kept for shape
+  // compatibility; plotting one would show BTC's past under whatever asset the
+  // user had selected, so they are deliberately never charted.
+  { card: 'etfFlowSentimentCard', key: 'etf_flow_sentiment', archived: true,
+    assets: ['btc', 'eth'],
+    assetOf: () => (typeof etfAsset === 'function' ? etfAsset() : 'btc'),
     title: 'ETF Flow Sentiment',
     what: '7d net flow sum (60%) and 30d net flow sum (40%) for the selected asset.' },
-  { card: 'futuresSentimentCard', key: 'futures_sentiment',
+  { card: 'futuresSentimentCard', key: 'futures_sentiment', archived: true,
+    assets: ['btc', 'eth', 'link', 'ltc'],
+    assetOf: () => ((typeof state === 'object' && state && state.asset) || 'btc'),
     title: 'Futures Positioning Sentiment',
     what: 'Funding rate, long/short ratio and 7d open-interest change for the selected asset.' },
-  { card: 'stocksSentimentCard', key: 'stocks_signal_breadth',
+  { card: 'stocksSentimentCard', key: 'stocks_signal_breadth', archived: true,
     title: 'Equity Signal Breadth',
     what: 'Buy/sell breadth across the scored top-50 US equities.' },
 ];
@@ -12467,7 +12576,41 @@ function compositeHistoryFor(key){
 }
 function compositeHistoryCardFor(key){
   for (const c of COMPOSITE_HISTORY_CARDS) if (c.key === key) return c;
+  // Per-asset keys (etf_flow_sentiment_eth, futures_sentiment_link, …) belong
+  // to the card whose base key they extend.
+  for (const c of COMPOSITE_HISTORY_CARDS){
+    if (!Array.isArray(c.assets)) continue;
+    for (const a of c.assets) if (key === c.key + '_' + a) return c;
+  }
   return null;
+}
+// The asset a per-asset key names, or null for a single-series card.
+function compositeHistoryAssetOf(key){
+  const spec = compositeHistoryCardFor(key);
+  if (!spec || !Array.isArray(spec.assets)) return null;
+  for (const a of spec.assets) if (key === spec.key + '_' + a) return a;
+  return null;
+}
+// The archive key a card should chart RIGHT NOW. For a per-asset card that is
+// the key for the asset its toggle is on — never the bare alias, which holds
+// the default asset's series and would render as this asset's past.
+function compositeHistoryKeyFor(spec){
+  if (!spec) return null;
+  if (!Array.isArray(spec.assets) || typeof spec.assetOf !== 'function') return spec.key;
+  let a = spec.assets[0];
+  try {
+    const v = String(spec.assetOf() || '').toLowerCase();
+    if (spec.assets.indexOf(v) >= 0) a = v;
+  } catch (_) {}
+  return spec.key + '_' + a;
+}
+// Modal title — a per-asset card names the asset, so a chart of LINK futures
+// can never be mistaken for the BTC one the card showed a moment ago.
+function compositeHistoryTitleFor(key){
+  const spec = compositeHistoryCardFor(key);
+  if (!spec) return key;
+  const a = compositeHistoryAssetOf(key);
+  return a ? spec.title + ' — ' + a.toUpperCase() : spec.title;
 }
 
 // Attach (or refresh) the click affordance on every composite card. Idempotent
@@ -12479,12 +12622,17 @@ function refreshCompositeHistoryAffordances(){
   COMPOSITE_HISTORY_CARDS.forEach(spec => {
     const card = document.getElementById(spec.card);
     if (!card) return;
-    const hist = compositeHistoryFor(spec.key);
+    // Resolved per render, so flipping the ETF / Futures asset toggle (both
+    // call renderAll()) repoints the affordance at that asset's own series.
+    const key = compositeHistoryKeyFor(spec);
+    const asset = compositeHistoryAssetOf(key);
+    const hist = compositeHistoryFor(key);
     const n = hist ? hist.points.length : 0;
-    const label = !hist ? 'History not recorded yet'
+    const suffix = asset ? ' (' + asset.toUpperCase() + ')' : '';
+    const label = (!hist ? 'History not recorded yet'
                 : n === 0 ? 'History: tracked, nothing recorded yet'
                 : n === 1 ? 'History: 1 observation'
-                : 'History: ' + n + ' observations';
+                : 'History: ' + n + ' observations') + suffix;
     let cta = card.querySelector(':scope > .histcta');
     if (!cta){
       cta = document.createElement('div');
@@ -12499,13 +12647,13 @@ function refreshCompositeHistoryAffordances(){
     if (!btn) return;
     btn.className = 'histbtn' + ((hist && n) ? '' : ' histbtn--none');
     btn.textContent = '📈 ' + label;
-    btn.setAttribute('data-histindex', spec.key);
+    btn.setAttribute('data-histindex', key);
     btn.setAttribute('aria-haspopup', 'dialog');
     btn.setAttribute('title', (hist && n)
       ? 'Open the daily history of this index, plotted against each value’s own observation date.'
       : 'This index has no usable daily history yet — open for the details.');
     card.classList.add('histcard');
-    card.setAttribute('data-histcard', spec.key);
+    card.setAttribute('data-histcard', key);
   });
 }
 
@@ -12624,18 +12772,45 @@ function compositeHistoryBodyHtml(key){
       + ' → ' + esc(arch.last_snapshot) + ').'
     : 'No composite snapshots have been captured yet.';
 
+  // A per-asset card charts ONE asset's series. Name it, and name the siblings,
+  // so nobody reads a LINK chart as "futures positioning" in general.
+  const assetLine = (function(){
+    const a = compositeHistoryAssetOf(key);
+    if (!a) return '';
+    const others = (spec.assets || []).filter(x => x !== a).map(x => x.toUpperCase());
+    return 'This card is per-asset: the chart is <b>' + esc(a.toUpperCase())
+      + '</b> only, read from <code>' + esc(key) + '</code>, because the assets '
+      + 'genuinely diverge and a blended series would be a number no card ever '
+      + 'displayed.' + (others.length
+          ? ' ' + esc(others.join(', ')) + ' are archived separately — switch the '
+            + 'toggle on the card to chart one of those.'
+          : '');
+  })();
+
   if (!hist){
-    out.push('<div class="histwarn">This index is not persisted to the daily '
-      + 'archive, so it has no history to chart. Its value is computed in the '
-      + 'browser at render time and discarded — the same gap every other '
-      + 'composite had before the archive existed.</div>');
+    // Two genuinely different situations, and conflating them is the lie the
+    // archive itself was guilty of for a whole release.
+    out.push(spec.archived
+      ? '<div class="histwarn">This index <b>is</b> recorded by the daily '
+        + 'archive, but no snapshot in it carries this key yet. The capture '
+        + 'writes one file per build and cannot be backfilled, so the series '
+        + 'starts from the first build after the key was added.</div>'
+      : '<div class="histwarn">This index is not persisted to the daily '
+        + 'archive, so it has no history to chart. Its value is computed in the '
+        + 'browser at render time and discarded — the same gap every other '
+        + 'composite had before the archive existed.</div>');
     out.push('<div class="histnote" style="margin-top:10px">'
-      + esc(spec.what) + '<br><br>' + archiveLine
+      + esc(spec.what) + (assetLine ? '<br><br>' + assetLine : '')
+      + '<br><br>' + archiveLine
       + ' It records ' + Object.keys(arch.indexes || {}).length
       + ' index series; <code>' + esc(key) + '</code> is not one of them. '
-      + 'Recording it means adding it to <code>scripts/snapshot_composites.py</code>, '
-      + 'which runs at the end of every Pages build — history would start '
-      + 'accumulating from that day forward and cannot be backfilled.</div>');
+      + (spec.archived
+          ? '<code>scripts/snapshot_composites.py</code> writes it at the end of '
+            + 'every Pages build; every snapshot currently on disk predates that.'
+          : 'Recording it means adding it to <code>scripts/snapshot_composites.py</code>, '
+            + 'which runs at the end of every Pages build — history would start '
+            + 'accumulating from that day forward and cannot be backfilled.')
+      + '</div>');
     return out.join('');
   }
 
@@ -12666,6 +12841,7 @@ function compositeHistoryBodyHtml(key){
   const staleN = pts.filter(p => p && p.stale).length;
   const bits = [];
   bits.push(esc(spec.what));
+  if (assetLine) bits.push(assetLine);
   bits.push(archiveLine + ' This index appeared in ' + hist.snapshots
     + ' of them: ' + hist.dated + ' produced a dated value'
     + (hist.undated ? ', ' + hist.undated + ' recorded a score with no observation date (unplottable, so excluded)' : '')
@@ -12714,12 +12890,14 @@ function openCompositeHistory(key){
   const titleEl = document.getElementById('compositeHistoryTitle');
   const subEl = document.getElementById('compositeHistorySub');
   const body = document.getElementById('compositeHistoryBody');
-  if (titleEl) titleEl.textContent = '📈 ' + ((spec && spec.title) || key) + ' — daily history';
+  if (titleEl) titleEl.textContent = '📈 ' + compositeHistoryTitleFor(key) + ' — daily history';
   if (subEl){
     const hist = compositeHistoryFor(key);
     subEl.textContent = hist
-      ? 'From data/composites/ · each value plotted at its own observation date'
-      : 'Not persisted to the daily composite archive';
+      ? 'From data/composites/ · indexes.' + key + ' · each value plotted at its own observation date'
+      : ((spec && spec.archived)
+          ? 'Recorded by the daily capture · no snapshot carries it yet'
+          : 'Not persisted to the daily composite archive');
   }
   if (body) body.innerHTML = compositeHistoryBodyHtml(key);
   _compositeHistoryReturnFocus = (document.activeElement instanceof HTMLElement)
@@ -12997,8 +13175,20 @@ function renderFuturesSentiment(){
   // 1) Funding rate. > 0.05% = +100, < -0.05% = -100, linear in between.
   const fundArr = Array.isArray(a.funding) ? a.funding : [];
   const fundLast = fundArr.length ? fundArr[fundArr.length - 1] : null;
-  const rate = fundLast && Number(fundLast.rate);
-  if (isFinite(rate)){
+  // Number.isFinite, NOT the global isFinite, and NaN rather than the falsy
+  // fundLast. The global COERCES: isFinite(null) evaluates Number(null) === 0
+  // and returns TRUE, so an EMPTY funding array pushed clampScore(0) — a
+  // neutral reading fabricated out of no data. That put this card and the
+  // history chart drawn beneath it on different numbers, because
+  // snapshot_composites.futures_sentiment() correctly SKIPS an absent input.
+  // Absence is not neutrality.
+  // `Number(null)` is 0, so a row that EXISTS with rate:null fabricates a
+  // zero exactly like an absent array does. Reject the empty values before
+  // coercing rather than after.
+  const rateRaw = fundLast ? fundLast.rate : null;
+  const rate = (rateRaw === null || rateRaw === undefined || rateRaw === '')
+             ? NaN : Number(rateRaw);
+  if (Number.isFinite(rate)){
     // 0.05% as a fraction = 0.0005. Map ±0.0005 → ±100.
     components.push(clampScore((rate / 0.0005) * 100));
   }
@@ -13006,8 +13196,13 @@ function renderFuturesSentiment(){
   //    log2(ratio); ±1 → ±100. Clamps via clampScore.
   const lsArr = Array.isArray(a.long_short_ratio) ? a.long_short_ratio : [];
   const lsLast = lsArr.length ? lsArr[lsArr.length - 1] : null;
-  const ratio = lsLast && Number(lsLast.ratio);
-  if (isFinite(ratio) && ratio > 0){
+  // Same shape as the funding leg above. This one happened to be safe — the
+  // `ratio > 0` clause rejects the coerced null — but relying on a second
+  // condition to catch the first one's bug is luck, not design.
+  const ratioRaw = lsLast ? lsLast.ratio : null;
+  const ratio = (ratioRaw === null || ratioRaw === undefined || ratioRaw === '')
+              ? NaN : Number(ratioRaw);
+  if (Number.isFinite(ratio) && ratio > 0){
     const lg = Math.log2(ratio);
     components.push(clampScore(lg * 100));
   }
@@ -13611,13 +13806,13 @@ function renderRedditCards(){
       return `<div class="card" style="border-left:4px solid ${accent}"><h3 style="font-size:13px">/r/${escapeHtml(s?.sub || name)}</h3><div class="sub" style="color:var(--muted);margin-top:8px">no Reddit data</div></div>`;
     }
     const posts = (s.top_posts || []).slice(0, 3).map(p => `
-      <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
+      <a class="feedrow" href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:4px 0;border-top:1px solid var(--border)">
         <span style="color:var(--muted)">▲ ${fmtNumShort(p.score)} · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${escapeHtml(p.title||'')}</span>
       </a>
     `).join('') || '<div class="sub" style="color:var(--muted);font-size:11px;padding:6px 0">No top posts.</div>';
     const trending = (s.trending || []).slice(0, 3).map(p => `
-      <a href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
+      <a class="feedrow" href="${sanitizeUrl(p.url)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:var(--text);text-decoration:none;padding:3px 0">
         <span style="color:#f59e0b">🔥 ${fmtNumShort(p.score)}</span>
         <span style="color:var(--muted)"> · 💬 ${fmtNumShort(p.comments)}</span>
         <span style="display:block;color:var(--text);line-height:1.3">${escapeHtml(p.title||'')}</span>
@@ -13983,7 +14178,7 @@ function openNewsSentimentDetail(symbol){
     const articles = (ccCoin.top_articles || []).slice(0, 6).map(art => {
       const sc = SENT_COLOR[art.sentiment] || 'var(--muted)';
       const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${sc};margin-right:6px;vertical-align:middle"></span>`;
-      return `<a href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;padding:6px 0;font-size:12px;color:var(--text);text-decoration:none;border-top:1px solid var(--border);line-height:1.35">
+      return `<a class="feedrow" href="${sanitizeUrl(art.url)}" target="_blank" rel="noopener" style="display:block;padding:6px 0;font-size:12px;color:var(--text);text-decoration:none;border-top:1px solid var(--border);line-height:1.35">
         ${dot}<strong style="color:${sc}">${escapeHtml((art.sentiment||'?').slice(0,3))}</strong>
         <span style="color:var(--muted)"> · ${escapeHtml((art.source||'').slice(0,24))}</span>
         <div style="color:var(--text);margin-top:2px">${escapeHtml(art.title || '')}</div>
@@ -14023,7 +14218,7 @@ function openNewsSentimentDetail(symbol){
     ? items.map(n => {
         const col = n.sentiment === 'POSITIVE' ? '#22c55e' : n.sentiment === 'NEGATIVE' ? '#ef4444' : '#f59e0b';
         const dot = `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${col};margin-right:6px;vertical-align:middle"></span>`;
-        return `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+        return `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
           <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-bottom:3px">
             ${dot}<span style="color:#a78bfa;font-weight:600">${escapeHtml(n.source || '')}</span>
             <span>· ${escapeHtml(n.date || '')}</span>
@@ -14142,7 +14337,7 @@ function renderResearchNews(){
     return (db || 0) - (da || 0);
   });
   host.innerHTML = sorted.slice(0, 15).map(n =>
-    `<a href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
+    `<a class="feedrow" href="${sanitizeUrl(n.url)}" target="_blank" rel="noopener" style="display:block;padding:8px 10px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)">
       <div style="font-weight:600;font-size:13px">${escapeHtml(n.title || '')}</div>
       <div style="font-size:11px;color:var(--muted);margin-top:2px">${escapeHtml(n.source || '')} · ${escapeHtml(n.date || '')}</div>
     </a>`

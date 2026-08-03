@@ -49,21 +49,40 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run LTHCS crypto daily pipeline
-        env:
-          # The crypto adapter uses free public APIs by default (CoinGecko
-          # free tier, blockchain.info, defillama) — none require keys.
-          # The plumbing below is for OPTIONAL paid-tier upgrades; every
-          # source degrades gracefully when its secret is absent.
-          #   * COINGECKO_API_KEY — Demo/Pro tier raises CoinGecko rate
-          #     limits (free tier ~30 calls/min is plenty for 3 assets,
-          #     but a key removes the throttle entirely).
-          #   * CRYPTOCOMPARE_API_KEY / GLASSNODE_API_KEY — reserved for a
-          #     future on-chain upgrade path. Currently unread; included
-          #     as placeholders so the workflow doesn't need an edit when
-          #     those sources land.
-          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
-          CRYPTOCOMPARE_API_KEY: ${{ secrets.CRYPTOCOMPARE_API_KEY }}
-          GLASSNODE_API_KEY: ${{ secrets.GLASSNODE_API_KEY }}
+        # NO `env:` KEY BLOCK, AND THAT IS THE FIX, NOT AN OMISSION.
+        #
+        # This step used to hand the job three secrets — COINGECKO_API_KEY,
+        # CRYPTOCOMPARE_API_KEY and GLASSNODE_API_KEY — described in a comment
+        # as lifting CoinGecko's rate limit and reserving an on-chain upgrade
+        # path. An audit of the actual code found that this pipeline reads NONE
+        # of them. `scripts/lthcs_crypto_daily.py` and everything it imports
+        # touch exactly one environment variable, LTHCS_CACHE_DIR, and
+        # `lthcs/sources/crypto_data.py::fetch_coingecko_markets` builds its URL
+        # with no key parameter and sends no auth header, so the rate limit the
+        # key was supposedly lifting has been binding this whole time. Every
+        # spelling was grepped: x-cg-, x_cg_, cg_demo, cg_pro, CG_API. Nothing.
+        #
+        # A secret passed to code that cannot read it is worse than no secret:
+        # it reads as working plumbing in the workflow, in the audit report and
+        # to anyone debugging a throttled run, and it is none of those things.
+        # So it is removed rather than left in place looking functional.
+        #
+        # WHY REMOVE RATHER THAN WIRE IT UP. Wiring is the better fix only when
+        # there is something to gain, and here there is not much: this job pulls
+        # one /coins/markets page for three assets, once a day, against a free
+        # tier that allows ~30 calls a minute. The throttle is not what is
+        # limiting this pipeline and never was. Wiring it also means editing
+        # lthcs/sources/crypto_data.py (thread a `headers` argument through
+        # _http_get/_cached_json and send `x-cg-demo-api-key`), which is a
+        # different file with different owners and different tests — a change
+        # worth making deliberately, if the call volume ever grows, and not
+        # worth smuggling in as a side effect of an honesty pass.
+        #
+        # If that day comes: add the header in crypto_data.py FIRST, then
+        # re-add COINGECKO_API_KEY here, then flip its row in
+        # scripts/check_secrets_present.py back from "(retired…)" to
+        # "lthcs-crypto-daily". The audit test enforces that ordering.
+        #
         # --force: re-running on a date that already has a snapshot is OK
         # (e.g. a manually dispatched run on the same UTC date as the cron).
         run: python scripts/lthcs_crypto_daily.py --force --verbose

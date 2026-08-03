@@ -42,15 +42,34 @@ from __future__ import annotations
 import os
 import sys
 
+# Annotation prefixes that assert "no workflow maps this key". They are checked
+# by prefix (not equality) so each row can explain itself in its own words while
+# still making a machine-checkable claim.
+#
+#   (not yet wired  — aspirational. Nothing reads it YET; wiring is pending.
+#   (retired        — dead. Something used to read it, or was supposed to, and
+#                     nothing does now. Setting it will never do anything again.
+#
+# The distinction is not pedantry. Both print as MISSING, but "not yet wired"
+# invites you to wait and "retired" tells you to stop waiting — and three keys
+# in this list spent months in the first category while actually being in the
+# second.
+UNWIRED_PREFIXES: tuple[str, ...] = ("(not yet wired", "(retired")
+
+
+def _is_unwired(where: str) -> bool:
+    return where.startswith(UNWIRED_PREFIXES)
+
+
 # (env var, what it unlocks, which workflow(s) map it in)
 #
 # The third column is the honest answer to "who would notice if this key were
 # empty?", derived by grepping .github/workflows for each name — NOT by
-# guessing. "(not yet wired)" means the key appears in no workflow except
-# secrets-check.yml itself, so setting it changes nothing until someone wires
-# it. Keeping that annotation accurate is the entire value of the column: a key
-# labelled with a workflow that does not map it sends the reader to the wrong
-# file, which is worse than no label at all.
+# guessing. An UNWIRED_PREFIXES value means the key appears in no workflow
+# except secrets-check.yml itself, so setting it changes nothing. Keeping that
+# annotation accurate is the entire value of the column: a key labelled with a
+# workflow that does not map it sends the reader to the wrong file, which is
+# worse than no label at all.
 # tests/test_data_health.py::test_secret_workflow_annotations_match_reality
 # re-derives the column from the workflow files, so it cannot drift silently.
 #
@@ -65,19 +84,31 @@ KEYS: list[tuple[str, str, str]] = [
     ("FBI_CDE_API_KEY",       "City: FBI Crime Data Explorer",                  "city-daily"),
     ("AIRNOW_API_KEY",        "City: AirNow air quality",                       "city-daily"),
     ("FRED_API_KEY",          "Macro overlay, CPI, metals, real estate",        "pages, lthcs-daily, real-estate-daily"),
-    ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart",   "pages, lthcs-crypto-daily"),
+    # Was annotated "pages, lthcs-crypto-daily". lthcs-crypto-daily.yml passed it
+    # alongside COINGECKO_API_KEY as a placeholder for a future on-chain upgrade,
+    # and the crypto pipeline read neither; both mappings are gone, so the claim
+    # is now just "pages" (V1 fetch, V2 build, and the api-status probe).
+    ("CRYPTOCOMPARE_API_KEY", "Per-coin OHLCV -> POC + signal-breadth chart",   "pages"),
     ("GLASSNODE_API_KEY",     "True BTC whale-cohort metrics",                  "pages"),
     ("COINMETRICS_API_KEY",   "ETH whale series on the Whale tab",              "pages"),
     ("ETHERSCAN_API_KEY",     "ETH blocks/day chart on the Whale tab",          "pages"),
-    ("COINGLASS_API_KEY",     "Crypto ETF flow history (per-fund)",             "(not yet wired)"),
-    ("SOSOVALUE_API_KEY",     "Crypto ETF flow history (alternative)",          "(not yet wired)"),
+    # --- retired: kept in the report on purpose, see the note below the list ---
+    ("COINGLASS_API_KEY",     "NOTHING. Was an ETF-flow fallback; BTC ETF flows "
+                              "come from the keyless Farside mirror CSV instead",
+                                                                                "(retired — dead path)"),
+    ("SOSOVALUE_API_KEY",     "NOTHING. api.sosovalue.com no longer resolves "
+                              "(NXDOMAIN); the API subdomain was decommissioned",
+                                                                                "(retired — upstream gone)"),
     ("EIA_API_KEY",           "Energy supplies (V2)",                           "pages"),
     ("ALPHA_VANTAGE_API_KEY", "LTHCS financial pillar",                         "pages, lthcs-daily"),
     ("FINNHUB_API_KEY",       "LTHCS thesis pillar",                            "pages"),
     ("R2_ACCESS_KEY_ID",      "R2 warehouse archive upload",                    "pages, r2-backfill"),
     # --- previously unaudited; every one is referenced by a real workflow ----
-    ("COINGECKO_API_KEY",     "LTHCS crypto: Demo/Pro tier lifts the CoinGecko rate limit",
-                                                                                "lthcs-crypto-daily"),
+    ("COINGECKO_API_KEY",     "NOTHING. It was passed by lthcs-crypto-daily but "
+                              "no Python reads it; crypto_data.py calls CoinGecko "
+                              "keyless, so the rate limit it was meant to lift "
+                              "still binds",
+                                                                                "(retired — never read)"),
     ("REDDIT_CLIENT_ID",      "Reddit OAuth for the research/sentiment pull",   "pages"),
     ("REDDIT_CLIENT_SECRET",  "Reddit OAuth (pairs with REDDIT_CLIENT_ID)",     "pages"),
     ("OPENSKY_CLIENT_ID",     "OpenSky OAuth2 - higher limits for the hourly flight snapshot",
@@ -93,13 +124,46 @@ KEYS: list[tuple[str, str, str]] = [
                               "github.token, which cannot read either)",        "security-audit"),
 ]
 
-# Keys the workflows hand to the job under a DIFFERENT env name. Printed as a
-# footnote because a secret that IS set but arrives under an alias is the most
-# confusing possible way for this report to say "MISSING" — it invites someone
-# to re-paste a key that was never the problem.
+# =========================================================================
+# THE THREE KNOWN FALSE ALARMS. READ THIS BEFORE "FIXING" ANY OF THEM.
+# =========================================================================
+# Three keys in the list above are invisible to a literal grep for their own
+# name in the code that consumes them, because they are RENAMED on the way in.
+# They work. They have always worked. Written down here because the obvious
+# "fix" — renaming the secret, or rewiring the workflow to pass the name the
+# code appears to want — breaks a working path to silence a report that was
+# never describing a real problem.
+#
+#   R2_SECRET_ACCESS_KEY   pages.yml and r2-backfill.yml map it into the job as
+#                          AWS_SECRET_ACCESS_KEY, and its partner
+#                          R2_ACCESS_KEY_ID as AWS_ACCESS_KEY_ID, because
+#                          upload_to_r2.py talks to Cloudflare R2 through boto3,
+#                          which only ever reads the AWS_* names. Grepping the
+#                          uploader for "R2_SECRET_ACCESS_KEY" finds nothing and
+#                          proves nothing.
+#   R2_BUCKET_NAME         travels under its own name, but is read inside an
+#                          inline `python3 - <<PY` heredoc in r2-backfill.yml
+#                          and by upload_to_r2.py — not anywhere a search of
+#                          "the fetchers" would look. Also genuinely fine.
+#   SECURITY_AUDIT_TOKEN   security-audit.yml maps it as
+#                          `GH_TOKEN: ${{ secrets.SECURITY_AUDIT_TOKEN ||
+#                          github.token }}`, because the `gh` CLI reads GH_TOKEN
+#                          and nothing else. The fallback is the subtle part: an
+#                          unset SECURITY_AUDIT_TOKEN does not fail, it quietly
+#                          drops to github.token, which cannot read Dependabot
+#                          or secret-scanning alerts. So "MISSING" here is real
+#                          and worth acting on — but the ALIAS is not a bug.
+#
+# The ALIASES footnote below prints the mapping next to the key, so a MISSING
+# row never sends someone to re-paste a secret that was never the problem.
 ALIASES: dict[str, str] = {
     "R2_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID (boto3 speaks to R2 over the S3 API)",
     "R2_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY (same reason)",
+    "R2_BUCKET_NAME": "R2_BUCKET_NAME (same name; read by upload_to_r2.py and "
+                      "an inline heredoc in r2-backfill.yml, not by a fetcher)",
+    "SECURITY_AUDIT_TOKEN": "GH_TOKEN (the gh CLI reads only GH_TOKEN; it falls "
+                            "back to github.token, which cannot read Dependabot "
+                            "or secret-scanning alerts)",
 }
 
 
@@ -125,8 +189,8 @@ def main() -> int:
         # Split the report: a key no workflow maps is a TODO, not an outage,
         # and mixing the two is how a real gap gets lost in a list of
         # aspirational ones.
-        unwired = [(n, w) for n, w in missing if w.startswith("(not yet wired")]
-        wired = [(n, w) for n, w in missing if not w.startswith("(not yet wired")]
+        unwired = [(n, w) for n, w in missing if _is_unwired(w)]
+        wired = [(n, w) for n, w in missing if not _is_unwired(w)]
         if wired:
             print("\nMissing keys and the workflow that expects each:")
             for name, where in wired:
@@ -135,11 +199,21 @@ def main() -> int:
                     print(f"  {'':24}    NOTE: mapped into the job as "
                           f"{ALIASES[name]}")
         if unwired:
-            print("\nMissing but referenced by no workflow — setting these "
-                  "changes nothing until they are wired:")
+            print("\nMissing and referenced by no workflow — setting these "
+                  "changes NOTHING. '(not yet wired)' means wiring is pending; "
+                  "'(retired)' means it is never coming back:")
             for name, where in unwired:
                 print(f"  {name:24} -> {where}")
-    if any(not w.startswith("(not yet wired") for _, w in missing):
+    # Same split for the keys that ARE set: a set-but-retired key is money and
+    # attention spent on nothing, and this report is the only place that says so.
+    retired_but_set = [(n, w) for n, u, w in KEYS
+                       if n in present and w.startswith("(retired")]
+    if retired_but_set:
+        print("\nSet, but RETIRED — these reach no code at all. Nothing breaks "
+              "if you delete them from repository secrets:")
+        for name, where in retired_but_set:
+            print(f"  {name:24} -> {where}")
+    if any(not _is_unwired(w) for _, w in missing):
         print(
             "\nIf you believe one of these IS set, it is almost certainly in the\n"
             "wrong store. Check, in this order:\n"
@@ -172,7 +246,9 @@ def main() -> int:
                          "declares one) or under the Dependabot/Codespaces tab, "
                          "rather than as a **Repository** secret. Rows marked "
                          "`(not yet wired)` are referenced by no workflow at "
-                         "all, so setting them changes nothing yet.\n")
+                         "all, so setting them changes nothing yet; rows marked "
+                         "`(retired…)` are dead and setting them will never "
+                         "change anything again.\n")
 
     return 0
 

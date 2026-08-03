@@ -579,3 +579,207 @@ def test_unbreakable_travel_text_can_wrap(v1_js):
                      v1_js) or (
         ".travel-bullet__excerpt" in v1_js
         and "overflow-wrap:anywhere" in v1_js)
+
+
+# ================= 4. Wiring the five newly-archived composites =============
+#
+# scripts/snapshot_composites.py now records overview_sentiment, defi_sentiment,
+# etf_flow_sentiment(_btc/_eth), futures_sentiment(_btc/_eth/_link/_ltc) and
+# stocks_signal_breadth. PR #25 made all five cards clickable but their charts
+# had nothing to plot; these guard the wiring that makes them plot the RIGHT
+# series and say so honestly.
+
+WRITER = ROOT / "scripts" / "snapshot_composites.py"
+
+# Every key the registry may resolve to, and whether it is per-asset.
+NEWLY_ARCHIVED = {
+    "overview_sentiment": None,
+    "defi_sentiment": None,
+    "stocks_signal_breadth": None,
+    "etf_flow_sentiment": ("btc", "eth"),
+    "futures_sentiment": ("btc", "eth", "link", "ltc"),
+}
+
+
+def registry_block(js: str) -> str:
+    m = re.search(r"const COMPOSITE_HISTORY_CARDS = \[(.*?)\n\];", js, re.S)
+    assert m, "COMPOSITE_HISTORY_CARDS not found"
+    return m.group(1)
+
+
+@pytest.fixture(scope="module")
+def registry_ctx(v1_js):
+    """A V8 context holding the SHIPPED registry plus its key resolvers, with
+    the two asset toggles stubbed so they can be driven from a test."""
+    py_mini_racer = pytest.importorskip(
+        "py_mini_racer", reason="V8 needed to execute the shipped JS")
+    ctx = py_mini_racer.MiniRacer()
+    m = re.search(r"const COMPOSITE_HISTORY_CARDS = \[.*?\n\];", v1_js, re.S)
+    assert m
+    bodies = "\n".join(
+        extract_function(v1_js, n)
+        for n in ("compositeHistoryCardFor", "compositeHistoryAssetOf",
+                  "compositeHistoryKeyFor", "compositeHistoryTitleFor")
+    )
+    ctx.eval(
+        "var state = {asset:'btc', etfAsset:'btc'};\n"
+        "function etfAsset(){ return state.etfAsset; }\n"
+        + m.group(0) + "\n" + bodies + "\n"
+        "function specFor(card){ for (const c of COMPOSITE_HISTORY_CARDS)"
+        " if (c.card === card) return c; return null; }\n"
+        "function keyFor(card){ return compositeHistoryKeyFor(specFor(card)); }\n"
+        "function setAssets(a, e){ state.asset = a; state.etfAsset = e; return true; }\n"
+        "function archivedFlags(){ const o = {};"
+        " COMPOSITE_HISTORY_CARDS.forEach(c => o[c.key] = !!c.archived); return o; }\n"
+    )
+    return ctx
+
+
+def test_the_five_newly_archived_keys_are_marked_archived(registry_ctx):
+    """`archived: true` is what switches the empty-state copy from "this index
+    is not persisted at all" (now a lie) to "recording started, no snapshot
+    carries it yet"."""
+    flags = registry_ctx.call("archivedFlags")
+    for key in NEWLY_ARCHIVED:
+        assert flags.get(key) is True, f"{key} is not marked archived"
+
+
+def test_archived_flag_agrees_with_the_snapshot_writer_both_ways(v1_js):
+    """Two lies this forbids: claiming an index is archived when the writer
+    never emits it, and claiming it is not when the writer does."""
+    writer = WRITER.read_text(encoding="utf-8")
+    for m in re.finditer(r"\{ card: '\w+', key: '(\w+)'(, archived: true)?", registry_block(v1_js)):
+        key, archived = m.group(1), bool(m.group(2))
+        emitted = (f'idx["{key}"]' in writer) or (f"idx[f\"{key}_" in writer) \
+            or re.search(r'idx\[f?"%s(_\{asset\})?"\]' % re.escape(key), writer) is not None
+        assert archived == emitted, (
+            f"{key}: registry says archived={archived}, writer emits={emitted}")
+
+
+def test_per_asset_card_charts_the_toggled_asset(registry_ctx):
+    """The card shows the toggled asset's number; the chart under it must be
+    that asset's own history, not whatever the default was."""
+    for asset, etf in (("btc", "btc"), ("eth", "eth"), ("link", "btc"), ("ltc", "eth")):
+        registry_ctx.call("setAssets", asset, etf)
+        assert registry_ctx.call("keyFor", "futuresSentimentCard") == \
+            "futures_sentiment_" + asset
+        assert registry_ctx.call("keyFor", "etfFlowSentimentCard") == \
+            "etf_flow_sentiment_" + etf
+
+
+def test_the_bare_alias_key_is_never_charted(registry_ctx):
+    """The writer also emits bare `etf_flow_sentiment` / `futures_sentiment`
+    holding the DEFAULT asset's series, for shape compatibility. Plotting one
+    would put BTC's past under an ETH card."""
+    for asset in ("btc", "eth", "link", "ltc"):
+        registry_ctx.call("setAssets", asset, "eth" if asset == "eth" else "btc")
+        assert registry_ctx.call("keyFor", "futuresSentimentCard") != "futures_sentiment"
+        assert registry_ctx.call("keyFor", "etfFlowSentimentCard") != "etf_flow_sentiment"
+
+
+def test_an_unknown_toggle_value_falls_back_to_a_declared_asset(registry_ctx):
+    """Never resolve to a key nobody writes — a typo'd or restored-from-storage
+    asset must land on a real series, not `futures_sentiment_doge`."""
+    registry_ctx.call("setAssets", "doge", "doge")
+    assert registry_ctx.call("keyFor", "futuresSentimentCard") == "futures_sentiment_btc"
+    assert registry_ctx.call("keyFor", "etfFlowSentimentCard") == "etf_flow_sentiment_btc"
+    registry_ctx.call("setAssets", "btc", "btc")
+
+
+def test_single_series_cards_resolve_to_their_plain_key(registry_ctx):
+    for card, key in (("overviewSentimentCard", "overview_sentiment"),
+                      ("defiSentimentCard", "defi_sentiment"),
+                      ("stocksSentimentCard", "stocks_signal_breadth"),
+                      ("whaleSentimentCard", "whale_sentiment_btc")):
+        assert registry_ctx.call("keyFor", card) == key
+
+
+def test_a_per_asset_key_maps_back_to_its_card_and_names_the_asset(registry_ctx):
+    """The modal is opened with the resolved key, so the lookup has to work in
+    reverse or the title falls back to a raw key string."""
+    assert registry_ctx.call("compositeHistoryTitleFor", "futures_sentiment_link") == \
+        "Futures Positioning Sentiment — LINK"
+    assert registry_ctx.call("compositeHistoryTitleFor", "etf_flow_sentiment_eth") == \
+        "ETF Flow Sentiment — ETH"
+    assert registry_ctx.call("compositeHistoryTitleFor", "defi_sentiment") == "DeFi Sentiment"
+    assert registry_ctx.call("compositeHistoryAssetOf", "futures_sentiment_ltc") == "ltc"
+    assert registry_ctx.call("compositeHistoryAssetOf", "defi_sentiment") is None
+
+
+def test_the_affordance_uses_the_resolved_key_not_the_base_key(v1_js):
+    """Both the button's data-histindex and the card's data-histcard have to
+    carry the per-asset key, or clicking the ETH card opens BTC's chart."""
+    fn = extract_function(v1_js, "refreshCompositeHistoryAffordances")
+    assert "const key = compositeHistoryKeyFor(spec);" in fn
+    assert "btn.setAttribute('data-histindex', key);" in fn
+    assert "card.setAttribute('data-histcard', key);" in fn
+    assert "compositeHistoryFor(spec.key)" not in fn
+
+
+def test_empty_state_separates_not_yet_captured_from_not_recorded(v1_js):
+    """A key the writer emits but no snapshot carries yet is a DIFFERENT
+    situation from one nothing records, and saying the second about the first
+    is exactly the kind of stale claim this archive exists to kill."""
+    body = extract_function(v1_js, "compositeHistoryBodyHtml")
+    assert "spec.archived" in body
+    assert "no snapshot in it carries this key yet" in body
+    assert "cannot be backfilled" in body
+    # the old copy must still exist for genuinely unrecorded cards
+    assert "This index is not persisted to the daily " in body
+
+
+def test_per_asset_modal_discloses_which_asset_it_is_showing(v1_js):
+    body = extract_function(v1_js, "compositeHistoryBodyHtml")
+    assert "This card is per-asset" in body
+    assert "compositeHistoryAssetOf(key)" in body
+
+
+def test_history_resolvers_match_v2s(v1_js):
+    """A fix in one frontend only is a half fix."""
+    if not V2_APP.exists():  # pragma: no cover
+        pytest.skip("v2/app.py not present")
+    src = V2_APP.read_text(encoding="utf-8")
+    v2_js = src[src.index('HTML_TEMPLATE = r"""') + len('HTML_TEMPLATE = r"""'):]
+    for name in ("compositeHistoryCardFor", "compositeHistoryAssetOf",
+                 "compositeHistoryKeyFor", "compositeHistoryTitleFor"):
+        assert extract_function(v1_js, name) == extract_function(v2_js, name), name
+    assert registry_block(v1_js).replace("test_v1_composite_history", "X") == \
+        registry_block(v2_js).replace("test_v2_composite_history", "X")
+
+
+# ================= 5. Unbreakable upstream text (Item 8) ====================
+
+
+def test_every_upstream_article_row_can_wrap(v1_js):
+    """A headline is whatever the feed sent. One underscore-joined slug is a
+    single unbreakable token, and V1 measured 1284px in a 360px viewport with
+    one in DATA.market.ai_news. Every row built from an upstream URL carries
+    the wrap class; overflow-wrap is inherited so the row covers its headline,
+    body and source."""
+    rows = re.findall(r"<a (class=\"feedrow\" )?href=\"\$\{sanitizeUrl\((?:n|p|art)\.url\)\}",
+                      v1_js)
+    assert rows, "no upstream article rows found — did the selector change?"
+    unclassed = [r for r in rows if not r[0]]
+    assert not unclassed, f"{len(unclassed)} upstream article row(s) with no wrap class"
+
+
+def test_the_wrap_class_actually_sets_overflow_wrap(v1_js):
+    css = v1_js[:v1_js.index("</style>")]
+    m = re.search(r"^[^\n{]*\.feedrow[^\n{]*\{overflow-wrap:anywhere\}", css, re.M)
+    assert m, ".feedrow has no overflow-wrap:anywhere rule"
+
+
+def test_insight_cards_can_wrap_too(v1_js):
+    """Insight headlines come from the same upstream feeds; they took the
+    overview / stocks / lthcs tabs to 1274-1355px at 360."""
+    assert v1_js.count('<div class="feedrow" style="display:flex;align-items:flex-start') >= 4
+
+
+def test_chart_card_subtitles_can_wrap(v1_js):
+    """`.chart-card .desc` carries the CoinGecko coin NAME under each per-coin
+    signal card (app.py's renderSignalCardFromObj). A long unbreakable name
+    sized the flex head to its min-content and took the signals tab to 717px
+    at both 360 and 390."""
+    css = v1_js[:v1_js.index("</style>")]
+    assert re.search(r"\.chart-card \.desc[^{]*\{overflow-wrap:anywhere\}", css), \
+        ".chart-card .desc has no overflow-wrap:anywhere rule"
