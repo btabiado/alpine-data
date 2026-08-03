@@ -1,13 +1,21 @@
 {
-  "checked_at": "2026-07-27T11:34:33+00:00",
+  "checked_at": "2026-08-03T11:37:13+00:00",
   "total_urls": 2192,
   "counts": {
-    "ok": 1942,
-    "gated": 160,
-    "dead": 17,
-    "unreachable": 73
+    "ok": 1933,
+    "gated": 163,
+    "dead": 19,
+    "unreachable": 77
   },
   "dead": [
+    {
+      "url": "https://developer.ieee.org/",
+      "code": 404,
+      "services": [
+        "IEEE Xplore Metadata API",
+        "IEEE Xplore Metadata API"
+      ]
+    },
     {
       "url": "https://docs.stratz.com/",
       "code": 404,
@@ -102,6 +110,13 @@
       ]
     },
     {
+      "url": "https://www.first.org/epss/api",
+      "code": 404,
+      "services": [
+        "EPSS API (FIRST.org)"
+      ]
+    },
+    {
       "url": "https://www.gmicloud.ai/en/models",
       "code": 404,
       "services": [
@@ -132,6 +147,13 @@
   ],
   "unreachable": [
     {
+      "url": "http://numbersapi.com/",
+      "code": null,
+      "services": [
+        "Numbers API (numbersapi.com)"
+      ]
+    },
+    {
       "url": "http://www.openthesis.org/",
       "code": null,
       "services": [
@@ -146,17 +168,17 @@
       ]
     },
     {
-      "url": "https://api.acaps.org/",
+      "url": "https://api.archives-ouvertes.fr/docs",
       "code": null,
       "services": [
-        "ACAPS API (INFORM Severity, Humanitarian Access)"
+        "HAL API (Archives Ouvertes)"
       ]
     },
     {
-      "url": "https://api.clearlydefined.io/api-docs/",
+      "url": "https://api.archives-ouvertes.fr/docs/search",
       "code": null,
       "services": [
-        "ClearlyDefined API"
+        "HAL Theses API (CCSD/CNRS)"
       ]
     },
     {
@@ -174,6 +196,13 @@
       ]
     },
     {
+      "url": "https://api.math.tools/",
+      "code": null,
+      "services": [
+        "Math Tools API (api.math.tools)"
+      ]
+    },
+    {
       "url": "https://api.pharmgkb.org/swagger/",
       "code": null,
       "services": [
@@ -181,19 +210,10 @@
       ]
     },
     {
-      "url": "https://api.protectedplanet.net/",
+      "url": "https://api.trade.gov/console/",
       "code": null,
       "services": [
-        "Protected Planet / WDPA API"
-      ]
-    },
-    {
-      "url": "https://api.protectedplanet.net/documentation",
-      "code": null,
-      "services": [
-        "Protected Planet API (WDPA, UNEP-WCMC)",
-        "Protected Planet WDPA API",
-        "Protected Planet API (WDPA/WDPCA, UNEP-WCMC & IUCN)"
+        "ITA Consolidated Screening List (CSL) API (Commerce)"
       ]
     },
     {
@@ -237,13 +257,6 @@
       "code": null,
       "services": [
         "Correlates of War (COW) Project datasets"
-      ]
-    },
-    {
-      "url": "https://datahelpdesk.worldbank.org/knowledgebase/articles/889392-about-the-indicators-api-documentation",
-      "code": 502,
-      "services": [
-        "World Bank Indicators API (v2)"
       ]
     },
     {
@@ -346,6 +359,14 @@
       ]
     },
     {
+      "url": "https://firms.modaps.eosdis.nasa.gov/api/",
+      "code": null,
+      "services": [
+        "NASA FIRMS (Fire Information for Resource Management)",
+        "NASA FIRMS Active Fire API"
+      ]
+    },
+    {
       "url": "https://fred.stlouisfed.org/categories/32217",
       "code": null,
       "services": [
@@ -391,6 +412,29 @@
       ]
     },
     {
+      "url": "https://guides.dataverse.org/en/latest/api/",
+      "code": null,
+      "services": [
+        "Harvard Dataverse API"
+      ]
+    },
+    {
+      "url": "https://guides.dataverse.org/en/latest/api/native-api.html",
+      "code": null,
+      "services": [
+        "Dataverse Native/Search API",
+        "Dataverse Native API",
+        "Harvard Dataverse Native + Search API"
+      ]
+    },
+    {
+      "url": "https://guides.dataverse.org/en/latest/api/search.html",
+      "code": null,
+      "services": [
+        "Harvard Dataverse Search API"
+      ]
+    },
+    {
       "url": "https://hemp.ams.usda.gov/s/PublicSearchTool",
       "code": null,
       "services": [
@@ -398,10 +442,31 @@
       ]
     },
     {
+      "url": "https://hexdb.io/",
+      "code": null,
+      "services": [
+        "hexdb.io (Mode-S / ICAO hex API)"
+      ]
+    },
+    {
+      "url": "https://iiif.bodleian.ox.ac.uk/iiif/",
+      "code": null,
+      "services": [
+        "Digital Bodleian / Oxford IIIF (added in verify)"
+      ]
+    },
+    {
       "url": "https://jrct.niph.go.jp/",
       "code": null,
       "services": [
         "jRCT / JPRN (Japan Registry of Clinical Trials)"
+      ]
+    },
+    {
+      "url": "https://legacy.openfmri.org/",
+      "code": null,
+      "services": [
+        "OpenfMRI (legacy)"
       ]
     },
     {
@@ -447,18 +512,18 @@
       ]
     },
     {
+      "url": "https://ndltd.org/thesis-resources/global-etd-search/",
+      "code": null,
+      "services": [
+        "NDLTD Global ETD Search"
+      ]
+    },
+    {
       "url": "https://neuroquery.org/",
       "code": null,
       "services": [
         "NeuroQuery API",
         "NeuroQuery"
-      ]
-    },
-    {
-      "url": "https://nmrshiftdb.nmr.uni-koeln.de/",
-      "code": null,
-      "services": [
-        "nmrshiftdb2"
       ]
     },
     {
@@ -483,17 +548,17 @@
       ]
     },
     {
+      "url": "https://rawg.io/apidocs",
+      "code": null,
+      "services": [
+        "RAWG Video Games Database"
+      ]
+    },
+    {
       "url": "https://rctportal.niph.go.jp/en",
       "code": null,
       "services": [
         "JPRN / NIPH Clinical Trials Search Portal (Japan)"
-      ]
-    },
-    {
-      "url": "https://roar.eprints.org/",
-      "code": null,
-      "services": [
-        "ROAR (Registry of Open Access Repositories)"
       ]
     },
     {
@@ -511,6 +576,13 @@
       ]
     },
     {
+      "url": "https://scholia.toolforge.org/",
+      "code": null,
+      "services": [
+        "Scholia"
+      ]
+    },
+    {
       "url": "https://search.patentsview.org/docs/",
       "code": null,
       "services": [
@@ -522,6 +594,13 @@
       "code": null,
       "services": [
         "SNOMED CT Snowstorm public training FHIR API"
+      ]
+    },
+    {
+      "url": "https://splatalogue.online/",
+      "code": null,
+      "services": [
+        "Splatalogue (NRAO Spectral Line Catalog)"
       ]
     },
     {
@@ -574,38 +653,10 @@
       ]
     },
     {
-      "url": "https://www.bailii.org/",
-      "code": null,
-      "services": [
-        "BAILII (British and Irish Legal Information Institute)"
-      ]
-    },
-    {
       "url": "https://www.brocade.io/",
       "code": null,
       "services": [
         "Brocade.io"
-      ]
-    },
-    {
-      "url": "https://www.buycott.com/api",
-      "code": null,
-      "services": [
-        "Buycott UPC/Barcode API"
-      ]
-    },
-    {
-      "url": "https://www.colourlovers.com/api",
-      "code": null,
-      "services": [
-        "COLOURlovers API"
-      ]
-    },
-    {
-      "url": "https://www.crystallography.net/",
-      "code": null,
-      "services": [
-        "Crystallography Open Database (COD)"
       ]
     },
     {
@@ -620,13 +671,6 @@
       "code": null,
       "services": [
         "Naval Vessel Register (NVR)"
-      ]
-    },
-    {
-      "url": "https://www.rcaap.pt/",
-      "code": null,
-      "services": [
-        "RCAAP — Repositório Científico de Acesso Aberto de Portugal"
       ]
     },
     {
