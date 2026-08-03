@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-02T09:04:59Z",
+  "generated_at": "2026-08-03T10:32:23Z",
   "methodology_version": "1.1",
   "as_of": "2026-04",
   "methodology_disclosures": [
@@ -27,7 +27,7 @@
         "label": "Worsening",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": -0.16312483456209062,
+        "composite_c": -0.16305932660897596,
         "pillars": [
           {
             "key": "city_services",
@@ -200,7 +200,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 0.3260210152836303,
+            "score_d": 0.3262175391429742,
             "feeds": [
               {
                 "label": "Crimes 2001-present",
@@ -211,11 +211,11 @@
                 "status": "ok",
                 "recent": 19063,
                 "recent_period": "2026-03",
-                "baseline_mean": 19663.083333333332,
-                "baseline_std": 1840.627766928688,
-                "z": -0.3260210152836303,
+                "baseline_mean": 19663.333333333332,
+                "baseline_std": 1840.2852737792825,
+                "z": -0.3262175391429742,
                 "yoy_pct": -3.6979035109876235,
-                "d": 0.3260210152836303,
+                "d": 0.3262175391429742,
                 "series": [
                   {
                     "month": "2023-04",
@@ -247,7 +247,7 @@
                   },
                   {
                     "month": "2023-11",
-                    "n": 21444
+                    "n": 21445
                   },
                   {
                     "month": "2023-12",
@@ -347,11 +347,11 @@
                   },
                   {
                     "month": "2025-12",
-                    "n": 17537
+                    "n": 17538
                   },
                   {
                     "month": "2026-01",
-                    "n": 16943
+                    "n": 16945
                   },
                   {
                     "month": "2026-02",
@@ -1065,12 +1065,12 @@
         "label": "Improving",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.47968115153227187,
+        "composite_c": 0.47968290439512495,
         "pillars": [
           {
             "key": "city_services",
             "name": "City Services",
-            "score_d": 0.651464324972289,
+            "score_d": 0.6514695835608484,
             "feeds": [
               {
                 "label": "311 (2010-present)",
@@ -1081,11 +1081,11 @@
                 "status": "ok",
                 "recent": 302190,
                 "recent_period": "2026-04",
-                "baseline_mean": 316322.25,
-                "baseline_std": 21693.05280162676,
-                "z": -0.651464324972289,
+                "baseline_mean": 316322.3333333333,
+                "baseline_std": 21693.0056136893,
+                "z": -0.6514695835608484,
                 "yoy_pct": 10.875068794716567,
-                "d": 0.651464324972289,
+                "d": 0.6514695835608484,
                 "series": [
                   {
                     "month": "2023-05",
@@ -1197,7 +1197,7 @@
                   },
                   {
                     "month": "2025-08",
-                    "n": 304038
+                    "n": 304039
                   },
                   {
                     "month": "2025-09",
@@ -2378,7 +2378,7 @@
         "label": "Improving",
         "pillars_present": 3,
         "pillars_total": 3,
-        "composite_c": 0.9568049921056389,
+        "composite_c": 0.9569970780214394,
         "pillars": [
           {
             "key": "city_services",
@@ -2551,7 +2551,7 @@
           {
             "key": "public_safety",
             "name": "Public Safety",
-            "score_d": 1.2576150247170592,
+            "score_d": 1.2581912824644617,
             "feeds": [
               {
                 "label": "SPD Crime 2008+",
@@ -2562,11 +2562,11 @@
                 "status": "ok",
                 "recent": 6154,
                 "recent_period": "2026-04",
-                "baseline_mean": 6585.333333333333,
-                "baseline_std": 342.9772425233034,
-                "z": -1.2576150247170592,
+                "baseline_mean": 6585.416666666667,
+                "baseline_std": 342.8863899149234,
+                "z": -1.2581912824644617,
                 "yoy_pct": 1.8199867637326272,
-                "d": 1.2576150247170592,
+                "d": 1.2581912824644617,
                 "series": [
                   {
                     "month": "2023-05",
@@ -2706,7 +2706,7 @@
                   },
                   {
                     "month": "2026-03",
-                    "n": 6211
+                    "n": 6212
                   },
                   {
                     "month": "2026-04",
@@ -3616,11 +3616,11 @@
           "status": "ok",
           "recent": 1096,
           "recent_period": "2026-04",
-          "baseline_mean": 1014.9166666666666,
-          "baseline_std": 205.90590825800885,
-          "z": 0.3937882794102854,
+          "baseline_mean": 1015.0,
+          "baseline_std": 205.91907795701366,
+          "z": 0.39335840468802524,
           "yoy_pct": -4.778453518679409,
-          "d": 0.3937882794102854,
+          "d": 0.39335840468802524,
           "series": [
             {
               "month": "2023-05",
@@ -3760,7 +3760,7 @@
             },
             {
               "month": "2026-03",
-              "n": 1047
+              "n": 1048
             },
             {
               "month": "2026-04",
