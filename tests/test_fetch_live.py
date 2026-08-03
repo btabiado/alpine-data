@@ -23,6 +23,7 @@ mirror is abandoned (last row 2025-05-02) and the committed CSV runs to
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -176,8 +177,27 @@ def test_mirror_still_writes_when_it_is_actually_ahead(tmp_path, monkeypatch):
 
 
 def test_committed_btc_flows_is_newer_than_the_mirror_can_offer():
-    """Documents the premise of the guard against the real committed file."""
-    csv = (ROOT / "data" / "btc_flows.csv").read_text()
+    """Documents the premise of the guard against the real COMMITTED file.
+
+    Reads the git blob, not the working tree, and the distinction is
+    load-bearing: `.github/workflows/tests.yml` deliberately overwrites both
+    flow CSVs with one-row stubs
+
+        printf 'date,Total\\n2024-01-11,100\\n' > data/btc_flows.csv
+
+    before pytest runs, to prove the aggregator can build a dashboard from
+    minimal input. Against the working tree this test therefore asserted
+    '2024-01-11' > '2025-05-02' and failed on every CI run while passing
+    locally — the premise it documents is a property of what is COMMITTED,
+    which is exactly what the mirror would overwrite.
+    """
+    proc = subprocess.run(
+        ["git", "show", "HEAD:data/btc_flows.csv"],
+        cwd=ROOT, capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        pytest.skip(f"git blob unavailable: {proc.stderr.strip()[:120]}")
+    csv = proc.stdout
     assert fetch_live._newest_date(csv) > "2025-05-02"
     assert csv.splitlines()[0].count(",") > 1, "per-fund columns, not Total-only"
 
