@@ -115,6 +115,15 @@ def coinbase_intl_perpetuals() -> list[dict]:
         if not sym:
             continue
         quote = it.get("quote") or {}
+        # Coinbase stamps each quote object with its own ISO-8601 UTC
+        # `timestamp` (same object that carries predicted_funding), which
+        # is when THE QUOTE was produced — not when we called. That is the
+        # honest per-row observation time; `market.fetched_at` is not, and
+        # for a stale-kept payload it would be actively wrong. Falls back
+        # to the instrument-level timestamp, then to None so a missing
+        # upstream timestamp renders as "unavailable" instead of "now".
+        q_ts = quote.get("timestamp") or it.get("timestamp")
+        q_ts = q_ts if isinstance(q_ts, str) and q_ts else None
         try:
             out.append({
                 "symbol":         sym,
@@ -124,6 +133,11 @@ def coinbase_intl_perpetuals() -> list[dict]:
                 "open_interest_base": float(it.get("open_interest") or 0),
                 "volume_24h":     float(it.get("qty_24hr") or 0),
                 "notional_24h":   float(it.get("notional_24hr") or 0),
+                # `as_of` is the YYYY-MM-DD every other row type in this
+                # payload uses; `as_of_ts` keeps the full precision that
+                # actually matters for an 8-hourly funding rate.
+                "as_of":          (q_ts[:10] if q_ts else None),
+                "as_of_ts":       q_ts,
             })
         except (ValueError, TypeError):
             continue
@@ -324,6 +338,18 @@ def coingecko_top_markets(per_page: int = 50) -> list[dict]:
     # Five fields previously emitted but never read — high_24h_usd,
     # low_24h_usd, change_1h_pct, ath_usd, ath_change_pct — are dropped to
     # shrink the inlined market.json blob in the rendered dashboard.
+    #
+    # `as_of` IS read: it is the only honest observation date the top-50
+    # tail carries. CoinGecko stamps every /coins/markets row with
+    # `last_updated` (ISO-8601 UTC, e.g. "2026-08-02T16:49:31.736Z") — the
+    # moment CG itself last repriced that coin, NOT the moment we called
+    # them. signals.compute_signal_simple copies it onto every
+    # signals_top20 entry so a freshness stamp can report the age of the
+    # DATA. Never substitute a local clock here: when the whole list is
+    # stale-kept (see `_fetch_trading_async`) these rows are copied forward
+    # verbatim and their as_of must stay frozen at the original
+    # observation, which is exactly what makes the frozen-chart bug
+    # visible instead of invisible.
     out = []
     for c in j:
         out.append({
@@ -339,8 +365,41 @@ def coingecko_top_markets(per_page: int = 50) -> list[dict]:
             "change_7d_pct": c.get("price_change_percentage_7d_in_currency"),
             "change_30d_pct": c.get("price_change_percentage_30d_in_currency"),
             "sparkline_7d": (c.get("sparkline_in_7d") or {}).get("price", []),
+            # None (not today's date) when CG omits it — an explicit
+            # "unavailable" beats a fabricated stamp.
+            "as_of": (str(c.get("last_updated") or "")[:10]) or None,
         })
     return out
+
+
+def stale_keep_markets_top() -> list[dict]:
+    """Previous ``markets_top`` list, flagged, for when CoinGecko returns [].
+
+    CoinGecko 429 (rate-limit wipe) returns an empty list. The semaphore +
+    0.6s gap helps, but a fresh-cache 429 from upstream contention is still
+    possible — preserve the last good list instead of clobbering cache.
+
+    Every carried-forward row gains ``stale: True`` and keeps its ORIGINAL
+    ``as_of`` (see `coingecko_top_markets`). Both matter, and for different
+    reasons: the frozen ``as_of`` is what lets the stamp age visibly, and
+    the flag is what lets the UI disclose "N of M served from cache"
+    instead of printing one confident date over a cache-served list. There
+    is deliberately no clock in this function.
+
+    Returns ``[]`` when there is nothing to carry forward.
+    """
+    path = CACHE / "market.json"
+    if not path.exists():
+        return []
+    try:
+        prev = json.loads(path.read_text()).get("markets_top") or []
+    except Exception as e:
+        print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
+        return []
+    kept = [{**r, "stale": True} for r in prev if isinstance(r, dict)]
+    if kept:
+        print(f"  [stale-keep] markets_top empty from API; kept {len(kept)} from previous fetch")
+    return kept
 
 
 def coingecko_trending() -> list[dict]:
@@ -476,6 +535,86 @@ def defillama_bridges() -> dict:
         for b in bridges[:10]
     ]
     return out
+
+
+def _series_last_date(rows: list | None) -> str | None:
+    """Newest ``YYYY-MM-DD`` in a ``[{date: ...}, ...]`` series, or None."""
+    if not isinstance(rows, list) or not rows:
+        return None
+    best: str | None = None
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        d = r.get("date")
+        if not isinstance(d, str) or len(d) < 10:
+            continue
+        d = d[:10]
+        try:
+            datetime.strptime(d, "%Y-%m-%d")
+        except ValueError:
+            continue
+        if best is None or d > best:
+            best = d
+    return best
+
+
+def defi_provenance(chains: list | None, protocols: list | None,
+                    yields_stablecoin: list | None, bridges: dict | None,
+                    tvl_history: dict | None,
+                    observed_at: datetime | None = None) -> dict:
+    """Derive an honest observation date for the DeFi subtree.
+
+    The DeFi block is a composite of five independently-fetched inputs, so
+    per rule "a composite is only as fresh as its oldest input" the
+    returned ``as_of`` is the MINIMUM of the contributing dates — never the
+    newest, never an average.
+
+    Where each date comes from:
+
+      * ``tvl_history`` — DeFiLlama's own daily timestamps. A real
+        observation date; used as-is (per chain, then min-ed).
+      * ``chains`` / ``protocols`` / ``yields_stablecoin`` / ``bridges`` —
+        DeFiLlama serves these as *current* snapshots with no upstream
+        timestamp of any kind, so for a snapshot that came back populated
+        the observation instant genuinely IS the fetch instant. That is the
+        one case where the clock is the right answer, and it is safe here
+        for a specific reason: none of these four has a stale-keep path, so
+        an input that fails this run arrives EMPTY and contributes no date
+        at all rather than a cached payload wearing a fresh stamp.
+      * An input that is empty contributes nothing. If every input is
+        empty the result is ``{"as_of": None, ...}`` and the UI is expected
+        to render an explicit unavailable state.
+
+    ``observed_at`` is injectable so tests can pin the clock.
+
+    Returns ``{"as_of", "observed_at", "sources"}`` where ``sources`` maps
+    each input to its own date (or None) so a UI can name the laggard
+    rather than just showing the min.
+    """
+    now = observed_at or datetime.now(timezone.utc)
+    snapshot_date = now.strftime("%Y-%m-%d")
+
+    sources: dict[str, Any] = {
+        "chains":            snapshot_date if chains else None,
+        "protocols":         snapshot_date if protocols else None,
+        "yields_stablecoin": snapshot_date if yields_stablecoin else None,
+        "bridges":           snapshot_date if (bridges or {}).get("top_bridges") else None,
+    }
+    tvl_dates: dict[str, str | None] = {}
+    for name, rows in (tvl_history or {}).items():
+        tvl_dates[name] = _series_last_date(rows)
+    sources["tvl_history"] = tvl_dates
+
+    candidates = [d for d in sources.values() if isinstance(d, str)]
+    candidates += [d for d in tvl_dates.values() if isinstance(d, str)]
+    return {
+        "as_of": min(candidates) if candidates else None,
+        # Wall-clock of the fetch. Named so nobody mistakes it for a data
+        # date: it exists for debugging "when did this run last", and must
+        # NOT be used as a freshness stamp.
+        "observed_at": now.isoformat(timespec="seconds"),
+        "sources": sources,
+    }
 
 
 def crypto_news_rss(limit: int = 120) -> list[dict]:
@@ -2519,6 +2658,35 @@ def cryptocompare_market(symbol: str, days: int = 180) -> dict:
     return out if isinstance(out, dict) else {"price": [], "volume": []}
 
 
+def poc_entry_as_of(entry: dict | None) -> str | None:
+    """Observation date (``YYYY-MM-DD``) of one ``poc_top`` entry.
+
+    Prefers the explicit ``as_of`` written by `compute_poc_top_markets`;
+    falls back to the last ``signal_history`` date so entries written by an
+    older build (restored from the Actions cache, which is never committed)
+    still report a real age instead of ``None``.
+
+    Deliberately has no clock in it. A carried-forward entry keeps whatever
+    date it was originally observed on, so `stale: true` rows age visibly
+    rather than inheriting the freshness of the coins around them.
+    """
+    def _iso(v) -> str | None:
+        if not isinstance(v, str) or len(v) < 10:
+            return None
+        try:
+            datetime.strptime(v[:10], "%Y-%m-%d")
+        except ValueError:
+            return None
+        return v[:10]
+
+    if not isinstance(entry, dict):
+        return None
+    hist = entry.get("signal_history")
+    last = hist[-1] if isinstance(hist, list) and hist else None
+    return _iso(entry.get("as_of")) or _iso(
+        last.get("date") if isinstance(last, dict) else None)
+
+
 def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
                              days: int = 180) -> list[dict]:
     """Fetch market_chart and compute multi-timeframe POC + migration + naked
@@ -2561,15 +2729,11 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
     STALE_KEEP_MAX_DAYS = 7
 
     def _entry_age_days(entry: dict) -> float | None:
-        hist = entry.get("signal_history") or []
-        if not isinstance(hist, list) or not hist:
-            return None
-        last = hist[-1]
-        if not isinstance(last, dict) or not isinstance(last.get("date"), str):
+        iso = poc_entry_as_of(entry)
+        if not iso:
             return None
         try:
-            d = datetime.strptime(last["date"][:10], "%Y-%m-%d").replace(
-                tzinfo=timezone.utc)
+            d = datetime.strptime(iso, "%Y-%m-%d").replace(tzinfo=timezone.utc)
         except ValueError:
             return None
         return (datetime.now(timezone.utc) - d).total_seconds() / 86400.0
@@ -2594,6 +2758,22 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
                   file=sys.stderr)
     except Exception as e:
         print(f"  [stale-keep] poc_top stale map suppressed: {type(e).__name__}", file=sys.stderr)
+
+    def _carry_forward(coin_id: str) -> dict:
+        """Copy the previous entry forward, flagged and dated honestly.
+
+        `as_of` is pinned to the date the carried-forward data was
+        ORIGINALLY observed (backfilled from signal_history for entries
+        written before as_of existed). It must never advance here — a
+        re-served entry that inherits today's date is precisely the lie
+        that let the breadth chart sit frozen at 2026-06-09 behind a
+        fresh-looking page.
+        """
+        stale = dict(stale_map[coin_id])
+        stale["stale"] = True
+        stale["as_of"] = poc_entry_as_of(stale)
+        return stale
+
     for c in coins:
         coin_id = c.get("id")
         symbol = (c.get("symbol") or "").upper()
@@ -2604,17 +2784,13 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
         volumes = (m or {}).get("volume") or []
         if not prices or not volumes:
             if coin_id in stale_map:
-                stale = dict(stale_map[coin_id])
-                stale["stale"] = True
-                out.append(stale)
+                out.append(_carry_forward(coin_id))
             continue
         tfs = {k: point_of_control(prices, volumes, lookback_days=lb, bins=b)
                for k, lb, b in LOOKBACKS}
         if not any(tfs.values()):
             if coin_id in stale_map:
-                stale = dict(stale_map[coin_id])
-                stale["stale"] = True
-                out.append(stale)
+                out.append(_carry_forward(coin_id))
             continue
         # Build a date-aligned closes/volumes pair so we can compute the
         # same rolling -100..+100 score the stocks breadth chart uses.
@@ -2636,6 +2812,10 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
             "name":          c.get("name"),
             "image":         c.get("image"),
             "current_price": c.get("price_usd"),
+            # Last date present in BOTH the price and volume series — the
+            # newest bar the POC/score were actually computed from, from
+            # CryptoCompare's own daily timestamps. Not a clock reading.
+            "as_of":         common[-1] if common else None,
             "poc": {
                 **tfs,
                 "migration":        compute_poc_migration(tfs.get("d30"), tfs.get("d90")),
@@ -2644,6 +2824,13 @@ def compute_poc_top_markets(top_markets: list[dict], n: int = 25,
             },
             "signal_history": signal_history,
         }
+        # `cryptocompare_market` has its own per-symbol stale-fallback and
+        # tags the dict it returns. Surface that here too, so the UI's
+        # "N of M served from cache" count covers BOTH stale paths and not
+        # just the copy-forward one below. The `as_of` above is already the
+        # cached series' own last date, so it stays honest either way.
+        if isinstance(m, dict) and m.get("stale"):
+            entry["stale"] = True
         out.append(entry)
     return out
 
@@ -2781,6 +2968,58 @@ def naked_pocs(price_series: list[dict], volume_series: list[dict],
     return naked[:top_n]
 
 
+# --- whale-sentiment provenance ---------------------------------------------
+# The two whale composites below used to stamp themselves with
+# ``whale["fetched_at"][:10]`` — the wall clock at fetch time. That advances
+# on every run whether or not a single on-chain number moved, and the whale
+# tree is stale-kept in pieces (bitinfocharts falls back to the previous
+# distribution, glassnode/etherscan fall back to data/.stale/*.json), so a
+# completely failed refresh still came out wearing today's date.
+#
+# The underlying proxy series all carry REAL observation dates
+# (blockchain.info charts, bitinfocharts cohort rows, Coin Metrics, the
+# synthesized Etherscan blocks/day series). Those dates are frozen by
+# construction: carry a payload forward and its dates come with it.
+#
+# So: each contributing component reports the observation date of the series
+# it was computed from, and the composite stamps the OLDEST of them — a
+# composite is only as fresh as its stalest input. The fetch clock survives
+# under the unambiguous name ``fetched_at`` and is never the headline stamp.
+
+# Marker field: only the fixed shape emits it. Consumers (v2 whaleFreshness,
+# scripts/snapshot_composites.py) gate on its presence before trusting
+# ``as_of``, because a cached sidecar from an older build carries the
+# poisoned value in a field that looks identical.
+WHALE_AS_OF_BASIS = "oldest contributing on-chain series"
+
+
+def _obs_date_of_series(series) -> str | None:
+    """Newest date in a ``[{date, value}, ...]`` series that carries a value.
+
+    That is the last day the upstream actually published a number — the
+    honest observation date of the series. Scans backwards so a trailing
+    null-valued or undated point cannot blank the answer. ``None`` when the
+    series has no usable date at all (never a substituted clock read).
+    """
+    if not isinstance(series, list):
+        return None
+    for row in reversed(series):
+        if not isinstance(row, dict) or row.get("value") is None:
+            continue
+        d = row.get("date")
+        if isinstance(d, str) and len(d) >= 10:
+            return d[:10]
+    return None
+
+
+def _obs_date_of_row(row) -> str | None:
+    """Observation date of a single dated row (e.g. a bitinfocharts cohort)."""
+    if not isinstance(row, dict):
+        return None
+    d = row.get("date")
+    return d[:10] if isinstance(d, str) and len(d) >= 10 else None
+
+
 def compute_whale_sentiment(whale: dict) -> dict | None:
     """Composite ±100 whale-sentiment score from existing BTC on-chain
     proxies (no new API calls). Six components, drawing on Glassnode-style
@@ -2842,9 +3081,19 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
         return (row.get("b1k_10k", 0) + row.get("b10k_100k", 0) + row.get("b100k_1m", 0))
 
     comps: list[dict] = []
-    def add(name: str, value: str, c: int, explanation: str):
+    obs_dates: list[str] = []
+    undated = 0
+
+    def add(name: str, value: str, c: int, explanation: str,
+            obs_date: str | None = None):
+        nonlocal undated
         comps.append({"name": name, "value": value,
-                      "contribution": int(c), "explanation": explanation})
+                      "contribution": int(c), "explanation": explanation,
+                      "as_of": obs_date})
+        if obs_date:
+            obs_dates.append(obs_date)
+        else:
+            undated += 1
 
     # 1) Whale supply 30d Δ — ±20 saturates at ±1%
     sup_now = _whale_supply(dist[-1])
@@ -2853,42 +3102,48 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
         sup_delta = (sup_now - sup_30) / sup_30 * 100
         c = _clamp(sup_delta / 1.0 * 20, -20, 20)
         add("Whale supply Δ30d", f"{sup_delta:+.2f}%", c,
-            "whales accumulating" if c > 0 else "whales distributing" if c < 0 else "flat")
+            "whales accumulating" if c > 0 else "whales distributing" if c < 0 else "flat",
+            _obs_date_of_row(dist[-1]))
 
     # 2) Hash rate vs 30d mean — ±20 saturates at ±10%
     hr = _pct_vs_mean30("hash_rate")
     if hr is not None:
         c = _clamp(hr / 10 * 20, -20, 20)
         add("Hash rate vs 30d", f"{hr:+.1f}%", c,
-            "miner confidence rising" if c > 0 else "miners capitulating" if c < 0 else "flat")
+            "miner confidence rising" if c > 0 else "miners capitulating" if c < 0 else "flat",
+            _obs_date_of_series(btc.get("hash_rate")))
 
     # 3) Miner revenue vs 30d mean — ±15 saturates at ±15%
     mr = _pct_vs_mean30("miners_revenue_usd")
     if mr is not None:
         c = _clamp(mr / 15 * 15, -15, 15)
         add("Miner revenue vs 30d", f"{mr:+.1f}%", c,
-            "miners under pressure" if c < 0 else "miner income healthy" if c > 0 else "flat")
+            "miners under pressure" if c < 0 else "miner income healthy" if c > 0 else "flat",
+            _obs_date_of_series(btc.get("miners_revenue_usd")))
 
     # 4) Avg tx USD z-score(30d) — ±15 saturates at ±2σ
     az = _z30("avg_tx_usd")
     if az is not None:
         c = _clamp(az / 2 * 15, -15, 15)
         add("Avg tx USD z30", f"{az:.2f}σ", c,
-            "larger-ticket flow (whale-shaped)" if c > 0 else "smaller-ticket flow")
+            "larger-ticket flow (whale-shaped)" if c > 0 else "smaller-ticket flow",
+            _obs_date_of_series(btc.get("avg_tx_usd")))
 
     # 5) Output volume BTC z-score(30d) — large-tx proxy
     oz = _z30("output_volume_btc")
     if oz is not None:
         c = _clamp(oz / 2 * 15, -15, 15)
         add("Output vol z30", f"{oz:.2f}σ", c,
-            "on-chain BTC movement spike" if c > 0 else "quiet on-chain")
+            "on-chain BTC movement spike" if c > 0 else "quiet on-chain",
+            _obs_date_of_series(btc.get("output_volume_btc")))
 
     # 6) Active addresses vs 30d mean — ±15 saturates at ±15%
     aa = _pct_vs_mean30("active_addresses")
     if aa is not None:
         c = _clamp(aa / 15 * 15, -15, 15)
         add("Active addr vs 30d", f"{aa:+.1f}%", c,
-            "broad usage uptick" if c > 0 else "usage softening")
+            "broad usage uptick" if c > 0 else "usage softening",
+            _obs_date_of_series(btc.get("active_addresses")))
 
     if not comps:
         return None
@@ -2904,7 +3159,17 @@ def compute_whale_sentiment(whale: dict) -> dict | None:
         "score": int(score),
         "label": label,
         "components": comps,
-        "as_of": (whale.get("fetched_at") or "")[:10],
+        # OLDEST contributing observation date, never the fetch clock. None
+        # when not one component could be dated — consumers must render an
+        # explicit "unavailable" rather than substituting today.
+        "as_of": min(obs_dates) if obs_dates else None,
+        "as_of_basis": WHALE_AS_OF_BASIS,
+        "dated_inputs": len(obs_dates),
+        "undated_inputs": undated,
+        # Wall clock at fetch time. Debug/provenance only — a stale-kept
+        # whale tree advances this while every date above stays frozen,
+        # which is exactly why it may never be the headline stamp.
+        "fetched_at": whale.get("fetched_at"),
         "disclaimer": ("Proxy composite from free blockchain.info + bitinfocharts "
                        "cohorts. Not a Glassnode metric — directional indicator, "
                        "not a trading signal."),
@@ -2965,26 +3230,37 @@ def compute_whale_sentiment_eth(whale: dict) -> dict | None:
         return int(max(lo, min(hi, round(x))))
 
     comps: list[dict] = []
+    obs_dates: list[str] = []
+    undated = 0
 
-    def add(name: str, value: str, c: int, explanation: str):
+    def add(name: str, value: str, c: int, explanation: str,
+            obs_date: str | None = None):
+        nonlocal undated
         comps.append({
             "name": name, "value": value,
             "contribution": int(c), "explanation": explanation,
+            "as_of": obs_date,
         })
+        if obs_date:
+            obs_dates.append(obs_date)
+        else:
+            undated += 1
 
     # 1) Active addresses z-score(30d) — ±25 saturates at ±2σ
     aa_z, aa_now = _z30(cm.get("AdrActCnt") or [])
     if aa_z is not None:
         c = _clamp(aa_z / 2 * 25, -25, 25)
         add("Active addr z30", f"{aa_z:.2f}σ", c,
-            "demand picking up" if c > 0 else "demand softening" if c < 0 else "flat")
+            "demand picking up" if c > 0 else "demand softening" if c < 0 else "flat",
+            _obs_date_of_series(cm.get("AdrActCnt")))
 
     # 2) Tx count z-score(30d) — ±25 saturates at ±2σ
     tx_z, tx_now = _z30(cm.get("TxCnt") or [])
     if tx_z is not None:
         c = _clamp(tx_z / 2 * 25, -25, 25)
         add("Tx count z30", f"{tx_z:.2f}σ", c,
-            "network activity rising" if c > 0 else "network quieter")
+            "network activity rising" if c > 0 else "network quieter",
+            _obs_date_of_series(cm.get("TxCnt")))
 
     # 3) Transfer volume USD z-score(30d) — Coin Metrics paid metric, may be
     #    absent on the community tier (the fetcher silently drops it). Still
@@ -2994,7 +3270,8 @@ def compute_whale_sentiment_eth(whale: dict) -> dict | None:
     if vol_z is not None:
         c = _clamp(vol_z / 2 * 25, -25, 25)
         add("Transfer vol USD z30", f"{vol_z:.2f}σ", c,
-            "economic throughput rising" if c > 0 else "economic throughput cooling")
+            "economic throughput rising" if c > 0 else "economic throughput cooling",
+            _obs_date_of_series(vol_series))
 
     # 4) Blocks per day vs the post-Merge 7,200 target — well above = network
     #    saturated by demand, well below = soft demand or proposer issues.
@@ -3007,7 +3284,8 @@ def compute_whale_sentiment_eth(whale: dict) -> dict | None:
         # ±25 saturates at ±2% deviation from target (blocks/day is tight)
         c = _clamp(bp_pct / 2 * 25, -25, 25)
         add("Blocks/day vs 7200", f"{bp_pct:+.2f}%", c,
-            "demand saturating slots" if c > 0 else "slots underused" if c < 0 else "at target")
+            "demand saturating slots" if c > 0 else "slots underused" if c < 0 else "at target",
+            _obs_date_of_series(eds_series))
 
     if not comps:
         return {
@@ -3015,7 +3293,13 @@ def compute_whale_sentiment_eth(whale: dict) -> dict | None:
             "score": 0,
             "label": "NO DATA",
             "components": [],
-            "as_of": (whale.get("fetched_at") or "")[:10],
+            # Nothing contributed, so there is nothing to date. Explicitly
+            # null — the fetch clock here was the original lie.
+            "as_of": None,
+            "as_of_basis": WHALE_AS_OF_BASIS,
+            "dated_inputs": 0,
+            "undated_inputs": 0,
+            "fetched_at": whale.get("fetched_at"),
             "disclaimer": "Not enough ETH on-chain data to compute sentiment yet.",
         }
 
@@ -3031,7 +3315,14 @@ def compute_whale_sentiment_eth(whale: dict) -> dict | None:
         "score": int(score),
         "label": label,
         "components": comps,
-        "as_of": (whale.get("fetched_at") or "")[:10],
+        # Oldest contributing observation date (rule: a composite is only as
+        # fresh as its stalest input). None when nothing could be dated.
+        "as_of": min(obs_dates) if obs_dates else None,
+        "as_of_basis": WHALE_AS_OF_BASIS,
+        "dated_inputs": len(obs_dates),
+        "undated_inputs": undated,
+        # Fetch clock — provenance only, never the headline stamp.
+        "fetched_at": whale.get("fetched_at"),
         "disclaimer": ("Proxy composite from free Coin Metrics community + "
                        "Etherscan daily series. Directional indicator, not a "
                        "trading signal. ETH-specific whale cohorts (≥10K ETH "
@@ -4446,6 +4737,18 @@ async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
                     cmf_v = _mf.cmf(hist, 20)
                 except Exception:
                     mfi_v = cmf_v = None
+                # Observation date for this row = the date of the last
+                # daily bar the score was actually computed from (Yahoo
+                # trading-day calendar). NOT the time we ran: on a weekend
+                # or a market holiday every row here is legitimately 1-3
+                # days old, and a same-day stamp would hide that. Also the
+                # only thing that stops a hist-fetch failure elsewhere in
+                # the sweep from looking current. None when the history is
+                # empty (compute_stock_signal returns a zero score with no
+                # rolling history) — an explicit unavailable, not a guess.
+                _hist = sig.get("history") or []
+                as_of = (_hist[-1].get("date")
+                         if isinstance(_hist[-1], dict) else None) if _hist else None
                 return {
                     "symbol":     sym,
                     "name":       m["name"],
@@ -4454,6 +4757,7 @@ async def _fetch_stocks_signals_async(limit: int = 50) -> list[dict]:
                     "volume":     m["volume"],
                     "score":      sig["score"],
                     "label":      sig["label"],
+                    "as_of":      as_of,
                     "components": sig["components"],
                     "history":    sig["history"],
                     "poc":        poc,
@@ -4731,18 +5035,7 @@ async def _fetch_trading_async() -> dict:
         print(f"  [stock-flows] sidecar build failed: {e}", file=sys.stderr)
 
     # ---- Stale-keep for top_markets (was inline in the sequential version) --
-    top_markets = top_markets_raw
-    if not top_markets and (CACHE / "market.json").exists():
-        # CoinGecko 429 (rate-limit wipe) returns []. The semaphore + 0.6s
-        # gap helps, but a fresh-cache 429 from upstream contention is still
-        # possible — preserve last good list instead of clobbering cache.
-        try:
-            prev = json.loads((CACHE / "market.json").read_text()).get("markets_top") or []
-            if prev:
-                top_markets = prev
-                print(f"  [stale-keep] markets_top empty from API; kept {len(prev)} from previous fetch")
-        except Exception as e:
-            print(f"  [stale-keep] failed to read previous markets_top: {e}", file=sys.stderr)
+    top_markets = top_markets_raw or stale_keep_markets_top()
 
     # ---- Batch 2: depends on top_markets ------------------------------------
     # compute_poc_top_markets fans out 50 cryptocompare_market calls. We
@@ -4774,6 +5067,27 @@ async def _fetch_trading_async() -> dict:
             ethbtc.append({"date": p["date"], "value": p["value"] / b})
 
     print(f"  [timing] fetch_trading total: {time.monotonic() - t_total:.2f}s")
+
+    # DeFi subtree + its provenance. `data-defi.json` is written as a lazy
+    # sidecar by the frontend builders, which have no access to the fetch
+    # that produced it — without this the sidecar carries no derivable date
+    # at all and any stamp on it would have to be build time. See
+    # `defi_provenance` for why the snapshot inputs may use the fetch
+    # instant and the historical series may not.
+    tvl_history = {
+        "Ethereum": tvl_eth,
+        "Solana": tvl_sol,
+        "Arbitrum": tvl_arb,
+        "Base": tvl_base,
+    }
+    defi_block = {
+        "chains": chains,
+        "protocols": protocols,
+        "yields_stablecoin": yields_top,
+        "bridges": bridges,
+        "tvl_history": tvl_history,
+        **defi_provenance(chains, protocols, yields_top, bridges, tvl_history),
+    }
 
     return {
         "btc": {
@@ -4829,18 +5143,7 @@ async def _fetch_trading_async() -> dict:
         "markets_top": top_markets,
         "trending": trending,
         "poc_top": poc_top,
-        "defi": {
-            "chains": chains,
-            "protocols": protocols,
-            "yields_stablecoin": yields_top,
-            "bridges": bridges,
-            "tvl_history": {
-                "Ethereum": tvl_eth,
-                "Solana": tvl_sol,
-                "Arbitrum": tvl_arb,
-                "Base": tvl_base,
-            },
-        },
+        "defi": defi_block,
         "news": news,
         # Per-coin CC news sentiment (top-25 by mcap). Keyed by uppercase
         # symbol. Frontend `groupNewsBySymbol` merges these counts on top of

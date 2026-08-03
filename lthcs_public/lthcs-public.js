@@ -11,6 +11,9 @@
    No framework. No state. Just fetch → render once.
    ========================================================================= */
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const MANIFEST_URL = '../data/lthcs/public/manifest.json';
 
 function $(id) {
@@ -86,7 +89,17 @@ function renderError(message) {
 
 function renderManifest(m) {
   // Header + intro meta.
-  setText('lpub-snapshot-date', m.latest_snapshot_date || '—');
+  // Freshness stamp. Every endpoint listed below is generated from this
+  // snapshot date, so it is the honest age of the whole published dataset.
+  paintComposite(
+    $('lpub-snapshot-date'),
+    [{ label: 'snapshot', date: m.latest_snapshot_date }],
+    {
+      detailEl: $('lpub-fresh-note'),
+      what: 'This published dataset',
+      baseClass: 'lthcs-meta-value',
+    },
+  );
   setText('lpub-version', m.version || '—');
   setText('lpub-univ-eq', String(m.universe_size ?? '—'));
   setText('lpub-univ-cx', String(m.crypto_universe_size ?? '—'));

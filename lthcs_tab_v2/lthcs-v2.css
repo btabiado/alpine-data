@@ -89,6 +89,50 @@ header .meta {
   margin-top: 3px;
 }
 
+/* ===== Data-freshness stamps (../lthcs_tab/lthcs-freshness.js) =====
+   V2 does not load lthcs.css, so the tint classes are restated here against
+   the V2 palette. Same three thresholds, same class names, same meaning as
+   lthcs.css and v2/app.py's .v2-fresh family — only the tokens differ. */
+.lthcs-fresh {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.lthcs-fresh--ok { color: var(--muted); }
+.lthcs-fresh--warn { color: var(--amber); }
+.lthcs-fresh--bad { color: var(--red); }
+.lthcs-fresh--none { color: var(--muted); font-style: italic; }
+
+.lthcs-freshnote {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 4px;
+  font-size: 10px;
+  line-height: 1.3;
+  max-width: 100%;
+  min-width: 0;
+}
+.lthcs-freshnote[hidden] { display: none; }
+.lthcs-freshnote:empty { display: none; }
+.lthcs-freshnote__lead {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 9px;
+}
+.lthcs-freshnote__pill {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1px 5px;
+  background: var(--panel2);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ===== Tabs (mirrors crypto-dashboard @ line 422) =====
    These are nav links, NOT in-page tab switches — each goes to a sibling
    page (../table/, ../heatmap/, ../). The visual matches the crypto-

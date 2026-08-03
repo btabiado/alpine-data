@@ -113,7 +113,18 @@
             <dt>When to care</dt>
             <dd>Big swings vs. the prior day &mdash; e.g. <code>+30 &rarr; &minus;5</code> is a real regime shift worth investigating in the components.</dd>
             <dt>Gotcha</dt>
-            <dd>"As of <em>YYYY-MM-DD</em>" reflects when the snapshot was computed (23:00 UTC cron). It does not auto-update intraday; refresh after the next daily run.</dd>
+            <dd>
+              Every LTHCS page stamps its header <code>as of YYYY-MM-DD (Nd ago)</code>. That is the age of
+              the <strong>data</strong>, never of the page build or of the fetch. The age is tinted:
+              grey up to 7 days, amber to 21, red beyond. When no honest observation date exists the stamp
+              reads <code>as of &mdash;</code> &mdash; it never falls back to today's clock.
+              Because the composite blends several inputs, the headline shows the <strong>oldest</strong>
+              contributing one, so a single lagging feed cannot hide behind a fresh sibling; when the
+              inputs disagree, or a pillar was dropped for lack of data, a small breakdown row appears
+              underneath listing each input's own date. A <code>&middot; N of M incomplete</code> suffix
+              counts the scored tickers carrying a data-quality flag. Snapshots do not auto-update
+              intraday; refresh after the next daily run (23:00 UTC cron).
+            </dd>
           </dl>
         </section>
 

@@ -87,6 +87,76 @@ def split_payload_for_sidecars(
     return trimmed, sidecars, manifest
 
 
+def defi_observation_date(defi: dict) -> str | None:
+    """Oldest last-observation date across the DeFi TVL history series.
+
+    ``defi["tvl_history"]`` is ``{chain: [{"date": "YYYY-MM-DD",
+    "tvl_usd": ...}, ...]}`` straight from DefiLlama's
+    ``/v2/historicalChainTvl`` endpoint — genuine daily observation dates,
+    not a clock read. Every other number in the subtree (chains[].tvl_usd,
+    chains[].change_7d_pct, the stablecoin aggregates) is a point-in-time
+    snapshot of that same daily-bucketed DefiLlama data, so the TVL series'
+    last bucket is the honest "the data behind this tab was observed on"
+    date for the tab as a whole.
+
+    MIN across chains, not MAX: a composite is only as fresh as its oldest
+    contributing input, and the DeFi tab charts all four chains side by
+    side. Returns ``None`` when no series carries a usable date — callers
+    must render an explicit "unavailable" state rather than substituting a
+    build/fetch timestamp.
+    """
+    hist = (defi or {}).get("tvl_history")
+    if not isinstance(hist, dict):
+        return None
+    lasts: list[str] = []
+    for series in hist.values():
+        if not isinstance(series, list) or not series:
+            continue
+        # Series are chronological from the fetcher, but don't trust it —
+        # take the max date present so an unsorted series can't understate.
+        dates = [
+            p["date"][:10]
+            for p in series
+            if isinstance(p, dict) and isinstance(p.get("date"), str)
+            and len(p["date"]) >= 10
+        ]
+        if dates:
+            lasts.append(max(dates))
+    return min(lasts) if lasts else None
+
+
+def stamp_defi_provenance(defi: dict, market: dict) -> dict:
+    """Backfill freshness provenance onto the DeFi subtree, in place.
+
+    NON-DESTRUCTIVE BY DESIGN. ``fetch_market.defi_provenance()`` is the
+    primary source of ``defi["as_of"]`` and writes a richer answer than we
+    can (it also knows which snapshot inputs came back populated, and
+    records a per-input ``sources`` map). This function only fills the gap
+    for a ``market.json`` produced *before* that landed — CI restores
+    market.json from the Actions cache and never commits it, so an older
+    payload can survive many builds. Overwriting a fetcher-supplied
+    ``as_of`` here would throw away the better answer.
+
+    ``as_of``
+        Only written when absent/None. Derived from ``defi_observation_date``
+        — a real DefiLlama daily-TVL bucket date. Stays ``None`` when the
+        TVL history is missing too, so the client renders an explicit
+        "unavailable" instead of inventing a date.
+    ``snapshot_fetched_at``
+        ``market["fetched_at"]`` — the wall clock of the fetch run. FETCH
+        time, not observation time. Written under a name nobody can mistake
+        for a data date, and consumed only in the hover detail. It must
+        never become the headline stamp.
+    """
+    existing = defi.get("as_of")
+    if not (isinstance(existing, str) and len(existing) >= 10):
+        defi["as_of"] = defi_observation_date(defi)
+    fetched = (market or {}).get("fetched_at")
+    if defi.get("snapshot_fetched_at") is None:
+        defi["snapshot_fetched_at"] = fetched if isinstance(fetched, str) else None
+    return defi
+
+
 def load_csv(path: Path) -> pd.DataFrame:
     if not path.exists():
         print(f"  [skip] {path.name} not found", file=sys.stderr)
@@ -336,6 +406,14 @@ def build_payload() -> dict:
     defi = None
     if isinstance(market, dict):
         defi = market.pop("defi", None)
+    # PROVENANCE FIX (freshness stamps): the defi subtree shipped with NO date
+    # of any kind — chains[].change_7d_pct and the stablecoin deltas are bare
+    # numbers, and the data-defi.json sidecar had no generated_at either. The
+    # DeFi tab therefore had no honest way to say how old its numbers were.
+    # stamp_defi_provenance() attaches a REAL observation date derived from the
+    # DefiLlama daily TVL history that ships in the same subtree.
+    if isinstance(defi, dict) and defi:
+        stamp_defi_provenance(defi, market if isinstance(market, dict) else {})
     payload = {
         "btc": aggregate(btc_df),
         "eth": aggregate(eth_df),
@@ -690,6 +768,38 @@ HTML_TEMPLATE = r"""<!doctype html>
   --v2-s1:4px; --v2-s2:8px; --v2-s3:12px; --v2-s4:16px; --v2-s5:24px;
   --v2-radius:10px;
 }
+/* --- FRESHNESS STAMPS ----------------------------------------------------
+   One visual language for "how old is the DATA behind this thing".
+   Written exclusively by the freshness()/paintFreshness() JS pair so the
+   tone thresholds (ok / warn / bad / none) can never drift between the
+   places that show a stamp. Tints reuse the existing semantic tokens —
+   no new colours. `none` = we have no honest observation date at all and
+   are saying so out loud rather than substituting build time.
+
+   Layout rules: inline, 11px, tabular numerals so the "(54d ago)" column
+   doesn't jitter, and `overflow-wrap:anywhere` so a long stamp wraps
+   inside its parent instead of widening the card at 360px. Never
+   `white-space:nowrap` — that is what pushes mobile layouts sideways. */
+.v2-fresh{font-size:11px;line-height:1.35;color:var(--muted);
+  font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.v2-fresh--ok  {color:var(--muted)}
+.v2-fresh--warn{color:var(--v2-warn)}
+.v2-fresh--bad {color:var(--v2-bad)}
+.v2-fresh--none{color:var(--muted);font-style:italic}
+/* Tab-level strip: one line under the AI-take band naming the OLDEST
+   contributing source for the whole tab. Block-level so it never competes
+   with the header for horizontal space; it is the mobile-visible stamp
+   (header .meta is display:none under 480px). */
+.v2-freshstrip{margin:0 0 10px;padding:5px 10px;border-radius:6px;
+  background:var(--panel2);border:1px solid var(--border);
+  display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.v2-freshstrip:empty{display:none}
+.v2-freshstrip .v2-fresh__key{color:var(--muted);font-size:10px;
+  letter-spacing:.08em;text-transform:uppercase;flex:0 0 auto}
+.v2-freshstrip.v2-freshstrip--warn{border-color:var(--v2-warn-bd);background:var(--v2-warn-bg)}
+.v2-freshstrip.v2-freshstrip--bad {border-color:var(--v2-bad-bd); background:var(--v2-bad-bg)}
+/* Card-level stamp sits directly under the card's subline. */
+.v2-card__head .v2-fresh{margin-top:2px}
 /* --- V2 PREVIEW BANNER ---------------------------------------------------
    Sticky at the very top of the page so anyone landing on /v2/ sees they
    are NOT looking at production. Solid contrasting bar with a link back to
@@ -1525,7 +1635,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 <header>
   <div>
     <h1>BDT Dashboards <span class="v2-chip v2-chip--ai" style="margin-left:8px;vertical-align:middle">V2</span></h1>
-    <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span></div>
+    <!-- Two DIFFERENT timestamps, deliberately labelled apart:
+           #generatedAt   = "built <ts>"  — when this HTML was rendered. The
+                            page rebuilds hourly, so this is ALWAYS ~fresh and
+                            says nothing about the data.
+           #dataFreshness = "data as of <date> (Nd ago)" — the OLDEST real
+                            observation date across the daily-cadence market
+                            surfaces, tinted amber/red as it ages. This is the
+                            one that catches a frozen series behind a
+                            fresh-looking page.
+         Hidden on phones by `header .meta{display:none}` (unchanged); the
+         per-tab .v2-freshstrip rows are the mobile-visible stamps. -->
+    <div class="meta"><span id="coverage"></span> &middot; <span id="generatedAt"></span> &middot; <span id="dataFreshness" class="v2-fresh"></span></div>
   </div>
   <div class="controls" style="border:0;padding:0">
     <!-- Per-asset BTC/ETH/LINK/LTC selector removed from the header per user
@@ -1778,6 +1899,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ OVERVIEW TAB (LANDING PAGE) ============ -->
   <div id="tab-overview">
     <div id="aiTake-overview" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-overview" class="v2-freshstrip"></div>
     <div id="overviewSpotlight"></div>
     <!-- News + Insights — pulled above the sentiment composite per user
          request: "news & insight need to go on before the Crypto market
@@ -1804,6 +1928,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 CRYPTO MARKET SENTIMENT</div>
           <div style="font-size:11px;color:var(--muted)" id="overviewSentimentSubline">—</div>
+          <!-- Freshness stamp for this composite. Written ONLY from real
+               observation dates (oldest contributing input); renders
+               "as of —" when no honest date exists. Never build time. -->
+          <div class="v2-fresh" id="overviewSentimentFresh"></div>
         </div>
         <div style="text-align:right">
           <div id="overviewSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -1947,6 +2075,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ ETF FLOWS TAB ============ -->
   <div id="tab-etf" class="hidden">
     <div id="aiTake-etf" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-etf" class="v2-freshstrip"></div>
     <!-- ETF FLOW SENTIMENT — composite of 7d net flow sum and 30d net flow
          sum, weighted 60/40 toward the 7d. Tracks the BTC/ETH toggle below.
          Rendered by renderEtfFlowSentiment(). -->
@@ -1955,6 +2086,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">💰 ETF FLOW SENTIMENT</div>
           <div style="font-size:11px;color:var(--muted)" id="etfFlowSentimentSubline">—</div>
+          <!-- Freshness stamp for this composite. Written ONLY from real
+               observation dates (oldest contributing input); renders
+               "as of —" when no honest date exists. Never build time. -->
+          <div class="v2-fresh" id="etfFlowSentimentFresh"></div>
         </div>
         <div style="text-align:right">
           <div id="etfFlowSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -2088,6 +2223,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ TRADING TAB ============ -->
   <div id="tab-trading" class="hidden">
     <div id="aiTake-trading" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-trading" class="v2-freshstrip"></div>
     <div id="tradingSpotlight"></div>
     <div id="tradingEmpty" class="empty hidden">No market data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="tradingContent">
@@ -2108,6 +2246,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🎯 FUTURES POSITIONING SENTIMENT</div>
             <div style="font-size:11px;color:var(--muted)" id="futuresSentimentSubline">—</div>
+            <!-- Freshness stamp for this composite. Written ONLY from real
+                 observation dates (oldest contributing input); renders
+                 "as of —" when no honest date exists. Never build time. -->
+            <div class="v2-fresh" id="futuresSentimentFresh"></div>
           </div>
           <div style="text-align:right">
             <div id="futuresSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -2350,6 +2492,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-stocks" class="hidden">
     <div class="container">
       <div id="aiTake-stocks" class="aiTake-slot"></div>
+      <!-- Freshness strip: OLDEST real observation date feeding this tab.
+           Written by renderTabFreshness(); hidden while empty. -->
+      <div id="tabFresh-stocks" class="v2-freshstrip"></div>
       <!-- Wave-3c spotlight row — top 3 stock signals (strongest BUY,
            weakest SELL, highest-volume mover). Populated by
            renderStocksSpotlight() from DATA.market.stocks_signals. -->
@@ -2373,6 +2518,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📊 STOCK SIGNAL SENTIMENT — TOP 50 MOST ACTIVE</div>
             <div style="font-size:11px;color:var(--muted)" id="stocksSentimentSubline">—</div>
+            <!-- Freshness stamp for this composite. Written ONLY from real
+                 observation dates (oldest contributing input); renders
+                 "as of —" when no honest date exists. Never build time. -->
+            <div class="v2-fresh" id="stocksSentimentFresh"></div>
           </div>
           <div style="text-align:right">
             <div id="stocksSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -2392,11 +2541,16 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <!-- Signal breadth chart (top of tab, before filter chips) -->
       <div class="v2-card">
-        <div class="v2-card__head">
+        <!-- flex-wrap:wrap + gap matches the #macroSection head idiom so the
+             right-hand freshness slot drops to its own line at 360px instead
+             of squeezing the title. -->
+        <div class="v2-card__head" style="flex-wrap:wrap;gap:8px">
           <div>
             <h2 class="v2-card__title">Stock signal breadth — 50 most active <span class="tag">Yahoo</span></h2>
             <div class="v2-card__subtitle">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 most-active US stocks &middot; last 90 days</div>
           </div>
+          <!-- Last bar plotted, from the breadth series itself. -->
+          <div class="v2-fresh" id="stocksBreadthFresh" style="flex:0 1 auto;text-align:right"></div>
         </div>
         <div class="v2-card__body"><div class="chart-wrap" style="height:220px"><canvas id="stocksBreadthChart"></canvas></div></div>
       </div>
@@ -2425,6 +2579,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-ainews" class="hidden">
     <div class="container">
       <div id="aiTake-ainews" class="aiTake-slot"></div>
+      <!-- Freshness strip: OLDEST real observation date feeding this tab.
+           Written by renderTabFreshness(); hidden while empty. -->
+      <div id="tabFresh-ainews" class="v2-freshstrip"></div>
       <!-- Wave-3c spotlight row — net sentiment today, busiest source,
            top AI-exposed ticker. Populated by renderAiNewsSpotlight(). -->
       <div id="aiNewsSpotlight" style="margin-bottom:10px"></div>
@@ -2562,6 +2719,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ SIGNALS TAB ============ -->
   <div id="tab-signals" class="hidden">
     <div id="aiTake-signals" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-signals" class="v2-freshstrip"></div>
     <div id="signalsSpotlight"></div>
     <div id="signalsEmpty" class="empty hidden">No signal data — needs price history. Run <code>--fetch-market</code>.</div>
     <div id="signalsContent">
@@ -2574,6 +2734,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
           <div>
             <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">📈 CRYPTO SIGNAL SENTIMENT — TOP 50 BY MARKET CAP</div>
             <div style="font-size:11px;color:var(--muted)" id="cryptoSignalsSentimentSubline">—</div>
+            <!-- Freshness stamp for this composite. Written ONLY from real
+                 observation dates (oldest contributing input); renders
+                 "as of —" when no honest date exists. Never build time. -->
+            <div class="v2-fresh" id="cryptoSignalsSentimentFresh"></div>
           </div>
           <div style="text-align:right">
             <div id="cryptoSignalsSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -2593,11 +2757,18 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       </div>
       <!-- Signal breadth chart (top of tab) -->
       <div class="v2-card" style="margin-bottom:14px">
-        <div class="v2-card__head">
+        <!-- THE MOTIVATING INCIDENT LIVES HERE. This chart sat frozen at
+             2026-06-09 for eight weeks behind a page that rebuilt hourly,
+             because nothing surfaced the series' own last date and nothing
+             counted the coins fetch_market was serving from its stale-keep
+             cache. #cryptoSignalsBreadthFresh now shows both.
+             flex-wrap:wrap so the slot drops to its own line at 360px. -->
+        <div class="v2-card__head" style="flex-wrap:wrap;gap:8px">
           <div>
             <h2 class="v2-card__title">Crypto signal breadth — top 50 by market cap <span class="tag">CoinGecko</span></h2>
             <div class="v2-card__subtitle">Daily count of STRONG BUY / BUY / HOLD / SELL / STRONG SELL across the top-50 by market cap · last 90 days</div>
           </div>
+          <div class="v2-fresh" id="cryptoSignalsBreadthFresh" style="flex:0 1 auto;text-align:right"></div>
         </div>
         <div class="v2-card__body">
           <div class="chart-wrap" style="height:220px"><canvas id="cryptoSignalsBreadthChart"></canvas></div>
@@ -2634,6 +2805,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <div id="tab-poc" class="hidden">
     <div class="container">
       <div id="aiTake-poc" class="aiTake-slot"></div>
+      <!-- Freshness strip: OLDEST real observation date feeding this tab.
+           Written by renderTabFreshness(); hidden while empty. -->
+      <div id="tabFresh-poc" class="v2-freshstrip"></div>
       <!-- Spotlight row — top-3 POC migrations (biggest UP, biggest DOWN, notable in-VA mover).
            Populated by renderPocSpotlight(); empty until first POC render. -->
       <div id="pocSpotlight" style="margin-bottom:10px"></div>
@@ -2663,6 +2837,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
             <div>
               <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🐋 POC SENTIMENT — TOP 50 BY MARKET CAP</div>
               <div style="font-size:11px;color:var(--muted)" id="pocSentimentSubline">—</div>
+              <!-- Freshness stamp for this composite. Written ONLY from real
+                   observation dates (oldest contributing input); renders
+                   "as of —" when no honest date exists. Never build time. -->
+              <div class="v2-fresh" id="pocSentimentFresh"></div>
             </div>
             <div style="text-align:right">
               <div id="pocSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -2704,6 +2882,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ DeFi TAB ============ -->
   <div id="tab-defi" class="hidden">
     <div id="aiTake-defi" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-defi" class="v2-freshstrip"></div>
     <!-- Wave-3c spotlight row — top stablecoin mcap, top DEX 24h volume,
          top yield. Populated by renderDefiSpotlight() from DATA.defi. -->
     <div id="defiSpotlight" style="margin-bottom:10px"></div>
@@ -2722,6 +2903,10 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
         <div>
           <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.06em">🌊 DEFI SENTIMENT</div>
           <div style="font-size:11px;color:var(--muted)" id="defiSentimentSubline">—</div>
+          <!-- Freshness stamp for this composite. Written ONLY from real
+               observation dates (oldest contributing input); renders
+               "as of —" when no honest date exists. Never build time. -->
+          <div class="v2-fresh" id="defiSentimentFresh"></div>
         </div>
         <div style="text-align:right">
           <div id="defiSentimentScore" style="font-size:28px;font-weight:700;line-height:1">—</div>
@@ -2814,6 +2999,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ RESEARCH TAB (one-stop consolidated info page) ============ -->
   <div id="tab-social" class="hidden">
     <div id="aiTake-social" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-social" class="v2-freshstrip"></div>
     <!-- Wave-3c spotlight row — top trending coin (social), biggest
          positive sentiment skew, biggest mention count. Populated by
          renderSocialSpotlight() from DATA.market.social + news. -->
@@ -2897,6 +3085,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
   <!-- ============ WHALE TAB ============ -->
   <div id="tab-whale" class="hidden">
     <div id="aiTake-whale" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-whale" class="v2-freshstrip"></div>
     <div id="whaleEmpty" class="empty hidden">No whale data. Run <code>python app.py --fetch-market</code>.</div>
     <div id="whaleContent">
       <div class="sub" id="whaleAsOf" style="margin-bottom:6px"></div>
@@ -3158,6 +3349,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
        lives in state.travelSub; selectTab('travel') resets it to 'overview'. -->
   <div id="tab-travel" class="hidden">
     <div id="aiTake-travel" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-travel" class="v2-freshstrip"></div>
     <div id="travelLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading travel advisories…</div>
     <div id="travelContent">
       <!-- Sub-view tab strip (Overview / L1 / L2 / L3&4 / Terrorism). These
@@ -3253,6 +3447,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 
   <div id="tab-cpi" class="hidden">
     <div id="aiTake-cpi" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-cpi" class="v2-freshstrip"></div>
     <div id="cpiLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading CPI data…</div>
     <div id="cpiContent">
       <!-- Empty state shown when FRED_API_KEY is unset (fred_available=false)
@@ -3324,6 +3521,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
        Travel / DeFi / Whale. -->
   <div id="tab-supplies" class="hidden">
     <div id="aiTake-supplies" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-supplies" class="v2-freshstrip"></div>
     <div id="suppliesLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading global supplies…</div>
     <div id="suppliesContent">
       <div class="row" id="suppliesSnapshot" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px"></div>
@@ -3384,6 +3584,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
        and central-bank gold alone on row 3 since it's the tallest card. -->
   <div id="tab-metals" class="hidden">
     <div id="aiTake-metals" class="aiTake-slot"></div>
+    <!-- Freshness strip: OLDEST real observation date feeding this tab.
+         Written by renderTabFreshness(); hidden while empty. -->
+    <div id="tabFresh-metals" class="v2-freshstrip"></div>
     <div id="metalsLoading" class="hidden" style="text-align:center;padding:32px;color:var(--muted);font-size:13px">Loading gold &amp; silver data…</div>
     <div id="metalsContent">
       <!-- Strength KPI band — derived from gold_price/silver_price observation
@@ -3453,6 +3656,9 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
     <!-- aiTake-mufon slot intentionally removed: UAP doesn't have AI
          insights and the "warming up" placeholder added noise rather
          than value. -->
+    <!-- Freshness strip (no aiTake slot on this tab, so it anchors here).
+         Reports the latest NUFORC sighting date in the sidecar. -->
+    <div id="tabFresh-mufon" class="v2-freshstrip"></div>
 
 
     <!-- Section A: Latest Updates -->
@@ -3601,6 +3807,44 @@ window.addEventListener('error', e => {
     (document.body || document.documentElement).appendChild(b);
   } catch (_) { /* defensive */ }
 });
+
+// ---------------------------------------------------------------------------
+// CHART.JS FAILURE MUST NOT SWALLOW THE FRESHNESS STAMPS
+// ---------------------------------------------------------------------------
+// Chart.js is a CDN dependency behind an SRI pin. When jsDelivr is blocked,
+// the pin mismatches after a version bump, or the client is offline, the
+// global `Chart` never exists — and `new Chart(...)` then throws a
+// ReferenceError that aborts the *whole renderer*. Everything after that
+// line, including the data-freshness stamp that renderer paints, silently
+// never runs. Observed in a gate run: 2 of 8-14 stamps painted per tab while
+// every static check still passed, i.e. the page looked fine and quietly
+// stopped disclosing how old its data was.
+//
+// A stamp that is missing is as dishonest as a stamp that lies, so charts are
+// downgraded to a no-op rather than allowed to take the page down with them.
+// Real Chart.js, when it loads, is left completely untouched.
+if (typeof window.Chart === 'undefined'){
+  window.Chart = function ChartUnavailable(canvas){
+    try {
+      const wrap = canvas && canvas.parentElement;
+      if (wrap && !wrap.dataset.chartFailed){
+        wrap.dataset.chartFailed = '1';
+        const note = document.createElement('div');
+        note.className = 'sub';
+        note.style.cssText = 'padding:10px;color:var(--muted);font-size:12px';
+        note.textContent = 'Chart library unavailable — the numbers and '
+          + 'freshness stamps below are unaffected.';
+        wrap.appendChild(note);
+      }
+    } catch (_) { /* defensive: never throw from the fallback */ }
+    this.destroy = function(){};
+    this.update  = function(){};
+    this.resize  = function(){};
+    this.data    = { labels: [], datasets: [] };
+    this.options = {};
+  };
+  window.Chart.__unavailable = true;
+}
 
 const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
@@ -3937,15 +4181,16 @@ function renderEtfKpis(){
   ).join('');
   // Staleness chip: flows come from committed CSV (Farside is Cloudflare-blocked),
   // refreshed manually — surface an amber warning when the latest flow is >7d old.
+  // Third hand-rolled copy of the age/tint logic, now on the shared helper so
+  // this chip and #etfFlowSentimentFresh always agree.
   const asOf = document.getElementById('etfAsOf');
   if (asOf){
-    const ld = s.last_date;
-    if (!ld){ asOf.textContent = ''; asOf.style.color = ''; }
-    else {
-      const ageDays = Math.floor((Date.now() - new Date(ld).getTime()) / 86400000);
-      asOf.textContent = `flows as of ${ld} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})${ageDays > 7 ? ' ⚠ stale' : ''}`;
-      asOf.style.color = ageDays > 7 ? '#f59e0b' : '';
-    }
+    paintFreshness(asOf, s.last_date, {
+      label: 'flows as of',
+      title: 'Last row in the committed ETF flow CSV. Farside is '
+           + 'Cloudflare-blocked, so this series is refreshed manually — '
+           + 'multi-day age here is a real gap, not a rendering artefact.',
+    });
   }
 }
 
@@ -4532,6 +4777,45 @@ function renderGlobalTable(){
 }
 
 // ---------- Signals tab ----------
+
+// Which `as_of` a signal card is allowed to render.
+//
+// Two different shapes reach the signal cards and they have different
+// provenance:
+//
+//   * signals_top20 rows (signals.compute_signal_simple) — `as_of` USED to
+//     be datetime.now(UTC) at scoring time, so a stale-kept markets_top came
+//     out wearing today's date. The fixed shape carries `computed_at`; a row
+//     without it predates the fix and its `as_of` is refused outright (same
+//     gate as signalsTop20Freshness).
+//   * DATA.signals.{btc,eth,link,ltc} (signals.compute_signal) — `as_of` has
+//     always been the last daily bar's date. Those rows carry `history` and
+//     no `computed_at`.
+//
+// Returns null when there is no trustworthy date; every caller feeds the
+// result through freshness()/freshnessHtml(), which renders "as of —".
+// Never substitute a clock read.
+function signalCardAsOf(s){
+  if (!s) return null;
+  if (typeof s.computed_at === 'string') return s.as_of || null;
+  if (Array.isArray(s.history) && s.history.length) return s.as_of || null;
+  return null;
+}
+
+// Matching hover copy, so an "as of —" says WHY it is dashed.
+function signalCardAsOfTitle(s){
+  if (!s) return 'No signal row.';
+  if (typeof s.computed_at !== 'string' && !(Array.isArray(s.history) && s.history.length)){
+    return 'This row predates the signals.py provenance fix, so its as_of is '
+         + 'scoring time rather than an observation date. Refusing to render it.';
+  }
+  if (!s.as_of){
+    return 'The upstream row carries no observation date (CoinGecko omitted '
+         + 'last_updated, or this is an older cached payload).';
+  }
+  return 'Observation date of the market row this score was computed from.';
+}
+
 function signalColor(score){
   if (score >= 50) return '#16a34a';
   if (score >= 20) return 'var(--v2-good)';
@@ -4559,7 +4843,7 @@ function renderSignalCard(asset, container){
       <div class="v2-card__head" style="align-items:flex-start">
         <div style="min-width:0">
           <h2 class="v2-card__title" style="font-size:15px">${asset.toUpperCase()} <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score: 50d SMA, RSI(14), MACD signal cross, 5d momentum, volume z-score, 50/200 SMA cross. ≥50 STRONG BUY; ≤-50 STRONG SELL.">signal</span> <span class="tag ${asset}">$${s.price.toLocaleString(undefined,{maximumFractionDigits:0})}</span></h2>
-          <div class="v2-card__subtitle">as of ${escapeHtml(s.as_of)}</div>
+          ${freshnessHtml(signalCardAsOf(s), {label:'as of', title: signalCardAsOfTitle(s)})}
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${s.label}</div>
@@ -4586,9 +4870,58 @@ function renderCryptoSignalsBreadth(){
   const items = (Array.isArray(raw) ? raw : [])
     .filter(e => e && Array.isArray(e.signal_history) && e.signal_history.length > 0)
     .map(e => ({history: e.signal_history}));
+  const breadth = computeSignalBreadth(items, 90);
+  // THE STAMP THIS WHOLE CHANGE EXISTS FOR.
+  //
+  // It is painted BEFORE the chart on purpose. Chart.js is a CDN dependency
+  // behind an SRI pin; when it fails to load, `new Chart(...)` throws and
+  // every statement after it in this function — the stamp included — never
+  // runs, leaving a blank where the honesty disclosure should be.
+  //
+  // WHICH DATE: NOT breadth[last].date. computeSignalBreadth builds its
+  // x-axis from the UNION of all 50 coins' history dates, so the last
+  // bucket is the MAX across inputs — one still-updating coin drags the
+  // right edge to today while 49 sit frozen, which is precisely the freeze
+  // this stamp exists to expose. The composite is only as fresh as its
+  // OLDEST contributing coin: pocTopFreshness() (fMin over per-entry
+  // as_of / signal_history last date).
+  //
+  // Rule 4 applies in full: fetch_market carries a coin's previous entry
+  // forward with `stale:true` when its fetch fails, so the count of cached
+  // coins is disclosed next to the date.
+  const el = document.getElementById('cryptoSignalsBreadthFresh');
+  if (el){
+    const lastBar = Array.isArray(breadth) && breadth.length
+      ? breadth[breadth.length - 1] : null;
+    const pf = pocTopFreshness();
+    const staleN = pf ? pf.stale : 0;
+    const totalN = pf ? pf.total : 0;
+    const undatedN = pf ? Math.max(0, (pf.total || 0) - (pf.dated || 0)) : 0;
+    paintFreshness(el, pf && pf.date, {
+      label: 'oldest coin',
+      stale: staleN,
+      total: totalN,
+      title: 'Oldest observation date across the '
+           + ((pf && pf.dated) || 0) + ' dated coins plotted — the breadth is '
+           + 'only as fresh as its stalest contributor.'
+           + (lastBar && lastBar.date
+              ? ' The chart\'s right edge is ' + lastBar.date + ', which is the '
+                + 'NEWEST coin, not the composite.'
+              : '')
+           + (undatedN > 0
+              ? ' ' + undatedN + ' of ' + totalN + ' coins carry no observation '
+                + 'date and are excluded from that minimum.'
+              : '')
+           + (staleN > 0
+              ? ' ' + staleN + ' of ' + totalN + ' coins were served from '
+                + "fetch_market's stale-keep cache this run — their bars are "
+                + 'a copy of a previous fetch, not a fresh observation.'
+              : ' No coins were served from cache this run.'),
+    });
+  }
   renderBreadthChart(
     'cryptoSignalsBreadthChart',
-    computeSignalBreadth(items, 90),
+    breadth,
     'Crypto signal breadth — top 50 by market cap'
   );
 }
@@ -4646,6 +4979,21 @@ function renderCryptoSignalsSentiment(){
   if (sublineEl){
     sublineEl.textContent = `${total} coins · positive = broad buy signals · negative = broad sell signals`;
   }
+  // FRESHNESS. This card is computed entirely from DATA.signals_top20, whose
+  // `as_of` was until recently `datetime.now(UTC)` stamped at scoring time —
+  // the exact "looks fresh, is frozen" lie this work exists to kill.
+  // signals.py now carries CoinGecko's own `last_updated` through instead and
+  // flags cache-served rows. signalsTop20Freshness() only trusts the field
+  // once the row proves it came from the fixed builder; otherwise this
+  // renders an explicit "as of —" rather than a fabricated date.
+  // The stale count matters as much as the date here: the fresh coins hold
+  // the min up while cached ones keep voting with frozen scores.
+  const sigFresh = signalsTop20Freshness();
+  if (sigFresh && sigFresh.stale > 0 && sublineEl){
+    sublineEl.textContent += ` · ${sigFresh.stale} of ${sigFresh.total} served from cache`;
+  }
+  paintCompositeFreshness('cryptoSignalsSentiment', sigFresh || {
+    date: null, title: 'No signal rows loaded.' });
   const pctBuy  = (buyTotal  / total) * 100;
   const pctHold = (hold      / total) * 100;
   const pctSell = (sellTotal / total) * 100;
@@ -4814,7 +5162,8 @@ function renderSignalCardFromObj(s){
       <div class="v2-card__head" style="align-items:flex-start">
         <div style="min-width:0">
           <h2 class="v2-card__title" style="font-size:15px">${sym} signal <span class="tag">${priceStr}</span></h2>
-          <div class="v2-card__subtitle">${escapeHtml(s.name||'')} · as of ${escapeHtml(s.as_of||'')}</div>
+          <div class="v2-card__subtitle">${escapeHtml(s.name||'')}</div>
+          ${freshnessHtml(signalCardAsOf(s), {label:'as of', title: signalCardAsOfTitle(s)})}
         </div>
         <div style="text-align:right">
           <div style="font-size:28px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
@@ -5335,7 +5684,8 @@ function renderWhaleSentiment(){
     <div class="v2-card__head" style="align-items:flex-start">
       <div style="min-width:0">
         <h2 class="v2-card__title" style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="Composite ±100 score from on-chain whale proxies (cohort supply, hash rate, miner revenue, large-tx flow, output volume, active addresses).">Whale Sentiment Index</span></h2>
-        <div class="v2-card__subtitle">Composite ±100 from on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+        <div class="v2-card__subtitle">Composite ±100 from on-chain proxies</div>
+        ${freshnessHtml(whaleSentimentAsOf(s), {label:'as of', title: whaleSentimentTitle(s)})}
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
@@ -5459,20 +5809,41 @@ function renderWhaleKpisV2(){
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
   ).join('');
 
-  // "data as of" badge — show freshest date across primary series
-  const asOfEl = document.getElementById('whaleAsOf');
-  if (asOfEl){
-    const candidates = [w.tx_volume_usd, w.active_addresses, w.miners_revenue_usd]
-      .map(s => last(s)).filter(p => p && p.date);
-    if (!candidates.length){
-      asOfEl.textContent = ''; asOfEl.style.color = '';
-    } else {
-      const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
-      const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
-      asOfEl.textContent = `data as of ${freshest} (${ageDays <= 0 ? 'today' : ageDays + 'd ago'})`;
-      asOfEl.style.color = ageDays > 7 ? 'var(--v2-warn)' : '';
-    }
+  // "data as of" badge. Was a hand-rolled copy of the age/tint logic (and
+  // took the FRESHEST of the series, which flatters a partially-frozen
+  // panel); now routed through the shared freshness() helper, which takes
+  // the OLDEST contributing series. See renderWhaleAsOf().
+  renderWhaleAsOf();
+}
+
+// Single writer for #whaleAsOf, the line above the BTC/ETH toggle on the
+// Whale tab. It is asset-scoped: previously only the BTC-side renderers wrote
+// it, so switching to the ETH panel left BTC's dates sitting above ETH's
+// numbers (and on a first load with whaleAsset persisted to 'eth' it stayed
+// blank entirely). Now every whale render path calls this and it reads
+// state.whaleAsset.
+function renderWhaleAsOf(){
+  const el = document.getElementById('whaleAsOf');
+  if (!el) return;
+  const asset = (state && state.whaleAsset === 'eth') ? 'eth' : 'btc';
+  const info = whaleFreshness(asset);
+  if (!info){
+    // Rule 5: no honest date ⇒ say so explicitly. Blanking the element hides
+    // the fact that the panel below is undated — which is how this stamp
+    // previously ended up falling back to the sentiment block's fetch clock
+    // and reading "today" over frozen data.
+    paintFreshness(el, null, {
+      label: (asset === 'eth' ? 'ETH data as of' : 'BTC data as of'),
+      title: 'None of the on-chain series on this panel carry an observation '
+           + 'date, so there is nothing honest to report.',
+    });
+    return;
   }
+  paintFreshness(el, info.date, {
+    label: (asset === 'eth' ? 'ETH data as of' : 'BTC data as of'),
+    title: 'Oldest of the primary on-chain series shown on this panel. '
+         + 'Observation date from the source feed, not the page build time.',
+  });
 }
 
 // Legacy KPI function kept for reference; renderWhaleKpisV2 is the new one
@@ -5665,24 +6036,10 @@ function renderWhaleKpis(){
     `<div class="card"><h3>${i.label}</h3><div class="v ${i.cls||''}">${i.val}</div>${i.sub?`<div class="sub">${i.sub}</div>`:''}</div>`
   ).join('');
 
-  // "data as of" badge — show freshest date across primary series so the user
-  // notices when blockchain.info is stale.
-  const asOfEl = document.getElementById('whaleAsOf');
-  if (asOfEl){
-    const candidates = [w.tx_volume_usd, w.active_addresses, w.large_tx]
-      .map(s => last(s))
-      .filter(p => p && p.date);
-    if (!candidates.length){
-      asOfEl.textContent = '';
-      asOfEl.style.color = '';
-    } else {
-      const freshest = candidates.reduce((a,b) => a.date >= b.date ? a : b).date;
-      const ageDays = Math.floor((Date.now() - new Date(freshest).getTime()) / 86400000);
-      const ageStr = ageDays <= 0 ? 'today' : `${ageDays}d ago`;
-      asOfEl.textContent = `data as of ${freshest} (${ageStr})`;
-      asOfEl.style.color = ageDays > 7 ? 'var(--v2-warn)' : '';
-    }
-  }
+  // "data as of" badge — second hand-rolled copy of the same logic, with
+  // subtly different formatting from the V2 one. Both now delegate to the
+  // single renderWhaleAsOf() writer so they cannot disagree.
+  renderWhaleAsOf();
 }
 
 function lineChart(canvasId, key, series, color, fmt){
@@ -5736,6 +6093,12 @@ function renderWhalePanel(){
     renderWhale();
     renderWhaleExtras();
   }
+  // #whaleAsOf sits ABOVE the BTC/ETH toggle, so it must reflect whichever
+  // panel is showing. It used to be written only by the BTC-side KPI
+  // renderers, which left BTC's dates stranded above the ETH panel (and
+  // blank on a cold load with whaleAsset persisted to 'eth'). Writing it
+  // here — after the branch — covers both panels on every render.
+  renderWhaleAsOf();
 }
 
 // ETH whale view — KPIs from Coin Metrics, largest 24h tx + network stats
@@ -5765,7 +6128,8 @@ function renderWhaleSentimentEth(){
     <div class="v2-card__head" style="align-items:flex-start">
       <div style="min-width:0">
         <h2 class="v2-card__title" style="font-size:15px">🐋 <span class="v2-tip-anchor" data-v2-tip="ETH parallel of the BTC whale index, derived from ETH-specific on-chain metrics.">ETH Whale Sentiment Index</span></h2>
-        <div class="v2-card__subtitle">Composite ±100 from ETH on-chain proxies · as of ${escapeHtml(s.as_of||'?')}</div>
+        <div class="v2-card__subtitle">Composite ±100 from ETH on-chain proxies</div>
+        ${freshnessHtml(whaleSentimentAsOf(s), {label:'as of', title: whaleSentimentTitle(s)})}
       </div>
       <div style="text-align:right">
         <div style="font-size:26px;font-weight:700;color:${color}">${escapeHtml(s.label||'')}</div>
@@ -6553,6 +6917,623 @@ function renderInsights(){
 }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================================
+// DATA FRESHNESS — one implementation, used by every stamp on the page
+// ============================================================================
+// THE RULES THIS ENFORCES (do not "simplify" any of them away):
+//
+//  1. A stamp reports the age of the DATA, never the age of the BUILD.
+//     DATA.generated_at is `datetime.now()` at render time. The page
+//     rebuilds hourly, so a build stamp reads "just now" while the series
+//     underneath is frozen. That is exactly how the crypto breadth chart
+//     sat at 2026-06-09 for eight weeks behind a fresh-looking page.
+//     `#generatedAt` is therefore labelled "built …" and is the ONLY place
+//     build time is allowed to appear.
+//
+//  2. `DATA.signals_top20[].as_of` is POISONED — signals.py sets it to
+//     datetime.now(UTC) at fetch time. It is never a valid input here.
+//     (DATA.signals.btc/.eth `as_of` IS a real observation date and is fine.)
+//
+//  3. A composite is only as fresh as its OLDEST contributing input —
+//     fMin(), never fMax(), never an average.
+//
+//  4. Entries flagged `stale:true` (fetch_market copies the previous entry
+//     forward) must be COUNTED and DISCLOSED next to the date. A bare date
+//     is still a partial lie: the fresh coins keep the series' last date
+//     current while the stale ones silently freeze their contribution.
+//
+//  5. No honest date ⇒ an explicit unavailable state ("as of —"), never a
+//     silent fallback to build/fetch time.
+//
+// `freshness()` is the single source of truth for text + tone; every other
+// function here just decides WHICH date to feed it. V1 (app.py) carries a
+// byte-for-byte equivalent so the two frontends cannot drift.
+
+// isoDate: 'YYYY-MM-DD' or ISO datetime or null/undefined
+// opts: {warnDays=7, badDays=21, label='as of', stale=null, total=null}
+// returns {text, tone, ageDays}   tone in 'ok'|'warn'|'bad'|'none'
+function freshness(isoDate, opts){
+  const o = opts || {};
+  const warnDays = (typeof o.warnDays === 'number' && isFinite(o.warnDays)) ? o.warnDays : 7;
+  const badDays  = (typeof o.badDays  === 'number' && isFinite(o.badDays))  ? o.badDays  : 21;
+  const label    = (o.label == null) ? 'as of' : String(o.label);
+  const dayMs = freshnessDayUTC(isoDate);
+  if (dayMs == null) return { text: label + ' —', tone: 'none', ageDays: null };
+  // Both operands are midnight UTC, so the difference is a whole number of
+  // days no matter what timezone the viewer is in. Computing from local
+  // midnight (or from Date.now() directly) is what produces "-1d ago" for
+  // anyone east of UTC in the early hours.
+  const now = new Date();
+  const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  let ageDays = Math.round((todayMs - dayMs) / 86400000);
+  if (!isFinite(ageDays)) return { text: label + ' —', tone: 'none', ageDays: null };
+  // A future-dated observation is a data bug, not negative age. Floor at 0
+  // so no stamp can ever read "(-1d ago)".
+  if (ageDays < 0) ageDays = 0;
+  const tone = ageDays <= warnDays ? 'ok'
+             : ageDays <= badDays  ? 'warn'
+             :                       'bad';
+  let text = label + ' ' + freshnessYmd(dayMs) + ' (' + ageDays + 'd ago)';
+  const staleN = Number(o.stale);
+  if (isFinite(staleN) && staleN > 0){
+    const totalN = Number(o.total);
+    text += (isFinite(totalN) && totalN > 0)
+      ? ' · ' + staleN + ' of ' + totalN + ' cached'
+      : ' · ' + staleN + ' cached';
+  }
+  return { text: text, tone: tone, ageDays: ageDays };
+}
+
+// Parse an ISO date / datetime to midnight-UTC epoch ms. null when the
+// input is missing or not a real calendar date. Rejects rollovers
+// ('2026-02-31' → Date.UTC gives Mar 3) by round-tripping the components,
+// so a malformed date renders "unavailable" rather than a wrong day.
+function freshnessDayUTC(isoDate){
+  if (isoDate == null) return null;
+  const s = String(isoDate).trim();
+  if (!s) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (m){
+    const y = Number(m[1]), mo = Number(m[2]), d = Number(m[3]);
+    if (!(mo >= 1 && mo <= 12) || !(d >= 1 && d <= 31)) return null;
+    const t = Date.UTC(y, mo - 1, d);
+    if (!isFinite(t)) return null;
+    const chk = new Date(t);
+    if (chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) return null;
+    return t;
+  }
+  const parsed = Date.parse(s);
+  if (!isFinite(parsed)) return null;
+  const dt = new Date(parsed);
+  return Date.UTC(dt.getUTCFullYear(), dt.getUTCMonth(), dt.getUTCDate());
+}
+
+function freshnessYmd(dayMs){
+  const d = new Date(dayMs);
+  const p2 = n => (n < 10 ? '0' : '') + n;
+  return d.getUTCFullYear() + '-' + p2(d.getUTCMonth() + 1) + '-' + p2(d.getUTCDate());
+}
+
+// DOM writer built on freshness(). Tone arrives as a CSS class (never an
+// inline colour) so the tints stay anchored to the --v2-* tokens.
+// opts.title sets the hover detail; opts.baseClass preserves an existing
+// utility class on the element.
+function paintFreshness(el, isoDate, opts){
+  if (!el) return null;
+  const o = opts || {};
+  const f = freshness(isoDate, o);
+  el.textContent = f.text;
+  el.className = (o.baseClass ? o.baseClass + ' ' : '') + 'v2-fresh v2-fresh--' + f.tone;
+  el.style.color = '';
+  if (o.title) el.setAttribute('title', o.title); else el.removeAttribute('title');
+  return f;
+}
+
+// String variant of paintFreshness, for the renderers that build their card
+// with innerHTML instead of poking individual elements (the two Whale
+// sentiment cards). Same helper, same thresholds, same tint classes — the
+// only difference is markup-out vs element-in.
+function freshnessHtml(isoDate, opts){
+  const o = opts || {};
+  const f = freshness(isoDate, o);
+  const title = o.title
+    ? ' title="' + escapeHtml(o.title + ' Not the page build time.') + '"'
+    : '';
+  return '<div class="v2-fresh v2-fresh--' + f.tone + '"' + title + '>'
+       + escapeHtml(f.text) + '</div>';
+}
+
+// --- date plumbing ---------------------------------------------------------
+// fDay: normalise anything date-ish to 'YYYY-MM-DD' (or null). Everything
+// below compares normalised strings, which sorts correctly by calendar day.
+function fDay(v){
+  const ms = freshnessDayUTC(v);
+  return ms == null ? null : freshnessYmd(ms);
+}
+// Last usable observation date in a [{date, ...}] series. Scans BACKWARDS so
+// a trailing null-dated point can't blank the answer. `key` defaults to 'date'.
+function fLast(series, key){
+  if (!Array.isArray(series)) return null;
+  const k = key || 'date';
+  for (let i = series.length - 1; i >= 0; i--){
+    const d = fDay(series[i] && series[i][k]);
+    if (d) return d;
+  }
+  return null;
+}
+// OLDEST of a set of dates — the composite-freshness rule. Nulls dropped;
+// null when nothing usable is left.
+function fMin(dates){
+  let out = null;
+  (dates || []).forEach(v => {
+    const d = fDay(v);
+    if (d && (out === null || d < out)) out = d;
+  });
+  return out;
+}
+// NEWEST of a set of dates. Only correct for "latest item in a feed"
+// surfaces (news, advisories) — never for a composite index.
+function fMax(dates){
+  let out = null;
+  (dates || []).forEach(v => {
+    const d = fDay(v);
+    if (d && (out === null || d > out)) out = d;
+  });
+  return out;
+}
+
+// --- per-surface date resolvers -------------------------------------------
+// Each returns {date, stale, total, label, title} or null when the surface
+// has no honest observation date. `date:null` inside a returned object means
+// "we know about this surface but it has no date" → renders "as of —".
+
+// poc_top powers BOTH the Crypto Signals breadth chart and the POC tab.
+// Per-entry honest date = signal_history[last].date. Entries carried forward
+// by fetch_market's stale-keep carry `stale:true` and are COUNTED (rule 4) —
+// they keep their old last-date, so they also drag the min down honestly.
+function pocTopFreshness(){
+  const list = ((DATA.market || {}).poc_top) || [];
+  if (!Array.isArray(list) || !list.length) return null;
+  const dates = [];
+  let staleCount = 0, dated = 0;
+  list.forEach(e => {
+    if (!e) return;
+    if (e.stale === true) staleCount++;
+    // Prefer the explicit per-entry as_of (fetch_market.poc_entry_as_of:
+    // last date present in BOTH the price and volume series). Fall back to
+    // signal_history's last date so entries written by an older build —
+    // market.json is restored from the Actions cache and never committed,
+    // so old shapes persist — still report a real age instead of nothing.
+    const d = fDay(e.as_of) || fLast(e.signal_history);
+    if (d){ dates.push(d); dated++; }
+  });
+  // `dated` is exposed so callers can disclose how much of the list the
+  // minimum actually covers — a min over 3 of 50 coins is not a statement
+  // about the other 47.
+  if (!dated) return { date: null, stale: staleCount, total: list.length, dated: 0 };
+  return { date: fMin(dates), stale: staleCount, total: list.length, dated: dated };
+}
+
+// signals_top20 — the top-50 simplified signal rows.
+//
+// HISTORY, AND WHY THE GATE BELOW EXISTS: `as_of` on these rows USED to be
+// `datetime.now(UTC)` stamped at scoring time, which meant a stale-kept
+// markets_top (CoinGecko 429 → previous list copied forward verbatim) came
+// out wearing today's date. signals.py now copies CoinGecko's own
+// `last_updated` through instead, and adds `stale` + `computed_at`.
+//
+// We cannot tell the old poisoned value apart from a real one by looking at
+// it — both are a plausible 'YYYY-MM-DD'. So we gate on a field that only
+// the fixed shape emits: `computed_at`. No `computed_at` ⇒ the payload
+// predates the fix ⇒ we refuse to read `as_of` at all and report no date.
+// `computed_at` itself is BUILD time and is never rendered.
+function signalsTop20Freshness(){
+  const rows = Array.isArray(DATA.signals_top20) ? DATA.signals_top20 : [];
+  if (!rows.length) return null;
+  const trustworthy = rows.some(r => r && typeof r.computed_at === 'string');
+  if (!trustworthy){
+    return { date: null, stale: 0, total: rows.length, trusted: false,
+             title: 'This payload predates the signals.py provenance fix, so '
+                  + 'signals_top20[].as_of is still fetch time rather than an '
+                  + 'observation date. Refusing to render it as freshness.' };
+  }
+  const dates = [];
+  let staleCount = 0;
+  rows.forEach(r => {
+    if (!r) return;
+    if (r.stale === true) staleCount++;
+    const d = fDay(r.as_of);
+    if (d) dates.push(d);
+  });
+  return { date: dates.length ? fMin(dates) : null, stale: staleCount,
+           total: rows.length, trusted: true };
+}
+
+// Coinbase International perp rows now carry the exchange's own quote
+// timestamp (as_of / as_of_ts). Oldest across the rows we actually average.
+function perpsFreshness(){
+  const perps = ((DATA.market || {}).coinbase_intl_perps) || [];
+  if (!Array.isArray(perps) || !perps.length) return null;
+  const dates = perps.map(p => fDay(p && (p.as_of || p.as_of_ts))).filter(Boolean);
+  if (!dates.length) return { date: null, stale: 0, total: perps.length };
+  return { date: fMin(dates), stale: 0, total: perps.length };
+}
+
+// stocks_signals[].history[last].date is a REAL observation date (Yahoo daily
+// bars). fetch_market drops a ticker rather than carrying it forward, so
+// `stale` is normally 0 — but it is COUNTED rather than assumed, so the day
+// the data layer starts carrying rows forward the stamp does not quietly
+// start lying. `dated` lets callers say how much of the universe the minimum
+// actually covers.
+function stocksFreshness(){
+  const rows = ((DATA.market || {}).stocks_signals) || [];
+  if (!Array.isArray(rows) || !rows.length) return null;
+  // Explicit per-row as_of when present (fetch_market now stamps the last
+  // daily bar's date), else derive it from the score history — same value,
+  // computed the same way, just resilient to an older cached payload.
+  const dates = [];
+  let staleCount = 0;
+  rows.forEach(r => {
+    if (!r) return;
+    if (r.stale === true) staleCount++;
+    const d = fDay(r.as_of) || fLast(r.history);
+    if (d) dates.push(d);
+  });
+  return { date: dates.length ? fMin(dates) : null, stale: staleCount,
+           total: rows.length, dated: dates.length };
+}
+
+// Futures: funding / long-short / open-interest all carry real dates.
+// Oldest of the three (rule 3). Tracks the asset the tab is showing.
+function futuresFreshness(asset){
+  const a = ((DATA.market || {})[asset || 'btc']) || {};
+  const parts = [fLast(a.funding), fLast(a.long_short_ratio), fLast(a.open_interest_usd)]
+    .filter(Boolean);
+  if (!parts.length) return null;
+  return { date: fMin(parts), stale: 0, total: parts.length };
+}
+
+// ETF flows: the daily series' last row. Same source #etfAsOf already uses.
+function etfFreshness(){
+  const d = etfData() || {};
+  const fromDaily = fLast(d.daily);
+  const fromStats = fDay((d.stats || {}).last_date);
+  const date = fromDaily || fromStats;
+  return date ? { date: date, stale: 0, total: 1 } : null;
+}
+
+// whale.sentiment.as_of / whale.eth.sentiment.as_of — the composite's own
+// observation date.
+//
+// HISTORY: this field USED to be `whale.fetched_at[:10]`, i.e. the wall clock
+// at fetch time, which advanced every run even when no on-chain value moved
+// (and the whale tree is stale-kept in pieces, so a failed refresh served old
+// numbers under today's date). fetch_market now derives it from the oldest
+// contributing proxy series and tags the payload with `as_of_basis`.
+//
+// The whale subtree ships as a lazily-fetched SIDECAR (data-whale.json), so a
+// CDN-cached copy from an older build can outlive this JS. The two values are
+// indistinguishable by inspection — both are a plausible 'YYYY-MM-DD' — so we
+// gate on `as_of_basis`, a field only the fixed shape emits. No basis ⇒ the
+// payload predates the fix ⇒ refuse the date entirely.
+function whaleSentimentAsOf(sent){
+  if (!sent || typeof sent.as_of_basis !== 'string') return null;
+  return fDay(sent.as_of);
+}
+
+// Hover copy for the two whale-sentiment cards. It has to be TRUE: the card
+// asserts "observation date, not the page build time", so it states which
+// minimum is being reported, how many inputs it covers, and how many inputs
+// carry no date at all. `fetched_at` is named as fetch time where it appears.
+function whaleSentimentTitle(sent){
+  const s = sent || {};
+  if (typeof s.as_of_basis !== 'string'){
+    return 'This whale payload predates the provenance fix — its as_of is '
+         + 'still the fetch clock, not an observation date, so it is not '
+         + 'rendered.';
+  }
+  const dated = Number(s.dated_inputs) || 0;
+  const undated = Number(s.undated_inputs) || 0;
+  let t = dated > 0
+    ? ('Oldest observation date across the ' + dated + ' dated on-chain '
+       + 'series this composite is computed from — it is only as fresh as '
+       + 'its stalest input.')
+    : 'None of the contributing on-chain series carry an observation date.';
+  if (undated > 0){
+    t += ' ' + undated + ' further input' + (undated === 1 ? '' : 's')
+       + ' carry no date and are excluded from that minimum.';
+  }
+  if (s.fetched_at){
+    t += ' Last fetch attempt ' + String(s.fetched_at).slice(0, 10)
+       + ' — that is fetch time, not a data date.';
+  }
+  return t;
+}
+
+// Whale: oldest of the primary on-chain series for the selected asset.
+function whaleFreshness(asset){
+  if (asset === 'eth'){
+    const eth = ((DATA.whale || {}).eth) || {};
+    const cm = eth.coin_metrics || {};
+    const parts = ['AdrActCnt', 'TxCnt', 'SplyCur']
+      .map(k => fLast(cm[k])).filter(Boolean);
+    const sentDate = whaleSentimentAsOf(eth.sentiment);
+    if (sentDate) parts.push(sentDate);
+    if (!parts.length) return null;
+    return { date: fMin(parts), stale: 0, total: parts.length };
+  }
+  const w = whaleData() || {};
+  const parts = [fLast(w.tx_volume_usd), fLast(w.active_addresses),
+                 fLast(w.miners_revenue_usd), fLast(w.large_tx)].filter(Boolean);
+  const sentDate = whaleSentimentAsOf((DATA.whale || {}).sentiment);
+  if (sentDate) parts.push(sentDate);
+  if (!parts.length) return null;
+  return { date: fMin(parts), stale: 0, total: parts.length };
+}
+
+// Crypto (Overview) tab: BTC/ETH daily price series + Fear & Greed. All real
+// daily observation dates. signals_top20 is deliberately absent (rule 2).
+function overviewFreshness(){
+  const m = DATA.market || {};
+  const parts = [fLast((m.btc || {}).price), fLast((m.eth || {}).price),
+                 fLast(m.fear_greed)].filter(Boolean);
+  if (!parts.length) return null;
+  return { date: fMin(parts), stale: 0, total: parts.length };
+}
+
+// DeFi: as_of is stamped builder-side (v2/app.py stamp_defi_provenance) from
+// the DefiLlama daily TVL history — a real observation date. Falls back to
+// recomputing from tvl_history client-side for a cached sidecar built before
+// the stamp landed. `snapshot_fetched_at` is FETCH time and is exposed only
+// in the hover title, never as the headline date.
+function defiFreshness(){
+  const defi = DATA.defi;
+  if (!defi || !Object.keys(defi).length) return null;
+  // Primary: `as_of` stamped by fetch_market.defi_provenance() — min across
+  // the five contributing inputs. Fallback: recompute from the daily TVL
+  // history for a sidecar built before that landed (v2/app.py's
+  // stamp_defi_provenance backfills the same value at build time; this is
+  // the belt to that braces).
+  let date = fDay(defi.as_of);
+  if (!date){
+    const hist = defi.tvl_history || {};
+    const lasts = Object.keys(hist).map(k => fLast(hist[k])).filter(Boolean);
+    date = lasts.length ? fMin(lasts) : null;
+  }
+  // Name the laggard when the fetcher told us which input it was.
+  let laggard = '';
+  const src = defi.sources;
+  if (src && date){
+    const flat = {};
+    Object.keys(src).forEach(k => {
+      const v = src[k];
+      if (typeof v === 'string') flat[k] = v;
+      else if (v && typeof v === 'object') Object.keys(v).forEach(kk => {
+        if (typeof v[kk] === 'string') flat['TVL ' + kk] = v[kk];
+      });
+    });
+    const oldest = Object.keys(flat).filter(k => flat[k] === date);
+    if (oldest.length) laggard = ' Oldest input: ' + oldest.join(', ') + '.';
+  }
+  // `observed_at` (fetcher) / `snapshot_fetched_at` (builder backfill) are
+  // both FETCH time. Hover detail only — never the headline date.
+  const fetched = defi.observed_at || defi.snapshot_fetched_at;
+  return {
+    date: date,
+    stale: 0,
+    total: 1,
+    title: 'Oldest of the DefiLlama inputs behind this tab.' + laggard
+         + (fetched ? ' Snapshot pulled ' + fetched + ' (fetch time, not an observation date).' : ''),
+  };
+}
+
+// Research tab: reddit / CryptoCompare social / Santiment are all bare
+// snapshots — no per-observation date anywhere in the subtree, and Santiment
+// is daily-gated and served from cache 23 hours out of 24. There is no honest
+// date to show, so we say so (rule 5) rather than printing social.fetched_at.
+function socialFreshness(){
+  const s = socialData() || {};
+  const santStale = !!((s.santiment || {}).stale);
+  return {
+    date: null,
+    stale: 0,
+    total: 0,
+    title: 'Reddit / CryptoCompare / Santiment ship point-in-time counts with no '
+         + 'observation date. social.fetched_at is fetch time, so it is not shown '
+         + 'as a freshness date.'
+         + (santStale ? ' Santiment is currently served from its daily-gated cache.' : ''),
+  };
+}
+
+// Feed-shaped surfaces: the honest signal is the NEWEST item — "the feed has
+// seen nothing more recent than this". fMax is correct here and only here.
+function aiNewsFreshness(){
+  const ai = ((DATA.market || {}).ai_news) || null;
+  if (!ai || !Array.isArray(ai.items) || !ai.items.length) return null;
+  return { date: fMax(ai.items.map(i => i && i.date)), stale: 0, total: ai.items.length,
+           label: 'latest article' };
+}
+function travelFreshness(){
+  const t = DATA.travel;
+  if (!t) return null;
+  const adv = Array.isArray(t.advisories) ? t.advisories : [];
+  if (!adv.length) return null;
+  return { date: fMax(adv.map(a => a && a.date)), stale: 0, total: adv.length,
+           label: 'latest advisory' };
+}
+function cpiFreshness(){
+  const cpi = DATA.cpi;
+  const series = (cpi && Array.isArray(cpi.series)) ? cpi.series : [];
+  const lasts = series.map(s => fLast(s && s.observations)).filter(Boolean);
+  if (!lasts.length) return null;
+  return { date: fMin(lasts), stale: 0, total: series.length,
+           title: 'Oldest last observation across the loaded FRED CPI series. '
+                + 'CPI is published monthly, so several weeks of age is normal.' };
+}
+function suppliesFreshness(){
+  const sup = DATA.supplies;
+  if (!sup) return null;
+  const lasts = Object.keys(sup)
+    .filter(k => k !== 'generated_at')
+    .map(k => fLast((sup[k] || {}).observations))
+    .filter(Boolean);
+  if (!lasts.length) return null;
+  return { date: fMin(lasts), stale: 0, total: lasts.length,
+           title: 'Oldest last observation across port TEU / inventory ratio / GSCPI. '
+                + 'All three are monthly series.' };
+}
+function metalsFreshness(){
+  const m = DATA.metals;
+  if (!m) return null;
+  const lasts = [fLast((m.gold_price || {}).observations),
+                 fLast((m.silver_price || {}).observations)].filter(Boolean);
+  if (!lasts.length) return null;
+  return { date: fMin(lasts), stale: 0, total: lasts.length,
+           title: 'Oldest last observation across the gold and silver price series. '
+                + 'Central-bank holdings and mine production are annual and carry '
+                + 'their own as-of on their cards.' };
+}
+function mufonFreshness(){
+  const mu = DATA.mufon;
+  const range = mu && Array.isArray(mu.date_range) ? mu.date_range : null;
+  if (!range || range.length < 2) return null;
+  return { date: fDay(range[1]), stale: 0, total: 1, label: 'latest sighting' };
+}
+
+// --- tab-level strips ------------------------------------------------------
+// One line per tab naming the OLDEST contributing source for that tab, placed
+// directly under the AI-take band. This is the mobile-visible stamp: the
+// header .meta (which carries the global one) is display:none under 480px.
+const TAB_FRESHNESS = {
+  overview: overviewFreshness,
+  signals:  pocTopFreshness,
+  poc:      pocTopFreshness,
+  stocks:   stocksFreshness,
+  trading:  () => futuresFreshness(state && state.asset ? state.asset : 'btc'),
+  etf:      etfFreshness,
+  whale:    () => whaleFreshness(state && state.whaleAsset ? state.whaleAsset : 'btc'),
+  defi:     defiFreshness,
+  social:   socialFreshness,
+  ainews:   aiNewsFreshness,
+  travel:   travelFreshness,
+  cpi:      cpiFreshness,
+  supplies: suppliesFreshness,
+  metals:   metalsFreshness,
+  mufon:    mufonFreshness,
+};
+// Human-readable "what feeds this stamp" per tab, shown as the strip's key.
+const TAB_FRESHNESS_SOURCE = {
+  overview: 'BTC/ETH price · Fear & Greed',
+  signals:  'top-50 signal history',
+  poc:      'top-50 signal history',
+  stocks:   'top-50 equity bars',
+  trading:  'funding · long/short · open interest',
+  etf:      'ETF daily flows',
+  whale:    'on-chain series',
+  defi:     'DefiLlama daily TVL',
+  social:   'social snapshots',
+  ainews:   'AI news feed',
+  travel:   'State Dept advisories',
+  cpi:      'FRED CPI series',
+  supplies: 'port TEU · inventory · GSCPI',
+  metals:   'gold/silver price series',
+  mufon:    'NUFORC sightings',
+};
+
+function renderTabFreshness(){
+  const tab = state && state.tab;
+  if (!tab) return;
+  const host = document.getElementById('tabFresh-' + tab);
+  if (!host) return;
+  const fn = TAB_FRESHNESS[tab];
+  const info = (typeof fn === 'function') ? (fn() || null) : null;
+  if (!info){
+    // Nothing loaded yet (lazy sidecar in flight, or an empty tab). Render
+    // nothing rather than a misleading "—"; :empty hides the strip.
+    host.innerHTML = '';
+    host.className = 'v2-freshstrip';
+    return;
+  }
+  host.innerHTML = '<span class="v2-fresh__key">Data freshness</span>'
+                 + '<span class="v2-fresh" id="tabFreshValue-' + escapeHtml(tab) + '"></span>';
+  const valueEl = document.getElementById('tabFreshValue-' + tab);
+  const f = paintFreshness(valueEl, info.date, {
+    label: info.label || 'as of',
+    stale: info.stale,
+    total: info.total,
+    title: (info.title ? info.title + ' ' : '')
+         + 'Source: ' + (TAB_FRESHNESS_SOURCE[tab] || 'tab data')
+         + '. This is an observation date, not the page build time.',
+  }) || { tone: 'none' };
+  host.className = 'v2-freshstrip'
+                 + (f.tone === 'bad' ? ' v2-freshstrip--bad'
+                 :  f.tone === 'warn' ? ' v2-freshstrip--warn' : '');
+}
+
+// --- header build stamp ----------------------------------------------------
+// The ONE place build time is allowed to be rendered, and it says "built" so
+// nobody reads it as a data date. It used to say "generated <ts>", sitting
+// alone in the header, which is how a page that rebuilds hourly managed to
+// look fresh while the series behind it were two months old. It now always
+// appears next to #dataFreshness, which reports the actual data age.
+function setBuildStamp(){
+  const el = document.getElementById('generatedAt');
+  if (el){
+    el.textContent = 'built ' + (DATA.generated_at || '—');
+    el.title = 'When this page was rendered. The dashboard rebuilds hourly, so '
+             + 'this is always recent and says NOTHING about how old the data '
+             + 'is — that is the stamp to the right.';
+  }
+  renderDataFreshness();
+}
+
+// --- global header stamp ---------------------------------------------------
+// The OLDEST observation date across the daily-cadence market surfaces. The
+// intentionally-slow tabs (CPI monthly, metals annual, MUFON, travel) are
+// EXCLUDED — folding a monthly series in here would peg the header
+// permanently red and train everyone to ignore it. Those tabs carry their
+// own strip. The hover title states the scope so the exclusion is disclosed,
+// not hidden.
+const HEADER_FRESHNESS_SOURCES = [
+  ['crypto prices / Fear & Greed', overviewFreshness],
+  ['top-50 signal history',        pocTopFreshness],
+  ['equity signals',               stocksFreshness],
+  ['ETF flows',                    etfFreshness],
+  ['futures',                      () => futuresFreshness(state && state.asset ? state.asset : 'btc')],
+  ['whale on-chain',               () => whaleFreshness('btc')],
+  ['DeFi TVL',                     defiFreshness],
+];
+
+function renderDataFreshness(){
+  const el = document.getElementById('dataFreshness');
+  if (!el) return;
+  let oldest = null, oldestName = '', staleSum = 0, staleTotal = 0, loaded = 0;
+  HEADER_FRESHNESS_SOURCES.forEach(pair => {
+    let info = null;
+    try { info = pair[1](); } catch (_) { info = null; }
+    if (!info) return;
+    loaded++;
+    const staleN = Number(info.stale);
+    if (isFinite(staleN) && staleN > 0){
+      staleSum += staleN;
+      staleTotal += Number(info.total) || 0;
+    }
+    const d = fDay(info.date);
+    if (d && (oldest === null || d < oldest)){ oldest = d; oldestName = pair[0]; }
+  });
+  paintFreshness(el, oldest, {
+    label: 'data as of',
+    stale: staleSum || null,
+    total: staleTotal || null,
+    title: loaded
+      ? 'Oldest observation date across ' + loaded + ' loaded daily-cadence surface(s)'
+        + (oldestName ? ' — currently ' + oldestName : '') + '. '
+        + 'Slower-cadence tabs (CPI, metals, travel, UAP) are excluded and carry '
+        + 'their own per-tab stamp. Not the page build time — see "built" to the left.'
+      : 'No daily-cadence data loaded yet.',
+  });
 }
 
 // ============================================================================
@@ -8134,6 +9115,12 @@ function renderStocksSentiment(){
   if (sublineEl){
     sublineEl.textContent = `${total} stocks · positive = broad buy · negative = broad sell`;
   }
+  // FRESHNESS. Contrary to the original recon note, these rows DO carry an
+  // observation date: stocks_signals[].history is [{date, score}, ...] built
+  // from Yahoo daily bars (fetch_market.compute_stock_signal). Oldest last-bar
+  // across the universe = the honest date for the aggregate.
+  paintCompositeFreshness('stocksSentiment', stocksFreshness() || {
+    date: null, title: 'No dated score history on the loaded equity rows.' });
   const pctBuy  = (buyTotal  / total) * 100;
   const pctHold = (hold      / total) * 100;
   const pctSell = (sellTotal / total) * 100;
@@ -8227,11 +9214,45 @@ function renderStocksTab(){
   // Always (re)render the breadth chart first so it appears whether or not
   // there are scoreable rows. computeSignalBreadth/renderBreadthChart both
   // handle empty input gracefully with a "No data available." message.
-  renderBreadthChart(
-    'stocksBreadthChart',
-    computeSignalBreadth(Array.isArray(rows) ? rows : [], 90),
-    null
-  );
+  const stocksBreadth = computeSignalBreadth(Array.isArray(rows) ? rows : [], 90);
+  // Same treatment as the crypto breadth chart, and for the same reason:
+  // stocksBreadth[last].date is the union's MAX — one ticker that still
+  // updates holds the right edge at today while the rest sit frozen. The
+  // honest stamp is the OLDEST contributing row (stocksFreshness → fMin),
+  // with the cached and undated row counts disclosed next to it.
+  // Painted BEFORE renderBreadthChart so a Chart.js failure cannot swallow
+  // the disclosure.
+  const sbEl = document.getElementById('stocksBreadthFresh');
+  if (sbEl){
+    const lastBar = Array.isArray(stocksBreadth) && stocksBreadth.length
+      ? stocksBreadth[stocksBreadth.length - 1] : null;
+    const sf = stocksFreshness();
+    const sStale = sf ? sf.stale : 0;
+    const sTotal = sf ? sf.total : 0;
+    const sUndated = sf ? Math.max(0, (sf.total || 0) - (sf.dated || 0)) : 0;
+    paintFreshness(sbEl, sf && sf.date, {
+      label: 'oldest ticker',
+      stale: sStale,
+      total: sTotal,
+      title: 'Oldest observation date across the ' + ((sf && sf.dated) || 0)
+           + " dated tickers plotted (Yahoo daily bars) — the breadth is only "
+           + 'as fresh as its stalest contributor.'
+           + (lastBar && lastBar.date
+              ? " The chart's right edge is " + lastBar.date + ', which is the '
+                + 'NEWEST ticker, not the composite.'
+              : '')
+           + (sUndated > 0
+              ? ' ' + sUndated + ' of ' + sTotal + ' tickers carry no observation '
+                + 'date and are excluded from that minimum.'
+              : '')
+           + (sStale > 0
+              ? ' ' + sStale + ' of ' + sTotal + ' tickers were served from cache '
+                + 'this run.'
+              : ' No tickers were served from cache this run.')
+           + ' US markets are closed at weekends, so 1-3 days of age is normal.',
+    });
+  }
+  renderBreadthChart('stocksBreadthChart', stocksBreadth, null);
   if (!Array.isArray(rows) || rows.length === 0){
     grid.innerHTML = V2.empty({
       icon: '📡',
@@ -11936,7 +12957,16 @@ function renderPocCards(){
 // writer — given a card id prefix, a net score in [-100, +100], a label
 // tier, a positive/neutral/negative weight split for the bar, and a
 // subline, it paints all the DOM elements consistently across the 4 cards.
-function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, subline){
+//
+// `fresh` (optional, last arg) is the freshness descriptor for the card:
+//   {date, stale, total, label, title}
+// `date` MUST be a real observation date — the OLDEST of the card's
+// contributing inputs (a composite is only as fresh as its stalest input).
+// Pass `{date: null, title: '<why>'}` when the inputs genuinely carry no
+// observation date: the stamp then renders an explicit "as of —" instead of
+// quietly falling back to build time. Omitting `fresh` entirely leaves the
+// slot blank (used by no caller today — every consumer passes one).
+function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, subline, fresh){
   const card = document.getElementById(prefix + 'Card');
   if (!card) return;
   card.style.display = '';
@@ -11960,6 +12990,23 @@ function paintSentimentCard(prefix, net, label, color, posPct, neuPct, negPct, s
   if (barPos) barPos.style.width = posPct.toFixed(1) + '%';
   if (barNeu) barNeu.style.width = neuPct.toFixed(1) + '%';
   if (barNeg) barNeg.style.width = negPct.toFixed(1) + '%';
+  paintCompositeFreshness(prefix, fresh);
+}
+// Shared writer for the `#<prefix>Fresh` slot on every composite-index card,
+// including the three hand-rolled ones (stocks / cryptoSignals / poc) that
+// don't route through paintSentimentCard.
+function paintCompositeFreshness(prefix, fresh){
+  const el = document.getElementById(prefix + 'Fresh');
+  if (!el) return;
+  if (!fresh){ el.textContent = ''; el.className = 'v2-fresh'; return; }
+  paintFreshness(el, fresh.date, {
+    label: fresh.label || 'as of',
+    stale: fresh.stale,
+    total: fresh.total,
+    title: (fresh.title || '')
+         + ' Oldest contributing input — a composite is only as fresh as its '
+         + 'stalest source. Not the page build time.',
+  });
 }
 function hideSentimentCard(prefix){
   const card = document.getElementById(prefix + 'Card');
@@ -12049,9 +13096,41 @@ function renderOverviewSentiment(){
   const bucket = sentimentBucket(net,
     ['STRONG BULLISH','BULLISH','NEUTRAL','BEARISH','STRONG BEARISH']);
   const split = sentimentBarSplit(components);
+  // FRESHNESS — oldest of the three contributing inputs, and only inputs
+  // that actually carry an observation date get a vote:
+  //   · F&G               → fear_greed[last].date                        REAL
+  //   · Top-50 signal avg → min(signals_top20[].as_of), gated on the
+  //                         signals.py provenance fix (see
+  //                         signalsTop20Freshness — the field used to be a
+  //                         clock read and is only trusted once the row
+  //                         carries `computed_at`)
+  //   · Perp funding      → min(coinbase_intl_perps[].as_of), Coinbase's
+  //                         own quote timestamp
+  // Any input whose date we cannot establish is EXCLUDED from the min and
+  // COUNTED in the subline — reporting a min over a subset without saying
+  // so would imply the whole composite is that fresh.
+  const fngIn = !!(fngLast && isFinite(fngVal));
+  const sigFresh  = sigScores.length ? signalsTop20Freshness() : null;
+  const perpFresh = rates.length ? perpsFreshness() : null;
+  const dated = [];
+  if (fngIn) dated.push(fLast(m.fear_greed));
+  if (sigFresh)  dated.push(sigFresh.date);
+  if (perpFresh) dated.push(perpFresh.date);
+  const usable = dated.filter(Boolean);
+  const undated = components.length - usable.length;
+  const staleN = (sigFresh && sigFresh.stale) || 0;
   paintSentimentCard('overviewSentiment', net, bucket.label, bucket.color,
     split.pos, split.neu, split.neg,
-    `Composite of Fear & Greed · Top-50 signal avg · perp funding rate (${components.length} inputs)`);
+    `Composite of Fear & Greed · Top-50 signal avg · perp funding rate (${components.length} inputs`
+      + (undated > 0 ? `, ${undated} carrying no observation date` : '') + ')',
+    { date: usable.length ? fMin(usable) : null,
+      stale: staleN,
+      total: staleN ? (sigFresh ? sigFresh.total : 0) : components.length,
+      title: 'Oldest of the inputs that carry an observation date'
+           + (undated > 0
+              ? '. ' + undated + ' of ' + components.length + ' inputs carry none, so '
+                + 'this bounds only part of the card.'
+              : ' (all ' + components.length + ' inputs dated).') });
 }
 
 // ---- DeFi: TVL-weighted 7d chain momentum + stablecoin mcap 7d Δ.
@@ -12092,9 +13171,18 @@ function renderDefiSentiment(){
   const bucket = sentimentBucket(net,
     ['STRONG EXPANSION','EXPANSION','NEUTRAL','CONTRACTION','STRONG CONTRACTION']);
   const split = sentimentBarSplit(components);
+  // FRESHNESS. The chain rows and the stablecoin aggregate are both bare
+  // snapshots with no date of their own; the DeFi subtree now ships an
+  // `as_of` stamped builder-side (v2/app.py stamp_defi_provenance) from the
+  // DefiLlama DAILY TVL history that lives in the same subtree — a real
+  // observation date, not a clock read. defiFreshness() falls back to
+  // recomputing it from tvl_history for sidecars cached before that landed.
+  const defiFresh = defiFreshness();
   paintSentimentCard('defiSentiment', net, bucket.label, bucket.color,
     split.pos, split.neu, split.neg,
-    `TVL-weighted 7d chain momentum · stablecoin mcap 7d Δ (${components.length} inputs)`);
+    `TVL-weighted 7d chain momentum · stablecoin mcap 7d Δ (${components.length} inputs)`,
+    defiFresh || { date: null,
+      title: 'DeFi sidecar carries no TVL history to date from.' });
 }
 
 // ---- ETF Flows: 7d net flow sum + 30d net flow sum, weighted 60/40 toward
@@ -12134,9 +13222,13 @@ function renderEtfFlowSentiment(){
   const bucket = sentimentBucket(net,
     ['STRONG INFLOWS','INFLOWS','BALANCED','OUTFLOWS','STRONG OUTFLOWS']);
   const split = sentimentBarSplit(components.map(c => c.s));
+  // FRESHNESS. Both windows read the same `daily` series, so its last row is
+  // the honest date for the whole card. Same source #etfAsOf uses — the two
+  // stamps on this tab now come from one code path and can't disagree.
   paintSentimentCard('etfFlowSentiment', net, bucket.label, bucket.color,
     split.pos, split.neu, split.neg,
-    `${sym} ETF · 7d net flow sum (60%) · 30d net flow sum (40%)`);
+    `${sym} ETF · 7d net flow sum (60%) · 30d net flow sum (40%)`,
+    etfFreshness() || { date: null, title: 'No ETF flow rows loaded.' });
 }
 
 // ---- Futures: funding rate + long/short ratio + 7d OI %Δ. Tracks state.asset
@@ -12182,9 +13274,15 @@ function renderFuturesSentiment(){
   const bucket = sentimentBucket(net,
     ['STRONG CROWDED LONGS','CROWDED LONGS','BALANCED','CROWDED SHORTS','STRONG CROWDED SHORTS']);
   const split = sentimentBarSplit(components);
+  // FRESHNESS. All three inputs (funding / long-short / open interest) carry
+  // real per-row dates, so this is a true min-of-three. Recomputed on every
+  // BTC/ETH/LINK/LTC toggle because renderFuturesSentiment is re-invoked from
+  // renderAll() and futuresFreshness() reads the same `asset`.
   paintSentimentCard('futuresSentiment', net, bucket.label, bucket.color,
     split.pos, split.neu, split.neg,
-    `${sym} · funding rate · long/short ratio · 7d OI Δ (${components.length} inputs)`);
+    `${sym} · funding rate · long/short ratio · 7d OI Δ (${components.length} inputs)`,
+    futuresFreshness(asset) || { date: null,
+      title: 'No dated funding / long-short / open-interest rows for ' + sym + '.' });
 }
 
 // ===== POC top-25 grid (Point of Control tab) =====
@@ -12321,9 +13419,22 @@ function renderPocSentimentIndex(){
     labelEl.textContent = label;
     labelEl.style.color = color;
   }
+  // FRESHNESS. The migration objects carry no date, but each poc_top entry
+  // does via signal_history[last].date (same aligned price/volume dates the
+  // POC itself is computed from). Oldest across the universe, plus the
+  // stale-keep count: fetch_market copies a coin's whole previous entry
+  // forward with `stale:true` when its fetch fails, and this renderer used
+  // to ignore that flag entirely — the fresh coins kept the aggregate
+  // looking current while the frozen ones quietly kept voting.
+  const pocFresh = pocTopFreshness();
   if (sublineEl){
-    sublineEl.textContent = `${considered} coins with migration data · positive = POCs drifting higher (broad accumulation) · negative = drifting lower (broad distribution)`;
+    const cachedNote = (pocFresh && pocFresh.stale > 0)
+      ? ` · ${pocFresh.stale} of ${pocFresh.total} served from cache`
+      : '';
+    sublineEl.textContent = `${considered} coins with migration data${cachedNote} · positive = POCs drifting higher (broad accumulation) · negative = drifting lower (broad distribution)`;
   }
+  paintCompositeFreshness('pocSentiment', pocFresh || {
+    date: null, title: 'No dated signal history on the loaded POC rows.' });
   const pctUp   = (up   / total) * 100;
   const pctFlat = (flat / total) * 100;
   const pctDown = (down / total) * 100;
@@ -13544,8 +14655,11 @@ function renderCpi(){
     const series = cpi.series || [];
     const okCount = series.filter(s => (s.observations||[]).length).length;
     let when = '';
+    // "fetched", not "updated": cpi.generated_at is when the sidecar was
+    // written, not when FRED last published. The real observation date is on
+    // the tab's freshness strip (min of the series' last observations).
     if (cpi.generated_at){
-      try { when = ' · updated ' + new Date(cpi.generated_at).toLocaleDateString(); } catch(_) {}
+      try { when = ' · fetched ' + new Date(cpi.generated_at).toLocaleDateString(); } catch(_) {}
     }
     asOf.textContent = 'Source: FRED · ' + okCount + ' of ' + series.length + ' series loaded' + when;
   }
@@ -13822,6 +14936,18 @@ function cpiSparkSvg(pts, opts){
 })();
 
 function renderAll(){
+  // FRESHNESS FIRST. Every stamp is a pure function of DATA + state, so it
+  // can be computed before a single chart or card is drawn — and it must be.
+  // These used to be painted at the very END of renderAll(), which meant any
+  // throw in a tab renderer (a Chart.js CDN failure was the observed case)
+  // blanked every stamp on the page while the numbers stayed on screen. A
+  // page that stops disclosing its data age while still showing the data is
+  // the exact failure mode these stamps exist to prevent.
+  //
+  // They are repainted at the end too: the tab renderers can lazily land a
+  // sidecar or flip state, and repainting is idempotent and cheap.
+  renderTabFreshness();
+  renderDataFreshness();
   renderInsights();
   renderAiTakeBands();
   // tag updates — ETF-related tags follow state.etfAsset (decoupled from
@@ -14073,6 +15199,16 @@ function renderAll(){
     if (!mufonLoadingActive) { renderMufonTrend(); renderMufonMap(); renderMufonShapes(); }
   }
   renderCoverage();
+  // Freshness AGAIN (it was already painted at the top of renderAll): every
+  // stamp is derived from whatever DATA now holds, and renderAll() is the
+  // single funnel for tab switches, asset toggles and post-sidecar
+  // re-renders — so recomputing here is what keeps the Futures stamp
+  // following the BTC/ETH/LINK/LTC toggle, the Whale stamp following the
+  // BTC/ETH panel, and the DeFi/CPI/metals/travel/UAP strips filling in the
+  // moment their lazy sidecar lands. The leading call is the safety net for
+  // a renderer above throwing; this one is the accuracy pass.
+  renderTabFreshness();
+  renderDataFreshness();
 }
 
 function selectTab(t){
@@ -14629,7 +15765,7 @@ async function liveRefresh(force){
           const j = await rr.json();
           if (j && j.generated_at && j.generated_at !== oldStamp) {
             Object.assign(DATA, j);
-            document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
+            setBuildStamp();
             renderAll();
             updated = true;
             break;
@@ -14643,7 +15779,7 @@ async function liveRefresh(force){
       if (!r.ok) throw new Error('http '+r.status);
       const j = await r.json();
       Object.assign(DATA, j);
-      document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
+      setBuildStamp();
       renderAll();
       if (btn) btn.textContent = '↻ Refresh';
     }
@@ -16480,7 +17616,7 @@ function _setSymbolSuggestActive(box, idx){
   try { renderSymbolRecentChips(); } catch (_) { /* defensive — never block boot */ }
 })();
 
-document.getElementById('generatedAt').textContent = 'generated ' + DATA.generated_at;
+setBuildStamp();
 // Deep-link support: open the tab named in the URL hash (#etf, #cpi, …) on
 // load, falling back to Overview; then react to later hash changes (browser
 // back/forward, manual edits, or an inbound link while already open).

@@ -31,6 +31,9 @@ import {
 // ---------------------------------------------------------------------------
 
 // Use the stable filename — survives daily date changes without code edits.
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const SNAPSHOT_URL = '../data/lthcs/public/latest_snapshot.json';
 const UNIVERSE_URL = '../data/lthcs/universe.json';
 const HISTORY_URL_TPL = '../data/lthcs/history/by_ticker/{TICKER}.json';
@@ -593,8 +596,28 @@ async function load() {
     state.scope = persisted;
   }
 
-  // 5) Stamp header meta.
-  setText('lb-snapshot-date', state.snapshot.calc_date || '—');
+  // 5) Stamp header meta. Every leaderboard on this page is a ranking over
+  //    the same snapshot, so its calc_date is the honest age of all of them.
+  //    Rule 3: rows carrying a data-quality flag are counted next to the date,
+  //    because a flagged pillar can move a ticker up or down a leaderboard.
+  const lbScores = Array.isArray(state.snapshot.scores) ? state.snapshot.scores : [];
+  const lbFlagged = lbScores.filter((r) => {
+    const flags = (r && r.data_quality_flags) || [];
+    const dropped = (r && r.dropped_pillars) || [];
+    return flags.length > 0 || dropped.length > 0;
+  }).length;
+  paintComposite(
+    document.getElementById('lb-snapshot-date'),
+    [{ label: 'scores', date: state.snapshot.calc_date }],
+    {
+      detailEl: document.getElementById('lb-fresh-note'),
+      stale: lbFlagged,
+      total: lbScores.length,
+      staleNoun: 'incomplete',
+      what: 'These leaderboards',
+      baseClass: 'lthcs-meta-value',
+    },
+  );
 
   // 6) Wire chips + render.
   hide('lb-loading');

@@ -27,9 +27,16 @@
           <p class="lthcs-subtitle">Daily scoring across 168 US-listed names (DJIA&nbsp;30 &middot; NASDAQ-100 &middot; S&amp;P&nbsp;100)</p>
         </div>
         <div class="lthcs-header-meta">
+          <!-- Freshness stamp. "Data as of" (not "Last updated") because the
+               value is the age of the OBSERVATIONS, never the page build.
+               The stamp is a composite: lthcs-tab.js feeds every contributing
+               input through fMin() so the headline can only ever be as fresh
+               as the oldest one. #lthcs-fresh-note stays hidden on days when
+               all inputs agree and nothing was dropped. -->
           <div class="lthcs-meta-line">
-            <span class="lthcs-meta-label">Last updated</span>
+            <span class="lthcs-meta-label">Data as of</span>
             <span id="lthcs-last-updated" class="lthcs-meta-value">&hellip;</span>
+            <span id="lthcs-fresh-note" class="lthcs-freshnote" hidden></span>
           </div>
           <div class="lthcs-meta-line">
             <span class="lthcs-meta-label">Model</span>

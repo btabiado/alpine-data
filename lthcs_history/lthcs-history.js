@@ -11,6 +11,9 @@
 //   elite, high_confidence, constructive, monitor, weakening, review
 // =========================================================================
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite, fLast } from '../lthcs_tab/lthcs-freshness.js';
+
 const DATA_BASE = '../data/lthcs/history/by_ticker';
 const UNIVERSE_URL = '../data/lthcs/universe.json';
 
@@ -390,6 +393,11 @@ async function runBandSearch(band, windowDays) {
   }
   rows.sort((a, b) => b.days - a.days || a.ticker.localeCompare(b.ticker));
 
+  // Stamp the result set with the OLDEST last-observation across every
+  // series it ranked. `latest` above is an fMax and is correct for its own
+  // job (defining "today" for the rolling window); it would be wrong here.
+  stampHistoryFreshness(results.map((r) => r.data), 'This band ranking');
+
   const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
   const aborted = errors.length > 0 || controller.signal.aborted;
   if (aborted) {
@@ -509,6 +517,8 @@ async function runStreakSearch() {
     byBand.set(b, arr.slice(0, 10));
   }
 
+  stampHistoryFreshness(datas, 'This streak ranking');
+
   const elapsed = ((performance.now() - t0) / 1000).toFixed(2);
   setStatus(`Loaded ${datas.length}/${tickers.length} tickers in ${elapsed}s. Top 10 streaks per band.`);
 
@@ -567,6 +577,52 @@ function switchMode(mode) {
   }
 }
 
+
+// ---------------------------------------------------------------------------
+// Freshness stamp
+//
+// A history series' honest date is its LAST observation, found by scanning
+// backwards so a trailing null-dated row cannot blank the answer (fLast).
+// Across several tickers the composite rule applies: the result set is only
+// as current as the series that has fallen furthest behind, so paintComposite
+// runs fMin over them. Tickers whose file exists but carries no usable date
+// are disclosed as undated rather than skipped.
+// ---------------------------------------------------------------------------
+function stampHistoryFreshness(datas, label) {
+  const list = (Array.isArray(datas) ? datas : [datas]).filter(Boolean);
+  const el = document.getElementById('lthcs-history-asof');
+  const noteEl = document.getElementById('lthcs-history-fresh-note');
+  if (!el) return;
+  if (!list.length) {
+    paintComposite(el, [], {
+      detailEl: noteEl, what: 'This view', baseClass: 'lthcs-meta-value',
+    });
+    return;
+  }
+  // Cap the disclosure row: a universe-wide search covers ~180 tickers and a
+  // 180-pill row would blow the mobile layout apart. The five oldest are the
+  // ones that actually explain the headline.
+  const comps = list.map((d) => ({
+    label: d.ticker || '?',
+    date: fLast(d.history, 'date'),
+  }));
+  comps.sort((a, b) => {
+    if (!a.date) return -1;
+    if (!b.date) return 1;
+    return a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+  });
+  const shown = comps.slice(0, 5);
+  const hidden = comps.length - shown.length;
+  paintComposite(el, shown, {
+    detailEl: noteEl,
+    what: label || 'This result set',
+    baseClass: 'lthcs-meta-value',
+    title: hidden > 0
+      ? hidden + ' further ticker series are at or newer than the five shown.'
+      : '',
+  });
+}
+
 async function handleTickerGo() {
   const input = $('lthcs-history-ticker');
   const tkr = (input.value || '').trim().toUpperCase();
@@ -585,10 +641,12 @@ async function handleTickerGo() {
         </div>
       `;
       $('lthcs-history-results').appendChild(card);
+      stampHistoryFreshness([], `${tkr}'s series`);
       setStatus(null);
       return;
     }
     $('lthcs-history-results').appendChild(renderTickerCard(data));
+    stampHistoryFreshness([data], `${tkr}'s series`);
     setStatus(null);
   } catch (e) {
     setStatus(`Error loading ${tkr}: ${e.message || e}`, 'error');
@@ -614,6 +672,13 @@ async function handleStreakGo() {
 }
 
 function wireUp() {
+  // Rule 4: paint the honest unavailable state immediately. Before any query
+  // runs this page is showing no data at all, so "as of —" is the truth. The
+  // "…" placeholder would otherwise sit there forever on a page nobody
+  // searched, reading as a load that never finished rather than as "nothing
+  // to date yet".
+  stampHistoryFreshness([], 'This view');
+
   for (const btn of document.querySelectorAll('.lthcs-history-mode')) {
     btn.addEventListener('click', () => switchMode(btn.dataset.mode));
   }

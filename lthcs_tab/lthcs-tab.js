@@ -36,6 +36,10 @@ const activeIsEmpty = effectiveIsEmpty;
 import { initWhatsNew, updateWhatsNew } from './lthcs-whatsnew.js';
 // --- end Phase 5 #2 hookup ---
 
+// --- Data-freshness stamp hookup ---
+import { paintComposite, fDay, fMin } from './lthcs-freshness.js';
+// --- end freshness hookup ---
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
@@ -45,6 +49,20 @@ const UNIVERSE_URL = '../data/lthcs/universe.json';
 const INDEX_URL = `${SNAPSHOTS_BASE}/index.json`;
 const INSIDER_BASE = '../data/lthcs/insider';
 const HISTORY_BASE = '../data/lthcs/history/by_ticker';
+// Freshness-only probes: files whose *dates* feed the composite stamp even
+// when their contents are consumed elsewhere (or not at all by this page).
+const COMPOSITE_INDEX_BASE = '../data/lthcs/index';
+const MACRO_BASE = '../data/lthcs/macro';
+const THESIS_ROTATION_URL = '../data/lthcs/thesis_rotation.json';
+// Hard ceiling on the freshness probes so a hung request can never leave the
+// stamp stuck on its "…" placeholder. On timeout the affected inputs resolve
+// to null, which renders as an *undated* component — disclosed, not hidden.
+const FRESH_PROBE_TIMEOUT_MS = 4000;
+// weights.json pillar order. The thesis pillar sits at index 3; the daily
+// pipeline zeroes its effective weight when the sentiment inputs behind it
+// are unavailable.
+const THESIS_PILLAR = 'thesis_integrity';
+const THESIS_PILLAR_INDEX = 3;
 
 // Task 1: score-trend thresholds. Anything within +/-0.5 reads as
 // "flat / stable"; beyond is up/down. The lookback prefers 30 days,
@@ -207,20 +225,12 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
-function formatDate(isoDate) {
-  if (!isoDate) return '—';
-  // Parse "YYYY-MM-DD" without timezone drift.
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
-  if (!m) return isoDate;
-  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
-  try {
-    return d.toLocaleDateString(undefined, {
-      year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
-    });
-  } catch {
-    return isoDate;
-  }
-}
+// formatDate() lived here and rendered a bare localised day ("Aug 1, 2026")
+// for the header stamp. It is gone on purpose: a bare date is exactly the
+// thing the freshness contract forbids (no age, no tint, and no way to tell a
+// one-day-old snapshot from a three-month-old one at a glance). Every stamp
+// on this page now goes through ./lthcs-freshness.js. Do not
+// reintroduce a local date formatter for a stamp.
 
 function pillarDisplayName(key) {
   return PILLAR_DISPLAY[key] || key;
@@ -962,12 +972,129 @@ function renderAll() {
 }
 
 function renderMeta(snapshot) {
-  const lastEl = $('#lthcs-last-updated');
-  if (lastEl) lastEl.textContent = formatDate(snapshot && snapshot.calc_date);
   const versionEl = $('#lthcs-model-version');
   if (versionEl && snapshot && snapshot.model_version) {
     versionEl.textContent = snapshot.model_version;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Freshness stamp (composite)
+//
+// LTHCS is a composite index, so Rule 2 of the honesty contract applies: the
+// headline can only be as fresh as the OLDEST input that carries weight in
+// today's number. `renderFreshness` gathers a date per contributing input and
+// hands the set to paintComposite(), which runs fMin() and disclosures.
+//
+// Deliberately NOT in the composite:
+//   * the page build time / any clock read — Rule 1
+//   * universe.json's roster vintage — it is reference data (which tickers
+//     exist), not an observation, so it is disclosed in the hover title but
+//     cannot drag the headline. Ageing the stamp on a roster that only
+//     changes at index rebalances would make it permanently and uselessly red.
+//   * the thesis pillar's sentiment vintage WHEN the pipeline dropped that
+//     pillar to zero weight — see composite() in lthcs-freshness.js. It still
+//     appears in the disclosure row, tinted bad and labelled "dropped".
+// ---------------------------------------------------------------------------
+
+// Small JSON probe that resolves to null instead of throwing, and that gives
+// up after FRESH_PROBE_TIMEOUT_MS. A probe that fails yields an *undated*
+// component, which paintComposite() counts and discloses.
+async function probeJSON(url) {
+  const ctl = (typeof AbortController === 'function') ? new AbortController() : null;
+  const timer = setTimeout(() => { if (ctl) ctl.abort(); }, FRESH_PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Does the thesis pillar carry any weight in this snapshot? True only if at
+// least one scored entry did NOT drop it. When every entry dropped it, the
+// pillar contributes exactly 0.0 to every score on the page.
+function thesisCarriesWeight(snapshot) {
+  const scores = (snapshot && snapshot.scores) || [];
+  if (!scores.length) return true; // unknown ⇒ assume it counts (conservative)
+  return scores.some((s) => {
+    const dropped = (s && s.dropped_pillars) || [];
+    if (dropped.includes(THESIS_PILLAR)) return false;
+    const eff = (s && s.effective_weights) || null;
+    if (Array.isArray(eff) && eff.length > THESIS_PILLAR_INDEX) {
+      return Number(eff[THESIS_PILLAR_INDEX]) > 0;
+    }
+    return true;
+  });
+}
+
+// Rule 3: entries carrying a data-quality flag are COUNTED, not glossed over.
+function countIncompleteEntries(snapshot) {
+  const scores = (snapshot && snapshot.scores) || [];
+  let n = 0;
+  for (const s of scores) {
+    const flags = (s && s.data_quality_flags) || [];
+    const dropped = (s && s.dropped_pillars) || [];
+    if (flags.length || dropped.length) n += 1;
+  }
+  return { stale: n, total: scores.length };
+}
+
+async function renderFreshness(snapshot, universe) {
+  const el = $('#lthcs-last-updated');
+  if (!el) return null;
+  const noteEl = $('#lthcs-fresh-note');
+  const calcDate = fDay(snapshot && snapshot.calc_date);
+
+  // Probe the sibling files whose observation dates belong in the composite.
+  // All three are small, same-origin and already on disk next to the snapshot.
+  const [indexDoc, macroDoc, thesisDoc] = await Promise.all([
+    calcDate ? probeJSON(`${COMPOSITE_INDEX_BASE}/${calcDate}.json`) : Promise.resolve(null),
+    calcDate ? probeJSON(`${MACRO_BASE}/breadth_${calcDate}.json`) : Promise.resolve(null),
+    probeJSON(THESIS_ROTATION_URL),
+  ]);
+
+  // thesis_rotation.json mirrors the per-ticker last_scored dates in
+  // data/lthcs/sentiment/*.json exactly (same writer, same run), so its
+  // OLDEST per-ticker date is the honest age of the whole sentiment corpus
+  // without fetching 200-odd files.
+  let thesisDate = null;
+  if (thesisDoc) {
+    const perTicker = Object.values((thesisDoc && thesisDoc.tickers) || {})
+      .map((t) => t && t.last_scored);
+    thesisDate = fMin(perTicker.concat([thesisDoc.last_updated]));
+  }
+
+  const thesisWeighted = thesisCarriesWeight(snapshot);
+  const components = [
+    { label: 'scores', date: snapshot && snapshot.calc_date },
+    { label: 'index', date: indexDoc && indexDoc.as_of },
+    { label: 'macro', date: macroDoc && macroDoc.as_of },
+    {
+      label: 'thesis',
+      date: thesisDate,
+      contributes: thesisWeighted,
+      // Severe: this pillar was SUPPOSED to count and the pipeline zeroed it.
+      // That forces the breakdown row open and tints the pill bad.
+      severe: !thesisWeighted,
+      note: thesisWeighted ? '' : 'pillar dropped from every score',
+    },
+  ];
+
+  const { stale, total } = countIncompleteEntries(snapshot);
+  return paintComposite(el, components, {
+    detailEl: noteEl,
+    stale,
+    total,
+    staleNoun: 'incomplete',
+    what: 'The LTHCS composite',
+    baseClass: 'lthcs-meta-value',
+    title: 'Universe roster (universe.json) last revised '
+      + (fDay(universe && universe.last_updated) || 'unknown') + '.',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -1435,6 +1562,13 @@ async function refresh() {
     state.universeByTicker = buildUniverseIndex(universe);
     state.enriched = enrichScores(snapshot, state.universeByTicker);
     renderMeta(snapshot);
+    // Composite freshness stamp. Side-loaded so the probes for the sibling
+    // input dates never block the cards, but it repaints the header the
+    // moment they settle (or time out). Its own failure path already renders
+    // an honest "as of —" rather than a guess, so nothing here can leave a
+    // stale or invented date on screen.
+    renderFreshness(snapshot, universe)
+      .catch((err) => console.warn('LTHCS: freshness stamp failed', err));
     persistSnapshotDate(snapshot && snapshot.calc_date);
     hide($('#lthcs-loading'));
     // Phase 4: now that universe is loaded, let the watchlists module

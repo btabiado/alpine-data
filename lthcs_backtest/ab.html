@@ -30,9 +30,12 @@
           <p class="lthcs-subtitle" id="ab-subtitle">Stress-test a calibration tweak before it ships to <code>weights.json</code>.</p>
         </div>
         <div class="lthcs-header-meta">
+          <!-- The A/B run's own data date, tinted. comparison.generated_at
+               is a build timestamp, so it is hover context only. -->
           <div class="lthcs-meta-line">
-            <span class="lthcs-meta-label">Run</span>
+            <span class="lthcs-meta-label">Run data as of</span>
             <span id="ab-generated" class="lthcs-meta-value">&hellip;</span>
+            <span id="ab-fresh-note" class="lthcs-freshnote" hidden></span>
           </div>
           <a href="./" class="lthcs-refresh-btn" aria-label="Back to backtest validation" style="text-decoration:none">
             <span aria-hidden="true">&larr;</span>
@@ -164,6 +167,6 @@
       </div>
     </main>
 
-    <script src="./lthcs-backtest-ab.js"></script>
+    <script type="module" src="./lthcs-backtest-ab.js"></script>
   </body>
 </html>

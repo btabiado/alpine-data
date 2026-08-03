@@ -16,6 +16,9 @@
    shape; the per-horizon dirs (<date>_h1, _h5, _h21) are fallbacks.
    ========================================================================= */
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const DATA_ROOT = '../data/lthcs';
 const VALIDATION_DATE = '2026-05-18';
 const HORIZON = 'horizon_21d';        // primary display horizon
@@ -393,13 +396,32 @@ function makeRetryButton() {
 }
 
 function renderHeader(summary, summaryH) {
-  const gen = summary?.generated_at;
-  let label = VALIDATION_DATE;
-  if (gen) {
-    const iso = gen.replace('T', ' ').replace(/\..+Z$/, ' UTC');
-    label = `${VALIDATION_DATE} (${iso})`;
-  }
-  $('bt-generated').textContent = label;
+  // Freshness stamp.
+  //
+  // VALIDATION_DATE is the pinned run id this page reads — it IS the run's
+  // observation date, so it is the honest stamp. `summary.generated_at` is
+  // the moment the backtest process finished writing its files: a BUILD time,
+  // which the contract says a stamp must never report. It is therefore kept
+  // out of the composite and demoted to hover context.
+  //
+  // Nothing here auto-follows the newest run on disk, so as newer
+  // <date>_validation directories appear this stamp legitimately reddens.
+  // That is the point: a pinned page that looks current is the lie.
+  const gen = summary?.generated_at || summaryH?.generated_at || null;
+  const genNote = gen
+    ? 'Backtest process finished ' + String(gen).replace('T', ' ').replace(/\..+Z$/, ' UTC')
+      + ' — that is a build time, not an observation.'
+    : '';
+  paintComposite(
+    $('bt-generated'),
+    [{ label: 'run', date: VALIDATION_DATE }],
+    {
+      detailEl: $('bt-fresh-note'),
+      what: 'This backtest run',
+      baseClass: 'lthcs-meta-value',
+      title: 'Run id ' + VALIDATION_DATE + '_validation (pinned by the page). ' + genNote,
+    },
+  );
 
   if (summary || summaryH) {
     const days = summary?.n_observation_dates ?? summaryH?.n_observation_dates ?? 90;
