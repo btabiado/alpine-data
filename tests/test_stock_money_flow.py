@@ -49,8 +49,11 @@ def test_score_stock_uptrend_positive():
     assert -100.0 <= out["score"] <= 100.0
     assert out["score"] > 0
     assert out["label"] in {"Inflow", "Heavy Inflow", "Neutral"}
-    # contract fields present
-    assert set(out.keys()) == {"symbol", "name", "score", "label", "mfi", "cmf", "indices", "sector"}
+    # contract fields present. `as_of` = the last bar MFI/CMF were computed
+    # from, so the payload stamp can be the oldest contributing bar rather
+    # than a wall-clock reading.
+    assert set(out.keys()) == {"symbol", "name", "score", "label", "mfi", "cmf",
+                               "indices", "sector", "as_of"}
     assert out["indices"] == ["NASDAQ-100", "S&P 500"]
 
 

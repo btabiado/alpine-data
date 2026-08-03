@@ -342,7 +342,7 @@ def compute_signal_simple(coin: dict) -> dict | None:
 
     Field names match the actual markets_top shape from fetch_market.py
     (price_usd, market_cap_usd, volume_24h_usd, change_*_pct, sparkline_7d,
-    rank, symbol, name, image)."""
+    rank, symbol, name, image, as_of, stale)."""
     if not coin:
         return None
     spark = coin.get("sparkline_7d") or []
@@ -404,11 +404,37 @@ def compute_signal_simple(coin: dict) -> dict | None:
         add("RSI(14) sparkline", f"{rsi:.1f}", c, e)
 
     score = max(-100, min(100, sum(x["contribution"] for x in comps)))
+    # ---- provenance -------------------------------------------------------
+    # `as_of` is the OBSERVATION date of the row this score was computed
+    # from — CoinGecko's own `last_updated`, carried through markets_top by
+    # fetch_market.coingecko_top_markets. It used to be
+    # `datetime.now(UTC)`, i.e. the moment this function ran, which meant a
+    # stale-kept markets_top (CG 429 → previous list copied forward) came
+    # out stamped with today's date. Every one of these cards then read as
+    # current while the prices behind them were frozen. Never reintroduce a
+    # clock call here.
+    #
+    # None when the upstream row carries no date (older cached market.json,
+    # or CG omitted last_updated) — consumers render an explicit
+    # "unavailable" rather than substituting today.
+    _as_of = coin.get("as_of")
+    _as_of = _as_of[:10] if isinstance(_as_of, str) and len(_as_of) >= 10 else None
+    out_stale = bool(coin.get("stale"))
     return {
         "score": int(score),
         "label": _label(score),
         "components": comps,
-        "as_of": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "as_of": _as_of,
+        # Distinct, unambiguously-named companion to `as_of`: the wall
+        # clock at scoring time. This is BUILD time (the dashboard builders
+        # call compute_all_top20 while rendering), not fetch time and
+        # certainly not a data date. Kept for debugging "when did this last
+        # rebuild"; it must never be rendered as a freshness stamp.
+        "computed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        # True when the underlying markets_top row was served from cache.
+        # A date alone under-reports staleness across a 50-coin list, so
+        # consumers count these and disclose "N of M served from cache".
+        "stale": out_stale,
         "price": float(price) if price else None,
         "symbol": coin.get("symbol"),
         "name": coin.get("name"),

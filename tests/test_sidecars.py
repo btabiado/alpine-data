@@ -254,10 +254,45 @@ def test_build_payload_hoists_defi_to_top_level(tmp_path: Path, monkeypatch):
     (tmp_path / "whale.json").write_text(json.dumps({"btc": {"tx_volume_usd": []}}))
 
     payload = app.build_payload()
-    # Hoisted to top level for sidecar extraction.
-    assert payload["defi"] == {"chains": [{"name": "Ethereum", "tvl_usd": 1.0}]}
+    # Hoisted to top level for sidecar extraction. The original content is
+    # preserved verbatim; build_payload additionally stamps freshness
+    # provenance onto the subtree (see stamp_defi_provenance) because the
+    # DeFi tab otherwise has no honest observation date to render.
+    assert payload["defi"]["chains"] == [{"name": "Ethereum", "tvl_usd": 1.0}]
+    # No TVL history in this fixture and no fetched_at on market -> both
+    # provenance fields are None. Crucially `as_of` is NOT backfilled from a
+    # clock: an undatable subtree must render "as of —", never today.
+    assert payload["defi"]["as_of"] is None
+    assert payload["defi"]["snapshot_fetched_at"] is None
     # And removed from market so it isn't double-inlined.
     assert "defi" not in payload["market"]
+
+
+def test_build_payload_stamps_a_real_defi_observation_date(tmp_path: Path, monkeypatch):
+    """With a TVL history present, the hoisted subtree carries the OLDEST
+    daily bucket across chains — a real observation date, and the value the
+    DeFi tab's stamp renders."""
+    monkeypatch.setattr(app, "DATA_DIR", tmp_path)
+    (tmp_path / "btc_flows.csv").write_text("date,Total\n2024-01-11,100.0\n")
+    (tmp_path / "eth_flows.csv").write_text("date,Total\n2024-07-23,5.0\n")
+    (tmp_path / "market.json").write_text(json.dumps({
+        "btc": {"price": []},
+        "eth": {"price": []},
+        "fetched_at": "2026-08-03T00:00:00+00:00",
+        "defi": {
+            "chains": [{"name": "Ethereum", "tvl_usd": 1.0}],
+            "tvl_history": {
+                "Ethereum": [{"date": "2026-08-01", "tvl_usd": 1}],
+                "Solana":   [{"date": "2026-06-09", "tvl_usd": 2}],
+            },
+        },
+    }))
+    (tmp_path / "whale.json").write_text(json.dumps({}))
+
+    payload = app.build_payload()
+    assert payload["defi"]["as_of"] == "2026-06-09", "oldest chain, not newest"
+    # Fetch time is recorded under a name nobody can mistake for a data date.
+    assert payload["defi"]["snapshot_fetched_at"] == "2026-08-03T00:00:00+00:00"
 
 
 def test_build_payload_defi_defaults_to_empty_dict(tmp_path: Path, monkeypatch):

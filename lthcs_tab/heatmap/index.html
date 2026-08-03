@@ -23,9 +23,13 @@
           <p class="lthcs-subtitle">Daily LTHCS scores grouped by GICS sector</p>
         </div>
         <div class="lthcs-header-meta">
+          <!-- Data-freshness stamp: age of the OBSERVATIONS behind the tiles,
+               never the page build. Composite over snapshot + universe roster;
+               #hm-fresh-note appears only when those inputs disagree. -->
           <div class="lthcs-meta-line">
-            <span class="lthcs-meta-label">Last updated</span>
+            <span class="lthcs-meta-label">Data as of</span>
             <span id="hm-last-updated" class="lthcs-meta-value">&hellip;</span>
+            <span id="hm-fresh-note" class="lthcs-freshnote" hidden></span>
           </div>
           <a class="lthcs-refresh-btn hm-back-link" href="../" aria-label="Back to card view">
             <span aria-hidden="true">&larr;</span>

@@ -92,23 +92,86 @@ def _series_last_date(series) -> str | None:
     return None
 
 
+def _oldest(dates) -> str | None:
+    """MIN of a set of contributing dates.
+
+    A composite is only as fresh as its OLDEST input. Taking the newest is
+    how one still-updating coin makes a breadth index built from 50 of them
+    read as current — the exact mechanism behind the freeze this directory
+    exists to make visible.
+    """
+    ds = [d[:10] for d in (dates or []) if isinstance(d, str) and len(d) >= 10]
+    return min(ds) if ds else None
+
+
+def _poc_entry_date(e) -> str | None:
+    """Observation date of one poc_top entry: its explicit ``as_of`` (which
+    fetch_market pins and never advances on carry-forward), else the last
+    date of its own signal_history."""
+    if not isinstance(e, dict):
+        return None
+    d = e.get("as_of")
+    if isinstance(d, str) and len(d) >= 10:
+        return d[:10]
+    return _series_last_date(e.get("signal_history"))
+
+
+def _whale_sentiment_date(sent) -> str | None:
+    """Observation date of a whale-sentiment composite — or None.
+
+    ``sentiment.as_of`` USED to be ``whale["fetched_at"][:10]``: the wall
+    clock at fetch time, which advanced on every run even when nothing
+    on-chain moved. Persisting that into the composite history would bake a
+    permanently-fresh-looking date into an archive whose entire purpose is
+    to make freezes visible.
+
+    fetch_market now derives ``as_of`` from the oldest contributing proxy
+    series and tags the payload with ``as_of_basis``. A payload without that
+    tag predates the fix (whale.json is restored from the Actions cache and
+    never committed, so old shapes do persist) and its ``as_of`` is refused —
+    the caller falls back to dating the composite from the raw series.
+    """
+    if not isinstance(sent, dict):
+        return None
+    if not isinstance(sent.get("as_of_basis"), str):
+        return None
+    d = sent.get("as_of")
+    return d[:10] if isinstance(d, str) and len(d) >= 10 else None
+
+
 def collect() -> dict:
     market = _load(CACHE / "market.json") or {}
     whale = _load(CACHE / "whale.json") or {}
     idx: dict[str, dict | None] = {}
 
     # --- Whale Sentiment Index (BTC) — computed Python-side in fetch_market ---
+    # Fallback when the payload predates the provenance fix: the OLDEST last
+    # date across the blockchain.info series the composite is built from.
+    # Taking one series' last date (or worse, `fetched_at`) would overstate
+    # the composite exactly the way this archive exists to catch.
     ws = (whale or {}).get("sentiment") or {}
     btc = (whale or {}).get("btc") or {}
     idx["whale_sentiment_btc"] = _entry(
         ws.get("score"), ws.get("label"),
-        ws.get("as_of") or _series_last_date(btc.get("tx_volume_usd")),
+        _whale_sentiment_date(ws) or _oldest([
+            _series_last_date(btc.get(k)) for k in (
+                "hash_rate", "miners_revenue_usd", "avg_tx_usd",
+                "output_volume_btc", "active_addresses", "tx_volume_usd",
+            )
+        ]),
     )
 
     # --- ETH Whale Sentiment Index ---
     wse = ((whale or {}).get("eth") or {}).get("sentiment") or {}
+    eth_cm = (((whale or {}).get("eth") or {}).get("coin_metrics") or {})
+    eth_eds = (((whale or {}).get("eth") or {}).get("etherscan_daily") or {})
     idx["whale_sentiment_eth"] = _entry(
-        wse.get("score"), wse.get("label"), wse.get("as_of"),
+        wse.get("score"), wse.get("label"),
+        _whale_sentiment_date(wse) or _oldest(
+            [_series_last_date(eth_cm.get(k)) for k in ("AdrActCnt", "TxCnt")]
+            + [_series_last_date(eth_eds.get("series")
+                                 if isinstance(eth_eds, dict) else None)]
+        ),
     )
 
     # --- Money Flow Index (±100 headline) ---
@@ -129,7 +192,23 @@ def collect() -> dict:
         u = (sym or "").upper()
         return u.startswith("USD") or u.endswith("USD") or u == "DAI"
 
-    sigs = [s for s in (market.get("signals_top20") or [])
+    # `signals_top20` is computed at RENDER time by app.py / v2/app.py and
+    # only ever exists in their in-memory payload — it is never written to
+    # data/market.json, which is all this script can see. That is why every
+    # committed snapshot so far records `crypto_signal_sentiment: null`:
+    # the gauge the user watches has no history at all. Recompute it here
+    # from the same pure function the builders call, over the same
+    # markets_top rows, so the series actually starts accumulating.
+    top20 = market.get("signals_top20")
+    if not top20:
+        try:
+            import signals as _sig
+            top20 = _sig.compute_all_top20({"market": market})
+        except Exception as e:  # never fail the build over a composite
+            print(f"  [composites] signals_top20 recompute skipped: "
+                  f"{type(e).__name__}: {e}")
+            top20 = []
+    sigs = [s for s in (top20 or [])
             if isinstance(s, dict) and not _is_stable(s.get("symbol"))]
     if sigs:
         def bucket(s):
@@ -148,9 +227,19 @@ def collect() -> dict:
             pos = sum(1 for b in buckets if b in ("buy", "strong_buy"))
             neg = sum(1 for b in buckets if b in ("sell", "strong_sell"))
             score = int(round(max(-100, min(100, (pos - neg) / total * 100))))
+            # as_of was `market.generated_at` — the payload's BUILD stamp,
+            # which reads current on every run no matter how old the coins
+            # under it are. Each signals_top20 entry now carries the
+            # CoinGecko observation date of the row it was scored from, so
+            # the composite takes the oldest of those, and discloses how
+            # many were served from cache.
+            cached = sum(1 for s in sigs if s.get("stale"))
+            note = f"{total} coins; {pos} buy+, {neg} sell+"
+            if cached:
+                note += f"; {cached} of {len(sigs)} cached"
             idx["crypto_signal_sentiment"] = _entry(
-                score, None, market.get("generated_at", "")[:10] or None,
-                note=f"{total} coins; {pos} buy+, {neg} sell+",
+                score, None, _oldest(s.get("as_of") for s in sigs),
+                stale=bool(cached), note=note,
             )
         else:
             idx["crypto_signal_sentiment"] = None
@@ -163,23 +252,27 @@ def collect() -> dict:
     # future chart can show the flat-line for what it is.
     poc = market.get("poc_top") or []
     if isinstance(poc, list) and poc:
-        hist_dates = [
-            _series_last_date(e.get("signal_history"))
-            for e in poc if isinstance(e, dict)
-        ]
-        hist_dates = [d for d in hist_dates if d]
-        any_stale = any(bool(e.get("stale")) for e in poc if isinstance(e, dict))
+        entries = [e for e in poc if isinstance(e, dict)]
+        # MIN, not max. This used to record the newest contributing date,
+        # so a single coin still fetching kept the whole breadth index
+        # looking live while carried-forward coins underneath it were
+        # weeks old.
+        hist_dates = [_poc_entry_date(e) for e in entries]
+        cached = sum(1 for e in entries if e.get("stale"))
         scores = [
             (e.get("signal_history") or [{}])[-1].get("score")
-            for e in poc if isinstance(e, dict) and e.get("signal_history")
+            for e in entries if e.get("signal_history")
         ]
         scores = [s for s in scores if isinstance(s, (int, float))]
+        note = f"{len(scores)} coins; mean of latest per-coin signal"
+        if cached:
+            note += f"; {cached} of {len(entries)} cached"
         idx["poc_signal_breadth"] = _entry(
             int(round(sum(scores) / len(scores))) if scores else None,
             None,
-            max(hist_dates) if hist_dates else None,
-            stale=any_stale,
-            note=f"{len(scores)} coins; mean of latest per-coin signal",
+            _oldest(hist_dates),
+            stale=bool(cached),
+            note=note,
         )
     else:
         idx["poc_signal_breadth"] = None

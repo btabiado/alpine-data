@@ -17,6 +17,9 @@
    page usable when no A/B run exists yet.
    ========================================================================= */
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const DATA_ROOT = '../data/lthcs';
 const BACKTEST_ROOT = `${DATA_ROOT}/backtest`;
 const LAST_RUN_KEY = 'lthcs.backtest.ab.last_run';
@@ -131,7 +134,24 @@ async function main() {
   content.classList.remove('hidden');
 
   // Header.
-  $('ab-generated').textContent = comparison.generated_at?.split('T')[0] ?? '?';
+  // The run id encodes the day the A/B comparison observed its data
+  // (ab_YYYYMMDDThhmmssZ). Prefer it over generated_at, which is the moment
+  // the writer process finished — a build time the contract keeps off stamps.
+  const runDay = /^ab_(\d{4})(\d{2})(\d{2})T/.exec(latest?.run_id || '');
+  const runDate = runDay ? `${runDay[1]}-${runDay[2]}-${runDay[3]}` : null;
+  paintComposite(
+    $('ab-generated'),
+    [{ label: 'run', date: runDate }],
+    {
+      detailEl: $('ab-fresh-note'),
+      what: 'This A/B comparison',
+      baseClass: 'lthcs-meta-value',
+      title: 'Run ' + (latest?.run_id || 'unknown')
+        + (comparison.generated_at
+          ? '. Writer finished ' + comparison.generated_at + ' — a build time, not an observation.'
+          : ''),
+    },
+  );
   const sub = `${comparison.label_a}  vs.  ${comparison.label_b}`;
   $('ab-subtitle').textContent = sub;
 

@@ -36,6 +36,9 @@
    `last_scored` if present.
    ========================================================================= */
 
+// Shared data-freshness stamp (ported from v2/app.py — one dialect site-wide).
+import { paintComposite } from '../lthcs_tab/lthcs-freshness.js';
+
 const DATA_ROOT = '../data/lthcs';
 const REPO_BASE = 'https://github.com/btabiado/alpine-data';
 const WORKFLOWS_BASE = `${REPO_BASE}/actions/workflows`;
@@ -608,6 +611,10 @@ async function main() {
   const errBox = $('freshness-error');
   const content = $('freshness-content');
 
+  // This IS a clock read, and it stays — but only under the "Probed at
+  // (clock)" label, where it is honest. It is not, and must never become, the
+  // page's freshness stamp: a probe timestamp reads 0d old no matter how long
+  // the crons have been dead. The data stamp is painted after the probes.
   $('freshness-asof').textContent = new Date().toISOString().replace('T', ' ').slice(0, 16) + 'Z';
 
   // Run every probe in parallel. Any individual probe that throws is
@@ -645,6 +652,26 @@ async function main() {
   }
 
   renderSummary(rows);
+
+  // Data-freshness stamp: a composite over every cron output this page
+  // probed, so the headline is the OLDEST of them (Rule 2). A probe that
+  // found nothing has lastDate === null and is disclosed as undated rather
+  // than dropped — a cron that produced no output at all is the worst case
+  // on the page, so it must not be able to improve the stamp by vanishing.
+  paintComposite(
+    $('freshness-data-asof'),
+    rows.map((r) => ({ label: r.name || 'cron', date: r.lastDate })),
+    {
+      detailEl: $('freshness-fresh-note'),
+      what: 'This pipeline view',
+      baseClass: 'lthcs-meta-value',
+      // Cadences here span hourly to monthly, so the daily thresholds would
+      // be permanently red. Widened to the slowest cron, same dialect.
+      warnDays: 35,
+      badDays: 45,
+    },
+  );
+
   renderDeployContext(await fetchSnapshotMeta());
 
   loading.classList.add('hidden');
