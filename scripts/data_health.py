@@ -114,12 +114,32 @@ from build_health_status import (  # noqa: E402  (path set above)
     DEFAULT,
     THRESHOLDS,
     AgeProbe,
-    _select,          # noqa: F401  re-export
+    _select,
     humanize_age,
-    nested_age_h,     # noqa: F401  re-export
+    nested_age_h,
     resolve_age,
 )
 from build_health_status import NESTED_DATE_PATHS as _NESTED_DATE_PATHS  # noqa: E402
+
+# `_select` and `nested_age_h` are re-exports, not dead imports: the age
+# resolution they implement lives in build_health_status so /health/ and this
+# watchdog can never disagree about what "stale" means, and the tests exercise
+# it through `data_health` because that is the module under test.
+# Declared here so that intent is machine-readable — CodeQL correctly flagged
+# them as unused when only a `# noqa` comment asserted otherwise.
+__all__ = [
+    # re-exported age machinery (shared with build_health_status / /health/)
+    "AgeProbe", "DEFAULT", "NESTED_DATE_PATHS", "THRESHOLDS",
+    "_select", "humanize_age", "nested_age_h", "resolve_age",
+    # this module's own surface
+    "COMMITTED", "BUILT", "STATIC", "DELEGATED",
+    "OK", "STALE", "UNKNOWN", "MISSING", "UNWATCHED", "SUPPRESSED", "EXPIRED",
+    "SKIPPED",
+    "Feed", "Result", "Suppression",
+    "MANIFEST", "SUPPRESSIONS",
+    "discover", "evaluate", "remediate",
+    "render_text", "render_issue", "main",
+]
 
 # Overridable so the monitor can be pointed at a fixture tree in tests without
 # a chdir dance. Defaults to the real repo root in every normal invocation.
@@ -671,13 +691,18 @@ def render_issue(results: list[Result], notes: list[str]) -> str:
     live status board rather than a pile of duplicate notifications.
     """
     failing = [r for r in results if r.fails]
+    # Explicit `+`, not adjacent-literal concatenation. Inside a LIST, two
+    # adjacent string literals are indistinguishable from a forgotten comma:
+    # the reader sees two rows, Python builds one. CodeQL flags the shape for
+    # exactly that reason and `+` is its documented remediation — it states
+    # the intent instead of relying on whitespace.
     lines = [
         "Automated data-health report. This issue is maintained by "
-        "`.github/workflows/data-health.yml` — it updates in place while feeds "
-        "are unhealthy and closes itself once they all recover.",
+        + "`.github/workflows/data-health.yml` — it updates in place while "
+        + "feeds are unhealthy and closes itself once they all recover.",
         "",
         f"**{len(failing)} feed(s) unhealthy** as of "
-        f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC.",
+        + f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M')} UTC.",
         "",
         "| feed | status | age | limit | owner |",
         "| --- | --- | --- | --- | --- |",
@@ -697,7 +722,7 @@ def render_issue(results: list[Result], notes: list[str]) -> str:
     muted = [r for r in results if r.status == SUPPRESSED]
     if muted:
         lines += ["", f"<details><summary>{len(muted)} suppressed "
-                      f"(not failing, but on the clock)</summary>", ""]
+                      + "(not failing, but on the clock)</summary>", ""]
         for r in muted:
             lines.append(f"- **`{r.path}`** — {r.detail}")
         lines += ["", "</details>"]
