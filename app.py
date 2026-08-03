@@ -51,6 +51,13 @@ SIDECAR_KEYS: tuple[str, ...] = ("whale", "defi")
 # — no need to re-fetch to see the size drop.
 FEAR_GREED_MAX_DAYS = 1095
 
+# How many daily composite snapshots (data/composites/<date>.json) get folded
+# into the inlined history. One file is ~600 bytes and collapses to a handful
+# of points per index, so a year of archive costs well under 100KB inlined —
+# cheap enough to avoid a sidecar round trip on click. The cap exists so the
+# payload cannot grow without bound once the directory has years in it.
+COMPOSITE_HISTORY_MAX_SNAPSHOTS = 400
+
 
 def split_payload_for_sidecars(
     payload: dict, keys: tuple[str, ...] = SIDECAR_KEYS
@@ -318,6 +325,134 @@ def streak_calc(values: list[float]) -> dict:
     return {"direction": direction, "length": length}
 
 
+def load_composite_history(max_snapshots: int = COMPOSITE_HISTORY_MAX_SNAPSHOTS) -> dict:
+    """Fold ``data/composites/<YYYY-MM-DD>.json`` into a per-index time series.
+
+    scripts/snapshot_composites.py has been writing one file per day since
+    PR #23 and nothing has ever read it. This is the reader.
+
+    Output shape (all of it inlined into the payload — the whole archive is
+    a few hundred bytes per day, far smaller than a sidecar round trip)::
+
+        {
+          "snapshots": 37,                    # files actually parsed
+          "first_snapshot": "2026-08-02",     # by FILENAME, i.e. capture day
+          "last_snapshot":  "2026-09-07",
+          "indexes": {
+            "crypto_signal_sentiment": {
+              "points": [{"as_of","score","label","stale","note","snapshot"}],
+              "snapshots": 37,   # days this key appeared in, null or not
+              "dated": 31,       # snapshots that produced a plottable point
+              "undated": 2,      # recorded a score but no observation date
+              "missing": 4,      # recorded as null -> a real gap in the series
+            }, ...
+          }
+        }
+
+    THE RULES (each one is a lie this function refuses to tell):
+
+    * A point is dated by the value's OWN ``as_of``, never by the filename.
+      A snapshot captured today can hold a value observed three weeks ago —
+      the composite archive exists precisely to make that visible, so
+      plotting it at the capture date would destroy the only signal it has.
+    * An entry with a score but no ``as_of`` is UNPLOTTABLE, not "today".
+      It is counted in ``undated`` and dropped from ``points``.
+    * A ``null`` entry is a GAP, counted in ``missing``, never interpolated.
+    * ``stale`` rides along per point so the chart can mark cache-served
+      observations instead of drawing them as genuine flat-line movement.
+    * Two snapshots reporting the SAME ``as_of`` are the same observation
+      seen twice (the source had not refreshed between captures). They
+      collapse to one point — the later capture wins, because it is the
+      most recently recomputed view of that observation — and the collapse
+      is what makes a frozen source render as a single stationary dot
+      rather than a week of fake daily readings.
+    * A key that appears in ANY snapshot is emitted even with zero points,
+      so the UI can distinguish "tracked, nothing recorded yet" from
+      "not tracked at all".
+
+    Never raises: a missing directory or an unparseable file is a gap in the
+    series, not a reason to fail a build.
+
+    Byte-for-byte the same loader v2/app.py carries. Change one, change both.
+    """
+    out: dict = {"snapshots": 0, "first_snapshot": None,
+                 "last_snapshot": None, "indexes": {}}
+    src = DATA_DIR / "composites"
+    if not src.is_dir():
+        return out
+    try:
+        files = sorted(p for p in src.glob("*.json") if p.stem[:4].isdigit())
+    except Exception as e:  # pragma: no cover - defensive
+        print(f"  [composites] listing failed: {e}", file=sys.stderr)
+        return out
+    if not files:
+        return out
+    if max_snapshots and len(files) > max_snapshots:
+        files = files[-max_snapshots:]
+
+    # as_of -> point, per index. dict preserves insertion order; we sort by
+    # as_of at the end because a later capture can carry an OLDER as_of.
+    series: dict[str, dict[str, dict]] = {}
+    meta: dict[str, dict] = {}
+    parsed = 0
+    for path in files:
+        try:
+            snap = json.loads(path.read_text())
+        except Exception as e:
+            print(f"  [composites] {path.name}: {e}", file=sys.stderr)
+            continue
+        if not isinstance(snap, dict):
+            continue
+        idx = snap.get("indexes")
+        if not isinstance(idx, dict):
+            continue
+        parsed += 1
+        snap_day = str(snap.get("as_of") or path.stem)[:10]
+        for key, entry in idx.items():
+            m = meta.setdefault(key, {"snapshots": 0, "dated": 0,
+                                      "undated": 0, "missing": 0})
+            m["snapshots"] += 1
+            if not isinstance(entry, dict):
+                m["missing"] += 1          # null → gap, never interpolated
+                series.setdefault(key, {})
+                continue
+            score = entry.get("score")
+            if not isinstance(score, (int, float)) or isinstance(score, bool):
+                m["missing"] += 1
+                series.setdefault(key, {})
+                continue
+            as_of = entry.get("as_of")
+            as_of = str(as_of)[:10] if isinstance(as_of, str) and len(str(as_of)) >= 10 else None
+            if not as_of:
+                # Scored but undatable. Refuse to date it from the filename.
+                m["undated"] += 1
+                series.setdefault(key, {})
+                continue
+            m["dated"] += 1
+            series.setdefault(key, {})[as_of] = {
+                "as_of": as_of,
+                "score": score,
+                "label": entry.get("label") if isinstance(entry.get("label"), str) else None,
+                "stale": bool(entry.get("stale")),
+                "note": entry.get("note") if isinstance(entry.get("note"), str) else None,
+                "snapshot": snap_day,
+            }
+
+    out["snapshots"] = parsed
+    out["first_snapshot"] = files[0].stem[:10]
+    out["last_snapshot"] = files[-1].stem[:10]
+    for key, m in sorted(meta.items()):
+        pts = sorted(series.get(key, {}).values(), key=lambda p: p["as_of"])
+        out["indexes"][key] = {
+            "points": pts,
+            "snapshots": m["snapshots"],
+            "dated": m["dated"],
+            "undated": m["undated"],
+            "missing": m["missing"],
+        }
+    return out
+
+
 def build_payload() -> dict:
     """Read CSVs + JSON caches and return the full dashboard payload."""
     btc_df = ensure_total(load_csv(DATA_DIR / "btc_flows.csv"))
@@ -360,6 +495,10 @@ def build_payload() -> dict:
         "market": market,
         "whale": whale,
         "defi": defi or {},
+        # Daily archive of every composite index, so a card can chart its own
+        # past instead of only ever showing today's number. See
+        # load_composite_history() for the shape and the honesty rules.
+        "composite_history": load_composite_history(),
         "generated_at": datetime.now().isoformat(timespec="seconds"),
     }
     try:
@@ -1035,6 +1174,102 @@ header .meta{color:var(--muted);font-size:12px}
 #textBtn[hidden]{display:none !important}
 .lbl{font-size:11px;color:var(--muted);align-self:center;margin:0 4px;letter-spacing:.04em;text-transform:uppercase}
 .container{padding:18px 24px;display:grid;gap:18px;max-width:1600px;margin:0 auto}
+/* ===== HORIZONTAL-OVERFLOW GUARD (the phone bug) ==========================
+   `.container` is display:grid with no grid-template-columns, so its single
+   implicit track is `auto` — and an `auto` track's BASE SIZE is the
+   MIN-CONTENT of its widest grid item. Every tab panel is a grid item (and
+   several tabs nest a second .container inside the first), so ANY descendant
+   with an intrinsic minimum width pushes the track — and therefore the whole
+   document — wider than the viewport. The phone then scrolls sideways on that
+   tab even though only one card is actually too wide.
+
+   Measured on the BUILT page at 360x740, document.documentElement.scrollWidth
+   per tab, before any of these rules:
+     · real_estate     1656px  (also 1696px at 1280 — it overflowed DESKTOP)
+     · aviation:used / :calc / :sources  582 / 582 / 586px
+     · travel           439px
+     · supplies/metals  432px
+     · aviation         402px
+     · stocks / lthcs   371px
+   Three distinct mechanisms produced all of it.
+
+   Rule 1 — `.container > *{min-width:0}`. This is the big one: it decouples
+   the grid track from its content's min-content, so the track is the viewport
+   and each surface has to solve its own overflow LOCALLY (which the cards'
+   ellipsis / overflow-x:auto bodies were already set up to do). On its own it
+   takes real_estate 1656→360, aviation 402→360, stocks/lthcs 371→360, every
+   aviation sub-view →360, and the 1280 desktop overflow →1280. The
+   min-content it was reading in real_estate came from #realEstateSummary
+   (1618px: the metro/state roll-up grids inside it), which is exactly the
+   kind of thing that should scroll its own box, not the page.
+
+   Rule 2 — the two `minmax(420px,1fr)` grids. `repeat(auto-fit,
+   minmax(420px,1fr))` hard-codes a 420px track floor, so on a 360px phone the
+   track is WIDER than the viewport by construction; auto-fit cannot help
+   because the minimum is not a percentage. `min(420px,100%)` keeps the
+   two-column desktop layout (100% is the wider value there) and collapses to
+   the container width on a phone. After rule 1 the grid BOX had already
+   shrunk to 336px while still painting a 420px track — 432px total.
+
+   Rule 3 — content that PAINTS wider than its (already shrunk) box.
+   `.travel-bullet__body` has flex:1;min-width:0 so the box does shrink, but
+   an unbreakable token still spills through overflow:visible and re-grows the
+   document. The live offender is a State-Dept excerpt whose HTML entities
+   arrive double-escaped, so `&#8220;Unrest&#8221;` renders as 20 literal
+   unbreakable characters. `anywhere` (not `break-word`) is deliberate — only
+   `anywhere` ALSO lowers the min-content size, which is what a grid track
+   reads. .tag/.v2-fresh/.v2-chip are included pre-emptively: they are the
+   short-string surfaces that carry unbroken source names and dates.
+
+   NOT the freshness stamps: hiding every .v2-fresh / .v2-freshstrip leaves
+   scrollWidth byte-identical. Verified before touching anything.
+
+   Same three mechanisms V2 fixed, mapped onto V1's markup: V1 has no
+   .v2-card/.v2-card__head flex wrappers, so rules 1b/1c have no V1 analogue,
+   and V1's two fixed-minimum grids have no V2 analogue. */
+.container > *{min-width:0}
+.travel-bullet__title,.travel-bullet__excerpt,.travel-bullet__top,
+.tag,.v2-fresh,.v2-chip{overflow-wrap:anywhere}
+/* Rule 2 lives on the .metals-grid2 / .supplies-grid declarations themselves,
+   further down this stylesheet — an override up here would lose the cascade
+   to the later same-specificity rule. */
+
+/* ===== COMPOSITE INDEX HISTORY AFFORDANCE ================================
+   A composite card whose value is archived daily to data/composites/ becomes
+   clickable and opens its own history chart. The call-to-action is appended
+   as the card's LAST child, in normal flow — deliberately NOT absolutely
+   positioned, because every one of these cards already puts its big score in
+   the top-right corner and an overlay chip would land on top of it. Adding a
+   row at the bottom cannot reflow anything above it.
+   Mirrors v2/app.py's .v2-hist* block; V1 palette tokens (--purple is the
+   composite-card accent, already the border-left colour on all seven .card
+   sentiment cards). */
+.histcard{cursor:pointer}
+.histcard:hover{border-color:var(--purple)}
+.histcta{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);
+  display:flex;align-items:center;justify-content:flex-start}
+.histbtn{font:inherit;font-size:11px;font-weight:600;line-height:1.3;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;
+  background:rgba(167,139,250,.14);color:var(--purple);
+  border:1px solid var(--purple);text-align:left}
+.histbtn:hover{filter:brightness(1.15)}
+.histbtn:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+/* Not-yet-archived index: the click still does something honest (it explains
+   what is missing) but must not promise a chart, so it reads as muted. */
+.histbtn--none{background:transparent;color:var(--muted);border-color:var(--border);font-weight:500}
+.histchart{width:100%;height:auto;display:block}
+.histnote{font-size:11.5px;line-height:1.5;color:var(--muted)}
+.histwarn{font-size:12px;line-height:1.5;border-radius:6px;padding:9px 11px;
+  background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.36);color:var(--amber)}
+.histlegend{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--muted);align-items:center}
+.histlegend b{font-weight:600;color:var(--text)}
+.histtable{width:100%;border-collapse:collapse;font-size:11.5px}
+.histtable th,.histtable td{text-align:left;padding:3px 8px 3px 0;border-bottom:1px solid var(--border);white-space:nowrap}
+.histtable th{color:var(--muted);font-weight:600}
+/* Horizontal scroll only. A nested vertical scroller inside a modal that
+   already scrolls is miserable on a phone — the row list is capped in JS
+   instead (COMPOSITE_HISTORY_TABLE_ROWS). */
+.histscroll{overflow-x:auto}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
 /* Top-25 signals strip layout. Outer #top20SignalCards is a vertical flex
    column — each populated bucket section gets its OWN full-width row, and
@@ -1667,12 +1902,19 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
 .metals-pct{display:inline-block;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid var(--border);color:var(--muted);margin-top:2px}
 .metals-pct.good{color:#22c55e;border-color:#22c55e}
 .metals-pct.bad{color:#ef4444;border-color:#ef4444}
-.metals-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+/* minmax(min(420px,100%),1fr), not minmax(420px,1fr) — see the
+   HORIZONTAL-OVERFLOW GUARD block near .container. A bare 420px track floor
+   is wider than a 360px phone by construction and auto-fit cannot rescue it,
+   so the Metals tab measured 432px at both 360 and 390. min() keeps the
+   two-up desktop layout (100% is the larger value there) and collapses the
+   track to the container on a phone. */
+.metals-grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:14px}
 .metals-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px}
 .metals-card h3{margin:0 0 4px;font-size:12px;font-weight:700;color:var(--text)}
 .metals-card .sub{font-size:11px;color:var(--muted)}
 /* Supplies grid */
-.supplies-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+/* Same fixed-420px-track overflow as .metals-grid2 above; same fix. */
+.supplies-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(420px,100%),1fr));gap:14px}
 .supplies-snapshot{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px}
 /* Travel Advisories tab — ported from V2 but mapped onto V1 tokens
    (var(--panel), var(--border), var(--muted), .card, etc.) so it lives
@@ -1985,6 +2227,31 @@ footer{padding:18px 24px;color:var(--muted);font-size:12px;text-align:center;bor
       <button class="btn" id="symbolDetailClose" aria-label="Close symbol detail">×</button>
     </div>
     <div id="symbolDetailBody"></div>
+  </div>
+</div>
+
+<!-- ============ COMPOSITE INDEX HISTORY MODAL ============ ================
+     Every composite index card (Crypto Signal Sentiment, POC breadth, the two
+     Whale Sentiment gauges, …) is clickable and opens this one shared modal
+     with that index's own daily history, read from DATA.composite_history
+     (folded out of data/composites/<date>.json by load_composite_history()).
+
+     One modal reused for every index — same reason there is one freshness()
+     for every stamp. Opened by openCompositeHistory(<index key>); the title,
+     chart and disclosure block are all written into the slots below.
+     role/aria-modal + focus handling live in the opener, not the markup, so
+     the two stay in sync. -->
+<div id="compositeHistoryModal" class="modal-bg hidden" role="dialog" aria-modal="true"
+     aria-labelledby="compositeHistoryTitle">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;width:min(760px,100%);max-height:92vh;display:flex;flex-direction:column;gap:10px;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="min-width:0">
+        <h2 id="compositeHistoryTitle" style="margin:0;font-size:15px">Index history</h2>
+        <div id="compositeHistorySub" class="sub" style="font-size:11px;color:var(--muted);margin-top:2px"></div>
+      </div>
+      <button class="btn" id="compositeHistoryClose" aria-label="Close index history">×</button>
+    </div>
+    <div id="compositeHistoryBody"></div>
   </div>
 </div>
 
@@ -4401,6 +4668,49 @@ window.addEventListener('error', e => {
   } catch (_) { /* defensive */ }
 });
 
+// ---------------------------------------------------------------------------
+// CHART.JS FAILURE MUST NOT SWALLOW THE FRESHNESS STAMPS
+// ---------------------------------------------------------------------------
+// Chart.js is a CDN dependency behind an SRI pin (cdn.jsdelivr.net, see the
+// <script integrity=…> in <head>). When jsDelivr is blocked, the pin
+// mismatches after a version bump, or the client is offline, the global
+// `Chart` never exists — and `new Chart(...)` then throws a ReferenceError
+// that aborts the *whole renderer*. Everything after that line, including the
+// data-freshness stamp that renderer paints, silently never runs.
+//
+// This is not hypothetical on V1: with jsDelivr blocked, `selectTab('etf')`
+// throws `ReferenceError: Chart is not defined at renderFlow` and the ETF tab
+// renders nothing at all — no numbers, no stamp, no empty state.
+//
+// A stamp that is missing is as dishonest as a stamp that lies, so charts are
+// downgraded to a no-op rather than allowed to take the page down with them.
+// Real Chart.js, when it loads, is left completely untouched.
+//
+// Byte-for-byte the same stub V2 carries (v2/app.py). If you change one,
+// change both — a fix that lands in only one frontend is a half fix.
+if (typeof window.Chart === 'undefined'){
+  window.Chart = function ChartUnavailable(canvas){
+    try {
+      const wrap = canvas && canvas.parentElement;
+      if (wrap && !wrap.dataset.chartFailed){
+        wrap.dataset.chartFailed = '1';
+        const note = document.createElement('div');
+        note.className = 'sub';
+        note.style.cssText = 'padding:10px;color:var(--muted);font-size:12px';
+        note.textContent = 'Chart library unavailable — the numbers and '
+          + 'freshness stamps below are unaffected.';
+        wrap.appendChild(note);
+      }
+    } catch (_) { /* defensive: never throw from the fallback */ }
+    this.destroy = function(){};
+    this.update  = function(){};
+    this.resize  = function(){};
+    this.data    = { labels: [], datasets: [] };
+    this.options = {};
+  };
+  window.Chart.__unavailable = true;
+}
+
 const DATA = __DATA_JSON__;
 const SHARE_TOKEN = __SHARE_TOKEN__;  // string when viewing via /share/<token>, else null
 const IS_SHARE = !!SHARE_TOKEN;
@@ -5134,9 +5444,9 @@ function moneyFlowFreshness(){
           + 'daily bars whose dates are not carried into the payload, so they '
           + 'are excluded from this minimum.'
         : '')
-    + ' money_flow.as_of is a clock read (money_flow.py falls back to '
-    + 'datetime.now when the market blob has no date) and is deliberately '
-    + 'not shown.';
+    + ' money_flow.as_of is no longer a clock read — _composite_as_of derives '
+    + 'it from these same legs, or leaves it null — so it is redundant with '
+    + 'this minimum rather than excluded from it.';
   return { date: parts.length ? fMin(parts) : null, stale: 0,
            total: parts.length, title: title };
 }
@@ -5357,6 +5667,66 @@ const TAB_FRESHNESS_SOURCE = {
   city:        'city indicator reference month',
   aviation:    'FAA registry / airman vintages',
 };
+
+// --- insights: age of the DATA the insights were derived FROM --------------
+// The insights engine (insights.py) runs at BUILD time, so every insight
+// surface used to be stamped with DATA.generated_at — a clock read dressed up
+// as "as of", and the last surviving relative of the defect this whole
+// freshness family exists to kill. Each insight does name its source feed
+// though (`i.tab`, set by insights.py's `setdefault("tab", …)`), and each tab
+// already has a resolver that reports the oldest observation date behind it.
+// So: resolve every tab represented in the list, take the MIN across them
+// (rule 3 — the bar is only as fresh as the stalest feed it summarises), and
+// disclose how many of those feeds carry no date at all.
+//
+// insights.py emits tab="markets" for the general macro/news pool; the page
+// calls that surface "overview", so it is ALIASED rather than dropped — an
+// unmapped tab would silently shrink the minimum's coverage, which is the
+// same class of quiet lie as reporting the newest input instead of the oldest.
+//
+// The same resolver V2 carries, with one deliberate difference: the
+// undated-feed sentence is pluralised correctly here (see the NOTE below).
+// Change one, change both.
+const INSIGHT_TAB_FRESHNESS_ALIAS = { markets: 'overview' };
+function insightsFreshness(list, tab){
+  const rows = Array.isArray(list) ? list : [];
+  const tabs = [];
+  rows.forEach(i => {
+    const t = (i && i.tab) || 'markets';
+    if (tabs.indexOf(t) < 0) tabs.push(t);
+  });
+  // Overview shows the unfiltered pool, so its stamp spans every feed present.
+  if (!tabs.length && tab) tabs.push(tab);
+  const dates = [];
+  let staleSum = 0, staleTotal = 0, undated = 0;
+  const named = [];
+  tabs.forEach(t => {
+    const key = INSIGHT_TAB_FRESHNESS_ALIAS[t] || t;
+    const fn = TAB_FRESHNESS[key];
+    let info = null;
+    if (typeof fn === 'function'){ try { info = fn(); } catch (_) { info = null; } }
+    if (!info || !info.date){ undated++; return; }
+    dates.push(info.date);
+    named.push(TAB_FRESHNESS_SOURCE[key] || key);
+    const s = Number(info.stale), n = Number(info.total);
+    if (isFinite(s) && s > 0){ staleSum += s; if (isFinite(n) && n > 0) staleTotal += n; }
+  });
+  const date = dates.length ? fMin(dates) : null;
+  let title = dates.length
+    ? 'Oldest observation date across the ' + dates.length + ' feed'
+      + (dates.length === 1 ? '' : 's') + ' these insights were derived from ('
+      + named.join(' · ') + ').'
+    : 'None of the feeds behind these insights report an observation date.';
+  if (undated > 0){
+    title += ' ' + undated + (undated === 1
+             ? ' further feed carries no observation date and is'
+             : ' further feeds carry no observation date and are')
+           + ' excluded from that minimum.';
+  }
+  title += ' The insight TEXT is generated at build time; this stamp is the age '
+         + 'of the DATA underneath it, not of the build.';
+  return { date: date, stale: staleSum, total: staleTotal, title: title };
+}
 
 function renderTabFreshness(){
   const tab = state && state.tab;
@@ -9376,10 +9746,31 @@ function renderInsights(){
   const cnt = document.getElementById('insightsCount');
   const label = TAB_LABELS[tab] || 'Insights';
   if (cnt) {
-    const asOf = (DATA.generated_at || '').slice(0, 16);
+    // THE FIX (was: `as of ${DATA.generated_at}`). DATA.generated_at is the
+    // BUILD clock. The page rebuilds hourly, so that stamp read "as of <a few
+    // minutes ago>" over a bar summarising feeds that could be weeks old —
+    // the last surviving instance of the defect the freshness work exists to
+    // kill.
+    //
+    // Insights ARE derived at build time, but each one names the feed it read
+    // (`i.tab`), so the honest stamp is the OLDEST data date across the feeds
+    // the LISTED insights actually came from. That is what insightsFreshness()
+    // computes, and it renders through the same freshness()/paintFreshness()
+    // path as every other stamp — same thresholds, same tints, same explicit
+    // "as of —" when no honest date exists.
     cnt.textContent = list.length
-      ? `${label} · ${list.length} as of ${asOf}`
+      ? `${label} · ${list.length}`
       : `${label} · none right now`;
+    if (list.length){
+      const f = insightsFreshness(list, tab);
+      cnt.appendChild(document.createTextNode(' · '));
+      const stamp = document.createElement('span');
+      stamp.style.marginLeft = '2px';
+      paintFreshness(stamp, f.date, {
+        label: 'data as of', stale: f.stale, total: f.total, title: f.title,
+      });
+      cnt.appendChild(stamp);
+    }
   }
   // Re-label the strong "Insights" header if present (the bar's title).
   // Always set the strong header — was previously only setting it for
@@ -9434,6 +9825,14 @@ function renderInsights(){
           </div>
         </div>`;
       }).join('');
+      // Same honesty contract as the bar above: the card asserts a current
+      // read on the AI feed, so it discloses the age of the DATA those
+      // bullets were derived from (oldest feed behind them), never the build
+      // clock. No bullets ⇒ nothing is being asserted ⇒ no stamp.
+      const fi = insightsFreshness(ainewsList, 'ainews');
+      inlineHost.insertAdjacentHTML('beforeend', freshnessHtml(fi.date, {
+        label: 'data as of', stale: fi.stale, total: fi.total, title: fi.title,
+      }));
     }
   }
 }
@@ -10484,7 +10883,13 @@ function renderOverviewInsights(){
     host.innerHTML = '<div class="sub" style="color:var(--muted);padding:14px">No notable insights right now</div>';
     return;
   }
-  host.innerHTML = all.slice(0,3).map(i => {
+  // "Most-relevant 3 right now" is a freshness claim. The bullets are written
+  // at build time but describe FEEDS, so the honest stamp is the age of the
+  // oldest feed the three shown insights actually read — never
+  // DATA.generated_at. Computed off the SHOWN slice, not the whole pool: a
+  // stamp must describe what the reader can see.
+  const shown = all.slice(0, 3);
+  host.innerHTML = shown.map(i => {
     const c = severityColor(i.severity);
     const ic = severityIcon(i.severity, i.kind);
     const detail = i.detail ? `<div class="sub" style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(i.detail)}</div>` : '';
@@ -10496,6 +10901,10 @@ function renderOverviewInsights(){
       </div>
     </div>`;
   }).join('');
+  const fi = insightsFreshness(shown, 'overview');
+  host.insertAdjacentHTML('beforeend', freshnessHtml(fi.date, {
+    label: 'data as of', stale: fi.stale, total: fi.total, title: fi.title,
+  }));
 }
 
 // AI-exposed stocks card for the Crypto Overview tab. Same subset + same
@@ -11953,6 +12362,412 @@ function hideSentimentCard(prefix){
   const card = document.getElementById(prefix + 'Card');
   if (card) card.style.display = 'none';
 }
+
+// ============================================================================
+// COMPOSITE INDEX HISTORY — click a composite card, get its own time series
+// ============================================================================
+// scripts/snapshot_composites.py has written data/composites/<date>.json every
+// build since PR #23; load_composite_history() (Python, above) folds those
+// files into DATA.composite_history and this block renders them.
+//
+// THE RULES THIS ENFORCES — they are the same honesty rules the freshness
+// stamps obey, applied to a time axis:
+//
+//  1. A point is plotted at the value's OWN `as_of`, NEVER at the snapshot
+//     filename's date. A capture taken today can hold a value observed three
+//     weeks ago; drawing that at today's x would erase the single most
+//     important thing this archive records. The x-axis is therefore
+//     TIME-proportional, not index-proportional, so a frozen source shows up
+//     as a gap and a stationary dot rather than as a tidy daily cadence.
+//  2. Cache-served points (`stale:true`, i.e. fetch_market carried the
+//     previous entry forward) are drawn as hollow amber rings, never as solid
+//     observations, and counted in the disclosure block.
+//  3. A sparse archive says so. Below MIN_TREND_POINTS the connecting line is
+//     not drawn at all — two dots joined by a line is a trend claim, and the
+//     directory only started accumulating recently.
+//  4. Gaps are gaps. Consecutive points more than GAP_BREAK_DAYS apart are
+//     drawn as separate polyline segments; a solid line across a three-week
+//     hole asserts continuity that was never observed.
+//  5. Snapshots that recorded a score with no observation date are UNPLOTTED
+//     and disclosed by count, rather than being dated from the filename.
+//
+// Deliberately hand-rolled inline SVG rather than Chart.js: this page's chart
+// library is a CDN dependency behind an SRI pin, and the whole point of the
+// stub above is that it can vanish. A history chart that disappears with the
+// CDN would be the same defect in a new place.
+//
+// Extending: add a row to COMPOSITE_HISTORY_CARDS. `key` must match the key
+// scripts/snapshot_composites.py writes into `indexes`. A card whose key the
+// archive has never seen still gets a (muted) affordance that opens an honest
+// "not recorded" explanation — silently hiding the gap is how the archive
+// went a whole release unnoticed and unread in the first place.
+//
+// Mirrors v2/app.py's block one-for-one (same card set, same thresholds, same
+// stale marker, same copy). Change one, change both.
+const COMPOSITE_HISTORY_CARDS = [
+  { card: 'cryptoSignalsSentimentCard', key: 'crypto_signal_sentiment',
+    title: 'Crypto Signal Sentiment',
+    what: 'Top-50 buy/sell breadth: ((BUY+STRONG BUY) − (SELL+STRONG SELL)) / scored coins × 100, stablecoins excluded.' },
+  { card: 'pocSentimentCard', key: 'poc_signal_breadth',
+    title: 'POC Signal Breadth',
+    what: 'Mean of the latest per-coin signal score across the top-25 Point-of-Control universe.' },
+  { card: 'whaleSentimentCard', key: 'whale_sentiment_btc',
+    title: 'BTC Whale Sentiment Index',
+    what: '±100 composite of the BTC on-chain proxies (hash rate, miner revenue, average tx value, output volume, active addresses, tx volume).' },
+  { card: 'whaleEthSentimentCard', key: 'whale_sentiment_eth',
+    title: 'ETH Whale Sentiment Index',
+    what: '±100 composite of the ETH on-chain proxies (Coin Metrics active addresses / tx count, Etherscan daily series).' },
+  // --- Cards the daily snapshot does NOT record yet -------------------------
+  // These four are computed in the browser from DATA at render time and thrown
+  // away, exactly as the archived ones were before PR #23. They are listed
+  // here on purpose: the affordance renders muted and the modal names the file
+  // that would have to change, instead of the card silently pretending it has
+  // no past.
+  { card: 'overviewSentimentCard', key: 'overview_sentiment',
+    title: 'Crypto Market Sentiment',
+    what: 'Mean of Fear & Greed, the top-50 signal average and average perp funding.' },
+  { card: 'defiSentimentCard', key: 'defi_sentiment',
+    title: 'DeFi Sentiment',
+    what: 'TVL-weighted 7d chain momentum plus stablecoin market-cap 7d change.' },
+  { card: 'etfFlowSentimentCard', key: 'etf_flow_sentiment',
+    title: 'ETF Flow Sentiment',
+    what: '7d net flow sum (60%) and 30d net flow sum (40%) for the selected asset.' },
+  { card: 'futuresSentimentCard', key: 'futures_sentiment',
+    title: 'Futures Positioning Sentiment',
+    what: 'Funding rate, long/short ratio and 7d open-interest change for the selected asset.' },
+  { card: 'stocksSentimentCard', key: 'stocks_signal_breadth',
+    title: 'Equity Signal Breadth',
+    what: 'Buy/sell breadth across the scored top-50 US equities.' },
+];
+// Below this many dated points, draw dots only — no connecting line, and say
+// why. Two points joined by a line is a trend assertion the archive cannot
+// support yet.
+const COMPOSITE_HISTORY_MIN_TREND_POINTS = 3;
+// Consecutive observations further apart than this get separate line segments.
+const COMPOSITE_HISTORY_GAP_BREAK_DAYS = 3;
+// The chart plots every point; the readout table under it is capped so a
+// multi-year archive doesn't turn the modal into an endless scroll.
+const COMPOSITE_HISTORY_TABLE_ROWS = 60;
+
+function compositeHistoryArchive(){
+  const h = DATA.composite_history;
+  return (h && typeof h === 'object') ? h : { snapshots: 0, indexes: {} };
+}
+function compositeHistoryFor(key){
+  const idx = compositeHistoryArchive().indexes;
+  const e = idx && idx[key];
+  if (!e || typeof e !== 'object') return null;    // key never archived
+  return {
+    points: Array.isArray(e.points) ? e.points : [],
+    snapshots: Number(e.snapshots) || 0,
+    dated: Number(e.dated) || 0,
+    undated: Number(e.undated) || 0,
+    missing: Number(e.missing) || 0,
+  };
+}
+function compositeHistoryCardFor(key){
+  for (const c of COMPOSITE_HISTORY_CARDS) if (c.key === key) return c;
+  return null;
+}
+
+// Attach (or refresh) the click affordance on every composite card. Idempotent
+// and cheap, so renderAll() can call it unconditionally — several of these
+// cards are rebuilt with innerHTML by their renderers (both whale gauges, the
+// crypto-signals card, the POC card), which drops the CTA, and this puts it
+// back.
+function refreshCompositeHistoryAffordances(){
+  COMPOSITE_HISTORY_CARDS.forEach(spec => {
+    const card = document.getElementById(spec.card);
+    if (!card) return;
+    const hist = compositeHistoryFor(spec.key);
+    const n = hist ? hist.points.length : 0;
+    const label = !hist ? 'History not recorded yet'
+                : n === 0 ? 'History: tracked, nothing recorded yet'
+                : n === 1 ? 'History: 1 observation'
+                : 'History: ' + n + ' observations';
+    let cta = card.querySelector(':scope > .histcta');
+    if (!cta){
+      cta = document.createElement('div');
+      cta.className = 'histcta';
+      cta.innerHTML = '<button type="button" class="histbtn"></button>';
+      card.appendChild(cta);
+    } else if (cta !== card.lastElementChild){
+      // A renderer appended content after us; keep the CTA last.
+      card.appendChild(cta);
+    }
+    const btn = cta.querySelector('.histbtn');
+    if (!btn) return;
+    btn.className = 'histbtn' + ((hist && n) ? '' : ' histbtn--none');
+    btn.textContent = '📈 ' + label;
+    btn.setAttribute('data-histindex', spec.key);
+    btn.setAttribute('aria-haspopup', 'dialog');
+    btn.setAttribute('title', (hist && n)
+      ? 'Open the daily history of this index, plotted against each value’s own observation date.'
+      : 'This index has no usable daily history yet — open for the details.');
+    card.classList.add('histcard');
+    card.setAttribute('data-histcard', spec.key);
+  });
+}
+
+// --- the chart -------------------------------------------------------------
+function compositeHistoryChart(points){
+  const W = 640, H = 210;
+  const PL = 46, PR = 14, PT = 14, PB = 30;
+  const iw = W - PL - PR, ih = H - PT - PB;
+  const dayMs = 86400000;
+  const xs = points.map(p => freshnessDayUTC(p.as_of)).filter(v => v != null);
+  if (!xs.length) return '';
+  let x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs);
+  if (x1 === x0){ x0 -= dayMs; x1 += dayMs; }         // single point → centre it
+  const vs = points.map(p => Number(p.score)).filter(v => isFinite(v));
+  let y0 = Math.min.apply(null, vs), y1 = Math.max.apply(null, vs);
+  const span = (y1 - y0) || Math.max(2, Math.abs(y1) * 0.2 || 2);
+  y0 -= span * 0.15; y1 += span * 0.15;
+  const X = ms => PL + ((ms - x0) / (x1 - x0)) * iw;
+  const Y = v  => PT + (1 - (v - y0) / (y1 - y0)) * ih;
+  const esc = s => escapeHtml(String(s));
+  const fmtScore = v => (v > 0 ? '+' : '') + (Number.isInteger(v) ? v : Number(v).toFixed(2));
+  // Axis ticks are read at a glance, so they round: whole numbers on a wide
+  // domain, one decimal on a narrow one. Point tooltips and the table below
+  // still carry the exact stored value.
+  const yRange = y1 - y0;
+  const fmtAxis = v => {
+    const r = yRange >= 20 ? Math.round(v) : Math.round(v * 10) / 10;
+    return (r > 0 ? '+' : '') + r;
+  };
+
+  const parts = [];
+  // grid + y axis (3 ticks: bottom / middle / top of the value domain)
+  [y0, (y0 + y1) / 2, y1].forEach(v => {
+    const y = Y(v);
+    parts.push('<line x1="' + PL + '" y1="' + y.toFixed(1) + '" x2="' + (W - PR)
+      + '" y2="' + y.toFixed(1) + '" stroke="var(--border)" stroke-width="1"/>');
+    parts.push('<text x="' + (PL - 6) + '" y="' + (y + 3.5).toFixed(1)
+      + '" text-anchor="end" font-size="10" fill="var(--muted)">' + esc(fmtAxis(v)) + '</text>');
+  });
+  // zero line when the domain crosses it — the sign of a sentiment index is
+  // the whole point, so it gets its own emphasised rule.
+  if (y0 < 0 && y1 > 0){
+    const yz = Y(0);
+    parts.push('<line x1="' + PL + '" y1="' + yz.toFixed(1) + '" x2="' + (W - PR)
+      + '" y2="' + yz.toFixed(1) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3"/>');
+  }
+  // x labels: first and last observation date (plus the middle one when the
+  // series is long enough for a third label not to collide).
+  const lbl = (ms, anchor) => '<text x="' + X(ms).toFixed(1) + '" y="' + (H - 9)
+    + '" text-anchor="' + anchor + '" font-size="10" fill="var(--muted)">'
+    + esc(freshnessYmd(ms)) + '</text>';
+  const firstMs = freshnessDayUTC(points[0].as_of);
+  const lastMs  = freshnessDayUTC(points[points.length - 1].as_of);
+  if (firstMs != null) parts.push(lbl(firstMs, points.length > 1 ? 'start' : 'middle'));
+  if (points.length > 1 && lastMs != null) parts.push(lbl(lastMs, 'end'));
+  // Middle tick is the TIME midpoint, not the middle array element — the
+  // x-axis is time-proportional (rule 1), so an index midpoint lands wherever
+  // the observations happen to cluster and can collide with the end label.
+  // Only drawn once the span is wide enough for three labels not to touch.
+  if ((x1 - x0) >= 10 * dayMs) parts.push(lbl((x0 + x1) / 2, 'middle'));
+
+  // Line — only above the sparse threshold (rule 3), and broken across gaps
+  // longer than GAP_BREAK_DAYS (rule 4).
+  if (points.length >= COMPOSITE_HISTORY_MIN_TREND_POINTS){
+    let seg = [];
+    const flush = () => {
+      if (seg.length >= 2){
+        parts.push('<polyline points="' + seg.join(' ') + '" fill="none" '
+          + 'stroke="var(--purple)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>');
+      }
+      seg = [];
+    };
+    let prevMs = null;
+    points.forEach(p => {
+      const ms = freshnessDayUTC(p.as_of), v = Number(p.score);
+      if (ms == null || !isFinite(v)){ flush(); prevMs = null; return; }
+      if (prevMs != null && (ms - prevMs) > COMPOSITE_HISTORY_GAP_BREAK_DAYS * dayMs) flush();
+      seg.push(X(ms).toFixed(1) + ',' + Y(v).toFixed(1));
+      prevMs = ms;
+    });
+    flush();
+  }
+  // Points. Stale (cache-served) observations are hollow amber rings so they
+  // can never be mistaken for a genuinely observed value (rule 2).
+  points.forEach(p => {
+    const ms = freshnessDayUTC(p.as_of), v = Number(p.score);
+    if (ms == null || !isFinite(v)) return;
+    const cx = X(ms).toFixed(1), cy = Y(v).toFixed(1);
+    const tip = p.as_of + ' · ' + fmtScore(v)
+      + (p.label ? ' · ' + p.label : '')
+      + (p.stale ? ' · source was cache-served (stale-kept)' : '')
+      + (p.snapshot && p.snapshot !== p.as_of
+         ? ' · recorded ' + p.snapshot + ' (capture day, not the observation)' : '')
+      + (p.note ? ' · ' + p.note : '');
+    parts.push(p.stale
+      ? '<circle cx="' + cx + '" cy="' + cy + '" r="4.5" fill="var(--panel)" '
+        + 'stroke="var(--amber)" stroke-width="2"><title>' + esc(tip) + '</title></circle>'
+      : '<circle cx="' + cx + '" cy="' + cy + '" r="3.5" fill="var(--purple)"'
+        + '><title>' + esc(tip) + '</title></circle>');
+  });
+  return '<svg class="histchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" '
+       + 'aria-label="Daily history of this composite index, plotted against each '
+       + 'value’s own observation date">' + parts.join('') + '</svg>';
+}
+
+// --- the modal body --------------------------------------------------------
+function compositeHistoryBodyHtml(key){
+  const spec = compositeHistoryCardFor(key) || { title: key, what: '' };
+  const arch = compositeHistoryArchive();
+  const hist = compositeHistoryFor(key);
+  const esc = s => escapeHtml(String(s == null ? '' : s));
+  const out = [];
+  const archiveLine = arch.snapshots
+    ? 'The composite archive holds ' + arch.snapshots + ' daily snapshot'
+      + (arch.snapshots === 1 ? '' : 's') + ' (' + esc(arch.first_snapshot)
+      + ' → ' + esc(arch.last_snapshot) + ').'
+    : 'No composite snapshots have been captured yet.';
+
+  if (!hist){
+    out.push('<div class="histwarn">This index is not persisted to the daily '
+      + 'archive, so it has no history to chart. Its value is computed in the '
+      + 'browser at render time and discarded — the same gap every other '
+      + 'composite had before the archive existed.</div>');
+    out.push('<div class="histnote" style="margin-top:10px">'
+      + esc(spec.what) + '<br><br>' + archiveLine
+      + ' It records ' + Object.keys(arch.indexes || {}).length
+      + ' index series; <code>' + esc(key) + '</code> is not one of them. '
+      + 'Recording it means adding it to <code>scripts/snapshot_composites.py</code>, '
+      + 'which runs at the end of every Pages build — history would start '
+      + 'accumulating from that day forward and cannot be backfilled.</div>');
+    return out.join('');
+  }
+
+  const pts = hist.points;
+  if (pts.length){
+    out.push(compositeHistoryChart(pts));
+    out.push('<div class="histlegend" style="margin-top:6px">'
+      + '<span><svg width="12" height="12" style="vertical-align:-2px"><circle cx="6" cy="6" r="3.5" fill="var(--purple)"/></svg> observed</span>'
+      + '<span><svg width="12" height="12" style="vertical-align:-2px"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--amber)" stroke-width="2"/></svg> source cache-served</span>'
+      + '<span>x-axis is the value’s own <b>observation date</b>, not the capture day</span>'
+      + '</div>');
+  }
+
+  // Sparse-archive disclosure (rule 3). Loud, above the numbers, whenever the
+  // series is too short to read as a trend.
+  if (pts.length < COMPOSITE_HISTORY_MIN_TREND_POINTS){
+    out.push('<div class="histwarn" style="margin-top:10px">'
+      + (pts.length === 0
+          ? 'No dated observation has been recorded for this index yet, so there is nothing to plot. '
+          : 'Only ' + pts.length + ' dated observation'
+            + (pts.length === 1 ? '' : 's') + ' recorded so far — too few to draw a trend, '
+            + 'so the points are shown without a connecting line. ')
+      + archiveLine
+      + ' This archive only began accumulating recently; it fills in one day per build.'
+      + '</div>');
+  }
+
+  const staleN = pts.filter(p => p && p.stale).length;
+  const bits = [];
+  bits.push(esc(spec.what));
+  bits.push(archiveLine + ' This index appeared in ' + hist.snapshots
+    + ' of them: ' + hist.dated + ' produced a dated value'
+    + (hist.undated ? ', ' + hist.undated + ' recorded a score with no observation date (unplottable, so excluded)' : '')
+    + (hist.missing ? ', ' + hist.missing + ' recorded nothing at all (a real gap, never interpolated)' : '')
+    + '.');
+  if (pts.length){
+    bits.push('Those collapse to <b>' + pts.length + '</b> distinct observation date'
+      + (pts.length === 1 ? '' : 's') + ' — repeat captures of the same unchanged '
+      + 'observation are one point, which is why a frozen source shows as a single '
+      + 'stationary dot instead of a week of invented daily readings.');
+  }
+  if (staleN){
+    bits.push('<b>' + staleN + ' of ' + pts.length + '</b> plotted point'
+      + (staleN === 1 ? ' was' : 's were') + ' cache-served at capture time '
+      + '(the fetcher carried the previous entry forward) and are drawn as hollow rings.');
+  }
+  out.push('<div class="histnote" style="margin-top:10px">' + bits.join('<br><br>') + '</div>');
+
+  if (pts.length){
+    const shown = pts.slice(-COMPOSITE_HISTORY_TABLE_ROWS);
+    if (shown.length < pts.length){
+      out.push('<div class="histnote" style="margin-top:10px">Table shows the '
+        + shown.length + ' most recent of ' + pts.length
+        + ' observations. The chart above plots all of them.</div>');
+    }
+    const rows = shown.slice().reverse().map(p =>
+      '<tr><td>' + esc(p.as_of) + '</td>'
+      + '<td style="font-weight:600">' + esc((Number(p.score) > 0 ? '+' : '')
+          + (Number.isInteger(p.score) ? p.score : Number(p.score).toFixed(2))) + '</td>'
+      + '<td>' + esc(p.label || '') + '</td>'
+      + '<td>' + (p.stale ? '<span class="tag" style="color:var(--amber);border-color:var(--amber);margin-left:0">cached</span>' : '') + '</td>'
+      + '<td style="color:var(--muted)">' + esc(p.snapshot || '') + '</td></tr>').join('');
+    out.push('<div class="histscroll" style="margin-top:10px"><table class="histtable">'
+      + '<thead><tr><th>Observed</th><th>Score</th><th>Label</th><th></th>'
+      + '<th title="The day the snapshot was captured. Deliberately shown separately from the observation date.">Captured</th></tr></thead>'
+      + '<tbody>' + rows + '</tbody></table></div>');
+  }
+  return out.join('');
+}
+
+let _compositeHistoryReturnFocus = null;
+function openCompositeHistory(key){
+  const modal = document.getElementById('compositeHistoryModal');
+  if (!modal || !key) return;
+  const spec = compositeHistoryCardFor(key);
+  const titleEl = document.getElementById('compositeHistoryTitle');
+  const subEl = document.getElementById('compositeHistorySub');
+  const body = document.getElementById('compositeHistoryBody');
+  if (titleEl) titleEl.textContent = '📈 ' + ((spec && spec.title) || key) + ' — daily history';
+  if (subEl){
+    const hist = compositeHistoryFor(key);
+    subEl.textContent = hist
+      ? 'From data/composites/ · each value plotted at its own observation date'
+      : 'Not persisted to the daily composite archive';
+  }
+  if (body) body.innerHTML = compositeHistoryBodyHtml(key);
+  _compositeHistoryReturnFocus = (document.activeElement instanceof HTMLElement)
+    ? document.activeElement : null;
+  modal.classList.remove('hidden');
+  const closeBtn = document.getElementById('compositeHistoryClose');
+  if (closeBtn) closeBtn.focus();
+}
+function closeCompositeHistory(){
+  const modal = document.getElementById('compositeHistoryModal');
+  if (!modal || modal.classList.contains('hidden')) return;
+  modal.classList.add('hidden');
+  // Return focus to whatever opened it so keyboard users don't get dumped at
+  // the top of the document.
+  const back = _compositeHistoryReturnFocus;
+  _compositeHistoryReturnFocus = null;
+  if (back && document.contains(back)) { try { back.focus(); } catch(_){} }
+}
+
+// One delegated wiring for every composite card, present and future. Clicking
+// anywhere on the card opens the history — EXCEPT on a genuinely interactive
+// child (a link, a toggle button, a form control), which keeps their own
+// behaviour. The .histbtn is the keyboard/screen-reader entry point and is a
+// real <button>, so Enter/Space come free.
+(function wireCompositeHistory(){
+  if (window._compositeHistoryWired) return; window._compositeHistoryWired = true;
+  document.addEventListener('click', e => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.id === 'compositeHistoryClose' || t.id === 'compositeHistoryModal'){
+      closeCompositeHistory();
+      return;
+    }
+    const btn = t.closest('.histbtn');
+    if (btn){
+      e.preventDefault(); e.stopPropagation();
+      openCompositeHistory(btn.getAttribute('data-histindex'));
+      return;
+    }
+    const card = t.closest('[data-histcard]');
+    if (card && !t.closest('a, button, input, select, textarea, [role="button"]')){
+      openCompositeHistory(card.getAttribute('data-histcard'));
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCompositeHistory();
+  });
+})();
 // Given a composite net score in [-100,+100], plus an array of normalized
 // component scores in [-100,+100], compute the proportional bar split (pos /
 // neu / neg) by summing absolute positive contributions, absolute negative
@@ -13393,6 +14208,12 @@ function renderAll(){
   renderTabFreshness();
   renderDataFreshness();
   renderInsights();
+  // Same reasoning, applied to the composite-history affordance: the tail
+  // call below is the one that matters (the card renderers innerHTML over
+  // their own contents and drop it), but running it here too means a throw
+  // in a tab renderer leaves the untouched cards still clickable instead of
+  // silently losing the entry point to their history. Idempotent and cheap.
+  refreshCompositeHistoryAffordances();
   // tag updates — ETF-related tags follow state.etfAsset (decoupled from
   // global asset), Futures-related tags follow state.asset (Futures toggle
   // sets state.asset on click so they always match).
@@ -13544,6 +14365,13 @@ function renderAll(){
   // safety net for a renderer above throwing; this one is the accuracy pass.
   renderTabFreshness();
   renderDataFreshness();
+  // Composite cards are the last thing touched: several of them (both whale
+  // sentiment gauges, the crypto-signals card, the POC card) are rebuilt with
+  // innerHTML by their own renderers, which drops the history call-to-action.
+  // Re-attaching here — after every renderer above has run — is what keeps
+  // every composite card clickable through tab switches, asset toggles and
+  // late sidecar landings.
+  refreshCompositeHistoryAffordances();
 }
 
 // ============================================================================

@@ -43,6 +43,21 @@ import os
 import sys
 
 # (env var, what it unlocks, which workflow(s) map it in)
+#
+# The third column is the honest answer to "who would notice if this key were
+# empty?", derived by grepping .github/workflows for each name — NOT by
+# guessing. "(not yet wired)" means the key appears in no workflow except
+# secrets-check.yml itself, so setting it changes nothing until someone wires
+# it. Keeping that annotation accurate is the entire value of the column: a key
+# labelled with a workflow that does not map it sends the reader to the wrong
+# file, which is worse than no label at all.
+# tests/test_data_health.py::test_secret_workflow_annotations_match_reality
+# re-derives the column from the workflow files, so it cannot drift silently.
+#
+# Ten keys the workflows DO reference were missing from this list entirely.
+# Every one of them sat outside the audit: a rotated-out OPENSKY_CLIENT_SECRET
+# or an emptied ANTHROPIC_API_KEY would have surfaced as a mysteriously
+# degraded feed with nothing in this report to explain it.
 KEYS: list[tuple[str, str, str]] = [
     ("SOCRATA_APP_TOKEN",     "City: lifts Socrata rate limit (avoids 429)",   "city-daily"),
     ("CENSUS_API_KEY",        "City: Census ACS median income",                 "city-daily"),
@@ -60,7 +75,32 @@ KEYS: list[tuple[str, str, str]] = [
     ("ALPHA_VANTAGE_API_KEY", "LTHCS financial pillar",                         "pages, lthcs-daily"),
     ("FINNHUB_API_KEY",       "LTHCS thesis pillar",                            "pages"),
     ("R2_ACCESS_KEY_ID",      "R2 warehouse archive upload",                    "pages, r2-backfill"),
+    # --- previously unaudited; every one is referenced by a real workflow ----
+    ("COINGECKO_API_KEY",     "LTHCS crypto: Demo/Pro tier lifts the CoinGecko rate limit",
+                                                                                "lthcs-crypto-daily"),
+    ("REDDIT_CLIENT_ID",      "Reddit OAuth for the research/sentiment pull",   "pages"),
+    ("REDDIT_CLIENT_SECRET",  "Reddit OAuth (pairs with REDDIT_CLIENT_ID)",     "pages"),
+    ("OPENSKY_CLIENT_ID",     "OpenSky OAuth2 - higher limits for the hourly flight snapshot",
+                                                                                "aviation-opensky"),
+    ("OPENSKY_CLIENT_SECRET", "OpenSky OAuth2 (pairs with OPENSKY_CLIENT_ID)",  "aviation-opensky"),
+    ("ANTHROPIC_API_KEY",     "chat.py assistant; LTHCS narrative generation",  "lthcs-daily"),
+    ("R2_SECRET_ACCESS_KEY",  "R2 archive upload - secret half of R2_ACCESS_KEY_ID",
+                                                                                "pages, r2-backfill"),
+    ("R2_BUCKET_NAME",        "R2 archive upload - destination bucket",         "pages, r2-backfill"),
+    ("SEC_USER_AGENT",        "SEC EDGAR demands a contact UA; without it Form 4/D fetches skip",
+                                                                                "lthcs-daily, lthcs-news-hourly"),
+    ("SECURITY_AUDIT_TOKEN",  "PAT for Dependabot + secret-scanning alerts (falls back to "
+                              "github.token, which cannot read either)",        "security-audit"),
 ]
+
+# Keys the workflows hand to the job under a DIFFERENT env name. Printed as a
+# footnote because a secret that IS set but arrives under an alias is the most
+# confusing possible way for this report to say "MISSING" — it invites someone
+# to re-paste a key that was never the problem.
+ALIASES: dict[str, str] = {
+    "R2_ACCESS_KEY_ID": "AWS_ACCESS_KEY_ID (boto3 speaks to R2 over the S3 API)",
+    "R2_SECRET_ACCESS_KEY": "AWS_SECRET_ACCESS_KEY (same reason)",
+}
 
 
 def main() -> int:
@@ -82,9 +122,24 @@ def main() -> int:
     print(f"\n{len(present)} set · {len(missing)} missing")
 
     if missing:
-        print("\nMissing keys and the workflow that expects each:")
-        for name, where in missing:
-            print(f"  {name:24} -> {where}")
+        # Split the report: a key no workflow maps is a TODO, not an outage,
+        # and mixing the two is how a real gap gets lost in a list of
+        # aspirational ones.
+        unwired = [(n, w) for n, w in missing if w.startswith("(not yet wired")]
+        wired = [(n, w) for n, w in missing if not w.startswith("(not yet wired")]
+        if wired:
+            print("\nMissing keys and the workflow that expects each:")
+            for name, where in wired:
+                print(f"  {name:24} -> {where}")
+                if name in ALIASES:
+                    print(f"  {'':24}    NOTE: mapped into the job as "
+                          f"{ALIASES[name]}")
+        if unwired:
+            print("\nMissing but referenced by no workflow — setting these "
+                  "changes nothing until they are wired:")
+            for name, where in unwired:
+                print(f"  {name:24} -> {where}")
+    if any(not w.startswith("(not yet wired") for _, w in missing):
         print(
             "\nIf you believe one of these IS set, it is almost certainly in the\n"
             "wrong store. Check, in this order:\n"
@@ -108,14 +163,16 @@ def main() -> int:
             fh.write("## API key presence\n\n")
             fh.write(f"**{len(present)} set · {len(missing)} missing**\n\n")
             if missing:
-                fh.write("| Key | Expected by |\n|---|---|\n")
+                fh.write("| Key | Expected by | Alias in the job |\n|---|---|---|\n")
                 for name, where in missing:
-                    fh.write(f"| `{name}` | {where} |\n")
+                    fh.write(f"| `{name}` | {where} | {ALIASES.get(name, '—')} |\n")
                 fh.write("\nA missing key here means Actions received an empty "
                          "string — most often because it was saved as an "
                          "*Environment* secret (only `pages.yml`'s deploy job "
                          "declares one) or under the Dependabot/Codespaces tab, "
-                         "rather than as a **Repository** secret.\n")
+                         "rather than as a **Repository** secret. Rows marked "
+                         "`(not yet wired)` are referenced by no workflow at "
+                         "all, so setting them changes nothing yet.\n")
 
     return 0
 
