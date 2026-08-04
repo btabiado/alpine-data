@@ -105,6 +105,34 @@ def _known_secret_values() -> list[str]:
     return sorted(set(vals), key=len, reverse=True)
 
 
+def safe_url(url: object) -> str:
+    """``scheme://host/path`` — the query string dropped entirely.
+
+    Use this instead of the raw URL when building an error message. Redacting
+    afterwards works, but it means the credential is briefly assembled into a
+    string that a later edit could route somewhere unredacted; dropping the
+    query means it is never in the message to begin with. It is also simply
+    better output: an operator needs to know WHICH endpoint failed, not the
+    forty characters of query that follow it.
+
+    Anything unparseable degrades to the mask rather than to the input.
+    """
+    try:
+        s = url if isinstance(url, str) else str(url)
+    except Exception:
+        return MASK
+    head = s.split("?", 1)[0].split("#", 1)[0]
+    # A credential can also be embedded as userinfo (https://user:pass@host).
+    if "@" in head:
+        scheme, _, rest = head.partition("://")
+        userinfo, _, hostpath = rest.rpartition("@")
+        if userinfo:
+            head = (scheme + "://" if scheme else "") + hostpath
+    # Defence in depth: if the path itself carries something key-shaped, the
+    # normal redactor still gets a pass over it.
+    return redact(head)
+
+
 def redact(text: object, extra: "tuple[str, ...] | list[str]" = ()) -> str:
     """Return ``text`` as a string with credentials masked.
 

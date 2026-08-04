@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from city.redact import MASK, redact
+from city.redact import MASK, redact, safe_url
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SECRET = "sk_live_A1b2C3d4E5f6G7h8i9J0"
@@ -132,3 +132,43 @@ def test_fetch_city_redacts_at_both_the_sink_and_the_summary():
     assert fail.index("redact(reason)") < fail.index("diagnostics.append")
     # defence in depth: the summary printer re-prints stored details
     assert src.count('redact(d["detail"])') == 2
+
+
+# --------------------------------------------------------------------------
+# safe_url — the credential never enters the message in the first place
+# --------------------------------------------------------------------------
+
+def test_safe_url_drops_the_query_entirely():
+    out = safe_url("https://api.census.gov/data/2022/acs/acs5?get=X&key=" + SECRET)
+    assert out == "https://api.census.gov/data/2022/acs/acs5"
+    assert SECRET not in out and "key=" not in out
+
+
+def test_safe_url_drops_userinfo_credentials():
+    out = safe_url("https://user:" + SECRET + "@example.gov/path?a=1")
+    assert SECRET not in out
+    assert out == "https://example.gov/path"
+
+
+def test_safe_url_keeps_the_part_an_operator_needs():
+    """Dropping the query must not drop WHICH endpoint failed."""
+    assert safe_url("https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL") == \
+        "https://cde.ucr.cjis.gov/LATEST/agency/byStateAbbr/FL"
+
+
+def test_safe_url_degrades_to_the_mask_not_to_the_input():
+    class Exploding:
+        def __str__(self):  # noqa: D105
+            raise RuntimeError("boom")
+    assert safe_url(Exploding()) == MASK
+
+
+@pytest.mark.parametrize("rel", ["city/fbi.py", "city/census.py", "city/arcgis.py"])
+def test_adapters_build_messages_from_safe_url_not_the_raw_url(rel):
+    """redact() after the fact works, but the key is briefly assembled into the
+    string. safe_url() means it is never there — belt as well as braces, and
+    the form a static analyser can actually follow."""
+    src = (REPO_ROOT / rel).read_text(encoding="utf-8")
+    for m in re.finditer(r'f"[^"]*\{url\}[^"]*"', src):
+        raise AssertionError(
+            f"{rel}: message interpolates the RAW url, use safe_url(url): {m.group(0)[:90]}")

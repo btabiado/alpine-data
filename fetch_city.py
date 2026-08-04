@@ -442,8 +442,14 @@ def _report_diagnostics(diagnostics: list) -> None:
             by_source.setdefault((d["source"], d["detail"], d["lost"]), []).append(
                 d["city"])
         for (source, detail, lost), cities in sorted(by_source.items()):
+            # Redacted like the other two loops below. In this branch `detail`
+            # is normally the _KEY_HELP signup text rather than an upstream
+            # error, so there is nothing secret in it today — but "today" is
+            # not a security property, and a third printer that treats the
+            # same field differently from its two siblings is how the next
+            # leak gets in.
             print("    - {}: null {} for {} ({})".format(
-                source, lost, ", ".join(cities), detail), file=sys.stderr)
+                source, lost, ", ".join(cities), redact(detail)), file=sys.stderr)
 
     if failed:
         print("  REQUESTS THAT FAILED ({}) — on our side, not the publisher's:"

@@ -255,9 +255,32 @@ def parse_flow_table(
             continue
 
         # First column is the date column; strip the rest to bare tickers.
+        #
+        # THE TRAILING TOTAL COLUMN. Farside's last column is the daily total,
+        # and on the ETH page its header cell is EMPTY. The old fallback named
+        # it positionally — "COL11" — and that shipped: data/eth_flows.csv on
+        # main carries COL11 where it used to carry Total.
+        #
+        # That is not cosmetic. app.py's ensure_total() looks for a column
+        # literally named "total" and, finding none, COMPUTES one by summing
+        # every numeric column — including the unrecognised total itself. Every
+        # ETH flow number on the dashboard was therefore exactly DOUBLE. The
+        # committed data proves the shape: on 2026-07-30 the funds sum to 12.8
+        # and COL11 is 12.8.
+        #
+        # So an unlabelled LAST column is named "Total", and the claim is then
+        # VERIFIED below against the parsed rows rather than assumed — if it
+        # does not behave like a total we fall back to the positional name and
+        # let the schema-change guard refuse the write, which is the safe
+        # direction.
         cols = ["date"]
-        for cell in header[1:]:
+        last_i = len(header) - 1
+        unlabelled_last = -1
+        for i, cell in enumerate(header[1:], start=1):
             tick = re.sub(r"[^A-Za-z0-9_]", "", cell)
+            if not tick and i == last_i:
+                unlabelled_last = len(cols)
+                tick = "Total"
             cols.append(tick or "COL%d" % len(cols))
 
         rows: list[list[str]] = []
@@ -284,11 +307,58 @@ def parse_flow_table(
             rows.append([iso] + [("0" if v is None else v) for v in vals])
 
         if rows:
+            # EARN the "Total" name given to an unlabelled last column above.
+            # If that column is really the daily total it equals the sum of the
+            # funds beside it; if the table shape changed and it is actually a
+            # fund, calling it Total would make ensure_total() adopt one fund's
+            # flow as the whole day's. Check it against the real parsed rows.
+            if unlabelled_last > 0 and not _behaves_like_a_total(rows, unlabelled_last):
+                cols[unlabelled_last] = "COL%d" % unlabelled_last
+                print("[etf-flows] last column is unlabelled and does NOT sum to "
+                      "the funds beside it; leaving it positional so the "
+                      "schema-change guard can refuse the write",
+                      file=sys.stderr)
             if unsettled is not None:
                 unsettled[:] = skipped
             return cols, rows
 
     return [], []
+
+
+def _behaves_like_a_total(rows: list[list[str]], idx: int,
+                          tol: float = 0.15, need: float = 0.8) -> bool:
+    """True when column ``idx`` equals the sum of the other value columns.
+
+    Tolerant on purpose: Farside rounds each cell to one decimal, so a row of
+    thirteen funds can drift from their own total by a few tenths without
+    anything being wrong. Requires agreement on ``need`` of the rows that carry
+    enough numbers to judge, so a handful of odd rows cannot veto a real total
+    and a coincidental single match cannot manufacture one.
+    """
+    agree = considered = 0
+    for r in rows:
+        try:
+            vals = [float(v) for v in r[1:]]
+        except (TypeError, ValueError):
+            continue
+        # `idx` indexes `cols`, whose first entry is "date"; `vals` has that
+        # entry stripped, so the candidate sits at idx-1 and a row is usable
+        # when it has at least idx values. `<=` here skipped EVERY row when the
+        # total was the last column — which is the only case this function is
+        # ever called for.
+        if len(vals) < idx:
+            continue
+        cand = vals[idx - 1]
+        others = [v for j, v in enumerate(vals, start=1) if j != idx]
+        if cand is None or not others:
+            continue
+        # An all-zero row agrees with everything; it is not evidence.
+        if cand == 0 and not any(others):
+            continue
+        considered += 1
+        if abs(sum(others) - cand) <= max(tol, abs(cand) * 0.01):
+            agree += 1
+    return considered >= 5 and (agree / considered) >= need
 
 
 def read_existing(path: Path) -> tuple[list[str], dict[str, list[str]]]:

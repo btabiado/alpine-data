@@ -201,8 +201,13 @@ def test_real_csv_headers_are_the_shape_these_tests_assume():
     """Guard the fixtures above against a silent upstream column change."""
     btc = _real_columns("btc_flows.csv")
     eth = _real_columns("eth_flows.csv")
-    assert btc[0] == "date" and btc[-1] == "Total"
-    assert eth[0] == "date" and eth[-1] == "Total"
+    # Both files must END in a named Total column. The ETH page's total header
+    # cell is EMPTY upstream; the scraper used to name it positionally
+    # ("COL11") and that shipped to main, where app.py's ensure_total() —
+    # which only recognises a column literally named "total" — treated it as a
+    # fund and summed it WITH the funds, doubling every ETH flow on the site.
+    assert btc[0] == "date" and btc[-1] == "Total", btc
+    assert eth[0] == "date" and eth[-1] == "Total", eth
     # The row shape quoted in the module docstring: date + 13 values.
     assert len(btc) == 14, btc
     assert len(eth) == 12, eth
