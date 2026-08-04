@@ -219,7 +219,12 @@ def test_missing_fbi_key_is_fetch_error_and_names_the_variable(monkeypatch):
 
     assert (series, hint) == ([], "fetch_error")
     assert "FBI_CDE_API_KEY" in reason
-    assert "api.data.gov" in reason      # tells the operator where to go
+    # Full signup URL, not a bare host substring: the operator needs the
+    # actual link, and a host-only check is the shape CodeQL flags because
+    # it is bypassable when used for trust decisions. This is an assertion
+    # about help text, not a security check — but the specific form is the
+    # better test either way.
+    assert "https://api.data.gov/signup/" in reason
 
 
 def test_stale_snapshot_still_reports_stale_not_fetch_error(monkeypatch):

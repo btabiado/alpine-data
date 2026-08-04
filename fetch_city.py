@@ -53,6 +53,8 @@ from pathlib import Path
 from city import socrata, arcgis, pulse
 from city import context as city_context
 
+from city.redact import redact
+
 ROOT = Path(__file__).resolve().parent
 REGISTRY = ROOT / "docs" / "city" / "city_registry.resolved.json"
 EXTENDED_REGISTRY = ROOT / "docs" / "city" / "city_registry.extended.json"  # P2, optional
@@ -149,6 +151,12 @@ def _fetch_feed_series(feed_cfg: dict, city_cfg: dict, *, as_of: str,
     label = feed_cfg.get("label", "feed")
 
     def _fail(kind, reason):
+        # See city/redact.py. `reason` is typically str(e) from an adapter and
+        # those messages embed the request URL, which carries the API key.
+        # Redact before printing AND before storing: the diagnostics list is
+        # re-printed by _print_diagnostics below, so storing a raw value would
+        # publish it twice.
+        reason = redact(reason)
         print("  [{}] {} {} -> {}".format(kind, adapter or "socrata", label, reason),
               file=sys.stderr)
         if diagnostics is not None:
@@ -442,14 +450,14 @@ def _report_diagnostics(diagnostics: list) -> None:
               .format(len(failed)), file=sys.stderr)
         for d in failed:
             print("    - {} {}: {} ({})".format(
-                d["city"], d["source"], d["lost"], d["detail"]), file=sys.stderr)
+                d["city"], d["source"], d["lost"], redact(d["detail"])), file=sys.stderr)
 
     if other:
         print("  EMPTY RESPONSES ({}) — the call worked and returned nothing:"
               .format(len(other)), file=sys.stderr)
         for d in other:
             print("    - {} {}: {} ({})".format(
-                d["city"], d["source"], d["lost"], d["detail"]), file=sys.stderr)
+                d["city"], d["source"], d["lost"], redact(d["detail"])), file=sys.stderr)
     print("", file=sys.stderr)
 
 

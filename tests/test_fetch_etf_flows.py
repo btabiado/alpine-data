@@ -26,6 +26,7 @@ all-zero trading day still is.
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 
@@ -164,8 +165,29 @@ def test_refuses_to_regress_to_older_data(btc_cfg, monkeypatch):
 # from the file the scraper actually writes.
 
 def _real_columns(name: str) -> list[str]:
-    line = (REPO_ROOT / "data" / name).read_text(encoding="utf-8").splitlines()[0]
-    return line.split(",")
+    """Header of the COMMITTED CSV — the git blob, not the working tree.
+
+    The distinction is load-bearing in CI and invisible locally.
+    `.github/workflows/tests.yml` deliberately overwrites both flow CSVs with
+    one-row stubs before pytest runs:
+
+        printf 'date,Total\\n2024-01-11,100\\n' > data/btc_flows.csv
+
+    so the build step can prove the aggregator renders a dashboard from minimal
+    input. Reading the working tree therefore returned ['date', 'Total'] on a
+    runner, which made `n` 1 instead of 13 and malformed every fixture these
+    helpers generate — six tests failing in CI while all six passed locally.
+
+    The shape being asserted is a property of what is COMMITTED, so read that.
+    """
+    proc = subprocess.run(
+        ["git", "show", f"HEAD:data/{name}"],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+    )
+    if proc.returncode != 0:
+        pytest.skip(f"git blob for data/{name} unavailable: "
+                    f"{proc.stderr.strip()[:120]}")
+    return proc.stdout.splitlines()[0].split(",")
 
 
 def _real_shape_html(*data_rows: str) -> str:

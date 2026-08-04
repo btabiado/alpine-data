@@ -187,7 +187,9 @@ def test_context_is_none_when_nothing_at_all_resolved(monkeypatch):
 
 def test_fbi_key_helpers(monkeypatch):
     assert city_context.fbi_key_missing() is True
-    assert "api.data.gov" in city_context.fbi_key_help()
+    # Full signup URL rather than a bare host substring — see the note in
+    # tests/test_fetch_city.py. The operator needs the link itself.
+    assert "https://api.data.gov/signup/" in city_context.fbi_key_help()
     monkeypatch.setenv("FBI_CDE_API_KEY", "REAL")
     assert city_context.fbi_key_missing() is False
 

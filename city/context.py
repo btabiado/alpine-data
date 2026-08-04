@@ -46,6 +46,8 @@ from typing import Optional
 
 from city import census, bls, airnow, fbi
 
+from .redact import redact
+
 # Fields that go null when the Census ACS call does not produce data. Named
 # explicitly so the log says what was lost instead of just what failed.
 _ACS_FIELDS = (
@@ -81,6 +83,12 @@ def _note(diagnostics, city_id, source, kind, detail, lost):
     fields that are null as a result, because "Census failed" tells a reader
     nothing about what is missing from the page.
     """
+    # Redact BEFORE the string is built, and store the redacted copy — the
+    # diagnostics list is re-printed by fetch_city's build summary, so an
+    # unredacted value here would leak twice. `detail` is usually str(e)[:300]
+    # from an adapter, and those adapters put the request URL in their message;
+    # the URL carries the API key as a query parameter.
+    detail = redact(detail) if detail else detail
     msg = "  [context] {} {}: {} -> {} is null".format(city_id, source, kind, lost)
     if detail:
         msg += " ({})".format(detail)

@@ -44,6 +44,8 @@ from typing import Optional
 
 import requests
 
+from .redact import redact
+
 __all__ = [
     "ArcGISError",
     "permits_monthly",
@@ -139,18 +141,18 @@ def _request_json(session, url: str, params: dict, timeout: int) -> dict:
     try:
         resp = sess.get(url, params=params, timeout=timeout)
     except requests.RequestException as exc:
-        raise ArcGISError(f"ArcGIS request to {url} failed: {exc}") from exc
+        raise ArcGISError(redact(f"ArcGIS request to {url} failed: {exc}")) from exc
 
     # Surface real HTTP errors (the FeatureServer mostly uses 200 + in-band
     # error, but guard the genuine 4xx/5xx path too).
     status = getattr(resp, "status_code", 200)
     if status >= 400:
-        raise ArcGISError(f"ArcGIS request to {url} returned HTTP {status}")
+        raise ArcGISError(redact(f"ArcGIS request to {url} returned HTTP {status}"))
 
     try:
         data = resp.json()
     except ValueError as exc:
-        raise ArcGISError(f"ArcGIS response from {url} was not JSON") from exc
+        raise ArcGISError(redact(f"ArcGIS response from {url} was not JSON")) from exc
 
     if isinstance(data, dict) and "error" in data:
         err = data["error"] or {}
