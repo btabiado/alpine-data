@@ -54,6 +54,8 @@ from typing import Optional
 
 import requests
 
+from .redact import redact
+
 __all__ = ["CensusError", "fetch_acs"]
 
 
@@ -230,7 +232,7 @@ def fetch_acs(
     try:
         resp = sess.get(url, params=params, timeout=timeout)
     except requests.RequestException as exc:
-        raise CensusError(f"ACS request to {url} failed: {exc}") from exc
+        raise CensusError(redact(f"ACS request to {url} failed: {exc}")) from exc
 
     status = getattr(resp, "status_code", 200)
     if status >= 400:

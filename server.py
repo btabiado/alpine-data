@@ -38,6 +38,7 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any
 
+import requests
 from flask import Flask, Response, jsonify, request
 
 import api_status
@@ -477,20 +478,326 @@ def api_refresh() -> Response:
     })
 
 
+# ---------- /api/seed-etf: the "Seed BTC (mirror)" button ----------
+#
+# This route used to answer every failure with "fetch failed; check server
+# logs". That sentence describes a transient network problem, and it invited
+# the user to keep pressing a button that can never succeed. What actually
+# happens today is a deliberate, permanent refusal: the mirror answers with
+# HTTP 200, but its newest row is 2025-05-02 while data/btc_flows.csv already
+# runs to 2026-05-12 with a per-fund breakdown the mirror does not carry, so
+# `fetch_live.fetch_btc_from_github_mirror` refuses to write rather than
+# regress the file by a year and flatten 12 columns into one.
+#
+# The refusal is right. The message was wrong. Three genuinely different
+# things can happen here and a caller has to be able to tell them apart:
+#
+#   unreachable      no usable HTTP response from the mirror. TRANSIENT —
+#                    retrying is sensible.            503 + Retry-After
+#   refused_stale    the mirror answered and its newest row is OLDER than
+#                    what is already on disk. PERMANENT.            409
+#   refused_shape    the mirror answered, but it writes date,Total only and
+#                    the file on disk carries per-fund columns that seeding
+#                    would destroy. PERMANENT.                      409
+#
+# Every date, row count and column name in the response is derived from bytes
+# this process actually read — the CSV on disk and the mirror body — so the
+# claim is checkable rather than assertive. Nothing derived from an exception
+# message or traceback is echoed to the client (see api_share_create above,
+# CodeQL py/stack-trace-exposure); tracebacks still go to stderr.
+#
+# Cost of doing it this way: on the (currently unreachable in practice) happy
+# path the mirror body is fetched twice — once by this probe to decide whether
+# seeding is safe, once by fetch_live's writer, which keeps its own guard as a
+# backstop. ~6KB. Worth it to avoid guessing at the reason, and to catch the
+# shape mismatch BEFORE a destructive write rather than after.
+
+_MIRROR_REPO = "canadiancode/btc-etf-flows"
+_MIRROR_UA = "Mozilla/5.0 (compatible; etf-flow-dashboard/1.0)"
+# What fetch_live's writer emits, regardless of the mirror's own header.
+_MIRROR_WRITES = ("date", "Total")
+_FLOWS_REFRESHER = ".github/workflows/etf-flows-daily.yml"
+
+_ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_COMPACT_DATE_RE = re.compile(r"^\d{8}T?$")
+
+
+def _flow_date(raw: str) -> str | None:
+    """Normalise one first-column cell to an ISO date, or None.
+
+    Handles both shapes in play: '2026-05-12' (our CSVs) and '"20250502T"'
+    (the mirror's). None means "not a date", never a substitute date.
+    """
+    d = raw.strip().strip('"')
+    if _ISO_DATE_RE.match(d):
+        return d
+    if _COMPACT_DATE_RE.match(d):
+        d = d.rstrip("T")
+        return f"{d[0:4]}-{d[4:6]}-{d[6:8]}"
+    return None
+
+
+def _header_columns(header_line: str) -> list[str]:
+    """Column names from a CSV header, bounded before we echo them back."""
+    cols = [c.strip().strip('"') for c in header_line.split(",")]
+    return [c[:40] for c in cols[:24]]
+
+
+def _age_days(iso_date: str | None, now: datetime) -> int | None:
+    """Age of the DATA in whole days. None when there is no date — a missing
+    date is an absence, not an age of 0."""
+    if not iso_date:
+        return None
+    try:
+        d = datetime.strptime(iso_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    return (now - d).days
+
+
+def _flows_file_facts(path, now: datetime) -> dict[str, Any]:
+    """What data/btc_flows.csv holds right now.
+
+    Absence is reported as absence: a missing or unreadable file gets
+    newest_date/rows of None with a reason, never 0. A file we could read that
+    happens to contain no dated rows gets rows=0 — that is a real reading.
+    """
+    facts: dict[str, Any] = {
+        "path": path.name,
+        "exists": path.exists(),
+        "rows": None,
+        "newest_date": None,
+        "newest_date_age_days": None,
+        "columns": None,
+    }
+    if not facts["exists"]:
+        facts["absent_reason"] = "no file on disk — there is nothing to regress"
+        return facts
+    try:
+        text = path.read_text()
+    except OSError:
+        traceback.print_exc(file=sys.stderr)
+        facts["absent_reason"] = "file exists but could not be read"
+        return facts
+    lines = [ln for ln in text.splitlines() if ln.strip()]
+    facts["columns"] = _header_columns(lines[0]) if lines else []
+    dates = [d for d in (_flow_date(ln.split(",", 1)[0]) for ln in lines[1:]) if d]
+    facts["rows"] = len(dates)
+    if dates:
+        facts["newest_date"] = max(dates)
+        facts["newest_date_age_days"] = _age_days(facts["newest_date"], now)
+    else:
+        facts["absent_reason"] = "no parsable date in the first column"
+    return facts
+
+
+def _probe_mirror(now: datetime, timeout: float = 30.0) -> dict[str, Any]:
+    """Read the mirror without writing anything, and report what it holds.
+
+    Deliberately parses the same way fetch_live's writer does (compact date +
+    float value, unparsable rows skipped) so `rows` is the number of rows a
+    seed would actually write.
+    """
+    probe: dict[str, Any] = {
+        "repo": _MIRROR_REPO,
+        "url": fetch_live.MIRROR_BTC_CSV,
+        "reachable": False,
+        "http_status": None,
+        "rows": None,
+        "newest_date": None,
+        "newest_date_age_days": None,
+        "columns": None,
+        "writes_columns": list(_MIRROR_WRITES),
+    }
+    try:
+        r = requests.get(
+            fetch_live.MIRROR_BTC_CSV,
+            headers={"User-Agent": _MIRROR_UA},
+            timeout=timeout,
+        )
+    except Exception as exc:
+        # Fixed vocabulary — the exception's own text never reaches the client.
+        traceback.print_exc(file=sys.stderr)
+        if isinstance(exc, requests.Timeout):
+            probe["unreachable_reason"] = "timed out"
+        elif isinstance(exc, requests.ConnectionError):
+            probe["unreachable_reason"] = "connection failed (DNS, TLS or refused)"
+        else:
+            probe["unreachable_reason"] = "no HTTP response"
+        return probe
+
+    probe["http_status"] = r.status_code
+    if r.status_code >= 400:
+        probe["unreachable_reason"] = f"HTTP {r.status_code}"
+        return probe
+
+    probe["reachable"] = True
+    lines = [ln for ln in (r.text or "").splitlines() if ln.strip()]
+    probe["columns"] = _header_columns(lines[0]) if lines else []
+    dates = []
+    for line in lines[1:]:
+        head, _, tail = line.partition(",")
+        d = _flow_date(head)
+        if d is None:
+            continue
+        try:
+            float(tail.strip().strip('"'))
+        except ValueError:
+            continue
+        dates.append(d)
+    probe["rows"] = len(dates)
+    if dates:
+        probe["newest_date"] = max(dates)
+        probe["newest_date_age_days"] = _age_days(probe["newest_date"], now)
+    return probe
+
+
+def _columns_lost_by_seeding(existing_columns: list[str] | None) -> list[str]:
+    """Columns on disk that a Total-only seed would delete."""
+    if not existing_columns:
+        return []
+    keeps = {c.lower() for c in _MIRROR_WRITES}
+    return [c for c in existing_columns if c and c.lower() not in keeps]
+
+
+def _seed_blockers(existing: dict[str, Any], mirror: dict[str, Any]) -> list[str]:
+    """Permanent reasons not to seed, most important first.
+
+    Staleness leads: when the mirror is behind, nothing about its shape can
+    make seeding a good idea. Shape is still reported alongside it, because a
+    reader deserves both facts.
+    """
+    blockers = []
+    e_new, m_new = existing.get("newest_date"), mirror.get("newest_date")
+    if e_new and m_new and e_new >= m_new:
+        blockers.append("stale")
+    if _columns_lost_by_seeding(existing.get("columns")):
+        blockers.append("shape")
+    return blockers
+
+
 @flask_app.route("/api/seed-etf", methods=["POST"])
 def api_seed_etf() -> Response:
-    """Pull BTC ETF flows from the community GitHub mirror.
+    """Pull BTC ETF flows from the community GitHub mirror — or say why not.
 
-    Mirror is community-maintained and may be stale. Total column only.
+    The mirror is Total-only and abandoned. See the block comment above for
+    the three outcomes and the status code each one answers with.
     """
+    now = datetime.now(timezone.utc)
+    path = dash.DATA_DIR / "btc_flows.csv"
+    existing = _flows_file_facts(path, now)
+    mirror = _probe_mirror(now)
+    base: dict[str, Any] = {
+        "source": _MIRROR_REPO,
+        "existing": existing,
+        "mirror": mirror,
+        # Disclosed so the *_age_days above are checkable arithmetic on the
+        # data's own dates, not an unexplained number.
+        "age_computed_at": now.isoformat(timespec="seconds"),
+        "refreshed_instead_by": _FLOWS_REFRESHER,
+    }
+
+    if not mirror["reachable"]:
+        why = mirror.get("unreachable_reason", "no HTTP response")
+        return jsonify({
+            **base,
+            "ok": False,
+            "outcome": "unreachable",
+            "retryable": True,
+            "wrote": None,
+            "error": (
+                f"could not reach the mirror ({why}); nothing was written and "
+                f"{existing['path']} is unchanged. This one is transient — "
+                f"retrying is reasonable."
+            ),
+        }), 503, {"Retry-After": "60"}
+
+    if not mirror["rows"]:
+        return jsonify({
+            **base,
+            "ok": False,
+            "outcome": "mirror_empty",
+            "retryable": False,
+            "wrote": None,
+            "error": (
+                f"the mirror answered (HTTP {mirror['http_status']}) but carried "
+                f"no parsable rows, so there is nothing to seed from; "
+                f"{existing['path']} is unchanged."
+            ),
+        }), 502
+
+    blockers = _seed_blockers(existing, mirror)
+    if blockers:
+        lost = _columns_lost_by_seeding(existing.get("columns"))
+        shape_note = (
+            f" It is also {len(mirror['writes_columns'])}-column "
+            f"({','.join(mirror['writes_columns'])}), which would delete the "
+            f"{len(lost)} per-fund column(s) on disk ({', '.join(lost)})."
+            if lost else ""
+        )
+        if blockers[0] == "stale":
+            outcome = "refused_stale"
+            error = (
+                f"refused on purpose: the mirror is not fresher than what we "
+                f"already have. It ends {mirror['newest_date']} "
+                f"({mirror['rows']} rows); {existing['path']} already runs to "
+                f"{existing['newest_date']} ({existing['rows']} rows). Seeding "
+                f"would move the data backwards.{shape_note} Nothing was "
+                f"written. The mirror is abandoned, so retrying will never "
+                f"help — BTC ETF flows are refreshed daily by "
+                f"{_FLOWS_REFRESHER}."
+            )
+        else:
+            outcome = "refused_shape"
+            error = (
+                f"refused on purpose: the mirror writes only "
+                f"{','.join(mirror['writes_columns'])}, and seeding would delete "
+                f"the {len(lost)} per-fund column(s) already in "
+                f"{existing['path']} ({', '.join(lost)}). Nothing was written. "
+                f"Retrying will never help — the mirror has no per-fund "
+                f"breakdown to give; BTC ETF flows are refreshed daily by "
+                f"{_FLOWS_REFRESHER}."
+            )
+        return jsonify({
+            **base,
+            "ok": False,
+            "outcome": outcome,
+            "retryable": False,
+            "wrote": None,
+            "blockers": blockers,
+            "columns_lost_if_seeded": lost,
+            "error": error,
+        }), 409
+
     try:
         n = fetch_live.fetch_btc_from_github_mirror(dash.DATA_DIR)
-        return jsonify({"ok": True, "rows": n, "source": "canadiancode/btc-etf-flows"})
     except Exception:
-        # Log full detail server-side, return generic message to client (see
-        # api_share_create above for rationale — CodeQL py/stack-trace-exposure).
+        # Probe said the seed was safe and the write still failed — a real
+        # fault, or the writer's own guard disagreeing with us. Log the
+        # detail, tell the client a category (see api_share_create above —
+        # CodeQL py/stack-trace-exposure).
         traceback.print_exc(file=sys.stderr)
-        return jsonify({"ok": False, "error": "fetch failed; check server logs"}), 503
+        return jsonify({
+            **base,
+            "ok": False,
+            "outcome": "write_failed",
+            "retryable": True,
+            "wrote": None,
+            "error": (
+                "the mirror looked safe to seed from but the write failed; "
+                f"{existing['path']} was left as it was. Check server logs."
+            ),
+        }), 503
+
+    return jsonify({
+        **base,
+        "ok": True,
+        "outcome": "seeded",
+        "retryable": False,
+        "rows": n,
+        "wrote": existing["path"],
+        "columns_written": list(_MIRROR_WRITES),
+    })
 
 
 @flask_app.route("/api/upload-csv", methods=["POST"])
